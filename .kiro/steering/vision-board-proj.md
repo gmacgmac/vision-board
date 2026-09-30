@@ -1,0 +1,158 @@
+---
+inclusion: always
+---
+
+> **Version**: 0.1 (DRAFT, awaiting maintainer review) | **Updated**: 2026-09-30
+
+# Vision Board — Project Rules
+
+Vision Board is a board an AI agent draws to mid-session, so a person can review the agent's
+output item by item (acknowledge, drop, comment, ask for more context, save for later) and the
+agent can read that back and redraw. It works on any project, not only code. It is built to last,
+so every rule below favours things that stay true when frameworks, models and people change.
+
+**Status**: planning. The vision, these rules and the Architect prototype (reference only) exist;
+no production code yet. Prototypes are reference, never a foundation to copy.
+
+**Origin.** These rules are adapted from Uplynk Studio (`~/WORK/uplynk-studio`,
+`.kiro/steering/studio-proj.md`, 2026-09-29) and keep its philosophy. Patterns built here are
+meant to be shared back with Studio's Architect over time, so keep shapes compatible where it
+costs nothing. The longer reasoning behind each rule is in `docs/principles.md`.
+
+**This file is protected.** Never edit it, `AGENTS.md`, `CLAUDE.md`, the decision register
+(`docs/decisions.md`), `docs/principles.md` or the design tokens on your own, and never use them to
+store memories, notes or specs you captured along the way. Propose the exact change, say why, and
+wait for a maintainer's yes.
+
+## Where things live
+
+| Need | Read |
+|---|---|
+| What to do next, open questions | `cortex-tasks/tracker.md` — read first, every session |
+| Why the product exists and where it is going | `docs/vision.md` |
+| How we build and why (the philosophy behind these rules) | `docs/principles.md` |
+| Why we chose something | `docs/decisions.md` (the register; accepted entries are binding) and the Cortex task each one links to |
+| Where new code goes | `README.md` § Layout; every planned folder has a README saying what belongs there |
+| The file formats the agent and the board share | `packages/format/` (the view file and the transcript) |
+| Existing patterns and their states | the generated pattern index (`docs/patterns/`, once built) |
+| Every dependency and why | `docs/specification/dependencies.md` (once the first dependency lands) |
+| The prototype | `prototypes/architect/` (reference only) |
+
+## Plan before you build: work goes through Cortex
+
+No unplanned coding. Any work beyond a trivial fix (a typo, a one-line change) starts as a
+conversation about the plan, becomes a Cortex task (single task, or a task set with PLAN.md),
+and is executed and logged through it. The PLAN records the thinking at the time; the task
+records what was done. That is how this project stays traceable years from now.
+
+Vibe coding is fine for throwaway spikes in `temp/`. Nothing from a spike reaches `apps/` or
+`packages/` without a plan.
+
+## Before you build anything
+
+Answer these in order. Stop at the first "no" and resolve it before writing code.
+
+1. **Is there a Cortex task for it?** If not, talk the plan through and write one first.
+   Check `cortex-tasks/tracker.md` for what is already planned.
+2. **Does a pattern already exist?** Search the pattern index. Extend a pattern before creating
+   one. A new pattern needs all its states, a gallery entry and tests.
+3. **Is it in the file formats?** Every piece of data the board shows and every thing a user
+   does must be expressible in the view file or the transcript (`packages/format/`). If it is
+   not, change the format first (with a schema version bump), then build the UI.
+4. **Does an action already exist?** Anything a user or agent can do is an action in the action
+   layer. Reuse it; do not wire a button straight to a file write or a server route.
+5. **Does a decision already cover it?** Check `docs/decisions.md` and follow it. To change it,
+   plan the change as a Cortex task and add a superseding entry.
+
+## The rules
+
+1. **Reuse before you create.** Patterns for UI, for layout modes, for actions, for file I/O,
+   for tests. No duplicated logic. If you copy code, you are missing a pattern. New code goes in
+   the folder the layout assigns; a new top-level folder or package needs a decision entry.
+2. **Modular, one job per file.** Applies to all code: components, layout modes, scripts, server
+   modules. Aim for about 300 lines: the repo check warns over 300 and fails over 500 unless the
+   file carries `verify: long-file <reason>`. Functions stay short (about 50 lines).
+3. **Design tokens are the only source of style.** No hard-coded colours, sizes or spacing.
+   Every colour pairing passes WCAG 2 AA and APCA contrast, in light and dark; a colour that fails
+   is fixed in its token, not per screen. Node states (open, acknowledged, dropped, commented,
+   needs context, saved for later, decided) are tokens too.
+4. **Every state gives visual feedback.** Controls: idle, hover, focus, pressed, loading,
+   success, error, disabled. Data views: loading, empty, error, partial, stale. Review items:
+   every item state above. States are part of the pattern, so a screen gets them by reusing it.
+5. **Accessibility is a gate, not a phase.** WCAG AA. Every node and every action is keyboard
+   reachable, labelled and has the correct role; lasso has a keyboard alternative. An accessible
+   board is also one that agents can read.
+6. **One contract shape.** The view file, the transcript and the local server's routes are
+   described by versioned JSON Schema (OpenAPI for the server if it grows). Consistent shapes,
+   errors and naming. Docs come from the schema (generated or verified), never hand-edited to
+   match.
+7. **One I/O layer.** Only one module reads or writes session files or calls the server. It
+   validates every file it reads and every file it writes. The agent writes views through the
+   same validator it can run from the command line.
+8. **One action layer, shared by people and agents.** Every action (acknowledge, drop, comment,
+   more context, save for later, confirm, approve, and anything later) is a typed action with
+   inputs, a needs-human-confirmation flag and a transcript record. Buttons, keyboard shortcuts
+   and outside agents all call the same actions. Agents never act on the person's behalf for a
+   decision: acknowledging, dropping and approving are human clicks. Every agent action is
+   recorded.
+9. **The agent describes, the engine places.** No coordinates in view files. Layout is a pure
+   function from nodes, links, regions, modes and hints to positions. Same input, same picture.
+10. **Stable identity.** Node ids and item numbers are assigned once per session and never
+    change on redraw, reorder or removal. "Item 47" means the same thing in every version.
+11. **Mock the data, not the screens.** The gallery, tests and demos run on fixture view files in
+    the exact schema. A fixture board and a live session go through the same code.
+12. **Feature flags from day one.** New modes, node types and behaviour ship behind a flag.
+13. **Tests for everything.** Unit tests for logic (layout is fully unit-testable), schema tests
+    that fixtures and code match the formats, and page tests that open every route and fail on
+    console errors, failed requests, accessibility violations or unexpected visual change. Write
+    the failing test first when fixing a bug.
+14. **Strict TypeScript** everywhere in production code.
+15. **Performance budgets** on page weight, load time and layout time for a large board, checked
+    by the test suite.
+16. **Stay framework-independent where it matters.** Anything shared beyond this app (nodes,
+    connectors, the canvas) is a plain web component with a framework-free core. The framework
+    choice is a decision entry.
+17. **Agent instructions are code.** The skill and prompts that teach an agent to draw a board
+    are versioned, reviewed, and tested against a set of scenarios before they change.
+18. **Local-first and safe by default.** The server binds to localhost only, checks Origin and
+    Host, accepts JSON only, and sanitises every id before it touches a path. No network calls
+    to third parties (fonts included) without a decision entry.
+19. **No secrets in the repo.** Anything secret lives in a git-ignored `.env`; `.env.example`
+    lists what is needed.
+20. **Dependencies are a cost.** Build it ourselves when it is small. Exact versions, install
+    scripts off, every package recorded in the dependency register in the same change.
+
+## The quality bar
+
+We build for the top of our field. A pattern, mode or view is not done until it has all its
+states, passes accessibility and contrast checks, has tests and a gallery entry, and has been
+through a design critique. Prefer fewer, excellent things over many adequate ones.
+
+## Decisions
+
+`docs/decisions.md` is the decision register: one short entry per decision, appended in order
+(`D-001`, `D-002`, ...). Each entry: date, status (Proposed, Accepted, or Superseded by D-NNN), the
+decision in a sentence or two, why in a sentence or two, the main alternative rejected, and a
+link to the Cortex task whose PLAN holds the full reasoning. Never edit an accepted entry;
+append a new one that supersedes it. The Cortex PLAN is the proposal; the register is the
+outcome. `cortex/LOG.md` is not a decision record: the Gardener prunes it.
+
+## Vision Board terminology
+
+Use these words consistently in code, docs and the UI.
+
+- **Board**: what the person sees for one session. **Session**: one review conversation.
+- **View**: one version of the board the agent wrote (`view-vN.json`). Views are immutable.
+- **Transcript**: the append-only record of what the person did (`transcript.jsonl`).
+- **Region**: an area of the board with one **layout mode** (flow, lanes, radial, text, grid...).
+- **Node**: anything drawn. **Item**: a node that needs a response; it has a stable **number**.
+- **Node type**: an entry in the fixed set of building blocks the agent draws from. It declares
+  its fields and which **actions** it offers.
+- **Link**: a connection between nodes, possibly across regions.
+- **Note**: a person's comment pinned to one or more nodes.
+- **Decided**: an item whose response closes it; it moves out of the open set.
+
+## Running the prototype
+
+- Architect: `node prototypes/architect/app/server.mjs`, then open http://localhost:4455.
+  Needs the Claude CLI signed in. Localhost only (see `prototypes/README.md`).

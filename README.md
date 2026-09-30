@@ -25,5 +25,6 @@ decision entry.
 
 ## Working here
 
-All work beyond a trivial fix is planned first as a Cortex task. `sessions/` (the agent's views
+Read `.kiro/steering/vision-board-proj.md` (the rules) and `docs/principles.md` (why). All work
+beyond a trivial fix is planned first as a Cortex task; the roadmap is `cortex-tasks/tracker.md`. `sessions/` (the agent's views
 and your transcripts) is local working data and is not committed.
