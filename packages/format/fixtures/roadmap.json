@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "session": "roadmap",
+  "version": 1,
+  "title": "Where Vision Board goes from here",
+  "summary": "The roadmap from chat, drawn as a board. Numbers run across every region.",
+  "regions": [
+    { "id": "review", "title": "Review", "mode": "grid", "columns": 3 },
+    { "id": "prove", "title": "Prove the idea before code", "mode": "flow" },
+    { "id": "decide", "title": "Formats and decisions", "mode": "radial", "center": "stack" },
+    { "id": "build", "title": "Build in thin slices", "mode": "lanes", "lanes": ["Foundation", "Board", "Agent"] }
+  ],
+  "nodes": [
+    { "id": "rules", "region": "review", "kind": "question", "n": 1, "title": "Review the rules and principles", "body": "Say what is wrong or missing." },
+    { "id": "decisions", "region": "review", "kind": "decision", "n": 2, "title": "Accept or change D-001 to D-008" },
+    { "id": "cortex", "region": "review", "kind": "action", "n": 3, "title": "Cortex setup", "body": "Categories and the registry." },
+    { "id": "paper", "region": "prove", "kind": "action", "n": 4, "title": "Paper prototype", "body": "Hand-write a view and transcript for a real review." },
+    { "id": "dogfood", "region": "prove", "kind": "finding", "n": 5, "title": "Use this roadmap as test case 1", "body": "It is the numbered, cross-category output the board replaces." },
+    { "id": "kinds", "region": "prove", "kind": "question", "n": 6, "title": "Define item kinds and their buttons" },
+    { "id": "stack", "region": "decide", "kind": "topic", "title": "Decide the stack" },
+    { "id": "spec", "region": "decide", "kind": "action", "n": 7, "title": "Format spec v0", "body": "JSON Schema and a validator." },
+    { "id": "framework", "region": "decide", "kind": "decision", "n": 8, "title": "Framework", "body": "SvelteKit to match Studio, or plain Vite." },
+    { "id": "engine", "region": "decide", "kind": "decision", "n": 9, "title": "Layout engine", "body": "Our own per mode, or ELK." },
+    { "id": "siblings", "region": "decide", "kind": "risk", "n": 10, "title": "Reuse from sibling projects", "body": "Dropped by the maintainer." },
+    { "id": "scaffold", "region": "build", "kind": "action", "lane": "Foundation", "n": 11, "title": "Scaffold", "body": "Workspace, tokens, ui base, checks." },
+    { "id": "skeleton", "region": "build", "kind": "action", "lane": "Board", "n": 12, "title": "Walking skeleton", "emphasis": true, "body": "Grid, item card, actions, transcript." },
+    { "id": "skill", "region": "build", "kind": "action", "lane": "Agent", "n": 13, "title": "Agent skill v0", "body": "Write a view, read the transcript." },
+    { "id": "modes", "region": "build", "kind": "action", "lane": "Board", "n": 14, "title": "More modes", "body": "List, flow, lanes, radial." },
+    { "id": "versions", "region": "build", "kind": "action", "lane": "Board", "n": 15, "title": "Versions, Confirm these, Approve" },
+    { "id": "webmcp", "region": "build", "kind": "action", "lane": "Agent", "n": 16, "title": "WebMCP or plugin", "body": "No manual \"go read it\" step." }
+  ],
+  "links": [
+    { "from": "paper", "to": "dogfood" }, { "from": "dogfood", "to": "kinds" },
+    { "from": "stack", "to": "spec" }, { "from": "stack", "to": "framework" },
+    { "from": "stack", "to": "engine" }, { "from": "stack", "to": "siblings" },
+    { "from": "kinds", "to": "spec" }, { "from": "framework", "to": "scaffold" },
+    { "from": "scaffold", "to": "skeleton" }, { "from": "skeleton", "to": "skill" },
+    { "from": "skeleton", "to": "modes" }, { "from": "modes", "to": "versions" },
+    { "from": "skill", "to": "webmcp" }, { "from": "engine", "to": "modes", "label": "informs" }
+  ]
+}

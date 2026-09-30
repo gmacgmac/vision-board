@@ -1,0 +1,18 @@
+{
+  "name": "vision-board",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "board": "node apps/board/server.ts",
+    "validate": "node packages/format/bin/validate.ts",
+    "reply": "node apps/board/bin/reply.ts",
+    "test": "node --test \"packages/*/tests/**/*.test.ts\""
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "format": 1,
+  "session": "login-review",
+  "version": 1,
+  "title": "Add passwordless login: what it touches",
+  "summary": "A sample code review: the agent researched a feature request and came back with touch points, questions and risks.",
+  "regions": [
+    { "id": "touch", "title": "Touch points", "mode": "flow" },
+    { "id": "questions", "title": "Questions for you", "mode": "list" },
+    { "id": "risks", "title": "Risks", "mode": "grid", "columns": 2 },
+    { "id": "plan", "title": "Proposed plan", "mode": "lanes", "lanes": ["Backend", "Frontend", "Ops"] }
+  ],
+  "nodes": [
+    { "id": "form", "region": "touch", "kind": "finding", "n": 1, "title": "Login form", "body": "Swap the password field for an email-only step.", "tags": ["web/login"] },
+    { "id": "auth-api", "region": "touch", "kind": "finding", "n": 2, "title": "Auth API", "body": "New endpoint to send and verify a one-time link.", "tags": ["api/auth"] },
+    { "id": "mailer", "region": "touch", "kind": "finding", "n": 3, "title": "Mailer", "body": "Needs a new template and rate limits.", "tags": ["services/mail"] },
+    { "id": "session", "region": "touch", "kind": "finding", "n": 4, "title": "Session store", "body": "Unchanged, but link tokens need their own table." },
+    { "id": "q-fallback", "region": "questions", "kind": "question", "n": 5, "title": "Keep passwords as a fallback?", "body": "Removing them is simpler; keeping them avoids lock-outs." },
+    { "id": "q-expiry", "region": "questions", "kind": "question", "n": 6, "title": "How long should a link live?", "body": "15 minutes is common." },
+    { "id": "q-sso", "region": "questions", "kind": "question", "n": 7, "title": "Is SSO in scope?" },
+    { "id": "r-deliver", "region": "risks", "kind": "risk", "n": 8, "title": "Email delivery delays", "body": "Links arrive late and expire." },
+    { "id": "r-phish", "region": "risks", "kind": "risk", "n": 9, "title": "Link phishing", "body": "Users trained to click login links." },
+    { "id": "r-shared", "region": "risks", "kind": "risk", "n": 10, "title": "Shared inboxes", "body": "Anyone with the inbox can sign in." },
+    { "id": "p-table", "region": "plan", "kind": "action", "lane": "Backend", "n": 11, "title": "Token table and migration" },
+    { "id": "p-endpoint", "region": "plan", "kind": "action", "lane": "Backend", "n": 12, "title": "Send and verify endpoints" },
+    { "id": "p-ui", "region": "plan", "kind": "action", "lane": "Frontend", "n": 13, "title": "Email-only login screen" },
+    { "id": "p-check", "region": "plan", "kind": "action", "lane": "Frontend", "n": 14, "title": "\"Check your inbox\" state" },
+    { "id": "p-limits", "region": "plan", "kind": "decision", "lane": "Ops", "n": 15, "title": "Rate limits per address", "body": "5 links an hour?" },
+    { "id": "p-alerts", "region": "plan", "kind": "action", "lane": "Ops", "n": 16, "title": "Delivery-failure alerts" }
+  ],
+  "links": [
+    { "from": "form", "to": "auth-api" }, { "from": "auth-api", "to": "mailer" },
+    { "from": "auth-api", "to": "session" },
+    { "from": "p-table", "to": "p-endpoint" }, { "from": "p-endpoint", "to": "p-ui" },
+    { "from": "p-ui", "to": "p-check" }, { "from": "p-endpoint", "to": "p-limits" },
+    { "from": "p-limits", "to": "p-alerts" },
+    { "from": "q-fallback", "to": "form", "label": "shapes" },
+    { "from": "r-deliver", "to": "mailer" }, { "from": "q-expiry", "to": "p-table" }
+  ]
+}

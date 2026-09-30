@@ -1,0 +1,59 @@
+// The view file: what the agent draws (sessions/<id>/view-vN.json). Meaning only, never
+// coordinates: layout is the engine's job (project rule 9).
+
+export const FORMAT_VERSION = 1;
+
+export const MODES = ['grid', 'flow', 'lanes', 'radial', 'list'] as const;
+export type Mode = (typeof MODES)[number];
+
+/** Node kinds the agent draws from. Items (nodes with a number) can be responded to. */
+export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'] as const;
+export type Kind = (typeof KINDS)[number];
+
+export interface Region {
+  id: string;
+  title: string;
+  mode: Mode;
+  /** lanes mode: lane names, top to bottom. */
+  lanes?: string[];
+  /** radial mode: the node at the centre (defaults to the most-linked node). */
+  center?: string;
+  /** grid mode: column count hint. */
+  columns?: number;
+}
+
+export interface ViewNode {
+  id: string;
+  region: string;
+  kind: Kind;
+  title: string;
+  body?: string;
+  /** Stable item number, unique across the whole session. Present = needs a response. */
+  n?: number;
+  /** lanes mode: which lane. */
+  lane?: string;
+  tags?: string[];
+  emphasis?: boolean;
+}
+
+export interface Link {
+  from: string;
+  to: string;
+  label?: string;
+}
+
+export interface View {
+  format: typeof FORMAT_VERSION;
+  session: string;
+  version: number;
+  title: string;
+  summary?: string;
+  regions: Region[];
+  nodes: ViewNode[];
+  links: Link[];
+}
+
+/** Keys that would smuggle coordinates into a view. */
+export const FORBIDDEN_KEYS = ['x', 'y', 'pos', 'position', 'left', 'top', 'width', 'height'];
+
+export const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;

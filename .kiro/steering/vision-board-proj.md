@@ -24,6 +24,19 @@ costs nothing. The longer reasoning behind each rule is in `docs/principles.md`.
 store memories, notes or specs you captured along the way. Propose the exact change, say why, and
 wait for a maintainer's yes.
 
+## How to respond to the maintainer
+
+Whenever a response has more than a couple of points to react to (findings, options, questions,
+suggestions, action items), write it as one numbered list:
+
+- Group items under category headings, but **the numbering keeps incrementing across
+  categories** (1–3 under the first heading, 4–7 under the next, and so on). Never restart at 1.
+- One point per number, short enough to answer in a word: the maintainer replies
+  "1 ok, 4 skip, 7 more context".
+- Keep numbers stable when you follow up on the same list; refer back by number.
+
+This is the text form of the board: when the list gets long, offer to draw it on the board.
+
 ## Where things live
 
 | Need | Read |
@@ -97,6 +110,8 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
    recorded.
 9. **The agent describes, the engine places.** No coordinates in view files. Layout is a pure
    function from nodes, links, regions, modes and hints to positions. Same input, same picture.
+   Where the person moves a node, that place is a **pin** recorded in the transcript (region-local
+   coordinates) and fed back into layout; the agent's view never holds coordinates.
 10. **Stable identity.** Node ids and item numbers are assigned once per session and never
     change on redraw, reorder or removal. "Item 47" means the same thing in every version.
 11. **Mock the data, not the screens.** The gallery, tests and demos run on fixture view files in

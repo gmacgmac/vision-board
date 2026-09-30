@@ -1,0 +1,16 @@
+{
+  "name": "item",
+  "title": "Review item",
+  "tag": "div.vb-item (vb-item element planned)",
+  "description": "A node on the board. Numbered nodes are items: they show the review buttons their kind offers and reflect the person's response.",
+  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden"],
+  "attributes": {
+    "data-kind": "question | finding | decision | risk | action | topic | note",
+    "data-status": "open | acknowledged | dropped | commented | context | later",
+    "data-pinned": "present when the person moved it"
+  },
+  "events": ["data-act button click -> action layer"],
+  "whenToUse": "Anything the agent draws that the person should read or respond to.",
+  "whenNotToUse": "Region headings and lane labels; those belong to the region pattern.",
+  "accessibility": "Focusable group with a label naming number, kind, title and status. Buttons are real buttons with labels and aria-pressed. Keyboard: A X C M L O respond, Alt+Arrows move, R resets the position, J K move between items."
+}

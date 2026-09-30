@@ -34,7 +34,7 @@ the Architect reference are in place. No code. Checkpoint tags: `checkpoint-01-l
 | 4 | Format spec v0 (view, transcript, node types, item actions) | Planned | — | `packages/format/` |
 | 5 | Decisions: framework, layout engine | Planned | — | Needs 3 and 4 |
 | 6 | Scaffold: workspace, tokens, ui base, verify checks, tests | Planned | — | Port from Studio |
-| 7 | Walking skeleton: grid mode, item card, actions, transcript, live reload | Planned | — | First usable board |
+| 7 | Walking skeleton: grid mode, item card, actions, transcript, live reload | In Progress | — | First usable board |
 | 8 | Agent skill v0: how an agent writes a view and reads a transcript | Planned | — | |
 | 9 | More modes: flow, lanes, text, then radial | Planned | — | |
 | 10 | Versions, diff highlights, Confirm these, Approve | Planned | — | From Architect |
@@ -43,6 +43,7 @@ the Architect reference are in place. No code. Checkpoint tags: `checkpoint-01-l
 
 | Date | Update |
 |------|--------|
+| 2026-09-30 | Walking skeleton written, untested: 5 layout modes, pins, actions, server, canvas. See HANDOVER.md |
 | 2026-09-30 | Repo organised; Architect copied as reference; founding docs drafted from Uplynk Studio |
 
 ## References
