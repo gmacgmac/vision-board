@@ -1,0 +1,12 @@
+{
+  "type": "ssai",
+  "name": "Ad insertion (SSAI)",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "dollar",
+  "description": "Inserts personalized ads into the stream server-side.",
+  "aliases": ["ads", "ad insertion", "ssai", "ad breaks", "monetize", "dai"],
+  "props": [],
+  "attachesTo": ["manifest", "channel", "live-event", "uplynk", "fast-out"],
+  "subflow": null
+}

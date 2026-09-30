@@ -1,0 +1,173 @@
+{
+  "id": "live-channel-demo",
+  "title": "Stadium feed to event, channel and YouTube",
+  "version": 2,
+  "status": "draft",
+  "createdAt": "2026-09-28T10:20:55.574Z",
+  "summary": "No changes made — happy to help: I can add/remove branches (e.g. another social or FAST destination), attach DRM/captions/ads/graphics to nodes, rename or reconfigure any step, or restructure the Uplynk chain. Just describe the change or pin a note.",
+  "assumptions": [
+    "DRM applied to the OTT output only — YouTube handles its own protection.",
+    "Assumed RTMP for the YouTube syndication.",
+    "Channel runs 24/7 on the existing schedule."
+  ],
+  "nodes": [
+    {
+      "id": "src",
+      "type": "signal-in",
+      "label": "Stadium feed",
+      "props": {
+        "protocol": "SDI",
+        "via": "on-site encoder"
+      },
+      "attachments": [
+        {
+          "type": "ad-markers",
+          "props": {
+            "format": "SCTE-35"
+          }
+        }
+      ],
+      "notes": [
+        "Primary feed from the venue truck"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest",
+      "type": "cloud-ingest",
+      "label": "Uplynk ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Cloud Slicer, one ingest point"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "xcode",
+      "type": "transcode",
+      "label": "Transcode",
+      "props": {
+        "codec": "H.264"
+      },
+      "attachments": [],
+      "notes": [
+        "Standard ABR ladder"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Match live event",
+      "props": {
+        "name": "Match day"
+      },
+      "attachments": [
+        {
+          "type": "captions",
+          "props": {}
+        }
+      ],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "chan",
+      "type": "channel",
+      "label": "24/7 sports channel",
+      "props": {
+        "schedule": "24/7"
+      },
+      "attachments": [
+        {
+          "type": "ssai",
+          "props": {}
+        }
+      ],
+      "notes": [
+        "Match slots into the channel schedule"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott",
+      "type": "ott-app",
+      "label": "OTT apps",
+      "props": {
+        "formats": "HLS, DASH"
+      },
+      "attachments": [
+        {
+          "type": "drm",
+          "props": {
+            "systems": "FairPlay, Widevine, PlayReady"
+          }
+        }
+      ],
+      "notes": [
+        "Web, mobile and CTV apps"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "synd",
+      "type": "syndication",
+      "label": "Syndication",
+      "props": {
+        "protocol": "RTMP"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "src",
+      "to": "ingest",
+      "label": ""
+    },
+    {
+      "from": "ingest",
+      "to": "xcode",
+      "label": ""
+    },
+    {
+      "from": "xcode",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "xcode",
+      "to": "chan",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott",
+      "label": ""
+    },
+    {
+      "from": "chan",
+      "to": "synd",
+      "label": ""
+    },
+    {
+      "from": "synd",
+      "to": "yt",
+      "label": ""
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "captions",
+  "name": "Captions",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "cc",
+  "description": "Adds closed captions or subtitles.",
+  "aliases": ["captions", "subtitles", "cc", "closed captions"],
+  "props": [],
+  "attachesTo": ["channel", "live-event", "transcode", "transmux", "uplynk", "remix"],
+  "subflow": null
+}

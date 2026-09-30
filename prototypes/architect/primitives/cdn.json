@@ -1,0 +1,16 @@
+{
+  "type": "cdn",
+  "name": "CDN",
+  "kind": "node",
+  "stage": "out",
+  "family": "uplynk",
+  "icon": "globe",
+  "description": "Delivers video to viewers over a content delivery network.",
+  "aliases": ["content delivery network", "multi-cdn", "edge"],
+  "props": [
+    { "key": "mode", "label": "Mode", "options": ["multi-CDN", "single CDN"] }
+  ],
+  "inputs": { "max": null, "from": ["manifest"] },
+  "outputs": { "max": null, "to": ["ott-app"] },
+  "subflow": null
+}

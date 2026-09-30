@@ -1,0 +1,12 @@
+{
+  "type": "graphics",
+  "name": "Graphics",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "image",
+  "description": "Adds on-screen graphics like bugs, logos, or lower thirds.",
+  "aliases": ["graphics", "overlays", "lower thirds", "bugs", "logo"],
+  "props": [],
+  "attachesTo": ["channel", "live-event", "prep-mcr", "remix"],
+  "subflow": null
+}

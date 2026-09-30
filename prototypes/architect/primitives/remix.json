@@ -1,0 +1,14 @@
+{
+  "type": "remix",
+  "name": "Remix",
+  "kind": "node",
+  "stage": "make",
+  "family": "files",
+  "icon": "scissors",
+  "description": "Edits, clips, or repackages content or a live feed into something new.",
+  "aliases": ["edit", "clip", "clipping", "highlights", "cut down"],
+  "props": [],
+  "inputs": { "max": null, "from": ["file-source", "live-event", "channel"] },
+  "outputs": { "max": null, "to": ["transcode", "social-out", "file-delivery"] },
+  "subflow": null
+}

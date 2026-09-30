@@ -1,0 +1,953 @@
+{
+  "generated": "2026-09-29T14:49:18.138Z",
+  "primitives": [
+    {
+      "type": "ad-markers",
+      "name": "Ad markers (SCTE-35)",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "tag",
+      "description": "Carries SCTE-35 cue tones for ad breaks.",
+      "aliases": [
+        "scte",
+        "scte-35",
+        "ad markers",
+        "cue tones"
+      ]
+    },
+    {
+      "type": "blackouts",
+      "name": "Blackouts & regional",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "ban",
+      "description": "Blocks or swaps content for specific regions.",
+      "aliases": [
+        "blackout",
+        "blackouts",
+        "regional replacement",
+        "geo rules",
+        "rights"
+      ]
+    },
+    {
+      "type": "captions",
+      "name": "Captions",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "cc",
+      "description": "Adds closed captions or subtitles.",
+      "aliases": [
+        "captions",
+        "subtitles",
+        "cc",
+        "closed captions"
+      ]
+    },
+    {
+      "type": "cdn",
+      "name": "CDN",
+      "kind": "node",
+      "stage": "out",
+      "family": "uplynk",
+      "icon": "globe",
+      "description": "Delivers video to viewers over a content delivery network.",
+      "aliases": [
+        "content delivery network",
+        "multi-cdn",
+        "edge"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "manifest"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "ott-app"
+        ]
+      }
+    },
+    {
+      "type": "channel",
+      "name": "Linear Channel",
+      "kind": "node",
+      "stage": "make",
+      "family": "live",
+      "icon": "tv",
+      "description": "A 24/7 linear channel — straight live by default, or Scheduled to mix live with VOD and other live content.",
+      "aliases": [
+        "linear",
+        "linear channel",
+        "24/7",
+        "channel",
+        "scheduled channel",
+        "channel scheduler",
+        "channel scheduling",
+        "schedule",
+        "programming",
+        "mix live and vod"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "transcode",
+          "transmux"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "remix",
+          "ott-app",
+          "syndication",
+          "social-out",
+          "fast-out",
+          "other-platform",
+          "switcher"
+        ]
+      }
+    },
+    {
+      "type": "cloud-ingest",
+      "name": "Cloud Ingest (Slicer)",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "cloud",
+      "description": "Slicer ingest for baseband/IP signals and files.",
+      "aliases": [
+        "slicer",
+        "cloud slicer",
+        "ingest",
+        "uplynk ingest",
+        "slice it"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "signal-in",
+          "prep-mcr",
+          "file-source"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "transcode"
+        ]
+      }
+    },
+    {
+      "type": "cloud-ingest-abr",
+      "name": "Cloud Ingest (ABR)",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "cloud",
+      "description": "Ingests an incoming ABR stream (HLS or DASH) for repackaging.",
+      "aliases": [
+        "abr ingest",
+        "hls ingest",
+        "dash ingest",
+        "abr cloud ingest"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "signal-in"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "transmux"
+        ]
+      }
+    },
+    {
+      "type": "drm",
+      "name": "DRM",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "lock",
+      "description": "Encrypts playback with a DRM system.",
+      "aliases": [
+        "drm",
+        "protected",
+        "protection",
+        "encrypt",
+        "content protection",
+        "fairplay",
+        "widevine",
+        "playready"
+      ]
+    },
+    {
+      "type": "fast-out",
+      "name": "FAST platforms",
+      "kind": "node",
+      "stage": "out",
+      "family": "destination",
+      "icon": "tv",
+      "description": "Delivers the channel to a FAST platform.",
+      "aliases": [
+        "fast",
+        "fast channel",
+        "free ad-supported tv"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "channel",
+          "syndication",
+          "switcher",
+          "uplynk"
+        ]
+      },
+      "outputs": {
+        "max": 0,
+        "to": []
+      }
+    },
+    {
+      "type": "file-delivery",
+      "name": "Download / link",
+      "kind": "node",
+      "stage": "out",
+      "family": "files",
+      "icon": "link",
+      "description": "A downloadable file or shareable link for the finished content.",
+      "aliases": [
+        "download",
+        "link",
+        "share link",
+        "connectors",
+        "export"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "remix",
+          "file-source"
+        ]
+      },
+      "outputs": {
+        "max": 0,
+        "to": []
+      }
+    },
+    {
+      "type": "file-source",
+      "name": "Your content",
+      "kind": "node",
+      "stage": "in",
+      "family": "files",
+      "icon": "file",
+      "description": "A piece of content you already have, ready to bring in.",
+      "aliases": [
+        "your content",
+        "local file",
+        "cloud url",
+        "media library",
+        "uplynk library",
+        "vod source",
+        "asset",
+        "computer"
+      ],
+      "inputs": {
+        "max": 0,
+        "from": []
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "cloud-ingest",
+          "remix",
+          "file-delivery",
+          "uplynk"
+        ]
+      }
+    },
+    {
+      "type": "graphics",
+      "name": "Graphics",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "image",
+      "description": "Adds on-screen graphics like bugs, logos, or lower thirds.",
+      "aliases": [
+        "graphics",
+        "overlays",
+        "lower thirds",
+        "bugs",
+        "logo"
+      ]
+    },
+    {
+      "type": "live-event",
+      "name": "Live event",
+      "kind": "node",
+      "stage": "make",
+      "family": "live",
+      "icon": "broadcast",
+      "description": "A scheduled one-off live broadcast.",
+      "aliases": [
+        "event",
+        "live event",
+        "one-off event"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "transcode",
+          "transmux"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "remix",
+          "ott-app",
+          "syndication",
+          "social-out",
+          "switcher"
+        ]
+      }
+    },
+    {
+      "type": "manifest",
+      "name": "Manifest generation",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "doc",
+      "description": "Builds the playback manifest and stitches in ads and personalization.",
+      "aliases": [
+        "packaging",
+        "manifest",
+        "stitching",
+        "packager"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "transcode",
+          "transmux"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "cdn",
+          "ott-app"
+        ]
+      }
+    },
+    {
+      "type": "metadata",
+      "name": "Metadata",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "doc",
+      "description": "Attaches descriptive metadata or EPG tags.",
+      "aliases": [
+        "metadata",
+        "tags",
+        "epg"
+      ]
+    },
+    {
+      "type": "other-platform",
+      "name": "Other platform",
+      "kind": "node",
+      "stage": "out",
+      "family": "destination",
+      "icon": "box",
+      "description": "Hands the finished feed to a platform of the customer's choosing.",
+      "aliases": [
+        "any platform",
+        "third-party platform",
+        "customer platform"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "prep-mcr",
+          "syndication",
+          "channel",
+          "switcher",
+          "uplynk"
+        ]
+      },
+      "outputs": {
+        "max": 0,
+        "to": []
+      }
+    },
+    {
+      "type": "ott-app",
+      "name": "OTT / own apps",
+      "kind": "node",
+      "stage": "out",
+      "family": "destination",
+      "icon": "play",
+      "description": "Uplynk's own apps and players where viewers watch directly.",
+      "aliases": [
+        "ott",
+        "own apps",
+        "apps",
+        "player",
+        "direct to consumer",
+        "d2c",
+        "web and mobile",
+        "low latency direct"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "live-event",
+          "channel",
+          "cdn",
+          "manifest",
+          "uplynk"
+        ]
+      },
+      "outputs": {
+        "max": 0,
+        "to": []
+      }
+    },
+    {
+      "type": "personalization",
+      "name": "Personalization",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "user",
+      "description": "Tailors playlists and ads per viewer or device.",
+      "aliases": [
+        "personalised",
+        "personalized",
+        "device detection",
+        "audiences",
+        "dynamic playlists"
+      ]
+    },
+    {
+      "type": "prep-mcr",
+      "name": "Prep & master control",
+      "kind": "node",
+      "stage": "make",
+      "family": "managed",
+      "icon": "cog",
+      "description": "Master control and prep run by Uplynk's managed service team.",
+      "aliases": [
+        "master control",
+        "mcr",
+        "playout",
+        "streamops",
+        "managed service",
+        "prep",
+        "grass valley",
+        "elemental",
+        "aws elemental"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "signal-in"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "cloud-ingest",
+          "other-platform",
+          "uplynk"
+        ]
+      }
+    },
+    {
+      "type": "remix",
+      "name": "Remix",
+      "kind": "node",
+      "stage": "make",
+      "family": "files",
+      "icon": "scissors",
+      "description": "Edits, clips, or repackages content or a live feed into something new.",
+      "aliases": [
+        "edit",
+        "clip",
+        "clipping",
+        "highlights",
+        "cut down"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "file-source",
+          "live-event",
+          "channel"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "transcode",
+          "social-out",
+          "file-delivery"
+        ]
+      }
+    },
+    {
+      "type": "signal-in",
+      "name": "Live signal",
+      "kind": "node",
+      "stage": "in",
+      "family": "live",
+      "icon": "signal",
+      "description": "A live signal coming in from an encoder, partner, or managed feed.",
+      "aliases": [
+        "feed",
+        "live feed",
+        "source",
+        "input",
+        "contribution",
+        "encoder",
+        "stadium feed",
+        "sdi feed",
+        "zixi feed",
+        "rist feed",
+        "rtmp feed",
+        "srt feed"
+      ],
+      "inputs": {
+        "max": 0,
+        "from": []
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "prep-mcr",
+          "cloud-ingest",
+          "cloud-ingest-abr",
+          "uplynk"
+        ]
+      }
+    },
+    {
+      "type": "social-out",
+      "name": "Social",
+      "kind": "node",
+      "stage": "out",
+      "family": "destination",
+      "icon": "user",
+      "description": "Publishes the stream to a social platform.",
+      "aliases": [
+        "youtube",
+        "x",
+        "twitter",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "twitch",
+        "linkedin",
+        "social",
+        "social media"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "syndication",
+          "live-event",
+          "channel",
+          "remix",
+          "switcher",
+          "uplynk"
+        ]
+      },
+      "outputs": {
+        "max": 0,
+        "to": []
+      }
+    },
+    {
+      "type": "ssai",
+      "name": "Ad insertion (SSAI)",
+      "kind": "attachment",
+      "stage": null,
+      "family": "uplynk",
+      "icon": "dollar",
+      "description": "Inserts personalized ads into the stream server-side.",
+      "aliases": [
+        "ads",
+        "ad insertion",
+        "ssai",
+        "ad breaks",
+        "monetize",
+        "dai"
+      ]
+    },
+    {
+      "type": "switcher",
+      "name": "Switcher",
+      "kind": "node",
+      "stage": "make",
+      "family": "live",
+      "icon": "share",
+      "description": "Switches several sources into one destination on a schedule, by rules, or by hand.",
+      "aliases": [
+        "switcher",
+        "switch",
+        "switching",
+        "router",
+        "routing",
+        "scheduled switching",
+        "rules-based switching"
+      ],
+      "inputs": {
+        "max": null,
+        "from": [
+          "live-event",
+          "channel"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "syndication",
+          "social-out",
+          "fast-out",
+          "other-platform"
+        ]
+      }
+    },
+    {
+      "type": "syndication",
+      "name": "Syndication",
+      "kind": "node",
+      "stage": "out",
+      "family": "destination",
+      "icon": "share",
+      "description": "Pushes the stream out to another platform or partner.",
+      "aliases": [
+        "restream",
+        "simulcast",
+        "syndicate"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "live-event",
+          "channel",
+          "switcher",
+          "uplynk"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "social-out",
+          "fast-out",
+          "other-platform"
+        ]
+      }
+    },
+    {
+      "type": "transcode",
+      "name": "Uplynk Transcode",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "layers",
+      "description": "Encodes ingested video into an ABR ladder for delivery.",
+      "aliases": [
+        "transcoder",
+        "transcoders",
+        "encode",
+        "encoding",
+        "abr ladder"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "cloud-ingest",
+          "remix"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "live-event",
+          "channel",
+          "manifest"
+        ]
+      }
+    },
+    {
+      "type": "transmux",
+      "name": "Uplynk Repackaging",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "layers",
+      "description": "Repackages an incoming ABR stream (HLS, DASH) without re-encoding.",
+      "aliases": [
+        "transmuxer",
+        "transmuxers",
+        "transmuxing",
+        "repackage",
+        "repackaging",
+        "abr passthrough",
+        "uplynk repackaging",
+        "repackager"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "cloud-ingest-abr"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "live-event",
+          "channel",
+          "manifest"
+        ]
+      }
+    },
+    {
+      "type": "uplynk",
+      "name": "Uplynk",
+      "kind": "node",
+      "stage": "make",
+      "family": "uplynk",
+      "icon": "layers",
+      "description": "The Uplynk platform: ingest, transcode, manifest, and CDN in one box.",
+      "aliases": [
+        "uplynk",
+        "uplynk platform",
+        "uplynk cloud"
+      ],
+      "inputs": {
+        "max": 1,
+        "from": [
+          "signal-in",
+          "prep-mcr",
+          "file-source"
+        ]
+      },
+      "outputs": {
+        "max": null,
+        "to": [
+          "ott-app",
+          "syndication",
+          "social-out",
+          "fast-out",
+          "other-platform"
+        ]
+      }
+    }
+  ],
+  "aliasMap": {
+    "24/7": "channel",
+    "abr cloud ingest": "cloud-ingest-abr",
+    "abr ingest": "cloud-ingest-abr",
+    "abr ladder": "transcode",
+    "abr passthrough": "transmux",
+    "ad breaks": "ssai",
+    "ad insertion": "ssai",
+    "ad insertion (ssai)": "ssai",
+    "ad markers": "ad-markers",
+    "ad markers (scte-35)": "ad-markers",
+    "ad-markers": "ad-markers",
+    "ads": "ssai",
+    "any platform": "other-platform",
+    "apps": "ott-app",
+    "asset": "file-source",
+    "audiences": "personalization",
+    "aws elemental": "prep-mcr",
+    "blackout": "blackouts",
+    "blackouts": "blackouts",
+    "blackouts & regional": "blackouts",
+    "bugs": "graphics",
+    "captions": "captions",
+    "cc": "captions",
+    "cdn": "cdn",
+    "channel": "channel",
+    "channel scheduler": "channel",
+    "channel scheduling": "channel",
+    "clip": "remix",
+    "clipping": "remix",
+    "closed captions": "captions",
+    "cloud ingest (abr)": "cloud-ingest-abr",
+    "cloud ingest (slicer)": "cloud-ingest",
+    "cloud slicer": "cloud-ingest",
+    "cloud url": "file-source",
+    "cloud-ingest": "cloud-ingest",
+    "cloud-ingest-abr": "cloud-ingest-abr",
+    "computer": "file-source",
+    "connectors": "file-delivery",
+    "content delivery network": "cdn",
+    "content protection": "drm",
+    "contribution": "signal-in",
+    "cue tones": "ad-markers",
+    "customer platform": "other-platform",
+    "cut down": "remix",
+    "d2c": "ott-app",
+    "dai": "ssai",
+    "dash ingest": "cloud-ingest-abr",
+    "device detection": "personalization",
+    "direct to consumer": "ott-app",
+    "download": "file-delivery",
+    "download / link": "file-delivery",
+    "drm": "drm",
+    "dynamic playlists": "personalization",
+    "edge": "cdn",
+    "edit": "remix",
+    "elemental": "prep-mcr",
+    "encode": "transcode",
+    "encoder": "signal-in",
+    "encoding": "transcode",
+    "encrypt": "drm",
+    "epg": "metadata",
+    "event": "live-event",
+    "export": "file-delivery",
+    "facebook": "social-out",
+    "fairplay": "drm",
+    "fast": "fast-out",
+    "fast channel": "fast-out",
+    "fast platforms": "fast-out",
+    "fast-out": "fast-out",
+    "feed": "signal-in",
+    "file-delivery": "file-delivery",
+    "file-source": "file-source",
+    "free ad-supported tv": "fast-out",
+    "geo rules": "blackouts",
+    "graphics": "graphics",
+    "grass valley": "prep-mcr",
+    "highlights": "remix",
+    "hls ingest": "cloud-ingest-abr",
+    "ingest": "cloud-ingest",
+    "input": "signal-in",
+    "instagram": "social-out",
+    "linear": "channel",
+    "linear channel": "channel",
+    "link": "file-delivery",
+    "linkedin": "social-out",
+    "live event": "live-event",
+    "live feed": "signal-in",
+    "live signal": "signal-in",
+    "live-event": "live-event",
+    "local file": "file-source",
+    "logo": "graphics",
+    "low latency direct": "ott-app",
+    "lower thirds": "graphics",
+    "managed service": "prep-mcr",
+    "manifest": "manifest",
+    "manifest generation": "manifest",
+    "master control": "prep-mcr",
+    "mcr": "prep-mcr",
+    "media library": "file-source",
+    "metadata": "metadata",
+    "mix live and vod": "channel",
+    "monetize": "ssai",
+    "multi-cdn": "cdn",
+    "one-off event": "live-event",
+    "other platform": "other-platform",
+    "other-platform": "other-platform",
+    "ott": "ott-app",
+    "ott / own apps": "ott-app",
+    "ott-app": "ott-app",
+    "overlays": "graphics",
+    "own apps": "ott-app",
+    "packager": "manifest",
+    "packaging": "manifest",
+    "personalised": "personalization",
+    "personalization": "personalization",
+    "personalized": "personalization",
+    "player": "ott-app",
+    "playout": "prep-mcr",
+    "playready": "drm",
+    "prep": "prep-mcr",
+    "prep & master control": "prep-mcr",
+    "prep-mcr": "prep-mcr",
+    "programming": "channel",
+    "protected": "drm",
+    "protection": "drm",
+    "regional replacement": "blackouts",
+    "remix": "remix",
+    "repackage": "transmux",
+    "repackager": "transmux",
+    "repackaging": "transmux",
+    "restream": "syndication",
+    "rights": "blackouts",
+    "rist feed": "signal-in",
+    "router": "switcher",
+    "routing": "switcher",
+    "rtmp feed": "signal-in",
+    "rules-based switching": "switcher",
+    "schedule": "channel",
+    "scheduled channel": "channel",
+    "scheduled switching": "switcher",
+    "scte": "ad-markers",
+    "scte-35": "ad-markers",
+    "sdi feed": "signal-in",
+    "share link": "file-delivery",
+    "signal-in": "signal-in",
+    "simulcast": "syndication",
+    "slice it": "cloud-ingest",
+    "slicer": "cloud-ingest",
+    "social": "social-out",
+    "social media": "social-out",
+    "social-out": "social-out",
+    "source": "signal-in",
+    "srt feed": "signal-in",
+    "ssai": "ssai",
+    "stadium feed": "signal-in",
+    "stitching": "manifest",
+    "streamops": "prep-mcr",
+    "subtitles": "captions",
+    "switch": "switcher",
+    "switcher": "switcher",
+    "switching": "switcher",
+    "syndicate": "syndication",
+    "syndication": "syndication",
+    "tags": "metadata",
+    "third-party platform": "other-platform",
+    "tiktok": "social-out",
+    "transcode": "transcode",
+    "transcoder": "transcode",
+    "transcoders": "transcode",
+    "transmux": "transmux",
+    "transmuxer": "transmux",
+    "transmuxers": "transmux",
+    "transmuxing": "transmux",
+    "twitch": "social-out",
+    "twitter": "social-out",
+    "uplynk": "uplynk",
+    "uplynk cloud": "uplynk",
+    "uplynk ingest": "cloud-ingest",
+    "uplynk library": "file-source",
+    "uplynk platform": "uplynk",
+    "uplynk repackaging": "transmux",
+    "uplynk transcode": "transcode",
+    "vod source": "file-source",
+    "web and mobile": "ott-app",
+    "widevine": "drm",
+    "x": "social-out",
+    "your content": "file-source",
+    "youtube": "social-out",
+    "zixi feed": "signal-in"
+  }
+}

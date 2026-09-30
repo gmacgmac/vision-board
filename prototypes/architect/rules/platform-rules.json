@@ -1,0 +1,39 @@
+{
+  "rules": [
+    {
+      "id": "single-input-outputs",
+      "text": "OTT, Social, FAST, Other platform, and Download outputs each take exactly one input; if two sources need to reach one of these, give each source its own output, or put a Switcher in front of a single shared destination.",
+      "check": "max-inputs"
+    },
+    {
+      "id": "own-ott-per-source",
+      "text": "When a live event and a linear channel both need to go to OTT, give each one its own OTT output rather than feeding one OTT output from both."
+    },
+    {
+      "id": "through-transcode-or-transmux",
+      "text": "Live events, channels, and Uplynk asset outputs are always fed by a Uplynk Transcode or Uplynk Repackaging step, never straight from ingest.",
+      "check": "accepts"
+    },
+    {
+      "id": "abr-transmux",
+      "text": "ABR signals (HLS, DASH) go into Cloud Ingest (ABR) and then Uplynk Repackaging; SDI, SRT, RTMP, RIST, Zixi, 2110 signals and files go into Cloud Ingest (Slicer) and then Uplynk Transcode.",
+      "check": "abr-path",
+      "abrProtocols": ["HLS", "DASH"]
+    },
+    {
+      "id": "abr-no-scte",
+      "text": "SCTE-35 ad markers work on Cloud Ingest (Slicer), not on ABR signals or Cloud Ingest (ABR).",
+      "check": "abr-no-attachment",
+      "attachment": "ad-markers",
+      "abrProtocols": ["HLS", "DASH"]
+    },
+    {
+      "id": "switcher-for-shared-destination",
+      "text": "To feed one social or FAST destination from several sources, put a Switcher in front of it."
+    },
+    {
+      "id": "channel-mode",
+      "text": "A Linear Channel is Live by default; use Scheduled only when the operator wants to schedule or mix live with VOD or other live content."
+    }
+  ]
+}

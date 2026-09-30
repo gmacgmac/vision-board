@@ -1,0 +1,16 @@
+{
+  "type": "other-platform",
+  "name": "Other platform",
+  "kind": "node",
+  "stage": "out",
+  "family": "destination",
+  "icon": "box",
+  "description": "Hands the finished feed to a platform of the customer's choosing.",
+  "aliases": ["any platform", "third-party platform", "customer platform"],
+  "props": [
+    { "key": "name", "label": "Name" }
+  ],
+  "inputs": { "max": 1, "from": ["prep-mcr", "syndication", "channel", "switcher", "uplynk"] },
+  "outputs": { "max": 0, "to": [] },
+  "subflow": null
+}

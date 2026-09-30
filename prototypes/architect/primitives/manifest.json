@@ -1,0 +1,14 @@
+{
+  "type": "manifest",
+  "name": "Manifest generation",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "doc",
+  "description": "Builds the playback manifest and stitches in ads and personalization.",
+  "aliases": ["packaging", "manifest", "stitching", "packager"],
+  "props": [],
+  "inputs": { "max": 1, "from": ["transcode", "transmux"] },
+  "outputs": { "max": null, "to": ["cdn", "ott-app"] },
+  "subflow": null
+}

@@ -1,0 +1,42 @@
+# --- OS and editor ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- Dependencies ---
+node_modules/
+
+# --- Build output (generated; never committed) ---
+dist/
+build/
+.svelte-kit/
+.vite/
+*.tsbuildinfo
+
+# --- Test and tool output ---
+coverage/
+playwright-report/
+test-results/
+.cache/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- Secrets: never commit. .env.example lists what is needed. ---
+.env
+.env.*
+!.env.example
+
+# --- Local working data: board sessions (views and transcripts) ---
+sessions/
+
+# --- Local scratch ---
+temp/
+
+# --- Personal Kiro settings (machine-local) ---
+.kiro/settings/

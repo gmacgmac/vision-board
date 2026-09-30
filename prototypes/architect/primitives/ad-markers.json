@@ -1,0 +1,12 @@
+{
+  "type": "ad-markers",
+  "name": "Ad markers (SCTE-35)",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "tag",
+  "description": "Carries SCTE-35 cue tones for ad breaks.",
+  "aliases": ["scte", "scte-35", "ad markers", "cue tones"],
+  "props": [],
+  "attachesTo": ["signal-in", "cloud-ingest", "channel", "live-event", "uplynk"],
+  "subflow": null
+}

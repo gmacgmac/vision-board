@@ -1,0 +1,17 @@
+{
+  "type": "signal-in",
+  "name": "Live signal",
+  "kind": "node",
+  "stage": "in",
+  "family": "live",
+  "icon": "signal",
+  "description": "A live signal coming in from an encoder, partner, or managed feed.",
+  "aliases": ["feed", "live feed", "source", "input", "contribution", "encoder", "stadium feed", "sdi feed", "zixi feed", "rist feed", "rtmp feed", "srt feed"],
+  "props": [
+    { "key": "protocol", "label": "Protocol", "options": ["SDI", "Zixi", "RIST", "RTMP", "SRT", "HLS", "DASH", "2110"] },
+    { "key": "via", "label": "Via", "options": ["on-site encoder", "partner signal", "managed feed", "Techex", "Zixi"] }
+  ],
+  "inputs": { "max": 0, "from": [] },
+  "outputs": { "max": null, "to": ["prep-mcr", "cloud-ingest", "cloud-ingest-abr", "uplynk"] },
+  "subflow": null
+}

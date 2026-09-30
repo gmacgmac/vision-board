@@ -1,0 +1,16 @@
+{
+  "type": "social-out",
+  "name": "Social",
+  "kind": "node",
+  "stage": "out",
+  "family": "destination",
+  "icon": "user",
+  "description": "Publishes the stream to a social platform.",
+  "aliases": ["youtube", "x", "twitter", "instagram", "facebook", "tiktok", "twitch", "linkedin", "social", "social media"],
+  "props": [
+    { "key": "platform", "label": "Platform", "options": ["YouTube", "X", "Instagram", "Facebook", "TikTok", "LinkedIn", "Twitch"] }
+  ],
+  "inputs": { "max": 1, "from": ["syndication", "live-event", "channel", "remix", "switcher", "uplynk"] },
+  "outputs": { "max": 0, "to": [] },
+  "subflow": null
+}

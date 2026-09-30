@@ -1,0 +1,17 @@
+{
+  "type": "live-event",
+  "name": "Live event",
+  "kind": "node",
+  "stage": "make",
+  "family": "live",
+  "icon": "broadcast",
+  "description": "A scheduled one-off live broadcast.",
+  "aliases": ["event", "live event", "one-off event"],
+  "props": [
+    { "key": "name", "label": "Name" },
+    { "key": "schedule", "label": "Schedule" }
+  ],
+  "inputs": { "max": null, "from": ["transcode", "transmux"] },
+  "outputs": { "max": null, "to": ["remix", "ott-app", "syndication", "social-out", "switcher"] },
+  "subflow": null
+}

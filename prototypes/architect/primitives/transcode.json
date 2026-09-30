@@ -1,0 +1,17 @@
+{
+  "type": "transcode",
+  "name": "Uplynk Transcode",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "layers",
+  "description": "Encodes ingested video into an ABR ladder for delivery.",
+  "aliases": ["transcoder", "transcoders", "encode", "encoding", "abr ladder"],
+  "props": [
+    { "key": "ladder", "label": "Ladder" },
+    { "key": "codec", "label": "Codec", "options": ["H.264", "HEVC"] }
+  ],
+  "inputs": { "max": 1, "from": ["cloud-ingest", "remix"] },
+  "outputs": { "max": null, "to": ["live-event", "channel", "manifest"] },
+  "subflow": null
+}

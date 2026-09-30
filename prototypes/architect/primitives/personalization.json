@@ -1,0 +1,12 @@
+{
+  "type": "personalization",
+  "name": "Personalization",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "user",
+  "description": "Tailors playlists and ads per viewer or device.",
+  "aliases": ["personalised", "personalized", "device detection", "audiences", "dynamic playlists"],
+  "props": [],
+  "attachesTo": ["manifest", "uplynk", "ott-app"],
+  "subflow": null
+}

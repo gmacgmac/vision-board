@@ -1,0 +1,16 @@
+{
+  "type": "fast-out",
+  "name": "FAST platforms",
+  "kind": "node",
+  "stage": "out",
+  "family": "destination",
+  "icon": "tv",
+  "description": "Delivers the channel to a FAST platform.",
+  "aliases": ["fast", "fast channel", "free ad-supported tv"],
+  "props": [
+    { "key": "platform", "label": "Platform" }
+  ],
+  "inputs": { "max": 1, "from": ["channel", "syndication", "switcher", "uplynk"] },
+  "outputs": { "max": 0, "to": [] },
+  "subflow": null
+}

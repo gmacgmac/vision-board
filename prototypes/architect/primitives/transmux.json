@@ -1,0 +1,35 @@
+{
+  "type": "transmux",
+  "name": "Uplynk Repackaging",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "layers",
+  "description": "Repackages an incoming ABR stream (HLS, DASH) without re-encoding.",
+  "aliases": [
+    "transmuxer",
+    "transmuxers",
+    "transmuxing",
+    "repackage",
+    "repackaging",
+    "abr passthrough",
+    "uplynk repackaging",
+    "repackager"
+  ],
+  "props": [],
+  "inputs": {
+    "max": 1,
+    "from": [
+      "cloud-ingest-abr"
+    ]
+  },
+  "outputs": {
+    "max": null,
+    "to": [
+      "live-event",
+      "channel",
+      "manifest"
+    ]
+  },
+  "subflow": null
+}

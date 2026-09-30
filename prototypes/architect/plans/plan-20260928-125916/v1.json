@@ -1,0 +1,295 @@
+{
+  "id": "plan-20260928-125916",
+  "title": "Super Bowl Redundant Feed + 24/7 Partner Channel",
+  "version": 1,
+  "status": "draft",
+  "createdAt": "2026-09-28T12:02:26.083Z",
+  "summary": "Built a redundant dual-SRT path through Grass Valley into a single Super Bowl live event branching to OTT, YouTube and three Zixi syndication partners, plus a separate HLS partner path through ABR transmux into a scheduled 24/7 linear channel with its own OTT output.",
+  "reply": "Set up two SRT feeds through a shared Grass Valley master control, each with its own ingest/transcode chain for redundancy, both landing in one Super Bowl live event that fans out to OTT, YouTube, and three Zixi syndication partners. The \"YouTube will receive Dash, Poole\" part didn't map to anything usable so I left YouTube as a plain social output — worth double-checking what that meant. Also added the HLS partner feed as its own path into a scheduled 24/7 channel with a separate OTT output, since live events and channels can't share one OTT per the platform rules.",
+  "assumptions": [
+    "Both SRT feeds routed through one shared Grass Valley master control before splitting into two redundant ingest/transcode chains.",
+    "Couldn't parse \"YouTube will receive Dash, Poole\" — sent YouTube as a standard social output; please clarify what was meant.",
+    "Set the three syndication partners to Zixi protocol as stated, even though you called it an 'SRT feed pushed over Zixi'.",
+    "Gave the live event and the 24/7 channel separate OTT outputs, since one OTT output can't serve two sources.",
+    "Channel scheduling enabled per your request, but no schedule details given yet — schedule field left blank."
+  ],
+  "nodes": [
+    {
+      "id": "srt1",
+      "type": "signal-in",
+      "label": "Feed A",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "srt2",
+      "type": "signal-in",
+      "label": "Feed B (backup)",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "mcr",
+      "type": "prep-mcr",
+      "label": "Master control",
+      "props": {
+        "provider": "Grass Valley"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ing1",
+      "type": "cloud-ingest",
+      "label": "Feed A ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ing2",
+      "type": "cloud-ingest",
+      "label": "Feed B ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc1",
+      "type": "transcode",
+      "label": "Feed A ABR",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc2",
+      "type": "transcode",
+      "label": "Feed B ABR",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Super Bowl",
+      "props": {
+        "name": "Super Bowl"
+      },
+      "attachments": [],
+      "notes": [
+        "Fed by two redundant SRT chains for failover",
+        "Branches to OTT, YouTube, and 3 syndication partners"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott1",
+      "type": "ott-app",
+      "label": "Event OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn1",
+      "type": "syndication",
+      "label": "Partner 1",
+      "props": {
+        "protocol": "Zixi"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn2",
+      "type": "syndication",
+      "label": "Partner 2",
+      "props": {
+        "protocol": "Zixi"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn3",
+      "type": "syndication",
+      "label": "Partner 3",
+      "props": {
+        "protocol": "Zixi"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "hls",
+      "type": "signal-in",
+      "label": "Partner feed",
+      "props": {
+        "protocol": "HLS"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ing3",
+      "type": "cloud-ingest-abr",
+      "label": "Partner ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tmx",
+      "type": "transmux",
+      "label": "ABR repackage",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "chan",
+      "type": "channel",
+      "label": "24/7 channel",
+      "props": {
+        "mode": "Scheduled",
+        "name": "24/7 Partner Channel"
+      },
+      "attachments": [],
+      "notes": [
+        "Scheduled mode for mixing/programming",
+        "Fed by HLS partner via ABR transmux",
+        "Has its own OTT output, separate from the event"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott2",
+      "type": "ott-app",
+      "label": "Channel OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "srt1",
+      "to": "mcr",
+      "label": ""
+    },
+    {
+      "from": "srt2",
+      "to": "mcr",
+      "label": ""
+    },
+    {
+      "from": "mcr",
+      "to": "ing1",
+      "label": ""
+    },
+    {
+      "from": "mcr",
+      "to": "ing2",
+      "label": ""
+    },
+    {
+      "from": "ing1",
+      "to": "tc1",
+      "label": ""
+    },
+    {
+      "from": "ing2",
+      "to": "tc2",
+      "label": ""
+    },
+    {
+      "from": "tc1",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "tc2",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn2",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn3",
+      "label": ""
+    },
+    {
+      "from": "hls",
+      "to": "ing3",
+      "label": ""
+    },
+    {
+      "from": "ing3",
+      "to": "tmx",
+      "label": ""
+    },
+    {
+      "from": "tmx",
+      "to": "chan",
+      "label": ""
+    },
+    {
+      "from": "chan",
+      "to": "ott2",
+      "label": ""
+    }
+  ]
+}

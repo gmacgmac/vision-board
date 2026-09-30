@@ -1,0 +1,14 @@
+{
+  "type": "file-delivery",
+  "name": "Download / link",
+  "kind": "node",
+  "stage": "out",
+  "family": "files",
+  "icon": "link",
+  "description": "A downloadable file or shareable link for the finished content.",
+  "aliases": ["download", "link", "share link", "connectors", "export"],
+  "props": [],
+  "inputs": { "max": 1, "from": ["remix", "file-source"] },
+  "outputs": { "max": 0, "to": [] },
+  "subflow": null
+}

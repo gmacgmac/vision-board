@@ -1,0 +1,16 @@
+{
+  "type": "switcher",
+  "name": "Switcher",
+  "kind": "node",
+  "stage": "make",
+  "family": "live",
+  "icon": "share",
+  "description": "Switches several sources into one destination on a schedule, by rules, or by hand.",
+  "aliases": ["switcher", "switch", "switching", "router", "routing", "scheduled switching", "rules-based switching"],
+  "props": [
+    { "key": "mode", "label": "Mode", "options": ["scheduled", "rules-based", "manual"] }
+  ],
+  "inputs": { "max": null, "from": ["live-event", "channel"] },
+  "outputs": { "max": null, "to": ["syndication", "social-out", "fast-out", "other-platform"] },
+  "subflow": null
+}

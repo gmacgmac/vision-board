@@ -1,0 +1,18 @@
+{
+  "type": "prep-mcr",
+  "name": "Prep & master control",
+  "kind": "node",
+  "stage": "make",
+  "family": "managed",
+  "icon": "cog",
+  "description": "Master control and prep run by Uplynk's managed service team.",
+  "aliases": ["master control", "mcr", "playout", "streamops", "managed service", "prep", "grass valley", "elemental", "aws elemental"],
+  "props": [
+    { "key": "provider", "label": "Provider", "options": ["Grass Valley", "AWS Elemental"] },
+    { "key": "services", "label": "Services" }
+  ],
+  "providers": ["Grass Valley", "AWS Elemental"],
+  "inputs": { "max": null, "from": ["signal-in"] },
+  "outputs": { "max": null, "to": ["cloud-ingest", "other-platform", "uplynk"] },
+  "subflow": null
+}

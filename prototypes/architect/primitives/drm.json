@@ -1,0 +1,14 @@
+{
+  "type": "drm",
+  "name": "DRM",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "lock",
+  "description": "Encrypts playback with a DRM system.",
+  "aliases": ["drm", "protected", "protection", "encrypt", "content protection", "fairplay", "widevine", "playready"],
+  "props": [
+    { "key": "systems", "label": "Systems" }
+  ],
+  "attachesTo": ["transcode", "transmux", "manifest", "uplynk", "channel", "live-event", "ott-app"],
+  "subflow": null
+}

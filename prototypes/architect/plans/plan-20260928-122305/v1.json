@@ -1,0 +1,166 @@
+{
+  "id": "plan-20260928-122305",
+  "title": "Grass Valley Event + Partner Channel",
+  "version": 1,
+  "status": "draft",
+  "createdAt": "2026-09-28T11:25:22.704Z",
+  "summary": "Built two parallel paths: a Grass Valley SRT feed transcoded into a live event, and a partner HLS feed transmuxed into a linear channel publishing to OTT and YouTube.",
+  "reply": "Set up two independent paths through Uplynk. Grass Valley's SRT feed goes through ingest and transcode into the live event, and the partner's HLS feed goes through ingest and transmux into the channel, which then feeds both your own OTT app and YouTube. I split Uplynk into its individual steps since a live event or channel can't be fed straight from the all-in-one Uplynk box — worth confirming that's fine.",
+  "assumptions": [
+    "Mapped 'Grass Valley outputs SRT' to a prep-mcr (Grass Valley) feeding Cloud Ingest, per vendor-as-prop rule.",
+    "Broke Uplynk into individual steps since live event/channel can't be fed directly from the composite Uplynk output.",
+    "Assumed the partner HLS feed arrives as a partner signal.",
+    "Assumed YouTube publish comes from the channel, not a separate switcher, since it's the only source targeting it."
+  ],
+  "nodes": [
+    {
+      "id": "gv-prep",
+      "type": "prep-mcr",
+      "label": "Grass Valley MCR",
+      "props": {
+        "provider": "Grass Valley"
+      },
+      "attachments": [],
+      "notes": [
+        "Outputs SRT into ingest"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest1",
+      "type": "cloud-ingest",
+      "label": "Event ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Takes SRT from Grass Valley"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "transcode1",
+      "type": "transcode",
+      "label": "Event transcode",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Live event",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Fed by transcode, not ingest directly"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "partner-feed",
+      "type": "signal-in",
+      "label": "Partner feed",
+      "props": {
+        "protocol": "HLS",
+        "via": "partner signal"
+      },
+      "attachments": [],
+      "notes": [
+        "Assumed partner signal delivery"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest2",
+      "type": "cloud-ingest",
+      "label": "Channel ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "transmux1",
+      "type": "transmux",
+      "label": "Channel transmux",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "HLS ABR signal, so transmux not transcode"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": "Live channel",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ott",
+      "type": "ott-app",
+      "label": "OTT / own apps",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "gv-prep",
+      "to": "ingest1",
+      "label": ""
+    },
+    {
+      "from": "ingest1",
+      "to": "transcode1",
+      "label": ""
+    },
+    {
+      "from": "transcode1",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "partner-feed",
+      "to": "ingest2",
+      "label": ""
+    },
+    {
+      "from": "ingest2",
+      "to": "transmux1",
+      "label": ""
+    },
+    {
+      "from": "transmux1",
+      "to": "channel",
+      "label": ""
+    },
+    {
+      "from": "channel",
+      "to": "ott",
+      "label": ""
+    },
+    {
+      "from": "channel",
+      "to": "yt",
+      "label": ""
+    }
+  ]
+}

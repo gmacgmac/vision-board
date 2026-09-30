@@ -1,0 +1,16 @@
+{
+  "type": "file-source",
+  "name": "Your content",
+  "kind": "node",
+  "stage": "in",
+  "family": "files",
+  "icon": "file",
+  "description": "A piece of content you already have, ready to bring in.",
+  "aliases": ["your content", "local file", "cloud url", "media library", "uplynk library", "vod source", "asset", "computer"],
+  "props": [
+    { "key": "from", "label": "From", "options": ["computer", "cloud URL", "Uplynk library"] }
+  ],
+  "inputs": { "max": 0, "from": [] },
+  "outputs": { "max": null, "to": ["cloud-ingest", "remix", "file-delivery", "uplynk"] },
+  "subflow": null
+}

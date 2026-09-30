@@ -1,0 +1,369 @@
+{
+  "id": "plan-20260928-160728",
+  "title": "Super Bowl Broadcast Workflow",
+  "version": 2,
+  "status": "draft",
+  "createdAt": "2026-09-28T15:14:34.851Z",
+  "summary": "Switched the YouTube syndication leg from an HLS pull to an SRT push to the given destination with 4 audio tracks, and confirmed the Grass Valley redundancy path.",
+  "reply": "Updated the YouTube branch — it's actually an SRT push to srt://test.bla.bla with 4 audio tracks, not an HLS pull, so I changed that syndication node's protocol and added a note. The Grass Valley note just confirms what's already drawn: both downlinked feeds go into GV, which outputs the dual redundant SRT — no changes needed there. Worth confirming the real destination URL for that YouTube SRT push since \"test.bla.bla\" was clearly a placeholder.",
+  "assumptions": [
+    "Changed YouTube syndication from HLS pull to SRT push per pinned note; destination URL looked like a placeholder, please confirm the real one.",
+    "Added '4 audio tracks' as a note on the YouTube syndication node — no prop field exists for audio track count.",
+    "Grass Valley note confirmed existing sig1/sig2 → mcr → dual SRT ingest structure; no rewiring needed."
+  ],
+  "nodes": [
+    {
+      "id": "sig1",
+      "type": "signal-in",
+      "label": "Feed 1 (SRT)",
+      "props": {
+        "protocol": "SRT",
+        "via": "Zixi"
+      },
+      "attachments": [],
+      "notes": [
+        "Primary Super Bowl feed",
+        "Downlinked into Grass Valley"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "sig2",
+      "type": "signal-in",
+      "label": "Feed 2 (SRT)",
+      "props": {
+        "protocol": "SRT",
+        "via": "Zixi"
+      },
+      "attachments": [],
+      "notes": [
+        "Backup Super Bowl feed",
+        "Downlinked into Grass Valley"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "mcr",
+      "type": "prep-mcr",
+      "label": "Grass Valley control",
+      "props": {
+        "provider": "Grass Valley",
+        "services": "Redundant feed handling"
+      },
+      "attachments": [],
+      "notes": [
+        "Receives downlinked signals from both feeds",
+        "Outputs dual redundant SRT to ingest"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ci1",
+      "type": "cloud-ingest",
+      "label": "Feed 1 ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ci2",
+      "type": "cloud-ingest",
+      "label": "Feed 2 ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc1",
+      "type": "transcode",
+      "label": "Feed 1 ladder",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc2",
+      "type": "transcode",
+      "label": "Feed 2 ladder",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Super Bowl",
+      "props": {
+        "name": "Super Bowl"
+      },
+      "attachments": [],
+      "notes": [
+        "Fed by two redundant SRT paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott1",
+      "type": "ott-app",
+      "label": "Event OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn-yt",
+      "type": "syndication",
+      "label": "YouTube push (SRT)",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [
+        "Destination: srt://test.bla.bla... (placeholder — confirm real URL)",
+        "4 audio tracks"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "social-yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn-p1",
+      "type": "syndication",
+      "label": "Partner 1 push",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn-p2",
+      "type": "syndication",
+      "label": "Partner 2 push",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn-p3",
+      "type": "syndication",
+      "label": "Partner 3 push",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "plat1",
+      "type": "other-platform",
+      "label": "Partner 1",
+      "props": {
+        "name": "Syndication partner 1"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "plat2",
+      "type": "other-platform",
+      "label": "Partner 2",
+      "props": {
+        "name": "Syndication partner 2"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "plat3",
+      "type": "other-platform",
+      "label": "Partner 3",
+      "props": {
+        "name": "Syndication partner 3"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "sig3",
+      "type": "signal-in",
+      "label": "Partner HLS feed",
+      "props": {
+        "protocol": "HLS"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ci-abr",
+      "type": "cloud-ingest-abr",
+      "label": "Channel ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "transmux1",
+      "type": "transmux",
+      "label": "ABR passthrough",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "channel1",
+      "type": "channel",
+      "label": "24/7 schedule",
+      "props": {
+        "mode": "Scheduled",
+        "name": "Partner Channel"
+      },
+      "attachments": [],
+      "notes": [
+        "Mixes live HLS feed with schedule"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott2",
+      "type": "ott-app",
+      "label": "Channel OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "sig1",
+      "to": "mcr",
+      "label": ""
+    },
+    {
+      "from": "sig2",
+      "to": "mcr",
+      "label": ""
+    },
+    {
+      "from": "mcr",
+      "to": "ci1",
+      "label": ""
+    },
+    {
+      "from": "mcr",
+      "to": "ci2",
+      "label": ""
+    },
+    {
+      "from": "ci1",
+      "to": "tc1",
+      "label": ""
+    },
+    {
+      "from": "ci2",
+      "to": "tc2",
+      "label": ""
+    },
+    {
+      "from": "tc1",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "tc2",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn-yt",
+      "label": ""
+    },
+    {
+      "from": "syn-yt",
+      "to": "social-yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn-p1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn-p2",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn-p3",
+      "label": ""
+    },
+    {
+      "from": "syn-p1",
+      "to": "plat1",
+      "label": ""
+    },
+    {
+      "from": "syn-p2",
+      "to": "plat2",
+      "label": ""
+    },
+    {
+      "from": "syn-p3",
+      "to": "plat3",
+      "label": ""
+    },
+    {
+      "from": "sig3",
+      "to": "ci-abr",
+      "label": ""
+    },
+    {
+      "from": "ci-abr",
+      "to": "transmux1",
+      "label": ""
+    },
+    {
+      "from": "transmux1",
+      "to": "channel1",
+      "label": ""
+    },
+    {
+      "from": "channel1",
+      "to": "ott2",
+      "label": ""
+    }
+  ]
+}

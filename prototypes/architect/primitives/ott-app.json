@@ -1,0 +1,16 @@
+{
+  "type": "ott-app",
+  "name": "OTT / own apps",
+  "kind": "node",
+  "stage": "out",
+  "family": "destination",
+  "icon": "play",
+  "description": "Uplynk's own apps and players where viewers watch directly.",
+  "aliases": ["ott", "own apps", "apps", "player", "direct to consumer", "d2c", "web and mobile", "low latency direct"],
+  "props": [
+    { "key": "formats", "label": "Formats", "options": ["HLS", "DASH"] }
+  ],
+  "inputs": { "max": 1, "from": ["live-event", "channel", "cdn", "manifest", "uplynk"] },
+  "outputs": { "max": 0, "to": [] },
+  "subflow": null
+}

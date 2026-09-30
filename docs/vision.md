@@ -1,12 +1,31 @@
+---
+category: project-docs
+last_updated: 2026-09-30
+status: active
+scope: Why Vision Board exists, what it does, and where it is going
+keywords: [vision, board, review, agent, feedback]
+---
+
 # Vision Board
 
-Status: idea, captured 2026-09-29. Nothing built yet.
-Origin: the Uplynk Architect prototype (`~/AI-Work-VSCode/uplynk-architect`).
+Status: vision, updated 2026-09-30. Nothing built yet.
+Origin: the Uplynk Architect prototype, copied as reference into `prototypes/architect/`
+(from Uplynk Studio, `~/WORK/uplynk-studio/prototypes/architect/`).
+
+Where to look in Architect:
+
+- `README.md`: what it does and how to run it
+- `CONTRACT.md`: the file formats (building blocks, plans, versions, log)
+- `app/index.html`: the canvas (drawing, click and lasso, notes, versions, Confirm these, Approve)
+- `app/server.mjs`: the local server, live updates and the Claude bridge
+- `prompts/architect.md`: the instructions the planner follows
 
 ## The problem
 
 - Working with AI, we can put out a lot quickly. What slows us down is taking in the AI's output so we can make the next decision.
 - AI output is often hard to take in. It's dense and full of commentary, and it assumes context we don't have.
+- A big piece of work comes back as dozens of points: findings, questions, options, risks, action items. Each one needs a response.
+- Bullets make that hard: to answer one, you have to quote it back. Numbered lists that run across categories help ("1 ok, 40 skip, 47 more context"), but it is still a wall of text, and the back and forth to get context (or a plain-language version) buries the thread.
 - As the AI does more of the work, we become conductors. Conductors need visual feedback so they can decide faster.
 
 ## The idea
@@ -17,7 +36,10 @@ A board the agent can draw to mid-session: "show me this on the vision board."
 - **Purpose:** learn and understand anything, then decide, whether that's through nodes, flows, text or a combination.
 - **You can work on the board.** Click a node or lasso a group of nodes and pin a note. Notes become context, questions or actions for the agent.
 - **It loops.** The agent reads your notes and replies in chat or by redrawing the board. Each pass moves the project forward.
+- **It works on any project.** Code, product management, writing, research: anything the agent can investigate.
 - **End state:** a skill (and later perhaps a plugin) that works in any agent session.
+
+Normal chat stays the default. The board is for the moments when the agent comes back with more than you can comfortably answer in text.
 
 ## Kept from Uplynk Architect
 
@@ -65,12 +87,12 @@ Optional hints from the agent: pin a node, set the order, emphasise something.
 
 - Mermaid uses a layout library called dagre. Its curvy connectors and odd starting points are what look messy.
 - **Proposed instead:**
-  - right-angle connectors with rounded corners, the same style as Architect
+  - right-angle connectors with rounded corners (new work: Architect draws curved Bézier connectors)
   - connection points on fixed sides of each node
   - parallel links bundled together
   - consistent spacing between nodes
 - **Engine choice to decide:**
-  - write our own layout for each mode, as Architect did
+  - write our own layout for each mode, extending Architect's flow layout
   - or use ELK (elkjs) for flow, tree and lanes, and our own code for radial
 
 ## Prior work nearby to check

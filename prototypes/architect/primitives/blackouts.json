@@ -1,0 +1,12 @@
+{
+  "type": "blackouts",
+  "name": "Blackouts & regional",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "ban",
+  "description": "Blocks or swaps content for specific regions.",
+  "aliases": ["blackout", "blackouts", "regional replacement", "geo rules", "rights"],
+  "props": [],
+  "attachesTo": ["channel", "live-event", "manifest", "uplynk"],
+  "subflow": null
+}

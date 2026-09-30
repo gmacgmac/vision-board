@@ -1,0 +1,152 @@
+{
+  "id": "plan-20260928-112148",
+  "title": "SRT to Live Event + 24/7 Channel",
+  "version": 3,
+  "status": "draft",
+  "createdAt": "2026-09-28T10:24:25.270Z",
+  "summary": "Gave the live event its own independent OTT output, separate from the channel's OTT node.",
+  "assumptions": [
+    "Created a separate OTT node for the live event since it must not share the channel's OTT output."
+  ],
+  "nodes": [
+    {
+      "id": "feed",
+      "type": "signal-in",
+      "label": "Grass Valley SRT feed",
+      "props": {
+        "protocol": "SRT",
+        "via": "on-site encoder"
+      },
+      "attachments": [],
+      "notes": [
+        "Grass Valley encoder feeding SRT",
+        "Used by both live event and channel paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest",
+      "type": "cloud-ingest",
+      "label": "Uplynk ingest",
+      "props": {},
+      "attachments": [
+        {
+          "type": "ad-markers",
+          "props": {}
+        }
+      ],
+      "notes": [
+        "SCTE-35 ad markers detected here"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "transcode",
+      "type": "transcode",
+      "label": "Transcoders",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "ABR ladder for both downstream paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Live event",
+      "props": {
+        "schedule": "occasional"
+      },
+      "attachments": [],
+      "notes": [
+        "Path A: occasional use of same source",
+        "Has its own independent OTT output"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": "24/7 channel",
+      "props": {
+        "schedule": "24/7"
+      },
+      "attachments": [],
+      "notes": [
+        "Path B: continuous distribution"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott",
+      "type": "ott-app",
+      "label": "OTT (channel)",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Fed only by the 24/7 channel"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott-event",
+      "type": "ott-app",
+      "label": "OTT (event)",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Independent OTT output for the live event only"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "feed",
+      "to": "ingest",
+      "label": ""
+    },
+    {
+      "from": "ingest",
+      "to": "transcode",
+      "label": ""
+    },
+    {
+      "from": "transcode",
+      "to": "event",
+      "label": "Path A"
+    },
+    {
+      "from": "transcode",
+      "to": "channel",
+      "label": "Path B"
+    },
+    {
+      "from": "channel",
+      "to": "ott",
+      "label": ""
+    },
+    {
+      "from": "channel",
+      "to": "yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott-event",
+      "label": ""
+    }
+  ]
+}

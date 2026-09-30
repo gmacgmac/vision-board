@@ -1,0 +1,160 @@
+{
+  "id": "plan-20260928-112148",
+  "title": "SRT to Live Event + 24/7 Channel",
+  "version": 4,
+  "status": "draft",
+  "createdAt": "2026-09-28T10:28:51.120Z",
+  "summary": "Configured the ingest slicer ID and preview settings, and set the live event's schedule and name.",
+  "assumptions": [
+    "Created a separate OTT node for the live event since it must not share the channel's OTT output.",
+    "Added slicer ID and preview props to Cloud Ingest even though not in its standard prop list — confirm these are tracked correctly.",
+    "Assumed 'Red Sox' is the event name despite it being described as a football tournament — please confirm."
+  ],
+  "nodes": [
+    {
+      "id": "feed",
+      "type": "signal-in",
+      "label": "Grass Valley SRT feed",
+      "props": {
+        "protocol": "SRT",
+        "via": "on-site encoder"
+      },
+      "attachments": [],
+      "notes": [
+        "Grass Valley encoder feeding SRT",
+        "Used by both live event and channel paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest",
+      "type": "cloud-ingest",
+      "label": "Uplynk ingest (srt1)",
+      "props": {
+        "slicerId": "srt1",
+        "preview": "enabled",
+        "maxConcurrentPreviews": "3"
+      },
+      "attachments": [
+        {
+          "type": "ad-markers",
+          "props": {}
+        }
+      ],
+      "notes": [
+        "SCTE-35 ad markers detected here",
+        "Slicer ID srt1, preview enabled (max 3 concurrent)"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "transcode",
+      "type": "transcode",
+      "label": "Transcoders",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "ABR ladder for both downstream paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Red Sox",
+      "props": {
+        "name": "Red Sox",
+        "schedule": "Saturdays 3:00–5:30 PM EST"
+      },
+      "attachments": [],
+      "notes": [
+        "Football tournament, weekly Saturday broadcast",
+        "Has its own independent OTT output"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": "24/7 channel",
+      "props": {
+        "schedule": "24/7"
+      },
+      "attachments": [],
+      "notes": [
+        "Path B: continuous distribution"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott",
+      "type": "ott-app",
+      "label": "OTT (channel)",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Fed only by the 24/7 channel"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott-event",
+      "type": "ott-app",
+      "label": "OTT (event)",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Independent OTT output for the live event only"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "feed",
+      "to": "ingest",
+      "label": ""
+    },
+    {
+      "from": "ingest",
+      "to": "transcode",
+      "label": ""
+    },
+    {
+      "from": "transcode",
+      "to": "event",
+      "label": "Path A"
+    },
+    {
+      "from": "transcode",
+      "to": "channel",
+      "label": "Path B"
+    },
+    {
+      "from": "channel",
+      "to": "ott",
+      "label": ""
+    },
+    {
+      "from": "channel",
+      "to": "yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott-event",
+      "label": ""
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "type": "cloud-ingest",
+  "name": "Cloud Ingest (Slicer)",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "cloud",
+  "description": "Slicer ingest for baseband/IP signals and files.",
+  "aliases": ["slicer", "cloud slicer", "ingest", "uplynk ingest", "slice it"],
+  "props": [],
+  "inputs": { "max": 1, "from": ["signal-in", "prep-mcr", "file-source"] },
+  "outputs": { "max": null, "to": ["transcode"] },
+  "subflow": null
+}

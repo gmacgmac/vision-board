@@ -1,0 +1,306 @@
+{
+  "id": "plan-20260928-163246",
+  "title": "Super Bowl Live + 24/7 Channel",
+  "version": 2,
+  "status": "draft",
+  "createdAt": "2026-09-28T15:49:01.524Z",
+  "summary": "Merged the two feed preps into a single shared Grass Valley instance and added captions to the Super Bowl event.",
+  "reply": "Combined both feed preps into one Grass Valley instance — both SRT feeds now downlink into it before splitting to their separate ingest/transcode paths. Also added captions to the Super Bowl event.",
+  "assumptions": [
+    "Both feeds are described as downlinked; kept protocol as SRT with via set to managed feed since downlink isn't a listed option.",
+    "Single shared Grass Valley prep now feeds both ingest paths (ci1 and ci2) separately, since each Cloud Ingest only takes one input."
+  ],
+  "nodes": [
+    {
+      "id": "feed1",
+      "type": "signal-in",
+      "label": "SRT feed 1",
+      "props": {
+        "protocol": "SRT",
+        "via": "managed feed"
+      },
+      "attachments": [],
+      "notes": [
+        "Downlinked source"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "gv1",
+      "type": "prep-mcr",
+      "label": "Shared prep",
+      "props": {
+        "provider": "Grass Valley"
+      },
+      "attachments": [],
+      "notes": [
+        "Single Grass Valley instance handling both feeds"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ci1",
+      "type": "cloud-ingest",
+      "label": "Feed 1 ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc1",
+      "type": "transcode",
+      "label": "Feed 1 ABR ladder",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "feed2",
+      "type": "signal-in",
+      "label": "SRT feed 2",
+      "props": {
+        "protocol": "SRT",
+        "via": "managed feed"
+      },
+      "attachments": [],
+      "notes": [
+        "Downlinked source"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ci2",
+      "type": "cloud-ingest",
+      "label": "Feed 2 ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tc2",
+      "type": "transcode",
+      "label": "Feed 2 ABR ladder",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Super Bowl",
+      "props": {
+        "name": "Super Bowl"
+      },
+      "attachments": [
+        {
+          "type": "captions",
+          "props": {}
+        }
+      ],
+      "notes": [
+        "Fed by two redundant SRT feeds via shared Grass Valley prep",
+        "Captions enabled"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott1",
+      "type": "ott-app",
+      "label": "Super Bowl OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [
+        "Delivery detail (HLS Pull) isn't a configurable field here"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "syn1",
+      "type": "syndication",
+      "label": "Partner 1",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn2",
+      "type": "syndication",
+      "label": "Partner 2",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "syn3",
+      "type": "syndication",
+      "label": "Partner 3",
+      "props": {
+        "protocol": "SRT"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "feedHls",
+      "type": "signal-in",
+      "label": "Partner HLS feed",
+      "props": {
+        "protocol": "HLS",
+        "via": "partner signal"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ciAbr",
+      "type": "cloud-ingest-abr",
+      "label": "24/7 ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "tmx",
+      "type": "transmux",
+      "label": "ABR passthrough",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "chan",
+      "type": "channel",
+      "label": "24/7 schedule",
+      "props": {
+        "mode": "Scheduled",
+        "name": "24/7 Channel"
+      },
+      "attachments": [],
+      "notes": [
+        "Scheduled mode enabled for 24/7 programming"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott2",
+      "type": "ott-app",
+      "label": "24/7 OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "feed1",
+      "to": "gv1",
+      "label": ""
+    },
+    {
+      "from": "feed2",
+      "to": "gv1",
+      "label": ""
+    },
+    {
+      "from": "gv1",
+      "to": "ci1",
+      "label": ""
+    },
+    {
+      "from": "gv1",
+      "to": "ci2",
+      "label": ""
+    },
+    {
+      "from": "ci1",
+      "to": "tc1",
+      "label": ""
+    },
+    {
+      "from": "tc1",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "ci2",
+      "to": "tc2",
+      "label": ""
+    },
+    {
+      "from": "tc2",
+      "to": "event",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn1",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn2",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "syn3",
+      "label": ""
+    },
+    {
+      "from": "feedHls",
+      "to": "ciAbr",
+      "label": ""
+    },
+    {
+      "from": "ciAbr",
+      "to": "tmx",
+      "label": ""
+    },
+    {
+      "from": "tmx",
+      "to": "chan",
+      "label": ""
+    },
+    {
+      "from": "chan",
+      "to": "ott2",
+      "label": ""
+    }
+  ]
+}

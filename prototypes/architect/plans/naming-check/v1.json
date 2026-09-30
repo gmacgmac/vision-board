@@ -1,0 +1,172 @@
+{
+  "id": "naming-check",
+  "title": "Partner & Stadium Live Workflow",
+  "version": 1,
+  "status": "draft",
+  "createdAt": "2026-09-28T11:59:33.013Z",
+  "summary": "Built two parallel chains: an HLS partner feed into a live event with OTT, and an SRT stadium feed into a scheduled channel mixing VOD with OTT and SCTE-35 markers.",
+  "reply": "Set up both paths: the HLS partner feed goes through ABR transmux into a live event and its own OTT output, and the SRT stadium feed goes through the slicer/transcode path into a scheduled channel (for the VOD mix) with its own OTT output. Gave each source a separate OTT since one OTT output can't take two sources. SCTE-35 markers are on the stadium ingest as requested — that's the one place they're allowed.",
+  "assumptions": [
+    "Gave the live event and the channel separate OTT outputs since one OTT output can't take two sources.",
+    "Assumed the partner HLS feed arrives via a partner signal, and the stadium SRT feed via an on-site encoder.",
+    "Channel schedule details (what VOD content, timing) not specified — left schedule prop blank for you to fill in."
+  ],
+  "nodes": [
+    {
+      "id": "sig-hls",
+      "type": "signal-in",
+      "label": "Partner feed",
+      "props": {
+        "protocol": "HLS",
+        "via": "partner signal"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "abr-ingest",
+      "type": "cloud-ingest-abr",
+      "label": "Partner ingest",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "transmux1",
+      "type": "transmux",
+      "label": "ABR repackage",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "event1",
+      "type": "live-event",
+      "label": "Partner event",
+      "props": {
+        "name": "",
+        "schedule": ""
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ott1",
+      "type": "ott-app",
+      "label": "Partner OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "sig-srt",
+      "type": "signal-in",
+      "label": "Stadium feed",
+      "props": {
+        "protocol": "SRT",
+        "via": "on-site encoder"
+      },
+      "attachments": [
+        {
+          "type": "ad-markers"
+        }
+      ],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "ingest-srt",
+      "type": "cloud-ingest",
+      "label": "Stadium ingest",
+      "props": {},
+      "attachments": [
+        {
+          "type": "ad-markers"
+        }
+      ],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "transcode1",
+      "type": "transcode",
+      "label": "ABR ladder",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    },
+    {
+      "id": "channel1",
+      "type": "channel",
+      "label": "Live + VOD mix",
+      "props": {
+        "mode": "Scheduled",
+        "name": "",
+        "schedule": ""
+      },
+      "attachments": [],
+      "notes": [
+        "Scheduled mode to mix live stadium feed with VOD",
+        "SCTE-35 markers carried from stadium ingest upstream"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott2",
+      "type": "ott-app",
+      "label": "Channel OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "sig-hls",
+      "to": "abr-ingest",
+      "label": ""
+    },
+    {
+      "from": "abr-ingest",
+      "to": "transmux1",
+      "label": ""
+    },
+    {
+      "from": "transmux1",
+      "to": "event1",
+      "label": ""
+    },
+    {
+      "from": "event1",
+      "to": "ott1",
+      "label": ""
+    },
+    {
+      "from": "sig-srt",
+      "to": "ingest-srt",
+      "label": ""
+    },
+    {
+      "from": "ingest-srt",
+      "to": "transcode1",
+      "label": ""
+    },
+    {
+      "from": "transcode1",
+      "to": "channel1",
+      "label": ""
+    },
+    {
+      "from": "channel1",
+      "to": "ott2",
+      "label": ""
+    }
+  ]
+}

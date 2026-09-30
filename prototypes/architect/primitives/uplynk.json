@@ -1,0 +1,58 @@
+{
+  "type": "uplynk",
+  "name": "Uplynk",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "layers",
+  "description": "The Uplynk platform: ingest, transcode, manifest, and CDN in one box.",
+  "aliases": ["uplynk", "uplynk platform", "uplynk cloud"],
+  "props": [],
+  "inputs": { "max": 1, "from": ["signal-in", "prep-mcr", "file-source"] },
+  "outputs": { "max": null, "to": ["ott-app", "syndication", "social-out", "fast-out", "other-platform"] },
+  "subflow": {
+    "nodes": [
+      {
+        "id": "u-ingest",
+        "type": "cloud-ingest",
+        "label": "Ingest",
+        "props": {},
+        "attachments": [],
+        "notes": ["Signals and files enter Uplynk's cloud ingest."],
+        "subflow": null
+      },
+      {
+        "id": "u-transcode",
+        "type": "transcode",
+        "label": "Transcode",
+        "props": {},
+        "attachments": [],
+        "notes": ["Builds the ABR ladder."],
+        "subflow": null
+      },
+      {
+        "id": "u-manifest",
+        "type": "manifest",
+        "label": "Manifest",
+        "props": {},
+        "attachments": [],
+        "notes": ["Generates the playback manifest."],
+        "subflow": null
+      },
+      {
+        "id": "u-cdn",
+        "type": "cdn",
+        "label": "CDN",
+        "props": {},
+        "attachments": [],
+        "notes": ["Delivers via multi-CDN to players."],
+        "subflow": null
+      }
+    ],
+    "edges": [
+      { "from": "u-ingest", "to": "u-transcode", "label": "" },
+      { "from": "u-transcode", "to": "u-manifest", "label": "" },
+      { "from": "u-manifest", "to": "u-cdn", "label": "" }
+    ]
+  }
+}

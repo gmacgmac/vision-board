@@ -1,0 +1,16 @@
+{
+  "type": "syndication",
+  "name": "Syndication",
+  "kind": "node",
+  "stage": "out",
+  "family": "destination",
+  "icon": "share",
+  "description": "Pushes the stream out to another platform or partner.",
+  "aliases": ["restream", "simulcast", "syndicate"],
+  "props": [
+    { "key": "protocol", "label": "Protocol", "options": ["RTMP", "SRT", "HLS", "Zixi"] }
+  ],
+  "inputs": { "max": 1, "from": ["live-event", "channel", "switcher", "uplynk"] },
+  "outputs": { "max": null, "to": ["social-out", "fast-out", "other-platform"] },
+  "subflow": null
+}

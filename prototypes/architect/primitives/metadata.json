@@ -1,0 +1,12 @@
+{
+  "type": "metadata",
+  "name": "Metadata",
+  "kind": "attachment",
+  "family": "uplynk",
+  "icon": "doc",
+  "description": "Attaches descriptive metadata or EPG tags.",
+  "aliases": ["metadata", "tags", "epg"],
+  "props": [],
+  "attachesTo": ["cloud-ingest", "cloud-ingest-abr", "file-source", "uplynk", "channel"],
+  "subflow": null
+}

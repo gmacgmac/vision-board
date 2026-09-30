@@ -1,0 +1,14 @@
+{
+  "type": "cloud-ingest-abr",
+  "name": "Cloud Ingest (ABR)",
+  "kind": "node",
+  "stage": "make",
+  "family": "uplynk",
+  "icon": "cloud",
+  "description": "Ingests an incoming ABR stream (HLS or DASH) for repackaging.",
+  "aliases": ["abr ingest", "hls ingest", "dash ingest", "abr cloud ingest"],
+  "props": [],
+  "inputs": { "max": 1, "from": ["signal-in"] },
+  "outputs": { "max": null, "to": ["transmux"] },
+  "subflow": null
+}

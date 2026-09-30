@@ -1,0 +1,141 @@
+{
+  "id": "plan-20260928-112148",
+  "title": "SRT to Live Event + 24/7 Channel",
+  "version": 2,
+  "status": "draft",
+  "createdAt": "2026-09-28T10:23:56.363Z",
+  "summary": "Added an OTT output edge from the live event, sharing the existing OTT node with the channel.",
+  "assumptions": [
+    "Applied the same OTT node/formats used by the channel to the live event, rather than creating a separate OTT output."
+  ],
+  "nodes": [
+    {
+      "id": "feed",
+      "type": "signal-in",
+      "label": "Grass Valley SRT feed",
+      "props": {
+        "protocol": "SRT",
+        "via": "on-site encoder"
+      },
+      "attachments": [],
+      "notes": [
+        "Grass Valley encoder feeding SRT",
+        "Used by both live event and channel paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ingest",
+      "type": "cloud-ingest",
+      "label": "Uplynk ingest",
+      "props": {},
+      "attachments": [
+        {
+          "type": "ad-markers",
+          "props": {}
+        }
+      ],
+      "notes": [
+        "SCTE-35 ad markers detected here"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "transcode",
+      "type": "transcode",
+      "label": "Transcoders",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "ABR ladder for both downstream paths"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "event",
+      "type": "live-event",
+      "label": "Live event",
+      "props": {
+        "schedule": "occasional"
+      },
+      "attachments": [],
+      "notes": [
+        "Path A: occasional use of same source",
+        "Now also outputs to OTT"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "channel",
+      "type": "channel",
+      "label": "24/7 channel",
+      "props": {
+        "schedule": "24/7"
+      },
+      "attachments": [],
+      "notes": [
+        "Path B: continuous distribution"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "ott",
+      "type": "ott-app",
+      "label": "OTT",
+      "props": {},
+      "attachments": [],
+      "notes": [
+        "Now fed by both channel and live event"
+      ],
+      "subflow": null
+    },
+    {
+      "id": "yt",
+      "type": "social-out",
+      "label": "YouTube",
+      "props": {
+        "platform": "YouTube"
+      },
+      "attachments": [],
+      "notes": [],
+      "subflow": null
+    }
+  ],
+  "edges": [
+    {
+      "from": "feed",
+      "to": "ingest",
+      "label": ""
+    },
+    {
+      "from": "ingest",
+      "to": "transcode",
+      "label": ""
+    },
+    {
+      "from": "transcode",
+      "to": "event",
+      "label": "Path A"
+    },
+    {
+      "from": "transcode",
+      "to": "channel",
+      "label": "Path B"
+    },
+    {
+      "from": "channel",
+      "to": "ott",
+      "label": ""
+    },
+    {
+      "from": "channel",
+      "to": "yt",
+      "label": ""
+    },
+    {
+      "from": "event",
+      "to": "ott",
+      "label": ""
+    }
+  ]
+}
