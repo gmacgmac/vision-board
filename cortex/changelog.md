@@ -16,6 +16,18 @@
 
 ---
 
+## v3.3.1 — 2026-10-01
+**Flagged tier wording gaps closed in the Gardener.**
+
+### Synced
+- `cortex-garden/references/engine.md` § Doc-Drift Check step 4: "no relevant doc" now checks Tracked **and** Flagged, so a topic covered only by a flagged doc no longer triggers a spurious `docs.include` proposal.
+- `cortex-garden/SKILL.md` § Scope tiers: Observable row now reads "outside `include` and `flag`", matching engine.md step 6.
+
+### Migrations
+- None.
+
+---
+
 ## v3.3.0 — 2026-10-01
 **`docs.flag` tier (watch, report, never edit); tracker becomes a queue linked to tasks.**
 

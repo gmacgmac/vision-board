@@ -15,7 +15,7 @@ Read scope and write permission are **different things**. Load `REGISTRY.md` `do
 |------|------|--------------|
 | **Tracked** | `docs.include` — explicit paths only | read **and fix in place** |
 | **Flagged** | `docs.flag` — explicit paths only | read, drift-check, **report** — never edit |
-| **Observable** | whatever `deep_ripple_scan` reaches outside `include` | **read only** — propose, never edit |
+| **Observable** | whatever `deep_ripple_scan` reaches outside `include` and `flag` | **read only** — propose, never edit |
 | **Off-limits** | `docs.exclude` — the single source of truth for this tier | neither read for drift nor write |
 
 - `docs.include` is authoritative. `docs.hint` only *proposes* candidates — an unlisted path is not tracked, however well it matches.

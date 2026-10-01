@@ -30,9 +30,9 @@ For every project-domain thread. Tiers are defined in `SKILL.md` § Scope tiers 
      ```
      [[YYYY-MM-DD HH:MM]] [needs-human-input] DRIFT {file} § {section}: {what is stale}; source {change} → Notes: `{file}` ({section heading})
      ```
-4. **No relevant doc found in Tracked**:
-   - A tracked folder covers this domain but no doc matches → `[needs-human-input]`: propose creation.
-   - Nothing tracked covers this domain → `[needs-human-input]`: propose a new `docs.include` entry (see § Proposing a new tracked path).
+4. **No relevant doc found in Tracked or Flagged**:
+   - A tracked or flagged folder covers this domain but no doc matches → `[needs-human-input]`: propose creation.
+   - Nothing in Tracked or Flagged covers this domain → `[needs-human-input]`: propose a new `docs.include` entry (see § Proposing a new tracked path).
 5. **After any doc change**: check whether `cortex/readme.md` is left inaccurate. It is Off-limits (managed — a fix reverts on `copier update`), so **raise `[needs-human-input]`, don't edit it**.
 6. **Deep Ripple Scan** (`deep_ripple_scan: true`, PROFILE §1): a **read-only** pass over Observable — outside `include` and `flag`, never into `exclude`. A hit is never fixed, only proposed (§ Proposing a new tracked path). If nothing is affected, record "no impact" and move on.
 
