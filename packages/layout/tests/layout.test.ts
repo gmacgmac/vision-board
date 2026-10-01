@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { View, Mode } from '../../format/src/view.ts';
+import type { View, Mode } from '../../format/src/index.ts';
 import { layoutBoard, overlaps } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 

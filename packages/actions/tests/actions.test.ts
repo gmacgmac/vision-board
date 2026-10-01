@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { View } from '../../format/src/view.ts';
-import type { TranscriptRecord } from '../../format/src/transcript.ts';
+import type { View } from '../../format/src/index.ts';
+import type { TranscriptRecord } from '../../format/src/index.ts';
 import { counts, makeRecord, reduceTranscript, statusOf, validateRecord, MAX_TEXT } from '../src/index.ts';
 
 const view: View = JSON.parse(

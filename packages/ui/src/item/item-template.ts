@@ -1,9 +1,9 @@
 // Item pattern, layer 2 (template): one pure function from an item to its markup. Tokens only;
 // no inline styles (the page's CSP forbids them). State changes are applied in place by the
 // page (data-status, aria-pressed), so this runs once per view version, not per click.
-import type { ViewNode } from '../../../format/src/view.ts';
-import type { ActionId } from '../../../format/src/transcript.ts';
-import { ACTIONS } from '../../../actions/src/registry.ts';
+import type { ViewNode } from '../../../format/src/index.ts';
+import type { ActionId } from '../../../format/src/index.ts';
+import { ACTIONS } from '../../../actions/src/index.ts';
 import { buttonLabel, KIND_LABEL, offers } from './item-core.ts';
 
 export const ICONS: Partial<Record<ActionId, string>> = {

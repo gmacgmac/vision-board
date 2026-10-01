@@ -1,6 +1,6 @@
 // The whole board: lay out each region in its mode, apply the person's pins, pack regions into
 // rows, then route every link (including links across regions). Pure and deterministic.
-import type { Mode, View } from '../../format/src/view.ts';
+import type { Mode, View } from '../../format/src/index.ts';
 import type { BoardLayout, Box, ModeFn, ModeOutput, RegionBox, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
 import { grid, list } from './modes/grid.ts';

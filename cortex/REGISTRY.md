@@ -37,7 +37,7 @@ categories:
   board-tokens:     { paths: [packages/tokens/] }
   board-agent:      { paths: [skills/] }                       # + packages/agent/, packages/cli/ when created (U2)
   project-docs:     { paths: [docs/, README.md, cortex-tasks/tracker.md] }
-  project-tooling:  { paths: [package.json, .npmrc, .nvmrc, .gitignore] }  # + scripts/ when created (U2)
+  project-tooling:  { paths: [scripts/, package.json, .npmrc, .nvmrc, .gitignore] }
 ```
 
 ---

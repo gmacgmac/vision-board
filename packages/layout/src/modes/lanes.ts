@@ -1,4 +1,4 @@
-import type { Region, ViewNode } from '../../../format/src/view.ts';
+import type { Region, ViewNode } from '../../../format/src/index.ts';
 import type { Box, Lane, ModeFn } from '../types.ts';
 import { GAP, LANE_GUTTER } from '../types.ts';
 import { columnX, graphOf, layersOf } from '../layers.ts';

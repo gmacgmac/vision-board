@@ -2,11 +2,11 @@
 // transcript record is validated before it is appended.
 import fs from 'node:fs';
 import path from 'node:path';
-import { ID_PATTERN } from '../../../packages/format/src/view.ts';
-import type { View } from '../../../packages/format/src/view.ts';
-import type { TranscriptRecord } from '../../../packages/format/src/transcript.ts';
-import { validateView } from '../../../packages/format/src/validate.ts';
-import { makeRecord, validateRecord } from '../../../packages/actions/src/record.ts';
+import { ID_PATTERN } from '../../../packages/format/src/index.ts';
+import type { View } from '../../../packages/format/src/index.ts';
+import type { TranscriptRecord } from '../../../packages/format/src/index.ts';
+import { validateView } from '../../../packages/format/src/index.ts';
+import { makeRecord, validateRecord } from '../../../packages/actions/src/index.ts';
 import { HttpError } from './guard.ts';
 
 const VIEW_FILE = /^view-v(\d+)\.json$/;

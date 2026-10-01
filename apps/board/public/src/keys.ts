@@ -1,6 +1,6 @@
 // Keyboard: every pointer action has a key (project rule 5). Shortcuts come from the action
 // registry, so a new action with a key works here without changes.
-import type { ActionId } from '/pkg/format/src/transcript.ts';
+import type { ActionId } from '/pkg/format/src/index.ts';
 import { ACTIONS } from '/pkg/actions/src/index.ts';
 
 export interface KeyHandlers {

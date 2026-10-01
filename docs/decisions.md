@@ -184,3 +184,21 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Alternative rejected**: Svelte components draw the nodes (Option B), which would tie every
   shared pattern to Svelte.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-016 Module layers, front doors and new folders
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, foundation review (tracker U2)
+- **Decision**: Dependencies point one way. `format` and `tokens` depend on nothing; `actions`
+  and `layout` on `format`; `ui` on `format`, `actions` and `tokens`; `agent` on `format` and
+  `actions`; `cli` on `format`, `actions` and `agent`. Apps may use any package, and nothing
+  imports an app. A cross-module import goes only through the target's front door
+  (`packages/<name>/src/index.ts`). `scripts/verify.mjs` enforces this (`LAYERS`), along with
+  file length, exact versions and the dependency register, and generates
+  `docs/specification/modules.md` from the real imports. New folders: `packages/agent/` (the
+  kiro-cli connection behind one interface, D-010/D-012), `packages/cli/` (the `vb` command),
+  `skills/` (agent instructions handed to other sessions, rule 17) and `scripts/` (repo checks).
+- **Why**: The structure stays true as more agents work in the repo, and anyone can see what
+  depends on what without reading code. One module per swap point keeps hosting and framework
+  changes local.
+- **Alternative rejected**: Conventions only, with no check. They drift as soon as an agent
+  takes a shortcut.
+- **Task**: [[cortex-tasks/project/2026-10-01_project-tooling_foundation.md]]

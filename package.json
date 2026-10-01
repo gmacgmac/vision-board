@@ -13,6 +13,8 @@
     "board": "node apps/board/server.ts",
     "validate": "node packages/format/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
-    "test": "node --test \"packages/*/tests/**/*.test.ts\""
+    "test": "node --test \"packages/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
+    "verify": "node scripts/verify.mjs",
+    "map": "node scripts/verify.mjs --write-map"
   }
 }

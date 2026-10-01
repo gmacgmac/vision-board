@@ -64,10 +64,11 @@ keywords: [tracker, queue, roadmap]
 
 ## Status — 2026-10-01
 
-The walking skeleton runs, with 28 tests passing, and the board has been dogfooded on the
+The walking skeleton runs and the board has been dogfooded on the
 `first-look` session (views v1 and v2). The framework interview settled D-005 and D-009 to D-015:
-plain Svelte, our own canvas, the Studio component model and the APCA contrast tiers. The board
-v3 plan is approved. Next: finish the foundation (U2), compact, then board v3 Stage 2.
+plain Svelte, our own canvas, the Studio component model and the APCA contrast tiers. The
+foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers checked by
+`npm run verify`, and a generated module map. Next: compact, then board v3 Stage 2 (U1).
 
 ---
 
@@ -76,7 +77,6 @@ v3 plan is approved. Next: finish the foundation (U2), compact, then board v3 St
 | ID | Item | Why | Source |
 |---|---|---|---|
 | U1 | Board v3 | **Problem:** notes can't be edited, there is no lasso or chat panel, and replies are pasted by hand. **Example:** first-look v2 items 14–26. **Solution:** the approved 7-stage plan. | Maintainer, 2026-10-01 · `cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md` |
-| U2 | Foundation before Stage 2 | **Problem:** no Cortex categories, no import-boundary check, no module map. **Example:** tasks can't be categorised, and wrong-way imports would go unnoticed. **Solution:** Cortex setup, one decision entry for `packages/agent`, `packages/cli` and `skills/`, fixed README sections, `scripts/verify.mjs` plus a generated module map. | Maintainer, 2026-10-01 |
 
 ## NEAR TERM
 

@@ -1,5 +1,5 @@
 // Every thing a person or agent can do on the board, declared once (project rule 8).
-import type { ActionId } from '../../format/src/transcript.ts';
+import type { ActionId } from '../../format/src/index.ts';
 
 export type ItemStatus = 'open' | 'acknowledged' | 'dropped' | 'commented' | 'context' | 'later';
 export const DECIDED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped']);

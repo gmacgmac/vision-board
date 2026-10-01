@@ -1,7 +1,7 @@
 // Folds the transcript into the current state of the board: item statuses, notes, the person's
 // pins and layout choices. Last record wins; nothing is ever removed from the transcript.
-import type { TranscriptRecord } from '../../format/src/transcript.ts';
-import type { Mode, View } from '../../format/src/view.ts';
+import type { TranscriptRecord } from '../../format/src/index.ts';
+import type { Mode, View } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS, DECIDED } from './registry.ts';
 

@@ -1,6 +1,6 @@
 // Connectors: right angles with rounded corners, fixed sides, ports spread along each side in
 // the order of the far end, so fan-outs don't start from one point.
-import type { Link } from '../../format/src/view.ts';
+import type { Link } from '../../format/src/index.ts';
 import type { Box, Point, Route } from './types.ts';
 import { centre, round } from './geometry.ts';
 

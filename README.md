@@ -4,23 +4,30 @@ An interactive board an AI agent draws to mid-session, so you can review its out
 item (acknowledge, drop, comment, ask for more context, save for later) instead of answering a
 wall of text. Why it exists: [docs/vision.md](docs/vision.md).
 
-Status: planning. Only the folder layout and reference material exist.
+Status: building. The walking skeleton runs (local server, five layout modes, per-item actions);
+board v3 is in progress (`cortex-tasks/tracker.md`).
 
 ## Layout
 
 | Folder | What belongs there |
 |---|---|
-| `apps/board/` | The app: canvas and the local server |
-| `packages/format/` | View and transcript file formats, schemas, validator |
-| `packages/layout/` | Layout engine: modes, region packing, connector routing |
+| `apps/board/` | The app: canvas (`public/`, moving to `src/`) and the local server (`server/`) |
+| `packages/format/` | View and transcript file formats, validator, fixtures |
 | `packages/actions/` | Typed actions shared by buttons and agents |
-| `packages/ui/` | Visual patterns (node, region, connector, note) |
+| `packages/layout/` | Layout engine: modes, region packing, connector routing |
+| `packages/ui/` | Visual patterns: node, link, region, note (core, template, element) |
 | `packages/tokens/` | Design tokens and contrast checks |
-| `docs/` | Vision, decisions, specifications |
+| `packages/agent/` | (planned) The kiro-cli connection behind one interface |
+| `packages/cli/` | (planned) The `vb` command: validate, reply, wait |
+| `skills/` | Agent instructions: how any agent draws a board and reads replies |
+| `scripts/` | Repo checks (`npm run verify`) and the module map generator (`npm run map`) |
+| `docs/` | Vision, principles, decisions, specifications (`specification/modules.md` is generated) |
 | `prototypes/` | Reference only: the Uplynk Architect prototype |
-| `cortex/`, `cortex-tasks/` | Work log and planned tasks (Cortex) |
+| `cortex/`, `cortex-tasks/` | Work log, tracker and planned tasks (Cortex) |
 
-Each folder has a README saying what goes in it. A new top-level folder or package needs a
+Each folder has a README saying what goes in it, what it depends on, what uses it and its public
+API. Dependencies point one way, and other modules import a package only through its
+`src/index.ts` (D-016, checked by `npm run verify`). A new top-level folder or package needs a
 decision entry.
 
 ## Working here

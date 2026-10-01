@@ -1,15 +1,15 @@
 // The board page: loads a session, lays it out, and routes every person action through the
 // action layer and the I/O module. Layout, formats and actions live in packages/; this file
 // only wires them to the page.
-import type { Mode, View, ViewNode } from '/pkg/format/src/view.ts';
-import type { ActionId } from '/pkg/format/src/transcript.ts';
+import type { Mode, View, ViewNode } from '/pkg/format/src/index.ts';
+import type { ActionId } from '/pkg/format/src/index.ts';
 import type { BoardLayout, Box, Size } from '/pkg/layout/src/index.ts';
 import { layoutBoard, routeLinks } from '/pkg/layout/src/index.ts';
 import type { BoardState } from '/pkg/actions/src/index.ts';
 import {
   ACTIONS, counts, DECIDED, reduceTranscript, replyText, statusOf, validateRecord,
 } from '/pkg/actions/src/index.ts';
-import { isPressed, KIND_LABEL } from '/pkg/ui/src/item/item-core.ts';
+import { isPressed, KIND_LABEL } from '/pkg/ui/src/index.ts';
 import type { RecordFields, SessionData } from './io.ts';
 import { ApiError, listSessions, loadSession, sendRecord, watchSession } from './io.ts';
 import {

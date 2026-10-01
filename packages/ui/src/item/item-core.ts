@@ -1,8 +1,8 @@
 // Item pattern, layer 1 (core): what an item is and which actions it offers. No DOM.
-import type { Kind, ViewNode } from '../../../format/src/view.ts';
-import type { ActionId } from '../../../format/src/transcript.ts';
-import type { ItemStatus } from '../../../actions/src/registry.ts';
-import { ACTIONS } from '../../../actions/src/registry.ts';
+import type { Kind, ViewNode } from '../../../format/src/index.ts';
+import type { ActionId } from '../../../format/src/index.ts';
+import type { ItemStatus } from '../../../actions/src/index.ts';
+import { ACTIONS } from '../../../actions/src/index.ts';
 
 export const KIND_LABEL: Record<Kind, string> = {
   question: 'Question', finding: 'Finding', decision: 'Decision', risk: 'Risk',

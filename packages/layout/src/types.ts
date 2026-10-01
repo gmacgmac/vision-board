@@ -1,4 +1,4 @@
-import type { Link, Mode, Region, ViewNode } from '../../format/src/view.ts';
+import type { Link, Mode, Region, ViewNode } from '../../format/src/index.ts';
 
 export interface Size { w: number; h: number }
 export interface Point { x: number; y: number }

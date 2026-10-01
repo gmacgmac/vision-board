@@ -1,6 +1,6 @@
 // Shared by flow and lanes: longest-path layering and barycentre ordering (from Architect's
 // `layout`, generalised: column widths come from the widest node, not a constant).
-import type { Link, ViewNode } from '../../format/src/view.ts';
+import type { Link, ViewNode } from '../../format/src/index.ts';
 import type { Size } from './types.ts';
 import { COL_GAP } from './types.ts';
 
