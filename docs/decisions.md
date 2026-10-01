@@ -62,7 +62,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-005 Components: core, template, element, page
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-002, D-009 draft
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 (refined by D-015) · **From**: Studio D-002, D-009 draft
 - **Decision**: Each pattern has a framework-free core, one template for live and server render,
   and a plain web component; the framework only arranges pages. Anything shared is a web component.
 - **Why**: Keeps the framework replaceable and makes patterns shareable with Studio. Studio's
@@ -169,4 +169,18 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Why**: The smallest set for D-012. Same versions as Studio, so patterns move without
   friction.
 - **Alternative rejected**: TypeScript 7.0.2, which svelte-check doesn't support yet.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-015 One wrapper per pattern, driven by type definitions
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, framework interview
+- **Decision**: Refines D-005, which follows Uplynk Studio's component model (framework-free core,
+  template, plain web component; Svelte only arranges the app). Each pattern has one generic
+  element: `<vb-node>`, `<vb-link>`, `<vb-region>`. A node type is a definition in one registry
+  (outline, ports, fields, actions, state tokens), and the element renders whichever type it is
+  given. A new type adds a definition, not a new element. A type that needs unusual content
+  supplies only a body template.
+- **Why**: An agent learns three patterns once. The same elements work in Studio, the Uplynk
+  architecture repo or any framework.
+- **Alternative rejected**: Svelte components draw the nodes (Option B), which would tie every
+  shared pattern to Svelte.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]

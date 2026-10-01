@@ -41,8 +41,8 @@ Your notes go into the chat input as chips that refer to nodes. Send hands the r
 
 ## Stages
 
-0. Framework (interview, 2026-10-01): D-012 plain Svelte, D-013 own canvas with outlines and
-   ports, D-014 dependencies. The component model is still open (D-005).
+0. Framework (interview, 2026-10-01): D-012 plain Svelte (runes only, `.kiro/steering/svelte-conventions.md`), D-013 own canvas with outlines and
+   ports, D-014 dependencies, D-005 + D-015 Studio component model with one wrapper per pattern.
 1. Plan and decisions: this file, D-010 (kiro-cli), D-011 (containers as threads), vision and
    tracker updates.
 2. Card and container basics: **first move the canvas onto Svelte and Vite, keeping everything
