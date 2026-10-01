@@ -72,7 +72,7 @@ Ten skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.md`
 | Skill | Role |
 |-------|------|
 | `cortex-route` | Explicit routing: classify an item, resolve the handler per `router.md § Resolution` |
-| `cortex-garden` | The Gardener: coalesce LOG entries into threads, verify changes, fix doc-drift inside the tracked surface (read-only outside it) |
+| `cortex-garden` | The Gardener: coalesce LOG entries into threads, verify changes, fix doc-drift inside the tracked surface, report it in flagged files (read-only outside both) |
 | `cortex-organize` | Information processing: sort, classify, and file inbound material |
 | `cortex-archive` | Retire or supersede content into `.archive/` |
 | `cortex-search` | Layered search across the doc surface and project |
@@ -162,7 +162,7 @@ changes are logged `[cortex-infra]` but not archived (git is their history).
 ## How It Works
 
 1. Work happens → the agent logs it to `LOG.md` (triggers in `.kiro/steering/cortex-change-protocol.md`; category from PROFILE §2, resident).
-2. The Gardener (`cortex-garden`) reads `LOG.md`, coalesces entries into threads, checks switches (PROFILE §1), and fixes doc-drift inside the **tracked** surface (`REGISTRY.md` `docs.include`). Outside it, `deep_ripple_scan` reads only and proposes; `docs.exclude` is never checked at all.
+2. The Gardener (`cortex-garden`) reads `LOG.md`, coalesces entries into threads, checks switches (PROFILE §1), and checks doc-drift against three lists in `REGISTRY.md` `docs`: `include` (tracked — fixed in place), `flag` (protected — drift reported as `[needs-human-input]`, never edited), and `exclude` (never checked). Outside those, `deep_ripple_scan` reads only and proposes.
 3. Each ripple is resolved per `router.md § Resolution` to its handler (a skill, or a handler linked in `REGISTRY.md`).
 4. Processed items are checkpointed in `AUDITED.md`.
 

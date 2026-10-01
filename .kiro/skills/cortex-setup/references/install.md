@@ -56,10 +56,12 @@ Present the proposed PROFILE for confirmation, then write it.
   concern). Leave both permanent rows as shipped — `cortex-infra` and `needs-human-input` are
   `{ virtual: true }`; **never give `cortex-infra` paths**, or the Gardener inherits a drift scope
   over the kernel. System content is matched by pattern instead (`cortex-change-protocol`).
-- **`docs`** — three keys. `include`: the authoritative docs discovered in the scan (this list is
-  the *only* thing the Gardener may fix). `hint`: reword for the project's shape — the shipped
-  default assumes a code repo. `exclude`: keep the kernel defaults and add any
-  content-not-documentation paths found (a manuscript, generated output, vendored trees).
+- **`docs`** — four keys. `include`: the authoritative docs discovered in the scan (this list is
+  the *only* thing the Gardener may fix). `flag`: protected files — anything a project rule
+  forbids agents to edit (project steering, decision register, principles); drift-checked and
+  reported, never edited. `hint`: reword for the project's shape — the shipped default assumes a
+  code repo. `exclude`: keep the kernel defaults and add any content-not-documentation paths
+  found (a manuscript, generated output, vendored trees).
 - **`handlers`** — leave mostly empty; add intent→skill or category overrides only where a real
   handler exists. Default for every category is the `cortex-garden` drift check.
 
@@ -73,7 +75,8 @@ Present the seeded REGISTRY for confirmation, then write it.
 - [ ] `needs-human-input` is `virtual`; not given paths.
 - [ ] No `<!-- INSTALL: -->` markers remain.
 
-Report a summary.
+Report a summary. Tell the user: once `include` + `flag` list every file worth watching, turn
+`deep_ripple_scan` off — the explicit fence replaces the slow, noisy scan.
 
 ## Troubleshooting
 

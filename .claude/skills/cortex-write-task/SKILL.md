@@ -36,6 +36,10 @@ Pick the branch, then follow the steps below.
 
 ---
 
+**Task from tracker items** → set `tracker:` in the frontmatter (TASK-STATUS.md or the single task file).
+
+---
+
 ## Naming Rules
 
 - Separator is `_` (underscore), even though categories contain `-` (hyphen).

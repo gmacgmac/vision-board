@@ -4,6 +4,7 @@ created: YYYY-MM-DD
 completed:           # Set when ALL tasks reach COMPLETED
 status: planned      # planned | in-progress | completed | deferred
 categories: []       # From cortex/PROFILE.md §2 (Categories)
+tracker:             # optional: path#ID[,ID]
 ---
 
 # [Task Name] - Task Status
@@ -96,5 +97,6 @@ itself on completion; do not restate those.
    [[YYYY-MM-DD HH:MM]] [CATEGORY] Completed set: [task_name] → Task: [[Link to this folder/TASK-STATUS.md]]
    ```
    `[CATEGORY]` from `PROFILE.md` §2.
-3. `cortex-garden` picks the entries up from `LOG.md` later and coalesces them into one thread.
+3. If `tracker` is set, delete those rows and rewrite Status. Orchestrator only, after the full set.
+4. `cortex-garden` picks the entries up from `LOG.md` later and coalesces them into one thread.
    Nothing here writes to `AUDITED.md`.

@@ -16,6 +16,22 @@
 
 ---
 
+## v3.3.0 — 2026-10-01
+**`docs.flag` tier (watch, report, never edit); tracker becomes a queue linked to tasks.**
+
+### Synced
+- `REGISTRY.md` (seed schema): new `docs.flag` list — drift-checked and reported, never edited. Precedence `exclude` > `flag` > `include`, regardless of match specificity.
+- `cortex-garden` SKILL.md + engine.md: new **Flagged** tier. Flagged drift always escalates as one `[needs-human-input] DRIFT {file} § {section}` LOG line per file, plus a `Drift flagged` checkpoint line. Deep scan skips `flag` paths. An approved fence proposal may land in `flag` instead of `include`.
+- `cortex-setup` install.md: seed protected files (anything a project rule forbids agents to edit) into `flag`; turn `deep_ripple_scan` off once the fence is complete.
+- `tracker-template.md` rewritten as a queue: buckets by when an item hurts (renameable per project), stable letter-prefixed IDs, rows deleted on completion (never struck through), removal only via a completed task, dropped items recorded as a `Dropped {ID}: {reason}` LOG line.
+- `task-status-template.md`, `single-task-template.md`: optional `tracker: path#ID[,ID]` frontmatter; On Completion deletes those rows and rewrites the tracker's Status. Task sets: orchestrator only, after the full set.
+- `cortex-write-task`: set `tracker:` when a task comes from tracker items. `cortex-organize`: tracker description updated.
+
+### Migrations
+- None. Upgrade step 4 (schema reconcile) adds `flag: []` to the consumer's `REGISTRY.md` `docs` block and adopts the new fence prose. Existing tracker files are untouched; adopting the new format is optional, per project.
+
+---
+
 ## v3.2.14 — 2026-09-16
 **Template-repo release process only — nothing shipped to consumers.**
 

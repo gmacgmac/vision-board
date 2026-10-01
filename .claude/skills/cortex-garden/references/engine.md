@@ -19,18 +19,22 @@ The detailed step engine powering the `cortex-garden` skill.
 
 ## Doc-Drift Check
 
-For every project-domain thread. Tiers are defined in `SKILL.md` § Scope tiers — steps 1–5 are **Tracked only**.
+For every project-domain thread. Tiers are defined in `SKILL.md` § Scope tiers — steps 1–5 cover **Tracked and Flagged**.
 
-1. **Load the fence**: read `REGISTRY.md` `docs`. `include` = Tracked. `exclude` = Off-limits, dropped from every search below. `hint` is a proposal source, not a matcher.
-2. **Discover relevant docs within Tracked**: `cortex-search` (Layers 1–3), scoped to `include` paths, for docs related to this thread's domain.
+1. **Load the fence**: read `REGISTRY.md` `docs`. `include` = Tracked. `flag` = Flagged. `exclude` = Off-limits, dropped from every search below. Precedence: `exclude` > `flag` > `include`. `hint` is a proposal source, not a matcher. No `flag` key = no Flagged tier.
+2. **Discover relevant docs within Tracked and Flagged**: `cortex-search` (Layers 1–3), scoped to `include` + `flag` paths, for docs related to this thread's domain.
 3. **Check each discovered doc** against the thread — see § Recency for how hard to look.
    - Not stale → no action.
-   - Stale → fix now, OR `[needs-human-input]` naming: exact file + section, what's missing/wrong, and the source change.
+   - Stale, **Tracked** → fix now, OR `[needs-human-input]` naming: exact file + section, what's missing/wrong, and the source change.
+   - Stale, **Flagged** → never edit. Append one DRIFT line per drifted file to `LOG.md`, and list it under `Drift flagged` in the checkpoint. The developer approves; the fix lands through the normal change protocol:
+     ```
+     [[YYYY-MM-DD HH:MM]] [needs-human-input] DRIFT {file} § {section}: {what is stale}; source {change} → Notes: `{file}` ({section heading})
+     ```
 4. **No relevant doc found in Tracked**:
    - A tracked folder covers this domain but no doc matches → `[needs-human-input]`: propose creation.
    - Nothing tracked covers this domain → `[needs-human-input]`: propose a new `docs.include` entry (see § Proposing a new tracked path).
 5. **After any doc change**: check whether `cortex/readme.md` is left inaccurate. It is Off-limits (managed — a fix reverts on `copier update`), so **raise `[needs-human-input]`, don't edit it**.
-6. **Deep Ripple Scan** (`deep_ripple_scan: true`, PROFILE §1): a **read-only** pass over Observable — outside `include`, never into `exclude`. A hit is never fixed, only proposed (§ Proposing a new tracked path). If nothing is affected, record "no impact" and move on.
+6. **Deep Ripple Scan** (`deep_ripple_scan: true`, PROFILE §1): a **read-only** pass over Observable — outside `include` and `flag`, never into `exclude`. A hit is never fixed, only proposed (§ Proposing a new tracked path). If nothing is affected, record "no impact" and move on.
 
 > **Layer 4 (FRONTMATTER_SEARCH)**: auto-detected — when discovered docs carry frontmatter, use it to disambiguate overlapping scopes.
 
@@ -47,7 +51,7 @@ The question is always **"does this doc reflect *this thread's* change?"** A doc
 
 ### Fix now vs escalate
 
-Applies to **Tracked** files only. Anything Observable escalates by definition, however trivial the fix.
+Applies to **Tracked** files only. Anything Flagged or Observable escalates by definition, however trivial the fix.
 
 - **Fix now** when the correction is small, mechanical and directly verifiable (a renamed path, a wrong table entry) — or when you can accurately describe new behavior after reading its actual implementation, not guessing from the LOG summary.
 - **Escalate** (`[needs-human-input]`: file + section + gap + source) when the fix needs substantial new prose in a large doc you haven't read end-to-end, or judgment you're not positioned to make in passing. Don't rush a big doc to close out a small thread.
@@ -63,7 +67,7 @@ The learning loop for the fence itself (`cortex-principles` #6 — the model pro
 > `{path}` looks affected by {change} and isn't tracked. Track it?
 > Proposed `REGISTRY.md` `docs.include` entry: `- {path}`
 
-- **Approved** → add the line to `docs.include`. Tracked from the next run on. `REGISTRY.md` is seed-once and the human's — never amend it without that approval.
+- **Approved** → add the line to `docs.include` (or `docs.flag` if the human wants it watched but never edited). Checked from the next run on. `REGISTRY.md` is seed-once and the human's — never amend it without that approval.
 - **Declined** → add the path to `docs.exclude` with a one-line reason, so it stops resurfacing every run. A finding re-raised indefinitely is noise, not learning.
 - **Unattended** → log-and-defer as `[needs-human-input]` carrying the proposed line verbatim, ready to approve later.
 

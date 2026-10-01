@@ -37,8 +37,11 @@ categories:
 
 ## Docs (the drift fence)
 
-Three tiers. `include` is the **only** list the Gardener may edit; everything else it can
-see, it can only propose on. See `cortex-garden` SKILL.md § Scope tiers.
+Three lists. `include` is the **only** list the Gardener may edit. `flag` is drift-checked and
+reported, never edited. Everything else it can see, it can only propose on. See `cortex-garden`
+SKILL.md § Scope tiers.
+
+Precedence, safest wins: `exclude` > `flag` > `include`, regardless of match specificity.
 
 ```yaml
 docs:
@@ -48,6 +51,10 @@ docs:
     # INSTALL: add authoritative doc folders/files discovered in the scan, e.g.
     # - docs/
     # - CONVENTIONS.md
+
+  # FLAGGED — read + drift-checked + reported as [needs-human-input]; NEVER edited.
+  # For protected files: project rules, decision registers, principles.
+  flag: []
 
   # A discovery HINT, not a live matcher. /cortex-setup and the Gardener use it to
   # *propose* additions to `include`; nothing is drift-checked until it is listed above.
@@ -75,6 +82,9 @@ docs:
 > fix there silently reverts. Everything else in those trees — project-authored rules, skills, and
 > steering — is ordinary project content and stays in scope. `PROFILE`/`REGISTRY` themselves change
 > only via the ratification loop (`cortex-garden` engine.md), never a doc-drift fix.
+
+> **`flag` vs `include`**: use `flag` when a change must be coordinated with the developer. Once
+> the fence lists every file worth watching, `deep_ripple_scan` can be turned off.
 
 > `cortex/LOG.md` and `cortex/AUDITED.md` are a further exception: the Gardener edits them, but
 > **only** via its defined mechanics (remove a processed thread's entries, append a checkpoint).

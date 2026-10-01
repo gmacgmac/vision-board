@@ -5,6 +5,7 @@ completed:           # Set when done
 status: pending      # pending | in-progress | completed | deferred
 categories: []       # From cortex/PROFILE.md §2 (Categories)
 type: implementation # implementation | research | analysis | migration | review
+tracker:             # optional: path#ID[,ID]
 ---
 
 # Task: [Task Title]
@@ -123,6 +124,7 @@ _To be completed by agent after task execution._
    [[YYYY-MM-DD HH:MM]] [CATEGORY] Completed: [task_name] → Task: [[Link to this file]]
    ```
    `[CATEGORY]` from `PROFILE.md` §2. Cite files by path + symbol, never by line number.
+3. If `tracker` is set, delete those rows and rewrite Status.
 
 > This is a standalone task, so this entry is the whole record — there is no set entry. Do not write
 > to `AUDITED.md`; that is `cortex-garden`'s ledger alone.

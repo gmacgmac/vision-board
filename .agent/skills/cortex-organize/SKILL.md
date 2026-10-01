@@ -32,7 +32,7 @@ Before creating new content:
 1. Select a template from `cortex/templates/` by content type:
    - `generic-document.md` — default for notes, references, and general docs. For structured/technical docs (how something is built, a capability, a reusable pattern), use its optional section library instead of a separate template.
    - `handler.md` — a routine/procedure the router dispatches to.
-   - `tracker-template.md` — a living overview of an ongoing effort (feature set, research thread, migration, or any multi-part project the user wants to track over time).
+   - `tracker-template.md` — a queue of open items for an ongoing effort; a row is deleted once its task completes.
    - `tasks/` — task planning and execution (usually via the `cortex-write-task` skill).
 2. Match the format/structure of existing docs in this category.
 3. If docs use frontmatter: generate frontmatter (category, last_updated, status, scope, keywords).
