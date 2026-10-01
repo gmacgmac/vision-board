@@ -10,7 +10,7 @@ created: 2026-10-01
 
 ## Execution record (read this first if resuming)
 
-- Plan: `PLAN.md` in this folder. Stages run in order, and each one is committed when it ends.
+- Plan: `PLAN.md` in this folder. After a compaction, read `HANDOVER-compaction.md` first. Stages run in order, and each one is committed when it ends.
 - Node: use 22.23.1 (`~/.nvm/versions/node/v22.23.1/bin`). `/usr/local/bin/node` is 22.14 and
   can't run `.ts`.
 - Server: `node apps/board/server.ts` on http://localhost:4466. The review session is `first-look`.
