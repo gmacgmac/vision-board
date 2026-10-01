@@ -1,6 +1,6 @@
 ---
 category: project-decisions
-last_updated: 2026-09-30
+last_updated: 2026-10-01
 status: active
 scope: The decision register for Vision Board — one entry per decision, appended in order
 keywords: [decisions, register, adr, governance]
@@ -109,3 +109,27 @@ engine (our own code per mode, or ELK for flow, tree and lanes). Both need a pla
   apps, and WCAG 2 contrast passes saturated colours on dark that still read poorly.
 - **Alternative rejected**: D-008, WCAG 2 AA plus a single APCA bar.
 - **Task**: none (maintainer ruling in chat).
+
+## D-010 The board talks to the agent through kiro-cli
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, first-look v2 item 25
+- **Decision**: The board has one chat, in a panel on the right, powered by kiro-cli (`kiro-cli
+  acp`) running on the maintainer's subscription. The agent updates the board through a tool call
+  that writes a validated view. Its final text appears in the chat. The person's notes enter the
+  chat input as chips that refer to nodes, and Send hands the round back. The board-launched agent
+  gets the narrowest tool set that can write views. `vb wait` stays as the path for an agent
+  already running in another session.
+- **Why**: One conversation flows on the right while answers happen in context on the board. No
+  copy-paste and no "go read it" step. Architect proved the shape with its side panel.
+- **Alternative rejected**: the agent in the person's own chat session as the only driver, with
+  the person pasting replies (vision.md v1, "Dropped: the app running Claude itself").
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-011 Containers are threads
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, first-look v2 items 20, 21
+- **Decision**: Every node lives in a container (region), and a container is a thread of the
+  conversation. The person can drag a container to move it, and drag items from one container to
+  another, for example into the built-in Later container. Both moves are transcript records, so
+  the agent's view still holds no coordinates. There is no freeform mode for now.
+- **Why**: Containers give multi-threading and parking for free, and keep layout per container.
+- **Alternative rejected**: a freeform mode with loose cards and no containers.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]

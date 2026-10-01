@@ -1,6 +1,6 @@
 ---
 category: project-docs
-last_updated: 2026-09-30
+last_updated: 2026-10-01
 status: active
 scope: Why Vision Board exists, what it does, and where it is going
 keywords: [vision, board, review, agent, feedback]
@@ -49,7 +49,12 @@ Normal chat stays the default. The board is for the moments when the agent comes
 4. **Versions that highlight what changed**, so you only re-read the parts that changed.
 5. **An Approve step:** the approved version becomes the decision you're working from.
 
-Dropped: the video-specific rules, and the app running Claude itself. The agent already in the session does the drawing.
+Dropped: the video-specific rules.
+
+Changed (2026-10-01, D-010): the board has its own chat panel on the right, powered by kiro-cli.
+The agent draws on the board through a tool call when the subject suits it. Its text answers
+appear in the chat, and the person's notes on the board go into the chat input as references to
+nodes.
 
 ## Handoff: getting notes back to the agent
 

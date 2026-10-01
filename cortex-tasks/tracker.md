@@ -3,7 +3,7 @@ category: project-docs
 type: tracker
 status: active
 created: 2026-09-30
-last_updated: 2026-09-30
+last_updated: 2026-10-01
 scope: What is outstanding for Vision Board, from founding rules to the first working board
 keywords: [tracker, roadmap, milestones, open questions]
 ---
@@ -38,11 +38,13 @@ the Architect reference are in place. No code. Checkpoint tags: `checkpoint-01-l
 | 8 | Agent skill v0: how an agent writes a view and reads a transcript | Planned | — | |
 | 9 | More modes: flow, lanes, text, then radial | Planned | — | |
 | 10 | Versions, diff highlights, Confirm these, Approve | Planned | — | From Architect |
+| 11 | Board v3: notes beside cards, containers as threads, Send and vb wait, kiro-cli chat panel | In Progress | `cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md` | D-010, D-011 |
 
 ## Updates
 
 | Date | Update |
 |------|--------|
+| 2026-10-01 | Dogfooded the board on `first-look` (v1, v2). D-009 contrast tiers, D-010 kiro-cli chat, D-011 containers as threads. Board v3 plan approved |
 | 2026-09-30 | Walking skeleton written, untested: 5 layout modes, pins, actions, server, canvas. See HANDOVER.md |
 | 2026-09-30 | Repo organised; Architect copied as reference; founding docs drafted from Uplynk Studio |
 
