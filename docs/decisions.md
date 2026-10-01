@@ -19,8 +19,8 @@ the end: date, status, the decision, why, the main alternative rejected, and the
 Never edit an Accepted entry; append a new one and mark the old one `Superseded by D-NNN`. The
 work log (`cortex/LOG.md`) is not a decision record: it is pruned.
 
-**Still open, not yet entries:** the app framework (Studio chose SvelteKit), and the layout
-engine (our own code per mode, or ELK for flow, tree and lanes). Both need a plan first.
+**Still open, not yet entries:** none. The framework (D-012) and the layout
+engine (D-013) were decided on 2026-10-01; the component model is D-005, still Proposed.
 
 ---
 
@@ -132,4 +132,41 @@ engine (our own code per mode, or ELK for flow, tree and lanes). Both need a pla
   the agent's view still holds no coordinates. There is no freeform mode for now.
 - **Why**: Containers give multi-threading and parking for free, and keep layout per container.
 - **Alternative rejected**: a freeform mode with loose cards and no containers.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-012 Plain Svelte for the app, SvelteKit later if needed
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, framework interview
+- **Decision**: The board app is Svelte 5 built with Vite. No SvelteKit: our own Node server
+  keeps serving the board's data and the kiro-cli connection. Add SvelteKit if a hosted version
+  needs its routing, server routes or deployment adapters. The agent connection sits behind one
+  module, so hosting it elsewhere swaps that module and nothing else.
+- **Why**: Everything runs client-side plus one local server today, and Svelte components move
+  into SvelteKit unchanged. Svelte matches Uplynk Studio.
+- **Alternative rejected**: SvelteKit now, which brings routing and a server layer we don't use yet.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-013 Our own canvas and layout engine, no node-graph library
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, framework interview
+- **Decision**: We keep the hand-rolled canvas and layout engine and use no node-graph library
+  (React Flow, Svelte Flow). A node type declares its outline (any shape: card, trapezoid,
+  chevron, circle) and its ports (any number, on any side). The engine routes connectors to those
+  ports and clips each line to the outline, and draws them in a layer beneath the nodes. Links stay
+  a separate list in the view, because one link belongs to two nodes.
+- **Why**: Full control of shapes, ports and layering with no framework to work around. The
+  layout engine is the product's core. MIT-licensed libraries may still be read for techniques,
+  with credit, but not copied wholesale.
+- **Alternative rejected**: Svelte Flow (xyflow, MIT). It's capable, but the maintainer found
+  its component model, port rules and layering confining in past projects.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-014 First dependencies
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, framework interview
+- **Decision**: svelte 5.57.1, vite 8.3.1, @sveltejs/vite-plugin-svelte 7.3.1, typescript 6.0.3,
+  svelte-check 4.7.6. These are Uplynk Studio's exact versions. TypeScript stays on 6 because
+  svelte-check 4.7.6 supports only 5 and 6. Exact pins, install scripts off, and each package is
+  recorded in `docs/specification/dependencies.md` when it is installed. Browser page tests
+  (Playwright, axe-core) need their own decision.
+- **Why**: The smallest set for D-012. Same versions as Studio, so patterns move without
+  friction.
+- **Alternative rejected**: TypeScript 7.0.2, which svelte-check doesn't support yet.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]

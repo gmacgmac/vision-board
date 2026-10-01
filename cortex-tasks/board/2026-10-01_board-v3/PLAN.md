@@ -41,10 +41,13 @@ Your notes go into the chat input as chips that refer to nodes. Send hands the r
 
 ## Stages
 
+0. Framework (interview, 2026-10-01): D-012 plain Svelte, D-013 own canvas with outlines and
+   ports, D-014 dependencies. The component model is still open (D-005).
 1. Plan and decisions: this file, D-010 (kiro-cli), D-011 (containers as threads), vision and
    tracker updates.
-2. Card and container basics: mode picker pill, region sizing, the note callout (edit and
-   delete), Architect styling within the tiers.
+2. Card and container basics: **first move the canvas onto Svelte and Vite, keeping everything
+   that works today**, then the mode picker pill, region sizing, the note callout (edit and
+   delete), and Architect styling within the tiers.
 3. Selection and moving: lasso, multi-click, keyboard selection; container notes; dragging cards
    between containers; the Later container.
 4. Send and `vb wait`: the `send` action with "Mark the rest ok", and the `vb` CLI (`validate`,
