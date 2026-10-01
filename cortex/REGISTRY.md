@@ -50,14 +50,11 @@ see, it can only propose on. See `cortex-garden` SKILL.md § Scope tiers.
 ```yaml
 docs:
   # TRACKED — read + fixable. Deliberately EMPTY on this project (maintainer, 2026-10-01):
-  # the Gardener never edits docs here. Everything below is in `flag` instead.
+  # the Gardener never edits docs here. Every doc worth watching is in `flag` instead.
   include: []
 
-  # FLAGGED — read + drift-check + REPORT, never edit. Project extension pending in Cortex
-  # (see temp/cortex-upstream-handover.md § 1). Until the Gardener supports it natively:
-  # treat every path here as Tracked for READING, and escalate EVERY drift as one
-  # `[needs-human-input] DRIFT {file} § {section}: {what is stale}; source {change}` LOG line.
-  # Never fix in place, however small. Fixes are coordinated with the developer.
+  # FLAGGED — read + drift-checked + reported as [needs-human-input] DRIFT lines; NEVER edited.
+  # Fixes are coordinated with the developer.
   flag:
     - /README.md
     - /AGENTS.md

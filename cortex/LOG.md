@@ -12,3 +12,5 @@
 [[2026-10-01 16:05]] [cortex-infra] Cortex setup (fresh install): 10 project categories (board-*, project-*), deep_ripple_scan off, docs.include empty + project docs.flag list (flag-only, never fix); tracker rewritten to the rolling-queue model (U/N/M/L/W); HANDOVER.md archived; Cortex upstream handover + tracker template drafted in temp/ → Notes: `cortex/REGISTRY.md` (`docs`)
 [[2026-10-01 16:45]] [cortex-infra] Cortex kernel updated v3.2.14 -> v3.3.0 via copier update (docs.flag tier, tracker queue template, tracker: task frontmatter) → Notes: `cortex/changelog.md` (`v3.3.0`)
 [[2026-10-01 16:50]] [cortex-infra] Cortex kernel v3.3.0 -> v3.3.1 via copier update (garden: Flagged covered in no-doc-found step and Observable row) → Notes: `cortex/changelog.md` (`v3.3.1`)
+[[2026-10-01 16:55]] [project-docs] Dropped W2: resolved by Cortex v3.3.x docs.flag tier → Notes: `cortex-tasks/tracker.md`
+[[2026-10-01 16:55]] [cortex-infra] REGISTRY docs.flag comment updated for native support; tracker aligned to v3.3 template (prefix column, Dropped rule, tracker: field); board v3 TASK-STATUS linked to U1; temp Cortex drafts removed → Notes: `cortex/REGISTRY.md` (`docs`)

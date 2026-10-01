@@ -2,6 +2,7 @@
 category: board-app
 type: task-status
 status: in-progress
+tracker: cortex-tasks/tracker.md#U1
 created: 2026-10-01
 ---
 

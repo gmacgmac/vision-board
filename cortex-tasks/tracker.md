@@ -5,43 +5,47 @@ status: active
 created: 2026-09-30
 last_updated: 2026-10-01
 scope: The live queue for Vision Board, from founding rules to a board any agent session can use
+keywords: [tracker, queue, roadmap]
 ---
 
 # Vision Board — Tracker
 
-> **The one queue.** This file is the live state. The history of what landed is the task files
-> under `cortex-tasks/` plus `cortex/LOG.md`. Decisions belong in `docs/decisions.md`,
-> architecture in `docs/`, detail in the task file. Aim for under ~250 lines.
+> **A queue of open items.** This file is live state only. The history of what landed is the
+> task files under `cortex-tasks/` plus `cortex/LOG.md`. Decisions belong in `docs/decisions.md`,
+> architecture in `docs/`, detail in the task file. Keep it short — aim for under ~250 lines.
 
 ---
 
 ## How this file works
 
-1. **One item at a time.** Pick an ID, talk it through, write it up as a Cortex task, execute it,
-   verify by execution.
-2. **On completion, delete the row**, the table line and any detail block. The task file and the
-   LOG entry are the trace.
-3. **IDs are stable and never reused.** The prefix says where the item started: `U` urgent,
-   `N` near term, `M` medium term, `L` long term, `W` workaround. An item that changes bucket keeps
-   its ID.
-4. **History is never rewritten.** Task files and LOG entries keep their old references.
-5. **New items land in the bucket that matches**, not at the bottom.
-6. **Every item gets the maintainer's explicit go before it starts.** "Proceed" on one item does
-   not carry to the next.
-7. **A problem found outside the task** is filed as a row: problem, example, solution, one
-   sentence each.
-8. **A workaround is recorded when it is taken**, in Workarounds, with how it ends.
-9. **Close-out** (the orchestrator): delete the row, rewrite Status, write the LOG line.
+1. **Every item becomes part of a Cortex task.** Work items one at a time, or batch similar items
+   into one task. The task's `tracker:` field names the rows, e.g.
+   `tracker: cortex-tasks/tracker.md#U2`.
+2. **On completion, delete the row** and its detail block. Never strike through or mark done.
+3. **A row is removed only when a completed task references it.** The task and its LOG line are
+   the record.
+4. **A dropped item** (duplicate, won't do, no longer matters) is deleted with one LOG line as its
+   record:
+   `[[YYYY-MM-DD HH:MM]] [category] Dropped {ID}: {reason} → Notes: \`cortex-tasks/tracker.md\``
+5. **IDs are stable and never reused.** The prefix is the bucket the item started in; an item that
+   moves bucket keeps its ID. Cross-reference by ID and title.
+6. **New items land in the bucket that matches**, not at the bottom.
+7. **A problem found outside the current task becomes a row**: the problem and an example. Add a
+   solution if known — "unknown" is a valid answer.
+8. **A workaround is recorded when it is taken**, with how it ends.
+9. **Every item gets the maintainer's explicit go before it starts** (project rule). "Proceed" on
+   one item does not carry to the next.
 
-**Buckets.** The question is *when does this hurt*, not *how hard is it*:
+**Buckets** answer *when does this hurt*, not *how hard is it*.
 
-| Bucket | Means |
-|---|---|
-| **Urgent** | Blocks the current milestone (board v3), loses data, or is the first thing a user sees fail |
-| **Near Term** | Bites in the first fortnight of real use |
-| **Medium Term** | Real debt with a known shape; costs more the longer it waits |
-| **Long Term** | Needs something else to exist first, or is a product bet |
-| **Parked** | Waiting on a gate: a proof, a validation pass, a maintainer decision |
+| Bucket | Prefix | Means |
+|---|---|---|
+| **Urgent** | U | Blocks the current milestone (board v3), loses data, or is the first thing a user sees fail |
+| **Near Term** | N | Bites soon in real use |
+| **Medium Term** | M | Real debt with a known shape; costs more the longer it waits |
+| **Long Term** | L | Needs something else to exist first, or is a bet |
+| **Parked** | — | Waiting on a gate: a proof, a validation, a decision. Keeps its original ID |
+| **Workarounds** | W | Shortcuts taken on purpose, to resolve or ratify |
 
 ---
 
@@ -106,10 +110,9 @@ v3 plan is approved. Next: finish the foundation (U2), compact, then board v3 St
 
 ---
 
-## WORKAROUNDS — shortcuts taken on purpose, to resolve or ratify
+## WORKAROUNDS
 
 | ID | Shortcut | Why taken | How it ends |
 |---|---|---|---|
 | W1 | Agents put the nvm Node 22.23.1 path first on every command | `/usr/local/bin/node` is 22.14 from the nodejs.org installer and can't run `.ts` | Maintainer removes the old install (sudo commands in chat, 2026-10-01) |
-| W2 | Gardener told "flag only" in a `REGISTRY.md` note | Cortex has no `docs.flag` tier yet | `docs.flag` lands in Cortex (`temp/cortex-upstream-handover.md`) |
 | W3 | Board replies pasted into chat | No `vb wait` or chat panel yet | Board v3 Stages 4 and 6 |
