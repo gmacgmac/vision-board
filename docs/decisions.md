@@ -89,10 +89,23 @@ engine (our own code per mode, or ELK for flow, tree and lanes). Both need a pla
 - **Task**: none yet (founding set).
 
 ## D-008 Two contrast gates
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-011 draft
+- **Date**: 2026-09-30 · **Status**: Superseded by D-009 · **From**: Studio D-011 draft
 - **Decision**: Every token pair passes WCAG 2 AA (text 4.5:1, UI 3:1) and APCA (text Lc 60, UI
   Lc 30) in light and dark; colours are `light-dark()` values. Needs Chrome/Edge 123, Firefox 120,
   Safari 17.5 or later.
 - **Why**: APCA catches text that passes WCAG 2 yet reads poorly on dark.
 - **Alternative rejected**: WCAG 2 alone.
 - **Task**: none yet (founding set).
+
+## D-009 APCA contrast in three tiers
+- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer ruling, 2026-10-01 (shared with sibling apps)
+- **Decision**: Text contrast is APCA only, in three tiers, light and dark, measured with APCA-W3
+  0.0.98G-4g: Lc 60 or more for reading text (body, muted, white on a button fill); Lc 45 or more
+  for short coloured labels (links, headings, status words, inline code); Lc 30 or more for
+  decoration (icons, focus rings, connectors). Body text (`--text`) carries no hue in any palette.
+  A pair under its bar is reported, never shipped quietly. The maintainer may overrule a tier by
+  eye; each overrule is recorded as a new decision. Supersedes D-008.
+- **Why**: One Lc 60 bar for every pair proved too strict for short coloured labels in sibling
+  apps, and WCAG 2 contrast passes saturated colours on dark that still read poorly.
+- **Alternative rejected**: D-008, WCAG 2 AA plus a single APCA bar.
+- **Task**: none (maintainer ruling in chat).

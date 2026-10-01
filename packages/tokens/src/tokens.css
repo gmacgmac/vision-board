@@ -1,7 +1,8 @@
 /* Vision Board design tokens: the only source of style (project rule 3).
    Each colour is one light-dark() value driven by color-scheme; data-theme forces a theme.
-   TODO(next set): split into primitives.css + semantic.css and port Studio's contrast gate
-   (WCAG 2 AA + APCA). Values below were chosen to pass both but are not yet machine-checked. */
+   TODO(next set): split into primitives.css + semantic.css and port a contrast gate for the
+   three APCA tiers (D-009: Lc 60 reading text, Lc 45 short coloured labels, Lc 30 decoration;
+   APCA-W3 0.0.98G-4g). Values below are hand-picked and not yet machine-checked. */
 
 :root {
   color-scheme: light dark;

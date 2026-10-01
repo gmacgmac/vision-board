@@ -86,13 +86,17 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
    modules. Aim for about 300 lines: the repo check warns over 300 and fails over 500 unless the
    file carries `verify: long-file <reason>`. Functions stay short (about 50 lines).
 3. **Design tokens are the only source of style.** No hard-coded colours, sizes or spacing.
-   Every colour pairing passes WCAG 2 AA and APCA contrast, in light and dark; a colour that fails
-   is fixed in its token, not per screen. Node states (open, acknowledged, dropped, commented,
-   needs context, saved for later, decided) are tokens too.
+   Text contrast is APCA, in three tiers: Lc 60 or more for reading text (body, muted, white on a
+   button fill); Lc 45 or more for short coloured labels (links, headings, status words, inline
+   code); Lc 30 or more for decoration (icons, focus rings, connectors). Body text (`--text`)
+   carries no hue in any palette. Measure with APCA-W3 0.0.98G-4g, light and dark. A pair under
+   its bar is reported, never shipped quietly; a colour that fails is fixed in its token, not per
+   screen. The maintainer may overrule a tier by eye, recorded as a decision (D-009). Node states
+   (open, acknowledged, dropped, commented, needs context, saved for later, decided) are tokens too.
 4. **Every state gives visual feedback.** Controls: idle, hover, focus, pressed, loading,
    success, error, disabled. Data views: loading, empty, error, partial, stale. Review items:
    every item state above. States are part of the pattern, so a screen gets them by reusing it.
-5. **Accessibility is a gate, not a phase.** WCAG AA. Every node and every action is keyboard
+5. **Accessibility is a gate, not a phase.** WCAG 2 AA, except contrast, which follows rule 3. Every node and every action is keyboard
    reachable, labelled and has the correct role; lasso has a keyboard alternative. An accessible
    board is also one that agents can read.
 6. **One contract shape.** The view file, the transcript and the local server's routes are

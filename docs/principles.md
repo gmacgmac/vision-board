@@ -95,9 +95,14 @@ back with Studio.
 - Tokens are the only source of colour, type, spacing, radius and motion. Colour literals exist
   in one file (`primitives.css`); everything else reads semantic tokens (what a colour is *for*).
 - Each colour is one `light-dark(<light>, <dark>)` value, so the themes can't drift.
-- **Two contrast gates**, in light and dark: WCAG 2 AA (text 4.5:1, UI marks 3:1) and APCA
-  (text Lc 60, UI marks Lc 30). Studio added APCA because saturated colours on dark passed WCAG 2
-  and still read poorly. Every foreground/background pair is listed and checked by the tests.
+- **APCA contrast in three tiers**, in light and dark, measured with APCA-W3 0.0.98G-4g: Lc 60
+  for reading text (body, muted, white on a button fill), Lc 45 for short coloured labels (links,
+  headings, status words, inline code), Lc 30 for decoration (icons, focus rings, connectors).
+  Body text (`--text`) carries no hue. One Lc 60 bar for everything proved too strict for short
+  coloured labels in sibling apps, and WCAG 2 passes saturated colours on dark that still read
+  poorly, so WCAG 2 contrast is not a gate (D-009). Every foreground/background pair is listed,
+  with its tier, and checked by the tests; a pair under its bar is reported, never shipped
+  quietly. The maintainer may overrule a tier by eye, recorded as a decision.
 - A failing colour is fixed in its token, by lightness within the same hue, never per screen.
 - Vision Board needs its own semantic groups on top of Studio's: item states, regions,
   connectors, note pins, and change highlights (new, changed, removed).
