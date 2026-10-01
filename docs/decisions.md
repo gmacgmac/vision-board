@@ -25,7 +25,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 ---
 
 ## D-001 Plan before you build
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-008
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-008
 - **Decision**: All work beyond a trivial fix starts as a plan and goes through a Cortex task.
   Decisions are recorded here, not in `cortex/LOG.md`.
 - **Why**: The plan keeps the thinking, the task keeps what was done, so the project stays
@@ -34,7 +34,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-002 Protected project instructions
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-007
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-007
 - **Decision**: `.kiro/steering/vision-board-proj.md` is the one set of project rules; Kiro loads
   it, `CLAUDE.md` imports it, `AGENTS.md` points to it. It, `docs/principles.md`, this register
   and the design tokens change only with the maintainer's yes (GitHub `CODEOWNERS` once hosted).
@@ -43,7 +43,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-003 One action layer
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-003
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-003
 - **Decision**: Every board action is a typed action with inputs, a needs-human flag and a
   transcript record. Buttons, shortcuts and agents call the same actions; decisions on items
   are the person's.
@@ -52,7 +52,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-004 The file formats are the contract
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-004, D-005 (adapted)
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-004, D-005 (adapted)
 - **Decision**: The view file and transcript have versioned JSON Schemas in `packages/format/`;
   types, validator, fixtures and docs come from them. Fixture boards in the exact schema drive the
   gallery and tests.
@@ -72,7 +72,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-006 Generated pattern index
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-006
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-006
 - **Decision**: The pattern index, with states, is generated from each pattern's `pattern.json`,
   never written by hand.
 - **Why**: A generated index is always true, so duplicated components get caught.
@@ -80,7 +80,7 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Task**: none yet (founding set).
 
 ## D-007 Dependency policy
-- **Date**: 2026-09-30 · **Status**: Proposed · **From**: Studio D-010 draft
+- **Date**: 2026-09-30 · **Status**: Accepted 2026-10-01 · **From**: Studio D-010 draft
 - **Decision**: Build small things ourselves. Exact versions, install scripts off, every
   dependency in `docs/specification/dependencies.md`. npm workspaces. No lint framework: our own
   checks in `scripts/verify.mjs` plus Prettier; Node's built-in test runner.

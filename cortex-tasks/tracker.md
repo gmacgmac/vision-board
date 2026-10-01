@@ -66,9 +66,10 @@ keywords: [tracker, queue, roadmap]
 
 The walking skeleton runs and the board has been dogfooded on the
 `first-look` session (views v1 and v2). The framework interview settled D-005 and D-009 to D-015:
-plain Svelte, our own canvas, the Studio component model and the APCA contrast tiers. The
+plain Svelte, our own canvas, the Studio component model and the APCA contrast tiers.
+The founding decisions D-001 to D-007 are accepted. The
 foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers checked by
-`npm run verify`, and a generated module map. Next: compact, then board v3 Stage 2 (U1).
+`npm run verify`, and a generated module map. Next: board v3 Stage 2 (U1).
 
 ---
 
@@ -85,6 +86,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N1 | Contrast gate for the three APCA tiers | **Problem:** token colours are hand-picked and unchecked. **Example:** `packages/tokens/src/tokens.css` TODO. **Solution:** port Studio's contrast check, tiered per D-009. | HANDOVER gap 13 |
 | N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. | Rule 6 |
 | N3 | Page tests decision | **Problem:** rule 13 page tests need Playwright and axe-core, which aren't decided yet. **Example:** D-014 leaves them out. **Solution:** a decision entry plus a `test:pages` script, as in Studio. | D-014 |
+| N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
 
 ## MEDIUM TERM
 
@@ -106,7 +108,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 
 | ID | Item | Waiting on | Source |
 |---|---|---|---|
-| N4 | Accept D-001 to D-004 and D-006 to D-007 | Maintainer review; all still Proposed | `docs/decisions.md` |
+| — | — | Nothing parked | — |
 
 ---
 
