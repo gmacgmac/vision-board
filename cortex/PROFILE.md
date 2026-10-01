@@ -12,7 +12,7 @@
 system_mode: learning        # learning | production
 auto_create_folders: true    # learning mode only (requires approval)
 auto_create_categories: true # learning mode only (requires approval)
-deep_ripple_scan: true       # ON by default — safety net for an incomplete fence
+deep_ripple_scan: false      # OFF (maintainer, 2026-10-01): exact files are tracked/flagged in REGISTRY docs
 ```
 
 - **learning** — propose new structure via `[needs-human-input]`, wait for approval. New projects.
@@ -39,13 +39,18 @@ name + a terse scope. Full paths/docs/handlers for each live in `REGISTRY.md`.
 
 **Project:**
 
-<!-- INSTALL: discovered by /cortex-setup. One line per category: name + 3–5 word scope. -->
-
 | Category | Scope |
 |----------|-------|
-<!-- | `{project}-core` | Main application logic | -->
-<!-- | `{project}-api` | Endpoints, I/O shapes | -->
-<!-- | `{project}-security` | Auth, validation, egress | -->
+| `board-app` | Page, panels, local server |
+| `board-security` | Localhost, origin, egress, agent tools |
+| `board-format` | View and transcript contract |
+| `board-actions` | Shared person and agent actions |
+| `board-layout` | Placement and connector routing |
+| `board-ui` | Node, link, region patterns |
+| `board-tokens` | Design tokens and contrast check |
+| `board-agent` | kiro-cli connection, vb CLI, skill |
+| `project-docs` | Vision, principles, specs, tracker |
+| `project-tooling` | Repo checks, build, dependencies |
 
 ---
 

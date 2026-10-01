@@ -27,10 +27,17 @@ categories:
                                                  # managed files `copier update` overwrites anyway.
   needs-human-input:  { virtual: true }          # a status, not a location — never path-matched
 
-  # --- project (INSTALL: discovered by /cortex-setup) ---
-  # {project}-core:   { paths: [src/, config/] }
-  # {project}-api:    { paths: [src/api/, src/routes/] }
-  # {project}-ui:     { paths: [web/], concern: {project}-web }   # concern override example
+  # --- project ---
+  board-app:        { paths: [apps/board/] }
+  board-security:   { paths: [apps/board/server/guard.ts] }   # + the agent tool limits once packages/agent exists
+  board-format:     { paths: [packages/format/] }
+  board-actions:    { paths: [packages/actions/] }
+  board-layout:     { paths: [packages/layout/] }
+  board-ui:         { paths: [packages/ui/] }
+  board-tokens:     { paths: [packages/tokens/] }
+  board-agent:      { paths: [skills/] }                       # + packages/agent/, packages/cli/ when created (U2)
+  project-docs:     { paths: [docs/, README.md, cortex-tasks/tracker.md] }
+  project-tooling:  { paths: [package.json, .npmrc, .nvmrc, .gitignore] }  # + scripts/ when created (U2)
 ```
 
 ---
@@ -42,27 +49,46 @@ see, it can only propose on. See `cortex-garden` SKILL.md § Scope tiers.
 
 ```yaml
 docs:
-  # TRACKED — read + fixable. Explicit only: this list is authoritative.
-  include:
-    - /README.md
-    # INSTALL: add authoritative doc folders/files discovered in the scan, e.g.
-    # - docs/
-    # - CONVENTIONS.md
+  # TRACKED — read + fixable. Deliberately EMPTY on this project (maintainer, 2026-10-01):
+  # the Gardener never edits docs here. Everything below is in `flag` instead.
+  include: []
 
-  # A discovery HINT, not a live matcher. /cortex-setup and the Gardener use it to
-  # *propose* additions to `include`; nothing is drift-checked until it is listed above.
-  # Rewrite it for the project's shape — the default is code-repo-shaped.
-  hint: "README.md files and docs/ folders within any category path"
+  # FLAGGED — read + drift-check + REPORT, never edit. Project extension pending in Cortex
+  # (see temp/cortex-upstream-handover.md § 1). Until the Gardener supports it natively:
+  # treat every path here as Tracked for READING, and escalate EVERY drift as one
+  # `[needs-human-input] DRIFT {file} § {section}: {what is stale}; source {change}` LOG line.
+  # Never fix in place, however small. Fixes are coordinated with the developer.
+  flag:
+    - /README.md
+    - /AGENTS.md
+    - /CLAUDE.md
+    - apps/board/README.md
+    - packages/format/README.md
+    - packages/actions/README.md
+    - packages/layout/README.md
+    - packages/ui/README.md
+    - packages/tokens/README.md
+    - docs/vision.md
+    - docs/principles.md
+    - docs/decisions.md
+    - .kiro/steering/vision-board-proj.md
+    - .kiro/steering/svelte-conventions.md
+    - skills/vision-board/SKILL.md
+
+  # A discovery HINT, not a live matcher. Proposals only.
+  hint: "README.md in each apps/ and packages/ folder, docs/, and project (non cortex-*) steering files"
 
   # OFF-LIMITS — never drift-checked, never written. Kernel defaults; add project paths.
   exclude: [
     cortex/,                  # kernel + data — never project content
     cortex-tasks/,            # historical record; "fixing" a completed task destroys the audit trail
-    "**/cortex-*"              # kernel skills/rules/steering mirrored into .agent/ .claude/ .kiro/ —
-                                # matched by PATTERN, not by tree, so a project-specific file sharing
-                                # the same folder (e.g. .kiro/steering/{project}-info.md) stays
-                                # Observable and driftable
-    # INSTALL: add content-not-documentation paths, e.g. `chapters/`, `dist/`, vendored trees
+    "**/cortex-*",            # kernel skills/rules/steering mirrored into .agent/ .claude/ .kiro/ —
+                              # matched by PATTERN, not by tree, so a project-specific file sharing
+                              # the same folder (e.g. .kiro/steering/{project}-info.md) stays
+                              # Observable and driftable
+    prototypes/,              # reference copy of Uplynk Architect, read only
+    sessions/,                # local board data, not committed
+    temp/,                    # interim files
   ]
 ```
 
