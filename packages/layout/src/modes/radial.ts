@@ -27,13 +27,22 @@ export const radial: ModeFn = ({ region, nodes, links, sizes }) => {
 
   const maxW = Math.max(...nodes.map((n) => sizes.get(n.id)!.w));
   const maxH = Math.max(...nodes.map((n) => sizes.get(n.id)!.h));
-  const step = Math.hypot(maxW, maxH) / 2 + maxH / 2 + GAP * 2;
-  const perRing = new Map<number, number>();
-  for (const d of depth.values()) perRing.set(d, (perRing.get(d) ?? 0) + 1);
+  // A card's reach from its centre is at most half its diagonal in any direction, so centres a
+  // diagonal + GAP apart can never overlap: rings are that far apart, and each ring is wide
+  // enough that its two closest neighbours (the narrowest wedge) are that far apart too.
+  const clear = Math.hypot(maxW, maxH) + GAP;
+  const total = leaves.get(root)!;
+  const perRing = new Map<number, { count: number; minSpan: number }>();
+  for (const [id, d] of depth) {
+    const span = (2 * Math.PI * leaves.get(id)!) / total;
+    const ring = perRing.get(d) ?? { count: 0, minSpan: Infinity };
+    perRing.set(d, { count: ring.count + 1, minSpan: Math.min(ring.minSpan, span) });
+  }
   const radius: number[] = [0];
   for (let d = 1; perRing.has(d); d++) {
-    const fit = (perRing.get(d)! * (maxW + GAP)) / (2 * Math.PI);
-    radius[d] = Math.max(radius[d - 1]! + step, fit);
+    const { count, minSpan } = perRing.get(d)!;
+    const fit = count > 1 ? clear / (2 * Math.sin(Math.min(minSpan, Math.PI) / 2)) : 0;
+    radius[d] = Math.max(radius[d - 1]! + clear, fit);
   }
 
   const pos = new Map<string, Box>();
