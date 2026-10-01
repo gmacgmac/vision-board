@@ -87,6 +87,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. | Rule 6 |
 | N3 | Page tests decision | **Problem:** rule 13 page tests need Playwright and axe-core, which aren't decided yet. **Example:** D-014 leaves them out. **Solution:** a decision entry plus a `test:pages` script, as in Studio. | D-014 |
 | N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
+| N6 | Dark theme cards unreadable | **Problem:** in dark theme the cards stay white and their titles and body text almost vanish. **Example:** roadmap session, Theme: dark (same before and after the Svelte move). **Solution:** fix the card surface and ink tokens for dark, checked against the APCA tiers; fold into Stage 2's styling step. | Browser check, 2026-10-01 |
 
 ## MEDIUM TERM
 
