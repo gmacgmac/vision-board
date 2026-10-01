@@ -1,13 +1,13 @@
 // Draws a laid-out board. Elements are created once per view version and then updated in
 // place (attributes, transforms), so focus and CSS transitions survive every re-layout.
-import type { View, ViewNode } from '/pkg/format/src/index.ts';
-import { MODES } from '/pkg/format/src/index.ts';
-import type { BoardLayout, Size } from '/pkg/layout/src/index.ts';
-import type { BoardState } from '/pkg/actions/src/index.ts';
-import { DECIDED, statusOf } from '/pkg/actions/src/index.ts';
-import { esc, itemTemplate } from '/pkg/ui/src/index.ts';
-import { isItem, isPressed, itemLabel, STATUS_LABEL } from '/pkg/ui/src/index.ts';
-import type { ActionId } from '/pkg/format/src/index.ts';
+import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
+import { MODES } from '../../../../packages/format/src/index.ts';
+import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
+import type { BoardState } from '../../../../packages/actions/src/index.ts';
+import { DECIDED, statusOf } from '../../../../packages/actions/src/index.ts';
+import { esc, itemTemplate } from '../../../../packages/ui/src/index.ts';
+import { isItem, isPressed, itemLabel, STATUS_LABEL } from '../../../../packages/ui/src/index.ts';
+import type { ActionId } from '../../../../packages/format/src/index.ts';
 
 const MODE_LABEL: Record<string, string> = {
   grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',

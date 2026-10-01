@@ -1,6 +1,6 @@
 // Pointer input: drag a card to move it (becomes a pin), drag empty space to pan, scroll to
 // pan, Ctrl/Cmd + scroll to zoom. Keyboard equivalents live in keys.ts (project rule 5).
-import type { Box } from '/pkg/layout/src/index.ts';
+import type { Box } from '../../../../packages/layout/src/index.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface PointerHandlers {

@@ -31,7 +31,7 @@ to answer item by item, roughly 8 items or more, or when how things connect matt
 5. Validate before telling the person: `node packages/format/bin/validate.ts sessions/<id>/view-vN.json`.
    Fix every problem it lists.
 6. Tell the person: "It's on the board: http://localhost:4466/#<id>" (server:
-   `node apps/board/server.ts`).
+   `npm run board`).
 
 ## Read the responses
 

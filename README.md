@@ -11,7 +11,7 @@ board v3 is in progress (`cortex-tasks/tracker.md`).
 
 | Folder | What belongs there |
 |---|---|
-| `apps/board/` | The app: canvas (`public/`, moving to `src/`) and the local server (`server/`) |
+| `apps/board/` | The app: page in `src/` (Svelte shell, canvas controller) and the local server (`server/`) |
 | `packages/format/` | View and transcript file formats, validator, fixtures |
 | `packages/actions/` | Typed actions shared by buttons and agents |
 | `packages/layout/` | Layout engine: modes, region packing, connector routing |

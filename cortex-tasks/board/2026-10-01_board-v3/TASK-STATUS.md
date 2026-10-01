@@ -19,16 +19,17 @@ created: 2026-10-01
   `curl` gets the correct 403).
 - Decisions in force: D-005 and D-009 to D-016. Svelte rules: `.kiro/steering/svelte-conventions.md`.
   Module map: `docs/specification/modules.md` (`npm run map`).
-- **Resume point (2026-10-01)**: foundation (tracker U2) is done. Next is **Stage 2, step 1**:
-  install the D-014 dependencies (exact pins, add `docs/specification/dependencies.md`), then move
-  the canvas from `apps/board/public/` to Svelte + Vite in `apps/board/src/` with
-  `compilerOptions.runes = true`, keeping every current behaviour, before any new feature.
-  Get the maintainer's go first (tracker rule 9).
+- **Resume point (2026-10-01, late)**: Stage 2 step 1 is done. D-014 packages are installed and
+  registered, and the page is Svelte + Vite in `apps/board/src/` (`shell/` Svelte, `board/` plain
+  controller), built to `dist/` and served by `npm run board`. Gate is now `npm test`,
+  `npm run verify` and `npm run check`. Next is **step 2: the mode picker pill**, which needs the
+  maintainer's go. `src/board/controller.ts` is 336 lines (warn); it shrinks when nodes move to
+  `<vb-node>`.
 
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
-| 2 Card and container basics | Planned | | |
+| 2 Card and container basics | In progress | | Step 1 (Svelte + Vite move) done |
 | 3 Selection and moving | Planned | | |
 | 4 Send and vb wait | Planned | | |
 | 5 kiro-cli spike | Planned | | |

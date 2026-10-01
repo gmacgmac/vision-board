@@ -1,5 +1,5 @@
 // Pan and zoom: one transform on the world layer. Screen <-> world conversion lives here only.
-import type { Box, Point } from '/pkg/layout/src/index.ts';
+import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 
 const MIN_K = 0.2;
 const MAX_K = 2.5;

@@ -10,11 +10,18 @@
     "packages/*"
   ],
   "scripts": {
-    "board": "node apps/board/server.ts",
+    "build": "npm run build --workspace apps/board",
+    "board": "npm run build && node apps/board/server.ts",
+    "serve": "node apps/board/server.ts",
+    "watch": "npm run build --workspace apps/board -- --watch",
+    "check": "npm run check --workspace apps/board",
     "validate": "node packages/format/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
     "test": "node --test \"packages/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "verify": "node scripts/verify.mjs",
     "map": "node scripts/verify.mjs --write-map"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
   }
 }

@@ -1,6 +1,6 @@
 // The browser's one I/O module (project rule 7): the only code that calls the server.
-import type { View } from '/pkg/format/src/index.ts';
-import type { TranscriptRecord } from '/pkg/format/src/index.ts';
+import type { View } from '../../../../packages/format/src/index.ts';
+import type { TranscriptRecord } from '../../../../packages/format/src/index.ts';
 
 export interface SessionSummary { id: string; title: string; versions: number[] }
 export interface SessionData { versions: number[]; view: View; transcript: TranscriptRecord[] }

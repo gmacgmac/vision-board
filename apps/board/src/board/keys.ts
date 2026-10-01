@@ -1,7 +1,7 @@
 // Keyboard: every pointer action has a key (project rule 5). Shortcuts come from the action
 // registry, so a new action with a key works here without changes.
-import type { ActionId } from '/pkg/format/src/index.ts';
-import { ACTIONS } from '/pkg/actions/src/index.ts';
+import type { ActionId } from '../../../../packages/format/src/index.ts';
+import { ACTIONS } from '../../../../packages/actions/src/index.ts';
 
 export interface KeyHandlers {
   act(id: string, action: ActionId): void;
@@ -22,8 +22,9 @@ const BY_KEY = new Map(
   Object.values(ACTIONS).filter((a) => a.key && a.onItem).map((a) => [a.key!, a.id]),
 );
 
-export function bindKeys(h: KeyHandlers): void {
-  document.addEventListener('keydown', (e) => {
+/** Listens on the document; returns the function that stops listening. */
+export function bindKeys(h: KeyHandlers): () => void {
+  const onKey = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
     if (e.defaultPrevented || target.closest('input, textarea, select, dialog')) return;
     if (e.key === 'Escape') return h.escape();
@@ -53,5 +54,7 @@ export function bindKeys(h: KeyHandlers): void {
     if (key === 'h') return h.toggleHide();
     if (key === '+' || key === '=') return h.zoom(1.2);
     if (key === '-') return h.zoom(1 / 1.2);
-  });
+  };
+  document.addEventListener('keydown', onKey);
+  return () => document.removeEventListener('keydown', onKey);
 }

@@ -1,5 +1,5 @@
-// Vision Board local server. Run: node apps/board/server.ts  (Node 22.18+, no dependencies)
-// Binds to 127.0.0.1 only. Routes:
+// Vision Board local server. Run: npm run board (builds the page, then starts this; Node 22.18+).
+// No runtime dependencies. Serves the built page from dist/. Binds to 127.0.0.1 only. Routes:
 //   GET  /api/sessions                      list sessions
 //   GET  /api/sessions/:id                  latest view, versions, transcript
 //   GET  /api/sessions/:id/views/:n         one view version
@@ -20,7 +20,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
 const PORT = Number(process.env.VB_PORT ?? 4466);
 const SESSIONS = path.resolve(process.env.VB_SESSIONS ?? path.join(ROOT, 'sessions'));
-const PUBLIC = path.join(HERE, 'public');
+const DIST = path.join(HERE, 'dist');
 const PACKAGES = path.join(ROOT, 'packages');
 
 const SECURITY_HEADERS = {
@@ -73,7 +73,7 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', `http://127.0.0.1:${PORT}`);
     if (url.pathname.startsWith('/api/')) return await api(req, res, url);
     if (req.method !== 'GET') throw new HttpError(405, 'Method not allowed');
-    const file = resolveStatic(url.pathname, PUBLIC, PACKAGES);
+    const file = resolveStatic(url.pathname, DIST);
     if (!file) throw new HttpError(404, 'Not found');
     sendStatic(res, file);
   } catch (err) {
@@ -83,6 +83,11 @@ const server = http.createServer(async (req, res) => {
     else res.end();
   }
 });
+
+if (!fs.existsSync(path.join(DIST, 'index.html'))) {
+  console.error('The page is not built yet. Run: npm run board (or npm run build first).');
+  process.exit(1);
+}
 
 const seeded = seedFixtures(SESSIONS, path.join(PACKAGES, 'format', 'fixtures'));
 server.listen(PORT, '127.0.0.1', () => {
