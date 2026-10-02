@@ -96,7 +96,7 @@ export function readLedger(lines: string[]): ReadLedger {
     if (p.length) {
       problems.push(...p.map((x) => `line ${i + 1}: ${x}`));
       const seq = (e as { seq?: unknown }).seq;
-      if (Number.isInteger(seq)) index.seq = seq as number; // one bad line, not a cascade
+      if (Number.isInteger(seq)) index.seq = Math.max(index.seq, seq as number); // one bad line, not a cascade
     } else {
       indexEvent(index, e as LedgerEvent);
       events.push(e as LedgerEvent);

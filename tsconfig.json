@@ -21,6 +21,7 @@
     "packages/*/tests/**/*.ts",
     "packages/*/bin/**/*.ts",
     "apps/board/server/**/*.ts",
+    "apps/*/tests/**/*.ts",
     "apps/board/server.ts",
     "apps/board/bin/**/*.ts"
   ],

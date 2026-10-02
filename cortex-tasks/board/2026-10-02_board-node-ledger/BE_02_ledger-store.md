@@ -51,4 +51,48 @@ commits. Deviation: stop and ask.
 
 ## Implementation Notes
 
-**Status**: Pending
+**Status**: Completed 2026-10-02
+
+- **`ledger.ts`** (`apps/board/server/ledger.ts`, 123 lines): `ledgerPath(dir)`; `openLedger(file,
+  warn?)` returns a `Ledger` with `file`, `problems` (load problems), `append`, `state`, `onAppend`.
+  `Caller` = `{ by: 'person' } | { by: 'agent', agent }`. `warn` defaults to stderr; tests pass a
+  collector.
+- **Load**: `readLedger` on the lines; valid events folded once with `foldLedger`; the index's
+  `seq` raised to the highest integer `seq` on any parseable line (`highestSeq`), so the next `seq`
+  is above every one seen. A torn last line (no newline) gets a newline before the next append,
+  so it never swallows the new event.
+- **Append**: the body's `v`, `seq`, `at`, `by`, `agent`, `person` are dropped and the server
+  stamps them. `node` without `n` gets `maxN + 1`; every `node` gets `ver` = current + 1, whatever
+  the body says. A `node` naming an `n` that does not exist is refused ("leave n out to create a
+  node"), so a client can never pick a fresh number. Checks run in order: shape
+  (`eventProblems`), context (`contextProblems`), then `validateAct` for `act`; any problem throws
+  `HttpError(422, 'Invalid event', problems)` and writes nothing (no `seq` is used up). Then
+  `mkdirSync` `.visionboard/`, `appendFileSync` one line ending `\n`, `indexEvent`, and
+  **`applyEvent`** on the cached state (no refold). A throwing listener is reported, never fails
+  a write that already landed.
+- **Exports changed**: `applyEvent` added to `packages/actions/src/index.ts` (already in `fold.ts`;
+  importing it from `fold.ts` directly is a back-door import that `npm run verify` fails).
+  `docs/specification/modules.md` regenerated with `npm run map`.
+- **Tests** (`apps/board/tests/ledger-store.test.ts`, 12 tests, temp dirs under `os.tmpdir()`
+  removed after each): stamping and `.visionboard/` creation; numbers assigned and never reused;
+  `ver 2`; a bad event writes nothing and returns every problem; the body cannot set `by`, `seq`,
+  `at`, `v` or `agent`; stale proposal refused; current proposal decided; corrupt line reported
+  while the rest loads; torn last line; `onAppend` unsubscribe; reopen gives the same state.
+  Root `test` glob now includes `apps/*/tests/**/*.test.ts` (51 -> 63 tests).
+- **Rule 18**: no id reaches a path here (the path is fixed under the project dir); board and
+  region ids are checked against `ID_PATTERN` by `eventProblems` before any write.
+- **Found, not changed (BE_01's file)**: `readLedger` sets `index.seq` to a bad line's `seq` even
+  when it is lower than the current one. A corrupt line carrying a low `seq` (e.g. a duplicate)
+  would make the next valid line fail "seq: expected" on reload. Fix is one word in
+  `ledger-index.ts` (`Math.max`), outside this task's inputs.
+- **Gap**: the root `tsconfig.json` does not include `apps/*/tests`, so `npm run check` does not
+  type-check the new test file. It was type-checked once with a scratch config extending the root
+  one (exit 0). Adding `apps/board/tests/**/*.ts` to the include is a one-line follow-up.
+- Security: none found. No new dependency. The server stamps identity; a body cannot claim it.
+
+### Orchestrator review (2026-10-02)
+
+- Gates rerun by the orchestrator: `npm test` 63/63, `npm run check`, `npm run verify` exit 0.
+- Two fixes from the notes above, applied by the orchestrator: `readLedger` now keeps the higher
+  `seq` when it skips a bad line (`Math.max`), so a corrupt low-`seq` line cannot lower it; the root
+  `tsconfig.json` now includes `apps/*/tests/**/*.ts`, so the new test is type-checked.

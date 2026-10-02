@@ -17,7 +17,7 @@
     "check": "npm run check --workspace apps/board && tsc -p tsconfig.json",
     "validate": "node packages/format/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
-    "test": "node --test \"packages/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
+    "test": "node --test \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "verify": "node scripts/verify.mjs",
     "map": "node scripts/verify.mjs --write-map"
   },
