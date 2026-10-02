@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-01
+> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-02
 
 # Vision Board — Project Rules
 
@@ -34,6 +34,7 @@ suggestions, action items), write it as one numbered list:
 
 - Group items under category headings, but **the numbering keeps incrementing across
   categories** (1–3 under the first heading, 4–7 under the next, and so on). Never restart at 1.
+- Sub-points are lettered under their number: 4A, 4B, 4C.
 - One point per number, short enough to answer in a word: the maintainer replies
   "1 ok, 4 skip, 7 more context".
 - Keep numbers stable when you follow up on the same list; refer back by number.
