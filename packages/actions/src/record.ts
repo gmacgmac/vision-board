@@ -1,12 +1,10 @@
 // Checks a transcript record against the action registry and the view it refers to. The server
 // runs this before appending; the browser runs it before sending. One rule set, both ends.
-import { ACTION_IDS } from '../../format/src/index.ts';
+import { ACTION_IDS, MAX_TEXT } from '../../format/src/index.ts';
 import type { TranscriptRecord } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { View } from '../../format/src/index.ts';
 import { ACTIONS } from './registry.ts';
-
-export const MAX_TEXT = 4000;
 
 export function validateRecord(input: unknown, view: View): string[] {
   if (typeof input !== 'object' || input === null) return ['record: must be an object'];

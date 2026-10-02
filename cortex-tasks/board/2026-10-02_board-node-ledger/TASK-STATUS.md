@@ -16,13 +16,15 @@ created: 2026-10-02
   `npm run check`, exit 0 each, read yourself.
 - This set runs before board v3's `<vb-node>` step, because `<vb-node>` draws the states and
   actions D-018 defines.
-- **Resume point (2026-10-02)**: design done, D-017 to D-021 accepted, open questions settled
-  in PLAN. Next: build step 1 (format version 2), with an explicit go.
+- **Resume point (2026-10-02)**: step 1 done. Ledger format 2 is defined and validated in
+  `packages/format` (`ledger.ts`, `ledger-shape.ts`, `ledger-index.ts`, fixture
+  `login-review.ledger.jsonl`). Every node gets a number; `item: true` marks those that ask for a
+  response. Nothing reads the ledger yet. Next: step 2, the ledger module, with an explicit go.
 
 | Step | Status | Commit | Notes |
 |---|---|---|---|
 | 0 Design and decisions | Done | | D-017 to D-021 accepted |
-| 1 Format v2 | Planned | | |
+| 1 Format v2 | Done | | Event types, shape and context checks, 9 tests |
 | 2 Ledger module | Planned | | |
 | 3 HTTP API and `vb` | Planned | | Replaces board v3 Stage 4 `vb wait` |
 | 4 MCP wrapper | Planned | | |

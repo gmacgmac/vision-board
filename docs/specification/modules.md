@@ -6,8 +6,8 @@
 | Module | Depends on | Used by | Public API (`src/index.ts`) |
 |---|---|---|---|
 | `apps/board` | `packages/actions`, `packages/format`, `packages/layout`, `packages/ui` | — | — |
-| `packages/actions` | `packages/format` | `apps/board`, `packages/ui` | { ACTIONS, DECIDED, ITEM_ACTIONS }; { ActionDef, ItemStatus }; { makeRecord, validateRecord, MAX_TEXT }; { counts, reduceTranscript, statusOf }; { BoardState, ItemNote, ItemState }; { replyText } |
-| `packages/format` | — | `apps/board`, `packages/actions`, `packages/layout`, `packages/ui` | * from view.ts; * from transcript.ts; * from validate.ts |
+| `packages/actions` | `packages/format` | `apps/board`, `packages/ui` | { ACTIONS, DECIDED, ITEM_ACTIONS }; { ActionDef, ItemStatus }; { makeRecord, validateRecord }; { counts, reduceTranscript, statusOf }; { BoardState, ItemNote, ItemState }; { replyText } |
+| `packages/format` | — | `apps/board`, `packages/actions`, `packages/layout`, `packages/ui` | * from view.ts; * from transcript.ts; * from validate.ts; * from ledger.ts; * from ledger-shape.ts; * from ledger-index.ts |
 | `packages/layout` | `packages/format` | `apps/board` | { layoutBoard, MODE_FNS }; { routeLinks, roundedPath }; { boundsOf, overlaps }; { LANE_GUTTER, REGION_HEAD, REGION_PAD }; * from types.ts |
 | `packages/ui` | `packages/actions`, `packages/format` | `apps/board` | * from item/item-core.ts; * from item/item-template.ts |
 | `scripts` | — | — | — |
