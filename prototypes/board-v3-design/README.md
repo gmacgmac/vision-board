@@ -9,8 +9,10 @@ behaviour into `packages/` and `apps/`, never this code. Open the pages through 
   with `README.md` listing every capability and where it goes.
 - `mockups/01b-cards-content-first.html`: **locked.** Cards, border tabs, footer, selection,
   open-frame containers.
-- `mockups/02-mode-picker.html`, `03-proposals-and-seen.html`, `04-decision-flow.html`: options
-  for the maintainer to pick by eye.
+- `mockups/02-mode-picker.html`, `03-proposals-and-seen.html`, `04-decision-flow.html`: the options
+  the maintainer picked from (picks below).
+- `mockups/05-final-spec.html` + `mockups/spec.css`: **the picks drawn as one page**, awaiting the
+  maintainer's confirmation by eye. `spec.css` holds the 01b card system once, so 05 does not copy it.
 
 ## Maintainer picks (2026-10-02)
 

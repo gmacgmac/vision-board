@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 — Final spec: the board with the 02-04 picks</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../architect-extract/architect.css">
+<link rel="stylesheet" href="spec.css">
+</head>
+<body>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 24 24"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></symbol>
+    <symbol id="i-lanes" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></symbol>
+    <symbol id="i-radial" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></symbol>
+    <symbol id="i-horiz" viewBox="0 0 24 24"><path d="M3 12h18"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></symbol>
+    <symbol id="i-vert" viewBox="0 0 24 24"><path d="M12 3v18"/><circle cx="12" cy="6" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-reopen" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.5-6M3.5 4v4h4"/><path d="M12 8v4l3 2"/></symbol>
+    <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></symbol>
+    <symbol id="i-finding" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-risk" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-action" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></symbol>
+    <symbol id="i-topic" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-decision" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+    <symbol id="i-agent" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/></symbol>
+    <symbol id="i-you" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m20 11-8.5 8.5a5 5 0 0 1-7-7L13 4a3.3 3.3 0 0 1 4.7 4.7L9.2 17.2a1.7 1.7 0 0 1-2.4-2.4L14.5 7"/></symbol>
+    <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5l3 3 5.8-5.8a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/></symbol>
+  </defs>
+</svg>
+<style>svg.ic { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }</style>
+
+<header class="page-head">
+  <div>
+    <a class="back" href="index.html">All mockups</a>
+    <h1>05 — Final spec: the board with the 02-04 picks</h1>
+    <p>One page for the combination you chose: the icon row with its cog on each container, proposals and unseen versions as overlays that point at their card, the decision flow with a horizontal/vertical toggle, and the chat on the right instead of a composer under the board. The cards are 01b, unchanged.</p>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Light theme</button>
+</header>
+
+<section class="sec-head"><h2>1 — The board, with the chat on the right</h2><p>You pasted a client email into the chat. The agent read it, proposed three changes, and the bar at the top counts them. 47's proposal is open as an overlay on top of its neighbour, 45's is out of date, and a new note on 42 is open beside it. Nothing on the board has moved or resized to make room.</p></section>
+<div class="shell">
+  <div class="shell-bar"><span class="name">Pricing review</span><span class="muted" style="font-size: 12.5px">Project: pricing-2027 · 9 nodes · 3 open items</span><span class="grow"></span><button class="btn btn-sm" type="button">Unseen (1)</button></div>
+  <div class="shell-main">
+    <main class="board" aria-label="Board">
+      <div class="board-bar"><div class="selbar at-top" role="region" aria-label="Agent proposals"><span>3 proposals from the agent</span><span class="muted">· 1 out of date</span><button class="btn btn-sm ghost" type="button">Review one by one</button><button class="btn btn-sm" type="button">Accept all (3)</button></div></div>
+
+      <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 7 decided</span></legend>
+        <div class="mode-row" role="radiogroup" aria-label="Layout for Pricing thread">
+          <button class="mseg" type="button" role="radio" aria-checked="true" aria-label="Grid" title="Grid"><svg class="ic" width="15" height="15"><use href="#i-grid"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Flow" title="Flow"><svg class="ic" width="15" height="15"><use href="#i-flow"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Lanes" title="Lanes"><svg class="ic" width="15" height="15"><use href="#i-lanes"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Radial" title="Radial"><svg class="ic" width="15" height="15"><use href="#i-radial"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="List" title="List"><svg class="ic" width="15" height="15"><use href="#i-list"/></svg></button>
+          <span class="div" aria-hidden="true"></span>
+          <button class="mseg" type="button" aria-label="Settings for Pricing thread" title="Container settings"><svg class="ic" width="15" height="15"><use href="#i-cog"/></svg></button>
+        </div>
+        <div class="cols">
+          <div class="col">
+            <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+              <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+              <div class="cb">
+                <h3 class="t">Do we grandfather existing annual plans?</h3>
+                <p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn. Grandfathering protects revenue but runs two price books for a year.</p>
+                <span class="lbl">Options</span>
+                <ul class="ul"><li><b>Grandfather for 12 months</b>, then migrate</li><li><b>Migrate at renewal</b> with a one-off credit</li></ul>
+              </div>
+              <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span>
+                <button class="qa" type="button" aria-label="History of 41 (decision flow)" title="History"><svg class="ic" width="15" height="15"><use href="#i-history"/></svg></button>
+                <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button>
+                <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button>
+                <button class="qa" type="button" aria-label="Note on 41"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+            </article>
+            <article class="card k-action is-proposed has-tab-bottom" tabindex="0" aria-label="Item 45, action, open, 1 out-of-date proposal">
+              <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><button class="tab prop stale" type="button" aria-haspopup="dialog" aria-expanded="false">OUT OF DATE</button>
+              <div class="cb">
+                <h3 class="t">Draft the migration email for grandfathered users</h3>
+                <p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p>
+              </div>
+              <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-action"/></svg><i class="sep"></i>Open</span>
+                <button class="qa" type="button" aria-label="Acknowledge 45"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button>
+                <button class="qa" type="button" aria-label="Drop 45"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button></div>
+            </article>
+          </div>
+          <div class="col">
+            <article class="card k-finding is-sel has-ovl" tabindex="0" aria-label="Item 42, finding, acknowledged, selected, note open">
+              <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span>
+              <div class="cb">
+                <h3 class="t">The usage tier carries 3x the support load</h3>
+                <span class="sub">6 weeks of beta tickets</span>
+                <ul class="ul"><li>Mostly onboarding confusion, not billing disputes</li><li>Drops to 1.4x after a customer's second month</li></ul>
+              </div>
+              <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-finding"/></svg><i class="sep"></i>Acknowledged</span>
+                <button class="qa" type="button" aria-label="Reopen 42"><svg class="ic" width="15" height="15"><use href="#i-reopen"/></svg></button></div>
+              <div class="ovl note to-right" style="--oy: 14px" role="dialog" aria-label="New note on 42">
+                <div class="head"><span class="nref k-finding">42</span><span class="grow">New note</span></div>
+                <textarea aria-label="Note text">What drives the onboarding confusion? Is it the plan picker?</textarea>
+                <div class="row"><span class="kbd-hint grow"><kbd>Enter</kbd> add · <kbd>Esc</kbd> cancel</span><button class="btn btn-sm" type="button">Cancel</button><button class="btn btn-sm btn-primary" type="button">Add note</button></div>
+              </div>
+            </article>
+            <article class="card k-question is-proposed has-ovl has-tab-bottom" tabindex="0" aria-label="Item 47, question, open, 1 proposal, proposal open">
+              <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span><button class="tab prop" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="prop47">PROPOSAL</button>
+              <div class="cb">
+                <h3 class="t">Will Northwind take the 20% prepay discount?</h3>
+                <p class="p">Offered on the 24 Sep call as the price of a two-year renewal.</p>
+              </div>
+              <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span></div>
+              <div class="ovl prop to-right" id="prop47" style="--oy: -6px" role="dialog" aria-label="Proposal on 47">
+                <div class="head"><span class="nref k-question">47</span><span class="grow">The agent proposes</span><button class="icon-btn" type="button" aria-label="Close" style="width: 26px; height: 26px"><svg class="ic" width="14" height="14"><use href="#i-x"/></svg></button></div>
+                <div class="what">Drop 47: the client declined</div>
+                <div><span class="diff-from">Open</span> → <span class="diff-to">Dropped</span></div>
+                <span class="src"><svg class="ic" width="13" height="13"><use href="#i-mail"/></svg>Email pasted in chat, 13:48</span>
+                <div class="row"><button class="btn btn-sm" type="button">Reject</button><button class="btn btn-sm btn-primary" type="button">Accept</button></div>
+              </div>
+            </article>
+          </div>
+          <div class="col">
+            <article class="card k-risk has-tab-bottom" tabindex="0" aria-label="Item 44, risk, commented, 3 unseen updates">
+              <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-expanded="false">3 UPDATES</button>
+              <div class="cb">
+                <h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3>
+                <p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing, so large self-serve teams have a reason to stall on sales.</p>
+                <div class="note-saved"><span class="who">Your note 1</span>Check with finance before we commit to a floor number.</div>
+              </div>
+              <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-risk"/></svg><i class="sep"></i>Commented</span>
+                <button class="qa" type="button" aria-label="Acknowledge 44"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button>
+                <button class="qa" type="button" aria-label="Drop 44"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button></div>
+            </article>
+            <article class="card k-decision is-dropped" tabindex="0" aria-label="Item 43, decision, dropped">
+              <span class="tab num">43</span><span class="tab kind" title="Drag to move">Decision</span>
+              <div class="cb"><h3 class="t">Kill the lifetime-deal tier</h3><p class="p">Dropped on Tuesday: two customers still on it.</p></div>
+              <div class="card-foot" style="color: var(--bad)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-decision"/></svg><i class="sep"></i>Dropped</span>
+                <button class="qa" type="button" aria-label="Reopen 43"><svg class="ic" width="15" height="15"><use href="#i-reopen"/></svg></button></div>
+            </article>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="fs g-later" style="max-width: 440px"><legend><span class="band-name">Later</span><span class="meta">1 parked</span></legend>
+        <div class="mode-row" role="radiogroup" aria-label="Layout for Later">
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Grid" title="Grid"><svg class="ic" width="15" height="15"><use href="#i-grid"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Flow" title="Flow"><svg class="ic" width="15" height="15"><use href="#i-flow"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Lanes" title="Lanes"><svg class="ic" width="15" height="15"><use href="#i-lanes"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Radial" title="Radial"><svg class="ic" width="15" height="15"><use href="#i-radial"/></svg></button>
+          <button class="mseg" type="button" role="radio" aria-checked="true" aria-label="List" title="List"><svg class="ic" width="15" height="15"><use href="#i-list"/></svg></button>
+          <span class="div" aria-hidden="true"></span>
+          <button class="mseg" type="button" aria-label="Settings for Later" title="Container settings"><svg class="ic" width="15" height="15"><use href="#i-cog"/></svg></button>
+        </div>
+        <article class="card k-topic" tabindex="0" aria-label="Item 46, topic, saved for later">
+          <span class="tab num">46</span><span class="tab kind" title="Drag to move">Topic</span>
+          <div class="cb"><h3 class="t">Regional pricing</h3><p class="p">Parked until after the EU launch. Handover written: situation, background, assessment, recommendation.</p></div>
+          <div class="card-foot" style="color: var(--c-monitor)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-topic"/></svg><i class="sep"></i>Saved for later</span></div>
+        </article>
+      </fieldset>
+    </main>
+
+    <aside class="chat" aria-label="Chat">
+      <div class="chat-head"><b>Chat</b><span class="pill ok">Agent connected</span></div>
+      <div class="chat-log" role="log" aria-label="Conversation">
+        <div class="msg you"><div class="who">You<span class="meta">13:47</span></div><p>Northwind replied. Update the board from this.</p>
+          <div class="paste"><span class="src"><svg class="ic" width="13" height="13"><use href="#i-mail"/></svg>Pasted email · 18 lines</span><span>"Thanks for the offer. We won't take the prepay discount this year, but we would like quarterly billing…"</span></div></div>
+        <div class="msg claude"><div class="who">Agent<span class="meta">13:48</span></div>
+          <p>I read the email and the finance sheet. Three changes are waiting for you on the board.</p>
+          <div class="tool"><svg class="ic" width="13" height="13"><use href="#i-tool"/></svg><code>board.propose</code><span class="okc">3 ok</span><span class="nref k-question">47</span><span class="nref k-risk">44</span><span class="nref new">new</span></div>
+          <p>45 is out of date: you edited it at 14:02, after I proposed marking it done. Reject it, or ask me to look again.</p></div>
+        <div class="msg you"><div class="who">You<span class="meta">14:05</span></div><p>Look again at 45.</p></div>
+        <div class="msg claude pending"><div class="who">Agent<span class="meta">14:05</span></div>
+          <div class="tool"><svg class="ic" width="13" height="13"><use href="#i-tool"/></svg><code>board.show 45 --linked</code><span class="okc">ok</span></div>
+          <p><span class="spinner" aria-hidden="true"></span>Checking 45 against your edit…</p></div>
+      </div>
+      <div class="chat-in">
+        <div class="cmp-context"><span class="cmp-label">Note</span><span class="ctx-chip"><span class="n">2</span><span class="t">42: What drives the onboarding…</span><button type="button" aria-label="Remove note 2"><svg class="ic" width="12" height="12"><use href="#i-x"/></svg></button></span><span class="cmp-label">Selected</span><span class="ctx-chip plain"><span class="t">42</span></span></div>
+        <div class="cmp-box">
+          <button class="icon-btn" type="button" aria-label="Attach a document"><svg class="ic" width="17" height="17"><use href="#i-clip"/></svg></button>
+          <textarea rows="2" aria-label="Message" placeholder="Message the agent, or paste an email or document…"></textarea>
+          <button class="cmp-send" type="button" aria-label="Send"><svg class="ic" width="18" height="18"><use href="#i-send"/></svg></button>
+        </div>
+        <span class="hint">Board changes arrive as tool calls; everything else is plain chat.</span>
+      </div>
+    </aside>
+  </div>
+</div>
+<section class="legend" aria-label="Notes on section 1">
+  <ul>
+    <li>Every overlay floats above the board with an arrow at its card; the card keeps its size and its neighbours stay put (pick 5). Here 42's note covers part of 44, and 47's proposal covers part of 43.</li>
+    <li>A card with a proposal waiting keeps a dashed outline, like a notification, until you decide it. The dashed line is deliberately unlike selection, which is the card's own colour at full strength (42).</li>
+    <li>When several overlays are open, the lowest item number sits on top.</li>
+    <li>The history button in 41's footer opens its decision flow (section 4).</li>
+  </ul>
+</section>
+
+<section class="sec-head"><h2>2 — Updates you haven't seen</h2><p>The "N UPDATES" tab opens the stepper as an overlay on that card. Each step shows one version you missed, with its changes marked; "Next update" moves on. On the latest version there is nothing to approve, because this is history, so the last step simply says it is the latest and offers Close. Closing marks every version you stepped through as seen.</p></section>
+<main class="stage" aria-label="Unseen versions">
+  <fieldset class="fs g-pricing" style="min-height: 400px"><legend><span class="band-name">Pricing thread</span><span class="meta">2 items with updates</span></legend>
+    <div class="cols" style="justify-content: space-between">
+      <article class="card k-risk is-sel has-ovl has-tab-bottom" tabindex="0" aria-label="Item 44, risk, showing update 2 of 3">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="steps44">3 UPDATES</button>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-risk"/></svg><i class="sep"></i>Commented</span></div>
+        <div class="ovl steps to-right" id="steps44" style="--oy: -4px" role="dialog" aria-label="Updates to 44, update 2 of 3">
+          <div class="head"><span class="nref k-risk">44</span><span class="grow"><b>Update 2 of 3</b> since you last looked</span><button class="icon-btn" type="button" aria-label="Close" style="width: 26px; height: 26px"><svg class="ic" width="14" height="14"><use href="#i-x"/></svg></button></div>
+          <div class="vstrip" role="group" aria-label="Unseen versions"><button class="vchip sm" type="button">v4</button><button class="vchip sm" type="button" aria-current="true">v5</button><button class="vchip sm unseen" type="button" aria-label="v6, not seen yet">v6</button></div>
+          <div class="vs-meta"><b>v5</b> · Wed 30 Sep, 15:40 · by the agent, from your note 1</div>
+          <div class="vs-body">
+            <h3 class="t">The enterprise floor undercuts self-serve at <span class="mark">35+</span> seats</h3>
+            <ul class="ul"><li><span class="mark">Adds a seat-based floor from 50 seats</span> as the fix</li><li>Crossover <span class="diff-from">40</span> → <span class="diff-to">35</span>, to match the finance sheet</li></ul>
+            <div class="changes"><span class="chg add">+ mitigation</span><span class="chg mod">~ title</span><span class="chg mod">~ crossover</span></div>
+          </div>
+          <div class="vs-nav"><span class="count"><span class="dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>2 of 3 seen</span><button class="btn btn-sm" type="button"><svg class="ic" width="14" height="14"><use href="#i-back"/></svg>Back</button><button class="btn btn-sm btn-primary" type="button">Next update</button></div>
+        </div>
+      </article>
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn. Grandfathering protects revenue but runs two price books for a year.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><p class="p">Mostly onboarding confusion, not billing disputes. Drops to 1.4x after a customer's second month.</p></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-finding"/></svg><i class="sep"></i>Acknowledged</span></div>
+      </article>
+      <article class="card k-action has-ovl has-tab-bottom" tabindex="0" aria-label="Item 48, action, showing its latest update">
+        <span class="tab num">48</span><span class="tab kind" title="Drag to move">Action</span><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="steps48">1 UPDATE</button>
+        <div class="cb"><h3 class="t">Send finance the credit model</h3><p class="p">Due Friday, so the migration email can quote the final amount.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-action"/></svg><i class="sep"></i>Open</span></div>
+        <div class="ovl steps to-left" id="steps48" style="--oy: -4px" role="dialog" aria-label="Updates to 48, latest version">
+          <div class="head"><span class="nref k-action">48</span><span class="grow"><b>Latest version</b></span><button class="icon-btn" type="button" aria-label="Close" style="width: 26px; height: 26px"><svg class="ic" width="14" height="14"><use href="#i-x"/></svg></button></div>
+          <div class="vstrip" role="group" aria-label="Unseen versions"><button class="vchip sm" type="button" aria-current="true">v2</button></div>
+          <div class="vs-meta"><b>v2</b> · Thu 1 Oct, 09:02 · by the agent</div>
+          <div class="vs-body"><p class="p">Due <span class="diff-from">Monday</span> → <span class="diff-to">Friday</span>, so the migration email can quote the final amount.</p><div class="changes"><span class="chg mod">~ due date</span></div></div>
+          <div class="vs-nav"><span class="count"><span class="dots" aria-hidden="true"><i class="on"></i></span>This is the latest</span><button class="btn btn-sm btn-primary" type="button">Close</button></div>
+        </div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<section class="sec-head"><h2>3 — Mode picker: the icon row, opened</h2><p>Closed, each container shows five layout icons and a cog on its top line (section 1). Hovering an icon, or opening the row from the keyboard, shows the tiles with one line each on what that layout is for. The agent picks the layout that fits what it is explaining; you can switch it to see the same nodes another way.</p></section>
+<main class="stage" aria-label="Mode picker open">
+  <fieldset class="fs g-pricing" style="min-height: 330px"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 7 decided</span></legend>
+    <div class="mode-row" role="radiogroup" aria-label="Layout for Pricing thread">
+      <button class="mseg" type="button" role="radio" aria-checked="true" aria-label="Grid"><svg class="ic" width="15" height="15"><use href="#i-grid"/></svg></button>
+      <button class="mseg is-hover" type="button" role="radio" aria-checked="false" aria-label="Flow" aria-describedby="modePop"><svg class="ic" width="15" height="15"><use href="#i-flow"/></svg></button>
+      <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Lanes"><svg class="ic" width="15" height="15"><use href="#i-lanes"/></svg></button>
+      <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Radial"><svg class="ic" width="15" height="15"><use href="#i-radial"/></svg></button>
+      <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="List"><svg class="ic" width="15" height="15"><use href="#i-list"/></svg></button>
+      <span class="div" aria-hidden="true"></span>
+      <button class="mseg" type="button" aria-label="Settings for Pricing thread"><svg class="ic" width="15" height="15"><use href="#i-cog"/></svg></button>
+    </div>
+    <div class="mode-pop" id="modePop" role="tooltip">
+      <div class="tiles">
+        <div class="mtile is-cur"><svg class="ic" width="22" height="22"><use href="#i-grid"/></svg>Grid<small>A numbered set to work through in order</small></div>
+        <div class="mtile is-hover"><svg class="ic" width="22" height="22"><use href="#i-flow"/></svg>Flow<small>Connected steps and where they branch</small></div>
+        <div class="mtile"><svg class="ic" width="22" height="22"><use href="#i-lanes"/></svg>Lanes<small>Several flows side by side, one per lane</small></div>
+        <div class="mtile"><svg class="ic" width="22" height="22"><use href="#i-radial"/></svg>Radial<small>One subject, everything related around it</small></div>
+        <div class="mtile"><svg class="ic" width="22" height="22"><use href="#i-list"/></svg>List<small>Dense reading, one row each</small></div>
+      </div>
+      <div class="foot"><span class="kbd-hint">The agent chose Grid for this container.</span><span class="kbd-hint"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> apply · <kbd>Esc</kbd> close</span></div>
+    </div>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><p class="p">Mostly onboarding confusion.</p></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-finding"/></svg><i class="sep"></i>Acknowledged</span></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<section class="sec-head"><h2>4 — Decision flow, both orientations</h2><p>One item's whole history from the ledger: your request, the agent's work, every version, your notes, and the moment you decided. The container's top line swaps the layout icons for a horizontal/vertical toggle. Both orientations use the same back-and-forth offset, and "you" looks identical in both.</p></section>
+<main class="stage" aria-label="Decision flow, horizontal">
+  <fieldset class="fs g-flow"><legend><span class="band-name">41 · Decision flow</span><span class="meta">9 steps · Mon 28 Sep to Thu 1 Oct</span></legend>
+    <div class="mode-row" role="radiogroup" aria-label="Orientation of the decision flow">
+      <button class="mseg" type="button" role="radio" aria-checked="true" aria-label="Horizontal" title="Horizontal"><svg class="ic" width="15" height="15"><use href="#i-horiz"/></svg></button>
+      <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Vertical" title="Vertical"><svg class="ic" width="15" height="15"><use href="#i-vert"/></svg></button>
+      <span class="div" aria-hidden="true"></span>
+      <button class="mseg" type="button" aria-label="Settings for this decision flow" title="Container settings"><svg class="ic" width="15" height="15"><use href="#i-cog"/></svg></button>
+    </div>
+    <div class="lane" tabindex="0" role="region" aria-label="History of 41, scrolls sideways">
+      <div class="lstep k-you"><span class="lwhen"><b>Mon 28 Sep</b>09:12</span>
+        <article class="card mini you" tabindex="0" aria-label="Your request"><span class="tab kind">Request</span><div class="cb"><span class="who-you">You, in chat</span><p class="p">Add the annual-plan question, with finance's three options.</p></div></article></div>
+      <div class="lstep k-agent"><span class="lwhen">09:13</span>
+        <article class="card mini" tabindex="0" aria-label="Agent run"><span class="tab kind">Agent</span><div class="cb"><span class="who-agent">The agent · 38s</span><p class="p">Created 41 from your request.</p><div class="changes"><span class="chg add">+ added 41</span></div></div></article></div>
+      <div class="lstep k-question"><span class="lwhen">09:13</span>
+        <article class="card mini" tabindex="0" aria-label="41 version 1"><span class="tab num">41</span><span class="tab kind">v1</span><div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><span class="lbl">Key points</span><ul class="ul"><li>Q4 churn</li><li>Two price books</li><li>Finance sign-off</li></ul></div></article></div>
+      <div class="lstep k-you"><span class="lwhen"><b>Tue 29 Sep</b>10:03</span>
+        <article class="card mini you" tabindex="0" aria-label="Your note 1"><span class="tab kind">Note 1</span><div class="cb"><span class="who-you">You</span><p class="p">What does the churn model say for each option?</p></div></article></div>
+      <div class="lstep k-question"><span class="lwhen">10:05</span>
+        <article class="card mini" tabindex="0" aria-label="41 version 2"><span class="tab num">41</span><span class="tab kind">v2</span><div class="cb"><p class="p">Churn per option: 2%, 6%, 11%.</p><div class="changes"><span class="chg add">+ churn</span><span class="chg mod">~ body</span></div></div><div class="card-foot" style="color: var(--muted)"><span class="word">Agent, from note 1</span><span class="took">52s</span></div></article></div>
+      <div class="lstep k-you"><span class="lwhen"><b>Wed 30 Sep</b>11:20</span>
+        <article class="card mini you" tabindex="0" aria-label="Your note 2"><span class="tab kind">Note 2</span><div class="cb"><span class="who-you">You</span><p class="p">Drop "migrate now", finance won't sign it.</p></div></article></div>
+      <div class="lstep k-question"><span class="lwhen">11:21</span>
+        <article class="card mini" tabindex="0" aria-label="41 version 3"><span class="tab num">41</span><span class="tab kind">v3</span><div class="cb"><p class="p">Two options left.</p><div class="changes"><span class="chg del">− migrate now</span></div></div><div class="card-foot" style="color: var(--muted)"><span class="word">Agent, from note 2</span><span class="took">21s</span></div></article></div>
+      <div class="lstep k-decision"><span class="lwhen"><b>Thu 1 Oct</b>16:40</span>
+        <article class="card mini is-sel" tabindex="0" aria-label="Decision, Thursday 1 October 16:40"><span class="tab num">41</span><span class="tab kind">Decision</span><div class="cb"><h3 class="t">Grandfather for 12 months, then migrate</h3></div><div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-decision"/></svg><i class="sep"></i>Decided by you</span></div></article></div>
+      <div class="lstep k-agent"><span class="lwhen">16:41</span>
+        <article class="card mini" tabindex="0" aria-label="Agent run after the decision"><span class="tab kind">Agent</span><div class="cb"><span class="who-agent">The agent · 24s</span><p class="p">Followed it through the thread.</p><div class="changes"><span class="chg add">+ added 45</span><span class="chg mod">~ 44</span></div></div></article></div>
+    </div>
+    <div class="kbd-hint">Your steps sit lower, the agent's and the item's higher. Scroll sideways with <kbd>←</kbd> <kbd>→</kbd> when the lane has focus.</div>
+  </fieldset>
+</main>
+
+<main class="stage" aria-label="Decision flow, vertical" style="margin-top: 28px">
+  <fieldset class="fs g-flow"><legend><span class="band-name">41 · Decision flow</span><span class="meta">the same 9 steps, vertical</span></legend>
+    <div class="mode-row" role="radiogroup" aria-label="Orientation of the decision flow">
+      <button class="mseg" type="button" role="radio" aria-checked="false" aria-label="Horizontal" title="Horizontal"><svg class="ic" width="15" height="15"><use href="#i-horiz"/></svg></button>
+      <button class="mseg" type="button" role="radio" aria-checked="true" aria-label="Vertical" title="Vertical"><svg class="ic" width="15" height="15"><use href="#i-vert"/></svg></button>
+      <span class="div" aria-hidden="true"></span>
+      <button class="mseg" type="button" aria-label="Settings for this decision flow" title="Container settings"><svg class="ic" width="15" height="15"><use href="#i-cog"/></svg></button>
+    </div>
+    <ol class="vflow" aria-label="History of 41">
+      <li class="k-you"><span class="when">Mon 28 Sep · 09:12</span>
+        <article class="card you" tabindex="0" aria-label="Your request"><span class="tab kind">Request</span><div class="cb"><span class="who-you">You, in chat</span><p class="p">Add the annual-plan question to the pricing thread, with the three options finance gave us.</p></div></article></li>
+      <li class="k-agent"><span class="when">09:13 · 38s</span>
+        <article class="card" tabindex="0" aria-label="Agent run, created 41"><span class="tab kind">Agent</span><div class="cb"><span class="who-agent">The agent</span><p class="p">Created 41 from your request and the finance notes.</p><div class="changes"><span class="chg add">+ added 41</span><span class="chg add">+ 3 options</span></div></div></article></li>
+      <li class="k-question"><span class="when">09:13</span>
+        <article class="card" tabindex="0" aria-label="41 version 1"><span class="tab num">41</span><span class="tab kind">v1</span><div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><span class="lbl">Key points</span><ul class="ul"><li><b>Q4 churn</b> if annual customers move at renewal</li><li><b>Two price books</b> for a year if we grandfather</li><li><b>Finance</b> has to sign off any credit</li></ul></div></article></li>
+      <li class="k-you"><span class="when">Tue 29 Sep · 10:03</span>
+        <article class="card you" tabindex="0" aria-label="Your note 1"><span class="tab kind">Note 1</span><div class="cb"><span class="who-you">You</span><p class="p">What does the churn model say for each option?</p></div></article></li>
+      <li class="k-question"><span class="when">10:05 · agent, 52s</span>
+        <article class="card" tabindex="0" aria-label="41 version 2"><span class="tab num">41</span><span class="tab kind">v2</span><div class="cb"><ul class="ul"><li>Churn estimate per option: <b>2%</b>, <b>6%</b>, <b>11%</b></li><li>Body rewritten around the churn numbers</li></ul><div class="changes"><span class="chg add">+ churn estimate</span><span class="chg mod">~ body</span></div></div></article></li>
+      <li class="k-you"><span class="when">Wed 30 Sep · 11:20</span>
+        <article class="card you" tabindex="0" aria-label="Your note 2"><span class="tab kind">Note 2</span><div class="cb"><span class="who-you">You</span><p class="p">Drop "migrate now", finance won't sign it.</p></div></article></li>
+      <li class="k-question"><span class="when">11:21 · agent, 21s</span>
+        <article class="card" tabindex="0" aria-label="41 version 3"><span class="tab num">41</span><span class="tab kind">v3</span><div class="cb"><p class="p">"Migrate now" removed. Two options left, each with its churn estimate.</p><div class="changes"><span class="chg del">− migrate now</span><span class="chg mod">~ options</span></div></div></article></li>
+      <li class="sys decided" role="note" style="width: auto"><svg class="ic" width="15" height="15" style="color: var(--accent-text)"><use href="#i-decision"/></svg><span>Decided by you: grandfather for 12 months, then migrate <small>· Thu 1 Oct, 16:40 · on v3</small></span></li>
+      <li class="k-agent"><span class="when">16:41 · 24s</span>
+        <article class="card" tabindex="0" aria-label="Agent run after the decision"><span class="tab kind">Agent</span><div class="cb"><span class="who-agent">The agent</span><p class="p">Followed the decision through the thread: added 45, the migration email, and updated 44 with the 12-month window.</p><div class="changes"><span class="chg add">+ added 45</span><span class="chg mod">~ changed 44</span></div></div></article></li>
+    </ol>
+  </fieldset>
+</main>
+<section class="legend" aria-label="Notes on sections 2-4">
+  <ul>
+    <li>All colours are Architect variables; this page adds none. "You" is the accent-soft fill everywhere: chat, notes, and both decision flows.</li>
+    <li>The decision flow opens from a card's history button and shows one item. Its container carries the orientation toggle and the cog instead of the five layout icons.</li>
+    <li>Contrast is not checked yet (tracker N1), so no pair here is cleared to ship.</li>
+  </ul>
+</section>
+<script>
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'light';
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    btn.textContent = dark ? 'Dark theme' : 'Light theme';
+  });
+</script>
+</body>
+</html>
