@@ -14,6 +14,10 @@ rules don't name. It is adapted from Uplynk Studio (`docs/vision.md` § How we b
 `docs/specification/rationale.md`, `docs/specification/architecture.md`, `packages/ui/README.md`,
 `packages/tokens/README.md` and the Studio Scaffold decision drafts, 2026-09-29 and 2026-09-30).
 
+**Our tenet: we don't know what the future looks like; we have to build it.** So we future-proof:
+we choose open, swappable shapes over ones that assume today's tools. Point 1 below is this tenet
+applied.
+
 ## What we are optimising for
 
 1. **A long life.** Frameworks, AI models and people will change several times. We favour what

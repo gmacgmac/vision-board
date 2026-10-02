@@ -11,6 +11,9 @@ output item by item (acknowledge, drop, comment, ask for more context, save for 
 agent can read that back and redraw. It works on any project, not only code. It is built to last,
 so every rule below favours things that stay true when frameworks, models and people change.
 
+**Our tenet: we don't know what the future looks like; we have to build it.** So we future-proof:
+we choose open, swappable shapes over ones that assume today's tools.
+
 **Status**: building. The walking skeleton runs; board v3 is in progress (tracker U1). Prototypes
 are reference, never a foundation to copy.
 
