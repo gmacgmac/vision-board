@@ -5,7 +5,7 @@
 ## Objective
 
 The board page loads boards and sends actions over the BE_03 routes, then the old view and
-transcript code is deleted, so one path is left.
+transcript code is archived, so one live path is left.
 
 ## Context
 
@@ -18,8 +18,9 @@ redraws the cards later; this task only swaps the data path.
 - **Modify**: `apps/board/src/board/io.ts`, `controller.ts`, `apps/board/src/shell/*.svelte` (wording),
   `packages/actions/src/index.ts`, `packages/format/src/index.ts`, `packages/format/src/view.ts`
   (header comment), `packages/format/README.md`, `apps/board/README.md`
-- **Delete**: `packages/actions/src/reduce.ts`, `record.ts`; `packages/format/src/transcript.ts`
-  (move `ACTION_IDS` and `ActionId` into `ledger.ts`)
+- **Archive (move to `prototypes/archive/view-format-v1/code/`)**: `packages/actions/src/reduce.ts`,
+  `record.ts`; `packages/format/src/transcript.ts` (first move `ACTION_IDS` and `ActionId` into
+  `ledger.ts`); `apps/board/server/sessions.ts` if BE_03 left it in place
 - **Reuse**: BE_03 routes; `boardState`, `replyText`, `ACTIONS` (actions)
 
 ## Steps
@@ -30,8 +31,9 @@ redraws the cards later; this task only swaps the data path.
    show in the existing error toast.
 3. [ ] Wording: "session" becomes "board" on screen. Empty state: "No boards yet. Run
    `npm run demo` to open the example boards."
-4. [ ] Delete the old modules once `grep` finds no caller; `npm run map` to regenerate
-   `docs/specification/modules.md`.
+4. [ ] `git mv` the old modules into the archive once `grep` finds no caller (the archive is
+   outside `npm run verify` and the type check, so nothing runs from it); add them to the
+   archive README. Then `npm run map` to regenerate `docs/specification/modules.md`.
 5. [ ] `view.ts` header: the projection layout reads, folded from the ledger, never a file.
 6. [ ] The steering file's "Where things live" row still says "the view file and the
    transcript". It is protected: write the replacement wording in the notes for the maintainer.

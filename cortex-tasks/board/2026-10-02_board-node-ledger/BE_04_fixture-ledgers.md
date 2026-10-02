@@ -5,8 +5,8 @@
 ## Objective
 
 Every test, the demo and the gallery run on fixture ledgers in the exact format (rule 11). The
-view-file fixtures and the old local sessions are removed, not kept as legacy (maintainer,
-2026-10-02, point 131).
+view-file fixtures and the old local sessions are archived as reference, not deleted
+(maintainer, 2026-10-02, point 255).
 
 ## Context
 
@@ -19,7 +19,8 @@ tests. `login-review.ledger.jsonl` (step 1) is the lifecycle walkthrough and sta
   `packages/format/fixtures/login-layout.ledger.jsonl`
 - **Modify**: `packages/layout/tests/layout.test.ts`, `packages/actions/tests/actions.test.ts`,
   `packages/format/tests/validate.test.ts`, `.gitignore`
-- **Delete**: `packages/format/fixtures/roadmap.json`, `login-review.json`; local `sessions/`
+- **Archive (move, see step 4)**: `packages/format/fixtures/roadmap.json`, `login-review.json`;
+  local `sessions/`
 - **Reuse**: `foldLedger`, `boardView`, `validateAct` (BE_01); `validateLedger`, `validateView`
 
 ## Steps
@@ -32,8 +33,12 @@ tests. `login-review.ledger.jsonl` (step 1) is the lifecycle walkthrough and sta
    every existing assertion's intent. Rewrite `actions.test.ts` around `validateAct` and
    `foldLedger`. `validate.test.ts`: the projection of every fixture ledger passes
    `validateView`, and the existing negative cases run on a projection copy.
-4. [ ] Delete the two view fixtures and the local `sessions/` folder; drop `sessions/` from
-   `.gitignore`. `.visionboard/` must not be ignored (it is committed, point 113).
+4. [ ] Archive, do not delete: `git mv` the two view fixtures into
+   `prototypes/archive/view-format-v1/fixtures/`, and move the local `sessions/` folder to
+   `prototypes/archive/view-format-v1/sessions/` (check it holds no PII first). Write
+   `prototypes/archive/view-format-v1/README.md`: what format 1 was, what replaced it (the
+   ledger, D-017), and that nothing runs from here. Add a line for it to `prototypes/README.md`.
+   Drop `sessions/` from `.gitignore`. `.visionboard/` must not be ignored (point 113).
 
 ## Validation
 

@@ -1,7 +1,7 @@
 ---
 category: board-format
 type: task-status
-status: planned
+status: in-progress
 tracker: cortex-tasks/tracker.md#U3
 created: 2026-10-02
 ---
@@ -20,9 +20,14 @@ created: 2026-10-02
   format 2 is defined and validated in `packages/format` (`ledger.ts`, `ledger-shape.ts`,
   `ledger-index.ts`, fixture `login-review.ledger.jsonl`). Every node gets a number; `item: true`
   marks those that ask for a response. Task files are written one step at a time from the latest PLAN.
-- **Who builds step 2**: the orchestrator, directly (Opus 5.5), not sub-agents. It defines the core
-  data pattern every later task reads (maintainer, 2026-10-02: no sub-agents while patterns are
-  being defined). Commit after each task, once the three gates pass.
+- **Who builds step 2 (revised 2026-10-02)**: sequential sub-agents via `cortex-task-exe`, one per
+  task, at the model in the table, at the maintainer's request. The orchestrator does NOT trust
+  return blocks (maintainer rule, overrides the skill): after each task it reads the `git diff`,
+  runs `npm test`, `npm run check` and `npm run verify` itself and reads each exit code, then
+  commits that task alone. A red gate or a BLOCKED/DEVIATION stops the run.
+- **Retired code is archived, not deleted** (maintainer, point 255): format-1 view files, the
+  transcript code and the old sessions move to `prototypes/archive/view-format-v1/` as reference.
+- **Checkpoint**: git tag `checkpoint/u3-step2-start` marks the tree before step 2.
 - **Known gap until U4**: step 2 removes view files, and the agent `write` call arrives with U4, so
   in between, boards come only from fixture ledgers (`npm run demo`).
 
@@ -43,7 +48,7 @@ created: 2026-10-02
 | 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | Pending | |
 | 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | Pending | |
 | 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | Pending | |
-| 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Opus 5.5 | Pending | |
+| 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Sonnet 5 | Pending | |
 
 Same wave = no shared files, so the tasks could run side by side; the orchestrator runs them in
 table order.

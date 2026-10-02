@@ -16,7 +16,7 @@ Until U4's `write` exists, boards come only from fixture ledgers (see TASK-STATU
 ## Inputs
 
 - **Modify**: `apps/board/server.ts`, `apps/board/bin/reply.ts`, root `package.json` (scripts)
-- **Delete**: `apps/board/server/sessions.ts`
+- **Delete**: nothing. `apps/board/server/sessions.ts` stays until FE_01 archives it.
 - **Reuse**: `openLedger`, `append`, `state`, `onAppend` (BE_02); `boardView`, `boardState`,
   `replyText` (BE_01); `guard`, `readJson`, `HttpError` (`server/guard.ts`)
 
