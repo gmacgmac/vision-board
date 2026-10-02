@@ -1,6 +1,6 @@
 ---
 category: project-decisions
-last_updated: 2026-10-01
+last_updated: 2026-10-02
 status: active
 scope: The decision register for Vision Board — one entry per decision, appended in order
 keywords: [decisions, register, adr, governance]
@@ -202,3 +202,64 @@ engine (D-013) were decided on 2026-10-01; the component model is D-005, still P
 - **Alternative rejected**: Conventions only, with no check. They drift as soon as an agent
   takes a shortcut.
 - **Task**: [[cortex-tasks/project/2026-10-01_project-tooling_foundation.md]]
+
+## D-017 Project ledger and node identity
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, node ledger design (tracker U3)
+- **Decision**: Node numbers are assigned by the server, per project, once, and never reused. A
+  project is any folder holding a `.visionboard/` data folder; git is not required. The
+  container is a property of the node, never part of its ID. History is an append-only JSON
+  Lines ledger, one readable event per line, written only through the single I/O layer, with
+  current state folded from it on load and writes applied one at a time by the server.
+- **Why**: "47" must mean one thing across chats, compactions and agents, and the record must
+  stay readable and diffable.
+- **Alternative rejected**: Container-prefixed IDs (they change on every move); per-board
+  numbers (renumbering later would repoint old references); SQLite now (not readable or
+  diffable; stays a swap behind the I/O layer).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
+
+## D-018 Versions, lifecycle, proposals and seen
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, node ledger design (tracker U3)
+- **Decision**: Every agent update to a node is a new version. Only a person's click closes an
+  item (acknowledged, dropped, decided); commented, needs context and parked mean the agent
+  owes a response. Agents propose changes, and the person accepts all, rejects all or decides
+  node by node; a proposal made against an older version cannot be accepted. A node shows its
+  unseen versions until the person steps through them. Seen is tracked per person, with one
+  person for now, and the agent is not told about people when there is only one.
+- **Why**: Keeps rule 8 while letting the agent do the legwork, and the agent never assumes a
+  change was read.
+- **Alternative rejected**: Letting a chat instruction close items directly (an agent deciding
+  for the person).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
+
+## D-019 One board API
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, node ledger design (tracker U3)
+- **Decision**: HTTP on the local server, an MCP server and the `vb` command are three doors to
+  one API (`check`, `write`, `show N [--linked]`, `open`, `propose`, `park`). Writes are per
+  node and streamable; each node is answered on its own, nodes appear on the board as they pass
+  validation, and every write ends with the pending items the agent has not answered. It
+  informs, it never fails the write. Every call names its agent. The agent-facing surface stays
+  minimal: optional fields are omitted when they do not apply, so the agent carries no
+  configuration it does not need.
+- **Why**: Any agent, any tool, many agents at once, with feedback instead of silent file edits,
+  at the smallest context cost.
+- **Alternative rejected**: Agents hand-editing JSON files; all-or-nothing writes.
+- **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
+
+## D-020 Parking bundles and branching
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, node ledger design (tracker U3)
+- **Decision**: Parking an item obliges the agent to write a handover bundle (situation,
+  background, assessment, recommendation, sources); the item stays pending until it is written.
+  Branching from an item starts a new board or chat carrying only that item's bundle and its
+  linked items' bundles.
+- **Why**: Context survives a week and a new chat without forking a whole conversation.
+- **Alternative rejected**: Forking the full conversation.
+- **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
+
+## D-021 Decision flow layout mode
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, node ledger design (tracker U3)
+- **Decision**: A layout mode that draws one item's ledger history as a timeline: the request,
+  key points, each version, the person's decision with its time, the work done and short notes.
+  It reads the ledger and ships behind a feature flag (rule 12).
+- **Why**: A lasting, readable record of how a decision was reached.
+- **Alternative rejected**: Reconstructing decisions from chat history.
+- **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]

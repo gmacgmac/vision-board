@@ -1,7 +1,7 @@
 ---
 category: board-format
 type: plan
-status: draft
+status: approved
 tracker: cortex-tasks/tracker.md#U3
 created: 2026-10-02
 scope: Node identity, lifecycle, the board API and parking — how agents and people share one board over a long conversation
@@ -11,7 +11,7 @@ scope: Node identity, lifecycle, the board API and parking — how agents and pe
 
 > **Status Doc**: [TASK-STATUS.md](./TASK-STATUS.md)
 > **Created**: 2026-10-02 · Design agreed in chat (maintainer, 2026-10-02, points 1–66 and the
-> "seen" follow-up). Not yet built. Decisions D-017 to D-021 below are drafts for the register.
+> "seen" follow-up). Not yet built. Decisions D-017 to D-021 accepted 2026-10-02.
 
 ---
 
@@ -134,13 +134,12 @@ and actions D-018 defines) → the rest of board v3, with Stage 4 folded into st
 
 ---
 
-## Open questions (settle in step 1)
+## Open questions (settled 2026-10-02)
 
-- Does each board keep immutable `view-vN.json` snapshots (rule 11 fixtures need the shape), or
-  is a view derived from the ledger on demand? Leaning: keep the view format for fixtures and
-  whole-board writes, derive live boards from the ledger.
-- Seen is per person. With more than one person on a board, does seen become per person ID?
-  Leaning: yes, one person for now, the field ready for more.
+- **View snapshots: keep them.** Fixtures and whole-board writes use the stored view format
+  (rule 11); live boards are rebuilt from the ledger.
+- **Seen: per person**, built for one person now. When there is only one person, the agent is
+  told nothing about people (D-018, D-019: the agent-facing surface stays minimal).
 
 ---
 
