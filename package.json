@@ -13,6 +13,7 @@
     "build": "npm run build --workspace apps/board",
     "board": "npm run build && node apps/board/server.ts",
     "serve": "node apps/board/server.ts",
+    "demo": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
     "watch": "npm run build --workspace apps/board -- --watch",
     "check": "npm run check --workspace apps/board && tsc -p tsconfig.json",
     "validate": "node packages/format/bin/validate.ts",
