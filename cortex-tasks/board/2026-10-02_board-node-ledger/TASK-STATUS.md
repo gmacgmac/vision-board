@@ -16,17 +16,47 @@ created: 2026-10-02
   `npm run check`, exit 0 each, read yourself.
 - This set runs before board v3's `<vb-node>` step, because `<vb-node>` draws the states and
   actions D-018 defines.
-- **Resume point (2026-10-02)**: step 1 done. Ledger format 2 is defined and validated in
-  `packages/format` (`ledger.ts`, `ledger-shape.ts`, `ledger-index.ts`, fixture
-  `login-review.ledger.jsonl`). Every node gets a number; `item: true` marks those that ask for a
-  response. Nothing reads the ledger yet. Next: step 2, the ledger module, after N7. Task files are written one step at a time from the latest PLAN.
+- **Resume point (2026-10-02)**: step 1 done; step 2 task files written (table below). Ledger
+  format 2 is defined and validated in `packages/format` (`ledger.ts`, `ledger-shape.ts`,
+  `ledger-index.ts`, fixture `login-review.ledger.jsonl`). Every node gets a number; `item: true`
+  marks those that ask for a response. Task files are written one step at a time from the latest PLAN.
+- **Who builds step 2**: the orchestrator, directly (Opus 5.5), not sub-agents. It defines the core
+  data pattern every later task reads (maintainer, 2026-10-02: no sub-agents while patterns are
+  being defined). Commit after each task, once the three gates pass.
+- **Known gap until U4**: step 2 removes view files, and the agent `write` call arrives with U4, so
+  in between, boards come only from fixture ledgers (`npm run demo`).
 
 | Step | Status | Commit | Notes |
 |---|---|---|---|
 | 0 Design and decisions | Done | | D-017 to D-021 accepted |
 | 1 Format v2 | Done | | Event types, shape and context checks, 9 tests |
-| 2 Ledger module and migration | Planned | | Next |
+| 2 Ledger module and migration | Planned | | Tasks below |
 | 3 Board UI: proposals, seen, park, branch | Planned | | After `<vb-node>` (board v3) |
 | 4 Incremental layout, decision flow | Planned | | |
+
+## Step 2 tasks
+
+| # | ID | Wave | Task | Model | Status | Commit |
+|---|---|---|---|---|---|---|
+| 1 | BE_01 | 1 | [Fold the ledger into board state](./BE_01_fold-and-projection.md) | Opus 5.5 | Pending | |
+| 2 | BE_02 | 2 | [The project ledger in the I/O layer](./BE_02_ledger-store.md) | Opus 5.5 | Pending | |
+| 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | Pending | |
+| 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | Pending | |
+| 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | Pending | |
+| 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Opus 5.5 | Pending | |
+
+Same wave = no shared files, so the tasks could run side by side; the orchestrator runs them in
+table order.
+
+## Shared foundations (step 2)
+
+| Artifact | Created by | Consumed by |
+|---|---|---|
+| `packages/format/src/ledger-index.ts` (`readLedger`) | BE_01 | BE_02 |
+| `packages/actions/src/fold.ts` (`foldLedger`, `boardView`, `boardState`) | BE_01 | BE_02, BE_03, BE_04, FE_01 |
+| `packages/actions/src/act.ts` (`validateAct`) | BE_01 | BE_02, BE_04 |
+| `apps/board/server/ledger.ts` (`openLedger`, `append`, `state`, `onAppend`) | BE_02 | BE_03 |
+| `packages/format/fixtures/roadmap.ledger.jsonl` | BE_04 | BE_03 (`demo` seed), VERIFY_01 |
+| `/api/boards` routes | BE_03 | FE_01 |
 
 API, `vb` and MCP: see `../2026-10-02_board-api-pattern/TASK-STATUS.md` (U4).
