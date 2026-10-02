@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vision Board — Design mockups</title>
+<link rel="stylesheet" href="../../packages/tokens/src/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font: var(--vb-weight-regular) var(--vb-text-md) / 1.5 var(--vb-font);
+    color: var(--vb-ink-strong); background: var(--vb-surface-canvas);
+    padding: var(--vb-space-5);
+  }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--vb-space-5); margin-bottom: var(--vb-space-5); }
+  .page-head h1 { font-size: var(--vb-text-xl); margin: 0 0 var(--vb-space-1); }
+  .page-head p { margin: 0; color: var(--vb-ink-subtle); max-width: 64ch; }
+  .theme-toggle { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); border: 1px solid var(--vb-line); flex: none; }
+  .theme-toggle button { font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); background: none; border: 0; border-radius: 4px; padding: var(--vb-space-1) var(--vb-space-3); cursor: pointer; }
+  .theme-toggle button[aria-pressed="true"] { background: var(--vb-surface-card); color: var(--vb-accent); font-weight: var(--vb-weight-medium); box-shadow: var(--vb-shadow-card); }
+  .theme-toggle button:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+  ul.pages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--vb-space-3); max-width: 760px; }
+  .pages li { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); background: var(--vb-surface-region); }
+  .pages a {
+    display: flex; align-items: baseline; gap: var(--vb-space-3); padding: var(--vb-space-4);
+    color: var(--vb-ink-strong); text-decoration: none; border-radius: var(--vb-radius-lg);
+  }
+  .pages a:hover { background: var(--vb-surface-card); }
+  .pages a:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+  .pages .num { font-family: var(--vb-font-mono); color: var(--vb-accent); font-weight: var(--vb-weight-bold); flex: none; }
+  .pages .label { font-weight: var(--vb-weight-medium); flex: none; }
+  .pages .one-line { color: var(--vb-ink-subtle); font-size: var(--vb-text-sm); }
+</style>
+</head>
+<body>
+<div class="page-head">
+  <div>
+    <h1>Vision Board — design mockups</h1>
+    <p>Four pages, each with 2–3 genuinely different directions for one piece of the board.
+    Spec only — nothing here is product code. Toggle light/dark on each page independently.</p>
+  </div>
+  <div class="theme-toggle" role="group" aria-label="Theme">
+    <button type="button" data-theme-choice="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+<ul class="pages">
+  <li><a href="01b-cards-content-first.html"><span class="num">01b</span><span class="label">Cards, content first (current)</span><span class="one-line">No icon tile; number, kind, pin and NEW or CHANGED sit on the card border; open-frame containers in their own colour.</span></a></li>
+  <li><a href="02-mode-picker.html"><span class="num">02</span><span class="label">Mode picker</span><span class="one-line">A title-bar mode pill that expands into Grid/Flow/Lanes/Radial/List, closed and open, with focus ring.</span></a></li>
+  <li><a href="03-proposals-and-seen.html"><span class="num">03</span><span class="label">Proposals and seen</span><span class="one-line">Agent proposals, the Accept-all bar, an out-of-date proposal, and the unseen-version stepper.</span></a></li>
+  <li><a href="04-decision-flow.html"><span class="num">04</span><span class="label">Decision flow</span><span class="one-line">One item's full ledger as a timeline — vertical, horizontal swimlane, or stacked cards.</span></a></li>
+</ul>
+<script>
+  var themeBtns = document.querySelectorAll('[data-theme-choice]');
+  themeBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.documentElement.setAttribute('data-theme', b.getAttribute('data-theme-choice'));
+      themeBtns.forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+  });
+</script>
+</body>
+</html>

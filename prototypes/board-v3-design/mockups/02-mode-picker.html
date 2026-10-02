@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 — Mode picker</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../architect-extract/architect.css">
+<style>
+  html, body { height: auto; }
+  body { overflow: auto; padding: 28px 32px 150px; }
+  .page-head { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; max-width: 1400px; margin: 0 auto 26px; }
+  .page-head h1 { margin: 0 0 6px; font: 600 22px/1.2 var(--f-display); }
+  .page-head p { margin: 0; max-width: 820px; color: var(--ink-2); }
+  .stage { position: relative; max-width: 1400px; margin: 0 auto; overflow: visible; border-radius: 18px; border: 1px solid var(--line); background-size: 22px 22px; padding: 40px 28px 40px; cursor: default; user-select: auto; display: grid; gap: 44px; }
+
+  /* Kind -> Architect family colour. */
+  .k-question { --fc: var(--c-content); } .k-finding { --fc: var(--c-channels); }
+  .k-decision { --fc: var(--accent); } .k-risk { --fc: var(--c-live); }
+  .k-action { --fc: var(--c-remix); } .k-topic { --fc: var(--c-monitor); }
+
+  /* Container: Option C (maintainer pick), an open frame in its own colour with the label in the top line. */
+  .fs { position: relative; margin: 0; padding: 36px 24px 30px; border: 1.5px solid color-mix(in srgb, var(--gc) 42%, var(--line)); border-radius: 18px; min-width: 0; }
+  .fs > legend { display: flex; align-items: center; gap: 10px; margin-left: 4px; padding: 0 10px; }
+  .band-name { font: 600 12px var(--f-mono); letter-spacing: .22em; text-transform: uppercase; color: color-mix(in srgb, var(--gc) 80%, var(--ink)); }
+  .fs .meta { font-size: 12px; color: var(--muted); }
+  .mode-pill { position: absolute; top: -14px; right: 18px; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); font-size: 12px; font-weight: 600; box-shadow: 0 0 0 6px var(--ground); }
+  .g-pricing { --gc: var(--accent); } .g-later { --gc: var(--c-monitor); }
+  .cols { display: flex; gap: 30px; align-items: flex-start; }
+  .col { display: grid; gap: 34px; width: 300px; }
+
+  /* Card v2: no icon tile. Everything on the border is a tab sitting in a gap cut out of the border. */
+  .card { position: relative; width: 300px; cursor: pointer; }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .card.is-sel { border-color: var(--fc); box-shadow: 0 0 0 1.5px var(--fc), 0 0 22px -6px color-mix(in srgb, var(--fc) 70%, transparent), var(--shadow); }
+  .card.is-sel::before { height: 2px; background: var(--fc); }
+  .card.is-dropped { opacity: .55; } .card.is-dropped .t { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .tab { position: absolute; display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 6px; box-shadow: 0 0 0 4px var(--gap, var(--ground)); white-space: nowrap; }
+  .tab.num { top: -11px; left: 14px; border: 1px solid color-mix(in srgb, var(--fc) 50%, var(--line)); background: var(--surface); color: var(--ink); font: 600 11px var(--f-mono); }
+  .tab.kind { top: -11px; left: 50%; transform: translateX(-50%); border-radius: 999px; border: 1px solid color-mix(in srgb, var(--fc) 55%, transparent); background: color-mix(in srgb, var(--fc) 16%, var(--gap, var(--ground))); color: var(--fc); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; cursor: grab; }
+  .tab.kind::before { content: ""; width: 6px; height: 8px; background: radial-gradient(currentColor 1px, transparent 1.2px) 0 0 / 3px 3px; opacity: .7; }
+  .tab.flag { bottom: -11px; right: 14px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: .06em; background: var(--accent); color: var(--accent-ink); }
+  .tab.flag.changed { background: var(--warn); color: #1a1405; }
+  .card .pin { left: auto; top: -12px; right: -12px; transform: none; }
+
+  .cb { display: grid; gap: 9px; padding: 20px 16px 14px; }
+  .t { margin: 0; font: 600 16px/1.3 var(--f-display); letter-spacing: -.01em; }
+  .sub { font-size: 12.5px; font-weight: 600; color: var(--fc); }
+  .p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .ul b { color: var(--ink); font-weight: 600; }
+  .reply { display: grid; gap: 4px; padding: 9px 11px; border-radius: 10px; background: color-mix(in srgb, var(--fc) 9%, var(--surface-2)); font-size: 13px; color: var(--ink-2); }
+  .reply .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--fc); }
+  .card-foot { display: flex; align-items: center; gap: 6px; padding: 8px 10px 9px 14px; border-top: 1px solid color-mix(in srgb, var(--fc) 18%, var(--line)); font-size: 12px; font-weight: 600; }
+  .card-foot .word { flex: 1; display: inline-flex; align-items: center; gap: 7px; }
+  .card-foot .kico { color: var(--fc); }
+  .card-foot .sep { width: 1px; height: 12px; background: var(--line-strong); }
+  .qa { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; border: 0; background: none; color: var(--muted); }
+  .qa:hover { background: var(--surface-2); color: var(--ink); }
+  .note-pop { position: relative; width: 300px; margin-top: 0; }
+  .note-saved { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--accent-line); background: var(--accent-soft); font-size: 13px; color: var(--ink-2); }
+  .note-saved .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); }
+  .legend { max-width: 1400px; margin: 22px auto 0; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font-size: 13px; }
+  .legend ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+  .dock-demo { position: fixed; left: 50%; bottom: 18px; z-index: 20; width: min(760px, calc(100vw - 48px)); transform: translateX(-50%); }
+  /* ---------- Shared mockup-page pieces (02-04) ---------- */
+  .back { display: inline-block; margin-bottom: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+  .recline { margin-top: 10px !important; color: var(--ink) !important; font-weight: 600; }
+  .rec { display: inline-flex; align-items: center; height: 21px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-text); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+  .opt-head { max-width: 1400px; margin: 40px auto 14px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+  .opt-head h2 { margin: 0; font: 600 17px/1.2 var(--f-display); letter-spacing: -.01em; }
+  .opt-head p { margin: 0; flex-basis: 100%; color: var(--ink-2); font-size: 13.5px; }
+  .is-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .kbd-hint { font-size: 11.5px; color: var(--muted); }
+  .kbd-hint kbd { padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-strong); font: 11px var(--f-mono); color: var(--ink-2); }
+  .cb .t { font-size: 15px; }
+  .cmp-context .ctx-chip .t { margin: 0; font: 600 12.5px var(--f-body); letter-spacing: 0; } /* .t (card title) would otherwise restyle the chip text */
+
+  /* ---------- 02: the pill, open ---------- */
+  .mode-pill .ic.chev { transition: rotate .15s; }
+  .mode-pill[aria-expanded="true"] { border-color: color-mix(in srgb, var(--gc) 70%, var(--line)); color: var(--ink); }
+  .mode-pill[aria-expanded="true"] .chev { rotate: 180deg; }
+  .mode-pill .cur { color: var(--gc); }
+
+  /* Option A: popover of icon tiles under the pill */
+  .mode-pop { position: absolute; top: 20px; right: 18px; z-index: 8; display: grid; gap: 10px; width: 336px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-lg); }
+  .mode-pop .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mtile { display: grid; justify-items: center; align-content: start; gap: 6px; padding: 12px 6px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font-size: 12px; font-weight: 600; }
+  .mtile:hover { background: var(--surface-2); color: var(--ink); }
+  .mtile small { font-size: 11px; font-weight: 500; color: var(--muted); text-align: center; line-height: 1.3; }
+  .mtile[aria-checked="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-text); }
+  .mode-pop .foot { display: flex; justify-content: space-between; padding: 2px 4px 0; }
+
+  /* Option B: the pill widens along the top line into a segmented row */
+  .mode-seg { position: absolute; top: -16px; right: 18px; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--gc) 60%, var(--line)); background: var(--surface); box-shadow: 0 0 0 6px var(--ground); }
+  .seg { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border: 0; border-radius: 7px; background: none; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .seg:hover { color: var(--ink); background: var(--surface-2); }
+  .seg[aria-checked="true"] { background: color-mix(in srgb, var(--gc) 16%, var(--surface-2)); color: var(--ink); box-shadow: var(--shadow); }
+  .seg-tip { position: absolute; top: 22px; right: 18px; z-index: 8; padding: 6px 10px; border-radius: 9px; border: 1px solid var(--line-strong); background: var(--surface); box-shadow: var(--shadow-lg); font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .seg-tip b { color: var(--ink); }
+  .mode-seg.icons-only .seg { padding: 0 6px; }
+
+  /* Option C: a strip of tiles that drops inside the frame and pushes the cards down */
+  .mode-strip { display: flex; align-items: stretch; gap: 8px; margin: -10px 0 30px; padding: 10px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--gc) 45%, var(--line)); background: color-mix(in srgb, var(--gc) 6%, var(--surface)); }
+  .stile { flex: 1; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); text-align: left; font-size: 13px; font-weight: 600; }
+  .stile:hover { background: var(--surface-2); color: var(--ink); }
+  .stile span { display: grid; gap: 1px; }
+  .stile small { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+  .stile[aria-checked="true"] { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-text); }
+  .strip-end { display: grid; align-content: center; justify-items: end; gap: 6px; padding-left: 6px; }
+</style>
+</head>
+<body>
+<header class="page-head">
+  <div>
+    <a class="back" href="index.html">All mockups</a>
+    <h1>02 — Mode picker</h1>
+    <p>Every container shows its layout on its top line as a pill, opposite the label. Choosing the pill (click, or Enter or Space when it has focus) opens a picker of the five layouts: Grid, Flow, Lanes, Radial and List. The choice applies to that container only. Arrow keys move between layouts, Enter applies, Esc closes and puts focus back on the pill.</p>
+    <p class="recline">Recommendation: A, the popover of tiles. It has room for a one-line hint per layout, works the same on a 400px container as on a full-width one, and does not move any card.</p>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Light theme</button>
+</header>
+
+<div class="opt-head"><h2>Closed (the same in A, B and C)</h2><p>The pill names the current layout. Nothing else on the frame changes.</p></div>
+<main class="stage" aria-label="Closed state">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 6 decided</span></legend><button class="mode-pill" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Layout mode: grid. Change layout">Grid <svg class="ic chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
+          <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged, new">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><span class="sub">6 weeks of beta tickets</span></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><i class="sep"></i>Acknowledged</span>
+          <button class="qa" type="button" aria-label="Reopen 42"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button></div>
+      </article>
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, note 1, changed">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag changed">CHANGED</span>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 40+ seats</h3><p class="p">Large self-serve teams have a reason to stall on sales.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span>
+          <button class="qa" type="button" aria-label="Acknowledge 44"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option A — Popover of tiles under the pill</h2><span class="rec">Recommended</span><p>A small panel drops from the pill over the frame's corner: five tiles, each an icon, a name and a one-line hint. Cards stay where they are.</p></div>
+<main class="stage" aria-label="Option A, open">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 6 decided</span></legend><button class="mode-pill" type="button" aria-haspopup="menu" aria-expanded="true" aria-controls="popA" aria-label="Layout mode: grid. Close layout picker">Grid <svg class="ic chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="mode-pop" id="popA">
+      <div class="tiles" role="menu" aria-label="Layout for Pricing thread">
+        <button class="mtile" type="button" role="menuitemradio" aria-checked="true"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Grid<small>Columns of cards</small></button>
+        <button class="mtile is-focus" type="button" role="menuitemradio" aria-checked="false"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></svg>Flow<small>Left to right, linked</small></button>
+        <button class="mtile" type="button" role="menuitemradio" aria-checked="false"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>Lanes<small>A row per state</small></button>
+        <button class="mtile" type="button" role="menuitemradio" aria-checked="false"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></svg>Radial<small>Around one item</small></button>
+        <button class="mtile" type="button" role="menuitemradio" aria-checked="false"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>List<small>Compact rows</small></button>
+      </div>
+      <div class="foot"><span class="kbd-hint"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> apply</span><span class="kbd-hint"><kbd>Esc</kbd> close</span></div>
+    </div>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
+          <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged, new">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><span class="sub">6 weeks of beta tickets</span></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><i class="sep"></i>Acknowledged</span>
+          <button class="qa" type="button" aria-label="Reopen 42"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button></div>
+      </article>
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, note 1, changed">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag changed">CHANGED</span>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 40+ seats</h3><p class="p">Large self-serve teams have a reason to stall on sales.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span>
+          <button class="qa" type="button" aria-label="Acknowledge 44"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option B — The pill widens along the top line</h2><p>The pill grows to the left into a segmented row that stays on the frame's line. One click from closed to any layout; a tooltip names the focused one. On a narrow container the row drops to icons only.</p></div>
+<main class="stage" aria-label="Option B, open">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 6 decided</span></legend>
+    <div class="mode-seg" role="radiogroup" aria-label="Layout for Pricing thread">
+      <button class="seg" type="button" role="radio" aria-checked="true"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>Grid</button>
+      <button class="seg is-focus" type="button" role="radio" aria-checked="false" aria-describedby="tipB"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></svg>Flow</button>
+      <button class="seg" type="button" role="radio" aria-checked="false"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>Lanes</button>
+      <button class="seg" type="button" role="radio" aria-checked="false"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></svg>Radial</button>
+      <button class="seg" type="button" role="radio" aria-checked="false"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>List</button>
+    </div>
+    <div class="seg-tip" id="tipB" role="tooltip"><b>Flow</b> · left to right, linked · <span class="kbd-hint"><kbd>Enter</kbd> apply · <kbd>Esc</kbd> close</span></div>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
+          <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged, new">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><span class="sub">6 weeks of beta tickets</span></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><i class="sep"></i>Acknowledged</span>
+          <button class="qa" type="button" aria-label="Reopen 42"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button></div>
+      </article>
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, note 1, changed">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag changed">CHANGED</span>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 40+ seats</h3><p class="p">Large self-serve teams have a reason to stall on sales.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span>
+          <button class="qa" type="button" aria-label="Acknowledge 44"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button></div>
+      </article>
+    </div>
+  </fieldset>
+  <fieldset class="fs g-later" style="max-width: 400px"><legend><span class="band-name">Later</span></legend>
+    <div class="mode-seg icons-only" role="radiogroup" aria-label="Layout for Later">
+      <button class="seg" type="button" role="radio" aria-checked="true" aria-label="Grid"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+      <button class="seg" type="button" role="radio" aria-checked="false" aria-label="Flow"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></svg></button>
+      <button class="seg" type="button" role="radio" aria-checked="false" aria-label="Lanes"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg></button>
+      <button class="seg" type="button" role="radio" aria-checked="false" aria-label="Radial"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></svg></button>
+      <button class="seg" type="button" role="radio" aria-checked="false" aria-label="List"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg></button>
+    </div>
+    <article class="card k-topic" tabindex="0" aria-label="Item 46, topic, saved for later">
+      <span class="tab num">46</span><span class="tab kind" title="Drag to move">Topic</span>
+      <div class="cb"><h3 class="t">Regional pricing</h3><p class="p">Parked until after the EU launch. On a narrow frame the row is icons only, so the label keeps its room.</p></div>
+      <div class="card-foot" style="color: var(--c-monitor)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg><i class="sep"></i>Saved for later</span></div>
+    </article>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option C — A strip of tiles inside the frame</h2><p>The pill flips its chevron and a strip of five wide tiles drops in under the top line, pushing the cards down while it is open. Most room for words, but every open moves the board.</p></div>
+<main class="stage" aria-label="Option C, open">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 of 6 decided</span></legend><button class="mode-pill" type="button" aria-haspopup="true" aria-expanded="true" aria-controls="stripC" aria-label="Layout mode: grid. Close layout picker">Grid <svg class="ic chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="mode-strip" id="stripC" role="radiogroup" aria-label="Layout for Pricing thread">
+      <button class="stile" type="button" role="radio" aria-checked="true"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg><span>Grid<small>Columns of cards</small></span></button>
+      <button class="stile" type="button" role="radio" aria-checked="false"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></svg><span>Flow<small>Left to right, linked</small></span></button>
+      <button class="stile is-focus" type="button" role="radio" aria-checked="false"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg><span>Lanes<small>A row per state</small></span></button>
+      <button class="stile" type="button" role="radio" aria-checked="false"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></svg><span>Radial<small>Around one item</small></span></button>
+      <button class="stile" type="button" role="radio" aria-checked="false"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg><span>List<small>Compact rows</small></span></button>
+      <div class="strip-end"><span class="kbd-hint"><kbd>←</kbd> <kbd>→</kbd> move</span><span class="kbd-hint"><kbd>Esc</kbd> close</span></div>
+    </div>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 41, question, open">
+        <span class="tab num">41</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers to usage pricing at renewal risks Q4 churn.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button>
+          <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      </article>
+      <article class="card k-finding" tabindex="0" aria-label="Item 42, finding, acknowledged, new">
+        <span class="tab num">42</span><span class="tab kind" title="Drag to move">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3><span class="sub">6 weeks of beta tickets</span></div>
+        <div class="card-foot" style="color: var(--ok)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><i class="sep"></i>Acknowledged</span>
+          <button class="qa" type="button" aria-label="Reopen 42"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v5h5"/></svg></button></div>
+      </article>
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, note 1, changed">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag changed">CHANGED</span>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 40+ seats</h3><p class="p">Large self-serve teams have a reason to stall on sales.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span>
+          <button class="qa" type="button" aria-label="Acknowledge 44"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg></button></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<section class="legend" aria-label="Notes">
+  <ul>
+    <li>Focus shown on one layout in each open state (Flow in A and B, Lanes in C) is the keyboard ring, not a selection. The current layout keeps the accent fill.</li>
+    <li>Closing applies nothing; only Enter, Space or a click on a layout changes the container.</li>
+    <li>Colours are Architect variables only; no new colours on this page.</li>
+  </ul>
+</section>
+
+<div class="dock-demo">
+  <div class="composer">
+    <div class="cmp-context"><span class="cmp-label">Selected</span><span class="ctx-chip plain"><span class="t">Pricing thread</span></span></div>
+    <div class="cmp-box">
+      <span class="cmp-mode">Board</span>
+      <textarea rows="1" aria-label="Message" placeholder="Say what to change, or add notes on the board and send…"></textarea>
+      <button class="cmp-send" type="button" aria-label="Send"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+  </div>
+</div>
+<script>
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'light';
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    btn.textContent = dark ? 'Dark theme' : 'Light theme';
+  });
+</script>
+</body>
+</html>

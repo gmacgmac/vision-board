@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 — Proposals and seen</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../architect-extract/architect.css">
+<style>
+  html, body { height: auto; }
+  body { overflow: auto; padding: 28px 32px 150px; }
+  .page-head { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; max-width: 1400px; margin: 0 auto 26px; }
+  .page-head h1 { margin: 0 0 6px; font: 600 22px/1.2 var(--f-display); }
+  .page-head p { margin: 0; max-width: 820px; color: var(--ink-2); }
+  .stage { position: relative; max-width: 1400px; margin: 0 auto; overflow: visible; border-radius: 18px; border: 1px solid var(--line); background-size: 22px 22px; padding: 40px 28px 40px; cursor: default; user-select: auto; display: grid; gap: 44px; }
+
+  /* Kind -> Architect family colour. */
+  .k-question { --fc: var(--c-content); } .k-finding { --fc: var(--c-channels); }
+  .k-decision { --fc: var(--accent); } .k-risk { --fc: var(--c-live); }
+  .k-action { --fc: var(--c-remix); } .k-topic { --fc: var(--c-monitor); }
+
+  /* Container: Option C (maintainer pick), an open frame in its own colour with the label in the top line. */
+  .fs { position: relative; margin: 0; padding: 36px 24px 30px; border: 1.5px solid color-mix(in srgb, var(--gc) 42%, var(--line)); border-radius: 18px; min-width: 0; }
+  .fs > legend { display: flex; align-items: center; gap: 10px; margin-left: 4px; padding: 0 10px; }
+  .band-name { font: 600 12px var(--f-mono); letter-spacing: .22em; text-transform: uppercase; color: color-mix(in srgb, var(--gc) 80%, var(--ink)); }
+  .fs .meta { font-size: 12px; color: var(--muted); }
+  .mode-pill { position: absolute; top: -14px; right: 18px; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); font-size: 12px; font-weight: 600; box-shadow: 0 0 0 6px var(--ground); }
+  .g-pricing { --gc: var(--accent); } .g-later { --gc: var(--c-monitor); }
+  .cols { display: flex; gap: 30px; align-items: flex-start; }
+  .col { display: grid; gap: 34px; width: 300px; }
+
+  /* Card v2: no icon tile. Everything on the border is a tab sitting in a gap cut out of the border. */
+  .card { position: relative; width: 300px; cursor: pointer; }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .card.is-sel { border-color: var(--fc); box-shadow: 0 0 0 1.5px var(--fc), 0 0 22px -6px color-mix(in srgb, var(--fc) 70%, transparent), var(--shadow); }
+  .card.is-sel::before { height: 2px; background: var(--fc); }
+  .card.is-dropped { opacity: .55; } .card.is-dropped .t { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .tab { position: absolute; display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 6px; box-shadow: 0 0 0 4px var(--gap, var(--ground)); white-space: nowrap; }
+  .tab.num { top: -11px; left: 14px; border: 1px solid color-mix(in srgb, var(--fc) 50%, var(--line)); background: var(--surface); color: var(--ink); font: 600 11px var(--f-mono); }
+  .tab.kind { top: -11px; left: 50%; transform: translateX(-50%); border-radius: 999px; border: 1px solid color-mix(in srgb, var(--fc) 55%, transparent); background: color-mix(in srgb, var(--fc) 16%, var(--gap, var(--ground))); color: var(--fc); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; cursor: grab; }
+  .tab.kind::before { content: ""; width: 6px; height: 8px; background: radial-gradient(currentColor 1px, transparent 1.2px) 0 0 / 3px 3px; opacity: .7; }
+  .tab.flag { bottom: -11px; right: 14px; border-radius: 6px; font-size: 10px; font-weight: 800; letter-spacing: .06em; background: var(--accent); color: var(--accent-ink); }
+  .tab.flag.changed { background: var(--warn); color: #1a1405; }
+  .card .pin { left: auto; top: -12px; right: -12px; transform: none; }
+
+  .cb { display: grid; gap: 9px; padding: 20px 16px 14px; }
+  .t { margin: 0; font: 600 16px/1.3 var(--f-display); letter-spacing: -.01em; }
+  .sub { font-size: 12.5px; font-weight: 600; color: var(--fc); }
+  .p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .ul b { color: var(--ink); font-weight: 600; }
+  .reply { display: grid; gap: 4px; padding: 9px 11px; border-radius: 10px; background: color-mix(in srgb, var(--fc) 9%, var(--surface-2)); font-size: 13px; color: var(--ink-2); }
+  .reply .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--fc); }
+  .card-foot { display: flex; align-items: center; gap: 6px; padding: 8px 10px 9px 14px; border-top: 1px solid color-mix(in srgb, var(--fc) 18%, var(--line)); font-size: 12px; font-weight: 600; }
+  .card-foot .word { flex: 1; display: inline-flex; align-items: center; gap: 7px; }
+  .card-foot .kico { color: var(--fc); }
+  .card-foot .sep { width: 1px; height: 12px; background: var(--line-strong); }
+  .qa { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; border: 0; background: none; color: var(--muted); }
+  .qa:hover { background: var(--surface-2); color: var(--ink); }
+  .note-pop { position: relative; width: 300px; margin-top: 0; }
+  .note-saved { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--accent-line); background: var(--accent-soft); font-size: 13px; color: var(--ink-2); }
+  .note-saved .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); }
+  .legend { max-width: 1400px; margin: 22px auto 0; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font-size: 13px; }
+  .legend ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+  .dock-demo { position: fixed; left: 50%; bottom: 18px; z-index: 20; width: min(760px, calc(100vw - 48px)); transform: translateX(-50%); }
+  /* ---------- Shared mockup-page pieces (02-04) ---------- */
+  .back { display: inline-block; margin-bottom: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--ink); }
+  .recline { margin-top: 10px !important; color: var(--ink) !important; font-weight: 600; }
+  .rec { display: inline-flex; align-items: center; height: 21px; padding: 0 8px; border-radius: 999px; border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-text); font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+  .opt-head { max-width: 1400px; margin: 40px auto 14px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+  .opt-head h2 { margin: 0; font: 600 17px/1.2 var(--f-display); letter-spacing: -.01em; }
+  .opt-head p { margin: 0; flex-basis: 100%; color: var(--ink-2); font-size: 13.5px; }
+  .is-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .kbd-hint { font-size: 11.5px; color: var(--muted); }
+  .kbd-hint kbd { padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line-strong); font: 11px var(--f-mono); color: var(--ink-2); }
+  .cb .t { font-size: 15px; }
+  .cmp-context .ctx-chip .t { margin: 0; font: 600 12.5px var(--f-body); letter-spacing: 0; } /* .t (card title) would otherwise restyle the chip text */
+
+  /* ---------- 03: proposals ---------- */
+  .part-head { max-width: 1400px; margin: 48px auto 0; padding-top: 18px; border-top: 1px solid var(--line); }
+  .part-head h2 { margin: 0 0 4px; font: 600 20px/1.2 var(--f-display); }
+  .part-head p { margin: 0; max-width: 860px; color: var(--ink-2); }
+  .row-top { display: grid; justify-items: start; gap: 10px; }
+  .has-tab-bottom .card-foot { padding-bottom: 15px; }
+  button.tab { border: 0; font-family: inherit; cursor: pointer; }
+  .tab.prop { bottom: -11px; left: 14px; border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-text); font-size: 10px; font-weight: 800; letter-spacing: .06em; }
+  .tab.prop.stale { border-color: var(--line-strong); background: var(--surface-2); color: var(--muted); }
+  .src { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+  .btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
+  .why-stale { display: flex; align-items: flex-start; gap: 6px; font-size: 12px; font-weight: 500; color: var(--warn); }
+  .why-stale .ic { margin-top: 2px; }
+  .acts { display: flex; gap: 6px; }
+  /* A: tab on the border + a footer row */
+  .prop-row { display: grid; gap: 8px; padding: 10px 10px 16px 14px; border-top: 1px dashed var(--accent-line); background: color-mix(in srgb, var(--accent) 6%, transparent); border-radius: 0 0 13px 13px; font-size: 13px; }
+  .prop-row.stale { border-top-color: var(--line-strong); background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+  .prop-row .line { display: flex; align-items: center; gap: 8px; }
+  .prop-row .what { flex: 1; font-weight: 600; color: var(--ink); }
+  /* B: a callout in the body */
+  .prop-call { display: grid; gap: 7px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--accent-line); background: var(--accent-soft); font-size: 13px; color: var(--ink-2); }
+  .prop-call .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); }
+  .prop-call b { color: var(--ink); }
+  .prop-call.stale { border-color: var(--line-strong); background: var(--surface-2); }
+  .prop-call.stale .who { color: var(--muted); }
+  .prop-call .acts { justify-content: flex-end; }
+  /* C: a note-pop style box beside the card */
+  .pair { display: flex; gap: 18px; align-items: flex-start; }
+  .note-pop.prop-pop { position: relative; z-index: 1; width: 290px; border-color: var(--accent-line); }
+  .note-pop.prop-pop::before { content: ""; position: absolute; left: -7px; top: 30px; width: 12px; height: 12px; background: var(--surface); border-left: 1px solid var(--accent-line); border-bottom: 1px solid var(--accent-line); rotate: 45deg; }
+  .note-pop.prop-pop.stale, .note-pop.prop-pop.stale::before { border-color: var(--line-strong); }
+  .prop-pop .what { font-size: 14px; font-weight: 600; }
+  .prop-pop .acts { justify-content: flex-end; }
+  /* Board-level bar */
+  .selbar.board { position: relative; display: inline-flex; }
+  .selbar .btn.ghost { border: 1px solid var(--line-strong); background: none; color: var(--ink-2); }
+  .apply-list { position: relative; display: grid; gap: 10px; width: 520px; padding: 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 72%, transparent); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); border: 1px solid color-mix(in srgb, var(--line-strong) 80%, transparent); box-shadow: var(--shadow-lg); }
+  .apply-list .head { font-weight: 600; }
+  .apply-list ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .apply-list li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); font-size: 13px; }
+  .apply-list li .what { flex: 1; }
+  .apply-list .skipped { font-size: 12px; color: var(--muted); }
+  .apply-list .acts { justify-content: flex-end; }
+  .nref { display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 20px; padding: 0 6px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--fc) 50%, var(--line)); background: var(--surface); color: var(--ink); font: 600 11px var(--f-mono); }
+  .nref.new { --fc: var(--c-channels); color: var(--fc); }
+
+  /* ---------- 03: unseen versions ---------- */
+  .vs-dialog { display: grid; gap: 12px; width: 380px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-lg); }
+  .vs-head { display: flex; align-items: center; gap: 8px; }
+  .vs-head b { flex: 1; font: 600 15px/1.2 var(--f-display); }
+  .vs-meta { font-size: 12px; color: var(--muted); }
+  .vs-meta b { color: var(--ink); font-weight: 600; }
+  .vs-nav { display: flex; align-items: center; gap: 6px; }
+  .vs-nav .count { flex: 1; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .dots { display: inline-flex; gap: 4px; margin-right: 6px; vertical-align: middle; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); }
+  .dots i.on { background: var(--warn); }
+  .vchip.unseen { position: relative; color: var(--ink); border-color: color-mix(in srgb, var(--warn) 50%, var(--line)); }
+  .vchip.unseen::after { content: ""; position: absolute; top: -3px; right: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 2px var(--ground); }
+  .uptodate { display: flex; align-items: center; gap: 8px; color: var(--ok); font-size: 13px; font-weight: 600; }
+  .uptodate small { display: block; color: var(--muted); font-weight: 500; }
+  .step-box { display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--line)); background: color-mix(in srgb, var(--warn) 7%, var(--surface)); }
+  .vstack { display: grid; gap: 18px; width: 300px; }
+  .vstrip { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .vstrip .lbl { margin-right: 4px; }
+  .vpanel { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+</style>
+</head>
+<body>
+<header class="page-head">
+  <div>
+    <a class="back" href="index.html">All mockups</a>
+    <h1>03 — Proposals and seen</h1>
+    <p>Two things the board has to show without getting in the way. Part A: the agent proposes changes it read from somewhere (an email pasted into the chat, an attached sheet) and you accept or reject each one, or all at once. Part B: items that moved on since you last looked carry an "N updates" tab, and you step through each unseen version until you are up to date.</p>
+    <p class="recline">Recommendation: proposals A (border tab plus footer row), unseen versions B (the card expands in place). Both keep the change on the card it belongs to and keep the card's content untouched.</p>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Light theme</button>
+</header>
+
+<section class="part-head"><h2>Part A — Agent proposals</h2><p>The example: you pasted Northwind's email into the chat. The agent proposes three changes from it and the finance sheet. A fourth, older proposal is out of date because you edited 45 after it was made, so it cannot be accepted until the agent looks again.</p></section>
+
+<div class="opt-head"><h2>Board level (the same in A, B and C)</h2><p>A glass bar above the board counts the proposals. Accept all opens a list of exactly what will be applied, and skips the out-of-date one with a reason.</p></div>
+<main class="stage" aria-label="Board-level proposals bar">
+  <div class="row-top">
+    <div class="selbar board" role="region" aria-label="Agent proposals"><span>3 proposals from the agent</span><span class="muted">· 1 out of date</span><button class="btn btn-sm ghost" type="button">Review one by one</button><button class="btn btn-sm" type="button" aria-expanded="true" aria-controls="applyAll">Accept all (3)</button></div>
+    <div class="apply-list" id="applyAll" role="dialog" aria-label="Accept all 3 proposals">
+      <div class="head">Accept these 3 changes?</div>
+      <ol>
+        <li class="k-question"><span class="nref">47</span><span class="what"><b>Drop</b>: the client declined</span><span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Email pasted in chat</span></li>
+        <li class="k-risk"><span class="nref">44</span><span class="what"><b>Change</b>: crossover from 40 to 35 seats</span><span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5"/></svg>Finance sheet</span></li>
+        <li><span class="nref new">new</span><span class="what"><b>Add finding</b>: Northwind wants quarterly billing</span><span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Email pasted in chat</span></li>
+      </ol>
+      <div class="skipped">Not included: 45 "Mark as done", out of date since you edited 45 at 14:02.</div>
+      <div class="acts"><button class="btn btn-sm" type="button">Cancel</button><button class="btn btn-sm btn-primary" type="button">Apply 3 changes</button></div>
+    </div>
+  </div>
+</main>
+
+<div class="opt-head"><h2>Option A — Tab on the border, row in the footer</h2><span class="rec">Recommended</span><p>A PROPOSAL tab on the bottom edge, like NEW and CHANGED, and one footer row under the state: what would change, where it came from, Reject and Accept.</p></div>
+<main class="stage" aria-label="Proposals option A">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 proposals here</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 47, question, open, 1 proposal">
+        <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span><span class="tab prop">PROPOSAL</span>
+        <div class="cb"><h3 class="t">Will Northwind take the 20% prepay discount?</h3><p class="p">Offered on the 24 Sep call as the price of a two-year renewal.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span></div>
+        <div class="prop-row">
+          <div class="line"><span class="what">Drop 47: the client declined</span></div>
+          <span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Email pasted in chat, 13:48</span>
+          <div class="line"><span style="flex: 1"></span><span class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: drop 47">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-label="Accept: drop 47">Accept</button></span></div>
+        </div>
+      </article>
+      <article class="card k-action" tabindex="0" aria-label="Item 45, action, 1 out-of-date proposal">
+        <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><span class="tab prop stale">OUT OF DATE</span>
+        <div class="cb"><h3 class="t">Draft the migration email for grandfathered users</h3><p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg><i class="sep"></i>Open</span></div>
+        <div class="prop-row stale">
+          <div class="line"><span class="what">Mark 45 as done</span></div>
+          <div class="why-stale" id="staleA"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>45 changed after this was proposed. Ask the agent to look again.</div>
+          <div class="line"><span style="flex: 1"></span><span class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: mark 45 as done">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-disabled="true" aria-describedby="staleA" aria-label="Accept: mark 45 as done (out of date)">Accept</button></span></div>
+        </div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option B — Callout in the card body</h2><p>The proposal reads as part of the card's content, under the text it would change. Clear on a big card, but it pushes the card taller and mixes agent text with the item's own.</p></div>
+<main class="stage" aria-label="Proposals option B">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 proposals here</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <article class="card k-question" tabindex="0" aria-label="Item 47, question, open, 1 proposal">
+        <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span>
+        <div class="cb"><h3 class="t">Will Northwind take the 20% prepay discount?</h3><p class="p">Offered on the 24 Sep call as the price of a two-year renewal.</p>
+          <div class="prop-call"><span class="who">The agent proposes</span><span><b>Drop 47</b>: the client declined.</span><span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Email pasted in chat, 13:48</span><span class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: drop 47">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-label="Accept: drop 47">Accept</button></span></div>
+        </div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span></div>
+      </article>
+      <article class="card k-action" tabindex="0" aria-label="Item 45, action, 1 out-of-date proposal">
+        <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span>
+        <div class="cb"><h3 class="t">Draft the migration email for grandfathered users</h3><p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p>
+          <div class="prop-call stale"><span class="who">Out of date</span><span><b>Mark 45 as done</b></span><span class="why-stale" id="staleB"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>45 changed after this was proposed. Ask the agent to look again.</span><span class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: mark 45 as done">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-disabled="true" aria-describedby="staleB" aria-label="Accept: mark 45 as done (out of date)">Accept</button></span></div>
+        </div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg><i class="sep"></i>Open</span></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option C — A box beside the card</h2><p>The card only gets a PROPOSAL tab; the proposal opens beside it in the note popover's shape, so the card itself never changes size. Needs free space to the side, like a note.</p></div>
+<main class="stage" aria-label="Proposals option C">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">2 proposals here</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <div class="pair">
+        <article class="card k-question has-tab-bottom" tabindex="0" aria-label="Item 47, question, open, 1 proposal">
+          <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span><button class="tab prop" type="button" aria-expanded="true" aria-controls="popC1">PROPOSAL</button>
+          <div class="cb"><h3 class="t">Will Northwind take the 20% prepay discount?</h3><p class="p">Offered on the 24 Sep call as the price of a two-year renewal.</p></div>
+          <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></svg><i class="sep"></i>Open</span></div>
+        </article>
+        <div class="note-pop prop-pop" id="popC1" role="dialog" aria-label="Proposal on 47">
+          <div class="head">The agent proposes, on <b>47 Will Northwind take the 20% prepay discount?</b></div>
+          <div class="what">Drop 47: the client declined</div>
+          <span class="src"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6 8.5-6"/></svg>Email pasted in chat, 13:48</span>
+          <div class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: drop 47">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-label="Accept: drop 47">Accept</button></div>
+        </div>
+      </div>
+      <div class="pair">
+        <article class="card k-action has-tab-bottom" tabindex="0" aria-label="Item 45, action, 1 out-of-date proposal">
+          <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><button class="tab prop stale" type="button" aria-expanded="true" aria-controls="popC2">OUT OF DATE</button>
+          <div class="cb"><h3 class="t">Draft the migration email for grandfathered users</h3><p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p></div>
+          <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></svg><i class="sep"></i>Open</span></div>
+        </article>
+        <div class="note-pop prop-pop stale" id="popC2" role="dialog" aria-label="Out-of-date proposal on 45">
+          <div class="head">Out of date, on <b>45 Draft the migration email</b></div>
+          <div class="what">Mark 45 as done</div>
+          <span class="why-stale" id="staleC"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>45 changed after this was proposed. Ask the agent to look again.</span>
+          <div class="acts"><button class="btn btn-sm" type="button" aria-label="Reject: mark 45 as done">Reject</button><button class="btn btn-sm btn-primary" type="button" aria-disabled="true" aria-describedby="staleC" aria-label="Accept: mark 45 as done (out of date)">Accept</button></div>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+</main>
+
+<section class="part-head"><h2>Part B — Unseen versions</h2><p>You last looked at 44 at v3. Since then it reached v6. The bottom-edge tab says "3 updates"; opening it steps through v4, v5 and v6 one at a time, each with its change chips, and ends on "You're up to date", which clears the tab.</p></section>
+
+<div class="opt-head"><h2>Option A — Dialog stepper</h2><p>The tab opens a dialog over the board: one version per step, Back and Next, then a last step that says you are up to date. Focused and roomy, but it hides the board you were reading.</p></div>
+<main class="stage" aria-label="Unseen versions option A">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">1 item with updates</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, 3 unseen updates">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-label="3 updates since you last looked. Show them">3 UPDATES</button>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span></div>
+      </article>
+      <div class="vs-dialog" role="dialog" aria-label="Updates to 44, step 2 of 3">
+        <div class="vs-head"><span class="nref k-risk">44</span><b>What changed since you looked</b><button class="icon-btn" type="button" aria-label="Close"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+        <div class="vstrip"><button class="vchip" type="button">v4</button><button class="vchip" type="button" aria-current="true">v5</button><button class="vchip unseen" type="button" aria-label="v6, not seen yet">v6</button></div>
+        <div class="vs-meta"><b>v5</b> · Wed 30 Sep, 15:40 · by the agent, from your note 1</div>
+        <div class="changes"><span class="chg add">+ mitigation</span><span class="chg mod">~ title</span><span class="chg mod">~ crossover 40 → 35</span></div>
+        <ul class="ul"><li>Adds a seat-based floor from 50 seats as the fix</li><li>Title now says 35+ seats, to match the finance sheet</li></ul>
+        <div class="vs-nav"><span class="count"><span class="dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>Update 2 of 3</span><button class="btn btn-sm" type="button">Back</button><button class="btn btn-sm btn-primary" type="button">Next update</button></div>
+      </div>
+      <div class="vs-dialog" role="dialog" aria-label="Updates to 44, done" style="width: 300px">
+        <div class="vs-head"><span class="nref k-risk">44</span><b>Last step</b><button class="icon-btn" type="button" aria-label="Close"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+        <div class="uptodate"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span>You're up to date<small>44 is at v6. The tab is gone.</small></span></div>
+        <div class="vs-nav"><span class="count"><span class="dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i></span>3 of 3 seen</span><button class="btn btn-sm btn-primary" type="button">Back to the board</button></div>
+      </div>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option B — The card expands in place</h2><span class="rec">Recommended</span><p>The card grows by one section for the version you are on, and its footer becomes the stepper. The board stays visible and the change sits right under the text it changed. When you reach the end, the tab is gone and the card shrinks back.</p></div>
+<main class="stage" aria-label="Unseen versions option B">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">1 item with updates</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <article class="card k-risk is-sel has-tab-bottom" tabindex="0" aria-label="Item 44, risk, showing update 2 of 3">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="tab flag changed" type="button" aria-expanded="true" aria-label="3 updates since you last looked. Hide them">3 UPDATES</button>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p>
+          <div class="step-box" role="region" aria-label="Update 2 of 3, v5">
+            <span class="lbl">v5 · Wed 30 Sep, 15:40 · agent</span>
+            <div class="changes"><span class="chg add">+ mitigation</span><span class="chg mod">~ title</span><span class="chg mod">~ crossover 40 → 35</span></div>
+            <ul class="ul"><li>Adds a seat-based floor from 50 seats as the fix</li><li>Title now says 35+ seats</li></ul>
+          </div>
+        </div>
+        <div class="card-foot vs-nav" style="color: var(--warn)"><span class="count" style="color: var(--warn)"><span class="dots" aria-hidden="true"><i class="on"></i><i class="on"></i><i></i></span>Update 2 of 3</span><button class="qa" type="button" aria-label="Previous update"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><button class="btn btn-sm btn-primary" type="button">Next update</button></div>
+      </article>
+      <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, up to date">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p>
+          <div class="uptodate" role="status"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span>You're up to date<small>v6 seen just now. This line fades after a moment.</small></span></div>
+        </div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span></div>
+      </article>
+    </div>
+  </fieldset>
+</main>
+
+<div class="opt-head"><h2>Option C — Version chips under the card</h2><p>A row of version chips hangs under the card, unseen ones dotted. Choosing a chip shows that version's changes in a small panel; the chips double as the history. Most compact, but small targets and an extra row on a busy board.</p></div>
+<main class="stage" aria-label="Unseen versions option C">
+  <fieldset class="fs g-pricing"><legend><span class="band-name">Pricing thread</span><span class="meta">1 item with updates</span></legend><button class="mode-pill" type="button" aria-label="Layout mode: grid">Grid <svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+    <div class="cols">
+      <div class="vstack">
+        <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, 3 unseen updates">
+          <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="tab flag changed" type="button" aria-expanded="true" aria-label="3 updates since you last looked. Hide them">3 UPDATES</button>
+          <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p></div>
+          <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span></div>
+        </article>
+        <div class="vstrip" role="group" aria-label="Versions of 44"><span class="lbl">Versions</span><button class="vchip sm" type="button">v1</button><button class="vchip sm" type="button">v2</button><button class="vchip sm" type="button">v3</button><button class="vchip sm" type="button">v4</button><button class="vchip sm" type="button" aria-current="true">v5</button><button class="vchip sm unseen" type="button" aria-label="v6, not seen yet">v6</button></div>
+        <div class="vpanel" role="region" aria-label="v5 changes">
+          <div class="vs-meta"><b>v5</b> · Wed 30 Sep, 15:40 · by the agent</div>
+          <div class="changes"><span class="chg add">+ mitigation</span><span class="chg mod">~ title</span><span class="chg mod">~ crossover 40 → 35</span></div>
+          <div class="vs-nav"><span class="count">1 more unseen</span><button class="btn btn-sm" type="button">Next: v6</button></div>
+        </div>
+      </div>
+      <div class="vstack">
+        <article class="card k-risk" tabindex="0" aria-label="Item 44, risk, up to date">
+          <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span>
+          <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p></div>
+          <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></svg><i class="sep"></i>Commented</span></div>
+        </article>
+        <div class="vstrip" role="group" aria-label="Versions of 44"><span class="lbl">Versions</span><button class="vchip sm" type="button">v1</button><button class="vchip sm" type="button">v2</button><button class="vchip sm" type="button">v3</button><button class="vchip sm" type="button">v4</button><button class="vchip sm" type="button">v5</button><button class="vchip sm" type="button" aria-current="true">v6</button></div>
+        <div class="vpanel"><div class="uptodate" role="status"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span>You're up to date<small>The chips fold away until the next update.</small></span></div></div>
+      </div>
+    </div>
+  </fieldset>
+</main>
+
+<section class="legend" aria-label="Notes">
+  <ul>
+    <li>Out-of-date Accept buttons use aria-disabled, not disabled, so they stay in the Tab order and announce their reason through aria-describedby.</li>
+    <li>"N updates" reuses the CHANGED tab colour (--warn); unseen version chips carry the same colour as a dot.</li>
+    <li>Colours are Architect variables only; no new colours on this page.</li>
+  </ul>
+</section>
+
+<div class="dock-demo">
+  <div class="composer">
+    <div class="cmp-context"><span class="cmp-label">Selected</span><span class="ctx-chip plain"><span class="t">47</span></span></div>
+    <div class="cmp-box">
+      <span class="cmp-mode">Board</span>
+      <textarea rows="1" aria-label="Message" placeholder="Say what to change, or add notes on the board and send…"></textarea>
+      <button class="cmp-send" type="button" aria-label="Send"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+  </div>
+</div>
+<script>
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'light';
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    btn.textContent = dark ? 'Dark theme' : 'Light theme';
+  });
+</script>
+</body>
+</html>
