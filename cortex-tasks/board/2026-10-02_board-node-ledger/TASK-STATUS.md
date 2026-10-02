@@ -43,7 +43,7 @@ created: 2026-10-02
 
 | # | ID | Wave | Task | Model | Status | Commit |
 |---|---|---|---|---|---|---|
-| 1 | BE_01 | 1 | [Fold the ledger into board state](./BE_01_fold-and-projection.md) | Opus 5.5 | Pending | |
+| 1 | BE_01 | 1 | [Fold the ledger into board state](./BE_01_fold-and-projection.md) | Opus 5.5 | COMPLETED | |
 | 2 | BE_02 | 2 | [The project ledger in the I/O layer](./BE_02_ledger-store.md) | Opus 5.5 | Pending | |
 | 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | Pending | |
 | 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | Pending | |

@@ -78,22 +78,32 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   } else if (e.type === 'propose') ix.proposals.set(e.seq, { n: e.n, ver: e.ver });
 }
 
-/** Every problem in a whole ledger, as "line N: ...". Empty means valid. Lines with problems are
- * skipped, so one bad event is reported without hiding the rest (D-019). */
-export function validateLedger(lines: string[]): string[] {
-  const out: string[] = [];
-  const ix = emptyIndex();
+export interface ReadLedger { events: LedgerEvent[]; problems: string[]; index: LedgerIndex }
+
+/** Parse and check a whole ledger. `events` holds the valid events in order; `problems` every
+ * problem as "line N: ...". Lines with problems are skipped, so one bad event is reported without
+ * hiding the rest (D-019). */
+export function readLedger(lines: string[]): ReadLedger {
+  const events: LedgerEvent[] = [];
+  const problems: string[] = [];
+  const index = emptyIndex();
   lines.forEach((line, i) => {
     if (!line.trim()) return;
     let e: unknown;
-    try { e = JSON.parse(line); } catch { ix.seq += 1; return void out.push(`line ${i + 1}: not JSON`); }
+    try { e = JSON.parse(line); } catch { index.seq += 1; return void problems.push(`line ${i + 1}: not JSON`); }
     let p = eventProblems(e);
-    if (!p.length) p = contextProblems(ix, e as LedgerEvent);
+    if (!p.length) p = contextProblems(index, e as LedgerEvent);
     if (p.length) {
-      out.push(...p.map((x) => `line ${i + 1}: ${x}`));
+      problems.push(...p.map((x) => `line ${i + 1}: ${x}`));
       const seq = (e as { seq?: unknown }).seq;
-      if (Number.isInteger(seq)) ix.seq = seq as number; // one bad line, not a cascade
-    } else indexEvent(ix, e as LedgerEvent);
+      if (Number.isInteger(seq)) index.seq = seq as number; // one bad line, not a cascade
+    } else {
+      indexEvent(index, e as LedgerEvent);
+      events.push(e as LedgerEvent);
+    }
   });
-  return out;
+  return { events, problems, index };
 }
+
+/** Every problem in a whole ledger. Empty means valid. */
+export const validateLedger = (lines: string[]): string[] => readLedger(lines).problems;

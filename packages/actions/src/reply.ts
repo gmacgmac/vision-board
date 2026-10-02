@@ -1,7 +1,8 @@
 // The person's responses as the numbered reply they would have typed: "1 ok, 4 drop, 7 more
-// context: ...". Paste it into chat, or let the agent read the transcript directly.
+// context: ...". Paste it into chat, or let the agent read the ledger directly. Reads one board as
+// `boardView` + `boardState` (fold.ts) give it.
 import type { View } from '../../format/src/index.ts';
-import type { BoardState } from './reduce.ts';
+import type { BoardState } from './fold.ts';
 import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
 
