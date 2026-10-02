@@ -319,13 +319,8 @@
   </fieldset>
 </main>
 
-<section class="sec-head"><h2>4 — Decision flow, both orientations</h2><p>One item's whole history from the ledger: your request, the agent's work, every version, your notes, and the moment you decided. The container's top line swaps the layout icons for a horizontal/vertical toggle. You are neutral grey and first in line: on the top line horizontally, on the left vertically. Everything the agent produced sits slightly lower, or slightly to the right, in the agent's own colour.</p></section>
-<div data-agent="lime" id="flows">
-<div class="agent-pick" role="group" aria-label="Agent colour to preview">Agent colour:
-  <button class="btn btn-sm" type="button" data-pick="lime" aria-pressed="true"><span class="swatch" style="background: var(--agent-lime)"></span>Lime (new)</button>
-  <button class="btn btn-sm" type="button" data-pick="sky" aria-pressed="false"><span class="swatch" style="background: var(--agent-sky)"></span>Sky (new)</button>
-  <button class="btn btn-sm" type="button" data-pick="pink" aria-pressed="false"><span class="swatch" style="background: var(--accent-text)"></span>Pink (brand)</button>
-</div>
+<section class="sec-head"><h2>4 — Decision flow, both orientations</h2><p>One item's whole history from the ledger: your request, the agent's work, every version, your notes, and the moment you decided. The container's top line swaps the layout icons for a horizontal/vertical toggle. You are neutral grey and first in line: on the top line horizontally, on the left vertically. Everything the agent produced sits slightly lower, or slightly to the right, in the agent's own colour, lime.</p></section>
+<div>
 <main class="stage" aria-label="Decision flow, horizontal">
   <fieldset class="fs g-flow"><legend><span class="band-name">41 · Decision flow</span><span class="meta">9 steps · Mon 28 Sep to Thu 1 Oct</span></legend>
     <div class="mode-row" role="radiogroup" aria-label="Orientation of the decision flow">
@@ -390,8 +385,8 @@
 </div>
 <section class="legend" aria-label="Notes on sections 2-4">
   <ul>
-    <li>All colours are Architect variables except the agent colour, which is a candidate new token: lime and sky sit in the widest gaps between the six kind colours, so the agent never matches an item's own colour. Pink is Architect's brand, but every decision flow ends on a pink decision step.</li>
-    <li>"You" is neutral grey in both decision flows. The chat panel and saved notes on cards are still pink: not changed yet.</li>
+    <li>All colours are Architect variables except the agent colour, lime: a new variable (<code>--agent</code>), chosen because it sits in the widest gap between the six kind colours, so the agent never matches an item's own colour.</li>
+    <li>"You" is neutral grey in the decision flows; your chat messages and saved notes stay pink.</li>
     <li>The decision flow opens from a card's history button and shows one item. Its container carries the orientation toggle and the cog instead of the five layout icons.</li>
     <li>Contrast is not checked yet (tracker N1), so no pair here is cleared to ship.</li>
   </ul>
@@ -403,11 +398,6 @@
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
     btn.textContent = dark ? 'Dark theme' : 'Light theme';
   });
-  const flows = document.getElementById('flows');
-  flows.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
-    flows.dataset.agent = b.dataset.pick;
-    flows.querySelectorAll('[data-pick]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
-  }));
 </script>
 </body>
 </html>

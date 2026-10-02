@@ -11,8 +11,8 @@ behaviour into `packages/` and `apps/`, never this code. Open the pages through 
   open-frame containers.
 - `mockups/02-mode-picker.html`, `03-proposals-and-seen.html`, `04-decision-flow.html`: the options
   the maintainer picked from (picks below).
-- `mockups/05-final-spec.html` + `mockups/spec.css`: **the picks drawn as one page**, awaiting the
-  maintainer's confirmation by eye. `spec.css` holds the 01b card system once, so 05 does not copy it.
+- `mockups/05-final-spec.html` + `mockups/spec.css`: **the locked final spec** (confirmed by the
+  maintainer by eye, 2026-10-02), together with 01b. `spec.css` holds the 01b card system once, so 05 does not copy it.
 
 ## Maintainer picks (2026-10-02)
 
@@ -63,8 +63,13 @@ behaviour into `packages/` and `apps/`, never this code. Open the pages through 
     versions stay bottom right; number, kind and note pin stay on the top border.
 11. **Bubble placement.** Opens on the card's right; flips to the left when the right would leave
     the board; opens below when neither side fits.
-12. **A bubble wears its card's colour** (border, arrow and the soft selected glow), so it reads
-    as attached to that card.
+12. **A bubble wears its card's colour** as a plain, subtle 1px border and arrow. It has no
+    selected look, except while you type in it.
 13. **Selection is thinner:** 1.5px in total (was 2.5px), still the card's own colour.
 14. **Out of date** is not accept/reject: the card changed after the agent proposed, so the
     choices are Dismiss or Ask the agent again.
+15. **Agent colour: lime** (`--agent`, a new design token in the palette swap). Sky and
+    Architect's pink were the rejected alternatives. "You" stays grey in the decision flow; your chat
+    messages and saved notes stay pink.
+16. **Later, not now:** the agent's chat messages may get a subtle lime border to match the
+    decision flow. Needs only the token, so no build work is planned for it.
