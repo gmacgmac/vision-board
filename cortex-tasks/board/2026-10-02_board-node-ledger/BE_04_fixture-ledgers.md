@@ -21,7 +21,9 @@ tests. `login-review.ledger.jsonl` (step 1) is the lifecycle walkthrough and sta
   `packages/format/tests/validate.test.ts`, `.gitignore`
 - **Archive (move, see step 4)**: `packages/format/fixtures/roadmap.json`, `login-review.json`;
   local `sessions/`
-- **Reuse**: `foldLedger`, `boardView`, `validateAct` (BE_01); `validateLedger`, `validateView`
+- **Reuse**: `foldDrawn`, `boardView` (`packages/format`, so layout and format tests may import
+  them under D-016); `foldLedger`, `validateAct` (`packages/actions`); `validateLedger`,
+  `validateView`
 
 ## Steps
 
@@ -29,8 +31,10 @@ tests. `login-review.ledger.jsonl` (step 1) is the lifecycle walkthrough and sta
    `board`, `region` and `node` events plus links, numbering nodes 1, 2, 3 in view order and
    mapping old ids to numbers in links and `region.center`. Old numbered nodes get `item: true`.
 2. [ ] Each new fixture passes `validateLedger` with no problems.
-3. [ ] Tests load fixtures through one helper per package (`foldLedger` -> `boardView`), keeping
-   every existing assertion's intent. Rewrite `actions.test.ts` around `validateAct` and
+3. [ ] Tests load fixtures through one helper per package, keeping every existing assertion's
+   intent. Layout and format tests: `foldDrawn` -> `boardView`, imported from
+   `packages/format` only (D-016; `npm run verify` checks test files too). Actions tests:
+   `foldLedger`. Rewrite `actions.test.ts` around `validateAct` and
    `foldLedger`. `validate.test.ts`: the projection of every fixture ledger passes
    `validateView`, and the existing negative cases run on a projection copy.
 4. [ ] Archive, do not delete: `git mv` the two view fixtures into

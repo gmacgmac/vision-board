@@ -1,10 +1,11 @@
-// Folds the project ledger (D-017) into board state: every node's versions, the person's
-// responses, replies, proposals, parks and what the person has seen. Pure: same events, same
-// state. Events are assumed valid (readLedger in packages/format checks them first).
+// Folds the project ledger (D-017) into board state: what the agent drew (folded by
+// `applyDrawn` in packages/format, which also gives `boardView`), plus the person's responses,
+// replies, proposals, parks and what the person has seen. Pure: same events, same state.
+// Events are assumed valid (readLedger in packages/format checks them first).
 import type {
-  ActEvent, ActionId, LedgerEvent, Mode, NodeBody, ParkBundle, ProposeEvent, Region, View, ViewNode,
+  ActEvent, ActionId, DrawnState, LedgerEvent, Mode, ParkBundle, ProposeEvent,
 } from '../../format/src/index.ts';
-import { FORMAT_VERSION } from '../../format/src/index.ts';
+import { applyDrawn, emptyDrawn, nodesOf } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS } from './registry.ts';
 
@@ -18,10 +19,6 @@ export interface BoardState {
   modes: Map<string, Mode>;
 }
 
-export interface NodeVersion extends NodeBody { ver: number; at: string; agent?: string }
-export interface LedgerNode { n: number; board: string; versions: NodeVersion[] }
-export interface LedgerBoard { id: string; title: string; summary?: string; regions: Region[] }
-export interface LedgerLink { from: number; to: number; label?: string }
 export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string }
 export interface Proposal {
   seq: number; at: string; n: number; ver: number; action: ProposeEvent['action'];
@@ -30,13 +27,8 @@ export interface Proposal {
   decidedBy?: number;
 }
 
-export interface LedgerState {
-  seq: number;
-  boards: Map<string, LedgerBoard>;
-  /** n -> its versions; the latest is the last. */
-  nodes: Map<number, LedgerNode>;
-  /** Keyed "from>to". */
-  links: Map<string, LedgerLink>;
+/** What was drawn (DrawnState, from packages/format) plus the person's side. */
+export interface LedgerState extends DrawnState {
   items: Map<number, ItemState>;
   replies: Map<number, LedgerReply[]>;
   pins: Map<number, { x: number; y: number }>;
@@ -50,7 +42,7 @@ export interface LedgerState {
 }
 
 export const emptyState = (): LedgerState => ({
-  seq: 0, boards: new Map(), nodes: new Map(), links: new Map(), items: new Map(),
+  ...emptyDrawn(), items: new Map(),
   replies: new Map(), pins: new Map(), modes: new Map(), seen: new Map(),
   proposals: new Map(), parks: new Map(),
 });
@@ -77,28 +69,10 @@ export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
 
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => { m.set(k, [...(m.get(k) ?? []), v]); };
 
-/** Apply one valid event to `s`. */
+/** Apply one valid event to `s`: the drawn part in format, then the person's side here. */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
-  s.seq = e.seq;
+  applyDrawn(s, e);
   switch (e.type) {
-    case 'board':
-      s.boards.set(e.board, { id: e.board, title: e.title, ...(e.summary && { summary: e.summary }), regions: [] });
-      break;
-    case 'region': {
-      const regions = s.boards.get(e.board)?.regions;
-      const i = regions?.findIndex((r) => r.id === e.region.id) ?? -1;
-      if (regions && i >= 0) regions[i] = e.region;
-      else regions?.push(e.region);
-      break;
-    }
-    case 'node': {
-      const node = s.nodes.get(e.n) ?? { n: e.n, board: e.board, versions: [] };
-      node.versions.push({ ...e.node, ver: e.ver, at: e.at, ...(e.agent && { agent: e.agent }) });
-      s.nodes.set(e.n, node);
-      break;
-    }
-    case 'link': s.links.set(`${e.from}>${e.to}`, { from: e.from, to: e.to, ...(e.label && { label: e.label }) }); break;
-    case 'unlink': s.links.delete(`${e.from}>${e.to}`); break;
     case 'act': applyAct(s, e); break;
     case 'seen': s.seen.set(e.n, Math.max(s.seen.get(e.n) ?? 0, e.ver)); break;
     case 'reply':
@@ -125,34 +99,6 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     const prop = e.proposal === undefined ? undefined : s.proposals.get(e.proposal);
     if (prop) prop.decidedBy = e.seq;
   }
-}
-
-/** The nodes of one board, in the order they were first drawn. */
-const nodesOf = (s: LedgerState, board: string) => [...s.nodes.values()].filter((x) => x.board === board);
-
-/** The latest version of every node. */
-export const latest = (node: LedgerNode): NodeVersion => node.versions[node.versions.length - 1]!;
-
-/** One board as the `View` the layout engine and the page read. Node id = `String(n)`; `n` is
- * set only on items (latest version has `item: true`). `version` = the ledger position. */
-export function boardView(s: LedgerState, board: string): View {
-  const b = s.boards.get(board);
-  if (!b) throw new Error(`unknown board "${board}"`);
-  const nodes = nodesOf(s, board);
-  const ids = new Set(nodes.map((x) => x.n));
-  return {
-    format: FORMAT_VERSION, session: b.id, version: s.seq, title: b.title,
-    ...(b.summary && { summary: b.summary }),
-    regions: b.regions.map(({ center, ...r }) => ({ ...r, ...(center !== undefined && { center: String(center) }) })),
-    nodes: nodes.map((x) => viewNode(x.n, latest(x))),
-    links: [...s.links.values()].filter((l) => ids.has(l.from) && ids.has(l.to))
-      .map((l) => ({ from: String(l.from), to: String(l.to), ...(l.label && { label: l.label }) })),
-  };
-}
-
-function viewNode(n: number, v: NodeVersion): ViewNode {
-  const { ver: _ver, at: _at, agent: _agent, item, ...body } = v;
-  return { id: String(n), ...body, ...(item && { n }) };
 }
 
 /** The person's responses on one board, keyed like `boardView` (`String(n)`). */

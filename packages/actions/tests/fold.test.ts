@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { readLedger, validateView } from '../../format/src/index.ts';
-import { boardState, boardView, foldLedger, replyText, validateAct } from '../src/index.ts';
+import { boardView, readLedger, validateView } from '../../format/src/index.ts';
+import { boardState, foldLedger, replyText, validateAct } from '../src/index.ts';
 
 const lines = fs.readFileSync(
   new URL('../../format/fixtures/login-review.ledger.jsonl', import.meta.url), 'utf8').trim().split('\n');

@@ -77,3 +77,8 @@ stop and ask.
 - Not changed: `packages/actions/README.md` still lists only the transcript API (outside this
   task's inputs).
 - Security: none found. No new dependency, no coordinates except the person's pin.
+- **Moved after review (2026-10-03, maintainer point 267)**: the drawn part of the fold
+  (`applyDrawn`, `foldDrawn`, `nodesOf`, `latest`, `boardView`, and the `NodeVersion`,
+  `LedgerNode`, `LedgerBoard`, `LedgerLink`, `DrawnState` types) moved to
+  `packages/format/src/board-view.ts`, so layout and format tests can read a board under D-016.
+  `LedgerState` now extends `DrawnState`; `applyEvent` calls `applyDrawn` first. Found by BE_04.

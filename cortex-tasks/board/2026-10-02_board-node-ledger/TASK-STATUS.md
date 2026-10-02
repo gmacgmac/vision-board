@@ -58,7 +58,8 @@ table order.
 | Artifact | Created by | Consumed by |
 |---|---|---|
 | `packages/format/src/ledger-index.ts` (`readLedger`) | BE_01 | BE_02 |
-| `packages/actions/src/fold.ts` (`foldLedger`, `boardView`, `boardState`) | BE_01 | BE_02, BE_03, BE_04, FE_01 |
+| `packages/format/src/board-view.ts` (`foldDrawn`, `applyDrawn`, `boardView`, `latest`) | BE_01, moved 2026-10-03 | BE_02, BE_03, BE_04, FE_01, layout tests |
+| `packages/actions/src/fold.ts` (`foldLedger`, `boardState`) | BE_01 | BE_02, BE_03, BE_04, FE_01 |
 | `packages/actions/src/act.ts` (`validateAct`) | BE_01 | BE_02, BE_04 |
 | `apps/board/server/ledger.ts` (`openLedger`, `append`, `state`, `onAppend`) | BE_02 | BE_03 |
 | `packages/format/fixtures/roadmap.ledger.jsonl` | BE_04 | BE_03 (`demo` seed), VERIFY_01 |

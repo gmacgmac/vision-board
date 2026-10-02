@@ -20,7 +20,9 @@ redraws the cards later; this task only swaps the data path.
   (header comment), `packages/format/README.md`, `apps/board/README.md`
 - **Archive (move to `prototypes/archive/view-format-v1/code/`)**: `packages/actions/src/reduce.ts`,
   `record.ts`; `packages/format/src/transcript.ts` (first move `ACTION_IDS` and `ActionId` into
-  `ledger.ts`); `apps/board/server/sessions.ts` if BE_03 left it in place
+  `ledger.ts`; first move `counts` and `statusOf` out of `reduce.ts` into `fold.ts`, reading
+  `boardState`, since the page still uses them); `apps/board/server/sessions.ts` if BE_03 left
+  it in place
 - **Reuse**: BE_03 routes; `boardState`, `replyText`, `ACTIONS` (actions)
 
 ## Steps

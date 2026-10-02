@@ -1,8 +1,8 @@
 // Checks a person's or agent's `act` event against the action registry and the folded ledger.
 // The server runs it before appending; the browser before sending. One rule set, both ends.
 import type { ActEvent } from '../../format/src/index.ts';
+import { latest } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
-import { latest } from './fold.ts';
 import { ACTIONS } from './registry.ts';
 
 export function validateAct(e: ActEvent, s: LedgerState): string[] {
