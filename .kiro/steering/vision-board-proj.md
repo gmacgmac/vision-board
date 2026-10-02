@@ -31,13 +31,7 @@ wait for a maintainer's yes.
 
 Whenever a response has more than a couple of points to react to (findings, options, questions,
 suggestions, action items), write it as one numbered list:
-
-- Group items under category headings, but **the numbering keeps incrementing across
-  categories** (1–3 under the first heading, 4–7 under the next, and so on). Never restart at 1.
-- Sub-points are lettered under their number: 4A, 4B, 4C.
-- One point per number, short enough to answer in a word: the maintainer replies
-  "1 ok, 4 skip, 7 more context".
-- Keep numbers stable when you follow up on the same list; refer back by number.
+Reply as one numbered list that keeps counting across headings and across replies for the whole conversation (never restart at 1), with sub-points lettered under their number (72A, 72B). One point per number, so the maintainer can answer "72 ok, 75 skip".
 
 This is the text form of the board: when the list gets long, offer to draw it on the board.
 
