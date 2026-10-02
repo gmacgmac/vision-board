@@ -1,0 +1,32 @@
+{"v":2,"seq":1,"at":"2026-10-02T09:00:00Z","by":"agent","agent":"kiro","type":"board","board":"login-layout","title":"Add passwordless login: what it touches","summary":"A sample code review: the agent researched a feature request and came back with touch points, questions and risks."}
+{"v":2,"seq":2,"at":"2026-10-02T09:00:01Z","by":"agent","agent":"kiro","type":"region","board":"login-layout","region":{"id":"touch","title":"Touch points","mode":"flow"}}
+{"v":2,"seq":3,"at":"2026-10-02T09:00:02Z","by":"agent","agent":"kiro","type":"region","board":"login-layout","region":{"id":"questions","title":"Questions for you","mode":"list"}}
+{"v":2,"seq":4,"at":"2026-10-02T09:00:03Z","by":"agent","agent":"kiro","type":"region","board":"login-layout","region":{"id":"risks","title":"Risks","mode":"grid","columns":2}}
+{"v":2,"seq":5,"at":"2026-10-02T09:00:04Z","by":"agent","agent":"kiro","type":"region","board":"login-layout","region":{"id":"plan","title":"Proposed plan","mode":"lanes","lanes":["Backend","Frontend","Ops"]}}
+{"v":2,"seq":6,"at":"2026-10-02T09:00:05Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":1,"ver":1,"node":{"region":"touch","kind":"finding","title":"Login form","body":"Swap the password field for an email-only step.","item":true,"tags":["web/login"]}}
+{"v":2,"seq":7,"at":"2026-10-02T09:00:06Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":2,"ver":1,"node":{"region":"touch","kind":"finding","title":"Auth API","body":"New endpoint to send and verify a one-time link.","item":true,"tags":["api/auth"]}}
+{"v":2,"seq":8,"at":"2026-10-02T09:00:07Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":3,"ver":1,"node":{"region":"touch","kind":"finding","title":"Mailer","body":"Needs a new template and rate limits.","item":true,"tags":["services/mail"]}}
+{"v":2,"seq":9,"at":"2026-10-02T09:00:08Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":4,"ver":1,"node":{"region":"touch","kind":"finding","title":"Session store","body":"Unchanged, but link tokens need their own table.","item":true}}
+{"v":2,"seq":10,"at":"2026-10-02T09:00:09Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":5,"ver":1,"node":{"region":"questions","kind":"question","title":"Keep passwords as a fallback?","body":"Removing them is simpler; keeping them avoids lock-outs.","item":true}}
+{"v":2,"seq":11,"at":"2026-10-02T09:00:10Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":6,"ver":1,"node":{"region":"questions","kind":"question","title":"How long should a link live?","body":"15 minutes is common.","item":true}}
+{"v":2,"seq":12,"at":"2026-10-02T09:00:11Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":7,"ver":1,"node":{"region":"questions","kind":"question","title":"Is SSO in scope?","item":true}}
+{"v":2,"seq":13,"at":"2026-10-02T09:00:12Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":8,"ver":1,"node":{"region":"risks","kind":"risk","title":"Email delivery delays","body":"Links arrive late and expire.","item":true}}
+{"v":2,"seq":14,"at":"2026-10-02T09:00:13Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":9,"ver":1,"node":{"region":"risks","kind":"risk","title":"Link phishing","body":"Users trained to click login links.","item":true}}
+{"v":2,"seq":15,"at":"2026-10-02T09:00:14Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":10,"ver":1,"node":{"region":"risks","kind":"risk","title":"Shared inboxes","body":"Anyone with the inbox can sign in.","item":true}}
+{"v":2,"seq":16,"at":"2026-10-02T09:00:15Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":11,"ver":1,"node":{"region":"plan","kind":"action","title":"Token table and migration","item":true,"lane":"Backend"}}
+{"v":2,"seq":17,"at":"2026-10-02T09:00:16Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":12,"ver":1,"node":{"region":"plan","kind":"action","title":"Send and verify endpoints","item":true,"lane":"Backend"}}
+{"v":2,"seq":18,"at":"2026-10-02T09:00:17Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":13,"ver":1,"node":{"region":"plan","kind":"action","title":"Email-only login screen","item":true,"lane":"Frontend"}}
+{"v":2,"seq":19,"at":"2026-10-02T09:00:18Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":14,"ver":1,"node":{"region":"plan","kind":"action","title":"\"Check your inbox\" state","item":true,"lane":"Frontend"}}
+{"v":2,"seq":20,"at":"2026-10-02T09:00:19Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":15,"ver":1,"node":{"region":"plan","kind":"decision","title":"Rate limits per address","body":"5 links an hour?","item":true,"lane":"Ops"}}
+{"v":2,"seq":21,"at":"2026-10-02T09:00:20Z","by":"agent","agent":"kiro","type":"node","board":"login-layout","n":16,"ver":1,"node":{"region":"plan","kind":"action","title":"Delivery-failure alerts","item":true,"lane":"Ops"}}
+{"v":2,"seq":22,"at":"2026-10-02T09:00:21Z","by":"agent","agent":"kiro","type":"link","from":1,"to":2}
+{"v":2,"seq":23,"at":"2026-10-02T09:00:22Z","by":"agent","agent":"kiro","type":"link","from":2,"to":3}
+{"v":2,"seq":24,"at":"2026-10-02T09:00:23Z","by":"agent","agent":"kiro","type":"link","from":2,"to":4}
+{"v":2,"seq":25,"at":"2026-10-02T09:00:24Z","by":"agent","agent":"kiro","type":"link","from":11,"to":12}
+{"v":2,"seq":26,"at":"2026-10-02T09:00:25Z","by":"agent","agent":"kiro","type":"link","from":12,"to":13}
+{"v":2,"seq":27,"at":"2026-10-02T09:00:26Z","by":"agent","agent":"kiro","type":"link","from":13,"to":14}
+{"v":2,"seq":28,"at":"2026-10-02T09:00:27Z","by":"agent","agent":"kiro","type":"link","from":12,"to":15}
+{"v":2,"seq":29,"at":"2026-10-02T09:00:28Z","by":"agent","agent":"kiro","type":"link","from":15,"to":16}
+{"v":2,"seq":30,"at":"2026-10-02T09:00:29Z","by":"agent","agent":"kiro","type":"link","from":5,"to":1,"label":"shapes"}
+{"v":2,"seq":31,"at":"2026-10-02T09:00:30Z","by":"agent","agent":"kiro","type":"link","from":8,"to":3}
+{"v":2,"seq":32,"at":"2026-10-02T09:00:31Z","by":"agent","agent":"kiro","type":"link","from":6,"to":11}

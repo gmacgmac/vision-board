@@ -2,11 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { View, Mode } from '../../format/src/index.ts';
+import { boardView, foldDrawn, readLedger } from '../../format/src/index.ts';
 import { layoutBoard, overlaps } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 
-const load = (name: string): View =>
-  JSON.parse(fs.readFileSync(new URL(`../../format/fixtures/${name}.json`, import.meta.url), 'utf8'));
+/** A fixture ledger's board (board id = file name) as the View the engine reads. */
+function load(name: string): View {
+  const lines = fs.readFileSync(new URL(`../../format/fixtures/${name}.ledger.jsonl`, import.meta.url), 'utf8');
+  return boardView(foldDrawn(readLedger(lines.trim().split('\n')).events), name);
+}
 const sizesFor = (v: View, w = 240, h = 96) => new Map<string, Size>(v.nodes.map((n) => [n.id, { w, h }]));
 const MODES: Mode[] = ['grid', 'list', 'flow', 'radial'];
 
@@ -17,7 +21,7 @@ function assertNoOverlap(v: View, nodes: Map<string, { x: number; y: number; w: 
       assert.ok(!overlaps(nodes.get(ids[i]!)!, nodes.get(ids[j]!)!), `${ids[i]} overlaps ${ids[j]} (${v.session})`);
 }
 
-for (const name of ['login-review', 'roadmap']) {
+for (const name of ['login-layout', 'roadmap']) {
   test(`${name}: every node placed, finite, no overlaps`, () => {
     const v = load(name);
     const out = layoutBoard(v, sizesFor(v));

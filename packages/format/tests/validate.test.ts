@@ -1,14 +1,23 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { boardView, foldDrawn, readLedger, validateLedger } from '../src/index.ts';
 import { validateView } from '../src/validate.ts';
 
-const load = (name: string) =>
-  JSON.parse(fs.readFileSync(new URL(`../fixtures/${name}.json`, import.meta.url), 'utf8'));
-const FIXTURES = ['login-review', 'roadmap'];
+const FIXTURES = fs.readdirSync(new URL('../fixtures/', import.meta.url))
+  .filter((f) => f.endsWith('.ledger.jsonl')).map((f) => f.slice(0, -'.ledger.jsonl'.length));
+const lines = (name: string) =>
+  fs.readFileSync(new URL(`../fixtures/${name}.ledger.jsonl`, import.meta.url), 'utf8').trim().split('\n');
+/** A fixture ledger's board (board id = file name), projected to a fresh copy. Untyped, as the
+ * JSON it replaces was, because the negative cases below break the shape on purpose. */
+const load = (name: string): any => boardView(foldDrawn(readLedger(lines(name)).events), name);
 
-for (const name of FIXTURES)
-  test(`fixture ${name} is a valid view`, () => assert.deepEqual(validateView(load(name)), []));
+test('every fixture ledger is found', () => assert.ok(FIXTURES.includes('roadmap') && FIXTURES.length >= 3));
+
+for (const name of FIXTURES) {
+  test(`fixture ${name} is a valid ledger`, () => assert.deepEqual(validateLedger(lines(name)), []));
+  test(`fixture ${name} projects to a valid view`, () => assert.deepEqual(validateView(load(name)), []));
+}
 
 test('rejects non-objects', () => assert.deepEqual(validateView(null), ['view: must be an object']));
 

@@ -1,0 +1,36 @@
+{"v":2,"seq":1,"at":"2026-10-02T09:00:00Z","by":"agent","agent":"kiro","type":"board","board":"roadmap","title":"Where Vision Board goes from here","summary":"The roadmap from chat, drawn as a board. Numbers run across every region."}
+{"v":2,"seq":2,"at":"2026-10-02T09:00:01Z","by":"agent","agent":"kiro","type":"region","board":"roadmap","region":{"id":"review","title":"Review","mode":"grid","columns":3}}
+{"v":2,"seq":3,"at":"2026-10-02T09:00:02Z","by":"agent","agent":"kiro","type":"region","board":"roadmap","region":{"id":"prove","title":"Prove the idea before code","mode":"flow"}}
+{"v":2,"seq":4,"at":"2026-10-02T09:00:03Z","by":"agent","agent":"kiro","type":"region","board":"roadmap","region":{"id":"decide","title":"Formats and decisions","mode":"radial","center":7}}
+{"v":2,"seq":5,"at":"2026-10-02T09:00:04Z","by":"agent","agent":"kiro","type":"region","board":"roadmap","region":{"id":"build","title":"Build in thin slices","mode":"lanes","lanes":["Foundation","Board","Agent"]}}
+{"v":2,"seq":6,"at":"2026-10-02T09:00:05Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":1,"ver":1,"node":{"region":"review","kind":"question","title":"Review the rules and principles","body":"Say what is wrong or missing.","item":true}}
+{"v":2,"seq":7,"at":"2026-10-02T09:00:06Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":2,"ver":1,"node":{"region":"review","kind":"decision","title":"Accept or change D-001 to D-008","item":true}}
+{"v":2,"seq":8,"at":"2026-10-02T09:00:07Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":3,"ver":1,"node":{"region":"review","kind":"action","title":"Cortex setup","body":"Categories and the registry.","item":true}}
+{"v":2,"seq":9,"at":"2026-10-02T09:00:08Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":4,"ver":1,"node":{"region":"prove","kind":"action","title":"Paper prototype","body":"Hand-write a view and transcript for a real review.","item":true}}
+{"v":2,"seq":10,"at":"2026-10-02T09:00:09Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":5,"ver":1,"node":{"region":"prove","kind":"finding","title":"Use this roadmap as test case 1","body":"It is the numbered, cross-category output the board replaces.","item":true}}
+{"v":2,"seq":11,"at":"2026-10-02T09:00:10Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":6,"ver":1,"node":{"region":"prove","kind":"question","title":"Define item kinds and their buttons","item":true}}
+{"v":2,"seq":12,"at":"2026-10-02T09:00:11Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":7,"ver":1,"node":{"region":"decide","kind":"topic","title":"Decide the stack"}}
+{"v":2,"seq":13,"at":"2026-10-02T09:00:12Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":8,"ver":1,"node":{"region":"decide","kind":"action","title":"Format spec v0","body":"JSON Schema and a validator.","item":true}}
+{"v":2,"seq":14,"at":"2026-10-02T09:00:13Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":9,"ver":1,"node":{"region":"decide","kind":"decision","title":"Framework","body":"SvelteKit to match Studio, or plain Vite.","item":true}}
+{"v":2,"seq":15,"at":"2026-10-02T09:00:14Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":10,"ver":1,"node":{"region":"decide","kind":"decision","title":"Layout engine","body":"Our own per mode, or ELK.","item":true}}
+{"v":2,"seq":16,"at":"2026-10-02T09:00:15Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":11,"ver":1,"node":{"region":"decide","kind":"risk","title":"Reuse from sibling projects","body":"Dropped by the maintainer.","item":true}}
+{"v":2,"seq":17,"at":"2026-10-02T09:00:16Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":12,"ver":1,"node":{"region":"build","kind":"action","title":"Scaffold","body":"Workspace, tokens, ui base, checks.","item":true,"lane":"Foundation"}}
+{"v":2,"seq":18,"at":"2026-10-02T09:00:17Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":13,"ver":1,"node":{"region":"build","kind":"action","title":"Walking skeleton","body":"Grid, item card, actions, transcript.","item":true,"lane":"Board","emphasis":true}}
+{"v":2,"seq":19,"at":"2026-10-02T09:00:18Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":14,"ver":1,"node":{"region":"build","kind":"action","title":"Agent skill v0","body":"Write a view, read the transcript.","item":true,"lane":"Agent"}}
+{"v":2,"seq":20,"at":"2026-10-02T09:00:19Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":15,"ver":1,"node":{"region":"build","kind":"action","title":"More modes","body":"List, flow, lanes, radial.","item":true,"lane":"Board"}}
+{"v":2,"seq":21,"at":"2026-10-02T09:00:20Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":16,"ver":1,"node":{"region":"build","kind":"action","title":"Versions, Confirm these, Approve","item":true,"lane":"Board"}}
+{"v":2,"seq":22,"at":"2026-10-02T09:00:21Z","by":"agent","agent":"kiro","type":"node","board":"roadmap","n":17,"ver":1,"node":{"region":"build","kind":"action","title":"WebMCP or plugin","body":"No manual \"go read it\" step.","item":true,"lane":"Agent"}}
+{"v":2,"seq":23,"at":"2026-10-02T09:00:22Z","by":"agent","agent":"kiro","type":"link","from":4,"to":5}
+{"v":2,"seq":24,"at":"2026-10-02T09:00:23Z","by":"agent","agent":"kiro","type":"link","from":5,"to":6}
+{"v":2,"seq":25,"at":"2026-10-02T09:00:24Z","by":"agent","agent":"kiro","type":"link","from":7,"to":8}
+{"v":2,"seq":26,"at":"2026-10-02T09:00:25Z","by":"agent","agent":"kiro","type":"link","from":7,"to":9}
+{"v":2,"seq":27,"at":"2026-10-02T09:00:26Z","by":"agent","agent":"kiro","type":"link","from":7,"to":10}
+{"v":2,"seq":28,"at":"2026-10-02T09:00:27Z","by":"agent","agent":"kiro","type":"link","from":7,"to":11}
+{"v":2,"seq":29,"at":"2026-10-02T09:00:28Z","by":"agent","agent":"kiro","type":"link","from":6,"to":8}
+{"v":2,"seq":30,"at":"2026-10-02T09:00:29Z","by":"agent","agent":"kiro","type":"link","from":9,"to":12}
+{"v":2,"seq":31,"at":"2026-10-02T09:00:30Z","by":"agent","agent":"kiro","type":"link","from":12,"to":13}
+{"v":2,"seq":32,"at":"2026-10-02T09:00:31Z","by":"agent","agent":"kiro","type":"link","from":13,"to":14}
+{"v":2,"seq":33,"at":"2026-10-02T09:00:32Z","by":"agent","agent":"kiro","type":"link","from":13,"to":15}
+{"v":2,"seq":34,"at":"2026-10-02T09:00:33Z","by":"agent","agent":"kiro","type":"link","from":15,"to":16}
+{"v":2,"seq":35,"at":"2026-10-02T09:00:34Z","by":"agent","agent":"kiro","type":"link","from":14,"to":17}
+{"v":2,"seq":36,"at":"2026-10-02T09:00:35Z","by":"agent","agent":"kiro","type":"link","from":10,"to":15,"label":"informs"}
