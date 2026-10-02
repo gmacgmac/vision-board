@@ -1,0 +1,28 @@
+{
+  // Strict checking of Node-side code (rule 14): packages, package tests/bin, and the board
+  // app's server + bin files. apps/board/src is excluded -- svelte-check covers it.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "packages/*/bin/**/*.ts",
+    "apps/board/server/**/*.ts",
+    "apps/board/server.ts",
+    "apps/board/bin/**/*.ts"
+  ],
+  "exclude": ["apps/board/src", "node_modules"]
+}

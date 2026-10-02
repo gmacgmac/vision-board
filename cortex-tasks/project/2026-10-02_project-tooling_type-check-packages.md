@@ -1,8 +1,8 @@
 ---
 task_name: Type-Check Every Package
 created: 2026-10-02
-completed:
-status: pending
+completed: 2026-10-02
+status: done
 categories: [project-tooling]
 type: implementation
 tracker: cortex-tasks/tracker.md#N7
@@ -62,9 +62,9 @@ never type-checked, so strict TypeScript (rule 14) is not enforced there.
 
 ## Success Criteria
 
-- [ ] `npm run check` type-checks every package, test, script-adjacent `.ts` and server file
-- [ ] `npm run check`, `npm test` and `npm run verify` each exit 0
-- [ ] A deliberately wrong type in `packages/format/src/ledger-index.ts` makes `npm run check`
+- [x] `npm run check` type-checks every package, test, script-adjacent `.ts` and server file
+- [x] `npm run check`, `npm test` and `npm run verify` each exit 0
+- [x] A deliberately wrong type in `packages/format/src/ledger-index.ts` makes `npm run check`
       fail (try it, then revert it)
 
 ## References
@@ -73,4 +73,46 @@ never type-checked, so strict TypeScript (rule 14) is not enforced there.
 
 ## Implementation Notes
 
-_(filled in on completion: what changed, errors fixed, the exact gate exit codes)_
+Added root `tsconfig.json` (strict, matching `apps/board/tsconfig.json`'s compiler options
+except `lib: ["ES2023"]`, no DOM/vite types) covering `packages/*/src`, `packages/*/tests`,
+`packages/*/bin`, `apps/board/server/**`, `apps/board/server.ts`, `apps/board/bin/**`, excluding
+`apps/board/src` and `node_modules`. Wired `npm run check` to `npm run check --workspace
+apps/board && tsc -p tsconfig.json`.
+
+Running `tsc -p tsconfig.json` reports 79 errors, every one caused by the absence of
+`@types/node`: `node:*` module specifiers (TS2591), Node globals `process`/`console`/`Buffer`/
+`URL`/timers (TS2591/TS2584/TS2304), the `NodeJS` namespace (TS2503), `import.meta.url`
+(TS2339), and implicit-`any` callback parameters on `fs`/`http` return values that are only
+untyped because those APIs' own types are unresolvable (TS7006 on `req`/`res` in
+`apps/board/server.ts:69` and on array-callback params in `apps/board/server/sessions.ts`).
+No error is independent of this cause -- confirmed by excluding every Node-type-related TS code
+and finding only those same cascaded TS7006s remain.
+
+Per the task's explicit instruction, `@types/node` was not installed. Stopping and reporting:
+**79 type errors, all and only from missing Node type definitions** -- installing `@types/node`
+(and adding `"types": ["node"]`) is the needed fix, which is a dependency decision for the
+maintainer.
+
+Deliberate-wrong-type check: changed `emptyIndex`'s `seq: 0` to `seq: 'zero'` in
+`packages/format/src/ledger-index.ts`; `npm run check` failed (exit 1, svelte-check reported
+`Type 'string' is not assignable to type 'number'.` at that line via the apps/board check,
+which imports the package). Reverted; `git diff packages/format/src/ledger-index.ts` is empty.
+
+No files under `packages/` or `apps/board/server*`/`bin/` were otherwise edited: there is no fix
+available that doesn't require the Node types decision.
+
+### Completion (orchestrator, 2026-10-02)
+
+- Maintainer approved `@types/node` 22.20.5 (rule 20). Installed with `--save-exact`, scripts off;
+  it brings `undici-types` 6.21.0 (types only, MIT, pinned by the lockfile). Root `tsconfig.json`
+  gained `"types": ["node"]` (TypeScript 6 no longer loads `@types/*` by default).
+- With Node types present, one real error remained: `ev()` in
+  `packages/format/tests/ledger.test.ts` indexed an array under `noUncheckedIndexedAccess`. Fixed
+  by throwing on a missing fixture line.
+- The sub-agent's wrong-type probe failed through svelte-check, not the new `tsc` step. Re-probed
+  with a wrong type in a file only `tsc` sees (`packages/format/tests/`, then removed): exit 2.
+- Gates, run by the orchestrator: `npm test` 42/42 exit 0, `npm run check` exit 0,
+  `npm run verify` exit 0 (one existing long-file warning).
+- Register: `docs/specification/dependencies.md` rows and summary counts updated; the old
+  "Types for Node files: not installed" row removed.
+

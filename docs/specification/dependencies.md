@@ -1,6 +1,6 @@
 ---
 category: project-tooling
-last_updated: 2026-10-01
+last_updated: 2026-10-02
 status: active
 scope: Every direct third-party package, with its exact version, who uses it and why; install scripts, licences and weight
 keywords: [dependencies, register, supply chain, npm, licences, install scripts, versions]
@@ -18,15 +18,15 @@ exact version and why we have it. The full installed tree is not listed: run `np
 what a decision lists, pin exact versions, install with scripts off (`.npmrc`), and update this
 register in the same change.
 
-## Summary (2026-10-01, macOS arm64)
+## Summary (2026-10-02, macOS arm64)
 
 | Measure | Value |
 |---|---|
-| Direct dependencies | 5, all `devDependencies`: 4 in `apps/board/package.json`, `typescript` at the root |
-| Lockfile third-party entries | 71, every platform included, workspace links excluded |
-| Installed on this machine | 47 (the 71 minus 24 optional binaries for other platforms) |
+| Direct dependencies | 6, all `devDependencies`: 4 in `apps/board/package.json`; `typescript` and `@types/node` at the root |
+| Lockfile third-party entries | 73, every platform included, workspace links excluded |
+| Installed on this machine | 49 (the 73 minus 24 optional binaries for other platforms) |
 | Install scripts run | 0. No installed package declares `preinstall`, `install` or `postinstall` |
-| Licences (installed) | MIT 39, Apache-2.0 4, MPL-2.0 2, ISC 1, BSD-3-Clause 1 |
+| Licences (installed) | MIT 41, Apache-2.0 4, MPL-2.0 2, ISC 1, BSD-3-Clause 1 |
 
 ## Direct dependencies: what and why (D-014)
 
@@ -37,6 +37,7 @@ register in the same change.
 | `@sveltejs/vite-plugin-svelte` | 7.3.1 | `apps/board/package.json` | `svelte()` in `apps/board/vite.config.ts`, `vitePreprocess` in `apps/board/svelte.config.js` | Compiles `.svelte` files inside Vite |
 | `svelte-check` | 4.7.6 | `apps/board/package.json` | root `check` script | Strict type and accessibility checks of `.svelte` and `.ts` files (rules 5, 14) |
 | `typescript` | 6.0.3 | `package.json` | `svelte-check` (peer) | Type checking. 6.x because `svelte-check` accepts only `^5 \|\| ^6`; review when it supports 7 |
+| `@types/node` | 22.20.5 | `package.json` | `"types": ["node"]` in the root `tsconfig.json` (N7) | Type definitions for Node's built-in modules, so package, server and bin code is strictly checked (rule 14). Major 22 matches our Node 22. Writing our own would be a second source of truth for Node's API (rule 6). Already in the tree through `vite`; now declared directly |
 
 ## Weight and risk
 
@@ -50,6 +51,7 @@ under each package that needs them).
 | `@sveltejs/vite-plugin-svelte` | 5 | none | MIT | none: required to build Svelte with Vite |
 | `svelte-check` | 10, plus `typescript` (peer) | none | MIT | none: the Svelte type checker |
 | `typescript` | 0 | none | Apache-2.0 | TypeScript 7 (not supported by `svelte-check` 4.7.6) |
+| `@types/node` | 1 (`undici-types` 6.21.0, type definitions only, pinned by the lockfile) | none | MIT | our own Node type definitions (would drift from real Node) |
 
 ## Install scripts
 
@@ -72,7 +74,6 @@ under each package that needs them).
 | Unit tests | Node's built-in runner (root `test` script) | Vitest |
 | Lint rules | `scripts/verify.mjs` | ESLint |
 | Local server | `apps/board/server.ts` on `node:http` | Express, Vite's dev server |
-| Types for Node files | server, bin and test files kept out of the type-checked `include` | `@types/node` |
 | Workspaces | npm workspaces | pnpm |
 
 Still to come: Prettier (D-007, tracker N5); Playwright and axe-core wait for their decision (N3).

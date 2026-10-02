@@ -90,7 +90,6 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N3 | Page tests decision | **Problem:** rule 13 page tests need Playwright and axe-core, which aren't decided yet. **Example:** D-014 leaves them out. **Solution:** a decision entry plus a `test:pages` script, as in Studio. | D-014 |
 | N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
 | N6 | Dark theme cards unreadable | **Problem:** in dark theme the cards stay white and their titles and body text almost vanish. **Example:** roadmap session, Theme: dark (same before and after the Svelte move). **Solution:** fix the card surface and ink tokens for dark, checked against the APCA tiers; fold into Stage 2b (Architect's look, D-024). | Browser check, 2026-10-01 |
-| N7 | Packages outside the page aren't type-checked | **Problem:** `npm run check` only covers code the page imports, so new package code (the ledger format) is checked by hand. **Example:** `packages/format/src/ledger-index.ts` passed only a one-off `tsc` run. **Solution:** a root strict `tsconfig` over `packages/*/src` run by `npm run check`. | U3 step 1, 2026-10-02 · `cortex-tasks/project/2026-10-02_project-tooling_type-check-packages.md` |
 
 ## MEDIUM TERM
 

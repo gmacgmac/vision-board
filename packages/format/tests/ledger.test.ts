@@ -5,7 +5,11 @@ import { eventProblems, validateLedger } from '../src/index.ts';
 
 const lines = () => fs.readFileSync(
   new URL('../fixtures/login-review.ledger.jsonl', import.meta.url), 'utf8').trim().split('\n');
-const ev = (i: number) => JSON.parse(lines()[i]);
+const ev = (i: number) => {
+  const line = lines()[i];
+  if (line === undefined) throw new Error(`fixture has no line ${i}`);
+  return JSON.parse(line);
+};
 const set = (ls: string[], i: number, e: unknown) => { ls[i] = JSON.stringify(e); return ls; };
 
 test('fixture ledger is valid', () => assert.deepEqual(validateLedger(lines()), []));
