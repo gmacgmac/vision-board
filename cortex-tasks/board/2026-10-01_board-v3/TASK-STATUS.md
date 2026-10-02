@@ -25,6 +25,11 @@ created: 2026-10-01
   `npm run verify` and `npm run check`. Next is **step 2: the mode picker pill**, which needs the
   maintainer's go. `src/board/controller.ts` is 336 lines (warn); it shrinks when nodes move to
   `<vb-node>`.
+- **Order change (2026-10-02, maintainer agreed)**: after step 1, build `<vb-node>` and
+  `<vb-region>` first, then Architect styling (with N6), then the mode picker and region sizing,
+  then notes beside cards. Before `<vb-node>`, the node ledger set
+  (`cortex-tasks/board/2026-10-02_board-node-ledger/`) runs its format step, and Stage 4 folds
+  into that set's API steps.
 
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
