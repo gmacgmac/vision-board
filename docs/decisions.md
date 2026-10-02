@@ -8,19 +8,15 @@ keywords: [decisions, register, adr, governance]
 
 # Decision register
 
-**How to read it.** An entry is *Proposed* or *Accepted*. Accepted entries are binding: when code
-disagrees with one, the code is wrong. Proposed entries are open for review. **Today every entry is
-Proposed**: they are carried over from Uplynk Studio's register and draft decisions
-(`~/WORK/uplynk-studio/docs/decisions.md`, D-001 to D-011) and adapted, awaiting the
-maintainer's review here. The reasoning is in [principles.md](principles.md).
+**How to read it.** One entry per decision, oldest first. *Accepted* entries are binding: when
+code disagrees with one, the code is wrong. *Proposed* entries are open for review. Don't read
+the whole file: list the entries with `grep "^## D-" docs/decisions.md`, then read the ones that
+apply. The reasoning behind the rules is in [principles.md](principles.md).
 
 **How to add to it.** Plan the decision as a Cortex task first. Then append the next number at
-the end: date, status, the decision, why, the main alternative rejected, and the task link.
-Never edit an Accepted entry; append a new one and mark the old one `Superseded by D-NNN`. The
-work log (`cortex/LOG.md`) is not a decision record: it is pruned.
-
-**Still open, not yet entries:** none. The framework (D-012) and the layout
-engine (D-013) were decided on 2026-10-01; the component model is D-005, still Proposed.
+the end, without rewriting the file: date, status, the decision, why, the main alternative
+rejected, and the task link. Never edit an Accepted entry; append a new one and mark the old one
+`Superseded by D-NNN`. The work log (`cortex/LOG.md`) is not a decision record: it is pruned.
 
 ---
 

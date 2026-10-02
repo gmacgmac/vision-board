@@ -136,8 +136,10 @@ and actions D-018 defines) → the rest of board v3, with Stage 4 folded into st
 
 ## Open questions (settled 2026-10-02)
 
-- **View snapshots: keep them.** Fixtures and whole-board writes use the stored view format
-  (rule 11); live boards are rebuilt from the ledger.
+- **Board versions are positions in the ledger, not files.** Each event has a sequence number,
+  so "version 5 of the board" is the ledger read up to a point, like a checkpoint. There are no
+  separate stored `view-vN.json` files. Test fixtures (rule 11) are small ledger files in the
+  same format. Forking a board is out of scope.
 - **Seen: per person**, built for one person now. When there is only one person, the agent is
   told nothing about people (D-018, D-019: the agent-facing surface stays minimal).
 
