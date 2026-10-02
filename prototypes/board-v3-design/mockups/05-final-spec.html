@@ -85,8 +85,8 @@
                 <button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button>
                 <button class="qa" type="button" aria-label="Note on 41"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
             </article>
-            <article class="card k-action is-proposed has-tab-bottom" tabindex="0" aria-label="Item 45, action, open, 1 out-of-date proposal">
-              <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><button class="tab prop stale" type="button" aria-haspopup="dialog" aria-expanded="false">OUT OF DATE</button>
+            <article class="card k-action has-tab-bottom" tabindex="0" aria-label="Item 45, action, open, 1 out-of-date proposal">
+              <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><button class="tab prop stale" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Show the out-of-date proposal on 45">OUT OF DATE</button>
               <div class="cb">
                 <h3 class="t">Draft the migration email for grandfathered users</h3>
                 <p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p>
@@ -112,8 +112,8 @@
                 <div class="row"><span class="kbd-hint grow"><kbd>Enter</kbd> add · <kbd>Esc</kbd> cancel</span><button class="btn btn-sm" type="button">Cancel</button><button class="btn btn-sm btn-primary" type="button">Add note</button></div>
               </div>
             </article>
-            <article class="card k-question is-proposed has-ovl has-tab-bottom" tabindex="0" aria-label="Item 47, question, open, 1 proposal, proposal open">
-              <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span><button class="tab prop" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="prop47">PROPOSAL</button>
+            <article class="card k-question has-ovl has-tab-bottom" tabindex="0" aria-label="Item 47, question, open, 1 proposal, proposal open">
+              <span class="tab num">47</span><span class="tab kind" title="Drag to move">Question</span><button class="tab prop" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="prop47" aria-label="Hide the proposal on 47">PROPOSAL</button>
               <div class="cb">
                 <h3 class="t">Will Northwind take the 20% prepay discount?</h3>
                 <p class="p">Offered on the 24 Sep call as the price of a two-year renewal.</p>
@@ -129,8 +129,8 @@
             </article>
           </div>
           <div class="col">
-            <article class="card k-risk has-tab-bottom" tabindex="0" aria-label="Item 44, risk, commented, 3 unseen updates">
-              <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-expanded="false">3 UPDATES</button>
+            <article class="card k-risk has-tab-bottom" tabindex="0" aria-label="Item 44, risk, commented, 1 proposal, 3 unseen updates">
+              <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="pin" type="button" aria-label="Note 1">1</button><button class="tab prop" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Show the proposal on 44">PROPOSAL</button><button class="tab flag changed" type="button" aria-haspopup="dialog" aria-expanded="false">3 UPDATES</button>
               <div class="cb">
                 <h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3>
                 <p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing, so large self-serve teams have a reason to stall on sales.</p>
@@ -196,12 +196,45 @@
 </div>
 <section class="legend" aria-label="Notes on section 1">
   <ul>
-    <li>Every overlay floats above the board with an arrow at its card; the card keeps its size and its neighbours stay put (pick 5). Here 42's note covers part of 44, and 47's proposal covers part of 43.</li>
-    <li>A card with a proposal waiting keeps a dashed outline, like a notification, until you decide it. The dashed line is deliberately unlike selection, which is the card's own colour at full strength (42).</li>
-    <li>When several overlays are open, the lowest item number sits on top.</li>
+    <li>Every bubble floats above the board with an arrow at its card, in that card's colour (42's note is teal, 47's proposal blue). The card keeps its size and its neighbours stay put.</li>
+    <li>Anything that needs your accept or reject is a tab at the bottom centre of the card: PROPOSAL (pink) or OUT OF DATE (amber outline). The tab is the button that shows and hides the bubble, so you can close it to read the card behind. 44 and 45 are closed; 47 is open.</li>
+    <li>Unseen versions stay bottom right (44's "3 UPDATES"). The number, kind and note pin stay on the top border.</li>
+    <li>When several bubbles are open, the lowest item number sits on top.</li>
     <li>The history button in 41's footer opens its decision flow (section 4).</li>
   </ul>
 </section>
+
+<section class="sec-head"><h2>1b — Proposals: open, out of date, and near the edge</h2><p>A bubble opens on its card's right. When that would run off the board, it opens on the left instead (44, at the right edge); if neither side fits, it opens below. An out-of-date proposal can't be accepted: the card changed after the agent proposed it, so you dismiss it or ask the agent to propose again against the latest version.</p></section>
+<main class="stage" aria-label="Proposal bubbles">
+  <fieldset class="fs g-pricing" style="min-height: 300px"><legend><span class="band-name">Pricing thread</span><span class="meta">2 proposals open</span></legend>
+    <div class="cols" style="justify-content: space-between">
+      <article class="card k-action has-ovl has-tab-bottom" tabindex="0" aria-label="Item 45, action, out-of-date proposal open">
+        <span class="tab num">45</span><span class="tab kind" title="Drag to move">Action</span><button class="tab prop stale" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="stale45" aria-label="Hide the out-of-date proposal on 45">OUT OF DATE</button>
+        <div class="cb"><h3 class="t">Draft the migration email for grandfathered users</h3><p class="p">Goes out 60 days before renewal. You added the credit amount at 14:02.</p></div>
+        <div class="card-foot" style="color: var(--muted)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-action"/></svg><i class="sep"></i>Open</span></div>
+        <div class="ovl prop stale to-right" id="stale45" style="--oy: -6px" role="dialog" aria-label="Out-of-date proposal on 45">
+          <div class="head"><span class="nref k-action">45</span><span class="grow">The agent proposed, on v2</span><button class="icon-btn" type="button" aria-label="Close" style="width: 26px; height: 26px"><svg class="ic" width="14" height="14"><use href="#i-x"/></svg></button></div>
+          <div class="what">Mark 45 done: the email is drafted</div>
+          <div class="why-stale"><svg class="ic" width="14" height="14"><use href="#i-clock"/></svg><span>You edited 45 at 14:02, so it is now v3. This proposal was made against v2 and can't be accepted.</span></div>
+          <span class="src"><svg class="ic" width="13" height="13"><use href="#i-mail"/></svg>Email pasted in chat, 13:48</span>
+          <div class="row"><button class="btn btn-sm" type="button">Dismiss</button><button class="btn btn-sm btn-primary" type="button">Ask the agent again</button></div>
+        </div>
+      </article>
+      <article class="card k-risk is-sel has-ovl has-tab-bottom" tabindex="0" aria-label="Item 44, risk, proposal open, selected">
+        <span class="tab num">44</span><span class="tab kind" title="Drag to move">Risk</span><button class="tab prop" type="button" aria-haspopup="dialog" aria-expanded="true" aria-controls="prop44" aria-label="Hide the proposal on 44">PROPOSAL</button>
+        <div class="cb"><h3 class="t">The enterprise floor undercuts self-serve at 35+ seats</h3><p class="p">A 35-seat team pays less on the enterprise floor than on usage pricing.</p></div>
+        <div class="card-foot" style="color: var(--accent-text)"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-risk"/></svg><i class="sep"></i>Commented</span></div>
+        <div class="ovl prop to-left" id="prop44" style="--oy: -6px" role="dialog" aria-label="Proposal on 44">
+          <div class="head"><span class="nref k-risk">44</span><span class="grow">The agent proposes</span><button class="icon-btn" type="button" aria-label="Close" style="width: 26px; height: 26px"><svg class="ic" width="14" height="14"><use href="#i-x"/></svg></button></div>
+          <div class="what">Update 44 with Northwind's seat count</div>
+          <div>Crossover <span class="diff-from">35+</span> → <span class="diff-to">30+</span> seats</div>
+          <span class="src"><svg class="ic" width="13" height="13"><use href="#i-mail"/></svg>Email pasted in chat, 13:48</span>
+          <div class="row"><button class="btn btn-sm" type="button">Reject</button><button class="btn btn-sm btn-primary" type="button">Accept</button></div>
+        </div>
+      </article>
+    </div>
+  </fieldset>
+</main>
 
 <section class="sec-head"><h2>2 — Updates you haven't seen</h2><p>The "N UPDATES" tab opens the stepper as an overlay on that card. Each step shows one version you missed, with its changes marked; "Next update" moves on. On the latest version there is nothing to approve, because this is history, so the last step simply says it is the latest and offers Close. Closing marks every version you stepped through as seen.</p></section>
 <main class="stage" aria-label="Unseen versions">
@@ -286,7 +319,13 @@
   </fieldset>
 </main>
 
-<section class="sec-head"><h2>4 — Decision flow, both orientations</h2><p>One item's whole history from the ledger: your request, the agent's work, every version, your notes, and the moment you decided. The container's top line swaps the layout icons for a horizontal/vertical toggle. Both orientations use the same back-and-forth offset, and "you" looks identical in both.</p></section>
+<section class="sec-head"><h2>4 — Decision flow, both orientations</h2><p>One item's whole history from the ledger: your request, the agent's work, every version, your notes, and the moment you decided. The container's top line swaps the layout icons for a horizontal/vertical toggle. You are neutral grey and first in line: on the top line horizontally, on the left vertically. Everything the agent produced sits slightly lower, or slightly to the right, in the agent's own colour.</p></section>
+<div data-agent="lime" id="flows">
+<div class="agent-pick" role="group" aria-label="Agent colour to preview">Agent colour:
+  <button class="btn btn-sm" type="button" data-pick="lime" aria-pressed="true"><span class="swatch" style="background: var(--agent-lime)"></span>Lime (new)</button>
+  <button class="btn btn-sm" type="button" data-pick="sky" aria-pressed="false"><span class="swatch" style="background: var(--agent-sky)"></span>Sky (new)</button>
+  <button class="btn btn-sm" type="button" data-pick="pink" aria-pressed="false"><span class="swatch" style="background: var(--accent-text)"></span>Pink (brand)</button>
+</div>
 <main class="stage" aria-label="Decision flow, horizontal">
   <fieldset class="fs g-flow"><legend><span class="band-name">41 · Decision flow</span><span class="meta">9 steps · Mon 28 Sep to Thu 1 Oct</span></legend>
     <div class="mode-row" role="radiogroup" aria-label="Orientation of the decision flow">
@@ -315,7 +354,7 @@
       <div class="lstep k-agent"><span class="lwhen">16:41</span>
         <article class="card mini" tabindex="0" aria-label="Agent run after the decision"><span class="tab kind">Agent</span><div class="cb"><span class="who-agent">The agent · 24s</span><p class="p">Followed it through the thread.</p><div class="changes"><span class="chg add">+ added 45</span><span class="chg mod">~ 44</span></div></div></article></div>
     </div>
-    <div class="kbd-hint">Your steps sit lower, the agent's and the item's higher. Scroll sideways with <kbd>←</kbd> <kbd>→</kbd> when the lane has focus.</div>
+    <div class="kbd-hint">Your steps sit on the top line; the agent's work and each version it wrote sit slightly lower. Scroll sideways with <kbd>←</kbd> <kbd>→</kbd> when the lane has focus.</div>
   </fieldset>
 </main>
 
@@ -348,9 +387,11 @@
     </ol>
   </fieldset>
 </main>
+</div>
 <section class="legend" aria-label="Notes on sections 2-4">
   <ul>
-    <li>All colours are Architect variables; this page adds none. "You" is the accent-soft fill everywhere: chat, notes, and both decision flows.</li>
+    <li>All colours are Architect variables except the agent colour, which is a candidate new token: lime and sky sit in the widest gaps between the six kind colours, so the agent never matches an item's own colour. Pink is Architect's brand, but every decision flow ends on a pink decision step.</li>
+    <li>"You" is neutral grey in both decision flows. The chat panel and saved notes on cards are still pink: not changed yet.</li>
     <li>The decision flow opens from a card's history button and shows one item. Its container carries the orientation toggle and the cog instead of the five layout icons.</li>
     <li>Contrast is not checked yet (tracker N1), so no pair here is cleared to ship.</li>
   </ul>
@@ -362,6 +403,11 @@
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
     btn.textContent = dark ? 'Dark theme' : 'Light theme';
   });
+  const flows = document.getElementById('flows');
+  flows.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
+    flows.dataset.agent = b.dataset.pick;
+    flows.querySelectorAll('[data-pick]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  }));
 </script>
 </body>
 </html>

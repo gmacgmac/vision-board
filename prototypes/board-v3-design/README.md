@@ -48,3 +48,23 @@ behaviour into `packages/` and `apps/`, never this code. Open the pages through 
    tool calls update the board, anything else is plain chat. It accepts pasted emails and
    documents. The mockups' bottom composer is a placeholder only; the composer's chips (notes,
    selection) move into the right-hand chat input.
+
+## Maintainer revisions to 05 (2026-10-02, second pass)
+
+8. **Decision flow colours and order (revises 6).** "You" is neutral grey, not pink, and your
+   text is never coloured. The agent gets its own colour, still to be picked by eye from three
+   candidates on 05 section 4 (lime, sky, or Architect's pink). You come first: on the top line
+   horizontally, on the left vertically. Everything the agent produced (its runs and the
+   versions it wrote) sits slightly lower, or slightly indented to the right. The offset is small
+   because the colour already says who is who.
+9. **No dashed outline on a card with a proposal (revises 3).** The tab is the signal.
+10. **Accept/reject lives on a tab at the bottom centre of the card** (PROPOSAL, OUT OF DATE).
+    The tab is the button that shows and hides the bubble, so the card behind can be read. Unseen
+    versions stay bottom right; number, kind and note pin stay on the top border.
+11. **Bubble placement.** Opens on the card's right; flips to the left when the right would leave
+    the board; opens below when neither side fits.
+12. **A bubble wears its card's colour** (border, arrow and the soft selected glow), so it reads
+    as attached to that card.
+13. **Selection is thinner:** 1.5px in total (was 2.5px), still the card's own colour.
+14. **Out of date** is not accept/reject: the card changed after the agent proposed, so the
+    choices are Dismiss or Ask the agent again.
