@@ -3,7 +3,7 @@ category: project-docs
 type: tracker
 status: active
 created: 2026-09-30
-last_updated: 2026-10-01
+last_updated: 2026-10-02
 scope: The live queue for Vision Board, from founding rules to a board any agent session can use
 keywords: [tracker, queue, roadmap]
 ---
@@ -78,18 +78,19 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | ID | Item | Why | Source |
 |---|---|---|---|
 | U1 | Board v3 | **Problem:** notes can't be edited, there is no lasso or chat panel, and replies are pasted by hand. **Example:** first-look v2 items 14–26. **Solution:** the approved 7-stage plan, reordered 2026-10-02 (U3 first, then `<vb-node>`). | Maintainer, 2026-10-01 · `cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md` |
-| U3 | Node ledger and board API | **Problem:** "47" can't be traced across chats or compactions, and nothing makes the agent answer every flagged item. **Example:** a parked item picked up a week later in a new chat. **Solution:** per-project ledger, one API (HTTP, MCP, `vb`), proposals, seen badges, parking bundles (D-017 to D-021). | Maintainer, 2026-10-02 · `cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md` |
+| U3 | Node ledger | **Problem:** "47" can't be traced across chats or compactions, and nothing makes the agent answer every flagged item. **Example:** a parked item picked up a week later in a new chat. **Solution:** per-project ledger, one API (HTTP, MCP, `vb`), proposals, seen badges, parking bundles (D-017 to D-021). | Maintainer, 2026-10-02 · `cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md` |
+| U4 | Board API pattern | **Problem:** agents can't check replies, write nodes with per-item answers or look up a node by number, and nothing stops code drifting from the contract. **Example:** a parked item a week later in a new chat. **Solution:** OpenAPI as the one source; routes, `vb`, MCP and docs derived and drift-tested (D-022, `docs/specification/api.md`). | Maintainer, 2026-10-02 · `cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md` |
 
 ## NEAR TERM
 
 | ID | Item | Why | Source |
 |---|---|---|---|
 | N1 | Contrast gate for the three APCA tiers | **Problem:** token colours are hand-picked and unchecked. **Example:** `packages/tokens/src/tokens.css` TODO. **Solution:** port Studio's contrast check, tiered per D-009. | HANDOVER gap 13 |
-| N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. | Rule 6 |
+| N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. Done as U4 step 1 (D-022). | Rule 6 |
 | N3 | Page tests decision | **Problem:** rule 13 page tests need Playwright and axe-core, which aren't decided yet. **Example:** D-014 leaves them out. **Solution:** a decision entry plus a `test:pages` script, as in Studio. | D-014 |
 | N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
-| N6 | Dark theme cards unreadable | **Problem:** in dark theme the cards stay white and their titles and body text almost vanish. **Example:** roadmap session, Theme: dark (same before and after the Svelte move). **Solution:** fix the card surface and ink tokens for dark, checked against the APCA tiers; fold into Stage 2's styling step. | Browser check, 2026-10-01 |
-| N7 | Packages outside the page aren't type-checked | **Problem:** `npm run check` only covers code the page imports, so new package code (the ledger format) is checked by hand. **Example:** `packages/format/src/ledger-index.ts` passed only a one-off `tsc` run. **Solution:** a root strict `tsconfig` over `packages/*/src` run by `npm run check`. | U3 step 1, 2026-10-02 |
+| N6 | Dark theme cards unreadable | **Problem:** in dark theme the cards stay white and their titles and body text almost vanish. **Example:** roadmap session, Theme: dark (same before and after the Svelte move). **Solution:** fix the card surface and ink tokens for dark, checked against the APCA tiers; fold into Stage 2b (Architect's look, D-024). | Browser check, 2026-10-01 |
+| N7 | Packages outside the page aren't type-checked | **Problem:** `npm run check` only covers code the page imports, so new package code (the ledger format) is checked by hand. **Example:** `packages/format/src/ledger-index.ts` passed only a one-off `tsc` run. **Solution:** a root strict `tsconfig` over `packages/*/src` run by `npm run check`. | U3 step 1, 2026-10-02 · `cortex-tasks/project/2026-10-02_project-tooling_type-check-packages.md` |
 
 ## MEDIUM TERM
 
@@ -106,6 +107,8 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | L1 | More layout modes: tree, timeline, matrix, layers, text | **Problem:** the vision lists nine modes and five exist. **Example:** `docs/vision.md` § Layout modes. **Solution:** add each once one container is excellent (v2 item 22). | `docs/vision.md` |
 | L2 | Share patterns with Studio and the Uplynk architecture repo | **Problem:** ideas proven here need to reach Uplynk. **Example:** `<vb-node>` for the architecture diagrams. **Solution:** extract into a shared package once a pattern is stable in both. | Maintainer, 2026-10-01 |
 | L3 | Hosted version | **Problem:** it may become a product. **Example:** maintainer, framework interview. **Solution:** add SvelteKit (D-012) and swap `packages/agent` for a hosted connection. | D-012 |
+| L4 | Expand a long card into a modal | **Problem:** a card with a lot of text grows too tall. **Example:** a finding with a long evidence list. **Solution:** a max card height from a token with a "Show more" control first; a modal that shows the full content later. | Maintainer, 2026-10-02 |
+| L5 | Self-host Architect's fonts | **Problem:** Figtree, Bricolage Grotesque and IBM Plex Mono load from Google, which rule 18 forbids, so the board uses system fonts. **Example:** mockup 01b. **Solution:** a decision entry, then bundle the OFL-licensed font files. | D-024, 2026-10-02 |
 
 ## PARKED
 

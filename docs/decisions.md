@@ -259,3 +259,43 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: A lasting, readable record of how a decision was reached.
 - **Alternative rejected**: Reconstructing decisions from chat history.
 - **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
+
+## D-022 JSON Schema validation with ajv; the API contract lives in packages/format
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, API pattern (tracker U4)
+- **Decision**: Formats and the API are defined as JSON Schema 2020-12 and OpenAPI 3.1 in
+  `packages/format/schema/`. They are checked with `ajv` (pinned exact, MIT), used only in tests and
+  in the I/O layer's validator. Routes, MCP tools, `vb` commands and the API docs are generated
+  from or tested against the spec (rule 6, `docs/specification/api.md`).
+- **Why**: One source for every contract, and drift fails a test. A full schema validator is
+  exactly where a homemade one hides bugs.
+- **Alternative rejected**: Our own validator for the whole standard; a separate `packages/api`
+  (the spec is a contract, and contracts live in `packages/format`).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-023 Our own Markdown renderer, a fixed subset
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, card design (01b)
+- **Decision**: Node bodies, notes, replies and parking bundles are Markdown. One renderer of our
+  own, in `packages/ui`, supports paragraphs, bold, italic, strikethrough, inline code, links,
+  bulleted and numbered lists, `###` subheaders (drawn as small labels), `>` quotes (drawn as the
+  embedded callout) and short code blocks. Anything else renders as plain text; raw HTML is always
+  escaped. Its tests use the CommonMark specification's examples for every construct it supports.
+- **Why**: We own every line and render the same everywhere; the standard's examples give us its
+  accuracy without its code.
+- **Alternative rejected**: `markdown-it` as a dependency, or a fork of it (about 5,000 lines and a
+  plugin system to cut down, with no upstream fixes once forked).
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-024 Architect's look is the board's look
+- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, mockup 01b
+- **Decision**: The board takes Uplynk Architect's palette and card recipe
+  (`prototypes/board-v3-design/architect-extract/`): dark-first ground with a dot grid, family-tinted cards, pink accent.
+  Cards have no icon tile and grow to fit their content; the number, kind (also the drag handle),
+  note pin and NEW or CHANGED sit in gaps on the card border; the kind icon, state and quick
+  actions sit in a footer. Selection is the card's own colour at full strength. Containers are open
+  frames in their own colour with the label in the top line. Kinds map to Architect families:
+  question blue, finding teal, decision pink, risk orange, action amber, topic violet. Every colour
+  still passes its APCA tier (D-009) before it ships; fonts stay system fonts until a
+  self-hosting decision (rule 18).
+- **Why**: The maintainer judged it by eye against Architect; it puts the space into content.
+- **Alternative rejected**: The previous pastel tokens with a blue accent; icon tiles in card heads.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]

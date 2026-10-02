@@ -120,17 +120,21 @@ and the chat alike, reads and writes it, and answers every write node by node.
 
 ## Build order (each step needs the maintainer's go)
 
-1. Format first: ledger event schema and node versions, format version 2, fixtures and
-   validator updated.
-2. Ledger module in the I/O layer, with the fold, number assignment and serialised writes.
-3. API over HTTP plus `vb check | write | show | open`. Replaces board v3 Stage 4's `vb wait`.
-4. MCP wrapper over the same API.
-5. Board UI, after `<vb-node>` exists: proposal markers and accept-all, the seen badge and
-   stepper, the park form, branching.
-6. Incremental layout and the decision flow mode.
+Task files are written for one step at a time, from this PLAN as it stands when the step starts
+(maintainer, 2026-10-02), so later steps pick up what earlier ones taught us.
 
-Board v3 order becomes: this design accepted → step 1 here → `<vb-node>` (it draws the states
-and actions D-018 defines) → the rest of board v3, with Stage 4 folded into steps 2–3.
+1. Format first: ledger event types, node versions, format 2, fixture, validator. **Done.**
+2. Ledger module in the I/O layer: read, fold to board state, assign numbers and `seq`, append one
+   event at a time; move the board off view files and the transcript; replace the old test
+   sessions with fixture ledgers (the old ones are deleted, not converted). `.visionboard/` is
+   committed to git.
+3. Board UI, after `<vb-node>` exists: proposal markers and accept-all, the seen badge and
+   stepper, the park form, branching (designs: mockup 03).
+4. Incremental layout and the decision flow mode (design: mockup 04).
+
+The API, `vb` and MCP moved to their own set, the API pattern
+(`cortex-tasks/board/2026-10-02_board-api-pattern/`, tracker U4): it is a new pattern with its own
+rules (D-022).
 
 ---
 

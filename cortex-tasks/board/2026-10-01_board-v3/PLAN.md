@@ -3,6 +3,7 @@ category: board-app
 type: plan
 status: approved
 created: 2026-10-01
+last_updated: 2026-10-02
 scope: Board v3 — notes beside cards, containers as threads, Send and vb wait, kiro-cli chat panel
 ---
 
@@ -39,34 +40,47 @@ Your notes go into the chat input as chips that refer to nodes. Send hands the r
 11. Anything not commented on can be accepted with one click by the person ("Mark the rest ok"),
     and Later parks a decision on purpose (v2 item 19).
 
-## Stages
+## Stages (re-planned 2026-10-02)
 
-0. Framework (interview, 2026-10-01): D-012 plain Svelte (runes only, `.kiro/steering/svelte-conventions.md`), D-013 own canvas with outlines and
-   ports, D-014 dependencies, D-005 + D-015 Studio component model with one wrapper per pattern.
-1. Plan and decisions: this file, D-010 (kiro-cli), D-011 (containers as threads), vision and
-   tracker updates.
-2. Card and container basics: **first move the canvas onto Svelte and Vite, keeping everything
-   that works today**, then the mode picker pill, region sizing, the note callout (edit and
-   delete), and Architect styling within the tiers.
-3. Selection and moving: lasso, multi-click, keyboard selection; container notes; dragging cards
-   between containers; the Later container.
-4. Send and `vb wait`: the `send` action with "Mark the rest ok", and the `vb` CLI (`validate`,
-   `reply`, `wait`).
-5. kiro-cli spike in `temp/`: drive `kiro-cli acp` from Node (session, prompt, streamed reply,
-   resume), board updates as a tool call, the narrowest tool set.
-6. Chat panel on the right: feed plus input, chips for notes, Send through kiro-cli.
-7. Verification: unit tests, the smoke test, screenshots, design critique, then v3 on the board.
+Order agreed with the maintainer on 2026-10-02. Task files are written for one stage at a time,
+from this PLAN as it stands when the stage starts, so later stages pick up what earlier ones
+taught us. Every stage ends green on `npm test`, `npm run verify` and `npm run check`, plus a
+browser check for UI work.
+
+0. Framework (done): D-012, D-013, D-014, D-005 + D-015.
+1. Plan and decisions (done): D-010, D-011; then D-017 to D-024 on 2026-10-02.
+2. Card and container basics. Step 1 (Svelte + Vite move) **done**. Then:
+   - 2a `<vb-node>` and `<vb-region>` with the node-type registry (D-015), today's look and
+     behaviour unchanged. Nodes and regions read the ledger (U3 step 2 lands first).
+   - 2b Architect's look (D-024, mockup `prototypes/board-v3-design/mockups/01b-cards-content-first.html`): tokens
+     replaced by Architect's palette (exact values shown to the maintainer before the protected
+     edit), the content-first card, border tabs, footer, selection in the card's own colour,
+     open-frame containers, dot grid. Fixes N6. APCA check (N1) runs on every pair.
+   - 2c Markdown renderer (D-023) in `packages/ui`, used by cards and notes.
+   - 2d Mode picker pill (mockup 02) and region sizing (no overlaps).
+   - 2e Notes beside cards, editable and removable, saved as ledger events.
+3. Selection and moving, ported from `prototypes/board-v3-design/architect-extract/` (README §2): click, Shift/Cmd/Ctrl
+   multi-select, lasso with area notes, selection bar, pins, keyboard route (arrows, Space, C/N);
+   container notes; dragging cards between containers; the Later container.
+4. Send: the `send` action with "Mark the rest ok". The `vb` commands and the API live in the
+   API pattern set (U4); this stage wires the board's Send to it.
+5. Proposals, seen and parking on the board (U3 step 3; mockup 03).
+6. Chat panel on the right: feed plus input, notes as chips (Architect composer), change chips per
+   version. It talks to any agent through the MCP (U4). kiro-cli comes after, as one more MCP
+   client, behind its own spike in `temp/` with the narrowest tool set.
+7. Decision flow mode and incremental layout (U3 step 4; mockup 04).
+8. Verification: unit and page tests, screenshots, design critique, a fresh-eyes usability
+   review, then v3 on the board itself.
 
 ## Format changes (rule: change the format first)
 
-- Transcript actions: `note-edit` (`replaces` = the earlier record), `note-delete`,
-  `move` (node to region), `region-pin`, `send` (`accept_rest`). Notes gain `nodes[]` (a group)
-  or `region`.
-- View: a built-in `later` region the person can always drop into. No coordinates (rule 9).
+- All of these are ledger events (D-017, `packages/format/src/ledger.ts`): notes with `nodes[]` or
+  a `region`, note edit and removal, `move` (node to region), region pins, `send` with
+  `accept_rest`, a built-in `later` region. No coordinates except a person's pin (rule 9).
 
 ## Risks
 
-- A board-launched kiro-cli runs tools on this machine. Stage 5 restricts its tools before
-  Stage 6 builds on it.
+- A board-launched kiro-cli runs tools on this machine. Its spike restricts its tools before the
+  chat panel uses it.
 - The board's own server starting an agent reverses `docs/vision.md` ("Dropped: the app running
   Claude itself"). D-010 records the change.

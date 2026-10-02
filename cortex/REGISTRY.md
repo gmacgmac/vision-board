@@ -68,6 +68,7 @@ docs:
     - docs/vision.md
     - docs/principles.md
     - docs/decisions.md
+    - docs/specification/api.md
     - .kiro/steering/vision-board-proj.md
     - .kiro/steering/svelte-conventions.md
     - skills/vision-board/SKILL.md

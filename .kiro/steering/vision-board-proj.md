@@ -59,6 +59,7 @@ This is the text form of the board: when the list gets long, offer to draw it on
 | Writing Svelte | `.kiro/steering/svelte-conventions.md` |
 | Work categories and the doc fence | `cortex/PROFILE.md` §2, `cortex/REGISTRY.md` |
 | Repo checks | `npm run verify` (layers, front doors, file length, exact versions, register) |
+| How a pattern is built (API, UI, layout) | `docs/specification/<pattern>.md` |
 
 ## Plan before you build: work goes through Cortex
 
@@ -89,7 +90,8 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
 ## The rules
 
 1. **Reuse before you create.** Patterns for UI, for layout modes, for actions, for file I/O,
-   for tests. No duplicated logic. If you copy code, you are missing a pattern. New code goes in
+   for tests. No duplicated logic. If you copy code, you are missing a pattern. A pattern has one
+   definition that every use reads from, so changing it once changes every use. New code goes in
    the folder the layout assigns; a new top-level folder or package needs a decision entry.
 2. **Modular, one job per file.** Applies to all code: components, layout modes, scripts, server
    modules. Aim for about 300 lines: the repo check warns over 300 and fails over 500 unless the
@@ -108,10 +110,11 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
 5. **Accessibility is a gate, not a phase.** WCAG 2 AA, except contrast, which follows rule 3. Every node and every action is keyboard
    reachable, labelled and has the correct role; lasso has a keyboard alternative. An accessible
    board is also one that agents can read.
-6. **One contract shape.** The view file, the transcript and the local server's routes are
-   described by versioned JSON Schema (OpenAPI for the server if it grows). Consistent shapes,
-   errors and naming. Docs come from the schema (generated or verified), never hand-edited to
-   match.
+6. **One contract, one source of truth.** Every contract has exactly one source: file and ledger
+   formats are versioned JSON Schema; the API is an OpenAPI spec that references them. Types, the
+   MCP tools, the `vb` commands and the docs are generated from or tested against that source, and
+   a test fails when the code and the source disagree. Change the source first. How each contract
+   is built: `docs/specification/`.
 7. **One I/O layer.** Only one module reads or writes session files or calls the server. It
    validates every file it reads and every file it writes. The agent writes views through the
    same validator it can run from the command line.
