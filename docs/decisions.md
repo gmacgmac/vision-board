@@ -324,3 +324,43 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: Staying on 3.1 because a TypeScript type generator can't read 3.2 yet;
   our types are hand-written and tested against the schemas, so nothing here depends on one.
 - **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-027 Agent identity and write grants
+- **Date**: 2026-10-05 · **Status**: Accepted · **From**: maintainer (chat 549-553, 557), U4 contract
+- **Decision**: Any agent can read any board. To write, an agent joins and gets its own id and
+  secret, and sends the secret on every write. Each write names its container (a region, D-011).
+  The agent that creates a container holds it; any other agent must ask, and only the person's
+  approval on the board grants it. Grants, requests and revocations are ledger events, folded like
+  everything else; the server keeps only a hash of each secret. The board page writes as the person
+  with a token only the page receives, so an agent cannot act as the person by mistake (rule 8).
+  The rules are in `docs/specification/api.md` § Callers.
+- **Why**: Every write is attributable to one agent and can be refused or revoked per agent and
+  per container. MCP 2026-07-28 has no sessions, so identity has to travel with each call.
+- **Alternative rejected**: One shared secret per container (writes from its holders look alike,
+  and revoking one agent means changing the secret for all); trusting the MCP client's own
+  approval prompt or `clientInfo` (self-reported, and absent in some clients).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-028 Our own MCP server, no SDK
+- **Date**: 2026-10-05 · **Status**: Accepted · **From**: maintainer (chat 558), U4 contract
+- **Decision**: `packages/mcp` is our own small stdio MCP server, calling the board's HTTP API
+  through `packages/client` (D-029). It speaks MCP 2026-07-28 and answers the legacy `initialize` handshake for older clients.
+  Its tools are generated from the `x-agent` operations in `openapi.json` by our own script.
+- **Why**: The stateless 2026-07-28 protocol needs only a handful of methods over JSON-RPC, and we
+  already validate with `ajv` (D-026). The official SDK would add `zod` and two packages for that.
+- **Alternative rejected**: `@modelcontextprotocol/server` 2.x (kept as the fallback if the
+  protocol work proves larger than expected); third-party OpenAPI-to-MCP generators (they mirror
+  the whole API, which agent-tool guidance advises against).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-029 `packages/client` and `packages/mcp`
+- **Date**: 2026-10-05 · **Status**: Accepted · **From**: maintainer (chat 557), U4 contract review
+- **Decision**: Two new packages, adding to D-016. `packages/client` is the one module that calls
+  the board server (rule 7), used by the board page, `vb` and the MCP server; it reads a route
+  table generated from `openapi.json`. Layers: `format`. `packages/mcp` is the MCP server
+  (D-028). Layers: `format`, `client`. `cli` gains `client`.
+- **Why**: Three callers of one API share one caller module instead of three. `packages/agent`
+  already has a job (the kiro-cli connection, D-016), and one package per swap point keeps it.
+- **Alternative rejected**: The MCP server inside `packages/agent` (two jobs in one package);
+  separate HTTP code in the page, `vb` and MCP (three copies of the same calls).
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
