@@ -1,6 +1,6 @@
 ---
 category: project-docs
-last_updated: 2026-10-01
+last_updated: 2026-10-04
 status: active
 scope: Why Vision Board exists, what it does, and where it is going
 keywords: [vision, board, review, agent, feedback]
@@ -8,7 +8,7 @@ keywords: [vision, board, review, agent, feedback]
 
 # Vision Board
 
-Status: vision, updated 2026-09-30. Nothing built yet.
+Status: vision, updated 2026-10-04. Building: see `cortex-tasks/tracker.md`.
 Origin: the Uplynk Architect prototype, copied as reference into `prototypes/architect/`
 (from Uplynk Studio, `~/WORK/uplynk-studio/prototypes/architect/`).
 
@@ -58,12 +58,33 @@ nodes.
 
 ## Handoff: getting notes back to the agent
 
-- The page saves a transcript locally (notes, selections, replies).
-- The agent picks it up and replies in chat or by updating the board.
-- A small local server plus a folder sits in between:
-  - `sessions/<id>/view-vN.json`: what the agent drew (version N)
-  - `sessions/<id>/transcript.jsonl`: what you did on the board
+- Everything the agent draws and everything you do goes into one append-only log per project,
+  the project ledger (`.visionboard/ledger.jsonl`, D-017). The board is worked out from it.
+- The agent reads your notes back through the board API and replies in chat or by redrawing.
+- A small local server owns the ledger; the page, the `vb` CLI and MCP all go through it (D-019).
 - Later: a plugin tool that shows the board and waits for your notes, with no manual "go read it" step.
+
+## Many chats, one board
+
+The board is shared ground for several conversations at once, not a picture of one chat.
+
+- **One ledger per project, not per chat.** Every chat and every agent writes into the same
+  project ledger, and each entry records who wrote it. So any chat can see the whole board.
+- **A container is a thread.** Each container has its own id and holds one line of work. The main
+  conversation lives in one container.
+- **Branching.** You can pull cards, a flow or a lane out into a new container and hand it to a new
+  chat. That chat starts with only the handover bundle and the linked cards (D-020), not a copy of
+  the whole conversation, so its context stays small.
+- **Aware, not tangled.** Through the API and MCP, each chat works in its own container and can read
+  the others: what they are doing, what they decided, what they parked. It shares context by
+  pointing at cards, not by copying them.
+- **Why it matters.** Threads of work run side by side and in their own direction, while the
+  person still sees and steers all of them in one place. That is the multi-threaded way of working
+  the board exists for.
+
+Still to design: which chat owns which container, what a chat may write outside its own container,
+and how the board shows that two agents are working at the same time. Each becomes a decision entry
+when it is built.
 
 ## Layout: a smart coordinate system
 

@@ -30,4 +30,4 @@ board version is a position in the ledger, not a file. Test boards are now fixtu
     Replaced by the project ledger store (`apps/board/server/ledger.ts`).
 
 The old local `sessions/` folder was not moved here: it holds the maintainer's own dictated
-comments, so it stays local and git-ignored until the maintainer decides.
+comments, so on 2026-10-04 it moved to the git-ignored `temp/keep-local/sessions-v1/` instead.

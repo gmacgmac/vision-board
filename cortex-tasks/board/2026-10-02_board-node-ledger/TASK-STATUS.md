@@ -16,6 +16,8 @@ created: 2026-10-02
   `npm run check`, exit 0 each, read yourself.
 - This set runs before board v3's `<vb-node>` step, because `<vb-node>` draws the states and
   actions D-018 defines.
+- **Resume point (2026-10-04)**: steps 1 and 2 done and verified. Next is board v3 stage 2a
+  (`<vb-node>`, `<vb-region>`) with U4 step 1 alongside; this set's step 3 follows `<vb-node>`.
 - **Resume point (2026-10-02)**: step 1 done; step 2 task files written (table below). Ledger
   format 2 is defined and validated in `packages/format` (`ledger.ts`, `ledger-shape.ts`,
   `ledger-index.ts`, fixture `login-review.ledger.jsonl`). Every node gets a number; `item: true`
@@ -35,7 +37,7 @@ created: 2026-10-02
 |---|---|---|---|
 | 0 Design and decisions | Done | | D-017 to D-021 accepted |
 | 1 Format v2 | Done | | Event types, shape and context checks, 9 tests |
-| 2 Ledger module and migration | Planned | | Tasks below |
+| 2 Ledger module and migration | Done | d17d774 + VERIFY_01 | Verified end to end 2026-10-04 |
 | 3 Board UI: proposals, seen, park, branch | Planned | | After `<vb-node>` (board v3) |
 | 4 Incremental layout, decision flow | Planned | | |
 
@@ -43,12 +45,12 @@ created: 2026-10-02
 
 | # | ID | Wave | Task | Model | Status | Commit |
 |---|---|---|---|---|---|---|
-| 1 | BE_01 | 1 | [Fold the ledger into board state](./BE_01_fold-and-projection.md) | Opus 5.5 | COMPLETED | |
-| 2 | BE_02 | 2 | [The project ledger in the I/O layer](./BE_02_ledger-store.md) | Opus 5.5 | COMPLETED | |
-| 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | COMPLETED (sessions/ held back: PII) | |
-| 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | COMPLETED | |
-| 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | COMPLETED | |
-| 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Sonnet 5 | Pending | |
+| 1 | BE_01 | 1 | [Fold the ledger into board state](./BE_01_fold-and-projection.md) | Opus 5.5 | COMPLETED | a6f2adb, c992baf |
+| 2 | BE_02 | 2 | [The project ledger in the I/O layer](./BE_02_ledger-store.md) | Opus 5.5 | COMPLETED | 6146dcd |
+| 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | COMPLETED (sessions/ kept local: `temp/keep-local/`) | 5def841 |
+| 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | COMPLETED | a088e63 |
+| 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | COMPLETED | d17d774 |
+| 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Orchestrator (maintainer, 343) | COMPLETED | this commit |
 
 Same wave = no shared files, so the tasks could run side by side; the orchestrator runs them in
 table order.
