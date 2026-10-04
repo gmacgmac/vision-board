@@ -47,7 +47,7 @@ created: 2026-10-02
 | 2 | BE_02 | 2 | [The project ledger in the I/O layer](./BE_02_ledger-store.md) | Opus 5.5 | COMPLETED | |
 | 3 | BE_04 | 2 | [Test boards become ledger files](./BE_04_fixture-ledgers.md) | Opus 5.5 | COMPLETED (sessions/ held back: PII) | |
 | 4 | BE_03 | 3 | [Serve boards from the ledger](./BE_03_server-routes.md) | Opus 5.5 | COMPLETED | |
-| 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | Pending | |
+| 5 | FE_01 | 4 | [The page reads and writes through the ledger](./FE_01_page-on-ledger.md) | Opus 5.5 | COMPLETED | |
 | 6 | VERIFY_01 | 5 | [Prove step 2 end to end](./VERIFY_01_ledger-step.md) | Sonnet 5 | Pending | |
 
 Same wave = no shared files, so the tasks could run side by side; the orchestrator runs them in

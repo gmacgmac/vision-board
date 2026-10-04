@@ -1,9 +1,9 @@
-<!-- The toolbar: session picker, board title and version, counts, and the board-wide buttons. -->
+<!-- The toolbar: board picker, board title and version, counts, and the board-wide buttons. -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
 
-  let { onsession, onfit, onhide }: {
-    onsession: (id: string) => void;
+  let { onboard, onfit, onhide }: {
+    onboard: (id: string) => void;
     onfit: () => void;
     onhide: () => void;
   } = $props();
@@ -25,11 +25,11 @@
 
 <header class="vb-toolbar">
   <div class="vb-brand" aria-hidden="true"><span></span></div>
-  <label class="vb-visually-hidden" for="session">Session</label>
-  <select id="session" class="vb-select" value={shell.sessionId}
-    onchange={(e) => onsession(e.currentTarget.value)}>
-    {#each shell.sessions as s (s.id)}
-      <option value={s.id}>{label(s.title)} · v{s.versions.at(-1)}</option>
+  <label class="vb-visually-hidden" for="board">Board</label>
+  <select id="board" class="vb-select" value={shell.boardId}
+    onchange={(e) => onboard(e.currentTarget.value)}>
+    {#each shell.boards as b (b.id)}
+      <option value={b.id}>{label(b.title)} · v{b.seq}</option>
     {/each}
   </select>
   <h1 id="title" class="vb-title">{shell.title}</h1>

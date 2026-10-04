@@ -2,9 +2,14 @@
 // `.visionboard/ledger.jsonl`. Append-only. A board version is a position in this file (its
 // `seq`), never a separate file. Meaning only, never coordinates except a person's pin (rule 9).
 import type { Kind, Region } from './view.ts';
-import type { ActionId } from './transcript.ts';
 
 export const LEDGER_FORMAT = 2;
+
+/** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
+export const ACTION_IDS = [
+  'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
+] as const;
+export type ActionId = (typeof ACTION_IDS)[number];
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',

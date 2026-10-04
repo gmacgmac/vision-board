@@ -25,7 +25,7 @@
 
 <a class="vb-skip" href="#stage">Skip to the board</a>
 <Toolbar
-  onsession={(id) => board?.switchTo(id)}
+  onboard={(id) => board?.switchTo(id)}
   onfit={() => board?.fit()}
   onhide={() => board?.toggleHide()}
 />

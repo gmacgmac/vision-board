@@ -1,5 +1,6 @@
-// The view file: what the agent draws (sessions/<id>/view-vN.json). Meaning only, never
-// coordinates: layout is the engine's job (project rule 9).
+// The projection layout reads: one board, folded from the project ledger by `boardView`
+// (board-view.ts), never read from a file. Meaning only, never coordinates: layout is the
+// engine's job (project rule 9).
 
 export const FORMAT_VERSION = 1;
 

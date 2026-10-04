@@ -1,4 +1,4 @@
-// The board controller: loads a session, lays it out, and routes every person action through
+// The board controller: loads a board, lays it out, and routes every person action through
 // the action layer and the I/O module. Layout, formats and actions live in packages/; this file
 // wires them to the canvas. It is plain TypeScript (D-005): the Svelte shell mounts it on the
 // stage element and reads what it reports through `shell`.
@@ -7,12 +7,10 @@ import type { ActionId } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import {
-  ACTIONS, counts, DECIDED, reduceTranscript, replyText, statusOf, validateRecord,
-} from '../../../../packages/actions/src/index.ts';
+import { ACTIONS, counts, DECIDED, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
 import { isPressed, KIND_LABEL } from '../../../../packages/ui/src/index.ts';
-import type { RecordFields, SessionData } from './io.ts';
-import { ApiError, listSessions, loadSession, sendRecord, watchSession } from './io.ts';
+import type { ActFields, BoardData } from './io.ts';
+import { ApiError, listBoards, loadBoard, sendAct, watchBoard } from './io.ts';
 import {
   buildCards, buildRegions, drawWires, measure, placeCards, placeRegions, readingOrder, updateCard,
 } from './render.ts';
@@ -43,8 +41,8 @@ export function createBoard(els: BoardElements): Board {
 
   const S = {
     id: '',
-    data: null as SessionData | null,
-    state: reduceTranscript([]) as BoardState,
+    data: null as BoardData | null,
+    state: { items: new Map(), pins: new Map(), modes: new Map() } as BoardState,
     cards: new Map<string, HTMLElement>(),
     regions: new Map<string, HTMLElement>(),
     layout: null as BoardLayout | null,
@@ -56,6 +54,10 @@ export function createBoard(els: BoardElements): Board {
 
   const view = (): View => S.data!.view;
   const nodeOf = (id: string): ViewNode | undefined => view().nodes.find((n) => n.id === id);
+  /** A node act names the node by number and the version the person was looking at. */
+  const target = (id: string) => ({ n: Number(id), ver: S.data!.versions[id] });
+  /** The agent's drawing without the ledger position, which every person act also advances. */
+  const drawing = (v: View) => JSON.stringify({ ...v, version: 0 });
 
   // ---- messages ------------------------------------------------------------------------------
 
@@ -110,14 +112,26 @@ export function createBoard(els: BoardElements): Board {
 
   // ---- actions -------------------------------------------------------------------------------
 
-  async function record(fields: RecordFields): Promise<boolean> {
-    const draft = { ...fields, at: new Date().toISOString(), by: 'person' as const, version: view().version };
-    const problems = validateRecord(draft, view());
-    if (problems.length) { toast(problems.join(' · '), 'error'); return false; }
+  /** Take a fresh load of board `id`. Rebuilds the cards only when the agent's drawing changed
+   * (or another board is opening) and returns true then; otherwise the caller relayouts. */
+  function take(id: string, data: BoardData): boolean {
+    const update = S.id === id && S.data !== null;
+    const redraw = !update || drawing(S.data!.view) !== drawing(data.view);
+    S.id = id;
+    S.data = data;
+    S.state = data.state;
+    shell.version = data.view.version;
+    if (!redraw) return false;
+    build();
+    if (update) toast(`The agent drew v${data.view.version}`);
+    return true;
+  }
+
+  /** Send one action; the server validates it, and its problems show in the error toast. */
+  async function record(fields: ActFields): Promise<boolean> {
     try {
-      const saved = await sendRecord(S.id, fields);
-      S.data!.transcript.push(saved);
-      S.state = reduceTranscript(S.data!.transcript);
+      await sendAct(S.id, fields);
+      take(S.id, await loadBoard(S.id));
       return true;
     } catch (err) {
       fail(err);
@@ -143,7 +157,7 @@ export function createBoard(els: BoardElements): Board {
       text = got || undefined;
     }
     const next = shell.hide && def.status && DECIDED.has(def.status) ? neighbour(id, 1) : null;
-    if (!(await record({ action, node: id, text }))) return;
+    if (!(await record({ action, ...target(id), text }))) return;
     relayout();
     const focusId = next && hiddenSet().has(id) ? next : id;
     S.cards.get(focusId)?.focus({ preventScroll: true });
@@ -160,13 +174,13 @@ export function createBoard(els: BoardElements): Board {
     if (!r) return;
     const x = Math.round(box.x - r.origin.x);
     const y = Math.round(box.y - r.origin.y);
-    await record({ action: 'pin', node: id, x, y });
+    await record({ action: 'pin', ...target(id), x, y });
     relayout(); // on failure this snaps the card back to its computed place
   }
 
   async function unpin(id: string) {
     if (!S.state.pins.has(id)) return;
-    if (await record({ action: 'unpin', node: id })) relayout();
+    if (await record({ action: 'unpin', ...target(id) })) relayout();
   }
 
   async function setMode(region: string, mode: Mode) {
@@ -179,7 +193,7 @@ export function createBoard(els: BoardElements): Board {
 
   async function resetRegion(region: string) {
     const ids = view().nodes.filter((n) => n.region === region && S.state.pins.has(n.id)).map((n) => n.id);
-    for (const id of ids) if (!(await record({ action: 'unpin', node: id }))) break;
+    for (const id of ids) if (!(await record({ action: 'unpin', ...target(id) }))) break;
     relayout();
   }
 
@@ -266,18 +280,12 @@ export function createBoard(els: BoardElements): Board {
   const onResize = () => S.layout && vp.apply();
   window.addEventListener('resize', onResize);
 
-  // ---- sessions ------------------------------------------------------------------------------
+  // ---- boards --------------------------------------------------------------------------------
 
-  async function openSession(id: string, fit = true) {
+  async function openBoard(id: string, fit = true) {
     try {
-      const data = await loadSession(id);
-      const sameVersion = S.id === id && S.data?.view.version === data.view.version;
-      S.id = id;
-      S.data = data;
-      S.state = reduceTranscript(data.transcript);
+      if (!take(id, await loadBoard(id))) relayout();
       showMessage(null);
-      if (sameVersion) relayout();
-      else build();
       if (fit && S.layout) vp.fit(S.layout.bounds, false);
       history.replaceState(null, '', `#${encodeURIComponent(id)}`);
     } catch (err) {
@@ -289,28 +297,24 @@ export function createBoard(els: BoardElements): Board {
   function watch(id: string) {
     S.unwatch?.();
     let pending = 0;
-    S.unwatch = watchSession(id, () => {
+    S.unwatch = watchBoard(id, () => {
       clearTimeout(pending);
-      pending = window.setTimeout(async () => {
-        const before = S.data?.view.version;
-        await openSession(id, false);
-        if (S.data && S.data.view.version !== before) toast(`The agent drew v${S.data.view.version}`);
-      }, 150);
+      pending = window.setTimeout(() => void openBoard(id, false), 150);
     });
   }
 
   async function boot() {
     try {
-      const sessions = await listSessions();
-      shell.sessions = sessions;
-      if (!sessions.length) {
-        showMessage('No sessions yet. The agent writes sessions/<id>/view-v1.json to start one.');
+      const boards = await listBoards();
+      shell.boards = boards;
+      if (!boards.length) {
+        showMessage('No boards yet. Run npm run demo to open the example boards.');
         return;
       }
       const wanted = decodeURIComponent(location.hash.slice(1));
-      const id = sessions.some((s) => s.id === wanted) ? wanted : sessions[0]!.id;
-      shell.sessionId = id;
-      await openSession(id);
+      const id = boards.some((b) => b.id === wanted) ? wanted : boards[0]!.id;
+      shell.boardId = id;
+      await openBoard(id);
       watch(id);
     } catch (err) {
       fail(err);
@@ -321,8 +325,8 @@ export function createBoard(els: BoardElements): Board {
   return {
     boot,
     switchTo(id) {
-      shell.sessionId = id;
-      void openSession(id);
+      shell.boardId = id;
+      void openBoard(id);
       watch(id);
     },
     fit: () => { if (S.layout) vp.fit(S.layout.bounds); },

@@ -1,7 +1,6 @@
 // Shape checks for one ledger event, on its own. Contextual rules (does node 47 exist, is this
 // the next version) are in ledger-index.ts. The API runs both on every streamed event (D-019).
-import { EVENT_TYPES, LEDGER_FORMAT, AGENT_EVENTS, PERSON_EVENTS } from './ledger.ts';
-import { ACTION_IDS } from './transcript.ts';
+import { ACTION_IDS, EVENT_TYPES, LEDGER_FORMAT, AGENT_EVENTS, PERSON_EVENTS } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
 
 type Rec = Record<string, unknown>;

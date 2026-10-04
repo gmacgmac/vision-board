@@ -9,7 +9,9 @@ controller it mounts (layout, drawing, pointer, keys, I/O; D-005). Vite builds `
 [--json]` prints the numbered reply for a board from the project ledger. Pages arrange patterns
 from `packages/ui`; they hold no layout maths, file formats or actions themselves.
 
-Routes (interim until U4 derives them from the OpenAPI spec, D-022; no agent write route):
+Routes (interim until U4 derives them from the OpenAPI spec, D-022; no agent write route). The
+page calls them only through `src/board/io.ts`; an action sends `{ action, n, ver }` (plus `text`,
+`x`, `y`, `region`, `mode`) and the server is its only validator:
 
 - `GET /api/boards`: `[{ id, title, seq }]`
 - `GET /api/boards/:id`: `{ seq, view, state, versions }` (`versions`: node id -> latest `ver`)

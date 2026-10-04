@@ -1,7 +1,7 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { SessionSummary } from '../board/io.ts';
+import type { BoardSummary } from '../board/io.ts';
 
 export interface NoteRequest {
   heading: string;
@@ -14,8 +14,8 @@ export interface NoteRequest {
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
 
 export const shell = $state({
-  sessions: [] as SessionSummary[],
-  sessionId: '',
+  boards: [] as BoardSummary[],
+  boardId: '',
   title: 'Vision Board',
   version: null as number | null,
   summary: '',

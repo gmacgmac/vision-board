@@ -3,11 +3,11 @@
 // replies, proposals, parks and what the person has seen. Pure: same events, same state.
 // Events are assumed valid (readLedger in packages/format checks them first).
 import type {
-  ActEvent, ActionId, DrawnState, LedgerEvent, Mode, ParkBundle, ProposeEvent,
+  ActEvent, ActionId, DrawnState, LedgerEvent, Mode, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
 import { applyDrawn, emptyDrawn, nodesOf } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
-import { ACTIONS } from './registry.ts';
+import { ACTIONS, DECIDED } from './registry.ts';
 
 export interface ItemNote { kind: 'comment' | 'context'; text: string; at: string }
 export interface ItemState { status: ItemStatus; notes: ItemNote[] }
@@ -111,4 +111,19 @@ export function boardState(s: LedgerState, board: string): BoardState {
     if (pin) out.pins.set(String(n), pin);
   }
   return out;
+}
+
+/** One item's status on a board; an item nobody has answered is open. */
+export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(id)?.status ?? 'open';
+
+/** How many of a board's items are decided, saved for later, and still open. */
+export function counts(view: View, s: BoardState) {
+  const items = view.nodes.filter((n) => n.n !== undefined);
+  const st = items.map((n) => statusOf(s, n.id));
+  return {
+    total: items.length,
+    decided: st.filter((x) => DECIDED.has(x)).length,
+    later: st.filter((x) => x === 'later').length,
+    open: st.filter((x) => !DECIDED.has(x) && x !== 'later').length,
+  };
 }
