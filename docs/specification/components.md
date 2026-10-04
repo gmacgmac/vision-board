@@ -90,6 +90,18 @@ the **decision diamond** (a fork in a flow, one way in, a "yes" and a "no" way o
   task adds outline and ports to the registry, the layout engine and the node CSS, behind a flag
   (rule 12), with the gallery and page tests covering both shapes.
 
+## Markdown (D-023)
+
+Card bodies and notes are Markdown, and every surface that shows written text renders it through
+the one function `renderMarkdown(src, { headingLevel })` from the `packages/ui` front door. It is a
+pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into blocks),
+`inline.ts` (marks, links, escapes), `render.ts` (the front function), `markdown.css` (the
+`vb-md-*` classes, imported by the page beside `node.css`) and `pattern.json` (the subset, the
+classes and the safety rules). A template sets its output with `innerHTML`, which is safe because
+the renderer escapes every text run; one-line fields (titles, tags) stay plain text through `esc`.
+Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.test.ts`), whose
+`EXCLUDED` table is the full list of deliberate differences.
+
 ## Type checking
 
 - Core and template files run under Node and must not use the DOM at run time; the Node tests

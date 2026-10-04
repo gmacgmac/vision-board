@@ -1,11 +1,12 @@
 // Node pattern, layer 3 (element): <vb-node>, in light DOM (components.md § The element).
 // render() builds the markup from the template once per view version; update() changes only
-// attributes and text, so focus and transitions survive. Browser only: the class is created
-// inside defineVbNode(), so importing this file never touches HTMLElement (Node tests import
-// the ui front door). It knows nothing about layout; the page measures and places it.
+// attributes, text and the note's Markdown, so focus and transitions survive. Browser only: the
+// class is created inside defineVbNode(), so importing this file never touches HTMLElement (Node
+// tests import the ui front door). It knows nothing about layout; the page measures and places it.
 import type { ActionId, ViewNode } from '../../../format/src/index.ts';
 import type { NodeState } from './node-core.ts';
 import { nodeTemplate } from './node-template.ts';
+import { renderMarkdown } from '../markdown/render.ts';
 
 export const VB_NODE_TAG = 'vb-node';
 
@@ -22,7 +23,11 @@ export function defineVbNode(): void {
   if (customElements.get(VB_NODE_TAG)) return;
 
   class VbNode extends HTMLElement implements VbNodeElement {
+    /** The note source last drawn, so an unchanged note is not rebuilt (a focused link in it keeps focus). */
+    private noteSrc: string | undefined;
+
     render(n: ViewNode): void {
+      this.noteSrc = undefined;
       this.dataset.id = n.id;
       this.dataset.kind = n.kind;
       this.toggleAttribute('data-emphasis', Boolean(n.emphasis));
@@ -45,7 +50,9 @@ export function defineVbNode(): void {
       this.piece('notes')!.hidden = st.note === undefined;
       if (st.note !== undefined) {
         this.piece('note-who')!.textContent = st.note.who;
-        this.piece('note-text')!.textContent = st.note.text;
+        // The note is Markdown (D-023); renderMarkdown escapes every text run, so this is safe markup.
+        if (this.noteSrc !== st.note.text) this.piece('note-text')!.innerHTML = renderMarkdown(st.note.text);
+        this.noteSrc = st.note.text;
       }
     }
 

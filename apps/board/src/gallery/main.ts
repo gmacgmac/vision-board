@@ -3,19 +3,23 @@
 // files, so a new pattern without a gallery entry shows up here as a gap and fails the page test.
 import '../styles/board.css';
 import '../../../../packages/ui/src/node/node.css';
+import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
 import './gallery.css';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
+import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { regionSamples } from './region-section.ts';
 
 interface PatternInfo {
   name: string;
   title: string;
-  tag: string;
+  /** The element, for a pattern that has one; `entry` names the function of one that draws markup only. */
+  tag?: string;
+  entry?: string;
   description: string;
   states: string[];
   whenToUse: string;
@@ -24,6 +28,7 @@ interface PatternInfo {
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
+  markdown: markdownSamples,
   node: nodeSamples,
   region: regionSamples,
 };
@@ -38,7 +43,7 @@ function section(p: PatternInfo, fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', p.title);
   heading.id = `pattern-${p.name}`;
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, `<${p.tag}>`), ` · states: ${p.states.join(', ')}`);
+  meta.append(el('code', undefined, p.tag ? `<${p.tag}>` : p.entry ?? p.name), ` · states: ${p.states.join(', ')}`);
   const body = el('div', 'g-body');
   const draw = SAMPLES[p.name];
   if (draw) draw(body, fx);

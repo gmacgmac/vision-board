@@ -15,8 +15,8 @@
     "vb-node-num": "tab in a gap on the top border, left: the item number (items only)",
     "vb-node-kind": "tab in a gap on the top border, centred: the kind; the drag handle from Stage 3",
     "vb-node-pin": "tab on the top border, right: shown when the person moved the node",
-    "vb-node-content": "title (vb-node-title), body (vb-node-body), tags as chips (vb-node-tags), note block",
-    "vb-node-notes": "the last note: who (vb-node-note-who) over the text (vb-node-note-text); hidden with no notes",
+    "vb-node-content": "title (vb-node-title), body (div.vb-node-body, Markdown through renderMarkdown), tags as chips (vb-node-tags), note block",
+    "vb-node-notes": "the last note: who (vb-node-note-who) over the text (vb-node-note-text, Markdown, clamped to three lines); hidden with no notes",
     "vb-node-foot": "items only: kind icon (vb-node-kico), divider (vb-node-sep), state word (vb-node-status), quick actions (vb-node-actions)"
   },
   "attributes": {
@@ -32,7 +32,7 @@
   },
   "methods": {
     "render(n: ViewNode)": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n)",
-    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, aria-label, aria-pressed, status word, note who and text), so focus survives"
+    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, aria-label, aria-pressed, status word, note who, and the note text as Markdown when it changed), so focus survives"
   },
   "events": [
     "data-act button click bubbles to the page's delegated listener -> action layer"

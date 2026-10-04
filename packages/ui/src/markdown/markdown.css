@@ -1,0 +1,49 @@
+/* Markdown pattern styles (packages/ui/src/markdown, D-023): the CSS hooks renderMarkdown writes.
+   Tokens only, no inline styles. The look is mockup 01b: paragraph = .p, label = .lbl, lists =
+   .ul, quote = the .reply box without its "who" line. A quote takes its tint from --kind, which a
+   card sets; outside a card it falls back to the accent. Imported by the page beside node.css. */
+
+.vb-md-p { margin: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink); }
+
+.vb-md-label {
+  display: block; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); line-height: 1.4;
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink-subtle);
+}
+
+.vb-md-list {
+  display: grid; gap: var(--vb-space-1); margin: 0; padding-left: calc(var(--vb-space-4) + var(--vb-space-1));
+  font-size: var(--vb-text-md); line-height: 1.45; color: var(--vb-ink);
+}
+.vb-md-list .vb-md-list { margin-top: var(--vb-space-1); }
+.vb-md-list strong { color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
+.vb-md-list > li > .vb-md-p + .vb-md-p { margin-top: var(--vb-space-1); }
+
+.vb-md-quote {
+  display: grid; gap: var(--vb-space-1); margin: 0; padding: var(--vb-space-2) var(--vb-space-3);
+  border-radius: var(--vb-radius-md);
+  background: color-mix(in srgb, var(--kind, var(--vb-accent)) 9%, var(--vb-surface-sunken));
+  font-size: var(--vb-text-md); color: var(--vb-ink);
+}
+
+.vb-md-icode, .vb-md-code { font-family: var(--vb-font-mono); background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+.vb-md-icode {
+  padding: 0 var(--vb-space-1); border-radius: var(--vb-radius-sm); font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+/* A code block is capped and scrolls; it is focusable (tabindex) so the keyboard can scroll it. */
+.vb-md-code {
+  margin: 0; max-height: calc(var(--vb-space-6) * 5); overflow: auto; padding: var(--vb-space-2) var(--vb-space-3);
+  border-radius: var(--vb-radius-md); font-size: var(--vb-text-sm); line-height: 1.45; white-space: pre;
+  color: var(--vb-ink); user-select: text; cursor: text;
+}
+.vb-md-code > code { font: inherit; }
+.vb-md-code:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+/* Inside a quote the ground is already sunken, so code sits one step deeper. */
+.vb-md-quote .vb-md-icode, .vb-md-quote .vb-md-code { background: var(--vb-surface-deep); }
+
+.vb-md-link {
+  color: var(--vb-accent-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+.vb-md-link:hover { text-decoration-thickness: 2px; }
+.vb-md-link:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; border-radius: 2px; }

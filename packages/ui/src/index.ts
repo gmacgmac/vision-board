@@ -7,4 +7,6 @@ export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';
 export * from './region/region-template.ts';
 export type { VbRegionElement } from './region/vb-region.ts';
+export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';
+export type { MarkdownOptions } from './markdown/render.ts';
 export { defineBoardElements } from './elements.ts';

@@ -3,6 +3,7 @@
 import { mount } from 'svelte';
 import './styles/board.css';
 import '../../../packages/ui/src/node/node.css';
+import '../../../packages/ui/src/markdown/markdown.css';
 import '../../../packages/ui/src/region/region.css';
 import { defineBoardElements } from '../../../packages/ui/src/index.ts';
 import App from './shell/App.svelte';

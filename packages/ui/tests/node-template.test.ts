@@ -62,3 +62,15 @@ test('nodeTemplate draws the note block hidden, with who and text parts for upda
 test('KIND_ICON has a drawing for every kind', () => {
   for (const kind of KINDS) assert.match(KIND_ICON[kind], /^<(path|circle) /, kind);
 });
+
+test('nodeTemplate renders the body as Markdown in div.vb-node-body (D-023)', () => {
+  const html = nodeTemplate(node({ n: 1, body: '### Options\n\n- **One**\n- Two' }));
+  assert.match(html, /<div class="vb-node-body"><span class="vb-md-label" role="heading" aria-level="4">Options<\/span>/);
+  assert.match(html, /<ul class="vb-md-list"><li><strong>One<\/strong><\/li><li>Two<\/li><\/ul><\/div>/);
+});
+
+test('nodeTemplate escapes raw HTML in a Markdown body', () => {
+  const html = nodeTemplate(node({ n: 1, body: 'a <b>bold</b> claim' }));
+  assert.ok(html.includes('<div class="vb-node-body"><p class="vb-md-p">a &#60;b&#62;bold&#60;/b&#62; claim</p></div>'));
+  assert.ok(!html.includes('<b>'));
+});

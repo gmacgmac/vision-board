@@ -11,6 +11,8 @@ export const BOARD = 'gallery';
 /** The regions whose nodes the node section shows. The `frame-*` regions are the region section's. */
 export const REGION_KINDS = 'kinds';
 export const REGION_OTHER = 'other';
+/** The region whose nodes the Markdown section shows: one card per construct, one with everything. */
+export const REGION_MARKDOWN = 'markdown';
 export const FRAME_PREFIX = 'frame-';
 
 export interface Fixture {

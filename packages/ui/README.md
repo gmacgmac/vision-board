@@ -10,5 +10,6 @@ element `<vb-node>` draws every card on the board and `<vb-region>` every contai
 - **Used by**: `apps/board`.
 - **Public API** (`src/index.ts`): the node core (`nodeState`, `NodeState`, `nodeLabel`, `offers`,
   `isPressed`, `STATUS_LABEL`), the node template (`nodeTemplate`, `esc`), the element type
-  `VbNodeElement`, and `defineBoardElements()`, which the page calls once at start-up. Pattern CSS
-  (`src/node/node.css`) is imported by the page.
+  `VbNodeElement`, the Markdown renderer (`renderMarkdown`, `MarkdownOptions`, `MARKDOWN_MAX`;
+  D-023, `src/markdown/`), and `defineBoardElements()`, which the page calls once at start-up.
+  Pattern CSS (`src/node/node.css`, `src/markdown/markdown.css`) is imported by the page.

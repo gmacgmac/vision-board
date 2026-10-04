@@ -55,3 +55,4 @@
 [[2026-10-04 20:55]] [board-app] Dropped N6: dark-theme cards are readable after Architect's palette and card recipe (checked by eye, board and gallery) -> Notes: `cortex-tasks/tracker.md`
 [[2026-10-04 22:05]] [needs-human-input] Tracker U5 (drag selects text), U6 (zoom controls, box zoom, Shift-lasso), U7 (adaptive card width) added from the maintainer's 2b look; each needs his go before it starts -> Notes: `cortex-tasks/tracker.md` (URGENT)
 [[2026-10-04 22:05]] [board] Stage 2b closed on the maintainer's look; Stage 2c task file written (Markdown renderer, D-023) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md]]
+[[2026-10-04 22:40]] [board] 2c_FE_01 Markdown renderer (D-023): packages/ui/src/markdown, card bodies and notes, CommonMark 0.31.2 examples (364 pass, 101 listed exclusions), safety tests; orchestrator re-ran all four gates -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2c_FE_01_markdown.md]]

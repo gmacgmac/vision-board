@@ -17,7 +17,8 @@ const LIVE_CLASS: Record<string, string> = { 'Being dragged': 'dragging' };
 const STATUSES = Object.keys(STATUS_LABEL) as ItemStatus[];
 const ITEM_KINDS = KINDS.filter((k) => NODE_TYPES[k].actions.length > 0);
 
-function card(n: ViewNode, fx: Fixture): VbNodeElement {
+/** A real <vb-node>, rendered and updated as the board does. The Markdown section draws its cards with it too. */
+export function card(n: ViewNode, fx: Fixture): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n);
   node.update(nodeState(n, fx.state));

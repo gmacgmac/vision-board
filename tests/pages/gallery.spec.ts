@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
-interface PatternInfo { name: string; title: string; tag: string }
+/** `tag` for a pattern with an element; `selector` for one that draws markup only (markdown). */
+interface PatternInfo { name: string; title: string; tag?: string; selector?: string }
 
 const UI = fileURLToPath(new URL('../../packages/ui/src/', import.meta.url));
 const PATTERNS: PatternInfo[] = readdirSync(UI, { withFileTypes: true })
@@ -28,7 +29,8 @@ test('every pattern has a section with samples of its own element', async ({ pag
   for (const p of PATTERNS) {
     const section = page.locator(`section[data-pattern="${p.name}"]`);
     await expect(section.getByRole('heading', { level: 2, name: p.title })).toBeVisible();
-    await expect(section.locator(p.tag).first(), `${p.name}: no <${p.tag}> drawn`).toBeVisible();
+    const drawn = p.tag ?? p.selector!;
+    await expect(section.locator(drawn).first(), `${p.name}: no ${drawn} drawn`).toBeVisible();
     await expect(section.locator('.g-missing')).toHaveCount(0);
   }
 });
@@ -105,6 +107,44 @@ test('theme button cycles system, light, dark', async ({ page }) => {
   await expect(html).not.toHaveAttribute('data-theme');
   expect(await bodyColour()).toBe(system);
 });
+
+test('markdown: one card per construct, one with everything, and a Markdown note', async ({ page }) => {
+  const md = page.locator('section[data-pattern="markdown"]');
+  for (const sel of ['p.vb-md-p', 'span.vb-md-label[role="heading"][aria-level="4"]', 'ul.vb-md-list', 'ol.vb-md-list',
+    'blockquote.vb-md-quote', 'pre.vb-md-code > code', 'code.vb-md-icode', 'a.vb-md-link', 'strong', 'em', 'del']) {
+    await expect(md.locator(`.vb-node-body ${sel}`).first(), sel).toBeVisible();
+  }
+  const everything = md.locator('vb-node').filter({ has: page.locator('h3:text-is("Everything at once")') });
+  for (const sel of ['p.vb-md-p', '.vb-md-label', 'ul.vb-md-list', 'ol.vb-md-list', '.vb-md-quote', '.vb-md-code', '.vb-md-icode', '.vb-md-link']) {
+    await expect(everything.locator(sel).first(), `everything: ${sel}`).toBeVisible();
+  }
+  // Raw HTML and a refused link stay text; every kept link has the fixed rel and target.
+  await expect(md.locator('.vb-node-body b, .vb-node-body script, .vb-node-body img')).toHaveCount(0);
+  await expect(md.getByText('<b>not bold</b>', { exact: false })).toBeVisible();
+  await expect(md.getByRole('link', { name: 'relative link' })).toHaveCount(0);
+  await expect(md.getByRole('link', { name: 'script link' })).toHaveCount(0);
+  await expect(md.locator('a.vb-md-link')).toHaveCount(3);
+  for (const a of await md.locator('a.vb-md-link').all()) {
+    await expect(a).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(a).toHaveAttribute('target', '_blank');
+  }
+  // The note renders Markdown too and keeps its three-line clamp.
+  const note = md.locator('.vb-node-note-text').filter({ has: page.locator('strong') });
+  await expect(note).toBeVisible();
+  expect(await note.evaluate((e) => getComputedStyle(e).webkitLineClamp)).toBe('3');
+  // A long code block scrolls inside its cap and can be reached by keyboard.
+  const code = md.locator('pre.vb-md-code').filter({ hasText: 'line 30' });
+  expect(await code.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true);
+  await expect(code).toHaveAttribute('tabindex', '0');
+});
+
+for (const theme of THEMES) {
+  test(`markdown: axe passes and the section matches its screenshot (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await expectNoAxeViolations(page);
+    await expect(page.locator('section[data-pattern="markdown"]')).toHaveScreenshot(`markdown-${theme}.png`);
+  });
+}
 
 for (const theme of THEMES) {
   test(`axe passes (${theme})`, async ({ page }) => {

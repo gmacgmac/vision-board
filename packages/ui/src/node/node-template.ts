@@ -8,9 +8,11 @@ import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
 import { buttonLabel, isItem, offers } from './node-core.ts';
 import { ACTION_ICON, KIND_ICON, svgIcon } from './node-icons.ts';
+import { esc } from '../markdown/inline.ts';
+import { renderMarkdown } from '../markdown/render.ts';
 
-export const esc = (s: string): string =>
-  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+// One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
+export { esc } from '../markdown/inline.ts';
 
 const button = (a: ActionId, n: ViewNode): string =>
   `<button type="button" class="vb-act" data-act="${a}" aria-label="${esc(buttonLabel(a, n))}"`
@@ -35,7 +37,8 @@ function footer(n: ViewNode): string {
 }
 
 export function nodeTemplate(n: ViewNode): string {
-  const body = n.body ? `<p class="vb-node-body">${esc(n.body)}</p>` : '';
+  // The body is Markdown (D-023); the renderer escapes every text run, so its output is safe markup.
+  const body = n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
   const tags = n.tags?.length
     ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
   const note = '<div class="vb-node-notes" hidden><span class="vb-node-note-who"></span>'

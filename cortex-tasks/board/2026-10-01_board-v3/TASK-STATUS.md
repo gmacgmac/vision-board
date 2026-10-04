@@ -74,5 +74,9 @@ Shift-lasso) and U7 (card width adapts to content; no token change until designe
 
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
-| 1 | [2c_FE_01 Markdown renderer](./2c_FE_01_markdown.md) | Opus 5.5 | Running | |
-| 2 | Stage check: orchestrator reads the diff, runs the four gates, checks gallery and board in dark and light | Orchestrator | | |
+| 1 | [2c_FE_01 Markdown renderer](./2c_FE_01_markdown.md) | Opus 5.5 | Done | see log |
+| 2 | Stage check: orchestrator reads the diff, runs the four gates, checks gallery and board in dark and light | Orchestrator | Done 2026-10-04 (149 unit, 26 page; link-scheme probe) | see log |
+
+Open from 2c (maintainer): dark link inside a quote or note scores Lc 44.0 (tier 45); the fix is
+the protected token `--vb-accent-text` dark `#ff5cbe` -> `#ff66c2` (Lc 46.1+), which also lifts the
+note "who" line (44.9, item 492).

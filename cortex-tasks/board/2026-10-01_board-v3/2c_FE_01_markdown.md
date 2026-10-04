@@ -85,20 +85,20 @@ plain text, and raw HTML is always escaped.
 
 ## Steps
 
-1. [ ] Tests first (above); see them fail.
-2. [ ] Blocks, then inline, then the front function, until the tests pass.
-3. [ ] Wire the two callers; style from tokens.
-4. [ ] Gallery section and fixture bodies; view the gallery and board in dark and light, then
+1. [x] Tests first (above); see them fail.
+2. [x] Blocks, then inline, then the front function, until the tests pass.
+3. [x] Wire the two callers; style from tokens.
+4. [x] Gallery section and fixture bodies; view the gallery and board in dark and light, then
    update the baselines and list their paths.
-5. [ ] APCA: run `temp/apca-2b.mjs` (or extend it) for any new colour pair (link, inline code,
+5. [x] APCA: run `temp/apca-2b.mjs` (or extend it) for any new colour pair (link, inline code,
    quote text) and record the scores here. A pair under its tier is reported, not shipped.
 
 ## Validation
 
-- [ ] `npm test`, `npm run check`, `npm run verify`, `npm run test:pages` all exit 0 (read each
+- [x] `npm test`, `npm run check`, `npm run verify`, `npm run test:pages` all exit 0 (read each
   exit code yourself)
-- [ ] The `EXCLUDED` table lists every deliberate difference with a reason
-- [ ] No new dependency; the spec file is test data, not a package
+- [x] The `EXCLUDED` table lists every deliberate difference with a reason
+- [x] No new dependency; the spec file is test data, not a package
 
 ## Constraints
 
@@ -109,5 +109,77 @@ and report. Write long files in chunks (create the first section, then append).
 
 ## Implementation Notes
 
-*(Filled by the implementer: status, files and symbols, gates with counts, existing tests
-modified and why, baselines re-recorded, APCA scores, EXCLUDED count, open items.)*
+**Status** (2026-10-04, implementer): done, not committed. One APCA pair is under its tier in
+dark (below); it needs a token decision before it ships.
+
+**Files and symbols**
+- New pattern `packages/ui/src/markdown/`: `blocks.ts` (`parseBlocks`, `Block`; CommonMark's
+  block algorithm, 265 lines), `inline.ts` (`renderInline`, `esc`; delimiter and bracket stacks,
+  299 lines), `render.ts` (`renderMarkdown`, `MarkdownOptions`, `MARKDOWN_MAX`, 62 lines),
+  `markdown.css`, `pattern.json` (with `entry` and `selector` instead of `tag`: no element).
+- Front door `packages/ui/src/index.ts` exports `renderMarkdown`, `MARKDOWN_MAX`, `MarkdownOptions`.
+  `esc` now lives in `inline.ts` (the one escaper) and `node-template.ts` re-exports it, so the
+  public API is unchanged.
+- Callers: `nodeTemplate` renders `n.body` into `div.vb-node-body`; `vb-node.ts` `update()` sets
+  the note with `renderMarkdown` as `innerHTML`, only when the note text changed (a focused link
+  in it keeps focus); the note keeps its three-line clamp. `node.css`: body is a grid on the
+  content gap; code in a note sits on `--vb-surface-deep`.
+- Page: `markdown.css` imported beside `node.css` in `apps/board/src/main.ts` and the gallery.
+- Gallery: `markdown-section.ts` (uses `card()`, now exported from `node-section.ts`), the
+  `markdown` region in `gallery.ledger.jsonl` (seq 105-115: one card per construct, one with
+  everything, one with a Markdown note), `REGION_MARKDOWN` in `fixture.ts`, the section meta
+  line shows `entry` when a pattern has no tag.
+- `roadmap.ledger.jsonl`: items 9 (Framework) and 13 (Walking skeleton) have a label and a list.
+- Docs: `components.md` § Markdown, `packages/ui/README.md` public API, node `pattern.json`
+  (body and note are Markdown), `docs/specification/modules.md` regenerated (`npm run map`).
+- Tests: `markdown-commonmark.test.ts`, `markdown-safety.test.ts`, `markdown-render.test.ts`,
+  fixture `tests/fixtures/commonmark-0.31.2.json` (spec.commonmark.org, CC BY-SA 4.0, README).
+
+**Gates** (exit codes read): `npm test` 0 (149 tests, 149 pass); `npm run check` 0 (svelte-check
+0 errors, 0 warnings; tsc clean); `npm run verify` 0 (1 warning, pre-existing:
+`apps/board/src/board/controller.ts` 344 lines); `npm run test:pages` 0 (26 passed).
+
+**Existing tests modified**
+- `node-template.test.ts`: two tests added (list + label classes; `<b>` escaped). No existing
+  assertion changed.
+- `gallery.spec.ts`: the "every pattern has a section" test reads `tag ?? selector`, because the
+  markdown pattern has no element; two Markdown tests added (constructs, note clamp, scrolling
+  focusable code, refused links; axe and section screenshot in dark and light).
+
+**Baselines re-recorded** (each viewed first): `tests/pages/__screenshots__/board.spec.ts/board-dark-darwin.png`,
+`board-light-darwin.png` (items 9 and 13 now show a label and a list);
+`tests/pages/__screenshots__/gallery.spec.ts/gallery-dark-darwin.png`, `gallery-light-darwin.png`
+(new Markdown section first); new `markdown-dark-darwin.png`, `markdown-light-darwin.png`.
+
+**EXCLUDED**: 101 of the 465 examples in the 13 covered sections (364 pass). By reason: reference
+links and definitions 41, raw HTML 23, indented code 23, HTML blocks 3, thematic breaks 3, lists
+nested past one level 3, setext headings 2, images 2, tabs expanded to spaces 1 (#13). The test also
+fails if an excluded example starts passing. The comparison maps our classes, the label (any
+level) and the quote back to plain tags, drops info-string classes, and turns a spec link our
+scheme rule refuses into its text.
+
+**APCA** (APCA-W3 0.0.98G-4g, worst case over the six kind tints; script `temp/2c-md/apca.mjs`):
+
+| Pair | Tier | Light | Dark |
+|---|---|---|---|
+| link (accent-text) on the card tint | 45 | 65.0 | 45.5 |
+| link (accent-text) in a quote or note | 45 | 56.5 | **44.0 FAIL** |
+| label (ink-subtle) on the card tint | 45 | 66.4 | 46.5 |
+| paragraph and list text (ink) on the card | 60 | 84.5 | 69.4 |
+| list bold (ink-strong) on the card | 60 | 94.7 | 92.6 |
+| quote text (ink) on its tint | 60 | 76.0 | 67.9 |
+| inline code (ink-strong) on surface-sunken / surface-deep | 45 | 95.1 / 88.7 | 93.8 / 91.9 |
+| code block text (ink) on surface-sunken / surface-deep | 60 | 84.8 / 78.5 | 70.5 / 68.6 |
+
+**Open items**
+1. Dark link inside a quote or note: Lc 44.0-44.9 (tier 45). Fixing it needs a token, which is
+   protected: dark `--vb-accent-text` `#ff5cbe` to `#ff66c2` gives Lc 46.1 or more in every tint
+   (it also colours the "Commented" state word). Not changed.
+2. Found while measuring, not changed here: the note's "who" line (`--kind` on the note tint, from
+   2b) is under 45 in dark for decision (44.9) and topic (44.8).
+3. Look choices to confirm: the pattern says list bold in `--vb-ink`, but 01b's `.ul b` uses its
+   strongest ink, so bold is `--vb-ink-strong` (the title colour). The code block cap is
+   `calc(var(--vb-space-6) * 5)` (160px): no height token exists. Inline code is `0.92em`.
+4. An empty `#` heading renders an empty label (as CommonMark does); axe's `empty-heading` is a
+   best-practice rule, outside the WCAG tags the page tests run.
+5. Links open in a new tab (`target="_blank"`) with no visible hint; WCAG AA does not require one.
