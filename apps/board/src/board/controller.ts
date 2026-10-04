@@ -9,6 +9,7 @@ import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/ind
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
+import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
 import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
 import type { ActFields, BoardData } from './io.ts';
 import { ApiError, listBoards, loadBoard, sendAct, watchBoard } from './io.ts';
@@ -44,7 +45,7 @@ export function createBoard(els: BoardElements): Board {
     id: '',
     data: null as BoardData | null,
     state: { items: new Map(), pins: new Map(), modes: new Map() } as BoardState,
-    cards: new Map<string, HTMLElement>(),
+    cards: new Map<string, VbNodeElement>(),
     regions: new Map<string, HTMLElement>(),
     layout: null as BoardLayout | null,
     sizes: new Map<string, Size>(),
@@ -224,11 +225,11 @@ export function createBoard(els: BoardElements): Board {
   }
 
   els.cards.addEventListener('focusin', (e) => {
-    setFocus((e.target as HTMLElement).closest<HTMLElement>('.vb-item')?.dataset.id ?? null);
+    setFocus((e.target as HTMLElement).closest<HTMLElement>('vb-node')?.dataset.id ?? null);
   });
   els.cards.addEventListener('focusout', (e) => {
     const to = (e as FocusEvent).relatedTarget as HTMLElement | null;
-    if (!to?.closest('.vb-item')) setFocus(null);
+    if (!to?.closest('vb-node')) setFocus(null);
   });
 
   // ---- wiring --------------------------------------------------------------------------------
@@ -237,7 +238,7 @@ export function createBoard(els: BoardElements): Board {
     const t = e.target as HTMLElement;
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) {
-      const id = actBtn.closest<HTMLElement>('.vb-item')!.dataset.id!;
+      const id = actBtn.closest<HTMLElement>('vb-node')!.dataset.id!;
       void act(id, actBtn.dataset.act as ActionId);
       return;
     }

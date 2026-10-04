@@ -29,7 +29,7 @@ export function bindKeys(h: KeyHandlers): () => void {
     if (e.defaultPrevented || target.closest('input, textarea, select, dialog')) return;
     if (e.key === 'Escape') return h.escape();
     if (e.metaKey || e.ctrlKey) return;
-    const id = target.closest<HTMLElement>('.vb-item')?.dataset.id ?? null;
+    const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;
     const arrow = ARROWS[e.key];
     if (arrow && id && e.altKey) {
       e.preventDefault();

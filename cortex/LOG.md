@@ -44,3 +44,4 @@
 [[2026-10-04 17:55]] [cortex-infra] Board v3 and API-pattern resume points moved to Stage 2a / U4 step 1; sub-agent model rule now Sonnet 5.5 for well-specified work -> Task: [[cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md]]
 [[2026-10-04 18:20]] [board-app] Stage 2a planned: component pattern spec (docs/specification/components.md) and three task files; steering gains one sentence on sub-agent models (maintainer-requested) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md]]
 [[2026-10-04 18:15]] [board-app] 2a_BE_01: node-type registry NODE_TYPES in format; validateAct and keyboard obey offered actions -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_BE_01_node-type-registry.md]]
+[[2026-10-04 18:35]] [board-app] 2a_FE_01: card is now <vb-node> (light-DOM element, nodeState core, pattern CSS in packages/ui); screenshots pixel-identical -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_01_vb-node.md]]

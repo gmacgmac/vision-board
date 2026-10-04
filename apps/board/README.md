@@ -7,7 +7,9 @@ Svelte shell (toolbar, reply panel, note dialog; D-012). `src/board/` is the fra
 controller it mounts (layout, drawing, pointer, keys, I/O; D-005). Vite builds `src/` into `dist/`
 (gitignored). Localhost only, with Host and Origin checks, JSON only. `bin/reply.ts <board>
 [--json]` prints the numbered reply for a board from the project ledger. Pages arrange patterns
-from `packages/ui`; they hold no layout maths, file formats or actions themselves.
+from `packages/ui`; they hold no layout maths, file formats or actions themselves. Every card is a
+`<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the pattern CSS, and
+`src/board/render.ts` creates, measures and places the elements but never builds their markup.
 
 Routes (interim until U4 derives them from the OpenAPI spec, D-022; no agent write route). The
 page calls them only through `src/board/io.ts`; an action sends `{ action, n, ver }` (plus `text`,

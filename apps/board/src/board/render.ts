@@ -5,9 +5,8 @@ import { MODES } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import { DECIDED, statusOf } from '../../../../packages/actions/src/index.ts';
-import { esc, itemTemplate } from '../../../../packages/ui/src/index.ts';
-import { isItem, isPressed, itemLabel, STATUS_LABEL } from '../../../../packages/ui/src/index.ts';
-import type { ActionId } from '../../../../packages/format/src/index.ts';
+import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
+import { esc, isItem, nodeState } from '../../../../packages/ui/src/index.ts';
 
 const MODE_LABEL: Record<string, string> = {
   grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',
@@ -21,41 +20,21 @@ export function readingOrder(view: View): ViewNode[] {
     .map((x) => x.n);
 }
 
-export function buildCards(host: HTMLElement, view: View): Map<string, HTMLElement> {
+/** One <vb-node> per node, in reading order. The element renders its own markup and state. */
+export function buildCards(host: HTMLElement, view: View): Map<string, VbNodeElement> {
   host.replaceChildren();
-  const cards = new Map<string, HTMLElement>();
+  const cards = new Map<string, VbNodeElement>();
   for (const n of readingOrder(view)) {
-    const el = document.createElement('div');
-    el.className = 'vb-item';
-    el.dataset.id = n.id;
-    el.dataset.kind = n.kind;
-    if (n.emphasis) el.dataset.emphasis = '';
-    el.tabIndex = 0;
-    el.setAttribute('role', 'listitem');
-    el.innerHTML = itemTemplate(n);
+    const el = document.createElement('vb-node') as VbNodeElement;
+    el.render(n);
     host.append(el);
     cards.set(n.id, el);
   }
   return cards;
 }
 
-export function updateCard(el: HTMLElement, n: ViewNode, s: BoardState): void {
-  const st = statusOf(s, n.id);
-  el.dataset.status = st;
-  el.setAttribute('aria-label', itemLabel(n, st));
-  el.toggleAttribute('data-pinned', s.pins.has(n.id));
-  for (const b of el.querySelectorAll<HTMLButtonElement>('button[data-act]'))
-    b.setAttribute('aria-pressed', String(isPressed(b.dataset.act as ActionId, st)));
-  const status = el.querySelector<HTMLElement>('.vb-item-status')!;
-  status.textContent = isItem(n) && st !== 'open' ? STATUS_LABEL[st] : '';
-  const notes = s.items.get(n.id)?.notes ?? [];
-  const p = el.querySelector<HTMLElement>('.vb-item-notes')!;
-  p.hidden = notes.length === 0;
-  const last = notes[notes.length - 1];
-  if (last) {
-    const lead = last.kind === 'context' ? 'Asked for context' : 'You';
-    p.textContent = `${notes.length > 1 ? `${notes.length} notes · ` : ''}${lead}: ${last.text}`;
-  }
+export function updateCard(el: VbNodeElement, n: ViewNode, s: BoardState): void {
+  el.update(nodeState(n, s));
 }
 
 export function measure(cards: Map<string, HTMLElement>): Map<string, Size> {

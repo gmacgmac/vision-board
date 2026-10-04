@@ -51,6 +51,6 @@ UI work, then commits that task alone.
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
 | 1 | [2a_BE_01 node-type registry](./2a_BE_01_node-type-registry.md) | Sonnet 5.5 | Done | see log |
-| 2 | [2a_FE_01 `<vb-node>`](./2a_FE_01_vb-node.md) | Opus 5.5 | Running | |
+| 2 | [2a_FE_01 `<vb-node>`](./2a_FE_01_vb-node.md) | Opus 5.5 | Done | see log |
 | 3 | [2a_FE_02 `<vb-region>`](./2a_FE_02_vb-region.md) | Sonnet 5.5 | Planned | |
 | 4 | Stage check: orchestrator clicks through `npm run dev` in dark and light | Orchestrator | Planned | |

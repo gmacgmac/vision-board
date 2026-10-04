@@ -1,10 +1,10 @@
-// Item pattern, layer 2 (template): one pure function from an item to its markup. Tokens only;
+// Node pattern, layer 2 (template): one pure function from a node to its markup. Tokens only;
 // no inline styles (the page's CSP forbids them). State changes are applied in place by the
-// page (data-status, aria-pressed), so this runs once per view version, not per click.
+// element (`VbNode.update`: data-status, aria-pressed), so this runs once per view version.
 import type { ActionId, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
-import { buttonLabel, offers } from './item-core.ts';
+import { buttonLabel, offers } from './node-core.ts';
 
 export const ICONS: Partial<Record<ActionId, string>> = {
   ack: '<path d="M4 10.5l4 4 8-9"/>',
@@ -20,18 +20,18 @@ export const esc = (s: string): string =>
 const icon = (a: ActionId) =>
   `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">${ICONS[a] ?? ''}</svg>`;
 
-export function itemTemplate(n: ViewNode): string {
-  const num = n.n !== undefined ? `<span class="vb-item-num" aria-hidden="true">${n.n}</span>` : '';
-  const body = n.body ? `<p class="vb-item-body">${esc(n.body)}</p>` : '';
+export function nodeTemplate(n: ViewNode): string {
+  const num = n.n !== undefined ? `<span class="vb-node-num" aria-hidden="true">${n.n}</span>` : '';
+  const body = n.body ? `<p class="vb-node-body">${esc(n.body)}</p>` : '';
   const tags = n.tags?.length
-    ? `<ul class="vb-item-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
+    ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
   const buttons = offers(n)
     .map((a) => `<button type="button" class="vb-act" data-act="${a}" aria-label="${esc(buttonLabel(a, n))}"`
       + ` title="${esc(ACTIONS[a].label)}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">${icon(a)}</button>`)
     .join('');
-  const actions = buttons ? `<div class="vb-item-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
-  return `<header class="vb-item-head">${num}<span class="vb-item-kind">${NODE_TYPES[n.kind].label}</span>`
-    + `<span class="vb-item-status" aria-hidden="true"></span><span class="vb-item-pin" aria-hidden="true" title="Moved by you">◆</span></header>`
-    + `<h3 class="vb-item-title">${esc(n.title)}</h3>${body}${tags}`
-    + `<p class="vb-item-notes" hidden></p>${actions}`;
+  const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
+  return `<header class="vb-node-head">${num}<span class="vb-node-kind">${NODE_TYPES[n.kind].label}</span>`
+    + `<span class="vb-node-status" aria-hidden="true"></span><span class="vb-node-pin" aria-hidden="true" title="Moved by you">◆</span></header>`
+    + `<h3 class="vb-node-title">${esc(n.title)}</h3>${body}${tags}`
+    + `<p class="vb-node-notes" hidden></p>${actions}`;
 }

@@ -20,7 +20,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (e.button !== 0 && e.button !== 1) return;
     const target = e.target as HTMLElement;
     if (target.closest(INTERACTIVE)) return;
-    const card = target.closest<HTMLElement>('.vb-item');
+    const card = target.closest<HTMLElement>('vb-node');
     const box0 = card ? h.box(card.dataset.id!) : undefined;
     if (card && box0 && e.button === 0 && !e.altKey) {
       drag = { id: card.dataset.id!, el: card, sx: e.clientX, sy: e.clientY, box0, box: box0, moved: false };
