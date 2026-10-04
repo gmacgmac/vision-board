@@ -40,3 +40,17 @@ created: 2026-10-01
 | 6 Chat panel (MCP), then kiro-cli | Planned | | |
 | 7 Decision flow, incremental layout | Planned | | U3 step 4 |
 | 8 Verification | Planned | | |
+
+## Stage 2a tasks (written 2026-10-04)
+
+Pattern: `docs/specification/components.md`. Research briefs (git-ignored):
+`temp/research/stage-2a-brief.md`. Run one at a time, in this order. After each, the
+orchestrator reads the diff, runs `npm test`, `npm run check` and `npm run verify`, browser-checks
+UI work, then commits that task alone.
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [2a_BE_01 node-type registry](./2a_BE_01_node-type-registry.md) | Sonnet 5.5 | Planned | |
+| 2 | [2a_FE_01 `<vb-node>`](./2a_FE_01_vb-node.md) | Opus 5.5 | Planned | |
+| 3 | [2a_FE_02 `<vb-region>`](./2a_FE_02_vb-region.md) | Sonnet 5.5 | Planned | |
+| 4 | Stage check: orchestrator clicks through `npm run dev` in dark and light | Orchestrator | Planned | |

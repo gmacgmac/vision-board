@@ -65,6 +65,9 @@ records what was done. That is how this project stays traceable years from now.
 Vibe coding is fine for throwaway spikes in `temp/`. Nothing from a spike reaches `apps/` or
 `packages/` without a plan.
 
+Sub-agent models: Sonnet 5.5 handles well-specified work, configuration and cited research about as
+well as Opus 5.5, so use it there and keep Opus 5.5 for defining new patterns and judgement-heavy design.
+
 ## Before you build anything
 
 Answer these in order. Stop at the first "no" and resolve it before writing code.
