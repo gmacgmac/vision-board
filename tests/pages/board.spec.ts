@@ -2,7 +2,7 @@
 // 17 nodes, 16 of them items). The tests run in this order on one server: read-only checks and
 // screenshots first, then the ones that answer items and change layouts, which change the ledger.
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -47,10 +47,11 @@ test('Tab moves from card to card, in item number order', async ({ page }) => {
 });
 
 /**
- * Known failure: axe `target-size` (WCAG 2.2 AA, 2.5.8). On the board's opening view the world is
- * zoomed out to fit, so the layout-mode buttons (.vb-mode) and the item buttons (.vb-act) are
- * drawn under 24 CSS pixels. The same buttons pass on the gallery at full size. Fixing it is a
- * UI change, not this task's. Remove the test.fail when it is fixed.
+ * Known failure: axe `target-size` (WCAG 2.2 AA, 2.5.8), tracker N8. On the board's opening view
+ * the world is zoomed out to fit. The cards' buttons (.vb-act) no longer fail: below 0.75 the
+ * stage is "far" and node.css hides them (2b_FE_01). The layout-mode buttons (.vb-mode) still
+ * draw under 24 CSS pixels; they are the region pattern's, rebuilt as the mode icon row with the
+ * open frames. Remove the test.fail when they are fixed.
  */
 const KNOWN_AXE = ['target-size'];
 
@@ -62,10 +63,19 @@ for (const theme of THEMES) {
   });
 
   test(`axe passes with nothing excused (${theme})`, async ({ page }) => {
-    test.fail(true, 'Known failure: axe target-size, buttons under 24px at the fit-to-view zoom');
+    test.fail(true, 'Known failure: axe target-size, layout-mode buttons under 24px at the fit-to-view zoom');
     await setTheme(page, theme);
     await openBoard(page);
     await expectNoAxeViolations(page);
+  });
+
+  test(`no card button draws under the target size at the fit-to-view zoom (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await openBoard(page);
+    await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator('vb-node .vb-act:visible')).toHaveCount(0);
+    const small = (await axeFindings(page)).filter((f) => f.id === 'target-size').flatMap((f) => f.targets);
+    expect(small.filter((t) => t.includes('vb-act')), small.join('\n')).toEqual([]);
   });
 
   test(`screenshot (${theme})`, async ({ page }) => {
@@ -77,13 +87,26 @@ for (const theme of THEMES) {
 
 // ---- From here on the tests change the ledger. ----
 
+/** Zoom in with the + key until the stage is no longer "far", so the cards' buttons show (N8). */
+async function zoomToButtons(page: Page): Promise<void> {
+  for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
+  await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+}
+
+/** Focus the card first: focusing pans it into view, so its button can be clicked. */
+async function clickOn(page: Page, n: number, name: string): Promise<void> {
+  await card(page, n).focus();
+  await card(page, n).getByRole('button', { name }).click();
+}
+
 test('ok, drop and comment work and survive a reload', async ({ page }) => {
   await openBoard(page);
-  await page.getByRole('button', { name: 'Acknowledge item 1 (A)' }).click();
+  await zoomToButtons(page);
+  await clickOn(page, 1, 'Acknowledge item 1 (A)');
   await expect(card(page, 1)).toHaveAttribute('data-status', 'acknowledged');
-  await page.getByRole('button', { name: 'Drop item 2 (X)' }).click();
+  await clickOn(page, 2, 'Drop item 2 (X)');
   await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
-  await page.getByRole('button', { name: 'Comment item 3 (C)' }).click();
+  await clickOn(page, 3, 'Comment item 3 (C)');
   const dialog = page.getByRole('dialog', { name: 'Comment' });
   await dialog.getByLabel('Your note').fill('Check the wording.');
   await dialog.getByRole('button', { name: 'Save' }).click();
@@ -94,13 +117,15 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
     await expect(card(page, 1).getByRole('button', { name: /^Acknowledge item 1/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
     await expect(card(page, 3)).toHaveAttribute('data-status', 'commented');
-    await expect(card(page, 3).locator('.vb-node-notes')).toHaveText('You: Check the wording.');
+    await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note');
+    await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
     await expect(page.locator('#counts')).toContainText('2 decided');
     await expect(page.getByRole('button', { name: 'Reply (3)' })).toBeVisible();
   };
   await expectAnswers();
   await page.reload();
   await expect(page.locator('vb-node')).toHaveCount(NODES);
+  await zoomToButtons(page);
   await expectAnswers();
 });
 

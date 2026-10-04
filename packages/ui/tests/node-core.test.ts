@@ -44,17 +44,17 @@ test('nodeState: every status sets status, label, status word and pressed', () =
     const st = nodeState(q, withItem(status));
     assert.equal(st.status, status);
     assert.equal(st.label, `Item 7, Question: Ship it?, ${STATUS_LABEL[status]}`);
-    assert.equal(st.statusWord, status === 'open' ? '' : STATUS_LABEL[status]);
+    assert.equal(st.statusWord, STATUS_LABEL[status]);
     const pressedNow = Object.entries(st.pressed).filter(([, v]) => v).map(([a]) => a);
     assert.deepEqual(pressedNow, PRESSED_BY[status] ?? [], status);
   }
 });
 
-test('nodeState: an item with no response is open, unpressed and has no note line', () => {
+test('nodeState: an item with no response is open, unpressed and has no note', () => {
   const st = nodeState(node({ n: 1 }), board());
   assert.equal(st.status, 'open');
-  assert.equal(st.statusWord, '');
-  assert.equal(st.noteLine, undefined);
+  assert.equal(st.statusWord, 'Open');
+  assert.equal(st.note, undefined);
   assert.equal(st.pinned, false);
   assert.deepEqual(Object.keys(st.pressed), ['ack', 'drop', 'comment', 'context', 'later']);
   assert.ok(Object.values(st.pressed).every((v) => v === false));
@@ -77,14 +77,14 @@ test('nodeState: pinned follows the pins map', () => {
   assert.equal(nodeState(node({ id: '2', n: 2 }), board({ pins })).pinned, false);
 });
 
-test('nodeState: one note is shown led by "You", with no count', () =>
-  assert.equal(nodeState(node({ n: 1 }), withItem('commented', [note('Looks right')])).noteLine,
-    'You: Looks right'));
+test('nodeState: one note is shown under "Your note", with no count', () =>
+  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [note('Looks right')])).note,
+    { who: 'Your note', text: 'Looks right' }));
 
 test('nodeState: three notes show the count and the last note', () =>
-  assert.equal(nodeState(node({ n: 1 }), withItem('commented',
-    [note('one'), note('two'), note('three')])).noteLine, '3 notes · You: three'));
+  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented',
+    [note('one'), note('two'), note('three')])).note, { who: '3 notes · Your note', text: 'three' }));
 
-test('nodeState: a context note is led by "Asked for context"', () =>
-  assert.equal(nodeState(node({ n: 1 }), withItem('context', [note('plain terms', 'context')])).noteLine,
-    'Asked for context: plain terms'));
+test('nodeState: a context note is shown under "You asked for more context"', () =>
+  assert.deepEqual(nodeState(node({ n: 1 }), withItem('context', [note('plain terms', 'context')])).note,
+    { who: 'You asked for more context', text: 'plain terms' }));

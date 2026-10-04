@@ -53,7 +53,9 @@ body {
 .vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
 
 /* Stage and world */
-.vb-stage { position: fixed; inset: var(--vb-toolbar-h) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+.vb-stage { position: fixed; inset: var(--vb-toolbar-h) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none;
+  background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
+  background-size: 22px 22px; }
 .vb-stage.panning { cursor: grabbing; }
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }

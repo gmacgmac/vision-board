@@ -6,10 +6,19 @@
   "files": {
     "core": "node-core.ts (nodeState, nodeLabel, offers, isPressed; no DOM)",
     "template": "node-template.ts (nodeTemplate: the only place the markup is built)",
+    "icons": "node-icons.ts (KIND_ICON per kind, ACTION_ICON per action, svgIcon)",
     "element": "vb-node.ts (defineVbNode, VbNodeElement; light DOM)",
     "styles": "node.css (scoped by the tag; tokens only)"
   },
   "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden"],
+  "parts": {
+    "vb-node-num": "tab in a gap on the top border, left: the item number (items only)",
+    "vb-node-kind": "tab in a gap on the top border, centred: the kind; the drag handle from Stage 3",
+    "vb-node-pin": "tab on the top border, right: shown when the person moved the node",
+    "vb-node-content": "title (vb-node-title), body (vb-node-body), tags as chips (vb-node-tags), note block",
+    "vb-node-notes": "the last note: who (vb-node-note-who) over the text (vb-node-note-text); hidden with no notes",
+    "vb-node-foot": "items only: kind icon (vb-node-kico), divider (vb-node-sep), state word (vb-node-status), quick actions (vb-node-actions)"
+  },
   "attributes": {
     "data-id": "the node id; the page finds a node with closest('vb-node')",
     "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts. Colour comes from --kind, which render() sets to var(--vb-kind-<kind>)",
@@ -18,13 +27,16 @@
     "data-emphasis": "present when the agent marked the node as emphasised (set by render)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
-    "aria-label": "number, kind, title and status (nodeLabel, set by update)"
+    "aria-label": "number, kind, title and status (nodeLabel, set by update)",
+    "data-zoom": "on the stage, not the node: 'far' below zoom 0.75 hides the quick actions (keeping their space); the keyboard shortcuts still work"
   },
   "methods": {
     "render(n: ViewNode)": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n)",
-    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, aria-label, aria-pressed, status word, note line), so focus survives"
+    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, aria-label, aria-pressed, status word, note who and text), so focus survives"
   },
-  "events": ["data-act button click bubbles to the page's delegated listener -> action layer"],
+  "events": [
+    "data-act button click bubbles to the page's delegated listener -> action layer"
+  ],
   "whenToUse": "Anything the agent draws that the person should read or respond to.",
   "whenNotToUse": "Region headings and lane labels; those belong to the region pattern.",
   "accessibility": "Focusable list item with a label naming number, kind, title and status. Buttons are real buttons with labels and aria-pressed. Keyboard: A X C M L O respond, Alt+Arrows move, R resets the position, J K move between items."

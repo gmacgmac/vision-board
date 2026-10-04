@@ -1,66 +1,130 @@
 /* Node pattern styles (<vb-node>, packages/ui/src/node). Scoped by the tag, light DOM; tokens only.
    Every state in pattern.json has a rule here. A kind's colour arrives as --kind, set by the
-   element from --vb-kind-<kind>, so no rule here lists kinds for colour. */
+   element from --vb-kind-<kind>, so no rule here lists kinds for colour. The look is board v3's
+   card (D-024, mockup 01b): a soft top-down tint of the kind colour, tabs in gaps cut from the
+   top border, and a footer with the kind icon, the state word and the quick actions. */
 
 vb-node {
   --kind: var(--vb-ink-subtle);
-  --state: var(--vb-state-open);
+  --state: var(--vb-ink-subtle);
+  /* What shows through the gaps cut from the border around the tabs. */
+  --gap: var(--vb-surface-canvas);
+  --surface: var(--vb-surface-card);
   position: absolute; left: 0; top: 0; width: var(--vb-card-w);
-  display: flex; flex-direction: column; gap: var(--vb-space-1);
-  padding: var(--vb-space-3) var(--vb-space-3) var(--vb-space-2);
-  background: var(--vb-surface-card); border: 1px solid var(--vb-line);
-  border-left: 4px solid var(--state); border-radius: var(--vb-radius-md);
+  display: flex; flex-direction: column;
+  border: 1px solid color-mix(in srgb, var(--kind) 38%, var(--vb-line)); border-radius: var(--vb-radius-lg);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--kind) 9%, var(--surface)) 0%, var(--surface) 55%);
   box-shadow: var(--vb-shadow-card); cursor: grab; user-select: none;
   transition: transform var(--vb-motion) var(--vb-ease), opacity var(--vb-motion) var(--vb-ease),
-    border-color var(--vb-motion-fast), background var(--vb-motion-fast);
+    border-color var(--vb-motion-fast), box-shadow var(--vb-motion-fast);
 }
-vb-node:hover { border-color: var(--vb-line-strong); border-left-color: var(--state); }
+/* The hairline accent on the top edge. */
+vb-node::before {
+  content: ''; position: absolute; left: var(--vb-space-4); right: var(--vb-space-4); top: -1px; height: 1.5px;
+  border-radius: 0 0 2px 2px; background: color-mix(in srgb, var(--kind) 75%, transparent);
+}
+vb-node:hover { border-color: color-mix(in srgb, var(--kind) 70%, var(--vb-line)); }
 vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 3px; z-index: 2; }
 vb-node.dragging { transition: none; cursor: grabbing; box-shadow: var(--vb-shadow-lift); z-index: 3; }
-vb-node[data-emphasis] { width: var(--vb-card-w-wide); border-top: 2px solid var(--kind); }
+vb-node[data-emphasis] { width: var(--vb-card-w-wide); }
+vb-node[data-emphasis]::before { height: 2px; background: var(--kind); }
 
-vb-node[data-kind='topic'] { background: var(--vb-surface-sunken); }
+vb-node[data-kind='topic'] { --surface: var(--vb-surface-sunken); }
 vb-node[data-kind='note'] { background: transparent; box-shadow: none; border-style: dashed; }
 
-vb-node[data-status='acknowledged'] { --state: var(--vb-state-ack); background: var(--vb-state-ack-soft); }
-vb-node[data-status='dropped'] { --state: var(--vb-state-drop); opacity: 0.62; }
-vb-node[data-status='dropped'] .vb-node-title { text-decoration: line-through; }
+/* The state word's colour; open is muted. Dropped also fades and strikes the title through. */
+vb-node[data-status='acknowledged'] { --state: var(--vb-state-ack); }
+vb-node[data-status='dropped'] { --state: var(--vb-state-drop); opacity: 0.55; }
+vb-node[data-status='dropped'] .vb-node-title { text-decoration: line-through; text-decoration-thickness: 1.5px; }
 vb-node[data-status='commented'] { --state: var(--vb-state-comment); }
-vb-node[data-status='context'] { --state: var(--vb-state-context); background: var(--vb-state-context-soft); }
-vb-node[data-status='later'] { --state: var(--vb-state-later); background: var(--vb-state-later-soft); }
+vb-node[data-status='context'] { --state: var(--vb-state-context); }
+vb-node[data-status='later'] { --state: var(--vb-state-later); }
 
-vb-node .vb-node-head { display: flex; align-items: center; gap: var(--vb-space-2); min-height: 22px; }
+/* Tabs on the top border, each in a gap cut from the line: number left, kind centred, the
+   moved-by-you marker right. */
+vb-node .vb-node-num, vb-node .vb-node-kind, vb-node .vb-node-pin {
+  position: absolute; top: -11px; display: inline-flex; align-items: center; gap: 5px;
+  height: 20px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm);
+  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); white-space: nowrap;
+}
 vb-node .vb-node-num {
-  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px;
-  border-radius: var(--vb-radius-pill); background: var(--vb-ink-strong); color: var(--vb-surface-card);
-  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); font-variant-numeric: tabular-nums;
+  left: 14px; border: 1px solid color-mix(in srgb, var(--kind) 50%, var(--vb-line));
+  background: var(--vb-surface-card); color: var(--vb-ink-strong);
+  font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font-mono); font-variant-numeric: tabular-nums;
 }
-vb-node .vb-node-kind { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.04em; text-transform: uppercase; color: var(--kind); }
-vb-node .vb-node-status { margin-left: auto; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--state); }
-vb-node .vb-node-pin { display: none; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
-vb-node[data-pinned] .vb-node-pin { display: inline; }
-vb-node[data-pinned] .vb-node-status:empty + .vb-node-pin { margin-left: auto; }
-vb-node .vb-node-title { margin: 0; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); line-height: 1.35; color: var(--vb-ink-strong); }
-vb-node .vb-node-body { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink); }
-vb-node .vb-node-tags { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
-vb-node .vb-node-tags li { font-size: var(--vb-text-xs); padding: 0 6px; border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); }
-vb-node .vb-node-notes {
-  margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-sm); color: var(--vb-ink-strong);
-  padding: var(--vb-space-1) var(--vb-space-2); border-radius: var(--vb-radius-sm); background: var(--vb-state-comment-soft);
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+vb-node .vb-node-kind {
+  left: 50%; transform: translateX(-50%); border-radius: var(--vb-radius-pill);
+  border: 1px solid color-mix(in srgb, var(--kind) 55%, transparent);
+  background: color-mix(in srgb, var(--kind) 16%, var(--gap)); color: var(--kind);
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.08em; text-transform: uppercase;
 }
-vb-node .vb-node-notes[hidden] { display: none; }
+/* Grip dots: the kind tab becomes the drag handle in Stage 3. */
+vb-node .vb-node-kind::before {
+  content: ''; width: 6px; height: 8px; opacity: 0.7;
+  background: radial-gradient(currentColor 1px, transparent 1.2px) 0 0 / 3px 3px;
+}
+vb-node .vb-node-pin {
+  display: none; right: 14px; padding: 0 6px; border: 1px solid var(--vb-line-strong);
+  background: var(--vb-surface-card); color: var(--vb-ink-subtle); font-size: var(--vb-text-xs);
+}
+vb-node[data-pinned] .vb-node-pin { display: inline-flex; }
 
-vb-node .vb-node-actions { display: flex; gap: 2px; margin-top: var(--vb-space-1); padding-top: var(--vb-space-1); border-top: 1px solid var(--vb-line); }
+/* Content: title, body, tags as chips, the note block. */
+vb-node .vb-node-content {
+  display: grid; gap: var(--vb-space-2);
+  padding: calc(var(--vb-space-4) + var(--vb-space-1)) var(--vb-space-4) var(--vb-space-3);
+}
+vb-node .vb-node-title {
+  margin: 0; font-size: var(--vb-text-lg); font-weight: var(--vb-weight-medium); line-height: 1.3;
+  letter-spacing: -0.01em; color: var(--vb-ink-strong);
+}
+vb-node .vb-node-body { margin: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink); }
+vb-node .vb-node-tags { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
+vb-node .vb-node-tags li {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 var(--vb-space-2);
+  border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); white-space: nowrap;
+}
+vb-node .vb-node-notes {
+  display: grid; gap: var(--vb-space-1); padding: var(--vb-space-2) var(--vb-space-3); border-radius: var(--vb-radius-md);
+  background: color-mix(in srgb, var(--kind) 9%, var(--vb-surface-sunken)); font-size: var(--vb-text-md); color: var(--vb-ink);
+}
+vb-node .vb-node-note-who {
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--kind);
+}
+vb-node .vb-node-note-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Footer: kind icon, divider, state word, then the quick actions. */
+vb-node .vb-node-foot {
+  display: flex; align-items: center; gap: var(--vb-space-1); min-height: 38px;
+  padding: var(--vb-space-1) var(--vb-space-1) var(--vb-space-1) var(--vb-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--kind) 18%, var(--vb-line));
+  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--state);
+}
+/* Tighter than 01b's spacing so the longest word fits beside five buttons on a 248px card. */
+vb-node .vb-node-state { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
+vb-node .vb-node-status { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+vb-node .vb-node-kico { flex: none; width: 14px; height: 14px; color: var(--kind); }
+vb-node .vb-node-sep { flex: none; width: 1px; height: 12px; background: var(--vb-line-strong); }
+vb-node .vb-node-kico, vb-node .vb-act-icon {
+  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+vb-node .vb-node-actions { display: flex; flex: none; }
+
 vb-node .vb-act {
-  display: grid; place-items: center; width: 30px; height: 28px; padding: 0; cursor: pointer;
+  display: grid; place-items: center; width: 24px; height: 26px; padding: 0; cursor: pointer;
   background: none; border: 1px solid transparent; border-radius: var(--vb-radius-sm); color: var(--vb-ink-subtle);
 }
-vb-node .vb-act svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+vb-node .vb-act-icon { width: 15px; height: 15px; stroke-width: 1.8; }
 vb-node .vb-act:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
 vb-node .vb-act:active { transform: translateY(1px); }
 vb-node .vb-act[data-act='ack'][aria-pressed='true'] { color: var(--vb-state-ack); border-color: var(--vb-state-ack); }
 vb-node .vb-act[data-act='drop'][aria-pressed='true'] { color: var(--vb-state-drop); border-color: var(--vb-state-drop); }
 vb-node .vb-act[data-act='context'][aria-pressed='true'] { color: var(--vb-state-context); border-color: var(--vb-state-context); }
 vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-later); border-color: var(--vb-state-later); }
-.vb-region[data-mode='radial'] vb-node[data-kind='topic'] { border-radius: var(--vb-radius-lg); }
+
+/* Zoomed out (N8): the stage carries data-zoom="far" below 0.75, where the buttons would draw
+   under the 24px target size. They are hidden but keep their space, so no card changes size;
+   the keyboard shortcuts still act on the focused card. */
+[data-zoom='far'] vb-node .vb-node-actions { visibility: hidden; }

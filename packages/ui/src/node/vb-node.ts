@@ -39,14 +39,18 @@ export function defineVbNode(): void {
       this.toggleAttribute('data-pinned', st.pinned);
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-act]'))
         b.setAttribute('aria-pressed', String(st.pressed[b.dataset.act as ActionId] ?? false));
-      this.piece('status').textContent = st.statusWord;
-      const notes = this.piece('notes');
-      notes.hidden = st.noteLine === undefined;
-      if (st.noteLine !== undefined) notes.textContent = st.noteLine;
+      // A non-item has no footer, so no status word.
+      const status = this.piece('status');
+      if (status) status.textContent = st.statusWord;
+      this.piece('notes')!.hidden = st.note === undefined;
+      if (st.note !== undefined) {
+        this.piece('note-who')!.textContent = st.note.who;
+        this.piece('note-text')!.textContent = st.note.text;
+      }
     }
 
-    private piece(name: string): HTMLElement {
-      return this.querySelector<HTMLElement>(`.vb-node-${name}`)!;
+    private piece(name: string): HTMLElement | null {
+      return this.querySelector<HTMLElement>(`.vb-node-${name}`);
     }
   }
 

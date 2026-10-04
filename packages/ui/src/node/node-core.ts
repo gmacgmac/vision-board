@@ -30,16 +30,22 @@ export function buttonLabel(action: ActionId, n: ViewNode): string {
   return `${def.label} item ${n.n}${def.key ? ` (${def.key.toUpperCase()})` : ''}`;
 }
 
+/** The note block on a card: a small heading naming who, then the last note's text. */
+export interface NoteLine {
+  who: string;
+  text: string;
+}
+
 /** Everything a drawn node shows for the person's current state; `update()` applies it. */
 export interface NodeState {
   status: ItemStatus;
   pinned: boolean;
   /** The node's accessible name: number, kind, title and (for items) status. */
   label: string;
-  /** The status word in the head; empty for open items and for non-items. */
+  /** The status word in the footer, "Open" included; empty for non-items. */
   statusWord: string;
-  /** The last note, led by who wrote it; absent when the node has no notes. */
-  noteLine?: string;
+  /** The last note and who it is from (with the count when there are several); absent with no notes. */
+  note?: NoteLine;
   /** aria-pressed for each offered action. */
   pressed: Partial<Record<ActionId, boolean>>;
 }
@@ -50,13 +56,13 @@ export function nodeState(n: ViewNode, s: BoardState): NodeState {
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
   const notes = s.items.get(n.id)?.notes ?? [];
   const last = notes[notes.length - 1];
-  const lead = last?.kind === 'context' ? 'Asked for context' : 'You';
+  const lead = last?.kind === 'context' ? 'You asked for more context' : 'Your note';
   return {
     status,
     pinned: s.pins.has(n.id),
     label: nodeLabel(n, status),
-    statusWord: isItem(n) && status !== 'open' ? STATUS_LABEL[status] : '',
-    ...(last ? { noteLine: `${notes.length > 1 ? `${notes.length} notes · ` : ''}${lead}: ${last.text}` } : {}),
+    statusWord: isItem(n) ? STATUS_LABEL[status] : '',
+    ...(last ? { note: { who: `${notes.length > 1 ? `${notes.length} notes · ` : ''}${lead}`, text: last.text } } : {}),
     pressed,
   };
 }

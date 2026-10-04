@@ -51,9 +51,10 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(node.locator('vb-node[data-emphasis]')).toHaveCount(1);
   await expect(node.locator('vb-node.dragging')).toHaveCount(1);
   await expect(node.locator('.vb-node-tags li')).toHaveCount(3);
-  await expect(node.locator('.vb-node-notes').filter({ hasText: 'You: Ship it' })).toBeVisible();
-  await expect(node.locator('.vb-node-notes').filter({ hasText: '2 notes ·' })).toBeVisible();
-  await expect(node.locator('.vb-node-notes').filter({ hasText: '3 notes · Asked for context:' })).toBeVisible();
+  const notes = node.locator('.vb-node-notes');
+  await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note")') }).filter({ hasText: 'Ship it' })).toBeVisible();
+  await expect(notes.locator('.vb-node-note-who:text-is("2 notes · Your note")')).toBeVisible();
+  await expect(notes.locator('.vb-node-note-who:text-is("3 notes · You asked for more context")')).toBeVisible();
   // Topics and notes are not items: no number, no status, no buttons.
   for (const kind of ['topic', 'note']) {
     const card = node.locator(`vb-node[data-kind="${kind}"]`);

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import { KINDS } from '../../format/src/index.ts';
-import { esc, nodeTemplate, offers } from '../src/index.ts';
+import { esc, KIND_ICON, nodeTemplate, offers } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -38,4 +38,27 @@ test('nodeTemplate draws one button per offered action, in order, for every kind
 test('nodeTemplate carries no inline style and no style element (the CSP refuses them)', () => {
   const html = nodeTemplate(node({ n: 1, body: 'b', tags: ['t'] }));
   assert.doesNotMatch(html, /style=|<style/);
+});
+
+test('nodeTemplate puts number, kind and pin on the top border, before the content', () => {
+  const html = nodeTemplate(node({ n: 41, kind: 'risk' }));
+  assert.match(html, /^<span class="vb-node-num"[^>]*>41<\/span><span class="vb-node-kind">Risk<\/span><span class="vb-node-pin"/);
+  assert.ok(html.indexOf('vb-node-pin') < html.indexOf('vb-node-content'));
+});
+
+test('nodeTemplate draws the footer on items only: kind icon, divider, state word, then buttons', () => {
+  for (const kind of KINDS) {
+    const item = nodeTemplate(node({ kind, n: 3 }));
+    assert.match(item, new RegExp(`<footer class="vb-node-foot">.*${KIND_ICON[kind].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`
+      + '.*vb-node-sep.*vb-node-status.*</span></span>(<div class="vb-node-actions"|</footer>)'), kind);
+    assert.doesNotMatch(nodeTemplate(node({ kind })), /vb-node-foot|vb-node-status/, `${kind} non-item`);
+  }
+});
+
+test('nodeTemplate draws the note block hidden, with who and text parts for update() to fill', () =>
+  assert.match(nodeTemplate(node({ n: 1 })),
+    /<div class="vb-node-notes" hidden><span class="vb-node-note-who"><\/span><span class="vb-node-note-text"><\/span><\/div>/));
+
+test('KIND_ICON has a drawing for every kind', () => {
+  for (const kind of KINDS) assert.match(KIND_ICON[kind], /^<(path|circle) /, kind);
 });

@@ -3,6 +3,8 @@ import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 
 const MIN_K = 0.2;
 const MAX_K = 2.5;
+/** The zoom below which the stage is "far" (data-zoom="far"). */
+const FAR_K = 0.75;
 
 export class Viewport {
   x = 0;
@@ -18,6 +20,9 @@ export class Viewport {
 
   apply(): void {
     this.world.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.k})`;
+    // Below FAR_K the cards' buttons would draw under the 24px target size, so node.css hides them (N8).
+    if (this.k < FAR_K) this.stage.dataset.zoom = 'far';
+    else delete this.stage.dataset.zoom;
   }
 
   toWorld(clientX: number, clientY: number): Point {
