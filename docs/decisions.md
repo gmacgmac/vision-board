@@ -299,3 +299,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: The maintainer judged it by eye against Architect; it puts the space into content.
 - **Alternative rejected**: The previous pastel tokens with a blue accent; icon tiles in card heads.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-025 Page tests with Playwright and axe-core
+- **Date**: 2026-10-04 · **Status**: Accepted · **From**: maintainer (tracker N3)
+- **Decision**: Page tests (rule 13) run in Playwright through `@playwright/test` 1.63.0, with
+  `axe-core` 4.13.0 injected into each page for accessibility checks, the same pair and versions
+  as Uplynk Studio. They run as `npm run test:pages`, separate from `npm test`, against a board
+  served from a fixture ledger. Exact pins, install scripts off, both in the dependency register.
+- **Why**: A unit test can't see a console error, a failed request, an accessibility violation or
+  a visual change; matching Studio keeps patterns shareable.
+- **Alternative rejected**: A DOM emulator (jsdom, happy-dom) in `npm test`: it has no layout, so
+  it can't check placement, contrast or screenshots.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]

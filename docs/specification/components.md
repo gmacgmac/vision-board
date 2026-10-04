@@ -61,8 +61,7 @@ pattern's markup or styles it.
   CSSOM: `el.style.setProperty('--kind', …)`, `el.style.transform = …`.
 - **Self-describing.** The element sets its own `role`, `tabindex` and label. Custom elements are
   `display: inline` by default, so `<pattern>.css` sets `display`.
-- **Don't shadow built-in names.** An element is an `HTMLElement`, so its own members must not
-  reuse `part`, `slot`, `title`, `hidden` or other built-in properties.
+- **Don't shadow built-in names** (steering rule 16).
 
 ## Type checking
 

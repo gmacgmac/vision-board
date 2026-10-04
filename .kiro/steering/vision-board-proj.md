@@ -139,7 +139,7 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
     by the test suite.
 16. **Stay framework-independent where it matters.** Anything shared beyond this app (nodes,
     connectors, the canvas) is a plain web component with a framework-free core. The framework
-    choice is a decision entry.
+    choice is a decision entry. Element code mustn't reuse built-in names such as `part`.
 17. **Agent instructions are code.** The skill and prompts that teach an agent to draw a board
     are versioned, reviewed, and tested against a set of scenarios before they change.
 18. **Local-first and safe by default.** The server binds to localhost only, checks Origin and
