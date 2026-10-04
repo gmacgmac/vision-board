@@ -14,9 +14,12 @@ created: 2026-10-02
 - Node 22.23.1 (`~/.nvm/versions/node/v22.23.1/bin`). Gate: `npm test`, `npm run verify`,
   `npm run check`, exit 0 each, read by the orchestrator itself after every task.
 - Task files are written one step at a time from the latest PLAN (maintainer, 2026-10-02).
-- Models: Opus 5.5 for spec, routes and MCP design; Sonnet 5 only for mechanical work that
-  follows an existing pattern (generated tables, doc regeneration, extra fixtures).
-- **Resume point (2026-10-02)**: planned. Waits on N7 and U3 step 2.
+- Models: Opus 5.5 for the spec, routes and MCP design; Sonnet 5.5 (`claude-sonnet-5.5`) for
+  well-specified tasks that follow a defined pattern (generated tables, doc regeneration,
+  fixtures, configuration).
+- **Resume point (2026-10-04)**: N7 and U3 step 2 are done, so step 1 can start alongside board
+  v3 Stage 2a. Spec additions since planning: three read calls, named-container writes and write
+  grants (proposed) in `docs/specification/api.md` § Operations and `docs/vision.md`.
 
 | Step | Status | Commit | Notes |
 |---|---|---|---|

@@ -19,14 +19,16 @@ created: 2026-10-01
   `curl` gets the correct 403).
 - Decisions in force: D-005 and D-009 to D-016. Svelte rules: `.kiro/steering/svelte-conventions.md`.
   Module map: `docs/specification/modules.md` (`npm run map`).
-- **Resume point (2026-10-02)**: re-planned (PLAN § Stages). Branch `board-v3`. Design locked:
-  D-024 and mockup `prototypes/board-v3-design/mockups/01b-cards-content-first.html`; Markdown
-  D-023. Order across sets: N7 type check → U3 step 2 ledger module → Stage 2a `<vb-node>` with
-  U4 step 1 (schemas and spec) alongside → 2b Architect's look → 2c Markdown → U4 steps 2-4 →
-  2d, 2e → Stages 3-8. Task files are written one stage at a time from the latest PLAN.
-- Models: Opus 5.5 for components, layout, visual work and anything cross-file; Sonnet 5 only for
-  mechanical work that follows an existing pattern. Every task: orchestrator reads `git diff`,
-  runs the gate itself, browser-checks UI, then commits.
+- **Resume point (2026-10-04)**: N7 and U3 step 2 done (board runs on the project ledger,
+  `45cd36a`). Design locked: mockups `01b-cards-content-first.html` + `05-final-spec.html` and
+  the picks in `prototypes/board-v3-design/README.md`. **Next: Stage 2a** `<vb-node>` and
+  `<vb-region>` (task files in `board/`), with U4 step 1 alongside → 2b Architect's look → 2c
+  Markdown → U4 steps 2-4 → 2d, 2e → Stages 3-8. Server: `npm run dev` (example board) or
+  `npm run board` (project ledger). Task files are written one stage at a time from the latest PLAN.
+- Models: Opus 5.5 for new patterns and judgment-heavy structural work; Sonnet 5.5
+  (`claude-sonnet-5.5`) for well-specified tasks, including configuration and cross-file work
+  that follows a defined pattern. Every task: orchestrator reads `git diff`, runs the gate
+  itself, browser-checks UI, then commits.
 
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
