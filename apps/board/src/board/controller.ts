@@ -4,11 +4,12 @@
 // stage element and reads what it reports through `shell`.
 import type { Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { ActionId } from '../../../../packages/format/src/index.ts';
+import { NODE_TYPES } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { ACTIONS, counts, DECIDED, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
-import { isPressed, KIND_LABEL } from '../../../../packages/ui/src/index.ts';
+import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
+import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
 import type { ActFields, BoardData } from './io.ts';
 import { ApiError, listBoards, loadBoard, sendAct, watchBoard } from './io.ts';
 import {
@@ -142,6 +143,8 @@ export function createBoard(els: BoardElements): Board {
   async function act(id: string, requested: ActionId) {
     const n = nodeOf(id);
     if (!n || n.n === undefined) return;
+    // The keyboard can't send what the card doesn't offer.
+    if (ITEM_ACTIONS.includes(requested) && !offers(n).includes(requested)) return;
     // Pressing the button that matches the current status undoes it.
     const action: ActionId = isPressed(requested, statusOf(S.state, id)) ? 'reopen' : requested;
     const def = ACTIONS[action];
@@ -149,7 +152,7 @@ export function createBoard(els: BoardElements): Board {
     if (def.text) {
       const got = await askNote(
         action === 'context' ? 'Ask for more context' : 'Comment',
-        `${n.n}. ${KIND_LABEL[n.kind]}: ${n.title}`,
+        `${n.n}. ${NODE_TYPES[n.kind].label}: ${n.title}`,
         def.text === 'required',
         action === 'context' ? 'Optional: what is unclear? e.g. "explain in plain terms"' : 'Your note for the agent',
       );

@@ -67,4 +67,29 @@ commits. A deviation from these steps: stop and report.
 
 ## Implementation Notes
 
-**Status**: Not started
+**Status**: Completed 2026-10-04 (not committed)
+
+**Files and symbols**
+
+- `packages/format/src/node-types.ts` (new): `NodeType`, `NODE_TYPES` (today's labels and actions).
+- `packages/format/src/index.ts`: exports `node-types.ts`.
+- `packages/actions/src/act.ts`: `validateAct` refuses a review action the node's type doesn't offer
+  (`<action>: a <kind> doesn't offer this`); `reopen`, `pin`, `unpin`, `mode` are not restricted.
+- `packages/ui/src/item/item-core.ts`: deleted `KIND_LABEL`, `REVIEW`, `OFFERS`; `offers` and
+  `itemLabel` read `NODE_TYPES`.
+- `packages/ui/src/item/item-template.ts`: label from `NODE_TYPES`.
+- `apps/board/src/board/controller.ts`: label from `NODE_TYPES`; `act` returns before sending when the
+  action is in `ITEM_ACTIONS` and not in `offers(n)`.
+- `packages/ui/src/item/pattern.json`: `data-kind` text.
+- `docs/specification/modules.md`: regenerated with `npm run map`.
+- Tests: new `packages/format/tests/node-types.test.ts`, `packages/ui/tests/item-core.test.ts`; added 6 tests
+  and two import names to `packages/actions/tests/actions.test.ts`. Tests 71 -> 82.
+
+**Deviation (step 7)**: the check that every listed action is in `ITEM_ACTIONS` is in `actions.test.ts`,
+not `node-types.test.ts`, because `ITEM_ACTIONS` lives in `packages/actions` and `format` may not import
+it (D-016, `LAYERS`). `node-types.test.ts` checks against `ACTION_IDS` instead.
+
+**Not acted on**
+
+- `apps/board/src/board/controller.ts` is 343 lines (verify warns over 300); it was 340 before this task.
+- Nothing in the browser was re-checked; no markup or CSS changed, and `itemTemplate` output is unchanged.

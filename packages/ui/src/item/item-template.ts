@@ -1,10 +1,10 @@
 // Item pattern, layer 2 (template): one pure function from an item to its markup. Tokens only;
 // no inline styles (the page's CSP forbids them). State changes are applied in place by the
 // page (data-status, aria-pressed), so this runs once per view version, not per click.
-import type { ViewNode } from '../../../format/src/index.ts';
-import type { ActionId } from '../../../format/src/index.ts';
+import type { ActionId, ViewNode } from '../../../format/src/index.ts';
+import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
-import { buttonLabel, KIND_LABEL, offers } from './item-core.ts';
+import { buttonLabel, offers } from './item-core.ts';
 
 export const ICONS: Partial<Record<ActionId, string>> = {
   ack: '<path d="M4 10.5l4 4 8-9"/>',
@@ -30,7 +30,7 @@ export function itemTemplate(n: ViewNode): string {
       + ` title="${esc(ACTIONS[a].label)}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">${icon(a)}</button>`)
     .join('');
   const actions = buttons ? `<div class="vb-item-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
-  return `<header class="vb-item-head">${num}<span class="vb-item-kind">${KIND_LABEL[n.kind]}</span>`
+  return `<header class="vb-item-head">${num}<span class="vb-item-kind">${NODE_TYPES[n.kind].label}</span>`
     + `<span class="vb-item-status" aria-hidden="true"></span><span class="vb-item-pin" aria-hidden="true" title="Moved by you">◆</span></header>`
     + `<h3 class="vb-item-title">${esc(n.title)}</h3>${body}${tags}`
     + `<p class="vb-item-notes" hidden></p>${actions}`;

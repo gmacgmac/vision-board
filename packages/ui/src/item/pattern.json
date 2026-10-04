@@ -5,7 +5,7 @@
   "description": "A node on the board. Numbered nodes are items: they show the review buttons their kind offers and reflect the person's response.",
   "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden"],
   "attributes": {
-    "data-kind": "question | finding | decision | risk | action | topic | note",
+    "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts",
     "data-status": "open | acknowledged | dropped | commented | context | later",
     "data-pinned": "present when the person moved it"
   },

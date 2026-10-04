@@ -1,9 +1,9 @@
 // Checks a person's or agent's `act` event against the action registry and the folded ledger.
 // The server runs it before appending; the browser before sending. One rule set, both ends.
 import type { ActEvent } from '../../format/src/index.ts';
-import { latest } from '../../format/src/index.ts';
+import { latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
-import { ACTIONS } from './registry.ts';
+import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
 export function validateAct(e: ActEvent, s: LedgerState): string[] {
   const def = ACTIONS[e.action];
@@ -18,6 +18,10 @@ export function validateAct(e: ActEvent, s: LedgerState): string[] {
   const node = e.n === undefined ? undefined : s.nodes.get(e.n);
   if (!node) p.push(`n: unknown node ${String(e.n)}`);
   else if (def.onItem && !latest(node).item) p.push(`n: node ${e.n} is not a numbered item`);
+  else if (ITEM_ACTIONS.includes(e.action)) {
+    const kind = latest(node).kind;
+    if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: a ${kind} doesn't offer this`);
+  }
   if (def.text === 'required' && !e.text?.trim()) p.push('text: required');
   return p;
 }
