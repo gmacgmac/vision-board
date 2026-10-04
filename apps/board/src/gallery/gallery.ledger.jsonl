@@ -1,0 +1,104 @@
+{"v":2,"seq":1,"at":"2026-10-04T09:00:01Z","by":"agent","agent":"kiro","type":"board","board":"gallery","title":"Pattern gallery","summary":"Every pattern in every state, drawn from this fixture ledger (project rule 11)."}
+{"v":2,"seq":2,"at":"2026-10-04T09:00:02Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"kinds","title":"Every kind in every status","mode":"grid","columns":5}}
+{"v":2,"seq":3,"at":"2026-10-04T09:00:03Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"other","title":"Other node states","mode":"grid","columns":4}}
+{"v":2,"seq":4,"at":"2026-10-04T09:00:04Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-grid","title":"Grid mode","mode":"grid","columns":2}}
+{"v":2,"seq":5,"at":"2026-10-04T09:00:05Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-flow","title":"Flow mode","mode":"flow"}}
+{"v":2,"seq":6,"at":"2026-10-04T09:00:06Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-lanes","title":"Lanes mode","mode":"lanes","lanes":["Now","Next"]}}
+{"v":2,"seq":7,"at":"2026-10-04T09:00:07Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-radial","title":"Radial mode","mode":"radial"}}
+{"v":2,"seq":8,"at":"2026-10-04T09:00:08Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-list","title":"List mode","mode":"list"}}
+{"v":2,"seq":9,"at":"2026-10-04T09:00:09Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-pinned","title":"Reset places showing","mode":"grid"}}
+{"v":2,"seq":10,"at":"2026-10-04T09:00:10Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-empty","title":"Empty message showing","mode":"grid"}}
+{"v":2,"seq":11,"at":"2026-10-04T09:00:11Z","by":"agent","agent":"kiro","type":"region","board":"gallery","region":{"id":"frame-bare","title":"No items, so no count","mode":"grid"}}
+{"v":2,"seq":12,"at":"2026-10-04T09:00:12Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":1,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":13,"at":"2026-10-04T09:00:13Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":2,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
+{"v":2,"seq":14,"at":"2026-10-04T09:00:14Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":3,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":15,"at":"2026-10-04T09:00:15Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":4,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":16,"at":"2026-10-04T09:00:16Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":5,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":17,"at":"2026-10-04T09:00:17Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":6,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":18,"at":"2026-10-04T09:00:18Z","by":"person","type":"act","action":"ack","n":6,"ver":1}
+{"v":2,"seq":19,"at":"2026-10-04T09:00:19Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":7,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
+{"v":2,"seq":20,"at":"2026-10-04T09:00:20Z","by":"person","type":"act","action":"ack","n":7,"ver":1}
+{"v":2,"seq":21,"at":"2026-10-04T09:00:21Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":8,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":22,"at":"2026-10-04T09:00:22Z","by":"person","type":"act","action":"ack","n":8,"ver":1}
+{"v":2,"seq":23,"at":"2026-10-04T09:00:23Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":9,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":24,"at":"2026-10-04T09:00:24Z","by":"person","type":"act","action":"ack","n":9,"ver":1}
+{"v":2,"seq":25,"at":"2026-10-04T09:00:25Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":10,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":26,"at":"2026-10-04T09:00:26Z","by":"person","type":"act","action":"ack","n":10,"ver":1}
+{"v":2,"seq":27,"at":"2026-10-04T09:00:27Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":11,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":28,"at":"2026-10-04T09:00:28Z","by":"person","type":"act","action":"drop","n":11,"ver":1}
+{"v":2,"seq":29,"at":"2026-10-04T09:00:29Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":12,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":30,"at":"2026-10-04T09:00:30Z","by":"person","type":"act","action":"drop","n":12,"ver":1}
+{"v":2,"seq":31,"at":"2026-10-04T09:00:31Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":13,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":32,"at":"2026-10-04T09:00:32Z","by":"person","type":"act","action":"drop","n":13,"ver":1}
+{"v":2,"seq":33,"at":"2026-10-04T09:00:33Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":14,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":34,"at":"2026-10-04T09:00:34Z","by":"person","type":"act","action":"drop","n":14,"ver":1}
+{"v":2,"seq":35,"at":"2026-10-04T09:00:35Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":15,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":36,"at":"2026-10-04T09:00:36Z","by":"person","type":"act","action":"comment","n":15,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":2,"seq":37,"at":"2026-10-04T09:00:37Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":16,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
+{"v":2,"seq":38,"at":"2026-10-04T09:00:38Z","by":"person","type":"act","action":"comment","n":16,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":2,"seq":39,"at":"2026-10-04T09:00:39Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":17,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":40,"at":"2026-10-04T09:00:40Z","by":"person","type":"act","action":"comment","n":17,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":2,"seq":41,"at":"2026-10-04T09:00:41Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":18,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":42,"at":"2026-10-04T09:00:42Z","by":"person","type":"act","action":"comment","n":18,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":2,"seq":43,"at":"2026-10-04T09:00:43Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":19,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":44,"at":"2026-10-04T09:00:44Z","by":"person","type":"act","action":"comment","n":19,"ver":1,"text":"Looks right, but check the edge case."}
+{"v":2,"seq":45,"at":"2026-10-04T09:00:45Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":20,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":46,"at":"2026-10-04T09:00:46Z","by":"person","type":"act","action":"context","n":20,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":47,"at":"2026-10-04T09:00:47Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":21,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
+{"v":2,"seq":48,"at":"2026-10-04T09:00:48Z","by":"person","type":"act","action":"context","n":21,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":49,"at":"2026-10-04T09:00:49Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":22,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":50,"at":"2026-10-04T09:00:50Z","by":"person","type":"act","action":"context","n":22,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":51,"at":"2026-10-04T09:00:51Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":23,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":52,"at":"2026-10-04T09:00:52Z","by":"person","type":"act","action":"context","n":23,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":53,"at":"2026-10-04T09:00:53Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":24,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":54,"at":"2026-10-04T09:00:54Z","by":"person","type":"act","action":"context","n":24,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":55,"at":"2026-10-04T09:00:55Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":25,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
+{"v":2,"seq":56,"at":"2026-10-04T09:00:56Z","by":"person","type":"act","action":"later","n":25,"ver":1}
+{"v":2,"seq":57,"at":"2026-10-04T09:00:57Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":26,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
+{"v":2,"seq":58,"at":"2026-10-04T09:00:58Z","by":"person","type":"act","action":"later","n":26,"ver":1}
+{"v":2,"seq":59,"at":"2026-10-04T09:00:59Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":27,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
+{"v":2,"seq":60,"at":"2026-10-04T09:01:00Z","by":"person","type":"act","action":"later","n":27,"ver":1}
+{"v":2,"seq":61,"at":"2026-10-04T09:01:01Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":28,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
+{"v":2,"seq":62,"at":"2026-10-04T09:01:02Z","by":"person","type":"act","action":"later","n":28,"ver":1}
+{"v":2,"seq":63,"at":"2026-10-04T09:01:03Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":29,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
+{"v":2,"seq":64,"at":"2026-10-04T09:01:04Z","by":"person","type":"act","action":"later","n":29,"ver":1}
+{"v":2,"seq":65,"at":"2026-10-04T09:01:05Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":30,"ver":1,"node":{"region":"other","kind":"decision","title":"Pinned: moved by the person","item":true,"body":"A diamond marks a card the person placed."}}
+{"v":2,"seq":66,"at":"2026-10-04T09:01:06Z","by":"person","type":"act","action":"pin","n":30,"x":40,"y":24}
+{"v":2,"seq":67,"at":"2026-10-04T09:01:07Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":31,"ver":1,"node":{"region":"other","kind":"finding","title":"Emphasis: a wider card with a coloured top edge","item":true,"body":"The agent marks what matters most.","emphasis":true}}
+{"v":2,"seq":68,"at":"2026-10-04T09:01:08Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":32,"ver":1,"node":{"region":"other","kind":"risk","title":"Tags: small labels under the text","item":true,"body":"Up to a handful fit on a card.","tags":["security","blocked","q4"]}}
+{"v":2,"seq":69,"at":"2026-10-04T09:01:09Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":33,"ver":1,"node":{"region":"other","kind":"question","title":"One note","item":true,"body":"The last note shows on the card."}}
+{"v":2,"seq":70,"at":"2026-10-04T09:01:10Z","by":"person","type":"act","action":"comment","n":33,"ver":1,"text":"Ship it after the review."}
+{"v":2,"seq":71,"at":"2026-10-04T09:01:11Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":34,"ver":1,"node":{"region":"other","kind":"question","title":"Two notes","item":true,"body":"The count leads the note line."}}
+{"v":2,"seq":72,"at":"2026-10-04T09:01:12Z","by":"person","type":"act","action":"comment","n":34,"ver":1,"text":"First thought."}
+{"v":2,"seq":73,"at":"2026-10-04T09:01:13Z","by":"person","type":"act","action":"comment","n":34,"ver":1,"text":"Second thought, which replaces the first on the card."}
+{"v":2,"seq":74,"at":"2026-10-04T09:01:14Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":35,"ver":1,"node":{"region":"other","kind":"question","title":"Three notes","item":true,"body":"A long last note is cut after three lines."}}
+{"v":2,"seq":75,"at":"2026-10-04T09:01:15Z","by":"person","type":"act","action":"comment","n":35,"ver":1,"text":"First thought."}
+{"v":2,"seq":76,"at":"2026-10-04T09:01:16Z","by":"person","type":"act","action":"comment","n":35,"ver":1,"text":"Second thought."}
+{"v":2,"seq":77,"at":"2026-10-04T09:01:17Z","by":"person","type":"act","action":"context","n":35,"ver":1,"text":"Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each."}
+{"v":2,"seq":78,"at":"2026-10-04T09:01:18Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":36,"ver":1,"node":{"region":"other","kind":"topic","title":"Topic: a heading for a group, not an item"}}
+{"v":2,"seq":79,"at":"2026-10-04T09:01:19Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":37,"ver":1,"node":{"region":"other","kind":"note","title":"Note: the agent remarks, nothing to answer"}}
+{"v":2,"seq":80,"at":"2026-10-04T09:01:20Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":38,"ver":1,"node":{"region":"other","kind":"action","title":"Long text: a title that is long enough to wrap onto a second and even a third line of the card","item":true,"body":"The body wraps too, so a long sentence shows how the card grows with its text instead of cutting it off."}}
+{"v":2,"seq":81,"at":"2026-10-04T09:01:21Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":39,"ver":1,"node":{"region":"other","kind":"action","title":"Being dragged","item":true,"body":"The lifted look while the person drags."}}
+{"v":2,"seq":82,"at":"2026-10-04T09:01:22Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":40,"ver":1,"node":{"region":"frame-grid","kind":"question","title":"grid item 1","item":true}}
+{"v":2,"seq":83,"at":"2026-10-04T09:01:23Z","by":"person","type":"act","action":"ack","n":40,"ver":1}
+{"v":2,"seq":84,"at":"2026-10-04T09:01:24Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":41,"ver":1,"node":{"region":"frame-grid","kind":"action","title":"grid item 2","item":true}}
+{"v":2,"seq":85,"at":"2026-10-04T09:01:25Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":42,"ver":1,"node":{"region":"frame-flow","kind":"question","title":"flow item 1","item":true}}
+{"v":2,"seq":86,"at":"2026-10-04T09:01:26Z","by":"person","type":"act","action":"ack","n":42,"ver":1}
+{"v":2,"seq":87,"at":"2026-10-04T09:01:27Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":43,"ver":1,"node":{"region":"frame-flow","kind":"action","title":"flow item 2","item":true}}
+{"v":2,"seq":88,"at":"2026-10-04T09:01:28Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":44,"ver":1,"node":{"region":"frame-lanes","kind":"question","title":"lanes item 1","item":true}}
+{"v":2,"seq":89,"at":"2026-10-04T09:01:29Z","by":"person","type":"act","action":"ack","n":44,"ver":1}
+{"v":2,"seq":90,"at":"2026-10-04T09:01:30Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":45,"ver":1,"node":{"region":"frame-lanes","kind":"action","title":"lanes item 2","item":true}}
+{"v":2,"seq":91,"at":"2026-10-04T09:01:31Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":46,"ver":1,"node":{"region":"frame-radial","kind":"question","title":"radial item 1","item":true}}
+{"v":2,"seq":92,"at":"2026-10-04T09:01:32Z","by":"person","type":"act","action":"ack","n":46,"ver":1}
+{"v":2,"seq":93,"at":"2026-10-04T09:01:33Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":47,"ver":1,"node":{"region":"frame-radial","kind":"action","title":"radial item 2","item":true}}
+{"v":2,"seq":94,"at":"2026-10-04T09:01:34Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":48,"ver":1,"node":{"region":"frame-list","kind":"question","title":"list item 1","item":true}}
+{"v":2,"seq":95,"at":"2026-10-04T09:01:35Z","by":"person","type":"act","action":"ack","n":48,"ver":1}
+{"v":2,"seq":96,"at":"2026-10-04T09:01:36Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":49,"ver":1,"node":{"region":"frame-list","kind":"action","title":"list item 2","item":true}}
+{"v":2,"seq":97,"at":"2026-10-04T09:01:37Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":50,"ver":1,"node":{"region":"frame-pinned","kind":"question","title":"pinned item 1","item":true}}
+{"v":2,"seq":98,"at":"2026-10-04T09:01:38Z","by":"person","type":"act","action":"pin","n":50,"x":16,"y":16}
+{"v":2,"seq":99,"at":"2026-10-04T09:01:39Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":51,"ver":1,"node":{"region":"frame-pinned","kind":"action","title":"pinned item 2","item":true}}
+{"v":2,"seq":100,"at":"2026-10-04T09:01:40Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":52,"ver":1,"node":{"region":"frame-empty","kind":"question","title":"empty item 1","item":true}}
+{"v":2,"seq":101,"at":"2026-10-04T09:01:41Z","by":"person","type":"act","action":"ack","n":52,"ver":1}
+{"v":2,"seq":102,"at":"2026-10-04T09:01:42Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":53,"ver":1,"node":{"region":"frame-empty","kind":"action","title":"empty item 2","item":true}}
+{"v":2,"seq":103,"at":"2026-10-04T09:01:43Z","by":"person","type":"act","action":"ack","n":53,"ver":1}
+{"v":2,"seq":104,"at":"2026-10-04T09:01:44Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":54,"ver":1,"node":{"region":"frame-bare","kind":"topic","title":"A region with only a heading"}}

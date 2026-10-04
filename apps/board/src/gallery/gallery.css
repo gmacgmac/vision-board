@@ -1,0 +1,45 @@
+/* Pattern gallery page (gallery.html). Tokens only. board.css is loaded first for the shared
+   base (buttons, focus ring, [hidden]); this file turns the board's fixed, non-scrolling page
+   into a scrolling document and flows the absolutely placed patterns into rows and grids. */
+
+html, body { height: auto; overflow: visible; }
+body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
+
+.g-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
+  padding: var(--vb-space-3) var(--vb-space-6); background: var(--vb-surface-region);
+  border-bottom: 1px solid var(--vb-line);
+}
+.g-page-title { margin: 0; font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
+.g-main { padding: var(--vb-space-5) var(--vb-space-6) var(--vb-space-6); }
+.g-intro { margin: 0 0 var(--vb-space-5); color: var(--vb-ink); }
+
+.g-section { margin: 0 0 var(--vb-space-6); padding-bottom: var(--vb-space-5); border-bottom: 1px solid var(--vb-line); }
+.g-title { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-xl); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
+.g-desc { margin: 0 0 var(--vb-space-2); max-width: 90ch; color: var(--vb-ink); }
+.g-meta, .g-note { margin: 0 0 var(--vb-space-2); max-width: 110ch; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
+.g-missing { padding: var(--vb-space-4); border: 1px dashed var(--vb-state-drop); color: var(--vb-state-drop); }
+
+.g-group { margin-top: var(--vb-space-5); }
+.g-group-title { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); color: var(--vb-ink-strong); }
+.g-group > .g-note { margin-bottom: var(--vb-space-3); }
+
+/* Patterns are placed by the board page (position: absolute, transform). Here they flow. */
+.g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-3); }
+.g-cards vb-node, .g-frames vb-region { position: relative; }
+.g-frames { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-4); }
+.g-frames vb-region { width: calc(var(--vb-card-w) * 3); }
+
+/* Kind by status: one row per status, one column per kind. */
+.g-matrix { --g-label-w: calc(var(--vb-space-6) * 4); display: flex; flex-direction: column; gap: var(--vb-space-3); }
+.g-row { display: flex; align-items: flex-start; gap: var(--vb-space-3); }
+.g-row-label { flex: none; width: var(--g-label-w); margin: var(--vb-space-2) 0 0; font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
+.g-matrix .g-cards { flex-wrap: nowrap; }
+.g-kind-head {
+  width: var(--vb-card-w); margin: 0; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--vb-ink-subtle);
+}
+.g-gap {
+  flex: none; width: var(--vb-card-w); padding: var(--vb-space-3); border: 1px dashed var(--vb-line-strong);
+  border-radius: var(--vb-radius-md); font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
+}

@@ -20,10 +20,13 @@
     "reply": "node apps/board/bin/reply.ts",
     "test": "node --test \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "verify": "node scripts/verify.mjs",
-    "map": "node scripts/verify.mjs --write-map"
+    "map": "node scripts/verify.mjs --write-map",
+    "test:pages": "playwright test --config tests/pages/playwright.config.ts"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
+    "axe-core": "4.13.0",
     "typescript": "6.0.3"
   }
 }

@@ -25,7 +25,8 @@
     "apps/board/server/**/*.ts",
     "apps/*/tests/**/*.ts",
     "apps/board/server.ts",
-    "apps/board/bin/**/*.ts"
+    "apps/board/bin/**/*.ts",
+    "tests/pages/**/*.ts"
   ],
   "exclude": ["apps/board/src", "node_modules"]
 }

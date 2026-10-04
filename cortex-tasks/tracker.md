@@ -87,9 +87,9 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 |---|---|---|---|
 | N1 | Contrast gate for the three APCA tiers | **Problem:** token colours are hand-picked and unchecked. **Example:** `packages/tokens/src/tokens.css` TODO. **Solution:** port Studio's contrast check, tiered per D-009. | HANDOVER gap 13 |
 | N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. Done as U4 step 1 (D-022). | Rule 6 |
-| N3 | Page tests decision | **Problem:** rule 13 page tests need Playwright and axe-core, which aren't decided yet. **Example:** D-014 leaves them out. **Solution:** a decision entry plus a `test:pages` script, as in Studio. | D-014 |
 | N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
 | N6 | Dark theme cards unreadable | **Problem:** in dark theme the cards stay white and their titles and body text almost vanish. **Example:** roadmap session, Theme: dark (same before and after the Svelte move). **Solution:** fix the card surface and ink tokens for dark, checked against the APCA tiers; fold into Stage 2b (Architect's look, D-024). | Browser check, 2026-10-01 |
+| N8 | Buttons too small when the board is zoomed out | **Problem:** axe `target-size` (WCAG 2.2 AA) flags the card and layout buttons on the board page, which are under 24 CSS pixels at the zoom that fits the whole board. **Example:** `tests/pages/board.spec.ts`, the known-failure axe test. **Solution:** unknown; options are a minimum on-screen size for controls, or hiding them below a zoom level. Fold into 2b (the footer quick actions). | 2a_FE_03 page tests |
 
 ## MEDIUM TERM
 

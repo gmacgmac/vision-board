@@ -20,6 +20,15 @@ page calls them only through `src/board/io.ts`; an action sends `{ action, n, ve
 - `POST /api/boards/:id/act`: append one person `act` event; 201 with the event, 422 with problems
 - `GET /api/boards/:id/events`: server-sent `change` events with `{ seq }` on every append
 
+The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
+drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the
+patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from the patterns'
+`pattern.json` files; a pattern needs a sample function in `src/gallery/main.ts` or the page shows
+a gap and the page test fails. Open it at `/gallery.html`. Page tests (`npm run test:pages`, D-025,
+in `tests/pages/`) run the board and the gallery in Chromium on port 4468 from a fresh copy of the
+roadmap fixture ledger; screenshots are stored in `tests/pages/__screenshots__/`, and
+`npm run test:pages -- --update-snapshots` replaces them on purpose.
+
 - **Depends on**: `packages/format`, `packages/actions`, `packages/layout`, `packages/ui`,
   `packages/tokens`.
 - **Used by**: nothing (apps are never imported, D-016).

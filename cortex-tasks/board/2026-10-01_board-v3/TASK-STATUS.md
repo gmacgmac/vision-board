@@ -33,7 +33,7 @@ created: 2026-10-01
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
-| 2 Card and container basics | In progress | 3ee805b | Step 1 done; 2a-2e next |
+| 2 Card and container basics | In progress | 3ee805b | Step 1 and 2a done (2026-10-04); 2b next |
 | 3 Selection and moving | Planned | | Port from architect-extract |
 | 4 Send | Planned | | Uses U4 |
 | 5 Proposals, seen, parking | Planned | | U3 step 3 |
@@ -53,5 +53,5 @@ UI work, then commits that task alone.
 | 1 | [2a_BE_01 node-type registry](./2a_BE_01_node-type-registry.md) | Sonnet 5.5 | Done | see log |
 | 2 | [2a_FE_01 `<vb-node>`](./2a_FE_01_vb-node.md) | Opus 5.5 | Done | see log |
 | 3 | [2a_FE_02 `<vb-region>`](./2a_FE_02_vb-region.md) | Sonnet 5.5 | Done | see log |
-| 4 | [2a_FE_03 page tests and gallery](./2a_FE_03_page-tests.md) | Sonnet 5.5 | Running | |
-| 5 | Stage check: orchestrator clicks through `npm run dev` in dark and light | Orchestrator | Planned | |
+| 4 | [2a_FE_03 page tests and gallery](./2a_FE_03_page-tests.md) | Sonnet 5.5 | Done | see log |
+| 5 | Stage check: orchestrator clicks through `npm run dev` in dark and light | Orchestrator | Done | page tests + gallery read by eye |
