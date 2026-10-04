@@ -55,3 +55,14 @@ UI work, then commits that task alone.
 | 3 | [2a_FE_02 `<vb-region>`](./2a_FE_02_vb-region.md) | Sonnet 5.5 | Done | see log |
 | 4 | [2a_FE_03 page tests and gallery](./2a_FE_03_page-tests.md) | Sonnet 5.5 | Done | see log |
 | 5 | Stage check: orchestrator clicks through `npm run dev` in dark and light | Orchestrator | Done | page tests + gallery read by eye |
+
+## Stage 2b tasks (written 2026-10-04)
+
+Palette done first by the orchestrator with the maintainer's yes (`1d7d560`; originals in
+`prototypes/board-v3-design/README.md` § Palette). Gates are now four: add `npm run test:pages`.
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [2b_FE_01 card recipe](./2b_FE_01_card-recipe.md) (also fixes N8) | Opus 5.5 | Running | |
+| 2 | [2b_FE_02 open frames](./2b_FE_02_open-frames.md) | Sonnet 5.5 | Planned | |
+| 3 | Stage check: orchestrator compares gallery and board with 01b and 05; maintainer's look | Orchestrator | Planned | |
