@@ -70,7 +70,7 @@
   /* Accent and focus */
   --vb-brand: #fb1fa7;
   --vb-accent: light-dark(#d4138a, #ff5cbe);
-  --vb-accent-text: light-dark(#c81784, #ff5cbe);
+  --vb-accent-text: light-dark(#c81784, #ff66c2); /* dark nudged from #ff5cbe */
   --vb-accent-fill: light-dark(#d4138a, #ff85cf); /* dark nudged from #ff5cbe */
   --vb-accent-fill-hover: light-dark(#bc0f7a, #ff9bd8);
   --vb-accent-soft: light-dark(#fde7f4, #2e1726);

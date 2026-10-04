@@ -85,8 +85,9 @@ the nudge looks wrong (the maintainer may accept a small shortfall as a recorded
 | `--vb-accent-fill` (dark) | `#FF5CBE` | `#FF85CF` | Dark text on a pink button scored Lc 50.7; reading text needs 60 |
 | `--vb-ink-subtle` (dark) | `#94949C` | `#9E9EA6` | Footer "Open" and hints scored Lc 43.6; short labels need 45 |
 | `--vb-kind-action` (light) | `#C98A0B` | `#B57C09` | ACTION on its tinted tab scored Lc 40.2; short labels need 45 |
+| `--vb-accent-text` (dark) | `#FF5CBE` | `#FF66C2` | A link in a quote or note scored Lc 44.0 and the "Your note" label 44.9; short labels need 45 (2c, maintainer's yes 2026-10-04) |
 
-Pink text, borders and selection keep `#FF5CBE` in dark. Card borders and divider lines stay
+Pink borders and selection keep `#FF5CBE` in dark; pink text is `#FF66C2`. Card borders and divider lines stay
 faint (dark Lc 15-20) by the maintainer's choice; they are not one of the three tiers. Note, which
 Architect has no family for, takes the muted grey. Scores: `temp/apca-2b.mjs` (git-ignored; the
 gate itself is tracker N1).
