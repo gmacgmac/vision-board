@@ -31,7 +31,7 @@ created: 2026-10-02
   transcript code and the old sessions move to `prototypes/archive/view-format-v1/` as reference.
 - **Checkpoint**: git tag `checkpoint/u3-step2-start` marks the tree before step 2.
 - **Known gap until U4**: step 2 removes view files, and the agent `write` call arrives with U4, so
-  in between, boards come only from fixture ledgers (`npm run demo`).
+  in between, boards come only from fixture ledgers (`npm run dev`, formerly `npm run demo`).
 
 | Step | Status | Commit | Notes |
 |---|---|---|---|

@@ -308,7 +308,7 @@ export function createBoard(els: BoardElements): Board {
       const boards = await listBoards();
       shell.boards = boards;
       if (!boards.length) {
-        showMessage('No boards yet. Run npm run demo to open the example boards.');
+        showMessage('No boards yet. Run npm run dev to open the example boards.');
         return;
       }
       const wanted = decodeURIComponent(location.hash.slice(1));

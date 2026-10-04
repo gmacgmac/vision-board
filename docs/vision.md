@@ -82,9 +82,23 @@ The board is shared ground for several conversations at once, not a picture of o
   person still sees and steers all of them in one place. That is the multi-threaded way of working
   the board exists for.
 
-Still to design: which chat owns which container, what a chat may write outside its own container,
-and how the board shows that two agents are working at the same time. Each becomes a decision entry
-when it is built.
+- **Reading is open, writing is deliberate** (agreed 2026-10-04, design in U4). Any agent can read
+  everything: one container's full history, the current state of every node, one node's full
+  history, and everything that changed since a point in the ledger. Reading never changes
+  anything, so many agents can read at once. A write must name its target container; there is no
+  default, so nothing is written by accident. A write to a container the chat did not create is
+  refused until the person approves it on the board. The refusal lives in the API, not only in
+  the agent skill, because a skill is advice an agent can ignore.
+- **Write grants (proposed).** A chat that creates a container holds its write grant. Other chats
+  see the container's title and contents but not the grant; to change it they ask, and the person
+  approves on the board, which hands that chat a grant. The grant is separate from the container
+  id, because ids are readable by everyone. This is local-only, so it guards against mistakes, not
+  attackers.
+- **Agent ids.** The format gets an optional agent id on every entry now; nothing enforces it yet.
+  Today each entry records only agent or person.
+
+Still to design: how the board shows that two agents are working at the same time. It becomes a
+decision entry when it is built.
 
 ## Layout: a smart coordinate system
 

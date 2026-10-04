@@ -72,6 +72,14 @@ packages/format/schema/openapi.json    every route, request, response and error 
 | `propose` | Propose ack or drop for a node, with a reason and source | agent |
 | `park` | Write a parking bundle for a node | agent |
 | `act` | A person's action (ack, drop, comment, later, seen, accept a proposal…) | person |
+| `container` *(planned)* | One container's full history: every node, version and note it held | agent, person |
+| `state` *(planned)* | The current state of every node | agent, person |
+| `since` *(planned)* | Every ledger entry after a given `seq`, from anyone | agent, person |
+
+Access (planned, `docs/vision.md` § Many chats, one board): reads are open to every agent. Every
+agent write names its target container, and a write to a container the chat holds no grant for is
+refused until the person approves it on the board. Entries carry an optional agent id, not yet
+enforced.
 
 ## Adding an operation
 

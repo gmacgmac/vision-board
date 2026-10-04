@@ -44,7 +44,7 @@ This is the text form of the board: when the list gets long, offer to draw it on
 | How we build and why (the philosophy behind these rules) | `docs/principles.md` |
 | Why we chose something | `docs/decisions.md` (the register; accepted entries are binding) and the Cortex task each one links to |
 | Where new code goes | `README.md` § Layout; every planned folder has a README saying what belongs there |
-| The file formats the agent and the board share | `packages/format/` (the view file and the transcript) |
+| The file formats the agent and the board share | `packages/format/` (the project ledger, `.visionboard/ledger.jsonl`; the board is worked out from it) |
 | Existing patterns and their states | the generated pattern index (`docs/patterns/`, once built) |
 | Every dependency and why | `docs/specification/dependencies.md` (once the first dependency lands) |
 | The prototype | `prototypes/architect/` (reference only) |

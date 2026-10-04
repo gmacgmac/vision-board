@@ -21,7 +21,7 @@ page calls them only through `src/board/io.ts`; an action sends `{ action, n, ve
 - **Depends on**: `packages/format`, `packages/actions`, `packages/layout`, `packages/ui`,
   `packages/tokens`.
 - **Used by**: nothing (apps are never imported, D-016).
-- **Run**: `npm run board` (builds, then serves the repo's own project ledger), or `npm run demo`
+- **Run**: `npm run board` (builds, then serves the repo's own project ledger), or `npm run dev`
   (serves `temp/demo`, seeded once from the roadmap fixture ledger), then open
   http://localhost:4466. `VB_PROJECT` picks the project folder; `VB_SEED` names a ledger copied
   in when the project has none yet.
