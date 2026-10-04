@@ -33,8 +33,8 @@ pattern's markup or styles it.
   layout engine will read outlines and ports, and the UI draws it. `format` is the only layer all
   three may import (D-016).
 - A `NodeType` holds what is true of the type everywhere: `label` and `actions` (the review
-  actions an item of this type offers) today. `outline` and `ports` (D-013) are added when the
-  first type that isn't a card arrives, not before.
+  actions an item of this type offers) today, and `outline` and `ports` (D-013) once the first
+  non-card shape is built (§ Shapes).
 - **Presentation keyed by type lives in `packages/ui`** (an icon, a body template for unusual
   content), as `Record<Kind, …>` so the compiler fails when a kind is added and its entry is not.
 - `KINDS` stays the list; `Kind` is its type. A new kind is one entry in `KINDS`, one in
@@ -63,6 +63,33 @@ pattern's markup or styles it.
   `display: inline` by default, so `<pattern>.css` sets `display`.
 - **Don't shadow built-in names** (steering rule 16).
 
+## Shapes: outlines and ports (D-013, D-015)
+
+A shape is data in the registry, not a new element. Approved examples (maintainer, 2026-10-04):
+the **decision diamond** (a fork in a flow, one way in, a "yes" and a "no" way out) and the
+**start/end pill** (where a flow begins or ends). The card stays the default.
+
+- **`outline`** names the shape: `card` (default), `diamond`, `pill`. It is a word, not a path, so
+  the agent never draws coordinates (rule 9). The node pattern owns one drawing per outline in
+  `node.css` (CSS `clip-path` or a background SVG, tokens only); a kind's colour still arrives
+  through `--kind`.
+- **`ports`** say where connectors may attach, as sides and positions on the outline's box:
+  `{ side: 't' | 'r' | 'b' | 'l', at?: 0..1 }` (at defaults to the middle). Card: every side,
+  spread as today. Diamond: its four points (`t`, `r`, `b`, `l` at 0.5). Pill: its two ends
+  (`l`, `r`), or `t`, `b` in a vertical flow. A port may carry a `label` ("yes", "no").
+- **The layout engine reads them through `format`**: `routeLinks` picks the nearest port the
+  type allows instead of any side, and clips each line to the outline's edge (the box edge for a
+  card, the point for a diamond, the rounded end for a pill). Same input, same picture.
+- **A link names a port only when it matters**: an optional `fromPort` label on a link (e.g.
+  "yes") is a format change, made first with a schema version bump (rule 6 / "change the format
+  first").
+- **How a type gets a shape**: a new kind (for example `fork`, `start`, `end`) with its outline
+  and ports in `NODE_TYPES`, or an optional `shape` on a node for kinds that may take several.
+  Which of the two is decided in the shapes task, after the mockups.
+- **Order**: mockups of both shapes in Architect's look after Stage 2b, picked by eye, then one
+  task adds outline and ports to the registry, the layout engine and the node CSS, behind a flag
+  (rule 12), with the gallery and page tests covering both shapes.
+
 ## Type checking
 
 - Core and template files run under Node and must not use the DOM at run time; the Node tests
@@ -76,8 +103,12 @@ pattern's markup or styles it.
 - **Template and element agree:** the element renders by calling the template, never its own
   markup, so there is one markup path. A server render (principles § "One template, two render
   paths") will call the same template when one exists.
-- **Element in a page:** page tests need Playwright and axe-core, which wait for their decision
-  (tracker N3). Until then each UI task is checked in a browser by the orchestrator.
+- **Element in a page:** page tests (D-025, `npm run test:pages`) open the board and the pattern
+  gallery in Chromium and fail on console errors, failed requests, accessibility violations or
+  screenshot changes. A new pattern needs a gallery entry: a section in
+  `apps/board/src/gallery/` drawn from `gallery.ledger.jsonl` through the pattern's own core
+  (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from their
+  `pattern.json`, and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
 
 ## Feature flags (rule 12)
 

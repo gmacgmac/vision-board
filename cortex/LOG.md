@@ -47,3 +47,4 @@
 [[2026-10-04 18:35]] [board-app] 2a_FE_01: card is now <vb-node> (light-DOM element, nodeState core, pattern CSS in packages/ui); screenshots pixel-identical -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_01_vb-node.md]]
 [[2026-10-04 18:55]] [board-app] D-025 page tests (Playwright + axe-core, maintainer yes); 2a_FE_03 page tests and pattern gallery planned; steering rule 16 gains the built-in-names line (maintainer wording) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]
 [[2026-10-04 19:00]] [board-app] 2a_FE_02: container frame is now <vb-region> (regionState core, template, element, region.css); screenshots pixel-identical -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_02_vb-region.md]]
+[[2026-10-04 19:10]] [board-app] Shapes pattern defined (outline + ports as registry data; diamond and pill approved as examples); PLAN Stage 2f added -> Notes: `docs/specification/components.md` (Shapes: outlines and ports)
