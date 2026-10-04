@@ -65,8 +65,14 @@ Palette done first by the orchestrator with the maintainer's yes (`1d7d560`; ori
 |---|---|---|---|---|
 | 1 | [2b_FE_01 card recipe](./2b_FE_01_card-recipe.md) (card half of N8) | Opus 5.5 | Done | see log |
 | 2 | [2b_FE_02 open frames](./2b_FE_02_open-frames.md) | Sonnet 5.5 | Done | see log |
-| 3 | Stage check: orchestrator compares gallery and board with 01b and 05; maintainer's look | Orchestrator | Orchestrator done; waits on maintainer's look | |
+| 3 | Stage check: orchestrator compares gallery and board with 01b and 05; maintainer's look | Orchestrator | Done: maintainer's look 2026-10-04 ("looks great") | a706fcb |
 
-Open with the maintainer (2026-10-04): card width. Cards grow in height; whether width adapts to
-content (instead of the fixed `--vb-card-w`, 248px; 05 uses 280px) is to be discussed before any
-token change.
+From the maintainer's look: tracker U5 (dragging selects text), U6 (zoom controls, box zoom,
+Shift-lasso) and U7 (card width adapts to content; no token change until designed with him).
+
+## Stage 2c tasks (written 2026-10-04)
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [2c_FE_01 Markdown renderer](./2c_FE_01_markdown.md) | Opus 5.5 | Running | |
+| 2 | Stage check: orchestrator reads the diff, runs the four gates, checks gallery and board in dark and light | Orchestrator | | |
