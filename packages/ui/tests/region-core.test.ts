@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
-import { MODE_LABEL, regionState } from '../src/index.ts';
+import { MODE_LABEL, REGION_COLOUR_DEFAULT, regionColour, regionState } from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -62,4 +62,10 @@ test('the empty message shows only when the layout drew none of the region\'s no
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
   assert.deepEqual(st, { mode: 'grid', countText: '', showReset: false, showEmpty: true });
+});
+
+test('every region takes the neutral frame colour for now, a token and never a literal colour', () => {
+  assert.equal(regionColour(region), REGION_COLOUR_DEFAULT);
+  assert.equal(regionColour({ id: 'other' }), 'var(--vb-line-strong)');
+  assert.doesNotMatch(REGION_COLOUR_DEFAULT, /#|rgb|hsl/);
 });

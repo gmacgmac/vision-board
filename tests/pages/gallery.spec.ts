@@ -79,6 +79,18 @@ test('region: each mode, Reset places, the empty message and no count', async ({
   await expect(bare.locator('.vb-region-count')).toHaveText('');
 });
 
+test('region: a narrow frame shows only its pressed mode until the group is hovered', async ({ page }) => {
+  const narrow = page.locator('section[data-pattern="region"] vb-region[data-region="frame-pinned"]');
+  const wide = page.locator('section[data-pattern="region"] vb-region[data-region="frame-grid"]');
+  const width = async (b: ReturnType<typeof narrow.locator>) => (await b.boundingBox())!.width;
+  const flow = (frame: typeof narrow) => frame.locator('button[data-mode="flow"]');
+  expect(await width(flow(wide))).toBeGreaterThan(24);
+  expect(await width(flow(narrow))).toBe(0);
+  expect(await width(narrow.locator('button[data-mode="grid"]'))).toBeGreaterThan(24);
+  await narrow.locator('.vb-modes').hover();
+  expect(await width(flow(narrow))).toBeGreaterThan(24);
+});
+
 test('theme button cycles system, light, dark', async ({ page }) => {
   const html = page.locator('html');
   const bodyColour = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);

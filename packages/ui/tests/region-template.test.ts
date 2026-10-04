@@ -39,3 +39,9 @@ test('regionTemplate puts the controls in a labelled group inside the header', (
 test('regionTemplate carries no inline style and no style element (the CSP refuses them)', () => {
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
+
+test('regionTemplate puts the title and count in a label group and the buttons in a tools group, in that order', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<header class=\"vb-region-head\"><div class=\"vb-region-label\"><h2 id=\"region-review\">Review<\/h2><span class=\"vb-region-count\"><\/span><\/div><div class=\"vb-region-tools\"><div class=\"vb-modes\"/);
+  assert.match(html, /Reset places<\/button><\/div><\/header>/);
+});

@@ -1,23 +1,54 @@
 /* Region pattern styles (<vb-region>, packages/ui/src/region). Scoped by the tag, light DOM; tokens
    only. The element is only the frame (D-013 layering): cards and wires draw in their own layers.
-   The page sets transform, width and height. */
+   The page sets transform, width and height. The look is board v3's open frame (D-024, mockup
+   05's fieldset): no fill, a thin line, and a top line whose title and buttons sit in gaps cut
+   from the border. The frame's colour is --region, set by the element (regionColour). */
 
 vb-region {
-  display: block; position: absolute; left: 0; top: 0; border-radius: var(--vb-radius-lg);
-  background: var(--vb-surface-region); border: 1px solid var(--vb-line);
+  --region-line-w: 1.5px;
+  display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
+  border: var(--region-line-w) solid color-mix(in srgb, var(--region) 70%, var(--vb-line));
+  /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
+  padding-top: 38px;
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
 }
+
+/* The top line straddles the border. Only its two groups take the pointer, so the line between
+   them stays part of the frame. Each group's canvas-coloured background is the gap in the border. */
 vb-region .vb-region-head {
-  display: flex; align-items: center; gap: var(--vb-space-2); height: 40px; padding: 0 var(--vb-space-3) 0 var(--vb-space-4);
-  cursor: default;
+  position: absolute; left: var(--vb-space-4); right: var(--vb-space-4);
+  top: calc(var(--region-line-w) / -2); transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
+  pointer-events: none; cursor: default;
 }
-vb-region .vb-region-head h2 { margin: 0; font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); white-space: nowrap; }
-vb-region .vb-region-count { font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); white-space: nowrap; }
-vb-region .vb-modes { margin-left: auto; display: flex; gap: 2px; padding: 2px; border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); }
+vb-region .vb-region-label, vb-region .vb-region-tools {
+  display: flex; align-items: center; gap: var(--vb-space-2); padding: 0 var(--vb-space-2);
+  background: var(--vb-surface-canvas); pointer-events: auto;
+}
+vb-region .vb-region-label { min-width: 0; }
+vb-region .vb-region-tools { flex: none; }
+vb-region .vb-region-head h2 {
+  margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
+}
+vb-region .vb-region-count {
+  min-width: 0; flex-shrink: 4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
+}
+vb-region .vb-region-count:empty { display: none; }
+
+vb-region .vb-modes { display: flex; gap: 2px; padding: 2px; border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); }
 vb-region .vb-mode {
   font: inherit; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); background: none; border: 0;
   border-radius: 4px; padding: 2px var(--vb-space-2); cursor: pointer;
 }
 vb-region .vb-mode:hover { color: var(--vb-ink-strong); }
 vb-region .vb-mode[aria-pressed='true'] { background: var(--vb-surface-card); color: var(--vb-accent); font-weight: var(--vb-weight-medium); box-shadow: var(--vb-shadow-card); }
+/* A narrow frame cannot hold five text buttons and a title: only the pressed mode shows, and the
+   group opens on hover or keyboard focus. Stage 2d replaces the buttons with the icon row. */
+@container (max-width: 480px) {
+  vb-region .vb-modes:not(:hover, :focus-within) { gap: 0; }
+  vb-region .vb-modes:not(:hover, :focus-within) .vb-mode:not([aria-pressed='true']) { width: 0; padding-inline: 0; overflow: hidden; opacity: 0; }
+}
 vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color: var(--vb-ink-subtle); font-size: var(--vb-text-sm); }

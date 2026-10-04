@@ -11,6 +11,16 @@ export const MODE_LABEL: Record<Mode, string> = {
   grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',
 };
 
+/**
+ * The colour a region's frame is drawn in, as a CSS value: the element sets it as `--region` and
+ * `region.css` mixes the frame line, the title and the count from it. Every region takes the
+ * neutral default for now; a region colour later is this one function (and one property).
+ */
+export const REGION_COLOUR_DEFAULT = 'var(--vb-line-strong)';
+export function regionColour(_r: Pick<Region, 'id'>): string {
+  return REGION_COLOUR_DEFAULT;
+}
+
 /** Everything a region's frame shows for the current state; `update()` applies it. */
 export interface RegionState {
   /** The layout mode in force (the engine's choice, after the person's pick). */

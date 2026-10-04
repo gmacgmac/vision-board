@@ -55,6 +55,10 @@ export interface BoardLayout {
 export const GAP = 24;
 export const COL_GAP = 72;
 export const REGION_PAD = 28;
-export const REGION_HEAD = 40;
+/** The top line of a region's frame: how far below the frame's top edge the content starts. The
+ *  line itself straddles the border (title and count left, layout buttons right), so this is the
+ *  room under it. `packages/ui/src/region/region.css` states the same number for the frame's top
+ *  padding; a page test fails if the two differ. */
+export const REGION_HEAD = 38;
 export const REGION_GAP = 56;
 export const LANE_GUTTER = 112;

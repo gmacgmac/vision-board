@@ -6,13 +6,14 @@
 // measures and places it (transform, width, height).
 import type { Region } from '../../../format/src/index.ts';
 import type { RegionState } from './region-core.ts';
+import { regionColour } from './region-core.ts';
 import { regionTemplate } from './region-template.ts';
 
 export const VB_REGION_TAG = 'vb-region';
 
 /** What the page holds: a <vb-region> it renders once and updates in place. */
 export interface VbRegionElement extends HTMLElement {
-  /** Build from the template; sets data-region, role, aria-labelledby. */
+  /** Build from the template; sets data-region, role, aria-labelledby and `--region`. */
   render(r: Region): void;
   /** Apply the current state (from `regionState`) without rebuilding the markup. */
   update(st: RegionState): void;
@@ -27,6 +28,7 @@ export function defineVbRegion(): void {
       this.dataset.region = r.id;
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', `region-${r.id}`);
+      this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r);
     }
 

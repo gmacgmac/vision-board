@@ -4,6 +4,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { REGION_HEAD } from '../../packages/layout/src/index.ts';
 
 const NODES = 17;
 const REGIONS = ['review', 'prove', 'decide', 'build'];
@@ -134,9 +135,10 @@ async function placement(page: Page, region: string, ids: string[]) {
   return page.evaluate(({ region, ids }) => {
     const rect = (e: Element) => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; };
     const frame = rect(document.querySelector(`vb-region[data-region="${region}"]`)!);
+    const head = rect(document.querySelector(`vb-region[data-region="${region}"] .vb-region-head`)!);
     const cards = ids.map((id) => ({ id, hidden: (document.querySelector(`vb-node[data-id="${id}"]`) as HTMLElement).hidden,
       ...rect(document.querySelector(`vb-node[data-id="${id}"]`)!) }));
-    return { frame, cards };
+    return { frame, head, cards };
   }, { region, ids });
 }
 
@@ -149,6 +151,10 @@ function problemsOf(p: Awaited<ReturnType<typeof placement>>): string[] {
     const inside = c.x >= p.frame.x - slack && c.y >= p.frame.y - slack
       && c.x + c.w <= p.frame.x + p.frame.w + slack && c.y + c.h <= p.frame.y + p.frame.h + slack;
     if (!inside) out.push(`card ${c.id} is outside its region`);
+  }
+  // The top line straddles the frame's border; no card may reach up into it.
+  for (const c of p.cards) {
+    if (c.y < p.head.y + p.head.h) out.push(`card ${c.id} overlaps the frame's top line`);
   }
   for (const [i, a] of p.cards.entries()) {
     for (const b of p.cards.slice(i + 1)) {
@@ -168,11 +174,27 @@ test('each layout mode draws every region', async ({ page }) => {
     const original = view.view.regions.find((r) => r.id === id)!.mode;
     for (const mode of [...MODES, original[0]!.toUpperCase() + original.slice(1)]) {
       const button = region.getByRole('button', { name: mode, exact: true });
+      // A narrow frame shows only the pressed mode until the group is hovered.
+      await region.locator('.vb-modes').hover();
       await button.click();
       await expect(region).toHaveAttribute('data-mode', mode.toLowerCase());
       await expect(button).toHaveAttribute('aria-pressed', 'true');
       await expect(page.locator('#wires')).not.toHaveClass(/settling/);
       await expect.poll(async () => problemsOf(await placement(page, id, ids)), { message: `${id} in ${mode}` }).toEqual([]);
     }
+  }
+});
+
+test('a region frame keeps REGION_HEAD of room under its top line, and the top line straddles the border', async ({ page }) => {
+  await openBoard(page);
+  for (const id of REGIONS) {
+    const region = page.locator(`vb-region[data-region="${id}"]`);
+    expect(await region.evaluate((e) => parseFloat(getComputedStyle(e).paddingTop)), id).toBe(REGION_HEAD);
+    const { frame, head } = await region.evaluate((e) => {
+      const f = e.getBoundingClientRect(), h = e.querySelector('.vb-region-head')!.getBoundingClientRect();
+      return { frame: { top: f.top }, head: { top: h.top, bottom: h.bottom } };
+    });
+    expect(head.top, `${id}: the top line starts above the frame's top edge`).toBeLessThan(frame.top);
+    expect(head.bottom, `${id}: the top line ends below the frame's top edge`).toBeGreaterThan(frame.top);
   }
 });

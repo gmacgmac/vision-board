@@ -51,3 +51,5 @@
 [[2026-10-04 19:20]] [board-app] 2a_FE_03: npm run test:pages (Playwright + axe-core, D-025) and the pattern gallery; Stage 2a complete; N8 logged (target-size when zoomed out) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]
 [[2026-10-04 20:05]] [board-app] Stage 2b: Architect's palette in tokens.css (maintainer yes; three APCA nudges, originals in design README); page-test baselines updated -> Notes: `packages/tokens/src/tokens.css` (Palette) — measured with APCA-W3 0.0.98G-4g
 [[2026-10-04 20:30]] [board-app] 2b_FE_01: <vb-node> takes Architect's card recipe (border tabs, footer, kind icons, tint, dot grid); card half of N8 fixed -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2b_FE_01_card-recipe.md]]
+[[2026-10-04 20:55]] [board-app] 2b_FE_02: <vb-region> is an open frame with its title on the top line (REGION_HEAD 38, tied to CSS by a page test) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2b_FE_02_open-frames.md]]
+[[2026-10-04 20:55]] [board-app] Dropped N6: dark-theme cards are readable after Architect's palette and card recipe (checked by eye, board and gallery) -> Notes: `cortex-tasks/tracker.md`

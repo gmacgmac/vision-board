@@ -64,5 +64,9 @@ Palette done first by the orchestrator with the maintainer's yes (`1d7d560`; ori
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
 | 1 | [2b_FE_01 card recipe](./2b_FE_01_card-recipe.md) (card half of N8) | Opus 5.5 | Done | see log |
-| 2 | [2b_FE_02 open frames](./2b_FE_02_open-frames.md) | Sonnet 5.5 | Planned | |
-| 3 | Stage check: orchestrator compares gallery and board with 01b and 05; maintainer's look | Orchestrator | Planned | |
+| 2 | [2b_FE_02 open frames](./2b_FE_02_open-frames.md) | Sonnet 5.5 | Done | see log |
+| 3 | Stage check: orchestrator compares gallery and board with 01b and 05; maintainer's look | Orchestrator | Orchestrator done; waits on maintainer's look | |
+
+Open with the maintainer (2026-10-04): card width. Cards grow in height; whether width adapts to
+content (instead of the fixed `--vb-card-w`, 248px; 05 uses 280px) is to be discussed before any
+token change.

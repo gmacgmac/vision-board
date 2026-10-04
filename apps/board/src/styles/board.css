@@ -53,9 +53,10 @@ body {
 .vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
 
 /* Stage and world */
-.vb-stage { position: fixed; inset: var(--vb-toolbar-h) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none;
-  background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
+/* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */
+.vb-ground { background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
   background-size: 22px 22px; }
+.vb-stage { position: fixed; inset: var(--vb-toolbar-h) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 .vb-stage.panning { cursor: grabbing; }
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }
@@ -70,7 +71,7 @@ body {
 .vb-wires marker#arrow-hot path { fill: var(--vb-wire-hot); }
 .vb-wires.settling .vb-wire { opacity: 0; }
 .vb-wire { transition: opacity var(--vb-motion-fast) linear; }
-.vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-region); stroke-width: 4px; }
+.vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
 .vb-lane { fill: var(--vb-lane-band); }
 .vb-lane.odd { fill: transparent; }
 .vb-lane-label { font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); fill: var(--vb-ink-subtle); }

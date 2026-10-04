@@ -21,7 +21,7 @@ function frame(id: string, fx: Fixture): VbRegionElement {
 }
 
 export function regionSamples(body: HTMLElement, fx: Fixture): void {
-  const frames = el('div', 'g-frames');
+  const frames = el('div', 'g-frames vb-ground');
   frames.append(...fx.view.regions.filter((r) => r.id.startsWith(FRAME_PREFIX)).map((r) => frame(r.id, fx)));
   body.append(group('Every mode, and the states around the count', 'The pressed button is the layout mode in force. Items are counted as decided when acknowledged or dropped.', frames));
 }

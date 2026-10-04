@@ -30,7 +30,7 @@
   onhide={() => board?.toggleHide()}
 />
 
-<main id="stage" class="vb-stage" tabindex="-1" aria-label="Board" bind:this={stage}>
+<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}>
   <div id="world" class="vb-world no-anim" bind:this={world}>
     <div id="regions" class="vb-regions" bind:this={regions}></div>
     <svg id="wires" class="vb-wires" aria-hidden="true" bind:this={wires}></svg>
