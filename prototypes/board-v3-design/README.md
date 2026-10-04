@@ -73,3 +73,20 @@ behaviour into `packages/` and `apps/`, never this code. Open the pages through 
     messages and saved notes stay pink.
 16. **Later, not now:** the agent's chat messages may get a subtle lime border to match the
     decision flow. Needs only the token, so no build work is planned for it.
+
+## Palette (built into `packages/tokens/src/tokens.css`, 2026-10-04)
+
+Architect's palette, measured against the APCA tiers (D-009). Three values were nudged to pass,
+with the maintainer's yes. Architect's originals are kept here so a value can go back by eye if
+the nudge looks wrong (the maintainer may accept a small shortfall as a recorded decision):
+
+| Token | Architect's original | Built | Why |
+|---|---|---|---|
+| `--vb-accent-fill` (dark) | `#FF5CBE` | `#FF85CF` | Dark text on a pink button scored Lc 50.7; reading text needs 60 |
+| `--vb-ink-subtle` (dark) | `#94949C` | `#9E9EA6` | Footer "Open" and hints scored Lc 43.6; short labels need 45 |
+| `--vb-kind-action` (light) | `#C98A0B` | `#B57C09` | ACTION on its tinted tab scored Lc 40.2; short labels need 45 |
+
+Pink text, borders and selection keep `#FF5CBE` in dark. Card borders and divider lines stay
+faint (dark Lc 15-20) by the maintainer's choice; they are not one of the three tiers. Note, which
+Architect has no family for, takes the muted grey. Scores: `temp/apca-2b.mjs` (git-ignored; the
+gate itself is tracker N1).

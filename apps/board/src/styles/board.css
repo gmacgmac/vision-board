@@ -83,7 +83,7 @@ body {
   max-width: min(640px, 90vw); padding: var(--vb-space-2) var(--vb-space-4); border-radius: var(--vb-radius-md);
   background: var(--vb-ink-strong); color: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
 }
-.vb-toast[data-tone='error'] { background: var(--vb-state-drop); color: var(--vb-ink-on-fill); }
+.vb-toast[data-tone='error'] { background: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
 .vb-help {
   position: fixed; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: 4; font-size: var(--vb-text-xs);
   color: var(--vb-ink-subtle); background: var(--vb-surface-region); border: 1px solid var(--vb-line);

@@ -49,3 +49,4 @@
 [[2026-10-04 19:00]] [board-app] 2a_FE_02: container frame is now <vb-region> (regionState core, template, element, region.css); screenshots pixel-identical -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_02_vb-region.md]]
 [[2026-10-04 19:10]] [board-app] Shapes pattern defined (outline + ports as registry data; diamond and pill approved as examples); PLAN Stage 2f added -> Notes: `docs/specification/components.md` (Shapes: outlines and ports)
 [[2026-10-04 19:20]] [board-app] 2a_FE_03: npm run test:pages (Playwright + axe-core, D-025) and the pattern gallery; Stage 2a complete; N8 logged (target-size when zoomed out) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]
+[[2026-10-04 20:05]] [board-app] Stage 2b: Architect's palette in tokens.css (maintainer yes; three APCA nudges, originals in design README); page-test baselines updated -> Notes: `packages/tokens/src/tokens.css` (Palette) — measured with APCA-W3 0.0.98G-4g
