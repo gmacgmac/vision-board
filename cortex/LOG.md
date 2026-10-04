@@ -57,3 +57,4 @@
 [[2026-10-04 22:05]] [board] Stage 2b closed on the maintainer's look; Stage 2c task file written (Markdown renderer, D-023) -> Task: [[cortex-tasks/board/2026-10-01_board-v3/TASK-STATUS.md]]
 [[2026-10-04 22:40]] [board] 2c_FE_01 Markdown renderer (D-023): packages/ui/src/markdown, card bodies and notes, CommonMark 0.31.2 examples (364 pass, 101 listed exclusions), safety tests; orchestrator re-ran all four gates -> Task: [[cortex-tasks/board/2026-10-01_board-v3/2c_FE_01_markdown.md]]
 [[2026-10-04 22:45]] [cortex-infra] Dark --vb-accent-text #ff5cbe -> #ff66c2 (maintainer-approved): Markdown link in a quote or note Lc 44.0 -> 46.1, note label passes -> Notes: `packages/tokens/src/tokens.css` (--vb-accent-text), `prototypes/board-v3-design/README.md` (Palette)
+[[2026-10-04 23:25]] [cortex-infra] D-026 OpenAPI 3.2 replaces D-022 (maintainer-approved); api.md layout line updated -> Notes: `docs/decisions.md` (D-026), `docs/specification/api.md` (Layout)

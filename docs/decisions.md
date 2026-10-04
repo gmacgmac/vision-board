@@ -1,6 +1,6 @@
 ---
 category: project-decisions
-last_updated: 2026-10-02
+last_updated: 2026-10-04
 status: active
 scope: The decision register for Vision Board — one entry per decision, appended in order
 keywords: [decisions, register, adr, governance]
@@ -261,7 +261,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: [[cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md]]
 
 ## D-022 JSON Schema validation with ajv; the API contract lives in packages/format
-- **Date**: 2026-10-02 · **Status**: Accepted · **From**: maintainer, API pattern (tracker U4)
+- **Date**: 2026-10-02 · **Status**: Superseded by D-026 · **From**: maintainer, API pattern (tracker U4)
 - **Decision**: Formats and the API are defined as JSON Schema 2020-12 and OpenAPI 3.1 in
   `packages/format/schema/`. They are checked with `ajv` (pinned exact, MIT), used only in tests and
   in the I/O layer's validator. Routes, MCP tools, `vb` commands and the API docs are generated
@@ -311,3 +311,16 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: A DOM emulator (jsdom, happy-dom) in `npm test`: it has no layout, so
   it can't check placement, contrast or screenshots.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]
+
+## D-026 OpenAPI 3.2 for the API contract (replaces D-022)
+- **Date**: 2026-10-04 · **Status**: Accepted · **From**: maintainer, U4 step 1 research
+- **Decision**: As D-022, with OpenAPI 3.2 in place of 3.1. Formats and the API are defined as
+  JSON Schema 2020-12 and OpenAPI 3.2 in `packages/format/schema/`, checked with `ajv` (pinned
+  exact, MIT), used only in tests and in the I/O layer's validator. Routes, MCP tools, `vb`
+  commands and the API docs are generated from or tested against the spec (rule 6,
+  `docs/specification/api.md`).
+- **Why**: 3.2 is the first version that describes streamed responses, one result per line, which
+  batch writes and change feeds need. It has been out a year and had its first patch release.
+- **Alternative rejected**: Staying on 3.1 because a TypeScript type generator can't read 3.2 yet;
+  our types are hand-written and tested against the schemas, so nothing here depends on one.
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]

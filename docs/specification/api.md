@@ -17,7 +17,7 @@ built the same way.
 ```
 packages/format/schema/*.schema.json   ledger events, node body, park bundle (JSON Schema 2020-12)
             │  $ref
-packages/format/schema/openapi.json    every route, request, response and error (OpenAPI 3.1)
+packages/format/schema/openapi.json    every route, request, response and error (OpenAPI 3.2, D-026)
             │  generated from / tested against
   ├─ server routes   apps/board/server   (route table read from the spec)
   ├─ MCP tools       packages/agent      (one tool per operation, generated, checked into git)
