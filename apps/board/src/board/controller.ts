@@ -9,7 +9,7 @@ import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/ind
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
+import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
 import type { ActFields, BoardData } from './io.ts';
 import { ApiError, listBoards, loadBoard, sendAct, watchBoard } from './io.ts';
@@ -46,7 +46,7 @@ export function createBoard(els: BoardElements): Board {
     data: null as BoardData | null,
     state: { items: new Map(), pins: new Map(), modes: new Map() } as BoardState,
     cards: new Map<string, VbNodeElement>(),
-    regions: new Map<string, HTMLElement>(),
+    regions: new Map<string, VbRegionElement>(),
     layout: null as BoardLayout | null,
     sizes: new Map<string, Size>(),
     focus: null as string | null,

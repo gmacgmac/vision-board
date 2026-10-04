@@ -4,7 +4,7 @@ The visual patterns, in Studio's component model (D-005, D-015): a framework-fre
 and one generic web component per pattern (`<vb-node>`, `<vb-link>`, `<vb-region>`), driven by a
 registry of type definitions. Each pattern has all its states and a `pattern.json`. How a pattern
 is built: `docs/specification/components.md`. Today it holds the node pattern (`src/node/`), whose
-element `<vb-node>` draws every card on the board; `<vb-region>` and `<vb-link>` follow.
+element `<vb-node>` draws every card on the board and `<vb-region>` every container frame; `<vb-link>` follows.
 
 - **Depends on**: `packages/format`, `packages/actions`, `packages/tokens` (CSS, loaded by the host page).
 - **Used by**: `apps/board`.

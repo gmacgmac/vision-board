@@ -3,4 +3,7 @@
 export * from './node/node-core.ts';
 export * from './node/node-template.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
+export * from './region/region-core.ts';
+export * from './region/region-template.ts';
+export type { VbRegionElement } from './region/vb-region.ts';
 export { defineBoardElements } from './elements.ts';

@@ -1,16 +1,10 @@
 // Draws a laid-out board. Elements are created once per view version and then updated in
 // place (attributes, transforms), so focus and CSS transitions survive every re-layout.
 import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
-import { MODES } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { DECIDED, statusOf } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { esc, isItem, nodeState } from '../../../../packages/ui/src/index.ts';
-
-const MODE_LABEL: Record<string, string> = {
-  grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',
-};
+import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import { esc, nodeState, regionState } from '../../../../packages/ui/src/index.ts';
 
 /** Items first in number order, then the rest: DOM order is tab order is reading order. */
 export function readingOrder(view: View): ViewNode[] {
@@ -52,45 +46,28 @@ export function placeCards(cards: Map<string, HTMLElement>, layout: BoardLayout)
   }
 }
 
-export function buildRegions(host: HTMLElement, view: View): Map<string, HTMLElement> {
+/** One <vb-region> per region. The element renders its own frame; the page places it. */
+export function buildRegions(host: HTMLElement, view: View): Map<string, VbRegionElement> {
   host.replaceChildren();
-  const els = new Map<string, HTMLElement>();
+  const els = new Map<string, VbRegionElement>();
   for (const r of view.regions) {
-    const el = document.createElement('section');
-    el.className = 'vb-region';
-    el.dataset.region = r.id;
-    el.setAttribute('aria-labelledby', `region-${r.id}`);
-    const modes = MODES.map((m) =>
-      `<button type="button" class="vb-mode" data-mode="${m}" data-region="${r.id}" aria-pressed="false">${MODE_LABEL[m]}</button>`,
-    ).join('');
-    el.innerHTML = `<header class="vb-region-head"><h2 id="region-${r.id}">${esc(r.title)}</h2>`
-      + `<span class="vb-region-count"></span>`
-      + `<div class="vb-modes" role="group" aria-label="Layout for ${esc(r.title)}">${modes}</div>`
-      + `<button type="button" class="vb-btn vb-btn-small" data-reset="${r.id}" hidden>Reset places</button>`
-      + `</header><p class="vb-region-empty" hidden>Everything here is decided.</p>`;
+    const el = document.createElement('vb-region') as VbRegionElement;
+    el.render(r);
     host.append(el);
     els.set(r.id, el);
   }
   return els;
 }
 
-export function placeRegions(els: Map<string, HTMLElement>, layout: BoardLayout, view: View, s: BoardState): void {
+export function placeRegions(els: Map<string, VbRegionElement>, layout: BoardLayout, view: View, s: BoardState): void {
+  const placed = new Set(layout.nodes.keys());
   for (const r of layout.regions) {
     const el = els.get(r.id);
     if (!el) continue;
     el.style.transform = `translate(${r.box.x}px, ${r.box.y}px)`;
     el.style.width = `${r.box.w}px`;
     el.style.height = `${r.box.h}px`;
-    el.dataset.mode = r.mode;
-    for (const b of el.querySelectorAll<HTMLButtonElement>('button[data-mode]'))
-      b.setAttribute('aria-pressed', String(b.dataset.mode === r.mode));
-    const nodes = view.nodes.filter((n) => n.region === r.id);
-    const items = nodes.filter(isItem);
-    const decided = items.filter((n) => DECIDED.has(statusOf(s, n.id))).length;
-    el.querySelector<HTMLElement>('.vb-region-count')!.textContent =
-      items.length ? `${decided}/${items.length} decided` : '';
-    el.querySelector<HTMLElement>('[data-reset]')!.hidden = !nodes.some((n) => s.pins.has(n.id));
-    el.querySelector<HTMLElement>('.vb-region-empty')!.hidden = nodes.some((n) => layout.nodes.has(n.id));
+    el.update(regionState(r, view, s, placed));
   }
 }
 

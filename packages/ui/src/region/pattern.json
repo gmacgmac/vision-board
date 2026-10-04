@@ -1,0 +1,30 @@
+{
+  "name": "region",
+  "title": "Board region",
+  "tag": "vb-region",
+  "description": "The frame of one area of the board: its title, how many of its items are decided, the layout-mode buttons and Reset places, drawn as one generic element whatever the mode. Cards and wires are drawn in their own layers (D-013), so the element is only the frame.",
+  "files": {
+    "core": "region-core.ts (regionState, MODE_LABEL, RegionState; no DOM)",
+    "template": "region-template.ts (regionTemplate: the only place the markup is built)",
+    "element": "vb-region.ts (defineVbRegion, VbRegionElement; light DOM)",
+    "styles": "region.css (scoped by the tag; tokens only)"
+  },
+  "states": ["mode", "pinned", "empty", "hover", "focus", "pressed"],
+  "attributes": {
+    "data-region": "the region id (set by render)",
+    "data-mode": "grid | flow | lanes | radial | list: the layout in force (set by update)",
+    "role": "region (set by render)",
+    "aria-labelledby": "region-<id>, the heading inside the frame (set by render)"
+  },
+  "methods": {
+    "render(r: Region)": "once per view version: data-region, role, aria-labelledby, innerHTML = regionTemplate(r)",
+    "update(st: RegionState)": "on every state change: attributes and text only (data-mode, mode button aria-pressed, count text, Reset places and the empty message shown or hidden), so focus survives"
+  },
+  "events": [
+    "button[data-mode] click bubbles to the page's delegated listener -> the mode action",
+    "button[data-reset] click bubbles to the page's delegated listener -> unpin every node of the region"
+  ],
+  "whenToUse": "The frame of every area of the board that has its own layout mode.",
+  "whenNotToUse": "Lane bands and labels inside a region (the wires layer draws them until <vb-link> arrives); cards (<vb-node>).",
+  "accessibility": "A labelled region landmark named by its heading. The mode buttons are real buttons in a labelled group with aria-pressed; Reset places is a real button, hidden when there is nothing to reset."
+}
