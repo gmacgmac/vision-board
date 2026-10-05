@@ -28,6 +28,13 @@ vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outlin
 vb-node.dragging { transition: none; cursor: grabbing; box-shadow: var(--vb-shadow-lift); z-index: 3; }
 vb-node[data-emphasis] { width: var(--vb-card-w-wide); }
 vb-node[data-emphasis]::before { height: 2px; background: var(--kind); }
+/* Size tiers (D-030, the nodeSize flag): the page sets data-size before it measures the card,
+   so it wins over the flag-off widths above. Emphasis is already one tier up in data-size. */
+vb-node[data-size='s'] { width: var(--vb-card-w-s); }
+vb-node[data-size='m'] { width: var(--vb-card-w-m); }
+vb-node[data-size='l'] { width: var(--vb-card-w-l); }
+/* The size pill draws over the card above, so an open card sits over its neighbours. */
+vb-node[data-size]:is(:hover, :focus-within) { z-index: 2; }
 
 vb-node[data-kind='topic'] { --surface: var(--vb-surface-sunken); }
 vb-node[data-kind='note'] { background: transparent; box-shadow: none; border-style: dashed; }
@@ -68,6 +75,9 @@ vb-node .vb-node-pin {
   background: var(--vb-surface-card); color: var(--vb-ink-subtle); font-size: var(--vb-text-xs);
 }
 vb-node[data-pinned] .vb-node-pin { display: inline-flex; }
+/* With the size control in the top-right gap, the moved-by-you tab sits to its left. */
+vb-node[data-size] .vb-node-pin { right: 54px; }
+vb-node[data-size-picked] .vb-node-pin { right: 62px; }
 
 /* Content: title, body, tags as chips, the note block. */
 vb-node .vb-node-content {
@@ -133,3 +143,57 @@ vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-l
    under the 24px target size. They are hidden but keep their space, so no card changes size;
    the keyboard shortcuts still act on the focused card. */
 [data-zoom='far'] vb-node .vb-node-actions { visibility: hidden; }
+
+/* The size control (D-030, option A, mockup 07): a faint glyph in the top-right border gap. It
+   opens like the region mode picker (region.css), through :hover and :focus-within, with no JS
+   state; the pill is visibility:hidden at rest, so only the glyph is in the tab order. It draws
+   on top, so the card never changes size or moves while it is open. data-open forces it open
+   (gallery samples). */
+vb-node .vb-size { position: absolute; z-index: 6; top: -11px; right: var(--vb-space-5); }
+vb-node .vb-size-trig {
+  position: relative; display: inline-grid; grid-auto-flow: column; place-items: center; gap: var(--vb-space-1);
+  height: 20px; min-width: 22px; padding: 0 5px; cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--vb-radius-sm); background: var(--vb-surface-card);
+  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); color: var(--vb-ink-subtle); white-space: nowrap; opacity: 0.5;
+  transition: opacity var(--vb-motion-fast), color var(--vb-motion-fast), border-color var(--vb-motion-fast);
+}
+/* A 24px hit area at rest, without growing the glyph. */
+vb-node .vb-size-trig::after { content: ''; position: absolute; inset: -3px -2px; }
+vb-node .vb-size-glyph { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+vb-node .vb-size-shown:empty { display: none; }
+vb-node:hover .vb-size-trig, vb-node .vb-size:is(:hover, :focus-within, [data-open]) .vb-size-trig {
+  opacity: 1; color: var(--vb-ink-strong); border-color: var(--vb-line-strong);
+}
+/* The person's pick: the letter, not the glyph, always at full strength. */
+vb-node[data-size-picked] .vb-size-trig {
+  opacity: 1; border-color: var(--vb-line-strong); color: var(--vb-ink);
+  font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font-mono);
+}
+vb-node[data-size-picked] .vb-size-glyph { display: none; }
+
+/* The pill lifts above the top edge, right-aligned to the glyph. */
+vb-node .vb-size-menu {
+  position: absolute; right: calc(var(--vb-space-1) * -1); bottom: calc(100% + var(--vb-space-2));
+  display: flex; gap: 2px; padding: 3px; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+  visibility: hidden; opacity: 0; transition: opacity var(--vb-motion-fast), visibility 0s var(--vb-motion-fast);
+}
+/* A bridge over the gap, so the pointer can travel from the glyph to the pill. */
+vb-node .vb-size-menu::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: var(--vb-space-3); }
+vb-node .vb-size:is(:hover, :focus-within, [data-open]) .vb-size-menu { visibility: visible; opacity: 1; transition: opacity var(--vb-motion-fast); }
+vb-node .vb-size-opt {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 7px;
+  border: 0; border-radius: 7px; background: none; cursor: pointer; white-space: nowrap;
+  color: var(--vb-ink); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+}
+vb-node .vb-size-opt:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+vb-node .vb-size-opt:active { transform: translateY(1px); }
+vb-node .vb-size-opt[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--kind) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
+}
+/* While Auto is on, the tier it chose is outlined. */
+vb-node .vb-size-opt[data-auto] { box-shadow: inset 0 0 0 1px var(--vb-line-strong); }
+vb-node .vb-size-opt:focus-visible, vb-node .vb-size-trig:focus-visible { outline-offset: 1px; }
+vb-node .vb-size-sep { width: 1px; align-self: stretch; margin: var(--vb-space-1) 2px; background: var(--vb-line-strong); }
+/* The size control hides the same way, the pill included, which would otherwise stay visible. */
+[data-zoom='far'] vb-node .vb-size, [data-zoom='far'] vb-node .vb-size .vb-size-menu { visibility: hidden; }

@@ -1,7 +1,7 @@
 // The page's side of packages/client (rule 7, D-029): the client is the only code that calls the
 // server; this wraps it in the shapes the page draws from. A refused call comes back as an
 // ApiError carrying the problem's pointer errors (api.md 38).
-import type { ActEvent, ActionId, Mode, NodeSize, View } from '../../../../packages/format/src/index.ts';
+import type { ActEvent, ActionId, ActSize, Mode, NodeSize, View } from '../../../../packages/format/src/index.ts';
 import type { BoardState, ItemState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 
@@ -21,6 +21,7 @@ export interface ActFields {
   y?: number;
   region?: string;
   mode?: Mode;
+  size?: ActSize;
 }
 
 /** `get_board` as JSON: `state`'s maps arrive as plain objects; `sizes` only when set. */

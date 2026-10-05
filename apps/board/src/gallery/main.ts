@@ -6,13 +6,16 @@ import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
 import './gallery.css';
+import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
+import { pageFlags } from '../flags.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { regionSamples } from './region-section.ts';
+import { sizeSection } from './size-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -84,6 +87,8 @@ function build(): void {
   const main = el('main', 'g-main');
   main.append(el('p', 'g-intro', 'Every pattern in every state, drawn from fixture data in the real ledger schema.'),
     ...patterns.map((p) => section(p, fx)));
+  // Behind its flag, so the gallery without it (and its screenshot) is unchanged.
+  if (flagOn('nodeSize', pageFlags())) main.append(sizeSection(fx));
   document.body.append(head, main);
 }
 

@@ -3,11 +3,11 @@
 // element (`VbNode.update`: data-status, aria-pressed, the status word, the note), so this runs
 // once per view version. The look is board v3's card (D-024, mockup 01b): content first, number
 // and kind as tabs in gaps cut from the top border, kind icon, state word and buttons in a footer.
-import type { ActionId, ViewNode } from '../../../format/src/index.ts';
+import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
-import { buttonLabel, isItem, offers } from './node-core.ts';
-import { ACTION_ICON, KIND_ICON, svgIcon } from './node-icons.ts';
+import { buttonLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
+import { ACTION_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 
@@ -36,13 +36,35 @@ function footer(n: ViewNode): string {
     + `<span class="vb-node-status"></span></span>${actions}</footer>`;
 }
 
-export function nodeTemplate(n: ViewNode): string {
+export interface NodeTemplateOptions {
+  /** Draw the size control (D-030); the page passes it when the nodeSize flag is on. */
+  sizeControl?: boolean;
+}
+
+const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
+
+/** Option A (mockup 07): a glyph in the top-right border gap; the S / M / L / Auto pill lifts
+ *  above the top edge on hover or keyboard focus. Labels, pressed state and the picked letter are
+ *  set by `update()`. The pill is hidden at rest, so only the glyph is in the tab order. */
+function sizeControl(n: ViewNode): string {
+  const name = isItem(n) ? `card ${n.n}` : `card: ${n.title}`;
+  const opts = SIZE_PICKS.map((t) =>
+    `<button type="button" class="vb-size-opt" data-size-pick="${t}" aria-pressed="false">${SIZE_LETTER[t]}</button>`).join('');
+  return `<div class="vb-size" role="group" aria-label="Size of ${esc(name)}">`
+    + `<button type="button" class="vb-size-trig" aria-expanded="false">${svgIcon(SIZE_ICON, 24, 'vb-size-glyph')}`
+    + '<span class="vb-size-shown"></span></button>'
+    + `<div class="vb-size-menu">${opts}<span class="vb-size-sep" aria-hidden="true"></span>`
+    + '<button type="button" class="vb-size-opt" data-size-pick="auto" aria-pressed="false" aria-label="Automatic size">Auto</button>'
+    + '</div></div>';
+}
+
+export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): string {
   // The body is Markdown (D-023); the renderer escapes every text run, so its output is safe markup.
   const body = n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
   const tags = n.tags?.length
     ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
   const note = '<div class="vb-node-notes" hidden><span class="vb-node-note-who"></span>'
     + '<span class="vb-node-note-text"></span></div>';
-  return `${tabs(n)}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
+  return `${tabs(n)}${opts.sizeControl ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${note}</div>${footer(n)}`;
 }

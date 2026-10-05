@@ -13,6 +13,8 @@ export const REGION_KINDS = 'kinds';
 export const REGION_OTHER = 'other';
 /** The region whose nodes the Markdown section shows: one card per construct, one with everything. */
 export const REGION_MARKDOWN = 'markdown';
+/** The region whose nodes the Node size section shows (nodeSize flag only). */
+export const REGION_SIZES = 'sizes';
 export const FRAME_PREFIX = 'frame-';
 
 export interface Fixture {

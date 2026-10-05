@@ -7,3 +7,4 @@ export * from './ledger-index.ts';
 export * from './board-view.ts';
 export * from './node-types.ts';
 export * from './operations.generated.ts';
+export * from './flags.ts';

@@ -5,17 +5,18 @@
 // engines are not verified here.
 //
 // `webServer` builds the page, then serves it on its own port (4468, so a board you are running
-// yourself on 4466 is never touched) from a fresh copy of the roadmap fixture ledger in a temp
-// folder. The server seeds the project from VB_SEED only when the folder has no ledger yet, so
-// removing the folder first is what makes every run start from the same board. The folder is
-// removed again when the server stops. Screenshots are kept in tests/pages/__screenshots__/;
-// update them on purpose with: npm run test:pages -- --update-snapshots
+// yourself on 4466 is never touched; VB_TEST_PORT picks another, so a second checkout can run its
+// own copy) from a fresh copy of the roadmap fixture ledger in a temp folder. The server seeds the
+// project from VB_SEED only when the folder has no ledger yet, so removing the folder first is what
+// makes every run start from the same board. The folder is removed again when the server stops.
+// Screenshots are kept in tests/pages/__screenshots__/; update them on purpose with:
+// npm run test:pages -- --update-snapshots
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 4468;
+const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${PORT}`);
 const SERVE = [
