@@ -1,13 +1,17 @@
-// Route table generator (api.md 1, 4, 53, 55): reads packages/format/schema/openapi.json and writes
-// packages/format/src/operations.generated.ts, the one table the server, client, MCP tools and vb
-// read instead of openapi.json. Run: npm run gen. `--check` exits 1 if the file would change.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+// API table generator (api.md 1, 4, 51, 53, 55): reads packages/format/schema/openapi.json and
+// writes packages/format/src/operations.generated.ts (the one route table the server, client, MCP
+// tools and vb read instead of openapi.json) and packages/cli/src/commands.generated.ts (one `vb`
+// command per x-agent operation, with its inputs). Run: npm run gen. `--check` exits 1 if a file
+// would change.
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SPEC = path.join(ROOT, 'packages/format/schema/openapi.json');
 export const OUT = path.join(ROOT, 'packages/format/src/operations.generated.ts');
+export const SCHEMA_DIR = path.join(ROOT, 'packages/format/schema');
+export const COMMANDS_OUT = path.join(ROOT, 'packages/cli/src/commands.generated.ts');
 const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
 const SCHEME_AUTH = { agentSecret: 'agent', personCookie: 'person' };
 
@@ -85,18 +89,162 @@ export function render(doc) {
   ].join('\n');
 }
 
-function main(argv) {
-  const text = render(JSON.parse(readFileSync(SPEC, 'utf8')));
-  if (argv.includes('--check')) {
-    if (!existsSync(OUT) || readFileSync(OUT, 'utf8') !== text) {
-      console.error('gen-api: operations.generated.ts is out of date. Run: npm run gen');
-      return 1;
+/** Every JSON Schema under `dir` (the vendored OpenAPI schema aside), by `$id`. */
+export function loadSchemas(dir = SCHEMA_DIR, out = new Map()) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name !== 'vendor') loadSchemas(file, out);
+    } else if (entry.name.endsWith('.schema.json')) {
+      const schema = JSON.parse(readFileSync(file, 'utf8'));
+      if (schema.$id) out.set(schema.$id, schema);
     }
-    console.log('gen-api: operations.generated.ts is current');
+  }
+  return out;
+}
+
+/** The schema a `$ref` names, with the document it lives in (for refs relative to it). */
+function lookup(ref, doc, schemas) {
+  const [base, pointer = ''] = ref.split('#');
+  const target = base ? schemas.get(base) : doc;
+  if (!target) throw new Error(`unresolved schema ${ref}`);
+  let node = target;
+  for (const part of pointer.split('/').filter(Boolean)) node = node?.[part.replace(/~1/g, '/').replace(/~0/g, '~')];
+  if (!node) throw new Error(`unresolved schema ${ref}`);
+  return { schema: node, doc: target };
+}
+
+/** A schema with its `$ref` and `allOf` folded in: own keywords win, properties and required add up.
+ * `properties` maps each name to `{ schema, doc }` so a property can be read in its own document. */
+export function shape(schema, doc, schemas, depth = 0) {
+  if (depth > 20) throw new Error('schema $ref loop');
+  const { $ref, allOf = [], ...own } = schema;
+  const base = $ref ? (({ schema: s, doc: d }) => shape(s, d, schemas, depth + 1))(lookup($ref, doc, schemas)) : {};
+  const properties = { ...base.properties };
+  const required = [...(base.required ?? [])];
+  for (const part of allOf) {
+    const folded = shape(part, doc, schemas, depth + 1);
+    Object.assign(properties, folded.properties);
+    required.push(...(folded.required ?? []));
+  }
+  for (const [name, prop] of Object.entries(own.properties ?? {})) properties[name] = { schema: prop, doc };
+  required.push(...(own.required ?? []));
+  return { ...base, ...own, properties, required: [...new Set(required)] };
+}
+
+/** The type a flag is parsed as: `string`, `integer`, `number`, `boolean`, or `json` for anything else. */
+export function inputType(schema, doc, schemas) {
+  const s = shape(schema, doc, schemas);
+  if (Array.isArray(s.enum)) return s.enum.every((v) => typeof v === 'string') ? 'string' : 'json';
+  return ['string', 'integer', 'number', 'boolean'].includes(s.type) ? s.type : 'json';
+}
+
+/** The inputs of an operation: path, then query, then the top-level properties of a JSON body. */
+function inputsOf(id, route, op, doc, schemas) {
+  const params = (op.parameters ?? []).map((p) => resolve(doc, p));
+  const input = (name, where, schema, schemaDoc, required, description) => ({
+    name, in: where, type: inputType(schema, schemaDoc, schemas), required, description: description ?? shape(schema, schemaDoc, schemas).description ?? '',
+  });
+  const out = ['path', 'query'].flatMap((where) => params.filter((p) => p.in === where)
+    .map((p) => input(p.name, where, p.schema ?? {}, doc, where === 'path' || p.required === true, p.description)));
+  const body = op.requestBody?.content?.['application/json']?.schema;
+  if (body) {
+    const folded = shape(body, doc, schemas);
+    for (const [name, prop] of Object.entries(folded.properties)) {
+      out.push(input(name, 'body', prop.schema, prop.doc, folded.required.includes(name), undefined));
+    }
+  }
+  const names = out.map((i) => i.name);
+  const twice = names.find((n, i) => names.indexOf(n) !== i);
+  if (twice) throw new Error(`${id}: input "${twice}" is named twice; a flag name must be unique`);
+  return out;
+}
+
+/** One `vb` command per x-agent operation (api.md 51), in document order. */
+export function commandsOf(doc, schemas) {
+  const out = [];
+  for (const [route, item] of Object.entries(doc.paths ?? {})) {
+    for (const method of METHODS.filter((m) => item[m] && item[m]['x-agent'] === true)) {
+      const op = item[method];
+      out.push({
+        name: op.operationId.replaceAll('_', '-'), operationId: op.operationId, summary: op.summary ?? '',
+        description: op.description ?? '', takesBody: method !== 'get', inputs: inputsOf(op.operationId, route, op, doc, schemas),
+      });
+    }
+  }
+  return out;
+}
+
+/** The text of commands.generated.ts for a document. */
+export function renderCommands(doc, schemas) {
+  const row = (c) => [
+    '  {',
+    `    name: ${JSON.stringify(c.name)}, operationId: ${JSON.stringify(c.operationId)}, takesBody: ${c.takesBody},`,
+    `    summary: ${JSON.stringify(c.summary)},`,
+    `    description: ${JSON.stringify(c.description)},`,
+    ...(c.inputs.length ? ['    inputs: [', ...c.inputs.map((i) => `      ${JSON.stringify(i)},`), '    ],'] : ['    inputs: [],']),
+    '  },',
+  ].join('\n');
+  return [
+    '// GENERATED by scripts/gen-api.mjs from packages/format/schema/openapi.json. Do not edit; run `npm run gen`.',
+    '// The `vb` command table (api.md 51): one command per x-agent operation, with its summary and its inputs',
+    '// (path, query, and the top-level properties of a JSON body). The CLI reads this, never openapi.json.',
+    '',
+    "import type { OperationId } from '../../format/src/index.ts';",
+    '',
+    "export type CommandInputType = 'string' | 'integer' | 'number' | 'boolean' | 'json';",
+    '',
+    'export interface CommandInput {',
+    '  /** The flag name: `--<name>`, and the key the client receives. */',
+    '  readonly name: string;',
+    "  readonly in: 'path' | 'query' | 'body';",
+    '  /** `json` is any array or object: the flag takes a JSON text. */',
+    '  readonly type: CommandInputType;',
+    '  readonly required: boolean;',
+    '  readonly description: string;',
+    '}',
+    '',
+    'export interface CommandInfo {',
+    "  /** The command word: the operationId with hyphens (`show-node`). */",
+    '  readonly name: string;',
+    '  readonly operationId: OperationId;',
+    '  readonly summary: string;',
+    '  readonly description: string;',
+    '  /** True when the request has a JSON body (`--json-body` may give it whole). */',
+    '  readonly takesBody: boolean;',
+    '  readonly inputs: readonly CommandInput[];',
+    '}',
+    '',
+    'export const COMMANDS: readonly CommandInfo[] = [',
+    ...commandsOf(doc, schemas).map(row),
+    '];',
+    '',
+  ].join('\n');
+}
+
+/** Every generated file: where it goes and what it should say. */
+function targets() {
+  const doc = JSON.parse(readFileSync(SPEC, 'utf8'));
+  return [
+    { file: OUT, text: render(doc) },
+    { file: COMMANDS_OUT, text: renderCommands(doc, loadSchemas()) },
+  ];
+}
+
+function main(argv) {
+  const files = targets();
+  if (argv.includes('--check')) {
+    const stale = files.filter((f) => !existsSync(f.file) || readFileSync(f.file, 'utf8') !== f.text);
+    for (const f of stale) console.error(`gen-api: ${path.relative(ROOT, f.file)} is out of date. Run: npm run gen`);
+    if (stale.length) return 1;
+    console.log('gen-api: generated files are current');
     return 0;
   }
-  writeFileSync(OUT, text);
-  console.log(`gen-api: wrote ${path.relative(ROOT, OUT)}`);
+  for (const f of files) {
+    mkdirSync(path.dirname(f.file), { recursive: true });
+    writeFileSync(f.file, f.text);
+    console.log(`gen-api: wrote ${path.relative(ROOT, f.file)}`);
+  }
   return 0;
 }
 
