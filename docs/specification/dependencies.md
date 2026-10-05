@@ -1,6 +1,6 @@
 ---
 category: project-tooling
-last_updated: 2026-10-04
+last_updated: 2026-10-05
 status: active
 scope: Every direct third-party package, with its exact version, who uses it and why; install scripts, licences and weight
 keywords: [dependencies, register, supply chain, npm, licences, install scripts, versions]
@@ -18,15 +18,15 @@ exact version and why we have it. The full installed tree is not listed: run `np
 what a decision lists, pin exact versions, install with scripts off (`.npmrc`), and update this
 register in the same change.
 
-## Summary (2026-10-04, macOS arm64)
+## Summary (2026-10-05, macOS arm64)
 
 | Measure | Value |
 |---|---|
-| Direct dependencies | 8, all `devDependencies`: 4 in `apps/board/package.json`; `typescript`, `@types/node`, `@playwright/test` and `axe-core` at the root |
-| Lockfile third-party entries | 77, every platform included, workspace links excluded |
-| Installed on this machine | 53 (the earlier 49 plus the 4 page-test packages, all installed) |
+| Direct dependencies | 9: `ajv` in `apps/board/package.json` `dependencies`; 8 `devDependencies`, 4 in `apps/board/package.json` and `typescript`, `@types/node`, `@playwright/test` and `axe-core` at the root |
+| Lockfile third-party entries | 82, every platform included, workspace links excluded |
+| Installed on this machine | 58 (the earlier 53 plus `ajv` and its 4 dependencies) |
 | Install scripts run | 0. No installed package declares `preinstall`, `install` or `postinstall` |
-| Licences (installed) | MIT 41, Apache-2.0 7, MPL-2.0 3, ISC 1, BSD-3-Clause 1 |
+| Licences (installed) | MIT 45, Apache-2.0 7, MPL-2.0 3, BSD-3-Clause 2, ISC 1 |
 
 ## Direct dependencies: what and why (D-014)
 
@@ -40,6 +40,7 @@ register in the same change.
 | `@types/node` | 22.20.5 | `package.json` | `"types": ["node"]` in the root `tsconfig.json` (N7) | Type definitions for Node's built-in modules, so package, server and bin code is strictly checked (rule 14). Major 22 matches our Node 22. Writing our own would be a second source of truth for Node's API (rule 6). Already in the tree through `vite`; now declared directly |
 | `@playwright/test` | 1.63.0 | `package.json` | `tests/pages/` and the root `test:pages` script | Page tests (rule 13, D-025): opens the board and the gallery in Chromium and fails on console errors, failed requests, accessibility violations and screenshot changes. Same version as Uplynk Studio. Its browsers are downloaded by a separate `playwright install`, never by `npm install` |
 | `axe-core` | 4.13.0 | `package.json` | `tests/pages/helpers.ts` | The accessibility checker the page tests inject into each page (WCAG 2 A and AA, rule 5). Same version as Uplynk Studio. No Playwright wrapper package is installed |
+| `ajv` | 8.20.0 | `apps/board/package.json` (`dependencies`) | `apps/board/server/schema.ts` only (the server's I/O layer, its tests and `npm run validate`) | Validates ledger lines against the JSON Schemas in `packages/format/schema/` (D-026, rule 6). Draft 2020-12 through `Ajv2020`, strict mode, `discriminator`. Never imported by the page, so it never reaches the page bundle (rule 15). Timestamps use a pattern, so `ajv-formats` is not installed |
 
 ## Weight and risk
 
@@ -56,6 +57,7 @@ under each package that needs them).
 | `@types/node` | 1 (`undici-types` 6.21.0, type definitions only, pinned by the lockfile) | none | MIT | our own Node type definitions (would drift from real Node) |
 | `@playwright/test` | 2 (`playwright`, `playwright-core`, 13 MB) | none | Apache-2.0 | a DOM emulator (jsdom, happy-dom): no layout, so no placement, contrast or screenshots (D-025) |
 | `axe-core` | 0 (3 MB) | none | MPL-2.0 | hand-written accessibility assertions: would miss the rules axe already encodes |
+| `ajv` | 4 (`fast-deep-equal` 3.1.3 MIT, `fast-uri` 3.1.8 BSD-3-Clause, `json-schema-traverse` 1.0.0 MIT, `require-from-string` 2.0.2 MIT) | none | MIT | our own JSON Schema validator: a second, untested reading of the standard (D-026) |
 
 ## Install scripts
 

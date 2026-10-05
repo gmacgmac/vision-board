@@ -53,10 +53,14 @@ packages/format/schema/openapi.json               every operation, input, output
 6. **Three layers per event, one definition each.** `$defs/core` holds the fields both forms
    share and is left open. `$defs/sent` is what a caller sends: `{ $ref: core }` plus the
    sent-only fields (`key`, `base`, and `n` as a number or `{ "key": … }`), closed with
-   `unevaluatedProperties: false`. `$defs/stored` is a ledger line: `allOf: [stamp, core,
-   storedOnly]` (`storedOnly` = server-resolved integer `n`, `ver`, `from`, `to`, plus `key`),
-   closed the same way. No field is listed twice, and a sent body can never set a stamped field
-   (`v`, `seq`, `at`, `by`, `agent`, `person`).
+   `unevaluatedProperties: false`. `$defs/stored` is a ledger line: `allOf: [stamp, stampAgent,
+   core, rules?, storedOnly]`, closed the same way. `storedOnly` holds the server-resolved
+   integer `n`, `ver`, `from`, `to`, `board` (taken from the path, never sent), `key`, and `by`
+   as a `const` (who may write the event). Any `if`/`then` sits in its own piece (`stampAgent`
+   for the v2/v3 agent rule, `rules` for per-action rules), because ajv stops counting a
+   piece's fields as known when its `if`/`then` fails, which would turn one bad field into a
+   list of "unknown field" errors. No field is listed twice, and a sent body can never set a
+   stamped field (`v`, `seq`, `at`, `by`, `agent`, `person`).
 7. **What gets closed.** Every terminal object schema (the outer `sent` and `stored` wrappers,
    and leaf objects such as `node`, `region`, `bundle`) has `type: "object"` and
    `unevaluatedProperties: false`. Reusable cores stay open, because a closed core inside `allOf`
@@ -77,7 +81,7 @@ packages/format/schema/openapi.json               every operation, input, output
       so no `ajv-formats`; the hand validator uses the same pattern instead of `Date.parse`
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
-      sources 20 of 500
+      sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
 11. **Versions.** `LEDGER_FORMAT` becomes 3. Every change to a ledger schema bumps it and the
     `$id` path. Readers accept every `v` they know (2 and 3); v3 only adds, so v2 lines stay
     valid. On a v2 line `agent` is any non-blank name (the fixtures say `kiro`); on v3 it is an

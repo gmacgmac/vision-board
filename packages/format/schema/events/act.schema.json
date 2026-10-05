@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json",
+  "title": "Ledger v3: the `act` event",
+  "description": "One action from the action registry (rule 8). `rules` says which fields each action needs; whether it is person-only lives in packages/actions (api.md 9).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": ["action"],
+      "properties": {
+        "action": {
+          "enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send"]
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
+        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"},
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/mode"},
+        "request": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"},
+        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"},
+        "size": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/actSize"}
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "act"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/rules"}
+      ],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "act"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/rules"}
+      ],
+      "unevaluatedProperties": false
+    },
+    "rules": {
+      "description": "What each action needs (api.md 16). Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`).",
+      "type": "object",
+      "allOf": [
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "mode"}}},
+          "then": {"type": "object", "required": ["board", "region", "mode"]}
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {"action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen"]}}
+          },
+          "then": {"type": "object", "required": ["n", "ver"]}
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {"action": {"enum": ["pin", "unpin", "size"]}}
+          },
+          "then": {"type": "object", "required": ["n"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "pin"}}},
+          "then": {"type": "object", "required": ["x", "y"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "comment"}}},
+          "then": {"type": "object", "required": ["text"]}
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {"action": {"enum": ["grant", "deny"]}}
+          },
+          "then": {"type": "object", "required": ["request"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "revoke"}}},
+          "then": {"type": "object", "required": ["holder", "board", "region"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "size"}}},
+          "then": {"type": "object", "required": ["size"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "send"}}},
+          "then": {"type": "object", "required": ["board"]}
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {"action": {"enum": ["grant", "deny", "revoke", "send"]}}
+          },
+          "then": {"type": "object", "properties": {"n": false}}
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json",
+  "title": "Ledger v3: the `node` event",
+  "description": "A new version of node `n`. The server resolves `n`, assigns `ver` and takes the board from the path; a sent item may name `base`, the version it was based on (api.md 6, 30).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": ["node"],
+      "properties": {
+        "node": {"$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/body"}
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "node"},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeRef"},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/core"}],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "node"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/core"},
+        {
+          "type": "object",
+          "required": ["board", "n", "ver"],
+          "properties": {
+            "by": {"const": "agent"},
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+            "n": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+            },
+            "ver": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+            },
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "body": {
+      "type": "object",
+      "required": ["region", "kind", "title"],
+      "properties": {
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/kind"},
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"},
+        "body": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeBody"},
+        "item": {"type": "boolean"},
+        "lane": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/lane"},
+        "tags": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/tags"},
+        "emphasis": {"type": "boolean"},
+        "size": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeSize",
+          "description": "The agent's suggestion; the person's size wins (api.md 17)"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

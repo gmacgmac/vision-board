@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json",
+  "title": "Ledger v3: the `region` event",
+  "description": "An agent adds a region (a container, D-011) or updates one by its id. The board comes from the path when sent (api.md 34).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": ["region"],
+      "properties": {
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/region"
+        }
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "region"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/core"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "region"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/core"
+        },
+        {
+          "type": "object",
+          "required": ["board"],
+          "properties": {
+            "by": {"const": "agent"},
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "region": {
+      "type": "object",
+      "required": ["id", "title", "mode"],
+      "properties": {
+        "id": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/regionTitle"
+        },
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/mode"},
+        "lanes": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/lanes"},
+        "center": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber",
+          "description": "The centre node's number (api.md 18)"
+        },
+        "columns": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/columns"}
+      },
+      "if": {"type": "object", "required": ["mode"], "properties": {"mode": {"const": "lanes"}}},
+      "then": {
+        "type": "object",
+        "required": ["lanes"],
+        "properties": {"lanes": {"type": "array", "minItems": 1}}
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

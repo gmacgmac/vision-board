@@ -6,7 +6,12 @@ serves the built page and reads and appends the project ledger
 Svelte shell (toolbar, reply panel, note dialog; D-012). `src/board/` is the framework-free canvas
 controller it mounts (layout, drawing, pointer, keys, I/O; D-005). Vite builds `src/` into `dist/`
 (gitignored). Localhost only, with Host and Origin checks, JSON only. `bin/reply.ts <board>
-[--json]` prints the numbered reply for a board from the project ledger. Pages arrange patterns
+[--json]` prints the numbered reply for a board from the project ledger. `bin/validate.ts
+<ledger.jsonl>` (`npm run validate -- <file>`) checks ledger files line by line against the JSON
+Schemas and the hand validator, then in order, and prints every problem with its line number.
+`server/schema.ts` is the only module that imports `ajv` (D-026): it loads the schemas in
+`packages/format/schema/` by `$id` and gives plain-English problems (`ledgerLineProblems`,
+`compileSchema`); the page never imports it. Pages arrange patterns
 from `packages/ui`; they hold no layout maths, file formats or actions themselves. Every card is a
 `<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the pattern CSS, and
 `src/board/render.ts` creates, measures and places the elements but never builds their markup.

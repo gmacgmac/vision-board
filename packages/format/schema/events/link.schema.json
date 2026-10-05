@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json",
+  "title": "Ledger v3: the `link` event",
+  "description": "An agent links two nodes. `from` and `to` take a number or `{ key }` when sent (api.md 35).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "properties": {
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/linkLabel"}
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type", "from", "to"],
+      "properties": {
+        "type": {"const": "link"},
+        "from": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeRef"},
+        "to": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeRef"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json#/$defs/core"}],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "link"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json#/$defs/core"},
+        {
+          "type": "object",
+          "required": ["from", "to"],
+          "properties": {
+            "by": {"const": "agent"},
+            "from": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+            },
+            "to": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+            },
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

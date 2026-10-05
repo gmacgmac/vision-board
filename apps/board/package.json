@@ -12,5 +12,8 @@
     "svelte": "5.57.1",
     "svelte-check": "4.7.6",
     "vite": "8.3.1"
+  },
+  "dependencies": {
+    "ajv": "8.20.0"
   }
 }

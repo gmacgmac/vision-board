@@ -7,7 +7,8 @@ import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { HttpError } from '../server/guard.ts';
 
-const AGENT: Caller = { by: 'agent', agent: 'kiro' };
+// New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
+const AGENT: Caller = { by: 'agent', agent: 'a-kiro0001' };
 const PERSON: Caller = { by: 'person' };
 const dirs: string[] = [];
 const quiet = () => {};
@@ -61,9 +62,9 @@ test('append: stamps every event and creates .visionboard/ on first write', () =
   const events = lines.map((l) => JSON.parse(l));
   assert.deepEqual(events.map((e) => e.seq), [1, 2, 3]);
   for (const e of events) {
-    assert.equal(e.v, 2);
+    assert.equal(e.v, 3);
     assert.equal(e.by, 'agent');
-    assert.equal(e.agent, 'kiro');
+    assert.equal(e.agent, 'a-kiro0001');
     assert.ok(!Number.isNaN(Date.parse(e.at)));
   }
   assert.equal(ledger.state().seq, 3);
@@ -114,10 +115,10 @@ test('the body cannot set by, seq, at, v or agent', () => {
   const e = ledger.append(
     { type: 'reply', n: 1, text: 'Noted.', by: 'person', seq: 99, at: '2000-01-01T00:00:00Z', v: 1, agent: 'someone-else' },
     AGENT);
-  assert.deepEqual([e.by, e.seq, e.v, e.agent], ['agent', 4, 2, 'kiro']);
+  assert.deepEqual([e.by, e.seq, e.v, e.agent], ['agent', 4, 3, 'a-kiro0001']);
   assert.notEqual(e.at, '2000-01-01T00:00:00Z');
   // A person cannot pass as an agent by naming one in the body.
-  const act = ledger.append({ type: 'act', action: 'ack', n: 1, ver: 1, by: 'agent', agent: 'kiro' }, PERSON);
+  const act = ledger.append({ type: 'act', action: 'ack', n: 1, ver: 1, by: 'agent', agent: 'a-kiro0001' }, PERSON);
   assert.equal(act.by, 'person');
   assert.equal('agent' in act, false);
   assert.equal(lineCount(file), 5);

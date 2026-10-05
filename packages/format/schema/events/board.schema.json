@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/board.schema.json",
+  "title": "Ledger v3: the `board` event",
+  "description": "An agent opens a board. A sent `board` item names no board; the path does (api.md 34).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"},
+        "summary": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/summary"}
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"const": "board"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/board.schema.json#/$defs/core"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "board"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/board.schema.json#/$defs/core"
+        },
+        {
+          "type": "object",
+          "required": ["board"],
+          "properties": {
+            "by": {"const": "agent"},
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

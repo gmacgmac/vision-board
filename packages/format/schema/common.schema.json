@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/common.schema.json",
+  "title": "Ledger v3: shared definitions",
+  "description": "Ids, text, limits, enums and the server's stamp, shared by every event schema (docs/specification/api.md 5-11). Lengths count code points. The hand validator (packages/format/src/ledger-shape.ts) gives the same verdict.",
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "agentId": { "type": "string", "pattern": "^a-[a-z0-9]{8}$" },
+    "text": { "type": "string", "pattern": "\\S" },
+    "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$" },
+    "seq": { "type": "integer", "minimum": 1 },
+    "nodeNumber": { "type": "integer", "minimum": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "title": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 200 },
+    "regionTitle": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "nodeBody": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 8000 },
+    "longText": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 4000 },
+    "summary": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 2000 },
+    "linkLabel": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "agentLabel": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "tag": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
+    "lane": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
+    "source": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 500 },
+    "key": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 64, "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)" },
+    "person": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "tags": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/tag" } },
+    "lanes": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/lane" } },
+    "sources": { "type": "array", "maxItems": 20, "items": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/source" } },
+    "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
+    "kind": { "enum": ["question", "finding", "decision", "risk", "action", "topic", "note"] },
+    "mode": { "enum": ["grid", "flow", "lanes", "radial", "list"] },
+    "nodeSize": { "enum": ["s", "m", "l"] },
+    "actSize": { "enum": ["s", "m", "l", "auto"] },
+    "nodeRef": {
+      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+      "anyOf": [
+        { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber" },
+        {
+          "type": "object",
+          "required": ["key"],
+          "properties": { "key": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key" } },
+          "unevaluatedProperties": false
+        }
+      ]
+    },
+    "stamp": {
+      "description": "What the server writes on every stored line. A sent body never sets these (api.md 6). On v2 `agent` is any name; on v3 an agent id (api.md 11).",
+      "type": "object",
+      "required": ["v", "seq", "at", "by"],
+      "properties": {
+        "v": { "enum": [2, 3] },
+        "seq": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq" },
+        "at": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp" },
+        "by": { "enum": ["person", "agent"] },
+        "agent": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text" },
+        "person": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/person" }
+      }
+    },
+    "stampAgent": {
+      "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+      "type": "object",
+      "if": { "type": "object", "required": ["v"], "properties": { "v": { "const": 3 } } },
+      "then": {
+        "type": "object",
+        "properties": { "agent": { "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId" } }
+      }
+    }
+  }
+}

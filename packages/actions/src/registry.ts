@@ -30,6 +30,13 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   pin: { id: 'pin', label: 'Move', personOnly: true, onItem: false },
   unpin: { id: 'unpin', label: 'Reset position', personOnly: true, onItem: false },
   mode: { id: 'mode', label: 'Change layout', personOnly: true, onItem: false },
+  // Ledger v3 (api.md 16). Their rules and fold arrive with 1_BE_02; listed here so the registry
+  // keeps one entry per action id.
+  grant: { id: 'grant', label: 'Grant', personOnly: true, onItem: false },
+  deny: { id: 'deny', label: 'Deny', personOnly: true, onItem: false, text: 'optional' },
+  revoke: { id: 'revoke', label: 'Revoke', personOnly: true, onItem: false },
+  size: { id: 'size', label: 'Resize', personOnly: true, onItem: false },
+  send: { id: 'send', label: 'Send', personOnly: true, onItem: false },
 };
 
 /** The review buttons an item offers. */

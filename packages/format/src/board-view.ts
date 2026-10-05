@@ -2,13 +2,13 @@
 // and links, and one board as the `View` the layout engine and the page read. This lives in
 // format so every layer can read a board (D-016); the person's responses (acts, notes, pins,
 // seen, proposals) are folded on top of it in packages/actions. Pure: same events, same board.
-import type { LedgerEvent, NodeBody } from './ledger.ts';
-import type { Region, View, ViewNode } from './view.ts';
+import type { LedgerEvent, LedgerRegion, NodeBody } from './ledger.ts';
+import type { View, ViewNode } from './view.ts';
 import { FORMAT_VERSION } from './view.ts';
 
 export interface NodeVersion extends NodeBody { ver: number; at: string; agent?: string }
 export interface LedgerNode { n: number; board: string; versions: NodeVersion[] }
-export interface LedgerBoard { id: string; title: string; summary?: string; regions: Region[] }
+export interface LedgerBoard { id: string; title: string; summary?: string; regions: LedgerRegion[] }
 export interface LedgerLink { from: number; to: number; label?: string }
 
 export interface DrawnState {

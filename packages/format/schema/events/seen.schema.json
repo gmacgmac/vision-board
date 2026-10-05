@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json",
+  "title": "Ledger v3: the `seen` event",
+  "description": "The person has seen version `ver` of node `n` (D-018).",
+  "$defs": {
+    "core": {
+      "type": "object",
+      "required": ["n", "ver"],
+      "properties": {
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"}
+      }
+    },
+    "sent": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "seen"}},
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json#/$defs/core"}],
+      "unevaluatedProperties": false
+    },
+    "stored": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {"type": {"const": "seen"}},
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+        },
+        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json#/$defs/core"},
+        {"type": "object", "properties": {"by": {"const": "person"}}}
+      ],
+      "unevaluatedProperties": false
+    }
+  }
+}

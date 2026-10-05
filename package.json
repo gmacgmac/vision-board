@@ -16,7 +16,7 @@
     "dev": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
     "watch": "npm run build --workspace apps/board -- --watch",
     "check": "npm run check --workspace apps/board && tsc -p tsconfig.json",
-    "validate": "node packages/format/bin/validate.ts",
+    "validate": "node apps/board/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
     "test": "node --test \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "verify": "node scripts/verify.mjs",
