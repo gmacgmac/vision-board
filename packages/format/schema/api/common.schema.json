@@ -420,6 +420,35 @@
         }
       },
       "unevaluatedProperties": false
+    },
+    "openContainer": {
+      "type": "object",
+      "description": "A whole container whose latest note from the person has no answer yet. Answer it with a `reply` whose `to` is `note`.",
+      "$comment": "Was: api.md 73, 77",
+      "required": ["board", "region", "title", "pending", "note"],
+      "properties": {
+        "board": {
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id",
+          "description": "The board the container is on."
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id",
+          "description": "The container."
+        },
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/title",
+          "description": "The container's title."
+        },
+        "pending": {
+          "enum": ["comment", "context"],
+          "description": "What the note asks for: a comment, or more context."
+        },
+        "note": {
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq",
+          "description": "The `seq` of the note waiting for an answer."
+        }
+      },
+      "unevaluatedProperties": false
     }
   }
 }

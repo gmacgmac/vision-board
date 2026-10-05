@@ -434,3 +434,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     returns the raw lines.
 76. **The numbered reply** (`replyText`) names a container note once, by the container's title:
     `On container "Formats and decisions" comment: ...`, after the item lines.
+77. **Where an owed container note shows.** A card-shaped `openItem` cannot name a container, so
+    `list_open` and the write result each add `containers` (left out when none): one
+    `openContainer { board, region, title, pending, note }` per container whose latest standing
+    note has no answer yet (73), for the agents that may answer it. `items` and `pending` stay
+    cards only.

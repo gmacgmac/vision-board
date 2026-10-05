@@ -146,7 +146,8 @@ export function boardAccess(s: LedgerState, board: string): BoardAccess {
  * whether the person has a version still to see (api.md 36, D-018). With `agent`, only the items
  * it may answer: in a container it holds, or whose latest version it wrote (api.md 41). */
 export function openItems(s: LedgerState, board: string, agent?: string): OpenItem[] {
-  const pending = new Map(pendingItems(s, board, agent).map((p) => [p.n, p]));
+  // A container's owed note has no place here: `openItem` is a card's shape (api.md 73).
+  const pending = new Map(pendingItems(s, board, agent).filter((p) => p.region === undefined).map((p) => [p.n, p]));
   const unseen = new Set(unseenItems(s, board).map((u) => u.n));
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
@@ -162,6 +163,19 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
     });
   }
   return out.sort((a, b) => a.n - b.n);
+}
+
+/** A whole container whose latest note waits for the agent (api.md 73, 77). */
+export interface OpenContainer { board: string; region: string; title: string; pending: 'comment' | 'context'; note: number }
+
+/** The containers on `board` whose latest standing note has no answer yet, for the agents that may
+ * answer them (api.md 77); `openItems` stays cards only. */
+export function openContainers(s: LedgerState, board: string, agent?: string): OpenContainer[] {
+  const regions = s.boards.get(board)?.regions ?? [];
+  return pendingItems(s, board, agent).flatMap((p) => {
+    const r = p.region !== undefined && p.ask ? regions.find((x) => x.id === p.region) : undefined;
+    return r && p.ask ? [{ board, region: r.id, title: r.title, pending: p.ask.kind, note: p.ask.seq }] : [];
+  });
 }
 
 /** The board a ledger line belongs to: the one it names, or its node's (a link by its `from`

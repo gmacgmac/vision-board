@@ -5,7 +5,7 @@ import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardAccess, boardHeads, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openItems, responsesAfter,
+  boardAccess, boardHeads, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter,
 } from '../../../packages/actions/src/index.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -75,7 +75,8 @@ const scopeOf = (caller: Ctx['caller']): string | undefined => (caller?.by === '
 const listOpen: Handler = ({ res, params, ledger, caller }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
-  sendJson(res, 200, { head: s.seq, items: openItems(s, board, scopeOf(caller)) });
+  const containers = openContainers(s, board, scopeOf(caller));
+  sendJson(res, 200, { head: s.seq, items: openItems(s, board, scopeOf(caller)), ...(containers.length > 0 && { containers }) });
 };
 
 /** A person act that ends a `check_responses` wait on `board`: Send, or an answer to a grant

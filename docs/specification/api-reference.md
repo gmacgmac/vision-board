@@ -421,6 +421,7 @@ Media type `application/json`.
 |---|---|---|---|
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `items` | list of object | yes | The items not yet decided. |
+| `containers` | list of object | no | Whole containers whose latest note has no answer yet; left out when none. |
 
 Example:
 
@@ -848,6 +849,7 @@ Media type `application/json`.
 | `results` | list of object or object | yes | One result per item, in the order you sent them. |
 | `head` | integer | yes | The ledger's latest `seq`; 0 when it is empty |
 | `pending` | list of object | yes | Items in containers the caller holds that still wait for it |
+| `containers` | list of object | no | Whole containers the caller holds whose latest note still waits for it; left out when none. |
 
 Example:
 

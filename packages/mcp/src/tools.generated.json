@@ -2253,6 +2253,52 @@
               "additionalProperties": false
             },
             "description": "The items not yet decided."
+          },
+          "containers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A whole container whose latest note from the person has no answer yet. Answer it with a `reply` whose `to` is `note`.",
+              "required": [
+                "board",
+                "region",
+                "title",
+                "pending",
+                "note"
+              ],
+              "properties": {
+                "board": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the container is on."
+                },
+                "region": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container."
+                },
+                "title": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "maxLength": 200,
+                  "description": "The container's title."
+                },
+                "pending": {
+                  "enum": [
+                    "comment",
+                    "context"
+                  ],
+                  "description": "What the note asks for: a comment, or more context."
+                },
+                "note": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The `seq` of the note waiting for an answer."
+                }
+              },
+              "additionalProperties": false
+            },
+            "description": "Whole containers whose latest note has no answer yet; left out when none."
           }
         },
         "additionalProperties": false
@@ -4764,6 +4810,52 @@
               "additionalProperties": false
             },
             "description": "Items in containers the caller holds that still wait for it"
+          },
+          "containers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "A whole container whose latest note from the person has no answer yet. Answer it with a `reply` whose `to` is `note`.",
+              "required": [
+                "board",
+                "region",
+                "title",
+                "pending",
+                "note"
+              ],
+              "properties": {
+                "board": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the container is on."
+                },
+                "region": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container."
+                },
+                "title": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "maxLength": 200,
+                  "description": "The container's title."
+                },
+                "pending": {
+                  "enum": [
+                    "comment",
+                    "context"
+                  ],
+                  "description": "What the note asks for: a comment, or more context."
+                },
+                "note": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The `seq` of the note waiting for an answer."
+                }
+              },
+              "additionalProperties": false
+            },
+            "description": "Whole containers the caller holds whose latest note still waits for it; left out when none."
           }
         },
         "additionalProperties": false

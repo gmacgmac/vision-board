@@ -35,6 +35,14 @@
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openItem"
       },
       "description": "Items in containers the caller holds that still wait for it"
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openContainer"
+      },
+      "description": "Whole containers the caller holds whose latest note still waits for it; left out when none.",
+      "$comment": "Was: api.md 77"
     }
   },
   "unevaluatedProperties": false,

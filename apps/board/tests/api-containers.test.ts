@@ -47,3 +47,12 @@ test('refused: a note on Later, an unknown container, a place without its board'
   p = await h.fails('act', act({ action: 'pin', region: 'review', x: 1, y: 1 }), 422, 'invalid');
   assert.equal(p.errors[0]!.pointer, '/board');
 });
+
+test('an owed container note: list_open carries it in containers until it is removed (api.md 77)', async () => {
+  const made = await h.ok('act', act({ action: 'context', ...on, text: 'Which teams review?' }));
+  const open = await h.ok('list_open', { board: 'roadmap' });
+  assert.deepEqual(open.containers.map((c: any) => [c.region, c.pending, c.note]), [['review', 'context', made.seq]]);
+  assert.ok(open.items.every((x: any) => x.n > 0), 'items stay cards only');
+  await h.ok('act', act({ action: 'note-remove', ...on, note: made.seq }));
+  assert.equal((await h.ok('list_open', { board: 'roadmap' })).containers, undefined, 'left out when none');
+});
