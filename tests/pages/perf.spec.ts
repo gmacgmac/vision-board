@@ -12,7 +12,7 @@ const CARDS = BIG.regions * BIG.perRegion;
 
 interface Counts {
   cardsUpdated: number; cardsMeasured: number; cardsPlaced: number; containersLaidOut: number;
-  linksRedrawn: number; fullFetches: number; containers: string[]; firstDrawMs: number | null;
+  linksRedrawn: number; fullFetches: number; framesUpdated: number; containers: string[]; firstDrawMs: number | null;
 }
 
 /** Wait until the page has nothing in flight, then read its counters. */
@@ -310,4 +310,56 @@ test('dragging 50 selected cards into another container updates those 50 and lay
   expect([...c.containers].sort()).toEqual([regionId(region), target.id].sort());
   const moved = await (await page.request.get(`${PERF_BASE}/api/boards/${BIG.board}`)).json() as { state: { moves?: Record<string, string> } };
   expect(Object.keys(moved.state.moves ?? {}).map(Number).sort((a, b) => a - b)).toEqual(numbersOf(region));
+});
+
+// 3_FE_04 ruling 9: a container drag changes only the frame's transform (and the carried cards'
+// shared offset), so a frame of it touches no card, measures nothing and lays out nothing; the drop
+// repacks only, re-measures nothing and redraws only the links of containers that moved; a note on
+// a container updates only that container's frame.
+test('a container drag frame costs nothing; the drop repacks only; a container note updates one frame', async ({ page }) => {
+  await open(page);
+  await counts(page);
+  // Zoom to r01's first card so its frame's grip is on the stage at a usable size.
+  const first = page.locator(`vb-node[data-id="${numbersOf(1)[0]}"]`);
+  await first.focus();
+  await first.locator('.vb-node-title').click();
+  await page.keyboard.press('z');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(450);
+  const frames = () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll<HTMLElement>('vb-region')]
+    .map((f) => [f.dataset.region!, { box: f.style.transform, mode: f.dataset.mode! }])));
+  const before = await frames();
+  const g = (await page.locator(`vb-region[data-region="${regionId(1)}"] .vb-region-grip`).boundingBox())!;
+  await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(g.x + g.width / 2 + 10, g.y + g.height / 2 + 10, { steps: 3 });
+  await counts(page);
+  await reset(page);
+  await page.mouse.move(g.x + g.width / 2 + 40, g.y + g.height / 2 + 160, { steps: 12 });
+  const frame = await counts(page);
+  expect([frame.cardsUpdated, frame.cardsMeasured, frame.cardsPlaced, frame.containersLaidOut]).toEqual([0, 0, 0, 0]);
+  await reset(page);
+  await page.mouse.up();
+  await expect.poll(async () => Object.keys((await (await page.request.get(`${PERF_BASE}/api/boards/${BIG.board}`)).json() as {
+    state: { regionPins?: Record<string, unknown> } }).state.regionPins ?? {})).toEqual([regionId(1)]);
+  const drop = await counts(page);
+  const after = await frames();
+  const moved = Object.keys(after).filter((id) => after[id]!.box !== before[id]?.box);
+  const linksOfMoved = moved.reduce((sum, id) => sum + (after[id]!.mode === 'grid' ? 0 : BIG.perRegion - 1), 0);
+  console.log(`[3_FE_04] container drop: ${JSON.stringify({ ...drop, containers: drop.containers.join(','), moved: moved.join(',') })}`);
+  expect([drop.cardsUpdated, drop.cardsMeasured, drop.containersLaidOut, drop.fullFetches]).toEqual([0, 0, 0, 0]);
+  expect(moved).toContain(regionId(1));
+  expect(drop.linksRedrawn).toBeLessThanOrEqual(linksOfMoved);
+  // A note on the container: one frame updated, no card, no layout, no link.
+  await reset(page);
+  const act = (body: object) => page.request.post(`${PERF_BASE}/api/boards/${BIG.board}/act`, { data: { type: 'act', board: BIG.board, region: regionId(1), ...body } });
+  const note = await act({ action: 'comment', text: 'Is this container in the right place?' });
+  expect(note.status(), await note.text()).toBe(201);
+  await expect(page.locator(`vb-region[data-region="${regionId(1)}"] .vb-region-note-pin`)).toHaveText('1');
+  const noted = await counts(page);
+  expect([noted.cardsUpdated, noted.cardsMeasured, noted.cardsPlaced, noted.containersLaidOut, noted.linksRedrawn, noted.framesUpdated])
+    .toEqual([0, 0, 0, 0, 0, 1]);
+  // Leave the board as it was for the tests after this one.
+  expect((await act({ action: 'note-remove', note: (await note.json() as { seq: number }).seq })).status()).toBe(201);
+  expect((await act({ action: 'unpin' })).status()).toBe(201);
 });

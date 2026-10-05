@@ -393,3 +393,44 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the holder of the container the person moved it into may answer and update it, and its author
     may still answer it. Later has no holders, so a card in Later is judged by the region its agent
     drew it in.
+
+## Ledger v7 additions: a note on, and a place for, a whole container (3_FE_04)
+
+71. `LEDGER_FORMAT` becomes 7 and every ledger `$id` moves to `.../schema/ledger/7/`; `openapi.json`
+    `info.version` becomes 1.4.0. Only adds: v2 through v6 lines stay valid. **A container act**
+    is a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin` that names `board` +
+    `region` in place of `n`; it carries no `n`, `ver` or `nodes`. These actions named no `region`
+    before v7, so a `region` on one of them is what makes it a container act. All are person-only
+    (rule 8): agents cannot write a note on a container or place one.
+72. **Which containers.** `region` is a container on `board`. A `pin` or `unpin` may also name
+    `later`, the board's built-in Later (67); a note may not, since Later is not a thread an agent
+    drew (refused `invalid`, pointer `/region`). An unknown board or container is refused
+    `invalid`, pointer `/board` or `/region`.
+73. **A note on a container** follows the card-note rules (59-61): it is named for ever by its
+    act's `seq`; a container holds at most one note not yet sent (a second is refused `invalid`,
+    pointer `/region`, until a `send` on its board comes after the first); `note-edit` and
+    `note-remove` name it by `note` with the same `board` + `region`, and are refused (pointer
+    `/note`) when it was sent, was removed, is on another container or another card, or is another
+    person's. A sent note is history. A container note changes no item's status. What the agent
+    owes (36) gains the latest standing ask on each container, and a `reply` whose `to` is the
+    note's `seq` answers it. On the page its pin number continues the same sequence as the card
+    notes of the current Send.
+74. **A container's place** is `pin { board, region, x, y }`, the top-left corner of its frame in
+    board coordinates; `unpin { board, region }` returns it to where layout puts it. This is the
+    only coordinate a container ever has, and only the person writes it (rule 9). Pinning a
+    container does not touch its cards' pins, which are local to the container. **Packing:** a
+    pinned container stays exactly where it was put; unpinned containers move right or down to
+    make room (`collide.ts`, `applyPins` and `makeRoom`), never on top of one another. Pinned
+    containers never move for an unpinned one. When two pinned containers would overlap, the one
+    pinned last (higher `seq`) stays and the earlier one is pushed right or down; its stored pin is
+    unchanged, so unpinning the later one lets it return. Same input, same picture.
+75. **What every read shows.** `get_board` adds `state.containerNotes` (region id -> that
+    container's notes, each shaped as a card note, 61) and `state.containerPins` (region id ->
+    `{x, y}`), each left out when empty, as `state.moves` is. `show_container` adds `notes` (the
+    container's own notes, oldest first, a removed one left out) and `pin` when it is placed.
+    `check_responses` reports a container note as the act that made it, with its latest words and
+    kind, by the rules of 61, to every agent that may answer the container (a holder, or the agent
+    that drew it); a container `pin` or `unpin` is reported the way a card pin is. `read_ledger`
+    returns the raw lines.
+76. **The numbered reply** (`replyText`) names a container note once, by the container's title:
+    `On container "Formats and decisions" comment: ...`, after the item lines.

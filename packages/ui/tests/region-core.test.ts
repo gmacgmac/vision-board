@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
-import { agentChoiceText, MODE_HINT, MODE_LABEL, REGION_COLOUR_DEFAULT, RESET_NONE_HINT, regionColour, regionHolders, regionState } from '../src/index.ts';
+import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT, RESET_NONE_HINT, regionColour, regionHolders, regionState } from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
 const view = (nodes: ViewNode[]): View =>
   ({ format: 1, session: 's', title: 'B', version: 1, regions: [region], nodes, links: [] });
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), ...f });
 const deciding = (...entries: [string, ItemStatus][]): BoardState =>
   board({ items: new Map(entries.map(([id, status]) => [id, { status, notes: [] }])) });
 const drawn = (...ids: string[]): ReadonlySet<string> => new Set(ids);
@@ -78,7 +78,29 @@ test('the empty message shows only when the layout drew none of the region\'s no
 
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
-  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, showEmpty: true });
+  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, canPutBack: false, showEmpty: true });
+});
+
+test('Put container back is enabled only while the container itself has a place (3_FE_04 ruling 7)', () => {
+  const v = view([node({ id: '1', n: 1 })]);
+  assert.equal(regionState(region, v, board(), drawn('1')).canPutBack, false);
+  assert.equal(regionState(region, v, board({ regionPins: new Map([['r', { x: 5, y: 5 }]]) }), drawn('1')).canPutBack, true);
+  assert.equal(regionState(region, v, board({ regionPins: new Map([['other', { x: 5, y: 5 }]]) }), drawn('1')).canPutBack, false);
+  // A card's pin is not the container's place.
+  assert.equal(regionState(region, v, board({ pins: new Map([['1', { x: 1, y: 1 }]]) }), drawn('1')).canPutBack, false);
+  assert.equal(PUT_BACK_NONE_HINT, 'Not moved');
+});
+
+test('a container note: the pin numbers the latest of the container\'s notes, the line shows its words (ruling 3)', () => {
+  const v = view([node({ id: '1', n: 1 })]);
+  const note = (seq: number, text: string, sent?: true) => ({ seq, kind: 'comment' as const, text, at: 'x', region: 'r', ...(sent && { sent }) });
+  assert.equal('note' in regionState(region, v, board(), drawn('1')), false, 'left out with no note');
+  const one = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Split it?')]]]) }), drawn('1'));
+  assert.deepEqual(one.note, { seq: 4, index: 1, sent: false, who: 'Your note', text: 'Split it?', label: 'Note 1 on container R. Edit it' });
+  const two = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Old', true), note(9, 'New')]]]) }), drawn('1'));
+  assert.deepEqual([two.note!.seq, two.note!.index, two.note!.sent], [9, 2, false]);
+  const sent = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Old', true)]]]) }), drawn('1'));
+  assert.deepEqual([sent.note!.who, sent.note!.label], ['Your note · Sent', 'Note 1 on container R, sent. Show it']);
 });
 
 test('every region takes the neutral frame colour for now, a token and never a literal colour', () => {

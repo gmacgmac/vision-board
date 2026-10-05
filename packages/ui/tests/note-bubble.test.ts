@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BUBBLE_EDGE, BUBBLE_GAP, bubbleView, noteBubbleTemplate, placeBubble, saveIntent,
+  BUBBLE_EDGE, BUBBLE_GAP, bubbleView, noteBubbleTemplate, placeBubble, saveIntent, titleAnchor,
 } from '../src/index.ts';
 
 const stage = { w: 1600, h: 1000 };
@@ -91,4 +91,26 @@ test('bubbleView and template for a note on a group of cards (3_FE_02 ruling 3):
   assert.equal(bubbleView({ mode: 'sent', kind: 'comment', number: 12, numbers, text: 'x' }).heading, 'Note on 3 cards: 12, 14, 15, sent');
   const html = noteBubbleTemplate(bubbleView({ mode: 'new', kind: 'comment', number: 12, numbers }));
   assert.match(html, /^<div class="vb-nb-head"><span class="vb-nb-title">Note on 3 cards: 12, 14, 15<\/span>/);
+});
+
+test('bubbleView for a note on a whole container (3_FE_04 ruling 3): its head names the container, no number chip', () => {
+  const container = 'Review';
+  assert.equal(bubbleView({ mode: 'new', kind: 'comment', container }).heading, 'Note on container Review');
+  assert.equal(bubbleView({ mode: 'edit', kind: 'comment', container, text: 'x' }).heading, 'Edit note on container Review');
+  assert.equal(bubbleView({ mode: 'sent', kind: 'comment', container, index: 2, text: 'x' }).heading, 'Note 2 on container Review, sent');
+  const html = noteBubbleTemplate(bubbleView({ mode: 'new', kind: 'comment', container }));
+  assert.match(html, /^<div class="vb-nb-head"><span class="vb-nb-title">Note on container Review<\/span>/);
+});
+
+test('titleAnchor: placed from it, the bubble opens beside the title line with its arrow on the line', () => {
+  const line = { x: 200, y: 300, w: 600, h: 24 };
+  const p = placeBubble(titleAnchor(line), bubble, stage);
+  assert.equal(p.side, 'right');
+  assert.equal(p.x, line.x + line.w + BUBBLE_GAP);
+  // The arrow points at the middle of the title line.
+  assert.equal(p.y + p.arrow, line.y + line.h / 2);
+  // Below, when neither side fits: under the title line, not over the cards.
+  const wide = placeBubble(titleAnchor({ x: 10, y: 300, w: 1500, h: 24 }), bubble, stage);
+  assert.equal(wide.side, 'below');
+  assert.equal(wide.y, 300 + 24 + BUBBLE_GAP);
 });

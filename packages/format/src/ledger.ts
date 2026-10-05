@@ -6,12 +6,13 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 6;
+export const LEDGER_FORMAT = 7;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
  * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
- * container (api.md 66-70). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6] as const;
+ * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
+ * in place of `n` (api.md 71-76). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -24,6 +25,17 @@ export type ActionId = (typeof ACTION_IDS)[number];
 /** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
  * name it; no agent draws it, and from ledger v6 no region may take its id. */
 export const LATER_REGION = 'later';
+
+/** Acts that may name a whole container with `board` + `region` in place of `n` (and `ver` and
+ * `nodes`): a note on it, and its place on the board (3_FE_04 ruling 1, api.md 71). */
+export const CONTAINER_ACTIONS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'pin', 'unpin', 'note-edit', 'note-remove']);
+/** Of those, the ones that place it; only these may name Later (api.md 72). */
+export const CONTAINER_PLACES: ReadonlySet<ActionId> = new Set(['pin', 'unpin']);
+
+/** Whether a well-formed act is about a whole container: one of `CONTAINER_ACTIONS` naming a
+ * `region` (the shape rules then forbid `n`, `ver` and `nodes`). */
+export const isContainerAct = (e: { action: ActionId; region?: string | undefined }): boolean =>
+  e.region !== undefined && CONTAINER_ACTIONS.has(e.action);
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',
@@ -101,7 +113,10 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,
  * and `kind` = what an edited note now asks for (api.md 58-61). `nodes` = the items a note on a
  * group of cards is on, in place of `n` and `ver` (api.md 62), or the cards a group `move` puts in
- * one container; `region` = that container for a `move` (api.md 66). */
+ * one container; `region` = that container for a `move` (api.md 66). With `board` + `region` in
+ * place of `n` (and `ver`, `nodes`), a `comment`, `context`, `note-edit` or `note-remove` is about a
+ * note on that whole container and a `pin` or `unpin` about its place, `x`/`y` then in board
+ * coordinates (api.md 71). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; n?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];

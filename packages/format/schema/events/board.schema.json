@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/6/events/board.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/7/events/board.schema.json",
   "title": "Board event",
   "description": "An agent opens a board. A sent `board` item names no board; the path does.",
   "$comment": "Was: api.md 34",
@@ -9,8 +9,8 @@
       "type": "object",
       "required": ["title"],
       "properties": {
-        "title": {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/title", "description": "The board's title."},
-        "summary": {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/summary", "description": "One or two sentences on what the board is for."}
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/title", "description": "The board's title."},
+        "summary": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/summary", "description": "One or two sentences on what the board is for."}
       }
     },
     "sent": {
@@ -18,11 +18,11 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "board"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"}
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/events/board.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/7/events/board.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -32,20 +32,20 @@
       "required": ["type"],
       "properties": {"type": {"const": "board"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/events/board.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/7/events/board.schema.json#/$defs/core"
         },
         {
           "type": "object",
           "required": ["board"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "board": {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"}
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/key"}
           }
         }
       ],

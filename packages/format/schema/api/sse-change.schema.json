@@ -24,7 +24,7 @@
         ],
         "properties": {
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/seq"
+            "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq"
           }
         },
         "unevaluatedProperties": false

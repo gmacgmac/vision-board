@@ -90,14 +90,36 @@ container ids and every existing note stay as they are (rule 10).
 Keep this list ticked as you go, so an interruption loses nothing. If you near your turn limit,
 stop at a ticked step with the tree compiling and say so.
 
-1. [ ] Failing tests first: format and fold for container notes and container pins (unit);
+1. [x] Failing tests first: format and fold for container notes and container pins (unit);
    layout: a pinned container stays put and others make room, same input same picture (unit);
    page tests for the note from the title line (one note, edit, remove, read-only after Send),
    grip drag, plain title drag still pans, "Put container back", Alt+arrows, the counting tests.
-2. [ ] Format and API.
-3. [ ] Container notes on the page.
-4. [ ] Layout with container pins, then the grip drag and keyboard.
-5. [ ] Gallery, axe in dark and light, baselines viewed before updating.
+2. [x] Contract (orchestrator, 2026-10-05): `api.md` 71-76; `act.schema.json` container-act rules;
+   `v` and `stampAgent` take 7; every `$id` at `/ledger/7/`; `openapi.json` 1.4.0;
+   `get_board` `state.containerNotes` / `state.containerPins`; `show_container` `notes` / `pin`;
+   `npm run gen` run. Schema and OpenAPI tests pass (32/32).
+
+The rest runs as small separate builds, one sub-agent each. Each ticks its own line.
+
+- [ ] **4A. Format, fold, act rules, reads, reply, server** (`packages/format/src`,
+  `packages/actions`, `apps/board/server`). Turns green: `packages/actions/tests/containers.test.ts`,
+  `apps/board/tests/api-containers.test.ts`, `apps/board/tests/board-data.test.ts`. Naming: the
+  in-memory board state keeps the step-1 test names, `regionPins` (region id -> `{x, y}`) and
+  `regionNotes` (region id -> notes, the same note type a card's notes use), as Maps beside `pins`
+  and `moves`; 4B and 4C's tests use those names too. The JSON the API returns follows the
+  contract: `state.containerPins` / `state.containerNotes` in `get_board`, and `notes` (array) and
+  `pin` in `show_container`. Where a step-1 test expects a single `note` on the container detail,
+  change the test to the contract, not the contract to the test.
+- [ ] **4B. Layout honours container pins** (`packages/layout` only, reusing `collide.ts`). Turns
+  green: `packages/layout/tests/container-pins.test.ts`, plus the existing layout tests.
+- [ ] **4C. Region pattern** (`packages/ui` only): grip, Comment button, pin, "Your note" line, the
+  cog's "Put container back", `pattern.json` states. Turns green: `region-core`, `region-template`
+  and `note-bubble` tests.
+- [ ] **4D. Page wiring** (`apps/board/src/board/`): container note flow through the existing note
+  bubble, grip drag (transform only while dragging, one `pin` on drop), Alt+arrows, C/N on the
+  title line, command table and help line.
+- [ ] **4E. Gallery, axe dark and light, baselines viewed before updating, perf counting tests,
+  all five gates.**
 
 ## Validation
 

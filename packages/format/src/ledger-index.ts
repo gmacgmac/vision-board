@@ -1,7 +1,7 @@
 // Contextual ledger rules: identity and order (D-017, D-018). The index is the smallest state
 // needed to judge the next event; the ledger module (step 2) folds the full board state.
 import type { ActEvent, LedgerEvent } from './ledger.ts';
-import { LATER_REGION } from './ledger.ts';
+import { CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
 import { eventProblems } from './ledger-shape.ts';
 
 export interface LedgerIndex {
@@ -107,9 +107,18 @@ export function openRequestOf(ix: LedgerIndex, agent: string | undefined, board:
   return undefined;
 }
 
-/** The container rules of an `act`: mode, move, grant, deny, revoke and send (api.md 16, 23, 66). */
+/** The container rules of an `act`: mode, move, grant, deny, revoke and send (api.md 16, 23, 66),
+ * and a note on or a place for a whole container (api.md 72). */
 function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
   const region = () => { if (!ix.boards.get(e.board!)?.has(e.region!)) p.push(`region: unknown "${e.region}"`); };
+  if (isContainerAct(e)) {
+    const regions = ix.boards.get(e.board!);
+    if (!regions) p.push(`board: unknown "${e.board}"`);
+    // Later can be placed but takes no note: it is not a thread an agent drew (3_FE_04 ruling 2).
+    else if (!regions.has(e.region!) && !(e.region === LATER_REGION && CONTAINER_PLACES.has(e.action)))
+      p.push(`region: unknown "${e.region}" on board "${e.board}"`);
+    return;
+  }
   switch (e.action) {
     case 'mode': region(); break;
     case 'move': {

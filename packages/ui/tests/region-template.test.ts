@@ -27,9 +27,9 @@ test('the mode row: one radio icon per mode, in order, unchecked and out of the 
   }
 });
 
-test('the mode row ends in a divider and the cog, a menu button for the settings menu', () => {
+test('the mode row ends in a divider, Comment and the cog, a menu button for the settings menu', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for Review" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-menu"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><\/div>/);
+  assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-region-comment"[^>]*>.*?<\/button><button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for Review" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-menu"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><\/div>/);
   assert.equal((html.match(/data-mode=/g) ?? []).length, 5, 'the cog is not a layout');
 });
 
@@ -47,13 +47,32 @@ test('the popover is a tooltip with one tile per mode and its one-liner, then th
   assert.match(html, /<p class="vb-mode-line"><\/p>/);
 });
 
-test('the settings menu holds Reset places alone, disabled with its hint until update() says otherwise', () => {
+test('the settings menu holds Reset places and Put container back, each disabled with its hint until update() says otherwise', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<div class="vb-region-menu" id="region-review-menu" role="menu" aria-label="Settings for Review"><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-reset="review" aria-label="Reset places" aria-disabled="true" aria-describedby="region-review-reset-hint">Reset places<span class="vb-menu-hint" id="region-review-reset-hint">No cards moved<\/span><\/button><\/div>/);
-  assert.equal((html.match(/role="menuitem"/g) ?? []).length, 1);
+  assert.match(html, /<div class="vb-region-menu" id="region-review-menu" role="menu" aria-label="Settings for Review"><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-reset="review" aria-label="Reset places" aria-disabled="true" aria-describedby="region-review-reset-hint">Reset places<span class="vb-menu-hint" id="region-review-reset-hint">No cards moved<\/span><\/button>/);
+  assert.match(html, /<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-put-back="review" aria-label="Put container back" aria-disabled="true" aria-describedby="region-review-back-hint">Put container back<span class="vb-menu-hint" id="region-review-back-hint">Not moved<\/span><\/button><\/div>/);
+  assert.equal((html.match(/role="menuitem"/g) ?? []).length, 2);
   assert.deepEqual(regionIds('review'), {
     heading: 'region-review', modes: 'region-review-modes', menu: 'region-review-menu', hint: 'region-review-reset-hint',
+    back: 'region-review-back-hint',
   });
+});
+
+test('the grip starts the title line: a labelled button with grip dots, for Alt+arrows too (3_FE_04 ruling 5)', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<div class="vb-region-label"><button type="button" class="vb-region-grip" aria-label="Move container Review" aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Alt\+ArrowUp Alt\+ArrowDown" title="Move container · Alt\+arrows"><\/button><h2 id="region-review">/);
+  // Later can be placed: a fixed frame keeps its grip.
+  assert.match(regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true }), /class="vb-region-grip" aria-label="Move container Later"/);
+});
+
+test('Comment sits in the row beside the cog, the cog last; the pin and the "Your note" line wait hidden (ruling 3)', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<button type="button" class="vb-mseg vb-region-comment" tabindex="-1" aria-label="Comment on container Review" title="Comment · C" aria-haspopup="dialog" data-region-comment="review"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><button type="button" class="vb-mseg vb-cog"/);
+  assert.match(html, /<button type="button" class="vb-region-note-pin" data-region-note="review" aria-haspopup="dialog" aria-expanded="false" hidden><\/button><\/div>/);
+  assert.match(html, /<\/header><p class="vb-region-note" data-region-note="review" hidden><span class="vb-region-note-who"><\/span> <span class="vb-region-note-text"><\/span><\/p>/);
+  // The built-in Later takes no note: no Comment, no pin, no line.
+  const later = regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true });
+  assert.doesNotMatch(later, /vb-region-comment|vb-region-note/);
 });
 
 test('regionTemplate has a count and a hidden empty message', () => {
@@ -68,7 +87,7 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
 
 test('the top line: title, count and holders in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><button type="button" class="vb-region-note-pin"[^>]*><\/button><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
   assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
