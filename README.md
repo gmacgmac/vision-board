@@ -19,6 +19,7 @@ board v3 is in progress (`cortex-tasks/tracker.md`).
 | `packages/tokens/` | Design tokens and contrast checks |
 | `packages/agent/` | (planned) The kiro-cli connection behind one interface |
 | `packages/cli/` | (planned) The `vb` command: validate, reply, wait |
+| `packages/mcp/` | The MCP server (`npm run mcp`): one tool per agent operation, generated from the API spec |
 | `skills/` | Agent instructions: how any agent draws a board and reads replies |
 | `scripts/` | Repo checks (`npm run verify`) and the module map generator (`npm run map`) |
 | `docs/` | Vision, principles, decisions, specifications (`specification/modules.md` is generated) |

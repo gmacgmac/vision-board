@@ -1,18 +1,21 @@
 // API table generator (api.md 1, 4, 51, 53, 55): reads packages/format/schema/openapi.json and
 // writes packages/format/src/operations.generated.ts (the one route table the server, client, MCP
-// tools and vb read instead of openapi.json) and packages/cli/src/commands.generated.ts (one `vb`
-// command per x-agent operation, with its inputs). Run: npm run gen. `--check` exits 1 if a file
-// would change.
+// tools and vb read instead of openapi.json), packages/cli/src/commands.generated.ts (one `vb`
+// command per x-agent operation, with its inputs) and packages/mcp/src/tools.generated.json (one
+// MCP tool per x-agent operation, from gen-mcp.mjs). Run: npm run gen. `--check` exits 1 if a
+// file would change.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderTools } from './gen-mcp.mjs';
+import { METHODS, lookup, resolveParam } from './openapi-refs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SPEC = path.join(ROOT, 'packages/format/schema/openapi.json');
 export const OUT = path.join(ROOT, 'packages/format/src/operations.generated.ts');
 export const SCHEMA_DIR = path.join(ROOT, 'packages/format/schema');
 export const COMMANDS_OUT = path.join(ROOT, 'packages/cli/src/commands.generated.ts');
-const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
+export const TOOLS_OUT = path.join(ROOT, 'packages/mcp/src/tools.generated.json');
 const SCHEME_AUTH = { agentSecret: 'agent', personCookie: 'person' };
 
 /** Who a call needs to be: `none` when any caller may (an empty requirement is an alternative). */
@@ -25,13 +28,6 @@ export function authOf(operationId, security) {
   return auth;
 }
 
-const resolve = (doc, p) => {
-  if (!p.$ref) return p;
-  const name = p.$ref.replace('#/components/parameters/', '');
-  if (!p.$ref.startsWith('#/components/parameters/') || !doc.components?.parameters?.[name]) throw new Error(`unresolved parameter ${p.$ref}`);
-  return doc.components.parameters[name];
-};
-
 /** The operations of an OpenAPI document, in document order. */
 export function operationsOf(doc) {
   const out = [];
@@ -41,7 +37,7 @@ export function operationsOf(doc) {
       const id = op.operationId;
       if (typeof id !== 'string') throw new Error(`${method.toUpperCase()} ${route}: no operationId`);
       const pathParams = [...route.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]);
-      const declared = (op.parameters ?? []).map((p) => resolve(doc, p)).filter((p) => p.in === 'path').map((p) => p.name);
+      const declared = (op.parameters ?? []).map((p) => resolveParam(doc, p)).filter((p) => p.in === 'path').map((p) => p.name);
       if (declared.join() !== pathParams.join()) throw new Error(`${id}: path parameters [${declared}] do not match ${route}`);
       if (typeof op['x-agent'] !== 'boolean') throw new Error(`${id}: x-agent must be true or false`);
       out.push({ operationId: id, method: method.toUpperCase(), path: route, pathParams, xAgent: op['x-agent'], auth: authOf(id, op.security) });
@@ -103,17 +99,6 @@ export function loadSchemas(dir = SCHEMA_DIR, out = new Map()) {
   return out;
 }
 
-/** The schema a `$ref` names, with the document it lives in (for refs relative to it). */
-function lookup(ref, doc, schemas) {
-  const [base, pointer = ''] = ref.split('#');
-  const target = base ? schemas.get(base) : doc;
-  if (!target) throw new Error(`unresolved schema ${ref}`);
-  let node = target;
-  for (const part of pointer.split('/').filter(Boolean)) node = node?.[part.replace(/~1/g, '/').replace(/~0/g, '~')];
-  if (!node) throw new Error(`unresolved schema ${ref}`);
-  return { schema: node, doc: target };
-}
-
 /** A schema with its `$ref` and `allOf` folded in: own keywords win, properties and required add up.
  * `properties` maps each name to `{ schema, doc }` so a property can be read in its own document. */
 export function shape(schema, doc, schemas, depth = 0) {
@@ -141,7 +126,7 @@ export function inputType(schema, doc, schemas) {
 
 /** The inputs of an operation: path, then query, then the top-level properties of a JSON body. */
 function inputsOf(id, route, op, doc, schemas) {
-  const params = (op.parameters ?? []).map((p) => resolve(doc, p));
+  const params = (op.parameters ?? []).map((p) => resolveParam(doc, p));
   const input = (name, where, schema, schemaDoc, required, description) => ({
     name, in: where, type: inputType(schema, schemaDoc, schemas), required, description: description ?? shape(schema, schemaDoc, schemas).description ?? '',
   });
@@ -225,9 +210,11 @@ export function renderCommands(doc, schemas) {
 /** Every generated file: where it goes and what it should say. */
 function targets() {
   const doc = JSON.parse(readFileSync(SPEC, 'utf8'));
+  const schemas = loadSchemas();
   return [
     { file: OUT, text: render(doc) },
-    { file: COMMANDS_OUT, text: renderCommands(doc, loadSchemas()) },
+    { file: COMMANDS_OUT, text: renderCommands(doc, schemas) },
+    { file: TOOLS_OUT, text: renderTools(doc, schemas) },
   ];
 }
 
