@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/write-result.schema.json",
+  "title": "API: write_board answer",
+  "description": "A batch that can be read always answers 200, with one result per item, in order, plus `head` and `pending` (api.md 34, 36).",
+  "type": "object",
+  "required": [
+    "results",
+    "head",
+    "pending"
+  ],
+  "properties": {
+    "results": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "https://vision-board.invalid/schema/api/write-result.schema.json#/$defs/written"
+          },
+          {
+            "$ref": "https://vision-board.invalid/schema/api/write-result.schema.json#/$defs/failed"
+          }
+        ]
+      }
+    },
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "pending": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openItem"
+      },
+      "description": "Items in containers the caller holds that still wait for it"
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "written": {
+      "type": "object",
+      "required": [
+        "index",
+        "ok",
+        "seq"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 199
+        },
+        "key": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"
+        },
+        "ok": {
+          "const": true
+        },
+        "seq": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber",
+          "description": "The node number, for a `node` item"
+        },
+        "ver": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version",
+          "description": "The new version, for a `node` item"
+        },
+        "replayed": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
+          "description": "The key was sent before with the same content; nothing was written now (api.md 29)"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "failed": {
+      "type": "object",
+      "required": [
+        "index",
+        "ok",
+        "problem"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 199
+        },
+        "key": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"
+        },
+        "ok": {
+          "const": false
+        },
+        "problem": {
+          "$ref": "https://vision-board.invalid/schema/api/problem.schema.json#/$defs/item"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

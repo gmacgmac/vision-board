@@ -1,0 +1,1565 @@
+{
+  "openapi": "3.2.0",
+  "info": {
+    "title": "Vision Board API",
+    "version": "1.0.0",
+    "summary": "The one board API, for the page, agents and the vb CLI",
+    "description": "Every operation on the project ledger, defined once (docs/specification/api.md, D-019, D-026). The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:4466",
+      "description": "The local board server"
+    }
+  ],
+  "paths": {
+    "/api/boards": {
+      "get": {
+        "operationId": "list_boards",
+        "x-agent": true,
+        "summary": "List the boards",
+        "description": "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "The boards.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/listBoardsResponse"
+                },
+                "example": {
+                  "boards": [
+                    {
+                      "board": "roadmap",
+                      "title": "Where Vision Board goes from here",
+                      "seq": 41
+                    }
+                  ],
+                  "head": 52
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}": {
+      "get": {
+        "operationId": "get_board",
+        "x-agent": true,
+        "summary": "Read a board as it is now",
+        "description": "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the node number.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The board.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/getBoardResponse"
+                },
+                "example": {
+                  "head": 52,
+                  "view": {
+                    "format": 1,
+                    "session": "roadmap",
+                    "version": 52,
+                    "title": "Where Vision Board goes from here",
+                    "regions": [
+                      {
+                        "id": "review",
+                        "title": "Review",
+                        "mode": "grid",
+                        "columns": 3
+                      }
+                    ],
+                    "nodes": [
+                      {
+                        "id": "1",
+                        "region": "review",
+                        "kind": "question",
+                        "title": "Review the rules and principles",
+                        "body": "Say what is wrong or missing.",
+                        "n": 1
+                      }
+                    ],
+                    "links": []
+                  },
+                  "state": {
+                    "items": {
+                      "1": {
+                        "status": "commented",
+                        "notes": [
+                          {
+                            "kind": "comment",
+                            "text": "Rule 6 needs an example.",
+                            "at": "2026-10-05T09:12:00Z"
+                          }
+                        ]
+                      }
+                    },
+                    "pins": {},
+                    "modes": {}
+                  },
+                  "versions": {
+                    "1": 2
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/nodes/{n}": {
+      "get": {
+        "operationId": "show_node",
+        "x-agent": true,
+        "summary": "Read one node with its history",
+        "description": "Read one node with every version it has had, the person's notes, replies, proposals, the park bundle if there is one, its links, its container (`region`) and the person's size. Pass the board id and the node number `n`. Add `linked=true` to also get the nodes linked to it, one hop away. Use it before you answer a comment or redraw a node, so you build on the latest version.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/nodePath"
+          },
+          {
+            "$ref": "#/components/parameters/linked"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The node.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/showNodeResponse"
+                },
+                "example": {
+                  "head": 52,
+                  "n": 1,
+                  "board": "roadmap",
+                  "region": "review",
+                  "status": "commented",
+                  "seen": 2,
+                  "versions": [
+                    {
+                      "ver": 1,
+                      "at": "2026-10-02T09:00:05Z",
+                      "agent": "kiro",
+                      "node": {
+                        "region": "review",
+                        "kind": "question",
+                        "title": "Review the rules and principles",
+                        "body": "Say what is wrong or missing.",
+                        "item": true
+                      }
+                    },
+                    {
+                      "ver": 2,
+                      "at": "2026-10-05T09:00:00Z",
+                      "agent": "a-k3m9x2pq",
+                      "node": {
+                        "region": "review",
+                        "kind": "question",
+                        "title": "Review the rules and principles",
+                        "body": "Say what is wrong or missing. Rule 6 is new.",
+                        "item": true
+                      }
+                    }
+                  ],
+                  "notes": [
+                    {
+                      "kind": "comment",
+                      "text": "Rule 6 needs an example.",
+                      "at": "2026-10-05T09:12:00Z"
+                    }
+                  ],
+                  "replies": [],
+                  "proposals": [],
+                  "links": [
+                    {
+                      "from": 1,
+                      "to": 2,
+                      "label": "blocks"
+                    }
+                  ],
+                  "linked": [
+                    {
+                      "n": 2,
+                      "board": "roadmap",
+                      "region": "review",
+                      "versions": [
+                        {
+                          "ver": 1,
+                          "at": "2026-10-02T09:00:06Z",
+                          "agent": "kiro",
+                          "node": {
+                            "region": "review",
+                            "kind": "decision",
+                            "title": "Accept or change D-001 to D-008",
+                            "item": true
+                          }
+                        }
+                      ],
+                      "notes": [],
+                      "replies": [],
+                      "proposals": [],
+                      "links": [
+                        {
+                          "from": 1,
+                          "to": 2,
+                          "label": "blocks"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/regions/{region}": {
+      "get": {
+        "operationId": "show_container",
+        "x-agent": true,
+        "summary": "Read one container with its history",
+        "description": "Read one container (a region) with its full history: the region itself, the agents that hold it, and every node it has held with every version and note. Pass the board id and the region id. Use it to see what a container holds before you write to it or ask for a grant. `holders` is empty for a region written before agents had ids.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/regionPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The container.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/showContainerResponse"
+                },
+                "example": {
+                  "head": 52,
+                  "board": "roadmap",
+                  "region": {
+                    "id": "review",
+                    "title": "Review",
+                    "mode": "grid",
+                    "columns": 3
+                  },
+                  "holders": [
+                    "a-k3m9x2pq"
+                  ],
+                  "nodes": [
+                    {
+                      "n": 1,
+                      "board": "roadmap",
+                      "region": "review",
+                      "status": "commented",
+                      "seen": 2,
+                      "versions": [
+                        {
+                          "ver": 1,
+                          "at": "2026-10-02T09:00:05Z",
+                          "agent": "kiro",
+                          "node": {
+                            "region": "review",
+                            "kind": "question",
+                            "title": "Review the rules and principles",
+                            "body": "Say what is wrong or missing.",
+                            "item": true
+                          }
+                        },
+                        {
+                          "ver": 2,
+                          "at": "2026-10-05T09:00:00Z",
+                          "agent": "a-k3m9x2pq",
+                          "node": {
+                            "region": "review",
+                            "kind": "question",
+                            "title": "Review the rules and principles",
+                            "body": "Say what is wrong or missing. Rule 6 is new.",
+                            "item": true
+                          }
+                        }
+                      ],
+                      "notes": [
+                        {
+                          "kind": "comment",
+                          "text": "Rule 6 needs an example.",
+                          "at": "2026-10-05T09:12:00Z"
+                        }
+                      ],
+                      "replies": [],
+                      "proposals": [],
+                      "links": [
+                        {
+                          "from": 1,
+                          "to": 2,
+                          "label": "blocks"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/open": {
+      "get": {
+        "operationId": "list_open",
+        "x-agent": true,
+        "summary": "List items not yet decided",
+        "description": "List the items on a board that the person has not decided yet. Each item gives its latest `ver` and `status`, whether it is `pending` your answer (a comment or \"needs context\" nobody has answered, or moved to Later with no park bundle), and whether it is `unseen` (a newer version than the person last saw). Pass the board id. With your Bearer secret the list covers only the containers you hold, so you are never told to answer another agent's items.",
+        "security": [
+          {},
+          {
+            "agentSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The open items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/listOpenResponse"
+                },
+                "example": {
+                  "head": 52,
+                  "items": [
+                    {
+                      "board": "roadmap",
+                      "n": 1,
+                      "ver": 2,
+                      "region": "review",
+                      "kind": "question",
+                      "title": "Review the rules and principles",
+                      "status": "commented",
+                      "pending": "comment",
+                      "unseen": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/responses": {
+      "get": {
+        "operationId": "check_responses",
+        "x-agent": true,
+        "summary": "Wait for the person's answers",
+        "description": "Read what the person did on a board after a ledger position, including the answers to your grant requests. Pass `after`, the `head` you last saw (0 for everything), and optionally `limit` and `wait` (0-60 seconds) to hold the call until the person presses Send or answers a request. A wait that times out returns `{ responses: [], head }`. The server keeps no state for you: pass back the `head` you got. `more: true` means read again at once. With your Bearer secret the answer covers only the containers you hold.",
+        "security": [
+          {},
+          {
+            "agentSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/after"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/wait"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The person's actions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/checkResponsesResponse"
+                },
+                "example": {
+                  "responses": [
+                    {
+                      "v": 3,
+                      "seq": 50,
+                      "at": "2026-10-05T09:12:00Z",
+                      "by": "person",
+                      "type": "act",
+                      "action": "comment",
+                      "n": 1,
+                      "ver": 2,
+                      "text": "Rule 6 needs an example."
+                    },
+                    {
+                      "v": 3,
+                      "seq": 51,
+                      "at": "2026-10-05T09:12:00Z",
+                      "by": "person",
+                      "type": "act",
+                      "action": "grant",
+                      "request": 44
+                    }
+                  ],
+                  "head": 53
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/ledger": {
+      "get": {
+        "operationId": "read_ledger",
+        "x-agent": true,
+        "summary": "Read raw ledger lines",
+        "description": "Read raw ledger lines after a position, oldest first, from every writer. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more? }`, or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. Use `check_responses` instead when you only want the person's answers.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/after"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/boardQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The ledger lines.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/readLedgerResponse"
+                },
+                "example": {
+                  "events": [
+                    {
+                      "v": 3,
+                      "seq": 1,
+                      "at": "2026-10-05T08:00:00Z",
+                      "by": "agent",
+                      "agent": "a-k3m9x2pq",
+                      "type": "board",
+                      "board": "pricing",
+                      "title": "Pricing options",
+                      "key": "pricing-board"
+                    },
+                    {
+                      "v": 3,
+                      "seq": 2,
+                      "at": "2026-10-05T08:00:01Z",
+                      "by": "agent",
+                      "agent": "a-k3m9x2pq",
+                      "type": "node",
+                      "board": "pricing",
+                      "n": 47,
+                      "ver": 1,
+                      "node": {
+                        "region": "options",
+                        "kind": "question",
+                        "title": "Flat fee or per seat?",
+                        "item": true
+                      },
+                      "key": "pricing-q"
+                    }
+                  ],
+                  "head": 53
+                }
+              },
+              "application/jsonl": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ledgerEvent"
+                  }
+                },
+                "examples": {
+                  "lines": {
+                    "summary": "Two lines",
+                    "dataValue": [
+                      {
+                        "v": 3,
+                        "seq": 1,
+                        "at": "2026-10-05T08:00:00Z",
+                        "by": "agent",
+                        "agent": "a-k3m9x2pq",
+                        "type": "board",
+                        "board": "pricing",
+                        "title": "Pricing options",
+                        "key": "pricing-board"
+                      },
+                      {
+                        "v": 3,
+                        "seq": 2,
+                        "at": "2026-10-05T08:00:01Z",
+                        "by": "agent",
+                        "agent": "a-k3m9x2pq",
+                        "type": "node",
+                        "board": "pricing",
+                        "n": 47,
+                        "ver": 1,
+                        "node": {
+                          "region": "options",
+                          "kind": "question",
+                          "title": "Flat fee or per seat?",
+                          "item": true
+                        },
+                        "key": "pricing-q"
+                      }
+                    ],
+                    "serializedValue": "{\"v\":3,\"seq\":1,\"at\":\"2026-10-05T08:00:00Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"board\",\"board\":\"pricing\",\"title\":\"Pricing options\",\"key\":\"pricing-board\"}\n{\"v\":3,\"seq\":2,\"at\":\"2026-10-05T08:00:01Z\",\"by\":\"agent\",\"agent\":\"a-k3m9x2pq\",\"type\":\"node\",\"board\":\"pricing\",\"n\":47,\"ver\":1,\"node\":{\"region\":\"options\",\"kind\":\"question\",\"title\":\"Flat fee or per seat?\",\"item\":true},\"key\":\"pricing-q\"}\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/agents": {
+      "post": {
+        "operationId": "join",
+        "x-agent": true,
+        "summary": "Join as an agent",
+        "description": "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: call `request_grant` for write access. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/joinRequest"
+              },
+              "example": {
+                "label": "Pricing chat"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new agent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/joinResponse"
+                },
+                "example": {
+                  "agent": "a-k3m9x2pq",
+                  "secret": "ffwviAc-sVj5m18PEV0ZM0canfMeJizkYZEfaHD0o1o"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/grants": {
+      "post": {
+        "operationId": "request_grant",
+        "x-agent": true,
+        "summary": "Ask for write access to a container",
+        "description": "Ask the person for write access to one container, named by `board` and `region`. Call it once when `write_board` answers `needs-grant`, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for that container it is returned with `replayed: true`; if you already hold the container you get `{ held: true }`.",
+        "security": [
+          {
+            "agentSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/grantRequestBody"
+              },
+              "example": {
+                "board": "pricing",
+                "region": "later",
+                "reason": "I need to park two notes there.",
+                "key": "grant-later"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The grant request was recorded, or you already hold the container.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/grantResponse"
+                },
+                "examples": {
+                  "replayed": {
+                    "summary": "An open request already stood",
+                    "dataValue": {
+                      "request": 54,
+                      "board": "pricing",
+                      "region": "later",
+                      "replayed": true
+                    }
+                  },
+                  "held": {
+                    "summary": "You already hold the container",
+                    "dataValue": {
+                      "board": "pricing",
+                      "region": "later",
+                      "held": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "A new grant request was recorded; the person has not answered yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/grantResponse"
+                },
+                "example": {
+                  "request": 54,
+                  "board": "pricing",
+                  "region": "later"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/write": {
+      "post": {
+        "operationId": "write_board",
+        "x-agent": true,
+        "summary": "Write to a board",
+        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose` or `park`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (items waiting for your answer). An item in a container you do not hold fails with `needs-grant`. You cannot decide an item: `propose` acknowledge or drop and the person decides.",
+        "security": [
+          {
+            "agentSecret": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/writeRequest"
+              },
+              "example": {
+                "items": [
+                  {
+                    "type": "region",
+                    "key": "pricing-options",
+                    "region": {
+                      "id": "options",
+                      "title": "Options",
+                      "mode": "grid",
+                      "columns": 2
+                    }
+                  },
+                  {
+                    "type": "node",
+                    "key": "pricing-q",
+                    "node": {
+                      "region": "options",
+                      "kind": "question",
+                      "title": "Flat fee or per seat?",
+                      "body": "Which model fits a team of ten?",
+                      "item": true
+                    }
+                  },
+                  {
+                    "type": "node",
+                    "node": {
+                      "region": "later",
+                      "kind": "note",
+                      "title": "Revisit annual billing"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "One result per item, in order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/writeResult"
+                },
+                "example": {
+                  "results": [
+                    {
+                      "index": 0,
+                      "key": "pricing-options",
+                      "ok": true,
+                      "seq": 81
+                    },
+                    {
+                      "index": 1,
+                      "key": "pricing-q",
+                      "ok": true,
+                      "seq": 82,
+                      "n": 47,
+                      "ver": 1
+                    },
+                    {
+                      "index": 2,
+                      "ok": false,
+                      "problem": {
+                        "type": "https://vision-board.invalid/problems/needs-grant",
+                        "title": "Needs a grant",
+                        "detail": "You do not hold the container \"later\" on board \"pricing\". Call request_grant once, wait for the person's answer in check_responses, then resend the same items with the same keys.",
+                        "board": "pricing",
+                        "region": "later"
+                      }
+                    }
+                  ],
+                  "head": 82,
+                  "pending": [
+                    {
+                      "board": "roadmap",
+                      "n": 1,
+                      "ver": 2,
+                      "region": "review",
+                      "kind": "question",
+                      "title": "Review the rules and principles",
+                      "status": "commented",
+                      "pending": "comment",
+                      "unseen": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/act": {
+      "post": {
+        "operationId": "act",
+        "x-agent": false,
+        "summary": "Record one action by the person",
+        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, save for later, reopen, move, reset, change layout, resize, grant or deny a request, revoke, or send. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. It returns the stored ledger line.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/actRequest"
+              },
+              "example": {
+                "type": "act",
+                "action": "comment",
+                "n": 1,
+                "ver": 2,
+                "text": "Rule 6 needs an example."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored action.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/act"
+                },
+                "example": {
+                  "v": 3,
+                  "seq": 50,
+                  "at": "2026-10-05T09:12:00Z",
+                  "by": "person",
+                  "type": "act",
+                  "action": "comment",
+                  "n": 1,
+                  "ver": 2,
+                  "text": "Rule 6 needs an example."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/seen": {
+      "post": {
+        "operationId": "mark_seen",
+        "x-agent": false,
+        "summary": "Record that the person saw a version",
+        "description": "Record that the person has seen a version of a node, so its \"updates\" badge can clear. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id, the node number `n` and the version `ver`. It returns the stored ledger line.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/seenRequest"
+              },
+              "example": {
+                "n": 1,
+                "ver": 2
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored line.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/seen"
+                },
+                "example": {
+                  "v": 3,
+                  "seq": 53,
+                  "at": "2026-10-05T09:12:00Z",
+                  "by": "person",
+                  "type": "seen",
+                  "n": 1,
+                  "ver": 2
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/events": {
+      "get": {
+        "operationId": "watch_board",
+        "x-agent": false,
+        "summary": "Watch a board for changes",
+        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger. Only the board page uses it, to know when to reload; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream of server-sent events.",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "$ref": "#/components/schemas/sseChange"
+                },
+                "examples": {
+                  "change": {
+                    "summary": "The ledger reached line 53",
+                    "dataValue": {
+                      "event": "change",
+                      "data": "{\"seq\":53}"
+                    },
+                    "serializedValue": "event: change\ndata: {\"seq\":53}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "agentSecret": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The secret `join` returned, sent as `Authorization: Bearer <secret>` (api.md 21)."
+      },
+      "personCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "vb_person",
+        "description": "Set by the server when it serves the board page; the page sends it (api.md 20)."
+      }
+    },
+    "schemas": {
+      "problem": {
+        "$ref": "https://vision-board.invalid/schema/api/problem.schema.json"
+      },
+      "writeRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/write-request.schema.json"
+      },
+      "writeResult": {
+        "$ref": "https://vision-board.invalid/schema/api/write-result.schema.json"
+      },
+      "joinRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/join-request.schema.json"
+      },
+      "joinResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/join-response.schema.json"
+      },
+      "grantRequestBody": {
+        "$ref": "https://vision-board.invalid/schema/api/grant-request-body.schema.json"
+      },
+      "grantResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/grant-response.schema.json"
+      },
+      "actRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/act-request.schema.json"
+      },
+      "seenRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/seen-request.schema.json"
+      },
+      "listBoardsResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/list-boards-response.schema.json"
+      },
+      "getBoardResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/get-board-response.schema.json"
+      },
+      "showNodeResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/show-node-response.schema.json"
+      },
+      "showContainerResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/show-container-response.schema.json"
+      },
+      "listOpenResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/list-open-response.schema.json"
+      },
+      "checkResponsesResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/check-responses-response.schema.json"
+      },
+      "readLedgerResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/read-ledger-response.schema.json"
+      },
+      "sseChange": {
+        "$ref": "https://vision-board.invalid/schema/api/sse-change.schema.json"
+      },
+      "board": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/board.schema.json#/$defs/stored"
+      },
+      "region": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/stored"
+      },
+      "node": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/stored"
+      },
+      "link": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json#/$defs/stored"
+      },
+      "unlink": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/unlink.schema.json#/$defs/stored"
+      },
+      "act": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/stored"
+      },
+      "seen": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json#/$defs/stored"
+      },
+      "reply": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/reply.schema.json#/$defs/stored"
+      },
+      "propose": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/propose.schema.json#/$defs/stored"
+      },
+      "park": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json#/$defs/stored"
+      },
+      "join": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/join.schema.json#/$defs/stored"
+      },
+      "grant-request": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/grant-request.schema.json#/$defs/stored"
+      },
+      "ledgerEvent": {
+        "description": "A stored ledger line, by `type`.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/board"
+          },
+          {
+            "$ref": "#/components/schemas/region"
+          },
+          {
+            "$ref": "#/components/schemas/node"
+          },
+          {
+            "$ref": "#/components/schemas/link"
+          },
+          {
+            "$ref": "#/components/schemas/unlink"
+          },
+          {
+            "$ref": "#/components/schemas/act"
+          },
+          {
+            "$ref": "#/components/schemas/seen"
+          },
+          {
+            "$ref": "#/components/schemas/reply"
+          },
+          {
+            "$ref": "#/components/schemas/propose"
+          },
+          {
+            "$ref": "#/components/schemas/park"
+          },
+          {
+            "$ref": "#/components/schemas/join"
+          },
+          {
+            "$ref": "#/components/schemas/grant-request"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type"
+        }
+      }
+    },
+    "parameters": {
+      "boardPath": {
+        "name": "board",
+        "in": "path",
+        "description": "The board id, from list_boards.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        }
+      },
+      "nodePath": {
+        "name": "n",
+        "in": "path",
+        "description": "The node number.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        }
+      },
+      "regionPath": {
+        "name": "region",
+        "in": "path",
+        "description": "The region (container) id.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        }
+      },
+      "boardQuery": {
+        "name": "board",
+        "in": "query",
+        "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        }
+      },
+      "after": {
+        "name": "after",
+        "in": "query",
+        "description": "A ledger `seq`: return what came after it. 0 (the default) means from the start. Pass the `head` you last saw.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/after"
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "How many to return at most (default 100, at most 500).",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/limit"
+        }
+      },
+      "wait": {
+        "name": "wait",
+        "in": "query",
+        "description": "Seconds (0-60) to hold the call until the person presses Send or answers a request. 0 answers at once.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/wait"
+        }
+      },
+      "linked": {
+        "name": "linked",
+        "in": "query",
+        "description": "True also returns the nodes linked to this one.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/linked"
+        }
+      }
+    },
+    "responses": {
+      "badRequest": {
+        "description": "The request cannot be read: not JSON, a bad id in the path, or a bad query.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/bad-request",
+              "title": "Bad request",
+              "status": 400,
+              "detail": "The board id in the path is not valid. Use lowercase letters, digits and hyphens, up to 64, not starting with a hyphen."
+            }
+          }
+        }
+      },
+      "notAuthenticated": {
+        "description": "The Bearer secret is missing or unknown.",
+        "headers": {
+          "WWW-Authenticate": {
+            "description": "How to authenticate",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Bearer realm=\"vision-board\""
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/not-authenticated",
+              "title": "Not authenticated",
+              "status": 401,
+              "detail": "The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again."
+            }
+          }
+        }
+      },
+      "forbidden": {
+        "description": "The Host or Origin is not allowed, or the wrong kind of caller used this route.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/forbidden",
+              "title": "Forbidden",
+              "status": 403,
+              "detail": "Only the person can do this, on the board; send a propose or reply item instead."
+            }
+          }
+        }
+      },
+      "notFound": {
+        "description": "No such board, node or region.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/not-found",
+              "title": "Not found",
+              "status": 404,
+              "detail": "There is no board \"pricing\". Call list_boards to see the boards."
+            }
+          }
+        }
+      },
+      "methodNotAllowed": {
+        "description": "The path exists but not for this method.",
+        "headers": {
+          "Allow": {
+            "description": "The methods this path answers",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "GET"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/method-not-allowed",
+              "title": "Method not allowed",
+              "status": 405,
+              "detail": "This path answers GET only."
+            }
+          }
+        }
+      },
+      "tooLarge": {
+        "description": "The body or the batch is over the limit.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/too-large",
+              "title": "Too large",
+              "status": 413,
+              "detail": "The body is over the 64 KiB limit. Split the items across several calls."
+            }
+          }
+        }
+      },
+      "unsupportedMediaType": {
+        "description": "The body is not application/json.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/unsupported-media-type",
+              "title": "Unsupported media type",
+              "status": 415,
+              "detail": "Send the body as application/json."
+            }
+          }
+        }
+      },
+      "invalid": {
+        "description": "The body fails the schema or a context rule.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/invalid",
+              "title": "Invalid",
+              "status": 422,
+              "detail": "The request does not fit the schema. Fix the fields listed in errors and send it again.",
+              "errors": [
+                {
+                  "pointer": "/items",
+                  "detail": "`items` is required"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "serverError": {
+        "description": "Something unexpected; the detail is in the server log, not here.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/server-error",
+              "title": "Server error",
+              "status": 500,
+              "detail": "Something went wrong on the server. Try again; if it keeps failing, tell the person."
+            }
+          }
+        }
+      }
+    }
+  }
+}

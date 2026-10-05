@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/check-responses-response.schema.json",
+  "title": "API: check_responses answer",
+  "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests). `more` is true when `limit` cut the list. A wait that timed out answers `{ responses: [], head }` (api.md 31, 43).",
+  "type": "object",
+  "required": [
+    "responses",
+    "head"
+  ],
+  "properties": {
+    "responses": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/stored"
+      }
+    },
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "more": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+    }
+  },
+  "unevaluatedProperties": false
+}

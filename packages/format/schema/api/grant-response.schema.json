@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/grant-response.schema.json",
+  "title": "API: request_grant answer",
+  "description": "Either the open request (with `replayed: true` when one already stood, api.md 26) or `{ held: true }` when the caller already holds the container.",
+  "oneOf": [
+    {
+      "$ref": "https://vision-board.invalid/schema/api/grant-response.schema.json#/$defs/requested"
+    },
+    {
+      "$ref": "https://vision-board.invalid/schema/api/grant-response.schema.json#/$defs/held"
+    }
+  ],
+  "$defs": {
+    "requested": {
+      "type": "object",
+      "required": [
+        "request",
+        "board",
+        "region"
+      ],
+      "properties": {
+        "request": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq",
+          "description": "The `seq` of the grant request; the person's answer names it"
+        },
+        "board": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "replayed": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "held": {
+      "type": "object",
+      "required": [
+        "board",
+        "region",
+        "held"
+      ],
+      "properties": {
+        "board": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "held": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/get-board-response.schema.json",
+  "title": "API: get_board answer",
+  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`. `state` and `versions` are keyed by node id (the string form of the number).",
+  "type": "object",
+  "required": [
+    "head",
+    "view",
+    "state",
+    "versions"
+  ],
+  "properties": {
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "view": {
+      "$ref": "https://vision-board.invalid/schema/api/view.schema.json"
+    },
+    "state": {
+      "type": "object",
+      "required": [
+        "items",
+        "pins",
+        "modes"
+      ],
+      "properties": {
+        "items": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+          },
+          "additionalProperties": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemState"
+          }
+        },
+        "pins": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "unevaluatedProperties": false
+          }
+        },
+        "modes": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          },
+          "additionalProperties": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/mode"
+          },
+          "description": "Region id to the person's layout choice"
+        },
+        "sizes": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+          },
+          "additionalProperties": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeSize"
+          },
+          "description": "The person's size per node; left out when none is set (api.md 17)"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "versions": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+      },
+      "additionalProperties": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+      }
+    }
+  },
+  "unevaluatedProperties": false
+}

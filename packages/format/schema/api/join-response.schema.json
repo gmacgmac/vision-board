@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/join-response.schema.json",
+  "title": "API: join answer",
+  "description": "The agent id and its secret, shown once (api.md 21). The agent must save both in its durable notes (api.md 22).",
+  "type": "object",
+  "required": [
+    "agent",
+    "secret"
+  ],
+  "properties": {
+    "agent": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
+    },
+    "secret": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/secret"
+    }
+  },
+  "unevaluatedProperties": false
+}

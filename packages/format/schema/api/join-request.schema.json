@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/join-request.schema.json",
+  "title": "API: join request",
+  "description": "The agent's label, for example \"Pricing chat\" (api.md 21). Grants nothing.",
+  "type": "object",
+  "required": [
+    "label"
+  ],
+  "properties": {
+    "label": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentLabel"
+    }
+  },
+  "unevaluatedProperties": false
+}

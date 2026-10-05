@@ -21,6 +21,7 @@
     "test": "node --test \"packages/*/tests/**/*.test.ts\" \"apps/*/tests/**/*.test.ts\" \"scripts/*.test.mjs\"",
     "verify": "node scripts/verify.mjs",
     "map": "node scripts/verify.mjs --write-map",
+    "gen": "node scripts/gen-api.mjs",
     "test:pages": "playwright test --config tests/pages/playwright.config.ts"
   },
   "devDependencies": {
