@@ -929,7 +929,7 @@ Record one action by the person: acknowledge, drop, comment, ask for context, ed
 | `proposal` | body | integer | no | The `seq` of the proposal being accepted. |
 | `x` | body | number | no | Where to place the node across, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
 | `y` | body | number | no | Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
-| `board` | body | string | no | The board the action is about, for `mode`, `revoke` and `send`. |
+| `board` | body | string | no | The board the action is about, for `mode`, `revoke` and `send`, and for a note on or a place for a whole container (with `region`). |
 | `region` | body | string | no | The container the action is about, for `mode` and `revoke`; for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`. |
 | `mode` | body | `"grid"` or `"flow"` or `"lanes"` or `"radial"` or `"list"` | no | The layout mode to set, for `mode`. |
 | `request` | body | integer | no | The `seq` of the grant request being answered, for `grant` and `deny`. |
@@ -973,7 +973,7 @@ Media type `application/json`.
 | `proposal` | integer | no | The `seq` of the proposal being accepted. |
 | `x` | number | no | Where to place the node across, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
 | `y` | number | no | Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
-| `board` | string | no | The board the action is about, for `mode`, `revoke` and `send`. |
+| `board` | string | no | The board the action is about, for `mode`, `revoke` and `send`, and for a note on or a place for a whole container (with `region`). |
 | `region` | string | no | The container the action is about, for `mode` and `revoke`; for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`. |
 | `mode` | `"grid"` or `"flow"` or `"lanes"` or `"radial"` or `"list"` | no | The layout mode to set, for `mode`. |
 | `request` | integer | no | The `seq` of the grant request being answered, for `grant` and `deny`. |

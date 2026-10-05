@@ -3,6 +3,8 @@ export type { ActionDef, AgentActionDef, AgentActionId, ItemStatus } from './reg
 export { MAX_TEXT } from '../../format/src/index.ts';
 export { applyEvent, boardState, counts, foldLedger, sentNotes, sentAfter, statusOf } from './fold.ts';
 export { liveNotes } from './notes.ts';
+export { containerJson, containerNotes, containerPin, noteJson } from './containers.ts';
+export type { Place } from './containers.ts';
 export { LATER, movedFrom, placedView, regionOf } from './moves.ts';
 export type { BoardState, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal } from './fold.ts';
 export { validateAct } from './act.ts';

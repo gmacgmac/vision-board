@@ -13,6 +13,7 @@ import { lanes } from './modes/lanes.ts';
 import { radial } from './modes/radial.ts';
 import { boundsOf } from './geometry.ts';
 import { applyPins, makeRoom } from './collide.ts';
+import { placeContainers } from './place.ts';
 import { routeLinks } from './route.ts';
 import type { LayoutOptions } from './types.ts';
 
@@ -40,23 +41,33 @@ export function layoutRegion(
   return { region, mode, out, b, w, h };
 }
 
-/** Pack laid-out regions into rows (in order) and route `links` between the placed nodes. */
-export function packRegions(pieces: readonly RegionPiece[], links: Link[], opts: { maxRowWidth?: number | undefined } = {}): BoardLayout {
+/** Pack laid-out regions into rows (in order), put pinned containers at their `pins` (frame
+ * top-left, board coordinates; place.ts), and route `links` between the placed nodes. Reads the
+ * pieces only, so a container pin re-lays-out no container (N12). */
+export function packRegions(
+  pieces: readonly RegionPiece[], links: Link[],
+  opts: { maxRowWidth?: number | undefined; pins?: Map<string, Point> | undefined } = {},
+): BoardLayout {
   const maxRow = opts.maxRowWidth ?? 1600;
-  const regions: RegionBox[] = [];
-  const nodes = new Map<string, Box>();
+  const frames = new Map<string, Box>();
   let x = 0, y = 0, rowH = 0;
   for (const p of pieces) {
     if (x > 0 && x + p.w > maxRow) { x = 0; y += rowH + REGION_GAP; rowH = 0; }
-    const origin = { x: x + REGION_PAD - p.b.x, y: y + REGION_HEAD - p.b.y };
+    frames.set(p.region.id, { x, y, w: p.w, h: p.h });
+    x += p.w + REGION_GAP;
+    rowH = Math.max(rowH, p.h);
+  }
+  placeContainers(frames, opts.pins);
+  const regions: RegionBox[] = [];
+  const nodes = new Map<string, Box>();
+  for (const p of pieces) {
+    const box = frames.get(p.region.id)!;
+    const origin = { x: box.x + REGION_PAD - p.b.x, y: box.y + REGION_HEAD - p.b.y };
     regions.push({
-      id: p.region.id, title: p.region.title, mode: p.mode,
-      box: { x, y, w: p.w, h: p.h }, origin,
+      id: p.region.id, title: p.region.title, mode: p.mode, box, origin,
       lanes: p.out.lanes?.map((l) => ({ ...l, y: origin.y + l.y })),
     });
     for (const [id, at] of p.out.pos) nodes.set(id, { ...at, x: at.x + origin.x, y: at.y + origin.y });
-    x += p.w + REGION_GAP;
-    rowH = Math.max(rowH, p.h);
   }
   const routes = routeLinks(links, nodes);
   return { regions, nodes, routes, bounds: boundsOf(regions.map((r) => r.box)) };
@@ -71,5 +82,5 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     const links = view.links.filter((l) => ids.has(l.from) && ids.has(l.to));
     return layoutRegion(region, nodes, links, sizes, { mode: opts.modes?.get(region.id), pins: opts.pins });
   });
-  return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth });
+  return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth, pins: opts.regionPins });
 }

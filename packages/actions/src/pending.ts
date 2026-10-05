@@ -1,7 +1,7 @@
 // What the agent owes and what the person has not seen yet (D-018, D-020, api.md 36, 41), and
 // the person's responses since a cursor (`check_responses`). Pure reads of the folded ledger.
 import type { ActEvent, LedgerNode } from '../../format/src/index.ts';
-import { latest, nodesOf } from '../../format/src/index.ts';
+import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { canWrite, holders } from './grants.ts';
 import { cardsOf } from './notes.ts';
@@ -84,6 +84,8 @@ function boardOf(s: LedgerState, e: ActEvent): string | undefined {
 /** Does this act concern `agent`? Send always; answers to its own requests and its own
  * removals; anything else in a container it may answer for, on any card it is on (api.md 41). */
 function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
+  // A note on or a place for a whole container: its holders, the agent that drew it among them (api.md 75).
+  if (isContainerAct(e)) return holders(s, e.board!, e.region!).includes(agent);
   switch (e.action) {
     case 'send': return true;
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;

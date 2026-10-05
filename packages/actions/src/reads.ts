@@ -6,6 +6,8 @@ import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBun
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
+import type { Place } from './containers.ts';
+import { containerNotes, containerPin, noteJson } from './containers.ts';
 import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
 import { movedFrom, regionOf } from './moves.ts';
 import { pendingItems, unseenItems } from './pending.ts';
@@ -38,8 +40,11 @@ export interface NodeDetail {
   links: { from: number; to: number; label?: string }[];
 }
 
-/** One container: the region as stored, who holds it, every node it has held. */
-export interface ContainerDetail { board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[] }
+/** One container: the region as stored, who holds it, every node it has held, the person's notes
+ * on the whole container (oldest first, api.md 75) and, when placed, where (api.md 74). */
+export interface ContainerDetail {
+  board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[]; notes: ItemNote[]; pin?: Place;
+}
 
 /** An unanswered grant request as the board page shows it (`get_board`): which container, why,
  * and the asking agent's id and the label it joined with. */
@@ -109,9 +114,12 @@ export function containerDetail(s: LedgerState, board: string, region: string): 
   const r = s.boards.get(board)?.regions.find((x) => x.id === region);
   if (!r) return undefined;
   const nodes = nodesOf(s, board).filter((x) => regionOf(s, x.n) === region || x.versions.some((v) => v.region === region));
+  const pin = containerPin(s, board, region);
   return {
     board, region: { ...r }, holders: holders(s, board, region),
     nodes: nodes.map((x) => nodeDetail(s, x.n)!),
+    notes: containerNotes(s, board, region).map(noteJson),
+    ...(pin && { pin }),
   };
 }
 

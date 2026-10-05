@@ -31,8 +31,10 @@ const asJson = (d: BoardData) => ({
     items: Object.fromEntries(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
     ...(d.state.sizes.size > 0 && { sizes: Object.fromEntries(d.state.sizes) }),
     ...(d.state.moves.size > 0 && { moves: Object.fromEntries(d.state.moves) }),
-    ...(d.state.regionNotes.size > 0 && { regionNotes: Object.fromEntries([...d.state.regionNotes].map(([r, notes]) => [r, notes.at(-1)])) }),
-    ...(d.state.regionPins.size > 0 && { regionPins: Object.fromEntries(d.state.regionPins) }),
+    ...(d.state.regionNotes.size > 0 && {
+      containerNotes: Object.fromEntries([...d.state.regionNotes].map(([r, notes]) => [r, notes.map(({ region: _, ...x }) => x)])),
+    }),
+    ...(d.state.regionPins.size > 0 && { containerPins: Object.fromEntries(d.state.regionPins) }),
   },
   versions: d.versions,
   ...d.access,

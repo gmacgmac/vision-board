@@ -2,7 +2,7 @@
 // the next version) are in ledger-index.ts. This is the hand-written twin of the JSON Schema in
 // packages/format/schema/ (the one source, rule 6): a test runs both over every fixture and a
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
-import type { EventType } from './ledger.ts';
+import type { ActionId, EventType } from './ledger.ts';
 import {
   ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS,
 } from './ledger.ts';
@@ -188,7 +188,7 @@ function actRules(e: Rec, p: string[]): void {
   }
   if (a === 'move') need('region', 'region: the container to move the cards to');
   const group = has('nodes');
-  if (CONTAINER_ACTIONS.has(a) && has('region')) containerRules(e, p);
+  if (CONTAINER_ACTIONS.has(a as ActionId) && has('region')) containerRules(e, p);
   else nodeRules(e, group, p);
   if (a === 'pin' && (!has('x') || !has('y'))) p.push('pin: x and y numbers');
   if (a === 'comment') need('text', 'text: required');

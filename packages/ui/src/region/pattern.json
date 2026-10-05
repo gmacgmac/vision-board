@@ -4,7 +4,7 @@
   "tag": "vb-region",
   "description": "The frame of one area of the board, an open frame with no fill (D-024): its title and decided count sit in a gap cut from the top border on the left; on the right the mode row (README pick 1, mockup 05): five layout icons, a divider and the settings cog. Hovering an icon or reaching the row by keyboard opens the layout popover; the cog opens the settings menu (Reset places). All drawn as one generic element whatever the mode. Cards and wires are drawn in their own layers (D-013), so the element is only the frame.",
   "files": {
-    "core": "region-core.ts (regionState, regionHolders, regionColour, REGION_COLOUR_DEFAULT, MODE_LABEL, MODE_HINT, agentChoiceText, RESET_NONE_HINT, RegionState, RegionHolder; no DOM)",
+    "core": "region-core.ts (regionState, regionNote, regionHolders, regionColour, REGION_COLOUR_DEFAULT, MODE_LABEL, MODE_HINT, agentChoiceText, RESET_NONE_HINT, PUT_BACK_NONE_HINT, RegionState, RegionNoteState, RegionHolder; no DOM)",
     "template": "region-template.ts (regionTemplate, holdersTemplate, regionIds: the only places the markup is built)",
     "icons": "region-icons.ts (MODE_ICON per mode, COG_ICON; wrapped by the node pattern's svgIcon)",
     "element": "vb-region.ts (defineVbRegion, VbRegionElement; light DOM)",
@@ -25,7 +25,24 @@
     "pressed",
     "far",
     "drop-target",
-    "fixed"
+    "fixed",
+    "grip",
+    "grip-hover",
+    "grip-focus",
+    "grip-pressed",
+    "dragging",
+    "comment",
+    "comment-hover",
+    "comment-focus",
+    "comment-pressed",
+    "comment-open",
+    "note-pin",
+    "note-pin-hover",
+    "note-pin-focus",
+    "note-pin-sent",
+    "note-line",
+    "put-back",
+    "put-back-disabled"
   ],
   "flaggedStates": {
     "held": "agentAccess flag: the region's holders after the count, the creator as plain text and every other holder as a Remove access button (D-027). Kept out of `states` so the gallery without the flag reads as before."
@@ -35,14 +52,19 @@
     "data-mode": "grid | flow | lanes | radial | list: the layout in force (set by update)",
     "data-open": "modes | menu: the layout popover or the settings menu is open (set by the row behaviour); the frame is then drawn above the cards",
     "data-drop": "the frame is the drop target under a card dragged by its kind tab: a dashed accent line and a soft fill (set by the page, 3_FE_03 ruling 3)",
-    "data-fixed": "the board sets the frame's layout (the built-in Later, 3_FE_03 ruling 5): no layout icons or popover, the cog alone (set by render)",
+    "data-fixed": "the board sets the frame's layout (the built-in Later, 3_FE_03 ruling 5): no layout icons or popover, and no Comment, note pin or note line (Later takes no note); the grip and the cog stay (set by render)",
+    "data-dragging": "the frame is being moved by its grip: grip dots shown, cursor grabbing, no transform transition (set by the page, 3_FE_04 ruling 6)",
+    "data-note-open": "the container's note bubble is open: Comment drawn pressed, the pin aria-expanded (set by setNoteOpen)",
+    "data-note-sent": "the container's latest note was sent: the pin is drawn quiet, like a card's sent pin (set by update)",
     "--region": "the frame colour as a CSS value, from regionColour (set by render); the frame line, the title and the active icon mix from it",
     "role": "region (set by render)",
     "aria-labelledby": "region-<id>, the heading inside the frame (set by render)"
   },
   "methods": {
     "render(r: Region, opts?: { fixed?, empty? })": "once per view version: data-region, role, aria-labelledby, --region, innerHTML = regionTemplate(r, opts) (the popover foot names r.mode, the agent's choice); `fixed` leaves out the layout icons and popover and sets data-fixed, `empty` replaces the empty message; closes anything open",
-    "update(st: RegionState)": "on every state change: attributes and text only (data-mode, the icons' aria-checked and the row's Tab stop, the current tile, count text, Reset places aria-disabled and its hint, the empty message), so focus survives; the holders slot is redrawn from holdersTemplate only when the holders change",
+    "update(st: RegionState)": "on every state change: attributes and text only (data-mode, the icons' aria-checked and the row's Tab stop, the current tile, count text, Reset places and Put container back aria-disabled and their hints, the note pin's number and name and the 'Your note' line, shown only with st.note, the empty message), so focus survives; the holders slot is redrawn from holdersTemplate only when the holders change",
+    "setNoteOpen(open)": "the container's note bubble opened or closed: data-note-open and the pin's aria-expanded",
+    "titleLine()": "the title line element, whose box the page passes through the note bubble's titleAnchor to place the container's bubble",
     "showPanel(what, { mode?, focus? })": "opens the layout popover with mode highlighted, or the settings menu (focusing its item unless focus is false); the gallery draws its open samples with it"
   },
   "events": [
@@ -51,11 +73,15 @@
     "Arrow keys move between the five layouts and the cog (one Tab stop for the row, roving tabindex); Home and End; ArrowDown on the cog opens its menu",
     "cog click -> the settings menu opens and its item takes focus; Esc or a click outside closes it and focus returns to the cog; Tab closes it",
     "menuitem[data-reset] click bubbles to the page's delegated listener -> unpin every node of the region; while aria-disabled (no card moved) the click is stopped in the element",
+    "menuitem[data-put-back] click bubbles to the page's delegated listener -> unpin the container (board + region); while aria-disabled (Not moved) the click is stopped in the element",
+    "button[data-region-comment] click (pointer, Enter or Space; a stop of the row between the layouts and the cog) bubbles to the page -> the container's note bubble opens",
+    "[data-region-note] click (the note pin, or the 'Your note' line) bubbles to the page -> the container's note bubble reopens",
+    "button.vb-region-grip: pointer drag and Alt+arrows are wired by the page (3_FE_04 rulings 5, 6, 8); a plain drag elsewhere on the title line still pans",
     "button[data-revoke] click bubbles to the page's delegated listener -> confirm, then the revoke action for that holder (agentAccess flag)"
   ],
   "whenToUse": "The frame of every area of the board that has its own layout mode.",
   "whenNotToUse": "Lane bands and labels inside a region (the wires layer draws them until <vb-link> arrives); cards (<vb-node>).",
   "narrow": "Under 600px of frame (container query) the popover drops to compact tiles: icon and name, with the highlighted layout's one-liner on one line under them. The count gives way before the title. At the minimum frame (336px) about eight letters of title fit beside the row; a longer title ellipsizes.",
-  "accessibility": "A labelled region landmark named by its heading. The layout icons are radios in a labelled radiogroup (one Tab stop, arrow keys between them, Enter or Space applies); the popover is a role=tooltip described onto the icon it is about. The cog is a menu button (aria-haspopup, aria-expanded, aria-controls) for a labelled role=menu whose one menuitem, Reset places, is aria-disabled with a described hint (No cards moved) when there is nothing to reset. A removable holder is a real button named \"<label>: remove access\"; the creator is plain text.",
+  "accessibility": "A labelled region landmark named by its heading. The layout icons are radios in a labelled radiogroup (one Tab stop, arrow keys between them, Enter or Space applies); the popover is a role=tooltip described onto the icon it is about. The cog is a menu button (aria-haspopup, aria-expanded, aria-controls) for a labelled role=menu with two menuitems: Reset places, aria-disabled with a described hint (No cards moved) when there is nothing to reset, and Put container back, aria-disabled with a described hint (Not moved) when the container has no place of its own. The grip is a real button named \"Move container <title>\" with aria-keyshortcuts for Alt+arrows, always in the tab order (its dots show on hover and focus). Comment is a button named \"Comment on container <title>\" (aria-haspopup=dialog) in the row's roving Tab stop; the note pin is a button named \"Note <n> on container <title>. Edit it\" (or \", sent. Show it\"), aria-haspopup=dialog with aria-expanded. A removable holder is a real button named \"<label>: remove access\"; the creator is plain text.",
   "far": "Below FAR_K the stage carries data-zoom=far and the row hides (visibility), its popover and menu with it, like the cards' buttons (N8)."
 }

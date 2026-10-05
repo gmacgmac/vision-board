@@ -14,9 +14,11 @@ export type NoteChoice = 'save' | 'cancel' | 'remove';
 export interface NoteEventDetail { choice: NoteChoice; text: string }
 
 export interface VbNoteBubbleElement extends HTMLElement {
-  /** Draw the bubble for one card (its kind's colour and number) or a group of cards (no `kind`,
-   *  so the neutral edge; no number chip), with the view from `bubbleView`. */
-  show(v: BubbleView, card: { kind?: Kind; number?: number }): void;
+  /** Draw the bubble for one card (its kind's colour and number), a group of cards (no `kind`,
+   *  so the neutral edge; no number chip) or a whole container (`line`: the container's frame
+   *  colour from `regionColour`, which its edge wears; sets `data-on="container"`), with the view
+   *  from `bubbleView`. */
+  show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }): void;
   /** Put it beside its card (from `placeBubble`), in the coordinates of its offset parent. */
   place(p: Placement): void;
   /** `saving` disables the buttons; `error` shows `message` under the text and keeps it. */
@@ -40,13 +42,16 @@ export function defineVbNoteBubble(): void {
       this.addEventListener('keydown', (e) => this.onKey(e));
     }
 
-    show(v: BubbleView, card: { kind?: Kind; number?: number }): void {
+    show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }): void {
       this.setAttribute('role', 'dialog');
       this.setAttribute('aria-label', v.heading);
       this.dataset.mode = v.mode;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
-      if (card.kind) this.style.setProperty('--kind', `var(--vb-kind-${card.kind})`);
+      if (card.line) this.style.setProperty('--kind', card.line);
+      else if (card.kind) this.style.setProperty('--kind', `var(--vb-kind-${card.kind})`);
       else this.style.removeProperty('--kind');
+      if (card.line) this.dataset.on = 'container';
+      else delete this.dataset.on;
       this.innerHTML = noteBubbleTemplate(v, card.number);
       this.setPhase('idle');
       this.hidden = false;

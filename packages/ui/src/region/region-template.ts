@@ -8,15 +8,38 @@
 import type { Mode, Region } from '../../../format/src/index.ts';
 import { MODES } from '../../../format/src/index.ts';
 import { esc } from '../node/node-template.ts';
-import { svgIcon } from '../node/node-icons.ts';
+import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
 import type { RegionHolder } from './region-core.ts';
-import { agentChoiceText, MODE_HINT, MODE_LABEL, RESET_NONE_HINT } from './region-core.ts';
+import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT } from './region-core.ts';
 import { COG_ICON, MODE_ICON } from './region-icons.ts';
 
 /** The ids the element ties together with aria-describedby / aria-controls. */
 export const regionIds = (id: string) => ({
   heading: `region-${id}`, modes: `region-${id}-modes`, menu: `region-${id}-menu`, hint: `region-${id}-reset-hint`,
+  back: `region-${id}-back-hint`,
 });
+
+/** The grip at the start of the title line (3_FE_04 ruling 5): the only handle that moves the
+ * container. Its dots are drawn by region.css; the page wires drag and Alt+arrows to it. */
+const grip = (title: string): string =>
+  `<button type="button" class="vb-region-grip" aria-label="Move container ${title}"`
+  + ' aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="Move container · Alt+arrows"></button>';
+
+/** Comment, in the mode row beside the cog (ruling 3): opens the container's note bubble. The
+ * page's delegated listener reads `data-region-comment`. */
+const commentButton = (id: string, title: string): string =>
+  `<button type="button" class="vb-mseg vb-region-comment" tabindex="-1" aria-label="Comment on container ${title}"`
+  + ` title="Comment · C" aria-haspopup="dialog" data-region-comment="${esc(id)}">`
+  + `${svgIcon(ACTION_ICON.comment!, 20, 'vb-mode-icon')}</button>`;
+
+/** The saved note's numbered pin on the title line; hidden until `update` gives it a note. */
+const notePin = (id: string): string =>
+  `<button type="button" class="vb-region-note-pin" data-region-note="${esc(id)}" aria-haspopup="dialog" aria-expanded="false" hidden></button>`;
+
+/** The short "Your note" line under the title; hidden until `update` gives it a note. */
+const noteLine = (id: string): string =>
+  `<p class="vb-region-note" data-region-note="${esc(id)}" hidden><span class="vb-region-note-who"></span>`
+  + ' <span class="vb-region-note-text"></span></p>';
 
 /** One layout icon: a radio in the row's radiogroup, out of the tab order until `update` makes the
  * checked one the row's single Tab stop. `data-mode` / `data-region` are the page's click wiring. */
@@ -35,18 +58,22 @@ const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
     + '<span><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> apply · <kbd>Esc</kbd> close</span></div></div>';
 };
 
-/** The settings menu: today only "Reset places", disabled with a hint until a card was moved. */
+/** The settings menu: "Reset places" (the cards' pins) and "Put container back" (the container's
+ * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it. */
 const settingsMenu = (r: Pick<Region, 'id' | 'title'>): string => {
   const ids = regionIds(r.id);
+  const item = (data: string, label: string, hint: string, hintId: string) =>
+    `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" ${data}="${esc(r.id)}" aria-label="${label}"`
+    + ` aria-disabled="true" aria-describedby="${hintId}">${label}<span class="vb-menu-hint" id="${hintId}">${hint}</span></button>`;
   return `<div class="vb-region-menu" id="${ids.menu}" role="menu" aria-label="Settings for ${esc(r.title)}">`
-    + `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-reset="${esc(r.id)}" aria-label="Reset places"`
-    + ` aria-disabled="true" aria-describedby="${ids.hint}">Reset places`
-    + `<span class="vb-menu-hint" id="${ids.hint}">${RESET_NONE_HINT}</span></button></div>`;
+    + item('data-reset', 'Reset places', RESET_NONE_HINT, ids.hint)
+    + item('data-put-back', 'Put container back', PUT_BACK_NONE_HINT, ids.back) + '</div>';
 };
 
 /** How a frame is built. `fixed`: its layout is set by the board, so it has no layout icons and
- * no popover, only the cog (the built-in Later, 3_FE_03 ruling 5). `empty`: the message it shows
- * when the layout drew none of its cards, in place of `EMPTY_DECIDED`. */
+ * no popover, only the cog (the built-in Later, 3_FE_03 ruling 5); it takes no note either, so no
+ * Comment, pin or note line, but keeps its grip (Later can be placed). `empty`: the message it
+ * shows when the layout drew none of its cards, in place of `EMPTY_DECIDED`. */
 export interface RegionFrameOptions { fixed?: boolean; empty?: string }
 
 /** The empty message of an ordinary frame: every card it has is decided and hidden. */
@@ -55,15 +82,16 @@ export const EMPTY_DECIDED = 'Everything here is decided.';
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
   const title = esc(r.title);
+  const notes = !opts.fixed;
   const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
   const row = `<div class="vb-mode-row"${opts.fixed ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
-    + modes
+    + modes + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
-  return `<header class="vb-region-head"><div class="vb-region-label"><h2 id="${ids.heading}">${title}</h2>`
-    + `<span class="vb-region-count"></span><span class="vb-region-holders"></span></div>`
+  return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
+    + `<span class="vb-region-count"></span><span class="vb-region-holders"></span>${notes ? notePin(r.id) : ''}</div>`
     + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${settingsMenu(r)}</div>`
-    + `</header><p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
+    + `</header>${notes ? noteLine(r.id) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 
 /**

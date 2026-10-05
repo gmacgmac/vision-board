@@ -25,6 +25,9 @@ export type ModeFn = (input: ModeInput) => ModeOutput;
 export interface LayoutOptions {
   /** The person's placements, region-local (from the transcript). */
   pins?: Map<string, Point>;
+  /** The person's container places (3_FE_04, api.md 74): region id -> the frame's top-left in
+   *  board coordinates, in pin order (the last pinned wins an overlap). Packing only. */
+  regionPins?: Map<string, Point>;
   /** The person's mode choice per region (from the transcript). */
   modes?: Map<string, Mode>;
   /** Nodes not drawn (e.g. decided items when hidden). */

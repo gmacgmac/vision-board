@@ -131,14 +131,17 @@ test('validateAct: one unsent note per container, changed only by its writer bef
   assert.ok(validateAct(agent, l.state(), 'b')[0]!.includes('only the person'));
 });
 
-test('reads: show_container carries the latest note, shaped like a card note with region in place of n', () => {
+test('reads: show_container carries the container\'s notes, shaped like card notes, and its place', () => {
   const l = containers();
-  assert.equal(containerDetail(l.state(), 'b', 'r')!.note, undefined);
+  assert.deepEqual(containerDetail(l.state(), 'b', 'r')!.notes, []);
   const note = l.act({ action: 'comment', ...on, text: 'Split?' });
-  assert.deepEqual(containerDetail(l.state(), 'b', 'r')!.note, { seq: note, kind: 'comment', text: 'Split?', at: l.state().acts.at(-1)!.at, region: 'r' });
+  assert.deepEqual(containerDetail(l.state(), 'b', 'r')!.notes, [{ seq: note, kind: 'comment', text: 'Split?', at: l.state().acts.at(-1)!.at }]);
   l.act({ action: 'send', board: 'b' });
-  assert.equal(containerDetail(l.state(), 'b', 'r')!.note!.sent, true);
-  assert.equal(containerDetail(l.state(), 'b', 'q')!.note, undefined);
+  assert.equal(containerDetail(l.state(), 'b', 'r')!.notes[0]!.sent, true);
+  assert.deepEqual(containerDetail(l.state(), 'b', 'q')!.notes, []);
+  assert.equal(containerDetail(l.state(), 'b', 'r')!.pin, undefined);
+  l.act({ action: 'pin', ...on, x: 5, y: 6 });
+  assert.deepEqual(containerDetail(l.state(), 'b', 'r')!.pin, { x: 5, y: 6 });
 });
 
 test('check_responses: a container note reaches the container\'s holders, with its latest words; a removed one is gone', () => {
@@ -153,13 +156,13 @@ test('check_responses: a container note reaches the container\'s holders, with i
   assert.deepEqual(responsesAfter(l.state(), 'b', 0, A).map((e) => e.seq), [place]);
 });
 
-test('the numbered reply names a container note once, as "on container <title>"', () => {
+test('the numbered reply names a container note once, as On container "<title>"', () => {
   const l = containers();
   l.act({ action: 'comment', ...on, text: 'Split by plan?' });
   l.act({ action: 'comment', board: 'b', region: 'q', text: 'More on review?' });
   const s = l.state();
   const text = replyText(boardView(s, 'b'), boardState(s, 'b'));
-  assert.equal(text.split('\n').filter((x) => x.includes('on container')).length, 2);
-  assert.ok(text.includes('on container r comment: Split by plan?'), text);
-  assert.ok(text.includes('on container q comment: More on review?'), text);
+  assert.equal(text.split('\n').filter((x) => x.includes('On container')).length, 2);
+  assert.ok(text.includes('On container "r" comment: Split by plan?'), text);
+  assert.ok(text.includes('On container "q" comment: More on review?'), text);
 });

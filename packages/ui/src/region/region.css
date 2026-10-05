@@ -186,3 +186,56 @@ vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
 /* Zoomed out (N8): below FAR_K the stage carries data-zoom="far", where the 28 x 24 icons would draw
    under the 24px target size. The row hides like the cards' buttons, its popover and menu with it. */
 [data-zoom='far'] vb-region .vb-region-tools { visibility: hidden; }
+
+/* The grip (3_FE_04 ruling 5): the only handle that moves the container, at the start of the
+   title line. Always there for the keyboard and screen readers; its dots (a glyph, sized by the
+   text tokens, hidden from assistive tech) show on hover of the title line and on focus. The page
+   sets data-dragging on the frame while it is moved: only its transform changes, so no transition. */
+vb-region .vb-region-grip {
+  display: grid; place-items: center; flex: none; width: var(--vb-space-4); height: var(--vb-space-5); padding: 0;
+  border: 0; border-radius: var(--vb-radius-sm); background: none; color: var(--vb-ink-subtle); cursor: grab;
+}
+vb-region .vb-region-grip::before {
+  content: '\283F' / ''; font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font-mono); line-height: 1;
+  opacity: 0; transition: opacity var(--vb-motion-fast);
+}
+vb-region .vb-region-label:hover .vb-region-grip::before, vb-region .vb-region-grip:focus-visible::before,
+vb-region .vb-region-grip[data-look]::before, vb-region[data-dragging] .vb-region-grip::before { opacity: 1; }
+vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'] { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-region .vb-region-grip:active, vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
+vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 90%, var(--vb-line)); }
+
+/* Comment (ruling 3) is a .vb-mseg of the mode row and takes its states; while the container's
+   note bubble is open it stays drawn pressed, as the cog does with its menu. */
+vb-region[data-note-open] .vb-region-comment { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+
+/* The saved note's pin on the title line: the card note pin's numbered drop (node.css
+   .vb-note-pin), in the line rather than off a corner. Quiet once the note is sent. */
+vb-region .vb-region-note-pin {
+  display: grid; place-items: center; flex: none; min-width: var(--vb-space-5); height: var(--vb-space-5);
+  padding: 0 var(--vb-space-1); cursor: pointer; border: 0; border-radius: 50% 50% 50% var(--vb-radius-sm);
+  background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); box-shadow: var(--vb-shadow-card);
+  font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); transition: scale var(--vb-motion-fast);
+}
+vb-region .vb-region-note-pin[hidden] { display: none; }
+vb-region .vb-region-note-pin:hover, vb-region .vb-region-note-pin[aria-expanded='true'] { scale: 1.1; }
+vb-region .vb-region-note-pin:active { scale: 1; }
+vb-region .vb-region-note-pin:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-region[data-note-sent] .vb-region-note-pin {
+  background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
+}
+
+/* The short "Your note" line under the title, inside the frame's top room (REGION_HEAD), so it
+   moves no card. One line; a long note ellipsizes. A click on it reopens the bubble (the pin is
+   its keyboard path). */
+vb-region .vb-region-note {
+  position: absolute; left: calc(var(--vb-space-4) + var(--vb-space-2)); right: var(--vb-space-4); top: var(--vb-space-4);
+  margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+  font-size: var(--vb-text-xs); color: var(--vb-ink-subtle);
+}
+vb-region .vb-region-note[hidden] { display: none; }
+vb-region .vb-region-note:hover .vb-region-note-text { color: var(--vb-ink-strong); }
+vb-region .vb-region-note-who { font-weight: var(--vb-weight-medium); color: var(--vb-ink); }
+vb-region .vb-region-note-text { color: var(--vb-ink-subtle); }
+[data-zoom='far'] vb-region :is(.vb-region-grip, .vb-region-note-pin, .vb-region-note) { visibility: hidden; }

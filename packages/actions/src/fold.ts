@@ -7,9 +7,11 @@
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
-import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, nodesOf } from '../../format/src/index.ts';
+import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, nodesOf } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
+import type { Place } from './containers.ts';
+import { applyContainerAct, containerState } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
 import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
 import { movedFrom } from './moves.ts';
@@ -26,6 +28,10 @@ export interface BoardState {
   /** The person's card size picks (D-030); a node with none follows the agent or the auto tier. */
   sizes: Map<string, NodeSize>;
   moves: Map<string, string>;
+  /** Region id -> where the person put that container, in the order last dropped (api.md 74). */
+  regionPins: Map<string, Place>;
+  /** Region id -> the person's notes on that whole container, oldest first (api.md 73). */
+  regionNotes: Map<string, ItemNote[]>;
 }
 
 export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string }
@@ -79,6 +85,10 @@ export interface LedgerState extends DrawnState {
   logs: Map<number, ItemLog>;
   /** `seq` of a `comment` or `context` act -> its ask, so `note-edit` and `note-remove` find it. */
   asks: Map<number, Ask>;
+  /** board -> region -> the person's place for that container (containers.ts, api.md 74). */
+  regionPins: Map<string, Map<string, Place>>;
+  /** board -> region -> the notes on that whole container (containers.ts, api.md 73). */
+  regionLogs: Map<string, Map<string, ItemLog>>;
   /** Every person act, in order, for `responsesAfter`. */
   acts: ActEvent[];
 }
@@ -87,7 +97,7 @@ export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
   replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
-  logs: new Map(), asks: new Map(), acts: [],
+  logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [],
 });
 
 /** Fold every event, in order, into the current state. */
@@ -131,6 +141,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
 }
 
 function applyAct(s: LedgerState, e: ActEvent): void {
+  if (isContainerAct(e)) return applyContainerAct(s, e);
   switch (e.action) {
     case 'mode': {
       const regions = s.modes.get(e.board!) ?? new Map<string, Mode>();
@@ -203,6 +214,7 @@ export function sentNotes(s: LedgerState, board: string, notes: readonly ItemNot
 export function boardState(s: LedgerState, board: string): BoardState {
   const out: BoardState = {
     items: new Map(), pins: new Map(), modes: new Map(s.modes.get(board)), sizes: new Map(), moves: new Map(),
+    ...containerState(s, board),
   };
   for (const { n } of nodesOf(s, board)) {
     const item = s.items.get(n);

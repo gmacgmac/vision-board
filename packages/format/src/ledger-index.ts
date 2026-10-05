@@ -116,7 +116,9 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
     if (!regions) p.push(`board: unknown "${e.board}"`);
     // Later can be placed but takes no note: it is not a thread an agent drew (3_FE_04 ruling 2).
     else if (!regions.has(e.region!) && !(e.region === LATER_REGION && CONTAINER_PLACES.has(e.action)))
-      p.push(`region: unknown "${e.region}" on board "${e.board}"`);
+      p.push(e.region === LATER_REGION
+        ? `region: unknown "${LATER_REGION}" as a container to write on: Later takes no note, since no agent drew it; write the note on one of the board's containers`
+        : `region: unknown "${e.region}" on board "${e.board}"`);
     return;
   }
   switch (e.action) {

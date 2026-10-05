@@ -36,6 +36,11 @@ export function replyText(view: View, s: BoardState): string {
   for (const g of groups.values())
     lines.push({ at: Math.min(...g.nodes!), text: `${g.nodes!.join(', ')} ${ACTIONS[g.kind].reply}: ${g.text}` });
   lines.sort((a, b) => a.at - b.at);
+  // A note on a whole container reads once, by the container's title, after the items (api.md 76).
+  for (const r of view.regions) {
+    const notes = s.regionNotes.get(r.id);
+    if (notes?.length) lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
+  }
   const head = `Board "${view.title}" (v${view.version})`;
   const tail = open.length ? [`Still open: ${open.join(', ')}`] : ['Nothing left open.'];
   return [head, ...lines.map((l) => l.text), ...tail].join('\n');

@@ -4,14 +4,14 @@
   "tag": "vb-note-bubble",
   "description": "A non-modal bubble beside one card where the person writes, edits or removes the card's note, or reads a sent one. It points at its card with an arrow in the card's colour, draws above the board and moves nothing (README picks 5, 11-12; mockup 05 section 1).",
   "files": {
-    "core": "note-bubble-core.ts (placeBubble, bubbleView, saveIntent; no DOM)",
+    "core": "note-bubble-core.ts (placeBubble, titleAnchor, bubbleView, saveIntent; no DOM)",
     "template": "note-bubble-template.ts (noteBubbleTemplate: the only place the markup is built)",
     "element": "vb-note-bubble.ts (defineVbNoteBubble, VbNoteBubbleElement; light DOM)",
     "styles": "note-bubble.css (scoped by the tag; tokens only)"
   },
-  "states": ["new", "edit", "sent", "saving", "error", "right", "left", "below", "focus"],
+  "states": ["new", "edit", "sent", "saving", "error", "right", "left", "below", "focus", "container"],
   "parts": {
-    "vb-nb-head": "the card's number chip (vb-nb-num) and the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', or 'Note 2 on 42, sent'",
+    "vb-nb-head": "the card's number chip (vb-nb-num) and the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', or 'Note 2 on 42, sent'; on a whole container no chip and 'Note on container Review' (3_FE_04 ruling 3)",
     "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; a sent note shows vb-nb-read (Markdown) instead",
     "vb-nb-error": "role=alert, under the text: why the last save did not go through",
     "vb-nb-row": "Remove (edit only), the key hint (vb-nb-hint), Cancel or Close, and Add note or Save (vb-nb-primary)"
@@ -22,11 +22,12 @@
     "data-mode": "new | edit | sent (set by show)",
     "data-side": "right | left | below: where it opened beside the card (set by place)",
     "data-phase": "idle | saving | error (set by setPhase); aria-busy while saving",
-    "--kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM)",
+    "--kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM); on a whole container, the container's line colour (show's `line`)",
+    "data-on": "container: the bubble is about a container's title line, placed from titleAnchor; its edge follows the frame's line, fainter at rest (set by show)",
     "--arrow": "where the arrow meets the bubble's edge (set by place)"
   },
   "methods": {
-    "show(v: BubbleView, card: { kind, number })": "draws it from noteBubbleTemplate",
+    "show(v: BubbleView, card: { kind, number, line? })": "draws it from noteBubbleTemplate; `line` (a container's regionColour) in place of kind and number for a note on a whole container",
     "place(p: Placement)": "left, top, data-side and --arrow from placeBubble, in its offset parent's pixels",
     "setPhase(phase, message?)": "saving disables the buttons and reads 'Saving…'; error shows the message and keeps the text",
     "focusText()": "focus into the text with the caret at the end; a sent note's first button"

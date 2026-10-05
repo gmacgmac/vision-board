@@ -24,6 +24,13 @@ export interface VbRegionElement extends HTMLElement {
   update(st: RegionState): void;
   /** Open the layout popover (`mode` highlighted) or the settings menu; the gallery's samples. */
   showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void;
+  /** Mark the container's note bubble open or closed: the pin's aria-expanded and
+   *  `data-note-open` on the frame (3_FE_04 ruling 3). The page calls it as it opens or closes
+   *  the bubble. */
+  setNoteOpen(open: boolean): void;
+  /** The title line, whose box the page measures and passes through `titleAnchor` to place the
+   *  container's note bubble. */
+  titleLine(): HTMLElement;
 }
 
 /** Defines `vb-region` once; a second call is a no-op. */
@@ -43,6 +50,7 @@ export function defineVbRegion(): void {
       this.setAttribute('aria-labelledby', regionIds(r.id).heading);
       this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
+      this.setNoteOpen(this.hasAttribute('data-note-open'));
       this.holdersKey = '';
     }
 
@@ -57,6 +65,11 @@ export function defineVbRegion(): void {
       reset.setAttribute('aria-disabled', String(!st.canReset));
       if (st.canReset) reset.removeAttribute('aria-describedby');
       else reset.setAttribute('aria-describedby', regionIds(this.dataset.region!).hint);
+      const back = this.piece('[data-put-back]');
+      back.setAttribute('aria-disabled', String(!st.canPutBack));
+      if (st.canPutBack) back.removeAttribute('aria-describedby');
+      else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
+      this.applyNote(st.note);
       this.piece('.vb-region-empty').hidden = !st.showEmpty;
       const key = JSON.stringify(st.holders ?? []);
       if (key !== this.holdersKey) {
@@ -67,6 +80,33 @@ export function defineVbRegion(): void {
 
     showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void {
       this.row.open(what, opts);
+    }
+
+    setNoteOpen(open: boolean): void {
+      this.toggleAttribute('data-note-open', open);
+      this.querySelector('.vb-region-note-pin')?.setAttribute('aria-expanded', String(open));
+    }
+
+    titleLine(): HTMLElement {
+      return this.piece('.vb-region-head');
+    }
+
+    /** The pin and the "Your note" line; a fixed frame (Later) has neither. */
+    private applyNote(note: RegionState['note']): void {
+      const pin = this.querySelector<HTMLButtonElement>('.vb-region-note-pin');
+      const line = this.querySelector<HTMLElement>('p.vb-region-note');
+      if (!pin || !line) return;
+      pin.hidden = line.hidden = !note;
+      this.toggleAttribute('data-note-sent', note?.sent === true);
+      if (!note) {
+        pin.removeAttribute('aria-label');
+        pin.textContent = '';
+        return;
+      }
+      pin.setAttribute('aria-label', note.label);
+      pin.textContent = String(note.index);
+      this.piece('.vb-region-note-who').textContent = note.who;
+      this.piece('.vb-region-note-text').textContent = note.text;
     }
 
     private piece(selector: string): HTMLElement {
