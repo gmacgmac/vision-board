@@ -168,3 +168,23 @@ override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.h
    folded like `pin`. The tier is a word, never a width, so no coordinates or pixel sizes enter
    the ledger.
 7. On by default (maintainer, 2026-10-05, chat 666); `?flags=-nodeSize` turns it off.
+
+## Notes beside cards (2e_FE_01)
+
+The person's note on a card is written in a bubble beside the card, never in a modal. The rules
+are the task's rulings (`cortex-tasks/board/2026-10-01_board-v3/2e_FE_01_note-bubbles.md`); the
+record is `api.md` 58-61.
+
+1. **The bubble** is its own pattern, `packages/ui/src/note-bubble/` (`<vb-note-bubble>`):
+   `placeBubble` puts it on the card's right, else the left, else below, in stage pixels, so it
+   draws above the board at any zoom and moves nothing; `bubbleView` says what it reads in each
+   mode (`new`, `edit`, `sent`); the element emits `vb-note` and never writes anything itself.
+2. **The page** has one bubble, owned by `apps/board/src/board/notes.ts`: C, M, the footer
+   buttons, the pin and a click on a note open it; it follows its card through
+   `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
+3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
+   `.vb-note-pin`, hanging off the top-right corner) and the "Your note" block (`notesMarkup`,
+   latest first, `data-sent` notes grey).
+4. **Zoomed out.** The `hideControlsZoomedOut` flag (off) is the only thing that sets the stage's
+   `data-zoom="far"` below `FAR_K` (`viewport.ts`); with it off every control shows at every
+   zoom (tracker N13).

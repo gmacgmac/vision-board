@@ -6,6 +6,7 @@ import path from 'node:path';
 import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { ProblemError } from '../server/problem.ts';
+import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
 
 // New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
 const AGENT: Caller = { by: 'agent', agent: 'a-kiro0001' };
@@ -64,7 +65,7 @@ test('append: stamps every event and creates .visionboard/ on first write', () =
   const events = lines.map((l) => JSON.parse(l));
   assert.deepEqual(events.map((e) => e.seq), [1, 2, 3]);
   for (const e of events) {
-    assert.equal(e.v, 3);
+    assert.equal(e.v, LEDGER_FORMAT);
     assert.equal(e.by, 'agent');
     assert.equal(e.agent, 'a-kiro0001');
     assert.ok(!Number.isNaN(Date.parse(e.at)));
@@ -118,7 +119,7 @@ test('the body cannot set by, seq, at, v or agent', () => {
   const e = ledger.append(
     { type: 'reply', n: 1, text: 'Noted.', by: 'person', seq: 99, at: '2000-01-01T00:00:00Z', v: 1, agent: 'someone-else' },
     AGENT);
-  assert.deepEqual([e.by, e.seq, e.v, e.agent], ['agent', 4, 3, 'a-kiro0001']);
+  assert.deepEqual([e.by, e.seq, e.v, e.agent], ['agent', 4, LEDGER_FORMAT, 'a-kiro0001']);
   assert.notEqual(e.at, '2000-01-01T00:00:00Z');
   // A person cannot pass as an agent by naming one in the body.
   const act = ledger.append({ type: 'act', action: 'ack', n: 1, ver: 1, by: 'agent', agent: 'a-kiro0001' }, PERSON);

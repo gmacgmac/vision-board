@@ -1,0 +1,79 @@
+/* Note bubble pattern styles (<vb-note-bubble>, packages/ui/src/note-bubble). Scoped by the tag,
+   light DOM; tokens only. Mockup 05 section 1 `.ovl` with `spec.css`: a 300px bubble whose 1px
+   border and arrow wear the card's colour (--kind, set by the element), faint at rest and full
+   while you type (README pick 12). The page places it beside its card in stage pixels, above the
+   board, so it never covers the card, moves nothing and stays readable at any zoom (picks 5, 11). */
+
+vb-note-bubble {
+  --kind: var(--vb-ink-subtle);
+  --edge: color-mix(in srgb, var(--kind) 65%, var(--vb-line));
+  --arrow: 22px;
+  position: absolute; z-index: 30; left: 0; top: 0;
+  display: grid; gap: var(--vb-space-2); width: 300px; padding: var(--vb-space-3);
+  border: 1px solid var(--edge); border-radius: 14px; background: var(--vb-surface-raised);
+  box-shadow: var(--vb-shadow-lift); color: var(--vb-ink); font-size: var(--vb-text-md);
+  cursor: default; user-select: text;
+}
+vb-note-bubble[hidden] { display: none; }
+/* Full colour while you type in it; data-typing draws that look for a gallery sample. */
+vb-note-bubble:is(:focus-within, [data-typing]) { --edge: var(--kind); }
+
+/* The arrow: a square turned 45deg, bordered on the two sides that face the card. */
+vb-note-bubble::before {
+  content: ''; position: absolute; width: 12px; height: 12px; rotate: 45deg; background: var(--vb-surface-raised);
+}
+vb-note-bubble[data-side='right']::before {
+  left: -7px; top: calc(var(--arrow) - 6px); border-left: 1px solid var(--edge); border-bottom: 1px solid var(--edge);
+}
+vb-note-bubble[data-side='left']::before {
+  right: -7px; top: calc(var(--arrow) - 6px); border-right: 1px solid var(--edge); border-top: 1px solid var(--edge);
+}
+/* Below the card (05 draws none): the arrow sits on the top edge and points up at the card. */
+vb-note-bubble[data-side='below']::before {
+  top: -7px; left: calc(var(--arrow) - 6px); border-left: 1px solid var(--edge); border-top: 1px solid var(--edge);
+}
+
+vb-note-bubble .vb-nb-head {
+  display: flex; align-items: center; gap: var(--vb-space-2); font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
+}
+vb-note-bubble .vb-nb-title { flex: 1; min-width: 0; color: var(--vb-ink); font-weight: var(--vb-weight-medium); }
+/* The card's number chip (05 `.nref`). */
+vb-note-bubble .vb-nb-num {
+  display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 20px; padding: 0 6px;
+  border: 1px solid color-mix(in srgb, var(--kind) 50%, var(--vb-line)); border-radius: var(--vb-radius-sm);
+  background: var(--vb-surface-card); color: var(--vb-ink-strong);
+  font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font-mono); font-variant-numeric: tabular-nums;
+}
+
+vb-note-bubble .vb-nb-text {
+  min-height: 70px; max-height: 240px; padding: var(--vb-space-2) 10px; resize: vertical;
+  border: 1px solid var(--vb-line-strong); border-radius: 10px; background: var(--vb-surface-card);
+  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-text-md); line-height: 1.45; outline: 0;
+}
+vb-note-bubble .vb-nb-text:focus { border-color: var(--vb-accent); }
+vb-note-bubble .vb-nb-text::placeholder { color: var(--vb-ink-subtle); }
+vb-note-bubble .vb-nb-read { display: grid; gap: var(--vb-space-2); max-height: 240px; overflow: auto; line-height: 1.45; }
+vb-note-bubble .vb-nb-error { margin: 0; color: var(--vb-state-drop); font-size: var(--vb-text-sm); }
+vb-note-bubble .vb-nb-error[hidden] { display: none; }
+
+/* Remove, the hint and Cancel / Save on one row; the hint wraps away first when Remove is there. */
+vb-note-bubble .vb-nb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+vb-note-bubble .vb-nb-hint { flex: 1 1 0; min-width: 0; color: var(--vb-ink-subtle); font-size: var(--vb-text-xs); line-height: 1.8; }
+vb-note-bubble[data-mode='edit'] .vb-nb-hint { order: -1; flex-basis: 100%; }
+vb-note-bubble kbd {
+  padding: 1px 5px; border: 1px solid var(--vb-line-strong); border-radius: 4px;
+  color: var(--vb-ink); font: var(--vb-text-xs) var(--vb-font-mono);
+}
+vb-note-bubble .vb-nb-btn {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 var(--vb-space-3); cursor: pointer;
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
+  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+}
+vb-note-bubble .vb-nb-btn:hover { background: var(--vb-surface-sunken); }
+vb-note-bubble .vb-nb-btn:active { transform: translateY(1px); }
+vb-note-bubble .vb-nb-btn:disabled { opacity: 0.5; cursor: progress; }
+vb-note-bubble .vb-nb-btn[data-note-do='remove'] { margin-right: auto; color: var(--vb-state-drop); }
+vb-note-bubble .vb-nb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
+vb-note-bubble .vb-nb-primary:hover { background: var(--vb-accent-fill-hover); }
+vb-note-bubble .vb-nb-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-note-bubble[data-phase='saving'] { cursor: progress; }

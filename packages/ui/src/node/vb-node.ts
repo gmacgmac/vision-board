@@ -6,8 +6,7 @@
 import type { ActionId, ViewNode } from '../../../format/src/index.ts';
 import type { NodeState } from './node-core.ts';
 import type { NodeTemplateOptions } from './node-template.ts';
-import { nodeTemplate } from './node-template.ts';
-import { renderMarkdown } from '../markdown/render.ts';
+import { nodeTemplate, notesMarkup } from './node-template.ts';
 
 export const VB_NODE_TAG = 'vb-node';
 
@@ -25,7 +24,7 @@ export function defineVbNode(): void {
   if (customElements.get(VB_NODE_TAG)) return;
 
   class VbNode extends HTMLElement implements VbNodeElement {
-    /** The note source last drawn, so an unchanged note is not rebuilt (a focused link in it keeps focus). */
+    /** The notes last drawn, so unchanged notes are not rebuilt (a focused link in one keeps focus). */
     private noteSrc: string | undefined;
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
@@ -49,14 +48,30 @@ export function defineVbNode(): void {
       // A non-item has no footer, so no status word.
       const status = this.piece('status');
       if (status) status.textContent = st.statusWord;
-      this.piece('notes')!.hidden = st.note === undefined;
-      if (st.note !== undefined) {
-        this.piece('note-who')!.textContent = st.note.who;
-        // The note is Markdown (D-023); renderMarkdown escapes every text run, so this is safe markup.
-        if (this.noteSrc !== st.note.text) this.piece('note-text')!.innerHTML = renderMarkdown(st.note.text);
-        this.noteSrc = st.note.text;
-      }
+      this.updateNotes(st);
       this.updateSize(st);
+    }
+
+    /** The note pin and the "Your note" block (2e_FE_01 ruling 7). */
+    private updateNotes(st: NodeState): void {
+      const block = this.piece('notes')!;
+      const pin = this.querySelector<HTMLButtonElement>('.vb-note-pin');
+      const v = st.notes;
+      block.hidden = v === undefined;
+      this.toggleAttribute('data-noted', v !== undefined);
+      if (pin) {
+        pin.hidden = v === undefined;
+        pin.textContent = v ? String(v.pin.index) : '';
+        pin.toggleAttribute('data-sent', v?.pin.sent ?? false);
+        if (v) {
+          pin.dataset.note = String(v.pin.seq);
+          pin.setAttribute('aria-label', v.pin.label);
+        }
+      }
+      // Markdown (D-023): notesMarkup escapes every text run, so this is safe markup.
+      const src = v ? JSON.stringify(v) : '';
+      if (this.noteSrc !== src) block.innerHTML = v ? notesMarkup(v) : '';
+      this.noteSrc = src;
     }
 
     /** data-size sets the width (node.css), so the page applies it before it measures the card. */

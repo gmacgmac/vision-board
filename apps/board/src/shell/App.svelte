@@ -1,5 +1,5 @@
 <!-- The page shell: toolbar, the requests strip (agentAccess flag), stage, reply panel, key help,
-     toast and the note and confirm dialogs. The stage's contents are drawn by the framework-free
+     toast and the confirm dialog. Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->
 <script lang="ts">
   import { onMount } from 'svelte';
@@ -7,7 +7,6 @@
   import { shell } from './shell.svelte.ts';
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
-  import NoteDialog from './NoteDialog.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
   import AccessRequests from './AccessRequests.svelte';
 
@@ -58,5 +57,4 @@
   {shell.toast?.text ?? ''}
 </div>
 
-<NoteDialog />
 <ConfirmDialog />

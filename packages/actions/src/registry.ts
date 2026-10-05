@@ -48,6 +48,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   revoke: { id: 'revoke', label: 'Remove access', ...decision, onItem: false },
   size: { id: 'size', label: 'Card size', ...person, onItem: false },
   send: { id: 'send', label: 'Send to agent', ...person, onItem: false },
+  // Ledger v4 (api.md 58-61): change a note not yet sent, named by the act that made it. No status
+  // of their own; the item's status is worked out again from its notes (notes.ts).
+  'note-edit': { id: 'note-edit', label: 'Edit note', ...person, onItem: true, text: 'required' },
+  'note-remove': { id: 'note-remove', label: 'Remove note', ...person, onItem: true },
 };
 
 /** The review buttons an item offers. */

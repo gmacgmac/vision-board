@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-05 (ledger v4, notes)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -47,7 +47,7 @@ packages/format/schema/openapi.json               every operation, input, output
 
 ## Schemas
 
-5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/3/<file>`.
+5. **Identity.** Each ledger schema's `$id` is `https://vision-board.invalid/schema/ledger/4/<file>`.
    `.invalid` is reserved (RFC 2606), so it is plainly a name and is never fetched. Every `$ref`
    uses the target's `$id`. API body schemas live under `.../schema/api/<file>` and version with
    `openapi.json` `info.version`, not with the ledger.
@@ -83,10 +83,10 @@ packages/format/schema/openapi.json               every operation, input, output
     - limits: node and board title 200, region title 80, node body 8000, text and reason 4000,
       summary 2000, link label 80, agent label 80, tags 12 of 40, lanes 12 of 40, columns 1-12,
       sources 20 of 500, propose source 500, park bundle fields 4000, key 64, person 80
-11. **Versions.** `LEDGER_FORMAT` becomes 3. Every change to a ledger schema bumps it and the
-    `$id` path. Readers accept every `v` they know (2 and 3); v3 only adds, so v2 lines stay
-    valid. On a v2 line `agent` is any non-blank name (the fixtures say `kiro`); on v3 it is an
-    agent id (`if`/`then` on `v`).
+11. **Versions.** `LEDGER_FORMAT` is 4 (v3 below, v4 in 58). Every change to a ledger schema
+    bumps it and the `$id` path. Readers accept every `v` they know (2, 3 and 4); each format only
+    adds, so older lines stay valid. On a v2 line `agent` is any non-blank name (the fixtures say
+    `kiro`); from v3 it is an agent id (`if`/`then` on `v`).
 12. **Where ajv runs.** `Ajv2020`, strict mode on, `discriminator: true`, only in tests and in the
     server's I/O layer (`apps/board/server`). Never from a front door the page imports, so it never
     reaches the page bundle (rule 15).
@@ -309,3 +309,29 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 57. Add or extend the schema, then the operation in `openapi.json`, then run the generators, then
     write the handler and its test. The drift tests tell you what is still missing.
+
+## Ledger v4 additions: notes beside cards (2e_FE_01)
+
+58. `LEDGER_FORMAT` becomes 4 and every ledger `$id` moves to `.../schema/ledger/4/`; `openapi.json`
+    `info.version` becomes 1.1.0. Only adds: v2 and v3 lines stay valid.
+59. **A note** is the person's `comment`, or a `context` with `text`. It is named for ever by that
+    act's `seq`. A card holds at most one note not yet sent: a second `comment` or `context` with
+    text on it is refused (`invalid`, pointer `/n`) until a `send` on its board comes after the
+    first. A `context` without words asks for context but is not a note (Reopen undoes it).
+60. **Two person-only acts change a note not yet sent:** `note-edit { n, note, text, kind? }`
+    replaces its words and, with `kind` (`comment` or `context`), what it asks for;
+    `note-remove { n, note }` takes it back. `note` is the `seq` of the act that made it; neither
+    names a version. The server refuses either (`invalid`, pointer `/note`) when the note was sent
+    (a `send` on its board after it), was removed, is on another node, or is another person's.
+    A sent note is history and is never changed; removing one from history is not built (open with
+    the maintainer, chat 740).
+61. **What every read shows** is a note's latest words and kind, under its own `seq`; a removed
+    note shows nowhere. The item's status is worked out as if a removed note had never been made,
+    and an edit that sets `kind` counts as a fresh press at the edit. What the agent owes (36) is
+    the latest standing ask, still named by the note's `seq`: an edit never makes a second one, and
+    a `reply` whose `to` is that `seq` answers it. `check_responses` reports a note as the act that
+    made it, with its latest words and kind, and again when it changed after `after`; a
+    `note-edit` never shows on its own, and a `note-remove` shows only for a note made at or before
+    `after` (one the agent may have read). In `get_board`, `show_node` and `show_container` each
+    note carries `seq`, and `sent: true` once a Send came after it. `read_ledger` returns the raw
+    lines.

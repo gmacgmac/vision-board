@@ -10,8 +10,9 @@ const node = (f: Partial<ViewNode>): ViewNode =>
 const board = (f: Partial<BoardState> = {}): BoardState =>
   ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), ...f });
 
-const note = (text: string, kind: ItemNote['kind'] = 'comment'): ItemNote =>
-  ({ kind, text, at: '2026-10-04T00:00:00Z' });
+let seq = 10;
+const note = (text: string, kind: ItemNote['kind'] = 'comment', sent = false): ItemNote =>
+  ({ seq: ++seq, kind, text, at: '2026-10-04T00:00:00Z', ...(sent && { sent: true as const }) });
 
 const withItem = (status: ItemStatus, notes: ItemNote[] = []): BoardState =>
   board({ items: new Map([['1', { status, notes }]]) });
@@ -54,7 +55,7 @@ test('nodeState: an item with no response is open, unpressed and has no note', (
   const st = nodeState(node({ n: 1 }), board());
   assert.equal(st.status, 'open');
   assert.equal(st.statusWord, 'Open');
-  assert.equal(st.note, undefined);
+  assert.equal(st.notes, undefined);
   assert.equal(st.pinned, false);
   assert.deepEqual(Object.keys(st.pressed), ['ack', 'drop', 'comment', 'context', 'later']);
   assert.ok(Object.values(st.pressed).every((v) => v === false));
@@ -77,14 +78,26 @@ test('nodeState: pinned follows the pins map', () => {
   assert.equal(nodeState(node({ id: '2', n: 2 }), board({ pins })).pinned, false);
 });
 
-test('nodeState: one note is shown under "Your note", with no count', () =>
-  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [note('Looks right')])).note,
-    { who: 'Your note', text: 'Looks right' }));
+// 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block, latest first.
+test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edits it', () => {
+  const one = note('Looks right');
+  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
+    entries: [{ seq: one.seq, index: 1, who: 'Your note 1', text: 'Looks right', sent: false }],
+    pin: { seq: one.seq, index: 1, sent: false, label: 'Note 1 on item 1. Edit it' },
+  });
+});
 
-test('nodeState: three notes show the count and the last note', () =>
-  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented',
-    [note('one'), note('two'), note('three')])).note, { who: '3 notes · Your note', text: 'three' }));
+test('nodeState: three notes, two sent: the count, the latest first, sent ones marked Sent', () => {
+  const v = nodeState(node({ n: 4 }), withItem('commented',
+    [note('one', 'comment', true), note('two', 'context', true), note('three')])).notes!;
+  assert.equal(v.count, '3 notes');
+  assert.deepEqual(v.entries.map((x) => [x.index, x.who, x.text, x.sent]), [
+    [3, 'Your note 3', 'three', false], [2, 'More context 2 · Sent', 'two', true], [1, 'Your note 1 · Sent', 'one', true]]);
+  assert.deepEqual([v.pin.index, v.pin.sent], [3, false]);
+});
 
-test('nodeState: a context note is shown under "You asked for more context"', () =>
-  assert.deepEqual(nodeState(node({ n: 1 }), withItem('context', [note('plain terms', 'context')])).note,
-    { who: 'You asked for more context', text: 'plain terms' }));
+test('nodeState: when every note is sent, the pin shows the latest and only reads it', () => {
+  const v = nodeState(node({ n: 7 }), withItem('context', [note('plain terms', 'context', true)])).notes!;
+  assert.deepEqual(v.pin, { seq: v.entries[0]!.seq, index: 1, sent: true, label: 'Note 1 on item 7, sent. Show it' });
+  assert.equal(v.entries[0]!.who, 'More context 1 · Sent');
+});

@@ -6,6 +6,7 @@ import '../styles/access.css';
 import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
+import '../../../../packages/ui/src/note-bubble/note-bubble.css';
 import './gallery.css';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
@@ -15,6 +16,7 @@ import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
+import { noteBubbleSamples } from './note-bubble-section.ts';
 import { regionSamples } from './region-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
@@ -35,6 +37,7 @@ interface PatternInfo {
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   markdown: markdownSamples,
   node: nodeSamples,
+  'note-bubble': noteBubbleSamples,
   region: regionSamples,
 };
 

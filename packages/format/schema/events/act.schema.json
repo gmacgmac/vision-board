@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json",
   "title": "Act event",
   "description": "One action from the action registry. `rules` says which fields each action needs; whether it is person-only lives in packages/actions.",
   "$comment": "Was: rule 8; api.md 9",
@@ -9,19 +9,21 @@
       "type": "object",
       "required": ["action"],
       "properties": {
-        "action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send"], "description": "Which action to take, from the action registry."},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the action is about."},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context` and `deny`."},
-        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted."},
+        "action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send", "note-edit", "note-remove"], "description": "Which action to take, from the action registry."},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the action is about."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context`, `deny` and `note-edit` (the note's new text)."},
+        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted."},
         "x": {"type": "number", "description": "Where to place the node across, for `pin`."},
         "y": {"type": "number", "description": "Where to place the node down, for `pin`."},
-        "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `revoke` and `send`."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode` and `revoke`."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/mode", "description": "The layout mode to set, for `mode`."},
-        "request": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
-        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`."},
-        "size": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."}
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `revoke` and `send`."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode` and `revoke`."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/mode", "description": "The layout mode to set, for `mode`."},
+        "request": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
+        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`."},
+        "size": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."},
+        "note": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/seq", "description": "The `seq` of the `comment` or `context` act that made the note, for `note-edit` and `note-remove`."},
+        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/noteKind", "description": "What the edited note now asks for, for `note-edit`: `comment` or `context`. Left out, the note keeps its kind."}
       }
     },
     "sent": {
@@ -29,8 +31,8 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/rules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/rules"}
       ],
       "unevaluatedProperties": false
     },
@@ -39,18 +41,18 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/rules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/rules"}
       ],
       "unevaluatedProperties": false
     },
     "rules": {
       "description": "What each action needs.",
-      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 16",
+      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 16, 58-61",
       "type": "object",
       "allOf": [
         {
@@ -69,7 +71,7 @@
           "if": {
             "type": "object",
             "required": ["action"],
-            "properties": {"action": {"enum": ["pin", "unpin", "size"]}}
+            "properties": {"action": {"enum": ["pin", "unpin", "size", "note-edit", "note-remove"]}}
           },
           "then": {"type": "object", "required": ["n"]}
         },
@@ -100,6 +102,18 @@
         {
           "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "send"}}},
           "then": {"type": "object", "required": ["board"]}
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": ["action"],
+            "properties": {"action": {"enum": ["note-edit", "note-remove"]}}
+          },
+          "then": {"type": "object", "required": ["note"]}
+        },
+        {
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "note-edit"}}},
+          "then": {"type": "object", "required": ["text"]}
         },
         {
           "if": {

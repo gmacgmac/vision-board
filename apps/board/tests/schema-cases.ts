@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v3 line for every event type and
+// Ledger lines for the schema tests (schema.test.ts): a valid v4 line for every event type and
 // action, and broken lines that each break one rule of api.md 5-11 and 14-18.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 3, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 3, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 4, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 4, seq: 1, at: AT, by: 'person' };
 export const VALID: Record<string, Rec> = {
   board: { ...AGENT, type: 'board', board: 'b', title: 'Pricing', summary: 'From chat.', key: 'board-1' },
   region: { ...AGENT, type: 'region', board: 'b', region: { id: 'plan', title: 'Plan', mode: 'lanes', lanes: ['Now', 'Later'] } },
@@ -31,6 +31,7 @@ export const ACTS: Record<string, Rec> = {
   unpin: { n: 1 }, mode: { board: 'b', region: 'plan', mode: 'grid' }, grant: { request: 5 },
   deny: { request: 5, text: 'Not this one.' }, revoke: { holder: 'a-abcd1234', board: 'b', region: 'plan' },
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
+  'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -79,7 +80,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v4', patch(V.board!, 'v', 4)],
+  ['unknown format v5', patch(V.board!, 'v', 5)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -128,6 +129,13 @@ export const BROKEN: [string, Rec][] = [
   ['size xl', act('size', { size: 'xl' })],
   ['send without board', act('send', { board: undefined })],
   ['send naming a node', act('send', { n: 1 })],
+  ['note-edit without note', act('note-edit', { note: undefined })],
+  ['note-edit without text', act('note-edit', { text: undefined })],
+  ['note-edit with blank text', act('note-edit', { text: '  ' })],
+  ['note-edit without n', act('note-edit', { n: undefined })],
+  ['note-edit with kind ack', act('note-edit', { kind: 'ack' })],
+  ['note-remove without note', act('note-remove', { note: undefined })],
+  ['note-remove with note 0', act('note-remove', { note: 0 })],
   ['join written by a person', { ...V.join!, by: 'person' }],
   ['grant-request written by a person', { ...V['grant-request']!, by: 'person' }],
   ['node written by a person', { ...V.node!, by: 'person' }],

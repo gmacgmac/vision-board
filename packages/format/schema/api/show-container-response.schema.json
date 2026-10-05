@@ -16,17 +16,17 @@
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
     "board": {
-      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id",
       "description": "The board the container is on."
     },
     "region": {
-      "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/region",
+      "$ref": "https://vision-board.invalid/schema/ledger/4/events/region.schema.json#/$defs/region",
       "description": "The container itself: its id, title, mode and lanes."
     },
     "holders": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/agentId"
       },
       "description": "Empty for a region written by a v2 line",
       "$comment": "Was: api.md 23"

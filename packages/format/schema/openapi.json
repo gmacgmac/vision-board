@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -110,6 +110,7 @@
                         "status": "commented",
                         "notes": [
                           {
+                            "seq": 50,
                             "kind": "comment",
                             "text": "Rule 6 needs an example.",
                             "at": "2026-10-05T09:12:00Z"
@@ -206,6 +207,7 @@
                   ],
                   "notes": [
                     {
+                      "seq": 50,
                       "kind": "comment",
                       "text": "Rule 6 needs an example.",
                       "at": "2026-10-05T09:12:00Z"
@@ -342,6 +344,7 @@
                       ],
                       "notes": [
                         {
+                          "seq": 50,
                           "kind": "comment",
                           "text": "Rule 6 needs an example.",
                           "at": "2026-10-05T09:12:00Z"
@@ -450,7 +453,7 @@
         "operationId": "check_responses",
         "x-agent": true,
         "summary": "Wait for the person's answers",
-        "description": "Read what the person did on a board after a ledger position, including the answers to your grant requests. Pass `after`, the `head` you last saw (0 for everything), and optionally `limit` and `wait` (0-60 seconds) to hold the call until the person presses Send or answers a request. A wait that times out returns `{ responses: [], head }`. The server keeps no state for you: pass back the `head` you got. `more: true` means read again at once. With your Bearer secret the answer covers only the containers you hold.",
+        "description": "Read what the person did on a board after a ledger position, including the answers to your grant requests. Pass `after`, the `head` you last saw (0 for everything), and optionally `limit` and `wait` (0-60 seconds) to hold the call until the person presses Send or answers a request. A wait that times out returns `{ responses: [], head }`. A note is reported as the `comment` or `context` act that made it, carrying the note's latest text and kind, again whenever the person edits it; a note removed before you could see it never appears, and a `note-remove` appears only for a note you may already have read. The server keeps no state for you: pass back the `head` you got. `more: true` means read again at once. With your Bearer secret the answer covers only the containers you hold.",
         "security": [
           {},
           {
@@ -963,7 +966,7 @@
         "operationId": "act",
         "x-agent": false,
         "summary": "Record one action by the person",
-        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, save for later, reopen, move, reset, change layout, resize, grant or deny a request, revoke, or send. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. It returns the stored ledger line.",
+        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, edit or remove a note not yet sent, save for later, reopen, move, reset, change layout, resize, grant or deny a request, revoke, or send. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -1238,40 +1241,40 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-change.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/3/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/4/events/grant-request.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -1325,7 +1328,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -1334,7 +1337,7 @@
         "description": "The node number.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/nodeNumber"
         }
       },
       "regionPath": {
@@ -1343,7 +1346,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -1352,7 +1355,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
         }
       },
       "after": {

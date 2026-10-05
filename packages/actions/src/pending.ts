@@ -81,6 +81,25 @@ function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
 /** The person's acts on `board` after `seq` `after`, oldest first (`check_responses`). With
  * `agent`, only those that concern it, including the answers to its grant requests. */
 export function responsesAfter(s: LedgerState, board: string, after: number, agent?: string): ActEvent[] {
-  return s.acts.filter((e) =>
-    e.seq > after && boardOf(s, e) === board && (agent === undefined || concerns(s, e, agent)));
+  const out: ActEvent[] = [];
+  for (const e of s.acts) {
+    if (boardOf(s, e) !== board || (agent !== undefined && !concerns(s, e, agent))) continue;
+    const shown = asReported(s, e, after);
+    if (shown) out.push(shown);
+  }
+  return out;
+}
+
+/** How an act reads to an agent whose cursor is `after` (api.md 61). A note is its `comment` or
+ * `context` act with the note's latest words and kind, shown again when it changed after the
+ * cursor; a removed note is gone. Edits are folded into the note, so they never show on their
+ * own; a removal shows only when the note itself is at or before the cursor (the agent may have
+ * read it). Anything else shows as written, once. */
+function asReported(s: LedgerState, e: ActEvent, after: number): ActEvent | undefined {
+  if (e.action === 'note-edit') return undefined;
+  if (e.action === 'note-remove') return e.seq > after && e.note! <= after ? e : undefined;
+  const a = e.action === 'comment' || e.action === 'context' ? s.asks.get(e.seq) : undefined;
+  if (!a) return e.seq > after ? e : undefined;
+  if (a.removed !== undefined || (e.seq <= after && (a.changed ?? 0) <= after)) return undefined;
+  return a.changed === undefined ? e : { ...e, action: a.kind, ...(a.text !== undefined && { text: a.text }) };
 }

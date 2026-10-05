@@ -15,9 +15,11 @@ const stamp = (seq: number) =>
 export class Ledger {
   lines: string[] = [];
   seq = 0;
+  /** The format new lines are stamped with; the note tests write v4 lines. */
+  v = 3;
 
   private add(e: object): number {
-    this.lines.push(JSON.stringify({ v: 3, seq: ++this.seq, at: stamp(this.seq), ...e }));
+    this.lines.push(JSON.stringify({ v: this.v, seq: ++this.seq, at: stamp(this.seq), ...e }));
     return this.seq;
   }
 

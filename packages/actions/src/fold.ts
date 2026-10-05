@@ -1,18 +1,19 @@
 // Folds the project ledger (D-017) into board state: what the agent drew (folded by
 // `applyDrawn` in packages/format, which also gives `boardView`), the container index (folded by
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
-// responses, replies, proposals, parks, sizes, Sends and what the person has seen, and each
-// agent's retry keys. Pure: same events, same state. Events are assumed valid (readLedger in
-// packages/format checks them first).
+// responses (status and notes: notes.ts), replies, proposals, parks, sizes, Sends and what the
+// person has seen, and each agent's retry keys. Pure: same events, same state. Events are
+// assumed valid (readLedger in packages/format checks them first).
 import type {
-  ActEvent, ActionId, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
+  ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
 import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, nodesOf } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
-import { ACTIONS, DECIDED } from './registry.ts';
+import { DECIDED } from './registry.ts';
+import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
+import { askOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
 
-export interface ItemNote { kind: 'comment' | 'context'; text: string; at: string }
-export interface ItemState { status: ItemStatus; notes: ItemNote[] }
+export type { ItemNote, ItemState } from './notes.ts';
 
 /** The person's responses for one board, keyed by node id (`String(n)`), as the page reads it. */
 export interface BoardState {
@@ -68,6 +69,10 @@ export interface LedgerState extends DrawnState {
   proposals: Map<number, Proposal>;
   parks: Map<number, ParkBundle>;
   marks: Map<number, Marks>;
+  /** n -> the item's asks and decisions, from which `items` is worked out (notes.ts). */
+  logs: Map<number, ItemLog>;
+  /** `seq` of a `comment` or `context` act -> its ask, so `note-edit` and `note-remove` find it. */
+  asks: Map<number, Ask>;
   /** Every person act, in order, for `responsesAfter`. */
   acts: ActEvent[];
 }
@@ -75,21 +80,9 @@ export interface LedgerState extends DrawnState {
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
   replies: new Map(), pins: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
-  keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(), acts: [],
+  keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
+  logs: new Map(), asks: new Map(), acts: [],
 });
-
-/** Status and note rules for one item action. Last action wins; notes accumulate. */
-export function applyItem(
-  prev: ItemState | undefined, action: ActionId, text: string | undefined, at: string,
-): ItemState {
-  const item = prev ?? { status: 'open' as ItemStatus, notes: [] };
-  const def = ACTIONS[action];
-  if ((action === 'comment' || action === 'context') && text?.trim())
-    item.notes.push({ kind: action, text: text.trim(), at });
-  if (def.status) item.status = def.status;
-  else if (action === 'comment' && item.status === 'open') item.status = 'commented';
-  return item;
-}
 
 /** Fold every event, in order, into the current state. */
 export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
@@ -152,16 +145,35 @@ function applyAct(s: LedgerState, e: ActEvent): void {
   }
 }
 
+/** An act on one item: a decision, an ask (`comment`, `context`), or a change to a note. The
+ * item's status, notes and owed ask are worked out again from its log (notes.ts). */
 function applyItemAct(s: LedgerState, e: ActEvent): void {
-  const n = e.n!;
-  s.items.set(n, applyItem(s.items.get(n), e.action, e.text, e.at));
+  const ask = e.note === undefined ? undefined : s.asks.get(e.note);
+  const n = ask?.n ?? e.n!;
+  const log = s.logs.get(n) ?? { asks: [], decisions: [] };
+  s.logs.set(n, log);
   if (e.action === 'comment' || e.action === 'context') {
-    const ver = e.ver ?? s.nodes.get(n)?.versions.at(-1)?.ver ?? 0;
-    marksOf(s, n).ask = { kind: e.action, seq: e.seq, ver };
-  }
-  if (e.action === 'later') marksOf(s, n).later = e.seq;
+    const made = askOf(e, e.ver ?? s.nodes.get(n)?.versions.at(-1)?.ver ?? 0);
+    log.asks.push(made);
+    s.asks.set(e.seq, made);
+  } else if (ask) foldNoteAct(ask, e);
+  else log.decisions.push({ seq: e.seq, action: e.action });
+  s.items.set(n, itemOf(log));
+  const latest = latestAsk(log);
+  const m = marksOf(s, n);
+  if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: latest.ver };
+  else delete m.ask;
+  if (e.action === 'later') m.later = e.seq;
   const prop = e.proposal === undefined ? undefined : s.proposals.get(e.proposal);
   if (prop) prop.decidedBy = e.seq;
+}
+
+/** Whether a Send on `board` came after the act `seq` (fold.ts `lastSend`): its note is history. */
+export const sentAfter = (s: LedgerState, board: string, seq: number): boolean => (s.lastSend.get(board) ?? 0) > seq;
+
+/** An item's notes as the reads show them: `sent` on each one a Send came after. */
+export function sentNotes(s: LedgerState, board: string, notes: readonly ItemNote[]): ItemNote[] {
+  return notes.map((x) => ({ ...x, ...(sentAfter(s, board, x.seq) && { sent: true as const }) }));
 }
 
 /** The person's responses on one board, keyed like `boardView` (`String(n)`). */
@@ -171,7 +183,7 @@ export function boardState(s: LedgerState, board: string): BoardState {
     const item = s.items.get(n);
     const pin = s.pins.get(n);
     const size = s.sizes.get(n);
-    if (item) out.items.set(String(n), item);
+    if (item) out.items.set(String(n), { status: item.status, notes: sentNotes(s, board, item.notes) });
     if (pin) out.pins.set(String(n), pin);
     if (size) out.sizes.set(String(n), size);
   }

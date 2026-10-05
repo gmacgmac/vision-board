@@ -1,7 +1,8 @@
 export { ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, DECIDED, ITEM_ACTIONS } from './registry.ts';
 export type { ActionDef, AgentActionDef, AgentActionId, ItemStatus } from './registry.ts';
 export { MAX_TEXT } from '../../format/src/index.ts';
-export { applyEvent, applyItem, boardState, counts, foldLedger, statusOf } from './fold.ts';
+export { applyEvent, boardState, counts, foldLedger, sentNotes, sentAfter, statusOf } from './fold.ts';
+export { liveNotes } from './notes.ts';
 export type { BoardState, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal } from './fold.ts';
 export { validateAct } from './act.ts';
 export { canWrite, creatorOf, grantRequests, holders, openRequest } from './grants.ts';

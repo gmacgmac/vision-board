@@ -37,34 +37,43 @@ test('Tab moves from card to card, in item number order', async ({ page }) => {
   const onCard = () => page.evaluate(() => document.activeElement?.localName === 'vb-node');
   await card(page, 1).focus();
   for (const expected of ['2', '3', '4']) {
-    // Each card's own buttons come first; the next Tab that lands on a card lands on the next card.
+    // Each card's own controls come first (the size glyph, its pill once the glyph has focus, and the
+    // five buttons, all shown at every zoom since N13); the next Tab that lands on a card lands on
+    // the next card.
     let presses = 0;
     do {
       await page.keyboard.press('Tab');
       presses += 1;
-    } while (!(await onCard()) && presses < 10);
+    } while (!(await onCard()) && presses < 16);
     expect(await focused()).toBe(expected);
   }
 });
 
 for (const theme of THEMES) {
-  // N8: below FAR_K the stage is "far" and both the cards' buttons (node.css) and the regions' mode
-  // rows (region.css) hide, so nothing on the opening view draws under the 24px target size.
-  test(`axe passes with nothing excused (${theme})`, async ({ page }) => {
+  // Tracker N13 (chat 717): with hideControlsZoomedOut off (the default) the stage is never "far",
+  // so the cards' buttons, the size control and the icon row stay visible at every zoom. At the
+  // opening fit-to-view zoom they draw under the 24px target size, which is the one rule excused
+  // there; at zoom 1 nothing is excused.
+  test(`axe passes at the opening zoom with only target-size excused (N13), and at zoom 1 with nothing (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
-    await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
+    await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
+    await expectNoAxeViolations(page, ['target-size']);
+    await zoomToFull(page);
     await expectNoAxeViolations(page);
   });
 
-  test(`no card button draws under the target size at the fit-to-view zoom (${theme})`, async ({ page }) => {
+  test(`with hideControlsZoomedOut on, the controls still hide below FAR_K and none draws under the target size (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page);
+    await openBoard(page, '?flags=hideControlsZoomedOut');
     await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-node .vb-act:visible')).toHaveCount(0);
+    await expect(page.locator('vb-node .vb-size-trig:visible')).toHaveCount(0);
+    await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
     const small = (await axeFindings(page)).filter((f) => f.id === 'target-size').flatMap((f) => f.targets);
-    expect(small.filter((t) => t.includes('vb-act')), small.join('\n')).toEqual([]);
+    expect(small.filter((t) => /vb-act|vb-size|vb-mode/.test(t)), small.join('\n')).toEqual([]);
   });
 
   // With the agentAccess flag off (on by default), as every screenshot taken before a flag must be
@@ -123,9 +132,9 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
   await clickOn(page, 2, 'Drop item 2 (X)');
   await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
   await clickOn(page, 3, 'Comment item 3 (C)');
-  const dialog = page.getByRole('dialog', { name: 'Comment' });
-  await dialog.getByLabel('Your note').fill('Check the wording.');
-  await dialog.getByRole('button', { name: 'Save' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Note on 3' });
+  await dialog.getByLabel('Note text').fill('Check the wording.');
+  await dialog.getByRole('button', { name: 'Add note' }).click();
   await expect(dialog).toBeHidden();
 
   const expectAnswers = async () => {
@@ -133,7 +142,7 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
     await expect(card(page, 1).getByRole('button', { name: /^Acknowledge item 1/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
     await expect(card(page, 3)).toHaveAttribute('data-status', 'commented');
-    await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note');
+    await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note 1');
     await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
     await expect(page.locator('#counts')).toContainText('2 decided');
     await expect(page.getByRole('button', { name: 'Reply (3)' })).toBeVisible();

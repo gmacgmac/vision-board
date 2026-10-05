@@ -2,7 +2,7 @@
 // every rule here is unit-tested under plain Node; the element only applies the result.
 import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
-import type { BoardState, ItemStatus } from '../../../actions/src/index.ts';
+import type { BoardState, ItemNote, ItemStatus } from '../../../actions/src/index.ts';
 import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
 
 export const STATUS_LABEL: Record<ItemStatus, string> = {
@@ -30,10 +30,34 @@ export function buttonLabel(action: ActionId, n: ViewNode): string {
   return `${def.label} item ${n.n}${def.key ? ` (${def.key.toUpperCase()})` : ''}`;
 }
 
-/** The note block on a card: a small heading naming who, then the last note's text. */
-export interface NoteLine {
-  who: string;
-  text: string;
+/** One of the person's notes in the card's "Your note" block (2e_FE_01 ruling 7). `index` is its
+ * pin number: its place among the card's notes, in the order they were made. */
+export interface NoteEntry { seq: number; index: number; who: string; text: string; sent: boolean }
+
+/** The card's notes: the numbered pin on its top-right corner (the latest note, the one a press
+ * of C or M or a click opens) and the block in its body, latest first, with "N notes" over it
+ * when there are several. */
+export interface NotesView {
+  count?: string;
+  entries: NoteEntry[];
+  pin: { seq: number; index: number; sent: boolean; label: string };
+}
+
+const KIND_WORD: Record<ItemNote['kind'], string> = { comment: 'Your note', context: 'More context' };
+
+/** The block and pin for an item's notes; undefined with none. */
+export function notesView(n: ViewNode, notes: readonly ItemNote[]): NotesView | undefined {
+  if (!notes.length) return undefined;
+  const entries = notes.map((x, i): NoteEntry => ({
+    seq: x.seq, index: i + 1, sent: x.sent === true, text: x.text,
+    who: `${KIND_WORD[x.kind]} ${i + 1}${x.sent ? ' · Sent' : ''}`,
+  })).reverse();
+  const top = entries[0]!;
+  const label = top.sent ? `Note ${top.index} on item ${n.n}, sent. Show it` : `Note ${top.index} on item ${n.n}. Edit it`;
+  return {
+    ...(notes.length > 1 && { count: `${notes.length} notes` }),
+    entries, pin: { seq: top.seq, index: top.index, sent: top.sent, label },
+  };
 }
 
 /** The size control's state (D-030): the card's tier, whether the person picked it, the trigger's
@@ -58,8 +82,8 @@ export interface NodeState {
   label: string;
   /** The status word in the footer, "Open" included; empty for non-items. */
   statusWord: string;
-  /** The last note and who it is from (with the count when there are several); absent with no notes. */
-  note?: NoteLine;
+  /** The person's notes: the pin and the "Your note" block; absent with no notes. */
+  notes?: NotesView;
   /** aria-pressed for each offered action. */
   pressed: Partial<Record<ActionId, boolean>>;
   /** The card's size tier and control; absent unless the page passed a tier (the nodeSize flag). */
@@ -71,16 +95,14 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize): NodeStat
   const status = statusOf(s, n.id);
   const pressed: Partial<Record<ActionId, boolean>> = {};
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
-  const notes = s.items.get(n.id)?.notes ?? [];
-  const last = notes[notes.length - 1];
-  const lead = last?.kind === 'context' ? 'You asked for more context' : 'Your note';
+  const notes = notesView(n, s.items.get(n.id)?.notes ?? []);
   const picked = s.sizes.has(n.id);
   return {
     status,
     pinned: s.pins.has(n.id),
     label: nodeLabel(n, status),
     statusWord: isItem(n) ? STATUS_LABEL[status] : '',
-    ...(last ? { note: { who: `${notes.length > 1 ? `${notes.length} notes · ` : ''}${lead}`, text: last.text } } : {}),
+    ...(notes && { notes }),
     pressed,
     ...(tier ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };

@@ -5,7 +5,9 @@
 import type { ActEvent } from '../../format/src/index.ts';
 import { containerKey, latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
+import { sentAfter } from './fold.ts';
 import { creatorOf, grantRequests } from './grants.ts';
+import { isNote, liveNotes } from './notes.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
 type Rule = (e: ActEvent, s: LedgerState, board: string | undefined, p: string[]) => void;
@@ -69,5 +71,24 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
     if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: a ${kind} doesn't offer this`);
   }
   if (def.text === 'required' && !e.text?.trim()) p.push('text: required');
+  if (node && !p.length) noteRules(e, s, node.board, p);
   return p;
+}
+
+/** One note not yet sent per card (ruling 1), and edits and removals only of the person's own
+ * live note before a Send (rulings 2-4, api.md 58-61). */
+function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): void {
+  if ((e.action === 'comment' || e.action === 'context') && e.text?.trim()) {
+    const open = liveNotes(s.logs.get(e.n!) ?? { asks: [], decisions: [] })
+      .find((x) => x.person === e.person && !sentAfter(s, board, x.seq));
+    if (open) p.push(`n: item ${e.n} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
+    return;
+  }
+  if (e.action !== 'note-edit' && e.action !== 'note-remove') return;
+  const a = s.asks.get(e.note!);
+  if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
+  else if (a.n !== e.n) p.push(`note: note ${e.note} is on node ${a.n}, not node ${e.n}`);
+  else if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
+  else if (sentAfter(s, board, a.seq)) p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
+  else if (a.person !== e.person) p.push(`note: note ${e.note} is not yours`);
 }

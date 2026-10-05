@@ -54,9 +54,13 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(node.locator('vb-node.dragging')).toHaveCount(1);
   await expect(node.locator('.vb-node-tags li')).toHaveCount(3);
   const notes = node.locator('.vb-node-notes');
-  await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note")') }).filter({ hasText: 'Ship it' })).toBeVisible();
-  await expect(notes.locator('.vb-node-note-who:text-is("2 notes · Your note")')).toBeVisible();
-  await expect(notes.locator('.vb-node-note-who:text-is("3 notes · You asked for more context")')).toBeVisible();
+  await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note 1")') }).filter({ hasText: 'Ship it' })).toBeVisible();
+  await expect(notes.filter({ hasText: 'Second thought, which replaces the first' })).toBeVisible();
+  await expect(notes.locator('.vb-node-note-who:text-is("More context 1")').first()).toBeVisible();
+  // The notes board: a pin per noted card, sent notes grey and marked, the count over several.
+  await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
+  await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
+  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(1);
   // Topics and notes are not items: no number, no status, no buttons.
   for (const kind of ['topic', 'note']) {
     const card = node.locator(`vb-node[data-kind="${kind}"]`);

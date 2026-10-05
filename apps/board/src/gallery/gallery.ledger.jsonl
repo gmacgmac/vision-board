@@ -68,13 +68,13 @@
 {"v":2,"seq":68,"at":"2026-10-04T09:01:08Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":32,"ver":1,"node":{"region":"other","kind":"risk","title":"Tags: small labels under the text","item":true,"body":"Up to a handful fit on a card.","tags":["security","blocked","q4"]}}
 {"v":2,"seq":69,"at":"2026-10-04T09:01:09Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":33,"ver":1,"node":{"region":"other","kind":"question","title":"One note","item":true,"body":"The last note shows on the card."}}
 {"v":2,"seq":70,"at":"2026-10-04T09:01:10Z","by":"person","type":"act","action":"comment","n":33,"ver":1,"text":"Ship it after the review."}
-{"v":2,"seq":71,"at":"2026-10-04T09:01:11Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":34,"ver":1,"node":{"region":"other","kind":"question","title":"Two notes","item":true,"body":"The count leads the note line."}}
+{"v":2,"seq":71,"at":"2026-10-04T09:01:11Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":34,"ver":1,"node":{"region":"other","kind":"question","title":"An edited note","item":true,"body":"The card shows the note's latest words."}}
 {"v":2,"seq":72,"at":"2026-10-04T09:01:12Z","by":"person","type":"act","action":"comment","n":34,"ver":1,"text":"First thought."}
-{"v":2,"seq":73,"at":"2026-10-04T09:01:13Z","by":"person","type":"act","action":"comment","n":34,"ver":1,"text":"Second thought, which replaces the first on the card."}
-{"v":2,"seq":74,"at":"2026-10-04T09:01:14Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":35,"ver":1,"node":{"region":"other","kind":"question","title":"Three notes","item":true,"body":"A long last note is cut after three lines."}}
+{"v":4,"seq":73,"at":"2026-10-04T09:01:13Z","by":"person","type":"act","action":"note-edit","n":34,"note":72,"text":"Second thought, which replaces the first on the card."}
+{"v":2,"seq":74,"at":"2026-10-04T09:01:14Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":35,"ver":1,"node":{"region":"other","kind":"question","title":"A long note that asks for more context","item":true,"body":"A long last note is cut after three lines."}}
 {"v":2,"seq":75,"at":"2026-10-04T09:01:15Z","by":"person","type":"act","action":"comment","n":35,"ver":1,"text":"First thought."}
-{"v":2,"seq":76,"at":"2026-10-04T09:01:16Z","by":"person","type":"act","action":"comment","n":35,"ver":1,"text":"Second thought."}
-{"v":2,"seq":77,"at":"2026-10-04T09:01:17Z","by":"person","type":"act","action":"context","n":35,"ver":1,"text":"Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each."}
+{"v":4,"seq":76,"at":"2026-10-04T09:01:16Z","by":"person","type":"act","action":"note-edit","n":35,"note":75,"text":"Second thought."}
+{"v":4,"seq":77,"at":"2026-10-04T09:01:17Z","by":"person","type":"act","action":"note-edit","n":35,"note":75,"kind":"context","text":"Please explain the trade-off between the two options, the cost of changing our mind later, and who else is affected, in plain terms with one example for each."}
 {"v":2,"seq":78,"at":"2026-10-04T09:01:18Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":36,"ver":1,"node":{"region":"other","kind":"topic","title":"Topic: a heading for a group, not an item"}}
 {"v":2,"seq":79,"at":"2026-10-04T09:01:19Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":37,"ver":1,"node":{"region":"other","kind":"note","title":"Note: the agent remarks, nothing to answer"}}
 {"v":2,"seq":80,"at":"2026-10-04T09:01:20Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":38,"ver":1,"node":{"region":"other","kind":"action","title":"Long text: a title that is long enough to wrap onto a second and even a third line of the card","item":true,"body":"The body wraps too, so a long sentence shows how the card grows with its text instead of cutting it off."}}
@@ -139,3 +139,17 @@
 {"v":3,"seq":139,"at":"2026-10-05T09:00:12Z","by":"agent","agent":"a-launch01","type":"grant-request","board":"gallery","region":"held","reason":"The launch date depends on these decisions; I want to link my timeline items to them."}
 {"v":3,"seq":140,"at":"2026-10-05T09:00:13Z","by":"agent","agent":"a-pricing1","type":"node","board":"gallery","n":73,"ver":1,"node":{"region":"held","kind":"question","title":"Which annual plans keep the old price?","item":true}}
 {"v":3,"seq":141,"at":"2026-10-05T09:00:14Z","by":"agent","agent":"a-pricing1","type":"node","board":"gallery","n":74,"ver":1,"node":{"region":"held-hover","kind":"question","title":"Do we email existing customers first?","item":true}}
+{"v":4,"seq":142,"at":"2026-10-05T09:01:01Z","by":"agent","agent":"a-pricing1","type":"board","board":"notes","title":"Notes beside cards"}
+{"v":4,"seq":143,"at":"2026-10-05T09:01:02Z","by":"agent","agent":"a-pricing1","type":"region","board":"notes","region":{"id":"notes","title":"Notes","mode":"grid","columns":4}}
+{"v":4,"seq":144,"at":"2026-10-05T09:01:03Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":75,"ver":1,"node":{"region":"notes","kind":"question","title":"A note not yet sent","body":"Its pin and its block are pink. Click either, or press C, to change it.","item":true}}
+{"v":4,"seq":145,"at":"2026-10-05T09:01:04Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":76,"ver":1,"node":{"region":"notes","kind":"finding","title":"More context, not yet sent","body":"Pressed M: the note asks the agent for more context.","item":true}}
+{"v":4,"seq":146,"at":"2026-10-05T09:01:05Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":77,"ver":1,"node":{"region":"notes","kind":"risk","title":"Two sent notes and one not yet sent","body":"The latest note is first. Sent notes are grey and say Sent.","item":true}}
+{"v":4,"seq":147,"at":"2026-10-05T09:01:06Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":78,"ver":1,"node":{"region":"notes","kind":"action","title":"A sent note","body":"A sent note is history: its bubble only shows it.","item":true}}
+{"v":4,"seq":148,"at":"2026-10-05T09:01:07Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"Which teams are under 10 seats?"}
+{"v":4,"seq":149,"at":"2026-10-05T09:01:08Z","by":"person","type":"act","action":"send","board":"notes"}
+{"v":4,"seq":150,"at":"2026-10-05T09:01:09Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"And how many of them churned in the first month?"}
+{"v":4,"seq":151,"at":"2026-10-05T09:01:10Z","by":"person","type":"act","action":"comment","n":78,"ver":1,"text":"Check with finance before we commit to a floor number."}
+{"v":4,"seq":152,"at":"2026-10-05T09:01:11Z","by":"person","type":"act","action":"send","board":"notes"}
+{"v":4,"seq":153,"at":"2026-10-05T09:01:12Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"Draft the email before we decide."}
+{"v":4,"seq":154,"at":"2026-10-05T09:01:13Z","by":"person","type":"act","action":"comment","n":75,"ver":1,"text":"What drives the onboarding confusion? Is it the plan picker?"}
+{"v":4,"seq":155,"at":"2026-10-05T09:01:14Z","by":"person","type":"act","action":"context","n":76,"ver":1,"text":"Explain the **1.4x** in plain terms."}

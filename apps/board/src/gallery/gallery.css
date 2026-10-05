@@ -64,3 +64,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-sends { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-4); padding: var(--vb-space-4); border-radius: var(--vb-radius-lg); background: var(--vb-surface-region); }
 .g-send { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--vb-space-1); }
 .g-send .g-note { margin: 0; }
+
+/* Note bubble samples (2e_FE_01): each a small stage on the board's canvas, with a card placed on
+   it the way the board places one and the bubble beside it. */
+.g-bubbles { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-5); }
+.g-bubble { margin: 0; display: flex; flex-direction: column; gap: var(--vb-space-1); }
+.g-bubble .g-note { margin: 0; }
+.g-bubble-stage { position: relative; border-radius: var(--vb-radius-lg); }

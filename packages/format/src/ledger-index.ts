@@ -128,7 +128,7 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   ix.seq = e.seq;
   switch (e.type) {
     case 'board': ix.boards.set(e.board, new Set()); break;
-    case 'region': indexRegion(ix, e.board, e.region.id, e.v === 3 ? e.agent : undefined); break;
+    case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;
     case 'node':
       ix.nodes.set(e.n, { board: e.board, ver: e.ver });
       ix.maxN = Math.max(ix.maxN, e.n);

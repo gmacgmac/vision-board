@@ -33,7 +33,7 @@ created: 2026-10-01
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
-| 2 Card and container basics | In progress | 3ee805b | 2a-2d done (2026-10-05); 2e next |
+| 2 Card and container basics | In progress | 3ee805b | 2a-2e done (2026-10-05); 2f and N12 next |
 | 3 Selection and moving | Planned | | Port from architect-extract |
 | 4 Send | Planned | | Uses U4 |
 | 5 Proposals, seen, parking | Planned | | U3 step 3 |
@@ -102,5 +102,7 @@ zoomed-out hiding is a switch, off (N13).
 
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
-| 1 | [2e_FE_01 note bubbles](./2e_FE_01_note-bubbles.md) | Opus 5.5 | Running | |
-| 2 | Stage check: orchestrator runs the gates, checks bubble placement and keyboard in dark and light | Orchestrator | Planned | |
+| 1 | [2e_FE_01 note bubbles](./2e_FE_01_note-bubbles.md) | Opus 5.5 | Done | see log |
+| 2 | Stage check: orchestrator runs the gates, checks bubble placement and keyboard in dark and light | Orchestrator | Done 2026-10-05 (466 unit, 66 page; bubble read by eye) | see log |
+
+Open from 2e: the new-note hint wraps "cancel" at 300px; clicking empty board keeps the bubble open, and opening another card's bubble drops unsaved text; APCA not measured for the sent pin, Remove and error text; `markdown-safety` 50 ms timing test flakes under full-suite load (passes alone), to fix with N12's budget tests.

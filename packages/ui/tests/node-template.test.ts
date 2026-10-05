@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import { KINDS } from '../../format/src/index.ts';
-import { esc, KIND_ICON, nodeTemplate, offers } from '../src/index.ts';
+import { esc, KIND_ICON, nodeTemplate, notesMarkup, offers } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -55,9 +55,27 @@ test('nodeTemplate draws the footer on items only: kind icon, divider, state wor
   }
 });
 
-test('nodeTemplate draws the note block hidden, with who and text parts for update() to fill', () =>
-  assert.match(nodeTemplate(node({ n: 1 })),
-    /<div class="vb-node-notes" hidden><span class="vb-node-note-who"><\/span><span class="vb-node-note-text"><\/span><\/div>/));
+test('nodeTemplate draws the note block and, on items only, the note pin, both hidden for update() to fill', () => {
+  const item = nodeTemplate(node({ n: 1 }));
+  assert.match(item, /<div class="vb-node-notes" hidden><\/div>/);
+  assert.match(item, /<button type="button" class="vb-note-pin" aria-haspopup="dialog" aria-expanded="false" hidden><\/button>/);
+  assert.doesNotMatch(nodeTemplate(node({ kind: 'topic' })), /vb-note-pin/);
+});
+
+test('notesMarkup: the count, then each note latest first with its seq, sent ones marked, Markdown escaped', () => {
+  const html = notesMarkup({
+    count: '2 notes',
+    entries: [
+      { seq: 9, index: 2, who: 'Your note 2', text: 'Check **the date** <b>', sent: false },
+      { seq: 4, index: 1, who: 'Your note 1 · Sent', text: 'First', sent: true },
+    ],
+    pin: { seq: 9, index: 2, sent: false, label: 'Note 2 on item 1. Edit it' },
+  });
+  assert.match(html, /^<span class="vb-node-notes-count">2 notes<\/span><div class="vb-node-note" data-note="9"><span class="vb-node-note-who">Your note 2<\/span>/);
+  assert.match(html, /<strong>the date<\/strong> &#60;b&#62;/);
+  assert.match(html, /<div class="vb-node-note" data-note="4" data-sent><span class="vb-node-note-who">Your note 1 · Sent<\/span>/);
+  assert.ok(html.indexOf('data-note="9"') < html.indexOf('data-note="4"'));
+});
 
 test('KIND_ICON has a drawing for every kind', () => {
   for (const kind of KINDS) assert.match(KIND_ICON[kind], /^<(path|circle) /, kind);

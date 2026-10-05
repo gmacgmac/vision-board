@@ -5,6 +5,7 @@
 import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
+import { sentNotes } from './fold.ts';
 import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
 import { pendingItems, unseenItems } from './pending.ts';
 import type { ItemStatus } from './registry.ts';
@@ -73,7 +74,7 @@ export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
     versions: node.versions.map(versionView),
-    notes: [...(s.items.get(n)?.notes ?? [])],
+    notes: sentNotes(s, node.board, s.items.get(n)?.notes ?? []),
     replies: [...(s.replies.get(n) ?? [])],
     proposals: [...s.proposals.values()].filter((p) => p.n === n),
     ...(park && { park }),

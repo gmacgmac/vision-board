@@ -4,7 +4,7 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, PERSON_EVENTS,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
 
@@ -120,6 +120,7 @@ const SHAPES: Record<EventType, Shape> = {
       action: oneOf(ACTION_IDS), n: nodeNumber, ver: int('the version acted on'), text: text(LIMITS.text),
       proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(MODES),
       request: int('seq of a grant-request event'), holder: agentId, size: oneOf(ACT_SIZES),
+      note: int('seq of the comment or context act that made the note'), kind: oneOf(NOTE_KINDS),
     },
   },
   seen: { req: ['n', 'ver'], fields: { n: nodeNumber, ver: int() } },
@@ -135,7 +136,9 @@ const SHAPES: Record<EventType, Shape> = {
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove']);
+/** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
+const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
 
 /** What each action needs beyond the field types (api.md 16; the schema's `if`/`then`). */
@@ -155,6 +158,8 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'revoke') for (const f of ['holder', 'board', 'region']) need(f, `revoke: ${f} required`);
   if (a === 'size') need('size', `size: one of ${ACT_SIZES.join(', ')}`);
   if (a === 'send') need('board', 'send: board required');
+  if (ON_NOTE.has(a)) need('note', `note: the seq of the comment or context act that made the note`);
+  if (a === 'note-edit') need('text', 'text: required');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
 }
 
@@ -181,8 +186,8 @@ export function eventProblems(input: unknown): string[] {
   const shape = SHAPES[t];
   const fields = { ...STAMP.fields, ...shape.fields };
   fieldProblems(rest, { req: [...STAMP.req, ...shape.req], fields }, '', p);
-  // On v3 the stamped agent is an agent id; on v2 any name (api.md 11).
-  if (agent !== undefined) (e.v === 3 ? agentId : text())(agent, 'agent', p);
+  // From v3 the stamped agent is an agent id; on v2 any name (api.md 11).
+  if (agent !== undefined) (e.v === 3 || e.v === 4 ? agentId : text())(agent, 'agent', p);
   if (AGENT_EVENTS.has(t) && e.by !== 'agent') p.push(`${t}: written by an agent`);
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(`${t}: written by a person`);
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');

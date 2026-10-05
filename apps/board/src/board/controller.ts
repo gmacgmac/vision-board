@@ -4,7 +4,7 @@
 // stage element and reads what it reports through `shell`.
 import type { ActSize, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { ActionId } from '../../../../packages/format/src/index.ts';
-import { flagOn, NODE_TYPES } from '../../../../packages/format/src/index.ts';
+import { flagOn } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
@@ -21,8 +21,9 @@ import { bindPointer } from './pointer.ts';
 import { bindKeys } from './keys.ts';
 import { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
 import { answerAct, answerWords, holdersOf, requestRows, revokeAct, revokeWords } from './access.ts';
+import { createNoteFlow, unsentNote } from './notes.ts';
 import { pageFlags } from '../flags.ts';
-import { askConfirm, askNote, shell, toast } from '../shell/shell.svelte.ts';
+import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
 
 export interface BoardElements {
   stage: HTMLElement;
@@ -46,7 +47,7 @@ export interface Board {
 
 export function createBoard(els: BoardElements): Board {
   const { stage, world, wires } = els;
-  const vp = new Viewport(stage, world);
+  const vp = new Viewport(stage, world, flagOn('hideControlsZoomedOut', pageFlags())); // N13, rule 12
   /** Card size tiers and their control (D-030), behind the nodeSize flag (rule 12). */
   const sizing = flagOn('nodeSize', pageFlags());
   /** Grant requests, holders and Send (D-027), behind the agentAccess flag (rule 12). */
@@ -115,6 +116,7 @@ export function createBoard(els: BoardElements): Board {
     clearTimeout(S.settle);
     S.settle = window.setTimeout(() => wires.classList.remove('settling'), 380);
     renderCounts();
+    notes.place();
   }
 
   function renderCounts() {
@@ -142,39 +144,40 @@ export function createBoard(els: BoardElements): Board {
     return true;
   }
 
-  /** Send one action; the server validates it, and its problems show in the error toast. */
-  async function record(fields: ActFields): Promise<boolean> {
+  /** Send one action; the server validates it, and its problems show in the error toast. Null
+   * when it was recorded, else the problem's detail. */
+  async function attempt(fields: ActFields): Promise<string | null> {
     try {
       await sendAct(S.id, fields);
       take(S.id, await loadBoard(S.id));
-      return true;
+      return null;
     } catch (err) {
       fail(err);
-      return false;
+      return err instanceof ApiError ? err.message : String(err);
     }
   }
+  const record = async (fields: ActFields) => (await attempt(fields)) === null;
+
+  /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
+  const notes = createNoteFlow({
+    stage, vp, node: nodeOf, state: () => S.state, layout: () => S.layout, card: (id) => S.cards.get(id),
+    ver: (id) => S.data?.versions[id], attempt, relayout, toast: (t) => toast(t),
+  });
 
   async function act(id: string, requested: ActionId) {
     const n = nodeOf(id);
     if (!n || n.n === undefined) return;
     // The keyboard can't send what the card doesn't offer.
     if (ITEM_ACTIONS.includes(requested) && !offers(n).includes(requested)) return;
-    // Pressing the button that matches the current status undoes it.
-    const action: ActionId = isPressed(requested, statusOf(S.state, id)) ? 'reopen' : requested;
+    // Pressing the button that matches the current status undoes it, unless the card has a note
+    // not yet sent: C and M then open it to edit (ruling 1).
+    const pressed = isPressed(requested, statusOf(S.state, id));
+    if ((requested === 'comment' || requested === 'context') && (!pressed || unsentNote(S.state, id)))
+      return notes.press(id, requested);
+    const action: ActionId = pressed ? 'reopen' : requested;
     const def = ACTIONS[action];
-    let text: string | undefined;
-    if (def.text) {
-      const got = await askNote(
-        action === 'context' ? 'Ask for more context' : 'Comment',
-        `${n.n}. ${NODE_TYPES[n.kind].label}: ${n.title}`,
-        def.text === 'required',
-        action === 'context' ? 'Optional: what is unclear? e.g. "explain in plain terms"' : 'Your note for the agent',
-      );
-      if (got === null) return;
-      text = got || undefined;
-    }
     const next = shell.hide && def.status && DECIDED.has(def.status) ? neighbour(id, 1) : null;
-    if (!(await record({ action, ...target(id), text }))) return;
+    if (!(await record({ action, ...target(id) }))) return;
     relayout();
     const focusId = next && hiddenSet().has(id) ? next : id;
     S.cards.get(focusId)?.focus({ preventScroll: true });
@@ -232,15 +235,8 @@ export function createBoard(els: BoardElements): Board {
     if (!document.activeElement || document.activeElement === document.body) stage.focus({ preventScroll: true });
   }
 
-  async function send(): Promise<string | null> {
-    try {
-      await sendAct(S.id, { action: 'send' });
-      return null;
-    } catch (err) {
-      fail(err);
-      return err instanceof ApiError ? err.message : String(err);
-    }
-  }
+  /** Send to agent; reloading at once greys the notes it sent (2e_FE_01 ruling 7). */
+  const send = () => attempt({ action: 'send' });
 
   async function resetRegion(region: string) {
     const ids = view().nodes.filter((n) => n.region === region && S.state.pins.has(n.id)).map((n) => n.id);
@@ -289,6 +285,8 @@ export function createBoard(els: BoardElements): Board {
       void act(id, actBtn.dataset.act as ActionId);
       return;
     }
+    const note = t.closest<HTMLElement>('[data-note]');
+    if (note && !t.closest('a')) return notes.show(note.closest<HTMLElement>('vb-node')!.dataset.id!, Number(note.dataset.note));
     const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
     const pick = sizeBtn?.dataset.sizePick;
     if (sizeBtn && isSizePick(pick)) return void setSize(sizeBtn.closest<HTMLElement>('vb-node')!.dataset.id!, pick);
@@ -395,6 +393,7 @@ export function createBoard(els: BoardElements): Board {
       S.unwatch?.();
       unbindKeys();
       unbindSize();
+      notes.destroy();
       window.removeEventListener('resize', onResize);
     },
   };

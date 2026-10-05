@@ -6,6 +6,7 @@
 import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
+import type { NotesView } from './node-core.ts';
 import { buttonLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
@@ -19,11 +20,24 @@ const button = (a: ActionId, n: ViewNode): string =>
   + ` title="${esc(ACTIONS[a].label)}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">`
   + `${svgIcon(ACTION_ICON[a] ?? '', 20, 'vb-act-icon')}</button>`;
 
-/** The tabs on the top border: number (items only), kind, and the moved-by-you marker. */
+/** The tabs on the top border: number (items only), kind, and the moved-by-you marker. An item
+ * also gets the note pin on its top-right corner, hidden until it has a note (`update()`). */
 function tabs(n: ViewNode): string {
   const num = isItem(n) ? `<span class="vb-node-num" aria-hidden="true">${n.n}</span>` : '';
+  const notePin = isItem(n) ? '<button type="button" class="vb-note-pin" aria-haspopup="dialog" aria-expanded="false" hidden></button>' : '';
   return `${num}<span class="vb-node-kind">${NODE_TYPES[n.kind].label}</span>`
-    + '<span class="vb-node-pin" aria-hidden="true" title="Moved by you">◆</span>';
+    + `<span class="vb-node-pin" aria-hidden="true" title="Moved by you">◆</span>${notePin}`;
+}
+
+/** The "Your note" block's contents (2e_FE_01 ruling 7): "N notes" when there are several, then
+ * each note, latest first, as Markdown (D-023) clamped to three lines. Each carries `data-note`,
+ * its seq, so a click opens it; the keyboard path is the pin and the C and M keys. */
+export function notesMarkup(v: NotesView): string {
+  const count = v.count ? `<span class="vb-node-notes-count">${esc(v.count)}</span>` : '';
+  return count + v.entries.map((x) =>
+    `<div class="vb-node-note" data-note="${x.seq}"${x.sent ? ' data-sent' : ''}>`
+    + `<span class="vb-node-note-who">${esc(x.who)}</span>`
+    + `<div class="vb-node-note-text">${renderMarkdown(x.text)}</div></div>`).join('');
 }
 
 /** Kind icon, divider, state word, then the quick actions. Items only: a non-item has no state. */
@@ -63,8 +77,7 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
   const body = n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
   const tags = n.tags?.length
     ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
-  const note = '<div class="vb-node-notes" hidden><span class="vb-node-note-who"></span>'
-    + '<span class="vb-node-note-text"></span></div>';
+  const note = '<div class="vb-node-notes" hidden></div>';
   return `${tabs(n)}${opts.sizeControl ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${note}</div>${footer(n)}`;
 }

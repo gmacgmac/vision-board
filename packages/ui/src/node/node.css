@@ -98,17 +98,46 @@ vb-node .vb-node-tags li {
   border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); white-space: nowrap;
 }
-vb-node .vb-node-notes {
-  display: grid; gap: var(--vb-space-1); padding: var(--vb-space-2) var(--vb-space-3); border-radius: var(--vb-radius-md);
-  background: color-mix(in srgb, var(--kind) 9%, var(--vb-surface-sunken)); font-size: var(--vb-text-md); color: var(--vb-ink);
+/* The "Your note" block (2e_FE_01 ruling 7, mockup 05 `.note-saved`): the latest note first, a
+   note not yet sent in the accent colour, sent ones grey and marked Sent. A click on one opens it
+   in the note bubble; the keyboard path is the pin and the C and M keys. */
+vb-node .vb-node-notes { display: grid; gap: var(--vb-space-1); }
+vb-node .vb-node-notes-count {
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--vb-ink-subtle);
 }
+vb-node .vb-node-note {
+  display: grid; gap: var(--vb-space-1); padding: 10px var(--vb-space-3); cursor: pointer;
+  border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-md);
+  background: var(--vb-accent-soft); font-size: var(--vb-text-md); color: var(--vb-ink);
+}
+vb-node .vb-node-note[data-sent] { border-color: var(--vb-line); background: var(--vb-surface-sunken); }
 vb-node .vb-node-note-who {
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
-  text-transform: uppercase; color: var(--kind);
+  text-transform: uppercase; color: var(--vb-accent-text);
 }
+vb-node .vb-node-note[data-sent] .vb-node-note-who { color: var(--vb-ink-subtle); }
 vb-node .vb-node-note-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-/* The note is Markdown too, on a sunken tint, so its code sits one step deeper. */
+/* The note is Markdown too, on a tint, so its code sits one step deeper. */
 vb-node .vb-node-note-text .vb-md-icode, vb-node .vb-node-note-text .vb-md-code { background: var(--vb-surface-deep); }
+
+/* The note pin (ruling 7, 05 `.card .pin`): a numbered drop hanging off the top-right corner,
+   the latest note's number. It clears the size control's hit area (tracker N10). */
+vb-node .vb-note-pin {
+  position: absolute; z-index: 4; top: -12px; right: -12px; display: grid; place-items: center;
+  width: 26px; height: 26px; padding: 0; cursor: pointer;
+  border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
+  color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
+  transition: scale var(--vb-motion-fast);
+}
+vb-node .vb-note-pin[hidden] { display: none; }
+vb-node .vb-note-pin:hover { scale: 1.1; }
+vb-node .vb-note-pin[data-sent] {
+  background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
+}
+vb-node .vb-note-pin:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+/* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
+vb-node[data-bubble] { z-index: 3; }
 
 /* Footer: kind icon, divider, state word, then the quick actions. */
 vb-node .vb-node-foot {

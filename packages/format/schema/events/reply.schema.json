@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/3/events/reply.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json",
   "title": "Reply event",
   "description": "The agent answers an item without redrawing it. `to` is the seq of the act it answers.",
   "$defs": {
@@ -8,8 +8,8 @@
       "type": "object",
       "required": ["text"],
       "properties": {
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "Your answer to the person."},
-        "to": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq", "description": "The `seq` of the person's action that you are answering."}
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/longText", "description": "Your answer to the person."},
+        "to": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/seq", "description": "The `seq` of the person's action that you are answering."}
       }
     },
     "sent": {
@@ -17,12 +17,12 @@
       "required": ["type", "n"],
       "properties": {
         "type": {"const": "reply"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeRef"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/nodeRef"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/events/reply.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -32,20 +32,20 @@
       "required": ["type"],
       "properties": {"type": {"const": "reply"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/events/reply.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json#/$defs/core"
         },
         {
           "type": "object",
           "required": ["n"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+            "n": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/key"}
           }
         }
       ],

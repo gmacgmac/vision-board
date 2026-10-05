@@ -14,6 +14,11 @@ export const FLAGS = {
     default: true,
     description: 'Cards take one of three widths (S, M, L) from their content, with a size control on each card (D-030, U7).',
   },
+  hideControlsZoomedOut: {
+    // Off by default (maintainer, chat 717, tracker N13): every control stays visible at every zoom.
+    default: false,
+    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts), hide the cards\' buttons, the size control and the containers\' icon row, so none draws under the 24px target size (N8, N13).',
+  },
   agentAccess: {
     default: true,
     description: 'The person\'s side of agent access: allow or refuse grant requests, see and remove each container\'s holders, and Send to agent (D-027, U4 2_FE_01).',

@@ -6,15 +6,16 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 3;
-/** Every format a reader accepts. v3 only adds to v2, so v2 lines stay valid (api.md 11). */
-export const LEDGER_FORMATS = [2, 3] as const;
+export const LEDGER_FORMAT = 4;
+/** Every format a reader accepts. Each format only adds to the one before, so older lines stay
+ * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61). */
+export const LEDGER_FORMATS = [2, 3, 4] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
@@ -37,8 +38,11 @@ export type NodeSize = (typeof NODE_SIZES)[number];
 /** The person's `size` action; `auto` clears it, like `unpin` (api.md 16). */
 export const ACT_SIZES = [...NODE_SIZES, 'auto'] as const;
 export type ActSize = (typeof ACT_SIZES)[number];
+/** What a person's note asks for: a `comment`, or more context (api.md 59). */
+export const NOTE_KINDS = ['comment', 'context'] as const;
+export type NoteKind = (typeof NOTE_KINDS)[number];
 
-/** Stamped by the server on every event. `agent` names the caller: on v3 an agent id from
+/** Stamped by the server on every event. `agent` names the caller: from v3 an agent id from
  * `join` (D-027), on v2 any name. `person` is written only once a board has more than one person
  * (D-018), so a single-person agent never sees it. */
 interface Base {
@@ -87,11 +91,13 @@ export interface NodeEvent extends Base, Keyed { type: 'node'; board: string; n:
 export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: number; to: number; label?: string }
 /** A person's action from the action registry. `ver` = the node version they were looking at;
  * `proposal` = the `seq` of the proposal they are accepting; `request` = the `seq` of the
- * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes. */
+ * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes; `note` =
+ * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,
+ * and `kind` = what an edited note now asks for (api.md 58-61). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; n?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];
-  request?: number; holder?: string; size?: ActSize;
+  request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind;
 }
 export interface SeenEvent extends Base { type: 'seen'; n: number; ver: number }
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */

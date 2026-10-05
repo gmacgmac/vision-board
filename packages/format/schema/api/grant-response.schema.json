@@ -22,15 +22,15 @@
       ],
       "properties": {
         "request": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/seq",
           "description": "The `seq` of the grant request; the person's answer names it"
         },
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id",
           "description": "The board the request is for."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id",
           "description": "The container the request is for."
         },
         "replayed": {
@@ -49,11 +49,11 @@
       ],
       "properties": {
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id",
           "description": "The board the container is on."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id",
           "description": "The container you already hold."
         },
         "held": {

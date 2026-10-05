@@ -10,14 +10,15 @@
     "element": "vb-node.ts (defineVbNode, VbNodeElement; light DOM)",
     "styles": "node.css (scoped by the tag; tokens only)"
   },
-  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden"],
+  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden", "noted", "note sent", "bubble open"],
   "parts": {
     "vb-node-num": "tab in a gap on the top border, left: the item number (items only)",
     "vb-node-kind": "tab in a gap on the top border, centred: the kind; the drag handle from Stage 3",
     "vb-node-pin": "tab on the top border, right: shown when the person moved the node",
     "vb-size": "nodeSize flag only (D-030): the size control in the top-right border gap; a glyph (vb-size-trig, the person's pick as \"◆ S\" in vb-size-shown) that lifts an S / M / L / Auto pill (vb-size-menu, buttons vb-size-opt with data-size-pick) on hover or keyboard focus; data-open forces it open for gallery samples",
     "vb-node-content": "title (vb-node-title), body (div.vb-node-body, Markdown through renderMarkdown), tags as chips (vb-node-tags), note block",
-    "vb-node-notes": "the last note: who (vb-node-note-who) over the text (vb-node-note-text, Markdown, clamped to three lines); hidden with no notes",
+    "vb-note-pin": "items only (2e_FE_01): the note pin, a numbered button hanging off the top-right corner with the latest note's number; data-note is its seq, data-sent once sent, aria-expanded while its bubble is open; hidden with no notes",
+    "vb-node-notes": "the \"Your note\" block: 'N notes' (vb-node-notes-count) over several, then each note latest first (vb-node-note, data-note = its seq, data-sent once sent) with who (vb-node-note-who, 'Your note 2 · Sent') over the text (vb-node-note-text, Markdown, clamped to three lines); hidden with no notes",
     "vb-node-foot": "items only: kind icon (vb-node-kico), divider (vb-node-sep), state word (vb-node-status), quick actions (vb-node-actions)"
   },
   "attributes": {
@@ -31,7 +32,9 @@
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
     "aria-label": "number, kind, title and status (nodeLabel, set by update)",
-    "data-zoom": "on the stage, not the node: 'far' below zoom 0.75 hides the quick actions (keeping their space); the keyboard shortcuts still work"
+    "data-noted": "present when the item has a note (set by update)",
+    "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
+    "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (off, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work"
   },
   "methods": {
     "render(n: ViewNode, opts?: { sizeControl })": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n, opts)",
@@ -39,9 +42,10 @@
   },
   "events": [
     "data-act button click bubbles to the page's delegated listener -> action layer",
-    "data-size-pick button click bubbles to the page's delegated listener -> the size act (nodeSize flag)"
+    "data-size-pick button click bubbles to the page's delegated listener -> the size act (nodeSize flag)",
+    "a click on the note pin or a note ([data-note]) bubbles to the page's delegated listener -> the note bubble"
   ],
   "whenToUse": "Anything the agent draws that the person should read or respond to.",
   "whenNotToUse": "Region headings and lane labels; those belong to the region pattern.",
-  "accessibility": "Focusable list item with a label naming number, kind, title and status. Buttons are real buttons with labels and aria-pressed. Keyboard: A X C M L O respond, Alt+Arrows move, R resets the position, J K move between items. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
+  "accessibility": "Focusable list item with a label naming number, kind, title and status. Buttons are real buttons with labels and aria-pressed. Keyboard: A X C M L O respond (C and M open the note bubble, editing the note not yet sent if there is one; the note pin is a tab stop labelled 'Note 1 on item 4. Edit it'), Alt+Arrows move, R resets the position, J K move between items. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
 }
