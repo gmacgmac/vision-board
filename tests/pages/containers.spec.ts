@@ -15,7 +15,8 @@ type Box = Point & { width: number; height: number };
 
 const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const grip = (page: Page, region: string) => frame(page, region).locator('.vb-region-grip');
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
+// Item numbers run across every board of the project, so a card is found by its title.
+const card = (page: Page, title: string) => page.locator('vb-node', { has: page.getByRole('heading', { name: title }) });
 const bubble = (page: Page) => page.locator('vb-note-bubble');
 const text = (page: Page) => bubble(page).getByLabel('Note text');
 const comment = (page: Page, title: string) => page.getByRole('button', { name: `Comment on container ${title}` });
@@ -163,7 +164,7 @@ test('the grip moves the frame and its cards; the drop writes one container pin;
   await openFrames(page);
   const before = await head(page);
   const f0 = await boxOf(page, frame(page, 'risks'));
-  const c0 = await boxOf(page, card(page, 3));
+  const c0 = await boxOf(page, card(page, 'Is the import too slow?'));
   const g = centre(await boxOf(page, grip(page, 'risks')));
   const d = { x: 0, y: Math.round(f0.height + 80) };
   await drag(page, g, { x: g.x + d.x, y: g.y + d.y }, async () => {
@@ -174,7 +175,7 @@ test('the grip moves the frame and its cards; the drop writes one container pin;
   await settled(page);
   await expect.poll(() => regionPins(page).then((p) => Object.keys(p))).toEqual(['risks']);
   const f1 = await boxOf(page, frame(page, 'risks'));
-  const c1 = await boxOf(page, card(page, 3));
+  const c1 = await boxOf(page, card(page, 'Is the import too slow?'));
   expect([Math.round(f1.x - f0.x), Math.round(f1.y - f0.y)]).toEqual([0, d.y]);
   expect([Math.round(c1.x - c0.x), Math.round(c1.y - c0.y)]).toEqual([0, d.y]);
   const lines = await linesAfter(page, before);

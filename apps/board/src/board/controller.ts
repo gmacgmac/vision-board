@@ -28,6 +28,7 @@ import { createItemActs } from './item-acts.ts';
 import { createSelection } from './selection.ts';
 import { createSelectionFlow } from './selection-flow.ts';
 import { createMoves } from './moves.ts';
+import { createContainerDrag } from './container-drag.ts';
 import { createSender } from './sender.ts';
 import type { CommandId } from './commands.ts';
 import { exposeWork } from './work.ts';
@@ -186,6 +187,12 @@ export function createBoard(els: BoardElements): Board {
   /** Pins, Reset places, the layout mode and the size tier (places.ts). */
   const places = createPlaces({
     vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),
+    settle: () => drawing.settle(),
+  });
+  /** Moving a whole container by its grip or Alt+arrows (3_FE_04, container-drag.ts). */
+  const frames = createContainerDrag({
+    layout: () => drawing.layout, view, frame: (r) => drawing.frames.get(r), card: (id) => drawing.cards.get(id),
+    drawDrag: (l) => drawing.wiresFor(l, focus.id), settle: () => drawing.settle(), record, redraw: () => redraw(),
   });
 
   /** Send to agent; it greys the notes it sent at once (2e_FE_01 ruling 7). */
@@ -209,6 +216,11 @@ export function createBoard(els: BoardElements): Board {
     putBack: (region) => void places.putBack(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
     pin: (id, box) => void places.pin(id, box),
+    pinRegion: (region, at) => void frames.pin(region, at),
+    frameStart: frames.start,
+    frameMove: frames.move,
+    frameEnd: (d) => void frames.end(d),
+    regionCommand: (_id, region) => notes.container(region, 'comment'),
     unpin: (id) => void places.unpin(id),
     layout: () => drawing.layout,
     view,

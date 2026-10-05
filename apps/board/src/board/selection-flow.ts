@@ -150,6 +150,8 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         place();
         return true;
       }
+      // A container's note needs the container (keys.ts finds it from focus).
+      case 'container-note': return false;
     }
   }
 

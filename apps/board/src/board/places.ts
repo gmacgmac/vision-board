@@ -19,6 +19,8 @@ export interface PlaceDeps {
   /** Send one act; true when it was recorded. */
   record(fields: ActFields): Promise<boolean>;
   redraw(): void;
+  /** Hide the connectors until the relayout a container's move causes has drawn (draw.ts). */
+  settle(): void;
 }
 
 export interface Places {
@@ -57,7 +59,11 @@ export function createPlaces(d: PlaceDeps): Places {
       for (const id of ids) if (!(await d.record({ action: 'unpin', ...d.target(id) }))) break;
     },
     async putBack(region) {
-      if (d.state().regionPins.has(region)) await d.record({ action: 'unpin', region });
+      if (!d.state().regionPins.has(region)) return;
+      // The board is laid out again once the unpin is back: the links hide until that draw settles.
+      d.settle();
+      await d.record({ action: 'unpin', region });
+      d.settle();
     },
   };
 }

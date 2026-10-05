@@ -4,11 +4,16 @@
 import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
 import type { CommandId } from './commands.ts';
-import { commandForKey } from './commands.ts';
+import { commandForKey, regionCommandForKey } from './commands.ts';
 
 export interface KeyHandlers {
   act(id: string, action: ActionId): void;
   nudge(id: string, dx: number, dy: number): void;
+  /** Alt+arrows with focus on a container's grip (3_FE_04 ruling 8): the cards' step. */
+  nudgeRegion(region: string, dx: number, dy: number): void;
+  /** A key the command table gives a container's title line (C or N: its note), with focus on
+   *  that line or its controls. */
+  regionCommand(id: CommandId, region: string): void;
   unpin(id: string): void;
   /** Space on a focused card: add it to the selection, or take it out (3_FE_01 ruling 3). */
   toggle(id: string): void;
@@ -36,13 +41,22 @@ export function bindKeys(h: KeyHandlers): () => void {
     if (e.key === 'Escape') return h.escape();
     if (e.metaKey || e.ctrlKey) return;
     const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;
+    /** The container whose title line (or one of its controls) has focus, outside every card. */
+    const region = id ? undefined : target.closest('.vb-region-head')?.closest<HTMLElement>('vb-region')?.dataset.region;
     const arrow = ARROWS[e.key];
-    if (arrow && id && e.altKey) {
+    const grip = region !== undefined && target.matches('.vb-region-grip');
+    if (arrow && (id || grip) && e.altKey) {
       e.preventDefault();
-      return h.nudge(id, arrow[0] * NUDGE * (e.shiftKey ? 4 : 1), arrow[1] * NUDGE * (e.shiftKey ? 4 : 1));
+      const step = NUDGE * (e.shiftKey ? 4 : 1);
+      return id ? h.nudge(id, arrow[0] * step, arrow[1] * step) : h.nudgeRegion(region!, arrow[0] * step, arrow[1] * step);
     }
     const key = e.key.toLowerCase();
     if (e.altKey) return;
+    const onRegion = region !== undefined && !e.shiftKey ? regionCommandForKey(key) : undefined;
+    if (onRegion) {
+      e.preventDefault();
+      return h.regionCommand(onRegion, region!);
+    }
     // Only on the card itself: Space on one of its buttons presses the button.
     if (key === ' ' && id && target.localName === 'vb-node') {
       e.preventDefault();

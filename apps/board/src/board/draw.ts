@@ -55,6 +55,8 @@ export interface Drawing {
   viewMoved(): void;
   /** Connectors for a layout that is not kept, such as one with a card mid-drag. */
   wiresFor(layout: BoardLayout, focus: string | null): void;
+  /** Hide the connectors as for a relayout (a container was dropped; its draw is on its way). */
+  settle(): void;
 }
 
 /** How long connectors stay hidden while cards glide to new places (the cards' transition). */
@@ -119,5 +121,6 @@ export function createDrawing(d: DrawDeps): Drawing {
     restate: (ids) => cards.restate(ids),
     viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); },
     wiresFor: (l, focus) => wires.draw(l, focus),
+    settle: settleWires,
   };
 }
