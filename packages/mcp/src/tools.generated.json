@@ -63,7 +63,7 @@
     {
       "name": "get_board",
       "title": "Read a board as it is now",
-      "description": "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the node number.",
+      "description": "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the node number.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -80,7 +80,7 @@
       },
       "outputSchema": {
         "title": "API: get_board answer",
-        "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`. `state` and `versions` are keyed by node id (the string form of the number).",
+        "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests and each region's holders. `state` and `versions` are keyed by node id (the string form of the number).",
         "type": "object",
         "required": [
           "head",
@@ -422,6 +422,85 @@
             "additionalProperties": {
               "type": "integer",
               "minimum": 1
+            }
+          },
+          "requests": {
+            "type": "array",
+            "minItems": 1,
+            "description": "The grant requests on this board the person has not answered, oldest first; left out when there are none (api.md 26, 32). The person answers one with `grant` or `deny` and its `seq`.",
+            "items": {
+              "type": "object",
+              "required": [
+                "seq",
+                "region",
+                "reason",
+                "at"
+              ],
+              "properties": {
+                "seq": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "region": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                },
+                "reason": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "maxLength": 4000
+                },
+                "at": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                },
+                "agent": {
+                  "type": "string",
+                  "pattern": "^a-[a-z0-9]{8}$"
+                },
+                "label": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "maxLength": 80,
+                  "description": "The label the asking agent joined with"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "holders": {
+            "type": "object",
+            "description": "Region id to the agents that hold it now, creator first (api.md 23); a region with none, and a board with none, are left out (api.md 32).",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "agent",
+                  "label"
+                ],
+                "properties": {
+                  "agent": {
+                    "type": "string",
+                    "pattern": "^a-[a-z0-9]{8}$"
+                  },
+                  "label": {
+                    "type": "string",
+                    "pattern": "\\S",
+                    "maxLength": 80
+                  },
+                  "creator": {
+                    "const": true,
+                    "description": "Present, and true, for the agent that created the region; the person cannot remove it"
+                  }
+                },
+                "additionalProperties": false
+              }
             }
           }
         },

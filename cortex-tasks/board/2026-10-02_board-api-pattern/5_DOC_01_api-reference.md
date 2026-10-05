@@ -23,6 +23,12 @@ MCP tool schemas and the reference all explain every field.
    or reads (for example `join` `label`; `request_grant` `board`, `region`, `reason`). Plain
    English, written for an agent, one sentence each. Run `npm run gen` so the generated tables
    pick them up.
+1b. Agents see schema `title`s and `description`s in MCP tool schemas and `vb` help, so none may
+   cite our own docs: remove every "(api.md N)", "D-0NN" and "rule N" reference from `title` and
+   `description` in `openapi.json` and `packages/format/schema/**` (keep them in `$comment`
+   instead, which the MCP generator must strip; add that to `scripts/mcp-schema.mjs`). Titles read
+   as plain names ("Grant request answer", not "API: request_grant answer"). A test fails if any
+   generated tool, command or reference text contains `api.md`, `D-0` or `rule `.
 2. `scripts/gen-api.mjs` also writes `docs/specification/api-reference.md`: a generated-file header;
    one section per operation in table order with its `operationId`, the `vb` command and MCP tool
    names, method and path, who may call it, its description, an inputs table (name, where, type,
