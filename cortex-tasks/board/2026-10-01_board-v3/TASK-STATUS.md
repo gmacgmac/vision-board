@@ -106,3 +106,10 @@ zoomed-out hiding is a switch, off (N13).
 | 2 | Stage check: orchestrator runs the gates, checks bubble placement and keyboard in dark and light | Orchestrator | Done 2026-10-05 (466 unit, 66 page; bubble read by eye) | see log |
 
 Open from 2e: the new-note hint wraps "cancel" at 300px; clicking empty board keeps the bubble open, and opening another card's bubble drops unsaved text; APCA not measured for the sent pin, Remove and error text; `markdown-safety` 50 ms timing test flakes under full-suite load (passes alone), to fix with N12's budget tests.
+
+## N12 tasks (written 2026-10-05, before Stage 3)
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [N12_FE_01 incremental board](./N12_FE_01_incremental-board.md) | Opus 5.5 | Running | |
+| 2 | Check: orchestrator runs the gates and the counting tests, tries a full rebuild to see them fail | Orchestrator | Planned | |
