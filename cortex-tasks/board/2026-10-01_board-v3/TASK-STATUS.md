@@ -33,7 +33,7 @@ created: 2026-10-01
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
-| 2 Card and container basics | In progress | 3ee805b | 2a, 2b, 2c done; 2d running (2026-10-05) |
+| 2 Card and container basics | In progress | 3ee805b | 2a-2d done (2026-10-05); 2e next |
 | 3 Selection and moving | Planned | | Port from architect-extract |
 | 4 Send | Planned | | Uses U4 |
 | 5 Proposals, seen, parking | Planned | | U3 step 3 |
@@ -88,6 +88,8 @@ packages and run in parallel: FE_01 in the main checkout, BE_01 in worktree bran
 
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
-| 1a | [2d_FE_01 icon row, popover, cog](./2d_FE_01_icon-row.md) (region half of N8) | Opus 5.5 | Running | |
-| 1b | [2d_BE_01 no overlaps](./2d_BE_01_no-overlaps.md) | Opus 5.5 | Running | |
-| 2 | Stage check: orchestrator merges, runs the four gates, compares with 05 in dark and light | Orchestrator | Planned | |
+| 1a | [2d_FE_01 icon row, popover, cog](./2d_FE_01_icon-row.md) (region half of N8) | Opus 5.5 | Done | e12780a |
+| 1b | [2d_BE_01 no overlaps](./2d_BE_01_no-overlaps.md) | Opus 5.5 | Done | 70fb930 (merge e11950a) |
+| 2 | Stage check: orchestrator merges, runs the four gates, compares with 05 in dark and light | Orchestrator | Done 2026-10-05 (434 unit, 58 page; board read by eye) | e11950a |
+
+Open from 2d: a link line can cross a container's icon row (wires draw over the top line); at 434px a long title plus count can clip the count; one access test keeps `KNOWN_AXE` when 3-4 holders pile up on a 336px frame. The row hides at the board's opening fit zoom (far), as the card buttons do.
