@@ -62,7 +62,9 @@ browser check for UI work.
    - 2f Shapes: decision diamond, start/end pill and circle for radial and mind-map views
      (components.md § Shapes; circle added by the maintainer 2026-10-05). Mockups in
      Architect's look after 2b, picked by the maintainer, then outline and ports in the
-     registry, the layout engine and the node CSS, behind a flag.
+     registry, the layout engine and the node CSS. Picked 2026-10-05 (mockup 08: diamond B, pill B,
+     circle A and B). No feature flag, by the maintainer's choice (an exception to rule 12); what
+     agents may draw is set in the agent skill. Built after Stage 3 (both change the formats).
 3. Selection and moving, ported from `prototypes/board-v3-design/architect-extract/` (README §2): click, Shift/Cmd/Ctrl
    multi-select, lasso with area notes, selection bar, pins, keyboard route (arrows, Space, C/N);
    container notes; dragging cards between containers; the Later container.

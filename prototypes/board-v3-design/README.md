@@ -95,3 +95,7 @@ gate itself is tracker N1).
 ## 07 node sizing (2026-10-05)
 
 Option A, picked by the orchestrator overnight under the maintainer's delegation (chat 559), for his look in the morning: a faint width glyph in the top-right border gap that lifts an S / M / L / Auto pill. Tiers 280 / 360 / 464px. Rules: `docs/specification/components.md` § Node size, D-030.
+
+## 08 shapes (2026-10-05)
+
+Maintainer picks (chat 790-801): **diamond B**, the fork card (a card with a diamond badge in its tab and labelled yes/no exits on its sides); **pill B**, a capsule with its number and a START / END tab; **circle A and B**, the agent's choice: all circles for short labels, a centre circle with card children when they carry detail. Shapes keep their actions (shown on hover or selection); only card-based shapes take the S / M / L widths, circles size to their text; forks use the decision colour, start and end the topic colour. No feature flag: the shapes are on, and what agents may draw is decided in the agent skill.

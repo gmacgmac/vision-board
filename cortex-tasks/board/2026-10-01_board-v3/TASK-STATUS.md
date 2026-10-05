@@ -113,3 +113,17 @@ Open from 2e: the new-note hint wraps "cancel" at 300px; clicking empty board ke
 |---|---|---|---|---|
 | 1 | [N12_FE_01 incremental board](./N12_FE_01_incremental-board.md) | Opus 5.5 | Done | see log |
 | 2 | Check: orchestrator runs the gates and the counting tests, tries a full rebuild to see them fail | Orchestrator | Done 2026-10-05 (480 unit + 4 timing, 74 page; no baseline changed) | see log |
+
+## Stage 3 tasks (written 2026-10-05)
+
+Reference behaviour: Uplynk Architect (`architect-extract/`), with the maintainer's changes
+(chat 665, 667, 673-679): Shift+drag lasso, kind tab moves, drag in a card selects text,
+background drag pans, the selection bar offers Comment or Zoom to selection, zoom buttons in the
+header. Run in order; each changes code the next builds on.
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [3_FE_01 select and drag](./3_FE_01_select-and-drag.md) (U5) | Opus 5.5 | Running | |
+| 2 | 3_FE_02 lasso, selection bar, group notes, zoom buttons and zoom to selection (U6) | Opus 5.5 | Planned | |
+| 3 | 3_FE_03 move cards between containers, group move, the Later container, container notes | Opus 5.5 | Planned | |
+| 4 | Stage check: orchestrator, then the maintainer's look | Orchestrator | Planned | |
