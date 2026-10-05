@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 — Shapes: decision diamond, start/end pill, circle</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../architect-extract/architect.css">
+<link rel="stylesheet" href="spec.css">
+<style>
+  /* Self-contained: spec.css (and the architect.css it sits on) only. Shapes are drawn here with inline SVG / CSS from the tokens;
+     the build would own one drawing per outline in node.css. Nodes and wires are placed by the script at the bottom. */
+  body { min-width: 1440px; }
+  .opt-h { margin: 26px 0 4px; font: 600 15px var(--f-display); } .opt-h span { color: var(--muted); font-weight: 500; }
+  .stage.fig-stage { display: block; padding: 40px 32px 34px; overflow: hidden; }
+  .fig { position: relative; margin: 0 auto; } .fig > * { position: absolute; }
+  .fig .card:not(.mini) { width: 280px; } .fig .card.mini { width: 210px; }
+  .legend b { color: var(--ink); } .legend ul { margin-top: 4px; } .legend .rec { margin-top: 8px; color: var(--ink); }
+  .cap { margin: 0; width: 290px; font-size: 12px; color: var(--muted); } .cap b { color: var(--ink-2); font-weight: 600; }
+  /* Wires: thin grey lines, one arrowhead per directed link */
+  .fig > svg.wires { left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .wires path.w { fill: none; stroke: color-mix(in srgb, var(--muted) 75%, var(--ground)); stroke-width: 1.75; stroke-linejoin: round; }
+  .wires path.ah { fill: color-mix(in srgb, var(--muted) 75%, var(--ground)); }
+  .wl { transform: translate(-50%, -50%); display: inline-flex; align-items: center; height: 19px; padding: 0 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--c) 55%, var(--line)); background: var(--surface); color: var(--c); font: 700 10.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 0 0 3px var(--ground); }
+  .wl.yes { --c: var(--ok); } .wl.no { --c: var(--bad); }
+  .port { width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; border: 1.5px solid var(--fc); background: var(--surface); }
+  /* Outlines. Diamond and hexagon: an SVG polygon in the box (0-100 units, so the points ARE the ports); pill and circle: a CSS radius. */
+  .shp { color: var(--ink); }
+  .shp svg.o { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--ink) 16%, transparent)); }
+  .shp svg.o polygon { fill: color-mix(in srgb, var(--fc) 9%, var(--surface)); stroke: color-mix(in srgb, var(--fc) 42%, var(--line)); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+  .shp.is-sel svg.o { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--fc) 60%, transparent)); }
+  .shp.is-sel svg.o polygon { stroke: var(--fc); stroke-width: 1.5; }
+  .shp .st { position: absolute; display: grid; gap: 3px; place-content: center; text-align: center; }
+  .shp .st .t { font: 600 14px/1.25 var(--f-display); overflow-wrap: anywhere; }
+  .shp .k { font: 700 10px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fc); }
+  .diamond .st { inset: 25%; } .hex .st { inset: 0 15%; }
+  .diamond .tab.num { top: 25%; left: 25%; transform: translate(-50%, -50%); } .hex .tab.num { top: 0; left: 13%; transform: translateY(-50%); }
+  .round { border: 1px solid color-mix(in srgb, var(--fc) 38%, var(--line)); background: linear-gradient(170deg, color-mix(in srgb, var(--fc) 9%, var(--surface)) 0%, var(--surface) 55%); box-shadow: var(--shadow); }
+  .round.is-sel { border-color: var(--fc); box-shadow: 0 0 0 .5px var(--fc), 0 0 18px -6px color-mix(in srgb, var(--fc) 65%, transparent), var(--shadow); }
+  .capsule { height: auto; min-height: 48px; padding: 8px 22px 8px 16px; border-radius: 999px; display: flex; align-items: center; gap: 9px; font-size: 14px; }
+  .capsule .ic { color: var(--fc); } .capsule .t { margin: 0; font: 600 14px/1.25 var(--f-display); } .capsule.wrap { max-width: 270px; padding-block: 13px; } .capsule.wrap .t { white-space: normal; } .capsule:not(.wrap) .t { white-space: nowrap; }
+  .capsule .tab.num { left: 20px; } .capsule .tab.kind { left: 50%; }
+  .circle { border-radius: 50%; } .circle .st { left: 50%; top: 50%; translate: -50% -50%; width: max-content; max-width: 104px; } .circle .st .t { font-size: 13.5px; }
+  .circle.big .st .t { font-size: 17px; letter-spacing: -.01em; } .circle .tab.num { top: 22%; left: 8.6%; transform: translate(-50%, -50%); }
+  .circle .pin { top: 14.6%; left: 85.4%; right: auto; transform: translate(-50%, -50%); }
+  /* Fork card (1B): a card with a diamond badge in the kind tab's place and ports on its sides */
+  .fork-badge { position: absolute; top: -15px; left: 50%; width: 30px; height: 30px; margin-left: -15px; display: grid; place-items: center; rotate: 45deg; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--fc) 60%, transparent); background: color-mix(in srgb, var(--fc) 16%, var(--ground)); color: var(--fc); box-shadow: 0 0 0 4px var(--ground); }
+  .fork-badge .ic { rotate: -45deg; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></symbol>
+    <symbol id="i-finding" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-risk" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></symbol>
+    <symbol id="i-action" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></symbol>
+    <symbol id="i-topic" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+    <symbol id="i-decision" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><rect x="8.5" y="8.5" width="7" height="7" rx="1.5"/></symbol>
+  </defs>
+</svg>
+<style>svg.ic { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }</style>
+
+<header class="page-head">
+  <div>
+    <a class="back" href="index.html">All mockups</a>
+    <h1>08 — Shapes: decision diamond, start/end pill, circle</h1>
+    <p>The three approved outlines (components.md § Shapes), each in two or three options, in Architect's look on the dotted canvas. Lines are computed, not drawn by hand: they leave from a port and stop at the outline's edge, exactly as <code>routeLinks</code> will. Section 3's circle links are straight, centre to centre. Toggle dark and light at the right.</p>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Light theme</button>
+</header>
+
+<section id="s1">
+<div class="sec-head"><h2>1 — Decision diamond, in a small flow</h2><p>One way in at the top, a "yes" and a "no" way out. The same flow three times; the lone shape on the right of each stage shows what a long title does to it.</p></div>
+<h3 class="opt-h">A — True diamond <span>· title inside, short titles</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f1a" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> a one- or two-word question ("Signed in?", "Paid plan?") and the classic flowchart reading: the shape says fork before you read it.
+  <ul><li><b>Risk:</b> only the middle half of the box holds text. A 41-character title needs a 240 × 240 diamond (right) against a 280 × 122 card, so neighbours are pushed apart and there is no room for body text or the kind tab.</li><li>The number tab sits on the upper-left edge; the kind is a small word inside, since the top point belongs to the incoming line.</li></ul></div>
+
+<h3 class="opt-h">B — Fork card <span>· card body, diamond badge, ports on the sides</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f1b" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> real sentences: the agent's usual titles and a line of context, in the card everyone already knows, so wrapping, tabs, size tiers and the footer all keep working.
+  <ul><li><b>Risk:</b> the signal is smaller: a 30px badge in the kind tab's slot plus two port dots, not a silhouette. The entry line meets the badge's top point.</li><li>A long title just wraps and the card grows taller (right); width stays on its tier.</li></ul></div>
+
+<h3 class="opt-h">C — Hexagon <span>· points left and right, flat top and bottom</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f1c" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> a title of up to about 50 characters: the text area is 70% of the width, so the same footprint as a small card holds two lines. Exits leave the two points; the entry meets the flat top.
+  <ul><li><b>Risk:</b> in classic flowcharts a hexagon means "preparation", not a decision, so first-time readers may not see a fork. It adds a fourth outline the spec has not approved.</li></ul>
+  <div class="rec"><b>Recommendation:</b> A if the agent is told to keep fork titles to about 16 characters; otherwise B. C only if the diamond's shape cost worries you more than its meaning.</div></div>
+</section>
+
+<section id="s2">
+<div class="sec-head"><h2>2 — Start and end pills</h2><p>A flow that begins and ends in a pill. Pills have two ports, the rounded ends (left and right here; top and bottom in a vertical flow), and the arrow stops at the end of the curve.</p></div>
+<h3 class="opt-h">A — Plain capsule <span>· icon and title, nothing on the border</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f2a" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> terminals that are only a signpost: "Start", "Video plays", "Done". Smallest footprint, and it cannot be mistaken for a card.
+  <ul><li><b>Risk:</b> no number and no kind tab, so it cannot be cited ("item 3"), noted, or get a proposal tab on its border. A long title wraps into a taller stadium (below) with the text area shrinking at both ends.</li></ul></div>
+
+<h3 class="opt-h">B — Capsule with a kind tab <span>· number and START / END tab, like cards</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f2b" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> every pill that is a real node of the board: it has a number for references, a tab for the kind, and room for a note pin, so proposals and notes work the same as on cards.
+  <ul><li><b>Risk:</b> 12px taller once the tabs straddle the border, and a START tab on a 190px pill is a lot of label for one word.</li></ul>
+  <div class="rec"><b>Recommendation:</b> B, because notes, proposals and "item 3" references hang off the tabs; use A only for pills that are drawn but not addressable.</div></div>
+</section>
+
+<section id="s3">
+<div class="sec-head"><h2>3 — Circles in a radial view</h2><p>A centre circle with the things around it. Each circle is sized to its text (the ruler at the top left is measured live), and every link is a straight line from centre to centre that stops at the rim, or at the box edge of a card.</p></div>
+<h3 class="opt-h">A — All circles <span>· mind map, short labels</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f3a" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> noun labels of one to three words ("Brand image" and where it is used). Shown: centre with number and kind tab; <b>Social posts</b> selected (1.5px, its own colour); <b>Email signature</b> with a note pin; <b>Partner co-marketing templates</b> at the largest size.
+  <ul><li><b>Risk:</b> the diameter follows the text, so area grows about with the square of the length: 8 characters is 84px, 30 characters 140px. The ring must widen to keep gaps, and there is no room for body text; detail would have to open on select.</li><li>Tabs sit on the rim: number at upper left, kind tab on top (only when the circle is wide enough), pin at upper right.</li></ul></div>
+
+<h3 class="opt-h">B — Centre circle, card children <span>· for children that carry text</span></h3>
+<div class="stage fig-stage"><div class="fig" id="f3b" data-w="1300"></div></div>
+<div class="legend"><b>Suits</b> a radial view whose satellites carry a sentence or bullets, so the people reading can see the detail without opening anything. The line still runs centre to centre; it stops at the circle's rim on one end and the card's box edge on the other.
+  <ul><li><b>Risk:</b> two outlines in one view, and at 7 or more cards the box-edge clipping leaves uneven line lengths. Cards do not shrink to the ring, so the ring is larger (about 860 × 420 here).</li></ul>
+  <div class="rec"><b>Recommendation:</b> A for pure labels (the brand-image example); B when children have body text. Make it the agent's choice, like the layout mode.</div></div>
+</section>
+
+<script>
+(() => {
+  const K = { question: 'Question', finding: 'Finding', decision: 'Decision', risk: 'Risk', action: 'Action', topic: 'Topic' };
+  const POLY = { diamond: '50,0 100,50 50,100 0,50', hex: '14,0 86,0 100,50 86,100 14,100 0,50' };
+  const ic = (s, w = 14, c = '') => `<svg class="ic ${c}" width="${w}" height="${w}"><use href="#i-${s}"/></svg>`;
+  const SV = 'http://www.w3.org/2000/svg';
+  const dist = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+  // One node = one element. shape: card | fork | diamond | hex | capsule | circle | cap (a caption)
+  function mk(n) {
+    const card = n.shape === 'card' || n.shape === 'fork', poly = n.shape === 'diamond' || n.shape === 'hex', k = n.k || 'topic', word = n.tag || K[k];
+    const e = document.createElement(card ? 'article' : 'div');
+    const tabs = (n.num ? `<span class="tab num">${n.num}</span>` : '') + (n.kind && !poly && n.shape !== 'fork' ? `<span class="tab kind">${word}</span>` : '')
+      + (n.note ? '<button class="pin" type="button" aria-label="Note 1">1</button>' : '');
+    e.className = (card ? 'card' : `shp ${n.shape}` + (poly ? '' : ' round')) + ` k-${k}` + (n.mini ? ' mini' : '') + (n.sel ? ' is-sel' : '') + (n.cls ? ' ' + n.cls : '') + (n.wrap ? ' wrap' : '');
+    if (card) e.innerHTML = (n.shape === 'fork' ? `<span class="fork-badge">${ic('decision', 13)}</span>` : '') + tabs
+      + `<div class="cb"><h3 class="t">${n.t}</h3>${n.p ? `<p class="p">${n.p}</p>` : ''}</div>`
+      + `<div class="card-foot" style="color: var(--muted)"><span class="word">${ic(n.ico || k, 14, 'kico')}<i class="sep"></i>${n.status || 'Open'}</span></div>`;
+    else if (poly) e.innerHTML = `<svg class="o" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="${POLY[n.shape]}"/></svg><div class="st"><span class="k">${word}</span><h3 class="t">${n.t}</h3></div>${tabs}`;
+    else if (n.shape === 'capsule') e.innerHTML = `${tabs}${ic(n.ico || k, 16)}<h3 class="t">${n.t}</h3>`;
+    else e.innerHTML = `${tabs}<div class="st"><h3 class="t">${n.t}</h3></div>`;
+    return e;
+  }
+  // Geometry. A port is a point on the outline's box (or on the badge, via po); a straight link runs centre to centre and stops at the edge.
+  const port = (n, s) => { const o = (n.po && n.po[s]) || 0; return { t: [n.x + n.w / 2, n.y + o], b: [n.x + n.w / 2, n.y + n.h + o], l: [n.x + o, n.y + n.h / 2], r: [n.x + n.w + o, n.y + n.h / 2] }[s]; };
+  const ctr = n => [n.x + n.w / 2, n.y + n.h / 2];
+  function edge(n, m) { // where the line toward m leaves n: the rim for a circle, the box edge for a card
+    const [cx, cy] = ctr(n), [mx, my] = ctr(m), dx = mx - cx, dy = my - cy;
+    const t = n.shape === 'circle' ? n.w / 2 / Math.hypot(dx, dy) : Math.min(n.w / 2 / (Math.abs(dx) || 1e-9), n.h / 2 / (Math.abs(dy) || 1e-9));
+    return [cx + dx * t, cy + dy * t];
+  }
+  function route(a, s1, b, s2) { // right-angled route between two ports, with the fewest bends
+    const p = port(a, s1), q = port(b, s2), v = s1 === 't' || s1 === 'b', near = (i, j) => Math.abs(p[i] - q[i]) < 1, mid = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    if (v && s2 !== 'l' && s2 !== 'r') return near(0, 0) ? [p, [p[0], q[1]]] : [p, [p[0], mid[1]], [q[0], mid[1]], q];
+    if (!v && s2 !== 't' && s2 !== 'b') return near(1, 1) ? [p, [q[0], p[1]]] : [p, [mid[0], p[1]], [mid[0], q[1]], q];
+    return v ? [p, [p[0], q[1]], q] : [p, [q[0], p[1]], q]; // from a side to a top: across, then down
+  }
+  function rounded(pts, r = 10) { // polyline to a path with rounded corners
+    let d = `M${pts[0]}`;
+    for (let i = 1; i < pts.length - 1; i++) {
+      const [a, b, c] = [pts[i - 1], pts[i], pts[i + 1]], k1 = Math.min(r, dist(a, b) / 2), k2 = Math.min(r, dist(b, c) / 2);
+      d += `L${b[0] + (a[0] - b[0]) * k1 / dist(a, b)},${b[1] + (a[1] - b[1]) * k1 / dist(a, b)}Q${b} ${b[0] + (c[0] - b[0]) * k2 / dist(b, c)},${b[1] + (c[1] - b[1]) * k2 / dist(b, c)}`;
+    }
+    return d + `L${pts[pts.length - 1]}`;
+  }
+  const path = (svg, cls, d) => { const p = document.createElementNS(SV, 'path'); p.setAttribute('class', cls); p.setAttribute('d', d); svg.append(p); };
+  function wire(fig, svg, R, l) {
+    const a = R[l.a], b = R[l.b];
+    const pts = l.line ? [edge(a, b), edge(b, a)] : route(a, l.s, b, l.t);
+    path(svg, 'w', rounded(pts));
+    if (l.arrow) { const [p, q] = pts.slice(-2), u = [(q[0] - p[0]) / dist(p, q), (q[1] - p[1]) / dist(p, q)], base = [q[0] - u[0] * 9, q[1] - u[1] * 9]; path(svg, 'ah', `M${q}L${base[0] - u[1] * 4.5},${base[1] + u[0] * 4.5}L${base[0] + u[1] * 4.5},${base[1] - u[0] * 4.5}Z`); }
+    const add = (cls, html, at, st) => { const x = document.createElement('i'); x.className = cls; x.innerHTML = html; x.style.cssText = `left:${at[0]}px;top:${at[1]}px;` + (st || ''); fig.append(x); };
+    if (l.label) { const [p, q] = pts, u = [(q[0] - p[0]) / dist(p, q), (q[1] - p[1]) / dist(p, q)]; add('wl ' + l.label, l.label, [p[0] + u[0] * 34, p[1] + u[1] * 34], 'font-style:normal'); }
+    [[a, l.s, pts[0]], [b, l.t, pts[pts.length - 1]]].forEach(([n, s, p]) => { if (n.dots && (s === 'l' || s === 'r')) add('port', '', p, "--fc:var(--accent)"); });
+  }
+  function build(id, nodes, links) {
+    const fig = document.getElementById(id), R = {};
+    fig.style.width = fig.dataset.w + 'px';
+    const svg = document.createElementNS(SV, 'svg'); svg.setAttribute('class', 'wires'); svg.setAttribute('aria-hidden', 'true'); fig.append(svg);
+    nodes.forEach(n => {
+      let e;
+      if (n.shape === 'cap') { e = document.createElement('p'); e.className = 'cap'; e.innerHTML = typeof n.html === 'function' ? n.html(R) : n.html; if (n.cw) e.style.width = n.cw + 'px'; }
+      else e = mk(n);
+      if (n.w) { e.style.width = n.w + 'px'; e.style.height = n.h + 'px'; }
+      fig.append(e);
+      if (n.shape === 'circle') { // diameter from the text: the circle must contain the text block's corners, plus padding
+        const s = e.querySelector('.st'), d = Math.max(n.min || 84, Math.ceil(2 * Math.hypot(s.offsetWidth / 2, s.offsetHeight / 2) + 24));
+        e.style.width = e.style.height = d + 'px';
+      }
+      const w = e.offsetWidth, h = e.offsetHeight, y = typeof n.y === 'function' ? n.y(R) : n.y !== undefined ? n.y : n.cy - h / 2;
+      R[n.id] = Object.assign(n, { e, w, h, x: n.cx - w / 2, y });
+      e.style.left = R[n.id].x + 'px'; e.style.top = y + 'px';
+    });
+    links.forEach(l => wire(fig, svg, R, l));
+    fig.style.height = Math.max(...Object.values(R).map(n => n.y + n.h)) + 26 + 'px';
+    fig.closest('.stage').dataset.ready = '1';
+  }
+  const LONG = 'Is the viewer signed in with a paid plan?';
+  // 1 - the flow, three ways. d = the fork node; the lone copy on the right shows a long title.
+  const flow = (id, d, long) => build(id, [
+    { id: 'e', shape: 'card', k: 'action', num: 12, kind: 1, t: 'Viewer opens a video', p: 'The player page loads.', cx: 500, y: 10 },
+    Object.assign({ id: 'd', k: 'decision', num: 13, cx: 500, y: r => r.e.y + r.e.h + 54 }, d),
+    { id: 'y', shape: 'card', k: 'action', num: 14, kind: 1, t: 'Play the video', p: 'Streaming starts right away.', cx: 170, y: r => r.d.y + r.d.h / 2 + 100 },
+    { id: 'n', shape: 'card', k: 'action', num: 15, kind: 1, t: 'Ask them to sign in', p: 'Show the sign-in form first.', cx: 830, y: r => r.d.y + r.d.h / 2 + 100 },
+    Object.assign({ id: 'L', k: 'decision', num: 16, cx: 1130, cy: 190 }, d, long),
+    { shape: 'cap', cx: 1130, y: r => r.L.y + r.L.h + 16, html: `<b>A long title</b>: ${LONG.length} characters. ${long.why}` },
+  ], [{ a: 'e', s: 'b', b: 'd', t: 't', arrow: 1 }, { a: 'd', s: 'l', b: 'y', t: 't', arrow: 1, label: 'yes' }, { a: 'd', s: 'r', b: 'n', t: 't', arrow: 1, label: 'no' }]);
+  flow('f1a', { shape: 'diamond', w: 170, h: 170, t: 'Signed in?' }, { w: 240, h: 240, t: LONG, cy: 200, why: 'The diamond grows to 240 × 240 to fit four lines; the card beside it is 122 tall.' });
+  flow('f1b', { shape: 'fork', kind: 1, dots: 1, po: { t: -6 }, t: 'Signed in?', p: 'Logged-in viewers skip the sign-in form.', status: 'Fork' }, { t: LONG, p: 'Logged-in viewers skip the sign-in form.', cy: 190, why: 'The card wraps to three lines and grows about 20px taller; width stays on its tier.' });
+  flow('f1c', { shape: 'hex', w: 250, h: 104, t: 'Signed in?' }, { t: LONG, cy: 190, why: 'The same 250 × 104 hexagon holds two lines; past about 50 characters it would need to grow.' });
+  // 2 - start and end pills, with a long title below
+  const pills = (id, kind) => build(id, [
+    { id: 's', shape: 'capsule', k: 'topic', ico: 'action', tag: 'Start', num: kind ? 1 : 0, kind, t: 'User presses play', cx: 120, cy: 90 },
+    { id: 'a', shape: 'card', k: 'action', num: 2, kind: 1, t: 'Player asks for the stream', p: 'The app requests the first chunk.', cx: 420, cy: 90 },
+    { id: 'b', shape: 'card', k: 'finding', num: 3, kind: 1, t: 'Stream comes from cache', p: 'The nearest edge server replies.', cx: 760, cy: 90 },
+    { id: 'z', shape: 'capsule', k: 'topic', ico: 'stop', tag: 'End', num: kind ? 4 : 0, kind, t: 'Video plays', cx: 1040, cy: 90 },
+    { id: 'w', shape: 'capsule', k: 'topic', ico: 'stop', tag: 'End', num: kind ? 5 : 0, kind, wrap: 1, t: 'Player shows the first frame once enough video is buffered', cx: 190, y: 220 },
+    { shape: 'cap', cx: 560, y: 232, html: '<b>A long title</b> wraps at 270px. The ends get rounder (radius is half the height) and the text area narrows at both ends.' },
+  ], [{ a: 's', s: 'r', b: 'a', t: 'l', arrow: 1 }, { a: 'a', s: 'r', b: 'b', t: 'l', arrow: 1 }, { a: 'b', s: 'r', b: 'z', t: 'l', arrow: 1 }]);
+  pills('f2a', 0); pills('f2b', 1);
+  // 3 - circles. Positions are polar around the centre; links are straight, centre to centre.
+  const SAT = [['Website', 'finding'], ['Social posts', 'action'], ['Partner co-marketing templates', 'question'], ['Invoices', 'topic'], ['Trade-show booth', 'finding'], ['Email signature', 'risk'], ['Slide master', 'topic'], ['Packaging', 'question']];
+  const ring = (id, mini) => {
+    const nodes = [{ id: 'c', shape: 'circle', k: 'topic', num: 1, kind: 1, cls: 'big', min: 150, t: 'Brand image', cx: 650, cy: 290 }], links = [];
+    const list = mini ? [1, 2, 3, 5, 6, 7] : [0, 1, 2, 3, 4, 5, 6, 7];
+    list.forEach((i, j) => {
+      const an = mini ? (-60 + 60 * j) * Math.PI / 180 : (-90 + 45 * j) * Math.PI / 180, [t, k] = SAT[i], sid = 's' + j;
+      const n = { id: sid, k, num: i + 2, t, cx: 650 + (mini ? 430 : 480) * Math.cos(an), cy: 290 + (mini ? 215 : 220) * Math.sin(an), sel: i === 1, note: i === 5 };
+      if (mini) Object.assign(n, { shape: 'card', mini: 1, kind: 1, p: ({1: 'Profile image and post frames.', 2: 'Co-branded decks and one-pagers.', 3: 'Logo, address block and colours.', 5: 'Logo and the legal line, two sizes.', 6: 'Title slide and footer logo.', 7: 'Box, tape and the label.'})[i] });
+      else Object.assign(n, { shape: 'circle', kind: i === 1 || i === 2 });
+      nodes.push(n); links.push({ a: 'c', b: sid, line: 1 });
+    });
+    if (!mini) nodes.push({ shape: 'cap', cx: 125, cw: 250, y: 10, html: r => `<b>Diameter follows the text</b><br>${r.s0.w}px Website · ${r.s1.w}px Social posts · ${r.s2.w}px Partner co-marketing templates · ${r.c.w}px centre` });
+    build(id, nodes, links);
+  };
+  ring('f3a', 0); ring('f3b', 1);
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', () => { const dark = document.documentElement.dataset.theme !== 'light'; document.documentElement.dataset.theme = dark ? 'light' : 'dark'; btn.textContent = dark ? 'Dark theme' : 'Light theme'; });
+})();
+</script>
+</body>
+</html>
