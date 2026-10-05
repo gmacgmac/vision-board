@@ -82,3 +82,9 @@ test('a read is read-only and takes no secret when its security names none', () 
   assert.deepEqual(tools[0].annotations, { readOnlyHint: true, openWorldHint: false });
   assert.equal(routes.make_thing.secret, false);
 });
+
+test('$comment (where the schemas point at our own docs) never reaches a tool schema, at any depth', () => {
+  const s = { type: 'object', description: 'A thing.', $comment: 'Was: api.md 1', properties: { a: { type: 'string', description: 'An a.', $comment: 'D-001' }, b: { type: 'array', items: { type: 'object', $comment: 'rule 3', properties: {} } } } };
+  assert.ok(!JSON.stringify(flatten(s, {}, new Map())).includes('$comment'));
+  assert.equal(flatten(s, {}, new Map()).properties.a.description, 'An a.');
+});

@@ -12,8 +12,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: list_boards answer",
-        "description": "`seq` is that board's own last ledger line; `head` is the ledger's (api.md Operations).",
+        "title": "Board list",
+        "description": "`seq` is that board's own last ledger line; `head` is the ledger's.",
         "type": "object",
         "required": [
           "boards",
@@ -32,25 +32,29 @@
               "properties": {
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board id, which the other operations take in their path."
                 },
                 "title": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 200
+                  "maxLength": 200,
+                  "description": "The board's title."
                 },
                 "seq": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The board's own last ledger line (`seq`)."
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "Every board in the project."
           },
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           }
         },
         "additionalProperties": false
@@ -79,7 +83,7 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: get_board answer",
+        "title": "Board state",
         "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests and each region's holders. `state` and `versions` are keyed by node id (the string form of the number).",
         "type": "object",
         "required": [
@@ -92,11 +96,11 @@
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "view": {
-            "title": "API: one board as a View",
-            "description": "The View the layout engine and the page read (packages/format `View`, `boardView`): meaning only, no coordinates. A node's id is the string form of its number; `n` is set only on items.",
+            "title": "Board view",
+            "description": "One board as the page draws it: meaning only, no coordinates. A node's id is the string form of its number; `n` is set only on items.",
             "type": "object",
             "required": [
               "format",
@@ -109,7 +113,8 @@
             ],
             "properties": {
               "format": {
-                "const": 1
+                "const": 1,
+                "description": "The View format version; always 1."
               },
               "session": {
                 "type": "string",
@@ -124,12 +129,14 @@
               "title": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 200
+                "maxLength": 200,
+                "description": "The board's title."
               },
               "summary": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 2000
+                "maxLength": 2000,
+                "description": "What the board is for."
               },
               "regions": {
                 "type": "array",
@@ -143,12 +150,14 @@
                   "properties": {
                     "id": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The container's id."
                     },
                     "title": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The container's title."
                     },
                     "mode": {
                       "enum": [
@@ -157,7 +166,8 @@
                         "lanes",
                         "radial",
                         "list"
-                      ]
+                      ],
+                      "description": "How the container lays out its cards."
                     },
                     "lanes": {
                       "type": "array",
@@ -166,21 +176,24 @@
                         "type": "string",
                         "pattern": "\\S",
                         "maxLength": 40
-                      }
+                      },
+                      "description": "Lane names, top to bottom, for a container in `lanes` mode."
                     },
                     "columns": {
                       "type": "integer",
                       "minimum": 1,
-                      "maximum": 12
+                      "maximum": 12,
+                      "description": "How many columns a `grid` container uses."
                     },
                     "center": {
                       "type": "string",
                       "pattern": "^[1-9][0-9]*$",
-                      "description": "The centre node's id (the ledger writes its number, api.md 18)"
+                      "description": "The centre node's id (the ledger writes its number)"
                     }
                   },
                   "additionalProperties": false
-                }
+                },
+                "description": "The containers on the board."
               },
               "nodes": {
                 "type": "array",
@@ -200,7 +213,8 @@
                     },
                     "region": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The container the node sits in."
                     },
                     "kind": {
                       "enum": [
@@ -211,26 +225,31 @@
                         "action",
                         "topic",
                         "note"
-                      ]
+                      ],
+                      "description": "What the node is: a question, finding, decision, risk, action, topic or note."
                     },
                     "title": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 200
+                      "maxLength": 200,
+                      "description": "The node's title."
                     },
                     "body": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 8000
+                      "maxLength": 8000,
+                      "description": "The node's text."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The item number; present when the node asks the person for a response."
                     },
                     "lane": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 40
+                      "maxLength": 40,
+                      "description": "The lane the node sits in, for a container in `lanes` mode."
                     },
                     "tags": {
                       "type": "array",
@@ -239,21 +258,25 @@
                         "type": "string",
                         "pattern": "\\S",
                         "maxLength": 40
-                      }
+                      },
+                      "description": "Short labels for the node."
                     },
                     "emphasis": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "description": "True when the agent drew the node emphasised."
                     },
                     "size": {
                       "enum": [
                         "s",
                         "m",
                         "l"
-                      ]
+                      ],
+                      "description": "The agent's size suggestion; the person's choice is in `state.sizes`."
                     }
                   },
                   "additionalProperties": false
-                }
+                },
+                "description": "Every node on the board, in its latest version."
               },
               "links": {
                 "type": "array",
@@ -277,11 +300,13 @@
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "What the link means, in a few words."
                     }
                   },
                   "additionalProperties": false
-                }
+                },
+                "description": "The links between nodes."
               }
             },
             "additionalProperties": false
@@ -333,16 +358,19 @@
                             "enum": [
                               "comment",
                               "context"
-                            ]
+                            ],
+                            "description": "`comment` or `context` (a request for more context)."
                           },
                           "text": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 4000
+                            "maxLength": 4000,
+                            "description": "The person's words."
                           },
                           "at": {
                             "type": "string",
-                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                            "description": "When the person wrote it."
                           }
                         },
                         "additionalProperties": false
@@ -350,7 +378,8 @@
                     }
                   },
                   "additionalProperties": false
-                }
+                },
+                "description": "Each item's status and the person's notes, by node id."
               },
               "pins": {
                 "type": "object",
@@ -374,7 +403,8 @@
                     }
                   },
                   "additionalProperties": false
-                }
+                },
+                "description": "Where the person pinned nodes, by node id."
               },
               "modes": {
                 "type": "object",
@@ -407,9 +437,10 @@
                     "l"
                   ]
                 },
-                "description": "The person's size per node; left out when none is set (api.md 17)"
+                "description": "The person's size per node; left out when none is set"
               }
             },
+            "description": "What the person has done on this board: each item's status, pins and chosen layout modes.",
             "additionalProperties": false
           },
           "versions": {
@@ -422,12 +453,13 @@
             "additionalProperties": {
               "type": "integer",
               "minimum": 1
-            }
+            },
+            "description": "Each node's latest version number, by node id."
           },
           "requests": {
             "type": "array",
             "minItems": 1,
-            "description": "The grant requests on this board the person has not answered, oldest first; left out when there are none (api.md 26, 32). The person answers one with `grant` or `deny` and its `seq`.",
+            "description": "The grant requests on this board the person has not answered, oldest first; left out when there are none. The person answers one with `grant` or `deny` and its `seq`.",
             "items": {
               "type": "object",
               "required": [
@@ -439,24 +471,29 @@
               "properties": {
                 "seq": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The request's `seq`; the person answers it with `grant` or `deny`."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the agent asked for."
                 },
                 "reason": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 4000
+                  "maxLength": 4000,
+                  "description": "Why the agent asked."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When the agent asked."
                 },
                 "agent": {
                   "type": "string",
-                  "pattern": "^a-[a-z0-9]{8}$"
+                  "pattern": "^a-[a-z0-9]{8}$",
+                  "description": "The agent that asked."
                 },
                 "label": {
                   "type": "string",
@@ -470,7 +507,7 @@
           },
           "holders": {
             "type": "object",
-            "description": "Region id to the agents that hold it now, creator first (api.md 23); a region with none, and a board with none, are left out (api.md 32).",
+            "description": "Region id to the agents that hold it now, creator first; a region with none, and a board with none, are left out.",
             "propertyNames": {
               "type": "string",
               "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
@@ -557,15 +594,18 @@
         "properties": {
           "n": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "description": "The node number."
           },
           "board": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "The board the node is on."
           },
           "region": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "The container the node is in now."
           },
           "status": {
             "enum": [
@@ -584,7 +624,7 @@
               "m",
               "l"
             ],
-            "description": "The person's size; it wins over the agent's suggestion in `versions` (api.md 17)"
+            "description": "The person's size; it wins over the agent's suggestion in `versions`"
           },
           "seen": {
             "type": "integer",
@@ -605,15 +645,18 @@
               "properties": {
                 "ver": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The version number, from 1."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When this version was written."
                 },
                 "agent": {
                   "type": "string",
-                  "pattern": "\\S"
+                  "pattern": "\\S",
+                  "description": "The agent that wrote this version."
                 },
                 "node": {
                   "type": "object",
@@ -625,7 +668,8 @@
                   "properties": {
                     "region": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The container (region) the node sits in."
                     },
                     "kind": {
                       "enum": [
@@ -636,25 +680,30 @@
                         "action",
                         "topic",
                         "note"
-                      ]
+                      ],
+                      "description": "What the node is: `question`, `finding`, `decision`, `risk`, `action`, `topic` or `note`."
                     },
                     "title": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 200
+                      "maxLength": 200,
+                      "description": "The node's title."
                     },
                     "body": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 8000
+                      "maxLength": 8000,
+                      "description": "The node's text."
                     },
                     "item": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "description": "True when the node asks the person for a response; it then gets an item number."
                     },
                     "lane": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 40
+                      "maxLength": 40,
+                      "description": "The lane the node sits in, for a container in `lanes` mode."
                     },
                     "tags": {
                       "type": "array",
@@ -663,10 +712,12 @@
                         "type": "string",
                         "pattern": "\\S",
                         "maxLength": 40
-                      }
+                      },
+                      "description": "Short labels for the node."
                     },
                     "emphasis": {
-                      "type": "boolean"
+                      "type": "boolean",
+                      "description": "True to draw the node emphasised. It never overrides a size the person chose."
                     },
                     "size": {
                       "enum": [
@@ -674,14 +725,16 @@
                         "m",
                         "l"
                       ],
-                      "description": "The agent's suggestion; the person's size wins (api.md 17)"
+                      "description": "The agent's suggestion; the person's size wins"
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "What the agent said in this version."
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "Every version of the node, oldest first."
           },
           "notes": {
             "type": "array",
@@ -697,20 +750,24 @@
                   "enum": [
                     "comment",
                     "context"
-                  ]
+                  ],
+                  "description": "`comment` or `context` (a request for more context)."
                 },
                 "text": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 4000
+                  "maxLength": 4000,
+                  "description": "The person's words."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When the person wrote it."
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The person's comments and requests for context on the node."
           },
           "replies": {
             "type": "array",
@@ -724,28 +781,34 @@
               "properties": {
                 "seq": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The reply's ledger line."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When the agent replied."
                 },
                 "text": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 4000
+                  "maxLength": 4000,
+                  "description": "The agent's answer."
                 },
                 "to": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The `seq` of the person's action this answers."
                 },
                 "agent": {
                   "type": "string",
-                  "pattern": "\\S"
+                  "pattern": "\\S",
+                  "description": "The agent that replied."
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The agent's replies on the node."
           },
           "proposals": {
             "type": "array",
@@ -763,47 +826,57 @@
               "properties": {
                 "seq": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The proposal's ledger line."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When the agent proposed it."
                 },
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node the proposal is about."
                 },
                 "ver": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node version the proposal is about."
                 },
                 "action": {
                   "enum": [
                     "ack",
                     "drop"
-                  ]
+                  ],
+                  "description": "`ack` (acknowledge) or `drop`."
                 },
                 "reason": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 4000
+                  "maxLength": 4000,
+                  "description": "Why the agent proposed it."
                 },
                 "source": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 500
+                  "maxLength": 500,
+                  "description": "Where the evidence is."
                 },
                 "agent": {
                   "type": "string",
-                  "pattern": "\\S"
+                  "pattern": "\\S",
+                  "description": "The agent that proposed it."
                 },
                 "decidedBy": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The `seq` of the person's action that took it; absent while it waits."
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The agent's proposed decisions on the node."
           },
           "park": {
             "type": "object",
@@ -817,22 +890,26 @@
               "situation": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 4000
+                "maxLength": 4000,
+                "description": "What is going on now."
               },
               "background": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 4000
+                "maxLength": 4000,
+                "description": "How things got here."
               },
               "assessment": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 4000
+                "maxLength": 4000,
+                "description": "What you make of it."
               },
               "recommendation": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 4000
+                "maxLength": 4000,
+                "description": "What you suggest doing next."
               },
               "sources": {
                 "type": "array",
@@ -841,10 +918,12 @@
                   "type": "string",
                   "pattern": "\\S",
                   "maxLength": 500
-                }
+                },
+                "description": "Files or links that back this up."
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "description": "The handover bundle, when the node has been saved for later."
           },
           "links": {
             "type": "array",
@@ -857,16 +936,19 @@
               "properties": {
                 "from": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node the link starts at."
                 },
                 "to": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node the link ends at."
                 },
                 "label": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 80
+                  "maxLength": 80,
+                  "description": "What the link means, in a few words."
                 }
               },
               "additionalProperties": false
@@ -876,13 +958,13 @@
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "linked": {
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Everything known about one node. Left open so show_node can add `head` and `linked` (api.md 6)",
+              "description": "Everything known about one node.",
               "required": [
                 "n",
                 "board",
@@ -896,15 +978,18 @@
               "properties": {
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node number."
                 },
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the node is on."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the node is in now."
                 },
                 "status": {
                   "enum": [
@@ -923,7 +1008,7 @@
                     "m",
                     "l"
                   ],
-                  "description": "The person's size; it wins over the agent's suggestion in `versions` (api.md 17)"
+                  "description": "The person's size; it wins over the agent's suggestion in `versions`"
                 },
                 "seen": {
                   "type": "integer",
@@ -944,15 +1029,18 @@
                     "properties": {
                       "ver": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The version number, from 1."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When this version was written."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that wrote this version."
                       },
                       "node": {
                         "type": "object",
@@ -964,7 +1052,8 @@
                         "properties": {
                           "region": {
                             "type": "string",
-                            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                            "description": "The container (region) the node sits in."
                           },
                           "kind": {
                             "enum": [
@@ -975,25 +1064,30 @@
                               "action",
                               "topic",
                               "note"
-                            ]
+                            ],
+                            "description": "What the node is: `question`, `finding`, `decision`, `risk`, `action`, `topic` or `note`."
                           },
                           "title": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 200
+                            "maxLength": 200,
+                            "description": "The node's title."
                           },
                           "body": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 8000
+                            "maxLength": 8000,
+                            "description": "The node's text."
                           },
                           "item": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "description": "True when the node asks the person for a response; it then gets an item number."
                           },
                           "lane": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 40
+                            "maxLength": 40,
+                            "description": "The lane the node sits in, for a container in `lanes` mode."
                           },
                           "tags": {
                             "type": "array",
@@ -1002,10 +1096,12 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 40
-                            }
+                            },
+                            "description": "Short labels for the node."
                           },
                           "emphasis": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "description": "True to draw the node emphasised. It never overrides a size the person chose."
                           },
                           "size": {
                             "enum": [
@@ -1013,14 +1109,16 @@
                               "m",
                               "l"
                             ],
-                            "description": "The agent's suggestion; the person's size wins (api.md 17)"
+                            "description": "The agent's suggestion; the person's size wins"
                           }
                         },
-                        "additionalProperties": false
+                        "additionalProperties": false,
+                        "description": "What the agent said in this version."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "Every version of the node, oldest first."
                 },
                 "notes": {
                   "type": "array",
@@ -1036,20 +1134,24 @@
                         "enum": [
                           "comment",
                           "context"
-                        ]
+                        ],
+                        "description": "`comment` or `context` (a request for more context)."
                       },
                       "text": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "The person's words."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the person wrote it."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The person's comments and requests for context on the node."
                 },
                 "replies": {
                   "type": "array",
@@ -1063,28 +1165,34 @@
                     "properties": {
                       "seq": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The reply's ledger line."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the agent replied."
                       },
                       "text": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "The agent's answer."
                       },
                       "to": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The `seq` of the person's action this answers."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that replied."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The agent's replies on the node."
                 },
                 "proposals": {
                   "type": "array",
@@ -1102,47 +1210,57 @@
                     "properties": {
                       "seq": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The proposal's ledger line."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the agent proposed it."
                       },
                       "n": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the proposal is about."
                       },
                       "ver": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node version the proposal is about."
                       },
                       "action": {
                         "enum": [
                           "ack",
                           "drop"
-                        ]
+                        ],
+                        "description": "`ack` (acknowledge) or `drop`."
                       },
                       "reason": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "Why the agent proposed it."
                       },
                       "source": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 500
+                        "maxLength": 500,
+                        "description": "Where the evidence is."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that proposed it."
                       },
                       "decidedBy": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The `seq` of the person's action that took it; absent while it waits."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The agent's proposed decisions on the node."
                 },
                 "park": {
                   "type": "object",
@@ -1156,22 +1274,26 @@
                     "situation": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What is going on now."
                     },
                     "background": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "How things got here."
                     },
                     "assessment": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What you make of it."
                     },
                     "recommendation": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What you suggest doing next."
                     },
                     "sources": {
                       "type": "array",
@@ -1180,10 +1302,12 @@
                         "type": "string",
                         "pattern": "\\S",
                         "maxLength": 500
-                      }
+                      },
+                      "description": "Files or links that back this up."
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "The handover bundle, when the node has been saved for later."
                 },
                 "links": {
                   "type": "array",
@@ -1196,16 +1320,19 @@
                     "properties": {
                       "from": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the link starts at."
                       },
                       "to": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the link ends at."
                       },
                       "label": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 80
+                        "maxLength": 80,
+                        "description": "What the link means, in a few words."
                       }
                     },
                     "additionalProperties": false
@@ -1214,10 +1341,11 @@
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The nodes linked to this one, each in full. Present only when `linked` is true."
           }
         },
-        "title": "API: show_node answer",
+        "title": "Node history",
         "additionalProperties": false
       },
       "annotations": {
@@ -1250,7 +1378,7 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: show_container answer",
+        "title": "Container history",
         "description": "One container (a region): the region as the ledger stores it, the agents that hold it, and every node it has held, each with its full history.",
         "type": "object",
         "required": [
@@ -1264,11 +1392,12 @@
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "board": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "The board the container is on."
           },
           "region": {
             "type": "object",
@@ -1280,12 +1409,14 @@
             "properties": {
               "id": {
                 "type": "string",
-                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                "description": "The container's id: lowercase letters, digits and hyphens. Send an id that already exists to update that container."
               },
               "title": {
                 "type": "string",
                 "pattern": "\\S",
-                "maxLength": 80
+                "maxLength": 80,
+                "description": "The container's title, shown on the board."
               },
               "mode": {
                 "enum": [
@@ -1294,7 +1425,8 @@
                   "lanes",
                   "radial",
                   "list"
-                ]
+                ],
+                "description": "How the container lays out its cards: `grid`, `flow`, `lanes`, `radial` or `list`."
               },
               "lanes": {
                 "type": "array",
@@ -1303,20 +1435,23 @@
                   "type": "string",
                   "pattern": "\\S",
                   "maxLength": 40
-                }
+                },
+                "description": "Lane names, top to bottom. Required when the mode is `lanes`."
               },
               "center": {
                 "type": "integer",
                 "minimum": 1,
-                "description": "The centre node's number (api.md 18)"
+                "description": "The centre node's number"
               },
               "columns": {
                 "type": "integer",
                 "minimum": 1,
-                "maximum": 12
+                "maximum": 12,
+                "description": "How many columns a `grid` container uses, from 1 to 12."
               }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "description": "The container itself: its id, title, mode and lanes."
           },
           "holders": {
             "type": "array",
@@ -1324,13 +1459,13 @@
               "type": "string",
               "pattern": "^a-[a-z0-9]{8}$"
             },
-            "description": "Empty for a region written by a v2 line (api.md 23)"
+            "description": "Empty for a region written by a v2 line"
           },
           "nodes": {
             "type": "array",
             "items": {
               "type": "object",
-              "description": "Everything known about one node. Left open so show_node can add `head` and `linked` (api.md 6)",
+              "description": "Everything known about one node.",
               "required": [
                 "n",
                 "board",
@@ -1344,15 +1479,18 @@
               "properties": {
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node number."
                 },
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the node is on."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the node is in now."
                 },
                 "status": {
                   "enum": [
@@ -1371,7 +1509,7 @@
                     "m",
                     "l"
                   ],
-                  "description": "The person's size; it wins over the agent's suggestion in `versions` (api.md 17)"
+                  "description": "The person's size; it wins over the agent's suggestion in `versions`"
                 },
                 "seen": {
                   "type": "integer",
@@ -1392,15 +1530,18 @@
                     "properties": {
                       "ver": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The version number, from 1."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When this version was written."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that wrote this version."
                       },
                       "node": {
                         "type": "object",
@@ -1412,7 +1553,8 @@
                         "properties": {
                           "region": {
                             "type": "string",
-                            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                            "description": "The container (region) the node sits in."
                           },
                           "kind": {
                             "enum": [
@@ -1423,25 +1565,30 @@
                               "action",
                               "topic",
                               "note"
-                            ]
+                            ],
+                            "description": "What the node is: `question`, `finding`, `decision`, `risk`, `action`, `topic` or `note`."
                           },
                           "title": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 200
+                            "maxLength": 200,
+                            "description": "The node's title."
                           },
                           "body": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 8000
+                            "maxLength": 8000,
+                            "description": "The node's text."
                           },
                           "item": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "description": "True when the node asks the person for a response; it then gets an item number."
                           },
                           "lane": {
                             "type": "string",
                             "pattern": "\\S",
-                            "maxLength": 40
+                            "maxLength": 40,
+                            "description": "The lane the node sits in, for a container in `lanes` mode."
                           },
                           "tags": {
                             "type": "array",
@@ -1450,10 +1597,12 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 40
-                            }
+                            },
+                            "description": "Short labels for the node."
                           },
                           "emphasis": {
-                            "type": "boolean"
+                            "type": "boolean",
+                            "description": "True to draw the node emphasised. It never overrides a size the person chose."
                           },
                           "size": {
                             "enum": [
@@ -1461,14 +1610,16 @@
                               "m",
                               "l"
                             ],
-                            "description": "The agent's suggestion; the person's size wins (api.md 17)"
+                            "description": "The agent's suggestion; the person's size wins"
                           }
                         },
-                        "additionalProperties": false
+                        "additionalProperties": false,
+                        "description": "What the agent said in this version."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "Every version of the node, oldest first."
                 },
                 "notes": {
                   "type": "array",
@@ -1484,20 +1635,24 @@
                         "enum": [
                           "comment",
                           "context"
-                        ]
+                        ],
+                        "description": "`comment` or `context` (a request for more context)."
                       },
                       "text": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "The person's words."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the person wrote it."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The person's comments and requests for context on the node."
                 },
                 "replies": {
                   "type": "array",
@@ -1511,28 +1666,34 @@
                     "properties": {
                       "seq": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The reply's ledger line."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the agent replied."
                       },
                       "text": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "The agent's answer."
                       },
                       "to": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The `seq` of the person's action this answers."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that replied."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The agent's replies on the node."
                 },
                 "proposals": {
                   "type": "array",
@@ -1550,47 +1711,57 @@
                     "properties": {
                       "seq": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The proposal's ledger line."
                       },
                       "at": {
                         "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "description": "When the agent proposed it."
                       },
                       "n": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the proposal is about."
                       },
                       "ver": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node version the proposal is about."
                       },
                       "action": {
                         "enum": [
                           "ack",
                           "drop"
-                        ]
+                        ],
+                        "description": "`ack` (acknowledge) or `drop`."
                       },
                       "reason": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 4000
+                        "maxLength": 4000,
+                        "description": "Why the agent proposed it."
                       },
                       "source": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 500
+                        "maxLength": 500,
+                        "description": "Where the evidence is."
                       },
                       "agent": {
                         "type": "string",
-                        "pattern": "\\S"
+                        "pattern": "\\S",
+                        "description": "The agent that proposed it."
                       },
                       "decidedBy": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The `seq` of the person's action that took it; absent while it waits."
                       }
                     },
                     "additionalProperties": false
-                  }
+                  },
+                  "description": "The agent's proposed decisions on the node."
                 },
                 "park": {
                   "type": "object",
@@ -1604,22 +1775,26 @@
                     "situation": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What is going on now."
                     },
                     "background": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "How things got here."
                     },
                     "assessment": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What you make of it."
                     },
                     "recommendation": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "What you suggest doing next."
                     },
                     "sources": {
                       "type": "array",
@@ -1628,10 +1803,12 @@
                         "type": "string",
                         "pattern": "\\S",
                         "maxLength": 500
-                      }
+                      },
+                      "description": "Files or links that back this up."
                     }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "description": "The handover bundle, when the node has been saved for later."
                 },
                 "links": {
                   "type": "array",
@@ -1644,16 +1821,19 @@
                     "properties": {
                       "from": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the link starts at."
                       },
                       "to": {
                         "type": "integer",
-                        "minimum": 1
+                        "minimum": 1,
+                        "description": "The node the link ends at."
                       },
                       "label": {
                         "type": "string",
                         "pattern": "\\S",
-                        "maxLength": 80
+                        "maxLength": 80,
+                        "description": "What the link means, in a few words."
                       }
                     },
                     "additionalProperties": false
@@ -1662,7 +1842,8 @@
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "Every node the container has held, each with all its versions and notes."
           }
         },
         "additionalProperties": false
@@ -1696,8 +1877,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: list_open answer",
-        "description": "Items not yet decided. With a Bearer secret, only the containers the caller holds (api.md 41).",
+        "title": "Open items",
+        "description": "Items not yet decided. With a Bearer secret, only the containers the caller holds.",
         "type": "object",
         "required": [
           "head",
@@ -1707,13 +1888,13 @@
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "items": {
             "type": "array",
             "items": {
               "type": "object",
-              "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply (api.md 32)",
+              "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply",
               "required": [
                 "board",
                 "n",
@@ -1726,19 +1907,23 @@
               "properties": {
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the item is on."
                 },
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The item number."
                 },
                 "ver": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The item's latest version."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the item is in."
                 },
                 "kind": {
                   "enum": [
@@ -1749,12 +1934,14 @@
                     "action",
                     "topic",
                     "note"
-                  ]
+                  ],
+                  "description": "What the node is."
                 },
                 "title": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 200
+                  "maxLength": 200,
+                  "description": "The item's title."
                 },
                 "status": {
                   "enum": [
@@ -1764,7 +1951,8 @@
                     "commented",
                     "context",
                     "later"
-                  ]
+                  ],
+                  "description": "Where the item stands with the person."
                 },
                 "pending": {
                   "enum": [
@@ -1772,7 +1960,7 @@
                     "context",
                     "later"
                   ],
-                  "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle (api.md 36)"
+                  "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle"
                 },
                 "unseen": {
                   "const": true,
@@ -1780,7 +1968,8 @@
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The items not yet decided."
           }
         },
         "additionalProperties": false
@@ -1834,8 +2023,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: check_responses answer",
-        "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests). `more` is true when `limit` cut the list. A wait that timed out answers `{ responses: [], head }` (api.md 31, 43).",
+        "title": "The person's responses",
+        "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests). `more` is true when `limit` cut the list. A wait that timed out answers `{ responses: [], head }`.",
         "type": "object",
         "required": [
           "responses",
@@ -1845,7 +2034,7 @@
           "responses": {
             "type": "array",
             "items": {
-              "description": "What each action needs (api.md 16). Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`).",
+              "description": "What each action needs.",
               "type": "object",
               "required": [
                 "v",
@@ -1860,30 +2049,36 @@
                   "enum": [
                     2,
                     3
-                  ]
+                  ],
+                  "description": "The ledger format version of the line: 2 or 3."
                 },
                 "seq": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The line's position in the ledger."
                 },
                 "at": {
                   "type": "string",
-                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "description": "When the server wrote the line."
                 },
                 "by": {
                   "enum": [
                     "person",
                     "agent"
-                  ]
+                  ],
+                  "description": "Who wrote the line: `person` or `agent`."
                 },
                 "agent": {
                   "type": "string",
-                  "pattern": "\\S"
+                  "pattern": "\\S",
+                  "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                 },
                 "person": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 80
+                  "maxLength": 80,
+                  "description": "The person's name, written only once a board has more than one person."
                 },
                 "action": {
                   "enum": [
@@ -1901,38 +2096,47 @@
                     "revoke",
                     "size",
                     "send"
-                  ]
+                  ],
+                  "description": "Which action to take, from the action registry."
                 },
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The number of the node the action is about."
                 },
                 "ver": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The node version the person was looking at."
                 },
                 "text": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 4000
+                  "maxLength": 4000,
+                  "description": "The person's words, for `comment`, `context` and `deny`."
                 },
                 "proposal": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The `seq` of the proposal being accepted."
                 },
                 "x": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Where to place the node across, for `pin`."
                 },
                 "y": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Where to place the node down, for `pin`."
                 },
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the action is about, for `mode`, `revoke` and `send`."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the action is about, for `mode` and `revoke`."
                 },
                 "mode": {
                   "enum": [
@@ -1941,15 +2145,18 @@
                     "lanes",
                     "radial",
                     "list"
-                  ]
+                  ],
+                  "description": "The layout mode to set, for `mode`."
                 },
                 "request": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The `seq` of the grant request being answered, for `grant` and `deny`."
                 },
                 "holder": {
                   "type": "string",
-                  "pattern": "^a-[a-z0-9]{8}$"
+                  "pattern": "^a-[a-z0-9]{8}$",
+                  "description": "The agent whose access is removed, for `revoke`."
                 },
                 "size": {
                   "enum": [
@@ -1957,19 +2164,21 @@
                     "m",
                     "l",
                     "auto"
-                  ]
+                  ],
+                  "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."
                 },
                 "type": {
                   "const": "act"
                 }
               },
               "additionalProperties": false
-            }
+            },
+            "description": "The person's actions after `after`, oldest first."
           },
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "more": {
             "const": true,
@@ -2012,8 +2221,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: read_ledger answer (JSON form)",
-        "description": "Ledger lines after `after`, oldest first. The `application/jsonl` form is the same lines without this envelope (api.md 44).",
+        "title": "Ledger lines",
+        "description": "Ledger lines after `after`, oldest first. The `application/jsonl` form is the same lines without this envelope.",
         "type": "object",
         "required": [
           "events",
@@ -2023,15 +2232,15 @@
           "events": {
             "type": "array",
             "items": {
-              "title": "Ledger v3: one stored line",
-              "description": "A stored ledger line, by its `type`. The discriminator gives a bad line one error, not one per branch (api.md 8).",
+              "title": "Ledger line",
+              "description": "A stored ledger line, by its `type`. The discriminator gives a bad line one error, not one per branch.",
               "type": "object",
               "required": [
                 "type"
               ],
               "oneOf": [
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2047,47 +2256,56 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "title": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 200
+                      "maxLength": 200,
+                      "description": "The board's title."
                     },
                     "summary": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 2000
+                      "maxLength": 2000,
+                      "description": "One or two sentences on what the board is for."
                     },
                     "board": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The board the line belongs to; the server takes it from the path."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "board"
@@ -2096,7 +2314,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2112,27 +2330,33 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "region": {
                       "type": "object",
@@ -2144,12 +2368,14 @@
                       "properties": {
                         "id": {
                           "type": "string",
-                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                          "description": "The container's id: lowercase letters, digits and hyphens. Send an id that already exists to update that container."
                         },
                         "title": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 80
+                          "maxLength": 80,
+                          "description": "The container's title, shown on the board."
                         },
                         "mode": {
                           "enum": [
@@ -2158,7 +2384,8 @@
                             "lanes",
                             "radial",
                             "list"
-                          ]
+                          ],
+                          "description": "How the container lays out its cards: `grid`, `flow`, `lanes`, `radial` or `list`."
                         },
                         "lanes": {
                           "type": "array",
@@ -2167,30 +2394,34 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 40
-                          }
+                          },
+                          "description": "Lane names, top to bottom. Required when the mode is `lanes`."
                         },
                         "center": {
                           "type": "integer",
                           "minimum": 1,
-                          "description": "The centre node's number (api.md 18)"
+                          "description": "The centre node's number"
                         },
                         "columns": {
                           "type": "integer",
                           "minimum": 1,
-                          "maximum": 12
+                          "maximum": 12,
+                          "description": "How many columns a `grid` container uses, from 1 to 12."
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The container to add, or to update when its id already exists."
                     },
                     "board": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The board the line belongs to; the server takes it from the path."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "region"
@@ -2199,7 +2430,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2217,27 +2448,33 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "node": {
                       "type": "object",
@@ -2249,7 +2486,8 @@
                       "properties": {
                         "region": {
                           "type": "string",
-                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                          "description": "The container (region) the node sits in."
                         },
                         "kind": {
                           "enum": [
@@ -2260,25 +2498,30 @@
                             "action",
                             "topic",
                             "note"
-                          ]
+                          ],
+                          "description": "What the node is: `question`, `finding`, `decision`, `risk`, `action`, `topic` or `note`."
                         },
                         "title": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 200
+                          "maxLength": 200,
+                          "description": "The node's title."
                         },
                         "body": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 8000
+                          "maxLength": 8000,
+                          "description": "The node's text."
                         },
                         "item": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "True when the node asks the person for a response; it then gets an item number."
                         },
                         "lane": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 40
+                          "maxLength": 40,
+                          "description": "The lane the node sits in, for a container in `lanes` mode."
                         },
                         "tags": {
                           "type": "array",
@@ -2287,10 +2530,12 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 40
-                          }
+                          },
+                          "description": "Short labels for the node."
                         },
                         "emphasis": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "True to draw the node emphasised. It never overrides a size the person chose."
                         },
                         "size": {
                           "enum": [
@@ -2298,28 +2543,32 @@
                             "m",
                             "l"
                           ],
-                          "description": "The agent's suggestion; the person's size wins (api.md 17)"
+                          "description": "The agent's suggestion; the person's size wins"
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The content of this version of the node."
                     },
                     "board": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The board the line belongs to; the server takes it from the path."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node number."
                     },
                     "ver": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node version this line wrote."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "node"
@@ -2328,7 +2577,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2344,46 +2593,55 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "What the link means, in a few words."
                     },
                     "from": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node the link starts at."
                     },
                     "to": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node the link ends at."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "link"
@@ -2392,7 +2650,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2408,46 +2666,55 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "What the link means, in a few words."
                     },
                     "from": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node the link starts at."
                     },
                     "to": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node the link ends at."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "unlink"
@@ -2456,7 +2723,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "What each action needs (api.md 16). Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`).",
+                  "description": "What each action needs.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2471,30 +2738,36 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
                       "enum": [
                         "person",
                         "agent"
-                      ]
+                      ],
+                      "description": "Who wrote the line: `person` or `agent`."
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "action": {
                       "enum": [
@@ -2512,38 +2785,47 @@
                         "revoke",
                         "size",
                         "send"
-                      ]
+                      ],
+                      "description": "Which action to take, from the action registry."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The number of the node the action is about."
                     },
                     "ver": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node version the person was looking at."
                     },
                     "text": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "The person's words, for `comment`, `context` and `deny`."
                     },
                     "proposal": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The `seq` of the proposal being accepted."
                     },
                     "x": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "Where to place the node across, for `pin`."
                     },
                     "y": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "Where to place the node down, for `pin`."
                     },
                     "board": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The board the action is about, for `mode`, `revoke` and `send`."
                     },
                     "region": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The container the action is about, for `mode` and `revoke`."
                     },
                     "mode": {
                       "enum": [
@@ -2552,15 +2834,18 @@
                         "lanes",
                         "radial",
                         "list"
-                      ]
+                      ],
+                      "description": "The layout mode to set, for `mode`."
                     },
                     "request": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The `seq` of the grant request being answered, for `grant` and `deny`."
                     },
                     "holder": {
                       "type": "string",
-                      "pattern": "^a-[a-z0-9]{8}$"
+                      "pattern": "^a-[a-z0-9]{8}$",
+                      "description": "The agent whose access is removed, for `revoke`."
                     },
                     "size": {
                       "enum": [
@@ -2568,7 +2853,8 @@
                         "m",
                         "l",
                         "auto"
-                      ]
+                      ],
+                      "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."
                     },
                     "type": {
                       "const": "act"
@@ -2577,7 +2863,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2593,35 +2879,43 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `person` for this event.",
                       "const": "person"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The number of the node the person has seen."
                     },
                     "ver": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The version of that node the person has seen."
                     },
                     "type": {
                       "const": "seen"
@@ -2630,7 +2924,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2646,46 +2940,55 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "text": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "Your answer to the person."
                     },
                     "to": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The `seq` of the person's action that you are answering."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node number."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "reply"
@@ -2694,7 +2997,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2712,57 +3015,68 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "ver": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node version you are proposing a decision on."
                     },
                     "action": {
                       "enum": [
                         "ack",
                         "drop"
-                      ]
+                      ],
+                      "description": "What you propose: `ack` (acknowledge) or `drop`. Only the person decides."
                     },
                     "reason": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "Why you propose this."
                     },
                     "source": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 500
+                      "maxLength": 500,
+                      "description": "Where the evidence is, such as a file path or a link."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node number."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "propose"
@@ -2771,7 +3085,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2787,27 +3101,33 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "bundle": {
                       "type": "object",
@@ -2821,22 +3141,26 @@
                         "situation": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What is going on now."
                         },
                         "background": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "How things got here."
                         },
                         "assessment": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What you make of it."
                         },
                         "recommendation": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What you suggest doing next."
                         },
                         "sources": {
                           "type": "array",
@@ -2845,20 +3169,23 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 500
-                          }
+                          },
+                          "description": "Files or links that back this up."
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The handover for an item saved for later, so a new chat can pick it up without this conversation."
                     },
                     "n": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node number."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "park"
@@ -2867,7 +3194,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2883,22 +3210,27 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
                       "pattern": "\\S",
+                      "description": "The new agent id.",
                       "allOf": [
                         {
                           "pattern": "^a-[a-z0-9]{8}$"
@@ -2908,12 +3240,14 @@
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "A short name for this chat or agent, such as \"Pricing chat\"; the person sees it when you ask for access."
                     },
                     "type": {
                       "const": "join"
@@ -2922,7 +3256,7 @@
                   "additionalProperties": false
                 },
                 {
-                  "description": "On a v3 line `agent` is an agent id. Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
+                  "description": "On a v3 line `agent` is an agent id.",
                   "type": "object",
                   "required": [
                     "v",
@@ -2939,46 +3273,55 @@
                       "enum": [
                         2,
                         3
-                      ]
+                      ],
+                      "description": "The ledger format version of the line: 2 or 3."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The line's position in the ledger."
                     },
                     "at": {
                       "type": "string",
-                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$"
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "description": "When the server wrote the line."
                     },
                     "by": {
+                      "description": "Who wrote the line; always `agent` for this event.",
                       "const": "agent"
                     },
                     "agent": {
                       "type": "string",
-                      "pattern": "\\S"
+                      "pattern": "\\S",
+                      "description": "The agent that wrote the line: an agent id on v3, any name on v2."
                     },
                     "person": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "The person's name, written only once a board has more than one person."
                     },
                     "board": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The board that holds the container."
                     },
                     "region": {
                       "type": "string",
-                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                      "description": "The container (region) you need to write to."
                     },
                     "reason": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "Why you need write access, so the person can decide."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "type": {
                       "const": "grant-request"
@@ -2987,12 +3330,13 @@
                   "additionalProperties": false
                 }
               ]
-            }
+            },
+            "description": "The ledger lines after `after`, oldest first."
           },
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "more": {
             "const": true,
@@ -3016,7 +3360,8 @@
           "label": {
             "type": "string",
             "pattern": "\\S",
-            "maxLength": 80
+            "maxLength": 80,
+            "description": "A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."
           }
         },
         "required": [
@@ -3025,8 +3370,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: join answer",
-        "description": "The agent id and its secret, shown once (api.md 21). The agent must save both in its durable notes (api.md 22).",
+        "title": "Join answer",
+        "description": "The agent id and its secret, shown once. The agent must save both in its durable notes.",
         "type": "object",
         "required": [
           "agent",
@@ -3035,12 +3380,13 @@
         "properties": {
           "agent": {
             "type": "string",
-            "pattern": "^a-[a-z0-9]{8}$"
+            "pattern": "^a-[a-z0-9]{8}$",
+            "description": "Your agent id."
           },
           "secret": {
             "type": "string",
             "pattern": "^[A-Za-z0-9_-]{43}$",
-            "description": "32 random bytes, base64url, shown once (api.md 21)"
+            "description": "32 random bytes, base64url, shown once"
           }
         },
         "additionalProperties": false
@@ -3061,22 +3407,25 @@
         "properties": {
           "board": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "The board that holds the container."
           },
           "region": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "description": "The container (region) you need to write to."
           },
           "reason": {
             "type": "string",
             "pattern": "\\S",
-            "maxLength": 4000
+            "maxLength": 4000,
+            "description": "Why you need write access, so the person can decide."
           },
           "key": {
             "type": "string",
             "pattern": "\\S",
             "maxLength": 64,
-            "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+            "description": "The agent's retry key, scoped to the agent across the project"
           },
           "secret": {
             "type": "string",
@@ -3092,8 +3441,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: request_grant answer",
-        "description": "Either the open request (with `replayed: true` when one already stood, api.md 26) or `{ held: true }` when the caller already holds the container.",
+        "title": "Grant request answer",
+        "description": "Either the open request (with `replayed: true` when one already stood) or `{ held: true }` when the caller already holds the container.",
         "type": "object",
         "properties": {
           "request": {
@@ -3102,20 +3451,40 @@
             "description": "The `seq` of the grant request; the person's answer names it"
           },
           "board": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                "description": "The board the request is for."
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                "description": "The board the container is on."
+              }
+            ]
           },
           "region": {
-            "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                "description": "The container the request is for."
+              },
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                "description": "The container you already hold."
+              }
+            ]
           },
           "replayed": {
             "const": true,
-            "description": "Present, and true, only when there is more to read or the answer repeats an earlier one"
+            "description": "True when you already had this request open, so nothing new was recorded."
           },
           "held": {
             "const": true,
-            "description": "Present, and true, only when there is more to read or the answer repeats an earlier one"
+            "description": "True: you already hold this container, so no request was recorded."
           }
         },
         "required": [
@@ -3144,12 +3513,13 @@
             "description": "The board id, from list_boards."
           },
           "items": {
+            "description": "The items to write, run in order (1 to 200); each has a `type`.",
             "type": "array",
             "minItems": 1,
             "maxItems": 200,
             "items": {
-              "title": "API: one write item",
-              "description": "One of the eight sent forms, by `type` (api.md 24, 34). The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+              "title": "Write item",
+              "description": "One of the eight sent forms, by `type`. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
               "type": "object",
               "required": [
                 "type"
@@ -3165,12 +3535,14 @@
                     "title": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 200
+                      "maxLength": 200,
+                      "description": "The board's title."
                     },
                     "summary": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 2000
+                      "maxLength": 2000,
+                      "description": "One or two sentences on what the board is for."
                     },
                     "type": {
                       "const": "board"
@@ -3179,7 +3551,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3201,12 +3573,14 @@
                       "properties": {
                         "id": {
                           "type": "string",
-                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                          "description": "The container's id: lowercase letters, digits and hyphens. Send an id that already exists to update that container."
                         },
                         "title": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 80
+                          "maxLength": 80,
+                          "description": "The container's title, shown on the board."
                         },
                         "mode": {
                           "enum": [
@@ -3215,7 +3589,8 @@
                             "lanes",
                             "radial",
                             "list"
-                          ]
+                          ],
+                          "description": "How the container lays out its cards: `grid`, `flow`, `lanes`, `radial` or `list`."
                         },
                         "lanes": {
                           "type": "array",
@@ -3224,20 +3599,23 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 40
-                          }
+                          },
+                          "description": "Lane names, top to bottom. Required when the mode is `lanes`."
                         },
                         "center": {
                           "type": "integer",
                           "minimum": 1,
-                          "description": "The centre node's number (api.md 18)"
+                          "description": "The centre node's number"
                         },
                         "columns": {
                           "type": "integer",
                           "minimum": 1,
-                          "maximum": 12
+                          "maximum": 12,
+                          "description": "How many columns a `grid` container uses, from 1 to 12."
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The container to add, or to update when its id already exists."
                     },
                     "type": {
                       "const": "region"
@@ -3246,7 +3624,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3268,7 +3646,8 @@
                       "properties": {
                         "region": {
                           "type": "string",
-                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                          "description": "The container (region) the node sits in."
                         },
                         "kind": {
                           "enum": [
@@ -3279,25 +3658,30 @@
                             "action",
                             "topic",
                             "note"
-                          ]
+                          ],
+                          "description": "What the node is: `question`, `finding`, `decision`, `risk`, `action`, `topic` or `note`."
                         },
                         "title": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 200
+                          "maxLength": 200,
+                          "description": "The node's title."
                         },
                         "body": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 8000
+                          "maxLength": 8000,
+                          "description": "The node's text."
                         },
                         "item": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "True when the node asks the person for a response; it then gets an item number."
                         },
                         "lane": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 40
+                          "maxLength": 40,
+                          "description": "The lane the node sits in, for a container in `lanes` mode."
                         },
                         "tags": {
                           "type": "array",
@@ -3306,10 +3690,12 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 40
-                          }
+                          },
+                          "description": "Short labels for the node."
                         },
                         "emphasis": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "True to draw the node emphasised. It never overrides a size the person chose."
                         },
                         "size": {
                           "enum": [
@@ -3317,16 +3703,17 @@
                             "m",
                             "l"
                           ],
-                          "description": "The agent's suggestion; the person's size wins (api.md 17)"
+                          "description": "The agent's suggestion; the person's size wins"
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The content of this version of the node."
                     },
                     "type": {
                       "const": "node"
                     },
                     "n": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3342,7 +3729,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3351,13 +3738,14 @@
                     },
                     "base": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3368,13 +3756,14 @@
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "What the link means, in a few words."
                     },
                     "type": {
                       "const": "link"
                     },
                     "from": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3390,7 +3779,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3398,7 +3787,7 @@
                       ]
                     },
                     "to": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3414,7 +3803,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3425,7 +3814,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "required": [
@@ -3441,13 +3830,14 @@
                     "label": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 80
+                      "maxLength": 80,
+                      "description": "What the link means, in a few words."
                     },
                     "type": {
                       "const": "unlink"
                     },
                     "from": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3463,7 +3853,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3471,7 +3861,7 @@
                       ]
                     },
                     "to": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3487,7 +3877,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3498,7 +3888,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "required": [
@@ -3519,17 +3909,19 @@
                     "text": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "Your answer to the person."
                     },
                     "to": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The `seq` of the person's action that you are answering."
                     },
                     "type": {
                       "const": "reply"
                     },
                     "n": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3545,7 +3937,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3556,7 +3948,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3573,29 +3965,33 @@
                   "properties": {
                     "ver": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The node version you are proposing a decision on."
                     },
                     "action": {
                       "enum": [
                         "ack",
                         "drop"
-                      ]
+                      ],
+                      "description": "What you propose: `ack` (acknowledge) or `drop`. Only the person decides."
                     },
                     "reason": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 4000
+                      "maxLength": 4000,
+                      "description": "Why you propose this."
                     },
                     "source": {
                       "type": "string",
                       "pattern": "\\S",
-                      "maxLength": 500
+                      "maxLength": 500,
+                      "description": "Where the evidence is, such as a file path or a link."
                     },
                     "type": {
                       "const": "propose"
                     },
                     "n": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3611,7 +4007,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3622,7 +4018,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3647,22 +4043,26 @@
                         "situation": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What is going on now."
                         },
                         "background": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "How things got here."
                         },
                         "assessment": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What you make of it."
                         },
                         "recommendation": {
                           "type": "string",
                           "pattern": "\\S",
-                          "maxLength": 4000
+                          "maxLength": 4000,
+                          "description": "What you suggest doing next."
                         },
                         "sources": {
                           "type": "array",
@@ -3671,16 +4071,18 @@
                             "type": "string",
                             "pattern": "\\S",
                             "maxLength": 500
-                          }
+                          },
+                          "description": "Files or links that back this up."
                         }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "description": "The handover for an item saved for later, so a new chat can pick it up without this conversation."
                     },
                     "type": {
                       "const": "park"
                     },
                     "n": {
-                      "description": "A node named by its number, or by the key of the item that made it (api.md 35). Sent forms only.",
+                      "description": "A node named by its number, or by the key of the item that made it. Sent forms only.",
                       "anyOf": [
                         {
                           "type": "integer",
@@ -3696,7 +4098,7 @@
                               "type": "string",
                               "pattern": "\\S",
                               "maxLength": 64,
-                              "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                              "description": "The agent's retry key, scoped to the agent across the project"
                             }
                           },
                           "additionalProperties": false
@@ -3707,7 +4109,7 @@
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     }
                   },
                   "additionalProperties": false
@@ -3728,8 +4130,8 @@
         "additionalProperties": false
       },
       "outputSchema": {
-        "title": "API: write_board answer",
-        "description": "A batch that can be read always answers 200, with one result per item, in order, plus `head` and `pending` (api.md 34, 36).",
+        "title": "Write results",
+        "description": "A batch that can be read always answers 200, with one result per item, in order, plus `head` and `pending`.",
         "type": "object",
         "required": [
           "results",
@@ -3753,20 +4155,23 @@
                     "index": {
                       "type": "integer",
                       "minimum": 0,
-                      "maximum": 199
+                      "maximum": 199,
+                      "description": "The position of the item in your request, from 0."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "ok": {
-                      "const": true
+                      "const": true,
+                      "description": "True: the item was written."
                     },
                     "seq": {
                       "type": "integer",
-                      "minimum": 1
+                      "minimum": 1,
+                      "description": "The ledger line the item was written as."
                     },
                     "n": {
                       "type": "integer",
@@ -3780,7 +4185,7 @@
                     },
                     "replayed": {
                       "const": true,
-                      "description": "The key was sent before with the same content; nothing was written now (api.md 29)"
+                      "description": "The key was sent before with the same content; nothing was written now"
                     }
                   },
                   "additionalProperties": false
@@ -3796,20 +4201,22 @@
                     "index": {
                       "type": "integer",
                       "minimum": 0,
-                      "maximum": 199
+                      "maximum": 199,
+                      "description": "The position of the item in your request, from 0."
                     },
                     "key": {
                       "type": "string",
                       "pattern": "\\S",
                       "maxLength": 64,
-                      "description": "The agent's retry key, scoped to the agent across the project (api.md 13, 29)"
+                      "description": "The agent's retry key, scoped to the agent across the project"
                     },
                     "ok": {
-                      "const": false
+                      "const": false,
+                      "description": "False: the item was not written; `problem` says why."
                     },
                     "problem": {
                       "type": "object",
-                      "description": "The members every problem has, and the extensions (api.md 39). Left open so `status` can join it",
+                      "description": "The members every problem has, plus the extensions some codes add.",
                       "required": [
                         "type",
                         "title",
@@ -3819,11 +4226,12 @@
                         "type": {
                           "type": "string",
                           "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error)$",
-                          "description": "`https://vision-board.invalid/problems/<code>`; the codes are the table in api.md 40"
+                          "description": "`https://vision-board.invalid/problems/<code>`; the codes are listed in the API reference."
                         },
                         "title": {
                           "type": "string",
-                          "pattern": "\\S"
+                          "pattern": "\\S",
+                          "description": "A short name for the kind of error; the same for every problem with this `type`."
                         },
                         "detail": {
                           "type": "string",
@@ -3846,11 +4254,13 @@
                               },
                               "detail": {
                                 "type": "string",
-                                "pattern": "\\S"
+                                "pattern": "\\S",
+                                "description": "What is wrong at that pointer."
                               }
                             },
                             "additionalProperties": false
-                          }
+                          },
+                          "description": "Where in the request body each fault is, when there is more than one."
                         },
                         "ver": {
                           "type": "integer",
@@ -3874,18 +4284,19 @@
                   "additionalProperties": false
                 }
               ]
-            }
+            },
+            "description": "One result per item, in the order you sent them."
           },
           "head": {
             "type": "integer",
             "minimum": 0,
-            "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+            "description": "The ledger's latest `seq`; 0 when it is empty"
           },
           "pending": {
             "type": "array",
             "items": {
               "type": "object",
-              "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply (api.md 32)",
+              "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply",
               "required": [
                 "board",
                 "n",
@@ -3898,19 +4309,23 @@
               "properties": {
                 "board": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The board the item is on."
                 },
                 "n": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The item number."
                 },
                 "ver": {
                   "type": "integer",
-                  "minimum": 1
+                  "minimum": 1,
+                  "description": "The item's latest version."
                 },
                 "region": {
                   "type": "string",
-                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "description": "The container the item is in."
                 },
                 "kind": {
                   "enum": [
@@ -3921,12 +4336,14 @@
                     "action",
                     "topic",
                     "note"
-                  ]
+                  ],
+                  "description": "What the node is."
                 },
                 "title": {
                   "type": "string",
                   "pattern": "\\S",
-                  "maxLength": 200
+                  "maxLength": 200,
+                  "description": "The item's title."
                 },
                 "status": {
                   "enum": [
@@ -3936,7 +4353,8 @@
                     "commented",
                     "context",
                     "later"
-                  ]
+                  ],
+                  "description": "Where the item stands with the person."
                 },
                 "pending": {
                   "enum": [
@@ -3944,7 +4362,7 @@
                     "context",
                     "later"
                   ],
-                  "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle (api.md 36)"
+                  "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle"
                 },
                 "unseen": {
                   "const": true,

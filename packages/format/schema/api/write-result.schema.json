@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-result.schema.json",
-  "title": "API: write_board answer",
-  "description": "A batch that can be read always answers 200, with one result per item, in order, plus `head` and `pending` (api.md 34, 36).",
+  "title": "Write results",
+  "description": "A batch that can be read always answers 200, with one result per item, in order, plus `head` and `pending`.",
+  "$comment": "Was: api.md 34, 36",
   "type": "object",
   "required": [
     "results",
@@ -22,7 +23,8 @@
             "$ref": "https://vision-board.invalid/schema/api/write-result.schema.json#/$defs/failed"
           }
         ]
-      }
+      },
+      "description": "One result per item, in the order you sent them."
     },
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
@@ -48,16 +50,19 @@
         "index": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 199
+          "maximum": 199,
+          "description": "The position of the item in your request, from 0."
         },
         "key": {
           "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"
         },
         "ok": {
-          "const": true
+          "const": true,
+          "description": "True: the item was written."
         },
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq",
+          "description": "The ledger line the item was written as."
         },
         "n": {
           "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber",
@@ -69,7 +74,8 @@
         },
         "replayed": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
-          "description": "The key was sent before with the same content; nothing was written now (api.md 29)"
+          "description": "The key was sent before with the same content; nothing was written now",
+          "$comment": "Was: api.md 29"
         }
       },
       "unevaluatedProperties": false
@@ -85,13 +91,15 @@
         "index": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 199
+          "maximum": 199,
+          "description": "The position of the item in your request, from 0."
         },
         "key": {
           "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"
         },
         "ok": {
-          "const": false
+          "const": false,
+          "description": "False: the item was not written; `problem` says why."
         },
         "problem": {
           "$ref": "https://vision-board.invalid/schema/api/problem.schema.json#/$defs/item"

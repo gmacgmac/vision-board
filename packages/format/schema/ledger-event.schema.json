@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/ledger-event.schema.json",
-  "title": "Ledger v3: one stored line",
-  "description": "A stored ledger line, by its `type`. The discriminator gives a bad line one error, not one per branch (api.md 8).",
+  "title": "Ledger line",
+  "description": "A stored ledger line, by its `type`. The discriminator gives a bad line one error, not one per branch.",
+  "$comment": "Was: api.md 8",
   "type": "object",
   "required": ["type"],
   "discriminator": {"propertyName": "type"},

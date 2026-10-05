@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-item.schema.json",
-  "title": "API: one write item",
-  "description": "One of the eight sent forms, by `type` (api.md 24, 34). The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+  "title": "Write item",
+  "description": "One of the eight sent forms, by `type`. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+  "$comment": "Was: api.md 24, 34",
   "type": "object",
   "required": [
     "type"

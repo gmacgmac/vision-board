@@ -1,16 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/events/grant-request.schema.json",
-  "title": "Ledger v3: the `grant-request` event",
-  "description": "An agent asks the person for write access to one container (api.md 15).",
+  "title": "Grant request event",
+  "description": "An agent asks the person for write access to one container.",
+  "$comment": "Was: api.md 15",
   "$defs": {
     "core": {
       "type": "object",
       "required": ["board", "region", "reason"],
       "properties": {
-        "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"},
-        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"}
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id", "description": "The board that holds the container."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id", "description": "The container (region) you need to write to."},
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "Why you need write access, so the person can decide."}
       }
     },
     "sent": {
@@ -42,7 +43,7 @@
         {
           "type": "object",
           "properties": {
-            "by": {"const": "agent"},
+            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
             "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
           }
         }

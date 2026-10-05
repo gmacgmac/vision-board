@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/grant-request-body.schema.json",
-  "title": "API: request_grant request",
-  "description": "Ask the person for write access to one container (api.md 15, 25). The same fields as the `grant-request` event, plus a retry key.",
+  "title": "Grant request",
+  "description": "Ask the person for write access to one container. The same fields as the `grant-request` event, plus a retry key.",
+  "$comment": "Was: api.md 15, 25",
   "type": "object",
   "properties": {
     "key": {

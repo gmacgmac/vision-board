@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/show-node-response.schema.json",
-  "title": "API: show_node answer",
+  "title": "Node history",
   "description": "Every version of a node with its notes, replies, proposals, park bundle, links, region and size; `linked` (only with `linked=true`) holds the nodes linked to it, one hop.",
   "type": "object",
   "required": [
@@ -15,7 +15,8 @@
       "type": "array",
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeDetail"
-      }
+      },
+      "description": "The nodes linked to this one, each in full. Present only when `linked` is true."
     }
   },
   "allOf": [

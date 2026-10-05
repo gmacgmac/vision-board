@@ -1,16 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/events/join.schema.json",
-  "title": "Ledger v3: the `join` event",
-  "description": "An agent joins the project with a label; its stamped `agent` is the new agent id (api.md 14, 21).",
+  "title": "Join event",
+  "description": "An agent joins the project with a label; its stamped `agent` is the new agent id.",
+  "$comment": "Was: api.md 14, 21",
   "$defs": {
     "core": {
       "type": "object",
       "required": ["label"],
       "properties": {
-        "label": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentLabel"
-        }
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentLabel", "description": "A short name for this chat or agent, such as \"Pricing chat\"; the person sees it when you ask for access."}
       }
     },
     "sent": {
@@ -36,10 +35,8 @@
           "type": "object",
           "required": ["agent"],
           "properties": {
-            "by": {"const": "agent"},
-            "agent": {
-              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
-            }
+            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
+            "agent": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId", "description": "The new agent id."}
           }
         }
       ],

@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/sse-change.schema.json",
-  "title": "API: one watch_board event",
-  "description": "A `change` event whose `data` is JSON `{ seq }` (api.md 44; OpenAPI 3.2.1 4.14.4).",
+  "title": "Board change event",
+  "description": "A `change` event whose `data` is JSON `{ seq }`.",
+  "$comment": "Was: api.md 44; OpenAPI 3.2.1 4.14.4",
   "type": "object",
   "required": [
     "event",
@@ -10,7 +11,8 @@
   ],
   "properties": {
     "event": {
-      "const": "change"
+      "const": "change",
+      "description": "The event name; always `change`."
     },
     "data": {
       "type": "string",
@@ -26,11 +28,13 @@
           }
         },
         "unevaluatedProperties": false
-      }
+      },
+      "description": "JSON text `{ \"seq\": <ledger position> }`: the ledger position just reached."
     },
     "retry": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "description": "How many milliseconds a client waits before it reconnects."
     }
   },
   "unevaluatedProperties": false

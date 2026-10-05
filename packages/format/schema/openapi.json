@@ -4,7 +4,8 @@
     "title": "Vision Board API",
     "version": "1.0.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
-    "description": "Every operation on the project ledger, defined once (docs/specification/api.md, D-019, D-026). The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document."
+    "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
+    "x-comment": "Was: docs/specification/api.md, D-019, D-026"
   },
   "servers": [
     {
@@ -232,7 +233,7 @@
                           "node": {
                             "region": "review",
                             "kind": "decision",
-                            "title": "Accept or change D-001 to D-008",
+                            "title": "Accept or change the first eight decisions",
                             "item": true
                           }
                         }
@@ -1173,13 +1174,15 @@
       "agentSecret": {
         "type": "http",
         "scheme": "bearer",
-        "description": "The secret `join` returned, sent as `Authorization: Bearer <secret>` (api.md 21)."
+        "description": "The secret `join` returned, sent as `Authorization: Bearer <secret>`.",
+        "x-comment": "Was: api.md 21"
       },
       "personCookie": {
         "type": "apiKey",
         "in": "cookie",
         "name": "vb_person",
-        "description": "Set by the server when it serves the board page; the page sends it (api.md 20)."
+        "description": "Set by the server when it serves the board page; the page sends it.",
+        "x-comment": "Was: api.md 20"
       }
     },
     "schemas": {

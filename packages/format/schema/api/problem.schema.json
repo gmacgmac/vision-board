@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/problem.schema.json",
-  "title": "API: a problem (RFC 9457)",
-  "description": "Every error is `application/problem+json` (api.md 38-40). `$defs/item` is the same object without `status`, for a failed write item, because the response's own status is 200.",
+  "title": "Problem details",
+  "description": "Every error is `application/problem+json`. `$defs/item` is the same object without `status`, for a failed write item, because the response's own status is 200.",
+  "$comment": "Was: api.md 38-40",
   "type": "object",
   "required": [
     "status"
@@ -24,7 +25,8 @@
     "code": {
       "type": "string",
       "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error)$",
-      "description": "`https://vision-board.invalid/problems/<code>`; the codes are the table in api.md 40"
+      "description": "`https://vision-board.invalid/problems/<code>`; the codes are listed in the API reference.",
+      "$comment": "Was: api.md 40"
     },
     "pointerError": {
       "type": "object",
@@ -39,14 +41,16 @@
           "description": "A JSON Pointer into the request body, such as /items/2/node/title"
         },
         "detail": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text",
+          "description": "What is wrong at that pointer."
         }
       },
       "unevaluatedProperties": false
     },
     "core": {
       "type": "object",
-      "description": "The members every problem has, and the extensions (api.md 39). Left open so `status` can join it",
+      "description": "The members every problem has, plus the extensions some codes add.",
+      "$comment": "Left open so `status` can join it. Was: api.md 39",
       "required": [
         "type",
         "title",
@@ -57,7 +61,8 @@
           "$ref": "https://vision-board.invalid/schema/api/problem.schema.json#/$defs/code"
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text",
+          "description": "A short name for the kind of error; the same for every problem with this `type`."
         },
         "detail": {
           "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text",
@@ -67,7 +72,8 @@
           "type": "array",
           "items": {
             "$ref": "https://vision-board.invalid/schema/api/problem.schema.json#/$defs/pointerError"
-          }
+          },
+          "description": "Where in the request body each fault is, when there is more than one."
         },
         "ver": {
           "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version",

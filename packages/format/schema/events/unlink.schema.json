@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/events/unlink.schema.json",
-  "title": "Ledger v3: the `unlink` event",
-  "description": "An agent removes a link. `from` and `to` take a number or `{ key }` when sent (api.md 35).",
+  "title": "Unlink event",
+  "description": "An agent removes a link. `from` and `to` take a number or `{ key }` when sent.",
+  "$comment": "Was: api.md 35",
   "$defs": {
     "core": {"$ref": "https://vision-board.invalid/schema/ledger/3/events/link.schema.json#/$defs/core"},
     "sent": {
@@ -37,13 +38,9 @@
           "type": "object",
           "required": ["from", "to"],
           "properties": {
-            "by": {"const": "agent"},
-            "from": {
-              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
-            },
-            "to": {
-              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
-            },
+            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
+            "from": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The node the link starts at."},
+            "to": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The node the link ends at."},
             "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
           }
         }

@@ -35,6 +35,7 @@ packages/format/schema/openapi.json               every operation, input, output
 
 1. The OpenAPI spec is the only place an operation is defined: its name (`operationId`), path,
    inputs, outputs and errors. Nothing else declares a route, a tool or a command by hand.
+   The generated, human-readable form of all of it is [api-reference.md](./api-reference.md).
 2. Data shapes live once, in the JSON Schemas, and the spec references them with `$ref`. The
    TypeScript types in `packages/format` stay hand-written. A test checks they agree:
    `EVENT_TYPES`, `ACTION_IDS`, `KINDS` and `MODES` equal the schema enums, and every fixture

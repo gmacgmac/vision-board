@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/grant-response.schema.json",
-  "title": "API: request_grant answer",
-  "description": "Either the open request (with `replayed: true` when one already stood, api.md 26) or `{ held: true }` when the caller already holds the container.",
+  "title": "Grant request answer",
+  "description": "Either the open request (with `replayed: true` when one already stood) or `{ held: true }` when the caller already holds the container.",
+  "$comment": "Was: api.md 26",
   "oneOf": [
     {
       "$ref": "https://vision-board.invalid/schema/api/grant-response.schema.json#/$defs/requested"
@@ -25,13 +26,16 @@
           "description": "The `seq` of the grant request; the person's answer names it"
         },
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "description": "The board the request is for."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "description": "The container the request is for."
         },
         "replayed": {
-          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
+          "description": "True when you already had this request open, so nothing new was recorded."
         }
       },
       "unevaluatedProperties": false
@@ -45,13 +49,16 @@
       ],
       "properties": {
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "description": "The board the container is on."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+          "description": "The container you already hold."
         },
         "held": {
-          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
+          "description": "True: you already hold this container, so no request was recorded."
         }
       },
       "unevaluatedProperties": false

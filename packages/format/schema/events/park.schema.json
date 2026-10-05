@@ -1,16 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json",
-  "title": "Ledger v3: the `park` event",
-  "description": "The handover bundle written when an item is parked (D-020).",
+  "title": "Park event",
+  "description": "The handover bundle written when an item is parked.",
+  "$comment": "Was: D-020",
   "$defs": {
     "core": {
       "type": "object",
       "required": ["bundle"],
       "properties": {
-        "bundle": {
-          "$ref": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json#/$defs/bundle"
-        }
+        "bundle": {"$ref": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json#/$defs/bundle", "description": "The handover for an item saved for later, so a new chat can pick it up without this conversation."}
       }
     },
     "sent": {
@@ -38,10 +37,8 @@
           "type": "object",
           "required": ["n"],
           "properties": {
-            "by": {"const": "agent"},
-            "n": {
-              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
-            },
+            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
+            "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
             "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
           }
         }
@@ -52,11 +49,11 @@
       "type": "object",
       "required": ["situation", "background", "assessment", "recommendation"],
       "properties": {
-        "situation": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
-        "background": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
-        "assessment": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
-        "recommendation": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
-        "sources": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/sources"}
+        "situation": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "What is going on now."},
+        "background": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "How things got here."},
+        "assessment": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "What you make of it."},
+        "recommendation": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "What you suggest doing next."},
+        "sources": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/sources", "description": "Files or links that back this up."}
       },
       "unevaluatedProperties": false
     }

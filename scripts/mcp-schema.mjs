@@ -1,9 +1,11 @@
 // Plain tool schemas for MCP (api.md 47): one schema with every `$ref` inlined, `allOf` folded
 // into one object (properties and required added up, `unevaluatedProperties: false` becoming
-// `additionalProperties: false`), and `$id`, `$schema`, `$defs`, `discriminator`, `example` and
-// `x-*` stripped, so a client that resolves no refs and knows only plain 2020-12 reads it.
-// `if`/`then`/`else` is dropped: the flattened schema is a little looser than the strict one, and
-// the board server still checks every call with the strict schemas. Lossy only toward accepting.
+// `additionalProperties: false`), and `$id`, `$schema`, `$defs`, `$comment`, `discriminator`,
+// `example` and `x-*` stripped, so a client that resolves no refs and knows only plain 2020-12
+// reads it. `$comment` is where the schemas keep their pointers to our own docs and design notes,
+// which an agent must never see. `if`/`then`/`else` is dropped: the flattened schema is a little
+// looser than the strict one, and the board server still checks every call with the strict
+// schemas. Lossy only toward accepting.
 import { lookup } from './openapi-refs.mjs';
 
 const DROP = new Set(['$id', '$schema', '$defs', '$comment', 'discriminator', 'example', 'if', 'then', 'else']);

@@ -1,17 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/ledger/3/events/propose.schema.json",
-  "title": "Ledger v3: the `propose` event",
-  "description": "The agent proposes a decision on version `ver`; only the person can make it (D-018).",
+  "title": "Propose event",
+  "description": "The agent proposes a decision on version `ver`; only the person can make it.",
+  "$comment": "Was: D-018",
   "$defs": {
     "core": {
       "type": "object",
       "required": ["ver", "action", "reason"],
       "properties": {
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"},
-        "action": {"enum": ["ack", "drop"]},
-        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"},
-        "source": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/source"}
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version", "description": "The node version you are proposing a decision on."},
+        "action": {"enum": ["ack", "drop"], "description": "What you propose: `ack` (acknowledge) or `drop`. Only the person decides."},
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText", "description": "Why you propose this."},
+        "source": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."}
       }
     },
     "sent": {
@@ -45,10 +46,8 @@
           "type": "object",
           "required": ["n"],
           "properties": {
-            "by": {"const": "agent"},
-            "n": {
-              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
-            },
+            "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
+            "n": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber", "description": "The node number."},
             "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
           }
         }

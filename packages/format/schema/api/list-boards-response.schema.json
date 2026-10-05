@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-boards-response.schema.json",
-  "title": "API: list_boards answer",
-  "description": "`seq` is that board's own last ledger line; `head` is the ledger's (api.md Operations).",
+  "title": "Board list",
+  "description": "`seq` is that board's own last ledger line; `head` is the ledger's.",
+  "$comment": "Was: api.md Operations",
   "type": "object",
   "required": [
     "boards",
@@ -20,17 +21,21 @@
         ],
         "properties": {
           "board": {
-            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+            "description": "The board id, which the other operations take in their path."
           },
           "title": {
-            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title",
+            "description": "The board's title."
           },
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq",
+            "description": "The board's own last ledger line (`seq`)."
           }
         },
         "unevaluatedProperties": false
-      }
+      },
+      "description": "Every board in the project."
     },
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
