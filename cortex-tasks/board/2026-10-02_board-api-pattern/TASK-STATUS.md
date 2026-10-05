@@ -23,7 +23,7 @@ created: 2026-10-02
 
 | Step | Task | Model | Status | Commit | Notes |
 |---|---|---|---|---|---|
-| 1 | [1_BE_01 ledger v3 schemas + ajv](./1_BE_01_ledger-v3-schemas.md) | Opus 5.5 | Running | | |
+| 1 | [1_BE_01 ledger v3 schemas + ajv](./1_BE_01_ledger-v3-schemas.md) | Opus 5.5 | Done | see log | 172 unit, 26 page; ajv 8.20.0 MIT; `key` on `join` to be removed in 2_BE_05 |
 | 1 | 1_BE_02 actions: registry, validateAct, fold (holders, keys, sizes, send, pending) | Opus 5.5 | Planned | | |
 | 1 | 1_BE_03 openapi.json 3.2, API body schemas, route table generator, spec-validity tests | Sonnet 5.5 | Planned | | |
 | 2 | 2_BE_04 packages/client, route dispatch, RFC 9457 errors, reads, page io switch | Opus 5.5 | Planned | | |
