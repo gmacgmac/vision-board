@@ -1,5 +1,6 @@
-<!-- The page shell: toolbar, stage, reply panel, key help, toast and note dialog. The stage's
-     contents are drawn by the framework-free board controller (D-005), mounted here. -->
+<!-- The page shell: toolbar, the requests strip (agentAccess flag), stage, reply panel, key help,
+     toast and the note and confirm dialogs. The stage's contents are drawn by the framework-free
+     board controller (D-005), mounted here. -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import { createBoard, type Board } from '../board/controller.ts';
@@ -7,6 +8,8 @@
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
   import NoteDialog from './NoteDialog.svelte';
+  import ConfirmDialog from './ConfirmDialog.svelte';
+  import AccessRequests from './AccessRequests.svelte';
 
   let stage: HTMLElement;
   let world: HTMLElement;
@@ -28,7 +31,12 @@
   onboard={(id) => board?.switchTo(id)}
   onfit={() => board?.fit()}
   onhide={() => board?.toggleHide()}
+  onsend={() => board?.send() ?? Promise.resolve('The board is not ready yet.')}
 />
+{#if shell.agentAccess}
+  <AccessRequests requests={shell.requests} ready={shell.version !== null}
+    onanswer={(seq, a, text) => board?.answer(seq, a, text) ?? Promise.resolve(false)} />
+{/if}
 
 <main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}>
   <div id="world" class="vb-world no-anim" bind:this={world}>
@@ -51,3 +59,4 @@
 </div>
 
 <NoteDialog />
+<ConfirmDialog />

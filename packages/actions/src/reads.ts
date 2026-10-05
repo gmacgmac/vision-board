@@ -5,7 +5,7 @@
 import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
-import { canWrite, holders } from './grants.ts';
+import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
 import { pendingItems, unseenItems } from './pending.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
@@ -35,6 +35,18 @@ export interface NodeDetail {
 
 /** One container: the region as stored, who holds it, every node it has held. */
 export interface ContainerDetail { board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[] }
+
+/** An unanswered grant request as the board page shows it (`get_board`): which container, why,
+ * and the asking agent's id and the label it joined with. */
+export interface AccessRequest { seq: number; region: string; reason: string; at: string; agent?: string; label?: string }
+
+/** One holder of a container, with its label; `creator` marks the agent that made the region,
+ * which the person cannot remove (api.md 23). */
+export interface AccessHolder { agent: string; label: string; creator?: true }
+
+/** Who may write where on one board: the open requests and each region's holders. Either is
+ * left out when it is empty, so a board with no agents carries neither (api.md 32). */
+export interface BoardAccess { requests?: AccessRequest[]; holders?: Record<string, AccessHolder[]> }
 
 /** An item not yet decided (`list_open`, and `pending` on a write answer). */
 export interface OpenItem {
@@ -90,6 +102,25 @@ export function containerDetail(s: LedgerState, board: string, region: string): 
     board, region: { ...r }, holders: holders(s, board, region),
     nodes: nodes.map((x) => nodeDetail(s, x.n)!),
   };
+}
+
+/** The open grant requests on `board`, oldest first, and each region's holders, creator first
+ * (`get_board`, D-027). Labels come from each agent's `join`. */
+export function boardAccess(s: LedgerState, board: string): BoardAccess {
+  const label = (agent: string) => s.agents.get(agent) ?? agent;
+  const requests: AccessRequest[] = grantRequests(s, board).filter((r) => !r.answer).map((r) => ({
+    seq: r.seq, region: r.region, reason: r.reason, at: r.at,
+    ...(r.agent !== undefined && { agent: r.agent, label: label(r.agent) }),
+  }));
+  const held: Record<string, AccessHolder[]> = {};
+  for (const r of s.boards.get(board)?.regions ?? []) {
+    const creator = creatorOf(s, board, r.id);
+    const list = holders(s, board, r.id)
+      .map((agent): AccessHolder => ({ agent, label: label(agent), ...(agent === creator && { creator: true as const }) }))
+      .sort((a, b) => Number(b.creator ?? false) - Number(a.creator ?? false));
+    if (list.length) held[r.id] = list;
+  }
+  return { ...(requests.length > 0 && { requests }), ...(Object.keys(held).length > 0 && { holders: held }) };
 }
 
 /** The items on `board` not yet decided, by number, with why each waits for the agent and

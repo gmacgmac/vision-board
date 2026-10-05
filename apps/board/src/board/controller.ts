@@ -20,8 +20,9 @@ import { Viewport } from './viewport.ts';
 import { bindPointer } from './pointer.ts';
 import { bindKeys } from './keys.ts';
 import { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
+import { answerAct, answerWords, holdersOf, requestRows, revokeAct, revokeWords } from './access.ts';
 import { pageFlags } from '../flags.ts';
-import { askNote, shell, toast } from '../shell/shell.svelte.ts';
+import { askConfirm, askNote, shell, toast } from '../shell/shell.svelte.ts';
 
 export interface BoardElements {
   stage: HTMLElement;
@@ -36,6 +37,10 @@ export interface Board {
   switchTo(id: string): void;
   fit(): void;
   toggleHide(): void;
+  /** Allow or Refuse a grant request (agentAccess flag); true when it was recorded. */
+  answer(request: number, answer: 'grant' | 'deny', text?: string): Promise<boolean>;
+  /** Send to agent; null when recorded, else the problem's detail. */
+  send(): Promise<string | null>;
   destroy(): void;
 }
 
@@ -44,6 +49,9 @@ export function createBoard(els: BoardElements): Board {
   const vp = new Viewport(stage, world);
   /** Card size tiers and their control (D-030), behind the nodeSize flag (rule 12). */
   const sizing = flagOn('nodeSize', pageFlags());
+  /** Grant requests, holders and Send (D-027), behind the agentAccess flag (rule 12). */
+  const access = flagOn('agentAccess', pageFlags());
+  shell.agentAccess = access;
 
   const S = {
     id: '',
@@ -100,7 +108,7 @@ export function createBoard(els: BoardElements): Board {
     S.layout = layoutBoard(view(), S.sizes, {
       pins: S.state.pins, modes: S.state.modes, hidden: hiddenSet(),
     });
-    placeRegions(S.regions, S.layout, view(), S.state);
+    placeRegions(S.regions, S.layout, view(), S.state, access ? holdersOf(S.data!) : undefined);
     placeCards(S.cards, S.layout);
     wires.classList.add('settling');
     drawWires(wires, S.layout, S.focus);
@@ -114,6 +122,7 @@ export function createBoard(els: BoardElements): Board {
     shell.counts = { open: c.open, decided: c.decided, later: c.later };
     shell.replyText = replyText(view(), S.state);
     shell.answered = view().nodes.filter((n) => n.n !== undefined && S.state.items.has(n.id)).length;
+    shell.requests = access ? requestRows(S.data!) : [];
   }
 
   // ---- actions -------------------------------------------------------------------------------
@@ -203,6 +212,36 @@ export function createBoard(els: BoardElements): Board {
     }
   }
 
+  // ---- agent access (agentAccess flag) ---------------------------------------------------------
+
+  async function answer(request: number, a: 'grant' | 'deny', text?: string): Promise<boolean> {
+    const row = shell.requests.find((r) => r.seq === request);
+    if (!(await record(answerAct(request, a, text)))) return false;
+    relayout();
+    toast(answerWords(row, a));
+    return true;
+  }
+
+  async function revoke(region: string, holder: string) {
+    const words = revokeWords(S.data!, region, holder);
+    if (!(await askConfirm(words.heading, words.body, words.confirm))) return;
+    if (!(await record(revokeAct(region, holder)))) return;
+    relayout();
+    toast(words.done);
+    // The holder's button is gone; keep keyboard focus on the board.
+    if (!document.activeElement || document.activeElement === document.body) stage.focus({ preventScroll: true });
+  }
+
+  async function send(): Promise<string | null> {
+    try {
+      await sendAct(S.id, { action: 'send' });
+      return null;
+    } catch (err) {
+      fail(err);
+      return err instanceof ApiError ? err.message : String(err);
+    }
+  }
+
   async function resetRegion(region: string) {
     const ids = view().nodes.filter((n) => n.region === region && S.state.pins.has(n.id)).map((n) => n.id);
     for (const id of ids) if (!(await record({ action: 'unpin', ...target(id) }))) break;
@@ -257,6 +296,8 @@ export function createBoard(els: BoardElements): Board {
     if (modeBtn) return void setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
     if (reset) return void resetRegion(reset.dataset.reset!);
+    const holder = t.closest<HTMLButtonElement>('button[data-revoke]');
+    if (holder && access) return void revoke(holder.closest<HTMLElement>('vb-region')!.dataset.region!, holder.dataset.revoke!);
   });
 
   bindPointer(stage, vp, {
@@ -348,6 +389,8 @@ export function createBoard(els: BoardElements): Board {
     },
     fit: () => { if (S.layout) vp.fit(S.layout.bounds); },
     toggleHide,
+    answer,
+    send,
     destroy() {
       S.unwatch?.();
       unbindKeys();

@@ -2,8 +2,8 @@
 // refused, plus holders and grant requests as the fold keeps them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canWrite, grantRequests, holders } from '../src/index.ts';
-import { A, B, C, scene } from './ledger-v3.ts';
+import { boardAccess, canWrite, grantRequests, holders } from '../src/index.ts';
+import { A, B, C, Ledger, scene } from './ledger-v3.ts';
 
 const need = (board: string, region: string) => ({ board, region });
 
@@ -120,4 +120,32 @@ test('another agent\'s request is its own; after an answer a new one is kept', (
   l.act({ action: 'deny', request: first });
   const again = l.request(C, 'r');
   assert.deepEqual(grantRequests(l.state()).map((r) => r.seq), [first, first + 1, again]);
+});
+
+test('boardAccess: open requests with the agent\'s label, and holders per region with the creator marked', () => {
+  const l = scene();
+  const granted = l.request(C, 'r');
+  l.act({ action: 'grant', request: granted });
+  const refused = l.request(C, 'q');
+  l.act({ action: 'deny', request: refused, text: 'No.' });
+  const open = l.request(C, 'later');
+  l.request(C, 'x', 'b2');
+  const s = l.state();
+  const at = grantRequests(s).find((r) => r.seq === open)!.at;
+  assert.deepEqual(boardAccess(s, 'b'), {
+    requests: [{ seq: open, region: 'later', reason: 'Adding to later.', at, agent: C, label: 'Spare chat' }],
+    holders: {
+      r: [{ agent: A, label: 'Pricing chat', creator: true }, { agent: C, label: 'Spare chat' }],
+      q: [{ agent: B, label: 'Review chat', creator: true }],
+      later: [{ agent: B, label: 'Review chat', creator: true }],
+    },
+  });
+});
+
+test('boardAccess: a board with no agents, or none waiting, leaves both out (api.md 32)', () => {
+  const l = new Ledger();
+  l.v2({ type: 'board', board: 'old', title: 'Old' });
+  l.v2({ type: 'region', board: 'old', region: { id: 'r', title: 'R', mode: 'grid' } });
+  assert.deepEqual(boardAccess(l.state(), 'old'), {});
+  assert.equal('requests' in boardAccess(scene().state(), 'b'), false);
 });

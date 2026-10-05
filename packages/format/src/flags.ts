@@ -13,6 +13,10 @@ export const FLAGS = {
     default: false,
     description: 'Cards take one of three widths (S, M, L) from their content, with a size control on each card (D-030, U7).',
   },
+  agentAccess: {
+    default: true,
+    description: 'The person\'s side of agent access: allow or refuse grant requests, see and remove each container\'s holders, and Send to agent (D-027, U4 2_FE_01).',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

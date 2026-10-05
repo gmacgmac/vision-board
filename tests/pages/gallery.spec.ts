@@ -152,8 +152,12 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 
+  // With the agentAccess flag off (on by default), so its section is not in the full page
+  // (components.md § Feature flags); send-access.spec.ts has that section's own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
+    await page.goto('/gallery.html?flags=-agentAccess');
+    await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });
 }

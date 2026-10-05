@@ -19,6 +19,11 @@ test('nodeSize is off by default', () => {
   assert.equal(flagOn('nodeSize', {}), false);
 });
 
+test('agentAccess is on by default, and -agentAccess turns it off', () => {
+  assert.equal(flagOn('agentAccess'), true);
+  assert.equal(flagOn('agentAccess', parseFlags('-agentAccess').overrides), false);
+});
+
 test('an override wins over the default, either way', () => {
   assert.equal(flagOn('nodeSize', { nodeSize: true }), true);
   assert.equal(flagOn('nodeSize', { nodeSize: false }), false);

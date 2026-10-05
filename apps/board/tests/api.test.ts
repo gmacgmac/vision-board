@@ -34,6 +34,17 @@ test('get_board: the view, the person\'s answers, the versions and head; sizes o
   assert.equal(roadmap.view.nodes.length, 17);
 });
 
+test('get_board: open grant requests with the agent\'s label, and each region\'s holders; left out when empty', async () => {
+  const pricing = await h.ok('get_board', { board: 'pricing' });
+  assert.deepEqual(pricing.holders, { options: [{ agent: 'a-k3m9x2pq', label: 'Pricing chat', creator: true }] });
+  assert.equal('requests' in pricing, false);
+  const roadmap = await h.ok('get_board', { board: 'roadmap' });
+  // The roadmap's regions were written by v2 lines, so nobody holds them; the seed asked for review.
+  assert.equal('holders' in roadmap, false);
+  assert.deepEqual(roadmap.requests.map((r: any) => [r.seq, r.region, r.agent, r.label, r.reason]), [
+    [h.seeded.request, 'review', 'a-k3m9x2pq', 'Pricing chat', 'I need to update the review items.']]);
+});
+
 test('show_node: every version, note, reply, proposal and link; linked=true adds the linked nodes', async () => {
   const { q, d, comment, propose } = h.seeded;
   const r = await h.ok('show_node', { board: 'pricing', n: q });

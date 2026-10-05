@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '../../format/src/index.ts';
-import { MODE_LABEL, regionTemplate } from '../src/index.ts';
+import { holdersTemplate, MODE_LABEL, regionTemplate } from '../src/index.ts';
 
 const region = { id: 'review', title: 'Review' };
 
@@ -40,8 +40,22 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
 
-test('regionTemplate puts the title and count in a label group and the buttons in a tools group, in that order', () => {
+test('regionTemplate puts the title, count and holders in a label group and the buttons in a tools group, in that order', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<header class=\"vb-region-head\"><div class=\"vb-region-label\"><h2 id=\"region-review\">Review<\/h2><span class=\"vb-region-count\"><\/span><\/div><div class=\"vb-region-tools\"><div class=\"vb-modes\"/);
+  assert.match(html, /<header class=\"vb-region-head\"><div class=\"vb-region-label\"><h2 id=\"region-review\">Review<\/h2><span class=\"vb-region-count\"><\/span><span class=\"vb-region-holders\"><\/span><\/div><div class=\"vb-region-tools\"><div class=\"vb-modes\"/);
   assert.match(html, /Reset places<\/button><\/div><\/header>/);
+});
+
+test('holdersTemplate: the creator is plain text; any other holder is a labelled Remove access button; text is escaped', () => {
+  const html = holdersTemplate([
+    { agent: 'a-aaaa1111', label: 'Pricing chat', removable: false },
+    { agent: 'a-bbbb2222', label: '<b>Docs</b> & co', removable: true },
+  ]);
+  assert.ok(!html.includes('<b>'), 'no raw markup from data');
+  assert.match(html, /^<span class="vb-holder" title="Created this container"><span class="vb-holder-sep" aria-hidden="true">·<\/span><span class="vb-holder-name">Pricing chat<\/span><\/span>/);
+  assert.match(html, /<button type="button" class="vb-holder" data-revoke="a-bbbb2222" aria-label="&#60;b&#62;Docs&#60;\/b&#62; &#38; co: remove access">/);
+  assert.match(html, /<span class="vb-holder-remove" aria-hidden="true">Remove access<\/span><\/button>$/);
+  assert.equal((html.match(/<button/g) ?? []).length, 1, 'the creator has no remove control');
+  assert.equal(holdersTemplate([]), '');
+  assert.doesNotMatch(html, /style=|<style/);
 });

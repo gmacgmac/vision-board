@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
-import { MODE_LABEL, REGION_COLOUR_DEFAULT, regionColour, regionState } from '../src/index.ts';
+import { MODE_LABEL, REGION_COLOUR_DEFAULT, regionColour, regionHolders, regionState } from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -68,4 +68,19 @@ test('every region takes the neutral frame colour for now, a token and never a l
   assert.equal(regionColour(region), REGION_COLOUR_DEFAULT);
   assert.equal(regionColour({ id: 'other' }), 'var(--vb-line-strong)');
   assert.doesNotMatch(REGION_COLOUR_DEFAULT, /#|rgb|hsl/);
+});
+
+test('holders: left out when none are given; creator first, and only the others removable', () => {
+  const v = view([node({ id: '1', n: 1 })]);
+  assert.equal('holders' in regionState(region, v, board(), drawn('1')), false);
+  assert.equal('holders' in regionState(region, v, board(), drawn('1'), []), false);
+  const st = regionState(region, v, board(), drawn('1'), [
+    { agent: 'a-bbbb2222', label: 'Docs chat' },
+    { agent: 'a-aaaa1111', label: 'Pricing chat', creator: true },
+  ]);
+  assert.deepEqual(st.holders, [
+    { agent: 'a-aaaa1111', label: 'Pricing chat', removable: false },
+    { agent: 'a-bbbb2222', label: 'Docs chat', removable: true },
+  ]);
+  assert.deepEqual(regionHolders([{ agent: 'a-bbbb2222', label: 'Docs chat' }]), [{ agent: 'a-bbbb2222', label: 'Docs chat', removable: true }]);
 });

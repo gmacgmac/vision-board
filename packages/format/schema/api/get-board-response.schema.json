@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/get-board-response.schema.json",
   "title": "API: get_board answer",
-  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`. `state` and `versions` are keyed by node id (the string form of the number).",
+  "description": "The board now: the View, the person's answers for every node, every node's latest version, and `head`; with agents, also the open grant requests and each region's holders. `state` and `versions` are keyed by node id (the string form of the number).",
   "type": "object",
   "required": [
     "head",
@@ -86,6 +86,73 @@
       },
       "additionalProperties": {
         "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+      }
+    },
+    "requests": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The grant requests on this board the person has not answered, oldest first; left out when there are none (api.md 26, 32). The person answers one with `grant` or `deny` and its `seq`.",
+      "items": {
+        "type": "object",
+        "required": [
+          "seq",
+          "region",
+          "reason",
+          "at"
+        ],
+        "properties": {
+          "seq": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+          },
+          "region": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          },
+          "reason": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"
+          },
+          "at": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp"
+          },
+          "agent": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
+          },
+          "label": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentLabel",
+            "description": "The label the asking agent joined with"
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    },
+    "holders": {
+      "type": "object",
+      "description": "Region id to the agents that hold it now, creator first (api.md 23); a region with none, and a board with none, are left out (api.md 32).",
+      "propertyNames": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "agent",
+            "label"
+          ],
+          "properties": {
+            "agent": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
+            },
+            "label": {
+              "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentLabel"
+            },
+            "creator": {
+              "const": true,
+              "description": "Present, and true, for the agent that created the region; the person cannot remove it"
+            }
+          },
+          "unevaluatedProperties": false
+        }
       }
     }
   },

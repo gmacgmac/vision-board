@@ -1,0 +1,46 @@
+/* The person's side of agent access (agentAccess flag): the requests strip under the header, and
+   the Send to agent button with its sending, sent and error states. Tokens only. The strip
+   continues the header (same surface, same line); on the board it sits between the header and
+   the stage, which moves down by the strip's height (--vb-strip-h), so it never covers the board. */
+
+.vb-access {
+  display: flex; align-items: flex-start; gap: var(--vb-space-3);
+  padding: var(--vb-space-2) var(--vb-space-4);
+  background: var(--vb-surface-region); border-bottom: 1px solid var(--vb-line);
+}
+.vb-access[data-placement='board'] {
+  position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: 5;
+  max-height: 40vh; overflow-y: auto;
+}
+.vb-access[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
+.vb-access-title {
+  flex: none; margin: 0; padding-top: var(--vb-space-1); white-space: nowrap;
+  font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); color: var(--vb-ink-strong);
+}
+.vb-access-list { flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--vb-space-1); }
+.vb-access-row { display: flex; align-items: center; gap: var(--vb-space-3); min-height: 32px; }
+.vb-access-row + .vb-access-row { border-top: 1px solid var(--vb-line); padding-top: var(--vb-space-1); }
+.vb-access-row[aria-busy='true'] { opacity: 0.6; }
+.vb-access-text { flex: 1; min-width: 0; margin: 0; display: flex; align-items: baseline; gap: var(--vb-space-2); font-size: var(--vb-text-sm); }
+.vb-access-ask { flex: none; color: var(--vb-ink); white-space: nowrap; }
+.vb-access-ask b { color: var(--vb-ink-strong); font-weight: var(--vb-weight-bold); }
+.vb-access-reason { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vb-ink-subtle); }
+.vb-access-actions { flex: none; display: flex; align-items: center; gap: var(--vb-space-2); margin: 0; }
+.vb-access-note {
+  width: calc(var(--vb-card-w-s) * 0.9); height: 26px; padding: 0 var(--vb-space-2);
+  font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-strong); background: var(--vb-surface-card);
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
+}
+.vb-access-note::placeholder { color: var(--vb-ink-subtle); }
+
+/* Send to agent */
+.vb-send { display: inline-flex; align-items: center; gap: var(--vb-space-2); }
+.vb-send[aria-disabled='true'] { cursor: progress; }
+.vb-send[data-state='error'] { background: var(--vb-state-drop-fill); border-color: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
+.vb-send-mark { font-weight: var(--vb-weight-bold); }
+.vb-spinner {
+  width: 12px; height: 12px; border-radius: 50%; flex: none;
+  border: 2px solid color-mix(in srgb, currentColor 35%, transparent); border-top-color: currentColor;
+  animation: vb-spin calc(var(--vb-motion) * 2.5) linear infinite;
+}
+@keyframes vb-spin { to { transform: rotate(360deg); } }

@@ -7,7 +7,7 @@
 import type { Region } from '../../../format/src/index.ts';
 import type { RegionState } from './region-core.ts';
 import { regionColour } from './region-core.ts';
-import { regionTemplate } from './region-template.ts';
+import { holdersTemplate, regionTemplate } from './region-template.ts';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -24,12 +24,16 @@ export function defineVbRegion(): void {
   if (customElements.get(VB_REGION_TAG)) return;
 
   class VbRegion extends HTMLElement implements VbRegionElement {
+    /** The holders last drawn, so an unchanged list keeps its buttons (and their focus). */
+    private holdersKey = '';
+
     render(r: Region): void {
       this.dataset.region = r.id;
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', `region-${r.id}`);
       this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r);
+      this.holdersKey = '';
     }
 
     update(st: RegionState): void {
@@ -39,6 +43,11 @@ export function defineVbRegion(): void {
       this.piece('.vb-region-count').textContent = st.countText;
       this.piece('[data-reset]').hidden = !st.showReset;
       this.piece('.vb-region-empty').hidden = !st.showEmpty;
+      const key = JSON.stringify(st.holders ?? []);
+      if (key !== this.holdersKey) {
+        this.holdersKey = key;
+        this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? []);
+      }
     }
 
     private piece(selector: string): HTMLElement {

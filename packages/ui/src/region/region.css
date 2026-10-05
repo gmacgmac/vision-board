@@ -38,6 +38,31 @@ vb-region .vb-region-count {
 }
 vb-region .vb-region-count:empty { display: none; }
 
+/* Holders (agentAccess flag): after the count, in its muted style. A removable holder is a quiet
+   button; on hover or keyboard focus it shows "Remove access" in a small bubble just below it,
+   over the frame's empty top room, so the top line never reflows. */
+vb-region .vb-region-holders { display: flex; align-items: center; gap: var(--vb-space-1); min-width: 0; flex-shrink: 2; }
+vb-region .vb-region-holders:empty { display: none; }
+vb-region .vb-holder {
+  position: relative; display: inline-flex; align-items: center; gap: var(--vb-space-1); min-width: 0; white-space: nowrap;
+  font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
+  background: none; border: 0; border-radius: var(--vb-radius-sm); padding: 2px var(--vb-space-1);
+}
+vb-region .vb-holder-name { overflow: hidden; text-overflow: ellipsis; }
+vb-region button.vb-holder { cursor: pointer; min-height: 24px; }
+vb-region button.vb-holder:hover, vb-region button.vb-holder:focus-visible, vb-region button.vb-holder[data-look='hover'] {
+  color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
+}
+vb-region button.vb-holder:active { transform: translateY(1px); }
+vb-region .vb-holder-remove {
+  display: none; position: absolute; top: calc(100% + var(--vb-space-1)); left: 0; z-index: 1;
+  padding: 2px var(--vb-space-2); border-radius: var(--vb-radius-sm); white-space: nowrap;
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-state-drop);
+  background: var(--vb-surface-raised); border: 1px solid var(--vb-line-strong); box-shadow: var(--vb-shadow-card);
+}
+vb-region button.vb-holder:hover .vb-holder-remove, vb-region button.vb-holder:focus-visible .vb-holder-remove,
+vb-region button.vb-holder[data-look='hover'] .vb-holder-remove { display: block; }
+
 vb-region .vb-modes { display: flex; gap: 2px; padding: 2px; border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); }
 vb-region .vb-mode {
   font: inherit; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); background: none; border: 0;

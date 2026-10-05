@@ -5,7 +5,7 @@ import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardHeads, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openItems, responsesAfter,
+  boardAccess, boardHeads, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openItems, responsesAfter,
 } from '../../../packages/actions/src/index.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -43,6 +43,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
       ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
     },
     versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(x.n), latest(x).ver])),
+    ...boardAccess(s, id),
   });
 };
 

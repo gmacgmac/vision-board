@@ -2,6 +2,7 @@
 // fixture ledger (rule 11). One section per pattern, listed from the patterns' own pattern.json
 // files, so a new pattern without a gallery entry shows up here as a gap and fails the page test.
 import '../styles/board.css';
+import '../styles/access.css';
 import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
@@ -16,6 +17,7 @@ import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { regionSamples } from './region-section.ts';
 import { sizeSection } from './size-section.ts';
+import { accessSection } from './access-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -88,7 +90,9 @@ function build(): void {
   main.append(el('p', 'g-intro', 'Every pattern in every state, drawn from fixture data in the real ledger schema.'),
     ...patterns.map((p) => section(p, fx)));
   // Behind its flag, so the gallery without it (and its screenshot) is unchanged.
-  if (flagOn('nodeSize', pageFlags())) main.append(sizeSection(fx));
+  const flags = pageFlags();
+  if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
+  if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
   document.body.append(head, main);
 }
 

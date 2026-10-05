@@ -37,11 +37,12 @@ body {
   height: 32px; padding: 0 var(--vb-space-3); cursor: pointer;
 }
 .vb-btn:hover { background: var(--vb-surface-sunken); }
-.vb-btn:active { transform: translateY(1px); }
+/* data-look draws a state without the pointer: the gallery's samples only. */
+.vb-btn:active, .vb-btn[data-look='pressed'] { transform: translateY(1px); }
 .vb-btn[aria-pressed='true'] { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
 .vb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .vb-btn-primary { background: var(--vb-accent-fill); border-color: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
-.vb-btn-primary:hover { background: var(--vb-accent-fill-hover); }
+.vb-btn-primary:hover, .vb-btn-primary[data-look='hover'] { background: var(--vb-accent-fill-hover); }
 .vb-btn-small { height: 26px; padding: 0 var(--vb-space-2); font-size: var(--vb-text-sm); }
 .vb-chip {
   display: inline-flex; align-items: center; gap: var(--vb-space-1); height: 24px; padding: 0 var(--vb-space-2);
@@ -56,7 +57,8 @@ body {
 /* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */
 .vb-ground { background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
   background-size: 22px 22px; }
-.vb-stage { position: fixed; inset: var(--vb-toolbar-h) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+/* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset. */
+.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px)) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 .vb-stage.panning { cursor: grabbing; }
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }

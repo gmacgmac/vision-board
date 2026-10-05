@@ -14,8 +14,8 @@ const THEMES: Theme[] = ['dark', 'light'];
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 
 /** Open the board and wait until it has drawn and stopped moving. */
-async function openBoard(page: Page): Promise<void> {
-  await page.goto('/');
+async function openBoard(page: Page, query = ''): Promise<void> {
+  await page.goto(`/${query}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
   await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
   await expect(page.locator('#wires')).not.toHaveClass(/settling/);
@@ -79,9 +79,11 @@ for (const theme of THEMES) {
     expect(small.filter((t) => t.includes('vb-act')), small.join('\n')).toEqual([]);
   });
 
+  // With the agentAccess flag off (on by default), as every screenshot taken before a flag must be
+  // (components.md § Feature flags); send-access.spec.ts covers the board with it on.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page);
+    await openBoard(page, '?flags=-agentAccess');
     await expect(page).toHaveScreenshot(`board-${theme}.png`);
   });
 }

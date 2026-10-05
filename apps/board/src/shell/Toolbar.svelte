@@ -1,11 +1,14 @@
-<!-- The toolbar: board picker, board title and version, counts, and the board-wide buttons. -->
+<!-- The toolbar: board picker, board title and version, counts, and the board-wide buttons.
+     Send to agent shows with the agentAccess flag. -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
+  import SendButton from './SendButton.svelte';
 
-  let { onboard, onfit, onhide }: {
+  let { onboard, onfit, onhide, onsend }: {
     onboard: (id: string) => void;
     onfit: () => void;
     onhide: () => void;
+    onsend: () => Promise<string | null>;
   } = $props();
 
   const THEMES = ['system', 'light', 'dark'] as const;
@@ -50,5 +53,6 @@
       aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>
       Reply{shell.answered ? ` (${shell.answered})` : ''}
     </button>
+    {#if shell.agentAccess && shell.version !== null}<SendButton {onsend} />{/if}
   </div>
 </header>

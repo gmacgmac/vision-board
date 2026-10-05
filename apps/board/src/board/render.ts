@@ -2,7 +2,7 @@
 // place (attributes, transforms), so focus and CSS transitions survive every re-layout.
 import type { NodeSize, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, BoardState } from '../../../../packages/actions/src/index.ts';
 import type { NodeTemplateOptions, VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { esc, nodeState, regionState } from '../../../../packages/ui/src/index.ts';
 
@@ -60,7 +60,11 @@ export function buildRegions(host: HTMLElement, view: View): Map<string, VbRegio
   return els;
 }
 
-export function placeRegions(els: Map<string, VbRegionElement>, layout: BoardLayout, view: View, s: BoardState): void {
+/** `holders` (the agentAccess flag): region id -> the agents that hold it, from `get_board`. */
+export function placeRegions(
+  els: Map<string, VbRegionElement>, layout: BoardLayout, view: View, s: BoardState,
+  holders?: Readonly<Record<string, AccessHolder[]>>,
+): void {
   const placed = new Set(layout.nodes.keys());
   for (const r of layout.regions) {
     const el = els.get(r.id);
@@ -68,7 +72,7 @@ export function placeRegions(els: Map<string, VbRegionElement>, layout: BoardLay
     el.style.transform = `translate(${r.box.x}px, ${r.box.y}px)`;
     el.style.width = `${r.box.w}px`;
     el.style.height = `${r.box.h}px`;
-    el.update(regionState(r, view, s, placed));
+    el.update(regionState(r, view, s, placed, holders?.[r.id]));
   }
 }
 

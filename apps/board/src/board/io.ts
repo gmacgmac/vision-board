@@ -2,14 +2,14 @@
 // server; this wraps it in the shapes the page draws from. A refused call comes back as an
 // ApiError carrying the problem's pointer errors (api.md 38).
 import type { ActEvent, ActionId, ActSize, Mode, NodeSize, View } from '../../../../packages/format/src/index.ts';
-import type { BoardState, ItemState } from '../../../../packages/actions/src/index.ts';
+import type { BoardAccess, BoardState, ItemState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 
 export interface BoardSummary { id: string; title: string; seq: number }
 
 /** One board as the page draws it. `versions`: node id -> latest `ver`, sent back with an act;
- * `head`: the ledger's latest `seq`. */
-export interface BoardData { head: number; view: View; state: BoardState; versions: Record<string, number> }
+ * `head`: the ledger's latest `seq`; `access`: open grant requests and each region's holders. */
+export interface BoardData { head: number; view: View; state: BoardState; versions: Record<string, number>; access: BoardAccess }
 
 /** What the page sends for one person action; the server stamps the rest. */
 export interface ActFields {
@@ -22,10 +22,15 @@ export interface ActFields {
   region?: string;
   mode?: Mode;
   size?: ActSize;
+  /** `grant` and `deny`: the `seq` of the grant request answered. */
+  request?: number;
+  /** `revoke`: the agent losing access to `region`. */
+  holder?: string;
 }
 
-/** `get_board` as JSON: `state`'s maps arrive as plain objects; `sizes` only when set. */
-interface BoardJson {
+/** `get_board` as JSON: `state`'s maps arrive as plain objects; `sizes`, `requests` and
+ * `holders` only when set. */
+interface BoardJson extends BoardAccess {
   head: number;
   view: View;
   state: {
@@ -71,6 +76,7 @@ export async function loadBoard(id: string): Promise<BoardData> {
     head: b.head,
     view: b.view,
     versions: b.versions,
+    access: { ...(b.requests && { requests: b.requests }), ...(b.holders && { holders: b.holders }) },
     state: {
       items: new Map(Object.entries(b.state.items)),
       pins: new Map(Object.entries(b.state.pins)),
@@ -99,10 +105,13 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-/** One person action. A `mode` act names its board, as the act schema asks (api.md 16). */
+/** Acts the schema asks to name their board (api.md 16): it is always the board they are sent to. */
+const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'send', 'revoke']);
+
+/** One person action. */
 export const sendAct = (id: string, fields: ActFields) =>
   call(() => asPerson(() => client.call<ActEvent>('act', {
-    board: id, body: { type: 'act', ...fields, ...(fields.action === 'mode' && { board: id }) },
+    board: id, body: { type: 'act', ...fields, ...(NAMES_BOARD.has(fields.action) && { board: id }) },
   })));
 
 /** Calls back whenever the project ledger gains an event (the agent drew, or another tab acted). */

@@ -125,3 +125,17 @@
 {"v":2,"seq":125,"at":"2026-10-04T09:02:05Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":72,"ver":1,"node":{"region":"sizes","kind":"question","title":"Does the credit show on the invoice?","body":"Tab reaches the glyph, then the four choices.","item":true}}
 {"v":2,"seq":126,"at":"2026-10-04T09:02:06Z","by":"person","type":"act","action":"size","n":70,"size":"s"}
 {"v":2,"seq":127,"at":"2026-10-04T09:02:07Z","by":"person","type":"act","action":"pin","n":71,"x":40,"y":24}
+{"v":3,"seq":128,"at":"2026-10-05T09:00:01Z","by":"agent","agent":"a-pricing1","type":"join","label":"Pricing chat"}
+{"v":3,"seq":129,"at":"2026-10-05T09:00:02Z","by":"agent","agent":"a-docschat","type":"join","label":"Docs chat"}
+{"v":3,"seq":130,"at":"2026-10-05T09:00:03Z","by":"agent","agent":"a-support1","type":"join","label":"Support chat"}
+{"v":3,"seq":131,"at":"2026-10-05T09:00:04Z","by":"agent","agent":"a-launch01","type":"join","label":"Launch plan chat"}
+{"v":3,"seq":132,"at":"2026-10-05T09:00:05Z","by":"agent","agent":"a-pricing1","type":"region","board":"gallery","region":{"id":"held","title":"Pricing thread","mode":"grid"}}
+{"v":3,"seq":133,"at":"2026-10-05T09:00:06Z","by":"agent","agent":"a-docschat","type":"grant-request","board":"gallery","region":"held","reason":"I keep the help pages in step with the prices."}
+{"v":3,"seq":134,"at":"2026-10-05T09:00:07Z","by":"person","type":"act","action":"grant","request":133}
+{"v":3,"seq":135,"at":"2026-10-05T09:00:08Z","by":"agent","agent":"a-pricing1","type":"region","board":"gallery","region":{"id":"held-hover","title":"Pricing thread (hover)","mode":"grid"}}
+{"v":3,"seq":136,"at":"2026-10-05T09:00:09Z","by":"agent","agent":"a-docschat","type":"grant-request","board":"gallery","region":"held-hover","reason":"I keep the help pages in step with the prices."}
+{"v":3,"seq":137,"at":"2026-10-05T09:00:10Z","by":"person","type":"act","action":"grant","request":136}
+{"v":3,"seq":138,"at":"2026-10-05T09:00:11Z","by":"agent","agent":"a-support1","type":"grant-request","board":"gallery","region":"held","reason":"Support needs to add the questions customers ask about the price change."}
+{"v":3,"seq":139,"at":"2026-10-05T09:00:12Z","by":"agent","agent":"a-launch01","type":"grant-request","board":"gallery","region":"held","reason":"The launch date depends on these decisions; I want to link my timeline items to them."}
+{"v":3,"seq":140,"at":"2026-10-05T09:00:13Z","by":"agent","agent":"a-pricing1","type":"node","board":"gallery","n":73,"ver":1,"node":{"region":"held","kind":"question","title":"Which annual plans keep the old price?","item":true}}
+{"v":3,"seq":141,"at":"2026-10-05T09:00:14Z","by":"agent","agent":"a-pricing1","type":"node","board":"gallery","n":74,"ver":1,"node":{"region":"held-hover","kind":"question","title":"Do we email existing customers first?","item":true}}

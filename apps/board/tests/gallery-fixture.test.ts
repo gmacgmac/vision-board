@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '../../../packages/format/src/index.ts';
 import type { ActEvent } from '../../../packages/format/src/index.ts';
-import { boardState, foldLedger, statusOf, validateAct } from '../../../packages/actions/src/index.ts';
+import { boardAccess, boardState, foldLedger, statusOf, validateAct } from '../../../packages/actions/src/index.ts';
 
 const FILE = new URL('../src/gallery/gallery.ledger.jsonl', import.meta.url);
 const lines = fs.readFileSync(FILE, 'utf8').trim().split('\n');
@@ -40,4 +40,13 @@ test('gallery ledger: a region frame exists for every layout mode', () => {
   const s = foldLedger(events);
   const modes = new Set(boardView(s, 'gallery').regions.filter((r) => r.id.startsWith('frame-')).map((r) => r.mode));
   for (const m of MODES) assert.ok(modes.has(m), `mode ${m}`);
+});
+
+test('gallery ledger: the agent access samples have two open requests and frames with a creator and a granted holder', () => {
+  const access = boardAccess(foldLedger(events), 'gallery');
+  assert.equal(access.requests?.length, 2);
+  assert.ok(access.requests!.every((r) => r.region === 'held' && r.label));
+  for (const region of ['held', 'held-hover']) {
+    assert.deepEqual(access.holders?.[region]?.map((h) => [h.label, h.creator ?? false]), [['Pricing chat', true], ['Docs chat', false]], region);
+  }
 });

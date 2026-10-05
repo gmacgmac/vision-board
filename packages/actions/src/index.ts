@@ -8,6 +8,6 @@ export { canWrite, creatorOf, grantRequests, holders, openRequest } from './gran
 export type { Container, GrantRequestView, WriteItem } from './grants.ts';
 export { pendingItems, responsesAfter, unseenItems } from './pending.ts';
 export type { PendingItem, UnseenItem } from './pending.ts';
-export { boardHeads, containerDetail, eventBoard, linkedDetails, nodeDetail, openItems } from './reads.ts';
-export type { ContainerDetail, NodeDetail, NodeVersionView, OpenItem } from './reads.ts';
+export { boardAccess, boardHeads, containerDetail, eventBoard, linkedDetails, nodeDetail, openItems } from './reads.ts';
+export type { AccessHolder, AccessRequest, BoardAccess, ContainerDetail, NodeDetail, NodeVersionView, OpenItem } from './reads.ts';
 export { replyText } from './reply.ts';

@@ -227,7 +227,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | operationId | Method and path | Who | Does |
 |---|---|---|---|
 | `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq }], head }`; `seq` is that board's own last line |
-| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head` |
+| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty) |
 | `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes |
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
 | `list_open` | `GET /api/boards/{board}/open` | anyone | Items not yet decided, with `pending` (36) and `unseen` (a newer version than the person last saw) |

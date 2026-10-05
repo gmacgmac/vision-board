@@ -53,4 +53,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
    the way :focus-visible would, since only one element can hold real focus. */
 .g-sizes { padding: calc(var(--vb-space-6) * 2) var(--vb-space-5) var(--vb-space-5); border-radius: var(--vb-radius-lg); }
 .g-sizes .g-cards { gap: calc(var(--vb-space-6) * 2) var(--vb-space-6); }
-.g-focused { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+.g-focused, [data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+
+/* Agent access samples (agentAccess flag): the Send states in a row, each with its caption. The
+   frames reuse .g-frames above. */
+.g-sends { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-4); padding: var(--vb-space-4); border-radius: var(--vb-radius-lg); background: var(--vb-surface-region); }
+.g-send { margin: 0; display: flex; flex-direction: column; align-items: flex-start; gap: var(--vb-space-1); }
+.g-send .g-note { margin: 0; }
