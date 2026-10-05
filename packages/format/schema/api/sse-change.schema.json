@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/sse-change.schema.json",
+  "title": "API: one watch_board event",
+  "description": "A `change` event whose `data` is JSON `{ seq }` (api.md 44; OpenAPI 3.2.1 4.14.4).",
+  "type": "object",
+  "required": [
+    "event",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "const": "change"
+    },
+    "data": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentSchema": {
+        "type": "object",
+        "required": [
+          "seq"
+        ],
+        "properties": {
+          "seq": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    },
+    "retry": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "unevaluatedProperties": false
+}

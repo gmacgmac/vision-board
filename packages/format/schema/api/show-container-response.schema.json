@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/show-container-response.schema.json",
+  "title": "API: show_container answer",
+  "description": "One container (a region): the region as the ledger stores it, the agents that hold it, and every node it has held, each with its full history.",
+  "type": "object",
+  "required": [
+    "head",
+    "board",
+    "region",
+    "holders",
+    "nodes"
+  ],
+  "properties": {
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "board": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+    },
+    "region": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/events/region.schema.json#/$defs/region"
+    },
+    "holders": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
+      },
+      "description": "Empty for a region written by a v2 line (api.md 23)"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeDetail"
+      }
+    }
+  },
+  "unevaluatedProperties": false
+}

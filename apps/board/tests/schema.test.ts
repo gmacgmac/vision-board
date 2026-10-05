@@ -208,10 +208,12 @@ function refsOf(node: unknown, out: string[] = []): string[] {
 
 test('every schema file compiles, with every $defs entry, and no $ref leaves https://vision-board.invalid/', () => {
   const files = schemaFiles();
-  assert.equal(files.length, 2 + EVENT_TYPES.length);
+  const relOf = (file: string) => path.relative(path.join(ROOT, 'packages/format/schema'), file).split(path.sep).join('/');
+  // The API body schemas (api/) have their own namespace and are checked in openapi.test.ts.
+  assert.equal(files.filter(({ file }) => !relOf(file).startsWith('api/')).length, 2 + EVENT_TYPES.length);
   for (const { file, schema } of files) {
-    const rel = path.relative(path.join(ROOT, 'packages/format/schema'), file);
-    assert.equal(schema.$id, `${LEDGER}${rel.split(path.sep).join('/')}`, rel);
+    const rel = relOf(file);
+    assert.equal(schema.$id, rel.startsWith('api/') ? `${SCHEMA_BASE}schema/${rel}` : `${LEDGER}${rel}`, rel);
     compileSchema(schema.$id);
     for (const name of Object.keys((schema.$defs ?? {}) as Rec)) compileSchema(`${schema.$id}#/$defs/${name}`);
     for (const ref of refsOf(schema)) assert.ok(ref.startsWith(SCHEMA_BASE), `${rel}: ${ref}`);

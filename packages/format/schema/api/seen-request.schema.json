@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/seen-request.schema.json",
+  "title": "API: mark_seen request",
+  "description": "`{ n, ver }`: the person has seen this version (D-018).",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/events/seen.schema.json#/$defs/core"
+    }
+  ],
+  "unevaluatedProperties": false
+}

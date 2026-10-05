@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/view.schema.json",
+  "title": "API: one board as a View",
+  "description": "The View the layout engine and the page read (packages/format `View`, `boardView`): meaning only, no coordinates. A node's id is the string form of its number; `n` is set only on items.",
+  "type": "object",
+  "required": [
+    "format",
+    "session",
+    "version",
+    "title",
+    "regions",
+    "nodes",
+    "links"
+  ],
+  "properties": {
+    "format": {
+      "const": 1
+    },
+    "session": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id",
+      "description": "The board id"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The ledger position the view was folded at"
+    },
+    "title": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"
+    },
+    "summary": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/summary"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/view.schema.json#/$defs/region"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/view.schema.json#/$defs/node"
+      }
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/view.schema.json#/$defs/link"
+      }
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "region": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "mode"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/regionTitle"
+        },
+        "mode": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/mode"
+        },
+        "lanes": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/lanes"
+        },
+        "columns": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/columns"
+        },
+        "center": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId",
+          "description": "The centre node's id (the ledger writes its number, api.md 18)"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "region",
+        "kind",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "kind": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/kind"
+        },
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"
+        },
+        "body": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeBody"
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "lane": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/lane"
+        },
+        "tags": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/tags"
+        },
+        "emphasis": {
+          "type": "boolean"
+        },
+        "size": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeSize"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "link": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+        },
+        "to": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
+        },
+        "label": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/linkLabel"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

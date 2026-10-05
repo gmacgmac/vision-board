@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/read-ledger-response.schema.json",
+  "title": "API: read_ledger answer (JSON form)",
+  "description": "Ledger lines after `after`, oldest first. The `application/jsonl` form is the same lines without this envelope (api.md 44).",
+  "type": "object",
+  "required": [
+    "events",
+    "head"
+  ],
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/ledger/3/ledger-event.schema.json"
+      }
+    },
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "more": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
+    }
+  },
+  "unevaluatedProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/grant-request-body.schema.json",
+  "title": "API: request_grant request",
+  "description": "Ask the person for write access to one container (api.md 15, 25). The same fields as the `grant-request` event, plus a retry key.",
+  "type": "object",
+  "properties": {
+    "key": {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "https://vision-board.invalid/schema/ledger/3/events/grant-request.schema.json#/$defs/core"
+    }
+  ],
+  "unevaluatedProperties": false
+}

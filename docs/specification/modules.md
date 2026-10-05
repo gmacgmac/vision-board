@@ -7,7 +7,7 @@
 |---|---|---|---|
 | `apps/board` | `packages/actions`, `packages/format`, `packages/layout`, `packages/ui` | — | — |
 | `packages/actions` | `packages/format` | `apps/board`, `packages/ui` | { ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, DECIDED, ITEM_ACTIONS }; { ActionDef, AgentActionDef, AgentActionId, ItemStatus }; { applyEvent, applyItem, boardState, counts, foldLedger, statusOf }; { BoardState, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal }; { validateAct }; { canWrite, creatorOf, grantRequests, holders, openRequest }; { Container, GrantRequestView, WriteItem }; { pendingItems, responsesAfter, unseenItems }; { PendingItem, UnseenItem }; { replyText } |
-| `packages/format` | — | `apps/board`, `packages/actions`, `packages/layout`, `packages/ui` | * from view.ts; * from validate.ts; * from ledger.ts; * from ledger-shape.ts; * from ledger-index.ts; * from board-view.ts; * from node-types.ts |
+| `packages/format` | — | `apps/board`, `packages/actions`, `packages/layout`, `packages/ui` | * from view.ts; * from validate.ts; * from ledger.ts; * from ledger-shape.ts; * from ledger-index.ts; * from board-view.ts; * from node-types.ts; * from operations.generated.ts |
 | `packages/layout` | `packages/format` | `apps/board` | { layoutBoard, MODE_FNS }; { routeLinks, roundedPath }; { boundsOf, overlaps }; { LANE_GUTTER, REGION_HEAD, REGION_PAD }; * from types.ts |
 | `packages/ui` | `packages/actions`, `packages/format` | `apps/board` | * from node/node-core.ts; * from node/node-template.ts; * from node/node-icons.ts; { VbNodeElement }; * from region/region-core.ts; * from region/region-template.ts; { VbRegionElement }; { renderMarkdown, MARKDOWN_MAX }; { MarkdownOptions }; { defineBoardElements } |
 | `scripts` | — | — | — |

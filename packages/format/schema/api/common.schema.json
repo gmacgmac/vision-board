@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/common.schema.json",
+  "title": "API: shared definitions",
+  "description": "Cursors, limits and the response parts more than one operation returns (api.md 31, 36). Ledger values (ids, text, limits, enums) come from the ledger schemas.",
+  "$defs": {
+    "head": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The ledger's latest `seq`; 0 when it is empty (api.md 31)"
+    },
+    "after": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "A `seq`; 0 means from the start (api.md 31)"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500,
+      "default": 100,
+      "description": "How many to return at most (api.md 31)"
+    },
+    "wait": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60,
+      "default": 0,
+      "description": "Seconds to hold the call until the person acts; 0 answers at once"
+    },
+    "linked": {
+      "type": "boolean",
+      "default": false,
+      "description": "True adds the nodes linked to this one"
+    },
+    "more": {
+      "const": true,
+      "description": "Present, and true, only when there is more to read or the answer repeats an earlier one"
+    },
+    "nodeId": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "description": "A node as the View names it: the string form of its number"
+    },
+    "itemStatus": {
+      "enum": [
+        "open",
+        "acknowledged",
+        "dropped",
+        "commented",
+        "context",
+        "later"
+      ]
+    },
+    "pendingReason": {
+      "enum": [
+        "comment",
+        "context",
+        "later"
+      ],
+      "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle (api.md 36)"
+    },
+    "secret": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$",
+      "description": "32 random bytes, base64url, shown once (api.md 21)"
+    },
+    "note": {
+      "type": "object",
+      "required": [
+        "kind",
+        "text",
+        "at"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "comment",
+            "context"
+          ]
+        },
+        "text": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"
+        },
+        "at": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "itemState": {
+      "type": "object",
+      "description": "The person's answers on one item",
+      "required": [
+        "status",
+        "notes"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/note"
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "reply": {
+      "type": "object",
+      "required": [
+        "seq",
+        "at",
+        "text"
+      ],
+      "properties": {
+        "seq": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+        },
+        "at": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp"
+        },
+        "text": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"
+        },
+        "to": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+        },
+        "agent": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "proposal": {
+      "type": "object",
+      "description": "An agent's proposed decision; `decidedBy` is the `seq` of the person's act that took it",
+      "required": [
+        "seq",
+        "at",
+        "n",
+        "ver",
+        "action",
+        "reason"
+      ],
+      "properties": {
+        "seq": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+        },
+        "at": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp"
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "ver": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+        },
+        "action": {
+          "enum": [
+            "ack",
+            "drop"
+          ]
+        },
+        "reason": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/longText"
+        },
+        "source": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/source"
+        },
+        "agent": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text"
+        },
+        "decidedBy": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "link": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "to": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "label": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/linkLabel"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "nodeVersion": {
+      "type": "object",
+      "description": "One version of a node: what the agent said, when, and who",
+      "required": [
+        "ver",
+        "at",
+        "node"
+      ],
+      "properties": {
+        "ver": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+        },
+        "at": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/timestamp"
+        },
+        "agent": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/text"
+        },
+        "node": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/node.schema.json#/$defs/body"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "nodeDetailCore": {
+      "type": "object",
+      "description": "Everything known about one node. Left open so show_node can add `head` and `linked` (api.md 6)",
+      "required": [
+        "n",
+        "board",
+        "region",
+        "versions",
+        "notes",
+        "replies",
+        "proposals",
+        "links"
+      ],
+      "properties": {
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "board": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "status": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus",
+          "description": "Only for an item (its latest version has `item: true`)"
+        },
+        "size": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeSize",
+          "description": "The person's size; it wins over the agent's suggestion in `versions` (api.md 17)"
+        },
+        "seen": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version",
+          "description": "The latest version the person has seen"
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeVersion"
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/note"
+          }
+        },
+        "replies": {
+          "type": "array",
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/reply"
+          }
+        },
+        "proposals": {
+          "type": "array",
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/proposal"
+          }
+        },
+        "park": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/events/park.schema.json#/$defs/bundle"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/link"
+          },
+          "description": "Links from or to this node"
+        }
+      }
+    },
+    "nodeDetail": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeDetailCore"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "openItem": {
+      "type": "object",
+      "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply (api.md 32)",
+      "required": [
+        "board",
+        "n",
+        "ver",
+        "region",
+        "kind",
+        "title",
+        "status"
+      ],
+      "properties": {
+        "board": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/nodeNumber"
+        },
+        "ver": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/version"
+        },
+        "region": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+        },
+        "kind": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/kind"
+        },
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"
+        },
+        "status": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus"
+        },
+        "pending": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/pendingReason"
+        },
+        "unseen": {
+          "const": true,
+          "description": "The item has a newer version than the person last saw"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/list-boards-response.schema.json",
+  "title": "API: list_boards answer",
+  "description": "`seq` is that board's own last ledger line; `head` is the ledger's (api.md Operations).",
+  "type": "object",
+  "required": [
+    "boards",
+    "head"
+  ],
+  "properties": {
+    "boards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "board",
+          "title",
+          "seq"
+        ],
+        "properties": {
+          "board": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/id"
+          },
+          "title": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/title"
+          },
+          "seq": {
+            "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/seq"
+          }
+        },
+        "unevaluatedProperties": false
+      }
+    },
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    }
+  },
+  "unevaluatedProperties": false
+}
