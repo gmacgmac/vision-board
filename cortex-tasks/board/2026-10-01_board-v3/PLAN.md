@@ -65,6 +65,10 @@ browser check for UI work.
 3. Selection and moving, ported from `prototypes/board-v3-design/architect-extract/` (README §2): click, Shift/Cmd/Ctrl
    multi-select, lasso with area notes, selection bar, pins, keyboard route (arrows, Space, C/N);
    container notes; dragging cards between containers; the Later container.
+   Maintainer, 2026-10-05 (chat 665, 667): U5 (no text selection while dragging) and U6 (zoom)
+   are part of this stage. Plain drag anywhere pans; Shift+drag draws the lasso; the selection
+   bar then offers Comment or Zoom to selection; zoom in, out and fit buttons sit in the board
+   header. How a card is moved without moving it by accident is being settled (chat 671).
 4. Send: the `send` action with "Mark the rest ok". The `vb` commands and the API live in the
    API pattern set (U4); this stage wires the board's Send to it.
 5. Proposals, seen and parking on the board (U3 step 3; mockup 03).

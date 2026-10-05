@@ -47,6 +47,10 @@ the 24px target-size check (N8, region half).
    keep 05's 28x24 size. Remove `test.fail` and the `KNOWN_AXE` note for the layout buttons in
    `board.spec.ts` once axe passes; leave the other specs' `KNOWN_AXE` if they still need it,
    and say which.
+8. Card sizes are on by default (maintainer, 2026-10-05, chat 666): in
+   `packages/format/src/flags.ts` set `nodeSize.default` to `true` (the flag stays, so
+   `?flags=-nodeSize` turns it off). Update the tests and baselines this changes, after viewing
+   them.
 
 ## Steps
 
