@@ -313,7 +313,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/2a_FE_03_page-tests.md]]
 
 ## D-026 OpenAPI 3.2 for the API contract (replaces D-022)
-- **Date**: 2026-10-04 · **Status**: Accepted · **From**: maintainer, U4 step 1 research
+- **Date**: 2026-10-04 · **Status**: Superseded by D-031 · **From**: maintainer, U4 step 1 research
 - **Decision**: As D-022, with OpenAPI 3.2 in place of 3.1. Formats and the API are defined as
   JSON Schema 2020-12 and OpenAPI 3.2 in `packages/format/schema/`, checked with `ajv` (pinned
   exact, MIT), used only in tests and in the I/O layer's validator. Routes, MCP tools, `vb`
@@ -376,3 +376,14 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: Free resizing by dragging (a width in the ledger, and every card a
   different size); one fixed width.
 - **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]
+
+## D-031 OpenAPI 3.2, restated without streamed writes (replaces D-026)
+- **Date**: 2026-10-05 · **Status**: Accepted · **From**: maintainer (chat 647, 661)
+- **Decision**: D-026's decision stands unchanged. Only its reason is corrected: writes answer
+  once per batch, with a result per item, and are never streamed (`docs/specification/api.md` 44).
+- **Why**: 3.2 is the first version that describes streamed responses, which the ledger read
+  (JSON Lines) and the live-update stream (`watch_board`, server-sent events) need. The contract
+  review cut streamed write replies: a stream can't keep "a bad request writes nothing", has no
+  place for the batch summary, and neither MCP nor `vb` could show it line by line.
+- **Alternative rejected**: Leaving D-026's reason as written, which names streamed batch writes.
+- **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
