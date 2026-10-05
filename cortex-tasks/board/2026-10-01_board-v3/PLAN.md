@@ -68,7 +68,9 @@ browser check for UI work.
    Maintainer, 2026-10-05 (chat 665, 667): U5 (no text selection while dragging) and U6 (zoom)
    are part of this stage. Plain drag anywhere pans; Shift+drag draws the lasso; the selection
    bar then offers Comment or Zoom to selection; zoom in, out and fit buttons sit in the board
-   header. How a card is moved without moving it by accident is being settled (chat 671).
+   header. Moving a card (chat 673, maintainer's yes): only by dragging its kind tab. Dragging
+   inside a card selects its text and never pans; only a drag on a container's background or
+   the board's background pans (cards need `user-select` restored, brief C3).
 4. Send: the `send` action with "Mark the rest ok". The `vb` commands and the API live in the
    API pattern set (U4); this stage wires the board's Send to it.
 5. Proposals, seen and parking on the board (U3 step 3; mockup 03).
