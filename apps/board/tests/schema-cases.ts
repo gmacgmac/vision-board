@@ -1,12 +1,14 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v5 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18 and 62-65.
+// Ledger lines for the schema tests (schema.test.ts): a valid v6 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65 and 66-70.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 5, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 5, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 6, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 6, seq: 1, at: AT, by: 'person' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
 export const GROUP = { nodes: [1, 2], text: 'The same question on both.' };
+/** A move of a group of cards (api.md 66): `nodes` in place of `n`, and the container. */
+export const GROUP_MOVE = { nodes: [1, 2], region: 'later' };
 export const VALID: Record<string, Rec> = {
   board: { ...AGENT, type: 'board', board: 'b', title: 'Pricing', summary: 'From chat.', key: 'board-1' },
   region: { ...AGENT, type: 'region', board: 'b', region: { id: 'plan', title: 'Plan', mode: 'lanes', lanes: ['Now', 'Later'] } },
@@ -34,6 +36,7 @@ export const ACTS: Record<string, Rec> = {
   deny: { request: 5, text: 'Not this one.' }, revoke: { holder: 'a-abcd1234', board: 'b', region: 'plan' },
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
+  move: { n: 1, ver: 1, region: 'plan' },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -82,7 +85,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v6', patch(V.board!, 'v', 6)],
+  ['unknown format v7', patch(V.board!, 'v', 7)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -150,6 +153,13 @@ export const BROKEN: [string, Rec][] = [
   ['group context without words', act('context', { nodes: [1, 2], n: undefined, ver: undefined })],
   ['nodes on an ack', act('ack', { nodes: [1, 2], n: undefined, ver: undefined })],
   ['nodes on a note-edit', act('note-edit', { nodes: [1, 2] })],
+  ['move without region', act('move', { region: undefined })],
+  ['move without n or nodes', act('move', { n: undefined, ver: undefined })],
+  ['move with a bad region id', act('move', { region: 'Plan A' })],
+  ['group move with n as well', act('move', { ...GROUP_MOVE, ver: undefined })],
+  ['group move with ver as well', act('move', { ...GROUP_MOVE, n: undefined })],
+  ['group move naming one node', act('move', { ...GROUP_MOVE, nodes: [1], n: undefined, ver: undefined })],
+  ['group move without region', act('move', { nodes: [1, 2], n: undefined, ver: undefined, region: undefined })],
   ['join written by a person', { ...V.join!, by: 'person' }],
   ['grant-request written by a person', { ...V['grant-request']!, by: 'person' }],
   ['node written by a person', { ...V.node!, by: 'person' }],

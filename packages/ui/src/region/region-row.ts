@@ -39,7 +39,8 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   function sync() {
     if (inRow(document.activeElement)) return;
-    const to = radios().find((b) => b.getAttribute('aria-checked') === 'true') ?? radios()[0];
+    // A fixed frame (Later) has no layouts: the cog is the row's one stop.
+    const to = radios().find((b) => b.getAttribute('aria-checked') === 'true') ?? radios()[0] ?? q<HTMLElement>(COG);
     if (to) rove(to);
   }
 

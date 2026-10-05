@@ -30,6 +30,7 @@ const asJson = (d: BoardData) => ({
   state: {
     items: Object.fromEntries(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
     ...(d.state.sizes.size > 0 && { sizes: Object.fromEntries(d.state.sizes) }),
+    ...(d.state.moves.size > 0 && { moves: Object.fromEntries(d.state.moves) }),
   },
   versions: d.versions,
   ...d.access,

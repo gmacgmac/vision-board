@@ -7,6 +7,11 @@ import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { AccessHolder, BoardState } from '../../../../packages/actions/src/index.ts';
 import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
+import { LATER_REGION } from '../../../../packages/format/src/index.ts';
+
+/** The built-in Later's frame (3_FE_03 ruling 5): its layout is the grid, set by the board, and
+ * while it is empty it shows only while a card is dragged, as a drop target. */
+export const LATER_FRAME = { fixed: true, empty: 'Drop a card here to save it for later.' } as const;
 
 /** Items first in number order, then the rest: DOM order is tab order is reading order. */
 export function readingOrder(view: View): ViewNode[] {
@@ -50,7 +55,7 @@ export function createRegionSet(host: HTMLElement): RegionSet {
           els.set(r.id, el);
         }
         if (drawn.get(r.id) !== key) {
-          el.render(r);
+          el.render(r, r.id === LATER_REGION ? LATER_FRAME : undefined);
           drawn.set(r.id, key);
           shown.delete(r.id);
         }

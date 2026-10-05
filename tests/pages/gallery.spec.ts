@@ -73,9 +73,9 @@ test('node: the other states are drawn', async ({ page }) => {
   }
 });
 
-test('region: each mode, the count, the empty message and no count', async ({ page }) => {
+test('region: each mode, the count, the empty message and no count; Later and a drop target (3_FE_03)', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
-  await expect(frames).toHaveCount(8);
+  await expect(frames).toHaveCount(10);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'list']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
@@ -84,9 +84,22 @@ test('region: each mode, the count, the empty message and no count', async ({ pa
     await expect(frame.locator(`[role="radio"][data-mode="${mode}"]`)).toHaveAttribute('aria-checked', 'true');
     await expect(frame.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
   }
-  await expect(frames.locator('.vb-region-empty:visible')).toHaveCount(1);
+  await expect(frames.locator('.vb-region-empty:visible')).toHaveCount(2);
   const bare = frames.filter({ has: page.locator('h2:text-is("No items, so no count")') });
   await expect(bare.locator('.vb-region-count')).toHaveText('');
+  // Later: fixed (no layout icons, the cog its one stop), holding the fixture's two moved cards;
+  // an empty one lit as the drop target, with its own empty message.
+  const later = frames.filter({ has: page.locator('h2:text-is("Later")') });
+  await expect(later).toHaveCount(2);
+  for (const f of await later.all()) {
+    await expect(f).toHaveAttribute('data-fixed', '');
+    await expect(f.locator('[role="radio"]')).toHaveCount(0);
+    await expect(f.locator('.vb-cog')).toHaveAttribute('tabindex', '0');
+  }
+  await expect(page.locator('vb-region[data-region="later"] .vb-region-count')).toHaveText(/of 2 decided$/);
+  const drop = page.locator('vb-region[data-drop]');
+  await expect(drop).toHaveCount(1);
+  await expect(drop.locator('.vb-region-empty')).toHaveText('Drop a card here to save it for later.');
 });
 
 test('region: the open samples: the popover wide and compact, and the settings menu enabled and disabled', async ({ page }) => {

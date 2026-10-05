@@ -69,6 +69,18 @@ vb-region button.vb-holder[data-look='hover'] .vb-holder-remove { display: block
 
 vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color: var(--vb-ink-subtle); font-size: var(--vb-text-sm); }
 
+/* A drop target (3_FE_03 ruling 3): while a card is dragged by its kind tab, the frame under the
+   pointer that can take it is drawn in the accent, with a soft fill. The page sets data-drop. */
+vb-region[data-drop] {
+  border-color: var(--vb-accent-line); border-style: dashed;
+  background: color-mix(in srgb, var(--vb-accent-soft) 60%, transparent);
+}
+vb-region[data-drop] .vb-region-head h2 { color: var(--vb-accent-text); }
+
+/* A fixed frame (the built-in Later, ruling 5): the board sets its layout, so its mode row holds
+   only the cog. */
+vb-region[data-fixed] .vb-mode-row { gap: 0; }
+
 
 /* The mode row (README pick 1, mockup 05 .mode-row / .mseg): five layout icons, a divider and the
    settings cog in one box on the top line's right. The ring in the canvas colour is its gap in the

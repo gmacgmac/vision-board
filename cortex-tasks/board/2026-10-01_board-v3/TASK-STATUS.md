@@ -125,6 +125,6 @@ header. Run in order; each changes code the next builds on.
 |---|---|---|---|---|
 | 1 | [3_FE_01 select and drag](./3_FE_01_select-and-drag.md) (U5) | Opus 5.5 | Done | see log |
 | 2 | [3_FE_02 lasso, selection bar, group notes, zoom](./3_FE_02_lasso-and-zoom.md) (U6) | Opus 5.5 | Done (resumed once at the turn limit; orchestrator fixed the header so the zoom buttons never clip) | see log |
-| 3 | [3_FE_03 move cards between containers, group move, the Later container](./3_FE_03_move-and-later.md) | Opus 5.5 | Running | |
+| 3 | [3_FE_03 move cards between containers, group move, the Later container](./3_FE_03_move-and-later.md) | Opus 5.5 | Done (ledger v6, `move` act; orchestrator checked a live drag and L into Later in the browser) | see log |
 | 4 | 3_FE_04 container notes (from the title bar) and dragging containers (region pins, PLAN decisions 4 and 5) | Opus 5.5 | Planned | |
 | 4 | Stage check: orchestrator, then the maintainer's look | Orchestrator | Planned | |

@@ -1,9 +1,9 @@
 // Folds the project ledger (D-017) into board state: what the agent drew (folded by
 // `applyDrawn` in packages/format, which also gives `boardView`), the container index (folded by
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
-// responses (status and notes: notes.ts), replies, proposals, parks, sizes, Sends and what the
-// person has seen, and each agent's retry keys. Pure: same events, same state. Events are
-// assumed valid (readLedger in packages/format checks them first).
+// responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
+// and what the person has seen, and each agent's retry keys. Pure: same events, same state. Events
+// are assumed valid (readLedger in packages/format checks them first).
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
@@ -12,16 +12,20 @@ import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
 import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
+import { movedFrom } from './moves.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
-/** The person's responses for one board, keyed by node id (`String(n)`), as the page reads it. */
+/** The person's responses for one board, keyed by node id (`String(n)`), as the page reads it.
+ * `moves`: the container the person put a card in, for each card not where the agent has it
+ * (api.md 66-70); the page places cards from it, as from `pins`. */
 export interface BoardState {
   items: Map<string, ItemState>;
   pins: Map<string, { x: number; y: number }>;
   modes: Map<string, Mode>;
   /** The person's card size picks (D-030); a node with none follows the agent or the auto tier. */
   sizes: Map<string, NodeSize>;
+  moves: Map<string, string>;
 }
 
 export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string }
@@ -55,6 +59,8 @@ export interface LedgerState extends DrawnState {
   items: Map<number, ItemState>;
   replies: Map<number, LedgerReply[]>;
   pins: Map<number, { x: number; y: number }>;
+  /** n -> the container of the person's latest `move` (api.md 66): it wins over the agent's. */
+  moves: Map<number, string>;
   /** n -> the person's size pick; `auto` deletes it (api.md 16). */
   sizes: Map<number, NodeSize>;
   /** board -> region -> the person's layout choice. */
@@ -79,7 +85,7 @@ export interface LedgerState extends DrawnState {
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
-  replies: new Map(), pins: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
+  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), acts: [],
 });
@@ -133,6 +139,13 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     }
     case 'pin': s.pins.set(e.n!, { x: e.x!, y: e.y! }); break;
     case 'unpin': s.pins.delete(e.n!); break;
+    // A pin is local to its container (rule 9), so a card that changes container leaves it behind.
+    case 'move':
+      for (const n of e.nodes ?? [e.n!]) {
+        s.moves.set(n, e.region!);
+        s.pins.delete(n);
+      }
+      break;
     case 'size': if (e.size === 'auto') s.sizes.delete(e.n!); else s.sizes.set(e.n!, e.size!); break;
     case 'send': s.lastSend.set(e.board!, e.seq); break;
     case 'deny': {
@@ -188,7 +201,9 @@ export function sentNotes(s: LedgerState, board: string, notes: readonly ItemNot
 
 /** The person's responses on one board, keyed like `boardView` (`String(n)`). */
 export function boardState(s: LedgerState, board: string): BoardState {
-  const out: BoardState = { items: new Map(), pins: new Map(), modes: new Map(s.modes.get(board)), sizes: new Map() };
+  const out: BoardState = {
+    items: new Map(), pins: new Map(), modes: new Map(s.modes.get(board)), sizes: new Map(), moves: new Map(),
+  };
   for (const { n } of nodesOf(s, board)) {
     const item = s.items.get(n);
     const pin = s.pins.get(n);
@@ -196,6 +211,7 @@ export function boardState(s: LedgerState, board: string): BoardState {
     if (item) out.items.set(String(n), { status: item.status, notes: sentNotes(s, board, item.notes) });
     if (pin) out.pins.set(String(n), pin);
     if (size) out.sizes.set(String(n), size);
+    if (movedFrom(s, n) !== undefined) out.moves.set(String(n), s.moves.get(n)!);
   }
   return out;
 }

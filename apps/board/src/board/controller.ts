@@ -1,19 +1,18 @@
 // The board controller: holds the project ledger state (live.ts), works the open board out from it
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
-// one wire them to the canvas: focus.ts (navigation), wiring.ts (input), access-flow.ts (agent
-// access), notes.ts (note bubbles), selection.ts (the person's selection), selection-flow.ts (the
-// lasso, the selection bar and the view commands, commands.ts), places.ts (pins, modes
-// and sizes). It is plain TypeScript (D-005): the Svelte shell mounts it on the stage element and
-// reads what it reports through `shell`.
+// one wire them to the canvas: focus.ts (navigation), wiring.ts (input), item-acts.ts (a card's
+// review buttons), access-flow.ts (agent access), notes.ts (note bubbles), selection.ts and
+// selection-flow.ts (the selection, the lasso, the bar and the view commands), places.ts (pins,
+// modes, sizes), moves.ts (containers, Later, Move to) and sender.ts (sending acts). Plain
+// TypeScript (D-005): the Svelte shell mounts it on the stage and reads what it reports via `shell`.
 import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
-import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
+import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
-import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
-import type { ActFields, BoardData } from './io.ts';
-import { ApiError, listBoards, sendAct } from './io.ts';
+import type { BoardData } from './io.ts';
+import { ApiError } from './io.ts';
+import { createBoards } from './boards.ts';
 import { boardData, decidedIds, drewOn } from './board-data.ts';
 import type { BoardElements } from './draw.ts';
 import { createDrawing } from './draw.ts';
@@ -24,11 +23,14 @@ import { Viewport } from './viewport.ts';
 import { createPlaces } from './places.ts';
 import { requestRows } from './access.ts';
 import { createAccessFlow } from './access-flow.ts';
-import { createNoteFlow, unsentNote } from './notes.ts';
+import { createNoteFlow } from './notes.ts';
+import { createItemActs } from './item-acts.ts';
 import { createSelection } from './selection.ts';
 import { createSelectionFlow } from './selection-flow.ts';
+import { createMoves } from './moves.ts';
+import { createSender } from './sender.ts';
 import type { CommandId } from './commands.ts';
-import { exposeWork, work } from './work.ts';
+import { exposeWork } from './work.ts';
 import { pageFlags } from '../flags.ts';
 import { shell, toast } from '../shell/shell.svelte.ts';
 
@@ -61,13 +63,16 @@ export function createBoard(els: BoardElements): Board {
   const S = {
     id: '',
     data: null as BoardData | null,
-    unwatch: null as (() => void) | null,
     /** A draw waiting for the next frame, so lines that land together draw once (approach 5). */
     frame: 0,
     /** The waiting draw starts from scratch (the state was read afresh). */
     fresh: false,
     /** The waiting draw shows lines in which the agent drew on this board. */
     drew: false,
+    /** A card is being dragged: Later shows as a drop target although it holds none (3_FE_03). */
+    later: false,
+    /** The board as the agent drew it, before the person's moves (where Reopen sends a card). */
+    drawn: null as View | null,
   };
 
   const view = (): View => S.data!.view;
@@ -105,16 +110,21 @@ export function createBoard(els: BoardElements): Board {
     if (!S.frame) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
   }
 
-  /** Work the open board out from the held state and draw what changed, now. */
+  /** Work the open board out from the held state and draw what changed, now; while a batch of acts
+   *  is on its way (sender.ts) the draw waits for its end. */
   function redraw(fresh = false) {
     cancelAnimationFrame(S.frame);
     S.frame = 0;
+    S.fresh ||= fresh;
     const s = live.state;
-    if (!s || !s.boards.has(S.id)) return;
-    const full = fresh || S.fresh;
+    if (!s || !s.boards.has(S.id) || sender.held) return;
+    const full = S.fresh;
     const drew = S.drew && !full;
     S.fresh = S.drew = false;
-    S.data = boardData(s, S.id);
+    const d = boardData(s, S.id);
+    S.drawn = d.view;
+    // Each card in the container the person put it in, Later last (3_FE_03 rulings 2 and 5).
+    S.data = { ...d, view: placedView(d.view, d.state, { later: S.later }) };
     // The selection survives a redraw; ids that left the board drop out of it (ruling 8).
     selection.keep(view().nodes.map((n) => n.id));
     Object.assign(shell, { title: view().title, version: view().version, summary: view().summary ?? '' });
@@ -136,35 +146,26 @@ export function createBoard(els: BoardElements): Board {
 
   // ---- actions -------------------------------------------------------------------------------
 
-  /** Send one action; the server validates it, and its problems show in the error toast. The
-   * stored line comes back and is applied in place. Null when it was recorded, else the detail. */
-  async function attempt(fields: ActFields): Promise<string | null> {
-    const on = sendAct(S.id, fields).then((e) => live.own(e));
-    sending.add(on);
-    try {
-      await on;
-      redraw();
-      return null;
-    } catch (err) {
-      fail(err);
-      return err instanceof ApiError ? err.message : String(err);
-    } finally {
-      sending.delete(on);
-    }
-  }
-  /** Acts on their way, so the test hook's `idle` waits for them too. */
-  const sending = new Set<Promise<void>>();
-  const record = async (fields: ActFields) => (await attempt(fields)) === null;
+  /** Every act goes through here: the server validates it, its problems show in the error toast,
+   * and the stored line comes back and is applied in place (sender.ts). */
+  const sender = createSender({ board: () => S.id, own: (e) => live.own(e), redraw: () => redraw(), fail });
+  const { attempt, record } = sender;
 
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
   });
+  /** Moving cards between containers, Later and the Move to list (3_FE_03, moves.ts). */
+  const moves = createMoves({
+    stage, vp, selection, layout: () => drawing.layout, view, drawn: () => S.drawn!, state: () => S.data!.state,
+    frame: (region) => drawing.frames.get(region), target, run: (steps) => sender.run(steps),
+    showLater: (on) => { S.later = on; }, redraw: () => redraw(), toast: (t) => toast(t),
+  });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout,
-    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'),
+    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu,
   });
   vp.onApply = () => {
     notes.place();
@@ -174,24 +175,12 @@ export function createBoard(els: BoardElements): Board {
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
 
-  async function act(id: string, requested: ActionId) {
-    const n = nodeOf(id);
-    if (!n || n.n === undefined) return;
-    // The keyboard can't send what the card doesn't offer.
-    if (ITEM_ACTIONS.includes(requested) && !offers(n).includes(requested)) return;
-    // Pressing the button that matches the current status undoes it, unless the card has a note
-    // not yet sent: C and M then open it to edit (ruling 1).
-    const pressed = isPressed(requested, statusOf(S.data!.state, id));
-    if ((requested === 'comment' || requested === 'context') && (!pressed || unsentNote(S.data!.state, id)))
-      return notes.press(id, requested);
-    const action: ActionId = pressed ? 'reopen' : requested;
-    const def = ACTIONS[action];
-    const next = shell.hide && def.status && DECIDED.has(def.status) ? focus.neighbour(id, 1) : null;
-    if (!(await record({ action, ...target(id) }))) return;
-    const focusId = next && hiddenSet().has(id) ? next : id;
-    drawing.cards.get(focusId)?.focus({ preventScroll: true });
-    if (def.reply) toast(`${n.n} ${action === 'reopen' ? 'reopened' : def.reply}`);
-  }
+  /** The review buttons and their keys on one card (item-acts.ts). */
+  const act = createItemActs({
+    node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => shell.hide, hidden: hiddenSet,
+    neighbour: (id, dir) => focus.neighbour(id, dir), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }),
+    toast: (t) => toast(t),
+  });
 
   /** Pins, Reset places, the layout mode and the size tier (places.ts). */
   const places = createPlaces({
@@ -220,6 +209,10 @@ export function createBoard(els: BoardElements): Board {
     layout: () => drawing.layout,
     view,
     drawDrag: (layout, id) => drawing.wiresFor(layout, id),
+    carried: moves.carried,
+    dragStart: moves.dragStart,
+    dragOver: moves.dragOver,
+    drop: (boxes, at) => void moves.drop(boxes, at),
     step: (from, dir) => {
       const next = focus.neighbour(from, dir);
       if (next) drawing.cards.get(next)?.focus({ preventScroll: true });
@@ -243,45 +236,10 @@ export function createBoard(els: BoardElements): Board {
 
   // ---- boards --------------------------------------------------------------------------------
 
-  /** Draw board `id` from the held state; no fetch, the state holds every board. */
-  function openBoard(id: string, fit = true) {
-    if (!live.state?.boards.has(id)) {
-      shell.message = `There is no board "${id}".`;
-      return;
-    }
-    if (S.id !== id) selection.clear();
-    S.id = id;
-    redraw(true);
-    shell.message = null;
-    if (fit && drawing.layout) vp.fit(drawing.layout.bounds, false);
-    history.replaceState(null, '', `#${encodeURIComponent(id)}`);
-  }
-
-  function watch(id: string) {
-    S.unwatch?.();
-    S.unwatch = live.watch(id);
-  }
-
-  async function boot() {
-    try {
-      const [boards] = await Promise.all([listBoards(), live.load()]);
-      shell.boards = boards;
-      if (!boards.length) {
-        shell.message = 'No boards yet. Run npm run dev to open the example boards.';
-        return;
-      }
-      const wanted = decodeURIComponent(location.hash.slice(1));
-      const id = boards.some((b) => b.id === wanted) ? wanted : boards[0]!.id;
-      shell.boardId = id;
-      openBoard(id);
-      watch(id);
-      // The first draw ends once the frame it was drawn for has been shown.
-      requestAnimationFrame(() => requestAnimationFrame(() => { work.firstDrawMs = performance.now(); }));
-    } catch (err) {
-      fail(err);
-      shell.message = 'Could not reach the board server. Start it with: npm run board';
-    }
-  }
+  /** Boot, and switching boards (boards.ts). */
+  const boards = createBoards({
+    live, vp, selection, id: () => S.id, setId: (id) => { S.id = id; }, redraw, layout: () => drawing.layout, fail,
+  });
 
   exposeWork({
     async rebuild() {
@@ -289,28 +247,25 @@ export function createBoard(els: BoardElements): Board {
       redraw(true);
     },
     async idle() {
-      while (sending.size) await Promise.allSettled([...sending]);
+      await sender.idle();
       await live.sync();
       while (S.frame) await nextFrame();
     },
   });
 
   return {
-    boot,
-    switchTo(id) {
-      shell.boardId = id;
-      openBoard(id);
-      watch(id);
-    },
+    boot: boards.boot,
+    switchTo: boards.switchTo,
     command: (id) => void flow.command(id),
     toggleHide,
     answer: (request, a, text) => accessFlow.answer(request, a, text),
     send,
     destroy() {
-      S.unwatch?.();
+      boards.stop();
       unbind();
       notes.destroy();
       flow.destroy();
+      moves.menu.destroy();
     },
   };
 }

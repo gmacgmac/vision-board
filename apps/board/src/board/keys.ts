@@ -13,8 +13,8 @@ export interface KeyHandlers {
   /** Space on a focused card: add it to the selection, or take it out (3_FE_01 ruling 3). */
   toggle(id: string): void;
   step(from: string | null, dir: 1 | -1): void;
-  /** A view command (3_FE_02 ruling 5: F, +, -, Z, N, C); false when it does not apply now, so
-   *  the key falls through (C on one card is that card's comment). */
+  /** A view command (3_FE_02 ruling 5: F, +, -, Z, N, C; 3_FE_03: Shift+M); false when it does not
+   *  apply now, so the key falls through (C on one card is that card's comment). */
   command(id: CommandId, key: string): boolean;
   toggleHide(): void;
   escape(): void;
@@ -55,6 +55,13 @@ export function bindKeys(h: KeyHandlers): () => void {
     if (key === 'k' || (id && (e.key === 'ArrowUp' || e.key === 'ArrowLeft'))) {
       e.preventDefault();
       return h.step(id, -1);
+    }
+    // A Shift combination a command claims (Shift+M, 3_FE_03 ruling 8) is that command's alone: it
+    // never falls through to the plain key's action.
+    const shifted = e.shiftKey ? commandForKey(`shift+${key}`) : undefined;
+    if (shifted) {
+      e.preventDefault();
+      return void h.command(shifted, `shift+${key}`);
     }
     const cmd = commandForKey(key);
     if (cmd && h.command(cmd, key)) return e.preventDefault();

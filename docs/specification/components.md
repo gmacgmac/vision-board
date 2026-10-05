@@ -220,7 +220,8 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
 The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lasso-and-zoom.md`).
 
 1. **One command table**, `apps/board/src/board/commands.ts` (`COMMANDS`, keyed by `CommandId`):
-   zoom out, Fit and zoom in (the header), Comment, Zoom to selection and Clear (the selection
+   zoom out, Fit and zoom in (the header), Comment, Move to (3_FE_03), Zoom to selection and Clear
+   (the selection
    bar), Zoom to this area (the area bar it draws when a lasso touches no card). Each entry holds
    its label and keys; the header buttons, the bar's buttons and `keys.ts` all read from it, so a
    command is wired once (ruling 5).
@@ -245,3 +246,35 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
 5. **View commands are never ledger events.** Zoom and Clear only move the viewport or the
    selection; Comment opens the note bubble, whose own write goes through the action layer as
    usual (rule 8).
+
+## Moving cards between containers, and Later (3_FE_03)
+
+The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_03_move-and-later.md`);
+the format is api.md 66-70.
+
+1. **Where a card is** is worked out, never stored on the page: `placedView` (`packages/actions`
+   `moves.ts`) puts each card of the agent's view in the container of the person's latest `move`
+   (`BoardState.moves`) and adds the built-in Later (`LATER`, id `later`, grid) last while it holds
+   a card or a card is being dragged. The controller draws that view; the agent's own view is kept
+   for Reopen, which sends a card back where its agent drew it.
+2. **A drag** (`pointer.ts`) on a kind tab carries the card, or the whole selection when the card
+   is in it (`moves.ts` `carried`); every carried card keeps its offset. The frame under the
+   pointer that can take the cards gets `data-drop` (`region.css`: a dashed accent line and a soft
+   fill); a frame of the drag writes only the carried cards' transforms and that attribute, so it
+   touches no other card and lays out nothing. The drop (`moves.ts` `drop`): in another container,
+   one `move` (with `nodes` for a group) and then each card's pin where it landed, local to that
+   container; in its own container, today's pin; outside every container, the cards go back and
+   nothing is written. Later takes only items that can be saved for later.
+3. **Later is one thing, two ways in.** Into Later: `move` and `later`; out of it (a drag, Reopen,
+   O, or L again): `move` and `reopen`. L and the card's Later button go through the same
+   `moves.ts` `status`, called from `item-acts.ts`.
+4. **One batch, drawn once.** A move's acts go through `sender.ts` `run`: the move first, then the
+   status acts and pins side by side; the board is drawn when the last answer is in, so moving 50
+   cards updates those 50 and lays out only the two containers (`perf.spec.ts`).
+5. **Move to** is one command (`move`, Shift+M, the bar's "Move to"): `move-menu.ts` lists the
+   board's containers, Later last (disabled when a selected card cannot go there), as a labelled
+   `role="menu"`; Up and Down move, Enter or a click moves the selection, Esc closes and gives
+   focus back. A Shift combination a command claims never falls through to the plain key (M).
+6. **Later's frame** is `<vb-region>` rendered with `LATER_FRAME` (`render.ts`): `fixed` (no layout
+   icons or popover; the board sets its layout; the cog is the row's one stop) and its own empty
+   message, "Drop a card here to save it for later."

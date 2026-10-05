@@ -1,17 +1,27 @@
-// Pointer input (3_FE_01 rulings 1 and 4-7, 3_FE_02 ruling 1). On a card: a click selects it
-// (Shift, Cmd or Ctrl adds or removes it), a drag on its kind tab moves it (the drop becomes a
-// pin), and a drag on its content selects text and never pans. On the board's or a container's
-// background (its top line outside its controls included): a drag pans and a click clears the
-// selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The middle button pans
-// anywhere. While a pan, a move or a lasso runs, nothing on the page gets text-selected (U5).
-// Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live in keys.ts (project rule 5).
+// Pointer input (3_FE_01 rulings 1 and 4-7, 3_FE_02 ruling 1, 3_FE_03 rulings 3-4). On a card: a
+// click selects it (Shift, Cmd or Ctrl adds or removes it), a drag on its kind tab moves it, with
+// the rest of the selection when it is selected (the drop is judged by moves.ts: another
+// container, its own, or nowhere), and a drag on its content selects text and never pans. On the
+// board's or a container's background (its top line outside its controls included): a drag pans
+// and a click clears the selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The
+// middle button pans anywhere. While a pan, a move or a lasso runs, nothing on the page gets
+// text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live in keys.ts
+// (project rule 5).
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface PointerHandlers {
   box(id: string): Box | undefined;
-  dragMove(id: string, box: Box): void;
-  dragEnd(id: string, box: Box): void;
+  /** The cards a drag on `id`'s kind tab carries: the selection when `id` is in it, else `id`
+   *  alone (3_FE_03 ruling 4). */
+  carried(id: string): string[];
+  /** The drag passed its threshold: the cards start moving (Later shows as a drop target). */
+  dragStart(ids: readonly string[]): void;
+  /** The carried cards' boxes now, and the pointer in client pixels. */
+  dragMove(boxes: ReadonlyMap<string, Box>, at: Point): void;
+  /** The drop: the carried cards' boxes and the pointer, or null when the pointer was lost (the
+   *  cards go back). */
+  dragEnd(boxes: ReadonlyMap<string, Box>, at: Point | null): void;
   /** A click on a card, not on one of its controls: alone, or `add` (Shift, Cmd or Ctrl held). */
   pick(id: string, add: boolean): void;
   /** A click on the board's or a container's background. */
@@ -33,8 +43,10 @@ const HANDLE = '.vb-node-kind';
 const DRAG_THRESHOLD = 4;
 
 interface Start { sx: number; sy: number; moved: boolean }
+/** One card a move carries: its element and its box when the drag began. */
+interface Carried { id: string; el: HTMLElement; box0: Box }
 type Gesture =
-  | Start & { kind: 'move'; id: string; el: HTMLElement; box0: Box; box: Box; add: boolean }
+  | Start & { kind: 'move'; id: string; el: HTMLElement; cards: Carried[]; boxes: Map<string, Box>; add: boolean }
   | Start & { kind: 'pan'; x0: number; y0: number; middle: boolean }
   /** On a card's content: the browser selects text on a drag; a click picks the card. */
   | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
@@ -47,6 +59,16 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   let stopMouse = false;
 
   const start = (e: PointerEvent): Start => ({ sx: e.clientX, sy: e.clientY, moved: false });
+  /** The cards a drag on `id` carries, each with its element and box; `id` first. */
+  function carriedFrom(id: string): Carried[] {
+    const out: Carried[] = [];
+    for (const c of [id, ...h.carried(id).filter((x) => x !== id)]) {
+      const el = stage.querySelector<HTMLElement>(`vb-node[data-id="${CSS.escape(c)}"]`);
+      const box0 = h.box(c);
+      if (el && box0) out.push({ id: c, el, box0 });
+    }
+    return out;
+  }
   function capture(e: PointerEvent) {
     stage.setPointerCapture(e.pointerId);
   }
@@ -70,9 +92,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     const add = e.shiftKey || e.metaKey || e.ctrlKey;
     if (card) {
       const id = card.dataset.id!;
-      const box0 = t.closest(HANDLE) ? h.box(id) : undefined;
-      if (box0) {
-        g = { kind: 'move', ...start(e), id, el: card, box0, box: box0, add };
+      const cards = t.closest(HANDLE) && h.box(id) ? carriedFrom(id) : [];
+      if (cards.length) {
+        g = { kind: 'move', ...start(e), id, el: card, cards, boxes: new Map(cards.map((c) => [c.id, c.box0])), add };
         return capture(e);
       }
       g = { kind: 'press', ...start(e), id, el: card, add };
@@ -101,18 +123,24 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   stage.addEventListener('pointermove', (e) => {
     if (!g) return;
     if (!g.moved && Math.hypot(e.clientX - g.sx, e.clientY - g.sy) < DRAG_THRESHOLD) return;
+    const first = !g.moved;
     g.moved = true;
     if (g.kind === 'pan') {
       vp.x = g.x0 + e.clientX - g.sx;
       vp.y = g.y0 + e.clientY - g.sy;
       vp.apply();
     } else if (g.kind === 'move') {
+      if (first) h.dragStart(g.cards.map((c) => c.id));
       const dx = (e.clientX - g.sx) / vp.k;
       const dy = (e.clientY - g.sy) / vp.k;
-      g.el.classList.add('dragging');
-      g.box = { ...g.box0, x: Math.round(g.box0.x + dx), y: Math.round(g.box0.y + dy) };
-      g.el.style.transform = `translate(${g.box.x}px, ${g.box.y}px)`;
-      h.dragMove(g.id, g.box);
+      // Every carried card keeps its offset from the others (3_FE_03 ruling 4).
+      for (const c of g.cards) {
+        const box = { ...c.box0, x: Math.round(c.box0.x + dx), y: Math.round(c.box0.y + dy) };
+        g.boxes.set(c.id, box);
+        c.el.classList.add('dragging');
+        c.el.style.transform = `translate(${box.x}px, ${box.y}px)`;
+      }
+      h.dragMove(g.boxes, { x: e.clientX, y: e.clientY });
     } else if (g.kind === 'lasso') h.lassoMove({ x: g.sx, y: g.sy }, { x: e.clientX, y: e.clientY });
   });
 
@@ -125,8 +153,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     const click = !d.moved && e.type === 'pointerup';
     if (d.kind === 'move') {
       if (d.moved) {
-        d.el.classList.remove('dragging');
-        h.dragEnd(d.id, d.box);
+        for (const c of d.cards) c.el.classList.remove('dragging');
+        h.dragEnd(d.boxes, e.type === 'pointerup' ? { x: e.clientX, y: e.clientY } : null);
       } else if (click) h.pick(d.id, d.add);
       d.el.focus({ preventScroll: true });
     } else if (d.kind === 'press' && click) {

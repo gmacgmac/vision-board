@@ -11,13 +11,15 @@ import { regionColour } from './region-core.ts';
 import type { ModeRow, RegionOpen } from './region-row.ts';
 import { bindModeRow } from './region-row.ts';
 import { holdersTemplate, regionIds, regionTemplate } from './region-template.ts';
+import type { RegionFrameOptions } from './region-template.ts';
 
 export const VB_REGION_TAG = 'vb-region';
 
 /** What the page holds: a <vb-region> it renders once and updates in place. */
 export interface VbRegionElement extends HTMLElement {
-  /** Build from the template; sets data-region, role, aria-labelledby and `--region`. */
-  render(r: Region): void;
+  /** Build from the template; sets data-region, role, aria-labelledby and `--region`; a fixed
+   *  frame (`opts.fixed`, the built-in Later) also carries `data-fixed`. */
+  render(r: Region, opts?: RegionFrameOptions): void;
   /** Apply the current state (from `regionState`) without rebuilding the markup. */
   update(st: RegionState): void;
   /** Open the layout popover (`mode` highlighted) or the settings menu; the gallery's samples. */
@@ -33,13 +35,14 @@ export function defineVbRegion(): void {
     private holdersKey = '';
     private readonly row: ModeRow = bindModeRow(this);
 
-    render(r: Region): void {
+    render(r: Region, opts: RegionFrameOptions = {}): void {
       this.row.close();
       this.dataset.region = r.id;
+      this.toggleAttribute('data-fixed', opts.fixed === true);
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', regionIds(r.id).heading);
       this.style.setProperty('--region', regionColour(r));
-      this.innerHTML = regionTemplate(r);
+      this.innerHTML = regionTemplate(r, opts);
       this.holdersKey = '';
     }
 

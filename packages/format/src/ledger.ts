@@ -6,19 +6,24 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 5;
+export const LEDGER_FORMAT = 6;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
  * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
- * group of cards, `nodes` in place of `n` (api.md 62-65). */
-export const LEDGER_FORMATS = [2, 3, 4, 5] as const;
+ * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
+ * container (api.md 66-70). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
+
+/** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
+ * name it; no agent draws it, and from ledger v6 no region may take its id. */
+export const LATER_REGION = 'later';
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',
@@ -95,7 +100,8 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes; `note` =
  * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,
  * and `kind` = what an edited note now asks for (api.md 58-61). `nodes` = the items a note on a
- * group of cards is on, in place of `n` and `ver` (api.md 62). */
+ * group of cards is on, in place of `n` and `ver` (api.md 62), or the cards a group `move` puts in
+ * one container; `region` = that container for a `move` (api.md 66). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; n?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];

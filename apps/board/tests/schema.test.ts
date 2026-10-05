@@ -1,4 +1,4 @@
-// Ledger v5 schemas (api.md 2, 5-11, 56, 62): the JSON Schema is the one source, and the hand validator
+// Ledger v6 schemas (api.md 2, 5-11, 56, 62, 66): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,11 +14,11 @@ import {
 import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
 } from '../server/schema.ts';
-import { ACTS, BROKEN, DROP, GROUP, PERSON, V, VALID, act, long, patch } from './schema-cases.ts';
+import { ACTS, BROKEN, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act, long, patch } from './schema-cases.ts';
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/5/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/6/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v5 lines for every event type and action ----
+// ---- 3. Valid v6 lines for every event type and action ----
 
-test('every event type has a valid v5 line, and every one passes both validators', () => {
+test('every event type has a valid v6 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v5 line, and every one passes both validators
   }
 });
 
-test('every action has a valid v5 act, and every one passes both validators', () => {
+test('every action has a valid v6 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -77,6 +77,9 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     // api.md 62: `nodes` in place of `n` and `ver`, on a comment or a context with words.
     { ...PERSON, type: 'act', action: 'comment', ...GROUP },
     { ...PERSON, type: 'act', action: 'context', ...GROUP, nodes: Array.from({ length: 500 }, (_, i) => i + 1) },
+    // api.md 66: a move names one card with `n`, or a group with `nodes`, and its container.
+    { ...PERSON, type: 'act', action: 'move', ...GROUP_MOVE },
+    { ...PERSON, type: 'act', action: 'move', n: 3, region: 'plan' },
   ];
   for (const e of lines) assert.deepEqual(verdict(e), { schema: true, hand: true }, JSON.stringify(e).slice(0, 80));
 });

@@ -2,7 +2,7 @@
 // (select, move by the kind tab, pan, lasso), the keyboard and the size control. Each control calls one
 // handler; what the handler does lives in the controller. Split out of controller.ts (N12_FE_01).
 import type { ActionId, ActSize, Mode } from '../../../../packages/format/src/index.ts';
-import type { Box } from '../../../../packages/layout/src/index.ts';
+import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import { routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { View } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
@@ -20,12 +20,18 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge'> {
   resetRegion(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
-  /** A card dropped, or nudged by keys, at `box`: it becomes a pin. */
+  /** A card nudged by keys to `box`: it becomes a pin. */
   pin(id: string, box: Box): void;
   layout(): BoardLayout | null;
   view(): View;
-  /** Connectors while a card is dragged: drawn from the moved box, no layout. */
+  /** Connectors while cards are dragged: drawn from the moved boxes, no layout. */
   drawDrag(layout: BoardLayout, id: string): void;
+  /** A drag on a kind tab (3_FE_03, moves.ts): the cards it carries, its start, the pointer over
+   *  the board (the container under it lights up), and the drop (null: the pointer was lost). */
+  carried(id: string): string[];
+  dragStart(ids: readonly string[]): void;
+  dragOver(at: Point): void;
+  drop(boxes: ReadonlyMap<string, Box>, at: Point | null): void;
   /** A click on a card (3_FE_01 ruling 1): it alone, or with `add` into or out of the selection. */
   pick(id: string, add: boolean): void;
   /** A click on a background: the selection clears. */
@@ -64,13 +70,17 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
 
   bindPointer(stage, vp, {
     box: (id) => h.layout()?.nodes.get(id),
-    dragMove: (id, box) => {
+    carried: (id) => h.carried(id),
+    dragStart: (ids) => h.dragStart(ids),
+    dragMove: (boxes, at) => {
       const layout = h.layout();
       if (!layout) return;
-      const nodes = new Map(layout.nodes).set(id, box);
-      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes) }, id);
+      const nodes = new Map(layout.nodes);
+      for (const [id, box] of boxes) nodes.set(id, box);
+      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes) }, boxes.keys().next().value!);
+      h.dragOver(at);
     },
-    dragEnd: (id, box) => h.pin(id, box),
+    dragEnd: (boxes, at) => h.drop(boxes, at),
     pick: (id, add) => h.pick(id, add),
     clear: () => h.clear(),
     lassoMove: h.lassoMove,

@@ -6,7 +6,7 @@
 // (opening a board, a rebuild) throws everything away and draws from scratch.
 import type { NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
+import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { holdersOf } from './access.ts';
 import { createCardSet } from './cards.ts';
 import type { BoardData } from './io.ts';
@@ -43,6 +43,8 @@ export interface DrawDeps {
 export interface Drawing {
   readonly layout: BoardLayout | null;
   readonly cards: ReadonlyMap<string, VbNodeElement>;
+  /** Each container's frame, by region id. */
+  readonly frames: ReadonlyMap<string, VbRegionElement>;
   /** Draw what changed since the last draw; `fresh` draws everything from scratch. */
   draw(fresh?: boolean): void;
   /** The focused card changed: redraw the connectors it lights up. */
@@ -109,6 +111,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   return {
     get layout() { return layout; },
     cards: cards.els,
+    frames: regions.els,
     draw,
     refocus() { if (layout) wires.draw(layout, d.focus()); },
     restate: (ids) => cards.restate(ids),

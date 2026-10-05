@@ -141,7 +141,7 @@ test('Space toggles the focused card in the selection; the focus ring still show
   await page.keyboard.press('Escape');
 });
 
-test('only the kind tab moves a card: dragging it moves and pins that card alone, R puts it back', async ({ page }) => {
+test('only the kind tab moves a card: dragging a selected card\'s tab moves and pins the selection, R puts each back', async ({ page }) => {
   await openBoard(page);
   await zoomToFull(page);
   await card(page, 1).focus();
@@ -153,14 +153,18 @@ test('only the kind tab moves a card: dragging it moves and pins that card alone
   await expect(page.locator('#wires')).not.toHaveClass(/settling/);
   const a1 = (await card(page, 1).boundingBox())!;
   expect(Math.hypot(a1.x - b1.x, a1.y - b1.y)).toBeGreaterThan(40);
-  // The other selected card stays where it was (group move is 3_FE_03), and both stay selected.
-  await expect(card(page, 2)).not.toHaveAttribute('data-pinned', '');
+  // The other selected card moves with it, by the same amount (3_FE_03 ruling 4), and both stay
+  // selected and keep their size.
+  await expect(card(page, 2)).toHaveAttribute('data-pinned', '');
   expect(await selectedIds(page)).toEqual(['1', '2']);
   const a2 = (await card(page, 2).boundingBox())!;
+  expect([Math.round(a2.x - b2.x), Math.round(a2.y - b2.y)]).toEqual([Math.round(a1.x - b1.x), Math.round(a1.y - b1.y)]);
   expect([Math.round(a2.width), Math.round(a2.height)]).toEqual([Math.round(b2.width), Math.round(b2.height)]);
-  await card(page, 1).focus();
-  await page.keyboard.press('r');
-  await expect(card(page, 1)).not.toHaveAttribute('data-pinned', '');
+  for (const n of [1, 2]) {
+    await card(page, n).focus();
+    await page.keyboard.press('r');
+    await expect(card(page, n)).not.toHaveAttribute('data-pinned', '');
+  }
 });
 
 test('a drag inside a card selects its text and neither moves the card nor pans', async ({ page }) => {

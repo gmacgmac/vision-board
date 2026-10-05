@@ -3,7 +3,7 @@
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
 // sent to (the route's path); when given, everything the act names must be on it.
 import type { ActEvent } from '../../format/src/index.ts';
-import { containerKey, latest, NODE_TYPES } from '../../format/src/index.ts';
+import { containerKey, LATER_REGION, latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { sentAfter } from './fold.ts';
 import { creatorOf, grantRequests } from './grants.ts';
@@ -33,7 +33,36 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
     else if (!s.index.holders.get(containerKey(e.board!, e.region!))?.has(e.holder!))
       p.push(`holder: "${e.holder}" does not hold ${where}; nothing to remove`);
   },
+  move: (e, s, board, p) => moveProblems(e, s, board, p),
 };
+
+/** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
+ * sent to; the container one of that board's, or its Later, which takes only items that can be
+ * saved for later. Any card moves between containers, an item or not. */
+function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
+  const field = e.nodes ? 'nodes' : 'n';
+  const cards = e.nodes ?? [e.n!];
+  const boards = new Set<string>();
+  for (const n of cards) {
+    const node = s.nodes.get(n);
+    if (node) boards.add(node.board);
+    else p.push(`${field}: unknown node ${n}`);
+  }
+  const [on] = boards;
+  if (boards.size > 1) return void p.push(`nodes: a move names cards on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
+  if (on === undefined) return;
+  if (board !== undefined && on !== board) return void p.push(`${field}: the cards are on board "${on}", not "${board}"`);
+  if (e.region !== LATER_REGION) {
+    if (!s.boards.get(on)?.regions.some((r) => r.id === e.region))
+      p.push(`region: unknown "${String(e.region)}"; pick a container on board "${on}", or ${LATER_REGION}`);
+    return;
+  }
+  for (const n of cards) {
+    const v = latest(s.nodes.get(n)!);
+    if (!v.item || !NODE_TYPES[v.kind].actions.includes('later'))
+      p.push(`region: Later takes only items that can be saved for later; node ${n} is ${v.item ? `a ${v.kind}, which can't` : 'not a numbered item'}`);
+  }
+}
 
 /** The act was sent to `board` but names `named`. */
 function onBoard(named: string | undefined, board: string | undefined, p: string[]): void {

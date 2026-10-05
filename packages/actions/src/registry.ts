@@ -52,6 +52,9 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // of their own; the item's status is worked out again from its notes (notes.ts).
   'note-edit': { id: 'note-edit', label: 'Edit note', ...person, onItem: true, text: 'required' },
   'note-remove': { id: 'note-remove', label: 'Remove note', ...person, onItem: true },
+  // Ledger v6 (api.md 66-70): put cards in a container on their board or in the built-in Later.
+  // The person's move wins over the agent's region (3_FE_03 ruling 2).
+  move: { id: 'move', label: 'Move to', ...person, onItem: false },
 };
 
 /** The review buttons an item offers. */

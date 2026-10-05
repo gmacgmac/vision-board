@@ -7,6 +7,7 @@ import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
+import { movedFrom, regionOf } from './moves.ts';
 import { pendingItems, unseenItems } from './pending.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
@@ -18,7 +19,10 @@ export interface NodeVersionView { ver: number; at: string; agent?: string; node
 export interface NodeDetail {
   n: number;
   board: string;
+  /** The container it is in now: the person's latest move, else its latest version's (api.md 68). */
   region: string;
+  /** Where the agent has it, when the person put it somewhere else (3_FE_03 ruling 2). */
+  moved_from?: string;
   /** Only for an item (its latest version has `item: true`). */
   status?: ItemStatus;
   /** The person's size pick; it wins over the agent's suggestion. */
@@ -51,7 +55,7 @@ export interface BoardAccess { requests?: AccessRequest[]; holders?: Record<stri
 
 /** An item not yet decided (`list_open`, and `pending` on a write answer). */
 export interface OpenItem {
-  board: string; n: number; ver: number; region: string; kind: NodeBody['kind']; title: string;
+  board: string; n: number; ver: number; region: string; moved_from?: string; kind: NodeBody['kind']; title: string;
   status: ItemStatus;
   pending?: 'comment' | 'context' | 'later';
   unseen?: true;
@@ -59,6 +63,12 @@ export interface OpenItem {
 
 const versionView = ({ ver, at, agent, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
   ({ ver, at, ...(agent !== undefined && { agent }), node });
+
+/** Where node `n` is, and where the agent has it when the person moved it (api.md 68). */
+const placeOf = (s: LedgerState, n: number) => {
+  const from = movedFrom(s, n);
+  return { region: regionOf(s, n)!, ...(from !== undefined && { moved_from: from }) };
+};
 
 /** Everything known about node `n`, or undefined when there is no such node. */
 export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
@@ -69,7 +79,7 @@ export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
   const seen = s.seen.get(n);
   const park = s.parks.get(n);
   return {
-    n, board: node.board, region: last.region,
+    n, board: node.board, ...placeOf(s, n),
     ...(last.item && { status: s.items.get(n)?.status ?? 'open' }),
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
@@ -94,11 +104,11 @@ export function linkedDetails(s: LedgerState, n: number): NodeDetail[] {
 }
 
 /** One container on `board`, or undefined when the board has no such region. A node belongs if
- * any of its versions was in the region. */
+ * any of its versions was in the region, or the person put it there (api.md 68). */
 export function containerDetail(s: LedgerState, board: string, region: string): ContainerDetail | undefined {
   const r = s.boards.get(board)?.regions.find((x) => x.id === region);
   if (!r) return undefined;
-  const nodes = nodesOf(s, board).filter((x) => x.versions.some((v) => v.region === region));
+  const nodes = nodesOf(s, board).filter((x) => regionOf(s, x.n) === region || x.versions.some((v) => v.region === region));
   return {
     board, region: { ...r }, holders: holders(s, board, region),
     nodes: nodes.map((x) => nodeDetail(s, x.n)!),
@@ -139,7 +149,7 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
     const p = pending.get(node.n);
     const why = p?.ask?.kind ?? (p?.later !== undefined ? 'later' : undefined);
     out.push({
-      board, n: node.n, ver: v.ver, region: v.region, kind: v.kind, title: v.title, status,
+      board, n: node.n, ver: v.ver, ...placeOf(s, node.n), kind: v.kind, title: v.title, status,
       ...(why && { pending: why }), ...(unseen.has(node.n) && { unseen: true as const }),
     });
   }

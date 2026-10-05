@@ -77,12 +77,12 @@ function fieldProblems(o: Rec, shape: Shape, prefix: string, p: string[]): void 
 
 const nodeNumber = int('node number');
 const key = text(LIMITS.key);
-/** A group note's items (api.md 62): two or more distinct node numbers. */
+/** A group of cards (api.md 62, 66): two or more distinct node numbers. */
 const nodeNumbers: Check = (v, f, p) => {
   list(nodeNumber, LIMITS.nodes)(v, f, p);
   if (!Array.isArray(v)) return;
-  if (v.length < 2) p.push(`${f}: at least 2 item numbers; a note on one card names it with n`);
-  if (new Set(v).size !== v.length) p.push(`${f}: each item once`);
+  if (v.length < 2) p.push(`${f}: at least 2 node numbers; one card is named with n`);
+  if (new Set(v).size !== v.length) p.push(`${f}: each node once`);
 };
 
 const REGION: Shape = {
@@ -144,13 +144,16 @@ const SHAPES: Record<EventType, Shape> = {
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move']);
 /** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
 
-/** Actions that may name a group of items with `nodes` in place of `n` and `ver` (api.md 62). */
-const ON_GROUP = new Set(['comment', 'context']);
+/** Actions that may name a group of cards with `nodes` in place of `n` and `ver`: a note on a
+ * group (api.md 62) and a group move (api.md 66). */
+const ON_GROUP = new Set(['comment', 'context', 'move']);
+/** Of those, the notes: a note on a group always has words. */
+const GROUP_NOTE = new Set(['comment', 'context']);
 
 /** What each action needs beyond the field types (api.md 16; the schema's `if`/`then`). */
 function actRules(e: Rec, p: string[]): void {
@@ -161,12 +164,13 @@ function actRules(e: Rec, p: string[]): void {
     if (!has('board') || !has('region')) p.push('mode: board and region required');
     need('mode', `mode: one of ${MODES.join(', ')}`);
   }
+  if (a === 'move') need('region', 'region: the container to move the cards to');
   const group = has('nodes');
-  if (group && !ON_GROUP.has(a)) p.push(`nodes: only a comment or context names a group of items`);
+  if (group && !ON_GROUP.has(a)) p.push(`nodes: only a comment, a context or a move names a group of cards`);
   if (group && ON_GROUP.has(a)) {
-    if (has('n')) p.push('n: a note on a group names its items in nodes, not n');
-    if (has('ver')) p.push('ver: a note on a group names no version');
-    need('text', 'text: required on a note on a group');
+    if (has('n')) p.push('n: a group names its cards in nodes, not n');
+    if (has('ver')) p.push('ver: a group names no version');
+    if (GROUP_NOTE.has(a)) need('text', 'text: required on a note on a group');
   } else {
     if (ON_VERSION.has(a) || ON_NODE.has(a)) need('n', 'n: node number');
     if (ON_VERSION.has(a)) need('ver', 'ver: the version acted on');
@@ -206,7 +210,7 @@ export function eventProblems(input: unknown): string[] {
   const fields = { ...STAMP.fields, ...shape.fields };
   fieldProblems(rest, { req: [...STAMP.req, ...shape.req], fields }, '', p);
   // From v3 the stamped agent is an agent id; on v2 any name (api.md 11).
-  if (agent !== undefined) (e.v === 3 || e.v === 4 || e.v === 5 ? agentId : text())(agent, 'agent', p);
+  if (agent !== undefined) (e.v === 2 ? text() : agentId)(agent, 'agent', p);
   if (AGENT_EVENTS.has(t) && e.by !== 'agent') p.push(`${t}: written by an agent`);
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(`${t}: written by a person`);
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');

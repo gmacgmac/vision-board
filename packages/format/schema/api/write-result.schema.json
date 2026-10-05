@@ -54,22 +54,22 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": true,
           "description": "True: the item was written."
         },
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/seq",
           "description": "The ledger line the item was written as."
         },
         "n": {
-          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/nodeNumber",
           "description": "The node number, for a `node` item"
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/version",
           "description": "The new version, for a `node` item"
         },
         "replayed": {
@@ -95,7 +95,7 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": false,

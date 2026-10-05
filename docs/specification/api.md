@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-05 (ledger v4, notes)
+updated: 2026-10-05 (ledger v6, moves)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -360,3 +360,36 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     line, `nodes` and all.
 65. **The numbered reply** (`replyText`) lists a group note once, naming every item it is on
     ("12, 14, 15 comment: ..."), instead of repeating it under each item.
+
+## Ledger v6 additions: moving cards between containers (3_FE_03)
+
+66. `LEDGER_FORMAT` becomes 6 and every ledger `$id` moves to `.../schema/ledger/6/`; `openapi.json`
+    `info.version` becomes 1.3.0. Only adds: v2 through v5 lines stay valid. **`move`** is a new
+    person-only act: `move { n, region }` puts one card in a container, `move { nodes, region }`
+    puts a group (two or more, as in 63) in one, in a single act. `ver` is optional on `n` and not
+    allowed with `nodes`. Agents cannot move (rule 8); they redraw.
+67. **Where it may go.** `region` is a container on the cards' board, or `later`, the board's
+    built-in **Later**: every board has one, last, laid out as a grid, which the page works out
+    from the fold. No agent draws it and it is never stored as a region: from v6 a `region` line
+    with id `later` is refused (`invalid`); a board whose older lines drew one keeps it, and that
+    frame is its Later. Later takes only items that can be saved for later (the server refuses any
+    other card, pointer `/region`). Every card a move names is on the board the act was sent to.
+68. **The person's move wins.** A card's container is the person's latest `move`, else the region
+    of its latest version, so an agent's newer version naming its old region does not pull it
+    back (as a pin is not undone by a redraw). A move clears the cards' pins, which were local to
+    the container they left (rule 9); a drop then pins them where they landed. `show_node`,
+    `show_container` and `list_open` give `region` (where it is) and, when the person moved it
+    elsewhere, `moved_from` (the region the agent drew it in); `show_container` lists the cards
+    the person put in it too. `get_board` keeps `view` as the agent drew it and adds
+    `state.moves` (node id -> container, only for cards not where the agent drew them; left out
+    when none), as it adds `state.pins`. `check_responses` reports a move to every agent that may
+    answer one of its cards; `read_ledger` returns the raw line.
+69. **Later is one thing, two ways in.** Putting a card in Later (a drop, L, or the card's Later
+    button) writes `move` to `later` and the `later` act, so its status, the "N later" count and
+    what the agent owes (36) stay as they were. Taking it out (a drag into a container, or Reopen)
+    writes `move` back and `reopen`; Reopen with no target returns the card to the region its
+    agent drew it in.
+70. **Grants follow the card** (24): a card's "current region" is the container it is in now, so
+    the holder of the container the person moved it into may answer and update it, and its author
+    may still answer it. Later has no holders, so a card in Later is judged by the region its agent
+    drew it in.

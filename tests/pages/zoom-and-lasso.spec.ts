@@ -114,14 +114,14 @@ test('a lasso that touches no card offers only "Zoom to this area", which zooms 
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(before.k);
 });
 
-test('the selection bar: N selected, Comment, Zoom to selection, Clear; centred above the selection; follows a pan', async ({ page }) => {
+test('the selection bar: N selected, Comment, Move to, Zoom to selection, Clear; centred above the selection; follows a pan', async ({ page }) => {
   await openBoard(page);
   await expect(bar(page)).toBeHidden();
   await clickCard(page, 13);
   await clickCard(page, 14, ['Shift']);
   await expect(bar(page)).toBeVisible();
   await expect(bar(page)).toContainText('2 selected');
-  expect(await barButtons(page)).toEqual(['Comment', 'Zoom to selection', 'Clear']);
+  expect(await barButtons(page)).toEqual(['Comment', 'Move to', 'Zoom to selection', 'Clear']);
   const sel = await boxOf(page, [13, 14]);
   const b = (await bar(page).boundingBox())!;
   expect(b.y + b.height).toBeLessThanOrEqual(sel.y);

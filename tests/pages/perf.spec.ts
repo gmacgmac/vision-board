@@ -240,3 +240,74 @@ test('a lasso over the 50 cards of one container updates those 50 and lays out n
   const panned = await counts(page);
   expect([panned.cardsUpdated, panned.cardsMeasured, panned.cardsPlaced, panned.containersLaidOut]).toEqual([0, 0, 0, 0]);
 });
+
+// 3_FE_03 ruling 9: moving 50 cards between two containers updates exactly those 50 and lays out
+// only the two containers; a frame of the drag touches no card and lays out nothing (the dragged
+// cards' transforms are written by the drag itself, and the highlighted container is an attribute).
+test('dragging 50 selected cards into another container updates those 50 and lays out only the two; a drag frame costs nothing', async ({ page }) => {
+  await open(page);
+  await counts(page);
+  const region = 5;
+  // As the lasso test: zoom to two corner cards so the grid container is large on the stage.
+  for (const [i, n] of [numbersOf(region)[0]!, numbersOf(region).at(-1)!].entries()) {
+    const el = page.locator(`vb-node[data-id="${n}"]`);
+    await el.focus();
+    await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
+  }
+  await page.keyboard.press('z');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  const f = (await page.locator(`vb-region[data-region="${regionId(region)}"]`).boundingBox())!;
+  await page.keyboard.down('Shift');
+  await page.mouse.move(f.x + 2, f.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(f.x + f.width - 2, f.y + f.height - 2, { steps: 6 });
+  await page.mouse.up();
+  await page.keyboard.up('Shift');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(50);
+  // Zoom out round the selection until a neighbouring container is wholly on the stage.
+  await page.keyboard.press('z');
+  const target = await page.evaluate(async (ids) => {
+    const stage = document.getElementById('stage')!.getBoundingClientRect();
+    const wait = () => new Promise((r) => setTimeout(r, 450));
+    for (let i = 0; i < 8; i += 1) {
+      for (const id of ids) {
+        const el = document.querySelector<HTMLElement>(`vb-region[data-region="${id}"]`)!;
+        const r = el.getBoundingClientRect();
+        // The part of the frame on the stage, clear of the stage's edge.
+        const b = { left: Math.max(r.left, stage.left + 10), top: Math.max(r.top, stage.top + 10),
+          right: Math.min(r.right, stage.right - 10), bottom: Math.min(r.bottom, stage.bottom - 10) };
+        for (let y = b.bottom - 6; y > b.top + 6; y -= 4) {
+          for (let x = b.right - 6; x > b.left + 6; x -= 4) {
+            if (document.elementFromPoint(x, y)?.closest('vb-region') === el) return { id, x, y };
+          }
+        }
+      }
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '-', bubbles: true }));
+      await wait();
+    }
+    throw new Error(`no neighbouring container on the stage: ${JSON.stringify(ids.map((id) => {
+      const b = document.querySelector(`vb-region[data-region="${id}"]`)!.getBoundingClientRect();
+      return [id, Math.round(b.left), Math.round(b.top), Math.round(b.width), Math.round(b.height)];
+    }))} stage ${JSON.stringify(stage)}`);
+  }, [regionId(region - 1), regionId(region + 1), regionId(region + 4), regionId(region - 4)]);
+  const tab = (await page.locator(`vb-node[data-id="${numbersOf(region)[0]}"] .vb-node-kind`).boundingBox())!;
+  await page.mouse.move(tab.x + tab.width / 2, tab.y + tab.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(tab.x + tab.width / 2 + 20, tab.y + tab.height / 2 + 20, { steps: 4 });
+  await counts(page);
+  await reset(page);
+  await page.mouse.move(target.x, target.y, { steps: 12 });
+  const frame = await counts(page);
+  expect([frame.cardsUpdated, frame.cardsMeasured, frame.cardsPlaced, frame.containersLaidOut]).toEqual([0, 0, 0, 0]);
+  await expect(page.locator(`vb-region[data-region="${target.id}"]`)).toHaveAttribute('data-drop', '');
+  await reset(page);
+  await page.mouse.up();
+  await expect(page.locator('vb-node[data-pinned]')).toHaveCount(50);
+  const c = await counts(page);
+  console.log(`[3_FE_03] move 50: ${JSON.stringify({ ...c, containers: c.containers.join(',') })}`);
+  expect([c.cardsUpdated, c.cardsMeasured, c.containersLaidOut, c.fullFetches]).toEqual([50, 50, 2, 0]);
+  expect([...c.containers].sort()).toEqual([regionId(region), target.id].sort());
+  const moved = await (await page.request.get(`${PERF_BASE}/api/boards/${BIG.board}`)).json() as { state: { moves?: Record<string, string> } };
+  expect(Object.keys(moved.state.moves ?? {}).map(Number).sort((a, b) => a - b)).toEqual(numbersOf(region));
+});

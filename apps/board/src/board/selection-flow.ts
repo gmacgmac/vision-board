@@ -1,5 +1,6 @@
 // The lasso, the selection bar and the view commands on the board page (3_FE_02 rulings 1, 2, 5
-// and 7). A Shift+drag on a background draws the dashed lasso; on release the cards it touches
+// and 7; Move to, 3_FE_03 ruling 8). A Shift+drag on a background draws the dashed lasso; on
+// release the cards it touches
 // replace the selection (Shift+Cmd/Ctrl adds them), through the same selection module a click
 // uses, so only those cards are updated and none is laid out. A lasso that touches no card gets
 // the area bar, whose one command zooms there; the area is kept here only, never stored (rule 9).
@@ -25,6 +26,9 @@ export interface SelectionFlowDeps {
   item(id: string): number | undefined;
   /** Comment with one card selected: that card's own note, as C on it (2e). */
   commentOn(id: string): void;
+  /** Move to (3_FE_03 ruling 8): open the list of containers for the selection, under `anchor`
+   *  (the bar, or the selection when the bar is hidden), in stage pixels. */
+  openMove(ids: readonly string[], anchor: StageBox): void;
 }
 
 export interface SelectionFlow {
@@ -119,6 +123,15 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
       case 'zoom-out': d.vp.zoomCentre(1 / 1.2); return true;
       case 'fit': if (layout) d.vp.fit(layout.bounds); return true;
       case 'comment': return comment(key);
+      case 'move': {
+        const sel = d.selection.selected();
+        const world = worldBoxOf(layout, sel);
+        if (!world) return false;
+        const s = d.stage.getBoundingClientRect();
+        const b = bar.getBoundingClientRect();
+        d.openMove(sel, bar.hidden ? toStage(world) : { x: b.left - s.left, y: b.top - s.top, w: b.width, h: b.height });
+        return true;
+      }
       case 'clear':
         if (!d.selection.selected().length) return false;
         d.selection.clear();

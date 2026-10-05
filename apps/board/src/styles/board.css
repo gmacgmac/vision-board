@@ -141,3 +141,22 @@ code { font-family: var(--vb-font-mono); }
 }
 .vb-dialog-hint { margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
 .vb-dialog-actions { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-4); }
+
+/* The Move to list (3_FE_03 ruling 8, move-menu.ts): the board's containers, Later last, drawn on
+   the stage above the cards and the selection bar, in the settings menu's look. */
+.vb-move-menu {
+  position: absolute; z-index: 29; left: 0; top: 0; display: grid; min-width: 200px; max-width: 360px; padding: 3px;
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+}
+.vb-move-menu[hidden] { display: none; }
+.vb-move-item {
+  display: block; width: 100%; min-height: 32px; padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px;
+  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium);
+  color: var(--vb-ink-strong); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.vb-move-item:hover, .vb-move-item:focus-visible { background: var(--vb-surface-sunken); }
+.vb-move-item:focus-visible { outline-offset: -2px; }
+.vb-move-item:active { transform: translateY(1px); }
+.vb-move-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
+.vb-move-item[aria-disabled='true']:hover { background: none; }

@@ -54,7 +54,7 @@
   <kbd>A</kbd> ok <kbd>X</kbd> drop <kbd>C</kbd> comment <kbd>M</kbd> more context <kbd>L</kbd> later
   <kbd>J</kbd>/<kbd>K</kbd> next · <kbd>Space</kbd> select · <kbd>Alt</kbd>+arrows move · <kbd>R</kbd> reset place ·
   drag the tab to move · drag the background to pan · <kbd>Shift</kbd>+drag to lasso ·
-  <kbd>Shift</kbd>+click to select more · <kbd>N</kbd>/<kbd>C</kbd> note the selection ·
+  <kbd>Shift</kbd>+click to select more · <kbd>N</kbd>/<kbd>C</kbd> note the selection · <kbd>Shift</kbd>+<kbd>M</kbd> move it ·
   <kbd>Z</kbd> zoom to selection · <kbd>F</kbd> fit · <kbd>Ctrl</kbd>+scroll zoom
 </div>
 

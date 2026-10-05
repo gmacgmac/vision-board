@@ -41,6 +41,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
     state: {
       items: Object.fromEntries(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
       ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
+      ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),
     },
     versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(x.n), latest(x).ver])),
     ...boardAccess(s, id),

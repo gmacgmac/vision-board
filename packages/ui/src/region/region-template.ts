@@ -44,18 +44,26 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>): string => {
     + `<span class="vb-menu-hint" id="${ids.hint}">${RESET_NONE_HINT}</span></button></div>`;
 };
 
-export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>): string {
+/** How a frame is built. `fixed`: its layout is set by the board, so it has no layout icons and
+ * no popover, only the cog (the built-in Later, 3_FE_03 ruling 5). `empty`: the message it shows
+ * when the layout drew none of its cards, in place of `EMPTY_DECIDED`. */
+export interface RegionFrameOptions { fixed?: boolean; empty?: string }
+
+/** The empty message of an ordinary frame: every card it has is decided and hidden. */
+export const EMPTY_DECIDED = 'Everything here is decided.';
+
+export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
   const title = esc(r.title);
-  const row = `<div class="vb-mode-row" role="radiogroup" aria-label="Layout for ${title}">`
-    + MODES.map((m) => modeButton(m, r.id)).join('')
-    + '<span class="vb-mode-div" aria-hidden="true"></span>'
+  const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
+  const row = `<div class="vb-mode-row"${opts.fixed ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
+    + modes
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label"><h2 id="${ids.heading}">${title}</h2>`
     + `<span class="vb-region-count"></span><span class="vb-region-holders"></span></div>`
-    + `<div class="vb-region-tools">${row}${modePopover(r)}${settingsMenu(r)}</div>`
-    + `</header><p class="vb-region-empty" hidden>Everything here is decided.</p>`;
+    + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${settingsMenu(r)}</div>`
+    + `</header><p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 
 /**

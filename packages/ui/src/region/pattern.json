@@ -23,7 +23,9 @@
     "hover",
     "focus",
     "pressed",
-    "far"
+    "far",
+    "drop-target",
+    "fixed"
   ],
   "flaggedStates": {
     "held": "agentAccess flag: the region's holders after the count, the creator as plain text and every other holder as a Remove access button (D-027). Kept out of `states` so the gallery without the flag reads as before."
@@ -32,12 +34,14 @@
     "data-region": "the region id (set by render)",
     "data-mode": "grid | flow | lanes | radial | list: the layout in force (set by update)",
     "data-open": "modes | menu: the layout popover or the settings menu is open (set by the row behaviour); the frame is then drawn above the cards",
+    "data-drop": "the frame is the drop target under a card dragged by its kind tab: a dashed accent line and a soft fill (set by the page, 3_FE_03 ruling 3)",
+    "data-fixed": "the board sets the frame's layout (the built-in Later, 3_FE_03 ruling 5): no layout icons or popover, the cog alone (set by render)",
     "--region": "the frame colour as a CSS value, from regionColour (set by render); the frame line, the title and the active icon mix from it",
     "role": "region (set by render)",
     "aria-labelledby": "region-<id>, the heading inside the frame (set by render)"
   },
   "methods": {
-    "render(r: Region)": "once per view version: data-region, role, aria-labelledby, --region, innerHTML = regionTemplate(r) (the popover foot names r.mode, the agent's choice); closes anything open",
+    "render(r: Region, opts?: { fixed?, empty? })": "once per view version: data-region, role, aria-labelledby, --region, innerHTML = regionTemplate(r, opts) (the popover foot names r.mode, the agent's choice); `fixed` leaves out the layout icons and popover and sets data-fixed, `empty` replaces the empty message; closes anything open",
     "update(st: RegionState)": "on every state change: attributes and text only (data-mode, the icons' aria-checked and the row's Tab stop, the current tile, count text, Reset places aria-disabled and its hint, the empty message), so focus survives; the holders slot is redrawn from holdersTemplate only when the holders change",
     "showPanel(what, { mode?, focus? })": "opens the layout popover with mode highlighted, or the settings menu (focusing its item unless focus is false); the gallery draws its open samples with it"
   },

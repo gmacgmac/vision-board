@@ -67,9 +67,15 @@ export type WriteItem =
 export function canWrite(s: LedgerState, agent: string, item: WriteItem): 'ok' | Container {
   const exists = (c: Container) => s.index.boards.get(c.board)?.has(c.region) ?? false;
   const need = (c: Container | undefined) => (c && exists(c) && !holds(s.index, agent, c) ? c : undefined);
+  /** The container a node is in now (api.md 24): where the person put it (moves.ts), else where
+   * the agent drew it. The built-in Later has no holders, so a card there is judged by the
+   * container its agent drew it in. */
   const placeOf = (n: number): Container | undefined => {
     const x = s.nodes.get(n);
-    return x && { board: x.board, region: latest(x).region };
+    if (!x) return undefined;
+    const moved = s.moves.get(n);
+    const here = moved !== undefined && exists({ board: x.board, region: moved }) ? moved : latest(x).region;
+    return { board: x.board, region: here };
   };
   switch (item.type) {
     case 'board': return 'ok';

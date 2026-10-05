@@ -14,7 +14,7 @@ import { ProblemError, problem } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
