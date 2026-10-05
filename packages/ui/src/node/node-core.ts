@@ -52,10 +52,13 @@ export function notesView(n: ViewNode, notes: readonly ItemNote[]): NotesView | 
   if (!notes.length) return undefined;
   const entries = notes.map((x, i): NoteEntry => ({
     seq: x.seq, index: i + 1, sent: x.sent === true, text: x.text,
-    who: `${KIND_WORD[x.kind]} ${i + 1}${x.sent ? ' · Sent' : ''}`,
+    who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? ` · ${x.nodes.length} cards` : ''}${x.sent ? ' · Sent' : ''}`,
   })).reverse();
   const top = entries[0]!;
-  const label = top.sent ? `Note ${top.index} on item ${n.n}, sent. Show it` : `Note ${top.index} on item ${n.n}. Edit it`;
+  // A note on a group of cards (3_FE_02) names every item it is on.
+  const group = notes.find((x) => x.seq === top.seq)?.nodes;
+  const on = group ? `items ${group.join(', ')}` : `item ${n.n}`;
+  const label = top.sent ? `Note ${top.index} on ${on}, sent. Show it` : `Note ${top.index} on ${on}. Edit it`;
   return {
     ...(notes.length > 1 && { count: `${notes.length} notes` }),
     entries, pin: { seq: top.seq, index: top.index, sent: top.sent, label },

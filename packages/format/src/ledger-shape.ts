@@ -19,7 +19,7 @@ const NON_BLANK = /\S/u;
 export const LIMITS = {
   title: 200, regionTitle: 80, body: 8000, text: 4000, summary: 2000, linkLabel: 80,
   agentLabel: 80, tag: 40, tags: 12, lane: 40, lanes: 12, columns: 12, source: 500, sources: 20,
-  key: 64, person: 80,
+  key: 64, person: 80, nodes: 500,
 } as const;
 
 /** Longest note, reply or reason a person or agent may write. */
@@ -77,6 +77,13 @@ function fieldProblems(o: Rec, shape: Shape, prefix: string, p: string[]): void 
 
 const nodeNumber = int('node number');
 const key = text(LIMITS.key);
+/** A group note's items (api.md 62): two or more distinct node numbers. */
+const nodeNumbers: Check = (v, f, p) => {
+  list(nodeNumber, LIMITS.nodes)(v, f, p);
+  if (!Array.isArray(v)) return;
+  if (v.length < 2) p.push(`${f}: at least 2 item numbers; a note on one card names it with n`);
+  if (new Set(v).size !== v.length) p.push(`${f}: each item once`);
+};
 
 const REGION: Shape = {
   req: ['id', 'title', 'mode'],
@@ -121,6 +128,7 @@ const SHAPES: Record<EventType, Shape> = {
       proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(MODES),
       request: int('seq of a grant-request event'), holder: agentId, size: oneOf(ACT_SIZES),
       note: int('seq of the comment or context act that made the note'), kind: oneOf(NOTE_KINDS),
+      nodes: nodeNumbers,
     },
   },
   seen: { req: ['n', 'ver'], fields: { n: nodeNumber, ver: int() } },
@@ -141,6 +149,9 @@ const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove']);
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
 
+/** Actions that may name a group of items with `nodes` in place of `n` and `ver` (api.md 62). */
+const ON_GROUP = new Set(['comment', 'context']);
+
 /** What each action needs beyond the field types (api.md 16; the schema's `if`/`then`). */
 function actRules(e: Rec, p: string[]): void {
   const a = e.action as string;
@@ -150,8 +161,16 @@ function actRules(e: Rec, p: string[]): void {
     if (!has('board') || !has('region')) p.push('mode: board and region required');
     need('mode', `mode: one of ${MODES.join(', ')}`);
   }
-  if (ON_VERSION.has(a) || ON_NODE.has(a)) need('n', 'n: node number');
-  if (ON_VERSION.has(a)) need('ver', 'ver: the version acted on');
+  const group = has('nodes');
+  if (group && !ON_GROUP.has(a)) p.push(`nodes: only a comment or context names a group of items`);
+  if (group && ON_GROUP.has(a)) {
+    if (has('n')) p.push('n: a note on a group names its items in nodes, not n');
+    if (has('ver')) p.push('ver: a note on a group names no version');
+    need('text', 'text: required on a note on a group');
+  } else {
+    if (ON_VERSION.has(a) || ON_NODE.has(a)) need('n', 'n: node number');
+    if (ON_VERSION.has(a)) need('ver', 'ver: the version acted on');
+  }
   if (a === 'pin' && (!has('x') || !has('y'))) p.push('pin: x and y numbers');
   if (a === 'comment') need('text', 'text: required');
   if (a === 'grant' || a === 'deny') need('request', `${a}: request, the seq of a grant-request event`);
@@ -187,7 +206,7 @@ export function eventProblems(input: unknown): string[] {
   const fields = { ...STAMP.fields, ...shape.fields };
   fieldProblems(rest, { req: [...STAMP.req, ...shape.req], fields }, '', p);
   // From v3 the stamped agent is an agent id; on v2 any name (api.md 11).
-  if (agent !== undefined) (e.v === 3 || e.v === 4 ? agentId : text())(agent, 'agent', p);
+  if (agent !== undefined) (e.v === 3 || e.v === 4 || e.v === 5 ? agentId : text())(agent, 'agent', p);
   if (AGENT_EVENTS.has(t) && e.by !== 'agent') p.push(`${t}: written by an agent`);
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(`${t}: written by a person`);
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');

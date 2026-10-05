@@ -156,7 +156,7 @@ export function eventBoard(s: LedgerState, e: LedgerEvent): string | undefined {
     case 'reply': case 'propose': case 'park': case 'seen': return nodeBoard(e.n);
     case 'join': return undefined;
     case 'act':
-      if (e.n !== undefined) return nodeBoard(e.n);
+      if (e.n !== undefined || e.nodes) return nodeBoard(e.n ?? e.nodes![0]);
       if (e.action === 'grant' || e.action === 'deny') return s.index.requests.get(e.request!)?.board;
       return e.board;
   }

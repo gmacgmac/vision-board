@@ -4,6 +4,7 @@ import type { ActEvent, LedgerNode } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { canWrite, holders } from './grants.ts';
+import { cardsOf } from './notes.ts';
 import { DECIDED } from './registry.ts';
 
 /** One item the agent owes an answer on. `ask`: the person's latest comment or "needs context"
@@ -35,7 +36,11 @@ function owedOn(s: LedgerState, node: LedgerNode): PendingItem | undefined {
   const m = s.marks.get(node.n);
   if (!m || DECIDED.has(status)) return undefined;
   const { ask } = m;
-  const answered = ask && (latest(node).ver > ask.ver || (s.replies.get(node.n) ?? []).some((r) => r.to === ask.seq));
+  // A reply naming a note on a group answers it on every card it is on (api.md 64).
+  const made = ask && s.asks.get(ask.seq);
+  const cards = made ? cardsOf(made) : [node.n];
+  const replied = (seq: number) => cards.some((n) => (s.replies.get(n) ?? []).some((r) => r.to === seq));
+  const answered = ask && (latest(node).ver > ask.ver || replied(ask.seq));
   const parkOwed = status === 'later' && m.later !== undefined && (m.park ?? 0) < m.later;
   if ((!ask || answered) && !parkOwed) return undefined;
   return {
@@ -59,22 +64,32 @@ export function unseenItems(s: LedgerState, board: string): UnseenItem[] {
   return out.sort((a, b) => a.n - b.n);
 }
 
+/** The items an act is on: a group note's cards, the cards of the note an edit or removal names,
+ * or its one node. */
+function cardsOfAct(s: LedgerState, e: ActEvent): number[] {
+  if (e.nodes) return e.nodes;
+  const ask = e.note === undefined ? undefined : s.asks.get(e.note);
+  if (ask) return cardsOf(ask);
+  return e.n === undefined ? [] : [e.n];
+}
+
 /** The board an act belongs to: its node's, its request's, or the one it names. */
 function boardOf(s: LedgerState, e: ActEvent): string | undefined {
-  if (e.n !== undefined) return s.nodes.get(e.n)?.board;
+  const first = e.n ?? e.nodes?.[0];
+  if (first !== undefined) return s.nodes.get(first)?.board;
   if (e.action === 'grant' || e.action === 'deny') return s.index.requests.get(e.request!)?.board;
   return e.board;
 }
 
 /** Does this act concern `agent`? Send always; answers to its own requests and its own
- * removals; anything else in a container it may answer for (api.md 41). */
+ * removals; anything else in a container it may answer for, on any card it is on (api.md 41). */
 function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
   switch (e.action) {
     case 'send': return true;
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
     case 'revoke': return e.holder === agent;
     case 'mode': return holders(s, e.board!, e.region!).includes(agent);
-    default: return e.n !== undefined && mayAnswer(s, agent, e.n);
+    default: return cardsOfAct(s, e).some((n) => mayAnswer(s, agent, n));
   }
 }
 

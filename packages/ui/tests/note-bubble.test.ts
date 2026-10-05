@@ -83,3 +83,12 @@ test('noteBubbleTemplate: a sent note is shown as Markdown with Close, never in 
   assert.match(html, /<div class="vb-nb-read"><p class="vb-md-p">Check <strong>this<\/strong><\/p><\/div>/);
   assert.match(html, /data-note-do="cancel">Close<\/button>/);
 });
+
+test('bubbleView and template for a note on a group of cards (3_FE_02 ruling 3): its head names them, no number chip', () => {
+  const numbers = [12, 14, 15];
+  assert.equal(bubbleView({ mode: 'new', kind: 'comment', number: 12, numbers }).heading, 'Note on 3 cards: 12, 14, 15');
+  assert.equal(bubbleView({ mode: 'edit', kind: 'comment', number: 12, numbers, text: 'x' }).heading, 'Edit note on 3 cards: 12, 14, 15');
+  assert.equal(bubbleView({ mode: 'sent', kind: 'comment', number: 12, numbers, text: 'x' }).heading, 'Note on 3 cards: 12, 14, 15, sent');
+  const html = noteBubbleTemplate(bubbleView({ mode: 'new', kind: 'comment', number: 12, numbers }));
+  assert.match(html, /^<div class="vb-nb-head"><span class="vb-nb-title">Note on 3 cards: 12, 14, 15<\/span>/);
+});

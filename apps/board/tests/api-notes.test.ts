@@ -15,7 +15,7 @@ const notesOf = async (n: number) => (await h.ok('show_node', { board: 'roadmap'
 test('edit, then check_responses and show_node carry the latest text under the note\'s own seq', async () => {
   const [seeded] = await notesOf(1);
   const stored = await h.ok('act', act({ action: 'note-edit', n: 1, note: seeded.seq, text: 'Rule 6 needs two examples.' }));
-  assert.equal(stored.v, 4);
+  assert.equal(stored.v, 5);
   assert.deepEqual((await notesOf(1)).map((x: any) => [x.seq, x.text, x.sent ?? false]),
     [[seeded.seq, 'Rule 6 needs two examples.', false]]);
   const r = await h.ok('check_responses', { board: 'roadmap', after: 0 });
@@ -49,4 +49,19 @@ test('note-remove takes a note back: show_node and list_open no longer have it',
   assert.deepEqual((await notesOf(1)).map((x: any) => x.seq), [notes[0].seq]);
   const open = await h.ok('list_open', { board: 'roadmap' });
   assert.equal(open.items.find((x: any) => x.n === 1).pending, 'comment', 'the sent note is still owed');
+});
+
+test('a group note (3_FE_02): one act with nodes, shown on each card, seen once by the agent', async () => {
+  const before = (await h.ok('check_responses', { board: 'roadmap', after: 0 })).head;
+  const stored = await h.ok('act', act({ action: 'comment', nodes: [5, 6], text: 'Both need a source.' }));
+  assert.deepEqual([stored.v, stored.nodes, stored.n, stored.ver], [5, [5, 6], undefined, undefined]);
+  for (const n of [5, 6]) {
+    assert.deepEqual((await notesOf(n)).map((x: any) => [x.seq, x.nodes, x.text]), [[stored.seq, [5, 6], 'Both need a source.']]);
+  }
+  const r = await h.ok('check_responses', { board: 'roadmap', after: before });
+  assert.deepEqual(r.responses.map((e: any) => [e.seq, e.nodes]), [[stored.seq, [5, 6]]]);
+  await h.ok('act', act({ action: 'note-edit', n: 6, note: stored.seq, text: 'Both need a source, please.' }));
+  assert.equal((await notesOf(5))[0].text, 'Both need a source, please.');
+  const p = await h.fails('act', act({ action: 'comment', nodes: [5, 7], text: 'x' }), 422, 'invalid');
+  assert.equal(p.errors[0]!.pointer, '/nodes');
 });

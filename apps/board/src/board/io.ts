@@ -32,6 +32,8 @@ export interface ActFields {
    * edited note now asks for. */
   note?: number;
   kind?: NoteKind;
+  /** A note on a group of cards (`comment`, 3_FE_02): the items it is on, in place of `n`. */
+  nodes?: number[];
 }
 
 export class ApiError extends Error {

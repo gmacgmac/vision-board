@@ -69,6 +69,7 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     case 'link': case 'unlink': node(e.from, 'from'); node(e.to, 'to'); break;
     case 'act':
       actContext(ix, e, p);
+      for (const n of e.nodes ?? []) node(n, 'nodes');
       if (e.n === undefined) break;
       verAtMost(e.n, e.ver);
       if (e.proposal !== undefined) {

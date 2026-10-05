@@ -2,7 +2,8 @@
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
 // one wire them to the canvas: focus.ts (navigation), wiring.ts (input), access-flow.ts (agent
-// access), notes.ts (note bubbles), selection.ts (the person's selection), places.ts (pins, modes
+// access), notes.ts (note bubbles), selection.ts (the person's selection), selection-flow.ts (the
+// lasso, the selection bar and the view commands, commands.ts), places.ts (pins, modes
 // and sizes). It is plain TypeScript (D-005): the Svelte shell mounts it on the stage element and
 // reads what it reports through `shell`.
 import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
@@ -25,6 +26,8 @@ import { requestRows } from './access.ts';
 import { createAccessFlow } from './access-flow.ts';
 import { createNoteFlow, unsentNote } from './notes.ts';
 import { createSelection } from './selection.ts';
+import { createSelectionFlow } from './selection-flow.ts';
+import type { CommandId } from './commands.ts';
 import { exposeWork, work } from './work.ts';
 import { pageFlags } from '../flags.ts';
 import { shell, toast } from '../shell/shell.svelte.ts';
@@ -34,7 +37,8 @@ export type { BoardElements } from './draw.ts';
 export interface Board {
   boot(): Promise<void>;
   switchTo(id: string): void;
-  fit(): void;
+  /** A view command from the header (zoom out, Fit, zoom in; commands.ts). */
+  command(id: CommandId): void;
   toggleHide(): void;
   /** Allow or Refuse a grant request (agentAccess flag); true when it was recorded. */
   answer(request: number, answer: 'grant' | 'deny', text?: string): Promise<boolean>;
@@ -80,7 +84,12 @@ export function createBoard(els: BoardElements): Board {
     els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
-  selection.onChange((c) => { drawing.restate(c.changed); shell.selection = c.text; });
+  selection.onChange((c) => {
+    drawing.restate(c.changed);
+    shell.selection = c.text;
+    flow.dismissArea();
+    flow.place();
+  });
 
   // ---- messages and drawing ------------------------------------------------------------------
 
@@ -112,6 +121,7 @@ export function createBoard(els: BoardElements): Board {
     drawing.draw(full);
     renderCounts();
     notes.place();
+    flow.place();
     if (drew) toast(`The agent drew v${view().version}`);
   }
 
@@ -149,10 +159,16 @@ export function createBoard(els: BoardElements): Board {
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
-    ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t),
+    ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
+  });
+  /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
+  const flow = createSelectionFlow({
+    stage, vp, selection, notes, layout: () => drawing.layout,
+    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'),
   });
   vp.onApply = () => {
     notes.place();
+    flow.place();
     drawing.viewMoved();
   };
 
@@ -208,16 +224,19 @@ export function createBoard(els: BoardElements): Board {
       const next = focus.neighbour(from, dir);
       if (next) drawing.cards.get(next)?.focus({ preventScroll: true });
     },
-    fit: () => { if (drawing.layout) vp.fit(drawing.layout.bounds); },
+    command: (id, key) => flow.command(id, key),
     toggleHide,
-    zoom: (f) => vp.zoomCentre(f),
+    lassoMove: flow.lassoMove,
+    lassoEnd: flow.lassoEnd,
+    lassoCancel: flow.lassoCancel,
     pick: (id, add) => selection.select([id], add ? 'toggle' : 'only'),
     toggle: (id) => selection.select([id], 'toggle'),
-    clear: () => selection.clear(),
+    clear: () => { selection.clear(); flow.dismissArea(); },
     // Esc closes an open bubble first, else clears the selection (ruling 1).
     escape: () => {
       if (notes.open) return notes.close();
       shell.replyOpen = false;
+      flow.dismissArea();
       selection.clear();
     },
   }, () => { if (drawing.layout) vp.apply(); });
@@ -283,7 +302,7 @@ export function createBoard(els: BoardElements): Board {
       openBoard(id);
       watch(id);
     },
-    fit: () => { if (drawing.layout) vp.fit(drawing.layout.bounds); },
+    command: (id) => void flow.command(id),
     toggleHide,
     answer: (request, a, text) => accessFlow.answer(request, a, text),
     send,
@@ -291,6 +310,7 @@ export function createBoard(els: BoardElements): Board {
       S.unwatch?.();
       unbind();
       notes.destroy();
+      flow.destroy();
     },
   };
 }

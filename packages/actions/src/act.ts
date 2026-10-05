@@ -7,7 +7,7 @@ import { containerKey, latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { sentAfter } from './fold.ts';
 import { creatorOf, grantRequests } from './grants.ts';
-import { isNote, liveNotes } from './notes.ts';
+import { cardsOf, isNote, liveNotes } from './notes.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
 type Rule = (e: ActEvent, s: LedgerState, board: string | undefined, p: string[]) => void;
@@ -62,6 +62,7 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
     rule(e, s, board, p);
     return p;
   }
+  if (e.nodes) return groupProblems(e, s, board);
   const node = e.n === undefined ? undefined : s.nodes.get(e.n);
   if (!node) p.push(`n: unknown node ${String(e.n)}`);
   else if (board !== undefined && node.board !== board) p.push(`n: node ${e.n} is on board "${node.board}", not "${board}"`);
@@ -75,19 +76,43 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   return p;
 }
 
+/** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named node is an item that
+ * offers the action, all on one board, the board the act was sent to. The one-note-per-card rule
+ * is for notes on one card: a card may also be in a group note not yet sent (ruling 3). */
+function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): string[] {
+  const p: string[] = [];
+  const boards = new Set<string>();
+  for (const n of e.nodes!) {
+    const node = s.nodes.get(n);
+    if (!node) { p.push(`nodes: unknown node ${n}`); continue; }
+    boards.add(node.board);
+    const v = latest(node);
+    if (!v.item) p.push(`nodes: node ${n} is not a numbered item`);
+    else if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${n} is a ${v.kind}, which doesn't offer ${e.action}`);
+  }
+  const [only] = boards;
+  if (boards.size > 1) p.push(`nodes: a note on a group names items on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
+  else if (only !== undefined && board !== undefined && only !== board) p.push(`nodes: the items are on board "${only}", not "${board}"`);
+  if (!e.text?.trim()) p.push('text: required');
+  return p;
+}
+
 /** One note not yet sent per card (ruling 1), and edits and removals only of the person's own
- * live note before a Send (rulings 2-4, api.md 58-61). */
+ * live note before a Send (rulings 2-4, api.md 58-61). A note on a group is changed from any of
+ * the cards it is on (3_FE_02 ruling 3). */
 function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): void {
   if ((e.action === 'comment' || e.action === 'context') && e.text?.trim()) {
     const open = liveNotes(s.logs.get(e.n!) ?? { asks: [], decisions: [] })
-      .find((x) => x.person === e.person && !sentAfter(s, board, x.seq));
+      .find((x) => x.nodes === undefined && x.person === e.person && !sentAfter(s, board, x.seq));
     if (open) p.push(`n: item ${e.n} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
     return;
   }
   if (e.action !== 'note-edit' && e.action !== 'note-remove') return;
   const a = s.asks.get(e.note!);
   if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
-  else if (a.n !== e.n) p.push(`note: note ${e.note} is on node ${a.n}, not node ${e.n}`);
+  else if (!cardsOf(a).includes(e.n!)) p.push(a.nodes
+    ? `note: note ${e.note} is on items ${a.nodes.join(', ')}, not node ${e.n}`
+    : `note: note ${e.note} is on node ${a.n}, not node ${e.n}`);
   else if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
   else if (sentAfter(s, board, a.seq)) p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
   else if (a.person !== e.person) p.push(`note: note ${e.note} is not yours`);

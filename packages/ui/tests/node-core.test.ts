@@ -120,3 +120,10 @@ test('nodeState: when every note is sent, the pin shows the latest and only read
   assert.deepEqual(v.pin, { seq: v.entries[0]!.seq, index: 1, sent: true, label: 'Note 1 on item 7, sent. Show it' });
   assert.equal(v.entries[0]!.who, 'More context 1 · Sent');
 });
+
+test('nodeState: a note on a group of cards says how many, and its pin names them', () => {
+  const group: ItemNote = { ...note('Decide these together'), nodes: [1, 4, 9] };
+  const v = nodeState(node({ n: 4 }), withItem('commented', [group])).notes!;
+  assert.deepEqual(v.entries.map((x) => x.who), ['Your note 1 · 3 cards']);
+  assert.equal(v.pin.label, 'Note 1 on items 1, 4, 9. Edit it');
+});

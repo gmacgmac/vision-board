@@ -7,6 +7,7 @@ import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/note-bubble/note-bubble.css';
+import '../../../../packages/ui/src/selection-bar/selection-bar.css';
 import './gallery.css';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
@@ -18,6 +19,7 @@ import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
 import { regionSamples } from './region-section.ts';
+import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
 
@@ -39,6 +41,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   node: nodeSamples,
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
+  'selection-bar': selectionBarSamples,
 };
 
 const files = import.meta.glob<PatternInfo>('../../../../packages/ui/src/*/pattern.json', { eager: true, import: 'default' });

@@ -1,10 +1,12 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v4 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11 and 14-18.
+// Ledger lines for the schema tests (schema.test.ts): a valid v5 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18 and 62-65.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 4, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 4, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 5, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 5, seq: 1, at: AT, by: 'person' };
+/** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
+export const GROUP = { nodes: [1, 2], text: 'The same question on both.' };
 export const VALID: Record<string, Rec> = {
   board: { ...AGENT, type: 'board', board: 'b', title: 'Pricing', summary: 'From chat.', key: 'board-1' },
   region: { ...AGENT, type: 'region', board: 'b', region: { id: 'plan', title: 'Plan', mode: 'lanes', lanes: ['Now', 'Later'] } },
@@ -80,7 +82,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v5', patch(V.board!, 'v', 5)],
+  ['unknown format v6', patch(V.board!, 'v', 6)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -136,6 +138,18 @@ export const BROKEN: [string, Rec][] = [
   ['note-edit with kind ack', act('note-edit', { kind: 'ack' })],
   ['note-remove without note', act('note-remove', { note: undefined })],
   ['note-remove with note 0', act('note-remove', { note: 0 })],
+  ['group comment with n as well', act('comment', { ...GROUP, ver: undefined })],
+  ['group comment with ver as well', act('comment', { ...GROUP, n: undefined })],
+  ['group comment naming one node', act('comment', { ...GROUP, nodes: [1], n: undefined, ver: undefined })],
+  ['group comment naming a node twice', act('comment', { ...GROUP, nodes: [1, 1], n: undefined, ver: undefined })],
+  ['group comment naming node 0', act('comment', { ...GROUP, nodes: [0, 1], n: undefined, ver: undefined })],
+  ['group comment with nodes not a list', act('comment', { ...GROUP, nodes: 1, n: undefined, ver: undefined })],
+  ['group comment over 500 nodes', act('comment', {
+    ...GROUP, nodes: Array.from({ length: 501 }, (_, i) => i + 1), n: undefined, ver: undefined,
+  })],
+  ['group context without words', act('context', { nodes: [1, 2], n: undefined, ver: undefined })],
+  ['nodes on an ack', act('ack', { nodes: [1, 2], n: undefined, ver: undefined })],
+  ['nodes on a note-edit', act('note-edit', { nodes: [1, 2] })],
   ['join written by a person', { ...V.join!, by: 'person' }],
   ['grant-request written by a person', { ...V['grant-request']!, by: 'person' }],
   ['node written by a person', { ...V.node!, by: 'person' }],

@@ -1,11 +1,11 @@
-// Pointer input (3_FE_01 rulings 1 and 4-7). On a card: a click selects it (Shift, Cmd or Ctrl
-// adds or removes it), a drag on its kind tab moves it (the drop becomes a pin), and a drag on its
-// content selects text and never pans. On the board's or a container's background (its top line
-// outside its controls included): a drag pans and a click clears the selection; Shift+drag is
-// reserved for the lasso (3_FE_02) and does nothing yet. The middle button pans anywhere. While a
-// pan or a move runs, nothing on the page gets text-selected (U5). Scroll pans, Ctrl/Cmd + scroll
-// zooms. Keyboard equivalents live in keys.ts (project rule 5).
-import type { Box } from '../../../../packages/layout/src/index.ts';
+// Pointer input (3_FE_01 rulings 1 and 4-7, 3_FE_02 ruling 1). On a card: a click selects it
+// (Shift, Cmd or Ctrl adds or removes it), a drag on its kind tab moves it (the drop becomes a
+// pin), and a drag on its content selects text and never pans. On the board's or a container's
+// background (its top line outside its controls included): a drag pans and a click clears the
+// selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The middle button pans
+// anywhere. While a pan, a move or a lasso runs, nothing on the page gets text-selected (U5).
+// Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live in keys.ts (project rule 5).
+import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface PointerHandlers {
@@ -16,11 +16,16 @@ export interface PointerHandlers {
   pick(id: string, add: boolean): void;
   /** A click on the board's or a container's background. */
   clear(): void;
+  /** A Shift+drag on a background (3_FE_02 ruling 1), in client pixels: drawn as it moves, then
+   *  ended (`add`: Cmd or Ctrl held too), or dropped when the pointer is lost. */
+  lassoMove(from: Point, to: Point): void;
+  lassoEnd(from: Point, to: Point, add: boolean): void;
+  lassoCancel(): void;
 }
 
 /** Nothing inside these starts a gesture: they are controls with their own click (a container's
- * tools, the note bubble the person types in, a note on a card that opens it). */
-const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note';
+ * tools, the note bubble the person types in, a note on a card that opens it, the selection bar). */
+const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note, vb-selection-bar';
 /** Where the middle button keeps its own meaning (a link opens in a new tab; a field pastes). */
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** The one place a card is moved from (ruling 4): the kind tab with its grip dots. */
@@ -33,8 +38,8 @@ type Gesture =
   | Start & { kind: 'pan'; x0: number; y0: number; middle: boolean }
   /** On a card's content: the browser selects text on a drag; a click picks the card. */
   | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
-  /** Shift on a background: the lasso's gesture, free until 3_FE_02. */
-  | Start & { kind: 'reserved' };
+  /** Shift on a background: the lasso; `add` when Cmd or Ctrl is held too. */
+  | Start & { kind: 'lasso'; add: boolean };
 
 export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): void {
   let g: Gesture | null = null;
@@ -78,9 +83,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     // A background: what was selected as text goes, as a press on a page's background does.
     document.getSelection()?.removeAllRanges();
     if (e.shiftKey) {
-      g = { kind: 'reserved', ...start(e) };
+      g = { kind: 'lasso', ...start(e), add: e.metaKey || e.ctrlKey };
       stopMouse = true;
-      return;
+      return capture(e);
     }
     pan(e);
   });
@@ -108,7 +113,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       g.box = { ...g.box0, x: Math.round(g.box0.x + dx), y: Math.round(g.box0.y + dy) };
       g.el.style.transform = `translate(${g.box.x}px, ${g.box.y}px)`;
       h.dragMove(g.id, g.box);
-    }
+    } else if (g.kind === 'lasso') h.lassoMove({ x: g.sx, y: g.sy }, { x: e.clientX, y: e.clientY });
   });
 
   const end = (e: PointerEvent) => {
@@ -128,6 +133,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       // A plain click focused the card itself; a modified one was kept from doing so.
       if (d.add) d.el.focus({ preventScroll: true });
       h.pick(d.id, d.add);
+    } else if (d.kind === 'lasso' && d.moved) {
+      if (e.type === 'pointerup') h.lassoEnd({ x: d.sx, y: d.sy }, { x: e.clientX, y: e.clientY }, d.add);
+      else h.lassoCancel();
     } else if (click && !(d.kind === 'pan' && d.middle)) h.clear();
   };
   stage.addEventListener('pointerup', end);

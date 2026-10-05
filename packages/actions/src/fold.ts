@@ -11,7 +11,7 @@ import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, nodesOf } from '../../f
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
-import { askOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
+import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -146,26 +146,36 @@ function applyAct(s: LedgerState, e: ActEvent): void {
 }
 
 /** An act on one item: a decision, an ask (`comment`, `context`), or a change to a note. The
- * item's status, notes and owed ask are worked out again from its log (notes.ts). */
+ * status, notes and owed ask of every card it touches (all the cards of a note on a group) are
+ * worked out again from their logs (notes.ts). */
 function applyItemAct(s: LedgerState, e: ActEvent): void {
   const ask = e.note === undefined ? undefined : s.asks.get(e.note);
-  const n = ask?.n ?? e.n!;
-  const log = s.logs.get(n) ?? { asks: [], decisions: [] };
-  s.logs.set(n, log);
+  const logOf = (n: number): ItemLog => {
+    const log = s.logs.get(n) ?? { asks: [], decisions: [] };
+    s.logs.set(n, log);
+    return log;
+  };
+  let cards = ask ? cardsOf(ask) : [e.n!];
   if (e.action === 'comment' || e.action === 'context') {
-    const made = askOf(e, e.ver ?? s.nodes.get(n)?.versions.at(-1)?.ver ?? 0);
-    log.asks.push(made);
+    const made = askOf(e, (n) => s.nodes.get(n)?.versions.at(-1)?.ver ?? 0);
+    cards = cardsOf(made);
+    for (const n of cards) logOf(n).asks.push(made);
     s.asks.set(e.seq, made);
   } else if (ask) foldNoteAct(ask, e);
-  else log.decisions.push({ seq: e.seq, action: e.action });
+  else logOf(e.n!).decisions.push({ seq: e.seq, action: e.action });
+  for (const n of cards) restate(s, n, logOf(n));
+  if (e.action === 'later') marksOf(s, e.n!).later = e.seq;
+  const prop = e.proposal === undefined ? undefined : s.proposals.get(e.proposal);
+  if (prop) prop.decidedBy = e.seq;
+}
+
+/** Card `n`'s status, notes and owed ask, from its log. */
+function restate(s: LedgerState, n: number, log: ItemLog): void {
   s.items.set(n, itemOf(log));
   const latest = latestAsk(log);
   const m = marksOf(s, n);
-  if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: latest.ver };
+  if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: askVer(latest, n) };
   else delete m.ask;
-  if (e.action === 'later') m.later = e.seq;
-  const prop = e.proposal === undefined ? undefined : s.proposals.get(e.proposal);
-  if (prop) prop.decidedBy = e.seq;
 }
 
 /** Whether a Send on `board` came after the act `seq` (fold.ts `lastSend`): its note is history. */

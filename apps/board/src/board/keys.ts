@@ -1,7 +1,10 @@
 // Keyboard: every pointer action has a key (project rule 5). Shortcuts come from the action
-// registry, so a new action with a key works here without changes.
+// registry and the page's command table (commands.ts), so a new action or command with a key
+// works here without changes.
 import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
+import type { CommandId } from './commands.ts';
+import { commandForKey } from './commands.ts';
 
 export interface KeyHandlers {
   act(id: string, action: ActionId): void;
@@ -10,9 +13,10 @@ export interface KeyHandlers {
   /** Space on a focused card: add it to the selection, or take it out (3_FE_01 ruling 3). */
   toggle(id: string): void;
   step(from: string | null, dir: 1 | -1): void;
-  fit(): void;
+  /** A view command (3_FE_02 ruling 5: F, +, -, Z, N, C); false when it does not apply now, so
+   *  the key falls through (C on one card is that card's comment). */
+  command(id: CommandId, key: string): boolean;
   toggleHide(): void;
-  zoom(factor: number): void;
   escape(): void;
 }
 
@@ -52,15 +56,14 @@ export function bindKeys(h: KeyHandlers): () => void {
       e.preventDefault();
       return h.step(id, -1);
     }
+    const cmd = commandForKey(key);
+    if (cmd && h.command(cmd, key)) return e.preventDefault();
     if (id && BY_KEY.has(key)) {
       e.preventDefault();
       return h.act(id, BY_KEY.get(key)!);
     }
     if (id && key === 'r') return h.unpin(id);
-    if (key === 'f') return h.fit();
     if (key === 'h') return h.toggleHide();
-    if (key === '+' || key === '=') return h.zoom(1.2);
-    if (key === '-') return h.zoom(1 / 1.2);
   };
   document.addEventListener('keydown', onKey);
   return () => document.removeEventListener('keydown', onKey);

@@ -1,0 +1,39 @@
+/* Selection bar pattern styles (<vb-selection-bar>, packages/ui/src/selection-bar), and the lasso's
+   box. Scoped by the tag, light DOM; tokens only. Architect `.selbar` and `.lasso`
+   (architect-extract/architect.css, README §1 point 6): a glass bar, surface at 72% behind a 16px
+   blur, a strong hairline and a large shadow; the lasso a dashed accent box over an 8% accent wash.
+   The page places both in stage pixels, above the cards: they move nothing (3_FE_02 rulings 1-2). */
+
+vb-selection-bar {
+  position: absolute; z-index: 28; left: 0; top: 0;
+  display: flex; align-items: center; gap: var(--vb-space-2); padding: 5px 5px 5px var(--vb-space-3);
+  border: 1px solid color-mix(in srgb, var(--vb-line-strong) 80%, transparent); border-radius: 12px;
+  background: color-mix(in srgb, var(--vb-surface-raised) 72%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: var(--vb-shadow-lift); color: var(--vb-ink-strong);
+  font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); white-space: nowrap;
+  cursor: default; user-select: none;
+}
+vb-selection-bar[hidden] { display: none; }
+/* The area bar has no count: its one button sits in an even frame. */
+vb-selection-bar:not(:has(.vb-sb-count)) { padding-left: 5px; }
+vb-selection-bar .vb-sb-count { margin-right: var(--vb-space-1); font-variant-numeric: tabular-nums; }
+
+vb-selection-bar .vb-sb-btn {
+  display: inline-flex; align-items: center; height: 28px; padding: 0 var(--vb-space-3); cursor: pointer;
+  border: 1px solid transparent; border-radius: var(--vb-radius-md); background: transparent;
+  color: var(--vb-ink-strong); font: inherit; font-weight: var(--vb-weight-medium);
+}
+vb-selection-bar .vb-sb-btn:hover { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
+vb-selection-bar .vb-sb-btn:active { transform: translateY(1px); }
+vb-selection-bar .vb-sb-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-selection-bar .vb-sb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
+vb-selection-bar .vb-sb-primary:hover { background: var(--vb-accent-fill-hover); }
+
+/* The lasso: drawn by the page while a Shift+drag runs, never a pointer target. */
+.vb-lasso {
+  position: absolute; z-index: 27; left: 0; top: 0; pointer-events: none;
+  border: 1.5px dashed var(--vb-accent); border-radius: 6px;
+  background: color-mix(in srgb, var(--vb-accent) 8%, transparent);
+}
+.vb-lasso[hidden] { display: none; }

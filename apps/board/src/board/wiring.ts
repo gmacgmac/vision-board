@@ -1,5 +1,5 @@
 // The stage's input wiring: the click delegate for every button on cards and frames, the pointer
-// (select, move by the kind tab, pan), the keyboard and the size control. Each control calls one
+// (select, move by the kind tab, pan, lasso), the keyboard and the size control. Each control calls one
 // handler; what the handler does lives in the controller. Split out of controller.ts (N12_FE_01).
 import type { ActionId, ActSize, Mode } from '../../../../packages/format/src/index.ts';
 import type { Box } from '../../../../packages/layout/src/index.ts';
@@ -8,6 +8,7 @@ import type { View } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { KeyHandlers } from './keys.ts';
 import { bindKeys } from './keys.ts';
+import type { PointerHandlers } from './pointer.ts';
 import { bindPointer } from './pointer.ts';
 import { bindSizeControl, isSizePick } from './size.ts';
 import type { Viewport } from './viewport.ts';
@@ -29,6 +30,10 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge'> {
   pick(id: string, add: boolean): void;
   /** A click on a background: the selection clears. */
   clear(): void;
+  /** The lasso (3_FE_02): drawn while it moves, then ended or dropped (pointer.ts). */
+  lassoMove: PointerHandlers['lassoMove'];
+  lassoEnd: PointerHandlers['lassoEnd'];
+  lassoCancel(): void;
 }
 
 const cardOf = (el: Element) => el.closest<HTMLElement>('vb-node')!.dataset.id!;
@@ -68,6 +73,9 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     dragEnd: (id, box) => h.pin(id, box),
     pick: (id, add) => h.pick(id, add),
     clear: () => h.clear(),
+    lassoMove: h.lassoMove,
+    lassoEnd: h.lassoEnd,
+    lassoCancel: () => h.lassoCancel(),
   });
 
   const unbindKeys = bindKeys({

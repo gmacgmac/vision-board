@@ -1,12 +1,15 @@
-<!-- The toolbar: board picker, board title and version, counts, and the board-wide buttons.
-     Send to agent shows with the agentAccess flag. -->
+<!-- The toolbar: board picker, board title and version, counts, the zoom group and the board-wide
+     buttons. Send to agent shows with the agentAccess flag. Zoom out/Fit/Zoom in are one command
+     table (board/commands.ts) shared with the selection bar and the keys (3_FE_02 ruling 5). -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
   import SendButton from './SendButton.svelte';
+  import { commandTitle, HEADER_COMMANDS } from '../board/commands.ts';
+  import type { CommandId } from '../board/commands.ts';
 
-  let { onboard, onfit, onhide, onsend }: {
+  let { onboard, oncommand, onhide, onsend }: {
     onboard: (id: string) => void;
-    onfit: () => void;
+    oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
   } = $props();
@@ -45,9 +48,14 @@
     {/if}
   </div>
   <div class="vb-toolbar-end">
+    <div class="vb-zoom" role="group" aria-label="Zoom">
+      {#each HEADER_COMMANDS as id (id)}
+        <button type="button" class="vb-btn" title={commandTitle(id)} aria-label={commandTitle(id).split(' · ')[0]}
+          onclick={() => oncommand(id)}>{id === 'fit' ? 'Fit' : id === 'zoom-out' ? '−' : '+'}</button>
+      {/each}
+    </div>
     <button type="button" class="vb-btn" id="hide" aria-pressed={shell.hide} title="Hide decided items · H"
       onclick={onhide}>Hide decided</button>
-    <button type="button" class="vb-btn" id="fit" title="Fit the board · F" onclick={onfit}>Fit</button>
     <button type="button" class="vb-btn" id="theme" title="Theme" onclick={nextTheme}>Theme: {theme}</button>
     <button type="button" class="vb-btn vb-btn-primary" id="reply-toggle" aria-expanded={shell.replyOpen}
       aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>

@@ -4,5 +4,5 @@
   "title": "Action request",
   "description": "One action from the action registry, as the person sends it: the `act` sent form. The board is the path; a `mode`, `send` or `revoke` action names the same board.",
   "$comment": "Was: api.md 6, 16",
-  "$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/sent"
+  "$ref": "https://vision-board.invalid/schema/ledger/5/events/act.schema.json#/$defs/sent"
 }

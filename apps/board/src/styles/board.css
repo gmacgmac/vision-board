@@ -30,7 +30,13 @@ body {
 .vb-title { margin: 0; font-size: var(--vb-text-lg); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .vb-counts { display: flex; gap: var(--vb-space-2); }
-.vb-toolbar-end { margin-left: auto; display: flex; gap: var(--vb-space-2); }
+/* The buttons never shrink or wrap: on a narrow window the title gives up its room (ellipsis). */
+.vb-toolbar-end { margin-left: auto; display: flex; gap: var(--vb-space-2); flex-shrink: 0; }
+.vb-toolbar-end .vb-btn { white-space: nowrap; }
+/* The zoom group (3_FE_02 ruling 5): three buttons with no gap between, like a segmented control. */
+.vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
+.vb-zoom .vb-btn { border: 0; border-radius: 0; }
+.vb-zoom .vb-btn + .vb-btn { border-left: 1px solid var(--vb-line-strong); }
 .vb-select, .vb-btn {
   font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
@@ -98,7 +104,7 @@ body {
 .vb-help {
   position: fixed; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: 4; font-size: var(--vb-text-xs);
   color: var(--vb-ink-subtle); background: var(--vb-surface-region); border: 1px solid var(--vb-line);
-  border-radius: var(--vb-radius-md); padding: var(--vb-space-1) var(--vb-space-3);
+  border-radius: var(--vb-radius-md); padding: var(--vb-space-1) var(--vb-space-3); pointer-events: none;
 }
 kbd {
   font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;

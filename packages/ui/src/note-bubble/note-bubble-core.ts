@@ -49,13 +49,15 @@ export type BubbleMode = 'new' | 'edit' | 'sent';
 export type BubblePhase = 'idle' | 'saving' | 'error';
 
 /** What the page knows when it opens a bubble. `number` is the card's item number; `index` the
- * note's place among the card's notes (its pin number), for an existing note. */
+ * note's place among the card's notes (its pin number), for an existing note; `numbers` every
+ * item of a note on a group of cards (3_FE_02 ruling 3). */
 export interface BubbleInput {
   mode: BubbleMode;
   kind: NoteKind;
   number: number;
   index?: number;
   text?: string;
+  numbers?: readonly number[];
 }
 
 /** Everything the bubble says; the element applies it. */
@@ -78,9 +80,18 @@ export const PLACEHOLDER: Record<NoteKind, string> = {
   context: 'What is unclear? For example: explain it in plain terms',
 };
 
-export function bubbleView(b: BubbleInput): BubbleView {
-  const heading = b.mode === 'new' ? `Note on ${b.number}`
+/** "Note on 42", or "Note on 3 cards: 12, 14, 15" for a group; each mode words it its own way. */
+function headingOf(b: BubbleInput): string {
+  if (b.numbers) {
+    const on = `on ${b.numbers.length} cards: ${b.numbers.join(', ')}`;
+    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${on}, sent`;
+  }
+  return b.mode === 'new' ? `Note on ${b.number}`
     : b.mode === 'edit' ? `Edit note on ${b.number}` : `Note ${b.index ?? 1} on ${b.number}, sent`;
+}
+
+export function bubbleView(b: BubbleInput): BubbleView {
+  const heading = headingOf(b);
   return {
     mode: b.mode, heading, placeholder: PLACEHOLDER[b.kind],
     hint: b.mode === 'sent' ? '' : `Enter ${b.mode === 'new' ? 'add' : 'save'} · Esc cancel`,

@@ -7,6 +7,7 @@ import '../../../packages/ui/src/node/node.css';
 import '../../../packages/ui/src/markdown/markdown.css';
 import '../../../packages/ui/src/region/region.css';
 import '../../../packages/ui/src/note-bubble/note-bubble.css';
+import '../../../packages/ui/src/selection-bar/selection-bar.css';
 import { defineBoardElements } from '../../../packages/ui/src/index.ts';
 import App from './shell/App.svelte';
 

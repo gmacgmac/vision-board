@@ -214,3 +214,34 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    The stage is `user-select: none` and a card's content `user-select: text`.
 4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
    else clears the selection.
+
+## The lasso, the selection bar and view commands (3_FE_02)
+
+The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lasso-and-zoom.md`).
+
+1. **One command table**, `apps/board/src/board/commands.ts` (`COMMANDS`, keyed by `CommandId`):
+   zoom out, Fit and zoom in (the header), Comment, Zoom to selection and Clear (the selection
+   bar), Zoom to this area (the area bar it draws when a lasso touches no card). Each entry holds
+   its label and keys; the header buttons, the bar's buttons and `keys.ts` all read from it, so a
+   command is wired once (ruling 5).
+2. **The lasso and the bar**, `apps/board/src/board/selection-flow.ts` (`createSelectionFlow`):
+   `pointer.ts`'s `lasso` gesture (Shift+drag on a background; Shift+Cmd/Ctrl adds) reports its
+   screen box through `lassoMove`/`lassoEnd`; the cards it touches (`touches`, `packages/ui`'s
+   `selection-bar` pattern) replace or add to the selection the same `selection.ts` module 3_FE_01
+   uses. Touching none opens the **area bar** instead, holding the lassoed world box until Clear,
+   a new lasso, or Zoom to this area dismisses it; the real selection bar shows "whenever the
+   selection is not empty and no bubble is open" (ruling 2), for one card same as several.
+3. **The bar's pattern**, `packages/ui/src/selection-bar/` (`<vb-selection-bar>`): `placeBar`
+   centres it above the selection's screen box, below when there is no room above, kept inside the
+   stage; it draws above the cards and moves nothing, and follows pan, zoom and a changed
+   selection through the same `place()` the note bubble uses. `vb-command` events name the
+   pressed button's `CommandId`; the element never acts itself (rule 8).
+4. **Group notes.** Comment on two or more selected cards opens one note on the group
+   (`notes.ts` `group()`, `BubbleInput.numbers`): the bubble's head names every item ("Note on 3
+   cards: 12, 14, 15") instead of a number chip, and its act carries `nodes` in place of `n`/`ver`
+   (api.md 62-65). Any of the group's pins reopens, edits or removes it on every card at once; a
+   card may also hold its own single-card note (named by `n`) independently. With exactly one card
+   selected, Comment is that card's own note (2e), unchanged.
+5. **View commands are never ledger events.** Zoom and Clear only move the viewport or the
+   selection; Comment opens the note bubble, whose own write goes through the action layer as
+   usual (rule 8).

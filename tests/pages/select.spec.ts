@@ -100,11 +100,12 @@ test('a click on the background or a container clears the selection; Esc closes 
   await page.mouse.click(bg.x, bg.y);
   expect(await selectedIds(page)).toEqual([]);
   await expect(live(page)).toHaveText('Selection cleared');
-  // Inside a container, away from its cards.
+  // Inside a container, away from its cards and from the selection bar the first click opens
+  // (3_FE_02 ruling 2: the bar shows for any non-empty selection, not just two or more).
   await clickCard(page, 1);
   const frame = page.locator('vb-region[data-region="review"]');
   const f = (await frame.boundingBox())!;
-  await page.mouse.click(f.x + 6, f.y + f.height - 6);
+  await page.mouse.click(f.x + f.width - 6, f.y + 6);
   expect(await selectedIds(page)).toEqual([]);
   // Esc: the open bubble first, keeping the selection; then the selection.
   await clickCard(page, 3);
@@ -206,7 +207,7 @@ test('U5: a drag across a container\'s title pans and leaves no text selected', 
   expect(await docSelection(page)).toBe('');
 });
 
-test('Shift+drag on a background is reserved for the lasso: it neither pans nor selects', async ({ page }) => {
+test('Shift+drag on a background is the lasso (3_FE_02): it never pans and selects no text', async ({ page }) => {
   await openBoard(page);
   await clickCard(page, 1);
   const before = await worldAt(page);
@@ -217,7 +218,6 @@ test('Shift+drag on a background is reserved for the lasso: it neither pans nor 
   await page.keyboard.up('Shift');
   expect(await worldAt(page)).toEqual(before);
   expect(await docSelection(page)).toBe('');
-  expect(await selectedIds(page)).toEqual(['1']);
 });
 
 test('a middle-button drag pans anywhere, a card included', async ({ page }) => {

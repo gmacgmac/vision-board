@@ -2,22 +2,27 @@
 // 58-61). A note is made by a `comment` or `context` act with words and is named, for ever, by
 // that act's `seq`. Until a Send after it, `note-edit` changes its words (and, with `kind`, what
 // it asks for) and `note-remove` takes it back; both are new acts, so the ledger stays
-// append-only (D-017). After a Send it is history. Pure: the fold calls `foldNoteAct` and
-// `itemOf`; the reads call `liveNotes` and `noteView`.
+// append-only (D-017). After a Send it is history. A note on a group of cards (3_FE_02, api.md
+// 62-65) is one ask shared by the log of every card it names. Pure: the fold calls `foldNoteAct`
+// and `itemOf`; the reads call `liveNotes` and `noteView`.
 import type { ActEvent, NoteKind } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS } from './registry.ts';
 
-/** A note as every read shows it: its latest words and kind. `sent` once a Send came after it. */
-export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true }
+/** A note as every read shows it: its latest words and kind. `sent` once a Send came after it;
+ * `nodes` when it is a note on a group of cards (api.md 62): every item it is on. */
+export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; nodes?: number[] }
 
 /** One `comment` or `context` act on an item, as it stands after its edits. `pos` is the `seq`
  * where it counts for the item's status: its own, or the latest edit that set its kind (the
  * latest press of C or M). `changed` is the `seq` of its latest edit. A `context` with no words
- * is an ask but not a note: it cannot be edited or removed (Reopen undoes it). */
+ * is an ask but not a note: it cannot be edited or removed (Reopen undoes it). A note on a group
+ * is ONE ask in the log of every card it names: `n` is its first card, `nodes` all of them, and
+ * `vers` the version each card was at when it was made (what a newer version answers, api.md 36). */
 export interface Ask {
   seq: number; n: number; kind: NoteKind; ver: number; at: string; pos: number;
   text?: string; person?: string; changed?: number; removed?: number;
+  nodes?: number[]; vers?: Record<number, number>;
 }
 
 /** A decision act on an item (ack, drop, later, reopen): it sets the status outright. */
@@ -30,11 +35,21 @@ export interface ItemState { status: ItemStatus; notes: ItemNote[] }
 
 export const isNote = (a: Ask | undefined): a is Ask & { text: string } => a?.text !== undefined;
 
-/** The ask a `comment` or `context` act makes. */
-export function askOf(e: ActEvent, ver: number): Ask {
+/** The cards an ask is on: every card of a group note, else its one card. */
+export const cardsOf = (a: Ask): number[] => a.nodes ?? [a.n];
+
+/** The version card `n` was at when the ask was made. */
+export const askVer = (a: Ask, n: number): number => a.vers?.[n] ?? a.ver;
+
+/** The ask a `comment` or `context` act makes; `verOf` gives a card's latest version, used where
+ * the act names none (a note on a group names no version: each card's is the one it was at). */
+export function askOf(e: ActEvent, verOf: (n: number) => number): Ask {
+  const cards = e.nodes ?? [e.n!];
+  const ver = e.ver ?? verOf(cards[0]!);
   return {
-    seq: e.seq, n: e.n!, kind: e.action as NoteKind, ver, at: e.at, pos: e.seq,
+    seq: e.seq, n: cards[0]!, kind: e.action as NoteKind, ver, at: e.at, pos: e.seq,
     ...(e.text?.trim() && { text: e.text.trim() }), ...(e.person !== undefined && { person: e.person }),
+    ...(e.nodes && { nodes: [...e.nodes], vers: Object.fromEntries(e.nodes.map((n) => [n, verOf(n)])) }),
   };
 }
 
@@ -69,7 +84,10 @@ export function itemOf(log: ItemLog): ItemState {
     if (def.status) status = def.status;
     else if (action === 'comment' && status === 'open') status = 'commented';
   }
-  return { status, notes: liveNotes(log).map(({ seq, kind, text, at }) => ({ seq, kind, text, at })) };
+  return {
+    status,
+    notes: liveNotes(log).map(({ seq, kind, text, at, nodes }) => ({ seq, kind, text, at, ...(nodes && { nodes: [...nodes] }) })),
+  };
 }
 
 /** The item's notes not removed, in the order they were made (the pin numbers). */

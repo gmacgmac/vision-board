@@ -12,7 +12,7 @@ import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/4/ledger-event.schema.json`;
+export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/5/ledger-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
 export interface SchemaProblem { pointer: string; detail: string }
@@ -115,6 +115,7 @@ function plain(e: ErrorObject): SchemaProblem {
     case 'minimum': return { pointer: at, detail: `${f} must be at least ${String(p.limit)}` };
     case 'maxItems': return { pointer: at, detail: `${f} has more than ${String(p.limit)} entries` };
     case 'minItems': return { pointer: at, detail: `${f} needs at least ${String(p.limit)} ${p.limit === 1 ? 'entry' : 'entries'}` };
+    case 'uniqueItems': return { pointer: at, detail: `${f} names the same entry twice` };
     case 'enum': return { pointer: at, detail: `${f} must be one of ${(p.allowedValues as unknown[]).map(String).join(', ')}` };
     case 'const': return { pointer: at, detail: `${f} must be ${quote(p.allowedValue)} here` };
     case 'false schema': return { pointer: at, detail: `${f} is not allowed here` };

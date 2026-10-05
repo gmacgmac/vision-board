@@ -182,3 +182,61 @@ test('selecting 50 cards updates exactly those 50 and lays out none; clearing up
   const cleared = await counts(page);
   expect([cleared.cardsUpdated, cleared.cardsMeasured, cleared.cardsPlaced, cleared.containersLaidOut]).toEqual([50, 0, 0, 0]);
 });
+
+// 3_FE_02 ruling 7: a lasso over 50 cards updates exactly those 50 and lays out none; the lasso box
+// and the selection bar redraw without touching any card, while drawing and while panning.
+test('a lasso over the 50 cards of one container updates those 50 and lays out none; the bar follows a pan for free', async ({ page }) => {
+  await open(page);
+  await counts(page);
+  // r05 (regions[4]): index 4 % 4 = 0, the roadmap's grid-mode region (3 columns) repeated — a
+  // lasso needs a compact box on screen, which only the grid regions give at 50 cards; the flow,
+  // radial and lanes regions run far wider than any viewport.
+  const region = 5;
+  const corners = [numbersOf(region)[0]!, numbersOf(region).at(-1)!];
+  for (const [i, n] of corners.entries()) {
+    const el = page.locator(`vb-node[data-id="${n}"]`);
+    await el.focus();
+    await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
+  }
+  await page.keyboard.press('z');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(2);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  const f = (await page.locator(`vb-region[data-region="${regionId(region)}"]`).boundingBox())!;
+  await reset(page);
+  await page.keyboard.down('Shift');
+  await page.mouse.move(f.x + 2, f.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(f.x + f.width - 2, f.y + f.height - 2, { steps: 12 });
+  const drawing = await counts(page);
+  expect([drawing.cardsUpdated, drawing.cardsMeasured, drawing.cardsPlaced, drawing.containersLaidOut]).toEqual([0, 0, 0, 0]);
+  await page.mouse.up();
+  await page.keyboard.up('Shift');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(50);
+  expect(await page.locator('vb-node[data-selected]').evaluateAll((els) => els.map((e) => Number((e as HTMLElement).dataset.id))
+    .sort((a, b) => a - b))).toEqual(numbersOf(region));
+  await expect(page.locator('vb-selection-bar')).toBeVisible();
+  const c = await counts(page);
+  console.log(`[3_FE_02] lasso 50: ${JSON.stringify({ ...c, containers: c.containers.join(',') })}`);
+  expect([c.cardsUpdated, c.cardsMeasured, c.cardsPlaced, c.containersLaidOut, c.fullFetches]).toEqual([50, 0, 0, 0, 0]);
+  // A wheel pan moves the bar with the board and touches no card. Checked on two adjacent cards
+  // (one row): the 50-card box used above is taller than the viewport even when fit, so its bar
+  // stays clamped to the stage's top edge through a small pan and the move would not show.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  const near = [numbersOf(region)[0]!, numbersOf(region)[1]!];
+  for (const [i, n] of near.entries()) {
+    const el = page.locator(`vb-node[data-id="${n}"]`);
+    await el.focus();
+    await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
+  }
+  await page.keyboard.press('z');
+  await page.waitForTimeout(450);
+  await reset(page);
+  const bar0 = (await page.locator('vb-selection-bar').boundingBox())!;
+  await page.mouse.move(f.x + f.width / 2, f.y + f.height / 2);
+  await page.mouse.wheel(0, 40);
+  await expect.poll(async () => Math.round((await page.locator('vb-selection-bar').boundingBox())!.y)).toBe(Math.round(bar0.y - 40));
+  const panned = await counts(page);
+  expect([panned.cardsUpdated, panned.cardsMeasured, panned.cardsPlaced, panned.containersLaidOut]).toEqual([0, 0, 0, 0]);
+});

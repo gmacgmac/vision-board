@@ -13,28 +13,28 @@
   },
   "oneOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/board.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/board.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/region.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/region.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/node.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/node.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/link.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/link.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/unlink.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/unlink.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/reply.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/propose.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/propose.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/4/events/park.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/5/events/park.schema.json#/$defs/sent"
     }
   ]
 }

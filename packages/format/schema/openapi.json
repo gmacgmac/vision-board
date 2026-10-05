@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -1241,40 +1241,40 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-change.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/4/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/5/events/grant-request.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -1328,7 +1328,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -1337,7 +1337,7 @@
         "description": "The node number.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/nodeNumber"
+          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/nodeNumber"
         }
       },
       "regionPath": {
@@ -1346,7 +1346,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -1355,7 +1355,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/4/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/5/common.schema.json#/$defs/id"
         }
       },
       "after": {

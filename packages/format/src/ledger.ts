@@ -6,10 +6,11 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 4;
+export const LEDGER_FORMAT = 5;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
- * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61). */
-export const LEDGER_FORMATS = [2, 3, 4] as const;
+ * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
+ * group of cards, `nodes` in place of `n` (api.md 62-65). */
+export const LEDGER_FORMATS = [2, 3, 4, 5] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -93,11 +94,12 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * `proposal` = the `seq` of the proposal they are accepting; `request` = the `seq` of the
  * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes; `note` =
  * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,
- * and `kind` = what an edited note now asks for (api.md 58-61). */
+ * and `kind` = what an edited note now asks for (api.md 58-61). `nodes` = the items a note on a
+ * group of cards is on, in place of `n` and `ver` (api.md 62). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; n?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];
-  request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind;
+  request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
 }
 export interface SeenEvent extends Base { type: 'seen'; n: number; ver: number }
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */

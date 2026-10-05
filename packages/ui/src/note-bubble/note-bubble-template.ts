@@ -14,9 +14,10 @@ const button = (act: string, label: string, primary = false): string =>
 const hint = (text: string): string =>
   text ? `<span class="vb-nb-hint">${esc(text).replace(/\b(Enter|Esc)\b/g, '<kbd>$1</kbd>')}</span>` : '<span class="vb-nb-hint"></span>';
 
-export function noteBubbleTemplate(v: BubbleView, number: number): string {
-  const head = `<div class="vb-nb-head"><span class="vb-nb-num" aria-hidden="true">${number}</span>`
-    + `<span class="vb-nb-title">${esc(v.heading)}</span></div>`;
+/** `number` draws the card's number chip; a note on a group of cards has none (its head names them). */
+export function noteBubbleTemplate(v: BubbleView, number?: number): string {
+  const chip = number === undefined ? '' : `<span class="vb-nb-num" aria-hidden="true">${number}</span>`;
+  const head = `<div class="vb-nb-head">${chip}<span class="vb-nb-title">${esc(v.heading)}</span></div>`;
   // A sent note is history: it is shown, as Markdown (D-023), never edited.
   const body = v.mode === 'sent'
     ? `<div class="vb-nb-read">${renderMarkdown(v.text)}</div>`

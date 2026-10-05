@@ -335,3 +335,28 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `after` (one the agent may have read). In `get_board`, `show_node` and `show_container` each
     note carries `seq`, and `sent: true` once a Send came after it. `read_ledger` returns the raw
     lines.
+
+## Ledger v5 additions: a note on a group of cards (3_FE_02)
+
+62. `LEDGER_FORMAT` becomes 5 and every ledger `$id` moves to `.../schema/ledger/5/`; `openapi.json`
+    `info.version` becomes 1.2.0. Only adds: v2 through v4 lines stay valid.
+63. **A note on a group** is a `comment` or `context` act that carries `nodes` (two or more
+    distinct item numbers, each once, on one board) in place of `n` and `ver`: the lasso's
+    selection bar offers Comment on two or more selected cards (3_FE_02 ruling 3). It is one note,
+    named for ever by that act's `seq`, the same as a note on one card (58); every named node must
+    be a numbered item on this board, and the action it offers must be one the item's kind allows.
+    The one-note-per-card rule (59) is unaffected: a card's own note (named by `n`) and a group
+    note it belongs to (named by `nodes`) are different notes, and either may sit on a card not
+    yet sent while the other is edited.
+64. **Edit, remove and reads.** `note-edit` and `note-remove` name a group note by the same `note`
+    seq from any one of its cards (`n` is any card the note is on); the server refuses a card the
+    note is not on. An edit or a removal changes the note on every card it names at once, the same
+    append-only way as a note on one card (60): `note-edit` replaces its words (and, with `kind`,
+    what it asks for) and `note-remove` takes it back, each a single new act. Every item's status
+    among the group is worked out from its own log the same way (61), so a reply naming the note's
+    `seq` answers it on every card at once, and a newer version of one card answers it there only
+    (api.md 36). `check_responses`, `get_board`, `show_node` and `show_container` show a group note
+    once, under its `seq`, carrying `nodes` (every item it is on); `read_ledger` returns the raw
+    line, `nodes` and all.
+65. **The numbered reply** (`replyText`) lists a group note once, naming every item it is on
+    ("12, 14, 15 comment: ..."), instead of repeating it under each item.
