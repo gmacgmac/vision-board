@@ -13,10 +13,11 @@ test('every flag has a boolean default and a description', () => {
   }
 });
 
-test('nodeSize is off by default', () => {
-  assert.equal(FLAGS.nodeSize.default, false);
-  assert.equal(flagOn('nodeSize'), false);
-  assert.equal(flagOn('nodeSize', {}), false);
+test('nodeSize is on by default (maintainer, 2026-10-05), and -nodeSize turns it off', () => {
+  assert.equal(FLAGS.nodeSize.default, true);
+  assert.equal(flagOn('nodeSize'), true);
+  assert.equal(flagOn('nodeSize', {}), true);
+  assert.equal(flagOn('nodeSize', parseFlags('-nodeSize').overrides), false);
 });
 
 test('agentAccess is on by default, and -agentAccess turns it off', () => {

@@ -6,10 +6,30 @@ import type { BoardState } from '../../../actions/src/index.ts';
 import { DECIDED, statusOf } from '../../../actions/src/index.ts';
 import { isItem } from '../node/node-core.ts';
 
-/** The text on each layout-mode button. Typed on `Mode`, so a new mode fails to compile here. */
+/** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
+ * so a new mode fails to compile here. */
 export const MODE_LABEL: Record<Mode, string> = {
   grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',
 };
+
+/**
+ * What each layout is for, in one line (README pick 2, mockup 05 section 3): the popover's tiles
+ * show it. The one place this text lives, so the agent skill can read the same words (tracker U4).
+ */
+export const MODE_HINT: Record<Mode, string> = {
+  grid: 'A numbered set to work through in order',
+  flow: 'Connected steps and where they branch',
+  lanes: 'Several flows side by side, one per lane',
+  radial: 'One subject, everything related around it',
+  list: 'Dense reading, one row each',
+};
+
+/** The popover's foot: the layout the agent drew the container in (the view's mode, not the
+ * person's pick). */
+export const agentChoiceText = (mode: Mode): string => `The agent chose ${MODE_LABEL[mode]} for this container.`;
+
+/** Under a disabled "Reset places" in the settings menu: why there is nothing to reset. */
+export const RESET_NONE_HINT = 'No cards moved';
 
 /**
  * The colour a region's frame is drawn in, as a CSS value: the element sets it as `--region` and
@@ -29,10 +49,11 @@ export interface RegionHolder { agent: string; label: string; removable: boolean
 export interface RegionState {
   /** The layout mode in force (the engine's choice, after the person's pick). */
   mode: Mode;
-  /** "<decided>/<items> decided"; empty when the region has no items. */
+  /** "<decided> of <items> decided"; empty when the region has no items. */
   countText: string;
-  /** Whether "Reset places" shows: at least one node of the region is pinned. */
-  showReset: boolean;
+  /** Whether "Reset places" in the settings menu is enabled: at least one node of the region is
+   * pinned. Otherwise it shows disabled, with `RESET_NONE_HINT`. */
+  canReset: boolean;
   /** Whether the "Everything here is decided." message shows: the layout drew none of its nodes. */
   showEmpty: boolean;
   /** The agents that hold the region, after the count; left out when none is given (the
@@ -62,8 +83,8 @@ export function regionState(
   const decided = items.filter((n) => DECIDED.has(statusOf(s, n.id))).length;
   return {
     mode: r.mode,
-    countText: items.length ? `${decided}/${items.length} decided` : '',
-    showReset: nodes.some((n) => s.pins.has(n.id)),
+    countText: items.length ? `${decided} of ${items.length} decided` : '',
+    canReset: nodes.some((n) => s.pins.has(n.id)),
     showEmpty: !nodes.some((n) => placed.has(n.id)),
     ...(holders !== undefined && holders.length > 0 && { holders: regionHolders(holders) }),
   };

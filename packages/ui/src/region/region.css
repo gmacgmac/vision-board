@@ -14,26 +14,27 @@ vb-region {
 }
 
 /* The top line straddles the border. Only its two groups take the pointer, so the line between
-   them stays part of the frame. Each group's canvas-coloured background is the gap in the border. */
+   them stays part of the frame. The label's canvas-coloured background is the gap in the border;
+   the mode row draws its own gap as a canvas-coloured ring (mockup 05 .mode-row). */
 vb-region .vb-region-head {
   position: absolute; left: var(--vb-space-4); right: var(--vb-space-4);
   top: calc(var(--region-line-w) / -2); transform: translateY(-50%);
   display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
   pointer-events: none; cursor: default;
 }
-vb-region .vb-region-label, vb-region .vb-region-tools {
-  display: flex; align-items: center; gap: var(--vb-space-2); padding: 0 var(--vb-space-2);
-  background: var(--vb-surface-canvas); pointer-events: auto;
+vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
+vb-region .vb-region-label {
+  min-width: 0; gap: var(--vb-space-2); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
 }
-vb-region .vb-region-label { min-width: 0; }
-vb-region .vb-region-tools { flex: none; }
+vb-region .vb-region-tools { position: relative; flex: none; }
 vb-region .vb-region-head h2 {
   margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
 vb-region .vb-region-count {
-  min-width: 0; flex-shrink: 4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  /* Gives way long before the title does: the title shrinks only once the count is gone. */
+  min-width: 0; flex-shrink: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
 }
 vb-region .vb-region-count:empty { display: none; }
@@ -63,17 +64,110 @@ vb-region .vb-holder-remove {
 vb-region button.vb-holder:hover .vb-holder-remove, vb-region button.vb-holder:focus-visible .vb-holder-remove,
 vb-region button.vb-holder[data-look='hover'] .vb-holder-remove { display: block; }
 
-vb-region .vb-modes { display: flex; gap: 2px; padding: 2px; border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken); }
-vb-region .vb-mode {
-  font: inherit; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); background: none; border: 0;
-  border-radius: 4px; padding: 2px var(--vb-space-2); cursor: pointer;
-}
-vb-region .vb-mode:hover { color: var(--vb-ink-strong); }
-vb-region .vb-mode[aria-pressed='true'] { background: var(--vb-surface-card); color: var(--vb-accent); font-weight: var(--vb-weight-medium); box-shadow: var(--vb-shadow-card); }
-/* A narrow frame cannot hold five text buttons and a title: only the pressed mode shows, and the
-   group opens on hover or keyboard focus. Stage 2d replaces the buttons with the icon row. */
-@container (max-width: 480px) {
-  vb-region .vb-modes:not(:hover, :focus-within) { gap: 0; }
-  vb-region .vb-modes:not(:hover, :focus-within) .vb-mode:not([aria-pressed='true']) { width: 0; padding-inline: 0; overflow: hidden; opacity: 0; }
-}
 vb-region .vb-region-empty { margin: var(--vb-space-2) var(--vb-space-4); color: var(--vb-ink-subtle); font-size: var(--vb-text-sm); }
+
+
+/* The mode row (README pick 1, mockup 05 .mode-row / .mseg): five layout icons, a divider and the
+   settings cog in one box on the top line's right. The ring in the canvas colour is its gap in the
+   border. The active icon takes the same neutral mix of --region that 05 takes of --gc. */
+vb-region .vb-mode-row {
+  position: relative; display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: var(--vb-radius-md);
+  border: 1px solid color-mix(in srgb, var(--region) 55%, var(--vb-line));
+  background: var(--vb-surface-card); box-shadow: 0 0 0 6px var(--vb-surface-canvas);
+}
+/* Collapsed (under 440px of frame, where the full row would leave under ~200px for the label
+   side): only the checked icon and the cog show. Hovering or focusing the row expands it to all
+   five icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
+   it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
+   never reflows the frame. */
+@container (max-width: 440px) {
+  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']) {
+    width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+  vb-region .vb-mode-row:hover, vb-region .vb-mode-row:focus-within {
+    position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
+    box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
+  }
+}
+vb-region .vb-mseg {
+  display: grid; place-items: center; width: 28px; height: 24px; padding: 0; cursor: pointer;
+  border: 0; border-radius: 7px; background: none; color: var(--vb-ink-subtle);
+}
+vb-region .vb-mseg:hover, vb-region .vb-mseg[data-hover], vb-region .vb-mseg[aria-expanded='true'] {
+  background: var(--vb-surface-sunken); color: var(--vb-ink-strong);
+}
+vb-region .vb-mseg[aria-checked='true'] {
+  background: color-mix(in srgb, var(--region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
+}
+vb-region .vb-mseg:active { transform: translateY(1px); }
+vb-region .vb-mseg:focus-visible { outline-offset: 1px; }
+vb-region .vb-mode-icon, vb-region .vb-mtile-icon {
+  flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+}
+vb-region .vb-mode-icon { width: 15px; height: 15px; }
+vb-region .vb-mode-div { width: 1px; height: 16px; margin: 0 3px; background: var(--vb-line-strong); }
+
+/* While the popover or the menu is open the frame is drawn above every card (an overlay: nothing
+   moves or resizes, README pick 5). Only the top line takes the pointer then, so the cards inside
+   the raised frame stay reachable. */
+vb-region[data-open] { z-index: 4; pointer-events: none; }
+
+/* The layout popover (mockup 05 .mode-pop / .mtile), right-aligned under the row. It may reach past
+   a narrow frame. The bridge above it keeps the pointer inside while it crosses the gap. */
+vb-region .vb-mode-pop {
+  display: none; position: absolute; z-index: 2; top: calc(100% + 3px); right: 0; width: 600px;
+  gap: var(--vb-space-2); padding: 10px; border-radius: var(--vb-radius-lg); cursor: default;
+  border: 1px solid var(--vb-line); background: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
+}
+vb-region .vb-mode-pop::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
+vb-region[data-open='modes'] .vb-mode-pop { display: grid; }
+vb-region .vb-mode-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+vb-region .vb-mtile {
+  display: grid; justify-items: center; align-content: start; gap: 6px; padding: 12px 6px 10px; text-align: center;
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
+  color: var(--vb-ink); font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+}
+vb-region .vb-mtile-icon { width: 22px; height: 22px; }
+vb-region .vb-mtile small, vb-region .vb-mode-line {
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-ink-subtle); line-height: 1.3;
+}
+vb-region .vb-mtile[data-hover] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); border-color: var(--vb-line-strong); }
+vb-region .vb-mtile[data-current] { border-color: var(--vb-accent-line); background: var(--vb-accent-soft); color: var(--vb-accent-text); }
+vb-region .vb-mode-line { display: none; margin: 0; padding: 0 var(--vb-space-1); }
+vb-region .vb-mode-foot {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--vb-space-1) var(--vb-space-3);
+  padding: 0 var(--vb-space-1); font-size: var(--vb-text-xs); color: var(--vb-ink-subtle);
+}
+/* Under 600px of frame the five tiles drop to icon and name, and the highlighted layout's one-liner
+   shows once, on the line under them (2d ruling 3). */
+@container (max-width: 600px) {
+  vb-region .vb-mode-pop { width: max-content; max-width: calc(var(--vb-card-w-s) + var(--vb-space-6) * 2); }
+  vb-region .vb-mtile { min-width: calc(var(--vb-space-6) + var(--vb-space-5)); padding: var(--vb-space-2) var(--vb-space-1); }
+  vb-region .vb-mtile small { display: none; }
+  vb-region .vb-mode-line { display: block; }
+}
+
+/* The settings menu, anchored under the cog. Today it holds Reset places alone: enabled when a
+   card of the frame was moved, otherwise disabled with its hint. */
+vb-region .vb-region-menu {
+  display: none; position: absolute; z-index: 2; top: calc(100% + 3px); right: 0; min-width: max-content; padding: 3px;
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+}
+vb-region[data-open='menu'] .vb-region-menu { display: block; }
+vb-region .vb-menu-item {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 32px;
+  padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px; background: none; cursor: pointer;
+  font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); text-align: left; white-space: nowrap;
+}
+vb-region .vb-menu-item:hover, vb-region .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }
+vb-region .vb-menu-item:active { transform: translateY(1px); }
+vb-region .vb-menu-item:focus-visible { outline-offset: -2px; }
+vb-region .vb-menu-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
+vb-region .vb-menu-item[aria-disabled='true']:hover { background: none; }
+vb-region .vb-menu-hint { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); color: var(--vb-ink-subtle); }
+vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
+
+/* Zoomed out (N8): below FAR_K the stage carries data-zoom="far", where the 28 x 24 icons would draw
+   under the 24px target size. The row hides like the cards' buttons, its popover and menu with it. */
+[data-zoom='far'] vb-region .vb-region-tools { visibility: hidden; }

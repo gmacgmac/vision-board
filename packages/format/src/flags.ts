@@ -10,7 +10,8 @@ export interface FlagDef {
 
 export const FLAGS = {
   nodeSize: {
-    default: false,
+    // On by default (maintainer, 2026-10-05); ?flags=-nodeSize turns it off.
+    default: true,
     description: 'Cards take one of three widths (S, M, L) from their content, with a size control on each card (D-030, U7).',
   },
   agentAccess: {

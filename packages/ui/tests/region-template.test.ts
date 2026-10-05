@@ -1,49 +1,75 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '../../format/src/index.ts';
-import { holdersTemplate, MODE_LABEL, regionTemplate } from '../src/index.ts';
+import { holdersTemplate, MODE_HINT, MODE_LABEL, regionIds, regionTemplate } from '../src/index.ts';
 
-const region = { id: 'review', title: 'Review' };
+const region = { id: 'review', title: 'Review', mode: 'flow' as const };
 
-test('regionTemplate escapes the title in the heading and the group label', () => {
-  const html = regionTemplate({ id: 'r', title: '<b>"x"</b> & co' });
+test('regionTemplate escapes the title in the heading, the row label, the cog and the menu', () => {
+  const html = regionTemplate({ id: 'r', title: '<b>"x"</b> & co', mode: 'grid' });
+  const t = '&#60;b&#62;&#34;x&#34;&#60;/b&#62; &#38; co';
   assert.ok(!html.includes('<b>'), 'no raw markup from data');
-  assert.ok(html.includes('<h2 id="region-r">&#60;b&#62;&#34;x&#34;&#60;/b&#62; &#38; co</h2>'));
-  assert.ok(html.includes('aria-label="Layout for &#60;b&#62;&#34;x&#34;&#60;/b&#62; &#38; co"'));
+  assert.ok(html.includes(`<h2 id="region-r">${t}</h2>`));
+  assert.ok(html.includes(`role="radiogroup" aria-label="Layout for ${t}"`));
+  assert.ok(html.includes(`aria-label="Settings for ${t}" aria-haspopup="menu"`));
+  assert.ok(html.includes(`role="menu" aria-label="Settings for ${t}"`));
 });
 
-test('regionTemplate draws one mode button per mode, in order, unpressed, labelled and tied to the region', () => {
+test('the mode row: one radio icon per mode, in order, unchecked and out of the tab order, tied to the region', () => {
   const html = regionTemplate(region);
-  const buttons = [...html.matchAll(/<button type="button" class="vb-mode" data-mode="(\w+)" data-region="(\w+)" aria-pressed="(\w+)">([^<]+)<\/button>/g)];
-  assert.deepEqual(buttons.map((b) => b[1]), [...MODES]);
-  assert.equal(buttons.length, 5);
-  for (const [, mode, rid, pressed, label] of buttons) {
-    assert.equal(rid, 'review');
-    assert.equal(pressed, 'false', 'update() sets the pressed one');
+  const radios = [...html.matchAll(/<button type="button" class="vb-mseg" role="radio" aria-checked="(\w+)" tabindex="(-?\d)" aria-label="(\w+)" data-mode="(\w+)" data-region="(\w+)"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button>/g)];
+  assert.deepEqual(radios.map((b) => b[4]), [...MODES]);
+  for (const [, checked, tabindex, label, mode, rid] of radios) {
+    assert.equal(checked, 'false', 'update() checks the one in force');
+    assert.equal(tabindex, '-1', 'update() makes the checked one the row\'s Tab stop');
     assert.equal(label, MODE_LABEL[mode as (typeof MODES)[number]]);
+    assert.equal(rid, 'review');
   }
 });
 
-test('regionTemplate has a hidden Reset places button, a count and a hidden empty message', () => {
+test('the mode row ends in a divider and the cog, a menu button for the settings menu', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<span class="vb-region-count"><\/span>/);
-  assert.match(html, /<button type="button" class="vb-btn vb-btn-small" data-reset="review" hidden>Reset places<\/button>/);
-  assert.match(html, /<p class="vb-region-empty" hidden>Everything here is decided\.<\/p>/);
+  assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for Review" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-menu"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><\/div>/);
+  assert.equal((html.match(/data-mode=/g) ?? []).length, 5, 'the cog is not a layout');
 });
 
-test('regionTemplate puts the controls in a labelled group inside the header', () => {
+test('the popover is a tooltip with one tile per mode and its one-liner, then the agent\'s choice and the keys', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head">.*<div class="vb-modes" role="group" aria-label="Layout for Review">.*<\/header>/);
+  assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="tooltip">/);
+  const tiles = [...html.matchAll(/<div class="vb-mtile" data-tile="(\w+)"><svg[^>]*>.*?<\/svg><span class="vb-mtile-name">(\w+)<\/span><small>([^<]+)<\/small><\/div>/g)];
+  assert.deepEqual(tiles.map((t) => t[1]), [...MODES]);
+  for (const [, mode, name, hint] of tiles) {
+    assert.equal(name, MODE_LABEL[mode as (typeof MODES)[number]]);
+    assert.equal(hint, MODE_HINT[mode as (typeof MODES)[number]]);
+  }
+  assert.ok(html.includes('<span>The agent chose Flow for this container.</span>'), 'the view\'s mode, the agent\'s choice');
+  assert.ok(html.includes('<kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> apply · <kbd>Esc</kbd> close'));
+  assert.match(html, /<p class="vb-mode-line"><\/p>/);
+});
+
+test('the settings menu holds Reset places alone, disabled with its hint until update() says otherwise', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<div class="vb-region-menu" id="region-review-menu" role="menu" aria-label="Settings for Review"><button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-reset="review" aria-label="Reset places" aria-disabled="true" aria-describedby="region-review-reset-hint">Reset places<span class="vb-menu-hint" id="region-review-reset-hint">No cards moved<\/span><\/button><\/div>/);
+  assert.equal((html.match(/role="menuitem"/g) ?? []).length, 1);
+  assert.deepEqual(regionIds('review'), {
+    heading: 'region-review', modes: 'region-review-modes', menu: 'region-review-menu', hint: 'region-review-reset-hint',
+  });
+});
+
+test('regionTemplate has a count and a hidden empty message', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<span class="vb-region-count"><\/span>/);
+  assert.match(html, /<p class="vb-region-empty" hidden>Everything here is decided\.<\/p>/);
 });
 
 test('regionTemplate carries no inline style and no style element (the CSP refuses them)', () => {
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
 
-test('regionTemplate puts the title, count and holders in a label group and the buttons in a tools group, in that order', () => {
+test('the top line: title, count and holders in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<header class=\"vb-region-head\"><div class=\"vb-region-label\"><h2 id=\"region-review\">Review<\/h2><span class=\"vb-region-count\"><\/span><span class=\"vb-region-holders\"><\/span><\/div><div class=\"vb-region-tools\"><div class=\"vb-modes\"/);
-  assert.match(html, /Reset places<\/button><\/div><\/header>/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
 test('holdersTemplate: the creator is plain text; any other holder is a labelled Remove access button; text is escaped', () => {

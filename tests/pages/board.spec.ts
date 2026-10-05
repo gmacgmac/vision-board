@@ -47,26 +47,14 @@ test('Tab moves from card to card, in item number order', async ({ page }) => {
   }
 });
 
-/**
- * Known failure: axe `target-size` (WCAG 2.2 AA, 2.5.8), tracker N8. On the board's opening view
- * the world is zoomed out to fit. The cards' buttons (.vb-act) no longer fail: below 0.75 the
- * stage is "far" and node.css hides them (2b_FE_01). The layout-mode buttons (.vb-mode) still
- * draw under 24 CSS pixels; they are the region pattern's, rebuilt as the mode icon row with the
- * open frames. Remove the test.fail when they are fixed.
- */
-const KNOWN_AXE = ['target-size'];
-
 for (const theme of THEMES) {
-  test(`axe passes apart from the known failure (${theme})`, async ({ page }) => {
-    await setTheme(page, theme);
-    await openBoard(page);
-    await expectNoAxeViolations(page, KNOWN_AXE);
-  });
-
+  // N8: below FAR_K the stage is "far" and both the cards' buttons (node.css) and the regions' mode
+  // rows (region.css) hide, so nothing on the opening view draws under the 24px target size.
   test(`axe passes with nothing excused (${theme})`, async ({ page }) => {
-    test.fail(true, 'Known failure: axe target-size, layout-mode buttons under 24px at the fit-to-view zoom');
     await setTheme(page, theme);
     await openBoard(page);
+    await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
     await expectNoAxeViolations(page);
   });
 
@@ -95,6 +83,31 @@ async function zoomToButtons(page: Page): Promise<void> {
   for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
   await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
 }
+
+/** Zoom in until the world draws at 1:1 or larger, where every control is its full CSS size. */
+async function zoomToFull(page: Page): Promise<void> {
+  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
+  expect(await scale()).toBeGreaterThanOrEqual(1);
+}
+
+/** Pan with the wheel (scroll pans the board) until `target` sits in the middle of the stage. */
+async function panTo(page: Page, target: Locator): Promise<void> {
+  const b = (await target.boundingBox())!;
+  const mid = { x: 800, y: 520 };
+  await page.mouse.move(mid.x, mid.y);
+  await page.mouse.wheel(b.x + b.width / 2 - mid.x, b.y + b.height / 2 - mid.y);
+  await expect.poll(async () => {
+    const now = (await target.boundingBox())!;
+    return Math.abs(now.y + now.height / 2 - mid.y) < 4;
+  }).toBe(true);
+}
+
+const row = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"] .vb-mode-row`);
+const active = (page: Page) => page.evaluate(() => {
+  const a = document.activeElement as HTMLElement | null;
+  return { region: a?.closest('vb-region')?.getAttribute('data-region') ?? null, label: a?.getAttribute('aria-label') ?? null };
+});
 
 /** Focus the card first: focusing pans it into view, so its button can be clicked. */
 async function clickOn(page: Page, n: number, name: string): Promise<void> {
@@ -169,23 +182,151 @@ function problemsOf(p: Awaited<ReturnType<typeof placement>>): string[] {
 
 test('each layout mode draws every region', async ({ page }) => {
   await openBoard(page);
+  await zoomToButtons(page);
   const view = await (await page.request.get('/api/boards/roadmap')).json() as { view: { nodes: { id: string; region: string }[]; regions: { id: string; mode: string }[] } };
   for (const id of REGIONS) {
     const ids = view.view.nodes.filter((n) => n.region === id).map((n) => n.id);
     const region: Locator = page.locator(`vb-region[data-region="${id}"]`);
     const original = view.view.regions.find((r) => r.id === id)!.mode;
     for (const mode of [...MODES, original[0]!.toUpperCase() + original.slice(1)]) {
-      const button = region.getByRole('button', { name: mode, exact: true });
-      // A narrow frame shows only the pressed mode until the group is hovered.
-      await region.locator('.vb-modes').hover();
-      await button.click();
+      // Each pick reveals the region, which can move its row out of the view: bring it back first.
+      await panTo(page, region.locator('.vb-mode-row'));
+      const icon = region.getByRole('radio', { name: mode, exact: true });
+      await icon.click();
       await expect(region).toHaveAttribute('data-mode', mode.toLowerCase());
-      await expect(button).toHaveAttribute('aria-pressed', 'true');
+      await expect(icon).toHaveAttribute('aria-checked', 'true');
+      await expect(region.locator('[role="radio"][aria-checked="true"]')).toHaveCount(1);
       await expect(page.locator('#wires')).not.toHaveClass(/settling/);
       await expect.poll(async () => problemsOf(await placement(page, id, ids)), { message: `${id} in ${mode}` }).toEqual([]);
     }
   }
 });
+
+test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc closes the popover', async ({ page }) => {
+  await openBoard(page);
+  await zoomToButtons(page);
+  await panTo(page, row(page, 'review'));
+  const review = page.locator('vb-region[data-region="review"]');
+  const pop = review.locator('[role="tooltip"]');
+  await expect(pop).toBeHidden();
+  // Tab from the top of the page: the first region's row is one stop, on its checked layout.
+  await page.locator('body').focus();
+  for (let i = 0; i < 30 && (await active(page)).region !== 'review'; i += 1) await page.keyboard.press('Tab');
+  expect(await active(page)).toEqual({ region: 'review', label: 'Grid' });
+  await expect(review.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
+  await expect(pop).toBeVisible();
+  await expect(pop.locator('.vb-mtile[data-current]')).toHaveAttribute('data-tile', 'grid');
+  await expect(pop).toContainText('The agent chose Grid for this container.');
+
+  await page.keyboard.press('ArrowRight');
+  expect(await active(page)).toEqual({ region: 'review', label: 'Flow' });
+  const flow = review.getByRole('radio', { name: 'Flow', exact: true });
+  await expect(flow).toHaveAttribute('aria-describedby', 'region-review-modes');
+  await expect(pop.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'flow');
+  await expect(review).toHaveAttribute('data-mode', 'grid');
+  await page.keyboard.press('Enter');
+  await expect(review).toHaveAttribute('data-mode', 'flow');
+  await expect(flow).toHaveAttribute('aria-checked', 'true');
+  await expect(pop).toBeHidden();
+  expect((await active(page)).label).toBe('Flow');
+
+  // Left wraps through the layouts; the cog is the row's last stop.
+  await page.keyboard.press('ArrowLeft');
+  expect((await active(page)).label).toBe('Grid');
+  await expect(pop).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(pop).toBeHidden();
+  expect((await active(page)).label).toBe('Grid');
+  await page.keyboard.press('End');
+  expect((await active(page)).label).toBe('Settings for Review');
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Enter');
+  await expect(review).toHaveAttribute('data-mode', 'grid');
+  // Tab leaves the row in one press, and the checked layout is the stop again.
+  await page.keyboard.press('Tab');
+  expect((await active(page)).region).not.toBe('review');
+  await expect(review.getByRole('radio', { name: 'Grid', exact: true })).toHaveAttribute('tabindex', '0');
+});
+
+test('hovering a layout icon shows the tiles, and leaving the row closes them', async ({ page }) => {
+  await openBoard(page);
+  await zoomToButtons(page);
+  await panTo(page, row(page, 'review'));
+  const review = page.locator('vb-region[data-region="review"]');
+  const pop = review.getByRole('tooltip');
+  await review.getByRole('radio', { name: 'Lanes', exact: true }).hover();
+  await expect(pop).toBeVisible();
+  await expect(pop.locator('.vb-mtile')).toHaveCount(5);
+  await expect(pop.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'lanes');
+  await expect(pop.locator('.vb-mtile[data-tile="lanes"] small')).toHaveText('Several flows side by side, one per lane');
+  await expect(pop.locator('.vb-mtile[data-tile="lanes"] small')).toBeVisible();
+  // The popover is an overlay: it reaches over the cards and moves nothing.
+  const before = await card(page, 1).boundingBox();
+  await pop.hover();
+  await expect(pop).toBeVisible();
+  expect(await card(page, 1).boundingBox()).toEqual(before);
+  await page.mouse.move(800, 980);
+  await expect(pop).toBeHidden();
+});
+
+test('the cog opens the settings menu; Reset places puts a moved card back, then shows disabled', async ({ page }) => {
+  await openBoard(page);
+  await zoomToButtons(page);
+  await card(page, 1).focus();
+  await page.keyboard.press('Alt+ArrowRight');
+  await expect(card(page, 1)).toHaveAttribute('data-pinned', '');
+  await panTo(page, row(page, 'review'));
+  const review = page.locator('vb-region[data-region="review"]');
+  const cog = review.getByRole('button', { name: 'Settings for Review' });
+  const menu = review.getByRole('menu', { name: 'Settings for Review' });
+  const reset = menu.getByRole('menuitem', { name: 'Reset places' });
+  await expect(menu).toBeHidden();
+  await cog.click();
+  await expect(menu).toBeVisible();
+  await expect(cog).toHaveAttribute('aria-expanded', 'true');
+  await expect(reset).toBeFocused();
+  await expect(reset).toHaveAttribute('aria-disabled', 'false');
+  await expect(menu.getByText('No cards moved')).toBeHidden();
+  await reset.click();
+  await expect(card(page, 1)).not.toHaveAttribute('data-pinned', '');
+  await expect(menu).toBeHidden();
+  await expect(cog).toBeFocused();
+  await expect(cog).toHaveAttribute('aria-expanded', 'false');
+
+  // Nothing moved now: the item stays, disabled, and says why; a click on it does nothing.
+  await page.keyboard.press('ArrowDown');
+  await expect(menu).toBeVisible();
+  await expect(reset).toHaveAttribute('aria-disabled', 'true');
+  await expect(menu.getByText('No cards moved')).toBeVisible();
+  // aria-disabled keeps it focusable, so Playwright calls it not enabled: force the real click.
+  await reset.click({ force: true });
+  await expect(menu).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await expect(cog).toBeFocused();
+  // An outside click closes it too.
+  await cog.click();
+  await expect(menu).toBeVisible();
+  await page.mouse.click(800, 980);
+  await expect(menu).toBeHidden();
+});
+
+for (const theme of THEMES) {
+  test(`axe passes with the popover and the settings menu open, at full size (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await openBoard(page);
+    await zoomToFull(page);
+    await panTo(page, row(page, 'review'));
+    const review = page.locator('vb-region[data-region="review"]');
+    await review.getByRole('radio', { name: 'Radial', exact: true }).hover();
+    await expect(review.getByRole('tooltip')).toBeVisible();
+    await expectNoAxeViolations(page);
+    await review.getByRole('button', { name: 'Settings for Review' }).click();
+    await expect(review.getByRole('menu')).toBeVisible();
+    await expectNoAxeViolations(page);
+    await page.keyboard.press('Escape');
+  });
+}
 
 test('a region frame keeps REGION_HEAD of room under its top line, and the top line straddles the border', async ({ page }) => {
   await openBoard(page);

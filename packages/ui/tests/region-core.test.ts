@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
-import { MODE_LABEL, REGION_COLOUR_DEFAULT, regionColour, regionHolders, regionState } from '../src/index.ts';
+import { agentChoiceText, MODE_HINT, MODE_LABEL, REGION_COLOUR_DEFAULT, RESET_NONE_HINT, regionColour, regionHolders, regionState } from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -20,6 +20,23 @@ test('MODE_LABEL names every mode', () => {
   assert.deepEqual(Object.keys(MODE_LABEL), [...MODES]);
 });
 
+test('MODE_HINT holds mockup 05\'s one-liner for every mode, in mode order', () => {
+  assert.deepEqual(Object.keys(MODE_HINT), [...MODES]);
+  assert.deepEqual(MODE_HINT, {
+    grid: 'A numbered set to work through in order',
+    flow: 'Connected steps and where they branch',
+    lanes: 'Several flows side by side, one per lane',
+    radial: 'One subject, everything related around it',
+    list: 'Dense reading, one row each',
+  });
+});
+
+test('the popover foot names the agent\'s layout; the disabled Reset places hint says why', () => {
+  assert.equal(agentChoiceText('grid'), 'The agent chose Grid for this container.');
+  assert.equal(agentChoiceText('radial'), 'The agent chose Radial for this container.');
+  assert.equal(RESET_NONE_HINT, 'No cards moved');
+});
+
 test('regionState carries the mode it is given', () => {
   for (const mode of MODES as readonly Mode[])
     assert.equal(regionState({ id: 'r', mode }, view([node({})]), board(), drawn('1')).mode, mode);
@@ -28,27 +45,27 @@ test('regionState carries the mode it is given', () => {
 test('the count reads decided over items, counting acknowledged and dropped only', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2 }), node({ id: '3', n: 3 }), node({ id: '4', n: 4 })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'dropped'], ['3', 'later']);
-  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countText, '2/4 decided');
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countText, '2 of 4 decided');
 });
 
 test('the count ignores nodes that are not items, and is empty when there are no items', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: 't', kind: 'topic' })]);
-  assert.equal(regionState(region, v, board(), drawn('1', 't')).countText, '0/1 decided');
+  assert.equal(regionState(region, v, board(), drawn('1', 't')).countText, '0 of 1 decided');
   assert.equal(regionState(region, view([node({ id: 't', kind: 'topic' })]), board(), drawn('t')).countText, '');
 });
 
 test('the count only looks at the nodes of this region', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, region: 'other' })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'acknowledged']);
-  assert.equal(regionState(region, v, s, drawn('1', '2')).countText, '1/1 decided');
+  assert.equal(regionState(region, v, s, drawn('1', '2')).countText, '1 of 1 decided');
 });
 
-test('Reset places shows when any node of the region is pinned, and not for another region', () => {
+test('Reset places is enabled when any node of the region is pinned, and not for another region', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2 }), node({ id: '3', n: 3, region: 'other' })]);
   const pin = { x: 1, y: 1 };
-  assert.equal(regionState(region, v, board(), drawn('1', '2')).showReset, false);
-  assert.equal(regionState(region, v, board({ pins: new Map([['2', pin]]) }), drawn('1', '2')).showReset, true);
-  assert.equal(regionState(region, v, board({ pins: new Map([['3', pin]]) }), drawn('1', '2')).showReset, false);
+  assert.equal(regionState(region, v, board(), drawn('1', '2')).canReset, false);
+  assert.equal(regionState(region, v, board({ pins: new Map([['2', pin]]) }), drawn('1', '2')).canReset, true);
+  assert.equal(regionState(region, v, board({ pins: new Map([['3', pin]]) }), drawn('1', '2')).canReset, false);
 });
 
 test('the empty message shows only when the layout drew none of the region\'s nodes', () => {
@@ -61,7 +78,7 @@ test('the empty message shows only when the layout drew none of the region\'s no
 
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
-  assert.deepEqual(st, { mode: 'grid', countText: '', showReset: false, showEmpty: true });
+  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, showEmpty: true });
 });
 
 test('every region takes the neutral frame colour for now, a token and never a literal colour', () => {

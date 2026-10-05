@@ -6,6 +6,7 @@ export * from './node/node-icons.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';
 export * from './region/region-template.ts';
+export * from './region/region-icons.ts';
 export type { VbRegionElement } from './region/vb-region.ts';
 export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';
 export type { MarkdownOptions } from './markdown/render.ts';

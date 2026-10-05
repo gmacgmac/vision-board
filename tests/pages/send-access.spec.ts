@@ -17,7 +17,16 @@ const REGION = 'pricing';
 const CONTAINER = 'Pricing thread';
 const CREATOR = 'Pricing chat';
 const THEMES: Theme[] = ['dark', 'light'];
-/** The board's own known axe failure (board.spec.ts KNOWN_AXE, tracker N8): the layout-mode buttons. */
+/**
+ * Known axe failure (2d_FE_01, Open item 3): `target-size` on the holders' Remove access
+ * buttons, once several accumulate on the access board's one frame (336px, the minimum: one S
+ * card). The collapsed row (2d_FE_01, item 1) frees the space the full row used to take, so two
+ * holders now fit at >=24px (measured 25x26, 29x26) and the regular tests pass without it. By
+ * the time this axe test runs, earlier tests in the file have left 3-4 holders granted on the
+ * same region (none are revoked along the way) and each button narrows under 24px (measured
+ * 12-13px wide with 4). The frame cannot grow for them: its width comes from its one card's
+ * content (`packages/layout`), which this task does not touch.
+ */
 const KNOWN_AXE = ['target-size'];
 
 interface Agent { agent: string; secret: string; label: string }
@@ -165,7 +174,7 @@ test('gallery: two requests with one refusing note open, frames with two holders
   await expect(s.getByLabel('Note for Launch plan chat (optional)')).toBeVisible();
   await expect(s.locator('vb-region')).toHaveCount(2);
   for (const f of await s.locator('vb-region').all()) {
-    await expect(f.locator('.vb-region-count')).toHaveText('0/1 decided');
+    await expect(f.locator('.vb-region-count')).toHaveText('0 of 1 decided');
     await expect(f.locator('.vb-holder')).toHaveCount(2);
     await expect(f.locator('span.vb-holder', { hasText: 'Pricing chat' })).toBeVisible();
     await expect(f.getByRole('button', { name: 'Docs chat: remove access' })).toBeVisible();

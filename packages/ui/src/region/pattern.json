@@ -2,35 +2,56 @@
   "name": "region",
   "title": "Board region",
   "tag": "vb-region",
-  "description": "The frame of one area of the board, an open frame with no fill (D-024): its title and decided count sit in a gap cut from the top border on the left, the layout-mode buttons and Reset places in a gap on the right, all drawn as one generic element whatever the mode. Cards and wires are drawn in their own layers (D-013), so the element is only the frame.",
+  "description": "The frame of one area of the board, an open frame with no fill (D-024): its title and decided count sit in a gap cut from the top border on the left; on the right the mode row (README pick 1, mockup 05): five layout icons, a divider and the settings cog. Hovering an icon or reaching the row by keyboard opens the layout popover; the cog opens the settings menu (Reset places). All drawn as one generic element whatever the mode. Cards and wires are drawn in their own layers (D-013), so the element is only the frame.",
   "files": {
-    "core": "region-core.ts (regionState, regionHolders, regionColour, REGION_COLOUR_DEFAULT, MODE_LABEL, RegionState, RegionHolder; no DOM)",
-    "template": "region-template.ts (regionTemplate and holdersTemplate: the only places the markup is built)",
+    "core": "region-core.ts (regionState, regionHolders, regionColour, REGION_COLOUR_DEFAULT, MODE_LABEL, MODE_HINT, agentChoiceText, RESET_NONE_HINT, RegionState, RegionHolder; no DOM)",
+    "template": "region-template.ts (regionTemplate, holdersTemplate, regionIds: the only places the markup is built)",
+    "icons": "region-icons.ts (MODE_ICON per mode, COG_ICON; wrapped by the node pattern's svgIcon)",
     "element": "vb-region.ts (defineVbRegion, VbRegionElement; light DOM)",
+    "behaviour": "region-row.ts (bindModeRow: the row's Tab stop and arrow keys, the popover and the settings menu; browser only)",
     "styles": "region.css (scoped by the tag; tokens only; the top padding states REGION_HEAD from packages/layout)"
   },
-  "states": ["mode", "pinned", "empty", "narrow", "hover", "focus", "pressed"],
+  "states": [
+    "mode",
+    "row",
+    "popover",
+    "menu",
+    "reset-disabled",
+    "pinned",
+    "empty",
+    "narrow",
+    "hover",
+    "focus",
+    "pressed",
+    "far"
+  ],
   "flaggedStates": {
     "held": "agentAccess flag: the region's holders after the count, the creator as plain text and every other holder as a Remove access button (D-027). Kept out of `states` so the gallery without the flag reads as before."
   },
   "attributes": {
     "data-region": "the region id (set by render)",
     "data-mode": "grid | flow | lanes | radial | list: the layout in force (set by update)",
-    "--region": "the frame colour as a CSS value, from regionColour (set by render); the frame line and the title mix from it",
+    "data-open": "modes | menu: the layout popover or the settings menu is open (set by the row behaviour); the frame is then drawn above the cards",
+    "--region": "the frame colour as a CSS value, from regionColour (set by render); the frame line, the title and the active icon mix from it",
     "role": "region (set by render)",
     "aria-labelledby": "region-<id>, the heading inside the frame (set by render)"
   },
   "methods": {
-    "render(r: Region)": "once per view version: data-region, role, aria-labelledby, --region, innerHTML = regionTemplate(r)",
-    "update(st: RegionState)": "on every state change: attributes and text only (data-mode, mode button aria-pressed, count text, Reset places and the empty message shown or hidden), so focus survives; the holders slot is redrawn from holdersTemplate only when the holders change"
+    "render(r: Region)": "once per view version: data-region, role, aria-labelledby, --region, innerHTML = regionTemplate(r) (the popover foot names r.mode, the agent's choice); closes anything open",
+    "update(st: RegionState)": "on every state change: attributes and text only (data-mode, the icons' aria-checked and the row's Tab stop, the current tile, count text, Reset places aria-disabled and its hint, the empty message), so focus survives; the holders slot is redrawn from holdersTemplate only when the holders change",
+    "showPanel(what, { mode?, focus? })": "opens the layout popover with mode highlighted, or the settings menu (focusing its item unless focus is false); the gallery draws its open samples with it"
   },
   "events": [
-    "button[data-mode] click bubbles to the page's delegated listener -> the mode action",
-    "button[data-reset] click bubbles to the page's delegated listener -> unpin every node of the region",
+    "button[role=radio][data-mode] click (pointer, Enter or Space) bubbles to the page's delegated listener -> the mode action; the popover closes",
+    "mouse over a layout icon, or keyboard focus on one -> the popover opens with that layout highlighted and tied to the icon by aria-describedby; it closes on leaving the row and popover, on blur, Esc or a pick",
+    "Arrow keys move between the five layouts and the cog (one Tab stop for the row, roving tabindex); Home and End; ArrowDown on the cog opens its menu",
+    "cog click -> the settings menu opens and its item takes focus; Esc or a click outside closes it and focus returns to the cog; Tab closes it",
+    "menuitem[data-reset] click bubbles to the page's delegated listener -> unpin every node of the region; while aria-disabled (no card moved) the click is stopped in the element",
     "button[data-revoke] click bubbles to the page's delegated listener -> confirm, then the revoke action for that holder (agentAccess flag)"
   ],
   "whenToUse": "The frame of every area of the board that has its own layout mode.",
   "whenNotToUse": "Lane bands and labels inside a region (the wires layer draws them until <vb-link> arrives); cards (<vb-node>).",
-  "narrow": "Under 480px (container query) only the pressed mode button shows; the group opens on hover or keyboard focus. Stage 2d replaces the buttons with the icon row.",
-  "accessibility": "A labelled region landmark named by its heading. The mode buttons are real buttons in a labelled group with aria-pressed; Reset places is a real button, hidden when there is nothing to reset. A removable holder is a real button named \"<label>: remove access\"; the creator is plain text."
+  "narrow": "Under 600px of frame (container query) the popover drops to compact tiles: icon and name, with the highlighted layout's one-liner on one line under them. The count gives way before the title. At the minimum frame (336px) about eight letters of title fit beside the row; a longer title ellipsizes.",
+  "accessibility": "A labelled region landmark named by its heading. The layout icons are radios in a labelled radiogroup (one Tab stop, arrow keys between them, Enter or Space applies); the popover is a role=tooltip described onto the icon it is about. The cog is a menu button (aria-haspopup, aria-expanded, aria-controls) for a labelled role=menu whose one menuitem, Reset places, is aria-disabled with a described hint (No cards moved) when there is nothing to reset. A removable holder is a real button named \"<label>: remove access\"; the creator is plain text.",
+  "far": "Below FAR_K the stage carries data-zoom=far and the row hides (visibility), its popover and menu with it, like the cards' buttons (N8)."
 }

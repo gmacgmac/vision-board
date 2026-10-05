@@ -1,5 +1,5 @@
-// Gallery entry for card size tiers (D-030), shown only with the nodeSize flag on
-// (gallery.html?flags=nodeSize), so the gallery without the flag is unchanged. The three tiers as
+// Gallery entry for card size tiers (D-030), shown by default (nodeSize is on by default;
+// gallery.html?flags=-nodeSize hides it). The three tiers as
 // the auto rule picks them, the agent's suggestion and emphasis, then the size control at rest,
 // with your pick, revealed and with keyboard focus. Each card is a real <vb-node>, drawn with the
 // tier the board would use (`tierOf`, through sizeTier) from the fixture ledger's "sizes" region.
@@ -37,7 +37,7 @@ export function sizeSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'Node size');
   heading.id = 'feature-nodeSize';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'data-size="s | m | l"'), ' · feature flag nodeSize (D-030) · on with ?flags=nodeSize');
+  meta.append(el('code', undefined, 'data-size="s | m | l"'), ' · feature flag nodeSize (D-030) · on by default · off with ?flags=-nodeSize');
   const canvas = (label: string, list: VbNodeElement[]) => {
     const c = el('div', 'g-sizes vb-ground');
     c.append(cardList(label, ...list));

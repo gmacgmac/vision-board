@@ -66,31 +66,72 @@ test('node: the other states are drawn', async ({ page }) => {
   }
 });
 
-test('region: each mode, Reset places, the empty message and no count', async ({ page }) => {
+test('region: each mode, the count, the empty message and no count', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
   await expect(frames).toHaveCount(8);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'list']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
-    await expect(frame.locator('.vb-region-count')).toHaveText('1/2 decided');
-    await expect(frame.locator('button[data-mode][aria-pressed="true"]')).toHaveCount(1);
+    await expect(frame.locator('.vb-region-count')).toHaveText('1 of 2 decided');
+    await expect(frame.locator('[role="radio"][aria-checked="true"]')).toHaveCount(1);
+    await expect(frame.locator(`[role="radio"][data-mode="${mode}"]`)).toHaveAttribute('aria-checked', 'true');
+    await expect(frame.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
   }
-  await expect(frames.locator('button[data-reset]:visible')).toHaveCount(1);
   await expect(frames.locator('.vb-region-empty:visible')).toHaveCount(1);
   const bare = frames.filter({ has: page.locator('h2:text-is("No items, so no count")') });
   await expect(bare.locator('.vb-region-count')).toHaveText('');
 });
 
-test('region: a narrow frame shows only its pressed mode until the group is hovered', async ({ page }) => {
-  const narrow = page.locator('section[data-pattern="region"] vb-region[data-region="frame-pinned"]');
-  const wide = page.locator('section[data-pattern="region"] vb-region[data-region="frame-grid"]');
-  const width = async (b: ReturnType<typeof narrow.locator>) => (await b.boundingBox())!.width;
-  const flow = (frame: typeof narrow) => frame.locator('button[data-mode="flow"]');
-  expect(await width(flow(wide))).toBeGreaterThan(24);
-  expect(await width(flow(narrow))).toBe(0);
-  expect(await width(narrow.locator('button[data-mode="grid"]'))).toBeGreaterThan(24);
-  await narrow.locator('.vb-modes').hover();
-  expect(await width(flow(narrow))).toBeGreaterThan(24);
+test('region: the open samples: the popover wide and compact, and the settings menu enabled and disabled', async ({ page }) => {
+  const frame = (id: string) => page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
+  const wide = frame('frame-grid').getByRole('tooltip');
+  await expect(wide).toBeVisible();
+  await expect(wide.locator('.vb-mtile')).toHaveCount(5);
+  await expect(wide.locator('.vb-mtile[data-current]')).toHaveAttribute('data-tile', 'grid');
+  await expect(wide.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'flow');
+  await expect(wide.locator('.vb-mtile small')).toHaveCount(5);
+  await expect(wide.locator('.vb-mtile small').first()).toBeVisible();
+  await expect(wide.locator('.vb-mode-line')).toBeHidden();
+  await expect(frame('frame-grid').getByRole('radio', { name: 'Flow' })).toHaveAttribute('aria-describedby', 'region-frame-grid-modes');
+  // Under 600px of frame: icon and name only, and the highlighted layout's one-liner once.
+  const compact = frame('frame-empty').getByRole('tooltip');
+  await expect(compact).toBeVisible();
+  await expect(compact.locator('.vb-mtile small').first()).toBeHidden();
+  await expect(compact.locator('.vb-mode-line')).toHaveText('One subject, everything related around it');
+  expect((await compact.boundingBox())!.width).toBeLessThan((await wide.boundingBox())!.width);
+
+  const enabled = frame('frame-pinned').getByRole('menu');
+  await expect(enabled).toBeVisible();
+  await expect(enabled.getByRole('menuitem', { name: 'Reset places' })).toHaveAttribute('aria-disabled', 'false');
+  await expect(enabled.getByText('No cards moved')).toBeHidden();
+  const disabled = frame('frame-bare').getByRole('menu');
+  await expect(disabled.getByRole('menuitem', { name: 'Reset places' })).toHaveAttribute('aria-disabled', 'true');
+  await expect(disabled.getByText('No cards moved')).toBeVisible();
+  for (const id of ['frame-pinned', 'frame-bare'])
+    await expect(frame(id).getByRole('button', { name: /^Settings for / })).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('region: a narrow frame collapses the row to the checked icon and the cog, expanding on hover', async ({ page }) => {
+  const frames = page.locator('section[data-pattern="region"] vb-region');
+  const widths = await frames.evaluateAll((els) => els.map((e) => [(e as HTMLElement).dataset.region!, (e as HTMLElement).offsetWidth] as const));
+  const narrowest = Math.min(...widths.map(([, w]) => w));
+  const ids = widths.filter(([, w]) => w === narrowest).map(([id]) => id);
+  expect(narrowest).toBeLessThan(440);
+  const visible = (row: ReturnType<typeof frames.locator>) =>
+    row.locator('.vb-mseg').evaluateAll((els) => els.filter((e) => (e as HTMLElement).getBoundingClientRect().width > 1).length);
+  for (const id of ids) {
+    const frame = page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
+    const row = frame.locator('.vb-mode-row');
+    // Collapsed: the checked layout and the cog only (2), not 6.
+    expect(await visible(row), `${id}: collapsed count`).toBe(2);
+    const cut = (sel: string) => frame.locator(sel).evaluate((e) => e.scrollWidth > e.clientWidth);
+    expect(await cut('h2'), `${id}: title ellipsized at ${narrowest}px`).toBe(false);
+    // Hovering (or focusing) the row expands it to all five icons plus the cog, as an overlay.
+    await row.hover();
+    expect(await visible(row), `${id}: expanded count`).toBe(6);
+    await page.mouse.move(0, 0);
+    expect(await visible(row), `${id}: collapses again on leave`).toBe(2);
+  }
 });
 
 test('theme button cycles system, light, dark', async ({ page }) => {

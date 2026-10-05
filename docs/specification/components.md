@@ -167,4 +167,4 @@ override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.h
 6. **The record**: a person-only `act` `size { n, size }` (`docs/specification/api.md` point 16),
    folded like `pin`. The tier is a word, never a width, so no coordinates or pixel sizes enter
    the ledger.
-7. Ships behind the `nodeSize` feature flag (rule 12) until the maintainer has looked at it.
+7. On by default (maintainer, 2026-10-05, chat 666); `?flags=-nodeSize` turns it off.

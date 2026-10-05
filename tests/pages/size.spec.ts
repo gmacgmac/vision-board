@@ -1,14 +1,13 @@
-// Card size tiers (D-030, U7), behind the nodeSize feature flag (rule 12): on the board with
-// ?flags=nodeSize, and the gallery's Node size section. Runs after board.spec.ts and
-// gallery.spec.ts on the same server; it leaves every size pick it makes back on Auto.
+// Card size tiers (D-030, U7), behind the nodeSize feature flag (rule 12), on by default since
+// 2026-10-05 (maintainer): on the board, off with ?flags=-nodeSize, and the gallery's Node size
+// section. Runs after board.spec.ts and gallery.spec.ts on the same server; it leaves every size
+// pick it makes back on Auto.
 import type { Page } from '@playwright/test';
-import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
-/** The board's own known axe failure (board.spec.ts KNOWN_AXE, tracker N8): the layout-mode buttons. */
-const KNOWN_AXE = ['target-size'];
 /** The tier widths (tokens.css). */
 const WIDTH = { s: 280, m: 360, l: 464 };
 
@@ -43,13 +42,13 @@ const active = (page: Page) => page.evaluate(() => {
 });
 
 test('flag off: no tiers and no size control on the board', async ({ page }) => {
-  await openBoard(page, '');
+  await openBoard(page, '?flags=-nodeSize');
   await expect(page.locator('vb-node[data-size]')).toHaveCount(0);
   await expect(page.locator('vb-node .vb-size')).toHaveCount(0);
 });
 
-test('flag on: every card has a tier, and a long card is wider than a short one', async ({ page }) => {
-  await openBoard(page);
+test('flag on by default: every card has a tier, and a long card is wider than a short one', async ({ page }) => {
+  await openBoard(page, '');
   await expect(page.locator('vb-node[data-size]')).toHaveCount(NODES);
   await expect(page.locator('vb-node .vb-size')).toHaveCount(NODES);
   // Card 1 has a short body (S); card 13 is emphasised, one tier up (M).
@@ -60,13 +59,13 @@ test('flag on: every card has a tier, and a long card is wider than a short one'
   expect(await width(page, 13)).toBeGreaterThan(await width(page, 1));
 });
 
-test('flag on via localStorage too, and ?flags=-nodeSize turns it off again', async ({ page }) => {
+test('flag off via localStorage too, and ?flags=nodeSize turns it on again', async ({ page }) => {
   await page.goto('/');
-  await page.evaluate(() => localStorage.setItem('vb.flags', 'nodeSize'));
+  await page.evaluate(() => localStorage.setItem('vb.flags', '-nodeSize'));
   await openBoard(page, '');
-  await expect(page.locator('vb-node[data-size]')).toHaveCount(NODES);
-  await openBoard(page, '?flags=-nodeSize');
   await expect(page.locator('vb-node[data-size]')).toHaveCount(0);
+  await openBoard(page, '?flags=nodeSize');
+  await expect(page.locator('vb-node[data-size]')).toHaveCount(NODES);
   await page.evaluate(() => localStorage.removeItem('vb.flags'));
 });
 
@@ -132,15 +131,12 @@ for (const theme of THEMES) {
   test(`flag on: axe passes on the board, the size control open included (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await expectNoAxeViolations(page, KNOWN_AXE);
+    await expectNoAxeViolations(page);
     await zoomToFull(page);
     await card(page, 1).focus();
     await card(page, 1).locator('.vb-size-trig').focus();
     await expect(card(page, 1).locator('.vb-size-menu')).toBeVisible();
-    await expectNoAxeViolations(page, KNOWN_AXE);
-    // The known failure is the layout-mode buttons' alone: no size control target is too small.
-    const small = (await axeFindings(page)).filter((f) => f.id === 'target-size').flatMap((f) => f.targets);
-    expect(small.filter((t) => t.includes('vb-size')), small.join('\n')).toEqual([]);
+    await expectNoAxeViolations(page);
   });
 }
 
@@ -149,11 +145,11 @@ for (const theme of THEMES) {
 const section = (page: Page) => page.locator('section[data-feature="nodeSize"]');
 const sample = (page: Page, title: string) => section(page).locator('vb-node').filter({ has: page.locator(`h3:text-is("${title}")`) });
 
-test('gallery: the Node size section shows only with the flag on', async ({ page }) => {
-  await page.goto('/gallery.html');
+test('gallery: the Node size section shows by default and not with -nodeSize', async ({ page }) => {
+  await page.goto('/gallery.html?flags=-nodeSize');
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
-  await page.goto('/gallery.html?flags=nodeSize');
+  await page.goto('/gallery.html');
   await expect(section(page)).toBeVisible();
 });
 
