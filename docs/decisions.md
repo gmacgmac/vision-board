@@ -364,3 +364,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: The MCP server inside `packages/agent` (two jobs in one package);
   separate HTTP code in the page, `vb` and MCP (three copies of the same calls).
 - **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-030 Three card widths, picked by content or by hand
+- **Date**: 2026-10-05 · **Status**: Accepted · **From**: maintainer (chat 489, 559; U7), mockup 07 option A
+- **Decision**: Cards come in three widths, `s`, `m` and `l` (280, 360 and 464px, as tokens).
+  Layout picks one from the body's length, code blocks and list length. The agent may suggest
+  one, and the person's pick, made from a small control in the card's top-right corner, wins
+  and is recorded as a `size` act. The rules are in `docs/specification/components.md` § Node size.
+- **Why**: Long cards in a narrow fixed width are uncomfortable to read; three set widths keep
+  boards tidy and the same board always draws the same way.
+- **Alternative rejected**: Free resizing by dragging (a width in the ledger, and every card a
+  different size); one fixed width.
+- **Task**: [[cortex-tasks/board/2026-10-01_board-v3/PLAN.md]]

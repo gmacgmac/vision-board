@@ -126,3 +126,28 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
 
 A refactor that keeps the look and behaviour needs no flag. A new mode, node type or behaviour
 ships behind one; the flag mechanism is defined by the first task that ships new behaviour.
+
+## Node size (D-030, tracker U7)
+
+A card has one of three widths. The engine picks one from what the card holds, and the person can
+override it by hand. Mockup `prototypes/board-v3-design/mockups/07-node-sizing.html`, option A.
+
+1. **Tiers** are tokens: `--vb-card-w-s` 280px, `--vb-card-w-m` 360px, `--vb-card-w-l` 464px.
+   Body text then runs about 37, 49 and 70 characters a line. Cards still grow taller to fit.
+2. **Auto tier**, a pure function in `packages/layout` (`sizeTier`), counting the body Markdown
+   only (title and tags do not count): `l` if the body is over 480 characters; `m` if it is over
+   140, or has a code block, or more than 6 list items; `s` otherwise.
+3. **Precedence**: the person's `size` act, then the agent's `node.size` suggestion, then the auto
+   tier. Emphasis raises the result one tier, up to `l`. The person's `auto` removes their pick.
+4. **Where it is applied**: the page sets `data-size` on `<vb-node>` before it measures cards,
+   because height depends on width; layout keeps reading measured sizes, so it stays pure (rule 9).
+5. **The control** (option A): a faint width glyph in the card's top-right border gap. On hover
+   or keyboard focus it lifts an S / M / L / Auto pill above the card's top edge, with 26px
+   buttons and a visible focus ring. Only the glyph is in the tab order until the pill opens; Esc
+   closes it. The label reads "Card size: S, automatic. Change size". When the person has picked
+   a size, the glyph shows the letter (for example "◆ S"). On a small card the "Moved by you" tab
+   shrinks to "◆" so the two fit side by side.
+6. **The record**: a person-only `act` `size { n, size }` (`docs/specification/api.md` point 16),
+   folded like `pin`. The tier is a word, never a width, so no coordinates or pixel sizes enter
+   the ledger.
+7. Ships behind the `nodeSize` feature flag (rule 12) until the maintainer has looked at it.

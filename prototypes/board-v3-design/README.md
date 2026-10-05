@@ -91,3 +91,7 @@ Pink borders and selection keep `#FF5CBE` in dark; pink text is `#FF66C2`. Card 
 faint (dark Lc 15-20) by the maintainer's choice; they are not one of the three tiers. Note, which
 Architect has no family for, takes the muted grey. Scores: `temp/apca-2b.mjs` (git-ignored; the
 gate itself is tracker N1).
+
+## 07 node sizing (2026-10-05)
+
+Option A, picked by the orchestrator overnight under the maintainer's delegation (chat 559), for his look in the morning: a faint width glyph in the top-right border gap that lifts an S / M / L / Auto pill. Tiers 280 / 360 / 464px. Rules: `docs/specification/components.md` § Node size, D-030.

@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 — Node sizing: S / M / L tiers and the size control (U7)</title>
+<link rel="icon" href="data:,">
+<style>
+  /* Self-contained: Architect's palette as 01b uses it (architect-extract/architect.css), copied, no network. */
+  :root {
+    color-scheme: dark;
+    --ground: #111112; --surface: #1A1A1C; --surface-2: #222225; --surface-3: #2C2C30;
+    --line: #2A2A2E; --line-strong: #3A3A40; --ink: #EDEDEF; --ink-2: #C7C7CC; --muted: #94949C;
+    --accent: #FF5CBE; --accent-ink: #1A0712; --accent-soft: #2E1726; --accent-line: #5E2449; --accent-text: #FF5CBE;
+    --c-content: #72A6F2; --c-remix: #E8B04A; --c-live: #F38860; --c-channels: #4FC3B0; --c-monitor: #A48EF2;
+    --ok: #4CC47F; --warn: #E6AF45; --bad: #F07474; --dot: rgb(255 255 255 / .07);
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 4px 14px rgb(0 0 0 / .3); --shadow-lg: 0 10px 40px rgb(0 0 0 / .55);
+    --f-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-mono: ui-monospace, "SF Mono", Menlo, monospace;
+    /* Proposed tier tokens (would join --vb-card-w in packages/tokens/src/tokens.css). */
+    --card-w-s: 280px; --card-w-m: 360px; --card-w-l: 464px;
+  }
+  .light {
+    color-scheme: light;
+    --ground: #F5F5F6; --surface: #FFFFFF; --surface-2: #EFEFF1; --surface-3: #E4E4E7;
+    --line: #E1E1E5; --line-strong: #CBCBD1; --ink: #18181B; --ink-2: #3F3F46; --muted: #6B6B74;
+    --accent: #D4138A; --accent-ink: #FFFFFF; --accent-soft: #FDE7F4; --accent-line: #F7B6DC; --accent-text: #C81784;
+    --c-content: #3471D0; --c-remix: #C98A0B; --c-live: #E0552A; --c-channels: #1F8F7E; --c-monitor: #7257C6;
+    --ok: #278F52; --warn: #B97C0C; --bad: #CC3B3B; --dot: rgb(24 24 27 / .09);
+    --shadow: 0 1px 2px rgb(24 24 27 / .06), 0 4px 14px rgb(24 24 27 / .06); --shadow-lg: 0 10px 40px rgb(24 24 27 / .16);
+    color: var(--ink);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { min-width: 1720px; padding: 28px 32px 60px; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--f-body); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg.ic { flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- Page ---------- */
+  .page-head h1 { margin: 0 0 6px; font: 600 22px/1.2 var(--f-display); }
+  .page-head p, .sec-head p { margin: 0; max-width: 940px; color: var(--ink-2); font-size: 13.5px; }
+  .sec-head { margin: 40px 0 14px; display: grid; gap: 4px; }
+  .sec-head h2 { margin: 0; font: 600 18px/1.2 var(--f-display); letter-spacing: -.01em; }
+  .stage { border-radius: 18px; border: 1px solid var(--line); background-color: var(--ground); background-image: radial-gradient(var(--dot) 1.2px, transparent 1.3px); background-size: 22px 22px; padding: 64px 32px 40px; }
+  .row { display: flex; align-items: flex-start; gap: 40px; }
+  .row.opts { gap: 56px; }
+  .slot.room { margin-right: 150px; }
+  .slot .state { order: 2; } /* below the card, clear of A's lifted pill */
+  .slot { display: grid; gap: 12px; justify-items: start; }
+  .cap { font-size: 12px; color: var(--muted); max-width: 100%; }
+  .cap b { color: var(--ink-2); font-weight: 600; }
+  .cap code, .legend code { font: 600 11.5px var(--f-mono); color: var(--ink-2); }
+  .state { font: 600 11px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .legend { margin-top: 18px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font-size: 13px; }
+  .legend ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  .legend .rec { margin-top: 8px; color: var(--ink); }
+  .rule { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font: 12px/1.6 var(--f-mono); color: var(--ink-2); white-space: pre; }
+  .light.stage { margin-top: 14px; }
+
+  /* ---------- Card: the 01b recipe, at the built type sizes (title 15px, body 13px) ---------- */
+  .k-question { --fc: var(--c-content); } .k-finding { --fc: var(--c-channels); }
+  .k-decision { --fc: var(--accent); } .k-action { --fc: var(--c-remix); }
+  .card { position: relative; width: var(--w, var(--card-w-s)); border-radius: 14px; border: 1px solid color-mix(in srgb, var(--fc) 38%, var(--line)); background: linear-gradient(170deg, color-mix(in srgb, var(--fc) 9%, var(--surface)) 0%, var(--surface) 55%); box-shadow: var(--shadow); }
+  .card::before { content: ""; position: absolute; left: 18px; right: 18px; top: -1px; height: 1.5px; border-radius: 0 0 2px 2px; background: color-mix(in srgb, var(--fc) 75%, transparent); }
+  .card:hover { border-color: color-mix(in srgb, var(--fc) 70%, var(--line)); }
+  .tier-s { --w: var(--card-w-s); } .tier-m { --w: var(--card-w-m); } .tier-l { --w: var(--card-w-l); }
+  .tab { position: absolute; display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 8px; border-radius: 6px; box-shadow: 0 0 0 4px var(--ground); white-space: nowrap; }
+  .tab.num { top: -11px; left: 14px; border: 1px solid color-mix(in srgb, var(--fc) 50%, var(--line)); background: var(--surface); color: var(--ink); font: 600 11px var(--f-mono); }
+  .tab.kind { top: -11px; left: 50%; transform: translateX(-50%); border-radius: 999px; border: 1px solid color-mix(in srgb, var(--fc) 55%, transparent); background: color-mix(in srgb, var(--fc) 16%, var(--ground)); color: var(--fc); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; cursor: grab; }
+  .tab.kind::before { content: ""; width: 6px; height: 8px; background: radial-gradient(currentColor 1px, transparent 1.2px) 0 0 / 3px 3px; opacity: .7; }
+  .tab.flag { bottom: -11px; right: 14px; font-size: 10px; font-weight: 800; letter-spacing: .06em; background: var(--accent); color: var(--accent-ink); }
+  .pin { position: absolute; top: -12px; right: -12px; z-index: 4; display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 2px solid var(--surface); border-radius: 50% 50% 50% 4px; background: var(--accent); color: var(--accent-ink); font-size: 12px; font-weight: 800; box-shadow: var(--shadow); }
+  .tab.moved { top: -11px; right: 54px; padding: 0 6px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--muted); font-size: 11px; } /* the build's "Moved by you", shortened */
+  .tab.moved.at-c { right: 20px; }
+  .cb { display: grid; gap: 9px; padding: 20px 16px 14px; }
+  .t { margin: 0; font: 600 15px/1.3 var(--f-display); letter-spacing: -.01em; }
+  .p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; line-height: 1.45; color: var(--ink-2); }
+  .ul b { color: var(--ink); font-weight: 600; }
+  .code { margin: 0; max-height: 160px; overflow: auto; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); font: 12px/1.5 var(--f-mono); color: var(--ink-2); white-space: pre; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); font-size: 11.5px; font-weight: 600; }
+  .card-foot { display: flex; align-items: center; gap: 6px; padding: 8px 10px 9px 14px; border-top: 1px solid color-mix(in srgb, var(--fc) 18%, var(--line)); font-size: 12px; font-weight: 600; color: var(--muted); }
+  .card-foot .word { flex: 1; display: inline-flex; align-items: center; gap: 7px; }
+  .card-foot .kico { color: var(--fc); }
+  .card-foot .sep { width: 1px; height: 12px; background: var(--line-strong); }
+  .qa { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; border: 0; background: none; color: var(--muted); }
+  .qa:hover { background: var(--surface-2); color: var(--ink); }
+
+  /* ---------- Size control, shared: CSS-only reveal like the region mode picker (region.css),
+     so hover and keyboard focus open it through :hover / :focus-within. The menu is
+     visibility:hidden at rest, so only the trigger is in the tab order. It draws on top
+     (pick 5): the card never changes size or moves while it is open. ---------- */
+  .sz { position: absolute; z-index: 6; }
+  .sz-trig { position: relative; display: inline-grid; place-items: center; gap: 4px; height: 20px; min-width: 22px; padding: 0 5px; border-radius: 6px; border: 1px solid transparent; background: var(--surface); color: var(--muted); box-shadow: 0 0 0 4px var(--ground); white-space: nowrap; opacity: .5; transition: opacity .12s, color .12s, border-color .12s; }
+  .sz-trig::after { content: ""; position: absolute; inset: -3px -2px; } /* 24px+ hit area at rest */
+  .card:hover .sz-trig, .sz:is(:hover, :focus-within, .open) .sz-trig { opacity: 1; color: var(--ink); border-color: var(--line-strong); }
+  .sz-trig.manual { grid-auto-flow: column; opacity: 1; border-color: var(--line-strong); color: var(--ink-2); font: 700 11px var(--f-mono); }
+  .sz-menu { position: absolute; display: flex; gap: 2px; padding: 3px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); box-shadow: var(--shadow-lg); visibility: hidden; opacity: 0; transition: opacity .12s, visibility 0s .12s; }
+  .sz:is(:hover, :focus-within, .open) .sz-menu { visibility: visible; opacity: 1; transition: opacity .12s; }
+  .sz-o { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 26px; height: 26px; padding: 0 7px; border: 0; border-radius: 7px; background: none; color: var(--ink-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .sz-o:hover { background: var(--surface-2); color: var(--ink); }
+  .sz-o[aria-pressed="true"] { background: color-mix(in srgb, var(--fc) 18%, var(--surface-2)); color: var(--ink); box-shadow: var(--shadow); }
+  .sz-o.is-auto { box-shadow: inset 0 0 0 1px var(--line-strong); } /* the tier auto picked, while Auto is on */
+  .sz-o small { font: 500 11px var(--f-mono); color: var(--muted); }
+  .sz-o.kb, .sz-trig.kb { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sz-o:focus-visible { outline-offset: 1px; }
+  .sep-v { width: 1px; align-self: stretch; margin: 4px 2px; background: var(--line-strong); }
+
+  /* A: a size glyph in the top-right gap; the pill lifts above the top edge, right-aligned. */
+  .sz-a { top: -11px; right: 24px; }
+  .sz-a .sz-menu { right: -4px; bottom: calc(100% + 8px); }
+  .sz-a .sz-menu::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 12px; } /* hover bridge */
+  /* B: a resize grip on the bottom-right corner; a vertical popover opens to the right and points at it. */
+  .sz-b { right: -14px; bottom: -14px; }
+  .sz-b .sz-trig { width: 24px; height: 24px; padding: 0; border-radius: 50%; }
+  .sz-b .sz-menu { flex-direction: column; left: calc(100% + 12px); bottom: -6px; width: 132px; }
+  .sz-b .sz-menu .sz-o { justify-content: flex-start; }
+  .sz-b .sz-menu .sz-o small { margin-left: auto; }
+  .sz-b .sz-menu .sep-v { width: auto; height: 1px; margin: 2px 4px; }
+  .sz-b .sz-menu::before { content: ""; position: absolute; left: -7px; bottom: 14px; width: 12px; height: 12px; rotate: 45deg; background: var(--surface); border-left: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); }
+  .sz-b .sz-menu::after { content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 14px; }
+  /* C: the tier letter in its own gap right of the kind tab; four choices drop below it. */
+  .kgrp { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); z-index: 6; }
+  .kgrp .tab.kind { position: relative; top: auto; left: auto; transform: none; }
+  .sz-c { top: 0; left: calc(100% + 10px); }
+  .sz-c .sz-trig { opacity: 1; font: 700 11px var(--f-mono); color: var(--muted); border-color: color-mix(in srgb, var(--line-strong) 60%, transparent); }
+  .sz-c .sz-trig.manual { color: var(--ink); }
+  .sz-c .sz-menu { top: calc(100% + 10px); left: 50%; translate: -50% 0; }
+  .sz-c .sz-menu::before { content: ""; position: absolute; top: -7px; left: calc(50% - 6px); width: 12px; height: 12px; rotate: 45deg; background: var(--surface); border-left: 1px solid var(--line-strong); border-top: 1px solid var(--line-strong); }
+  .sz-c .sz-menu::after { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 12px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-question" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.5M12 17h.01"/></symbol>
+    <symbol id="i-finding" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+    <symbol id="i-decision" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
+    <symbol id="i-size" viewBox="0 0 24 24"><path d="M3 5v14M21 5v14M7 12h10M10 9l-3 3 3 3M14 9l3 3-3 3"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><path d="M6 18 18 6M12 6h6v6M6 12v6h6"/></symbol>
+  </defs>
+</svg>
+
+<header class="page-head">
+  <h1>07 — Node sizing: S / M / L tiers and the size control (U7)</h1>
+  <p>Cards today are 248px, or 300px when the agent emphasises one, and grow taller to fit. Here the width comes from three tiers picked by a pure rule from the body, so long cards are wide enough to read; a discreet corner control lets you set a card's size by hand, saved like a pin, with Auto handing it back. Section 1 is the tiers, section 2 the three control options, section 3 the same in the light theme. Hover or Tab through any card: the controls are live.</p>
+</header>
+
+<section class="sec-head"><h2>1 — The three tiers, picked automatically</h2><p>Widths are chosen so body text (13px, as built) sits near 45-75 characters a line where it matters: M and L. S stays narrow on purpose, because a short card is one to three lines and a wider card would only waste the board. Each caption is measured live from the card's own text.</p></section>
+<main class="stage">
+  <div class="row">
+    <div class="slot">
+      <article class="card k-question tier-s" tabindex="0" aria-label="Item 41, question, open, size S automatic">
+        <span class="tab num">41</span><span class="tab kind">Question</span>
+        <div class="cb" data-body>
+          <h3 class="t">Do we grandfather existing annual plans?</h3>
+          <p class="p" data-measure>Moving annual customers to usage pricing at renewal risks Q4 churn. Do we keep their price for a year?</p>
+        </div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 41"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop 41"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note on 41"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article>
+      <p class="cap"><b>S · 280px</b> · text column 246px<br><span data-cap></span></p>
+    </div>
+    <div class="slot">
+      <article class="card k-finding tier-m" tabindex="0" aria-label="Item 42, finding, open, size M automatic">
+        <span class="tab num">42</span><span class="tab kind">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb" data-body>
+          <h3 class="t">The usage tier carries 3x the support load</h3>
+          <p class="p" data-measure>Six weeks of beta tickets show the usage tier generating three times the support volume of annual plans, and almost none of it is about the bill itself.</p>
+          <ul class="ul"><li>Mostly onboarding confusion, not billing disputes</li><li>Drops to 1.4x after a customer's second month</li><li>Concentrated in teams under 10 seats</li></ul>
+          <div class="chips"><span class="chip">Support</span><span class="chip">Zendesk export</span></div>
+        </div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-finding"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 42"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop 42"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note on 42"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article>
+      <p class="cap"><b>M · 360px</b> · text column 326px<br><span data-cap></span></p>
+    </div>
+    <div class="slot">
+      <article class="card k-decision tier-l" tabindex="0" aria-label="Item 43, decision, open, size L automatic">
+        <span class="tab num">43</span><span class="tab kind">Decision</span>
+        <div class="cb" data-body>
+          <h3 class="t">Grandfather annual plans for 12 months, then migrate at renewal</h3>
+          <p class="p" data-measure>Existing annual customers keep their current price until their first renewal after 1 March, then move to usage pricing with a one-off credit worth two months of their old plan. This keeps the Q4 churn risk low and gives support a year to fix the onboarding confusion behind most usage-tier tickets.</p>
+          <span class="lbl">What this means</span>
+          <ul class="ul"><li>Two price books run side by side until the last grandfathered plan renews</li><li>Finance signs off the credit amount before the migration email goes out</li><li>Sales stops quoting the lifetime-deal tier from today</li><li>Teams over 40 seats are routed to the enterprise floor instead</li></ul>
+          <p class="p">The billing service already supports a plan override per account, so the first year needs no new code: the nightly job applies the override below and removes it on renewal.</p>
+          <pre class="code">{
+  "plan": "annual-2025",
+  "override": "grandfathered",
+  "until": "first-renewal-after:2027-03-01",
+  "credit": { "months": 2, "of": "old-plan" }
+}</pre>
+        </div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-decision"/></svg><i class="sep"></i>Open</span>
+          <button class="qa" type="button" aria-label="Acknowledge 43"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop 43"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note on 43"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article>
+      <p class="cap"><b>L · 464px</b> · text column 430px · code column ~56 mono chars<br><span data-cap></span></p>
+    </div>
+  </div>
+  <div class="legend">
+    <pre class="rule">auto tier, from the body Markdown only (title and tags do not count):
+  L  if body &gt; 480 characters
+  M  if body &gt; 140 characters, or it has a code block, or more than 6 list items
+  S  otherwise
+your pick (S / M / L) wins and is saved like a pin; Auto removes it and the rule applies again</pre>
+    <ul style="margin-top: 10px">
+      <li>Tokens: <code>--vb-card-w-s: 280px</code>, <code>--vb-card-w-m: 360px</code>, <code>--vb-card-w-l: 464px</code>, beside today's <code>--vb-card-w</code>. Emphasis would become "one tier up" rather than its own 300px width.</li>
+      <li>The tier is written on the card as a data attribute before the page measures it, because height depends on width; layout keeps reading the measured sizes (brief § 2), so layout stays pure.</li>
+      <li>Saved as a person act, like <code>pin</code>/<code>unpin</code>, with the tier as a word (e.g. <code>size: "L"</code>), never <code>width</code>, which the format forbids in a node body.</li>
+    </ul>
+  </div>
+</main>
+
+<section class="sec-head"><h2>2 — Three options for the size control</h2><p>Each option on the tightest case, an S card (280px) with a long kind label. Left to right: at rest on automatic, at rest with your own pick, revealed on hover (with a note pin, a NEW flag and the moved-by-you marker present, to show nothing collides), and revealed by keyboard with focus on L. Revealed targets are 26px. Zoomed out (N8) the control hides with <code>visibility</code>, like the footer actions.</p></section>
+
+<main class="stage" aria-label="Option A">
+  <div class="row opts">
+    <div class="slot"><span class="state">A · at rest, auto</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 51, question, open, size S automatic">
+        <span class="tab num">51</span><span class="tab kind">Question</span>
+        <div class="sz sz-a" role="group" aria-label="Size of card 51"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="false"><svg class="ic" width="13" height="13"><use href="#i-size"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></div></div>
+        <div class="cb"><h3 class="t">Who signs off the credit amount?</h3><p class="p">Finance owns the number; the pricing lead owns the email.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">A · at rest, your pick</span>
+      <article class="card k-question" tabindex="0" data-auto="M" aria-label="Item 52, question, open, size S set by you">
+        <span class="tab num">52</span><span class="tab kind">Question</span>
+        <div class="sz sz-a" role="group" aria-label="Size of card 52"><button class="sz-trig manual" type="button" aria-label="Card size: S, set by you. Change size" aria-expanded="false">◆ S</button>
+          <div class="sz-menu"><button class="sz-o" type="button" aria-pressed="true">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="false" aria-label="Automatic size">Auto</button></div></div>
+        <div class="cb"><h3 class="t">Is the credit two months or three?</h3><p class="p">Auto would make this M; you kept it small.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">A · hover, revealed</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 53, question, open, note 1, new, moved by you, size S automatic">
+        <span class="tab num">53</span><span class="tab kind">Question</span><span class="tab moved" aria-label="Moved by you">◆</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag">NEW</span>
+        <div class="sz sz-a open" role="group" aria-label="Size of card 53"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true"><svg class="ic" width="13" height="13"><use href="#i-size"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></div></div>
+        <div class="cb"><h3 class="t">Who sends the migration email?</h3><p class="p">Support or the account owner?</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">A · keyboard focus on L</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 54, question, open, size S automatic">
+        <span class="tab num">54</span><span class="tab kind">Question</span>
+        <div class="sz sz-a open" role="group" aria-label="Size of card 54"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true"><svg class="ic" width="13" height="13"><use href="#i-size"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o kb" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></div></div>
+        <div class="cb"><h3 class="t">Does the credit show on the invoice?</h3><p class="p">Tab reaches the glyph, then the four choices.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+  </div>
+  <div class="legend"><b>A — glyph in the top-right gap, pill lifts above the edge</b>
+    <ul><li>Pro: the most discreet at rest (a faint glyph), and it sits with your other markers (moved, note pin) in the top-right.</li>
+      <li>Con: the pill floats over the gap above the card, so it can cover the footer of the card above while open; the moved-by-you tab must shrink to "◆".</li></ul></div>
+</main>
+
+<main class="stage" aria-label="Option B">
+  <div class="row opts">
+    <div class="slot"><span class="state">B · at rest, auto</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 61, question, open, size S automatic">
+        <span class="tab num">61</span><span class="tab kind">Question</span>
+        <div class="cb"><h3 class="t">Who signs off the credit amount?</h3><p class="p">Finance owns the number; the pricing lead owns the email.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+        <div class="sz sz-b" role="group" aria-label="Size of card 61"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="false"><svg class="ic" width="12" height="12"><use href="#i-grip"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false" aria-label="Small, 280 pixels">S Small<small>280</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Medium, 360 pixels">M Medium<small>360</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Large, 464 pixels">L Large<small>464</small></button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true">Auto<small>S</small></button></div></div>
+      </article></div>
+    <div class="slot"><span class="state">B · at rest, your pick</span>
+      <article class="card k-question" tabindex="0" data-auto="M" aria-label="Item 62, question, open, size S set by you">
+        <span class="tab num">62</span><span class="tab kind">Question</span>
+        <div class="cb"><h3 class="t">Is the credit two months or three?</h3><p class="p">Auto would make this M; you kept it small.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+        <div class="sz sz-b" role="group" aria-label="Size of card 62"><button class="sz-trig manual" type="button" aria-label="Card size: S, set by you. Change size" aria-expanded="false">S</button>
+          <div class="sz-menu"><button class="sz-o" type="button" aria-pressed="true" aria-label="Small, 280 pixels">S Small<small>280</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Medium, 360 pixels">M Medium<small>360</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Large, 464 pixels">L Large<small>464</small></button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="false">Auto<small>M</small></button></div></div>
+      </article></div>
+    <div class="slot room"><span class="state">B · hover, revealed</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 63, question, open, note 1, new, size S automatic">
+        <span class="tab num">63</span><span class="tab kind">Question</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">Who sends the migration email?</h3><p class="p">Support or the account owner?</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+        <div class="sz sz-b open" role="group" aria-label="Size of card 63"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true"><svg class="ic" width="12" height="12"><use href="#i-grip"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false" aria-label="Small, 280 pixels">S Small<small>280</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Medium, 360 pixels">M Medium<small>360</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Large, 464 pixels">L Large<small>464</small></button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true">Auto<small>S</small></button></div></div>
+      </article></div>
+    <div class="slot"><span class="state">B · keyboard focus on L</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 64, question, open, size S automatic">
+        <span class="tab num">64</span><span class="tab kind">Question</span>
+        <div class="cb"><h3 class="t">Does the credit show on the invoice?</h3><p class="p">The grip is the last stop in the card's tab order.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+        <div class="sz sz-b open" role="group" aria-label="Size of card 64"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true"><svg class="ic" width="12" height="12"><use href="#i-grip"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false" aria-label="Small, 280 pixels">S Small<small>280</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Medium, 360 pixels">M Medium<small>360</small></button><button class="sz-o kb" type="button" aria-pressed="false" aria-label="Large, 464 pixels">L Large<small>464</small></button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true">Auto<small>S</small></button></div></div>
+      </article></div>
+  </div>
+  <div class="legend"><b>B — resize grip on the bottom-right corner, vertical popover beside it</b>
+    <ul><li>Pro: the familiar "resize" corner, nothing added to the busy top border, and the popover can name each size and its width.</li>
+      <li>Con: shares the bottom-right with NEW / unseen-updates tabs and the last footer action, and the grip suggests dragging, which would not resize freely.</li></ul></div>
+</main>
+
+<main class="stage" aria-label="Option C">
+  <div class="row opts">
+    <div class="slot"><span class="state">C · at rest, auto</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 71, question, open, size S automatic">
+        <span class="tab num">71</span>
+        <span class="kgrp"><span class="tab kind">Question</span><span class="sz sz-c" role="group" aria-label="Size of card 71"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="false">S</button>
+          <span class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></span></span></span>
+        <div class="cb"><h3 class="t">Who signs off the credit amount?</h3><p class="p">Finance owns the number; the pricing lead owns the email.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">C · at rest, your pick</span>
+      <article class="card k-question" tabindex="0" data-auto="M" aria-label="Item 72, question, open, size S set by you">
+        <span class="tab num">72</span>
+        <span class="kgrp"><span class="tab kind">Question</span><span class="sz sz-c" role="group" aria-label="Size of card 72"><button class="sz-trig manual" type="button" aria-label="Card size: S, set by you. Change size" aria-expanded="false">S ◆</button>
+          <span class="sz-menu"><button class="sz-o" type="button" aria-pressed="true">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="false" aria-label="Automatic size">Auto</button></span></span></span>
+        <div class="cb"><h3 class="t">Is the credit two months or three?</h3><p class="p">Auto would make this M; you kept it small.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">C · hover, revealed</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 73, question, open, note 1, new, moved by you, size S automatic">
+        <span class="tab num">73</span><span class="tab moved at-c" aria-label="Moved by you">◆</span><button class="pin" type="button" aria-label="Note 1">1</button><span class="tab flag">NEW</span>
+        <span class="kgrp"><span class="tab kind">Question</span><span class="sz sz-c open" role="group" aria-label="Size of card 73"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true">S</button>
+          <span class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></span></span></span>
+        <div class="cb"><h3 class="t">Who sends the migration email?</h3><p class="p">Support or the account owner?</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot"><span class="state">C · keyboard focus on L</span>
+      <article class="card k-question" tabindex="0" aria-label="Item 74, question, open, size S automatic">
+        <span class="tab num">74</span>
+        <span class="kgrp"><span class="tab kind">Question</span><span class="sz sz-c open" role="group" aria-label="Size of card 74"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true">S</button>
+          <span class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o kb" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></span></span></span>
+        <div class="cb"><h3 class="t">Does the credit show on the invoice?</h3><p class="p">The letter always shows the card's current tier.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+  </div>
+  <div class="legend"><b>C — the tier letter beside the kind tab, choices drop below it</b>
+    <ul><li>Pro: always tells you the card's tier at a glance, and the choices open inside the card, so nothing outside it is covered.</li>
+      <li>Con: least discreet (a letter on every card), it lengthens the centred label group, and while open it covers the right end of the title.</li></ul>
+    <p class="rec"><b>Recommendation: A.</b> It is the quietest at rest, keeps the kind tab and footer untouched, and groups the size with the other things you set yourself (moved, notes) in one corner.</p></div>
+</main>
+
+<section class="sec-head"><h2>3 — Light theme</h2><p>The same tiers and controls on the light palette: S with option A open, M with option B open, and a card you set to L by hand with option C open.</p></section>
+<main class="stage light" aria-label="Light theme">
+  <div class="row">
+    <div class="slot"><span class="state">S · A revealed</span>
+      <article class="card k-question tier-s" tabindex="0" aria-label="Item 81, question, open, note 1, size S automatic">
+        <span class="tab num">81</span><span class="tab kind">Question</span><button class="pin" type="button" aria-label="Note 1">1</button>
+        <div class="sz sz-a open" role="group" aria-label="Size of card 81"><button class="sz-trig" type="button" aria-label="Card size: S, automatic. Change size" aria-expanded="true"><svg class="ic" width="13" height="13"><use href="#i-size"/></svg></button>
+          <div class="sz-menu"><button class="sz-o is-auto" type="button" aria-pressed="false">S</button><button class="sz-o" type="button" aria-pressed="false">M</button><button class="sz-o kb" type="button" aria-pressed="false">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true" aria-label="Automatic size">Auto</button></div></div>
+        <div class="cb"><h3 class="t">Do we grandfather existing annual plans?</h3><p class="p">Moving annual customers at renewal risks Q4 churn.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-question"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+    <div class="slot room"><span class="state">M · B revealed</span>
+      <article class="card k-finding tier-m" tabindex="0" aria-label="Item 82, finding, open, new, size M automatic">
+        <span class="tab num">82</span><span class="tab kind">Finding</span><span class="tab flag">NEW</span>
+        <div class="cb"><h3 class="t">The usage tier carries 3x the support load</h3>
+          <ul class="ul"><li>Mostly onboarding confusion, not billing disputes</li><li>Drops to 1.4x after a customer's second month</li><li>Concentrated in teams under 10 seats</li></ul></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-finding"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+        <div class="sz sz-b open" role="group" aria-label="Size of card 82"><button class="sz-trig" type="button" aria-label="Card size: M, automatic. Change size" aria-expanded="true"><svg class="ic" width="12" height="12"><use href="#i-grip"/></svg></button>
+          <div class="sz-menu"><button class="sz-o" type="button" aria-pressed="false" aria-label="Small, 280 pixels">S Small<small>280</small></button><button class="sz-o is-auto" type="button" aria-pressed="false" aria-label="Medium, 360 pixels">M Medium<small>360</small></button><button class="sz-o" type="button" aria-pressed="false" aria-label="Large, 464 pixels">L Large<small>464</small></button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="true">Auto<small>M</small></button></div></div>
+      </article></div>
+    <div class="slot"><span class="state">L by you · C revealed</span>
+      <article class="card k-decision tier-l" tabindex="0" data-auto="M" aria-label="Item 83, decision, open, size L set by you">
+        <span class="tab num">83</span>
+        <span class="kgrp"><span class="tab kind">Decision</span><span class="sz sz-c open" role="group" aria-label="Size of card 83"><button class="sz-trig manual" type="button" aria-label="Card size: L, set by you. Change size" aria-expanded="true">L ◆</button>
+          <span class="sz-menu"><button class="sz-o" type="button" aria-pressed="false">S</button><button class="sz-o is-auto" type="button" aria-pressed="false">M</button><button class="sz-o" type="button" aria-pressed="true">L</button><i class="sep-v"></i><button class="sz-o" type="button" aria-pressed="false" aria-label="Automatic size">Auto</button></span></span></span>
+        <div class="cb"><h3 class="t">Kill the lifetime-deal tier from today</h3><p class="p">Sales stops quoting it now; the 212 existing lifetime accounts keep their plan and are not migrated. Auto would make this M, but you widened it to read alongside the migration plan.</p></div>
+        <div class="card-foot"><span class="word"><svg class="ic kico" width="14" height="14"><use href="#i-decision"/></svg><i class="sep"></i>Open</span><button class="qa" type="button" aria-label="Acknowledge"><svg class="ic" width="15" height="15"><use href="#i-check"/></svg></button><button class="qa" type="button" aria-label="Drop"><svg class="ic" width="15" height="15"><use href="#i-x"/></svg></button><button class="qa" type="button" aria-label="Note"><svg class="ic" width="15" height="15"><use href="#i-plus"/></svg></button></div>
+      </article></div>
+  </div>
+</main>
+
+<script>
+  // The auto rule, as proposed: body Markdown only.
+  const autoTier = (body) => {
+    const text = [...body.children].filter((el) => !el.matches('.t, .chips')).map((el) => el.textContent).join(' ').replace(/\s+/g, ' ').trim();
+    const n = text.length, code = !!body.querySelector('pre'), items = body.querySelectorAll('li').length;
+    return { n, tier: n > 480 ? 'L' : (n > 140 || code || items > 6) ? 'M' : 'S' };
+  };
+  // Characters per line, measured from the rendered text: one range per character, grouped by line top.
+  const perLine = (el) => {
+    const r = document.createRange(), lines = new Map(), walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let t; (t = walk.nextNode());) for (let i = 0; i < t.length; i++) {
+      r.setStart(t, i); r.setEnd(t, i + 1); const box = r.getClientRects()[0];
+      if (box) lines.set(Math.round(box.top), (lines.get(Math.round(box.top)) || 0) + 1);
+    }
+    const c = [...lines.values()], full = c.length > 1 ? c.slice(0, -1) : c;
+    return { max: Math.max(...c), mean: Math.round(full.reduce((a, b) => a + b, 0) / full.length), lines: c.length };
+  };
+  document.querySelectorAll('[data-measure]').forEach((p) => {
+    const slot = p.closest('.slot'), a = autoTier(p.closest('[data-body]')), m = perLine(p);
+    slot.querySelector('[data-cap]').textContent = `body ${a.n} chars → auto ${a.tier} · measured ${m.mean} chars/line (max ${m.max}, ${m.lines} lines)`;
+  });
+  // Live controls: picking a size re-widths the card; Auto applies the rule again. Esc closes.
+  document.querySelectorAll('.sz').forEach((sz) => {
+    const trig = sz.querySelector('.sz-trig'), card = sz.closest('.card');
+    const glyph = sz.classList.contains('sz-a') ? '<svg class="ic" width="13" height="13"><use href="#i-size"/></svg>' : sz.classList.contains('sz-b') ? '<svg class="ic" width="12" height="12"><use href="#i-grip"/></svg>' : null;
+    const sync = () => { if (!sz.classList.contains('open')) trig.setAttribute('aria-expanded', String(sz.matches(':hover, :focus-within'))); };
+    ['mouseenter', 'mouseleave', 'focusin', 'focusout'].forEach((e) => sz.addEventListener(e, () => setTimeout(sync)));
+    sz.addEventListener('keydown', (e) => { if (e.key === 'Escape') { sz.classList.remove('open'); card.focus(); } });
+    sz.querySelectorAll('.sz-o').forEach((o) => o.addEventListener('click', () => {
+      sz.querySelectorAll('.sz-o').forEach((x) => { x.setAttribute('aria-pressed', 'false'); x.classList.remove('kb'); });
+      o.setAttribute('aria-pressed', 'true');
+      const pick = o.textContent.trim()[0], auto = pick === 'A';
+      const tier = auto ? (card.dataset.auto || autoTier(card.querySelector('.cb')).tier) : pick;
+      card.classList.remove('tier-s', 'tier-m', 'tier-l'); card.classList.add('tier-' + tier.toLowerCase());
+      trig.classList.toggle('manual', !auto);
+      if (auto && glyph && !sz.classList.contains('sz-c')) trig.innerHTML = glyph;
+      else trig.textContent = sz.classList.contains('sz-c') ? (auto ? tier : tier + ' ◆') : sz.classList.contains('sz-b') ? tier : '◆ ' + tier;
+      trig.setAttribute('aria-label', `Card size: ${tier}, ${auto ? 'automatic' : 'set by you'}. Change size`);
+    }));
+  });
+</script>
+</body>
+</html>
