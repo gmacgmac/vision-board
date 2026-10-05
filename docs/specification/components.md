@@ -79,7 +79,9 @@ the default.
   `{ side: 't' | 'r' | 'b' | 'l', at?: 0..1 }` (at defaults to the middle). Card: every side,
   spread as today. Diamond: its four points (`t`, `r`, `b`, `l` at 0.5). Pill: its two ends
   (`l`, `r`), or `t`, `b` in a vertical flow. Circle: any angle, so a line meets it on the
-  straight line to its centre (no fixed sides). A port may carry a `label` ("yes", "no").
+  straight line to its centre (no fixed sides). A circle is sized to fit its text (its diameter
+  comes from the text, like a card's height), and in radial mode its links are straight lines,
+  centre to centre, never right-angled routes (maintainer, 2026-10-05). A port may carry a `label` ("yes", "no").
 - **The layout engine reads them through `format`**: `routeLinks` picks the nearest port the
   type allows instead of any side, and clips each line to the outline's edge (the box edge for a
   card, the point for a diamond, the rounded end for a pill, the rim for a circle). Same input, same picture.
