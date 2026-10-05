@@ -50,3 +50,10 @@ test('gallery ledger: the agent access samples have two open requests and frames
     assert.deepEqual(access.holders?.[region]?.map((h) => [h.label, h.creator ?? false]), [['Pricing chat', true], ['Docs chat', false]], region);
   }
 });
+
+test('gallery ledger: the container samples have a sent container note, three not yet sent and one moved container', () => {
+  const state = boardState(foldLedger(events), 'containers');
+  const notes = Object.fromEntries([...state.regionNotes].map(([id, ns]) => [id, ns.map((n) => n.sent === true)]));
+  assert.deepEqual(notes, { 'c-sent': [true], 'c-hover': [false], 'c-focus': [false], 'c-open': [false] });
+  assert.deepEqual([...state.regionPins.keys()], ['c-moved']);
+});

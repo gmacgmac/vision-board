@@ -8,6 +8,7 @@ import type { AccessHolder, BoardState } from '../../../../packages/actions/src/
 import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
 import { LATER_REGION } from '../../../../packages/format/src/index.ts';
+import { work } from './work.ts';
 
 /** The built-in Later's frame (3_FE_03 ruling 5): its layout is the grid, set by the board, and
  * while it is empty it shows only while a card is dragged, as a drop target. */
@@ -80,7 +81,10 @@ export function createRegionSet(host: HTMLElement): RegionSet {
           el.style.height = `${r.box.h}px`;
           moved = true;
         }
-        if (was?.state !== state) el.update(st);
+        if (was?.state !== state) {
+          el.update(st);
+          work.framesUpdated += 1;
+        }
         shown.set(r.id, { box, state });
       }
       return moved;

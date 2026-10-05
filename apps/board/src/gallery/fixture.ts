@@ -11,6 +11,8 @@ export const BOARD = 'gallery';
 /** The board the note samples use (2e_FE_01): its own, because a Send is per board, and its
  * Sends make some notes history while leaving the main board's notes not yet sent. */
 export const NOTES_BOARD = 'notes';
+/** The board the container samples use (3_FE_04): its own, so its Send leaves the other boards' notes as they are. */
+export const CONTAINERS_BOARD = 'containers';
 /** The regions whose nodes the node section shows. The `frame-*` regions are the region section's. */
 export const REGION_KINDS = 'kinds';
 export const REGION_OTHER = 'other';
@@ -29,6 +31,8 @@ export interface Fixture {
   access: BoardAccess;
   /** The notes board, for the note pin, the "Your note" block and the note bubble. */
   notes: { view: View; state: BoardState };
+  /** The containers board (3_FE_04): container notes before and after a Send, and a moved container. */
+  containers: { view: View; state: BoardState };
 }
 
 /** Fails loudly on a bad fixture: a gallery drawn from invalid data would prove nothing. */
@@ -39,5 +43,6 @@ export function loadFixture(): Fixture {
   return {
     view: boardView(ledger, BOARD), state: boardState(ledger, BOARD), access: boardAccess(ledger, BOARD),
     notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD) },
+    containers: { view: boardView(ledger, CONTAINERS_BOARD), state: boardState(ledger, CONTAINERS_BOARD) },
   };
 }

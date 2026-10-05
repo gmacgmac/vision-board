@@ -221,6 +221,9 @@ test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc cl
   // Tab from the top of the page: the first region's row is one stop, on its checked layout.
   await page.locator('body').focus();
   for (let i = 0; i < 30 && (await active(page)).region !== 'review'; i += 1) await page.keyboard.press('Tab');
+  // The grip is the frame's first stop (3_FE_04 ruling 5), then the row.
+  expect(await active(page)).toEqual({ region: 'review', label: 'Move container Review' });
+  await page.keyboard.press('Tab');
   expect(await active(page)).toEqual({ region: 'review', label: 'Grid' });
   await expect(review.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
   await expect(pop).toBeVisible();

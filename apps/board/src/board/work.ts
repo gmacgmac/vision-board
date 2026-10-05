@@ -18,6 +18,8 @@ export interface WorkCounts {
   linksRedrawn: number;
   /** Reads of the whole ledger: opening the page, a ledger that went back, a format it cannot apply. */
   fullFetches: number;
+  /** Container frames whose element was updated (`update` on a `<vb-region>`). */
+  framesUpdated: number;
 }
 
 export interface Work extends WorkCounts {
@@ -28,7 +30,7 @@ export interface Work extends WorkCounts {
 }
 
 const zero = (): Work => ({
-  cardsUpdated: 0, cardsMeasured: 0, cardsPlaced: 0, containersLaidOut: 0, linksRedrawn: 0, fullFetches: 0,
+  cardsUpdated: 0, cardsMeasured: 0, cardsPlaced: 0, containersLaidOut: 0, linksRedrawn: 0, fullFetches: 0, framesUpdated: 0,
   containers: [], firstDrawMs: null,
 });
 

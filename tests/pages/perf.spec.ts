@@ -341,7 +341,7 @@ test('a container drag frame costs nothing; the drop repacks only; a container n
   await reset(page);
   await page.mouse.up();
   await expect.poll(async () => Object.keys((await (await page.request.get(`${PERF_BASE}/api/boards/${BIG.board}`)).json() as {
-    state: { regionPins?: Record<string, unknown> } }).state.regionPins ?? {})).toEqual([regionId(1)]);
+    state: { containerPins?: Record<string, unknown> } }).state.containerPins ?? {})).toEqual([regionId(1)]);
   const drop = await counts(page);
   const after = await frames();
   const moved = Object.keys(after).filter((id) => after[id]!.box !== before[id]?.box);

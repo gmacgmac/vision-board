@@ -67,6 +67,7 @@ address carries **`?vbwork`** (the page tests open `/?vbwork#<board>`). `__vbWor
 | `containersLaidOut` | containers laid out again (their layout mode ran); `containers` lists them |
 | `linksRedrawn` | connectors whose path or look was written |
 | `fullFetches` | reads of the whole ledger |
+| `framesUpdated` | container frames updated (`update` on a `<vb-region>`) |
 | `firstDrawMs` | milliseconds from navigation start to the end of the first draw |
 
 `__vbWork.reset()` zeroes the counters (not `firstDrawMs`), `__vbWork.idle()` resolves once the page

@@ -258,8 +258,13 @@ for (const theme of THEMES) {
     await grip(page, 'risks').focus();
     await page.keyboard.press('Alt+ArrowDown');
     await expect.poll(() => regionPins(page).then((p) => Object.keys(p))).toEqual(['risks']);
-    await comment(page, 'Plan').click();
-    await expect(page.getByRole('dialog', { name: /container Plan/ })).toBeVisible();
+    // Parked is the last container, panned left, so its bubble opens over empty board, not another card's buttons.
+    const t = centre(await boxOf(page, frame(page, 'parked').locator('h2')));
+    await drag(page, t, { x: t.x - 420, y: t.y });
+    await comment(page, 'Parked').click();
+    await expect(page.getByRole('dialog', { name: /container Parked/ })).toBeVisible();
+    const [b, f] = [await boxOf(page, bubble(page)), await boxOf(page, frame(page, 'parked'))];
+    expect(b.x >= f.x + f.width - 1).toBe(true);
     await expectNoAxeViolations(page);
     await page.keyboard.press('Escape');
   });

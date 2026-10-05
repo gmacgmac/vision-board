@@ -155,3 +155,26 @@
 {"v":4,"seq":155,"at":"2026-10-05T09:01:14Z","by":"person","type":"act","action":"context","n":76,"ver":1,"text":"Explain the **1.4x** in plain terms."}
 {"v":2,"seq":156,"at":"2026-10-05T09:01:15Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":79,"ver":1,"node":{"region":"other","kind":"risk","title":"Selected","item":true,"body":"Picked by the person: 1.5px in the card's own colour, with a soft glow. Selecting decides nothing."}}
 {"v":6,"seq":157,"at":"2026-10-05T09:01:16Z","by":"person","type":"act","action":"move","nodes":[2,3],"region":"later"}
+{"v":7,"seq":158,"at":"2026-10-05T09:02:00Z","by":"agent","agent":"a-pricing1","type":"board","board":"containers","title":"Container notes and moves"}
+{"v":7,"seq":159,"at":"2026-10-05T09:02:01Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-rest","title":"At rest","mode":"grid"}}
+{"v":7,"seq":160,"at":"2026-10-05T09:02:02Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-hover","title":"Hover","mode":"grid"}}
+{"v":7,"seq":161,"at":"2026-10-05T09:02:03Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-focus","title":"Focus","mode":"grid"}}
+{"v":7,"seq":162,"at":"2026-10-05T09:02:04Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-pressed","title":"Pressed","mode":"grid"}}
+{"v":7,"seq":163,"at":"2026-10-05T09:02:05Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-open","title":"Note open","mode":"grid"}}
+{"v":7,"seq":164,"at":"2026-10-05T09:02:06Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-sent","title":"Note sent","mode":"grid"}}
+{"v":7,"seq":165,"at":"2026-10-05T09:02:07Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-moved","title":"Moved","mode":"grid"}}
+{"v":7,"seq":166,"at":"2026-10-05T09:02:08Z","by":"agent","agent":"a-pricing1","type":"region","board":"containers","region":{"id":"c-dragging","title":"Dragging","mode":"grid"}}
+{"v":7,"seq":167,"at":"2026-10-05T09:02:09Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":80,"ver":1,"node":{"region":"c-rest","kind":"question","title":"Which plan do we ship first?","item":true}}
+{"v":7,"seq":168,"at":"2026-10-05T09:02:10Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":81,"ver":1,"node":{"region":"c-hover","kind":"question","title":"Is the annual price right?","item":true}}
+{"v":7,"seq":169,"at":"2026-10-05T09:02:11Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":82,"ver":1,"node":{"region":"c-focus","kind":"risk","title":"Churn after the trial","item":true}}
+{"v":7,"seq":170,"at":"2026-10-05T09:02:12Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":83,"ver":1,"node":{"region":"c-pressed","kind":"finding","title":"Teams pay yearly","item":true}}
+{"v":7,"seq":171,"at":"2026-10-05T09:02:13Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":84,"ver":1,"node":{"region":"c-open","kind":"decision","title":"Keep the free tier","item":true}}
+{"v":7,"seq":172,"at":"2026-10-05T09:02:14Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":85,"ver":1,"node":{"region":"c-sent","kind":"action","title":"Draft the price page","item":true}}
+{"v":7,"seq":173,"at":"2026-10-05T09:02:15Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":86,"ver":1,"node":{"region":"c-moved","kind":"question","title":"Who owns the rollout?","item":true}}
+{"v":7,"seq":174,"at":"2026-10-05T09:02:16Z","by":"agent","agent":"a-pricing1","type":"node","board":"containers","n":87,"ver":1,"node":{"region":"c-dragging","kind":"risk","title":"Late legal review","item":true}}
+{"v":7,"seq":175,"at":"2026-10-05T09:02:17Z","by":"person","type":"act","action":"comment","board":"containers","region":"c-sent","text":"Should this wait for the next release?"}
+{"v":7,"seq":176,"at":"2026-10-05T09:02:18Z","by":"person","type":"act","action":"send","board":"containers"}
+{"v":7,"seq":177,"at":"2026-10-05T09:02:19Z","by":"person","type":"act","action":"comment","board":"containers","region":"c-hover","text":"Is this group in the right order?"}
+{"v":7,"seq":178,"at":"2026-10-05T09:02:20Z","by":"person","type":"act","action":"context","board":"containers","region":"c-focus","text":"Say more about where these risks come from."}
+{"v":7,"seq":179,"at":"2026-10-05T09:02:21Z","by":"person","type":"act","action":"comment","board":"containers","region":"c-open","text":"Can we decide this before the launch call?"}
+{"v":7,"seq":180,"at":"2026-10-05T09:02:22Z","by":"person","type":"act","action":"pin","board":"containers","region":"c-moved","x":40,"y":24}

@@ -6,6 +6,7 @@ import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BubbleInput, BubblePhase, VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
 import { bubbleView, placeBubble } from '../../../../packages/ui/src/index.ts';
 import { el, group } from './dom.ts';
+import { containerBubbleSample } from './container-bubble.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
 
@@ -80,6 +81,6 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
 
 export function noteBubbleSamples(body: HTMLElement, fx: Fixture): void {
   const row = el('div', 'g-bubbles');
-  row.append(...SAMPLES.map((s) => sample(s, fx)));
-  body.append(group('Every state', 'New, editing, saving, error and a sent note, placed on the right, on the left and below the way the board places them. The border and arrow wear the card\'s colour, faint at rest and full while you type.', row));
+  row.append(...SAMPLES.map((s) => sample(s, fx)), containerBubbleSample(fx));
+  body.append(group('Every state', 'New, editing, saving, error and a sent note, placed on the right, on the left and below the way the board places them, and a note on a whole container beside its title line. The border and arrow wear the card\'s colour (the container\'s line colour), faint at rest and full while you type.', row));
 }

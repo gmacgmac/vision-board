@@ -115,20 +115,21 @@ The rest runs as small separate builds, one sub-agent each. Each ticks its own l
 - [x] **4C. Region pattern** (0cf8377) (`packages/ui` only): grip, Comment button, pin, "Your note" line, the
   cog's "Put container back", `pattern.json` states. Turns green: `region-core`, `region-template`
   and `note-bubble` tests.
-- [ ] **4D. Page wiring** (`apps/board/src/board/`): container note flow through the existing note
+- [x] **4D. Page wiring** (43a5f97, 31e70cf) (`apps/board/src/board/`): container note flow through the existing note
   bubble, grip drag (transform only while dragging, one `pin` on drop), Alt+arrows, C/N on the
   title line, command table and help line.
 - [x] **4F. What the agent owes counts container notes** (a57c7ff): `pendingItems`; api.md 77 adds `containers` to `list_open` and the write result.
-- [~] **4D.** 4D1 notes and Put container back done (43a5f97); 4D2 grip drag, Alt+arrows, C/N running.
-- [ ] **4E. Gallery, axe dark and light, baselines viewed before updating, perf counting tests,
+- [x] **4D.** 4D1 notes and Put container back (43a5f97); 4D2 grip drag, Alt+arrows, C/N (31e70cf).
+- [x] **4E. Gallery, axe dark and light, baselines viewed before updating, perf counting tests,
   all five gates.**
 
 ## Validation
 
-- [ ] All five gates exit 0 (read the exit codes): `npm test`, `npm run check`, `npm run verify`,
+- [x] All five gates exit 0 (read the exit codes): `npm test`, `npm run check`, `npm run verify`,
   `npm run test:pages`, `npm run gen -- --check`
-- [ ] Board in dark and light: a container note and a container drag, checked through the page
-  tests and gallery frames; say plainly if you did not watch a live drag.
+- [x] Board in dark and light: a container note and a container drag, checked through the page
+  tests and gallery frames; say plainly if you did not watch a live drag. (Page tests and gallery
+  screenshots only: no live drag was watched by a person.)
 
 ## Constraints
 
@@ -142,4 +143,27 @@ unsettled.
 
 ## Implementation Notes
 
-(to be filled in by the builder)
+- **4A** (0cf8377) `packages/actions`: `containers.ts` (new: container reads, `get_board` `containerNotes`/`containerPins`),
+  `fold.ts` (`regionNotes`, `regionPins` Maps), `act.ts` (container act rules, Later refused), `notes.ts`, `reads.ts`,
+  `reply.ts` ("On container ..."); `packages/format` ledger v7; `apps/board/server/reads.ts`.
+- **4B** (0cf8377) `packages/layout`: `place.ts`, `collide.ts` (`applyPins`, `makeRoom`), `board.ts`, `types.ts`.
+- **4C** (0cf8377) `packages/ui/src/region`: grip, Comment, note pin, "Your note" line, Put container back
+  (`regionNote`, `RegionNoteState`, `PUT_BACK_NONE_HINT`, `setNoteOpen`, `titleLine`); note bubble `titleAnchor`, `data-on`.
+- **4D** (43a5f97, 31e70cf) `apps/board/src/board`: `notes.ts` (`containerView`, `anchorBox`), `container-drag.ts` (new),
+  `pointer.ts`, `keys.ts` (Alt+arrows, C/N), `commands.ts`, `places.ts`, `layout-cache.ts`, `wiring.ts`, help line.
+- **4F** (a57c7ff) `packages/actions/src/pending.ts` (`pendingItems`, `openContainer`); `list_open` / write result `containers`.
+- **4E** gallery `container-section.ts` (8 frames on fixture board `containers`), `container-bubble.ts` (bubble
+  `container` state), `fixture.ts` (`CONTAINERS_BOARD`), 23 v7 ledger lines; `region.css` `data-look` hover/pressed
+  for grip, Comment, pin; `work.ts` `framesUpdated` (bumped in `render.ts`, listed in performance.md).
+- **Event shapes** (api.md 71-77): `comment|context { board, region, text }`, `note-edit|note-remove { board, region,
+  note }`, `pin { board, region, x, y }`, `unpin { board, region }`; person only; no `n`/`ver`/`nodes`.
+- **Tests changed (4E)**: containers.spec axe opens Parked's note after a pan (on Plan the bubble covered Risks' card
+  buttons); perf.spec reads `state.containerPins` (was `regionPins`) and gets `framesUpdated`; gallery.spec 18 frames,
+  collapsed row 3/7 (Comment stays beside the cog), new container-samples test; board.spec Tab hits the grip before the
+  row; send-access axe test revokes the two holders it grants (a sixth holder sat under the wider row); fixture test.
+- **Baselines updated** (all viewed): board dark/light (grip room, Comment icon, help line), gallery dark/light (new
+  samples, Comment, menu item), agent-access dark/light (grip, Comment, hover frame now ellipsizes), node-size
+  dark/light (no content change: sub-pixel shift from the taller gallery above).
+- **Gates**: `npm test` 0 (554 + 4), `check` 0, `verify` 0, `test:pages` 0 (120), `gen -- --check` 0.
+- **Unsettled**: many holders on a narrow frame still slide under the mode row (pre-existing, worse by ~44px);
+  Pressed looks are a 1px nudge, hard to see; no live drag watched.
