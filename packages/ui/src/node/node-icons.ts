@@ -24,6 +24,9 @@ export const ACTION_ICON: Partial<Record<ActionId, string>> = {
   later: '<path d="M6 4h8v12l-4-3-4 3z"/>',
 };
 
+/** The size control's glyph, 24 x 24: a width between two bars (mockup 07, i-size). */
+export const SIZE_ICON = '<path d="M3 5v14M21 5v14M7 12h10M10 9l-3 3 3 3M14 9l3 3-3 3"/>';
+
 /** One icon as an inline SVG, hidden from assistive tech (the button or card carries the label). */
 export const svgIcon = (paths: string, box: number, cls: string): string =>
   `<svg class="${cls}" viewBox="0 0 ${box} ${box}" aria-hidden="true" focusable="false">${paths}</svg>`;

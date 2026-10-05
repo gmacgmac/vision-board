@@ -2,9 +2,9 @@
 // the action layer and the I/O module. Layout, formats and actions live in packages/; this file
 // wires them to the canvas. It is plain TypeScript (D-005): the Svelte shell mounts it on the
 // stage element and reads what it reports through `shell`.
-import type { Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
+import type { ActSize, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { ActionId } from '../../../../packages/format/src/index.ts';
-import { NODE_TYPES } from '../../../../packages/format/src/index.ts';
+import { flagOn, NODE_TYPES } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
 import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
@@ -19,6 +19,8 @@ import {
 import { Viewport } from './viewport.ts';
 import { bindPointer } from './pointer.ts';
 import { bindKeys } from './keys.ts';
+import { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
+import { pageFlags } from '../flags.ts';
 import { askNote, shell, toast } from '../shell/shell.svelte.ts';
 
 export interface BoardElements {
@@ -40,6 +42,8 @@ export interface Board {
 export function createBoard(els: BoardElements): Board {
   const { stage, world, wires } = els;
   const vp = new Viewport(stage, world);
+  /** Card size tiers and their control (D-030), behind the nodeSize flag (rule 12). */
+  const sizing = flagOn('nodeSize', pageFlags());
 
   const S = {
     id: '',
@@ -81,7 +85,7 @@ export function createBoard(els: BoardElements): Board {
 
   function build() {
     world.classList.add('no-anim');
-    S.cards = buildCards(els.cards, view());
+    S.cards = buildCards(els.cards, view(), { sizeControl: sizing });
     S.regions = buildRegions(els.regions, view());
     shell.title = view().title;
     shell.version = view().version;
@@ -91,7 +95,7 @@ export function createBoard(els: BoardElements): Board {
   }
 
   function relayout() {
-    for (const n of view().nodes) updateCard(S.cards.get(n.id)!, n, S.state);
+    for (const n of view().nodes) updateCard(S.cards.get(n.id)!, n, S.state, sizing ? tierOf(n, S.state) : undefined);
     S.sizes = measure(S.cards);
     S.layout = layoutBoard(view(), S.sizes, {
       pins: S.state.pins, modes: S.state.modes, hidden: hiddenSet(),
@@ -187,6 +191,10 @@ export function createBoard(els: BoardElements): Board {
     if (await record({ action: 'unpin', ...target(id) })) relayout();
   }
 
+  async function setSize(id: string, size: ActSize) {
+    if (await record(sizeAct(id, size))) relayout();
+  }
+
   async function setMode(region: string, mode: Mode) {
     if (await record({ action: 'mode', region, mode })) {
       relayout();
@@ -242,6 +250,9 @@ export function createBoard(els: BoardElements): Board {
       void act(id, actBtn.dataset.act as ActionId);
       return;
     }
+    const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
+    const pick = sizeBtn?.dataset.sizePick;
+    if (sizeBtn && isSizePick(pick)) return void setSize(sizeBtn.closest<HTMLElement>('vb-node')!.dataset.id!, pick);
     const modeBtn = t.closest<HTMLButtonElement>('button[data-mode]');
     if (modeBtn) return void setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
@@ -280,6 +291,8 @@ export function createBoard(els: BoardElements): Board {
     shell.hide = !shell.hide;
     if (S.data) relayout();
   }
+
+  const unbindSize = bindSizeControl(stage);
 
   const onResize = () => S.layout && vp.apply();
   window.addEventListener('resize', onResize);
@@ -338,6 +351,7 @@ export function createBoard(els: BoardElements): Board {
     destroy() {
       S.unwatch?.();
       unbindKeys();
+      unbindSize();
       window.removeEventListener('resize', onResize);
     },
   };

@@ -1,9 +1,9 @@
 // Draws a laid-out board. Elements are created once per view version and then updated in
 // place (attributes, transforms), so focus and CSS transitions survive every re-layout.
-import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
+import type { NodeSize, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { NodeTemplateOptions, VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { esc, nodeState, regionState } from '../../../../packages/ui/src/index.ts';
 
 /** Items first in number order, then the rest: DOM order is tab order is reading order. */
@@ -15,20 +15,21 @@ export function readingOrder(view: View): ViewNode[] {
 }
 
 /** One <vb-node> per node, in reading order. The element renders its own markup and state. */
-export function buildCards(host: HTMLElement, view: View): Map<string, VbNodeElement> {
+export function buildCards(host: HTMLElement, view: View, opts: NodeTemplateOptions = {}): Map<string, VbNodeElement> {
   host.replaceChildren();
   const cards = new Map<string, VbNodeElement>();
   for (const n of readingOrder(view)) {
     const el = document.createElement('vb-node') as VbNodeElement;
-    el.render(n);
+    el.render(n, opts);
     host.append(el);
     cards.set(n.id, el);
   }
   return cards;
 }
 
-export function updateCard(el: VbNodeElement, n: ViewNode, s: BoardState): void {
-  el.update(nodeState(n, s));
+/** `tier` (the nodeSize flag) sets data-size, so call this before `measure`: height follows width. */
+export function updateCard(el: VbNodeElement, n: ViewNode, s: BoardState, tier?: NodeSize): void {
+  el.update(nodeState(n, s, tier));
 }
 
 export function measure(cards: Map<string, HTMLElement>): Map<string, Size> {

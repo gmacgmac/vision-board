@@ -47,3 +47,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
   flex: none; width: var(--vb-card-w); padding: var(--vb-space-3); border: 1px dashed var(--vb-line-strong);
   border-radius: var(--vb-radius-md); font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
 }
+
+/* Node size samples (nodeSize flag only): on the board's canvas, with room above each row for the
+   size pill, which lifts above a card's top edge. .g-focused draws the focus ring on one sample,
+   the way :focus-visible would, since only one element can hold real focus. */
+.g-sizes { padding: calc(var(--vb-space-6) * 2) var(--vb-space-5) var(--vb-space-5); border-radius: var(--vb-radius-lg); }
+.g-sizes .g-cards { gap: calc(var(--vb-space-6) * 2) var(--vb-space-6); }
+.g-focused { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }

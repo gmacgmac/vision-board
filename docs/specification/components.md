@@ -125,7 +125,24 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
 ## Feature flags (rule 12)
 
 A refactor that keeps the look and behaviour needs no flag. A new mode, node type or behaviour
-ships behind one; the flag mechanism is defined by the first task that ships new behaviour.
+ships behind one. The pattern was defined by the first such task (U7, node size):
+
+- **One definition**: `packages/format/src/flags.ts` holds `FLAGS` (name → `{ default,
+  description }`). `format` because every layer may read it (D-016). Adding a flag is one entry;
+  removing it, when its behaviour becomes the default, is deleting the entry and its checks.
+- **One question**: `flagOn(name, overrides)` returns the override when there is one, else the
+  default. An unknown name throws, so a typo never reads as "off".
+- **Overrides**: the page reads them with `pageFlags()` (`apps/board/src/flags.ts`) from the
+  `vb.flags` localStorage key, then `?flags=` in the address, which wins. Both use `parseFlags`'
+  format: comma-separated names, a leading `-` turning one off (`?flags=nodeSize`,
+  `?flags=-nodeSize`). Unknown names are refused and ignored. Tests and the gallery pass overrides
+  directly.
+- **Where it is checked**: once, where the behaviour enters (the board controller, the gallery's
+  entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
+  packages never read the address or storage. Pure packages (`layout`) take the result as input.
+- **Flag off means unchanged**: every existing page-test screenshot must still match with the
+  flag off. A gallery section for flagged behaviour shows only with the flag on, with its own
+  screenshots.
 
 ## Node size (D-030, tracker U7)
 

@@ -1,6 +1,6 @@
 // Node pattern, layer 1 (core): what a node shows and which actions it offers. No DOM, so
 // every rule here is unit-tested under plain Node; the element only applies the result.
-import type { ActionId, ViewNode } from '../../../format/src/index.ts';
+import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../../actions/src/index.ts';
 import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
@@ -36,6 +36,20 @@ export interface NoteLine {
   text: string;
 }
 
+/** The size control's state (D-030): the card's tier, whether the person picked it, the trigger's
+ *  label, and what the trigger shows in place of the glyph ("◆ S" for a pick, empty otherwise). */
+export interface SizeState {
+  tier: NodeSize;
+  picked: boolean;
+  label: string;
+  shown: string;
+}
+
+export const SIZE_LETTER: Record<NodeSize, string> = { s: 'S', m: 'M', l: 'L' };
+
+export const sizeLabel = (v: { tier: NodeSize; picked: boolean }): string =>
+  `Card size: ${SIZE_LETTER[v.tier]}, ${v.picked ? 'your pick' : 'automatic'}. Change size`;
+
 /** Everything a drawn node shows for the person's current state; `update()` applies it. */
 export interface NodeState {
   status: ItemStatus;
@@ -48,15 +62,19 @@ export interface NodeState {
   note?: NoteLine;
   /** aria-pressed for each offered action. */
   pressed: Partial<Record<ActionId, boolean>>;
+  /** The card's size tier and control; absent unless the page passed a tier (the nodeSize flag). */
+  size?: SizeState;
 }
 
-export function nodeState(n: ViewNode, s: BoardState): NodeState {
+/** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import). */
+export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize): NodeState {
   const status = statusOf(s, n.id);
   const pressed: Partial<Record<ActionId, boolean>> = {};
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
   const notes = s.items.get(n.id)?.notes ?? [];
   const last = notes[notes.length - 1];
   const lead = last?.kind === 'context' ? 'You asked for more context' : 'Your note';
+  const picked = s.sizes.has(n.id);
   return {
     status,
     pinned: s.pins.has(n.id),
@@ -64,5 +82,6 @@ export function nodeState(n: ViewNode, s: BoardState): NodeState {
     statusWord: isItem(n) ? STATUS_LABEL[status] : '',
     ...(last ? { note: { who: `${notes.length > 1 ? `${notes.length} notes · ` : ''}${lead}`, text: last.text } } : {}),
     pressed,
+    ...(tier ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };
 }
