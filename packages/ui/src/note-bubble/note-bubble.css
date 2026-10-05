@@ -6,7 +6,9 @@
 
 vb-note-bubble {
   --kind: var(--vb-ink-subtle);
-  --edge: color-mix(in srgb, var(--kind) 65%, var(--vb-line));
+  /* The card's own border colour (node.css: --kind 38% into --vb-line), fainter at rest and the
+     same as the card while you type: the bubble never outshines its card (maintainer, 749). */
+  --edge: color-mix(in srgb, var(--kind) 24%, var(--vb-line));
   --arrow: 22px;
   position: absolute; z-index: 30; left: 0; top: 0;
   display: grid; gap: var(--vb-space-2); width: 300px; padding: var(--vb-space-3);
@@ -16,7 +18,7 @@ vb-note-bubble {
 }
 vb-note-bubble[hidden] { display: none; }
 /* Full colour while you type in it; data-typing draws that look for a gallery sample. */
-vb-note-bubble:is(:focus-within, [data-typing]) { --edge: var(--kind); }
+vb-note-bubble:is(:focus-within, [data-typing]) { --edge: color-mix(in srgb, var(--kind) 38%, var(--vb-line)); }
 
 /* The arrow: a square turned 45deg, bordered on the two sides that face the card. */
 vb-note-bubble::before {
@@ -59,7 +61,9 @@ vb-note-bubble .vb-nb-error[hidden] { display: none; }
 /* Remove, the hint and Cancel / Save on one row; the hint wraps away first when Remove is there. */
 vb-note-bubble .vb-nb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
 vb-note-bubble .vb-nb-hint { flex: 1 1 0; min-width: 0; color: var(--vb-ink-subtle); font-size: var(--vb-text-xs); line-height: 1.8; }
-vb-note-bubble[data-mode='edit'] .vb-nb-hint { order: -1; flex-basis: 100%; }
+/* The hint always takes its own row above the buttons, in both modes, so it never wraps mid-phrase
+   ("Esc / cancel" broke when Cancel and Add note left it too little room; maintainer, 771). */
+vb-note-bubble .vb-nb-hint { order: -1; flex-basis: 100%; white-space: nowrap; }
 vb-note-bubble kbd {
   padding: 1px 5px; border: 1px solid var(--vb-line-strong); border-radius: 4px;
   color: var(--vb-ink); font: var(--vb-text-xs) var(--vb-font-mono);

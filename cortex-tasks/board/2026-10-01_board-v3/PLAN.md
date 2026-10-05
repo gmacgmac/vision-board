@@ -59,7 +59,8 @@ browser check for UI work.
    - 2c Markdown renderer (D-023) in `packages/ui`, used by cards and notes.
    - 2d Mode picker pill (mockup 02) and region sizing (no overlaps).
    - 2e Notes beside cards, editable and removable, saved as ledger events.
-   - 2f Shapes: decision diamond and start/end pill (components.md § Shapes). Mockups in
+   - 2f Shapes: decision diamond, start/end pill and circle for radial and mind-map views
+     (components.md § Shapes; circle added by the maintainer 2026-10-05). Mockups in
      Architect's look after 2b, picked by the maintainer, then outline and ports in the
      registry, the layout engine and the node CSS, behind a flag.
 3. Selection and moving, ported from `prototypes/board-v3-design/architect-extract/` (README §2): click, Shift/Cmd/Ctrl

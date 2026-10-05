@@ -67,19 +67,22 @@ pattern's markup or styles it.
 
 A shape is data in the registry, not a new element. Approved examples (maintainer, 2026-10-04):
 the **decision diamond** (a fork in a flow, one way in, a "yes" and a "no" way out) and the
-**start/end pill** (where a flow begins or ends). The card stays the default.
+**start/end pill** (where a flow begins or ends), and the **circle** (the centre of a radial or
+mind-map view, with related nodes in circles around it; maintainer, 2026-10-05). The card stays
+the default.
 
-- **`outline`** names the shape: `card` (default), `diamond`, `pill`. It is a word, not a path, so
+- **`outline`** names the shape: `card` (default), `diamond`, `pill`, `circle`. It is a word, not a path, so
   the agent never draws coordinates (rule 9). The node pattern owns one drawing per outline in
   `node.css` (CSS `clip-path` or a background SVG, tokens only); a kind's colour still arrives
   through `--kind`.
 - **`ports`** say where connectors may attach, as sides and positions on the outline's box:
   `{ side: 't' | 'r' | 'b' | 'l', at?: 0..1 }` (at defaults to the middle). Card: every side,
   spread as today. Diamond: its four points (`t`, `r`, `b`, `l` at 0.5). Pill: its two ends
-  (`l`, `r`), or `t`, `b` in a vertical flow. A port may carry a `label` ("yes", "no").
+  (`l`, `r`), or `t`, `b` in a vertical flow. Circle: any angle, so a line meets it on the
+  straight line to its centre (no fixed sides). A port may carry a `label` ("yes", "no").
 - **The layout engine reads them through `format`**: `routeLinks` picks the nearest port the
   type allows instead of any side, and clips each line to the outline's edge (the box edge for a
-  card, the point for a diamond, the rounded end for a pill). Same input, same picture.
+  card, the point for a diamond, the rounded end for a pill, the rim for a circle). Same input, same picture.
 - **A link names a port only when it matters**: an optional `fromPort` label on a link (e.g.
   "yes") is a format change, made first with a schema version bump (rule 6 / "change the format
   first").
