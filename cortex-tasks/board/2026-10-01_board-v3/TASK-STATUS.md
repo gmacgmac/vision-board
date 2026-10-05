@@ -33,7 +33,7 @@ created: 2026-10-01
 | Stage | Status | Commit | Notes |
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
-| 2 Card and container basics | In progress | 3ee805b | Step 1 and 2a done (2026-10-04); 2b next |
+| 2 Card and container basics | In progress | 3ee805b | 2a, 2b, 2c done; 2d running (2026-10-05) |
 | 3 Selection and moving | Planned | | Port from architect-extract |
 | 4 Send | Planned | | Uses U4 |
 | 5 Proposals, seen, parking | Planned | | U3 step 3 |
@@ -80,3 +80,14 @@ Shift-lasso) and U7 (card width adapts to content; no token change until designe
 Open from 2c (maintainer): dark link inside a quote or note scores Lc 44.0 (tier 45); the fix is
 the protected token `--vb-accent-text` dark `#ff5cbe` -> `#ff66c2` (Lc 46.1+), which also lifts the
 note "who" line (44.9, item 492).
+
+## Stage 2d tasks (written 2026-10-05)
+
+Facts: `temp/research/stage-2d-2e-3-brief.md` (git-ignored). The two tasks touch disjoint
+packages and run in parallel: FE_01 in the main checkout, BE_01 in worktree branch `2d-layout`.
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1a | [2d_FE_01 icon row, popover, cog](./2d_FE_01_icon-row.md) (region half of N8) | Opus 5.5 | Running | |
+| 1b | [2d_BE_01 no overlaps](./2d_BE_01_no-overlaps.md) | Opus 5.5 | Running | |
+| 2 | Stage check: orchestrator merges, runs the four gates, compares with 05 in dark and light | Orchestrator | Planned | |
