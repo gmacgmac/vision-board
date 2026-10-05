@@ -1,6 +1,7 @@
 // The projection layout reads: one board, folded from the project ledger by `boardView`
 // (board-view.ts), never read from a file. Meaning only, never coordinates: layout is the
 // engine's job (project rule 9).
+import type { NodeSize } from './ledger.ts';
 
 export const FORMAT_VERSION = 1;
 
@@ -35,6 +36,8 @@ export interface ViewNode {
   lane?: string;
   tags?: string[];
   emphasis?: boolean;
+  /** The agent's card size suggestion (D-030); the person's `size` act wins (BoardState.sizes). */
+  size?: NodeSize;
 }
 
 export interface Link {

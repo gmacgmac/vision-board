@@ -1,7 +1,11 @@
-export { ACTIONS, DECIDED, ITEM_ACTIONS } from './registry.ts';
-export type { ActionDef, ItemStatus } from './registry.ts';
+export { ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, DECIDED, ITEM_ACTIONS } from './registry.ts';
+export type { ActionDef, AgentActionDef, AgentActionId, ItemStatus } from './registry.ts';
 export { MAX_TEXT } from '../../format/src/index.ts';
 export { applyEvent, applyItem, boardState, counts, foldLedger, statusOf } from './fold.ts';
-export type { BoardState, ItemNote, ItemState, LedgerReply, LedgerState, Proposal } from './fold.ts';
+export type { BoardState, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal } from './fold.ts';
 export { validateAct } from './act.ts';
+export { canWrite, creatorOf, grantRequests, holders, openRequest } from './grants.ts';
+export type { Container, GrantRequestView, WriteItem } from './grants.ts';
+export { pendingItems, responsesAfter, unseenItems } from './pending.ts';
+export type { PendingItem, UnseenItem } from './pending.ts';
 export { replyText } from './reply.ts';

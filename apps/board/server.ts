@@ -71,6 +71,7 @@ function loadBoard(id: string) {
     view: boardView(s, id),
     state: {
       items: Object.fromEntries(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
+      sizes: Object.fromEntries(st.sizes),
     },
     versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(x.n), latest(x).ver])),
   };

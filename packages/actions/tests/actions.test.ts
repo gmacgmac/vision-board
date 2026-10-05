@@ -32,8 +32,11 @@ test('agents cannot take decisions', () => {
     assert.ok(validateAct(act({ by: 'agent', action }), state).some((p) => p.includes('only the person')), action);
 });
 
-test('agents may comment', () =>
-  assert.deepEqual(validateAct(act({ by: 'agent', action: 'comment', text: 'hi' }), state), []));
+// comment and context are person-only since ledger v3 (api.md 19): an agent replies instead.
+test('agents may not comment or ask for context either', () => {
+  for (const action of ['comment', 'context'] as const)
+    assert.ok(validateAct(act({ by: 'agent', action, text: 'hi' }), state).some((p) => p.includes('only the person')), action);
+});
 
 test('item actions reject non-item nodes and unknown nodes', () => {
   assert.ok(validateAct(act({ n: plain }), state).some((p) => p.includes('not a numbered item')));

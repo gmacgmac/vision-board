@@ -1,7 +1,7 @@
 // The browser's one I/O module (project rule 7): the only code that calls the server. Boards come
 // from the project ledger over the /api/boards routes (apps/board/server.ts); the server is the
 // only validator, so a refused action comes back as an ApiError carrying its problems.
-import type { ActEvent, ActionId, Mode, View } from '../../../../packages/format/src/index.ts';
+import type { ActEvent, ActionId, Mode, NodeSize, View } from '../../../../packages/format/src/index.ts';
 import type { BoardState, ItemState } from '../../../../packages/actions/src/index.ts';
 
 export interface BoardSummary { id: string; title: string; seq: number }
@@ -29,6 +29,7 @@ interface BoardJson {
     items: Record<string, ItemState>;
     pins: Record<string, { x: number; y: number }>;
     modes: Record<string, Mode>;
+    sizes: Record<string, NodeSize>;
   };
   versions: Record<string, number>;
 }
@@ -67,6 +68,7 @@ export async function loadBoard(id: string): Promise<BoardData> {
       items: new Map(Object.entries(b.state.items)),
       pins: new Map(Object.entries(b.state.pins)),
       modes: new Map(Object.entries(b.state.modes)),
+      sizes: new Map(Object.entries(b.state.sizes)),
     },
   };
 }

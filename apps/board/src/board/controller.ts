@@ -44,7 +44,7 @@ export function createBoard(els: BoardElements): Board {
   const S = {
     id: '',
     data: null as BoardData | null,
-    state: { items: new Map(), pins: new Map(), modes: new Map() } as BoardState,
+    state: { items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map() } as BoardState,
     cards: new Map<string, VbNodeElement>(),
     regions: new Map<string, VbRegionElement>(),
     layout: null as BoardLayout | null,

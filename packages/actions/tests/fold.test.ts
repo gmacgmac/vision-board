@@ -81,7 +81,7 @@ const act = (f: Partial<ActEvent>): ActEvent =>
 test('validateAct follows the registry', () => {
   assert.deepEqual(validateAct(act({}), state), []);
   assert.ok(validateAct(act({ by: 'agent' }), state).some((p) => p.includes('only the person')));
-  assert.deepEqual(validateAct(act({ by: 'agent', action: 'comment', text: 'hi' }), state), []);
+  assert.ok(validateAct(act({ by: 'agent', action: 'comment', text: 'hi' }), state).some((p) => p.includes('only the person')));
   assert.ok(validateAct(act({ n: 2 }), state).some((p) => p.includes('not a numbered item')));
   assert.ok(validateAct(act({ n: 99 }), state).some((p) => p.includes('unknown node')));
   assert.ok(validateAct(act({ action: 'comment', text: ' ' }), state).includes('text: required'));

@@ -8,7 +8,7 @@ const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
 
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), ...f });
 
 const note = (text: string, kind: ItemNote['kind'] = 'comment'): ItemNote =>
   ({ kind, text, at: '2026-10-04T00:00:00Z' });
