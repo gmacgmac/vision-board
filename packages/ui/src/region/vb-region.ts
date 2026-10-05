@@ -98,6 +98,8 @@ export function defineVbRegion(): void {
       if (!pin || !line) return;
       pin.hidden = line.hidden = !note;
       this.toggleAttribute('data-note-sent', note?.sent === true);
+      // As a card's pin (vb-node): `data-sent` on the pin itself.
+      pin.toggleAttribute('data-sent', note?.sent === true);
       if (!note) {
         pin.removeAttribute('aria-label');
         pin.textContent = '';

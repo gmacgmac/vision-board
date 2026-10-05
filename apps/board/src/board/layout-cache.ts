@@ -13,6 +13,9 @@ export interface LayoutInputs {
   pins: Map<string, Point>;
   modes: Map<string, Mode>;
   hidden: Set<string>;
+  /** Region id -> where the person put that container (3_FE_04). Packing reads it, no container's
+   * own layout does, so it is in no container's key: a container pin repacks only (N12). */
+  regionPins?: Map<string, Point>;
 }
 
 export interface LayoutRun {
@@ -35,7 +38,7 @@ const nodeKey = (n: ViewNode, s: Size | undefined, pin: Point | undefined) =>
 export function createLayoutCache(): LayoutCache {
   let kept = new Map<string, { key: string; piece: RegionPiece }>();
   return {
-    run(view, sizes, { pins, modes, hidden }) {
+    run(view, sizes, { pins, modes, hidden, regionPins }) {
       const nodes = new Map<string, ViewNode[]>();
       const regionOf = new Map<string, string>();
       for (const n of view.nodes) {
@@ -69,7 +72,7 @@ export function createLayoutCache(): LayoutCache {
         return piece;
       });
       kept = next;
-      return { layout: packRegions(pieces, view.links), laidOut };
+      return { layout: packRegions(pieces, view.links, { pins: regionPins }), laidOut };
     },
     clear() { kept = new Map(); },
   };

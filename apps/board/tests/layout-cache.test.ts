@@ -108,3 +108,17 @@ test('a layout mode reads only the node fields the cache keys on (id, kind, lane
     }
   }
 });
+
+test('a container pin repacks only: no container is laid out again, and the answer equals layoutBoard', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n) => [n.id, { w: 240, h: 96 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  cache.run(view, sizes, inputs);
+  const moved = { ...inputs, regionPins: new Map([[view.regions[0]!.id, { x: 900, y: 700 }]]) };
+  const run = cache.run(view, sizes, moved);
+  assert.deepEqual(run.laidOut, []);
+  assert.deepEqual(run.layout, layoutBoard(view, sizes, moved));
+  const box = run.layout.regions.find((r) => r.id === view.regions[0]!.id)!.box;
+  assert.deepEqual([box.x, box.y], [900, 700]);
+});

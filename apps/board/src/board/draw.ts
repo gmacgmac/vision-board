@@ -98,7 +98,9 @@ export function createDrawing(d: DrawDeps): Drawing {
     regions.sync(data.view);
     cards.measure(sync.dirty, sizes);
     for (const id of sizes.keys()) if (!cards.els.has(id)) sizes.delete(id);
-    const run = cache.run(data.view, sizes, { pins: data.state.pins, modes: data.state.modes, hidden: d.hidden() });
+    const run = cache.run(data.view, sizes, {
+      pins: data.state.pins, modes: data.state.modes, hidden: d.hidden(), regionPins: data.state.regionPins,
+    });
     work.containersLaidOut += run.laidOut.length;
     work.containers.push(...run.laidOut);
     layout = run.layout;

@@ -154,6 +154,7 @@ export function createBoard(els: BoardElements): Board {
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
+    region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id),
     ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
   });
   /** Moving cards between containers, Later and the Move to list (3_FE_03, moves.ts). */
@@ -203,6 +204,9 @@ export function createBoard(els: BoardElements): Board {
     setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode),
     resetRegion: (region) => void places.resetRegion(region),
+    regionComment: (region) => notes.container(region),
+    regionNote: (region) => notes.showContainer(region),
+    putBack: (region) => void places.putBack(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
     pin: (id, box) => void places.pin(id, box),
     unpin: (id) => void places.unpin(id),

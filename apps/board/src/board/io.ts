@@ -92,11 +92,15 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
 
 /** Acts the schema asks to name their board (api.md 16): it is always the board they are sent to. */
 const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'send', 'revoke']);
+/** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
+const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'note-edit', 'note-remove', 'pin', 'unpin']);
+const namesBoard = (f: ActFields) =>
+  NAMES_BOARD.has(f.action) || (CONTAINER_ACTS.has(f.action) && f.region !== undefined && f.n === undefined);
 
 /** One person action. */
 export const sendAct = (id: string, fields: ActFields) =>
   call(() => asPerson(() => client.call<ActEvent>('act', {
-    board: id, body: { type: 'act', ...fields, ...(NAMES_BOARD.has(fields.action) && { board: id }) },
+    board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
 /** Calls back with the new line's `seq` whenever the project ledger gains one (the agent drew, or

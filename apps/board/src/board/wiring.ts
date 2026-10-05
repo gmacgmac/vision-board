@@ -18,6 +18,11 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge'> {
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
   resetRegion(region: string): void;
+  /** A container's title line (3_FE_04): Comment, its note's pin or "Your note" line, and the
+   *  cog's "Put container back". */
+  regionComment(region: string): void;
+  regionNote(region: string): void;
+  putBack(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
   /** A card nudged by keys to `box`: it becomes a pin. */
@@ -64,6 +69,12 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (modeBtn) return h.setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
     if (reset) return h.resetRegion(reset.dataset.reset!);
+    const back = t.closest<HTMLButtonElement>('button[data-put-back]');
+    if (back) return h.putBack(back.dataset.putBack!);
+    const regionComment = t.closest<HTMLButtonElement>('button[data-region-comment]');
+    if (regionComment) return h.regionComment(regionComment.dataset.regionComment!);
+    const regionNote = t.closest<HTMLElement>('[data-region-note]');
+    if (regionNote && !selectingIn(regionNote)) return h.regionNote(regionNote.dataset.regionNote!);
     const holder = t.closest<HTMLButtonElement>('button[data-revoke]');
     if (holder && h.revoke) return h.revoke(holder.closest<HTMLElement>('vb-region')!.dataset.region!, holder.dataset.revoke!);
   });

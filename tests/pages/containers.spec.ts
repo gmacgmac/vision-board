@@ -54,7 +54,7 @@ async function openFrames(page: Page): Promise<void> {
 const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
 const head = async (page: Page) => (await api(page, `/boards/${BOARD}`)).head as number;
 const linesAfter = async (page: Page, after: number) => (await api(page, `/ledger?after=${after}&board=${BOARD}`)).events as Record<string, unknown>[];
-const regionPins = async (page: Page) => ((await api(page, `/boards/${BOARD}`)).state.regionPins ?? {}) as Record<string, Point>;
+const regionPins = async (page: Page) => ((await api(page, `/boards/${BOARD}`)).state.containerPins ?? {}) as Record<string, Point>;
 const boxOf = async (page: Page, sel: ReturnType<Page['locator']>): Promise<Box> => (await sel.boundingBox())!;
 const centre = (b: Box): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
 const scale = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
