@@ -2,7 +2,7 @@
 // person's responses after a cursor (check_responses).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pendingItems, responsesAfter, unseenItems } from '../src/index.ts';
+import { openItems, pendingItems, responsesAfter, unseenItems } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 
 test('pending: the latest comment, until a reply names it', () => {
@@ -118,4 +118,15 @@ test('responsesAfter, scoped: a revoke tells the agent it lost access', () => {
   l.act({ action: 'grant', request: l.request(C, 'r') });
   const revoke = l.act({ action: 'revoke', holder: C, board: 'b', region: 'r' });
   assert.ok(responsesAfter(l.state(), 'b', revoke - 1, C).some((e) => e.seq === revoke));
+});
+
+test('openItems with an agent: only the items it may answer, with their pending reason', () => {
+  const l = scene();
+  l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
+  l.act({ action: 'comment', n: 2, ver: 1, text: 'And this?' });
+  const s = l.state();
+  assert.deepEqual(openItems(s, 'b').map((x) => x.n), [1, 2, 3]);
+  assert.deepEqual(openItems(s, 'b', A).map((x) => [x.n, x.pending]), [[1, 'comment']]);
+  assert.deepEqual(openItems(s, 'b', B).map((x) => [x.n, x.pending]), [[2, 'comment']]);
+  assert.deepEqual(openItems(s, 'b', C), [], 'C holds nothing, and the v2 item 3 has no holder');
 });

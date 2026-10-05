@@ -50,7 +50,7 @@ interface Base {
   person?: string;
 }
 
-/** On every agent-written event: the agent's retry key (api.md 13, 29). */
+/** On every agent-written event but `join`: the agent's retry key (api.md 13, 29). */
 interface Keyed { key?: string }
 
 /** What the agent says about a node. `item` = it asks the person for a response. */
@@ -102,7 +102,7 @@ export interface ProposeEvent extends Base, Keyed {
 }
 export interface ParkEvent extends Base, Keyed { type: 'park'; n: number; bundle: ParkBundle }
 /** An agent joins the project (D-027). Its stamped `agent` is the new agent id. */
-export interface JoinEvent extends Base, Keyed { type: 'join'; label: string }
+export interface JoinEvent extends Base { type: 'join'; label: string }
 /** An agent asks the person for write access to one container (api.md 15, 23). */
 export interface GrantRequestEvent extends Base, Keyed {
   type: 'grant-request'; board: string; region: string; reason: string;

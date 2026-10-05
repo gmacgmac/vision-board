@@ -129,7 +129,7 @@ const SHAPES: Record<EventType, Shape> = {
     fields: { n: nodeNumber, ver: int(), action: oneOf(['ack', 'drop']), reason: text(LIMITS.text), source: text(LIMITS.source), key },
   },
   park: { req: ['n', 'bundle'], fields: { n: nodeNumber, bundle: obj(BUNDLE), key } },
-  join: { req: ['label'], fields: { label: text(LIMITS.agentLabel), key } },
+  join: { req: ['label'], fields: { label: text(LIMITS.agentLabel) } },
   'grant-request': { req: ['board', 'region', 'reason'], fields: { board: id, region: id, reason: text(LIMITS.text), key } },
 };
 

@@ -112,13 +112,12 @@ test('grantRequests: seq, agent, container, reason and answer, with a refusal\'s
   assert.deepEqual(grantRequests(s).map((r) => r.seq), [one, two, other]);
 });
 
-test('a second open request for the same container is not kept; after an answer a new one is', () => {
+test('another agent\'s request is its own; after an answer a new one is kept', () => {
   const l = scene();
   const first = l.request(C, 'r');
-  l.request(C, 'r');
-  l.request(B, 'r'); // another agent's request is its own
-  assert.deepEqual(grantRequests(l.state()).map((r) => [r.seq, r.agent]), [[first, C], [first + 2, B]]);
+  l.request(B, 'r'); // another agent's request is its own (a repeat of C's is refused by the ledger)
+  assert.deepEqual(grantRequests(l.state()).map((r) => [r.seq, r.agent]), [[first, C], [first + 1, B]]);
   l.act({ action: 'deny', request: first });
   const again = l.request(C, 'r');
-  assert.deepEqual(grantRequests(l.state()).map((r) => r.seq), [first, first + 2, again]);
+  assert.deepEqual(grantRequests(l.state()).map((r) => r.seq), [first, first + 1, again]);
 });

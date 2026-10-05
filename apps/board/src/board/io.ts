@@ -80,11 +80,30 @@ export async function loadBoard(id: string): Promise<BoardData> {
   };
 }
 
+/** sessionStorage flag: the page has already reloaded once for a fresh person cookie. */
+const RELOADED = 'vb-person-reload';
+
+/** A person route (`act`) answered `forbidden`: after a server restart the page's cookie is
+ * stale, so reload once to get the new one (api.md 20). A second refusal is shown as usual. */
+async function asPerson<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    const out = await run();
+    sessionStorage.removeItem(RELOADED);
+    return out;
+  } catch (err) {
+    if (err instanceof ApiProblem && err.code === 'forbidden' && !sessionStorage.getItem(RELOADED)) {
+      sessionStorage.setItem(RELOADED, '1');
+      location.reload();
+    }
+    throw err;
+  }
+}
+
 /** One person action. A `mode` act names its board, as the act schema asks (api.md 16). */
 export const sendAct = (id: string, fields: ActFields) =>
-  call(() => client.call<ActEvent>('act', {
+  call(() => asPerson(() => client.call<ActEvent>('act', {
     board: id, body: { type: 'act', ...fields, ...(fields.action === 'mode' && { board: id }) },
-  }));
+  })));
 
 /** Calls back whenever the project ledger gains an event (the agent drew, or another tab acted). */
 export function watchBoard(id: string, onChange: () => void): () => void {

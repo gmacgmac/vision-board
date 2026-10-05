@@ -5,17 +5,24 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { OPERATIONS } from '../../../packages/format/src/index.ts';
-import type { Ledger } from './ledger.ts';
+import type { Agents } from './agents.ts';
+import type { CallerEnv } from './callers.ts';
+import { callerOf } from './callers.ts';
+import type { Caller, Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import type { ParamSpec } from './spec.ts';
 import { SPECS, coerce, paramProblems } from './spec.ts';
 
-/** What a handler gets: the request, its parsed parameters (defaults filled in) and the ledger. */
+/** What a handler gets: the request, its parsed parameters (defaults filled in), the ledger, the
+ * agents store and the caller the operation's `security` allowed (api.md 20-22). */
 export interface Ctx {
   req: IncomingMessage;
   res: ServerResponse;
   params: Record<string, unknown>;
   ledger: Ledger;
+  agents: () => Agents;
+  /** The person, an agent, or undefined for a read without credentials. */
+  caller: Caller | undefined;
 }
 
 export type Handler = (ctx: Ctx) => void | Promise<void>;
@@ -82,9 +89,10 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
   return out;
 }
 
-/** Answer one /api request through the route table and the handler table. */
+/** Answer one /api request through the route table and the handler table: route, parameters,
+ * then the caller, then the handler (so nothing is read from an unauthorised body). */
 export async function dispatch(
-  req: IncomingMessage, res: ServerResponse, url: URL, ledger: Ledger, handlers: HandlerTable,
+  req: IncomingMessage, res: ServerResponse, url: URL, env: CallerEnv, handlers: HandlerTable,
 ): Promise<void> {
   const method = req.method ?? 'GET';
   const match = matchRoute(method, url.pathname);
@@ -94,5 +102,6 @@ export async function dispatch(
     throw problem('method-not-allowed', `This path answers ${allow} only.`, { headers: { Allow: allow } });
   }
   const params = readParams(match.id, match.raw, url.searchParams);
-  await handlers[match.id]({ req, res, params, ledger });
+  const caller = callerOf(req, match.id, env);
+  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, caller });
 }

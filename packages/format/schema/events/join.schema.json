@@ -17,8 +17,7 @@
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": {"const": "join"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+        "type": {"const": "join"}
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/3/events/join.schema.json#/$defs/core"}],
       "unevaluatedProperties": false
@@ -40,8 +39,7 @@
             "by": {"const": "agent"},
             "agent": {
               "$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/agentId"
-            },
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/3/common.schema.json#/$defs/key"}
+            }
           }
         }
       ],

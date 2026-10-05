@@ -23,10 +23,26 @@ export interface ParamSpec {
   description: string;
 }
 
+/** Who may call an operation, from its `security` (api.md 20-22, 41): `person` needs the person
+ * cookie, `agent` a Bearer secret, `optional-agent` takes a Bearer secret to scope a read, and
+ * `none` takes no credentials. */
+export type Security = 'none' | 'person' | 'agent' | 'optional-agent';
+
 export interface OperationSpec {
   params: ParamSpec[];
   /** The `$id` of the JSON request body's schema, when the operation takes one. */
   body?: string;
+  security: Security;
+  /** `x-agent`: an operation agents get (api.md 41). */
+  agent: boolean;
+}
+
+/** The kind of caller an operation's `security` list allows. */
+function securityOf(list: Rec[] | undefined): Security {
+  const names = (list ?? []).map((req) => Object.keys(req).join(','));
+  if (names.includes('personCookie')) return 'person';
+  if (!names.includes('agentSecret')) return 'none';
+  return names.includes('') ? 'optional-agent' : 'agent';
 }
 
 const doc: Rec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8'));
@@ -51,7 +67,10 @@ function operationSpec(id: OperationId): OperationSpec {
   const op: Rec = doc.paths[path][method.toLowerCase()];
   const params = ((op.parameters ?? []) as Rec[]).map((p) => paramSpec(local(p)));
   const ref = op.requestBody?.content?.['application/json']?.schema;
-  return { params, ...(ref && { body: String(local(ref).$ref) }) };
+  return {
+    params, ...(ref && { body: String(local(ref).$ref) }),
+    security: securityOf(op.security ?? doc.security), agent: op['x-agent'] === true,
+  };
 }
 
 /** Every operation's inputs, read once at startup. */

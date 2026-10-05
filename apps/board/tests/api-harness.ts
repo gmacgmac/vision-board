@@ -1,6 +1,8 @@
 // The API test harness: a real board server on a free port, over a temporary project seeded from
-// the roadmap fixture plus a v3 board written through the ledger module. Every call goes through
-// packages/client, and every answer is held to openapi.json with `checkAnswer` (api.md 54).
+// the roadmap fixture plus a v3 board written through the ledger module. The page is fetched once
+// for the person cookie, as a browser would; `join` gives agent clients their secrets. Every call
+// goes through packages/client, and every answer is held to openapi.json with `checkAnswer`
+// (api.md 54).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -49,17 +51,31 @@ function seedMore(ledger: Ledger): Seeded {
 
 export interface Harness {
   base: string;
+  /** No credentials: what a read needs. */
   client: Client;
+  /** The board page: it sends the person cookie the server set with the page. */
+  person: Client;
+  /** The `Cookie` header value the page sends (`vb_person=…`). */
+  cookie: string;
   ledger: Ledger;
   seeded: Seeded;
-  /** The last answer `client` received, parsed by media type. */
+  /** Join over HTTP; the client sends the new secret. */
+  join(label: string): Promise<Joined>;
+  /** A client sending this secret as a Bearer. */
+  agent(secret: string): Client;
+  /** The last answer any client received, parsed by media type. */
   last(): Answer;
-  /** Call through the client, check the answer against the spec, return the value. */
-  ok<T = any>(id: OperationId, input?: CallInput, opts?: CallOptions): Promise<T>;
-  /** Call through the client, expect a problem with this status and code, check it against the spec. */
-  fails(id: OperationId, input: CallInput, status: number, code: string): Promise<ApiProblem>;
+  /** Call, check the answer against the spec, return the value. `as` picks the caller; person
+   * operations default to the page, every other operation to no credentials. */
+  ok<T = any>(id: OperationId, input?: CallInput, opts?: CallOptions & { as?: Client }): Promise<T>;
+  /** Call, expect a problem with this status and code, check it against the spec. */
+  fails(id: OperationId, input: CallInput, status: number, code: string, as?: Client): Promise<ApiProblem>;
   close(): Promise<void>;
 }
+
+export interface Joined { agent: string; secret: string; client: Client }
+
+const PERSON_OPS: ReadonlySet<OperationId> = new Set(['act', 'mark_seen']);
 
 const mediaOf = (h: Headers) => (h.get('content-type') ?? '').split(';')[0]!.trim();
 
@@ -75,29 +91,42 @@ export async function startBoard(): Promise<Harness> {
   const file = ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.copyFileSync(FIXTURE, file);
+  const dist = path.join(dir, 'dist');
+  fs.mkdirSync(dist);
+  fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><title>Board</title>\n');
   const ledger = openLedger(file, () => {});
   const seeded = seedMore(ledger);
-  const server = createBoardServer({ ledger, dist: dir });
+  const server = createBoardServer({ ledger, dist });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
+  const page = await fetch(`${base}/`);
+  const cookie = /^(vb_person=[^;]+)/.exec(page.headers.get('set-cookie') ?? '')?.[1] ?? assert.fail('the page set no person cookie');
   let last: Answer | undefined;
-  const recording: typeof fetch = async (url, init) => {
-    const res = await fetch(url, init);
+  const recording = (extra: Record<string, string> = {}): typeof fetch => async (url, init) => {
+    const res = await fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), ...extra } });
     const media = mediaOf(res.headers);
     last = { status: res.status, headers: res.headers, media, body: await parsed(res.clone(), media) };
     return res;
   };
-  const client = createClient({ base, fetch: recording });
+  const client = createClient({ base, fetch: recording() });
+  const person = createClient({ base, fetch: recording({ Cookie: cookie }) });
+  const agent = (secret: string) => createClient({ base, secret, fetch: recording() });
+  const pick = (id: OperationId, as?: Client) => as ?? (PERSON_OPS.has(id) ? person : client);
   const h: Harness = {
-    base, client, ledger, seeded,
+    base, client, person, cookie, ledger, seeded, agent,
     last: () => last ?? assert.fail('no answer yet'),
-    async ok(id, input, opts) {
-      const value = await client.call(id, input, opts);
+    async join(label) {
+      const r = await h.ok<{ agent: string; secret: string }>('join', { body: { label } });
+      return { ...r, client: agent(r.secret) };
+    },
+    async ok(id, input, { as, ...opts } = {}) {
+      const value = await pick(id, as).call(id, input, opts);
       checkAnswer(id, h.last());
       return value as any;
     },
-    async fails(id, input, status, code) {
-      try { await client.call(id, input); } catch (err) {
+    async fails(id, input, status, code, as) {
+      try { await pick(id, as).call(id, input); } catch (err) {
         assert.ok(err instanceof ApiProblem, String(err));
         assert.deepEqual([err.status, err.code], [status, code], err.detail);
         checkAnswer(id, h.last());

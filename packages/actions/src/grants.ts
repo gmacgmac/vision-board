@@ -30,8 +30,8 @@ export interface GrantRequestView extends Container {
   answer?: { action: 'grant' | 'deny'; seq: number; text?: string };
 }
 
-/** Every kept grant request, oldest first, optionally on one board. A repeat of an open request
- * is not kept (api.md 26). */
+/** Every grant request, oldest first, optionally on one board. The ledger refuses a repeat of an
+ * open request (api.md 26), so the person is asked once. */
 export function grantRequests(s: LedgerState, board?: string): GrantRequestView[] {
   const out: GrantRequestView[] = [];
   for (const [seq, note] of s.grantNotes) {
@@ -46,7 +46,7 @@ export function grantRequests(s: LedgerState, board?: string): GrantRequestView[
   return out;
 }
 
-/** The kept, unanswered request `seq`, or undefined. */
+/** The unanswered request `seq`, or undefined. */
 export function openRequest(s: LedgerState, seq: number): GrantRequestView | undefined {
   const r = grantRequests(s).find((x) => x.seq === seq);
   return r && !r.answer ? r : undefined;

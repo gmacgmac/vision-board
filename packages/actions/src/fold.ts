@@ -48,8 +48,8 @@ export interface LedgerState extends DrawnState {
   index: LedgerIndex;
   /** Agent id -> the label it joined with. */
   agents: Map<string, string>;
-  /** `grant-request` seq -> its words. Only requests the fold keeps: a second open request from
-   * the same agent for the same container is dropped (api.md 26). */
+  /** `grant-request` seq -> its words. The ledger refuses a second open request from the same
+   * agent for the same container (api.md 26), so every request is kept. */
   grantNotes: Map<number, GrantNote>;
   items: Map<number, ItemState>;
   replies: Map<number, LedgerReply[]>;
@@ -115,7 +115,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   }
   switch (e.type) {
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
-    case 'grant-request': if (!repeatsOpen(s, e.seq)) s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
+    case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
     case 'act': s.acts.push(e); applyAct(s, e); break;
     case 'seen': s.seen.set(e.n, Math.max(s.seen.get(e.n) ?? 0, e.ver)); break;
     case 'reply':
@@ -129,18 +129,6 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
       break;
     case 'park': s.parks.set(e.n, e.bundle); marksOf(s, e.n).park = e.seq; break;
   }
-}
-
-/** True when request `seq` repeats a kept, unanswered request from the same agent for the same
- * container (api.md 26): the fold keeps the first, so the person is asked once. */
-function repeatsOpen(s: LedgerState, seq: number): boolean {
-  const r = s.index.requests.get(seq);
-  if (!r) return false;
-  for (const kept of s.grantNotes.keys()) {
-    const k = s.index.requests.get(kept);
-    if (k && !k.answer && k.agent === r.agent && k.board === r.board && k.region === r.region) return true;
-  }
-  return false;
 }
 
 function applyAct(s: LedgerState, e: ActEvent): void {

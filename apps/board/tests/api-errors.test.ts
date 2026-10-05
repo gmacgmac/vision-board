@@ -25,8 +25,9 @@ async function raw(path: string, init: RequestInit = {}): Promise<Answer> {
   return { status: res.status, headers: res.headers, media: media(res), body: text ? JSON.parse(text) : undefined };
 }
 
+/** A raw POST, as the board page sends it (with the person cookie). */
 const json = (body: unknown, type = 'application/json'): RequestInit =>
-  ({ method: 'POST', headers: { 'Content-Type': type }, body: typeof body === 'string' ? body : JSON.stringify(body) });
+  ({ method: 'POST', headers: { 'Content-Type': type, Cookie: h.cookie }, body: typeof body === 'string' ? body : JSON.stringify(body) });
 
 test('the handler table has exactly one handler per operation of the route table (api.md 53)', () => {
   assert.deepEqual(Object.keys(HANDLERS).sort(), Object.keys(OPERATIONS).sort());
@@ -94,7 +95,7 @@ test('a body that is not application/json is unsupported-media-type (415); chars
     assert.equal(a.status, 415, type);
     checkAnswer('act', a);
   }
-  const noType = await raw('/api/boards/roadmap/act', { method: 'POST', body: new Uint8Array([123, 125]) });
+  const noType = await raw('/api/boards/roadmap/act', { method: 'POST', headers: { Cookie: h.cookie }, body: new Uint8Array([123, 125]) });
   assert.equal(noType.status, 415);
   for (const type of ['application/json; charset=utf-8', 'Application/JSON;charset="UTF-8"']) {
     const a = await raw('/api/boards/roadmap/act', json(act, type));
@@ -164,9 +165,9 @@ test('a wrong Host, or a write from another Origin, is forbidden (403); no Origi
   assert.deepEqual([host.status, host.body.type], [403, 'https://vision-board.invalid/problems/forbidden']);
   const body = JSON.stringify({ type: 'act', action: 'pin', n: 3, x: 5, y: 6 });
   const port = new URL(h.base).port;
-  const origin = await rawHttp('/api/boards/roadmap/act', { Host: `127.0.0.1:${port}`, Origin: 'http://evil.example', 'Content-Type': 'application/json' }, 'POST', body);
+  const origin = await rawHttp('/api/boards/roadmap/act', { Host: `127.0.0.1:${port}`, Origin: 'http://evil.example', 'Content-Type': 'application/json', Cookie: h.cookie }, 'POST', body);
   assert.equal(origin.status, 403);
-  const same = await rawHttp('/api/boards/roadmap/act', { Host: `localhost:${port}`, Origin: `http://localhost:${port}`, 'Content-Type': 'application/json' }, 'POST', body);
+  const same = await rawHttp('/api/boards/roadmap/act', { Host: `localhost:${port}`, Origin: `http://localhost:${port}`, 'Content-Type': 'application/json', Cookie: h.cookie }, 'POST', body);
   assert.equal(same.status, 201);
 });
 
@@ -188,12 +189,5 @@ test('anything unexpected is server-error (500) with a fixed detail; the stack g
   } finally {
     console.error = original;
     server.close();
-  }
-});
-
-test('join, request_grant and write_board are not built yet: they answer not-found', async () => {
-  for (const [id, input] of [['join', { body: { label: 'x' } }], ['request_grant', { body: {} }], ['write_board', { board: 'roadmap', body: { items: [] } }]] as const) {
-    const a = await raw(new URL(h.client.url(id, input)).pathname, json(input.body));
-    assert.deepEqual([a.status, (a.body as any).type], [404, 'https://vision-board.invalid/problems/not-found'], id);
   }
 });

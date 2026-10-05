@@ -27,12 +27,12 @@ const read = (events: object[]) => readLedger(events.map((e) => JSON.stringify(e
 
 test('a valid v3 sequence: the creator holds, a grant adds a holder, a revoke removes one', () => {
   const events = [...base(), person({ action: 'grant', request: 6 }), person({ action: 'size', n: 1, size: 'l' }),
-    person({ action: 'revoke', holder: A, board: 'b', region: 'r' }), person({ action: 'send', board: 'b' })];
+    person({ action: 'revoke', holder: B, board: 'b', region: 'r' }), person({ action: 'send', board: 'b' })];
   const { problems, index } = read(events);
   assert.deepEqual(problems, []);
   assert.deepEqual([...index.agents], [A, B]);
   assert.equal(index.creators.get(containerKey('b', 'r')), A);
-  assert.deepEqual([...index.holders.get(containerKey('b', 'r'))!], [B]);
+  assert.deepEqual([...index.holders.get(containerKey('b', 'r'))!], [A]);
   assert.deepEqual(index.requests.get(6), { agent: B, board: 'b', region: 'r', answer: { action: 'grant', seq: 7 } });
 });
 
@@ -53,6 +53,20 @@ test('grant and deny answer an open grant request, once', () => {
   assert.deepEqual(read(events).problems, [
     'line 8: request: grant request 6 was already answered', 'line 9: request: no grant request 4',
   ]);
+});
+
+test('revoke: a container\'s creator cannot be removed', () => {
+  const events = [...base(), person({ action: 'revoke', holder: A, board: 'b', region: 'r' })];
+  assert.deepEqual(read(events).problems, [`line 7: holder: "${A}" created b/r, and a container's creator cannot be removed`]);
+});
+
+test('grant-request: a second open request from the same agent for the same container is refused', () => {
+  const events = [...base(), agent(B, { type: 'grant-request', board: 'b', region: 'r', reason: 'Again.' }),
+    agent(A, { type: 'region', board: 'b', region: { id: 'q', title: 'Q', mode: 'grid' } }),
+    agent(B, { type: 'grant-request', board: 'b', region: 'q', reason: 'Another container.' }),
+    person({ action: 'deny', request: 6 }),
+    agent(B, { type: 'grant-request', board: 'b', region: 'r', reason: 'After the answer.' })];
+  assert.deepEqual(read(events).problems, ['line 7: board: this agent already has open grant request 6 for b/r']);
 });
 
 test('revoke: only a current holder can be revoked', () => {

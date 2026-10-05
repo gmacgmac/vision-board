@@ -23,7 +23,11 @@ parameters with the spec's schemas (`server/spec.ts`) and calls the operation's 
 `server/handlers.ts` (reads in `server/reads.ts`, writes in `server/writes.ts`). Every error is an
 RFC 9457 problem (`server/problem.ts`), and `server/body.ts` parses the media type exactly and caps
 the body. The page calls the server only through `packages/client`, wrapped by
-`src/board/io.ts`. `join`, `request_grant` and `write_board` answer `not-found` until 2_BE_05.
+`src/board/io.ts`. Before a handler runs, `server/callers.ts` works out the caller from the
+operation's `security`: the person by the `vb_person` cookie set with the page (fresh at each start),
+an agent by its Bearer secret. `server/agents.ts` is the only module that touches
+`.visionboard/agents.json` (one SHA-256 per agent, git-ignored), and `server/write-board.ts` runs a
+`write_board` batch item by item (keys, `base`, grants, then the ledger module).
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the

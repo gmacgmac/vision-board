@@ -83,12 +83,23 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     case 'join':
       if (e.agent !== undefined && ix.agents.has(e.agent)) p.push(`agent: "${e.agent}" has already joined`);
       break;
-    case 'grant-request':
+    case 'grant-request': {
       if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
       else if (!ix.boards.get(e.board)!.has(e.region)) p.push(`region: unknown "${e.region}"`);
+      const open = openRequestOf(ix, e.agent, e.board, e.region);
+      if (open !== undefined) p.push(`board: this agent already has open grant request ${open} for ${e.board}/${e.region}`);
       break;
+    }
   }
   return p;
+}
+
+/** The `seq` of `agent`'s unanswered grant request for the container, if any (api.md 26). */
+export function openRequestOf(ix: LedgerIndex, agent: string | undefined, board: string, region: string): number | undefined {
+  for (const [seq, r] of ix.requests) {
+    if (!r.answer && r.agent === agent && r.board === board && r.region === region) return seq;
+  }
+  return undefined;
 }
 
 /** The container rules of an `act`: mode, grant, deny, revoke and send (api.md 16, 23). */
@@ -104,7 +115,9 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
       break;
     }
     case 'revoke':
-      if (!ix.holders.get(containerKey(e.board!, e.region!))?.has(e.holder!))
+      if (ix.creators.get(containerKey(e.board!, e.region!)) === e.holder)
+        p.push(`holder: "${e.holder}" created ${e.board}/${e.region}, and a container's creator cannot be removed`);
+      else if (!ix.holders.get(containerKey(e.board!, e.region!))?.has(e.holder!))
         p.push(`holder: "${e.holder}" does not hold ${e.board}/${e.region}`);
       break;
   }

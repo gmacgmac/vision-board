@@ -1,6 +1,6 @@
 // The read operations (api.md Operations, 31, 41, 43, 44): every answer carries `head`, the
-// ledger's latest `seq`. The shapes are built by packages/actions; nothing is folded here. Reads
-// are unscoped for now; a Bearer secret scopes them in 2_BE_05 (api.md 41).
+// ledger's latest `seq`. The shapes are built by packages/actions; nothing is folded here. A read
+// that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
@@ -66,16 +66,20 @@ const showContainer: Handler = ({ res, params, ledger }) => {
   sendJson(res, 200, { head: s.seq, ...detail });
 };
 
-const listOpen: Handler = ({ res, params, ledger }) => {
+/** The agent a scoped read is for: the Bearer caller, if any (api.md 41). */
+const scopeOf = (caller: Ctx['caller']): string | undefined => (caller?.by === 'agent' ? caller.agent : undefined);
+
+const listOpen: Handler = ({ res, params, ledger, caller }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
-  sendJson(res, 200, { head: s.seq, items: openItems(s, board) });
+  sendJson(res, 200, { head: s.seq, items: openItems(s, board, scopeOf(caller)) });
 };
 
 /** A person act that ends a `check_responses` wait on `board`: Send, or an answer to a grant
- * request on it (api.md Operations). */
-const wakes = (s: LedgerState, board: string, e: LedgerEvent): boolean =>
-  e.type === 'act' && (e.action === 'send' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board;
+ * request on it (api.md Operations); for a scoped caller, only one that concerns it. */
+const wakes = (s: LedgerState, board: string, e: LedgerEvent, agent: string | undefined): boolean =>
+  e.type === 'act' && (e.action === 'send' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
+  (agent === undefined || responsesAfter(s, board, e.seq - 1, agent).some((x) => x.seq === e.seq));
 
 /** Hold until `stop` says so, `seconds` pass, or the caller goes away. True if the caller is still there. */
 function hold({ res, ledger }: Ctx, seconds: number, stop: (e: LedgerEvent) => boolean): Promise<boolean> {
@@ -100,9 +104,11 @@ const checkResponses: Handler = async (ctx) => {
   const board = requireBoard(ledger.state(), params.board);
   const after = Number(params.after);
   const wait = Number(params.wait);
-  const since = () => responsesAfter(ledger.state(), board, after);
-  if (wait > 0 && !since().some((e) => wakes(ledger.state(), board, e))) {
-    if (!(await hold(ctx, wait, (e) => wakes(ledger.state(), board, e)))) return;
+  const agent = scopeOf(ctx.caller);
+  const since = () => responsesAfter(ledger.state(), board, after, agent);
+  const wake = (e: LedgerEvent) => wakes(ledger.state(), board, e, agent);
+  if (wait > 0 && !since().some(wake)) {
+    if (!(await hold(ctx, wait, wake))) return;
   }
   const { list, more } = page(since(), params.limit);
   sendJson(res, 200, { responses: list, head: ledger.state().seq, ...(more && { more }) });

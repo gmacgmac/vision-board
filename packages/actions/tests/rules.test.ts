@@ -30,14 +30,12 @@ test('grant and deny: an open grant request on this board', () => {
   assert.ok(has(validateAct(act({ action: 'grant', request: 6, board: undefined }), s, 'b'), 'is not a grant request'));
 });
 
-test('grant and deny: an answered request, or a repeat that was not kept, is refused', () => {
+test('grant and deny: an answered request is refused', () => {
   const l = scene();
   const req = l.request(C, 'r');
-  const repeat = l.request(C, 'r');
   l.act({ action: 'deny', request: req });
   const s = l.state();
   assert.ok(has(validateAct(act({ action: 'grant', request: req, board: undefined }), s, 'b'), 'already answered (deny)'));
-  assert.ok(has(validateAct(act({ action: 'grant', request: repeat, board: undefined }), s, 'b'), 'is not a grant request'));
 });
 
 test('revoke: a granted holder can be removed', () => {

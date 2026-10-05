@@ -5,7 +5,7 @@
 import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
-import { holders } from './grants.ts';
+import { canWrite, holders } from './grants.ts';
 import { pendingItems, unseenItems } from './pending.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
@@ -93,15 +93,17 @@ export function containerDetail(s: LedgerState, board: string, region: string): 
 }
 
 /** The items on `board` not yet decided, by number, with why each waits for the agent and
- * whether the person has a version still to see (api.md 36, D-018). */
-export function openItems(s: LedgerState, board: string): OpenItem[] {
-  const pending = new Map(pendingItems(s, board).map((p) => [p.n, p]));
+ * whether the person has a version still to see (api.md 36, D-018). With `agent`, only the items
+ * it may answer: in a container it holds, or whose latest version it wrote (api.md 41). */
+export function openItems(s: LedgerState, board: string, agent?: string): OpenItem[] {
+  const pending = new Map(pendingItems(s, board, agent).map((p) => [p.n, p]));
   const unseen = new Set(unseenItems(s, board).map((u) => u.n));
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
     const v = latest(node);
     const status = s.items.get(node.n)?.status ?? 'open';
     if (!v.item || DECIDED.has(status)) continue;
+    if (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.n }) !== 'ok') continue;
     const p = pending.get(node.n);
     const why = p?.ask?.kind ?? (p?.later !== undefined ? 'later' : undefined);
     out.push({
