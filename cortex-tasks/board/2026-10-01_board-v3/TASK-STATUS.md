@@ -93,3 +93,14 @@ packages and run in parallel: FE_01 in the main checkout, BE_01 in worktree bran
 | 2 | Stage check: orchestrator merges, runs the four gates, compares with 05 in dark and light | Orchestrator | Done 2026-10-05 (434 unit, 58 page; board read by eye) | e11950a |
 
 Open from 2d: a link line can cross a container's icon row (wires draw over the top line); at 434px a long title plus count can clip the count; one access test keeps `KNOWN_AXE` when 3-4 holders pile up on a 336px frame. The row hides at the board's opening fit zoom (far), as the card buttons do.
+
+## Stage 2e tasks (written 2026-10-05)
+
+Rulings from the maintainer (chat 717-719, 736): one unsent note per card, editable and
+removable until sent; sent notes are history; removing a sent note from history is open (740);
+zoomed-out hiding is a switch, off (N13).
+
+| Order | Task | Model | Status | Commit |
+|---|---|---|---|---|
+| 1 | [2e_FE_01 note bubbles](./2e_FE_01_note-bubbles.md) | Opus 5.5 | Running | |
+| 2 | Stage check: orchestrator runs the gates, checks bubble placement and keyboard in dark and light | Orchestrator | Planned | |

@@ -10,6 +10,7 @@
 | Layout, whole board | under 100 ms | 1,000 cards, 3 pins per container | `packages/layout/tests` |
 | First draw of a board | under 1 s | 1,000 cards, page test machine | page test (tracker N12) |
 | One change shown | under 50 ms | one act on a 1,000-card board | page test (tracker N12) |
+| Only what changed is redrawn | exactly 50 cards updated, measured and redrawn; only their containers laid out; no whole-board fetch | 50 cards changed in one batch on a 1,000-card board, and 1 card in a second case | page test counting the work, not only timing it (tracker N12) |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown-safety.test.ts` |
 | Board page weight | under 150 KB gzip (JS + CSS) | `npm run build` output | `npm run verify` (tracker N12) |
 | Server start | under 1 s | a 100,000-event ledger | server test (tracker N12) |
