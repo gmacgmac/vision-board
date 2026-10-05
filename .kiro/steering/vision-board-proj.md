@@ -136,7 +136,9 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
     the failing test first when fixing a bug.
 14. **Strict TypeScript** everywhere in production code.
 15. **Performance budgets** on page weight, load time and layout time for a large board, checked
-    by the test suite.
+    by the test suite. Work in proportion to what changed and what is on screen: an event updates
+    only the cards it touches, nothing rebuilds the whole board, and off-screen or zoomed-out
+    cards stay cheap (`docs/specification/performance.md`).
 16. **Stay framework-independent where it matters.** Anything shared beyond this app (nodes,
     connectors, the canvas) is a plain web component with a framework-free core. The framework
     choice is a decision entry. Element code mustn't reuse built-in names such as `part`.
