@@ -1,5 +1,6 @@
-// The whole board: lay out each region in its mode, apply the person's pins, pack regions into
-// rows, then route every link (including links across regions). Pure and deterministic.
+// The whole board: lay out each region in its mode, apply the person's pins, move unpinned cards
+// out from under them (collide.ts), pack regions into rows, then route every link (including links
+// across regions). Pure and deterministic.
 import type { Mode, View } from '../../format/src/index.ts';
 import type { BoardLayout, Box, ModeFn, ModeOutput, RegionBox, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
@@ -8,6 +9,7 @@ import { flow } from './modes/flow.ts';
 import { lanes } from './modes/lanes.ts';
 import { radial } from './modes/radial.ts';
 import { boundsOf } from './geometry.ts';
+import { applyPins, makeRoom } from './collide.ts';
 import { routeLinks } from './route.ts';
 import type { LayoutOptions } from './types.ts';
 
@@ -28,11 +30,9 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     const out: ModeOutput = nodes.length
       ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes })
       : { pos: new Map() };
-    for (const [id, pin] of opts.pins ?? []) {
-      const at = out.pos.get(id);
-      if (at) out.pos.set(id, { ...at, x: pin.x, y: pin.y });
-    }
+    const pinned = applyPins(out.pos, opts.pins);
     const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
+    makeRoom(out.pos, pinned, laneBoxes);
     const b = boundsOf([...out.pos.values(), ...laneBoxes]);
     const w = Math.max(b.w, MIN_W) + REGION_PAD * 2;
     const h = (nodes.length ? b.h : EMPTY_H) + REGION_HEAD + REGION_PAD;

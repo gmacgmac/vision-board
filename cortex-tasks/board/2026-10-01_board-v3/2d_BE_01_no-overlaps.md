@@ -58,4 +58,50 @@ codes, the commit hash.
 
 ## Implementation Notes
 
-**Status**: Not started.
+**Status**: Done in the 2d-layout worktree (2026-10-05), committed on branch `2d-layout`, not merged.
+
+**Collision rule.** After the pins land, every unpinned card that a pinned card overlaps moves to
+the nearest spot (straight-line distance) that is GAP (24) clear of every other card and of the
+lane gutters, never above or left of the region content's top-left; cards are handled in the
+mode's own order, and a card no pin covers stays exactly where the mode put it. Pinned cards never
+move, including when the person stacked them on each other.
+
+**Changed.** `packages/layout/src/collide.ts` (new, 69 lines): `applyPins`, `makeRoom`, private
+`nearestFree` and `axis`. `packages/layout/src/board.ts` `layoutBoard`: the inline pin loop is
+replaced by `applyPins` then `makeRoom` (lane gutter boxes passed as keep-out). Public API, the
+pin format, the ledger and the schema are unchanged; `npm run map` output is unchanged.
+
+**Why the top-left floor.** The frame's origin is derived from the content bounds, so a card
+pushed up or left would shift the origin and with it every pinned card on screen (ruling 1). With
+the floor, the collision pass only ever grows the frame right or down (ruling 2). Moving the least
+is therefore "least among spots that keep the origin".
+
+**Search.** The closest free spot always has each coordinate either unchanged or flush with an
+obstacle side, so only those candidates are tried, nearest first, with early exit. The large-board
+budget test with 3 pins per region runs in about 5ms.
+
+**Region packing (step 3).** Not reproduced: 300 seeded boards with no pins, all five modes, s/m/l
+widths and heights 72-320, give no card or frame overlap. The packer advances `x` by the frame's
+full width plus REGION_GAP, so frames cannot overlap in layout. The reported overlap is likely
+on the page (the header's mode buttons overflowing a narrow frame, the 2d_FE_01 icon row), not in
+`packages/layout`. The no-pin generator test is kept as the guard.
+
+**Tests added.** `packages/layout/tests/no-overlap.test.ts`: seeded (mulberry32) generator; "no
+pins" (300 boards), "0-3 pins on other cards" (300 boards: cards apart unless both pinned, inside
+the frame and below its top line, frames apart, pins exact), "same input gives the same output",
+"a card under a pin moves to the nearest free spot; the rest and the frame stay", "stacked pins
+both stay; cards no pin covers do not move". `layout.test.ts`: "layout of a large board with cards
+pinned on others stays under budget". The pin tests failed before the change and pass after.
+
+**Open (for the maintainer, not changed).**
+1. In lanes mode a moved card can end up in a neighbouring lane's band, or below the last lane:
+   the rulings say least movement and say nothing about lanes.
+2. The existing origin quirk (brief A6) remains: a pin above or left of the mode's content still
+   moves the origin, so unpinned cards and the frame shift. Not in this task's rulings.
+3. `packages/layout/README.md` still reads correctly but does not name the collision pass; it is
+   outside this task's allowed files.
+
+**Gates** (exit codes read directly): `npm test` 0 (436 pass), `npm run check` 0, `npm run verify` 0
+(the existing controller.ts length warning only), `VB_TEST_PORT=4492 npm run test:pages` 0 (54
+passed, no screenshot baseline changed). The config reads `VB_TEST_PORT` and passes it to the
+server as `VB_PORT`.
