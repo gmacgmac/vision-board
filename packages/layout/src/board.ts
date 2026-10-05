@@ -1,9 +1,12 @@
 // The whole board: lay out each region in its mode, apply the person's pins, move unpinned cards
 // out from under them (collide.ts), pack regions into rows, then route every link (including links
-// across regions). Pure and deterministic.
-import type { Mode, View } from '../../format/src/index.ts';
-import type { BoardLayout, Box, ModeFn, ModeOutput, RegionBox, Size } from './types.ts';
+// across regions). Pure and deterministic. `layoutRegion` and `packRegions` are the two halves, so
+// a page can keep a region's result until its inputs change (N12, performance.md approach 2);
+// `layoutBoard` is exactly the two composed.
+import type { Link, Region, View, ViewNode } from '../../format/src/index.ts';
+import type { Box, BoardLayout, ModeFn, ModeOutput, Point, RegionBox, RegionPiece, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
+import type { Mode } from '../../format/src/index.ts';
 import { grid, list } from './modes/grid.ts';
 import { flow } from './modes/flow.ts';
 import { lanes } from './modes/lanes.ts';
@@ -18,27 +21,27 @@ export const MODE_FNS: Record<Mode, ModeFn> = { grid, list, flow, lanes, radial 
 const MIN_W = 280;
 const EMPTY_H = 56;
 
-export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOptions = {}): BoardLayout {
-  const hidden = opts.hidden ?? new Set<string>();
-  const visible = view.nodes.filter((n) => !hidden.has(n.id));
+/** One region: `nodes` are its visible nodes in view order, `links` the links between them. Pins
+ * for other regions' nodes are ignored. The result is never changed afterwards. */
+export function layoutRegion(
+  region: Region, nodes: ViewNode[], links: Link[], sizes: Map<string, Size>,
+  opts: { mode?: Mode | undefined; pins?: Map<string, Point> | undefined } = {},
+): RegionPiece {
+  const mode = opts.mode ?? region.mode;
+  const out: ModeOutput = nodes.length
+    ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes })
+    : { pos: new Map() };
+  const pinned = applyPins(out.pos, opts.pins);
+  const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
+  makeRoom(out.pos, pinned, laneBoxes);
+  const b = boundsOf([...out.pos.values(), ...laneBoxes]);
+  const w = Math.max(b.w, MIN_W) + REGION_PAD * 2;
+  const h = (nodes.length ? b.h : EMPTY_H) + REGION_HEAD + REGION_PAD;
+  return { region, mode, out, b, w, h };
+}
 
-  const pieces = view.regions.map((region) => {
-    const mode = opts.modes?.get(region.id) ?? region.mode;
-    const nodes = visible.filter((n) => n.region === region.id);
-    const ids = new Set(nodes.map((n) => n.id));
-    const links = view.links.filter((l) => ids.has(l.from) && ids.has(l.to));
-    const out: ModeOutput = nodes.length
-      ? MODE_FNS[mode]({ region: { ...region, mode }, nodes, links, sizes })
-      : { pos: new Map() };
-    const pinned = applyPins(out.pos, opts.pins);
-    const laneBoxes: Box[] = (out.lanes ?? []).map((l) => ({ x: 0, y: l.y, w: LANE_GUTTER, h: l.h }));
-    makeRoom(out.pos, pinned, laneBoxes);
-    const b = boundsOf([...out.pos.values(), ...laneBoxes]);
-    const w = Math.max(b.w, MIN_W) + REGION_PAD * 2;
-    const h = (nodes.length ? b.h : EMPTY_H) + REGION_HEAD + REGION_PAD;
-    return { region, mode, out, b, w, h };
-  });
-
+/** Pack laid-out regions into rows (in order) and route `links` between the placed nodes. */
+export function packRegions(pieces: readonly RegionPiece[], links: Link[], opts: { maxRowWidth?: number | undefined } = {}): BoardLayout {
   const maxRow = opts.maxRowWidth ?? 1600;
   const regions: RegionBox[] = [];
   const nodes = new Map<string, Box>();
@@ -55,7 +58,18 @@ export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOp
     x += p.w + REGION_GAP;
     rowH = Math.max(rowH, p.h);
   }
-
-  const routes = routeLinks(view.links, nodes);
+  const routes = routeLinks(links, nodes);
   return { regions, nodes, routes, bounds: boundsOf(regions.map((r) => r.box)) };
+}
+
+export function layoutBoard(view: View, sizes: Map<string, Size>, opts: LayoutOptions = {}): BoardLayout {
+  const hidden = opts.hidden ?? new Set<string>();
+  const visible = view.nodes.filter((n) => !hidden.has(n.id));
+  const pieces = view.regions.map((region) => {
+    const nodes = visible.filter((n) => n.region === region.id);
+    const ids = new Set(nodes.map((n) => n.id));
+    const links = view.links.filter((l) => ids.has(l.from) && ids.has(l.to));
+    return layoutRegion(region, nodes, links, sizes, { mode: opts.modes?.get(region.id), pins: opts.pins });
+  });
+  return packRegions(pieces, view.links, { maxRowWidth: opts.maxRowWidth });
 }

@@ -80,32 +80,3 @@ test('hidden nodes are not placed', () => {
   const id = v.nodes[0]!.id;
   assert.ok(!layoutBoard(v, sizesFor(v), { hidden: new Set([id]) }).nodes.has(id));
 });
-
-test('layout of a large board stays under budget', () => {
-  const v = load('roadmap');
-  const base = [...v.nodes];
-  for (let k = 0; k < 20; k++)
-    for (const n of base) v.nodes.push({ ...n, id: `${n.id}-${k}`, n: undefined });
-  const t = performance.now();
-  layoutBoard(v, sizesFor(v));
-  assert.ok(performance.now() - t < 500, 'layout of ~350 nodes took over 500ms');
-});
-
-test('layout of a large board with cards pinned on others stays under budget', () => {
-  const v = load('roadmap');
-  const base = [...v.nodes];
-  for (let k = 0; k < 20; k++)
-    for (const n of base) v.nodes.push({ ...n, id: `${n.id}-${k}`, n: undefined });
-  const sizes = sizesFor(v);
-  const before = layoutBoard(v, sizes);
-  // Three cards per region dropped onto the region's first card, so every region makes room.
-  const pins = new Map<string, { x: number; y: number }>();
-  for (const r of before.regions) {
-    const ids = v.nodes.filter((n) => n.region === r.id).map((n) => n.id);
-    const first = before.nodes.get(ids[0]!)!;
-    for (const id of ids.slice(-3)) pins.set(id, { x: first.x - r.origin.x + 8, y: first.y - r.origin.y + 8 });
-  }
-  const t = performance.now();
-  layoutBoard(v, sizes, { pins });
-  assert.ok(performance.now() - t < 500, 'layout of ~350 nodes with pins took over 500ms');
-});

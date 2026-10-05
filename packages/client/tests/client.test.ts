@@ -96,3 +96,33 @@ test('an error answer that is not a problem becomes server-error with its status
   assert.deepEqual([err.code, err.status], ['server-error', 502]);
   assert.deepEqual(err.errors, []);
 });
+
+test('watch: parsed data per named event, onOpen on every (re)connect, and a stop that closes', () => {
+  class FakeSource extends EventTarget {
+    static last: FakeSource;
+    url: string;
+    closed = false;
+    constructor(url: string) { super(); this.url = url; FakeSource.last = this; }
+    close() { this.closed = true; }
+  }
+  const g = globalThis as { EventSource?: unknown };
+  const saved = g.EventSource;
+  g.EventSource = FakeSource;
+  try {
+    const seen: unknown[] = [];
+    let opened = 0;
+    const stop = createClient({ base: BASE }).watch('watch_board', { board: 'roadmap' }, 'change', (d) => seen.push(d), () => { opened += 1; });
+    const es = FakeSource.last;
+    assert.equal(es.url, `${BASE}/api/boards/roadmap/events`);
+    es.dispatchEvent(new Event('open'));
+    es.dispatchEvent(Object.assign(new Event('change'), { data: '{"seq":7}' }));
+    es.dispatchEvent(Object.assign(new Event('change'), { data: 'not json' }));
+    es.dispatchEvent(new Event('open'));
+    assert.deepEqual(seen, [{ seq: 7 }]);
+    assert.equal(opened, 2);
+    stop();
+    assert.equal(es.closed, true);
+  } finally {
+    g.EventSource = saved;
+  }
+});

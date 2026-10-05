@@ -1,37 +1,34 @@
-// The board controller: loads a board, lays it out, and routes every person action through
-// the action layer and the I/O module. Layout, formats and actions live in packages/; this file
-// wires them to the canvas. It is plain TypeScript (D-005): the Svelte shell mounts it on the
-// stage element and reads what it reports through `shell`.
+// The board controller: holds the project ledger state (live.ts), works the open board out from it
+// (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
+// layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
+// one wire them to the canvas: focus.ts (navigation), wiring.ts (input), access-flow.ts (agent
+// access), notes.ts (note bubbles). It is plain TypeScript (D-005): the Svelte shell mounts it on
+// the stage element and reads what it reports through `shell`.
 import type { ActSize, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
-import { layoutBoard, routeLinks } from '../../../../packages/layout/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
+import type { Box } from '../../../../packages/layout/src/index.ts';
 import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
 import type { ActFields, BoardData } from './io.ts';
-import { ApiError, listBoards, loadBoard, sendAct, watchBoard } from './io.ts';
-import {
-  buildCards, buildRegions, drawWires, measure, placeCards, placeRegions, readingOrder, updateCard,
-} from './render.ts';
+import { ApiError, listBoards, sendAct } from './io.ts';
+import { boardData, decidedIds, drewOn } from './board-data.ts';
+import type { BoardElements } from './draw.ts';
+import { createDrawing } from './draw.ts';
+import { createLive } from './live.ts';
+import { createFocus } from './focus.ts';
+import { bindStage } from './wiring.ts';
 import { Viewport } from './viewport.ts';
-import { bindPointer } from './pointer.ts';
-import { bindKeys } from './keys.ts';
-import { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
-import { answerAct, answerWords, holdersOf, requestRows, revokeAct, revokeWords } from './access.ts';
+import { sizeAct } from './size.ts';
+import { requestRows } from './access.ts';
+import { createAccessFlow } from './access-flow.ts';
 import { createNoteFlow, unsentNote } from './notes.ts';
+import { exposeWork, work } from './work.ts';
 import { pageFlags } from '../flags.ts';
-import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
+import { shell, toast } from '../shell/shell.svelte.ts';
 
-export interface BoardElements {
-  stage: HTMLElement;
-  world: HTMLElement;
-  regions: HTMLElement;
-  cards: HTMLElement;
-  wires: SVGSVGElement;
-}
+export type { BoardElements } from './draw.ts';
 
 export interface Board {
   boot(): Promise<void>;
@@ -45,8 +42,10 @@ export interface Board {
   destroy(): void;
 }
 
+const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
 export function createBoard(els: BoardElements): Board {
-  const { stage, world, wires } = els;
+  const { stage, world } = els;
   const vp = new Viewport(stage, world, flagOn('hideControlsZoomedOut', pageFlags())); // N13, rule 12
   /** Card size tiers and their control (D-030), behind the nodeSize flag (rule 12). */
   const sizing = flagOn('nodeSize', pageFlags());
@@ -57,112 +56,99 @@ export function createBoard(els: BoardElements): Board {
   const S = {
     id: '',
     data: null as BoardData | null,
-    state: { items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map() } as BoardState,
-    cards: new Map<string, VbNodeElement>(),
-    regions: new Map<string, VbRegionElement>(),
-    layout: null as BoardLayout | null,
-    sizes: new Map<string, Size>(),
-    focus: null as string | null,
     unwatch: null as (() => void) | null,
-    settle: 0,
+    /** A draw waiting for the next frame, so lines that land together draw once (approach 5). */
+    frame: 0,
+    /** The waiting draw starts from scratch (the state was read afresh). */
+    fresh: false,
+    /** The waiting draw shows lines in which the agent drew on this board. */
+    drew: false,
   };
 
   const view = (): View => S.data!.view;
   const nodeOf = (id: string): ViewNode | undefined => view().nodes.find((n) => n.id === id);
   /** A node act names the node by number and the version the person was looking at. */
   const target = (id: string) => ({ n: Number(id), ver: S.data!.versions[id] });
-  /** The agent's drawing without the ledger position, which every person act also advances. */
-  const drawing = (v: View) => JSON.stringify({ ...v, version: 0 });
 
-  // ---- messages ------------------------------------------------------------------------------
+  const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data) : new Set());
 
-  function showMessage(text: string | null) {
-    shell.message = text;
-  }
+  const live = createLive(onLines);
+  const drawing = createDrawing({ els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id });
+  const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
+
+  // ---- messages and drawing ------------------------------------------------------------------
 
   function fail(err: unknown) {
     const e = err instanceof ApiError ? err : new ApiError(String(err));
     toast([e.message, ...e.problems].join(' · '), 'error');
   }
 
-  // ---- drawing -------------------------------------------------------------------------------
-
-  function hiddenSet(): Set<string> {
-    if (!shell.hide) return new Set();
-    return new Set(view().nodes.filter((n) => DECIDED.has(statusOf(S.state, n.id))).map((n) => n.id));
+  /** Lines were applied to the held state: draw them in the next frame. */
+  function onLines(lines: LedgerEvent[], full: boolean) {
+    if (full) S.fresh = true;
+    else if (S.id && drewOn(live.state!, lines, S.id)) S.drew = true;
+    if (!S.frame) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
   }
 
-  function build() {
-    world.classList.add('no-anim');
-    S.cards = buildCards(els.cards, view(), { sizeControl: sizing });
-    S.regions = buildRegions(els.regions, view());
-    shell.title = view().title;
-    shell.version = view().version;
-    shell.summary = view().summary ?? '';
-    relayout();
-    requestAnimationFrame(() => requestAnimationFrame(() => world.classList.remove('no-anim')));
-  }
-
-  function relayout() {
-    for (const n of view().nodes) updateCard(S.cards.get(n.id)!, n, S.state, sizing ? tierOf(n, S.state) : undefined);
-    S.sizes = measure(S.cards);
-    S.layout = layoutBoard(view(), S.sizes, {
-      pins: S.state.pins, modes: S.state.modes, hidden: hiddenSet(),
-    });
-    placeRegions(S.regions, S.layout, view(), S.state, access ? holdersOf(S.data!) : undefined);
-    placeCards(S.cards, S.layout);
-    wires.classList.add('settling');
-    drawWires(wires, S.layout, S.focus);
-    clearTimeout(S.settle);
-    S.settle = window.setTimeout(() => wires.classList.remove('settling'), 380);
+  /** Work the open board out from the held state and draw what changed, now. */
+  function redraw(fresh = false) {
+    cancelAnimationFrame(S.frame);
+    S.frame = 0;
+    const s = live.state;
+    if (!s || !s.boards.has(S.id)) return;
+    const full = fresh || S.fresh;
+    const drew = S.drew && !full;
+    S.fresh = S.drew = false;
+    S.data = boardData(s, S.id);
+    Object.assign(shell, { title: view().title, version: view().version, summary: view().summary ?? '' });
+    drawing.draw(full);
     renderCounts();
     notes.place();
+    if (drew) toast(`The agent drew v${view().version}`);
   }
 
   function renderCounts() {
-    const c = counts(view(), S.state);
+    const st = S.data!.state;
+    const c = counts(view(), st);
     shell.counts = { open: c.open, decided: c.decided, later: c.later };
-    shell.replyText = replyText(view(), S.state);
-    shell.answered = view().nodes.filter((n) => n.n !== undefined && S.state.items.has(n.id)).length;
+    shell.replyText = replyText(view(), st);
+    shell.answered = view().nodes.filter((n) => n.n !== undefined && st.items.has(n.id)).length;
     shell.requests = access ? requestRows(S.data!) : [];
   }
 
   // ---- actions -------------------------------------------------------------------------------
 
-  /** Take a fresh load of board `id`. Rebuilds the cards only when the agent's drawing changed
-   * (or another board is opening) and returns true then; otherwise the caller relayouts. */
-  function take(id: string, data: BoardData): boolean {
-    const update = S.id === id && S.data !== null;
-    const redraw = !update || drawing(S.data!.view) !== drawing(data.view);
-    S.id = id;
-    S.data = data;
-    S.state = data.state;
-    shell.version = data.view.version;
-    if (!redraw) return false;
-    build();
-    if (update) toast(`The agent drew v${data.view.version}`);
-    return true;
-  }
-
-  /** Send one action; the server validates it, and its problems show in the error toast. Null
-   * when it was recorded, else the problem's detail. */
+  /** Send one action; the server validates it, and its problems show in the error toast. The
+   * stored line comes back and is applied in place. Null when it was recorded, else the detail. */
   async function attempt(fields: ActFields): Promise<string | null> {
+    const on = sendAct(S.id, fields).then((e) => live.own(e));
+    sending.add(on);
     try {
-      await sendAct(S.id, fields);
-      take(S.id, await loadBoard(S.id));
+      await on;
+      redraw();
       return null;
     } catch (err) {
       fail(err);
       return err instanceof ApiError ? err.message : String(err);
+    } finally {
+      sending.delete(on);
     }
   }
+  /** Acts on their way, so the test hook's `idle` waits for them too. */
+  const sending = new Set<Promise<void>>();
   const record = async (fields: ActFields) => (await attempt(fields)) === null;
 
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
-    stage, vp, node: nodeOf, state: () => S.state, layout: () => S.layout, card: (id) => S.cards.get(id),
-    ver: (id) => S.data?.versions[id], attempt, relayout, toast: (t) => toast(t),
+    stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
+    ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t),
   });
+  vp.onApply = () => {
+    notes.place();
+    drawing.viewMoved();
+  };
+
+  const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
 
   async function act(id: string, requested: ActionId) {
     const n = nodeOf(id);
@@ -171,230 +157,144 @@ export function createBoard(els: BoardElements): Board {
     if (ITEM_ACTIONS.includes(requested) && !offers(n).includes(requested)) return;
     // Pressing the button that matches the current status undoes it, unless the card has a note
     // not yet sent: C and M then open it to edit (ruling 1).
-    const pressed = isPressed(requested, statusOf(S.state, id));
-    if ((requested === 'comment' || requested === 'context') && (!pressed || unsentNote(S.state, id)))
+    const pressed = isPressed(requested, statusOf(S.data!.state, id));
+    if ((requested === 'comment' || requested === 'context') && (!pressed || unsentNote(S.data!.state, id)))
       return notes.press(id, requested);
     const action: ActionId = pressed ? 'reopen' : requested;
     const def = ACTIONS[action];
-    const next = shell.hide && def.status && DECIDED.has(def.status) ? neighbour(id, 1) : null;
+    const next = shell.hide && def.status && DECIDED.has(def.status) ? focus.neighbour(id, 1) : null;
     if (!(await record({ action, ...target(id) }))) return;
-    relayout();
     const focusId = next && hiddenSet().has(id) ? next : id;
-    S.cards.get(focusId)?.focus({ preventScroll: true });
+    drawing.cards.get(focusId)?.focus({ preventScroll: true });
     if (def.reply) toast(`${n.n} ${action === 'reopen' ? 'reopened' : def.reply}`);
   }
 
-  function regionOf(id: string) {
-    const n = nodeOf(id);
-    return S.layout?.regions.find((r) => r.id === n?.region);
-  }
-
   async function pin(id: string, box: Box) {
-    const r = regionOf(id);
+    const r = drawing.layout?.regions.find((x) => x.id === nodeOf(id)?.region);
     if (!r) return;
     const x = Math.round(box.x - r.origin.x);
     const y = Math.round(box.y - r.origin.y);
-    await record({ action: 'pin', ...target(id), x, y });
-    relayout(); // on failure this snaps the card back to its computed place
+    // On failure the draw snaps the card back to its computed place.
+    if (!(await record({ action: 'pin', ...target(id), x, y }))) redraw();
   }
 
   async function unpin(id: string) {
-    if (!S.state.pins.has(id)) return;
-    if (await record({ action: 'unpin', ...target(id) })) relayout();
+    if (S.data!.state.pins.has(id)) await record({ action: 'unpin', ...target(id) });
   }
 
-  async function setSize(id: string, size: ActSize) {
-    if (await record(sizeAct(id, size))) relayout();
-  }
+  const setSize = (id: string, size: ActSize) => void record(sizeAct(id, size));
 
   async function setMode(region: string, mode: Mode) {
-    if (await record({ action: 'mode', region, mode })) {
-      relayout();
-      const r = S.layout?.regions.find((x) => x.id === region);
-      if (r) vp.reveal(r.box);
-    }
+    if (!(await record({ action: 'mode', region, mode }))) return;
+    const r = drawing.layout?.regions.find((x) => x.id === region);
+    if (r) vp.reveal(r.box);
   }
 
-  // ---- agent access (agentAccess flag) ---------------------------------------------------------
-
-  async function answer(request: number, a: 'grant' | 'deny', text?: string): Promise<boolean> {
-    const row = shell.requests.find((r) => r.seq === request);
-    if (!(await record(answerAct(request, a, text)))) return false;
-    relayout();
-    toast(answerWords(row, a));
-    return true;
-  }
-
-  async function revoke(region: string, holder: string) {
-    const words = revokeWords(S.data!, region, holder);
-    if (!(await askConfirm(words.heading, words.body, words.confirm))) return;
-    if (!(await record(revokeAct(region, holder)))) return;
-    relayout();
-    toast(words.done);
-    // The holder's button is gone; keep keyboard focus on the board.
-    if (!document.activeElement || document.activeElement === document.body) stage.focus({ preventScroll: true });
-  }
-
-  /** Send to agent; reloading at once greys the notes it sent (2e_FE_01 ruling 7). */
+  /** Send to agent; it greys the notes it sent at once (2e_FE_01 ruling 7). */
   const send = () => attempt({ action: 'send' });
 
   async function resetRegion(region: string) {
-    const ids = view().nodes.filter((n) => n.region === region && S.state.pins.has(n.id)).map((n) => n.id);
+    const ids = view().nodes.filter((n) => n.region === region && S.data!.state.pins.has(n.id)).map((n) => n.id);
     for (const id of ids) if (!(await record({ action: 'unpin', ...target(id) }))) break;
-    relayout();
   }
-
-  // ---- navigation and focus ------------------------------------------------------------------
-
-  function visibleOrder(): string[] {
-    return readingOrder(view()).map((n) => n.id).filter((id) => S.layout?.nodes.has(id));
-  }
-
-  function neighbour(id: string | null, dir: 1 | -1): string | null {
-    const ids = visibleOrder();
-    if (!ids.length) return null;
-    const i = id ? ids.indexOf(id) : -1;
-    return ids[(i + dir + ids.length) % ids.length] ?? null;
-  }
-
-  function setFocus(id: string | null) {
-    if (S.focus === id) return;
-    S.focus = id;
-    if (S.layout) drawWires(wires, S.layout, S.focus);
-    if (id) {
-      const b = S.layout?.nodes.get(id);
-      if (b) vp.reveal(b);
-    }
-  }
-
-  els.cards.addEventListener('focusin', (e) => {
-    setFocus((e.target as HTMLElement).closest<HTMLElement>('vb-node')?.dataset.id ?? null);
-  });
-  els.cards.addEventListener('focusout', (e) => {
-    const to = (e as FocusEvent).relatedTarget as HTMLElement | null;
-    if (!to?.closest('vb-node')) setFocus(null);
-  });
-
-  // ---- wiring --------------------------------------------------------------------------------
-
-  stage.addEventListener('click', (e) => {
-    const t = e.target as HTMLElement;
-    const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
-    if (actBtn) {
-      const id = actBtn.closest<HTMLElement>('vb-node')!.dataset.id!;
-      void act(id, actBtn.dataset.act as ActionId);
-      return;
-    }
-    const note = t.closest<HTMLElement>('[data-note]');
-    if (note && !t.closest('a')) return notes.show(note.closest<HTMLElement>('vb-node')!.dataset.id!, Number(note.dataset.note));
-    const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
-    const pick = sizeBtn?.dataset.sizePick;
-    if (sizeBtn && isSizePick(pick)) return void setSize(sizeBtn.closest<HTMLElement>('vb-node')!.dataset.id!, pick);
-    const modeBtn = t.closest<HTMLButtonElement>('button[data-mode]');
-    if (modeBtn) return void setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
-    const reset = t.closest<HTMLButtonElement>('button[data-reset]');
-    if (reset) return void resetRegion(reset.dataset.reset!);
-    const holder = t.closest<HTMLButtonElement>('button[data-revoke]');
-    if (holder && access) return void revoke(holder.closest<HTMLElement>('vb-region')!.dataset.region!, holder.dataset.revoke!);
-  });
-
-  bindPointer(stage, vp, {
-    box: (id) => S.layout?.nodes.get(id),
-    dragMove: (id, box) => {
-      // Live connectors while dragging: re-route with the moved box, no full relayout.
-      if (!S.layout) return;
-      const nodes = new Map(S.layout.nodes).set(id, box);
-      drawWires(wires, { ...S.layout, nodes, routes: routeLinks(view().links, nodes) }, id);
-    },
-    dragEnd: (id, box) => void pin(id, box),
-  });
-
-  const unbindKeys = bindKeys({
-    act: (id, a) => void act(id, a),
-    nudge: (id, dx, dy) => {
-      const b = S.layout?.nodes.get(id);
-      if (b) void pin(id, { ...b, x: b.x + dx, y: b.y + dy });
-    },
-    unpin: (id) => void unpin(id),
-    step: (from, dir) => {
-      const next = neighbour(from, dir);
-      if (next) S.cards.get(next)?.focus({ preventScroll: true });
-    },
-    fit: () => S.layout && vp.fit(S.layout.bounds),
-    toggleHide,
-    zoom: (f) => vp.zoomCentre(f),
-    escape: () => { shell.replyOpen = false; },
-  });
 
   function toggleHide() {
     shell.hide = !shell.hide;
-    if (S.data) relayout();
+    if (S.data) redraw();
   }
 
-  const unbindSize = bindSizeControl(stage);
+  // ---- wiring --------------------------------------------------------------------------------
 
-  const onResize = () => S.layout && vp.apply();
-  window.addEventListener('resize', onResize);
+  const unbind = bindStage(stage, vp, {
+    act: (id, a) => void act(id, a),
+    showNote: (id, seq) => notes.show(id, seq),
+    setSize,
+    setMode: (region, mode) => void setMode(region, mode),
+    resetRegion: (region) => void resetRegion(region),
+    ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
+    pin: (id, box) => void pin(id, box),
+    unpin: (id) => void unpin(id),
+    layout: () => drawing.layout,
+    view,
+    drawDrag: (layout, id) => drawing.wiresFor(layout, id),
+    step: (from, dir) => {
+      const next = focus.neighbour(from, dir);
+      if (next) drawing.cards.get(next)?.focus({ preventScroll: true });
+    },
+    fit: () => { if (drawing.layout) vp.fit(drawing.layout.bounds); },
+    toggleHide,
+    zoom: (f) => vp.zoomCentre(f),
+    escape: () => { shell.replyOpen = false; },
+  }, () => { if (drawing.layout) vp.apply(); });
 
   // ---- boards --------------------------------------------------------------------------------
 
-  async function openBoard(id: string, fit = true) {
-    try {
-      if (!take(id, await loadBoard(id))) relayout();
-      showMessage(null);
-      if (fit && S.layout) vp.fit(S.layout.bounds, false);
-      history.replaceState(null, '', `#${encodeURIComponent(id)}`);
-    } catch (err) {
-      fail(err);
-      showMessage(err instanceof ApiError ? [err.message, ...err.problems].join('\n') : String(err));
+  /** Draw board `id` from the held state; no fetch, the state holds every board. */
+  function openBoard(id: string, fit = true) {
+    if (!live.state?.boards.has(id)) {
+      shell.message = `There is no board "${id}".`;
+      return;
     }
+    S.id = id;
+    redraw(true);
+    shell.message = null;
+    if (fit && drawing.layout) vp.fit(drawing.layout.bounds, false);
+    history.replaceState(null, '', `#${encodeURIComponent(id)}`);
   }
 
   function watch(id: string) {
     S.unwatch?.();
-    let pending = 0;
-    S.unwatch = watchBoard(id, () => {
-      clearTimeout(pending);
-      pending = window.setTimeout(() => void openBoard(id, false), 150);
-    });
+    S.unwatch = live.watch(id);
   }
 
   async function boot() {
     try {
-      const boards = await listBoards();
+      const [boards] = await Promise.all([listBoards(), live.load()]);
       shell.boards = boards;
       if (!boards.length) {
-        showMessage('No boards yet. Run npm run dev to open the example boards.');
+        shell.message = 'No boards yet. Run npm run dev to open the example boards.';
         return;
       }
       const wanted = decodeURIComponent(location.hash.slice(1));
       const id = boards.some((b) => b.id === wanted) ? wanted : boards[0]!.id;
       shell.boardId = id;
-      await openBoard(id);
+      openBoard(id);
       watch(id);
+      // The first draw ends once the frame it was drawn for has been shown.
+      requestAnimationFrame(() => requestAnimationFrame(() => { work.firstDrawMs = performance.now(); }));
     } catch (err) {
       fail(err);
-      showMessage('Could not reach the board server. Start it with: npm run board');
+      shell.message = 'Could not reach the board server. Start it with: npm run board';
     }
   }
+
+  exposeWork({
+    async rebuild() {
+      await live.load();
+      redraw(true);
+    },
+    async idle() {
+      while (sending.size) await Promise.allSettled([...sending]);
+      await live.sync();
+      while (S.frame) await nextFrame();
+    },
+  });
 
   return {
     boot,
     switchTo(id) {
       shell.boardId = id;
-      void openBoard(id);
+      openBoard(id);
       watch(id);
     },
-    fit: () => { if (S.layout) vp.fit(S.layout.bounds); },
+    fit: () => { if (drawing.layout) vp.fit(drawing.layout.bounds); },
     toggleHide,
-    answer,
+    answer: (request, a, text) => accessFlow.answer(request, a, text),
     send,
     destroy() {
       S.unwatch?.();
-      unbindKeys();
-      unbindSize();
+      unbind();
       notes.destroy();
-      window.removeEventListener('resize', onResize);
     },
   };
 }

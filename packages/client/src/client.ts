@@ -143,8 +143,9 @@ export interface Client {
   call<T = unknown>(id: OperationId, input?: CallInput, opts?: CallOptions): Promise<T>;
   /** The URL an operation lives at, for what `fetch` cannot hold open (EventSource). */
   url(id: OperationId, input?: CallInput): string;
-  /** Listen to a server-sent-events operation (`watch_board`) in the browser. Returns a stop. */
-  watch(id: OperationId, input: CallInput, event: string, on: (data: unknown) => void): () => void;
+  /** Listen to a server-sent-events operation (`watch_board`) in the browser. Returns a stop.
+   * `onOpen` runs each time the stream (re)connects, so a reader can catch up on what it missed. */
+  watch(id: OperationId, input: CallInput, event: string, on: (data: unknown) => void, onOpen?: () => void): () => void;
 }
 
 export function createClient(opts: ClientOptions = {}): Client {
@@ -162,10 +163,11 @@ export function createClient(opts: ClientOptions = {}): Client {
       return (await parseResponse(res)) as T;
     },
     url: (id, input) => urlFor(base, id, input),
-    watch(id, input, event, on) {
+    watch(id, input, event, on, onOpen) {
       const Source = globalThis.EventSource;
       if (!Source) throw new Error('watch needs EventSource (a browser)');
       const es = new Source(urlFor(base, id, input));
+      if (onOpen) es.addEventListener('open', () => onOpen());
       es.addEventListener(event, (e) => {
         try { on(JSON.parse((e as MessageEvent<string>).data)); } catch { /* not JSON: ignored */ }
       });

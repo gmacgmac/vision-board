@@ -111,5 +111,5 @@ Open from 2e: the new-note hint wraps "cancel" at 300px; clicking empty board ke
 
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
-| 1 | [N12_FE_01 incremental board](./N12_FE_01_incremental-board.md) | Opus 5.5 | Running | |
-| 2 | Check: orchestrator runs the gates and the counting tests, tries a full rebuild to see them fail | Orchestrator | Planned | |
+| 1 | [N12_FE_01 incremental board](./N12_FE_01_incremental-board.md) | Opus 5.5 | Done | see log |
+| 2 | Check: orchestrator runs the gates and the counting tests, tries a full rebuild to see them fail | Orchestrator | Done 2026-10-05 (480 unit + 4 timing, 74 page; no baseline changed) | see log |

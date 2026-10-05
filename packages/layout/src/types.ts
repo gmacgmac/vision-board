@@ -45,6 +45,17 @@ export interface RegionBox {
 
 export interface Route { from: string; to: string; label?: string; d: string; mid: Point }
 
+/** One region laid out on its own (`layoutRegion`): its mode's region-local positions after pins
+ *  and the collision pass, their bounds `b`, and the frame's size. `packRegions` places it. */
+export interface RegionPiece {
+  region: Region;
+  mode: Mode;
+  out: ModeOutput;
+  b: Box;
+  w: number;
+  h: number;
+}
+
 export interface BoardLayout {
   regions: RegionBox[];
   nodes: Map<string, Box>;

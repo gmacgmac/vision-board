@@ -1,7 +1,7 @@
 // Proves every rule in verify.mjs fails when broken and passes when kept.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMap, checkImports, checkLength, checkManifest } from './verify.mjs';
+import { buildMap, checkImports, checkLength, checkManifest, checkWeight, pageAssets } from './verify.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -51,4 +51,17 @@ test('map: lists real dependencies, users and the public API', () => {
   ]);
   assert.match(map, /\| `packages\/actions` \| `packages\/format` \| — \|/);
   assert.match(map, /\| `packages\/format` \| — \| `packages\/actions` \| \* from view\.ts \|/);
+});
+
+test('page weight: the board page is its HTML\'s assets and what they import, never the gallery\'s', () => {
+  const html = '<script type="module" src="/assets/index-a.js"></script><link rel="stylesheet" href="/assets/shared-b.css">';
+  const files = { 'index-a.js': 'import{x}from"./shared-c.js";import("./lazy-d.js")', 'shared-c.js': '', 'lazy-d.js': '', 'gallery-e.js': '' };
+  assert.deepEqual(pageAssets(html, (name) => files[name] ?? null).sort(), ['index-a.js', 'lazy-d.js', 'shared-b.css', 'shared-c.js']);
+});
+
+test('page weight: over the gzip budget fails and names the size, at or under it is silent', () => {
+  assert.deepEqual(checkWeight('apps/board/dist/index.html', 150 * 1024, 150), []);
+  const over = checkWeight('apps/board/dist/index.html', 150 * 1024 + 1, 150);
+  assert.deepEqual(levels(over), ['fail']);
+  assert.match(over[0].message, /150\.0 KB gzip.*budget 150 KB/);
 });

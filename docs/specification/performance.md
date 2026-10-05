@@ -7,16 +7,24 @@
 
 | What | Budget | Measured on | Checked by |
 |---|---|---|---|
-| Layout, whole board | under 100 ms | 1,000 cards, 3 pins per container | `packages/layout/tests` |
-| First draw of a board | under 1 s | 1,000 cards, page test machine | page test (tracker N12) |
-| One change shown | under 50 ms | one act on a 1,000-card board | page test (tracker N12) |
-| Only what changed is redrawn | exactly 50 cards updated, measured and redrawn; only their containers laid out; no whole-board fetch | 50 cards changed in one batch on a 1,000-card board, and 1 card in a second case | page test counting the work, not only timing it (tracker N12) |
-| Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown-safety.test.ts` |
-| Board page weight | under 150 KB gzip (JS + CSS) | `npm run build` output | `npm run verify` (tracker N12) |
-| Server start | under 1 s | a 100,000-event ledger | server test (tracker N12) |
+| Layout, whole board | under 100 ms | 1,000 cards, 3 pins per container | `packages/layout/tests/layout.timing.ts` |
+| First draw of a board | under 1 s | 1,000 cards, page test machine | `tests/pages/perf.spec.ts` |
+| One change shown | under 50 ms | one act on a 1,000-card board (median of five) | `tests/pages/perf.spec.ts` |
+| Only what changed is redrawn | exactly 50 cards updated, measured and redrawn; only their containers laid out; no whole-board fetch | 50 cards changed in one batch on a 1,000-card board, and 1 card in a second case | `tests/pages/perf.spec.ts`, counting the work, not only timing it |
+| Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
+| Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
+| Board page weight | under 150 KB gzip (JS + CSS) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
+| Server start | under 1 s | a 100,000-event ledger | `apps/board/tests/server-start.timing.ts` |
 
-Today (2026-10-05) the board page is about 52 KB gzip, and layout of about 350 cards takes about
-5 ms. A budget changes only with a reason in the PLAN of the task that changes it.
+Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): the board page is
+57.1 KB gzip; layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20
+containers); the first draw of 1,000 cards ends 310 to 340 ms after navigation starts; one act is
+shown in 25 to 30 ms (median of five, the round trip to the server included); a batch of 50 changed
+cards updates and measures 50 cards and lays out their 2 containers, and 1 changed card in the last
+container updates 1 card, lays out 1 container and redraws 2 connectors, with no full fetch in
+either; the server starts on a 100,000-event ledger in about 330 ms, so it keeps no checkpoint yet
+(approach 7 waits until it is needed).
+A budget changes only with a reason in the PLAN of the task that changes it.
 
 ## Approach
 
@@ -43,10 +51,45 @@ Today (2026-10-05) the board page is about 52 KB gzip, and layout of about 350 c
    sequence number it covers, so startup folds only the events after it. The ledger itself stays
    the one source (D-017): a checkpoint can always be thrown away and rebuilt.
 
+## Counting the work
+
+The page counts what each change costs it (`apps/board/src/board/work.ts`), so the page tests prove
+an event touched only what it should. The counters exist on every page and cost a few additions;
+they are readable from outside only as **`window.__vbWork`**, which the page defines only when its
+address carries **`?vbwork`** (the page tests open `/?vbwork#<board>`). `__vbWork.work` holds:
+
+| Counter | Counts |
+|---|---|
+| `cardsUpdated` | cards rendered or updated (`render` or `update` on a `<vb-node>`) |
+| `cardsMeasured` | cards whose size was read from the browser |
+| `cardsPlaced` | cards whose place (transform, hidden) was written |
+| `containersLaidOut` | containers laid out again (their layout mode ran); `containers` lists them |
+| `linksRedrawn` | connectors whose path or look was written |
+| `fullFetches` | reads of the whole ledger |
+| `firstDrawMs` | milliseconds from navigation start to the end of the first draw |
+
+`__vbWork.reset()` zeroes the counters (not `firstDrawMs`), `__vbWork.idle()` resolves once the page
+has read every line the server holds and drawn it, and `__vbWork.rebuild()` throws away the held
+state and everything drawn and draws again from a fresh read.
+
+## How the budget tests run
+
+- Unit timing tests are `*.timing.ts` files, not `*.test.ts`: `npm test` runs every unit test in
+  parallel first, then `npm run test:timing` runs the timing tests alone, one file at a time
+  (`--test-concurrency=1`), so a busy machine cannot fail them by running other tests beside them.
+- The page budgets run on their own server (`tests/pages/playwright.config.ts`, the page-test port
+  plus one) over a ledger `tests/pages/perf-ledger.ts` generates from the roadmap fixture's shapes:
+  `big`, 1,000 cards in 20 containers (the roadmap's grid, flow, radial and lanes containers, five
+  times each, 50 cards each, with their kinds of links), and `mixed`, a copy of the roadmap board for
+  the same-picture test. Page tests already run one at a time (one worker).
+
 ## Where this lands
 
-- Points 1, 3 and 5 belong to the page's controller and the shared client (`apps/board/src/board`,
-  `packages/client`); point 2 to `packages/layout`; point 4 to `render.ts` and `viewport.ts`;
-  point 6 to the reads in the API (`show_node`); point 7 to `apps/board/server/ledger.ts`.
+- Points 1, 3 and 5 belong to the page (`apps/board/src/board`: `live.ts` holds the ledger state and
+  applies new lines, `board-data.ts` works a board out of it, `draw.ts`, `cards.ts`, `render.ts`
+  and `wires.ts` draw what changed) and the shared client (`packages/client`, the live stream);
+  point 2 to `packages/layout` (`layoutRegion`, `packRegions`) and the page's `layout-cache.ts`;
+  point 4 to `offscreen.ts` and `viewport.ts`; point 6 to the reads in the API (`show_node`);
+  point 7 to `apps/board/server/ledger.ts`.
 - The work is tracker N12. Its page test runs before Stage 3, because Stage 3's selection and
   dragging code is the next thing it measures.

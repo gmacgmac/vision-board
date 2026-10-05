@@ -1,4 +1,4 @@
-export { layoutBoard, MODE_FNS } from './board.ts';
+export { layoutBoard, layoutRegion, MODE_FNS, packRegions } from './board.ts';
 export { routeLinks, roundedPath } from './route.ts';
 export { boundsOf, overlaps } from './geometry.ts';
 export { autoTier, measureBody, sizeTier, TIERS } from './size.ts';

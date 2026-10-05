@@ -1,8 +1,10 @@
 // The page's side of packages/client (rule 7, D-029): the client is the only code that calls the
-// server; this wraps it in the shapes the page draws from. A refused call comes back as an
-// ApiError carrying the problem's pointer errors (api.md 38).
-import type { ActEvent, ActionId, ActSize, Mode, NodeSize, NoteKind, View } from '../../../../packages/format/src/index.ts';
-import type { BoardAccess, BoardState, ItemState } from '../../../../packages/actions/src/index.ts';
+// server; this wraps it in the shapes the page draws from. The page reads the ledger itself
+// (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
+// a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
+// the problem's pointer errors (api.md 38).
+import type { ActEvent, ActionId, ActSize, LedgerEvent, Mode, NoteKind, View } from '../../../../packages/format/src/index.ts';
+import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 
 export interface BoardSummary { id: string; title: string; seq: number }
@@ -30,20 +32,6 @@ export interface ActFields {
    * edited note now asks for. */
   note?: number;
   kind?: NoteKind;
-}
-
-/** `get_board` as JSON: `state`'s maps arrive as plain objects; `sizes`, `requests` and
- * `holders` only when set. */
-interface BoardJson extends BoardAccess {
-  head: number;
-  view: View;
-  state: {
-    items: Record<string, ItemState>;
-    pins: Record<string, { x: number; y: number }>;
-    modes: Record<string, Mode>;
-    sizes?: Record<string, NodeSize>;
-  };
-  versions: Record<string, number>;
 }
 
 export class ApiError extends Error {
@@ -74,21 +62,12 @@ export async function listBoards(): Promise<BoardSummary[]> {
   return r.boards.map((b) => ({ id: b.board, title: b.title, seq: b.seq }));
 }
 
-export async function loadBoard(id: string): Promise<BoardData> {
-  const b = await call(() => client.call<BoardJson>('get_board', { board: id }));
-  return {
-    head: b.head,
-    view: b.view,
-    versions: b.versions,
-    access: { ...(b.requests && { requests: b.requests }), ...(b.holders && { holders: b.holders }) },
-    state: {
-      items: new Map(Object.entries(b.state.items)),
-      pins: new Map(Object.entries(b.state.pins)),
-      modes: new Map(Object.entries(b.state.modes)),
-      sizes: new Map(Object.entries(b.state.sizes ?? {})),
-    },
-  };
-}
+/** The most lines one `read_ledger` call returns (api.md 31). */
+const PAGE = 500;
+
+/** One page of ledger lines after `after`, oldest first; `more` when there are more. */
+export const readLedger = (after: number) =>
+  call(() => client.call<{ events: LedgerEvent[]; head: number; more?: true }>('read_ledger', { after, limit: PAGE }));
 
 /** sessionStorage flag: the page has already reloaded once for a fresh person cookie. */
 const RELOADED = 'vb-person-reload';
@@ -118,7 +97,8 @@ export const sendAct = (id: string, fields: ActFields) =>
     board: id, body: { type: 'act', ...fields, ...(NAMES_BOARD.has(fields.action) && { board: id }) },
   })));
 
-/** Calls back whenever the project ledger gains an event (the agent drew, or another tab acted). */
-export function watchBoard(id: string, onChange: () => void): () => void {
-  return client.watch('watch_board', { board: id }, 'change', onChange);
+/** Calls back with the new line's `seq` whenever the project ledger gains one (the agent drew, or
+ * another tab acted), and `onOpen` each time the stream (re)connects. */
+export function watchBoard(id: string, onChange: (seq: number) => void, onOpen: () => void): () => void {
+  return client.watch('watch_board', { board: id }, 'change', (d) => onChange(Number((d as { seq?: unknown }).seq)), onOpen);
 }

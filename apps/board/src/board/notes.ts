@@ -33,7 +33,8 @@ export interface NoteFlow {
   press(id: string, kind: NoteKind): void;
   /** The pin, or a note in the "Your note" block: open that note (read-only once sent). */
   show(id: string, seq: number): void;
-  /** Follow the card after a pan, a zoom or a relayout; close if the card is gone. */
+  /** Follow the card after a pan, a zoom or a relayout (ruling 6: the controller calls it on
+   * every one); close if the card is gone. */
   place(): void;
   /** Close without saving; focus goes back to the card. */
   close(): void;
@@ -51,8 +52,6 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   bubble.hidden = true;
   d.stage.append(bubble);
   let open: Open | null = null;
-  // It follows its card on every pan and zoom (ruling 6).
-  d.vp.onApply = () => place();
 
   function mark(id: string, on: boolean) {
     const card = d.card(id);

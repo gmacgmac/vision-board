@@ -64,6 +64,9 @@ body {
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }
 .vb-world.no-anim * { transition: none !important; }
 .vb-regions, .vb-cards { position: absolute; left: 0; top: 0; }
+/* A card well off screen (offscreen.ts, N12): the browser skips drawing it; its size stays the one
+   last measured (contain-intrinsic-size, set by the page) and it keeps its name and tab order. */
+.vb-cards vb-node[data-offscreen] { content-visibility: auto; }
 .vb-wires { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 
 /* Wires and lanes */

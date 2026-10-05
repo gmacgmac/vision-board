@@ -14,7 +14,12 @@ Schemas and the hand validator, then in order, and prints every problem with its
 `compileSchema`); the page never imports it. Pages arrange patterns
 from `packages/ui`; they hold no layout maths, file formats or actions themselves. Every card is a
 `<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the pattern CSS, and
-`src/board/render.ts` creates, measures and places the elements but never builds their markup.
+`src/board/cards.ts` and `src/board/render.ts` create, measure and place the elements but never
+build their markup. The page works in proportion to what changed (N12,
+`docs/specification/performance.md`): `src/board/live.ts` reads the ledger once and applies each new
+line to the state it holds, `board-data.ts` works the open board out from that state, and `draw.ts`
+updates, measures and lays out only what a change touched (`layout-cache.ts` per container,
+`wires.ts` per connector, `offscreen.ts` for cards well off screen), counting the work in `work.ts`.
 
 Routes come from the route table generated from `packages/format/schema/openapi.json`
 (`docs/specification/api.md`). `server.ts` only starts the server; `server/app.ts` runs the guard
@@ -35,7 +40,8 @@ patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed fr
 `pattern.json` files; a pattern needs a sample function in `src/gallery/main.ts` or the page shows
 a gap and the page test fails. Open it at `/gallery.html`. Page tests (`npm run test:pages`, D-025,
 in `tests/pages/`) run the board and the gallery in Chromium on port 4468 from a fresh copy of the
-roadmap fixture ledger; screenshots are stored in `tests/pages/__screenshots__/`, and
+roadmap fixture ledger, and the performance budgets on port 4469 from a generated 1,000-card ledger
+(`tests/pages/perf-ledger.ts`); screenshots are stored in `tests/pages/__screenshots__/`, and
 `npm run test:pages -- --update-snapshots` replaces them on purpose.
 
 - **Depends on**: `packages/format`, `packages/actions`, `packages/client`, `packages/layout`,

@@ -1,24 +1,10 @@
 // Safety of the Markdown renderer (D-023, 2c_FE_01): raw HTML is always escaped, only http:,
 // https: and mailto: links survive, attributes cannot be broken out of, input is capped at 20,000
-// characters, and adversarial input renders in linear time.
+// characters, and adversarial input renders safe (its time: markdown.timing.ts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown } from '../src/index.ts';
-
-const LINK_SHAPE = '<a class="vb-md-link" href="[^"<>]*"(?: title="[^"<>]*")? rel="noopener noreferrer" target="_blank">';
-const LINK = new RegExp(LINK_SHAPE);
-const LINKS = new RegExp(LINK_SHAPE, 'g');
-
-/** Every tag in the output is one the renderer is allowed to write, and every <a> has the fixed shape. */
-function assertSafe(html: string): void {
-  const tags = [...html.matchAll(/<\/?([a-z0-9]+)/g)].map((m) => m[1]);
-  const allowed = new Set(['p', 'span', 'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a', 'strong', 'em', 'del', 'br']);
-  for (const t of tags) assert.ok(allowed.has(t!), `unexpected tag <${t}> in ${html}`);
-  assert.equal((html.match(/<a /g) ?? []).length, (html.match(LINKS) ?? []).length, `link shape in ${html}`);
-  assert.doesNotMatch(html, /style=|<script|<img|<iframe/i);
-  // A refused URL may show as text, but never inside a tag.
-  assert.doesNotMatch(html, /<[^>]*(?:javascript:|data:|vbscript:)/i);
-}
+import { ADVERSARIAL, assertSafe, LINK } from './markdown-adversarial.ts';
 
 test('raw HTML is escaped, inline and as a block', () => {
   for (const src of ['<script>alert(1)</script>', 'a <script>alert(1)</script> b', '<img src=x onerror=alert(1)>',
@@ -73,37 +59,6 @@ test('input over 20,000 characters is cut there with an ellipsis', () => {
   assert.equal(renderMarkdown('a'.repeat(20_000)), `<p class="vb-md-p">${'a'.repeat(20_000)}</p>`);
 });
 
-/** Adversarial inputs for backtracking and quadratic scans, each at or near the 20,000 cap. */
-const ADVERSARIAL: Record<string, string> = {
-  'stars': '*'.repeat(20_000),
-  'brackets': '['.repeat(20_000),
-  'backticks': '`'.repeat(20_000),
-  'stars, brackets, backticks (x 10,000 each, cut at 20,000)': '*'.repeat(10_000) + '['.repeat(10_000) + '`'.repeat(10_000),
-  'star-a pairs': '*a'.repeat(10_000),
-  'underscore-a pairs': '_a'.repeat(10_000),
-  'tilde pairs': '~~a'.repeat(6_666),
-  'bracket-a pairs': '[a'.repeat(10_000),
-  'open link targets': '[a]('.repeat(5_000),
-  'backtick runs of growing length': Array.from({ length: 190 }, (_, i) => `${'`'.repeat(i + 1)}a`).join(''),
-  'angle brackets': '<'.repeat(20_000),
-  'autolink starts': '<a:'.repeat(6_666),
-  'backslashes': '\\'.repeat(20_000),
-  'image starts': '!['.repeat(10_000),
-  'nested quotes': '>'.repeat(20_000),
-  'nested lists': '- '.repeat(10_000),
-  'many lines': 'a\n'.repeat(10_000),
-  'many list items': '- a\n'.repeat(5_000),
-  'trailing hashes': `# ${'# '.repeat(9_998)}`,
-  'spaces then hashes': `# a${' '.repeat(10_000)}${'#'.repeat(9_990)}x`,
-};
-
-test('adversarial input renders in under 50 ms', () => {
-  renderMarkdown('warm *up* [a](https://e.com) `x`');
-  for (const [name, src] of Object.entries(ADVERSARIAL)) {
-    const start = performance.now();
-    const html = renderMarkdown(src);
-    const ms = performance.now() - start;
-    assertSafe(html);
-    assert.ok(ms < 50, `${name}: ${ms.toFixed(1)} ms`);
-  }
+test('adversarial input renders safe (its time is checked alone: markdown.timing.ts)', () => {
+  for (const src of Object.values(ADVERSARIAL)) assertSafe(renderMarkdown(src));
 });

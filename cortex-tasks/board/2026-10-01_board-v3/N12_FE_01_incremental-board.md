@@ -82,4 +82,102 @@ anything unsettled.
 
 ## Implementation Notes
 
-**Status**: Not started.
+**Status**: Built, not committed (2026-10-05). All five gates exit 0; no screenshot baseline changed.
+
+**Modules and symbols**
+- `packages/layout/src/board.ts`: `layoutBoard` is now `layoutRegion` (one container: mode, pins,
+  collision pass, frame size; result never changed afterwards) composed with `packRegions` (rows,
+  origins, `routeLinks`). New type `RegionPiece` (`types.ts`); both exported from the front door.
+- `apps/board/src/board/` (controller.ts split, 400 -> 300 lines, no long-file marker):
+  - `live.ts` `createLive`: holds the project `LedgerState`; `load` (read_ledger, 500 a page, folded
+    with `foldLedger`), `sync` (lines after the held head, applied with `applyEvent`; calls during a
+    read share one more read), `own` (an act's answer applied in place when it is the next line),
+    `watch` (`watch_board`; catches up on every (re)connect). Full fetch only on open, a ledger that
+    went back (`head` below the held one) or a newer `v` (`canApply`).
+  - `board-data.ts` `boardData` (= get_board's answer from the held state, same reads as the
+    server), `drewOn` ("The agent drew" toast), `canApply`, `decidedIds`.
+  - `draw.ts` `createDrawing`: one incremental draw (sync cards, measure dirty, cached layout, place,
+    wires, offscreen); `fresh` draws from scratch. `BoardElements` moved here (re-exported).
+  - `cards.ts` `createCardSet`: render only on a new `ver`, update only when `nodeState` changed,
+    measure only those; reads after writes; places written only when changed (a drag's own transform
+    is detected by read-back); reading order kept by moving only out-of-place cards.
+  - `render.ts` `readingOrder`, `createRegionSet` (frames rendered on region change, updated on
+    state change). `wires.ts` `createWires` (per-link `<path>`/`<text>`, written only when path,
+    label or hot look changed; DOM order kept equal to a full draw). `layout-cache.ts`
+    `createLayoutCache` (key per container: region, mode, visible nodes' id/kind/lane/size/pin,
+    inner links). `offscreen.ts` `markOffscreen` (`data-offscreen` + `contain-intrinsic-size`
+    beyond one screen of margin; `board.css` sets `content-visibility: auto`). `work.ts` (counters,
+    `exposeWork`). `focus.ts` (navigation), `wiring.ts` `bindStage` (click delegate, pointer, keys,
+    size control, resize), `access-flow.ts` (Allow/Refuse/Remove access).
+  - `io.ts`: `loadBoard` removed; `readLedger(after)`; `watchBoard(id, onChange(seq), onOpen)`.
+    `notes.ts`: no longer sets `vp.onApply` (the controller calls `notes.place` and the offscreen
+    pass from it). Switching boards fetches nothing (the held state has every board).
+- `packages/client`: `watch(..., onOpen?)`.
+- `scripts/verify.mjs`: `PAGE`, `pageAssets`, `checkWeight`, `pageWeight` (board page = its HTML's
+  assets and what they import; warns when not built).
+
+**Counter names** (`window.__vbWork`, only with `?vbwork`; documented in performance.md § Counting
+the work): `cardsUpdated`, `cardsMeasured`, `cardsPlaced`, `containersLaidOut` (+ `containers`),
+`linksRedrawn`, `fullFetches`, `firstDrawMs`; hook functions `reset`, `idle`, `rebuild`.
+
+**Measured against each budget**
+| Budget | Measured |
+|---|---|
+| Layout, 1,000 cards, 3 pins per container: < 100 ms | 2.9 ms; 5.9 ms with 60 pins |
+| First draw, 1,000 cards: < 1 s | 313-337 ms over 5 runs |
+| One change shown: < 50 ms | median 24.7-29.6 ms (single acts 21-41 ms), 1 card updated, 0 full fetches |
+| 50 cards in one batch | 50 updated, 50 measured, 2 containers (r03, r07), 0 full fetches; 900 cards placed and 686 links redrawn (the two containers grew, so everything packed after them moved) |
+| 1 card (last container) | 1 updated, 1 measured, 1 container, 0 placed, 2 links, 0 full fetches |
+| Board page weight: < 150 KB gzip | 57.1 KB |
+| Server start, 100,000 events: < 1 s | 324-331 ms, so no checkpoint (step 5) |
+
+**Tests added or changed, and why**
+- Failing first: `tests/pages/perf.spec.ts` (first draw, 50-card and 1-card counting, one-act
+  timing, off-screen cards) failed on the old controller (no hook). Checked both ways the task asks:
+  forcing `draw(true)` on every change, and a full ledger read on every sync, each fail the counting
+  tests; dropping card heights from the layout-cache key fails `same-picture.spec.ts` (seed 2026)
+  and `layout-cache.test.ts`. All reverted.
+- `tests/pages/same-picture.spec.ts`: ruling 1 at page level; 3 seeds x 40 random steps (the page's
+  own clicks, acts from "another tab", agent nodes, versions, links, unlinks, modes, pins, sizes,
+  notes); after each step every card's markup and size, every frame, the wires SVG and the counts
+  equal a freshly opened page. Attributes compared in name order; `data-offscreen`,
+  `contain-intrinsic-size` and the transient `settling` class are left out (viewport and timing).
+- `apps/board/tests/layout-cache.test.ts`: cache == `layoutBoard` after each of 120 seeded random
+  changes x 4 seeds, and only touched containers laid out; a drift guard that layout modes read no
+  node field beyond the key. `apps/board/tests/board-data.test.ts`: page fold == `get_board` for
+  every board. `packages/layout/tests/per-container.test.ts`: the two halves compose to
+  `layoutBoard`; packing never mutates a kept piece. `packages/client/tests/client.test.ts`: `watch`
+  with a stub EventSource (it had no test). `scripts/verify.test.mjs`: page-weight rule both ways.
+- Ruling 7: timing tests are `*.timing.ts`, run by `npm run test:timing` (serial,
+  `--test-concurrency=1`) after the unit run in `npm test`. Moved there: the Markdown 50 ms test
+  (`markdown.timing.ts`; shared inputs in `markdown-adversarial.ts`; the safety file keeps a
+  safe-output check without timing) and the two layout budget tests from `layout.test.ts`, now on
+  performance.md's numbers (1,000 cards, 100 ms; they were ~350 cards, 500 ms). New:
+  `apps/board/tests/server-start.timing.ts`.
+- Fixture: `tests/pages/perf-ledger.ts` generates `big` (1,000 cards, the roadmap's four containers
+  x 5, 50 cards each, roadmap kinds/bodies/lanes and link shapes) and `mixed` (roadmap copy). Second
+  web server on the page-test port + 1 (`perf-server.ts`); the servers start in order, so it serves
+  the page the first one built.
+
+**Gates** (exit codes read directly): `npm test` 0 (480 + 4 timing), `npm run check` 0,
+`npm run verify` 0 (0 warnings), `npm run test:pages` 0 (74 passed), `node scripts/gen-api.mjs
+--check` 0. Also: `docs/specification/modules.md` regenerated (`npm run map`, layout's new exports).
+
+**Unsettled**
+1. Links: every route is worked out again each draw (pure, ~1 ms) and only changed connectors are
+   written. That is more than "links that touch a moved box" when a moved card shifts the port of
+   a neighbour's other link on the same side; needed for the same picture. Approach 2's wording
+   could say "only connectors whose route changed".
+2. Per batch the page still does O(cards) plain JS (boardView/boardState/boardAccess, `nodeState`
+   per card, cache keys, routes); only the DOM work is proportional. Measured inside the 50 ms.
+3. Opening reads the whole project ledger at 500 lines a call: 4 calls today, but 200 sequential
+   calls on a 100,000-event project. A checkpoint or a larger page for the page's own read would
+   fix it; not needed for any budget yet.
+4. `boardData` repeats the five-line composition of the server's `getBoard`
+   (`apps/board/server/reads.ts`, outside this task's inputs); a test holds them equal. Moving it to
+   `packages/actions` and calling it from both removes the duplicate.
+5. A line with an unknown `v` triggers a full re-read, which folds it the same way; reloading the
+   page (to get a build that knows the format) may be the better answer.
+6. No feature flag: the behaviour is meant to be identical (same-picture test), so rule 12 was not
+   applied; say if a kill switch is wanted.
+7. `firstDrawMs` is taken two frames after the synchronous first draw (after its paint).
