@@ -11,6 +11,6 @@ request. `read_ledger` with `{ accept: 'application/jsonl' }` returns a list. `u
 `watch()` cover server-sent events in the browser. Works in the browser and in Node 22.
 
 - **Depends on**: `packages/format`.
-- **Used by**: `apps/board` (`src/board/io.ts`); `packages/cli` and `packages/mcp` next.
+- **Used by**: `apps/board` (`src/board/io.ts`), `packages/cli` and `packages/mcp`.
 - **Public API** (`src/index.ts`): `createClient`, `ApiProblem`, `buildRequest`, `urlFor`,
   `parseResponse`, `problemFrom`, and their types.
