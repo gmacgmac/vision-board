@@ -11,6 +11,7 @@
 | First draw of a board | under 1 s | 1,000 cards, page test machine | `tests/pages/perf.spec.ts` |
 | One change shown | under 50 ms | one act on a 1,000-card board (median of five) | `tests/pages/perf.spec.ts` |
 | Only what changed is redrawn | exactly 50 cards updated, measured and redrawn; only their containers laid out; no whole-board fetch | 50 cards changed in one batch on a 1,000-card board, and 1 card in a second case | `tests/pages/perf.spec.ts`, counting the work, not only timing it |
+| Selecting is view state | selecting 50 cards updates exactly those 50; nothing measured, placed or laid out; no fetch (clearing the same) | 50 cards of one container on the 1,000-card board (3_FE_01) | `tests/pages/perf.spec.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
 | Board page weight | under 150 KB gzip (JS + CSS) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |

@@ -10,10 +10,10 @@
     "element": "vb-node.ts (defineVbNode, VbNodeElement; light DOM)",
     "styles": "node.css (scoped by the tag; tokens only)"
   },
-  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "dragging", "pinned", "hidden", "noted", "note sent", "bubble open"],
+  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "selected", "dragging", "pinned", "hidden", "noted", "note sent", "bubble open"],
   "parts": {
     "vb-node-num": "tab in a gap on the top border, left: the item number (items only)",
-    "vb-node-kind": "tab in a gap on the top border, centred: the kind; the drag handle from Stage 3",
+    "vb-node-kind": "tab in a gap on the top border, centred: the kind, with grip dots; the drag handle, the one place a card is moved from (3_FE_01)",
     "vb-node-pin": "tab on the top border, right: shown when the person moved the node",
     "vb-size": "nodeSize flag only (D-030): the size control in the top-right border gap; a glyph (vb-size-trig, the person's pick as \"◆ S\" in vb-size-shown) that lifts an S / M / L / Auto pill (vb-size-menu, buttons vb-size-opt with data-size-pick) on hover or keyboard focus; data-open forces it open for gallery samples",
     "vb-node-content": "title (vb-node-title), body (div.vb-node-body, Markdown through renderMarkdown), tags as chips (vb-node-tags), note block",
@@ -26,19 +26,20 @@
     "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts. Colour comes from --kind, which render() sets to var(--vb-kind-<kind>)",
     "data-status": "open | acknowledged | dropped | commented | context | later (set by update)",
     "data-pinned": "present when the person moved it (set by update)",
+    "data-selected": "present while the person has it selected (3_FE_01; view state the page passes to nodeState, set by update): mockup 05's look, 1.5px in the card's own colour with a soft glow",
     "data-emphasis": "present when the agent marked the node as emphasised (set by render)",
     "data-size": "nodeSize flag only: s | m | l, the tier from sizeTier (packages/layout), which picks the width token; set by update before the page measures",
     "data-size-picked": "nodeSize flag only: present when the person picked the size (set by update)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
-    "aria-label": "number, kind, title and status (nodeLabel, set by update)",
+    "aria-label": "number, kind, title and status (nodeLabel, set by update), then ', selected' while selected",
     "data-noted": "present when the item has a note (set by update)",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
     "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (off, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work"
   },
   "methods": {
     "render(n: ViewNode, opts?: { sizeControl })": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n, opts)",
-    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, aria-label, aria-pressed, status word, note who, and the note text as Markdown when it changed; with st.size, data-size, data-size-picked and the size control's label, letter and pressed choice), so focus survives"
+    "update(st: NodeState)": "on every state change: attributes and text only (data-status, data-pinned, data-selected, aria-label, aria-pressed, status word, note who, and the note text as Markdown when it changed; with st.size, data-size, data-size-picked and the size control's label, letter and pressed choice), so focus survives"
   },
   "events": [
     "data-act button click bubbles to the page's delegated listener -> action layer",
@@ -47,5 +48,5 @@
   ],
   "whenToUse": "Anything the agent draws that the person should read or respond to.",
   "whenNotToUse": "Region headings and lane labels; those belong to the region pattern.",
-  "accessibility": "Focusable list item with a label naming number, kind, title and status. Buttons are real buttons with labels and aria-pressed. Keyboard: A X C M L O respond (C and M open the note bubble, editing the note not yet sent if there is one; the note pin is a tab stop labelled 'Note 1 on item 4. Edit it'), Alt+Arrows move, R resets the position, J K move between items. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
+  "accessibility": "Focusable list item with a label naming number, kind, title and status; a selected card's label ends ', selected' (a list item takes no aria-selected), and the page announces the count in a polite live region. Selection is not focus: the focus ring still draws on a selected card. Buttons are real buttons with labels and aria-pressed. Text: the content (title, body, tags, notes, Markdown code blocks) is selectable; the tabs, the size control, the pin and the footer are not. Keyboard: Space adds the focused card to the selection or takes it out; A X C M L O respond (C and M open the note bubble, editing the note not yet sent if there is one; the note pin is a tab stop labelled 'Note 1 on item 4. Edit it'), Alt+Arrows move, R resets the position, J K move between items. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
 }

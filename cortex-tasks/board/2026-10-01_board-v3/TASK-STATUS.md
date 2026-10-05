@@ -123,7 +123,7 @@ header. Run in order; each changes code the next builds on.
 
 | Order | Task | Model | Status | Commit |
 |---|---|---|---|---|
-| 1 | [3_FE_01 select and drag](./3_FE_01_select-and-drag.md) (U5) | Opus 5.5 | Running | |
-| 2 | 3_FE_02 lasso, selection bar, group notes, zoom buttons and zoom to selection (U6) | Opus 5.5 | Planned | |
+| 1 | [3_FE_01 select and drag](./3_FE_01_select-and-drag.md) (U5) | Opus 5.5 | Done | see log |
+| 2 | [3_FE_02 lasso, selection bar, group notes, zoom](./3_FE_02_lasso-and-zoom.md) (U6) | Opus 5.5 | Running | |
 | 3 | 3_FE_03 move cards between containers, group move, the Later container, container notes | Opus 5.5 | Planned | |
 | 4 | Stage check: orchestrator, then the maintainer's look | Orchestrator | Planned | |

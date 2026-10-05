@@ -1,6 +1,6 @@
 // The stage's input wiring: the click delegate for every button on cards and frames, the pointer
-// (drag and pan), the keyboard and the size control. Each control calls one handler; what the
-// handler does lives in the controller. Split out of controller.ts (N12_FE_01).
+// (select, move by the kind tab, pan), the keyboard and the size control. Each control calls one
+// handler; what the handler does lives in the controller. Split out of controller.ts (N12_FE_01).
 import type { ActionId, ActSize, Mode } from '../../../../packages/format/src/index.ts';
 import type { Box } from '../../../../packages/layout/src/index.ts';
 import { routeLinks } from '../../../../packages/layout/src/index.ts';
@@ -25,9 +25,18 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge'> {
   view(): View;
   /** Connectors while a card is dragged: drawn from the moved box, no layout. */
   drawDrag(layout: BoardLayout, id: string): void;
+  /** A click on a card (3_FE_01 ruling 1): it alone, or with `add` into or out of the selection. */
+  pick(id: string, add: boolean): void;
+  /** A click on a background: the selection clears. */
+  clear(): void;
 }
 
 const cardOf = (el: Element) => el.closest<HTMLElement>('vb-node')!.dataset.id!;
+/** Text the person selected inside `el` by dragging (a note is text to copy, not only a link). */
+const selectingIn = (el: Element) => {
+  const s = document.getSelection();
+  return !!s && !s.isCollapsed && !!s.anchorNode && el.contains(s.anchorNode);
+};
 
 /** Bind everything; returns the function that unbinds what outlives the stage (document, window). */
 export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, onResize: () => void): () => void {
@@ -36,7 +45,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
     const note = t.closest<HTMLElement>('[data-note]');
-    if (note && !t.closest('a')) return h.showNote(cardOf(note), Number(note.dataset.note));
+    if (note && !t.closest('a') && !selectingIn(note)) return h.showNote(cardOf(note), Number(note.dataset.note));
     const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
     const pick = sizeBtn?.dataset.sizePick;
     if (sizeBtn && isSizePick(pick)) return h.setSize(cardOf(sizeBtn), pick);
@@ -57,6 +66,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes) }, id);
     },
     dragEnd: (id, box) => h.pin(id, box),
+    pick: (id, add) => h.pick(id, add),
+    clear: () => h.clear(),
   });
 
   const unbindKeys = bindKeys({

@@ -2,12 +2,12 @@
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
 // one wire them to the canvas: focus.ts (navigation), wiring.ts (input), access-flow.ts (agent
-// access), notes.ts (note bubbles). It is plain TypeScript (D-005): the Svelte shell mounts it on
-// the stage element and reads what it reports through `shell`.
-import type { ActSize, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
+// access), notes.ts (note bubbles), selection.ts (the person's selection), places.ts (pins, modes
+// and sizes). It is plain TypeScript (D-005): the Svelte shell mounts it on the stage element and
+// reads what it reports through `shell`.
+import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
-import type { Box } from '../../../../packages/layout/src/index.ts';
 import { ACTIONS, counts, DECIDED, ITEM_ACTIONS, replyText, statusOf } from '../../../../packages/actions/src/index.ts';
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
@@ -20,10 +20,11 @@ import { createLive } from './live.ts';
 import { createFocus } from './focus.ts';
 import { bindStage } from './wiring.ts';
 import { Viewport } from './viewport.ts';
-import { sizeAct } from './size.ts';
+import { createPlaces } from './places.ts';
 import { requestRows } from './access.ts';
 import { createAccessFlow } from './access-flow.ts';
 import { createNoteFlow, unsentNote } from './notes.ts';
+import { createSelection } from './selection.ts';
 import { exposeWork, work } from './work.ts';
 import { pageFlags } from '../flags.ts';
 import { shell, toast } from '../shell/shell.svelte.ts';
@@ -73,8 +74,13 @@ export function createBoard(els: BoardElements): Board {
   const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data) : new Set());
 
   const live = createLive(onLines);
-  const drawing = createDrawing({ els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id });
+  /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
+  const selection = createSelection();
+  const drawing = createDrawing({
+    els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+  });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
+  selection.onChange((c) => { drawing.restate(c.changed); shell.selection = c.text; });
 
   // ---- messages and drawing ------------------------------------------------------------------
 
@@ -100,6 +106,8 @@ export function createBoard(els: BoardElements): Board {
     const drew = S.drew && !full;
     S.fresh = S.drew = false;
     S.data = boardData(s, S.id);
+    // The selection survives a redraw; ids that left the board drop out of it (ruling 8).
+    selection.keep(view().nodes.map((n) => n.id));
     Object.assign(shell, { title: view().title, version: view().version, summary: view().summary ?? '' });
     drawing.draw(full);
     renderCounts();
@@ -169,34 +177,13 @@ export function createBoard(els: BoardElements): Board {
     if (def.reply) toast(`${n.n} ${action === 'reopen' ? 'reopened' : def.reply}`);
   }
 
-  async function pin(id: string, box: Box) {
-    const r = drawing.layout?.regions.find((x) => x.id === nodeOf(id)?.region);
-    if (!r) return;
-    const x = Math.round(box.x - r.origin.x);
-    const y = Math.round(box.y - r.origin.y);
-    // On failure the draw snaps the card back to its computed place.
-    if (!(await record({ action: 'pin', ...target(id), x, y }))) redraw();
-  }
-
-  async function unpin(id: string) {
-    if (S.data!.state.pins.has(id)) await record({ action: 'unpin', ...target(id) });
-  }
-
-  const setSize = (id: string, size: ActSize) => void record(sizeAct(id, size));
-
-  async function setMode(region: string, mode: Mode) {
-    if (!(await record({ action: 'mode', region, mode }))) return;
-    const r = drawing.layout?.regions.find((x) => x.id === region);
-    if (r) vp.reveal(r.box);
-  }
+  /** Pins, Reset places, the layout mode and the size tier (places.ts). */
+  const places = createPlaces({
+    vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),
+  });
 
   /** Send to agent; it greys the notes it sent at once (2e_FE_01 ruling 7). */
   const send = () => attempt({ action: 'send' });
-
-  async function resetRegion(region: string) {
-    const ids = view().nodes.filter((n) => n.region === region && S.data!.state.pins.has(n.id)).map((n) => n.id);
-    for (const id of ids) if (!(await record({ action: 'unpin', ...target(id) }))) break;
-  }
 
   function toggleHide() {
     shell.hide = !shell.hide;
@@ -208,12 +195,12 @@ export function createBoard(els: BoardElements): Board {
   const unbind = bindStage(stage, vp, {
     act: (id, a) => void act(id, a),
     showNote: (id, seq) => notes.show(id, seq),
-    setSize,
-    setMode: (region, mode) => void setMode(region, mode),
-    resetRegion: (region) => void resetRegion(region),
+    setSize: places.setSize,
+    setMode: (region, mode) => void places.setMode(region, mode),
+    resetRegion: (region) => void places.resetRegion(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
-    pin: (id, box) => void pin(id, box),
-    unpin: (id) => void unpin(id),
+    pin: (id, box) => void places.pin(id, box),
+    unpin: (id) => void places.unpin(id),
     layout: () => drawing.layout,
     view,
     drawDrag: (layout, id) => drawing.wiresFor(layout, id),
@@ -224,7 +211,15 @@ export function createBoard(els: BoardElements): Board {
     fit: () => { if (drawing.layout) vp.fit(drawing.layout.bounds); },
     toggleHide,
     zoom: (f) => vp.zoomCentre(f),
-    escape: () => { shell.replyOpen = false; },
+    pick: (id, add) => selection.select([id], add ? 'toggle' : 'only'),
+    toggle: (id) => selection.select([id], 'toggle'),
+    clear: () => selection.clear(),
+    // Esc closes an open bubble first, else clears the selection (ruling 1).
+    escape: () => {
+      if (notes.open) return notes.close();
+      shell.replyOpen = false;
+      selection.clear();
+    },
   }, () => { if (drawing.layout) vp.apply(); });
 
   // ---- boards --------------------------------------------------------------------------------
@@ -235,6 +230,7 @@ export function createBoard(els: BoardElements): Board {
       shell.message = `There is no board "${id}".`;
       return;
     }
+    if (S.id !== id) selection.clear();
     S.id = id;
     redraw(true);
     shell.message = null;

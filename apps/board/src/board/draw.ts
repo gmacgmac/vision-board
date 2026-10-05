@@ -36,6 +36,8 @@ export interface DrawDeps {
   data(): BoardData;
   hidden(): Set<string>;
   focus(): string | null;
+  /** Whether the person has selected card `id` (selection.ts, 3_FE_01). */
+  selected(id: string): boolean;
 }
 
 export interface Drawing {
@@ -45,6 +47,8 @@ export interface Drawing {
   draw(fresh?: boolean): void;
   /** The focused card changed: redraw the connectors it lights up. */
   refocus(): void;
+  /** The selection changed for `ids`: update those cards, and lay out, measure and place nothing. */
+  restate(ids: readonly string[]): void;
   /** The view moved (pan, zoom, resize): mark the cards now well off screen. */
   viewMoved(): void;
   /** Connectors for a layout that is not kept, such as one with a card mid-drag. */
@@ -87,7 +91,7 @@ export function createDrawing(d: DrawDeps): Drawing {
       sizes.clear();
     }
     const tier = d.sizing ? (n: ViewNode): NodeSize => tierOf(n, data.state) : undefined;
-    const sync = cards.sync(data.view, data.state, data.versions, tier);
+    const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier);
     if (fresh || sync.created) noAnim();
     regions.sync(data.view);
     cards.measure(sync.dirty, sizes);
@@ -107,6 +111,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     cards: cards.els,
     draw,
     refocus() { if (layout) wires.draw(layout, d.focus()); },
+    restate: (ids) => cards.restate(ids),
     viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); },
     wiresFor: (l, focus) => wires.draw(l, focus),
   };

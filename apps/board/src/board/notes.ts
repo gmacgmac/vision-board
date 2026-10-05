@@ -38,6 +38,8 @@ export interface NoteFlow {
   place(): void;
   /** Close without saving; focus goes back to the card. */
   close(): void;
+  /** Whether the bubble is open (Esc closes it before it clears the selection, 3_FE_01). */
+  readonly open: boolean;
   destroy(): void;
 }
 
@@ -139,5 +141,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   bubble.addEventListener('vb-note', (e) => void onChoice(e));
 
-  return { press, show, place, close: () => close(), destroy: () => bubble.remove() };
+  return {
+    press, show, place, close: () => close(), destroy: () => bubble.remove(),
+    get open() { return open !== null; },
+  };
 }

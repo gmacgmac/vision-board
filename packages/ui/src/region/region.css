@@ -22,6 +22,9 @@ vb-region .vb-region-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
   pointer-events: none; cursor: default;
 }
+/* The label is part of the frame's background: a drag on it pans the board (3_FE_01 ruling 6). */
+vb-region .vb-region-label { cursor: grab; }
+.panning vb-region .vb-region-label { cursor: grabbing; }
 vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
 vb-region .vb-region-label {
   min-width: 0; gap: var(--vb-space-2); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);

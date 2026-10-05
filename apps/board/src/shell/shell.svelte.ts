@@ -38,6 +38,8 @@ export const shell = $state({
   /** The agentAccess flag: Send to agent, the requests strip and the holders on each frame. */
   agentAccess: false,
   requests: [] as AccessRequestRow[],
+  /** What the selection's live region says ("3 cards selected", "Selection cleared"), 3_FE_01. */
+  selection: '',
 });
 
 let toastTimer = 0;

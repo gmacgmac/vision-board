@@ -43,6 +43,7 @@ export function defineVbNode(): void {
       this.dataset.status = st.status;
       this.setAttribute('aria-label', st.label);
       this.toggleAttribute('data-pinned', st.pinned);
+      this.toggleAttribute('data-selected', st.selected);
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-act]'))
         b.setAttribute('aria-pressed', String(st.pressed[b.dataset.act as ActionId] ?? false));
       // A non-item has no footer, so no status word.

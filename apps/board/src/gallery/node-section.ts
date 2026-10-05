@@ -13,6 +13,8 @@ import { REGION_KINDS, REGION_OTHER } from './fixture.ts';
 
 /** Classes the board puts on a node while something is happening to it. Keyed by node title. */
 const LIVE_CLASS: Record<string, string> = { 'Being dragged': 'dragging' };
+/** View state the board passes to `nodeState`: the person's selection (3_FE_01). Keyed by title. */
+const SELECTED = new Set(['Selected']);
 
 const STATUSES = Object.keys(STATUS_LABEL) as ItemStatus[];
 const ITEM_KINDS = KINDS.filter((k) => NODE_TYPES[k].actions.length > 0);
@@ -22,7 +24,7 @@ const ITEM_KINDS = KINDS.filter((k) => NODE_TYPES[k].actions.length > 0);
 export function card(n: ViewNode, fx: Fixture, state = fx.state): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n);
-  node.update(nodeState(n, state));
+  node.update(nodeState(n, state, undefined, SELECTED.has(n.title)));
   const live = LIVE_CLASS[n.title];
   if (live) node.classList.add(live);
   return node;
@@ -60,7 +62,7 @@ export function nodeSamples(body: HTMLElement, fx: Fixture): void {
   const others = fx.view.nodes.filter((n) => n.region === REGION_OTHER).map((n) => card(n, fx));
   body.append(
     group('Every kind in every status', 'Columns are kinds, rows are the status the person gave. Topics and notes are not items, so they have no status.', matrix(fx)),
-    group('Other states', 'Pinned, emphasis, tags, a note, an edited note, a long note asking for more context, topic and note (not items), long text and the lifted look while dragging. Focus is checked on the board page.',
+    group('Other states', 'Pinned, emphasis, tags, a note, an edited note, a long note asking for more context, topic and note (not items), long text, the lifted look while dragging, and selected (its name ends ", selected"). Focus is checked on the board page.',
       cardList('Other node states', ...others)),
     group('Notes on a card', 'A numbered pin on the top-right corner (the latest note) and the "Your note" block, latest first: a note not yet sent is pink; sent notes are grey and say Sent. A click on the pin or a note opens it in the note bubble.',
       cardList('Note states', ...fx.notes.view.nodes.map((n) => card(n, fx, fx.notes.state)))),

@@ -193,3 +193,24 @@ record is `api.md` 58-61.
 4. **Zoomed out.** The `hideControlsZoomedOut` flag (off) is the only thing that sets the stage's
    `data-zoom="far"` below `FAR_K` (`viewport.ts`); with it off every control shows at every
    zoom (tracker N13).
+
+## Selecting and moving (3_FE_01)
+
+The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_select-and-drag.md`).
+
+1. **The selection** is view state, never a ledger event. It lives in one page module,
+   `apps/board/src/board/selection.ts`: `selected()`, `has(id)`, `select(ids, mode)` (`only`, `add`,
+   `remove`, `toggle`), `clear()`, `keep(ids)` (drops ids that left the board, after each redraw) and
+   `onChange`, whose event names only the ids that changed. The lasso and the selection bar call it.
+2. **On the card**, the page passes `selected` to `nodeState`; `<vb-node>` sets `data-selected`
+   (mockup 05's look, `node.css`) and its label ends ", selected". A list item takes no
+   `aria-selected`, so the name carries it, and a polite live region (`#selection-status`) says
+   "3 cards selected" or "Selection cleared". A change of the selection goes through `restate` in
+   `cards.ts`: those cards are updated, nothing is measured, placed or laid out.
+3. **Pointer** (`pointer.ts`): a click on a card selects it (Shift, Cmd or Ctrl adds or removes);
+   only the kind tab (`.vb-node-kind`) moves a card; a drag on a card's content selects text; a
+   drag on a background (the board, a frame, a frame's title line outside its tools) pans and a
+   click there clears; Shift+drag on a background is the lasso's; the middle button pans anywhere.
+   The stage is `user-select: none` and a card's content `user-select: text`.
+4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
+   else clears the selection.

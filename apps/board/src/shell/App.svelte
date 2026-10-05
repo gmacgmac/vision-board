@@ -45,12 +45,15 @@
   </div>
   <div id="message" class="vb-message" role="status" hidden={shell.message === null}>{shell.message ?? ''}</div>
 </main>
+<!-- The selection, perceivable without colour (3_FE_01 ruling 9): a polite live region. -->
+<p id="selection-status" class="vb-visually-hidden" role="status">{shell.selection}</p>
 
 <ReplyPanel />
 
 <div class="vb-help" aria-hidden="true">
   <kbd>A</kbd> ok <kbd>X</kbd> drop <kbd>C</kbd> comment <kbd>M</kbd> more context <kbd>L</kbd> later
-  <kbd>J</kbd>/<kbd>K</kbd> next · <kbd>Alt</kbd>+arrows move · <kbd>R</kbd> reset place · drag to move · scroll to pan · <kbd>Ctrl</kbd>+scroll zoom
+  <kbd>J</kbd>/<kbd>K</kbd> next · <kbd>Space</kbd> select · <kbd>Alt</kbd>+arrows move · <kbd>R</kbd> reset place ·
+  drag the tab to move · drag the background to pan · <kbd>Shift</kbd>+click to select more · <kbd>Ctrl</kbd>+scroll zoom
 </div>
 
 <div id="toast" class="vb-toast" role="alert" hidden={!shell.toast} data-tone={shell.toast?.tone}>

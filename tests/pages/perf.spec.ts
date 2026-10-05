@@ -155,3 +155,30 @@ test('cards off screen are cheap, keep their name and order, and draw again when
   await far.focus();
   await expect(page.locator(`vb-node[data-id="${id}"]`)).not.toHaveAttribute('data-offscreen');
 });
+
+// 3_FE_01 ruling 10: selecting is view state, so it touches only the cards whose state changed:
+// no measuring, no placing, no layout, no fetch.
+test('selecting 50 cards updates exactly those 50 and lays out none; clearing updates the same 50', async ({ page }) => {
+  await open(page);
+  await counts(page);
+  await reset(page);
+  // The 50 cards of one container, each focused first (focus pans it into view, which costs no
+  // card work), then clicked on its title: the first alone, the rest with Shift.
+  const ns = numbersOf(4);
+  for (const [i, n] of ns.entries()) {
+    const el = page.locator(`vb-node[data-id="${n}"]`);
+    await el.focus();
+    await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
+  }
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(50);
+  await expect(page.locator('#selection-status')).toHaveText('50 cards selected');
+  const c = await counts(page);
+  console.log(`[3_FE_01] select 50: ${JSON.stringify({ ...c, containers: c.containers.join(',') })}`);
+  expect([c.cardsUpdated, c.cardsMeasured, c.cardsPlaced, c.containersLaidOut, c.fullFetches]).toEqual([50, 0, 0, 0, 0]);
+  // linksRedrawn is not asserted: focus moved card to card, and focus lights a card's connectors.
+  await reset(page);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  const cleared = await counts(page);
+  expect([cleared.cardsUpdated, cleared.cardsMeasured, cleared.cardsPlaced, cleared.containersLaidOut]).toEqual([50, 0, 0, 0]);
+});

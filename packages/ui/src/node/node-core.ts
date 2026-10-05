@@ -19,10 +19,12 @@ export const offers = (n: ViewNode): ActionId[] => (isItem(n) ? [...NODE_TYPES[n
 export const isPressed = (action: ActionId, status: ItemStatus): boolean =>
   ACTIONS[action].status !== undefined && ACTIONS[action].status === status;
 
-export function nodeLabel(n: ViewNode, status: ItemStatus): string {
+/** The accessible name; `selected` adds ", selected" last (3_FE_01 ruling 9, mockup 05), since a
+ *  list item can carry no aria-selected and the selection must be perceivable without colour. */
+export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false): string {
   const num = isItem(n) ? `Item ${n.n}, ` : '';
   const st = isItem(n) ? `, ${STATUS_LABEL[status]}` : '';
-  return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}`;
+  return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${selected ? ', selected' : ''}`;
 }
 
 export function buttonLabel(action: ActionId, n: ViewNode): string {
@@ -78,7 +80,9 @@ export const sizeLabel = (v: { tier: NodeSize; picked: boolean }): string =>
 export interface NodeState {
   status: ItemStatus;
   pinned: boolean;
-  /** The node's accessible name: number, kind, title and (for items) status. */
+  /** In the person's selection (3_FE_01): view state the page passes in, never a ledger fact. */
+  selected: boolean;
+  /** The node's accessible name: number, kind, title, (for items) status, and "selected". */
   label: string;
   /** The status word in the footer, "Open" included; empty for non-items. */
   statusWord: string;
@@ -90,8 +94,9 @@ export interface NodeState {
   size?: SizeState;
 }
 
-/** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import). */
-export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize): NodeState {
+/** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import), and
+ *  so does `selected` (the page's selection module, 3_FE_01). */
+export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected = false): NodeState {
   const status = statusOf(s, n.id);
   const pressed: Partial<Record<ActionId, boolean>> = {};
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
@@ -100,7 +105,8 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize): NodeStat
   return {
     status,
     pinned: s.pins.has(n.id),
-    label: nodeLabel(n, status),
+    selected,
+    label: nodeLabel(n, status, selected),
     statusWord: isItem(n) ? STATUS_LABEL[status] : '',
     ...(notes && { notes }),
     pressed,

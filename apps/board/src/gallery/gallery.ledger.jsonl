@@ -153,3 +153,4 @@
 {"v":4,"seq":153,"at":"2026-10-05T09:01:12Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"Draft the email before we decide."}
 {"v":4,"seq":154,"at":"2026-10-05T09:01:13Z","by":"person","type":"act","action":"comment","n":75,"ver":1,"text":"What drives the onboarding confusion? Is it the plan picker?"}
 {"v":4,"seq":155,"at":"2026-10-05T09:01:14Z","by":"person","type":"act","action":"context","n":76,"ver":1,"text":"Explain the **1.4x** in plain terms."}
+{"v":2,"seq":156,"at":"2026-10-05T09:01:15Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":79,"ver":1,"node":{"region":"other","kind":"risk","title":"Selected","item":true,"body":"Picked by the person: 1.5px in the card's own colour, with a soft glow. Selecting decides nothing."}}

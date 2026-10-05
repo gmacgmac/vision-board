@@ -52,6 +52,9 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(node.locator('vb-node[data-pinned]')).toHaveCount(1);
   await expect(node.locator('vb-node[data-emphasis]')).toHaveCount(1);
   await expect(node.locator('vb-node.dragging')).toHaveCount(1);
+  // 3_FE_01 ruling 2: 05's selected look, named in the card's label too.
+  await expect(node.locator('vb-node[data-selected]')).toHaveCount(1);
+  await expect(node.locator('vb-node[data-selected]')).toHaveAttribute('aria-label', /, selected$/);
   await expect(node.locator('.vb-node-tags li')).toHaveCount(3);
   const notes = node.locator('.vb-node-notes');
   await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note 1")') }).filter({ hasText: 'Ship it' })).toBeVisible();

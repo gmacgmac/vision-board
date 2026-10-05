@@ -7,6 +7,8 @@ export interface KeyHandlers {
   act(id: string, action: ActionId): void;
   nudge(id: string, dx: number, dy: number): void;
   unpin(id: string): void;
+  /** Space on a focused card: add it to the selection, or take it out (3_FE_01 ruling 3). */
+  toggle(id: string): void;
   step(from: string | null, dir: 1 | -1): void;
   fit(): void;
   toggleHide(): void;
@@ -37,6 +39,11 @@ export function bindKeys(h: KeyHandlers): () => void {
     }
     const key = e.key.toLowerCase();
     if (e.altKey) return;
+    // Only on the card itself: Space on one of its buttons presses the button.
+    if (key === ' ' && id && target.localName === 'vb-node') {
+      e.preventDefault();
+      return h.toggle(id);
+    }
     if (key === 'j' || (id && (e.key === 'ArrowDown' || e.key === 'ArrowRight'))) {
       e.preventDefault();
       return h.step(id, 1);

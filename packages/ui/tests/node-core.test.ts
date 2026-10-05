@@ -78,6 +78,25 @@ test('nodeState: pinned follows the pins map', () => {
   assert.equal(nodeState(node({ id: '2', n: 2 }), board({ pins })).pinned, false);
 });
 
+// 3_FE_01 rulings 2 and 9: selection is view state the page passes in, perceivable without colour
+// through the accessible name (mockup 05: "Item 42, finding, acknowledged, selected").
+test('nodeState: not selected unless the page says so; selected adds ", selected" to the name', () => {
+  const q = node({ n: 7, title: 'Ship it?' });
+  assert.equal(nodeState(q, board()).selected, false);
+  const st = nodeState(q, board(), undefined, true);
+  assert.equal(st.selected, true);
+  assert.equal(st.label, 'Item 7, Question: Ship it?, Open, selected');
+  assert.equal(nodeState(node({ kind: 'topic', title: 'Stack' }), board(), undefined, true).label, 'Topic: Stack, selected');
+  // Nothing else a card shows depends on selection.
+  const { selected: _a, label: _b, ...rest } = st;
+  const { selected: _c, label: _d, ...plain } = nodeState(q, board());
+  assert.deepEqual(rest, plain);
+});
+
+test('nodeLabel: selected comes last, after the status', () =>
+  assert.equal(nodeLabel(node({ kind: 'finding', n: 5, title: 'Use it' }), 'later', true),
+    'Item 5, Finding: Use it, Saved for later, selected'));
+
 // 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block, latest first.
 test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edits it', () => {
   const one = note('Looks right');
