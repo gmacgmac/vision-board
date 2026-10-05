@@ -12,7 +12,7 @@ export const ROOTS = ['apps', 'packages', 'scripts'];
 export const MAP_FILE = 'docs/specification/modules.md';
 export const REGISTER = 'docs/specification/dependencies.md';
 
-/** Which packages each package may import (D-016). Apps may import any package; nothing imports an app. */
+/** Which packages each package may import (D-016, D-029). Apps may import any package; nothing imports an app. */
 export const LAYERS = {
   format: [],
   tokens: [],
@@ -20,7 +20,9 @@ export const LAYERS = {
   layout: ['format'],
   ui: ['format', 'actions', 'tokens'],
   agent: ['format', 'actions'],
-  cli: ['format', 'actions', 'agent'],
+  client: ['format'],
+  mcp: ['format', 'client'],
+  cli: ['format', 'actions', 'agent', 'client'],
 };
 
 const SOURCE = /\.(?:ts|mjs|js|svelte|css|html)$/;

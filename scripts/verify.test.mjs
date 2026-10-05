@@ -24,6 +24,17 @@ test('imports: back door, wrong-way layer, app and scripts imports fail', () => 
   assert.match(checkImports('packages/ui/src/a.ts', "import x from '../../../apps/board/src/x.ts';")[0].message, /imports an app/);
   assert.match(checkImports('apps/board/src/a.ts', "import x from '../../../scripts/verify.mjs';")[0].message, /scripts/);
   assert.match(checkImports('apps/board/src/a.ts', "export * from '/pkg/ui/src/item/item-core.ts';")[0].message, /back-door/);
+
+test('imports: the client and MCP layers of D-029', () => {
+  const imp = (from, to) => checkImports(`packages/${from}/src/a.ts`, `import { X } from '../../${to}/src/index.ts';`);
+  assert.deepEqual(imp('client', 'format'), []);
+  assert.deepEqual(imp('mcp', 'client'), []);
+  assert.deepEqual(imp('mcp', 'format'), []);
+  assert.deepEqual(imp('cli', 'client'), []);
+  assert.match(imp('client', 'actions')[0].message, /may not depend/);
+  assert.match(imp('mcp', 'actions')[0].message, /may not depend/);
+  assert.match(imp('format', 'client')[0].message, /may not depend/);
+});
 });
 
 test('manifest: ranges fail, unregistered packages fail, registered exact pins pass', () => {

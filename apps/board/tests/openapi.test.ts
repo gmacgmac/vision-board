@@ -3,36 +3,15 @@
 // problem, every reference resolves, every example fits its schema, and the route table is current.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
-import type { ValidateFunction } from 'ajv/dist/2020.js';
 import { SCHEMA_BASE, compileSchema, schemaFiles } from '../server/schema.ts';
+import type { Rec } from './openapi-ajv.ts';
+import { COMPONENTS_ID, ajv, compileInline, deref, doc, ops, pointer, read } from './openapi-ajv.ts';
 
-type Rec = Record<string, any>;
-const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 const API = `${SCHEMA_BASE}schema/api/`;
-const doc: Rec = JSON.parse(read('packages/format/schema/openapi.json'));
 const apiMd = read('docs/specification/api.md');
-const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
-
-interface Op { id: string; method: string; path: string; op: Rec }
-const ops: Op[] = Object.entries<Rec>(doc.paths).flatMap(([route, item]) =>
-  METHODS.filter((m) => item[m]).map((m) => ({ id: item[m].operationId, method: m.toUpperCase(), path: route, op: item[m] })));
 
 // ---- walking the document ----
-
-/** Follow a `#/...` pointer inside the document. */
-function pointer(ref: string): unknown {
-  let node: any = doc;
-  for (const part of ref.slice(2).split('/').map((p) => p.replace(/~1/g, '/').replace(/~0/g, '~'))) {
-    node = node?.[part];
-    if (node === undefined) return undefined;
-  }
-  return node;
-}
 
 /** Every `$ref` string in the document (the examples hold data, not references). */
 function refsOf(node: unknown, out: string[] = []): string[] {
@@ -46,9 +25,6 @@ function refsOf(node: unknown, out: string[] = []): string[] {
   return out;
 }
 
-/** A response, or the component a `$ref` names. */
-const deref = (x: Rec): Rec => (x.$ref ? (pointer(x.$ref) as Rec) : x);
-
 /** Every media type object (`content` entry) with the kind of place it is in. */
 function mediaTypes(): { where: string; role: 'request' | 'success' | 'error'; type: string; media: Rec }[] {
   const out: ReturnType<typeof mediaTypes> = [];
@@ -60,31 +36,6 @@ function mediaTypes(): { where: string; role: 'request' | 'success' | 'error'; t
     }
   }
   return out;
-}
-
-/** The schemas as ajv can compile them: `#/components/schemas/x` points into one synthetic
- * document, and OpenAPI's `discriminator` (documentation here; ledger-event.schema.json carries
- * ajv's) is dropped because ajv needs `properties` on each branch of a `oneOf` of references. */
-const COMPONENTS_ID = `${SCHEMA_BASE}openapi-components`;
-function forAjv(node: any): any {
-  if (Array.isArray(node)) return node.map(forAjv);
-  if (!node || typeof node !== 'object') return node;
-  const out: Rec = {};
-  for (const [k, v] of Object.entries(node)) {
-    if (k === 'discriminator') continue;
-    out[k] = k === '$ref' && typeof v === 'string' && v.startsWith('#/components/schemas/')
-      ? `${COMPONENTS_ID}#/$defs/${v.slice('#/components/schemas/'.length)}` : forAjv(v);
-  }
-  return out;
-}
-const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, discriminator: true });
-for (const { schema } of schemaFiles()) ajv.addSchema(schema);
-ajv.addSchema({ $id: COMPONENTS_ID, $defs: forAjv(doc.components.schemas) });
-const compiled = new Map<string, ValidateFunction>();
-function compileInline(schema: Rec): ValidateFunction {
-  const key = JSON.stringify(schema);
-  if (!compiled.has(key)) compiled.set(key, ajv.compile(forAjv(schema)));
-  return compiled.get(key)!;
 }
 
 // ---- 1. The document is valid OpenAPI 3.2 ----

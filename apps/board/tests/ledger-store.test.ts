@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
-import { HttpError } from '../server/guard.ts';
+import { ProblemError } from '../server/problem.ts';
 
 // New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
 const AGENT: Caller = { by: 'agent', agent: 'a-kiro0001' };
@@ -34,11 +34,13 @@ function seeded(count = 2) {
 const node = (title: string, n?: number) =>
   ({ type: 'node', board: 'review', ...(n !== undefined && { n }), node: { region: 'main', kind: 'question', title, item: true } });
 
+/** The pointer errors of the `invalid` problem `fn` throws, as "pointer detail". */
 const problemsOf = (fn: () => unknown): string[] => {
   try { fn(); } catch (err) {
-    assert.ok(err instanceof HttpError);
+    assert.ok(err instanceof ProblemError);
     assert.equal(err.status, 422);
-    return err.problems;
+    assert.equal(err.code, 'invalid');
+    return (err.body.errors ?? []).map((e) => `${e.pointer} ${e.detail}`);
   }
   assert.fail('expected a 422');
 };
@@ -97,10 +99,11 @@ test('a bad event writes nothing and returns every problem', () => {
   ledger.onAppend((e) => seen.push(e));
   const problems = problemsOf(() => ledger.append(
     { type: 'node', board: 'review', node: { region: 'main', kind: 'nope', title: '', x: 1 } }, AGENT));
+  // The stored-line schema runs first (api.md 7): one pointer error per bad field.
   assert.equal(problems.length, 3, problems.join('; '));
-  assert.ok(problems.some((p) => p.startsWith('node.x')));
-  assert.ok(problems.some((p) => p.startsWith('node.kind')));
-  assert.ok(problems.some((p) => p.startsWith('node.title')));
+  assert.ok(problems.includes('/node/x unknown field `x`'), problems.join('; '));
+  assert.ok(problems.some((p) => p.startsWith('/node/kind ')));
+  assert.ok(problems.some((p) => p.startsWith('/node/title ')));
   assert.match(problemsOf(() => ledger.append('not an event', AGENT)).join(), /must be an object/);
   assert.match(problemsOf(() => ledger.append({ type: 'act', action: 'ack', n: 1, ver: 1 }, AGENT)).join(), /only the person/);
   assert.equal(fs.readFileSync(file, 'utf8'), before);

@@ -1,8 +1,10 @@
 // The one I/O layer for the project ledger (rule 7, D-017): the only module that reads or appends
 // `<project>/.visionboard/ledger.jsonl`. Every line is checked on read and every event before it is
 // written. The server stamps `v`, `seq`, `at`, `by` and `agent`, and assigns node numbers and
-// versions, so a request body can never claim them. Node is single-threaded and the append is
-// synchronous, so writes are applied one at a time (PLAN key change 2).
+// versions, so a request body can never claim them. Each stamped line is checked against the
+// stored-line JSON Schema first (unknown fields are refused, never stored, api.md 7), then by the
+// hand rules and the context. Node is single-threaded and the append is synchronous, so writes
+// are applied one at a time (PLAN key change 2, api.md 33).
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '../../../packages/format/src/index.ts';
@@ -11,7 +13,9 @@ import {
 } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import { applyEvent, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
-import { HttpError } from './guard.ts';
+import type { PointerError } from './problem.ts';
+import { pointerError, problem } from './problem.ts';
+import { ledgerLineProblems } from './schema.ts';
 
 export const DATA_DIR = '.visionboard';
 export const LEDGER_FILE = 'ledger.jsonl';
@@ -23,10 +27,13 @@ export interface Ledger {
   readonly file: string;
   /** Problems found when the file was opened, as "line N: ...". */
   readonly problems: readonly string[];
-  /** Stamp, check and append one event. Throws HttpError 422 with every problem, writing nothing. */
-  append(input: unknown, caller: Caller): LedgerEvent;
+  /** Stamp, check and append one event. Throws an `invalid` problem with every error, writing
+   * nothing. `board`: the board the route names; an act must stay on it. */
+  append(input: unknown, caller: Caller, opts?: { board?: string }): LedgerEvent;
   /** The folded state, kept current on every append. */
   state(): LedgerState;
+  /** Every valid line, oldest first (`read_ledger`). */
+  events(): readonly LedgerEvent[];
   /** Called after each append. Returns an unsubscribe. */
   onAppend(fn: (e: LedgerEvent) => void): () => void;
 }
@@ -69,17 +76,30 @@ function stamp(input: unknown, caller: Caller, seq: number, ix: LedgerIndex): Re
   return e;
 }
 
-/** Every problem with appending `e` now: shape, then context, then the action rules. */
-function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState): string[] {
-  if (!isRec(input)) return ['event: must be an object'];
+/** The wrong caller for an event: `by` is stamped from the route, so the schema refusing it
+ * means a person route was used for an agent's event, or the reverse. */
+const wrongCaller = (e: Rec): PointerError => ({
+  pointer: '',
+  detail: e.by === 'agent'
+    ? 'only the person can do this, on the board; send a propose or reply item instead'
+    : `only an agent writes a ${String(e.type)} event`,
+});
+
+/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, the
+ * context and the action rules. */
+function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
+  if (!isRec(input)) return [{ pointer: '', detail: 'the event must be an object' }];
+  const hand = (list: string[]) => list.map((t) => pointerError(t, e));
   if (input.type === 'node' && Number.isInteger(input.n) && !ix.nodes.has(input.n as number))
-    return [`n: unknown node ${String(input.n)}; leave n out to create a node`];
+    return hand([`n: unknown node ${String(input.n)}; leave n out to create a node`]);
+  const schema = ledgerLineProblems(JSON.stringify(e));
+  if (schema.length) return schema.some((p) => p.pointer === '/by') ? [wrongCaller(e)] : schema;
   const shape = eventProblems(e);
-  if (shape.length) return shape;
+  if (shape.length) return hand(shape);
   const event = e as unknown as LedgerEvent;
   const context = contextProblems(ix, event);
-  if (context.length || event.type !== 'act') return context;
-  return validateAct(event as ActEvent, s);
+  if (context.length || event.type !== 'act') return hand(context);
+  return hand(validateAct(event as ActEvent, s, board));
 }
 
 /** Open a ledger file (absent = empty). Bad lines are reported through `warn` and skipped, so one
@@ -92,6 +112,7 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
   const ix = read.index;
   ix.seq = Math.max(ix.seq, highestSeq(lines));
   const s = foldLedger(read.events);
+  const events: LedgerEvent[] = [...read.events];
   const listeners = new Set<(e: LedgerEvent) => void>();
   // A torn last line (no newline) must not swallow the next event.
   let torn = text.length > 0 && !text.endsWith('\n');
@@ -100,18 +121,22 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
     file,
     problems: read.problems,
     state: () => s,
+    events: () => events,
     onAppend(fn) {
       listeners.add(fn);
       return () => { listeners.delete(fn); };
     },
-    append(input, caller) {
+    append(input, caller, opts = {}) {
       const e = stamp(input, caller, ix.seq + 1, ix);
-      const problems = check(input, e, ix, s);
-      if (problems.length) throw new HttpError(422, 'Invalid event', problems);
+      const errors = check(input, e, ix, s, opts.board);
+      if (errors.length) {
+        throw problem('invalid', 'The event does not fit the ledger. Fix the fields listed in errors and send it again.', { errors });
+      }
       const event = e as unknown as LedgerEvent;
       fs.mkdirSync(path.dirname(file), { recursive: true });
       fs.appendFileSync(file, `${torn ? '\n' : ''}${JSON.stringify(event)}\n`);
       torn = false;
+      events.push(event);
       indexEvent(ix, event);
       applyEvent(s, event);
       for (const fn of [...listeners]) {
