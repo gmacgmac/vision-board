@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>09 — Container notes: four ways to show a note on a whole container</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="../architect-extract/architect.css">
+<link rel="stylesheet" href="spec.css">
+<style>
+  /* Self-contained: architect.css + spec.css tokens only (rule 3: no hard-coded colours). The scenes are built by the script at the
+     bottom from a few small builders; title line, mode row, cards, note block and bubble reuse spec.css classes and tokens. */
+  body { min-width: 1440px; }
+  svg.ic { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .opt-h { margin: 34px 0 4px; font: 600 16px var(--f-display); } .opt-h span { color: var(--muted); font-weight: 500; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 20px; align-items: start; }
+  .pair > figure { margin: 0; min-width: 0; }
+  .pair figcaption { margin: 0 0 7px 2px; display: flex; gap: 8px; align-items: baseline; font: 700 11px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .pair figcaption b { color: var(--ink); } .pair figcaption i { font: 500 12px var(--f-body); letter-spacing: 0; text-transform: none; }
+  /* A scene: the noted container on top, a second container below it; --sgap is the gap between them */
+  .scene { position: relative; display: flex; flex-direction: column; gap: var(--sgap, 36px); padding: 46px 30px 36px; border-radius: 18px; border: 1px solid var(--line); background-color: var(--ground); background-image: radial-gradient(var(--dot) 1.2px, transparent 1.3px); background-size: 22px 22px; }
+  .scene .ct { max-width: var(--cw, none); }
+  .scene .tagline { position: absolute; left: 14px; top: 12px; right: 14px; display: flex; gap: 8px; font: 600 11.5px var(--f-body); color: var(--muted); }
+  .scene .tagline b { color: var(--ink-2); font-weight: 700; }
+  .scene .tagline .warn { margin-left: auto; color: var(--warn); font-weight: 700; }
+  /* Container: the open frame of region.css. The title line straddles the border; its label side has the canvas colour (the gap in the frame). */
+  .ct { --gc: var(--c-live); position: relative; padding: 38px 24px 26px; border: 1.5px solid color-mix(in srgb, var(--gc) 42%, var(--line)); border-radius: 18px; min-width: 0; }
+  .ct.g2 { --gc: var(--c-content); } .ct.first { z-index: 3; } .ct.second { z-index: 1; }
+  .ct-head { position: absolute; z-index: 10; left: 16px; right: 16px; top: -1px; transform: translateY(-50%); display: flex; align-items: center; justify-content: space-between; gap: 12px; pointer-events: none; }
+  .ct-label, .ct-tools { display: flex; align-items: center; pointer-events: auto; }
+  .ct-label { position: relative; min-width: 0; gap: 8px; padding: 0 8px; background: var(--ground); }
+  .ct-tools { position: relative; flex: none; }
+  .ct-label h3 { margin: 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 12px var(--f-mono); letter-spacing: .22em; text-transform: uppercase; color: color-mix(in srgb, var(--gc) 80%, var(--ink)); }
+  .cnt { min-width: 0; flex-shrink: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--muted); }
+  .grip { display: grid; place-items: center; flex: none; width: 16px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); }
+  .grip::before { content: "\283F"; font: 700 14px var(--f-mono); line-height: 1; opacity: 0; }
+  .ct-label:hover .grip::before, .grip:focus-visible::before { opacity: 1; }
+  .ct-tools .mode-row { position: relative; top: auto; right: auto; }
+  .mseg { position: relative; }
+  .mseg.on { background: var(--surface-2); color: var(--ink); }
+  .mseg:focus-visible, .mseg.is-focus, .ntext:focus-visible, .nflag:focus-visible, .grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .ct .card { width: auto; cursor: default; }
+  .ct .cb { gap: 4px; padding: 18px 12px 12px; }
+  .ct .t { font-size: 13.5px; } .ct .p { font-size: 12px; line-height: 1.4; }
+  .ct-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 22px; }
+  /* Note pin: the saved note's numbered drop (region.css .vb-region-note-pin); quiet once the note is sent */
+  .npin { position: relative; flex: none; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border: 0; border-radius: 50% 50% 50% 4px; background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow); font: 800 11px var(--f-body); }
+  .npin.sent { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong), var(--shadow); }
+  .npin:hover, .npin.is-hover { transform: scale(1.1); }
+  .npin:focus-visible, .npin.is-focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ntext { flex: 0 5000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0; border: 0; background: none; text-align: left; font-size: 12px; color: var(--ink-2); }
+  .ntext.sent { color: var(--muted); } .ntext:hover { color: var(--ink); }
+  .anchor { position: relative; display: inline-flex; flex: none; }
+  /* The existing note bubble (.ovl of spec.css), opened under its anchor. Unsent: editable. Sent: read-only history. */
+  .note-ovl { --fc: var(--accent); width: 300px; }
+  .note-ovl.below { left: var(--bx, -16px); top: calc(100% + 12px); z-index: 30; }
+  .note-ovl.below::before { left: var(--ax, 22px); top: -7px; border-left: 1px solid var(--oc); border-top: 1px solid var(--oc); }
+  .note-ovl textarea { min-height: 64px; } .note-ovl .btxt { margin: 0; line-height: 1.5; color: var(--ink); }
+  .note-ovl .ro { font-size: 12px; color: var(--muted); }
+  .note-ovl .btn.ghost, .nblock .btn.ghost { border: 1px solid var(--line-strong); background: none; color: var(--ink-2); }
+  .st { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: var(--accent-text); }
+  .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+  .st.sent { color: var(--muted); } .st.sent::before { background: none; box-shadow: inset 0 0 0 1.5px var(--muted); }
+  /* Hover / focus preview */
+  .tip { position: absolute; z-index: 25; top: calc(100% + 10px); right: 0; width: 250px; display: grid; gap: 4px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--surface); box-shadow: var(--shadow-lg); font-size: 12px; color: var(--ink-2); text-align: left; }
+  .tip.l { left: -10px; right: auto; }
+  .tip p { margin: 0; line-height: 1.45; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .tip .hint { font-size: 11px; color: var(--muted); }
+  /* Option B: count badge on the Comment icon, and the note block at the top of the container */
+  .bdg { position: absolute; top: -7px; right: -7px; display: grid; place-items: center; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 0 2px var(--surface); font: 800 10px var(--f-body); pointer-events: none; }
+  .bdg.sent { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong), 0 0 0 2px var(--surface); }
+  .nblock { display: grid; gap: 6px; margin: 0 0 26px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--accent-line); background: var(--accent-soft); font-size: 13px; color: var(--ink-2); }
+  .nblock .top { display: flex; align-items: center; gap: 8px; } .nblock .grow { flex: 1; }
+  .nblock .who { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); }
+  .nblock p { margin: 0; line-height: 1.5; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .nblock .acts { display: flex; align-items: center; gap: 6px; } .nblock .acts .ro { font-size: 12px; color: var(--muted); }
+  .nblock .more { padding: 0; border: 0; background: none; color: var(--accent-text); font-size: 12px; font-weight: 600; text-decoration: underline; }
+  .shift { position: absolute; left: 12px; width: 9px; border: 1.5px solid var(--warn); border-right: 0; border-radius: 4px 0 0 4px; pointer-events: none; }
+  /* Option D: the flag standing on the frame's top edge, in the free stretch between the label side and the tools */
+  .nflag { position: absolute; z-index: 5; bottom: calc(100% + 1.5px); left: var(--fx, 212px); width: 150px; height: 24px; display: flex; align-items: center; gap: 6px; padding: 0 8px 0 5px; border: 1px solid var(--accent-line); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--accent-soft); color: var(--ink-2); font-size: 11.5px; text-align: left; }
+  .nflag.sent { border-color: var(--line-strong); background: var(--surface); color: var(--muted); }
+  .nflag .npin { height: 16px; min-width: 16px; padding: 0 3px; font-size: 10px; box-shadow: none; }
+  .nflag .tx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cmp th, .cmp td { padding: 8px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+  .cmp th { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .cmp td:first-child { font-weight: 700; color: var(--ink); white-space: nowrap; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-comment" viewBox="0 0 20 20"><path d="M4 5h12v8H9l-4 3v-3H4z"/></symbol><!-- ACTION_ICON.comment, packages/ui/src/node/node-icons.ts -->
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 24 24"><rect x="2.5" y="9" width="6" height="6" rx="1.5"/><rect x="15.5" y="3.5" width="6" height="6" rx="1.5"/><rect x="15.5" y="14.5" width="6" height="6" rx="1.5"/><path d="M8.5 12H12V6.5h3.5M12 12v5.5h3.5"/></symbol>
+    <symbol id="i-lanes" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></symbol>
+    <symbol id="i-radial" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/><circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></symbol>
+  </defs>
+</svg>
+<header class="page-head">
+  <div>
+    <a class="back" href="index.html">All mockups</a>
+    <h1>09 — Container notes: how a note on a whole container is shown</h1>
+    <p>A container takes ONE unsent note (edit or remove until Send; after Send it is read-only history until the agent answers). Today's build shows a "Your note" line under the title line, and it overlaps the kind tabs of the cards below it. Four fixes, each drawn as a small board scene: the noted container plus a second one next to it, so you can see whether anything has to move. Each option shows no note, one unsent note, one sent note waiting for the agent, and a long note. Cards are drawn smaller than on the board; the title line is drawn at real size. Toggle dark and light at the right.</p>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Light theme</button>
+</header>
+
+<section id="oa">
+<div class="sec-head"><h2>A — Note text on the title line</h2><p>Numbered pin plus the first words of the note, after the count, cut with an ellipsis. Nothing moves.</p></div>
+<div class="pair" id="scenes-a"></div>
+<div class="legend"><b>Trade-offs.</b> The pin and the start of the note sit on the title line, after the count; the text gives way first, then the count, then the title. No container grows and no card moves, so the overlap with the kind tabs is gone. The price is room: at about 600px a note gets 15 to 18 characters, at 440px almost none, and in a narrow container (last scene) only the pin is left and the count starts to clip. A long note looks the same as a short one, so the full text always needs a click on the text or the pin (the existing bubble). Good for a one-word reminder, poor for a sentence. Sent is told apart only by the quiet pin and the muted text.</div>
+</section>
+
+<section id="ob">
+<div class="sec-head"><h2>B — Count badge on the Comment icon; the icon shows and hides a note block at the top</h2><p>The maintainer's idea. Left: the note is hidden, the icon carries a badge "1" (a note the agent has not processed yet). Right: the icon was clicked; a note block sits under the title line, above all the cards, pushes them down, and the container below moves down with it (bracket at the left edge, dashed line = where it was).</p></div>
+<div class="pair" id="scenes-b"></div>
+<div class="legend"><b>Trade-offs.</b> The title line gets no extra text at all: the only addition is a 15px badge on an icon that is already there, so it works in the narrowest container. The note is read in full where it lives (the note text, its state, and Edit / Remove while unsent), and a sent note shows as read-only history. The badge counts notes the agent has not processed: an unsent note and a sent one that is still waiting both show "1" (the sent one in the quiet style of the sent pin), and it disappears when the agent answers. The price is layout: showing the block makes the container grow by the height of the block (about 60px for a short note, about 110px for a long one, which is clamped to 3 lines with "Show all"), and everything below it on the board moves down, so showing or hiding a note can shift wires and the view under the person's eyes. A hidden note is not readable at a glance; hover or keyboard focus on the icon shows a short preview without moving anything (last scene).</div>
+</section>
+
+<section id="oc">
+<div class="sec-head"><h2>C — Pin only; the note appears on hover and click</h2><p>Only the numbered pin sits on the title line. Hover or focus shows a small preview; click opens the existing note bubble. Nothing moves.</p></div>
+<div class="pair" id="scenes-c"></div>
+<div class="legend"><b>Trade-offs.</b> The cheapest title line: one 20px pin after the count, so even a 300px container has room, and nothing can overlap or shift. The note is not readable at a glance, though: with several containers the person must hover each pin to find out which note is which, and a short, a sent and a long note all look alike at rest (first four scenes; the long one is drawn while hovered). The preview is clamped to 3 lines, so a long note needs the click. The bubble is the one the cards already use, so editing, removing and the read-only sent view need no new design. Touch screens have no hover, so there the pin is tap-to-open only.</div>
+</section>
+
+<section id="od">
+<div class="sec-head"><h2>D — A flag on the top edge of the frame</h2><p>A small tab stands on the frame's upper edge, in the gap above the container, with a one-line note cut short. Click opens the bubble. Here the noted container is the LOWER one, so the gap between the two containers is where the flag lives.</p></div>
+<div class="pair" id="scenes-d"></div>
+<div class="legend"><b>Trade-offs.</b> The note sits outside the frame, so it cannot touch the title line or the cards, and a flag reads as "attached to this whole container" better than a pin inside it. Nothing inside the container moves. But the flag needs about 24px of free gap above the frame: with the normal 36px between containers it fits, with a tight gap (last-but-one scene, 10px) it lands on the bottom edge of the container above and hides part of it; dragging containers close together will do this often. The flag also needs a free stretch on the top edge between the title and the tool icons (about 150px here); in a container under about 480px wide there is none and it would have to sit over the title line. A long note is cut to about 20 characters, as in A. Stacking the flag completely above the title line (not drawn) would need 44px of gap.</div>
+</section>
+
+<section id="osum">
+<div class="sec-head"><h2>Side by side</h2></div>
+<table class="cmp">
+  <thead><tr><th>Option</th><th>Moves anything?</th><th>Readable at a glance</th><th>Extra clicks</th><th>Narrow container</th></tr></thead>
+  <tbody>
+    <tr><td>A — text on the title line</td><td>No</td><td>Only the first ~15 characters</td><td>1 to read it all</td><td>Falls back to the pin alone</td></tr>
+    <tr><td>B — badge + note block</td><td>Yes: the container grows, the ones below shift</td><td>Yes, in full, when shown</td><td>1 to show, 1 to hide</td><td>Works (only a badge is added)</td></tr>
+    <tr><td>C — pin only</td><td>No</td><td>No (preview on hover)</td><td>1 to read it all</td><td>Works</td></tr>
+    <tr><td>D — flag on the frame edge</td><td>No, but needs free gap above</td><td>Only the first ~20 characters</td><td>1 to read it all</td><td>No room for it</td></tr>
+  </tbody>
+</table>
+</section>
+<script>
+(function () {
+  'use strict';
+  // --- data ------------------------------------------------------------------------------------------------------------
+  const K = { risk: 'Risk', question: 'Question', decision: 'Decision', action: 'Action', finding: 'Finding', topic: 'Topic' };
+  const SHORT = 'Check with finance first.';
+  const LONG = 'Finance has not signed off on the floor price. Run the churn model for each option before we commit, ask legal whether the annual lock-in needs a new clause, and tell sales the date moves if either answer is no.';
+  const N = { unsent: { s: 'unsent', t: SHORT }, sent: { s: 'sent', t: SHORT }, long: { s: 'unsent', t: LONG } };
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const ic = (id, n) => `<svg class="ic" width="${n}" height="${n}" aria-hidden="true" focusable="false"><use href="#i-${id}"/></svg>`;
+  const card = (k, n, t, p) => `<article class="card k-${k}" tabindex="0" aria-label="Item ${n}, ${K[k].toLowerCase()}: ${esc(t)}"><span class="tab num">${n}</span><span class="tab kind">${K[k]}</span><div class="cb"><h4 class="t">${esc(t)}</h4><p class="p">${esc(p)}</p></div></article>`;
+  const RISKS = { name: 'Risks', count: '1 of 3 decided', cards: [
+    card('risk', 7, 'Floor price too low', 'Margin falls under 40%'), card('question', 8, 'Who signs it off?', 'Finance or the CEO'), card('decision', 9, 'Keep the annual lock-in', 'Open until legal replies')] };
+  const STEPS = { name: 'Next steps', count: '0 of 4 decided', g2: 1, cards: [
+    card('action', 12, 'Run the churn model', 'One run per option'), card('action', 13, 'Ask legal about lock-in', 'Needs a new clause?'),
+    card('finding', 14, 'A rival cut prices', 'Seen on their site'), card('topic', 15, 'Draft the customer email', 'Waits for 12 and 13')] };
+  const sayState = (n) => (n.s === 'sent' ? 'sent, waiting for the agent' : 'unsent');
+  // --- title line pieces -----------------------------------------------------------------------------------------------
+  const seg = (id, label, on) => `<button class="mseg" type="button" role="radio" aria-checked="${on}" aria-label="${label}" title="${label}" tabindex="-1">${ic(id, 15)}</button>`;
+  const MODES = [['grid', 'Grid'], ['flow', 'Flow'], ['lanes', 'Lanes'], ['radial', 'Radial'], ['list', 'List']];
+  function row(c, o) {
+    const modes = (o.collapsed ? MODES.slice(0, 1) : MODES).map((m, i) => seg(m[0], m[1], i === 0)).join('');
+    const cls = 'mseg cm' + (o.on || o.shown ? ' on' : '') + (o.focus ? ' is-focus' : '') + (o.hover ? ' is-hover' : '');
+    const id = 'nb-' + o.uid;
+    const cm = o.opt === 'B' && o.note
+      ? `<button class="${cls}" type="button" aria-label="${o.shown ? 'Hide' : 'Show'} note on container ${c.name}" aria-expanded="${!!o.shown}"${o.shown ? ` aria-controls="${id}"` : ''} aria-describedby="${id}-d" title="Note · C">${ic('comment', 15)}<span class="bdg ${o.note.s === 'sent' ? 'sent' : ''}" aria-hidden="true">1</span><span class="sr" id="${id}-d">1 unprocessed note</span></button>`
+      : `<button class="${cls}" type="button" aria-label="Comment on container ${c.name}" aria-haspopup="dialog" title="Comment · C">${ic('comment', 15)}</button>`;
+    return `<div class="mode-row" role="radiogroup" aria-label="Layout for ${c.name}">${modes}<span class="div" aria-hidden="true"></span>${cm}`
+      + `<button class="mseg" type="button" aria-label="Settings for ${c.name}" aria-haspopup="menu" aria-expanded="false" title="Container settings">${ic('cog', 15)}</button></div>`;
+  }
+  const pin = (c, n, extra) => `<button class="npin ${n.s === 'sent' ? 'sent' : ''} ${extra || ''}" type="button" aria-haspopup="dialog" aria-label="Note 1 on container ${c.name}, ${sayState(n)}">1</button>`;
+  const stateText = (n) => (n.s === 'sent' ? 'Sent, waiting for the agent' : 'Unsent');
+  const bubble = (c, n, style) => `<div class="ovl note-ovl below" role="dialog" aria-label="Note on container ${c.name}"${style ? ` style="${style}"` : ''}>`
+    + `<div class="head"><span class="nref">1</span><b>Your note</b><span class="grow"></span><span class="st ${n.s}">${stateText(n)}</span></div>`
+    + (n.s === 'sent'
+      ? `<p class="btxt">${esc(n.t)}</p><div class="ro">Read-only until the agent answers.</div>`
+      : `<textarea aria-label="Note on container ${c.name}">${esc(n.t)}</textarea><div class="row"><button class="btn btn-sm ghost" type="button">Remove</button><button class="btn btn-sm btn-primary" type="button">Send</button></div>`)
+    + '</div>';
+  const tip = (n, cls) => `<div class="tip ${cls || ''}" role="tooltip"><p>${esc(n.t)}</p><span class="hint">${stateText(n)} · click to open</span></div>`;
+  // Option B: the note block at the top of the container
+  const block = (c, n, o) => `<div class="nblock" id="nb-${o.uid}" role="region" aria-label="Note on container ${c.name}">`
+    + `<div class="top"><span class="who">Your note 1</span><span class="st ${n.s}">${stateText(n)}</span><span class="grow"></span>`
+    + (n.s === 'sent' ? '<span class="acts"><span class="ro">Read-only until the agent answers</span></span>'
+      : `<span class="acts"><button class="btn btn-sm ghost" type="button" aria-label="Edit note on container ${c.name}">Edit</button><button class="btn btn-sm ghost" type="button" aria-label="Remove note on container ${c.name}">Remove</button></span>`)
+    + `</div><p>${esc(n.t)}</p>` + (n.t.length > 140 ? `<button class="more" type="button" aria-label="Show the whole note on container ${c.name}" style="justify-self: start">Show all</button>` : '') + '</div>';
+  // Option D: the flag on the frame's top edge
+  const flag = (c, n) => `<button class="nflag ${n.s === 'sent' ? 'sent' : ''}" type="button" aria-haspopup="dialog" aria-label="Open note on container ${c.name}, ${sayState(n)}">`
+    + `<span class="npin ${n.s === 'sent' ? 'sent' : ''}" aria-hidden="true">1</span><span class="tx">${esc(n.t)}</span></button>`;
+  function head(c, o) {
+    const n = o.note;
+    let note = '';
+    if (n && o.opt === 'A') note = pin(c, n) + `<button class="ntext ${n.s === 'sent' ? 'sent' : ''}" type="button" aria-label="Open note on container ${c.name}: ${esc(n.t)}">${esc(n.t)}</button>`;
+    if (n && o.opt === 'C') note = `<span class="anchor">${pin(c, n, o.hover ? 'is-hover' : '')}${o.tip ? tip(n, 'l') : ''}${o.bubble ? bubble(c, n) : ''}</span>`;
+    const extra = n && o.opt === 'B' && o.tip ? tip(n) : '';
+    return `<header class="ct-head"><div class="ct-label"><button class="grip" type="button" aria-label="Move container ${c.name}"></button><h3>${c.name}</h3><span class="cnt">${c.count}</span>${note}</div>`
+      + `<div class="ct-tools">${row(c, o)}${extra}</div></header>`;
+  }
+  function ctHtml(c, o, noted) {
+    const oo = noted ? o : { opt: o.opt, collapsed: o.collapsed, uid: o.uid + '-x' };
+    const n = oo.note, D = n && o.opt === 'D';
+    return `<section class="ct ${c.g2 ? 'g2' : ''} ${noted ? 'first' : 'second'}" aria-label="Container ${c.name}">${head(c, oo)}`
+      + (D ? flag(c, n) : '') + (D && o.bubble ? bubble(c, n, 'left: 196px; top: 16px; --ax: 30px') : '')
+      + (n && o.shown ? block(c, n, o) : '') + `<div class="ct-cards">${c.cards.join('')}</div></section>`;
+  }
+  function fig(o) {
+    o.uid = o.uid || Math.random().toString(36).slice(2, 7);
+    const order = o.opt === 'D' ? [STEPS, RISKS] : [RISKS, STEPS];
+    const style = (o.gap ? `--sgap: ${o.gap}px;` : '') + (o.w ? ` --cw: ${o.w}px;` : '');
+    return `<figure><figcaption><b>${o.title}</b><i>${o.sub || ''}</i></figcaption>`
+      + `<div class="scene" id="sc-${o.uid}"${style ? ` style="${style}"` : ''}${o.twin ? ` data-twin="sc-${o.twin}"` : ''} role="group" aria-label="Option ${o.opt}: ${o.title}">`
+      + order.map((c) => ctHtml(c, o, c === RISKS)).join('')
+      + `<div class="tagline"><span>${o.tag || ''}</span><span class="warn" data-shift></span></div></div></figure>`;
+  }
+  const mount = (id, list, opt) => { document.getElementById(id).innerHTML = list.map((o) => fig(Object.assign({ opt: opt }, o))).join(''); };
+  // --- the four options --------------------------------------------------------------------------------------------------
+  mount('scenes-a', [
+    { title: 'No note', sub: 'title line as it is today', note: null, tag: 'Nothing moves' },
+    { title: 'Unsent note', sub: 'pin + text after the count', note: N.unsent, tag: 'Nothing moves' },
+    { title: 'Sent, waiting for the agent', sub: 'quiet pin, muted text', note: N.sent, tag: 'Nothing moves' },
+    { title: 'Long note', sub: 'cut at the same width, full text in the bubble', note: N.long, tag: 'Nothing moves' },
+    { title: 'Container 440px wide', sub: 'unsent note: no room left for any text', note: N.unsent, w: 440, tag: 'Full icon row leaves the text about 0px' },
+    { title: 'Narrow container, 320px', sub: 'sent note: only the pin fits, the count clips', note: N.sent, w: 320, collapsed: 1, tag: 'Icon row collapsed to grid, comment, cog' },
+  ], 'A');
+  const hid = (uid, title, sub, note) => ({ uid: uid, title: title, sub: sub, note: note, tag: 'Hidden: badge only' });
+  const shw = (uid, twin, title, sub, note) => ({ uid: uid, twin: twin, title: title, sub: sub, note: note, shown: 1, tag: 'Shown' });
+  mount('scenes-b', [
+    hid('bu', 'Unsent note, hidden', 'badge "1" on the Comment icon', N.unsent), shw('bus', 'bu', 'Unsent note, shown', 'icon clicked: block above the cards', N.unsent),
+    hid('bs', 'Sent note, hidden', 'quiet badge: still waiting for the agent', N.sent), shw('bss', 'bs', 'Sent note, shown', 'read-only, no Edit or Remove', N.sent),
+    hid('bl', 'Long note, hidden', 'same badge, however long the note', N.long), shw('bls', 'bl', 'Long note, shown', '3 lines, then "Show all"', N.long),
+    { uid: 'bn', title: 'No note', sub: 'plain Comment icon; a click opens the bubble to write one', note: null, tag: 'Nothing moves' },
+    { uid: 'bh', title: 'Hover or keyboard focus on the icon', sub: 'preview, nothing moves', note: N.unsent, hover: 1, focus: 1, tip: 1, tag: 'Hidden: preview over the cards' },
+  ], 'B');
+  mount('scenes-c', [
+    { title: 'No note', sub: 'nothing added', note: null, tag: 'Nothing moves' },
+    { title: 'Unsent note, at rest', sub: 'the pin is all there is', note: N.unsent, tag: 'Nothing moves' },
+    { title: 'Sent note, at rest', sub: 'quiet pin', note: N.sent, tag: 'Nothing moves' },
+    { title: 'Long note, pin hovered', sub: 'preview cut at 3 lines', note: N.long, hover: 1, tip: 1, tag: 'Preview floats over the cards' },
+    { title: 'Click: the existing bubble, unsent', sub: 'edit, remove or send here', note: N.unsent, bubble: 1, on: 1, tag: 'Bubble floats over the cards' },
+    { title: 'Click: the bubble, sent', sub: 'read-only history', note: N.sent, bubble: 1, on: 1, tag: 'Bubble floats over the cards' },
+  ], 'C');
+  mount('scenes-d', [
+    { title: 'No note', sub: 'gap between the containers is free', note: null, tag: 'Gap 36px' },
+    { title: 'Unsent note', sub: 'flag on the top edge', note: N.unsent, tag: 'Gap 36px: flag fits' },
+    { title: 'Sent, waiting for the agent', sub: 'quiet flag', note: N.sent, tag: 'Gap 36px: flag fits' },
+    { title: 'Long note', sub: 'cut to one line', note: N.long, tag: 'Gap 36px: flag fits' },
+    { title: 'Tight gap, 10px', sub: 'containers dragged close together', note: N.unsent, gap: 10, tag: 'The flag covers the lower edge of the container above' },
+    { title: 'Click: the bubble opens below the flag', sub: 'same bubble as on the cards', note: N.unsent, bubble: 1, on: 1, tag: 'Bubble floats over the cards' },
+  ], 'D');
+  // --- option B: measure how far the lower container moved (the shown scene against its hidden twin) ---------------
+  function shifts() {
+    document.querySelectorAll('.scene[data-twin]').forEach(function (s) {
+      const t = document.getElementById(s.dataset.twin);
+      if (!t) return;
+      const a = t.querySelector('.ct.second').offsetTop, b = s.querySelector('.ct.second').offsetTop;
+      s.querySelectorAll('.shift').forEach(function (x) { x.remove(); });
+      const br = document.createElement('div');
+      br.className = 'shift'; br.setAttribute('aria-hidden', 'true'); br.style.top = a + 'px'; br.style.height = (b - a) + 'px';
+      s.appendChild(br);
+      s.querySelector('[data-shift]').textContent = 'Container below moved down ' + Math.round(b - a) + 'px (bracket)';
+    });
+  }
+  window.addEventListener('load', shifts);
+  window.addEventListener('resize', shifts);
+  shifts();
+  const btn = document.getElementById('themeBtn');
+  btn.addEventListener('click', function () {
+    const dark = document.documentElement.dataset.theme !== 'light';
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    btn.textContent = dark ? 'Dark theme' : 'Light theme';
+  });
+})();
+</script>
+</body>
+</html>
