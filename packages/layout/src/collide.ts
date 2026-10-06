@@ -20,31 +20,41 @@ export function applyPins(pos: Map<string, Box>, pins?: Map<string, Point>): Set
   return pinned;
 }
 
+export interface RoomOptions {
+  /** Clearance kept around a moved box. Cards: GAP. Containers: REGION_GAP. */
+  gap?: number;
+  /** Containers (3_FE_04 ruling 6): a moved box goes only right or down of where it was, not
+   *  merely inside the content's top-left. */
+  rightOrDown?: boolean;
+}
+
 /**
- * Each unpinned card that overlaps a pinned one moves to the closest spot (straight-line distance)
- * that is GAP clear of every other card and of `keepOut` (lane gutters), never above or left of
+ * Each unpinned box that overlaps a pinned one moves to the closest spot (straight-line distance)
+ * that is `gap` clear of every other box and of `keepOut` (lane gutters), never above or left of
  * the content's top-left, so the frame's origin (and every pin on screen) stays where it was.
+ * With `rightOrDown`, never above or left of the box's own place either.
  */
-export function makeRoom(pos: Map<string, Box>, pinned: Set<string>, keepOut: Box[] = []): void {
+export function makeRoom(pos: Map<string, Box>, pinned: Set<string>, keepOut: Box[] = [], opts: RoomOptions = {}): void {
   if (!pinned.size) return;
+  const gap = opts.gap ?? GAP;
   const pins = [...pinned].map((id) => pos.get(id)!);
   const floor = boundsOf([...pos.values(), ...keepOut]);
   for (const [id, box] of pos) {
     if (pinned.has(id) || !pins.some((p) => overlaps(box, p))) continue;
     const others = [...keepOut];
     for (const [o, b] of pos) if (o !== id) others.push(b);
-    pos.set(id, { ...box, ...nearestFree(box, others, floor) });
+    pos.set(id, { ...box, ...nearestFree(box, others, opts.rightOrDown ? box : floor, gap) });
   }
 }
 
 /**
  * The free top-left closest to `box`'s own. The closest free spot always has each coordinate
- * either unchanged or flush (GAP away) with an obstacle's side, so only those are tried, nearest
+ * either unchanged or flush (`gap` away) with an obstacle's side, so only those are tried, nearest
  * first, stopping as soon as nothing left can beat the best found.
  */
-function nearestFree(box: Box, obstacles: Box[], floor: Point): Point {
-  const xs = axis(box.x, floor.x, obstacles.flatMap((o) => [o.x - box.w - GAP, o.x + o.w + GAP]));
-  const ys = axis(box.y, floor.y, obstacles.flatMap((o) => [o.y - box.h - GAP, o.y + o.h + GAP]));
+function nearestFree(box: Box, obstacles: Box[], floor: Point, gap: number): Point {
+  const xs = axis(box.x, floor.x, obstacles.flatMap((o) => [o.x - box.w - gap, o.x + o.w + gap]));
+  const ys = axis(box.y, floor.y, obstacles.flatMap((o) => [o.y - box.h - gap, o.y + o.h + gap]));
   let best: Point = { x: box.x, y: box.y };
   let dBest = Infinity;
   for (const x of xs) {
@@ -53,7 +63,7 @@ function nearestFree(box: Box, obstacles: Box[], floor: Point): Point {
     for (const y of ys) {
       const d = Math.hypot(dx, y - box.y);
       if (d >= dBest) break;
-      if (obstacles.some((o) => overlaps({ ...box, x, y }, o, GAP - EPS))) continue;
+      if (obstacles.some((o) => overlaps({ ...box, x, y }, o, gap - EPS))) continue;
       best = { x, y };
       dBest = d;
       break;

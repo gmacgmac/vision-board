@@ -19,6 +19,8 @@ export interface PlaceDeps {
   /** Send one act; true when it was recorded. */
   record(fields: ActFields): Promise<boolean>;
   redraw(): void;
+  /** Hide the connectors until the relayout a container's move causes has drawn (draw.ts). */
+  settle(): void;
 }
 
 export interface Places {
@@ -27,6 +29,8 @@ export interface Places {
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): Promise<void>;
   resetRegion(region: string): Promise<void>;
+  /** "Put container back" (3_FE_04 ruling 7): the container returns to where layout puts it. */
+  putBack(region: string): Promise<void>;
 }
 
 export function createPlaces(d: PlaceDeps): Places {
@@ -53,6 +57,13 @@ export function createPlaces(d: PlaceDeps): Places {
     async resetRegion(region) {
       const ids = d.view().nodes.filter((n) => n.region === region && d.state().pins.has(n.id)).map((n) => n.id);
       for (const id of ids) if (!(await d.record({ action: 'unpin', ...d.target(id) }))) break;
+    },
+    async putBack(region) {
+      if (!d.state().regionPins.has(region)) return;
+      // The board is laid out again once the unpin is back: the links hide until that draw settles.
+      d.settle();
+      await d.record({ action: 'unpin', region });
+      d.settle();
     },
   };
 }

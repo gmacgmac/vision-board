@@ -3,7 +3,7 @@
 // `join`, the one credential-free write. Each body fits the operation's request schema first
 // (pointers into the body, api.md 38), then the ledger module's own checks as it appends.
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { holders, openItems } from '../../../packages/actions/src/index.ts';
+import { holders, openContainers, openItems } from '../../../packages/actions/src/index.ts';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { openRequestOf } from '../../../packages/format/src/index.ts';
 import { newSecret } from './agents.ts';
@@ -121,7 +121,8 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   const results = writeItems(ledger, agent, board, list);
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, agent).filter((x) => x.pending !== undefined) : [];
-  sendJson(res, 200, { results, head: s.seq, pending });
+  const containers = s.boards.has(board) ? openContainers(s, board, agent) : [];
+  sendJson(res, 200, { results, head: s.seq, pending, ...(containers.length > 0 && { containers }) });
 };
 
 export const WRITES = {

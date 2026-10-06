@@ -42,6 +42,18 @@ export function placeBubble(card: StageBox, bubble: StageSize, stage: StageSize)
   return { side: 'below', x, y: card.y + card.h + BUBBLE_GAP, arrow };
 }
 
+/**
+ * The box to place a bubble from when it is about a container's title line (3_FE_04 ruling 3),
+ * not a card: `placeBubble(titleAnchor(line), ...)` opens it beside the line with the arrow on the
+ * line's middle, or below the line when neither side fits (never over the cards). The box is the
+ * line's span, shifted up so the bubble's drop and arrow offset land on the line's middle, and
+ * ending at the line's bottom.
+ */
+export function titleAnchor(line: StageBox): StageBox {
+  const y = line.y + line.h / 2 - BUBBLE_DROP - BUBBLE_ARROW_AT;
+  return { x: line.x, y, w: line.w, h: line.y + line.h - y };
+}
+
 /** `new`: no note yet (C or M on a card without one). `edit`: the card's note not yet sent.
  * `sent`: a sent note, which is history and only shown. */
 export type BubbleMode = 'new' | 'edit' | 'sent';
@@ -50,14 +62,16 @@ export type BubblePhase = 'idle' | 'saving' | 'error';
 
 /** What the page knows when it opens a bubble. `number` is the card's item number; `index` the
  * note's place among the card's notes (its pin number), for an existing note; `numbers` every
- * item of a note on a group of cards (3_FE_02 ruling 3). */
+ * item of a note on a group of cards (3_FE_02 ruling 3); `container` the title of the container
+ * a note on a whole container is on (3_FE_04 ruling 3), in place of `number`. */
 export interface BubbleInput {
   mode: BubbleMode;
   kind: NoteKind;
-  number: number;
+  number?: number;
   index?: number;
   text?: string;
   numbers?: readonly number[];
+  container?: string;
 }
 
 /** Everything the bubble says; the element applies it. */
@@ -80,8 +94,13 @@ export const PLACEHOLDER: Record<NoteKind, string> = {
   context: 'What is unclear? For example: explain it in plain terms',
 };
 
-/** "Note on 42", or "Note on 3 cards: 12, 14, 15" for a group; each mode words it its own way. */
+/** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
+ * whole container; each mode words it its own way. */
 function headingOf(b: BubbleInput): string {
+  if (b.container !== undefined) {
+    const on = `on container ${b.container}`;
+    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${b.index ?? 1} ${on}, sent`;
+  }
   if (b.numbers) {
     const on = `on ${b.numbers.length} cards: ${b.numbers.join(', ')}`;
     return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${on}, sent`;
@@ -110,3 +129,21 @@ export function saveIntent(mode: BubbleMode, kind: NoteKind, text: string): 'sav
   if (text.trim()) return 'save';
   return mode === 'new' && kind === 'context' ? 'save' : 'skip';
 }
+
+/** Whether the words typed differ from the words the bubble opened with (3_FE_04 step 4G ruling
+ * 4). Line endings and the whitespace around the text do not count: losing them loses nothing. */
+export function isDirty(opened: string, now: string): boolean {
+  const norm = (s: string) => s.replace(/\r\n?/g, '\n').trim();
+  return norm(opened) !== norm(now);
+}
+
+/** What Esc or Cancel does: `close` (as before) or `ask` (the text changed: the page confirms
+ * "Discard your changes?" first). A sent note is never typed in, so it always closes. */
+export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' {
+  return mode !== 'sent' && dirty ? 'ask' : 'close';
+}
+
+/** `vb-note-discard` (bubbles): Esc or Cancel with changed text. The bubble stays open; the page
+ * asks through its confirm dialog and then closes it (OK) or puts focus back in it (Cancel). */
+export const NOTE_DISCARD_EVENT = 'vb-note-discard';
+export interface NoteDiscardDetail { text: string }

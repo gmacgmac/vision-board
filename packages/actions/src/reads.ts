@@ -6,6 +6,8 @@ import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBun
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
+import type { Place } from './containers.ts';
+import { containerNotes, containerPin, noteJson } from './containers.ts';
 import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
 import { movedFrom, regionOf } from './moves.ts';
 import { pendingItems, unseenItems } from './pending.ts';
@@ -38,8 +40,11 @@ export interface NodeDetail {
   links: { from: number; to: number; label?: string }[];
 }
 
-/** One container: the region as stored, who holds it, every node it has held. */
-export interface ContainerDetail { board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[] }
+/** One container: the region as stored, who holds it, every node it has held, the person's notes
+ * on the whole container (oldest first, api.md 75) and, when placed, where (api.md 74). */
+export interface ContainerDetail {
+  board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[]; notes: ItemNote[]; pin?: Place;
+}
 
 /** An unanswered grant request as the board page shows it (`get_board`): which container, why,
  * and the asking agent's id and the label it joined with. */
@@ -109,9 +114,12 @@ export function containerDetail(s: LedgerState, board: string, region: string): 
   const r = s.boards.get(board)?.regions.find((x) => x.id === region);
   if (!r) return undefined;
   const nodes = nodesOf(s, board).filter((x) => regionOf(s, x.n) === region || x.versions.some((v) => v.region === region));
+  const pin = containerPin(s, board, region);
   return {
     board, region: { ...r }, holders: holders(s, board, region),
     nodes: nodes.map((x) => nodeDetail(s, x.n)!),
+    notes: containerNotes(s, board, region).map(noteJson),
+    ...(pin && { pin }),
   };
 }
 
@@ -138,7 +146,8 @@ export function boardAccess(s: LedgerState, board: string): BoardAccess {
  * whether the person has a version still to see (api.md 36, D-018). With `agent`, only the items
  * it may answer: in a container it holds, or whose latest version it wrote (api.md 41). */
 export function openItems(s: LedgerState, board: string, agent?: string): OpenItem[] {
-  const pending = new Map(pendingItems(s, board, agent).map((p) => [p.n, p]));
+  // A container's owed note has no place here: `openItem` is a card's shape (api.md 73).
+  const pending = new Map(pendingItems(s, board, agent).filter((p) => p.region === undefined).map((p) => [p.n, p]));
   const unseen = new Set(unseenItems(s, board).map((u) => u.n));
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
@@ -154,6 +163,19 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
     });
   }
   return out.sort((a, b) => a.n - b.n);
+}
+
+/** A whole container whose latest note waits for the agent (api.md 73, 77). */
+export interface OpenContainer { board: string; region: string; title: string; pending: 'comment' | 'context'; note: number }
+
+/** The containers on `board` whose latest standing note has no answer yet, for the agents that may
+ * answer them (api.md 77); `openItems` stays cards only. */
+export function openContainers(s: LedgerState, board: string, agent?: string): OpenContainer[] {
+  const regions = s.boards.get(board)?.regions ?? [];
+  return pendingItems(s, board, agent).flatMap((p) => {
+    const r = p.region !== undefined && p.ask ? regions.find((x) => x.id === p.region) : undefined;
+    return r && p.ask ? [{ board, region: r.id, title: r.title, pending: p.ask.kind, note: p.ask.seq }] : [];
+  });
 }
 
 /** The board a ledger line belongs to: the one it names, or its node's (a link by its `from`

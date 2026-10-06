@@ -4,7 +4,8 @@
 // container, its own, or nowhere), and a drag on its content selects text and never pans. On the
 // board's or a container's background (its top line outside its controls included): a drag pans
 // and a click clears the selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The
-// middle button pans anywhere. While a pan, a move or a lasso runs, nothing on the page gets
+// middle button pans anywhere. A drag on a container's grip moves the container (3_FE_04 ruling 5,
+// container-drag.ts). While a pan, a move or a lasso runs, nothing on the page gets
 // text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live in keys.ts
 // (project rule 5).
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
@@ -31,6 +32,11 @@ export interface PointerHandlers {
   lassoMove(from: Point, to: Point): void;
   lassoEnd(from: Point, to: Point, add: boolean): void;
   lassoCancel(): void;
+  /** A drag on a container's grip (3_FE_04 ruling 5): it starts, moves by `d` board units since
+   *  the press, and ends (null: the pointer was lost). A click on the grip calls none of them. */
+  frameStart(region: string): void;
+  frameMove(d: Point): void;
+  frameEnd(d: Point | null): void;
 }
 
 /** Nothing inside these starts a gesture: they are controls with their own click (a container's
@@ -40,6 +46,8 @@ const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-no
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** The one place a card is moved from (ruling 4): the kind tab with its grip dots. */
 const HANDLE = '.vb-node-kind';
+/** The one place a container is moved from (3_FE_04 ruling 5): the grip on its title line. */
+const GRIP = '.vb-region-grip';
 const DRAG_THRESHOLD = 4;
 
 interface Start { sx: number; sy: number; moved: boolean }
@@ -51,7 +59,9 @@ type Gesture =
   /** On a card's content: the browser selects text on a drag; a click picks the card. */
   | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
   /** Shift on a background: the lasso; `add` when Cmd or Ctrl is held too. */
-  | Start & { kind: 'lasso'; add: boolean };
+  | Start & { kind: 'lasso'; add: boolean }
+  /** On a container's grip: the frame and its cards move (container-drag.ts). */
+  | Start & { kind: 'frame'; region: string; el: HTMLElement };
 
 export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): void {
   let g: Gesture | null = null;
@@ -86,6 +96,15 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       if (t.closest(OWN_MIDDLE)) return;
       stopMouse = true; // no autoscroll, no paste
       return pan(e);
+    }
+    // The grip is a button (it takes focus for Alt+arrows), so it is looked for before the other
+    // controls; a press on it starts a container move, never a pan.
+    const gripEl = e.button === 0 && !e.shiftKey ? t.closest<HTMLElement>(GRIP) : null;
+    const region = gripEl?.closest<HTMLElement>('vb-region')?.dataset.region;
+    if (gripEl && region) {
+      g = { kind: 'frame', ...start(e), region, el: gripEl };
+      stopMouse = true; // no text selection; focus is given on release
+      return capture(e);
     }
     if (e.button !== 0 || t.closest(INTERACTIVE)) return;
     const card = t.closest<HTMLElement>('vb-node');
@@ -141,6 +160,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
         c.el.style.transform = `translate(${box.x}px, ${box.y}px)`;
       }
       h.dragMove(g.boxes, { x: e.clientX, y: e.clientY });
+    } else if (g.kind === 'frame') {
+      if (first) h.frameStart(g.region);
+      h.frameMove({ x: (e.clientX - g.sx) / vp.k, y: (e.clientY - g.sy) / vp.k });
     } else if (g.kind === 'lasso') h.lassoMove({ x: g.sx, y: g.sy }, { x: e.clientX, y: e.clientY });
   });
 
@@ -156,6 +178,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
         for (const c of d.cards) c.el.classList.remove('dragging');
         h.dragEnd(d.boxes, e.type === 'pointerup' ? { x: e.clientX, y: e.clientY } : null);
       } else if (click) h.pick(d.id, d.add);
+      d.el.focus({ preventScroll: true });
+    } else if (d.kind === 'frame') {
+      if (d.moved) h.frameEnd(e.type === 'pointerup' ? { x: (e.clientX - d.sx) / vp.k, y: (e.clientY - d.sy) / vp.k } : null);
       d.el.focus({ preventScroll: true });
     } else if (d.kind === 'press' && click) {
       // A plain click focused the card itself; a modified one was kept from doing so.

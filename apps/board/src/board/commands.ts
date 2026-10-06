@@ -5,7 +5,7 @@
 // so none is a ledger event (rule 8 covers the note and the move themselves, which are written
 // through the action layer).
 
-export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'zoom-selection', 'clear', 'zoom-area'] as const;
+export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
 
 export interface CommandDef {
@@ -30,17 +30,27 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   'zoom-selection': { label: 'Zoom to selection', keys: ['z'] },
   clear: { label: 'Clear', keys: [] },
   'zoom-area': { label: 'Zoom to this area', keys: [] },
+  // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
+  // container's note, a comment as N is for the selection. Those keys mean this only there.
+  'container-note': { label: 'Comment on container', keys: ['c', 'n'] },
 };
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
 export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'zoom-selection', 'clear'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
+/** The commands whose keys apply on a focused container's title line, before any other meaning. */
+export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
 
-const BY_KEY = new Map(COMMAND_IDS.flatMap((id) => COMMANDS[id].keys.map((k) => [k, id] as const)));
+const byKey = (ids: readonly CommandId[]) => new Map(ids.flatMap((id) => COMMANDS[id].keys.map((k) => [k, id] as const)));
+const BY_KEY = byKey(COMMAND_IDS.filter((id) => !REGION_COMMANDS.includes(id)));
+const ON_REGION = byKey(REGION_COMMANDS);
 
 /** The command a key runs, if any. */
 export const commandForKey = (key: string): CommandId | undefined => BY_KEY.get(key);
+
+/** The command a key runs with focus on a container's title line, if any. */
+export const regionCommandForKey = (key: string): CommandId | undefined => ON_REGION.get(key);
 
 export const isCommand = (s: string | undefined): s is CommandId => COMMAND_IDS.includes(s as CommandId);
 

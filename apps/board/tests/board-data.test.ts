@@ -31,6 +31,10 @@ const asJson = (d: BoardData) => ({
     items: Object.fromEntries(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
     ...(d.state.sizes.size > 0 && { sizes: Object.fromEntries(d.state.sizes) }),
     ...(d.state.moves.size > 0 && { moves: Object.fromEntries(d.state.moves) }),
+    ...(d.state.regionNotes.size > 0 && {
+      containerNotes: Object.fromEntries([...d.state.regionNotes].map(([r, notes]) => [r, notes.map(({ region: _, ...x }) => x)])),
+    }),
+    ...(d.state.regionPins.size > 0 && { containerPins: Object.fromEntries(d.state.regionPins) }),
   },
   versions: d.versions,
   ...d.access,
@@ -58,6 +62,16 @@ test('drewOn: a batch redrew a board only with an agent drawing line on that boa
   assert.equal(drewOn(s, [node], 'pricing'), true);
   assert.equal(drewOn(s, [node], 'roadmap'), false);
   assert.equal(drewOn(s, [act], 'roadmap'), false);
+});
+
+test('a container note and a container place (3_FE_04): the folded board still equals get_board', async () => {
+  const body = (f: object) => ({ board: 'roadmap', body: { type: 'act', board: 'roadmap', region: 'build', ...f } });
+  const note = await h.ok<{ seq: number }>('act', body({ action: 'comment', text: 'Thin enough?' }));
+  await h.ok('act', body({ action: 'pin', x: 2400, y: 0 }));
+  const s = foldLedger(await allLines());
+  assert.deepEqual(asJson(boardData(s, 'roadmap')), await h.ok('get_board', { board: 'roadmap' }));
+  await h.ok('act', body({ action: 'note-remove', note: note.seq }));
+  await h.ok('act', body({ action: 'unpin' }));
 });
 
 test('canApply: a line from a newer ledger format is not applied in place', () => {

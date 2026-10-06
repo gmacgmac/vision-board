@@ -108,3 +108,37 @@ test('a layout mode reads only the node fields the cache keys on (id, kind, lane
     }
   }
 });
+
+test('a container pin repacks only: no container is laid out again, and the answer equals layoutBoard', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n) => [n.id, { w: 240, h: 96 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  cache.run(view, sizes, inputs);
+  const moved = { ...inputs, regionPins: new Map([[view.regions[0]!.id, { x: 900, y: 700 }]]) };
+  const run = cache.run(view, sizes, moved);
+  assert.deepEqual(run.laidOut, []);
+  assert.deepEqual(run.layout, layoutBoard(view, sizes, moved));
+  const box = run.layout.regions.find((r) => r.id === view.regions[0]!.id)!.box;
+  assert.deepEqual([box.x, box.y], [900, 700]);
+});
+
+test('a shown container note lays out exactly that container; hiding it restores the identical layout', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n) => [n.id, { w: 240, h: 96 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  const before = cache.run(view, sizes, inputs).layout;
+  const id = view.regions[0]!.id;
+  const shown = { ...inputs, headInsets: new Map([[id, 72]]) };
+  const run = cache.run(view, sizes, shown);
+  assert.deepEqual(run.laidOut, [id]);
+  assert.deepEqual(run.layout, layoutBoard(view, sizes, shown));
+  const grown = run.layout.regions.find((r) => r.id === id)!.box;
+  assert.equal(grown.h, before.regions.find((r) => r.id === id)!.box.h + 72);
+  // The same inset again lays out nothing.
+  assert.deepEqual(cache.run(view, sizes, { ...inputs, headInsets: new Map([[id, 72]]) }).laidOut, []);
+  const hidden = cache.run(view, sizes, { ...inputs, headInsets: new Map() });
+  assert.deepEqual(hidden.laidOut, [id]);
+  assert.deepEqual(hidden.layout, before);
+});

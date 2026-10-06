@@ -6,23 +6,27 @@
 // 62-65) is one ask shared by the log of every card it names. Pure: the fold calls `foldNoteAct`
 // and `itemOf`; the reads call `liveNotes` and `noteView`.
 import type { ActEvent, NoteKind } from '../../format/src/index.ts';
+import { isContainerAct } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS } from './registry.ts';
 
 /** A note as every read shows it: its latest words and kind. `sent` once a Send came after it;
- * `nodes` when it is a note on a group of cards (api.md 62): every item it is on. */
-export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; nodes?: number[] }
+ * `nodes` when it is a note on a group of cards (api.md 62): every item it is on. `region` when it
+ * is a note on a whole container (api.md 73), in place of a card. */
+export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; nodes?: number[]; region?: string }
 
 /** One `comment` or `context` act on an item, as it stands after its edits. `pos` is the `seq`
  * where it counts for the item's status: its own, or the latest edit that set its kind (the
  * latest press of C or M). `changed` is the `seq` of its latest edit. A `context` with no words
  * is an ask but not a note: it cannot be edited or removed (Reopen undoes it). A note on a group
  * is ONE ask in the log of every card it names: `n` is its first card, `nodes` all of them, and
- * `vers` the version each card was at when it was made (what a newer version answers, api.md 36). */
+ * `vers` the version each card was at when it was made (what a newer version answers, api.md 36).
+ * A note on a whole container (api.md 73) is on no card: `region` names the container, `n` and
+ * `ver` are 0, and `cardsOf` is empty. */
 export interface Ask {
   seq: number; n: number; kind: NoteKind; ver: number; at: string; pos: number;
   text?: string; person?: string; changed?: number; removed?: number;
-  nodes?: number[]; vers?: Record<number, number>;
+  nodes?: number[]; vers?: Record<number, number>; region?: string;
 }
 
 /** A decision act on an item (ack, drop, later, reopen): it sets the status outright. */
@@ -35,8 +39,8 @@ export interface ItemState { status: ItemStatus; notes: ItemNote[] }
 
 export const isNote = (a: Ask | undefined): a is Ask & { text: string } => a?.text !== undefined;
 
-/** The cards an ask is on: every card of a group note, else its one card. */
-export const cardsOf = (a: Ask): number[] => a.nodes ?? [a.n];
+/** The cards an ask is on: every card of a group note, none for a container note, else its one card. */
+export const cardsOf = (a: Ask): number[] => (a.region !== undefined ? [] : a.nodes ?? [a.n]);
 
 /** The version card `n` was at when the ask was made. */
 export const askVer = (a: Ask, n: number): number => a.vers?.[n] ?? a.ver;
@@ -44,6 +48,10 @@ export const askVer = (a: Ask, n: number): number => a.vers?.[n] ?? a.ver;
 /** The ask a `comment` or `context` act makes; `verOf` gives a card's latest version, used where
  * the act names none (a note on a group names no version: each card's is the one it was at). */
 export function askOf(e: ActEvent, verOf: (n: number) => number): Ask {
+  if (isContainerAct(e)) {
+    const { region, ...rest } = e;
+    return { ...askOf({ ...rest, n: 0, ver: 0 }, verOf), region: region! };
+  }
   const cards = e.nodes ?? [e.n!];
   const ver = e.ver ?? verOf(cards[0]!);
   return {

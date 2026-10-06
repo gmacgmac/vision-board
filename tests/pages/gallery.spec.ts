@@ -75,7 +75,8 @@ test('node: the other states are drawn', async ({ page }) => {
 
 test('region: each mode, the count, the empty message and no count; Later and a drop target (3_FE_03)', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
-  await expect(frames).toHaveCount(10);
+  // Ten frames, then the eight container samples (3_FE_04) and the three container note states (step 4G).
+  await expect(frames).toHaveCount(21);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'list']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
@@ -131,7 +132,7 @@ test('region: the open samples: the popover wide and compact, and the settings m
     await expect(frame(id).getByRole('button', { name: /^Settings for / })).toHaveAttribute('aria-expanded', 'true');
 });
 
-test('region: a narrow frame collapses the row to the checked icon and the cog, expanding on hover', async ({ page }) => {
+test('region: a narrow frame collapses the row to the checked icon, Comment and the cog, expanding on hover', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
   const widths = await frames.evaluateAll((els) => els.map((e) => [(e as HTMLElement).dataset.region!, (e as HTMLElement).offsetWidth] as const));
   const narrowest = Math.min(...widths.map(([, w]) => w));
@@ -142,16 +143,60 @@ test('region: a narrow frame collapses the row to the checked icon and the cog, 
   for (const id of ids) {
     const frame = page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
     const row = frame.locator('.vb-mode-row');
-    // Collapsed: the checked layout and the cog only (2), not 6.
-    expect(await visible(row), `${id}: collapsed count`).toBe(2);
+    // Collapsed: the checked layout, Comment and the cog only (3), not 7.
+    expect(await visible(row), `${id}: collapsed count`).toBe(3);
     const cut = (sel: string) => frame.locator(sel).evaluate((e) => e.scrollWidth > e.clientWidth);
     expect(await cut('h2'), `${id}: title ellipsized at ${narrowest}px`).toBe(false);
-    // Hovering (or focusing) the row expands it to all five icons plus the cog, as an overlay.
+    // Hovering (or focusing) the row expands it to all five icons plus Comment and the cog, as an overlay.
     await row.hover();
-    expect(await visible(row), `${id}: expanded count`).toBe(6);
+    expect(await visible(row), `${id}: expanded count`).toBe(7);
     await page.mouse.move(0, 0);
-    expect(await visible(row), `${id}: collapses again on leave`).toBe(2);
+    expect(await visible(row), `${id}: collapses again on leave`).toBe(3);
   }
+});
+
+test('region: the container samples (3_FE_04): grip and Comment in each look, the badge, the note preview and block, Put container back', async ({ page }) => {
+  const frame = (id: string) => page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
+  for (const look of ['hover', 'focus', 'pressed'])
+    await expect(frame(`c-${look}`).locator('.vb-region-grip'), look).toHaveAttribute('data-look', look);
+  await expect(frame('c-hover').locator('.vb-region-comment')).toHaveAttribute('data-hover', '');
+  for (const look of ['focus', 'pressed']) await expect(frame(`c-${look}`).locator('.vb-region-comment')).toHaveAttribute('data-look', look);
+  // No pin or "Your note" line on the title line: Comment's badge "1", none with no note, bright
+  // while unsent, quiet once sent (step 4G ruling 1).
+  await expect(page.locator('section[data-pattern="region"] .vb-region-note-pin')).toHaveCount(0);
+  await expect(frame('c-rest').locator('.vb-region-badge')).toBeHidden();
+  await expect(frame('c-open')).toHaveAttribute('data-badge', 'unsent');
+  await expect(frame('c-open')).toHaveAttribute('data-note-open', '');
+  const sent = frame('c-sent');
+  await expect(sent).toHaveAttribute('data-badge', 'sent');
+  await expect(sent.locator('.vb-region-badge')).toBeVisible();
+  // The preview open on "Hover"; the note block shown on "Note sent", read-only.
+  await expect(frame('c-hover').locator('.vb-note-pop-text')).toHaveText('Is this group in the right order?');
+  await expect(frame('c-hover').locator('.vb-note-pop')).toBeVisible();
+  await expect(sent.locator('.vb-region-note-block .vb-nblock-text')).toHaveText('Should this wait for the next release?');
+  await expect(sent.locator('.vb-region-note-block')).toBeVisible();
+  await expect(sent.locator('.vb-region-note-block').getByRole('button', { name: /^(Edit|Remove)/ })).toHaveCount(0);
+  await expect(frame('c-dragging')).toHaveAttribute('data-dragging', '');
+  const back = (id: string) => frame(id).getByRole('menuitem', { name: 'Put container back' });
+  await expect(back('c-rest')).toHaveAttribute('aria-disabled', 'true');
+  await expect(frame('c-rest').getByText('Not moved')).toBeVisible();
+  await expect(back('c-moved')).toHaveAttribute('aria-disabled', 'false');
+  // Step 4G's other states: the preview by keyboard focus; answered (no badge); a long note cut at
+  // 3 lines with Show all and Edit / Remove (unsent); a narrow frame whose badge still shows.
+  await expect(frame('c-focus').locator('.vb-note-pop')).toBeVisible();
+  await expect(frame('n-answered')).toHaveAttribute('data-note-stage', 'answered');
+  await expect(frame('n-answered')).toHaveAttribute('data-badge', 'none');
+  await expect(frame('n-answered').locator('.vb-region-badge')).toBeHidden();
+  const long = frame('n-long').locator('.vb-region-note-block');
+  await expect(long).toBeVisible();
+  await expect(long.getByRole('button', { name: 'Show all' })).toBeVisible();
+  await expect(long.getByRole('button', { name: /^(Edit|Remove) note on container Long note$/ })).toHaveCount(2);
+  await expect(frame('n-narrow')).toHaveAttribute('data-badge', 'unsent');
+  await expect(frame('n-narrow').locator('.vb-region-badge')).toBeVisible();
+  // The note bubble's container state, beside a frame's title line, with no number chip.
+  const bubble = page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-on="container"]');
+  await expect(bubble).toHaveAttribute('aria-label', 'Edit note on container Note open');
+  await expect(bubble.locator('.vb-nb-num')).toHaveCount(0);
 });
 
 test('theme button cycles system, light, dark', async ({ page }) => {

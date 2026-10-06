@@ -42,3 +42,19 @@ test('packRegions never changes the pieces it is given, so a kept piece can be p
   packRegions(pieces, v.links, { maxRowWidth: 900 });
   assert.equal(JSON.stringify(pieces, (_k, x) => (x instanceof Map ? [...x] : x)), before);
 });
+
+test('container pins are packing only: packRegions with pins changes no piece, and moves frames, not layouts', () => {
+  const v = load('roadmap');
+  const sizes = sizesFor(v);
+  const pieces = v.regions.map((r) => layoutRegion(r, v.nodes.filter((n) => n.region === r.id), [], sizes));
+  const ser = (x: unknown) => JSON.stringify(x, (_k, y) => (y instanceof Map ? [...y] : y));
+  const before = ser(pieces);
+  const free = packRegions(pieces, v.links);
+  const first = v.regions[0]!.id;
+  const pinned = packRegions(pieces, v.links, { pins: new Map([[first, { x: 5000, y: 300 }]]) });
+  assert.equal(ser(pieces), before);
+  const a = free.regions.find((r) => r.id === first)!;
+  const b = pinned.regions.find((r) => r.id === first)!;
+  assert.deepEqual({ w: b.box.w, h: b.box.h }, { w: a.box.w, h: a.box.h });
+  assert.deepEqual({ x: b.origin.x - a.origin.x, y: b.origin.y - a.origin.y }, { x: 5000 - a.box.x, y: 300 - a.box.y });
+});

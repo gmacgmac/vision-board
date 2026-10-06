@@ -271,6 +271,12 @@ for (const theme of THEMES) {
     await holderButton(page, `Axe ${theme} holder`).hover();
     await expectNoAxeViolations(page, KNOWN_AXE);
     await grant(page, a.seq);
+    // Take both back (3_FE_04): with the grip and Comment on the title line, a sixth holder here
+    // is pushed under the mode row, so the light run and the tests after it could not reach theirs.
+    for (const x of [a, b]) {
+      const r = await page.request.post(`/api/boards/${BOARD}/act`, { data: { type: 'act', action: 'revoke', board: BOARD, region: REGION, holder: x.agent } });
+      expect(r.status(), await r.text()).toBe(201);
+    }
   });
 }
 

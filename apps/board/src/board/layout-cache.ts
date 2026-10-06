@@ -1,8 +1,9 @@
 // Layout per container, kept between draws (N12_FE_01 ruling 3, performance.md approach 2). Each
 // container's result from `layoutRegion` is kept with a key of everything it read: the region, its
-// mode, its visible nodes (id, kind, lane, measured size, pin) in view order, and the links inside
-// it. A draw lays out again only the containers whose key changed, then packs every container and
-// routes the links (cheap). The layout functions stay pure; only this cache lives in the page.
+// mode, its visible nodes (id, kind, lane, measured size, pin) in view order, the links inside
+// it, and its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3). A draw lays
+// out again only the containers whose key changed, then packs every container and routes the
+// links (cheap). The layout functions stay pure; only this cache lives in the page.
 // Same input, same picture: a test drives random changes and holds the result equal to
 // `layoutBoard` after each one.
 import type { Link, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
@@ -13,6 +14,12 @@ export interface LayoutInputs {
   pins: Map<string, Point>;
   modes: Map<string, Mode>;
   hidden: Set<string>;
+  /** Region id -> where the person put that container (3_FE_04). Packing reads it, no container's
+   * own layout does, so it is in no container's key: a container pin repacks only (N12). */
+  regionPins?: Map<string, Point>;
+  /** Region id -> the shown note block's height (3_FE_04 step 4G): that container's own input, so
+   * it is in that container's key alone; showing one note lays out that one container. */
+  headInsets?: Map<string, number>;
 }
 
 export interface LayoutRun {
@@ -35,7 +42,7 @@ const nodeKey = (n: ViewNode, s: Size | undefined, pin: Point | undefined) =>
 export function createLayoutCache(): LayoutCache {
   let kept = new Map<string, { key: string; piece: RegionPiece }>();
   return {
-    run(view, sizes, { pins, modes, hidden }) {
+    run(view, sizes, { pins, modes, hidden, regionPins, headInsets }) {
       const nodes = new Map<string, ViewNode[]>();
       const regionOf = new Map<string, string>();
       for (const n of view.nodes) {
@@ -56,20 +63,22 @@ export function createLayoutCache(): LayoutCache {
         const own = nodes.get(region.id) ?? [];
         const inner = links.get(region.id) ?? [];
         const mode = modes.get(region.id);
+        // 0, negative or absent are all no inset (LayoutOptions.headInsets): one key for them.
+        const inset = Math.max(0, headInsets?.get(region.id) ?? 0);
         const key = JSON.stringify([
-          region, mode ?? null, own.map((n) => nodeKey(n, sizes.get(n.id), pins.get(n.id))), inner.map((l) => [l.from, l.to]),
+          region, mode ?? null, inset, own.map((n) => nodeKey(n, sizes.get(n.id), pins.get(n.id))), inner.map((l) => [l.from, l.to]),
         ]);
         const old = kept.get(region.id);
         let piece = old?.key === key ? old.piece : undefined;
         if (!piece) {
-          piece = layoutRegion(region, own, inner, sizes, { mode, pins });
+          piece = layoutRegion(region, own, inner, sizes, { mode, pins, headInset: inset });
           laidOut.push(region.id);
         }
         next.set(region.id, { key, piece });
         return piece;
       });
       kept = next;
-      return { layout: packRegions(pieces, view.links), laidOut };
+      return { layout: packRegions(pieces, view.links, { pins: regionPins }), laidOut };
     },
     clear() { kept = new Map(); },
   };

@@ -3,10 +3,12 @@
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
 // sent to (the route's path); when given, everything the act names must be on it.
 import type { ActEvent } from '../../format/src/index.ts';
-import { containerKey, LATER_REGION, latest, NODE_TYPES } from '../../format/src/index.ts';
+import { CONTAINER_PLACES, containerKey, isContainerAct, LATER_REGION, latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { sentAfter } from './fold.ts';
+import { containerLog } from './containers.ts';
 import { creatorOf, grantRequests } from './grants.ts';
+import type { Ask } from './notes.ts';
 import { cardsOf, isNote, liveNotes } from './notes.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
@@ -85,6 +87,7 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   if (!def) return [`action: unknown "${String(e.action)}"`];
   if (e.by !== 'person' || def.by !== 'person')
     return [`${e.action}: only the person can do this, on the board; send a propose or reply item instead`];
+  if (isContainerAct(e)) return containerProblems(e, s, board);
   const p: string[] = [];
   const rule = RULES[e.action];
   if (rule) {
@@ -139,10 +142,54 @@ function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): voi
   if (e.action !== 'note-edit' && e.action !== 'note-remove') return;
   const a = s.asks.get(e.note!);
   if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
+  else if (a.region !== undefined) p.push(`note: note ${e.note} is on container "${a.region}", not node ${e.n}`);
   else if (!cardsOf(a).includes(e.n!)) p.push(a.nodes
     ? `note: note ${e.note} is on items ${a.nodes.join(', ')}, not node ${e.n}`
     : `note: note ${e.note} is on node ${a.n}, not node ${e.n}`);
-  else if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
+  else changeProblems(a, e, s, board, p);
+}
+
+/** A note may change only while it stands, before a Send, and only by the person who wrote it. */
+function changeProblems(a: Ask, e: ActEvent, s: LedgerState, board: string, p: string[]): void {
+  if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
   else if (sentAfter(s, board, a.seq)) p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
   else if (a.person !== e.person) p.push(`note: note ${e.note} is not yours`);
+}
+
+/** A note on, or a place for, a whole container (3_FE_04 rulings 1-2, api.md 72-73): a container
+ * on the board the act was sent to, or for a place its built-in Later. */
+function containerProblems(e: ActEvent, s: LedgerState, board: string | undefined): string[] {
+  const p: string[] = [];
+  onBoard(e.board, board, p);
+  if (p.length) return p;
+  const b = s.boards.get(e.board!);
+  if (!b) return [`board: unknown "${String(e.board)}"`];
+  const note = !CONTAINER_PLACES.has(e.action);
+  if (!b.regions.some((r) => r.id === e.region)) {
+    if (e.region === LATER_REGION && note)
+      return [`region: Later takes no note: it holds the cards saved for later and is not a thread an agent drew; write the note on one of the board's containers`];
+    if (e.region !== LATER_REGION)
+      return [`region: unknown "${String(e.region)}"; pick a container on board "${e.board}"${note ? '' : `, or ${LATER_REGION}`}`];
+  }
+  if (note) containerNoteRules(e, s, p);
+  return p;
+}
+
+/** The card-note rules on a whole container (api.md 73): one note not yet sent per container from
+ * each person, and edits and removals only of that container's own live note before a Send. */
+function containerNoteRules(e: ActEvent, s: LedgerState, p: string[]): void {
+  const board = e.board!;
+  const region = e.region!;
+  const log = containerLog(s, board, region);
+  if (e.action === 'comment' || e.action === 'context') {
+    if (!e.text?.trim()) return void p.push('text: required');
+    const open = liveNotes(log ?? { asks: [], decisions: [] }).find((x) => x.person === e.person && !sentAfter(s, board, x.seq));
+    if (open) p.push(`region: container "${region}" already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
+    return;
+  }
+  const a = s.asks.get(e.note!);
+  if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
+  else if (a.region === undefined) p.push(`note: note ${e.note} is on ${a.nodes ? `items ${a.nodes.join(', ')}` : `node ${a.n}`}, not container "${region}"`);
+  else if (!log?.asks.includes(a)) p.push(`note: note ${e.note} is on container "${a.region}"${a.region === region ? ' of another board' : ''}, not "${region}"`);
+  else changeProblems(a, e, s, board, p);
 }

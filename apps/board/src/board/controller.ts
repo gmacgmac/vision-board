@@ -2,7 +2,8 @@
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
 // one wire them to the canvas: focus.ts (navigation), wiring.ts (input), item-acts.ts (a card's
-// review buttons), access-flow.ts (agent access), notes.ts (note bubbles), selection.ts and
+// review buttons), access-flow.ts (agent access), notes.ts (note bubbles), region-notes.ts (a
+// container's note preview and block), selection.ts and
 // selection-flow.ts (the selection, the lasso, the bar and the view commands), places.ts (pins,
 // modes, sizes), moves.ts (containers, Later, Move to) and sender.ts (sending acts). Plain
 // TypeScript (D-005): the Svelte shell mounts it on the stage and reads what it reports via `shell`.
@@ -24,15 +25,18 @@ import { createPlaces } from './places.ts';
 import { requestRows } from './access.ts';
 import { createAccessFlow } from './access-flow.ts';
 import { createNoteFlow } from './notes.ts';
+import { DISCARD_ASK } from './note-discard.ts';
+import { createRegionNotes, owedRegions } from './region-notes.ts';
 import { createItemActs } from './item-acts.ts';
 import { createSelection } from './selection.ts';
 import { createSelectionFlow } from './selection-flow.ts';
 import { createMoves } from './moves.ts';
+import { createContainerDrag } from './container-drag.ts';
 import { createSender } from './sender.ts';
 import type { CommandId } from './commands.ts';
 import { exposeWork } from './work.ts';
 import { pageFlags } from '../flags.ts';
-import { shell, toast } from '../shell/shell.svelte.ts';
+import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
 
 export type { BoardElements } from './draw.ts';
 
@@ -87,6 +91,7 @@ export function createBoard(els: BoardElements): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    insets: () => regionNotes.insets(), owed: () => owedRegions(live.state!, S.id),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => {
@@ -129,6 +134,7 @@ export function createBoard(els: BoardElements): Board {
     selection.keep(view().nodes.map((n) => n.id));
     Object.assign(shell, { title: view().title, version: view().version, summary: view().summary ?? '' });
     drawing.draw(full);
+    regionNotes.apply(drawing.frames);
     renderCounts();
     notes.place();
     flow.place();
@@ -154,7 +160,14 @@ export function createBoard(els: BoardElements): Board {
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
+    region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id),
     ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
+    discard: () => askConfirm(...DISCARD_ASK),
+  });
+  /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
+  const regionNotes = createRegionNotes({
+    stage, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id, edit: notes.showContainer,
+    attempt, relayout: () => redraw(), toast,
   });
   /** Moving cards between containers, Later and the Move to list (3_FE_03, moves.ts). */
   const moves = createMoves({
@@ -185,6 +198,12 @@ export function createBoard(els: BoardElements): Board {
   /** Pins, Reset places, the layout mode and the size tier (places.ts). */
   const places = createPlaces({
     vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),
+    settle: () => drawing.settle(),
+  });
+  /** Moving a whole container by its grip or Alt+arrows (3_FE_04, container-drag.ts). */
+  const frames = createContainerDrag({
+    layout: () => drawing.layout, view, frame: (r) => drawing.frames.get(r), card: (id) => drawing.cards.get(id),
+    drawDrag: (l) => drawing.wiresFor(l, focus.id), settle: () => drawing.settle(), record, redraw: () => redraw(),
   });
 
   /** Send to agent; it greys the notes it sent at once (2e_FE_01 ruling 7). */
@@ -203,8 +222,15 @@ export function createBoard(els: BoardElements): Board {
     setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode),
     resetRegion: (region) => void places.resetRegion(region),
+    regionComment: (region) => notes.container(region),
+    putBack: (region) => void places.putBack(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
     pin: (id, box) => void places.pin(id, box),
+    pinRegion: (region, at) => void frames.pin(region, at),
+    frameStart: frames.start,
+    frameMove: frames.move,
+    frameEnd: (d) => void frames.end(d),
+    regionCommand: (_id, region) => notes.container(region, 'comment'),
     unpin: (id) => void places.unpin(id),
     layout: () => drawing.layout,
     view,
@@ -264,6 +290,7 @@ export function createBoard(els: BoardElements): Board {
       boards.stop();
       unbind();
       notes.destroy();
+      regionNotes.destroy();
       flow.destroy();
       moves.menu.destroy();
     },

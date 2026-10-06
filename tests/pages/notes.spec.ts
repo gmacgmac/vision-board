@@ -67,13 +67,15 @@ test('a second press edits the note rather than adding one; M makes it ask for m
   await expect(card(page, 4)).toHaveAttribute('data-status', 'context');
 });
 
-test('the footer button opens it too; Esc cancels, writes nothing and gives focus back to the card', async ({ page }) => {
+test('the footer button opens it too; Esc cancels (typed words after Discard), writes nothing and gives focus back to the card', async ({ page }) => {
   await openBoard(page);
   await card(page, 5).focus();
   await card(page, 5).getByRole('button', { name: 'Comment item 5 (C)' }).click();
   await expect(page.getByRole('dialog', { name: 'Note on 5' })).toBeVisible();
   await page.keyboard.type('Never saved');
   await page.keyboard.press('Escape');
+  // Typed words are never lost silently (3_FE_04 step 4G ruling 4).
+  await page.getByRole('dialog', { name: 'Discard your changes?' }).getByRole('button', { name: 'Discard' }).click();
   await expect(bubble(page)).toBeHidden();
   await expect(card(page, 5)).toBeFocused();
   await expect(card(page, 5).locator('.vb-note-pin')).toBeHidden();

@@ -1,10 +1,12 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v6 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65 and 66-70.
+// Ledger lines for the schema tests (schema.test.ts): a valid v7 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70 and 71-76.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 6, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 6, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 7, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 7, seq: 1, at: AT, by: 'person' };
+/** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
+export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
 export const GROUP = { nodes: [1, 2], text: 'The same question on both.' };
 /** A move of a group of cards (api.md 66): `nodes` in place of `n`, and the container. */
@@ -85,7 +87,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v7', patch(V.board!, 'v', 7)],
+  ['unknown format v8', patch(V.board!, 'v', 8)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -160,6 +162,17 @@ export const BROKEN: [string, Rec][] = [
   ['group move with ver as well', act('move', { ...GROUP_MOVE, n: undefined })],
   ['group move naming one node', act('move', { ...GROUP_MOVE, nodes: [1], n: undefined, ver: undefined })],
   ['group move without region', act('move', { nodes: [1, 2], n: undefined, ver: undefined, region: undefined })],
+  ['container note without board', act('comment', { region: 'plan', n: undefined, ver: undefined })],
+  ['container note with n as well', act('comment', { ...CONTAINER, ver: undefined })],
+  ['container note with ver as well', act('comment', { ...CONTAINER, n: undefined })],
+  ['container note with nodes as well', act('comment', { ...CONTAINER, ...GROUP, n: undefined, ver: undefined })],
+  ['container context without words', act('context', { ...CONTAINER, n: undefined, ver: undefined })],
+  ['container place without x', act('pin', { ...CONTAINER, n: undefined, x: undefined })],
+  ['container place with n as well', act('pin', CONTAINER)],
+  ['container unpin without board', act('unpin', { region: 'plan', n: undefined })],
+  ['container note-edit with n as well', act('note-edit', CONTAINER)],
+  ['container note-remove without note', act('note-remove', { ...CONTAINER, n: undefined, note: undefined })],
+  ['container place with a bad region id', act('pin', { board: 'b', region: 'Plan A', n: undefined })],
   ['join written by a person', { ...V.join!, by: 'person' }],
   ['grant-request written by a person', { ...V['grant-request']!, by: 'person' }],
   ['node written by a person', { ...V.node!, by: 'person' }],

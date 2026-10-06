@@ -91,7 +91,7 @@ vb-region .vb-mode-row {
   background: var(--vb-surface-card); box-shadow: 0 0 0 6px var(--vb-surface-canvas);
 }
 /* Collapsed (under 440px of frame, where the full row would leave under ~200px for the label
-   side): only the checked icon and the cog show. Hovering or focusing the row expands it to all
+   side): only the checked icon, Comment and the cog show. Hovering or focusing the row expands it to all
    five icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
    it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
    never reflows the frame. */
@@ -114,7 +114,7 @@ vb-region .vb-mseg:hover, vb-region .vb-mseg[data-hover], vb-region .vb-mseg[ari
 vb-region .vb-mseg[aria-checked='true'] {
   background: color-mix(in srgb, var(--region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
 }
-vb-region .vb-mseg:active { transform: translateY(1px); }
+vb-region .vb-mseg:active, vb-region .vb-mseg[data-look='pressed'] { transform: translateY(1px); }
 vb-region .vb-mseg:focus-visible { outline-offset: 1px; }
 vb-region .vb-mode-icon, vb-region .vb-mtile-icon {
   flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
@@ -186,3 +186,114 @@ vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
 /* Zoomed out (N8): below FAR_K the stage carries data-zoom="far", where the 28 x 24 icons would draw
    under the 24px target size. The row hides like the cards' buttons, its popover and menu with it. */
 [data-zoom='far'] vb-region .vb-region-tools { visibility: hidden; }
+
+/* The grip (3_FE_04 ruling 5): the only handle that moves the container, at the start of the
+   title line. Always there for the keyboard and screen readers; its dots (a glyph, sized by the
+   text tokens, hidden from assistive tech) show on hover of the title line and on focus. The page
+   sets data-dragging on the frame while it is moved: only its transform changes, so no transition. */
+vb-region .vb-region-grip {
+  display: grid; place-items: center; flex: none; width: var(--vb-space-4); height: var(--vb-space-5); padding: 0;
+  border: 0; border-radius: var(--vb-radius-sm); background: none; color: var(--vb-ink-subtle); cursor: grab;
+}
+vb-region .vb-region-grip::before {
+  content: '\283F' / ''; font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font-mono); line-height: 1;
+  opacity: 0; transition: opacity var(--vb-motion-fast);
+}
+vb-region .vb-region-label:hover .vb-region-grip::before, vb-region .vb-region-grip:focus-visible::before,
+vb-region .vb-region-grip[data-look]::before, vb-region[data-dragging] .vb-region-grip::before { opacity: 1; }
+vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'] { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
+vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 90%, var(--vb-line)); }
+
+/* Comment (ruling 3) is a .vb-mseg of the mode row and takes its states; while the container's
+   note bubble is open it stays drawn pressed, as the cog does with its menu. */
+vb-region[data-note-open] .vb-region-comment { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+
+/* Comment's badge "1" (step 4G ruling 1): a note the agent has not processed yet. Bright (accent)
+   while unsent; quiet, as the card's sent pin, once sent and waiting; gone once answered or with
+   no note. The frame's data-badge says which; the button's name says it in words. */
+vb-region .vb-region-comment { position: relative; }
+vb-region .vb-region-badge {
+  display: none; position: absolute; top: calc(var(--vb-space-2) * -1); right: calc(var(--vb-space-2) * -1);
+  place-items: center; min-width: var(--vb-space-4); height: var(--vb-space-4); padding: 0 var(--vb-space-1);
+  border-radius: var(--vb-radius-pill); pointer-events: none; background: var(--vb-accent-fill); color: var(--vb-ink-on-fill);
+  box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-surface-card); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); line-height: 1;
+}
+vb-region:is([data-badge='unsent'], [data-badge='sent']) .vb-region-badge { display: grid; }
+vb-region[data-badge='sent'] .vb-region-badge {
+  background: var(--vb-surface-raised); color: var(--vb-ink-strong);
+  box-shadow: inset 0 0 0 1px var(--vb-line-strong), 0 0 0 var(--vb-focus-w) var(--vb-surface-card);
+}
+
+/* The note's state, in the preview and the block (mockup 09 .st): a dot in the accent while
+   unsent, a hollow ring and muted words once sent. */
+vb-region .vb-note-state {
+  display: inline-flex; align-items: center; gap: var(--vb-space-1); margin: 0;
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); color: var(--vb-accent-text);
+}
+vb-region .vb-note-state::before {
+  content: ''; width: var(--vb-space-2); height: var(--vb-space-2); border-radius: var(--vb-radius-pill); background: var(--vb-accent);
+}
+vb-region:not([data-note-stage='unsent']) .vb-note-state { color: var(--vb-ink-subtle); }
+vb-region:not([data-note-stage='unsent']) .vb-note-state::before { background: none; box-shadow: inset 0 0 0 1px var(--vb-ink-subtle); }
+
+/* Note buttons (preview and block), quiet like mockup 09's ghost buttons. */
+vb-region .vb-note-btn {
+  display: inline-flex; align-items: center; gap: var(--vb-space-1); min-height: var(--vb-space-5); padding: 0 var(--vb-space-2);
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm); background: none; cursor: pointer;
+  color: var(--vb-ink); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+}
+vb-region .vb-note-btn[hidden] { display: none; }
+vb-region .vb-note-btn:hover, vb-region .vb-note-btn[data-look='hover'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+vb-region .vb-note-btn:active, vb-region .vb-note-btn[data-look='pressed'] { transform: translateY(1px); }
+vb-region .vb-note-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-region .vb-note-eye { width: var(--vb-space-4); height: var(--vb-space-4); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+
+/* The preview popover under Comment (ruling 2, mockup 09 .tip): the note's first 3 lines, its
+   state, Edit and Show in container. Shown while data-preview is on the frame, which also raises
+   the frame above the cards (as data-open does); the bridge above it keeps the pointer inside
+   while it crosses the gap (WCAG 1.4.13: hoverable). */
+vb-region[data-preview] { z-index: 4; pointer-events: none; }
+vb-region .vb-note-pop {
+  display: none; position: absolute; z-index: 2; top: calc(100% + var(--vb-space-1)); right: 0; width: var(--vb-card-w);
+  gap: var(--vb-space-2); padding: var(--vb-space-2) var(--vb-space-3); border-radius: var(--vb-radius-md); cursor: default;
+  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+  font-size: var(--vb-text-sm); color: var(--vb-ink); text-align: left;
+}
+vb-region .vb-note-pop::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
+vb-region[data-preview] .vb-note-pop { display: grid; }
+vb-region .vb-note-pop-text, vb-region .vb-nblock-text {
+  margin: 0; line-height: 1.45; color: var(--vb-ink-strong); overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
+vb-region .vb-note-acts { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); }
+
+/* The note block (ruling 3, mockup 09 B), in the frame's flow under the top room (the frame's
+   padding-top is REGION_HEAD) and above the cards, which the page moves down by its measured
+   height (noteHeight, vb-region-note-resize; step 4G2). Shown while data-note-shown is set and
+   the container has a note. Read-only once sent: no Edit or Remove, a line saying why. */
+vb-region .vb-region-note-block {
+  display: grid; gap: var(--vb-space-1); margin: 0 var(--vb-space-4) var(--vb-space-5); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-md); background: var(--vb-accent-soft);
+  font-size: var(--vb-text-md); color: var(--vb-ink); pointer-events: auto; cursor: default;
+}
+vb-region .vb-region-note-block[hidden] { display: none; }
+vb-region:not([data-note-stage='unsent']) .vb-region-note-block { border-color: var(--vb-line-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-nblock-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vb-space-1) var(--vb-space-2); }
+vb-region .vb-nblock-who {
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-accent-text);
+}
+vb-region:not([data-note-stage='unsent']) .vb-nblock-who { color: var(--vb-ink); }
+vb-region .vb-nblock-acts { display: flex; align-items: center; gap: var(--vb-space-1); margin-left: auto; }
+vb-region .vb-nblock-ro { font-size: var(--vb-text-sm); color: var(--vb-ink); }
+vb-region .vb-nblock-ro:empty { display: none; }
+vb-region .vb-region-note-block[data-expanded] .vb-nblock-text { display: block; -webkit-line-clamp: none; line-clamp: none; }
+vb-region .vb-nblock-more {
+  justify-self: start; padding: 0; border: 0; background: none; cursor: pointer; text-decoration: underline;
+  color: var(--vb-accent-text); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+}
+vb-region .vb-nblock-more[hidden] { display: none; }
+vb-region .vb-nblock-more:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+[data-zoom='far'] vb-region .vb-region-grip { visibility: hidden; }

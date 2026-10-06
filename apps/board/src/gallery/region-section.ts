@@ -10,6 +10,7 @@ import { regionState } from '../../../../packages/ui/src/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { FRAME_PREFIX } from './fixture.ts';
+import { containerSamples } from './container-section.ts';
 import { laterSamples } from './later-section.ts';
 
 /** The one frame whose layout drew none of its nodes, so it shows the empty message. */
@@ -45,4 +46,5 @@ export function regionSamples(body: HTMLElement, fx: Fixture): void {
     + 'Grid mode shows the popover with Flow under the pointer; the narrow "Empty message showing" frame shows its compact form. '
     + 'The cog\'s menu is open on "Reset places showing" (a card was moved) and on "No items, so no count" (nothing to reset).', frames));
   laterSamples(body, fx);
+  containerSamples(body, fx);
 }

@@ -35,6 +35,14 @@
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openItem"
       },
       "description": "Items in containers the caller holds that still wait for it"
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openContainer"
+      },
+      "description": "Whole containers the caller holds whose latest note still waits for it; left out when none.",
+      "$comment": "Was: api.md 77"
     }
   },
   "unevaluatedProperties": false,
@@ -54,23 +62,28 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": true,
           "description": "True: the item was written."
         },
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq",
           "description": "The ledger line the item was written as."
         },
         "n": {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/nodeNumber",
           "description": "The node number, for a `node` item"
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/version",
           "description": "The new version, for a `node` item"
+        },
+        "title": {
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/title",
+          "description": "The node's title as written, for a `node` item: check it names the node you meant",
+          "$comment": "Was: api.md 34"
         },
         "replayed": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more",
@@ -95,7 +108,7 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/6/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": false,

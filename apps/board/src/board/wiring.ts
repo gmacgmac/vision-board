@@ -13,15 +13,25 @@ import { bindPointer } from './pointer.ts';
 import { bindSizeControl, isSizePick } from './size.ts';
 import type { Viewport } from './viewport.ts';
 
-export interface StageHandlers extends Omit<KeyHandlers, 'nudge'> {
+export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
   showNote(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
   resetRegion(region: string): void;
+  /** A container's title line (3_FE_04): Comment and the cog's "Put container back". The note
+   *  preview and block report their own presses (vb-region-note, region-notes.ts). */
+  regionComment(region: string): void;
+  putBack(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
   /** A card nudged by keys to `box`: it becomes a pin. */
   pin(id: string, box: Box): void;
+  /** A container nudged by keys (3_FE_04): its frame's top left to `at`, as a container pin. */
+  pinRegion(region: string, at: Point): void;
+  /** A drag on a container's grip (container-drag.ts): start, move by `d`, drop (null: lost). */
+  frameStart: PointerHandlers['frameStart'];
+  frameMove: PointerHandlers['frameMove'];
+  frameEnd: PointerHandlers['frameEnd'];
   layout(): BoardLayout | null;
   view(): View;
   /** Connectors while cards are dragged: drawn from the moved boxes, no layout. */
@@ -64,6 +74,10 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (modeBtn) return h.setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
     if (reset) return h.resetRegion(reset.dataset.reset!);
+    const back = t.closest<HTMLButtonElement>('button[data-put-back]');
+    if (back) return h.putBack(back.dataset.putBack!);
+    const regionComment = t.closest<HTMLButtonElement>('button[data-region-comment]');
+    if (regionComment) return h.regionComment(regionComment.dataset.regionComment!);
     const holder = t.closest<HTMLButtonElement>('button[data-revoke]');
     if (holder && h.revoke) return h.revoke(holder.closest<HTMLElement>('vb-region')!.dataset.region!, holder.dataset.revoke!);
   });
@@ -86,6 +100,9 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     lassoMove: h.lassoMove,
     lassoEnd: h.lassoEnd,
     lassoCancel: () => h.lassoCancel(),
+    frameStart: h.frameStart,
+    frameMove: h.frameMove,
+    frameEnd: h.frameEnd,
   });
 
   const unbindKeys = bindKeys({
@@ -93,6 +110,11 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     nudge: (id, dx, dy) => {
       const b = h.layout()?.nodes.get(id);
       if (b) h.pin(id, { ...b, x: b.x + dx, y: b.y + dy });
+    },
+    // The same step on a container: from where the layout has its frame now.
+    nudgeRegion: (region, dx, dy) => {
+      const b = h.layout()?.regions.find((r) => r.id === region)?.box;
+      if (b) h.pinRegion(region, { x: b.x + dx, y: b.y + dy });
     },
   });
   const unbindSize = bindSizeControl(stage);

@@ -1,16 +1,19 @@
 // What the agent owes and what the person has not seen yet (D-018, D-020, api.md 36, 41), and
 // the person's responses since a cursor (`check_responses`). Pure reads of the folded ledger.
 import type { ActEvent, LedgerNode } from '../../format/src/index.ts';
-import { latest, nodesOf } from '../../format/src/index.ts';
+import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { canWrite, holders } from './grants.ts';
-import { cardsOf } from './notes.ts';
+import { cardsOf, latestAsk } from './notes.ts';
 import { DECIDED } from './registry.ts';
 
 /** One item the agent owes an answer on. `ask`: the person's latest comment or "needs context"
- * that nothing answers yet. `later`: the `seq` of the "later" that has no park bundle after it. */
+ * that nothing answers yet. `later`: the `seq` of the "later" that has no park bundle after it.
+ * A whole container's latest standing note (api.md 73) is owed with `region` set and `n` 0, as
+ * its `Ask` is: it is on no card. */
 export interface PendingItem {
   n: number;
+  region?: string;
   ask?: { kind: 'comment' | 'context'; seq: number };
   later?: number;
 }
@@ -19,8 +22,9 @@ export interface PendingItem {
  * (api.md 24); that is also what it is told it owes (api.md 41). */
 const mayAnswer = (s: LedgerState, agent: string, n: number) => canWrite(s, agent, { type: 'reply', n }) === 'ok';
 
-/** Items on `board` the agent owes an answer on, by number. With `agent`, only the items it may
- * answer, so one agent is never told to answer another's items. A decided item owes nothing. */
+/** Items on `board` the agent owes an answer on, by number, then its containers' notes in the
+ * order the containers were first noted. With `agent`, only the items and containers it may
+ * answer, so one agent is never told to answer another's. A decided item owes nothing. */
 export function pendingItems(s: LedgerState, board: string, agent?: string): PendingItem[] {
   const out: PendingItem[] = [];
   for (const node of nodesOf(s, board)) {
@@ -28,7 +32,27 @@ export function pendingItems(s: LedgerState, board: string, agent?: string): Pen
     const owed = owedOn(s, node);
     if (owed) out.push(owed);
   }
-  return out.sort((a, b) => a.n - b.n);
+  return [...out.sort((a, b) => a.n - b.n), ...owedContainers(s, board, agent)];
+}
+
+/** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
+ * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a
+ * `seq` names one act (api.md 73). */
+function replied(s: LedgerState, seq: number, cards: number[]): boolean {
+  const on = cards.length ? cards.map((n) => s.replies.get(n) ?? []) : [...s.replies.values()];
+  return on.some((rs) => rs.some((r) => r.to === seq));
+}
+
+/** Each container on `board` whose latest standing note nothing answers yet (api.md 73), for the
+ * agents that may answer it: its holders, the agent that drew it among them (api.md 75). */
+function owedContainers(s: LedgerState, board: string, agent?: string): PendingItem[] {
+  const out: PendingItem[] = [];
+  for (const [region, log] of s.regionLogs.get(board) ?? []) {
+    if (agent !== undefined && !holders(s, board, region).includes(agent)) continue;
+    const ask = latestAsk(log);
+    if (ask && !replied(s, ask.seq, cardsOf(ask))) out.push({ n: 0, region, ask: { kind: ask.kind, seq: ask.seq } });
+  }
+  return out;
 }
 
 function owedOn(s: LedgerState, node: LedgerNode): PendingItem | undefined {
@@ -36,11 +60,9 @@ function owedOn(s: LedgerState, node: LedgerNode): PendingItem | undefined {
   const m = s.marks.get(node.n);
   if (!m || DECIDED.has(status)) return undefined;
   const { ask } = m;
-  // A reply naming a note on a group answers it on every card it is on (api.md 64).
   const made = ask && s.asks.get(ask.seq);
   const cards = made ? cardsOf(made) : [node.n];
-  const replied = (seq: number) => cards.some((n) => (s.replies.get(n) ?? []).some((r) => r.to === seq));
-  const answered = ask && (latest(node).ver > ask.ver || replied(ask.seq));
+  const answered = ask && (latest(node).ver > ask.ver || replied(s, ask.seq, cards));
   const parkOwed = status === 'later' && m.later !== undefined && (m.park ?? 0) < m.later;
   if ((!ask || answered) && !parkOwed) return undefined;
   return {
@@ -84,6 +106,8 @@ function boardOf(s: LedgerState, e: ActEvent): string | undefined {
 /** Does this act concern `agent`? Send always; answers to its own requests and its own
  * removals; anything else in a container it may answer for, on any card it is on (api.md 41). */
 function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
+  // A note on or a place for a whole container: its holders, the agent that drew it among them (api.md 75).
+  if (isContainerAct(e)) return holders(s, e.board!, e.region!).includes(agent);
   switch (e.action) {
     case 'send': return true;
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;

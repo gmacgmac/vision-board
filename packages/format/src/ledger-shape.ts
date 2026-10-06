@@ -2,9 +2,9 @@
 // the next version) are in ledger-index.ts. This is the hand-written twin of the JSON Schema in
 // packages/format/schema/ (the one source, rule 6): a test runs both over every fixture and a
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
-import type { EventType } from './ledger.ts';
+import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
 
@@ -155,6 +155,28 @@ const ON_GROUP = new Set(['comment', 'context', 'move']);
 /** Of those, the notes: a note on a group always has words. */
 const GROUP_NOTE = new Set(['comment', 'context']);
 
+/** A note on, or a place for, a whole container (api.md 71): board + region, no card named. */
+function containerRules(e: Rec, p: string[]): void {
+  if (e.board === undefined) p.push('board: a note on or a place for a container names its board and region');
+  for (const f of ['n', 'ver', 'nodes']) if (e[f] !== undefined) p.push(`${f}: a container is named by board and region, not ${f}`);
+  if ((e.action === 'comment' || e.action === 'context') && e.text === undefined) p.push('text: required on a note on a container');
+}
+
+/** An act on cards: one card (`n`, with `ver` for a decision or an ask) or a group (`nodes`). */
+function nodeRules(e: Rec, group: boolean, p: string[]): void {
+  const a = e.action as string;
+  const has = (f: string) => e[f] !== undefined;
+  if (group && !ON_GROUP.has(a)) p.push(`nodes: only a comment, a context or a move names a group of cards`);
+  if (group && ON_GROUP.has(a)) {
+    if (has('n')) p.push('n: a group names its cards in nodes, not n');
+    if (has('ver')) p.push('ver: a group names no version');
+    if (GROUP_NOTE.has(a) && !has('text')) p.push('text: required on a note on a group');
+  } else {
+    if ((ON_VERSION.has(a) || ON_NODE.has(a)) && !has('n')) p.push('n: node number');
+    if (ON_VERSION.has(a) && !has('ver')) p.push('ver: the version acted on');
+  }
+}
+
 /** What each action needs beyond the field types (api.md 16; the schema's `if`/`then`). */
 function actRules(e: Rec, p: string[]): void {
   const a = e.action as string;
@@ -166,15 +188,8 @@ function actRules(e: Rec, p: string[]): void {
   }
   if (a === 'move') need('region', 'region: the container to move the cards to');
   const group = has('nodes');
-  if (group && !ON_GROUP.has(a)) p.push(`nodes: only a comment, a context or a move names a group of cards`);
-  if (group && ON_GROUP.has(a)) {
-    if (has('n')) p.push('n: a group names its cards in nodes, not n');
-    if (has('ver')) p.push('ver: a group names no version');
-    if (GROUP_NOTE.has(a)) need('text', 'text: required on a note on a group');
-  } else {
-    if (ON_VERSION.has(a) || ON_NODE.has(a)) need('n', 'n: node number');
-    if (ON_VERSION.has(a)) need('ver', 'ver: the version acted on');
-  }
+  if (CONTAINER_ACTIONS.has(a as ActionId) && has('region')) containerRules(e, p);
+  else nodeRules(e, group, p);
   if (a === 'pin' && (!has('x') || !has('y'))) p.push('pin: x and y numbers');
   if (a === 'comment') need('text', 'text: required');
   if (a === 'grant' || a === 'deny') need('request', `${a}: request, the seq of a grant-request event`);

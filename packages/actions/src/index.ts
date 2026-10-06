@@ -3,6 +3,8 @@ export type { ActionDef, AgentActionDef, AgentActionId, ItemStatus } from './reg
 export { MAX_TEXT } from '../../format/src/index.ts';
 export { applyEvent, boardState, counts, foldLedger, sentNotes, sentAfter, statusOf } from './fold.ts';
 export { liveNotes } from './notes.ts';
+export { containerJson, containerNotes, containerPin, noteJson } from './containers.ts';
+export type { Place } from './containers.ts';
 export { LATER, movedFrom, placedView, regionOf } from './moves.ts';
 export type { BoardState, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal } from './fold.ts';
 export { validateAct } from './act.ts';
@@ -10,6 +12,6 @@ export { canWrite, creatorOf, grantRequests, holders, openRequest } from './gran
 export type { Container, GrantRequestView, WriteItem } from './grants.ts';
 export { pendingItems, responsesAfter, unseenItems } from './pending.ts';
 export type { PendingItem, UnseenItem } from './pending.ts';
-export { boardAccess, boardHeads, containerDetail, eventBoard, linkedDetails, nodeDetail, openItems } from './reads.ts';
-export type { AccessHolder, AccessRequest, BoardAccess, ContainerDetail, NodeDetail, NodeVersionView, OpenItem } from './reads.ts';
+export { boardAccess, boardHeads, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems } from './reads.ts';
+export type { AccessHolder, AccessRequest, BoardAccess, ContainerDetail, NodeDetail, NodeVersionView, OpenContainer, OpenItem } from './reads.ts';
 export { replyText } from './reply.ts';

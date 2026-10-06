@@ -19,6 +19,11 @@ vb-note-bubble {
 vb-note-bubble[hidden] { display: none; }
 /* Full colour while you type in it; data-typing draws that look for a gallery sample. */
 vb-note-bubble:is(:focus-within, [data-typing]) { --edge: color-mix(in srgb, var(--kind) 38%, var(--vb-line)); }
+/* On a whole container (3_FE_04 ruling 3): --kind is the container's own line colour, and the
+   edge follows the frame's line (region.css: --region 70% into --vb-line) the way a card's bubble
+   follows its card: fainter at rest, the same as the frame while you type. */
+vb-note-bubble[data-on='container'] { --edge: color-mix(in srgb, var(--kind) 45%, var(--vb-line)); }
+vb-note-bubble[data-on='container']:is(:focus-within, [data-typing]) { --edge: color-mix(in srgb, var(--kind) 70%, var(--vb-line)); }
 
 /* The arrow: a square turned 45deg, bordered on the two sides that face the card. */
 vb-note-bubble::before {

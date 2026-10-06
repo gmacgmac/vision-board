@@ -8,6 +8,7 @@ import type { AccessHolder, BoardState } from '../../../../packages/actions/src/
 import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
 import { LATER_REGION } from '../../../../packages/format/src/index.ts';
+import { work } from './work.ts';
 
 /** The built-in Later's frame (3_FE_03 ruling 5): its layout is the grid, set by the board, and
  * while it is empty it shows only while a card is dragged, as a drop target. */
@@ -26,8 +27,11 @@ export interface RegionSet {
   /** One `<vb-region>` per region of `view`, in view order; a changed region is rendered again. */
   sync(view: View): void;
   /** Place and update each frame; true when any frame moved or changed size. `holders` (the
-   * agentAccess flag): region id -> the agents that hold it. */
-  place(layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>): boolean;
+   * agentAccess flag): region id -> the agents that hold it. `owed`: the containers the agent
+   * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). */
+  place(
+    layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>, owed?: ReadonlySet<string>,
+  ): boolean;
   clear(): void;
 }
 
@@ -64,14 +68,14 @@ export function createRegionSet(host: HTMLElement): RegionSet {
         prev = el;
       }
     },
-    place(layout, view, s, holders) {
+    place(layout, view, s, holders, owed) {
       const placed = new Set(layout.nodes.keys());
       let moved = false;
       for (const r of layout.regions) {
         const el = els.get(r.id);
         if (!el) continue;
         const box = JSON.stringify(r.box);
-        const st = regionState(r, view, s, placed, holders?.[r.id]);
+        const st = regionState(r, view, s, placed, holders?.[r.id], owed);
         const state = JSON.stringify(st);
         const was = shown.get(r.id);
         if (was?.box !== box) {
@@ -80,7 +84,10 @@ export function createRegionSet(host: HTMLElement): RegionSet {
           el.style.height = `${r.box.h}px`;
           moved = true;
         }
-        if (was?.state !== state) el.update(st);
+        if (was?.state !== state) {
+          el.update(st);
+          work.framesUpdated += 1;
+        }
         shown.set(r.id, { box, state });
       }
       return moved;
