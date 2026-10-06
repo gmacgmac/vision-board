@@ -46,6 +46,8 @@ test('a new board and new regions need no grant; the writer becomes the holder; 
   n.q1 = r.results[2].n;
   n.q2 = r.results[3].n;
   assert.deepEqual([r.results[2].ver, r.results[3].n - r.results[2].n, 'n' in r.results[0]], [1, 1, false]);
+  // api.md 34: a node's result echoes its title, so the agent can check it wrote the node it meant
+  assert.deepEqual([r.results[2].title, r.results[3].title, 'title' in r.results[0]], ['Q1', 'Q2', false]);
   assert.equal(r.head, h.ledger.state().seq);
   assert.deepEqual(r.pending, []);
   const stored = h.ledger.events().at(-1)!;

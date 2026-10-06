@@ -4616,6 +4616,12 @@
                       "minimum": 1,
                       "description": "The new version, for a `node` item"
                     },
+                    "title": {
+                      "type": "string",
+                      "pattern": "\\S",
+                      "maxLength": 200,
+                      "description": "The node's title as written, for a `node` item: check it names the node you meant"
+                    },
                     "replayed": {
                       "const": true,
                       "description": "The key was sent before with the same content; nothing was written now"

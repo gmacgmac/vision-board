@@ -23,7 +23,7 @@ const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !
 export type ItemProblem = Omit<ProblemBody, 'status'>;
 
 export type WriteResult =
-  | { index: number; key?: string; ok: true; seq: number; n?: number; ver?: number; replayed?: true }
+  | { index: number; key?: string; ok: true; seq: number; n?: number; ver?: number; title?: string; replayed?: true }
   | { index: number; key?: string; ok: false; problem: ItemProblem };
 
 /** An item that cannot be written, with its problem. */
@@ -122,7 +122,7 @@ function eventOf(b: Batch, item: Rec): Rec {
 function written(i: number, key: string | undefined, e: LedgerEvent, replayed = false): WriteResult {
   return {
     index: i, ...(key !== undefined && { key }), ok: true, seq: e.seq,
-    ...(e.type === 'node' && { n: e.n, ver: e.ver }), ...(replayed && { replayed: true as const }),
+    ...(e.type === 'node' && { n: e.n, ver: e.ver, title: e.node.title }), ...(replayed && { replayed: true as const }),
   };
 }
 

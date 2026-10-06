@@ -179,8 +179,9 @@ packages/format/schema/openapi.json               every operation, input, output
 
 34. The body is `{ "items": [ … ] }`. Items carry no `board`; the path names it. A batch that can
     be read always answers 200, with one result per item, in order:
-    `{ "index": 0, "key": "pricing-q", "ok": true, "seq": 81, "n": 47, "ver": 1 }` or
-    `{ "index": 1, "ok": false, "problem": { … } }`. Items run in order. One failure never stops
+    `{ "index": 0, "key": "pricing-q", "ok": true, "seq": 81, "n": 47, "ver": 1, "title": "…" }` or
+    `{ "index": 1, "ok": false, "problem": { … } }`. A node's `title` is as written, so the agent
+    can see it changed the node it meant to. Items run in order. One failure never stops
     the rest, except items that depend on it (they name its key, directly or through another
     failed item), which fail with `depends-on-failed`.
 35. `n`, `from` and `to` take a number or `{ "key": "…" }`. A key resolves to a node made earlier
