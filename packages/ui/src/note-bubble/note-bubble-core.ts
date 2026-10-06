@@ -129,3 +129,21 @@ export function saveIntent(mode: BubbleMode, kind: NoteKind, text: string): 'sav
   if (text.trim()) return 'save';
   return mode === 'new' && kind === 'context' ? 'save' : 'skip';
 }
+
+/** Whether the words typed differ from the words the bubble opened with (3_FE_04 step 4G ruling
+ * 4). Line endings and the whitespace around the text do not count: losing them loses nothing. */
+export function isDirty(opened: string, now: string): boolean {
+  const norm = (s: string) => s.replace(/\r\n?/g, '\n').trim();
+  return norm(opened) !== norm(now);
+}
+
+/** What Esc or Cancel does: `close` (as before) or `ask` (the text changed: the page confirms
+ * "Discard your changes?" first). A sent note is never typed in, so it always closes. */
+export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' {
+  return mode !== 'sent' && dirty ? 'ask' : 'close';
+}
+
+/** `vb-note-discard` (bubbles): Esc or Cancel with changed text. The bubble stays open; the page
+ * asks through its confirm dialog and then closes it (OK) or puts focus back in it (Cancel). */
+export const NOTE_DISCARD_EVENT = 'vb-note-discard';
+export interface NoteDiscardDetail { text: string }

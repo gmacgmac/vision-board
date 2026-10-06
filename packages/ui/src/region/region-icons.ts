@@ -19,3 +19,7 @@ export const MODE_ICON: Record<Mode, string> = {
 /** The container settings cog. */
 export const COG_ICON = '<circle cx="12" cy="12" r="3"/>'
   + '<path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>';
+
+/** An eye, 20 x 20 like the action icons: the note preview's "Show in container" / "Hide"
+ * (3_FE_04 step 4G ruling 2). Same stroke style; the mockups draw none. */
+export const EYE_ICON = '<path d="M2.5 10s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z"/><circle cx="10" cy="10" r="2.2"/>';

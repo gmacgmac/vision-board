@@ -10,6 +10,8 @@ import type { RegionState } from './region-core.ts';
 import { regionColour } from './region-core.ts';
 import type { ModeRow, RegionOpen } from './region-row.ts';
 import { bindModeRow } from './region-row.ts';
+import type { NoteParts } from './region-note.ts';
+import { bindNoteParts } from './region-note.ts';
 import { holdersTemplate, regionIds, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
 
@@ -24,10 +26,17 @@ export interface VbRegionElement extends HTMLElement {
   update(st: RegionState): void;
   /** Open the layout popover (`mode` highlighted) or the settings menu; the gallery's samples. */
   showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void;
-  /** Mark the container's note bubble open or closed: the pin's aria-expanded and
-   *  `data-note-open` on the frame (3_FE_04 ruling 3). The page calls it as it opens or closes
-   *  the bubble. */
+  /** Mark the container's note bubble open or closed: `data-note-open` on the frame (3_FE_04
+   *  ruling 3), and opening closes the note preview. The page calls it as it opens or closes the
+   *  bubble. */
   setNoteOpen(open: boolean): void;
+  /** Whether the note block shows under the title line (step 4G ruling 3); reflects
+   *  `data-note-shown`. Page state only (not in the ledger). Setting it re-measures the block
+   *  and fires `vb-region-note-resize` when its height changed. */
+  noteShown: boolean;
+  /** The note block's height in the frame's own pixels with its gap to the cards; 0 while it is
+   *  hidden or the container has no note. The same number `vb-region-note-resize` carries. */
+  noteHeight(): number;
   /** The title line, whose box the page measures and passes through `titleAnchor` to place the
    *  container's note bubble. */
   titleLine(): HTMLElement;
@@ -41,6 +50,7 @@ export function defineVbRegion(): void {
     /** The holders last drawn, so an unchanged list keeps its buttons (and their focus). */
     private holdersKey = '';
     private readonly row: ModeRow = bindModeRow(this);
+    private readonly note: NoteParts = bindNoteParts(this);
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
       this.row.close();
@@ -50,6 +60,7 @@ export function defineVbRegion(): void {
       this.setAttribute('aria-labelledby', regionIds(r.id).heading);
       this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
+      this.note.bind();
       this.setNoteOpen(this.hasAttribute('data-note-open'));
       this.holdersKey = '';
     }
@@ -69,7 +80,7 @@ export function defineVbRegion(): void {
       back.setAttribute('aria-disabled', String(!st.canPutBack));
       if (st.canPutBack) back.removeAttribute('aria-describedby');
       else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
-      this.applyNote(st.note);
+      this.applyNote(st);
       this.piece('.vb-region-empty').hidden = !st.showEmpty;
       const key = JSON.stringify(st.holders ?? []);
       if (key !== this.holdersKey) {
@@ -84,31 +95,33 @@ export function defineVbRegion(): void {
 
     setNoteOpen(open: boolean): void {
       this.toggleAttribute('data-note-open', open);
-      this.querySelector('.vb-region-note-pin')?.setAttribute('aria-expanded', String(open));
+      // The bubble takes over from the preview.
+      if (open) this.note.close();
+    }
+
+    get noteShown(): boolean {
+      return this.hasAttribute('data-note-shown');
+    }
+
+    set noteShown(on: boolean) {
+      if (on === this.noteShown) return;
+      this.toggleAttribute('data-note-shown', on);
+      this.note.shown(on);
+    }
+
+    noteHeight(): number {
+      return this.note.height();
     }
 
     titleLine(): HTMLElement {
       return this.piece('.vb-region-head');
     }
 
-    /** The pin and the "Your note" line; a fixed frame (Later) has neither. */
-    private applyNote(note: RegionState['note']): void {
-      const pin = this.querySelector<HTMLButtonElement>('.vb-region-note-pin');
-      const line = this.querySelector<HTMLElement>('p.vb-region-note');
-      if (!pin || !line) return;
-      pin.hidden = line.hidden = !note;
-      this.toggleAttribute('data-note-sent', note?.sent === true);
-      // As a card's pin (vb-node): `data-sent` on the pin itself.
-      pin.toggleAttribute('data-sent', note?.sent === true);
-      if (!note) {
-        pin.removeAttribute('aria-label');
-        pin.textContent = '';
-        return;
-      }
-      pin.setAttribute('aria-label', note.label);
-      pin.textContent = String(note.index);
-      this.piece('.vb-region-note-who').textContent = note.who;
-      this.piece('.vb-region-note-text').textContent = note.text;
+    /** Comment's name and badge, the preview and the note block; a fixed frame (Later) has none
+     *  of them. */
+    private applyNote(st: RegionState): void {
+      this.querySelector('.vb-region-comment')?.setAttribute('aria-label', st.commentLabel);
+      this.note.apply(st.note);
     }
 
     private piece(selector: string): HTMLElement {

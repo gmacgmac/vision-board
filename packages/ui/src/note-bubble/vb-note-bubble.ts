@@ -4,7 +4,8 @@
 // never writes anything itself (rule 8). Keys: Enter saves, Shift+Enter is a new line, Esc
 // cancels. Browser only: the class is created inside defineVbNoteBubble().
 import type { Kind } from '../../../format/src/index.ts';
-import type { BubblePhase, BubbleView, Placement } from './note-bubble-core.ts';
+import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
+import { cancelIntent, isDirty, NOTE_DISCARD_EVENT } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';
 
 export const VB_NOTE_BUBBLE_TAG = 'vb-note-bubble';
@@ -25,6 +26,9 @@ export interface VbNoteBubbleElement extends HTMLElement {
   setPhase(phase: BubblePhase, message?: string): void;
   /** The words typed so far. */
   readonly text: string;
+  /** Whether the words typed differ from those it was shown with (`isDirty`); false for a sent
+   *  note. The page reads it before opening another bubble over this one (step 4G ruling 4). */
+  readonly dirty: boolean;
   /** Move focus into the text, caret at the end (or to the first button of a sent note). */
   focusText(): void;
 }
@@ -33,6 +37,9 @@ export function defineVbNoteBubble(): void {
   if (customElements.get(VB_NOTE_BUBBLE_TAG)) return;
 
   class VbNoteBubble extends HTMLElement implements VbNoteBubbleElement {
+    /** The words it was shown with, which `dirty` compares against. */
+    private opened = '';
+
     constructor() {
       super();
       this.addEventListener('click', (e) => {
@@ -53,6 +60,7 @@ export function defineVbNoteBubble(): void {
       if (card.line) this.dataset.on = 'container';
       else delete this.dataset.on;
       this.innerHTML = noteBubbleTemplate(v, card.number);
+      this.opened = v.text;
       this.setPhase('idle');
       this.hidden = false;
     }
@@ -84,6 +92,10 @@ export function defineVbNoteBubble(): void {
       return this.querySelector('textarea')?.value ?? '';
     }
 
+    get dirty(): boolean {
+      return this.dataset.mode !== 'sent' && isDirty(this.opened, this.text);
+    }
+
     focusText(): void {
       const ta = this.querySelector('textarea');
       if (!ta) return void this.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
@@ -92,6 +104,13 @@ export function defineVbNoteBubble(): void {
     }
 
     private choose(choice: NoteChoice): void {
+      // Esc or Cancel with changed words asks the page first (step 4G ruling 4); unchanged, it
+      // closes as before.
+      if (choice === 'cancel' && cancelIntent(this.dataset.mode as BubbleMode, this.dirty) === 'ask') {
+        const ask: NoteDiscardDetail = { text: this.text };
+        this.dispatchEvent(new CustomEvent<NoteDiscardDetail>(NOTE_DISCARD_EVENT, { bubbles: true, detail: ask }));
+        return;
+      }
       const detail: NoteEventDetail = { choice, text: this.text };
       this.dispatchEvent(new CustomEvent<NoteEventDetail>('vb-note', { bubbles: true, detail }));
     }

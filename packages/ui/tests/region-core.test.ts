@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
 import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
-import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT, RESET_NONE_HINT, regionColour, regionHolders, regionState } from '../src/index.ts';
+import type { RegionNoteStage } from '../src/index.ts';
+import {
+  agentChoiceText, commentLabel, MODE_HINT, MODE_LABEL, NOTE_STAGE_TEXT, noteBadge, noteStage, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT,
+  RESET_NONE_HINT, regionColour, regionHolders, regionNote, regionState,
+} from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -78,7 +82,7 @@ test('the empty message shows only when the layout drew none of the region\'s no
 
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
-  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, canPutBack: false, showEmpty: true });
+  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, canPutBack: false, commentLabel: 'Comment on container R', showEmpty: true });
 });
 
 test('Put container back is enabled only while the container itself has a place (3_FE_04 ruling 7)', () => {
@@ -91,16 +95,46 @@ test('Put container back is enabled only while the container itself has a place 
   assert.equal(PUT_BACK_NONE_HINT, 'Not moved');
 });
 
-test('a container note: the pin numbers the latest of the container\'s notes, the line shows its words (ruling 3)', () => {
+test('a container note: the latest note\'s stage, badge, state line and words (step 4G ruling 1)', () => {
   const v = view([node({ id: '1', n: 1 })]);
   const note = (seq: number, text: string, sent?: true) => ({ seq, kind: 'comment' as const, text, at: 'x', region: 'r', ...(sent && { sent }) });
-  assert.equal('note' in regionState(region, v, board(), drawn('1')), false, 'left out with no note');
+  const none = regionState(region, v, board(), drawn('1'));
+  assert.equal('note' in none, false, 'left out with no note');
+  assert.equal(none.commentLabel, 'Comment on container R');
   const one = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Split it?')]]]) }), drawn('1'));
-  assert.deepEqual(one.note, { seq: 4, index: 1, sent: false, who: 'Your note', text: 'Split it?', label: 'Note 1 on container R. Edit it' });
+  assert.deepEqual(one.note, {
+    seq: 4, stage: 'unsent', badge: 'unsent', stateText: 'Unsent', text: 'Split it?', editable: true, readOnlyText: '',
+  });
+  assert.equal(one.commentLabel, 'Comment on container R, 1 unsent note');
   const two = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Old', true), note(9, 'New')]]]) }), drawn('1'));
-  assert.deepEqual([two.note!.seq, two.note!.index, two.note!.sent], [9, 2, false]);
-  const sent = regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'Old', true)]]]) }), drawn('1'));
-  assert.deepEqual([sent.note!.who, sent.note!.label], ['Your note · Sent', 'Note 1 on container R, sent. Show it']);
+  assert.deepEqual([two.note!.seq, two.note!.stage, two.note!.text], [9, 'unsent', 'New'], 'the latest note');
+  const sentNotes = board({ regionNotes: new Map([['r', [note(4, 'Old', true)]]]) });
+  const sent = regionState(region, v, sentNotes, drawn('1'));
+  assert.deepEqual([sent.note!.stage, sent.note!.badge, sent.note!.stateText, sent.note!.editable, sent.note!.readOnlyText],
+    ['sent', 'sent', 'Sent, waiting for the agent', false, 'Read-only until the agent answers'], 'waiting when owed is not given');
+  assert.equal(sent.commentLabel, 'Comment on container R, 1 sent note waiting for the agent');
+  // `owed` from pendingItems: still listed, still waiting; no longer listed, answered and no badge.
+  assert.equal(regionState(region, v, sentNotes, drawn('1'), undefined, new Set(['r'])).note!.badge, 'sent');
+  const answered = regionState(region, v, sentNotes, drawn('1'), undefined, new Set(['other']));
+  assert.deepEqual([answered.note!.stage, answered.note!.badge, answered.note!.stateText, answered.note!.readOnlyText],
+    ['answered', 'none', 'Sent, answered', 'Read-only']);
+  assert.equal(answered.commentLabel, 'Comment on container R');
+  // An unsent note keeps its badge whatever `owed` says: only a sent note can be answered.
+  assert.equal(regionState(region, v, board({ regionNotes: new Map([['r', [note(4, 'x')]]]) }), drawn('1'), undefined, new Set()).note!.badge, 'unsent');
+});
+
+test('noteStage, noteBadge and commentLabel: the badge from the note\'s state', () => {
+  assert.equal(noteStage({}, true), 'unsent');
+  assert.equal(noteStage({}, false), 'unsent');
+  assert.equal(noteStage({ sent: true }, true), 'sent');
+  assert.equal(noteStage({ sent: true }, false), 'answered');
+  assert.deepEqual([undefined, 'unsent', 'sent', 'answered'].map((s) => noteBadge(s as RegionNoteStage | undefined)), ['none', 'unsent', 'sent', 'none']);
+  assert.deepEqual(NOTE_STAGE_TEXT, { unsent: 'Unsent', sent: 'Sent, waiting for the agent', answered: 'Sent, answered' });
+  assert.equal(commentLabel('Risks', 'unsent'), 'Comment on container Risks, 1 unsent note');
+  assert.equal(commentLabel('Risks', 'sent'), 'Comment on container Risks, 1 sent note waiting for the agent');
+  assert.equal(commentLabel('Risks', 'none'), 'Comment on container Risks');
+  assert.equal(regionNote(undefined), undefined);
+  assert.equal(regionNote([]), undefined);
 });
 
 test('every region takes the neutral frame colour for now, a token and never a literal colour', () => {

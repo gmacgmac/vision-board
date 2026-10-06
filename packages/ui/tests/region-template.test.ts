@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '../../format/src/index.ts';
-import { holdersTemplate, MODE_HINT, MODE_LABEL, regionIds, regionTemplate } from '../src/index.ts';
+import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, regionIds, regionTemplate } from '../src/index.ts';
 
 const region = { id: 'review', title: 'Review', mode: 'flow' as const };
 
@@ -54,7 +54,8 @@ test('the settings menu holds Reset places and Put container back, each disabled
   assert.equal((html.match(/role="menuitem"/g) ?? []).length, 2);
   assert.deepEqual(regionIds('review'), {
     heading: 'region-review', modes: 'region-review-modes', menu: 'region-review-menu', hint: 'region-review-reset-hint',
-    back: 'region-review-back-hint',
+    back: 'region-review-back-hint', preview: 'region-review-note-preview', previewText: 'region-review-note-preview-text',
+    noteText: 'region-review-note-text',
   });
 });
 
@@ -65,14 +66,34 @@ test('the grip starts the title line: a labelled button with grip dots, for Alt+
   assert.match(regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true }), /class="vb-region-grip" aria-label="Move container Later"/);
 });
 
-test('Comment sits in the row beside the cog, the cog last; the pin and the "Your note" line wait hidden (ruling 3)', () => {
+test('Comment sits in the row beside the cog, the cog last, with its badge; no note pin or "Your note" line (step 4G ruling 1)', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<button type="button" class="vb-mseg vb-region-comment" tabindex="-1" aria-label="Comment on container Review" title="Comment · C" aria-haspopup="dialog" data-region-comment="review"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><button type="button" class="vb-mseg vb-cog"/);
-  assert.match(html, /<button type="button" class="vb-region-note-pin" data-region-note="review" aria-haspopup="dialog" aria-expanded="false" hidden><\/button><\/div>/);
-  assert.match(html, /<\/header><p class="vb-region-note" data-region-note="review" hidden><span class="vb-region-note-who"><\/span> <span class="vb-region-note-text"><\/span><\/p>/);
-  // The built-in Later takes no note: no Comment, no pin, no line.
+  assert.match(html, /<button type="button" class="vb-mseg vb-region-comment" tabindex="-1" aria-label="Comment on container Review" title="Comment · C" aria-haspopup="dialog" data-region-comment="review"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><span class="vb-region-badge" aria-hidden="true">1<\/span><\/button><button type="button" class="vb-mseg vb-cog"/);
+  assert.doesNotMatch(html, /vb-region-note-pin|class="vb-region-note"|data-region-note=|Your note<\/span> <span/);
+  // The built-in Later takes no note: no Comment, no preview, no note block.
   const later = regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true });
-  assert.doesNotMatch(later, /vb-region-comment|vb-region-note/);
+  assert.doesNotMatch(later, /vb-region-comment|vb-note-pop|vb-region-note-block/);
+});
+
+test('the preview: a non-modal labelled dialog after the layout popover, with the text, the state, Edit and Show in container (ruling 2)', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<\/div><div class="vb-note-pop" id="region-review-note-preview" role="dialog" aria-label="Note on container Review"><p class="vb-note-pop-text" id="region-review-note-preview-text"><\/p><p class="vb-note-state"><\/p><div class="vb-note-acts"><button type="button" class="vb-note-btn" data-note-act="edit">Edit<\/button><button type="button" class="vb-note-btn" data-note-act="show"><svg class="vb-note-eye" viewBox="0 0 20 20" aria-hidden="true" focusable="false">.*?<\/svg><span class="vb-note-show-label">Show in container<\/span><\/button><\/div><\/div><div class="vb-region-menu"/);
+  assert.doesNotMatch(html, /role="tooltip"[^>]*>[^<]*<p class="vb-note-pop-text"/, 'not a tooltip: it holds buttons');
+  assert.match(EYE_ICON, /^<path d="[^"]+"\/><circle [^>]+\/>$/);
+});
+
+test('the note block: hidden under the title line and before the empty message, with state, Edit, Remove, the text and Show all (ruling 3)', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<\/header><section class="vb-region-note-block" role="group" aria-label="Note on container Review" hidden><div class="vb-nblock-top"><span class="vb-nblock-who">Your note<\/span><span class="vb-note-state"><\/span><span class="vb-nblock-acts"><button type="button" class="vb-note-btn" data-note-act="edit" aria-label="Edit note on container Review">Edit<\/button><button type="button" class="vb-note-btn" data-note-act="remove" aria-label="Remove note on container Review">Remove<\/button><span class="vb-nblock-ro"><\/span><\/span><\/div><p class="vb-nblock-text" id="region-review-note-text"><\/p><button type="button" class="vb-nblock-more" aria-expanded="false" aria-controls="region-review-note-text" hidden>Show all<\/button><\/section><p class="vb-region-empty" hidden>/);
+  // The page's delegated click listener reads data-note (cards) and data-region-note: neither is here.
+  assert.doesNotMatch(html, /data-note=|data-region-note=/);
+});
+
+test('the note parts escape the title', () => {
+  const html = regionTemplate({ id: 'r', title: '<b>x</b>', mode: 'grid' });
+  assert.ok(html.includes('aria-label="Note on container &#60;b&#62;x&#60;/b&#62;"'));
+  assert.ok(html.includes('aria-label="Remove note on container &#60;b&#62;x&#60;/b&#62;"'));
+  assert.ok(!html.includes('<b>'));
 });
 
 test('regionTemplate has a count and a hidden empty message', () => {
@@ -87,8 +108,8 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
 
 test('the top line: title, count and holders in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><button type="button" class="vb-region-note-pin"[^>]*><\/button><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
-  assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
 test('holdersTemplate: the creator is plain text; any other holder is a labelled Remove access button; text is escaped', () => {
