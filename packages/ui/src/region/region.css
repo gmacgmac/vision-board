@@ -287,7 +287,7 @@ vb-region .vb-nblock-who {
 }
 vb-region:not([data-note-stage='unsent']) .vb-nblock-who { color: var(--vb-ink); }
 vb-region .vb-nblock-acts { display: flex; align-items: center; gap: var(--vb-space-1); margin-left: auto; }
-vb-region .vb-nblock-ro { font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
+vb-region .vb-nblock-ro { font-size: var(--vb-text-sm); color: var(--vb-ink); }
 vb-region .vb-nblock-ro:empty { display: none; }
 vb-region .vb-region-note-block[data-expanded] .vb-nblock-text { display: block; -webkit-line-clamp: none; line-clamp: none; }
 vb-region .vb-nblock-more {

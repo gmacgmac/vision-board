@@ -65,7 +65,7 @@
     "data-fixed": "the board sets the frame's layout (the built-in Later, 3_FE_03 ruling 5): no layout icons or popover, and no Comment, note preview or note block (Later takes no note); the grip and the cog stay (set by render)",
     "data-dragging": "the frame is being moved by its grip: grip dots shown, cursor grabbing, no transform transition (set by the page, 3_FE_04 ruling 6)",
     "data-note-open": "the container's note bubble is open: Comment drawn pressed; the preview closes (set by setNoteOpen)",
-    "data-badge": "unsent | sent: Comment's badge \"1\", bright (accent) while unsent, quiet once sent and still waiting; absent with no note or once answered (set by update from RegionNoteState.badge; step 4G ruling 1)",
+    "data-badge": "unsent | sent | none: Comment's badge \"1\", bright (accent) while unsent, quiet once sent and still waiting; none once answered (no badge drawn); absent with no note (set by update from RegionNoteState.badge; step 4G ruling 1)",
     "data-note-stage": "unsent | sent | answered: the latest note's stage, for the preview's and the block's state line and look; absent with no note (set by update). Not data-note, which the page's listener reads on cards",
     "data-preview": "the note preview is open under Comment; the frame is drawn above the cards like data-open (set by the note behaviour from previewShown)",
     "data-note-shown": "the note block shows under the title line (the noteShown property; page state only, not in the ledger, step 4G ruling 3). Set as an attribute it takes effect on the next update; the property applies at once",

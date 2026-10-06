@@ -160,6 +160,28 @@ test('Show in container draws the note block above the cards and pushes the cont
   await expect.poll(() => frames(page)).toEqual(f0);
 });
 
+test('Remove in the note block closes that note\'s open bubble', async ({ page }) => {
+  await openFrames(page);
+  await comment(page, 'Plan').click();
+  await text(page).fill('Gone soon.');
+  await page.keyboard.press('Enter');
+  await expect(frame(page, 'plan')).toHaveAttribute('data-badge', 'unsent');
+  await comment(page, 'Plan').hover();
+  await preview(page, 'plan').getByRole('button', { name: 'Show in container' }).click();
+  await expect(block(page, 'plan')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(preview(page, 'plan')).toBeHidden();
+  // The block's Edit opens the bubble on the note; Remove in the block, with the bubble still up.
+  await block(page, 'plan').getByRole('button', { name: 'Edit note on container Plan' }).click();
+  await expect(bubble(page)).toBeVisible();
+  await expect(text(page)).toHaveValue('Gone soon.');
+  await block(page, 'plan').getByRole('button', { name: 'Remove note on container Plan' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(block(page, 'plan')).toBeHidden();
+  await expect(bubble(page)).toBeHidden();
+  await expect(frame(page, 'plan')).not.toHaveAttribute('data-note-open', '');
+});
+
 test('the grip moves the frame and its cards; the drop writes one container pin; Put container back undoes it', async ({ page }) => {
   await openFrames(page);
   const before = await head(page);

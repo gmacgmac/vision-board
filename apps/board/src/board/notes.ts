@@ -214,8 +214,17 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     return { x: box.x * k + x, y: box.y * k + y, w: box.w * k, h: box.h * k };
   }
 
+  /** Whether the note the bubble is on still exists (Remove in the note block, or another tab). */
+  function noteGone(o: Open): boolean {
+    if (!o.note) return false;
+    const notes = o.region ? d.state().regionNotes.get(o.region) : d.state().items.get(o.id)?.notes;
+    return !notes?.some((x) => x.seq === o.note!.seq);
+  }
+
   function place() {
     if (!open) return;
+    // A removed note takes its bubble with it, changed words or not: there is nothing to save to.
+    if (noteGone(open)) return close(false);
     const at = anchorBox(open);
     if (!at) return close(false);
     const size = { w: bubble.offsetWidth, h: bubble.offsetHeight };

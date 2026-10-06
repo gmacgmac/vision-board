@@ -178,3 +178,15 @@
 {"v":7,"seq":178,"at":"2026-10-05T09:02:20Z","by":"person","type":"act","action":"context","board":"containers","region":"c-focus","text":"Say more about where these risks come from."}
 {"v":7,"seq":179,"at":"2026-10-05T09:02:21Z","by":"person","type":"act","action":"comment","board":"containers","region":"c-open","text":"Can we decide this before the launch call?"}
 {"v":7,"seq":180,"at":"2026-10-05T09:02:22Z","by":"person","type":"act","action":"pin","board":"containers","region":"c-moved","x":40,"y":24}
+{"v":7,"seq":181,"at":"2026-10-05T09:03:00Z","by":"agent","agent":"a-pricing1","type":"board","board":"container-notes","title":"Container note states"}
+{"v":7,"seq":182,"at":"2026-10-05T09:03:01Z","by":"agent","agent":"a-pricing1","type":"region","board":"container-notes","region":{"id":"n-answered","title":"Answered","mode":"grid"}}
+{"v":7,"seq":183,"at":"2026-10-05T09:03:02Z","by":"agent","agent":"a-pricing1","type":"node","board":"container-notes","n":88,"ver":1,"node":{"region":"n-answered","kind":"question","title":"Does the trial need a card?","item":true}}
+{"v":7,"seq":184,"at":"2026-10-05T09:03:03Z","by":"person","type":"act","action":"comment","board":"container-notes","region":"n-answered","text":"Should the trial skip the card step?"}
+{"v":7,"seq":185,"at":"2026-10-05T09:03:04Z","by":"person","type":"act","action":"send","board":"container-notes"}
+{"v":7,"seq":186,"at":"2026-10-05T09:03:05Z","by":"agent","agent":"a-pricing1","type":"reply","n":88,"text":"Yes: the trial starts without a card.","to":184}
+{"v":7,"seq":187,"at":"2026-10-05T09:03:06Z","by":"agent","agent":"a-pricing1","type":"region","board":"container-notes","region":{"id":"n-long","title":"Long note","mode":"grid"}}
+{"v":7,"seq":188,"at":"2026-10-05T09:03:07Z","by":"agent","agent":"a-pricing1","type":"region","board":"container-notes","region":{"id":"n-narrow","title":"Narrow","mode":"grid"}}
+{"v":7,"seq":189,"at":"2026-10-05T09:03:08Z","by":"agent","agent":"a-pricing1","type":"node","board":"container-notes","n":89,"ver":1,"node":{"region":"n-long","kind":"finding","title":"Annual plans sell better","item":true}}
+{"v":7,"seq":190,"at":"2026-10-05T09:03:09Z","by":"agent","agent":"a-pricing1","type":"node","board":"container-notes","n":90,"ver":1,"node":{"region":"n-narrow","kind":"risk","title":"Price page slips","item":true}}
+{"v":7,"seq":191,"at":"2026-10-05T09:03:10Z","by":"person","type":"act","action":"comment","board":"container-notes","region":"n-long","text":"Before we settle the order of this group, check three things with the team: whether annual plans really sell better once the discount is gone, whether the trial numbers hold for teams as well as for single seats, and whether finance can live with the lower first-month revenue. If any of the three is a no, move the pricing question to the top and park the rest until the next review."}
+{"v":7,"seq":192,"at":"2026-10-05T09:03:11Z","by":"person","type":"act","action":"comment","board":"container-notes","region":"n-narrow","text":"Too much in one group?"}

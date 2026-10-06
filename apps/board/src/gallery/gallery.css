@@ -34,9 +34,13 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Two frames are narrow: under 440px (where the mode row collapses) and under 600px (where the
    popover drops to compact tiles). */
 .g-frames vb-region:is([data-region='frame-pinned'], [data-region='frame-empty']) { width: calc(var(--vb-card-w) * 1.75); }
+/* A container note sample near the smallest frame (336px), where the badge must still fit. */
+.g-frames vb-region[data-region='n-narrow'] { width: calc(var(--vb-card-w) * 1.4); }
 /* An open popover is an overlay that reaches past its frame; here it gets room of its own so it
    does not cover the next sample. */
 .g-frames vb-region[data-open='modes'] { margin-bottom: calc(var(--vb-space-6) * 3); }
+/* So does an open note preview (the "Hover" and "Focus" container samples). */
+.g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
 
 /* Kind by status: one row per status, one column per kind. */
 .g-matrix { --g-label-w: calc(var(--vb-space-6) * 4); display: flex; flex-direction: column; gap: var(--vb-space-3); }
