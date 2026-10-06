@@ -167,3 +167,39 @@ unsettled.
 - **Gates**: `npm test` 0 (554 + 4), `check` 0, `verify` 0, `test:pages` 0 (120), `gen -- --check` 0.
 - **Unsettled**: many holders on a narrow frame still slide under the mode row (pre-existing, worse by ~44px);
   Pressed looks are a 1px nudge, hard to see; no live drag watched.
+
+## Step 4G: the container note lives on the Comment icon (maintainer 948, 971, 987-995, 2026-10-06)
+
+Built step 4's "Your note" line overlapped the cards below. Mockup 09 option B, as the maintainer
+reshaped it, replaces it. Rulings (do not reopen):
+
+1. **The Comment icon is the only indicator.** Removed from the title line: the note pin and the
+   "Your note" line. With no note, a click on the icon opens the editor bubble (as now). With a
+   note, the icon carries a badge "1": bright while unsent, quiet once sent and still waiting for
+   the agent (gone once answered, as `pendingItems` already decides). Click opens the bubble.
+2. **Hover or keyboard focus on the icon** shows a preview popover: the note text (3 lines, then
+   cut), its state, and two buttons: **Edit** (opens the bubble) and **Show in container** (an eye;
+   pressed again, "Hide"). The popover is hoverable, stays while the pointer is on it, and Esc
+   closes it (WCAG 1.4.13). Touch: a tap on the icon opens the popover.
+3. **Shown in container:** mockup 09 B's note block under the title line, above the cards: text
+   (3 lines, then "Show all"), state, Edit and Remove while unsent, read-only once sent. The
+   container grows by the block's height; containers below move down by the existing packing.
+   Show/hide is page state only (like zoom): not in the ledger, reset on reload.
+4. **Unsaved text is never lost silently (994), cards and containers alike:** Enter or Save saves.
+   Esc, Cancel or opening another bubble with changed text asks "Discard your changes? / Changes
+   will be lost." with OK (discard) and Cancel (back to editing), through the shell's existing
+   `askConfirm`. Unchanged text closes without asking.
+5. **Cards keep their pin and "Your note" block (intentional).** Card notes are the granular
+   detail; a container note is the broad picture the agent applies across its cards.
+6. **The page test finds a card by the `n` its write result returns**, not by title (959).
+
+Steps (each a small run, ~100 tool calls, Long File Strategy, own package only):
+- [ ] **4G1. Region pattern** (`packages/ui/src/region` + `note-bubble` only): badge states on the
+  Comment button, the preview popover with Edit and Show/Hide, the note block, removal of the pin
+  and "Your note" line; gallery-ready states; unit tests. The bubble reports "has unsaved changes".
+- [ ] **4G2. Layout** (`packages/layout` only): `LayoutOptions` takes a per-region extra top inset
+  (the shown note block's measured height); frame grows by it, cards start below it; the
+  per-container cache keys on it; counting test: showing one note lays out only that container.
+- [ ] **4G3. Page wiring** (`apps/board/src/board`, after 4G1 and 4G2): popover, show/hide state,
+  measure the block and pass the inset, discard confirm for card and container bubbles, the page
+  test change in 6, gallery samples, baselines viewed before updating, all five gates.
