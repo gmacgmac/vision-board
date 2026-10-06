@@ -34,7 +34,7 @@ created: 2026-10-01
 |---|---|---|---|
 | 1 Plan and decisions | Done | 9b9daaa | D-010, D-011; framework interview D-012 to D-015; foundation D-016 |
 | 2 Card and container basics | In progress | 3ee805b | 2a-2e done (2026-10-05); 2f and N12 next |
-| 3 Selection and moving | Planned | | Port from architect-extract |
+| 3 Selection and moving | Done 2026-10-06 (3_FE_01 to 3_FE_04) | merge 5c7ef3c | Ready for the maintainer to use; next is real use (tracker N17), not new features |
 | 4 Send | Planned | | Uses U4 |
 | 5 Proposals, seen, parking | Planned | | U3 step 3 |
 | 6 Chat panel (MCP), then kiro-cli | Planned | | |
@@ -126,5 +126,5 @@ header. Run in order; each changes code the next builds on.
 | 1 | [3_FE_01 select and drag](./3_FE_01_select-and-drag.md) (U5) | Opus 5.5 | Done | see log |
 | 2 | [3_FE_02 lasso, selection bar, group notes, zoom](./3_FE_02_lasso-and-zoom.md) (U6) | Opus 5.5 | Done (resumed once at the turn limit; orchestrator fixed the header so the zoom buttons never clip) | see log |
 | 3 | [3_FE_03 move cards between containers, group move, the Later container](./3_FE_03_move-and-later.md) | Opus 5.5 | Done (ledger v6, `move` act; orchestrator checked a live drag and L into Later in the browser) | see log |
-| 4 | [3_FE_04 container notes and dragging containers](./3_FE_04_container-notes-and-drag.md) (PLAN decisions 4 and 5) | Opus 5.5 | Running | |
+| 4 | [3_FE_04 container notes and dragging containers](./3_FE_04_container-notes-and-drag.md) (PLAN decisions 4 and 5) | Opus 5.5 (contract by orchestrator) | Done: 4A-4F, then 4G (container note on the Comment icon, mockup 09 B as reshaped by the maintainer; discard confirm on every bubble); orchestrator re-ran five gates (572 unit + 4 timing, 124 page) and checked a container note live | merge 5c7ef3c |
 | 4 | Stage check: orchestrator, then the maintainer's look | Orchestrator | Planned | |
