@@ -28,6 +28,12 @@ export interface LayoutOptions {
   /** The person's container places (3_FE_04, api.md 74): region id -> the frame's top-left in
    *  board coordinates, in pin order (the last pinned wins an overlap). Packing only. */
   regionPins?: Map<string, Point>;
+  /** Extra room under a container's top line (3_FE_04 ruling 3): region id -> px, the measured
+   *  height of its shown note block. The frame grows by it and its cards start that much lower
+   *  (content at REGION_HEAD + inset); containers below make room by the usual packing, and a
+   *  pinned container stays at its pin. It is that one container's input (`layoutRegion`'s
+   *  `headInset`), so a page cache keys the container on it. 0, negative or absent: no inset. */
+  headInsets?: Map<string, number>;
   /** The person's mode choice per region (from the transcript). */
   modes?: Map<string, Mode>;
   /** Nodes not drawn (e.g. decided items when hidden). */
@@ -49,7 +55,8 @@ export interface RegionBox {
 export interface Route { from: string; to: string; label?: string; d: string; mid: Point }
 
 /** One region laid out on its own (`layoutRegion`): its mode's region-local positions after pins
- *  and the collision pass, their bounds `b`, and the frame's size. `packRegions` places it. */
+ *  and the collision pass, their bounds `b`, the frame's size, and `head`, the extra room under the
+ *  top line (its `headInset`, 0 when none; `h` includes it). `packRegions` places it. */
 export interface RegionPiece {
   region: Region;
   mode: Mode;
@@ -57,6 +64,7 @@ export interface RegionPiece {
   b: Box;
   w: number;
   h: number;
+  head: number;
 }
 
 export interface BoardLayout {
