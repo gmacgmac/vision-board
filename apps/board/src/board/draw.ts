@@ -38,6 +38,10 @@ export interface DrawDeps {
   focus(): string | null;
   /** Whether the person has selected card `id` (selection.ts, 3_FE_01). */
   selected(id: string): boolean;
+  /** Each shown container note block's height (region-notes.ts): the layout's head insets. */
+  insets(): Map<string, number>;
+  /** The containers the agent still owes an answer on (a sent note's badge, step 4G ruling 1). */
+  owed(): ReadonlySet<string>;
 }
 
 export interface Drawing {
@@ -102,11 +106,12 @@ export function createDrawing(d: DrawDeps): Drawing {
     for (const id of sizes.keys()) if (!cards.els.has(id)) sizes.delete(id);
     const run = cache.run(data.view, sizes, {
       pins: data.state.pins, modes: data.state.modes, hidden: d.hidden(), regionPins: data.state.regionPins,
+      headInsets: d.insets(),
     });
     work.containersLaidOut += run.laidOut.length;
     work.containers.push(...run.laidOut);
     layout = run.layout;
-    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined);
+    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed());
     if (cards.place(layout) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);

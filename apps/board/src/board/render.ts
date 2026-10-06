@@ -27,8 +27,11 @@ export interface RegionSet {
   /** One `<vb-region>` per region of `view`, in view order; a changed region is rendered again. */
   sync(view: View): void;
   /** Place and update each frame; true when any frame moved or changed size. `holders` (the
-   * agentAccess flag): region id -> the agents that hold it. */
-  place(layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>): boolean;
+   * agentAccess flag): region id -> the agents that hold it. `owed`: the containers the agent
+   * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). */
+  place(
+    layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>, owed?: ReadonlySet<string>,
+  ): boolean;
   clear(): void;
 }
 
@@ -65,14 +68,14 @@ export function createRegionSet(host: HTMLElement): RegionSet {
         prev = el;
       }
     },
-    place(layout, view, s, holders) {
+    place(layout, view, s, holders, owed) {
       const placed = new Set(layout.nodes.keys());
       let moved = false;
       for (const r of layout.regions) {
         const el = els.get(r.id);
         if (!el) continue;
         const box = JSON.stringify(r.box);
-        const st = regionState(r, view, s, placed, holders?.[r.id]);
+        const st = regionState(r, view, s, placed, holders?.[r.id], owed);
         const state = JSON.stringify(st);
         const was = shown.get(r.id);
         if (was?.box !== box) {

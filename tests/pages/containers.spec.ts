@@ -1,95 +1,28 @@
-// Notes on a whole container and dragging containers (3_FE_04 rulings 2-8): Comment on a frame's
-// title line opens the note bubble beside it (one unsent note, edit, Remove, read-only after Send);
-// the grip moves the frame and its cards and writes one container pin; a plain drag on the title
-// line still pans and Shift+drag still lassoes; containers never overlap; "Put container back"
-// unpins; Alt+arrows on the grip move it; C or N on the title line opens the note. Runs on its own
-// board, "frames", written through the API by an agent, so no other file's board changes.
-import type { APIRequestContext, Page } from '@playwright/test';
+// Notes on a whole container and dragging containers (3_FE_04 rulings 2-8, step 4G): Comment on
+// a frame's title line opens the note bubble beside it (one unsent note, edit, Remove, read-only
+// after Send); the note shows only as Comment's badge, its preview (hover or focus: Edit, Show in
+// container) and, when shown, the note block that pushes the containers below down; changed words
+// are never lost silently (note-discard.spec.ts); the grip moves the frame and its cards and
+// writes one container pin; a plain drag on the title line still pans and Shift+drag still
+// lassoes; containers never overlap; "Put container back" unpins; Alt+arrows on the grip move it;
+// C or N on the title line opens the note. Runs on its own board, written through the API by an
+// agent, so no other file's board changes.
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import {
+  agentWrite, apart, block, bubble, boxOf, card, centre, comment, drag, ensureBoard, frame, frames, fx, grip, head,
+  linesAfter, openFrames, preview, putAllBack, regionPins, REGIONS, scale, settled, text,
+} from './frames-board.ts';
 
-const BOARD = 'frames';
 const THEMES: Theme[] = ['dark', 'light'];
-type Point = { x: number; y: number };
-type Box = Point & { width: number; height: number };
 
-const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
-const grip = (page: Page, region: string) => frame(page, region).locator('.vb-region-grip');
-// Item numbers run across every board of the project, so a card is found by its title.
-const card = (page: Page, title: string) => page.locator('vb-node', { has: page.getByRole('heading', { name: title }) });
-const bubble = (page: Page) => page.locator('vb-note-bubble');
-const text = (page: Page) => bubble(page).getByLabel('Note text');
-const comment = (page: Page, title: string) => page.getByRole('button', { name: `Comment on container ${title}` });
-
-/** Board "frames": three containers, items in two of them, a link across two. Written once. */
-async function ensureBoard(request: APIRequestContext): Promise<void> {
-  const boards = await (await request.get('/api/boards')).json() as { boards: { board: string }[] };
-  if (boards.boards.some((b) => b.board === BOARD)) return;
-  const j = await request.post('/api/agents', { data: { label: 'Frames chat' } });
-  expect(j.status(), await j.text()).toBe(201);
-  const { secret } = await j.json() as { secret: string };
-  const node = (region: string, title: string, key: string) =>
-    ({ type: 'node', key, node: { region, kind: 'question', title, item: true } });
-  const r = await request.post(`/api/boards/${BOARD}/write`, {
-    headers: { Authorization: `Bearer ${secret}` },
-    data: { items: [
-      { type: 'board', title: 'Frames' },
-      { type: 'region', region: { id: 'plan', title: 'Plan', mode: 'grid' } },
-      { type: 'region', region: { id: 'risks', title: 'Risks', mode: 'grid' } },
-      { type: 'region', region: { id: 'parked', title: 'Parked', mode: 'grid' } },
-      node('plan', 'Ship the beta in May?', 'p1'), node('plan', 'Who signs off the copy?', 'p2'),
-      node('risks', 'Is the import too slow?', 'r1'), node('parked', 'Dark mode for print?', 'k1'),
-      { type: 'link', from: { key: 'p1' }, to: { key: 'r1' }, label: 'blocks' },
-    ] },
-  });
-  expect(r.status(), await r.text()).toBe(200);
-}
-
-async function openFrames(page: Page): Promise<void> {
-  await page.goto(`/?frames#${BOARD}`);
-  await expect(page.locator('vb-node')).toHaveCount(4);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
-}
-
-const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
-const head = async (page: Page) => (await api(page, `/boards/${BOARD}`)).head as number;
-const linesAfter = async (page: Page, after: number) => (await api(page, `/ledger?after=${after}&board=${BOARD}`)).events as Record<string, unknown>[];
-const regionPins = async (page: Page) => ((await api(page, `/boards/${BOARD}`)).state.containerPins ?? {}) as Record<string, Point>;
-const boxOf = async (page: Page, sel: ReturnType<Page['locator']>): Promise<Box> => (await sel.boundingBox())!;
-const centre = (b: Box): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
-const scale = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-const settled = async (page: Page) => expect(page.locator('#wires')).not.toHaveClass(/settling/);
-
-/** Press on `from`, move to `to` in steps, run `during`, let go. */
-async function drag(page: Page, from: Point, to: Point, during?: () => Promise<void>): Promise<void> {
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  await page.mouse.move(to.x, to.y, { steps: 10 });
-  await during?.();
-  await page.mouse.up();
-}
-
-function apart(boxes: Box[]): boolean {
-  return boxes.every((a, i) => boxes.every((b, j) => j <= i
-    || a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y));
-}
-
-/** Every container back where the layout puts it (setup and clean-up). */
-async function putAllBack(page: Page): Promise<void> {
-  for (const region of Object.keys(await regionPins(page))) {
-    const r = await page.request.post(`/api/boards/${BOARD}/act`, { data: { type: 'act', action: 'unpin', board: BOARD, region } });
-    expect(r.status(), await r.text()).toBe(201);
-  }
-}
-
-test.beforeEach(async ({ page, request }) => {
+test.beforeEach(async ({ page, request }, info) => {
   await page.goto('/?setup');
-  await ensureBoard(request);
+  await ensureBoard(request, info.workerIndex);
   await putAllBack(page);
 });
 
-test('Comment on the title line opens the bubble beside it; Enter adds one note, shown as a pin and a "Your note" line', async ({ page }) => {
+test('Comment opens the bubble beside the title line; Enter adds one note, shown only as Comment\'s badge and preview', async ({ page }) => {
   await openFrames(page);
   const before = await head(page);
   await comment(page, 'Plan').click();
@@ -102,24 +35,31 @@ test('Comment on the title line opens the bubble beside it; Enter adds one note,
   await page.keyboard.type('Is the plan in the right order?');
   await page.keyboard.press('Enter');
   await expect(bubble(page)).toBeHidden();
-  const pin = frame(page, 'plan').locator('.vb-region-note-pin');
-  await expect(pin).toHaveText('1');
-  await expect(frame(page, 'plan').locator('.vb-region-note-text')).toHaveText('Is the plan in the right order?');
+  // No pin and no "Your note" line: the badge "1", bright while unsent (ruling 1).
+  await expect(frame(page, 'plan')).toHaveAttribute('data-badge', 'unsent');
+  await expect(comment(page, 'Plan')).toHaveAccessibleName('Comment on container Plan, 1 unsent note');
+  await expect(frame(page, 'plan').locator('.vb-region-note-pin, .vb-region-note-who')).toHaveCount(0);
+  await expect(block(page, 'plan')).toBeHidden();
   const lines = await linesAfter(page, before);
-  expect(lines.map((e) => [e.action, e.board, e.region, e.n, e.text])).toEqual([['comment', BOARD, 'plan', undefined, 'Is the plan in the right order?']]);
-  // Pressing Comment again opens that note to edit, with Remove: never a second note.
+  expect(lines.map((e) => [e.action, e.board, e.region, e.n, e.text])).toEqual([['comment', fx.board, 'plan', undefined, 'Is the plan in the right order?']]);
+  // Pressing Comment again opens that note to edit: never a second note.
   await comment(page, 'Plan').click();
   await expect(page.getByRole('dialog', { name: 'Edit note on container Plan' })).toBeVisible();
   await expect(text(page)).toHaveValue('Is the plan in the right order?');
   await text(page).fill('Is May realistic?');
   await page.keyboard.press('Enter');
-  await expect(frame(page, 'plan').locator('.vb-region-note-text')).toHaveText('Is May realistic?');
-  expect((await linesAfter(page, before)).map((e) => e.action)).toEqual(['comment', 'note-edit']);
-  // The pin opens it too; Remove takes it back.
-  await pin.click();
+  await expect(bubble(page)).toBeHidden();
+  // Hover shows the preview: the text, its state, Edit and Show in container (ruling 2).
+  await comment(page, 'Plan').hover();
+  await expect(preview(page, 'plan')).toBeVisible();
+  await expect(preview(page, 'plan').locator('.vb-note-pop-text')).toHaveText('Is May realistic?');
+  await expect(preview(page, 'plan').locator('.vb-note-state')).toHaveText('Unsent');
+  await expect(preview(page, 'plan').getByRole('button', { name: 'Show in container' })).toBeVisible();
+  // Edit opens the bubble; Remove there takes the note back.
+  await preview(page, 'plan').getByRole('button', { name: 'Edit' }).click();
+  await expect(page.getByRole('dialog', { name: 'Edit note on container Plan' })).toBeVisible();
   await bubble(page).getByRole('button', { name: 'Remove' }).click();
-  await expect(pin).toBeHidden();
-  await expect(frame(page, 'plan').locator('.vb-region-note')).toBeHidden();
+  await expect(frame(page, 'plan').locator('.vb-region-badge')).toBeHidden();
   expect((await linesAfter(page, before)).map((e) => e.action)).toEqual(['comment', 'note-edit', 'note-remove']);
 });
 
@@ -138,33 +78,93 @@ test('C or N with focus on the title line opens the container note; Esc cancels 
   expect(await head(page)).toBe(before);
 });
 
-test('after Send the container note is history: the pin reads it, and Comment starts note 2', async ({ page }) => {
+test('after Send the badge goes quiet and the preview opens the note read-only; the answer takes the badge away', async ({ page, request }) => {
   await openFrames(page);
+  const before = await head(page);
   await comment(page, 'Parked').click();
   await text(page).fill('Should this wait for v2?');
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Send to agent' }).click();
-  const pin = frame(page, 'parked').locator('.vb-region-note-pin');
-  await expect(pin).toHaveAttribute('data-sent', '');
-  await expect(frame(page, 'parked').locator('.vb-region-note-who')).toHaveText('Your note · Sent');
-  await pin.click();
+  await expect(frame(page, 'parked')).toHaveAttribute('data-badge', 'sent');
+  await expect(comment(page, 'Parked')).toHaveAccessibleName('Comment on container Parked, 1 sent note waiting for the agent');
+  await comment(page, 'Parked').hover();
+  await expect(preview(page, 'parked').locator('.vb-note-state')).toHaveText('Sent, waiting for the agent');
+  await preview(page, 'parked').getByRole('button', { name: 'Open' }).click();
   const read = page.getByRole('dialog', { name: 'Note 1 on container Parked, sent' });
   await expect(read).toBeVisible();
   await expect(read.locator('textarea')).toHaveCount(0);
   await read.getByRole('button', { name: 'Close' }).click();
+  // The agent answers: pendingItems no longer lists the container, so the badge goes.
+  const note = (await linesAfter(page, before)).find((e) => e.action === 'comment')!;
+  await agentWrite(request, [{ type: 'reply', n: fx.n.k1, text: 'Yes, after v2.', to: note.seq }]);
+  await expect(frame(page, 'parked').locator('.vb-region-badge')).toBeHidden();
+  await expect(comment(page, 'Parked')).toHaveAccessibleName('Comment on container Parked');
+  await expect(frame(page, 'parked')).toHaveAttribute('data-note-stage', 'answered');
+  // Comment starts note 2, bright again.
   await comment(page, 'Parked').click();
-  await expect(page.getByRole('dialog', { name: 'Note on container Parked' })).toBeVisible();
+  await expect(bubble(page)).toHaveAttribute('aria-label', 'Note on container Parked');
   await text(page).fill('One more thought.');
   await page.keyboard.press('Enter');
-  await expect(pin).toHaveText('2');
-  await expect(pin).not.toHaveAttribute('data-sent', '');
+  await expect(frame(page, 'parked')).toHaveAttribute('data-badge', 'unsent');
+});
+
+
+test('Show in container draws the note block above the cards and pushes the containers below down; Hide puts all back', async ({ page }) => {
+  await openFrames(page);
+  await comment(page, 'Plan').click();
+  await text(page).fill('Check the order before May.');
+  await page.keyboard.press('Enter');
+  await expect(frame(page, 'plan')).toHaveAttribute('data-badge', 'unsent');
+  await settled(page);
+  const [f0, c0, before] = [await frames(page), await boxOf(page, card(page, 'p1')), await head(page)];
+  // Keyboard focus on Comment opens the preview too (ruling 2).
+  await comment(page, 'Plan').focus();
+  await expect(preview(page, 'plan')).toBeVisible();
+  await preview(page, 'plan').getByRole('button', { name: 'Show in container' }).click();
+  await expect(block(page, 'plan')).toBeVisible();
+  await expect(block(page, 'plan').locator('.vb-nblock-text')).toHaveText('Check the order before May.');
+  await expect.poll(async () => (await boxOf(page, frame(page, 'plan'))).height).toBeGreaterThan(f0[0]!.height + 10);
+  await settled(page);
+  const [f1, c1] = [await frames(page), await boxOf(page, card(page, 'p1'))];
+  const grow = f1[0]!.height - f0[0]!.height;
+  // The cards start below the block; every container below Plan moved down to make room.
+  expect(Math.abs(c1.y - c0.y - grow)).toBeLessThan(2);
+  const below = REGIONS.map((_, i) => i).filter((i) => i > 0 && f0[i]!.y >= f0[0]!.y + f0[0]!.height - 1);
+  expect(below.length).toBeGreaterThan(0);
+  for (const i of below) expect(f1[i]!.y).toBeGreaterThan(f0[i]!.y);
+  // Page state only: nothing is written.
+  expect(await head(page)).toBe(before);
+  await comment(page, 'Plan').hover();
+  await preview(page, 'plan').getByRole('button', { name: 'Hide' }).click();
+  await expect(block(page, 'plan')).toBeHidden();
+  await expect.poll(() => frames(page)).toEqual(f0);
+  // Shown again, then reloaded: hidden (not in the ledger, ruling 3).
+  await comment(page, 'Plan').hover();
+  await preview(page, 'plan').getByRole('button', { name: 'Show in container' }).click();
+  await expect(block(page, 'plan')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('vb-node')).toHaveCount(7);
+  await expect(frame(page, 'plan')).toHaveAttribute('data-badge', 'unsent');
+  await expect(block(page, 'plan')).toBeHidden();
+  // The block's Remove takes the note back (unsent only).
+  await comment(page, 'Plan').hover();
+  await preview(page, 'plan').getByRole('button', { name: 'Show in container' }).click();
+  // The preview stays while focus is in it; Esc closes it, focus back on Comment.
+  await page.keyboard.press('Escape');
+  await expect(preview(page, 'plan')).toBeHidden();
+  await expect(comment(page, 'Plan')).toBeFocused();
+  await block(page, 'plan').getByRole('button', { name: 'Remove note on container Plan' }).click();
+  await expect(frame(page, 'plan').locator('.vb-region-badge')).toBeHidden();
+  await expect(block(page, 'plan')).toBeHidden();
+  expect((await linesAfter(page, before)).map((e) => [e.action, e.region])).toEqual([['note-remove', 'plan']]);
+  await expect.poll(() => frames(page)).toEqual(f0);
 });
 
 test('the grip moves the frame and its cards; the drop writes one container pin; Put container back undoes it', async ({ page }) => {
   await openFrames(page);
   const before = await head(page);
   const f0 = await boxOf(page, frame(page, 'risks'));
-  const c0 = await boxOf(page, card(page, 'Is the import too slow?'));
+  const c0 = await boxOf(page, card(page, 'r1'));
   const g = centre(await boxOf(page, grip(page, 'risks')));
   const d = { x: 0, y: Math.round(f0.height + 80) };
   await drag(page, g, { x: g.x + d.x, y: g.y + d.y }, async () => {
@@ -175,11 +175,11 @@ test('the grip moves the frame and its cards; the drop writes one container pin;
   await settled(page);
   await expect.poll(() => regionPins(page).then((p) => Object.keys(p))).toEqual(['risks']);
   const f1 = await boxOf(page, frame(page, 'risks'));
-  const c1 = await boxOf(page, card(page, 'Is the import too slow?'));
+  const c1 = await boxOf(page, card(page, 'r1'));
   expect([Math.round(f1.x - f0.x), Math.round(f1.y - f0.y)]).toEqual([0, d.y]);
   expect([Math.round(c1.x - c0.x), Math.round(c1.y - c0.y)]).toEqual([0, d.y]);
   const lines = await linesAfter(page, before);
-  expect(lines.map((e) => [e.action, e.board, e.region, e.n])).toEqual([['pin', BOARD, 'risks', undefined]]);
+  expect(lines.map((e) => [e.action, e.board, e.region, e.n])).toEqual([['pin', fx.board, 'risks', undefined]]);
   // The cog's Put container back writes unpin and returns it.
   await frame(page, 'risks').getByRole('button', { name: 'Settings for Risks' }).click();
   await frame(page, 'risks').getByRole('menuitem', { name: 'Put container back' }).click();

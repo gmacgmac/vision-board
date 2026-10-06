@@ -355,7 +355,7 @@ test('a container drag frame costs nothing; the drop repacks only; a container n
   const act = (body: object) => page.request.post(`${PERF_BASE}/api/boards/${BIG.board}/act`, { data: { type: 'act', board: BIG.board, region: regionId(1), ...body } });
   const note = await act({ action: 'comment', text: 'Is this container in the right place?' });
   expect(note.status(), await note.text()).toBe(201);
-  await expect(page.locator(`vb-region[data-region="${regionId(1)}"] .vb-region-note-pin`)).toHaveText('1');
+  await expect(page.locator(`vb-region[data-region="${regionId(1)}"]`)).toHaveAttribute('data-badge', 'unsent');
   const noted = await counts(page);
   expect([noted.cardsUpdated, noted.cardsMeasured, noted.cardsPlaced, noted.containersLaidOut, noted.linksRedrawn, noted.framesUpdated])
     .toEqual([0, 0, 0, 0, 0, 1]);

@@ -155,22 +155,27 @@ test('region: a narrow frame collapses the row to the checked icon, Comment and 
   }
 });
 
-test('region: the container samples (3_FE_04): grip, Comment and pin in each look, the note before and after Send, Put container back', async ({ page }) => {
+test('region: the container samples (3_FE_04): grip and Comment in each look, the badge, the note preview and block, Put container back', async ({ page }) => {
   const frame = (id: string) => page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
   for (const look of ['hover', 'focus', 'pressed'])
     await expect(frame(`c-${look}`).locator('.vb-region-grip'), look).toHaveAttribute('data-look', look);
   await expect(frame('c-hover').locator('.vb-region-comment')).toHaveAttribute('data-hover', '');
   for (const look of ['focus', 'pressed']) await expect(frame(`c-${look}`).locator('.vb-region-comment')).toHaveAttribute('data-look', look);
-  for (const look of ['hover', 'focus']) await expect(frame(`c-${look}`).locator('.vb-region-note-pin')).toHaveAttribute('data-look', look);
-  await expect(frame('c-rest').locator('.vb-region-note-pin')).toBeHidden();
-  await expect(frame('c-rest').locator('.vb-region-note')).toBeHidden();
-  const open = frame('c-open');
-  await expect(open).toHaveAttribute('data-note-open', '');
-  await expect(open.locator('.vb-region-note-pin')).toHaveAttribute('aria-expanded', 'true');
-  await expect(open.locator('.vb-region-note-who')).toHaveText('Your note');
+  // No pin or "Your note" line on the title line: Comment's badge "1", none with no note, bright
+  // while unsent, quiet once sent (step 4G ruling 1).
+  await expect(page.locator('section[data-pattern="region"] .vb-region-note-pin')).toHaveCount(0);
+  await expect(frame('c-rest').locator('.vb-region-badge')).toBeHidden();
+  await expect(frame('c-open')).toHaveAttribute('data-badge', 'unsent');
+  await expect(frame('c-open')).toHaveAttribute('data-note-open', '');
   const sent = frame('c-sent');
-  await expect(sent.locator('.vb-region-note-pin[data-sent]')).toHaveText('1');
-  await expect(sent.locator('.vb-region-note-who')).toHaveText('Your note · Sent');
+  await expect(sent).toHaveAttribute('data-badge', 'sent');
+  await expect(sent.locator('.vb-region-badge')).toBeVisible();
+  // The preview open on "Hover"; the note block shown on "Note sent", read-only.
+  await expect(frame('c-hover').locator('.vb-note-pop-text')).toHaveText('Is this group in the right order?');
+  await expect(frame('c-hover').locator('.vb-note-pop')).toBeVisible();
+  await expect(sent.locator('.vb-region-note-block .vb-nblock-text')).toHaveText('Should this wait for the next release?');
+  await expect(sent.locator('.vb-region-note-block')).toBeVisible();
+  await expect(sent.locator('.vb-region-note-block').getByRole('button', { name: /^(Edit|Remove)/ })).toHaveCount(0);
   await expect(frame('c-dragging')).toHaveAttribute('data-dragging', '');
   const back = (id: string) => frame(id).getByRole('menuitem', { name: 'Put container back' });
   await expect(back('c-rest')).toHaveAttribute('aria-disabled', 'true');

@@ -1,7 +1,8 @@
 // Gallery samples for notes on a whole container and moving containers (3_FE_04): the title
-// line's grip and Comment at rest, hovered, focused and pressed; the note pin and the "Your note"
-// line before and after a Send; Comment drawn open while the note bubble is up; a frame being
-// dragged; and the cog's Put container back disabled (never moved) and enabled (moved). Every
+// line's grip and Comment at rest, hovered, focused and pressed; Comment's badge with no note,
+// unsent and sent (step 4G ruling 1); the note preview open; the note block shown in the
+// container; Comment drawn open while the note bubble is up; a frame being dragged; and the cog's
+// Put container back disabled (never moved) and enabled (moved). Every
 // frame is a real <vb-region> updated with `regionState` from the fixture ledger's containers
 // board, exactly as the board does; a look the pointer or focus would give is drawn with
 // `data-look` (or the row's `data-hover`), since only one element can hold them for real.
@@ -18,17 +19,22 @@ interface Extra {
   menu?: true;
   noteOpen?: true;
   dragging?: true;
+  /** The note preview open under Comment (as hover or focus opens it). */
+  preview?: true;
+  /** The note block shown in the container (Show in container). */
+  shown?: true;
 }
 
 /** Keyed by region id on the containers board. */
 const EXTRA: Record<string, Extra> = {
   'c-rest': { menu: true },
-  'c-hover': { look: 'hover' },
+  'c-hover': { look: 'hover', preview: true },
   'c-focus': { look: 'focus' },
   'c-pressed': { look: 'pressed' },
   'c-open': { noteOpen: true },
   'c-moved': { menu: true },
   'c-dragging': { dragging: true },
+  'c-sent': { shown: true },
 };
 
 function lookOf(f: VbRegionElement, look: Look): void {
@@ -36,7 +42,6 @@ function lookOf(f: VbRegionElement, look: Look): void {
   const comment = f.querySelector('.vb-region-comment');
   if (look === 'hover') comment?.toggleAttribute('data-hover', true);
   else comment?.setAttribute('data-look', look);
-  if (look !== 'pressed') f.querySelector('.vb-region-note-pin:not([hidden])')?.setAttribute('data-look', look);
 }
 
 function frame(id: string, fx: Fixture): VbRegionElement {
@@ -49,6 +54,8 @@ function frame(id: string, fx: Fixture): VbRegionElement {
   if (extra.look) lookOf(f, extra.look);
   if (extra.noteOpen) f.setNoteOpen(true);
   if (extra.dragging) f.toggleAttribute('data-dragging', true);
+  if (extra.preview) f.toggleAttribute('data-preview', true);
+  if (extra.shown) f.noteShown = true;
   return f;
 }
 
@@ -59,8 +66,9 @@ export function containerSamples(body: HTMLElement, fx: Fixture): void {
   for (const f of drawn) if (EXTRA[f.dataset.region!]?.menu) f.showPanel('menu', { focus: false });
   body.append(group('Notes on a container, and moving it',
     'The grip at the start of the title line moves the container; Comment, beside the cog, opens its note. '
-    + '"Hover", "Focus" and "Pressed" draw the grip, Comment and the note pin in that look. A saved note shows as a '
-    + 'numbered pin and a "Your note" line; once sent, the pin is quiet and the line says Sent. "Note open" is how '
+    + '"Hover", "Focus" and "Pressed" draw the grip and Comment in that look. A note gives Comment a badge "1": '
+    + 'bright while unsent, quiet once sent. "Hover" has the note preview open; "Note sent" shows its note in the '
+    + 'container. "Note open" is how '
     + 'the title line looks while its bubble is up. The cog\'s menu is open on "At rest" (Put container back '
     + 'disabled: not moved) and on "Moved" (enabled).', frames));
 }

@@ -6,7 +6,8 @@
 // the whole container beside that line, by the same rules: one not yet sent, edit, Remove,
 // read-only after Send (3_FE_04 rulings 2 and 3). Every
 // write goes through the controller's `attempt`, so through the action layer and the I/O module
-// (rule 8); this module only opens, places and closes the bubble.
+// (rule 8); this module only opens, places and closes the bubble. Changed words are never lost
+// silently: closing or replacing a bubble with changed text asks first (note-discard.ts).
 import type { NoteKind, Region, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { BoardState, ItemNote } from '../../../../packages/actions/src/index.ts';
@@ -14,6 +15,8 @@ import type { BubbleMode, BubbleView, StageBox, VbNoteBubbleElement, VbRegionEle
 import { bubbleView, boxAround, placeBubble, regionColour, saveIntent, titleAnchor } from '../../../../packages/ui/src/index.ts';
 import type { NoteEventDetail } from '../../../../packages/ui/src/index.ts';
 import type { ActFields } from './io.ts';
+import type { AskDiscard } from './note-discard.ts';
+import { bindDiscard, mayLeave } from './note-discard.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface NoteDeps {
@@ -35,6 +38,8 @@ export interface NoteDeps {
   toast(text: string): void;
   /** The bubble opened or closed (the selection bar hides while it is open, 3_FE_02 ruling 2). */
   changed(): void;
+  /** "Discard your changes?" (step 4G ruling 4); true to discard. */
+  discard: AskDiscard;
 }
 
 export interface NoteFlow {
@@ -48,12 +53,12 @@ export interface NoteFlow {
   /** Comment on a container's title line (3_FE_04): edit its note not yet sent, or start one
    *  (`kind` sets what it asks for; default: the note's own, else a comment). */
   container(region: string, kind?: NoteKind): void;
-  /** The container's pin or its "Your note" line: open its latest note (read-only once sent). */
+  /** Edit (or Open) in the container's note preview or block: its latest note, read-only once sent. */
   showContainer(region: string): void;
   /** Follow the card after a pan, a zoom or a relayout (ruling 6: the controller calls it on
    * every one); close if the card is gone. */
   place(): void;
-  /** Close without saving; focus goes back to the card. */
+  /** Close without saving (with changed words, after asking); focus goes back to the card. */
   close(): void;
   /** Whether the bubble is open (Esc closes it before it clears the selection, 3_FE_01). */
   readonly open: boolean;
@@ -122,7 +127,14 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     return { v, on: { line: regionColour(r) } };
   }
 
+  /** Another bubble over one with changed words asks first (ruling 4); unchanged, it opens now. */
   function openWith(o: Open) {
+    const was = open;
+    if (!was || !bubble.dirty) return openNow(o);
+    void mayLeave(bubble, d.discard).then((ok) => { if (ok && open === was) openNow(o); });
+  }
+
+  function openNow(o: Open) {
     const view = o.region ? containerView(o) : cardView(o);
     if (!view) return;
     if (o.region) {
@@ -256,9 +268,16 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   bubble.addEventListener('vb-note', (e) => void onChoice(e));
+  // Esc or Cancel with changed words: the bubble stays open and asks; OK closes it.
+  bindDiscard(bubble, d.discard, () => close(), () => open);
 
   return {
-    press, group, show, container, showContainer, place, close: () => close(), destroy: () => bubble.remove(),
+    press, group, show, container, showContainer, place, destroy: () => bubble.remove(),
+    close: () => {
+      if (!bubble.dirty) return close();
+      const o = open;
+      void mayLeave(bubble, d.discard).then((ok) => { if (ok && open === o) close(); });
+    },
     get open() { return open !== null; },
   };
 }
