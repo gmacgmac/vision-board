@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-05 (ledger v6, moves)
+updated: 2026-10-07 (project stream, watch mode build event)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -241,10 +241,11 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
+| `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
-    items. `act`, `mark_seen` and `watch_board` are not agent operations (`x-agent: false`).
+    items. `act`, `mark_seen`, `watch_board` and `watch_project` are not agent operations (`x-agent: false`).
 42. `propose` and `park` are write items, not operations: one write tool with per-item answers
     is easier for an agent than three (fewer, task-shaped tools).
 43. `check_responses` keeps no state per caller: the caller passes the `head` it last saw. MCP
@@ -252,8 +253,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 44. OpenAPI shapes: `read_ledger`'s `application/jsonl` is complete content,
     `schema: { type: array, items: ledgerEvent }`; `watch_board` is `text/event-stream` with
     `itemSchema` describing an event whose `data` has `contentMediaType: application/json` and a
-    `contentSchema` of `{ seq }` (OpenAPI 3.2.1 § 4.14.4). Writes have no streaming form: the board
-    already draws each node as it is appended, through `watch_board`.
+    `contentSchema` of `{ seq }` (OpenAPI 3.2.1 § 4.14.4). `watch_project` is the same, and its
+    `itemSchema` is a `oneOf` of that `change` and a `build` event (`{ build }`), which the project
+    stream carries in watch mode only (79). Writes have no streaming form: the board already draws
+    each node as it is appended, through `watch_project` or `watch_board`.
 
 ## MCP (`packages/mcp`)
 
@@ -440,3 +443,21 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `openContainer { board, region, title, pending, note }` per container whose latest standing
     note has no answer yet (73), for the agents that may answer it. `items` and `pending` stay
     cards only.
+
+## The project stream and watch mode (BE_01, found in use)
+
+78. **The project stream** is `watch_project`, `GET /api/events`: the `change { seq }` events of
+    `watch_board` for every board in the project, `retry: 2000` first and a `: beat` comment every
+    20 s. It answers 200 on a project with no boards, so the page can wait for the first one.
+    `watch_board` is unchanged, for other clients. `openapi.json` `info.version` becomes 1.5.0; the
+    ledger format does not change.
+79. **Watch mode** is dev only: a server started with `VB_WATCH=1` watches `dist/`
+    (`server/build-watch.ts`) and the project stream also sends `build { build }`, once on every
+    connect and again whenever the id changes. The id is the server's start time plus the `mtime`
+    of `dist/index.html`, so a restart and a new page build both change it; a new one is sent only
+    once the folder has been quiet for 300 ms and `index.html` exists, so a page never reloads into
+    a half-written build. Without `VB_WATCH` nothing is watched and no `build` is ever sent. The
+    item schema is `api/sse-build.schema.json`.
+80. **Board heads in the fold.** `list_boards`' `seq`, each board's own last line, is kept by the
+    fold (`LedgerState.heads`, set in `applyEvent` through `eventBoard`) and read with `boardList`,
+    so the server and the page, which applies each line as it arrives, give the same number.

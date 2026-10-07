@@ -75,8 +75,8 @@ test('node: the other states are drawn', async ({ page }) => {
 
 test('region: each mode, the count, the empty message and no count; Later and a drop target (3_FE_03)', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
-  // Ten frames, then the eight container samples (3_FE_04) and the three container note states (step 4G).
-  await expect(frames).toHaveCount(21);
+  // Ten frames, the three long titles (FE_03), then the eight container samples (3_FE_04) and the three container note states (step 4G).
+  await expect(frames).toHaveCount(24);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'list']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
@@ -258,11 +258,12 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 
-  // With the agentAccess flag off (on by default), so its section is not in the full page
-  // (components.md § Feature flags); send-access.spec.ts has that section's own screenshots.
+  // With the agentAccess and wireLayers flags off (on by default), so their sections are not in the
+  // full page (components.md § Feature flags); send-access.spec.ts and wires.spec.ts have those
+  // sections' own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers');
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });

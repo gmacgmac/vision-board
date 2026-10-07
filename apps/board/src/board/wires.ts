@@ -3,6 +3,8 @@
 // connector whose path, label or look changed is written. A link's route changes when a box it
 // touches moved, or when a neighbour on the same side of a card moved its port. The SVG's children
 // stay in the order a full draw writes them: lanes, then connectors, then labels, each in link order.
+// With the wireLayers flag (D-032) the page puts this SVG behind frames and cards, and `top`, an SVG
+// above the cards, repeats the focused card's connectors.
 import type { BoardLayout, Route } from '../../../../packages/layout/src/index.ts';
 import { esc } from '../../../../packages/ui/src/index.ts';
 import { work } from './work.ts';
@@ -22,20 +24,26 @@ export interface Wires {
 
 const keyOf = (r: Route) => `${r.from}>${r.to}`;
 
-export function createWires(svg: SVGSVGElement): Wires {
+export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
   let groups: { lanes: SVGGElement; paths: SVGGElement; labels: SVGGElement } | null = null;
   let lanesSrc = '';
+  let topSrc = '';
   let size = '';
   const drawn = new Map<string, Drawn>();
 
   function frame() {
     svg.innerHTML = `<defs>${marker('arrow')}${marker('arrow-hot')}</defs><g class="vb-lanes"></g><g></g><g></g>`;
     const [lanes, paths, labels] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement];
-    lanesSrc = '';
+    lanesSrc = topSrc = '';
     size = '';
     drawn.clear();
     return { lanes, paths, labels };
   }
+
+  /** The focused card's connectors and labels, drawn again above the cards. */
+  const topOf = (routes: Route[]) => routes.map((r) =>
+    `<path class="vb-wire hot" d="${r.d}" marker-end="url(#arrow-hot)"/>`
+    + (r.label ? `<text class="vb-wire-label" x="${r.mid.x}" y="${r.mid.y - 6}" text-anchor="middle">${esc(r.label)}</text>` : '')).join('');
 
   function lanesOf(layout: BoardLayout): string {
     return layout.regions.flatMap((r) => (r.lanes ?? []).map((l, i) =>
@@ -62,6 +70,10 @@ export function createWires(svg: SVGSVGElement): Wires {
       const lanes = lanesOf(layout);
       if (lanes !== lanesSrc) groups.lanes.innerHTML = lanesSrc = lanes;
       const hot = (r: Route) => focus !== null && (r.from === focus || r.to === focus);
+      if (top) {
+        const src = topOf(layout.routes.filter(hot));
+        if (src !== topSrc) top.innerHTML = topSrc = src;
+      }
       const live = new Set(layout.routes.map(keyOf));
       for (const [key, d] of drawn) {
         if (live.has(key)) continue;
@@ -109,6 +121,7 @@ export function createWires(svg: SVGSVGElement): Wires {
     clear() {
       groups = null;
       svg.innerHTML = '';
+      if (top) top.innerHTML = topSrc = '';
       drawn.clear();
     },
   };

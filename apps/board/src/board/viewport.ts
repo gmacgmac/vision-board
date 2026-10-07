@@ -6,6 +6,9 @@ const MAX_K = 2.5;
 /** The zoom below which the stage is "far" (data-zoom="far"), the one place it is set. */
 export const FAR_K = 0.75;
 
+/** Where the view is: the pan (`x`, `y`, screen px) and the zoom (`k`). */
+export interface ViewSnapshot { x: number; y: number; k: number }
+
 export class Viewport {
   x = 0;
   y = 0;
@@ -49,6 +52,18 @@ export class Viewport {
     this.k = Math.min(MAX_K, Math.max(MIN_K, this.k * factor));
     this.x = clientX - r.left - p.x * this.k;
     this.y = clientY - r.top - p.y * this.k;
+    this.apply();
+  }
+
+  snapshot(): ViewSnapshot {
+    return { x: this.x, y: this.y, k: this.k };
+  }
+
+  /** Go back to a view `snapshot` returned; the zoom is clamped to what the board allows. */
+  restore(v: ViewSnapshot): void {
+    this.k = Math.min(MAX_K, Math.max(MIN_K, v.k));
+    this.x = v.x;
+    this.y = v.y;
     this.apply();
   }
 

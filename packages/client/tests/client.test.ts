@@ -126,3 +126,27 @@ test('watch: parsed data per named event, onOpen on every (re)connect, and a sto
     g.EventSource = saved;
   }
 });
+
+test('watch: several named events on one stream, each with its name', () => {
+  class FakeSource extends EventTarget {
+    static last: FakeSource;
+    url: string;
+    constructor(url: string) { super(); this.url = url; FakeSource.last = this; }
+    close() { /* nothing to close */ }
+  }
+  const g = globalThis as { EventSource?: unknown };
+  const saved = g.EventSource;
+  g.EventSource = FakeSource;
+  try {
+    const seen: [unknown, string][] = [];
+    createClient({ base: BASE }).watch('watch_project', {}, ['change', 'build'], (d, name) => seen.push([d, name]));
+    const es = FakeSource.last;
+    assert.equal(es.url, `${BASE}/api/events`);
+    es.dispatchEvent(Object.assign(new Event('build'), { data: '{"build":"a-1"}' }));
+    es.dispatchEvent(Object.assign(new Event('change'), { data: '{"seq":3}' }));
+    es.dispatchEvent(Object.assign(new Event('other'), { data: '{}' }));
+    assert.deepEqual(seen, [[{ build: 'a-1' }, 'build'], [{ seq: 3 }, 'change']]);
+  } finally {
+    g.EventSource = saved;
+  }
+});

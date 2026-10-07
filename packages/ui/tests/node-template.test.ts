@@ -71,9 +71,11 @@ test('notesMarkup: the count, then each note latest first with its seq, sent one
     ],
     pin: { seq: 9, index: 2, sent: false, label: 'Note 2 on item 1. Edit it' },
   });
-  assert.match(html, /^<span class="vb-node-notes-count">2 notes<\/span><div class="vb-node-note" data-note="9"><span class="vb-node-note-who">Your note 2<\/span>/);
+  assert.match(html, /^<span class="vb-node-notes-count">2 notes<\/span><div class="vb-node-note" data-note="9" tabindex="0"><span class="vb-node-note-who">Your note 2<\/span>/);
   assert.match(html, /<strong>the date<\/strong> &#60;b&#62;/);
-  assert.match(html, /<div class="vb-node-note" data-note="4" data-sent><span class="vb-node-note-who">Your note 1 · Sent<\/span>/);
+  assert.match(html, /<div class="vb-node-note" data-note="4" data-sent tabindex="0"><span class="vb-node-note-who">Your note 1 · Sent<\/span>/);
+  // The full note again as a tip, hidden from screen readers (they read the note itself).
+  assert.ok(html.includes('<div class="vb-tip vb-note-tip" aria-hidden="true"><p class="vb-md-p">First</p></div></div>'));
   assert.ok(html.indexOf('data-note="9"') < html.indexOf('data-note="4"'));
 });
 

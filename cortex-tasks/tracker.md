@@ -3,7 +3,7 @@ category: project-docs
 type: tracker
 status: active
 created: 2026-09-30
-last_updated: 2026-10-02
+last_updated: 2026-10-06
 scope: The live queue for Vision Board, from founding rules to a board any agent session can use
 keywords: [tracker, queue, roadmap]
 ---
@@ -54,7 +54,7 @@ keywords: [tracker, queue, roadmap]
 1. Read `.kiro/steering/vision-board-proj.md` (the rules) and `docs/principles.md` (why).
 2. Replies are one numbered list whose numbers keep counting across headings, short enough to
    answer "1 ok, 4 skip". Long replies go on the board (`sessions/<id>/view-vN.json`).
-3. Use Node 22.23.1 (`~/.nvm/versions/node/v22.23.1/bin`), never `/usr/local/bin/node` (W1).
+3. Use Node 22.18 or newer, which runs the `.ts` files directly (`/usr/local/bin/node` is 24.14).
 4. Verify by running `npm test` and reading the exit code yourself, and look at UI changes in a
    browser before reporting them done.
 5. Protected files (steering, `AGENTS.md`, `CLAUDE.md`, decisions, principles, tokens) change only
@@ -89,7 +89,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N1 | Contrast gate for the three APCA tiers | **Problem:** token colours are hand-picked and unchecked. **Example:** `packages/tokens/src/tokens.css` TODO. **Solution:** port Studio's contrast check, tiered per D-009. | HANDOVER gap 13 |
 | N2 | JSON Schema for the view and transcript | **Problem:** rule 6 needs versioned schemas, and today it's a TypeScript validator only. **Example:** `packages/format/src/validate.ts`. **Solution:** schema files, with docs generated from them. Done as U4 step 1 (D-022). | Rule 6 |
 | N5 | Install Prettier | **Problem:** D-007 names Prettier as the formatter, and it isn't installed. **Example:** D-014 lists five packages, Prettier isn't one. **Solution:** pin it, add it to `dependencies.md`, add a `format` check to `verify`. | D-007 |
-| N9 | Board settings instead of address flags | **Problem:** feature flags are switched by adding `?flags=` to the address, which a person won't know or remember. **Example:** card sizes need `?flags=nodeSize`. **Solution:** a settings panel on the board for flags and board preferences, saved per person; design to be discussed. | Maintainer, 2026-10-05 |
+| N9 | Board settings instead of address flags | **Problem:** feature flags are switched by adding `?flags=` to the address, which a person won't know or remember. **Example:** card sizes need `?flags=nodeSize`. **Solution:** a settings panel on the board for flags and board preferences, saved per person; design to be discussed. Include two switches from D-032: hide the dot grid, and a very light blur behind cards (off by default). | Maintainer, 2026-10-05 |
 | N10 | Size control crowds the card's top-right corner | **Problem:** the S/M/L control (D-030, option A) and the note pin share the card's top-right border, so it looks bunched. **Example:** a card with a note on `?flags=nodeSize`. **Solution:** unknown; review the control's place by eye once notes beside cards (2e) are in. | Maintainer, 2026-10-05 |
 | N11 | The person edits a card's text | **Problem:** only the agent can change a card's text; the person can only ask for a change in a note. **Example:** fixing a wrong word in a finding without a round trip. **Solution:** a person edit becomes a new version of the node in the ledger (D-017, D-018), shown like any other version; design to be discussed. Notes stay append-only: an edited note shows its latest text, earlier text kept in history (chat 664). When the agent next reads the board, the change must reach it wrapped in a short message saying what the person changed and from which version; the agent skill (rule 17) explains how to treat it (chat 718). | Maintainer, 2026-10-05 |
 | N12 | Performance budgets enforced | **Problem:** rule 15's budgets are mostly unchecked, and the page re-fetches and re-measures the whole board on every change. **Example:** `controller.ts` `watch` calls `openBoard`; `relayout` measures every card. **Solution:** `docs/specification/performance.md`: incremental updates, per-container layout, measure only changed cards, skip off-screen cards, ledger checkpoint; **Built 2026-10-05 (N12_FE_01): incremental updates, per-container layout, counting and timing tests; follow-up N15.** a 1,000-card page test, a page test that changes 50 cards (and 1) and counts that only those cards and their containers were redrawn, and a page-weight check, before Stage 3. | Maintainer, 2026-10-05 |
@@ -129,5 +129,4 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 
 | ID | Shortcut | Why taken | How it ends |
 |---|---|---|---|
-| W1 | Agents put the nvm Node 22.23.1 path first on every command | `/usr/local/bin/node` is 22.14 from the nodejs.org installer and can't run `.ts` | Maintainer removes the old install (sudo commands in chat, 2026-10-01) |
 | W3 | Board replies pasted into chat | No `vb wait` or chat panel yet | Board v3 Stages 4 and 6 |

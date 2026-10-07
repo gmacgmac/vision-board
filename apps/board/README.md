@@ -51,4 +51,6 @@ roadmap fixture ledger, and the performance budgets on port 4469 from a generate
   (serves `temp/demo`, seeded once from the roadmap fixture ledger), then open
   http://localhost:4466. `VB_PROJECT` picks the project folder; `VB_SEED` names a ledger copied
   in when the project has none yet.
-  `npm run watch` rebuilds on change; reload the page. `npm run check` type-checks `src/`.
+  `npm run board:watch` is for working on the board: it rebuilds the page on save, restarts the
+  server only when server code changes, and reloads the open page with its view kept (dev only;
+  `npm run board` never reloads). `npm run watch` alone only rebuilds. `npm run check` type-checks `src/`.

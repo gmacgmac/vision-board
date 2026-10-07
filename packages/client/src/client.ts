@@ -143,9 +143,10 @@ export interface Client {
   call<T = unknown>(id: OperationId, input?: CallInput, opts?: CallOptions): Promise<T>;
   /** The URL an operation lives at, for what `fetch` cannot hold open (EventSource). */
   url(id: OperationId, input?: CallInput): string;
-  /** Listen to a server-sent-events operation (`watch_board`) in the browser. Returns a stop.
-   * `onOpen` runs each time the stream (re)connects, so a reader can catch up on what it missed. */
-  watch(id: OperationId, input: CallInput, event: string, on: (data: unknown) => void, onOpen?: () => void): () => void;
+  /** Listen to a server-sent-events operation (`watch_board`, `watch_project`) in the browser.
+   * `on` gets each named event's parsed data and its name. Returns a stop. `onOpen` runs each time
+   * the stream (re)connects, so a reader can catch up on what it missed. */
+  watch(id: OperationId, input: CallInput, event: string | readonly string[], on: (data: unknown, event: string) => void, onOpen?: () => void): () => void;
 }
 
 export function createClient(opts: ClientOptions = {}): Client {
@@ -168,9 +169,13 @@ export function createClient(opts: ClientOptions = {}): Client {
       if (!Source) throw new Error('watch needs EventSource (a browser)');
       const es = new Source(urlFor(base, id, input));
       if (onOpen) es.addEventListener('open', () => onOpen());
-      es.addEventListener(event, (e) => {
-        try { on(JSON.parse((e as MessageEvent<string>).data)); } catch { /* not JSON: ignored */ }
-      });
+      for (const name of typeof event === 'string' ? [event] : event) {
+        es.addEventListener(name, (e) => {
+          let data: unknown;
+          try { data = JSON.parse((e as MessageEvent<string>).data); } catch { return; /* not JSON: ignored */ }
+          on(data, name);
+        });
+      }
       return () => es.close();
     },
   };

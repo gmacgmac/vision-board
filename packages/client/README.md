@@ -8,7 +8,8 @@ body, every other named input goes in the query string, and a secret is sent as
 `Authorization: Bearer`. A problem answer is thrown as `ApiProblem` (`code`, `status`, `detail`,
 `errors`, and `ver`/`board`/`region` when sent). A missing path parameter is refused before any
 request. `read_ledger` with `{ accept: 'application/jsonl' }` returns a list. `url()` and
-`watch()` cover server-sent events in the browser. Works in the browser and in Node 22.
+`watch()` cover server-sent events in the browser (one stream, one or several named events,
+each handed on with its name). Works in the browser and in Node 22.
 
 - **Depends on**: `packages/format`.
 - **Used by**: `apps/board` (`src/board/io.ts`), `packages/cli` and `packages/mcp`.

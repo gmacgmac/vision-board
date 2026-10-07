@@ -12,6 +12,7 @@ import type { OperationId } from '../../../packages/format/src/index.ts';
 import type { CallInput, CallOptions, Client } from '../../../packages/client/src/index.ts';
 import { ApiProblem, createClient } from '../../../packages/client/src/index.ts';
 import { createBoardServer } from '../server/app.ts';
+import { watchBuild } from '../server/build-watch.ts';
 import type { Caller, Ledger } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Answer } from './openapi-ajv.ts';
@@ -51,6 +52,8 @@ function seedMore(ledger: Ledger): Seeded {
 
 export interface Harness {
   base: string;
+  /** The page folder the server serves (a temporary one holding only `index.html`). */
+  dist: string;
   /** No credentials: what a read needs. */
   client: Client;
   /** The board page: it sends the person cookie the server set with the page. */
@@ -86,7 +89,8 @@ async function parsed(res: Response, media: string): Promise<unknown> {
   return text ? JSON.parse(text) : undefined;
 }
 
-export async function startBoard(): Promise<Harness> {
+/** `watch`: as `VB_WATCH=1`, the server watches `dist` and sends `build` on `watch_project`. */
+export async function startBoard({ watch = false } = {}): Promise<Harness> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-api-'));
   const file = ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -96,7 +100,8 @@ export async function startBoard(): Promise<Harness> {
   fs.writeFileSync(path.join(dist, 'index.html'), '<!doctype html><title>Board</title>\n');
   const ledger = openLedger(file, () => {});
   const seeded = seedMore(ledger);
-  const server = createBoardServer({ ledger, dist });
+  const build = watch ? watchBuild(dist) : undefined;
+  const server = createBoardServer({ ledger, dist, build });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
@@ -114,7 +119,7 @@ export async function startBoard(): Promise<Harness> {
   const agent = (secret: string) => createClient({ base, secret, fetch: recording() });
   const pick = (id: OperationId, as?: Client) => as ?? (PERSON_OPS.has(id) ? person : client);
   const h: Harness = {
-    base, client, person, cookie, ledger, seeded, agent,
+    base, dist, client, person, cookie, ledger, seeded, agent,
     last: () => last ?? assert.fail('no answer yet'),
     async join(label) {
       const r = await h.ok<{ agent: string; secret: string }>('join', { body: { label } });
@@ -135,6 +140,7 @@ export async function startBoard(): Promise<Harness> {
       return assert.fail(`${id} answered ${h.last().status}, not ${status} ${code}`);
     },
     close: () => new Promise<void>((resolve) => {
+      build?.close();
       server.closeAllConnections();
       server.close(() => { fs.rmSync(dir, { recursive: true, force: true }); resolve(); });
     }),

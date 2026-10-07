@@ -35,6 +35,7 @@
   --vb-card-w-s: 280px;
   --vb-card-w-m: 360px;
   --vb-card-w-l: 464px;
+  --vb-card-fill: 70%; /* How opaque a card is, so a connector behind it shows through (D-032). */
   --vb-toolbar-h: 52px;
   --vb-focus-w: 2px;
   --vb-wire-w: 1.6px;

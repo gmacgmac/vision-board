@@ -14,6 +14,7 @@
     "board": "npm run build && node apps/board/server.ts",
     "serve": "node apps/board/server.ts",
     "dev": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
+    "board:watch": "node scripts/board-watch.mjs",
     "watch": "npm run build --workspace apps/board -- --watch",
     "check": "npm run check --workspace apps/board && tsc -p tsconfig.json",
     "validate": "node apps/board/bin/validate.ts",

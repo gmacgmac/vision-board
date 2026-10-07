@@ -27,6 +27,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Patterns are placed by the board page (position: absolute, transform). Here they flow. */
 .g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-3); }
 .g-cards vb-node, .g-frames vb-region { position: relative; }
+/* A card with its note preview open: room to its right for the box (a card's width and its reach) and below it for the box, which is taller than a short card. */
+.g-tips { gap: var(--vb-space-5) calc(var(--vb-card-w) + var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 3); }
 /* The frames sit on the board's dot-grid canvas (.vb-ground). The top line straddles each frame's
    border, so the group leaves room above; a frame draws no cards, so it has a set height. */
 .g-frames { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5); border-radius: var(--vb-radius-lg); }
@@ -39,6 +41,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* An open popover is an overlay that reaches past its frame; here it gets room of its own so it
    does not cover the next sample. */
 .g-frames vb-region[data-open='modes'] { margin-bottom: calc(var(--vb-space-6) * 3); }
+/* The long-title sample on a narrow frame; an open title tip gets room of its own as well. */
+.g-frames vb-region[data-region='title-wide'] { width: calc(var(--vb-card-w) * 2.4); }
+.g-frames vb-region[data-region='title-narrow'] { width: calc(var(--vb-card-w) * 1.4); }
+.g-frames vb-region[data-title-tip-open] { margin-bottom: calc(var(--vb-space-6) * 2); }
 /* So does an open note preview (the "Hover" and "Focus" container samples). */
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
 
@@ -75,3 +81,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-bubble { margin: 0; display: flex; flex-direction: column; gap: var(--vb-space-1); }
 .g-bubble .g-note { margin: 0; }
 .g-bubble-stage { position: relative; border-radius: var(--vb-radius-lg); }
+
+/* See-through cards sample (wireLayers flag): a stage that takes the board's .vb-world rules
+   (board.css) but flows in the page. The connector layer sits at z-index -1, so the stage makes
+   its own stacking context to keep it above the stage's own canvas. */
+.g-wire-stage.vb-world { position: relative; isolation: isolate; width: calc(var(--vb-card-w) * 3); height: calc(var(--vb-space-6) * 11); border-radius: var(--vb-radius-lg); }

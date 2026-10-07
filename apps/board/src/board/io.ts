@@ -7,8 +7,6 @@ import type { ActEvent, ActionId, ActSize, LedgerEvent, Mode, NoteKind, View } f
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 
-export interface BoardSummary { id: string; title: string; seq: number }
-
 /** One board as the page draws it. `versions`: node id -> latest `ver`, sent back with an act;
  * `head`: the ledger's latest `seq`; `access`: open grant requests and each region's holders. */
 export interface BoardData { head: number; view: View; state: BoardState; versions: Record<string, number>; access: BoardAccess }
@@ -59,11 +57,6 @@ async function call<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function listBoards(): Promise<BoardSummary[]> {
-  const r = await call(() => client.call<{ boards: { board: string; title: string; seq: number }[] }>('list_boards'));
-  return r.boards.map((b) => ({ id: b.board, title: b.title, seq: b.seq }));
-}
-
 /** The most lines one `read_ledger` call returns (api.md 31). */
 const PAGE = 500;
 
@@ -103,8 +96,21 @@ export const sendAct = (id: string, fields: ActFields) =>
     board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
-/** Calls back with the new line's `seq` whenever the project ledger gains one (the agent drew, or
- * another tab acted), and `onOpen` each time the stream (re)connects. */
-export function watchBoard(id: string, onChange: (seq: number) => void, onOpen: () => void): () => void {
-  return client.watch('watch_board', { board: id }, 'change', (d) => onChange(Number((d as { seq?: unknown }).seq)), onOpen);
+/** What the project's live stream reports (`watch_project`, api.md 78-80). */
+export interface ProjectEvents {
+  /** The project ledger gained line `seq` (the agent drew, or another tab acted). */
+  change(seq: number): void;
+  /** The built page's id; sent only by a server in watch mode, on connect and on every rebuild. */
+  build(id: string): void;
+  /** The stream (re)connected. */
+  open(): void;
+}
+
+/** Follow the whole project, boards or none; a stop function. */
+export function watchProject(on: ProjectEvents): () => void {
+  return client.watch('watch_project', {}, ['change', 'build'], (d, event) => {
+    const data = d as { seq?: unknown; build?: unknown };
+    if (event === 'change') on.change(Number(data.seq));
+    else if (typeof data.build === 'string') on.build(data.build);
+  }, () => on.open());
 }

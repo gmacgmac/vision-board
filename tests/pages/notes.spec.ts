@@ -96,6 +96,11 @@ test('the pin and the note block open the note; Remove takes it back', async ({ 
   await expect(page.getByRole('dialog', { name: 'Edit note on 5' })).toBeVisible();
   await expect(card(page, 5).locator('.vb-note-pin')).toHaveAttribute('aria-expanded', 'true');
   await page.keyboard.press('Escape');
+  // The note is a tab stop too (FE_04): Enter on it opens the bubble, as a click does.
+  await card(page, 5).locator('.vb-node-note').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('dialog', { name: 'Edit note on 5' })).toBeVisible();
+  await page.keyboard.press('Escape');
   await card(page, 5).locator('.vb-node-note').click();
   await expect(page.getByRole('dialog', { name: 'Edit note on 5' })).toBeVisible();
   // Empty text on Save keeps the note: only Remove removes it (ruling 6).

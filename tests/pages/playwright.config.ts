@@ -12,19 +12,21 @@
 // A second server (PERF_PORT, one above) serves the performance fixture (perf-ledger.ts: a
 // 1,000-card board and a mixed one) the same way, for perf.spec.ts, so the budgets never share a
 // ledger with the other tests. It serves the page the first server built: Playwright starts the
-// servers one after the other, in this order.
+// servers one after the other, in this order. A third (EMPTY_PORT, two above) serves an empty
+// project, no seed, for live-boards.spec.ts: the page waits there for the first board drawn.
 // Screenshots are kept in tests/pages/__screenshots__/; update them on purpose with:
 // npm run test:pages -- --update-snapshots
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
-import { PERF_PORT } from './perf-server.ts';
+import { EMPTY_PORT, PERF_PORT } from './perf-server.ts';
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${PORT}`);
 const PERF_PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${PERF_PORT}`);
+const EMPTY_PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${EMPTY_PORT}`);
 const serve = (start: string) => [
   'rm -rf "$VB_PROJECT"',
   'trap "rm -rf $VB_PROJECT; exit 0" TERM INT EXIT',
@@ -32,6 +34,7 @@ const serve = (start: string) => [
 ].join('; ');
 const SERVE = serve('npm run build && node apps/board/server.ts');
 const SERVE_PERF = serve('node tests/pages/perf-ledger.ts "$VB_SEED" && node apps/board/server.ts');
+const SERVE_EMPTY = serve('node apps/board/server.ts');
 const env = process.env as Record<string, string>;
 
 export default defineConfig({
@@ -51,6 +54,9 @@ export default defineConfig({
     reducedMotion: 'reduce',
     viewport: { width: 1600, height: 1000 },
     trace: 'retain-on-failure',
+    // No network beyond the local servers (rule 18): every other host fails to resolve, so the
+    // test browser can't reach Google's services or anything a page might call by mistake.
+    launchOptions: { args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } } }],
   webServer: [{
@@ -72,6 +78,14 @@ export default defineConfig({
     reuseExistingServer: false,
     cwd: ROOT,
     env: { ...env, VB_PORT: String(PERF_PORT), VB_PROJECT: PERF_PROJECT, VB_SEED: path.join(PERF_PROJECT, 'seed.ledger.jsonl') },
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
+    timeout: 60_000,
+  }, {
+    command: `sh -c '${SERVE_EMPTY}'`,
+    url: `http://127.0.0.1:${EMPTY_PORT}/api/boards`,
+    reuseExistingServer: false,
+    cwd: ROOT,
+    env: { ...env, VB_PORT: String(EMPTY_PORT), VB_PROJECT: EMPTY_PROJECT },
     gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
     timeout: 60_000,
   }],

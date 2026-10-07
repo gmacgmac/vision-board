@@ -1,16 +1,15 @@
 // The board controller: holds the project ledger state (live.ts), works the open board out from it
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
-// one wire them to the canvas: focus.ts (navigation), wiring.ts (input), item-acts.ts (a card's
-// review buttons), access-flow.ts (agent access), notes.ts (note bubbles), region-notes.ts (a
-// container's note preview and block), selection.ts and
-// selection-flow.ts (the selection, the lasso, the bar and the view commands), places.ts (pins,
-// modes, sizes), moves.ts (containers, Later, Move to) and sender.ts (sending acts). Plain
-// TypeScript (D-005): the Svelte shell mounts it on the stage and reads what it reports via `shell`.
-import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
+// one wire them to the canvas: boards.ts (boot, the picker, the kept view), focus.ts (navigation),
+// wiring.ts (input), item-acts.ts (a card's review buttons), access-flow.ts (agent access), notes.ts
+// (note bubbles), region-notes.ts (a container's note preview and block), selection.ts and
+// selection-flow.ts (the selection, the lasso, the bar, the view commands), places.ts (pins, modes,
+// sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts). Plain TypeScript (D-005):
+// the Svelte shell mounts it on the stage and reads what it reports via `shell`.
+import type { LedgerEvent, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { BoardData } from './io.ts';
 import { ApiError } from './io.ts';
 import { createBoards } from './boards.ts';
@@ -63,6 +62,9 @@ export function createBoard(els: BoardElements): Board {
   /** Grant requests, holders and Send (D-027), behind the agentAccess flag (rule 12). */
   const access = flagOn('agentAccess', pageFlags());
   shell.agentAccess = access;
+  const layers = flagOn('wireLayers', pageFlags()); // connectors behind frames and cards (D-032, rule 12)
+  world.toggleAttribute('data-wire-layers', layers);
+  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
 
   const S = {
     id: '',
@@ -90,7 +92,7 @@ export function createBoard(els: BoardElements): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, vp, sizing, access, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, vp, sizing, access, layers, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => owedRegions(live.state!, S.id),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
@@ -113,6 +115,7 @@ export function createBoard(els: BoardElements): Board {
     if (full) S.fresh = true;
     else if (S.id && drewOn(live.state!, lines, S.id)) S.drew = true;
     if (!S.frame) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
+    boards.listed();
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
@@ -184,6 +187,7 @@ export function createBoard(els: BoardElements): Board {
     notes.place();
     flow.place();
     drawing.viewMoved();
+    boards.moved();
   };
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
@@ -265,13 +269,11 @@ export function createBoard(els: BoardElements): Board {
   /** Boot, and switching boards (boards.ts). */
   const boards = createBoards({
     live, vp, selection, id: () => S.id, setId: (id) => { S.id = id; }, redraw, layout: () => drawing.layout, fail,
+    keepView: flagOn('keepView', pageFlags()), // the view kept across a reload (FE_02 ruling 5, rule 12)
   });
 
   exposeWork({
-    async rebuild() {
-      await live.load();
-      redraw(true);
-    },
+    async rebuild() { await live.load(); redraw(true); },
     async idle() {
       await sender.idle();
       await live.sync();

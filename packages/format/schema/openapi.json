@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -1170,6 +1170,64 @@
           }
         }
       }
+    },
+    "/api/events": {
+      "get": {
+        "operationId": "watch_project",
+        "x-agent": false,
+        "summary": "Watch the project for changes",
+        "description": "Stream a `change` event with `{ seq }`, the new ledger position, each time anything is appended to the ledger, for every board in the project. It answers on a project with no boards yet, so a client can wait for the first one. When the server runs in watch mode it also sends a `build` event with `{ build }` once on connect and again whenever the page is rebuilt or the server restarts; a client reloads when the value changes. Only the board page uses it; agents call `check_responses` with `wait` instead. The connection stays open until the client closes it.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A stream of server-sent events.",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/sseChange"
+                    },
+                    {
+                      "$ref": "#/components/schemas/sseBuild"
+                    }
+                  ]
+                },
+                "examples": {
+                  "change": {
+                    "summary": "The ledger reached line 53",
+                    "dataValue": {
+                      "event": "change",
+                      "data": "{\"seq\":53}"
+                    },
+                    "serializedValue": "event: change\ndata: {\"seq\":53}\n\n"
+                  },
+                  "build": {
+                    "summary": "The page being served (watch mode only)",
+                    "dataValue": {
+                      "event": "build",
+                      "data": "{\"build\":\"mgfx0k2a-mgfx3n7q\"}"
+                    },
+                    "serializedValue": "event: build\ndata: {\"build\":\"mgfx0k2a-mgfx3n7q\"}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1239,6 +1297,9 @@
       },
       "sseChange": {
         "$ref": "https://vision-board.invalid/schema/api/sse-change.schema.json"
+      },
+      "sseBuild": {
+        "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
         "$ref": "https://vision-board.invalid/schema/ledger/7/events/board.schema.json#/$defs/stored"

@@ -12,6 +12,7 @@ import type { ModeRow, RegionOpen } from './region-row.ts';
 import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
+import { bindTitleTip } from './region-title.ts';
 import { holdersTemplate, regionIds, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
 
@@ -51,9 +52,11 @@ export function defineVbRegion(): void {
     private holdersKey = '';
     private readonly row: ModeRow = bindModeRow(this);
     private readonly note: NoteParts = bindNoteParts(this);
+    private readonly titleTip = bindTitleTip(this);
 
     render(r: Region, opts: RegionFrameOptions = {}): void {
       this.row.close();
+      this.titleTip.close();
       this.dataset.region = r.id;
       this.toggleAttribute('data-fixed', opts.fixed === true);
       this.setAttribute('role', 'region');

@@ -1,0 +1,13 @@
+/* A hover tip's box (packages/ui/src/tip/hover-tip.ts): the full text of something a pattern had to
+   cut, in a small raised box under its anchor. Tokens only. The pattern's own CSS places it (top,
+   left or right on the positioned parent) and shows it (display: block) while the attribute the
+   helper sets is on; the bridge above it keeps the pointer inside while it crosses the gap
+   (WCAG 1.4.13: hoverable). z 4 draws it above a pattern's own buttons (the region's mode row is z 3). */
+.vb-tip {
+  display: none; position: absolute; z-index: 4; width: max-content; max-width: min(var(--vb-card-w), 80vw);
+  padding: var(--vb-space-1) var(--vb-space-3); border-radius: var(--vb-radius-md); cursor: default;
+  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+  font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); line-height: 1.4; color: var(--vb-ink-strong);
+  overflow-wrap: anywhere; text-align: left; text-transform: none; letter-spacing: normal;
+}
+.vb-tip::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }

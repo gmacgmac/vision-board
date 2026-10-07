@@ -26,9 +26,10 @@ export const lanes: ModeFn = ({ region, nodes, links, sizes }) => {
       const l = layers.get(n.id)!;
       const at = stackH.get(l) ?? 0;
       pos.set(n.id, { x: xs[l]!, y: y + GAP / 2 + at, ...s });
-      stackH.set(l, at + s.h + GAP / 2);
+      stackH.set(l, at + s.h + GAP);
     }
-    const h = Math.max(64, ...stackH.values()) + GAP / 2;
+    // The lane's padding stays GAP / 2 above and below; only the stack's own steps grew to GAP.
+    const h = Math.max(64, ...[...stackH.values()].map((v) => v - GAP / 2)) + GAP / 2;
     out.push({ name, y, h });
     y += h;
   }

@@ -55,7 +55,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.4.0');
+  assert.equal(doc.info.version, '1.5.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });
@@ -212,9 +212,11 @@ test('every example validates against its schema, and every request and success 
 test('the serialized examples say the same as the data: jsonl lines and the server-sent event', () => {
   const ledger = doc.paths['/api/ledger'].get.responses['200'].content['application/jsonl'].examples.lines;
   assert.deepEqual(ledger.serializedValue.trim().split('\n').map((l: string) => JSON.parse(l)), ledger.dataValue);
-  const sse = doc.paths['/api/boards/{board}/events'].get.responses['200'].content['text/event-stream'].examples.change;
-  const fields = Object.fromEntries(sse.serializedValue.trim().split('\n').map((l: string) => l.split(': ')));
-  assert.deepEqual(fields, sse.dataValue);
+  const streams = ['/api/boards/{board}/events', '/api/events'].map((p) => doc.paths[p].get.responses['200'].content['text/event-stream']);
+  for (const sse of streams.flatMap((s) => Object.values<Rec>(s.examples))) {
+    const fields = Object.fromEntries(sse.serializedValue.trim().split('\n').map((l: string) => l.split(': ')));
+    assert.deepEqual(fields, sse.dataValue);
+  }
 });
 
 // ---- 5. The document and api.md say the same (api.md 52, 56) ----

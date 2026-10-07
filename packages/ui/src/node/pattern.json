@@ -8,9 +8,10 @@
     "template": "node-template.ts (nodeTemplate: the only place the markup is built)",
     "icons": "node-icons.ts (KIND_ICON per kind, ACTION_ICON per action, svgIcon)",
     "element": "vb-node.ts (defineVbNode, VbNodeElement; light DOM)",
-    "styles": "node.css (scoped by the tag; tokens only)"
+    "behaviour": "node-note-tip.ts (bindNoteTip: a cut note's full-text tip, on the shared hover tip packages/ui/src/tip/hover-tip.ts bindHoverTip; browser only)",
+    "styles": "node.css (scoped by the tag; tokens only); tip/tip.css (the shared hover tip's box)"
   },
-  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "selected", "dragging", "pinned", "hidden", "noted", "note sent", "bubble open"],
+  "states": ["open", "acknowledged", "dropped", "commented", "context", "later", "focus", "selected", "dragging", "pinned", "hidden", "noted", "note sent", "bubble open", "see-through", "note-preview"],
   "parts": {
     "vb-node-num": "tab in a gap on the top border, left: the item number (items only)",
     "vb-node-kind": "tab in a gap on the top border, centred: the kind, with grip dots; the drag handle, the one place a card is moved from (3_FE_01)",
@@ -18,7 +19,7 @@
     "vb-size": "nodeSize flag only (D-030): the size control in the top-right border gap; a glyph (vb-size-trig, the person's pick as \"◆ S\" in vb-size-shown) that lifts an S / M / L / Auto pill (vb-size-menu, buttons vb-size-opt with data-size-pick) on hover or keyboard focus; data-open forces it open for gallery samples",
     "vb-node-content": "title (vb-node-title), body (div.vb-node-body, Markdown through renderMarkdown), tags as chips (vb-node-tags), note block",
     "vb-note-pin": "items only (2e_FE_01): the note pin, a numbered button hanging off the top-right corner with the latest note's number; data-note is its seq, data-sent once sent, aria-expanded while its bubble is open; hidden with no notes",
-    "vb-node-notes": "the \"Your note\" block: 'N notes' (vb-node-notes-count) over several, then each note latest first (vb-node-note, data-note = its seq, data-sent once sent) with who (vb-node-note-who, 'Your note 2 · Sent') over the text (vb-node-note-text, Markdown, clamped to three lines); hidden with no notes",
+    "vb-node-notes": "the \"Your note\" block: 'N notes' (vb-node-notes-count) over several, then each note latest first (vb-node-note, data-note = its seq, data-sent once sent) with who (vb-node-note-who, 'Your note 2 · Sent') over the text (vb-node-note-text, Markdown, cut at three lines: the line clamp plus a three-line height cap, so a list or code block is cut too); each note is a tab stop (tabindex 0; Enter opens it) and holds its full text again as a tip (vb-note-tip, aria-hidden, Markdown); hidden with no notes",
     "vb-node-foot": "items only: kind icon (vb-node-kico), divider (vb-node-sep), state word (vb-node-status), quick actions (vb-node-actions)"
   },
   "attributes": {
@@ -35,6 +36,8 @@
     "aria-label": "number, kind, title and status (nodeLabel, set by update), then ', selected' while selected",
     "data-noted": "present when the item has a note (set by update)",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
+    "data-tip-open": "on a note (vb-node-note), while its full-text tip is open beside the card, and the card is drawn above its neighbours: the pointer on the note or the tip, or focus on the note, while the note is cut (set by the note-tip behaviour; notePreview flag, which the page shows as data-note-preview on its world); Esc dismisses it, a click opens the bubble instead",
+    "--card-surface, --card-surface-sunken, --note-surface": "wireLayers flag only (D-032): fills the page sets on the world (board.css, [data-wire-layers]) as --vb-card-fill of the card, topic and note surface over transparent, so a connector drawn behind a card shows through. node.css reads them with the solid token as fallback (--surface; a note's background), so with the flag off the colours are exactly as before",
     "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (off, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work"
   },
   "methods": {
@@ -44,9 +47,10 @@
   "events": [
     "data-act button click bubbles to the page's delegated listener -> action layer",
     "data-size-pick button click bubbles to the page's delegated listener -> the size act (nodeSize flag)",
+    "hover or keyboard focus on a cut note opens its tip (notePreview flag); the pointer may cross onto the tip, which scrolls past 240px and draws no actions; Esc dismisses it; a press in the tip opens nothing",
     "a click on the note pin or a note ([data-note]) bubbles to the page's delegated listener -> the note bubble"
   ],
   "whenToUse": "Anything the agent draws that the person should read or respond to.",
   "whenNotToUse": "Region headings and lane labels; those belong to the region pattern.",
-  "accessibility": "Focusable list item with a label naming number, kind, title and status; a selected card's label ends ', selected' (a list item takes no aria-selected), and the page announces the count in a polite live region. Selection is not focus: the focus ring still draws on a selected card. Buttons are real buttons with labels and aria-pressed. Text: the content (title, body, tags, notes, Markdown code blocks) is selectable; the tabs, the size control, the pin and the footer are not. Keyboard: Space adds the focused card to the selection or takes it out; A X C M L O respond (C and M open the note bubble, editing the note not yet sent if there is one; the note pin is a tab stop labelled 'Note 1 on item 4. Edit it'), Alt+Arrows move, R resets the position, J K move between items. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
+  "accessibility": "Focusable list item with a label naming number, kind, title and status; a selected card's label ends ', selected' (a list item takes no aria-selected), and the page announces the count in a polite live region. Selection is not focus: the focus ring still draws on a selected card. Buttons are real buttons with labels and aria-pressed. Text: the content (title, body, tags, notes, Markdown code blocks) is selectable; the tabs, the size control, the pin and the footer are not. Keyboard: Space adds the focused card to the selection or takes it out; A X C M L O respond (C and M open the note bubble, editing the note not yet sent if there is one; the note pin is a tab stop labelled 'Note 1 on item 4. Edit it'), Alt+Arrows move, R resets the position, J K move between items. A note is a tab stop: focus shows its full text in the tip (aria-hidden, since the note itself is already read in full), Enter opens it in the note bubble; Esc closes the tip without moving focus. Size control: the glyph is one tab stop labelled 'Card size: S, automatic. Change size' (or 'your pick'); focusing it opens the pill, whose four buttons follow in the tab order with aria-pressed; Esc closes it and returns focus to the card."
 }

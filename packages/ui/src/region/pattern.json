@@ -9,8 +9,8 @@
     "template": "region-template.ts (regionTemplate, holdersTemplate, regionIds: the only places the markup is built)",
     "icons": "region-icons.ts (MODE_ICON per mode, COG_ICON, EYE_ICON; wrapped by the node pattern's svgIcon)",
     "element": "vb-region.ts (defineVbRegion, VbRegionElement; light DOM)",
-    "behaviour": "region-row.ts (bindModeRow: the row's Tab stop and arrow keys, the popover and the settings menu; browser only); region-note.ts (bindNoteParts: Comment's badge, the note preview and the note block, their events and the block's height; browser only)",
-    "styles": "region.css (scoped by the tag; tokens only; the top padding states REGION_HEAD from packages/layout)"
+    "behaviour": "region-row.ts (bindModeRow: the row's Tab stop and arrow keys, the popover and the settings menu; browser only); region-note.ts (bindNoteParts: Comment's badge, the note preview and the note block, their events and the block's height; browser only); region-title.ts (bindTitleTip: the cut title's full-text tip, on the shared hover tip packages/ui/src/tip/hover-tip.ts bindHoverTip; browser only)",
+    "styles": "region.css (scoped by the tag; tokens only; the top padding states REGION_HEAD from packages/layout); region-note.css (the container note: Comment's badge, the preview, the note block); tip/tip.css (the shared hover tip's box)"
   },
   "states": [
     "mode",
@@ -52,7 +52,9 @@
     "note-button-focus",
     "note-button-pressed",
     "put-back",
-    "put-back-disabled"
+    "put-back-disabled",
+    "title-long",
+    "title-tip"
   ],
   "flaggedStates": {
     "held": "agentAccess flag: the region's holders after the count, the creator as plain text and every other holder as a Remove access button (D-027). Kept out of `states` so the gallery without the flag reads as before."
@@ -68,6 +70,7 @@
     "data-badge": "unsent | sent | none: Comment's badge \"1\", bright (accent) while unsent, quiet once sent and still waiting; none once answered (no badge drawn); absent with no note (set by update from RegionNoteState.badge; step 4G ruling 1)",
     "data-note-stage": "unsent | sent | answered: the latest note's stage, for the preview's and the block's state line and look; absent with no note (set by update). Not data-note, which the page's listener reads on cards",
     "data-preview": "the note preview is open under Comment; the frame is drawn above the cards like data-open (set by the note behaviour from previewShown)",
+    "data-title-tip-open": "the cut title's full-text tip is open below the title; the frame is drawn above the cards like data-preview (set by the title behaviour; titleTip flag, which the page shows as data-title-tip on its world)",
     "data-note-shown": "the note block shows under the title line (the noteShown property; page state only, not in the ledger, step 4G ruling 3). Set as an attribute it takes effect on the next update; the property applies at once",
     "--region": "the frame colour as a CSS value, from regionColour (set by render); the frame line, the title and the active icon mix from it",
     "role": "region (set by render)",
@@ -95,11 +98,12 @@
     "vb-region-note-resize (bubbles, CustomEvent): detail { region, height } whenever the note block's height (noteHeight) changes: shown, hidden (0), Show all / Show less, new text, a width change (ResizeObserver)",
     ".vb-nblock-more click -> Show all / Show less (inside the element: aria-expanded, then a vb-region-note-resize)",
     "button.vb-region-grip: pointer drag and Alt+arrows are wired by the page (3_FE_04 rulings 5, 6, 8); a plain drag elsewhere on the title line still pans",
+    "mouse over the title, or keyboard focus on the grip or anywhere in the label group, while the title is cut (titleTip flag) -> the tip opens below the title with its full text; it stays while the pointer is on the title or the tip and while focus is in the label group, and closes on leave, blur, Esc (focus stays) or a press outside (touch: a tap on the title opens it)",
     "button[data-revoke] click bubbles to the page's delegated listener -> confirm, then the revoke action for that holder (agentAccess flag)"
   ],
   "whenToUse": "The frame of every area of the board that has its own layout mode.",
   "whenNotToUse": "Lane bands and labels inside a region (the wires layer draws them until <vb-link> arrives); cards (<vb-node>).",
-  "narrow": "Under 600px of frame (container query) the popover drops to compact tiles: icon and name, with the highlighted layout's one-liner on one line under them. The count gives way before the title. At the minimum frame (336px) about eight letters of title fit beside the row; a longer title ellipsizes.",
-  "accessibility": "A labelled region landmark named by its heading. The layout icons are radios in a labelled radiogroup (one Tab stop, arrow keys between them, Enter or Space applies); the popover is a role=tooltip described onto the icon it is about. The cog is a menu button (aria-haspopup, aria-expanded, aria-controls) for a labelled role=menu with two menuitems: Reset places, aria-disabled with a described hint (No cards moved) when there is nothing to reset, and Put container back, aria-disabled with a described hint (Not moved) when the container has no place of its own. The grip is a real button named \"Move container <title>\" with aria-keyshortcuts for Alt+arrows, always in the tab order (its dots show on hover and focus). Comment is a button named \"Comment on container <title>\" (aria-haspopup=dialog) in the row's roving Tab stop; its name says the badge (\", 1 unsent note\" or \", 1 sent note waiting for the agent\"), and the badge itself is aria-hidden. While the preview is open Comment is aria-describedby its text. The preview is a non-modal role=dialog labelled \"Note on container <title>\" (not a tooltip: it holds buttons), placed right after the row so Tab from Comment reaches Edit and Show in container / Hide; Esc closes it and returns focus to Comment (WCAG 1.4.13: hoverable, persistent, dismissible). The note block is a role=group labelled \"Note on container <title>\" with named Edit and Remove buttons (unsent only) and a Show all / Show less button (aria-expanded, aria-controls the text). A removable holder is a real button named \"<label>: remove access\"; the creator is plain text.",
+  "narrow": "Under 600px of frame (container query) the popover drops to compact tiles: icon and name, with the highlighted layout's one-liner on one line under them. The count gives way before the title. A title wraps to two lines, then ends in an ellipsis, with its full text in the tip (titleTip flag); at the minimum frame (336px) about twenty letters of title fit per line beside the collapsed row. Popovers of the top line (layout, settings menu, note preview, title tip) draw above the row at every frame width.",
+  "accessibility": "A labelled region landmark named by its heading. The layout icons are radios in a labelled radiogroup (one Tab stop, arrow keys between them, Enter or Space applies); the popover is a role=tooltip described onto the icon it is about. The cog is a menu button (aria-haspopup, aria-expanded, aria-controls) for a labelled role=menu with two menuitems: Reset places, aria-disabled with a described hint (No cards moved) when there is nothing to reset, and Put container back, aria-disabled with a described hint (Not moved) when the container has no place of its own. The grip is a real button named \"Move container <title>\" with aria-keyshortcuts for Alt+arrows, always in the tab order (its dots show on hover and focus). Comment is a button named \"Comment on container <title>\" (aria-haspopup=dialog) in the row's roving Tab stop; its name says the badge (\", 1 unsent note\" or \", 1 sent note waiting for the agent\"), and the badge itself is aria-hidden. While the preview is open Comment is aria-describedby its text. The preview is a non-modal role=dialog labelled \"Note on container <title>\" (not a tooltip: it holds buttons), placed right after the row so Tab from Comment reaches Edit and Show in container / Hide; Esc closes it and returns focus to Comment (WCAG 1.4.13: hoverable, persistent, dismissible). The note block is a role=group labelled \"Note on container <title>\" with named Edit and Remove buttons (unsent only) and a Show all / Show less button (aria-expanded, aria-controls the text). The title is the heading with its full text even when the line clamp cuts it; the tip repeats it for sighted users and is aria-hidden, so a screen reader never reads it twice (WCAG 1.4.13: hoverable, persistent, Esc dismisses). A removable holder is a real button named \"<label>: remove access\"; the creator is plain text.",
   "far": "Below FAR_K the stage carries data-zoom=far and the row hides (visibility), its popover and menu with it, like the cards' buttons (N8)."
 }

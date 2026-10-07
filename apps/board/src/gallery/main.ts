@@ -6,6 +6,8 @@ import '../styles/access.css';
 import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
+import '../../../../packages/ui/src/region/region-note.css';
+import '../../../../packages/ui/src/tip/tip.css';
 import '../../../../packages/ui/src/note-bubble/note-bubble.css';
 import '../../../../packages/ui/src/selection-bar/selection-bar.css';
 import './gallery.css';
@@ -22,6 +24,7 @@ import { regionSamples } from './region-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
+import { wireSection } from './wire-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -97,8 +100,11 @@ function build(): void {
     ...patterns.map((p) => section(p, fx)));
   // Behind its flag, so the gallery without it (and its screenshot) is unchanged.
   const flags = pageFlags();
+  main.toggleAttribute('data-title-tip', flagOn('titleTip', flags)); // the title tip (FE_03), as the board's world
+  main.toggleAttribute('data-note-preview', flagOn('notePreview', flags)); // the card note preview (FE_04), as the board's world
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
   if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
+  if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
   document.body.append(head, main);
 }
 

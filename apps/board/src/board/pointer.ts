@@ -195,8 +195,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   stage.addEventListener('pointercancel', end);
 
   stage.addEventListener('wheel', (e) => {
-    // Scrolling inside the note bubble scrolls its text, not the board.
-    if ((e.target as HTMLElement).closest('vb-note-bubble')) return;
+    // Scrolling inside the note bubble or a hover tip scrolls its text, not the board.
+    if ((e.target as HTMLElement).closest('vb-note-bubble, .vb-tip')) return;
     e.preventDefault();
     if (e.ctrlKey || e.metaKey) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
     else vp.panBy(-e.deltaX, -e.deltaY);

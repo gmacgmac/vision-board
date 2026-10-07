@@ -70,6 +70,10 @@ export const OPERATIONS = {
     operationId: 'watch_board', method: 'GET', path: '/api/boards/{board}/events',
     pathParams: ['board'], xAgent: false, auth: 'none',
   },
+  watch_project: {
+    operationId: 'watch_project', method: 'GET', path: '/api/events',
+    pathParams: [], xAgent: false, auth: 'none',
+  },
 } as const satisfies Record<string, OperationInfo>;
 
 export type OperationId = keyof typeof OPERATIONS;

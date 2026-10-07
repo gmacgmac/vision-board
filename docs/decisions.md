@@ -387,3 +387,17 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   place for the batch summary, and neither MCP nor `vb` could show it line by line.
 - **Alternative rejected**: Leaving D-026's reason as written, which names streamed batch writes.
 - **Task**: [[cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md]]
+
+## D-032 Connectors behind see-through cards; settings for the grid and blur
+- **Date**: 2026-10-06 · **Status**: Accepted · **From**: maintainer (board items 31, 50; chat)
+- **Decision**: Connectors draw behind container frames and cards. Cards are 30% see-through
+  (`--vb-card-fill`, 70% opaque; 40% and 25% were tried first), so a connector behind a card shows faintly; the focused card's
+  connectors draw above the cards. The dot grid may show through cards. Board settings (tracker
+  N9) get two switches: hide the dot grid, and a very light blur behind cards for readability
+  (off by default). Behind the `wireLayers` flag, on by default.
+- **Why**: Lines drawn over cards cut through the text, and lines hidden under solid cards lose
+  how cards connect. Subtle see-through keeps both readable.
+- **Alternative rejected**: A canvas-coloured plate under each card to hide the dots
+  (`wirePlates`, tried 2026-10-06); blur on by default, which costs drawing time on large boards
+  (rule 15).
+- **Task**: [[cortex-tasks/board/2026-10-06_board-ui_wire-layers.md]] (written once the work lands)

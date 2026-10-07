@@ -117,3 +117,31 @@
 {"v":7,"seq":117,"at":"2026-10-06T18:18:24.456Z","by":"agent","agent":"a-y1f80ru6","type":"reply","key":"r2-c93","n":46,"to":93,"text":"Your note on the Questions container: both points are now cards in \"Found in use: polish\". The cut-off title is item 46 and the toolbar covering the popover is item 47."}
 {"v":7,"seq":118,"at":"2026-10-06T18:31:55.145Z","by":"agent","agent":"a-y1f80ru6","type":"node","key":"wl-try","node":{"region":"wire-layers","kind":"question","item":true,"emphasis":true,"title":"Try both looks: which one?","body":"Both are built, behind flags. Reload the page with one of these addresses:\n\n- **Look A** (cards 55% see-through; lines and dots show): http://localhost:4466/?flags=wireLayers#vision-board-overview\n- **Look B** (same, plus a plate under each card that hides the dots, so only lines show): http://localhost:4466/?flags=wireLayers,wirePlates#vision-board-overview\n\nIn both, lines run behind container frames and cards. Click a card and its own lines draw on top in the accent colour. Comment with A or B, and whether 55% should be stronger or weaker."},"board":"vision-board-overview","n":50,"ver":1}
 {"v":7,"seq":119,"at":"2026-10-06T18:31:55.146Z","by":"agent","agent":"a-y1f80ru6","type":"link","key":"wl-l3","from":31,"to":50,"label":"try it"}
+{"v":7,"seq":120,"at":"2026-10-07T12:54:58.080Z","by":"person","type":"act","action":"comment","n":32,"ver":1,"text":"123"}
+{"v":7,"seq":121,"at":"2026-10-07T12:55:01.529Z","by":"person","type":"act","action":"note-remove","n":32,"note":120}
+{"v":7,"seq":122,"at":"2026-10-07T14:32:35.098Z","by":"person","type":"act","action":"pin","n":28,"ver":1,"x":168,"y":12}
+{"v":7,"seq":123,"at":"2026-10-07T14:32:36.758Z","by":"person","type":"act","action":"pin","n":28,"ver":1,"x":282,"y":11}
+{"v":7,"seq":124,"at":"2026-10-07T14:32:39.413Z","by":"person","type":"act","action":"pin","n":28,"ver":1,"x":-7,"y":8}
+{"v":7,"seq":125,"at":"2026-10-07T14:32:42.849Z","by":"person","type":"act","action":"pin","n":29,"ver":1,"x":212,"y":358}
+{"v":7,"seq":126,"at":"2026-10-07T14:32:46.908Z","by":"person","type":"act","action":"pin","n":31,"ver":1,"x":377,"y":868}
+{"v":7,"seq":127,"at":"2026-10-07T14:32:51.443Z","by":"person","type":"act","action":"pin","n":31,"ver":1,"x":392,"y":589}
+{"v":7,"seq":128,"at":"2026-10-07T14:32:58.617Z","by":"person","type":"act","action":"pin","n":29,"ver":1,"x":490,"y":361}
+{"v":7,"seq":129,"at":"2026-10-07T14:33:03.738Z","by":"person","type":"act","action":"pin","n":31,"ver":1,"x":-6,"y":404}
+{"v":7,"seq":130,"at":"2026-10-07T14:33:06.225Z","by":"person","type":"act","action":"pin","n":30,"ver":1,"x":489,"y":629}
+{"v":7,"seq":131,"at":"2026-10-07T14:33:09.388Z","by":"person","type":"act","action":"pin","n":32,"ver":1,"x":472,"y":892}
+{"v":7,"seq":132,"at":"2026-10-07T14:33:14.981Z","by":"person","type":"act","action":"pin","n":33,"ver":1,"x":671,"y":1188}
+{"v":7,"seq":133,"at":"2026-10-07T14:33:16.287Z","by":"person","type":"act","action":"pin","n":33,"ver":1,"x":802,"y":1149}
+{"v":7,"seq":134,"at":"2026-10-07T14:33:19.572Z","by":"person","type":"act","action":"pin","n":28,"ver":1,"x":-196,"y":31}
+{"v":7,"seq":135,"at":"2026-10-07T14:33:21.037Z","by":"person","type":"act","action":"pin","n":28,"ver":1,"x":-307,"y":47}
+{"v":7,"seq":136,"at":"2026-10-07T14:35:02.625Z","by":"person","type":"act","action":"pin","region":"wire-layers","x":257,"y":2717,"board":"vision-board-overview"}
+{"v":7,"seq":137,"at":"2026-10-07T14:35:10.601Z","by":"person","type":"act","action":"pin","n":20,"ver":1,"x":107,"y":612}
+{"v":7,"seq":138,"at":"2026-10-07T14:35:13.074Z","by":"person","type":"act","action":"pin","n":21,"ver":1,"x":103,"y":834}
+{"v":7,"seq":139,"at":"2026-10-07T14:35:16.259Z","by":"person","type":"act","action":"pin","n":22,"ver":1,"x":98,"y":1055}
+{"v":7,"seq":140,"at":"2026-10-07T14:35:21.805Z","by":"person","type":"act","action":"pin","n":23,"ver":1,"x":100,"y":1344}
+{"v":7,"seq":141,"at":"2026-10-07T14:40:05.496Z","by":"person","type":"act","action":"move","n":27,"region":"later"}
+{"v":7,"seq":142,"at":"2026-10-07T14:40:05.508Z","by":"person","type":"act","action":"later","n":27,"ver":1}
+{"v":7,"seq":143,"at":"2026-10-07T14:40:41.098Z","by":"person","type":"act","action":"move","n":18,"region":"why"}
+{"v":7,"seq":144,"at":"2026-10-07T14:40:45.545Z","by":"person","type":"act","action":"move","n":19,"region":"why"}
+{"v":7,"seq":145,"at":"2026-10-07T14:41:15.196Z","by":"person","type":"act","action":"pin","region":"ask","x":-3,"y":1365,"board":"vision-board-overview"}
+{"v":7,"seq":146,"at":"2026-10-07T14:51:22.431Z","by":"person","type":"act","action":"note-edit","n":34,"note":69,"text":"Not sure. The wording is complicated.\nWhat is M2 routing? I assume that refers to a task or tracker item.\n* 123\n* 234"}
+{"v":7,"seq":147,"at":"2026-10-07T14:51:37.048Z","by":"person","type":"act","action":"note-edit","n":34,"note":69,"text":"Not sure. The wording is complicated.\nWhat is M2 routing? I assume that refers to a task or tracker item.\n- 123\n- 234"}

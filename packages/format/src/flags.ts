@@ -23,6 +23,26 @@ export const FLAGS = {
     default: true,
     description: 'The person\'s side of agent access: allow or refuse grant requests, see and remove each container\'s holders, and Send to agent (D-027, U4 2_FE_01).',
   },
+  wireLayers: {
+    // On by default (maintainer, 2026-10-06, D-032); ?flags=-wireLayers turns it off.
+    default: true,
+    description: 'Connectors draw behind container frames and cards, cards are see-through (--vb-card-fill) so a connector behind one still shows, and the focused card\'s connectors draw above the cards (D-032).',
+  },
+  keepView: {
+    // On by default (maintainer, 2026-10-07, found-in-use FE_02); ?flags=-keepView turns it off.
+    default: true,
+    description: 'Each board\'s zoom and position are kept in sessionStorage (vb.view.<board>) and restored when the board opens, so a reload keeps the view; off, a board always fits on open.',
+  },
+  titleTip: {
+    // On by default (maintainer, 2026-10-07, found-in-use FE_03); ?flags=-titleTip turns it off.
+    default: true,
+    description: 'A container title cut at two lines shows its full text in a tip below the title, on hover of the title and on keyboard focus in the label group (WCAG 1.4.13); off, a cut title ends in an ellipsis with no tip.',
+  },
+  notePreview: {
+    // On by default (maintainer, 2026-10-07, found-in-use FE_04); ?flags=-notePreview turns it off.
+    default: true,
+    description: 'A card note cut at three lines shows its full text, as Markdown, in a box beside the card on hover and on keyboard focus (WCAG 1.4.13: hoverable, persistent, Esc dismisses); a click still opens the note bubble; off, a cut note has no preview.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

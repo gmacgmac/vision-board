@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/sse-build.schema.json",
+  "title": "Page build event",
+  "description": "A `build` event whose `data` is JSON `{ build }`. Sent only when the server runs in watch mode.",
+  "$comment": "Was: api.md 79; OpenAPI 3.2.1 4.14.4",
+  "type": "object",
+  "required": [
+    "event",
+    "data"
+  ],
+  "properties": {
+    "event": {
+      "const": "build",
+      "description": "The event name; always `build`."
+    },
+    "data": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentSchema": {
+        "type": "object",
+        "required": [
+          "build"
+        ],
+        "properties": {
+          "build": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9.-]+$",
+            "description": "Names the page the server is serving now. It changes when the server restarts or the page is rebuilt; a page that sees a different value reloads."
+          }
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "JSON text `{ \"build\": <id> }`: the current build of the page."
+    },
+    "retry": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many milliseconds a client waits before it reconnects."
+    }
+  },
+  "unevaluatedProperties": false
+}

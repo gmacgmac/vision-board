@@ -9,10 +9,10 @@
     "element": "vb-note-bubble.ts (defineVbNoteBubble, VbNoteBubbleElement; light DOM)",
     "styles": "note-bubble.css (scoped by the tag; tokens only)"
   },
-  "states": ["new", "edit", "sent", "saving", "error", "right", "left", "below", "focus", "container", "dirty"],
+  "states": ["new", "edit", "sent", "saving", "error", "right", "left", "below", "focus", "container", "dirty", "growing"],
   "parts": {
     "vb-nb-head": "the card's number chip (vb-nb-num) and the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', or 'Note 2 on 42, sent'; on a whole container no chip and 'Note on container Review' (3_FE_04 ruling 3)",
-    "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; a sent note shows vb-nb-read (Markdown) instead",
+    "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; it grows with its words from 70px to 240px (never shorter than it is, so a manual resize stays), then scrolls; a sent note shows vb-nb-read (Markdown) instead",
     "vb-nb-error": "role=alert, under the text: why the last save did not go through",
     "vb-nb-row": "Remove (edit only), the key hint (vb-nb-hint), Cancel or Close, and Add note or Save (vb-nb-primary)"
   },

@@ -1,15 +1,18 @@
 // The ledger state the page holds, and how it stays current (N12_FE_01 ruling 2, performance.md
 // approaches 1 and 5). Opening the page reads the whole ledger once (`read_ledger`, a full fetch,
 // counted) and folds it with the shared action layer. After that every new line is applied to the
-// same state: the live stream (`watch_board`) says a line was appended, the page reads only the
-// lines after the last one it holds, and hands them on in one batch. An act the page sent itself
+// same state: the project's live stream (`watch_project`, followed from boot whether or not there
+// are boards, FE_02 ruling 1) says a line was appended, the page reads only the lines after the
+// last one it holds, and hands them on in one batch. An act the page sent itself
 // is applied from its answer when it is the next line. A full fetch happens again only when the
 // ledger went back (another project, a reset) or a line has a format the page cannot apply.
+// In watch mode (dev only) the stream also names the built page: the first id is kept, and a
+// different one reloads the page, whose view is already saved (FE_02 ruling 6).
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { applyEvent, foldLedger } from '../../../../packages/actions/src/index.ts';
 import { canApply } from './board-data.ts';
-import { readLedger, watchBoard } from './io.ts';
+import { readLedger, watchProject } from './io.ts';
 import { work } from './work.ts';
 
 export interface Live {
@@ -22,8 +25,8 @@ export interface Live {
   sync(): Promise<void>;
   /** An act the page sent: applied in place when it is the next line, else read with the rest. */
   own(e: LedgerEvent): Promise<void>;
-  /** Follow board `id`'s live stream; a stop function. */
-  watch(id: string): () => void;
+  /** Follow the project's live stream; a stop function. */
+  watch(): () => void;
   /** Resolves when no read is in flight. */
   settled(): Promise<void>;
 }
@@ -100,9 +103,17 @@ export function createLive(onLines: OnLines): Live {
       if (state && !reading && e.seq === state.seq + 1 && apply([e])) return;
       await sync();
     },
-    watch(id) {
-      // On (re)connecting, catch up on anything appended while the stream was not open.
-      return watchBoard(id, (seq) => { if (!state || seq > state.seq) void sync(); }, () => void sync());
+    watch() {
+      let build: string | null = null;
+      return watchProject({
+        change: (seq) => { if (!state || seq > state.seq) void sync(); },
+        build: (id) => {
+          if (build === null) build = id;
+          else if (id !== build) location.reload();
+        },
+        // On (re)connecting, catch up on anything appended while the stream was not open.
+        open: () => void sync(),
+      });
     },
     settled: async () => { while (reading) await reading; },
   };

@@ -5,7 +5,9 @@
 // tests import the ui front door). It knows nothing about layout; the page measures and places it.
 import type { ActionId, ViewNode } from '../../../format/src/index.ts';
 import type { NodeState } from './node-core.ts';
+import type { HoverTip } from '../tip/hover-tip.ts';
 import type { NodeTemplateOptions } from './node-template.ts';
+import { bindNoteTip } from './node-note-tip.ts';
 import { nodeTemplate, notesMarkup } from './node-template.ts';
 
 export const VB_NODE_TAG = 'vb-node';
@@ -26,8 +28,12 @@ export function defineVbNode(): void {
   class VbNode extends HTMLElement implements VbNodeElement {
     /** The notes last drawn, so unchanged notes are not rebuilt (a focused link in one keeps focus). */
     private noteSrc: string | undefined;
+    /** One tip per drawn note; closed before the notes are rebuilt, so none leaves a listener behind. */
+    private noteTips: HoverTip[] = [];
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
+      for (const t of this.noteTips) t.close();
+      this.noteTips = [];
       this.noteSrc = undefined;
       this.dataset.id = n.id;
       this.dataset.kind = n.kind;
@@ -71,7 +77,11 @@ export function defineVbNode(): void {
       }
       // Markdown (D-023): notesMarkup escapes every text run, so this is safe markup.
       const src = v ? JSON.stringify(v) : '';
-      if (this.noteSrc !== src) block.innerHTML = v ? notesMarkup(v) : '';
+      if (this.noteSrc !== src) {
+        for (const t of this.noteTips) t.close();
+        block.innerHTML = v ? notesMarkup(v) : '';
+        this.noteTips = [...block.querySelectorAll<HTMLElement>('.vb-node-note')].map(bindNoteTip);
+      }
       this.noteSrc = src;
     }
 

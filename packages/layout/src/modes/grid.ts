@@ -21,14 +21,14 @@ export const grid: ModeFn = ({ region, nodes, sizes }) => {
   return { pos };
 };
 
-/** A single column, in the agent's order. */
+/** A single column, in the agent's order, GAP apart so the next card's tabs clear the one above. */
 export const list: ModeFn = ({ nodes, sizes }) => {
   const pos = new Map<string, Box>();
   let y = 0;
   for (const n of nodes) {
     const s = sizes.get(n.id)!;
     pos.set(n.id, { x: 0, y, ...s });
-    y += s.h + GAP / 2;
+    y += s.h + GAP;
   }
   return { pos };
 };

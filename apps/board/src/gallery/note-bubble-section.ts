@@ -36,6 +36,8 @@ const SAMPLES: Sample[] = [
   { caption: 'Error: the board refused it, the text is kept', title: 'A note not yet sent', phase: 'error',
     message: 'Not saved: The board server is not reachable. Is it running?',
     bubble: { mode: 'edit' }, stage: { w: 680, h: 300, x: 24, y: 24 } },
+  { caption: 'Long text: the box grows with the words up to its maximum height, then scrolls', title: 'A note longer than its preview',
+    bubble: { mode: 'edit' }, stage: { w: 680, h: 300, x: 24, y: 24 } },
   { caption: 'A sent note: history, shown and never edited', title: 'A sent note',
     bubble: { mode: 'sent', index: 1 }, stage: { w: 680, h: 300, x: 24, y: 24 } },
 ];

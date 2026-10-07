@@ -9,7 +9,9 @@ vb-node {
   --state: var(--vb-ink-subtle);
   /* What shows through the gaps cut from the border around the tabs. */
   --gap: var(--vb-surface-canvas);
-  --surface: var(--vb-surface-card);
+  /* --card-surface, --card-surface-sunken and --note-surface: see-through fills the page sets
+     (wireLayers flag, D-032) so a connector behind a card shows; solid, a note clear, if unset. */
+  --surface: var(--card-surface, var(--vb-surface-card));
   position: absolute; left: 0; top: 0; width: var(--vb-card-w);
   display: flex; flex-direction: column;
   border: 1px solid color-mix(in srgb, var(--kind) 38%, var(--vb-line)); border-radius: var(--vb-radius-lg);
@@ -49,8 +51,10 @@ vb-node[data-size='l'] { width: var(--vb-card-w-l); }
 /* The size pill draws over the card above, so an open card sits over its neighbours. */
 vb-node[data-size]:is(:hover, :focus-within) { z-index: 2; }
 
-vb-node[data-kind='topic'] { --surface: var(--vb-surface-sunken); }
-vb-node[data-kind='note'] { background: transparent; box-shadow: none; border-style: dashed; }
+vb-node[data-kind='topic'] { --surface: var(--card-surface-sunken, var(--vb-surface-sunken)); }
+vb-node[data-kind='note'] {
+  background: var(--note-surface, transparent); box-shadow: none; border-style: dashed;
+}
 
 /* The state word's colour; open is muted. Dropped also fades and strikes the title through. */
 vb-node[data-status='acknowledged'] { --state: var(--vb-state-ack); }
@@ -132,9 +136,26 @@ vb-node .vb-node-note-who {
   text-transform: uppercase; color: var(--vb-accent-text);
 }
 vb-node .vb-node-note[data-sent] .vb-node-note-who { color: var(--vb-ink-subtle); }
-vb-node .vb-node-note-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* Three lines: the line clamp ends plain text in "…"; the height cap (three lines of the Markdown
+   paragraph) is what cuts a list or a code block, which the clamp does not reach (grid blocks). */
+vb-node .vb-node-note-text {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  max-height: calc(var(--vb-text-md) * 1.5 * 3);
+}
+/* The note's full-text tip (notePreview flag, WCAG 1.4.13; box: tip/tip.css), beside the card while
+   data-tip-open is on the note, which also raises the card above its neighbours. The note is a tab
+   stop (focus shows the tip), so it takes the focus ring. The bridge spans the gap to the card. */
+vb-node .vb-node-note { position: relative; --reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
+vb-node .vb-node-note:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-node:has(.vb-node-note[data-tip-open]) { z-index: 4; }
+vb-node .vb-note-tip {
+  top: 0; left: calc(100% + var(--reach)); width: var(--vb-card-w); max-height: 240px; overflow: auto;
+  font-weight: var(--vb-weight-regular); cursor: text; user-select: text;
+}
+vb-node .vb-note-tip::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--reach); height: auto; }
+vb-node .vb-node-note[data-tip-open] .vb-note-tip { display: block; }
 /* The note is Markdown too, on a tint, so its code sits one step deeper. */
-vb-node .vb-node-note-text .vb-md-icode, vb-node .vb-node-note-text .vb-md-code { background: var(--vb-surface-deep); }
+vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
 
 /* The note pin (ruling 7, 05 `.card .pin`): a numbered drop hanging off the top-right corner,
    the latest note's number. It clears the size control's hit area (tracker N10). */

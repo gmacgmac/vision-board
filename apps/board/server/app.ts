@@ -7,8 +7,9 @@ import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import type { Agents } from './agents.ts';
 import { openAgents } from './agents.ts';
-import type { CallerEnv } from './callers.ts';
+import type { BuildWatch } from './build-watch.ts';
 import { newPersonToken, personCookie } from './callers.ts';
+import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
 import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
@@ -27,14 +28,16 @@ export interface BoardServerOptions {
   ledger: Ledger;
   /** The built page (apps/board/dist). */
   dist: string;
+  /** Watch mode only (`VB_WATCH=1`): the build being served, for `watch_project`'s `build` event. */
+  build?: BuildWatch | undefined;
 }
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
-export function createBoardServer({ ledger, dist }: BoardServerOptions): http.Server {
+export function createBoardServer({ ledger, dist, build }: BoardServerOptions): http.Server {
   let agents: Agents | undefined;
-  const env: CallerEnv = {
-    ledger, person: newPersonToken(), agents: () => (agents ??= openAgents(path.dirname(ledger.file))),
+  const env: ServerEnv = {
+    ledger, person: newPersonToken(), agents: () => (agents ??= openAgents(path.dirname(ledger.file))), build,
   };
   const server = http.createServer(async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);

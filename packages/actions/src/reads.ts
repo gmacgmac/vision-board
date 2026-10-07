@@ -1,8 +1,8 @@
 // The read views the API answers with (api.md Operations, 31-36): one node with its whole
-// history, one container, the open items, and which board a ledger line belongs to. Pure reads
+// history, one container, the open items, and the board list. Pure reads
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
 // Optional fields are left out when they do not apply (api.md 32).
-import type { LedgerEvent, LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
+import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
 import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
@@ -178,28 +178,9 @@ export function openContainers(s: LedgerState, board: string, agent?: string): O
   });
 }
 
-/** The board a ledger line belongs to: the one it names, or its node's (a link by its `from`
- * node), or its grant request's. A `join` belongs to none. */
-export function eventBoard(s: LedgerState, e: LedgerEvent): string | undefined {
-  const nodeBoard = (n: number | undefined) => (n === undefined ? undefined : s.nodes.get(n)?.board);
-  switch (e.type) {
-    case 'board': case 'region': case 'node': case 'grant-request': return e.board;
-    case 'link': case 'unlink': return nodeBoard(e.from);
-    case 'reply': case 'propose': case 'park': case 'seen': return nodeBoard(e.n);
-    case 'join': return undefined;
-    case 'act':
-      if (e.n !== undefined || e.nodes) return nodeBoard(e.n ?? e.nodes![0]);
-      if (e.action === 'grant' || e.action === 'deny') return s.index.requests.get(e.request!)?.board;
-      return e.board;
-  }
-}
+/** One board in `list_boards`: its id, title and its own last line (fold.ts `heads`). */
+export interface BoardListItem { board: string; title: string; seq: number }
 
-/** Each board's own last `seq` (`list_boards`). */
-export function boardHeads(s: LedgerState, events: readonly LedgerEvent[]): Map<string, number> {
-  const out = new Map<string, number>();
-  for (const e of events) {
-    const board = eventBoard(s, e);
-    if (board !== undefined) out.set(board, e.seq);
-  }
-  return out;
-}
+/** Every board, in the order drawn, with its title and its own last line (`list_boards`). */
+export const boardList = (s: LedgerState): BoardListItem[] =>
+  [...s.boards.values()].map((b) => ({ board: b.id, title: b.title, seq: s.heads.get(b.id)! }));

@@ -6,6 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { OPERATIONS } from '../../../packages/format/src/index.ts';
 import type { Agents } from './agents.ts';
+import type { BuildWatch } from './build-watch.ts';
 import type { CallerEnv } from './callers.ts';
 import { callerOf } from './callers.ts';
 import type { Caller, Ledger } from './ledger.ts';
@@ -13,8 +14,12 @@ import { problem } from './problem.ts';
 import type { ParamSpec } from './spec.ts';
 import { SPECS, coerce, paramProblems } from './spec.ts';
 
+/** What the server holds for every request: the callers' env, and the build in watch mode. */
+export interface ServerEnv extends CallerEnv { build?: BuildWatch | undefined }
+
 /** What a handler gets: the request, its parsed parameters (defaults filled in), the ledger, the
- * agents store and the caller the operation's `security` allowed (api.md 20-22). */
+ * agents store, the caller the operation's `security` allowed (api.md 20-22) and, in watch mode
+ * only, the build being served (api.md 79). */
 export interface Ctx {
   req: IncomingMessage;
   res: ServerResponse;
@@ -23,6 +28,7 @@ export interface Ctx {
   agents: () => Agents;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
+  build?: BuildWatch | undefined;
 }
 
 export type Handler = (ctx: Ctx) => void | Promise<void>;
@@ -92,7 +98,7 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
 /** Answer one /api request through the route table and the handler table: route, parameters,
  * then the caller, then the handler (so nothing is read from an unauthorised body). */
 export async function dispatch(
-  req: IncomingMessage, res: ServerResponse, url: URL, env: CallerEnv, handlers: HandlerTable,
+  req: IncomingMessage, res: ServerResponse, url: URL, env: ServerEnv, handlers: HandlerTable,
 ): Promise<void> {
   const method = req.method ?? 'GET';
   const match = matchRoute(method, url.pathname);
@@ -103,5 +109,5 @@ export async function dispatch(
   }
   const params = readParams(match.id, match.raw, url.searchParams);
   const caller = callerOf(req, match.id, env);
-  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, caller });
+  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, caller, build: env.build });
 }

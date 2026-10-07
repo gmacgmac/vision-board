@@ -106,9 +106,9 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
 
-test('the top line: title, count and holders in a label group, then the row, popover and menu in a tools group', () => {
+test('the top line: title, count, holders and the title tip (the full title, hidden from assistive tech) in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
   assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
@@ -124,4 +124,9 @@ test('holdersTemplate: the creator is plain text; any other holder is a labelled
   assert.equal((html.match(/<button/g) ?? []).length, 1, 'the creator has no remove control');
   assert.equal(holdersTemplate([]), '');
   assert.doesNotMatch(html, /style=|<style/);
+});
+
+test('the title tip holds the escaped full title and is hidden from assistive tech (the heading keeps the text)', () => {
+  const html = regionTemplate({ id: 'r', title: '<b>x</b>', mode: 'grid' });
+  assert.ok(html.includes('<span class="vb-tip vb-title-tip" aria-hidden="true">&#60;b&#62;x&#60;/b&#62;</span>'));
 });

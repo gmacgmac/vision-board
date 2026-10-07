@@ -2,7 +2,7 @@
 // `applyDrawn` in packages/format, which also gives `boardView`), the container index (folded by
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
-// and what the person has seen, and each agent's retry keys. Pure: same events, same state. Events
+// and what the person has seen, each agent's retry keys, and each board's own last line. Pure: same events, same state. Events
 // are assumed valid (readLedger in packages/format checks them first).
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
@@ -91,13 +91,15 @@ export interface LedgerState extends DrawnState {
   regionLogs: Map<string, Map<string, ItemLog>>;
   /** Every person act, in order, for `responsesAfter`. */
   acts: ActEvent[];
+  /** board -> `seq` of its own last line (`eventBoard`): `list_boards` and the page's picker. */
+  heads: Map<string, number>;
 }
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
   replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
-  logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [],
+  logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -118,6 +120,8 @@ const marksOf = (s: LedgerState, n: number): Marks => {
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   applyDrawn(s, e);
   indexEvent(s.index, e);
+  const board = eventBoard(s, e);
+  if (board !== undefined) s.heads.set(board, e.seq);
   if ('key' in e && e.key !== undefined && e.agent !== undefined) {
     const keys = s.keys.get(e.agent) ?? new Map<string, number>();
     s.keys.set(e.agent, keys.set(e.key, e.seq));
@@ -137,6 +141,22 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
       });
       break;
     case 'park': s.parks.set(e.n, e.bundle); marksOf(s, e.n).park = e.seq; break;
+  }
+}
+
+/** The board a ledger line belongs to: the one it names, or its node's (a link by its `from`
+ * node), or its grant request's. A `join` belongs to none. */
+export function eventBoard(s: LedgerState, e: LedgerEvent): string | undefined {
+  const nodeBoard = (n: number | undefined) => (n === undefined ? undefined : s.nodes.get(n)?.board);
+  switch (e.type) {
+    case 'board': case 'region': case 'node': case 'grant-request': return e.board;
+    case 'link': case 'unlink': return nodeBoard(e.from);
+    case 'reply': case 'propose': case 'park': case 'seen': return nodeBoard(e.n);
+    case 'join': return undefined;
+    case 'act':
+      if (e.n !== undefined || e.nodes) return nodeBoard(e.n ?? e.nodes![0]);
+      if (e.action === 'grant' || e.action === 'deny') return s.index.requests.get(e.request!)?.board;
+      return e.board;
   }
 }
 

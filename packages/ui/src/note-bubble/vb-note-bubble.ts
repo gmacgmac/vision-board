@@ -47,6 +47,12 @@ export function defineVbNoteBubble(): void {
         if (b && !b.disabled) this.choose(b.dataset.noteDo as NoteChoice);
       });
       this.addEventListener('keydown', (e) => this.onKey(e));
+      this.addEventListener('input', () => this.grow());
+    }
+
+    /** Drawn in a gallery stage before it joins the page: measure once it is there. */
+    connectedCallback(): void {
+      this.grow();
     }
 
     show(v: BubbleView, card: { kind?: Kind; number?: number; line?: string }): void {
@@ -63,6 +69,7 @@ export function defineVbNoteBubble(): void {
       this.opened = v.text;
       this.setPhase('idle');
       this.hidden = false;
+      this.grow();
     }
 
     place(p: Placement): void {
@@ -101,6 +108,13 @@ export function defineVbNoteBubble(): void {
       if (!ta) return void this.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
       ta.focus({ preventScroll: true });
       ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+
+    /** The text grows with its words (found-in-use FE_04 ruling 2): never shorter than it is, so a
+     *  manual resize stays; note-bubble.css gives the minimum and the maximum, past which it scrolls. */
+    private grow(): void {
+      const ta = this.querySelector('textarea');
+      if (ta && ta.scrollHeight > ta.clientHeight) ta.style.height = `${ta.scrollHeight + ta.offsetHeight - ta.clientHeight}px`;
     }
 
     private choose(choice: NoteChoice): void {

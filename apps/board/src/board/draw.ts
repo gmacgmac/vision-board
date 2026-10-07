@@ -24,6 +24,8 @@ export interface BoardElements {
   regions: HTMLElement;
   cards: HTMLElement;
   wires: SVGSVGElement;
+  /** The SVG above the cards, for the wireLayers flag. */
+  wiresTop?: SVGSVGElement;
 }
 
 export interface DrawDeps {
@@ -33,6 +35,8 @@ export interface DrawDeps {
   sizing: boolean;
   /** The agentAccess flag: frames show their holders (D-027). */
   access: boolean;
+  /** The wireLayers flag: connectors behind cards, the focused card's above them (D-032). */
+  layers?: boolean;
   data(): BoardData;
   hidden(): Set<string>;
   focus(): string | null;
@@ -70,7 +74,7 @@ export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
   const cards = createCardSet(els.cards, { sizeControl: d.sizing });
   const regions = createRegionSet(els.regions);
-  const wires = createWires(els.wires);
+  const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();
   let layout: BoardLayout | null = null;

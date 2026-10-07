@@ -31,13 +31,17 @@ function tabs(n: ViewNode): string {
 
 /** The "Your note" block's contents (2e_FE_01 ruling 7): "N notes" when there are several, then
  * each note, latest first, as Markdown (D-023) clamped to three lines. Each carries `data-note`,
- * its seq, so a click opens it; the keyboard path is the pin and the C and M keys. */
+ * its seq, so a click opens it, and is a tab stop (Enter opens it, `VbNode`). Each also holds the
+ * note in full as a hover tip (found-in-use FE_04, `bindNoteTip`): hidden for screen readers,
+ * which read the note itself, and shown only when the note is cut and the notePreview flag is on. */
 export function notesMarkup(v: NotesView): string {
   const count = v.count ? `<span class="vb-node-notes-count">${esc(v.count)}</span>` : '';
-  return count + v.entries.map((x) =>
-    `<div class="vb-node-note" data-note="${x.seq}"${x.sent ? ' data-sent' : ''}>`
-    + `<span class="vb-node-note-who">${esc(x.who)}</span>`
-    + `<div class="vb-node-note-text">${renderMarkdown(x.text)}</div></div>`).join('');
+  return count + v.entries.map((x) => {
+    const text = renderMarkdown(x.text);
+    return `<div class="vb-node-note" data-note="${x.seq}"${x.sent ? ' data-sent' : ''} tabindex="0">`
+      + `<span class="vb-node-note-who">${esc(x.who)}</span><div class="vb-node-note-text">${text}</div>`
+      + `<div class="vb-tip vb-note-tip" aria-hidden="true">${text}</div></div>`;
+  }).join('');
 }
 
 /** Kind icon, divider, state word, then the quick actions. Items only: a non-item has no state. */

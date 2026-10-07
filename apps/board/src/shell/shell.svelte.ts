@@ -1,7 +1,7 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, confirm dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { BoardSummary } from '../board/io.ts';
+import type { BoardListItem } from '../../../../packages/actions/src/index.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
 
@@ -22,8 +22,12 @@ export type SendState = 'idle' | 'sending' | 'sent' | 'error';
 export interface AccessRequestRow { seq: number; label: string; container: string; reason: string }
 
 export const shell = $state({
-  boards: [] as BoardSummary[],
+  /** The picker's list, from the held state after every batch (boards.ts `listed`). */
+  boards: [] as BoardListItem[],
   boardId: '',
+  /** Boards that appeared after the page opened and have not been opened yet (FE_02 ruling 3).
+   * Replaced, never changed in place, so the toolbar sees every change. */
+  newBoards: new Set<string>(),
   title: 'Vision Board',
   version: null as number | null,
   summary: '',

@@ -1,11 +1,11 @@
-// The read operations (api.md Operations, 31, 41, 43, 44): every answer carries `head`, the
+// The read operations (api.md Operations, 31, 41, 43, 44, 78-80): every answer carries `head`, the
 // ledger's latest `seq`. The shapes are built by packages/actions; nothing is folded here. A read
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardAccess, boardHeads, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter,
+  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter,
 } from '../../../packages/actions/src/index.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -26,9 +26,7 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
 
 const listBoards: Handler = ({ res, ledger }) => {
   const s = ledger.state();
-  const heads = boardHeads(s, ledger.events());
-  const boards = [...s.boards.values()].map((b) => ({ board: b.id, title: b.title, seq: heads.get(b.id) ?? s.seq }));
-  sendJson(res, 200, { boards, head: s.seq });
+  sendJson(res, 200, { boards: boardList(s), head: s.seq });
 };
 
 const getBoard: Handler = ({ res, params, ledger }) => {
@@ -130,17 +128,36 @@ const readLedger: Handler = ({ req, res, params, ledger }) => {
   sendJson(res, 200, { events: list, head: s.seq, ...(more && { more }) });
 };
 
-/** Server-sent `change` events with `{ seq }` on every append, and a comment every 20 s. */
-const watchBoard: Handler = ({ res, params, ledger }) => {
-  requireBoard(ledger.state(), params.board);
+type Send = (event: string, data: object) => void;
+
+/** A server-sent event stream (api.md 44): `retry` first, `change { seq }` on every append, a
+ * comment every 20 s. `more` adds other events and returns their off switches. */
+function stream({ res, ledger }: Ctx, more: (send: Send) => (() => void)[] = () => []): void {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
   res.write('retry: 2000\n\n');
-  const off = ledger.onAppend((e) => res.write(`event: change\ndata: ${JSON.stringify({ seq: e.seq })}\n\n`));
+  const send: Send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  const offs = [ledger.onAppend((e) => send('change', { seq: e.seq })), ...more(send)];
   const beat = setInterval(() => res.write(': beat\n\n'), 20000);
-  res.on('close', () => { off(); clearInterval(beat); });
+  res.on('close', () => { for (const off of offs) off(); clearInterval(beat); });
+}
+
+/** One board's stream; refused with `not-found` for an unknown board. */
+const watchBoard: Handler = (ctx) => {
+  requireBoard(ctx.ledger.state(), ctx.params.board);
+  stream(ctx);
 };
+
+/** The whole project's stream, which answers on an empty project too. In watch mode it also sends
+ * `build { build }` on connect and whenever the page is rebuilt (api.md 78-80). */
+const watchProject: Handler = (ctx) => stream(ctx, (send) => {
+  const { build } = ctx;
+  if (!build) return [];
+  send('build', { build: build.id() });
+  return [build.onChange((id) => send('build', { build: id }))];
+});
 
 export const READS = {
   list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer,
   list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger, watch_board: watchBoard,
+  watch_project: watchProject,
 } satisfies Record<string, Handler>;

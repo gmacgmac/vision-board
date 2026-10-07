@@ -15,10 +15,11 @@
   let regions: HTMLElement;
   let cards: HTMLElement;
   let wires: SVGSVGElement;
+  let wiresTop: SVGSVGElement;
   let board: Board | null = $state(null);
 
   onMount(() => {
-    const b = createBoard({ stage, world, regions, cards, wires });
+    const b = createBoard({ stage, world, regions, cards, wires, wiresTop });
     board = b;
     void b.boot();
     return () => b.destroy();
@@ -42,6 +43,7 @@
     <div id="regions" class="vb-regions" bind:this={regions}></div>
     <svg id="wires" class="vb-wires" aria-hidden="true" bind:this={wires}></svg>
     <div id="cards" class="vb-cards" role="list" aria-label="Items, in number order" bind:this={cards}></div>
+    <svg id="wires-top" class="vb-wires vb-wires-top" aria-hidden="true" bind:this={wiresTop}></svg>
   </div>
   <div id="message" class="vb-message" role="status" hidden={shell.message === null}>{shell.message ?? ''}</div>
 </main>

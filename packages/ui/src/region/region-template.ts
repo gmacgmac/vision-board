@@ -113,7 +113,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
-    + '<span class="vb-region-count"></span><span class="vb-region-holders"></span></div>'
+    + `<span class="vb-region-count"></span><span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r)}</div>`
     + `</header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }

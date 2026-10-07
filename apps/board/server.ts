@@ -3,11 +3,13 @@
 // route table generated from openapi.json, api.md 53). Binds to 127.0.0.1 only. Boards come from
 // the project ledger (`<VB_PROJECT>/.visionboard/ledger.jsonl`, D-017).
 // Env: VB_PORT (4466), VB_PROJECT (repo root), VB_SEED (a fixture ledger copied in when the
-// project has no ledger yet; the fixture itself is never written).
+// project has no ledger yet; the fixture itself is never written), VB_WATCH (`1`: watch mode, dev
+// only; dist/ is watched and `watch_project` sends `build` so an open page reloads, api.md 79).
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createBoardServer } from './server/app.ts';
+import { watchBuild } from './server/build-watch.ts';
 import { ledgerPath, openLedger } from './server/ledger.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -36,9 +38,20 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 
 const FILE = ledgerPath(PROJECT);
 const seeded = seed(FILE, process.env.VB_SEED);
-const server = createBoardServer({ ledger: openLedger(FILE), dist: DIST });
+const build = process.env.VB_WATCH === '1' ? watchBuild(DIST) : undefined;
+const server = createBoardServer({ ledger: openLedger(FILE), dist: DIST, build });
+
+if (build) {
+  const stop = () => {
+    build.close();
+    server.closeAllConnections();
+    server.close(() => process.exit(0));
+  };
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
+}
 
 server.listen(PORT, '127.0.0.1', () => {
   if (seeded) console.log(`Seeded the project ledger from ${process.env.VB_SEED}`);
-  console.log(`Vision Board on http://localhost:${PORT}  (ledger: ${FILE})`);
+  console.log(`Vision Board on http://localhost:${PORT}  (ledger: ${FILE})${build ? '  [watch mode]' : ''}`);
 });
