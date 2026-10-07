@@ -131,7 +131,7 @@ const SHAPES: Record<EventType, Shape> = {
       nodes: nodeNumbers,
     },
   },
-  seen: { req: ['n', 'ver'], fields: { n: nodeNumber, ver: int() } },
+  seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int('seq of a line') } },
   reply: { req: ['n', 'text'], fields: { n: nodeNumber, text: text(LIMITS.text), to: int('seq of the act it answers'), key } },
   propose: {
     req: ['n', 'ver', 'action', 'reason'],
@@ -139,7 +139,7 @@ const SHAPES: Record<EventType, Shape> = {
   },
   park: { req: ['n', 'bundle'], fields: { n: nodeNumber, bundle: obj(BUNDLE), key } },
   join: { req: ['label'], fields: { label: text(LIMITS.agentLabel) } },
-  'grant-request': { req: ['board', 'region', 'reason'], fields: { board: id, region: id, reason: text(LIMITS.text), key } },
+  'grant-request': { req: ['board', 'reason'], fields: { board: id, region: id, reason: text(LIMITS.text), key } },
 };
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
@@ -193,12 +193,21 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'pin' && (!has('x') || !has('y'))) p.push('pin: x and y numbers');
   if (a === 'comment') need('text', 'text: required');
   if (a === 'grant' || a === 'deny') need('request', `${a}: request, the seq of a grant-request event`);
-  if (a === 'revoke') for (const f of ['holder', 'board', 'region']) need(f, `revoke: ${f} required`);
+  if (a === 'revoke') for (const f of ['holder', 'board']) need(f, `revoke: ${f} required`);
   if (a === 'size') need('size', `size: one of ${ACT_SIZES.join(', ')}`);
   if (a === 'send') need('board', 'send: board required');
   if (ON_NOTE.has(a)) need('note', `note: the seq of the comment or context act that made the note`);
   if (a === 'note-edit') need('text', 'text: required');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
+}
+
+/** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), never
+ * both (api.md 87). */
+function seenRules(e: Rec, p: string[]): void {
+  const node = e.n !== undefined || e.ver !== undefined;
+  if (node && (e.board !== undefined || e.head !== undefined)) p.push('seen: a node (n and ver) or a board (board and head), not both');
+  else if (node || e.board === undefined) for (const f of ['n', 'ver']) { if (e[f] === undefined) p.push(`${f}: required`); }
+  else if (e.head === undefined) p.push('head: required, the board\'s last line the person has seen');
 }
 
 const STAMP: Shape = {
@@ -230,6 +239,7 @@ export function eventProblems(input: unknown): string[] {
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(`${t}: written by a person`);
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');
   if (t === 'act') actRules(e, p);
+  if (t === 'seen') seenRules(e, p);
   return p;
 }
 

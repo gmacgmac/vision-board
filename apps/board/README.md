@@ -17,9 +17,19 @@ from `packages/ui`; they hold no layout maths, file formats or actions themselve
 `src/board/cards.ts` and `src/board/render.ts` create, measure and place the elements but never
 build their markup. The page works in proportion to what changed (N12,
 `docs/specification/performance.md`): `src/board/live.ts` reads the ledger once and applies each new
-line to the state it holds, `board-data.ts` works the open board out from that state, and `draw.ts`
+line to the state it holds, `board-data.ts` works the open board and what needs attention
+(`pageConditions`, from the conditions table; `attention.ts` shows it and sends the board seen) out
+from that state, and `draw.ts`
 updates, measures and lays out only what a change touched (`layout-cache.ts` per container,
 `wires.ts` per connector, `offscreen.ts` for cards well off screen), counting the work in `work.ts`.
+
+One server per ledger: `server.ts` takes `<VB_PROJECT>/.visionboard/lock` (`server/lock.ts`)
+before it opens the ledger, because a second writer would fork it. The file is JSON (`host`, `pid`,
+`port`, `started`, `beat`), git-ignored, and `beat` is rewritten every 30 seconds. A second server,
+here or on another computer sharing the folder, prints which computer holds the lock and exits 1.
+A lock is stale, and replaced with a one-line notice, when its `beat` is over 2 minutes old or it
+is on this computer and its process is gone. `SIGINT`, `SIGTERM` and normal exit release it, in
+every mode. If a server is refused and nothing is running, wait 2 minutes or delete the file.
 
 Routes come from the route table generated from `packages/format/schema/openapi.json`
 (`docs/specification/api.md`). `server.ts` only starts the server; `server/app.ts` runs the guard

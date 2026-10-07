@@ -3,11 +3,11 @@
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
 // sent to (the route's path); when given, everything the act names must be on it.
 import type { ActEvent } from '../../format/src/index.ts';
-import { CONTAINER_PLACES, containerKey, isContainerAct, LATER_REGION, latest, NODE_TYPES } from '../../format/src/index.ts';
+import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { sentAfter } from './fold.ts';
 import { containerLog } from './containers.ts';
-import { creatorOf, grantRequests } from './grants.ts';
+import { grantRequests } from './grants.ts';
 import type { Ask } from './notes.ts';
 import { cardsOf, isNote, liveNotes } from './notes.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
@@ -27,13 +27,11 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   },
   grant: (e, s, board, p) => answers(e, s, board, p),
   deny: (e, s, board, p) => answers(e, s, board, p),
+  // A container, or with no `region` the whole board (api.md 82).
   revoke: (e, s, board, p) => {
     onBoard(e.board, board, p);
-    const where = `${String(e.board)}/${String(e.region)}`;
-    if (creatorOf(s, e.board!, e.region!) === e.holder)
-      p.push(`holder: "${e.holder}" created ${where}, and a container's creator cannot be removed`);
-    else if (!s.index.holders.get(containerKey(e.board!, e.region!))?.has(e.holder!))
-      p.push(`holder: "${e.holder}" does not hold ${where}; nothing to remove`);
+    const problem = revokeProblem(s.index, e.board!, e.region, e.holder!);
+    if (problem) p.push(problem);
   },
   move: (e, s, board, p) => moveProblems(e, s, board, p),
 };

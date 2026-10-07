@@ -1,6 +1,7 @@
-// write_board end to end (api.md 24-25, 29-37): per-item results, every row of point 24 allowed
-// and refused, moves needing both grants, the grant loop with resent keys, replays and key
-// conflicts, `base`, key references, depends-on-failed, scoped `pending`, and whole-call problems.
+// write_board end to end (api.md 24-25, 29-37, 81-86): per-item results, every row of point 24
+// allowed and refused, board access before container access (D-034), moves needing both grants,
+// the grant loop with resent keys, replays and key conflicts, `base`, key references,
+// depends-on-failed, scoped `pending`, a board revoke, and whole-call problems.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Client } from '../../../packages/client/src/index.ts';
@@ -27,15 +28,16 @@ const codes = (r: any) => r.results.map((x: any) => (x.ok ? 'ok' : x.problem.typ
 const region = (id: string, extra = {}) => ({ type: 'region', region: { id, title: id.toUpperCase(), mode: 'grid', ...extra } });
 const node = (where: string, title: string, extra = {}) => ({ type: 'node', node: { region: where, kind: 'question', title, item: true }, ...extra });
 
-/** Ask for a container as `who` and have the person grant it. */
-async function grant(who: Joined, board: string, regionId: string): Promise<void> {
-  const r = await h.ok('request_grant', { body: { board, region: regionId, reason: 'For the test.' } }, { as: who.client });
+/** Ask for a container, or with no region the board, as `who` and have the person grant it. */
+async function grant(who: Joined, board: string, regionId?: string): Promise<void> {
+  const body = { board, ...(regionId !== undefined && { region: regionId }), reason: 'For the test.' };
+  const r = await h.ok('request_grant', { body }, { as: who.client });
   await h.ok('act', { board, body: { type: 'act', action: 'grant', request: r.request } });
 }
 
 const n: Record<string, number> = {};
 
-test('a new board and new regions need no grant; the writer becomes the holder; keys name nodes within a batch', async () => {
+test('a new board needs no grant; its writer holds it and its new regions; keys name nodes within a batch', async () => {
   const r = await write(A, 'plan', [
     { type: 'board', title: 'Plan', key: 'plan' }, { ...region('a'), key: 'reg-a' },
     node('a', 'Q1', { key: 'q1' }), node('a', 'Q2', { key: 'q2' }),
@@ -53,9 +55,27 @@ test('a new board and new regions need no grant; the writer becomes the holder; 
   const stored = h.ledger.events().at(-1)!;
   assert.deepEqual(stored.type === 'link' && [stored.from, stored.to, stored.agent, stored.key], [n.q1, n.q2, A.agent, 'l1']);
   assert.deepEqual((await h.ok('show_container', { board: 'plan', region: 'a' })).holders, [A.agent]);
-  const b = await write(B, 'plan', [{ ...region('b'), key: 'reg-b' }, node('b', 'B1', { key: 'b1' })]);
+});
+
+test('another agent\'s board: needs-grant names the board; B asks for it, is granted, and makes its own container', async () => {
+  const batch = [{ ...region('b'), key: 'reg-b' }, node('b', 'B1', { key: 'b1' })];
+  const refused = await write(B, 'plan', batch);
+  assert.deepEqual(codes(refused), ['needs-grant', 'needs-grant']);
+  const p = refused.results[0].problem;
+  assert.deepEqual([p.board, 'region' in p], ['plan', false]);
+  assert.match(p.detail, /Call request_grant once with just the board/);
+  const asked = await h.ok('request_grant', { body: { board: 'plan', reason: 'I review the plan.' } }, { as: B.client });
+  assert.deepEqual([h.last().status, asked.board, 'region' in asked], [201, 'plan', false]);
+  const board = await h.ok('get_board', { board: 'plan' });
+  assert.deepEqual(board.requests.map((r: any) => [r.seq, 'region' in r]), [[asked.request, false]]);
+  await h.ok('act', { board: 'plan', body: { type: 'act', action: 'grant', request: asked.request } });
+  assert.deepEqual((await h.ok('request_grant', { body: { board: 'plan', reason: 'Again.' } }, { as: B.client })),
+    { board: 'plan', held: true });
+  const b = await write(B, 'plan', batch);
   assert.deepEqual(codes(b), ['ok', 'ok']);
   n.b1 = b.results[1].n;
+  assert.deepEqual((await h.ok('get_board', { board: 'plan' })).boardHolders.map((x: any) => [x.agent, x.creator ?? false]),
+    [[A.agent, true], [B.agent, false]]);
 });
 
 test('point 24 over HTTP: what each item needs, allowed for the holder and refused with needs-grant for another agent', async () => {
@@ -120,15 +140,19 @@ test('the grant loop: needs-grant, request (and a repeat), the person grants, th
     { type: 'reply', n: { key: 'bq' }, text: 'Context.', key: 'br' },
   ];
   const first = await write(B, 'roadmap', batch);
-  assert.deepEqual(codes(first), ['ok', 'needs-grant', 'depends-on-failed']);
+  // B holds nothing on the roadmap: the new region needs the board, the node its container.
+  assert.deepEqual(codes(first), ['needs-grant', 'needs-grant', 'depends-on-failed']);
+  assert.deepEqual(first.results.slice(0, 2).map((x: any) => x.problem.region), [undefined, 'review']);
   const req = await h.ok('request_grant', { body: { board: 'roadmap', region: 'review', reason: 'Adding findings.' } }, { as: B.client });
   const again = await h.ok('request_grant', { body: { board: 'roadmap', region: 'review', reason: 'Adding findings.' } }, { as: B.client });
   assert.deepEqual([again.request, again.replayed], [req.request, true]);
   await h.ok('act', { board: 'roadmap', body: { type: 'act', action: 'grant', request: req.request } });
+  // A grant on a container brings its board, so the new region is allowed too.
   const resent = await write(B, 'roadmap', batch);
   assert.deepEqual(codes(resent), ['ok', 'ok', 'ok']);
-  assert.deepEqual([resent.results[0].replayed, resent.results[0].seq], [true, first.results[0].seq]);
-  assert.equal('replayed' in resent.results[1], false, 'a failed item reserved no key');
+  assert.equal('replayed' in resent.results[0] || 'replayed' in resent.results[1], false, 'a failed item reserved no key');
+  const replay = await write(B, 'roadmap', batch.slice(0, 1));
+  assert.deepEqual([replay.results[0].replayed, replay.results[0].seq], [true, resent.results[0].seq]);
   assert.equal(h.ledger.events().filter((e) => e.type === 'region' && e.region.id === 'b-notes').length, 1);
 });
 
@@ -213,4 +237,22 @@ test('a board item makes a new board in the path, and later items in the batch c
   const r = await write(B, 'fresh', [node('main', 'Too early'), { type: 'board', title: 'Fresh' }, { ...region('main'), key: 'fm' }, node('main', 'First')]);
   assert.deepEqual(codes(r), ['invalid', 'ok', 'ok', 'ok']);
   assert.deepEqual((await h.ok('list_boards')).boards.find((b: any) => b.board === 'fresh').title, 'Fresh');
+});
+
+test('a board revoke stops every write there, its own container too; the board\'s creator stays; only it writes the board line', async () => {
+  const C = await h.join('Third chat');
+  await grant(C, 'plan');
+  const mine = await write(C, 'plan', [{ ...region('c'), key: 'reg-c' }, node('c', 'C1', { key: 'c1' })]);
+  assert.deepEqual(codes(mine), ['ok', 'ok']);
+  const retitle = await write(C, 'plan', [{ type: 'board', title: 'Mine now' }]);
+  assert.deepEqual(codes(retitle), ['forbidden']);
+  assert.match(retitle.results[0].problem.detail, /Only the agent that created board "plan"/);
+  const kept = await h.fails('act', { board: 'plan', body: { type: 'act', action: 'revoke', holder: A.agent, board: 'plan' } }, 422, 'invalid');
+  assert.match(kept.errors[0]!.detail, /created board plan, and a board's creator cannot be removed/);
+  await h.ok('act', { board: 'plan', body: { type: 'act', action: 'revoke', holder: C.agent, board: 'plan' } });
+  const after = await write(C, 'plan', [node('c', 'C2'), { type: 'reply', n: mine.results[1].n, text: 'Mine.' }]);
+  assert.deepEqual(codes(after), ['needs-grant', 'needs-grant']);
+  assert.deepEqual(after.results.map((x: any) => [x.problem.board, x.problem.region]), [['plan', undefined], ['plan', undefined]]);
+  assert.equal(h.last().status, 200);
+  assert.equal((await h.ok('request_grant', { body: { board: 'plan', reason: 'Back again.' } }, { as: C.client })).held, undefined);
 });

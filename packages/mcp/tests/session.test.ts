@@ -71,7 +71,10 @@ test('join: an agent id and a secret, once', async () => {
 
 const QUESTION = { type: 'node', key: 'mcp-q', node: { region: 'options', kind: 'question', title: 'Monthly or yearly billing?', item: true } };
 
-test('write_board: a new region is written, an item in a container the agent does not hold fails needs-grant; not an error', async () => {
+test('write_board: on a board granted to it, a new region is written; an item in a container it does not hold fails needs-grant; not an error', async () => {
+  // D-034: ask for another agent's board first.
+  const board = await ok('request_grant', { board: 'pricing', reason: 'I keep notes on pricing.', secret });
+  await (await person()).call('act', { board: 'pricing', body: { type: 'act', action: 'grant', request: board.request } });
   const r = await ok('write_board', {
     board: 'pricing', secret,
     items: [{ type: 'region', key: 'mcp-notes', region: { id: 'mcp-notes', title: 'MCP notes', mode: 'list' } }, QUESTION],

@@ -15,7 +15,7 @@ const act = (body: object) => ({ board: 'roadmap', body: { type: 'act', ...body 
 
 test('a move: show_node, list_open, show_container and get_board show where the card is and where the agent has it', async () => {
   const stored = await h.ok('act', act({ action: 'move', n: 4, region: 'review' }));
-  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [7, 'move', 4, 'review']);
+  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [8, 'move', 4, 'review']);
   const node = await h.ok('show_node', { board: 'roadmap', n: 4 });
   assert.deepEqual([node.region, node.moved_from], ['review', 'prove']);
   const open = await h.ok('list_open', { board: 'roadmap' });

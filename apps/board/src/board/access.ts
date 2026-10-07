@@ -1,6 +1,6 @@
-// The person's side of agent access on the page (agentAccess flag, D-027, api.md 16, 23-26):
-// the rows the requests strip shows, the holders each frame shows, and the acts Allow, Refuse,
-// Remove access and Send send. Plain data in, plain data out; the controller sends the acts
+// The person's side of agent access on the page (agentAccess flag, D-027, D-034, api.md 16, 23-26,
+// 81-86): the rows the requests strip shows, the holders the toolbar lists for the board and each
+// frame shows for its container, and the acts Allow, Refuse, Remove access and Send send. Plain data in, plain data out; the controller sends the acts
 // through the one act path, so the server's checks (validateAct) judge every one.
 import type { View } from '../../../../packages/format/src/index.ts';
 import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
@@ -12,37 +12,49 @@ const UNNAMED = 'An agent';
 
 const titleOf = (view: View, region: string) => view.regions.find((r) => r.id === region)?.title ?? region;
 
-/** The open requests, oldest first, with the container's title and the agent's label. */
+/** The open requests, oldest first, with the container's title (none for a request for the whole
+ * board) and the agent's label. */
 export function requestRows(data: BoardData): AccessRequestRow[] {
   return (data.access.requests ?? []).map((r) => ({
-    seq: r.seq, label: r.label ?? UNNAMED, container: titleOf(data.view, r.region), reason: r.reason,
+    seq: r.seq, label: r.label ?? UNNAMED, reason: r.reason,
+    ...(r.region !== undefined && { container: titleOf(data.view, r.region) }),
   }));
 }
 
+/** What a request asks, after the agent's label (the strip's row and its announcement). */
+export const askWords = (row: AccessRequestRow): string =>
+  row.container === undefined ? 'wants to draw on this board' : `asks to write in ${row.container}`;
+
 /** Region id -> its holders; empty when the board has none. */
 export const holdersOf = (data: BoardData): Readonly<Record<string, AccessHolder[]>> => data.access.holders ?? {};
+
+/** The board's own holders, creator first; empty when it has none (a board drawn before agents). */
+export const boardHoldersOf = (data: BoardData): AccessHolder[] => data.access.boardHolders ?? [];
 
 /** Allow or Refuse one request; a refusal's note is optional (api.md 16). */
 export const answerAct = (request: number, answer: 'grant' | 'deny', text?: string): ActFields =>
   ({ action: answer, request, ...(answer === 'deny' && text?.trim() && { text: text.trim() }) });
 
-/** Remove one holder from one container; io.ts adds the board. */
-export const revokeAct = (region: string, holder: string): ActFields => ({ action: 'revoke', region, holder });
+/** Remove one holder from one container, or with no `region` from the board; io.ts adds the board. */
+export const revokeAct = (region: string | undefined, holder: string): ActFields =>
+  ({ action: 'revoke', ...(region !== undefined && { region }), holder });
 
 /** The confirm step's words for Remove access, and the toast after it. */
-export function revokeWords(data: BoardData, region: string, holder: string) {
-  const label = holdersOf(data)[region]?.find((h) => h.agent === holder)?.label ?? UNNAMED;
-  const title = titleOf(data.view, region);
+export function revokeWords(data: BoardData, region: string | undefined, holder: string) {
+  const list = region === undefined ? boardHoldersOf(data) : holdersOf(data)[region];
+  const label = list?.find((h) => h.agent === holder)?.label ?? UNNAMED;
+  const where = region === undefined ? 'draw on this board' : `write in ${titleOf(data.view, region)}`;
   return {
     heading: `Remove ${label}'s access?`,
-    body: `${label} will no longer be able to write in ${title}. Its items stay on the board, and it can ask again.`,
+    body: `${label} will no longer be able to ${where}. Its items stay on the board, and it can ask again.`,
     confirm: 'Remove access',
-    done: `${label} can no longer write in ${title}`,
+    done: `${label} can no longer ${where}`,
   };
 }
 
 /** The toast after Allow or Refuse. */
 export function answerWords(row: AccessRequestRow | undefined, answer: 'grant' | 'deny'): string {
   const who = row?.label ?? UNNAMED;
-  return answer === 'grant' ? `${who} can now write in ${row?.container ?? 'the container'}` : `Refused ${who}`;
+  if (answer === 'deny') return `Refused ${who}`;
+  return row && row.container === undefined ? `${who} can now draw on this board` : `${who} can now write in ${row?.container ?? 'the container'}`;
 }

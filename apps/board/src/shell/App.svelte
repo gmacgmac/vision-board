@@ -32,10 +32,11 @@
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
   onsend={() => board?.send() ?? Promise.resolve('The board is not ready yet.')}
+  onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
 />
 {#if shell.agentAccess}
-  <AccessRequests requests={shell.requests} ready={shell.version !== null}
-    onanswer={(seq, a, text) => board?.answer(seq, a, text) ?? Promise.resolve(false)} />
+  <AccessRequests requests={shell.requests} news={shell.requestNews}
+    onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)} />
 {/if}
 
 <main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}>

@@ -1,19 +1,20 @@
 // The board controller: holds the project ledger state (live.ts), works the open board out from it
 // (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
 // layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
-// one wire them to the canvas: boards.ts (boot, the picker, the kept view), focus.ts (navigation),
-// wiring.ts (input), item-acts.ts (a card's review buttons), access-flow.ts (agent access), notes.ts
-// (note bubbles), region-notes.ts (a container's note preview and block), selection.ts and
-// selection-flow.ts (the selection, the lasso, the bar, the view commands), places.ts (pins, modes,
-// sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts). Plain TypeScript (D-005):
-// the Svelte shell mounts it on the stage and reads what it reports via `shell`.
+// one wire them to the canvas: boards.ts (boot, the picker, the kept view), attention.ts (marks,
+// badges, the toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (a card's
+// review buttons), access-flow.ts (agent access), notes.ts (note bubbles), region-notes.ts (a
+// container's note preview and block), selection.ts and selection-flow.ts (the selection, the
+// lasso, the bar, the view commands), places.ts (pins, modes, sizes), moves.ts (containers, Later,
+// Move to), sender.ts (sending acts). Plain TypeScript (D-005): the Svelte shell mounts it.
 import type { LedgerEvent, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
 import type { BoardData } from './io.ts';
 import { ApiError } from './io.ts';
 import { createBoards } from './boards.ts';
-import { boardData, decidedIds, drewOn } from './board-data.ts';
+import { boardData, decidedIds } from './board-data.ts';
+import { createAttention } from './attention.ts';
 import type { BoardElements } from './draw.ts';
 import { createDrawing } from './draw.ts';
 import { createLive } from './live.ts';
@@ -21,11 +22,11 @@ import { createFocus } from './focus.ts';
 import { bindStage } from './wiring.ts';
 import { Viewport } from './viewport.ts';
 import { createPlaces } from './places.ts';
-import { requestRows } from './access.ts';
-import { createAccessFlow } from './access-flow.ts';
+import { boardHoldersOf, requestRows } from './access.ts';
+import { type AccessFlow, createAccessFlow } from './access-flow.ts';
 import { createNoteFlow } from './notes.ts';
 import { DISCARD_ASK } from './note-discard.ts';
-import { createRegionNotes, owedRegions } from './region-notes.ts';
+import { createRegionNotes } from './region-notes.ts';
 import { createItemActs } from './item-acts.ts';
 import { createSelection } from './selection.ts';
 import { createSelectionFlow } from './selection-flow.ts';
@@ -45,8 +46,8 @@ export interface Board {
   /** A view command from the header (zoom out, Fit, zoom in; commands.ts). */
   command(id: CommandId): void;
   toggleHide(): void;
-  /** Allow or Refuse a grant request (agentAccess flag); true when it was recorded. */
-  answer(request: number, answer: 'grant' | 'deny', text?: string): Promise<boolean>;
+  /** Allow or Refuse a grant request, Remove access (agentAccess flag, access-flow.ts). */
+  access: AccessFlow;
   /** Send to agent; null when recorded, else the problem's detail. */
   send(): Promise<string | null>;
   destroy(): void;
@@ -73,7 +74,7 @@ export function createBoard(els: BoardElements): Board {
     frame: 0,
     /** The waiting draw starts from scratch (the state was read afresh). */
     fresh: false,
-    /** The waiting draw shows lines in which the agent drew on this board. */
+    /** The waiting draw shows lines in which the agent drew on this board (`board.drawn`). */
     drew: false,
     /** A card is being dragged: Later shows as a drop target although it holds none (3_FE_03). */
     later: false,
@@ -89,11 +90,12 @@ export function createBoard(els: BoardElements): Board {
   const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data) : new Set());
 
   const live = createLive(onLines);
+  const attention = createAttention({ state: () => live.state, board: () => S.id, fail });
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, layers, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => owedRegions(live.state!, S.id),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => {
@@ -112,8 +114,8 @@ export function createBoard(els: BoardElements): Board {
 
   /** Lines were applied to the held state: draw them in the next frame. */
   function onLines(lines: LedgerEvent[], full: boolean) {
-    if (full) S.fresh = true;
-    else if (S.id && drewOn(live.state!, lines, S.id)) S.drew = true;
+    S.fresh ||= full;
+    S.drew ||= attention.batch(lines, full);
     if (!S.frame) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
     boards.listed();
   }
@@ -150,7 +152,7 @@ export function createBoard(els: BoardElements): Board {
     shell.counts = { open: c.open, decided: c.decided, later: c.later };
     shell.replyText = replyText(view(), st);
     shell.answered = view().nodes.filter((n) => n.n !== undefined && st.items.has(n.id)).length;
-    shell.requests = access ? requestRows(S.data!) : [];
+    [shell.requests, shell.boardHolders] = access ? [requestRows(S.data!), boardHoldersOf(S.data!)] : [[], []];
   }
 
   // ---- actions -------------------------------------------------------------------------------
@@ -213,10 +215,7 @@ export function createBoard(els: BoardElements): Board {
   /** Send to agent; it greys the notes it sent at once (2e_FE_01 ruling 7). */
   const send = () => attempt({ action: 'send' });
 
-  function toggleHide() {
-    shell.hide = !shell.hide;
-    if (S.data) redraw();
-  }
+  const toggleHide = () => { shell.hide = !shell.hide; if (S.data) redraw(); };
 
   // ---- wiring --------------------------------------------------------------------------------
 
@@ -262,13 +261,13 @@ export function createBoard(els: BoardElements): Board {
       flow.dismissArea();
       selection.clear();
     },
-  }, () => { if (drawing.layout) vp.apply(); });
+  }, () => { if (drawing.layout) vp.resized(); });
 
   // ---- boards --------------------------------------------------------------------------------
 
   /** Boot, and switching boards (boards.ts). */
   const boards = createBoards({
-    live, vp, selection, id: () => S.id, setId: (id) => { S.id = id; }, redraw, layout: () => drawing.layout, fail,
+    live, vp, selection, id: () => S.id, setId: (id) => { const from = S.id; S.id = id; attention.switched(from); }, redraw, layout: () => drawing.layout, fail,
     keepView: flagOn('keepView', pageFlags()), // the view kept across a reload (FE_02 ruling 5, rule 12)
   });
 
@@ -286,10 +285,11 @@ export function createBoard(els: BoardElements): Board {
     switchTo: boards.switchTo,
     command: (id) => void flow.command(id),
     toggleHide,
-    answer: (request, a, text) => accessFlow.answer(request, a, text),
+    access: accessFlow,
     send,
     destroy() {
       boards.stop();
+      attention.destroy();
       unbind();
       notes.destroy();
       regionNotes.destroy();

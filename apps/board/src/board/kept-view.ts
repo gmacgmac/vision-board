@@ -30,7 +30,8 @@ export function createKeptView(vp: Viewport, board: () => string, on: boolean): 
     if (!pending) return;
     pending = false;
     const id = board();
-    if (!id) return;
+    // A view taken while the stage had no room (a hidden pane or tab) is not the person's.
+    if (!id || !vp.sized) return;
     try {
       sessionStorage.setItem(KEY + id, JSON.stringify(vp.snapshot()));
     } catch {

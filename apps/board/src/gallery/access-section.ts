@@ -1,6 +1,7 @@
-// Gallery entry for the person's side of agent access (agentAccess flag, D-027): the requests
-// strip with two requests and a refusing note open, frames with a creator and a granted holder
-// (at rest, and with Remove access revealed), and Send to agent in every state. Shown only with
+// Gallery entry for the person's side of agent access (agentAccess flag, D-027, D-034): the
+// requests strip with two requests for a container (one with its refusing note open) and one for
+// the whole board, the header's Agents list open, frames with a creator and a granted holder (at
+// rest, and with Remove access revealed), and Send to agent in every state. Shown only with
 // the flag on, so ?flags=-agentAccess draws the gallery as it was. The strip and the button are
 // the board's own Svelte components, mounted with a forced state; the frames are real
 // <vb-region> elements, updated with `regionState` from the fixture ledger's holders, exactly as
@@ -10,6 +11,7 @@ import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
 import AccessRequests from '../shell/AccessRequests.svelte';
 import SendButton from '../shell/SendButton.svelte';
+import BoardAgents from '../shell/BoardAgents.svelte';
 import type { SendState } from '../shell/shell.svelte.ts';
 import { requestRows } from '../board/access.ts';
 import type { BoardData } from '../board/io.ts';
@@ -50,8 +52,14 @@ function strip(fx: Fixture): HTMLElement {
   const rows = requestRows(asBoard(fx));
   mount(AccessRequests, {
     target: host,
-    props: { requests: rows, refusing: rows.at(-1)?.seq ?? null, placement: 'gallery', onanswer: () => Promise.resolve(false) },
+    props: { requests: rows, refusing: rows[1]?.seq ?? null, placement: 'gallery', onanswer: () => Promise.resolve(false) },
   });
+  return host;
+}
+
+function agents(fx: Fixture): HTMLElement {
+  const host = el('div', 'g-agents');
+  mount(BoardAgents, { target: host, props: { holders: fx.boardAgents, open: true, onrevoke: () => Promise.resolve() } });
   return host;
 }
 
@@ -73,13 +81,14 @@ export function accessSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'Agent access');
   heading.id = 'feature-agentAccess';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'grant · deny · revoke · send'), ' · feature flag agentAccess (D-027), on by default · off with ?flags=-agentAccess');
+  meta.append(el('code', undefined, 'grant · deny · revoke · send'), ' · feature flag agentAccess (D-027, D-034), on by default · off with ?flags=-agentAccess');
   const frames = el('div', 'g-frames vb-ground');
   frames.append(...REGIONS_HELD.map((id) => frame(id, fx)));
   box.append(heading,
-    el('p', 'g-desc', 'Agents ask before they write in a container another agent made. The person allows or refuses each request, sees who holds each container, can remove an agent\'s access, and presses Send to agent when done.'),
+    el('p', 'g-desc', 'Agents ask before they draw on a board, or write in a container, another agent made. The person allows or refuses each request, sees who holds the board and each container, can remove an agent\'s access, and presses Send to agent when done.'),
     meta,
-    group('Requests', 'The strip under the header while any request is open. Refuse opens an optional one-line note; the second request shows it open.', strip(fx)),
+    group('Requests', 'The strip under the header while any request is open. Refuse opens an optional one-line note; the second request shows it open. The third asks for the whole board: an agent asks for a board it did not make before it draws there.', strip(fx)),
+    group('Agents on the board', 'In the header, the agents that can draw on the open board: the one that made it (no remove control), then each agent the person allowed. Remove access asks to confirm, then takes the whole board back.', agents(fx)),
     group('Holders on a container', 'After the count: the agent that made the container (no remove control), then each agent granted access. Hover or keyboard focus shows Remove access, which asks to confirm.', frames),
     group('Send to agent', 'Every state of the button in the board header.', sends()));
   return box;

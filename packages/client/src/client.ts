@@ -19,7 +19,7 @@ export interface ProblemDocument {
   errors?: ProblemError[];
   /** `conflict`: the node's current version. */
   ver?: number;
-  /** `needs-grant`: the container needed. */
+  /** `needs-grant`: the board needed, and the container when it names `region`. */
   board?: string;
   region?: string;
 }

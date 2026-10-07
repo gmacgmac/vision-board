@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.5.0",
+    "version": "1.7.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -662,7 +662,7 @@
         "operationId": "join",
         "x-agent": true,
         "summary": "Join as an agent",
-        "description": "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: call `request_grant` for write access. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
+        "description": "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -720,8 +720,8 @@
       "post": {
         "operationId": "request_grant",
         "x-agent": true,
-        "summary": "Ask for write access to a container",
-        "description": "Ask the person for write access to one container, named by `board` and `region`. Call it once when `write_board` answers `needs-grant`, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for that container it is returned with `replayed: true`; if you already hold the container you get `{ held: true }`.",
+        "summary": "Ask for write access to a board or a container",
+        "description": "Ask the person for write access to a board, or to one container on it. Ask for the board first: before you write anything on a board you did not create, call this with just `board`. Then, for another agent's container, call it with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for it, that request is returned with `replayed: true`; if you already hold it you get `{ held: true }`.",
         "security": [
           {
             "agentSecret": []
@@ -745,7 +745,7 @@
         },
         "responses": {
           "200": {
-            "description": "The grant request was recorded, or you already hold the container.",
+            "description": "An open request already stood, or you already hold the board or container.",
             "content": {
               "application/json": {
                 "schema": {
@@ -780,10 +780,22 @@
                 "schema": {
                   "$ref": "#/components/schemas/grantResponse"
                 },
-                "example": {
-                  "request": 54,
-                  "board": "pricing",
-                  "region": "later"
+                "examples": {
+                  "container": {
+                    "summary": "A request for one container",
+                    "dataValue": {
+                      "request": 54,
+                      "board": "pricing",
+                      "region": "later"
+                    }
+                  },
+                  "board": {
+                    "summary": "A request for the whole board",
+                    "dataValue": {
+                      "request": 55,
+                      "board": "pricing"
+                    }
+                  }
                 }
               }
             }
@@ -823,7 +835,7 @@
         "operationId": "write_board",
         "x-agent": true,
         "summary": "Write to a board",
-        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose` or `park`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (items waiting for your answer). An item in a container you do not hold fails with `needs-grant`. You cannot decide an item: `propose` acknowledge or drop and the person decides.",
+        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose` or `park`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (items waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide an item: `propose` acknowledge or drop and the person decides.",
         "security": [
           {
             "agentSecret": []
@@ -1047,8 +1059,8 @@
       "post": {
         "operationId": "mark_seen",
         "x-agent": false,
-        "summary": "Record that the person saw a version",
-        "description": "Record that the person has seen a version of a node, so its \"updates\" badge can clear. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id, the node number `n` and the version `ver`. It returns the stored ledger line.",
+        "summary": "Record what the person has seen",
+        "description": "Record that the person has seen a version of a node (`n` and `ver`), so its \"updates\" badge can clear, or has looked at the board up to a line (`board`, the same board as the path, and `head`, the board's `seq` in `list_boards`), so the board is no longer new or changed. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -1066,9 +1078,21 @@
               "schema": {
                 "$ref": "#/components/schemas/seenRequest"
               },
-              "example": {
-                "n": 1,
-                "ver": 2
+              "examples": {
+                "node": {
+                  "summary": "A node version",
+                  "dataValue": {
+                    "n": 1,
+                    "ver": 2
+                  }
+                },
+                "board": {
+                  "summary": "A board, up to a line",
+                  "dataValue": {
+                    "board": "pricing",
+                    "head": 52
+                  }
+                }
               }
             }
           }
@@ -1302,40 +1326,40 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/grant-request.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -1389,7 +1413,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -1398,7 +1422,7 @@
         "description": "The node number.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/nodeNumber"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/nodeNumber"
         }
       },
       "regionPath": {
@@ -1407,7 +1431,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -1416,7 +1440,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
         }
       },
       "after": {

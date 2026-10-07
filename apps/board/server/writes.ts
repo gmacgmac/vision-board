@@ -54,10 +54,13 @@ function onBoard(s: LedgerState, board: string, n: unknown): void {
   }
 }
 
-/** The person has seen version `ver` of node `n` (D-018). */
+/** The person has seen version `ver` of node `n` (D-018), or has looked at the board up to line
+ * `head` (api.md 87); either way on the board in the path. */
 const markSeen: Handler = async ({ req, res, params, ledger }) => {
   const board = requireBoard(ledger.state(), params.board);
   const e = await body('mark_seen', req);
+  if (e.board !== undefined && e.board !== board)
+    throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
   onBoard(ledger.state(), board, e.n);
   sendJson(res, 201, ledger.append({ ...e, type: 'seen' }, { by: 'person' }));
 };
@@ -74,30 +77,32 @@ const join: Handler = async ({ req, res, ledger, agents }) => {
   sendJson(res, 201, { agent, secret });
 };
 
-/** Ask the person for one container (api.md 25-26): a holder is told so, an open request from
- * this agent is returned again, a retry key sent before returns its request; else a new one. */
+/** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a
+ * holder is told so, an open request from this agent is returned again, a retry key sent before
+ * returns its request; else a new one. */
 const requestGrant: Handler = async ({ req, res, ledger, caller }) => {
   const agent = agentOf(caller);
   const b = await body('request_grant', req);
   const s = ledger.state();
   const board = requireBoard(s, b.board);
-  const region = String(b.region);
-  if (!s.index.boards.get(board)?.has(region)) {
+  const region = b.region === undefined ? undefined : String(b.region);
+  if (region !== undefined && !s.index.boards.get(board)?.has(region)) {
     throw problem('not-found', `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
   }
-  if (holders(s, board, region).includes(agent)) return sendJson(res, 200, { board, region, held: true });
+  const what = { board, ...(region !== undefined && { region }) };
+  if (holders(s, board, region).includes(agent)) return sendJson(res, 200, { ...what, held: true });
   const open = openRequestOf(s.index, agent, board, region);
-  if (open !== undefined) return sendJson(res, 200, { request: open, board, region, replayed: true });
+  if (open !== undefined) return sendJson(res, 200, { request: open, ...what, replayed: true });
   const keyed = typeof b.key === 'string' ? s.keys.get(agent)?.get(b.key) : undefined;
   if (keyed !== undefined) {
     const r = s.index.requests.get(keyed);
     if (r?.board !== board || r.region !== region || s.grantNotes.get(keyed)?.reason !== b.reason) {
       throw invalid([{ pointer: '/key', detail: `key reused for different content; use a new key for a new request` }]);
     }
-    return sendJson(res, 200, { request: keyed, board, region, replayed: true });
+    return sendJson(res, 200, { request: keyed, ...what, replayed: true });
   }
   const e = ledger.append({ ...b, type: 'grant-request' }, { by: 'agent', agent });
-  sendJson(res, 201, { request: e.seq, board, region });
+  sendJson(res, 201, { request: e.seq, ...what });
 };
 
 /** One batch of write items (api.md 34, 37): a body that cannot be read at all, or an unknown

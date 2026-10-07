@@ -1,0 +1,101 @@
+// What needs the person's attention on the page (FE_01, D-033), read from the conditions table
+// (packages/actions conditions.ts) and never from page-local sets: the picker's " · new" and
+// " · changed" marks (`board.new`, `board.changed`, never on the open board), the container badges
+// (`container.owed`), the requests the strip announces (`grant.requested` lines in the batch) and
+// the "agent drew" toast (`board.drawn`, when its line is in the batch). `pageConditions`
+// (board-data.ts, also the gallery's) is the one read; this runs it after every batch and switch,
+// and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
+// when a board opens, when the page leaves it (a switch, or the page going away) and, while it
+// stays open, at most once a minute when an agent's line arrives. Never while viewing a past
+// version (not built yet).
+import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
+import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import { boardNews } from '../../../../packages/actions/src/index.ts';
+import { pageConditions } from './board-data.ts';
+import { markBoardSeen } from './io.ts';
+import { shell } from '../shell/shell.svelte.ts';
+
+/** The least time between two board seen lines while a board stays open (api.md 87). */
+const SEEN_EVERY_MS = 60_000;
+
+export interface AttentionDeps {
+  state(): LedgerState | null;
+  /** The open board's id; '' before one opens. */
+  board(): string;
+  fail(err: unknown): void;
+}
+
+export interface Attention {
+  /** After a batch was applied (`full`: the state was read afresh): marks, badges and the strip's
+   * news again; true when the agent drew on the open board in this batch (the toast). */
+  batch(lines: readonly LedgerEvent[], full: boolean): boolean;
+  /** The open board changed from `from` (already set): a board seen for the one left and the one
+   * opened, and every mark read again. */
+  switched(from: string): void;
+  /** The containers on the open board the agent owes an answer on: their badges. */
+  owed(): ReadonlySet<string>;
+  destroy(): void;
+}
+
+export function createAttention(d: AttentionDeps): Attention {
+  let owed = new Set<string>();
+  let timer = 0;
+  let sentAt = 0;
+  /** board -> the head last sent, so a board seen still on its way is not sent twice. */
+  const sent = new Map<string, number>();
+
+  /** Record a board seen on `board` when it would carry a mark if it were not open. */
+  function see(board: string, leaving = false) {
+    const s = d.state();
+    const head = s?.heads.get(board);
+    if (!s || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
+    sent.set(board, head);
+    sentAt = Date.now();
+    markBoardSeen(board, head, leaving).catch((err: unknown) => {
+      sent.delete(board);
+      d.fail(err);
+    });
+  }
+
+  /** While a board stays open: a board seen when one is due, at most once a minute. */
+  function keep() {
+    const s = d.state();
+    if (timer || !s || !d.board() || !boardNews(s, d.board())) return;
+    timer = window.setTimeout(() => { timer = 0; see(d.board()); }, Math.max(0, sentAt + SEEN_EVERY_MS - Date.now()));
+  }
+
+  /** Read the conditions again; true when the agent drew on the open board from line `from` on. */
+  function read(from: number): boolean {
+    const s = d.state();
+    if (!s) return false;
+    const c = pageConditions(s, d.board());
+    owed = c.owed;
+    if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
+    const news = c.requests.filter((seq) => seq >= from);
+    if (news.length) shell.requestNews = news;
+    return c.drawn !== undefined && c.drawn >= from;
+  }
+
+  const leave = () => see(d.board(), true);
+  addEventListener('pagehide', leave);
+
+  return {
+    batch(lines, full) {
+      const drew = read(full ? Infinity : lines[0]?.seq ?? Infinity);
+      keep();
+      return drew;
+    },
+    switched(from) {
+      clearTimeout(timer);
+      timer = 0;
+      if (from) see(from);
+      see(d.board());
+      read(Infinity);
+    },
+    owed: () => owed,
+    destroy() {
+      clearTimeout(timer);
+      removeEventListener('pagehide', leave);
+    },
+  };
+}

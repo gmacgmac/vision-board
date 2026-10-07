@@ -1,8 +1,8 @@
-// What the agent owes and what the person has not seen (D-018, D-020, api.md 36, 41), and the
-// person's responses after a cursor (check_responses).
+// What the agent owes (D-020, api.md 36, 41), and the person's responses after a cursor
+// (check_responses). What the person has not seen is the `item.unseen` row (conditions.test.ts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openItems, pendingItems, responsesAfter, unseenItems } from '../src/index.ts';
+import { openItems, pendingItems, responsesAfter } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 
 test('pending: the latest comment, until a reply names it', () => {
@@ -71,18 +71,6 @@ test('pending, scoped: an author still owes the park on a node it moved to Later
   assert.deepEqual(pendingItems(s, 'b', A), [{ n: 1, later }]);
   assert.deepEqual(pendingItems(s, 'b', B), [{ n: 1, later }], 'B holds Later');
   assert.deepEqual(pendingItems(s, 'b', C), []);
-});
-
-test('unseen: items newer than the person last saw; seen is 0 when never seen', () => {
-  const l = scene();
-  assert.deepEqual(unseenItems(l.state(), 'b'), [{ n: 1, ver: 1, seen: 0 }, { n: 2, ver: 1, seen: 0 }, { n: 3, ver: 1, seen: 0 }]);
-  l.seen(1, 1);
-  l.seen(2, 1);
-  l.seen(3, 1);
-  assert.deepEqual(unseenItems(l.state(), 'b'), []);
-  l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
-  assert.deepEqual(unseenItems(l.state(), 'b'), [{ n: 1, ver: 2, seen: 1 }]);
-  assert.deepEqual(unseenItems(l.state(), 'b2'), [{ n: 4, ver: 1, seen: 0 }]);
 });
 
 test('responsesAfter: the person\'s acts on this board after the cursor', () => {

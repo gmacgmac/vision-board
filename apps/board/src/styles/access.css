@@ -44,3 +44,23 @@
   animation: vb-spin calc(var(--vb-motion) * 2.5) linear infinite;
 }
 @keyframes vb-spin { to { transform: rotate(360deg); } }
+
+/* The board's Agents list in the toolbar (D-034): a disclosure whose panel hangs under it, over the
+   requests strip and the reply panel while it is open. */
+.vb-toolbar:has(.vb-agents[open]) { z-index: 7; }
+.vb-agents { position: relative; }
+.vb-agents > summary { list-style: none; display: inline-flex; align-items: center; gap: var(--vb-space-1); cursor: pointer; }
+.vb-agents > summary::-webkit-details-marker { display: none; }
+.vb-agents[open] > summary { border-color: var(--vb-line-strong); background: var(--vb-surface-region); }
+.vb-agents-panel {
+  position: absolute; right: 0; top: calc(100% + var(--vb-space-1));
+  min-width: calc(var(--vb-card-w-s) * 1.2); padding: var(--vb-space-3);
+  background: var(--vb-surface-raised); border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg);
+  box-shadow: var(--vb-shadow-lift);
+}
+.vb-agents-title { margin: 0 0 var(--vb-space-2); font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); color: var(--vb-ink-strong); }
+.vb-agents-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--vb-space-1); }
+.vb-agents-row { display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3); min-height: 32px; font-size: var(--vb-text-sm); }
+.vb-agents-row + .vb-agents-row { border-top: 1px solid var(--vb-line); padding-top: var(--vb-space-1); }
+.vb-agents-label { color: var(--vb-ink-strong); white-space: nowrap; }
+.vb-agents-note { color: var(--vb-ink-subtle); white-space: nowrap; }

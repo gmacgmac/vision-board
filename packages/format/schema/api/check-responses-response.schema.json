@@ -13,7 +13,7 @@
     "responses": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/stored"
       },
       "description": "The person's actions after `after`, oldest first."
     },

@@ -127,6 +127,29 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
   (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from their
   `pattern.json`, and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
 
+## Awareness tables (D-033)
+
+Three typed tables in `packages/actions`, derived from the folded ledger and read alike by the
+server, the page and (through the API) agents. Nothing in them is stored, so nothing goes stale.
+
+- **References** (`references.ts`, `REFERENCES`, `scopeOf`): what belongs to what; the board,
+  container and cards any ledger line touches.
+- **Permissions** (`permissions.ts`, `PERMISSIONS`, `canWrite`): who may write what, board first,
+  then container (D-034).
+- **Conditions** (`conditions.ts`, `CONDITIONS`, `conditionsOf`): what needs attention. Each row
+  says what it is about (a reference kind), who is told (person, agent, both), where the page
+  shows it (picker, card, container, strip, toast), when it holds and when it ends, and how it is
+  derived. A condition is ids only (`{ kind, board, container?, n?, seq? }`); a component looks up
+  the words it shows. An agent's rows are scoped through `PERMISSIONS`.
+
+On the page, one read (`pageConditions`, `apps/board/src/board/board-data.ts`, also the gallery's)
+gives the picker marks, the container badges, the open requests and `board.drawn`;
+`attention.ts` runs it after every batch and on every switch, decides what is news (a request or a
+drawing line in the batch), and sends the board seen that ends the marks. Components only render.
+
+The rule: **a check needed twice is a row**, never a local check. A new kind without a row is a
+type error, and each table has a coverage test that fails when a row has no test case.
+
 ## Feature flags (rule 12)
 
 A refactor that keeps the look and behaviour needs no flag. A new mode, node type or behaviour

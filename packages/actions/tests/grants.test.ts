@@ -18,10 +18,11 @@ test('holders: the creator, plus grants, minus revocations; a v2 region has none
   assert.deepEqual(holders(s, 'b', 'old'), []);
 });
 
-test('a new board and a new region id need no grant', () => {
+test('a new board needs no grant; a new region id needs only the board (D-034)', () => {
   const s = scene().state();
   assert.equal(canWrite(s, C, { type: 'board', board: 'fresh' }), 'ok');
-  assert.equal(canWrite(s, C, { type: 'region', board: 'b', region: { id: 'fresh' } }), 'ok');
+  assert.equal(canWrite(s, B, { type: 'region', board: 'b', region: { id: 'fresh' } }), 'ok');
+  assert.deepEqual(canWrite(s, C, { type: 'region', board: 'b', region: { id: 'fresh' } }), { board: 'b' });
 });
 
 test('an existing region id needs that region', () => {
@@ -92,7 +93,7 @@ test('an author parks a node it moved into Later after losing Later', () => {
 
 test('unknown regions and nodes are left to the context check', () => {
   const s = scene().state();
-  assert.equal(canWrite(s, C, { type: 'node', board: 'b', n: 50, node: { region: 'nope' } }), 'ok');
+  assert.equal(canWrite(s, B, { type: 'node', board: 'b', n: 50, node: { region: 'nope' } }), 'ok');
   assert.equal(canWrite(s, C, { type: 'reply', n: 999 }), 'ok');
   assert.equal(canWrite(s, C, { type: 'link', from: 999, to: 1 }), 'ok');
 });
@@ -134,6 +135,8 @@ test('boardAccess: open requests with the agent\'s label, and holders per region
   const at = grantRequests(s).find((r) => r.seq === open)!.at;
   assert.deepEqual(boardAccess(s, 'b'), {
     requests: [{ seq: open, region: 'later', reason: 'Adding to later.', at, agent: C, label: 'Spare chat' }],
+    // D-034: the board's creator, and every agent that made or was granted a container on it.
+    boardHolders: [{ agent: A, label: 'Pricing chat', creator: true }, { agent: B, label: 'Review chat' }, { agent: C, label: 'Spare chat' }],
     holders: {
       r: [{ agent: A, label: 'Pricing chat', creator: true }, { agent: C, label: 'Spare chat' }],
       q: [{ agent: B, label: 'Review chat', creator: true }],

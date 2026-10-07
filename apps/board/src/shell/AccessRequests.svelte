@@ -1,15 +1,17 @@
-<!-- The requests strip (agentAccess flag, D-027): under the header while any grant request is
-     open, one row per request, "<agent> asks to write in <container>" and its reason, with Allow
-     and Refuse. Refuse opens a one-line optional note, then sends `deny`; Allow sends `grant`.
+<!-- The requests strip (agentAccess flag, D-027, D-034): under the header while any grant request
+     is open, one row per request, "<agent> asks to write in <container>" (or, for the whole board,
+     "<agent> wants to draw on this board") and its reason, with Allow and Refuse. Refuse opens a one-line optional note, then sends `deny`; Allow sends `grant`.
      Both are the person's decision (rule 8), sent through the board's act path. A region
-     landmark with a heading; a polite live region, always present so it is heard, announces a
-     request that arrives while the page is open. The strip itself shows only while a request
-     is open. The gallery passes `refusing` to draw a row with its note open. -->
+     landmark with a heading; a polite live region, always present so it is heard, announces the
+     requests in `news`: those that arrived in the page's latest batch (board/attention.ts, the
+     `grant.requested` condition). The strip itself shows only while a request is open. The gallery
+     passes `refusing` to draw a row with its note open. -->
 <script lang="ts">
   import { tick } from 'svelte';
   import type { AccessRequestRow } from './shell.svelte.ts';
+  import { askWords } from '../board/access.ts';
 
-  let { requests, onanswer, refusing = null, placement = 'board', ready = true }: {
+  let { requests, onanswer, refusing = null, placement = 'board', news = [] }: {
     requests: AccessRequestRow[];
     /** Sends `grant` or `deny`; resolves true when it was recorded. */
     onanswer: (seq: number, answer: 'grant' | 'deny', text?: string) => Promise<boolean>;
@@ -17,26 +19,15 @@
     refusing?: number | null;
     /** `board`: fixed under the header; `gallery`: in the page flow. */
     placement?: 'board' | 'gallery';
-    /** False until the board has loaded, so the requests already open then are not announced. */
-    ready?: boolean;
+    /** The requests to announce, by line: those that arrived while the page was open. */
+    news?: readonly number[];
   } = $props();
 
   // svelte-ignore state_referenced_locally
   let open: number | null = $state(refusing);
   let note = $state('');
   let busy: number | null = $state(null);
-  let announce = $state('');
-  /** Requests already shown, so only one that arrives later is announced. */
-  const known = new Set<number>();
-  let primed = false;
-
-  $effect(() => {
-    if (!ready) return;
-    const fresh = requests.filter((r) => !known.has(r.seq));
-    for (const r of requests) known.add(r.seq);
-    if (primed && fresh.length) announce = fresh.map((r) => `${r.label} asks to write in ${r.container}`).join('. ');
-    primed = true;
-  });
+  const announce = $derived(requests.filter((r) => news.includes(r.seq)).map((r) => `${r.label} ${askWords(r)}`).join('. '));
 
   /** On the board the strip pushes the stage down by its height (board.css, --vb-strip-h), so
    * it never covers the top of the board; the property goes when the strip does. */
@@ -96,7 +87,8 @@
     {#each requests as r (r.seq)}
       <li class="vb-access-row" data-request={r.seq} aria-busy={busy === r.seq ? 'true' : undefined}>
         <p class="vb-access-text">
-          <span class="vb-access-ask"><b>{r.label}</b> asks to write in <b>{r.container}</b></span>
+          <span class="vb-access-ask"><b>{r.label}</b>
+            {#if r.container === undefined}wants to draw on <b>this board</b>{:else}asks to write in <b>{r.container}</b>{/if}</span>
           <span class="vb-access-reason">{r.reason}</span>
         </p>
         {#if open === r.seq}
@@ -110,7 +102,7 @@
         {:else}
           <div class="vb-access-actions">
             <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow"
-              aria-label="Allow {r.label} to write in {r.container}" onclick={() => answer(r, 'grant')}>Allow</button>
+              aria-label="Allow {r.label} to {r.container === undefined ? 'draw on this board' : `write in ${r.container}`}" onclick={() => answer(r, 'grant')}>Allow</button>
             <button type="button" class="vb-btn vb-btn-small" id={idOf(r.seq, 'refuse')}
               aria-label="Refuse {r.label}" onclick={() => startRefuse(r)}>Refuse</button>
           </div>

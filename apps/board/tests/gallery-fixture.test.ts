@@ -42,10 +42,11 @@ test('gallery ledger: a region frame exists for every layout mode', () => {
   for (const m of MODES) assert.ok(modes.has(m), `mode ${m}`);
 });
 
-test('gallery ledger: the agent access samples have two open requests and frames with a creator and a granted holder', () => {
+test('gallery ledger: the agent access samples have two open requests for a container and one for the board, frames with a creator and a granted holder', () => {
   const access = boardAccess(foldLedger(events), 'gallery');
-  assert.equal(access.requests?.length, 2);
-  assert.ok(access.requests!.every((r) => r.region === 'held' && r.label));
+  assert.deepEqual(access.requests?.map((r) => [r.region, Boolean(r.label)]), [['held', true], ['held', true], [undefined, true]]);
+  assert.deepEqual(boardAccess(foldLedger(events), 'notes').boardHolders?.map((h) => [h.label, h.creator ?? false]),
+    [['Pricing chat', true], ['Docs chat', false]]);
   for (const region of ['held', 'held-hover']) {
     assert.deepEqual(access.holders?.[region]?.map((h) => [h.label, h.creator ?? false]), [['Pricing chat', true], ['Docs chat', false]], region);
   }

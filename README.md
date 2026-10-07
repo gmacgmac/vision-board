@@ -35,6 +35,7 @@ decision entry.
 
 - `npm run board`: builds once, then serves this repo's own project ledger at http://localhost:4466. Use it to review a session; the page never reloads by itself.
 - `npm run board:watch`: for working on the board itself. Rebuilds the page on save, restarts the server only when server code changes, and reloads the open page with its view kept. Ctrl+C stops both.
+- One server per ledger: a second one, here or on another computer sharing this folder, refuses to start and says which computer holds `.visionboard/lock` (`apps/board/README.md`).
 - `npm run dev`: the example boards (`temp/demo`, seeded from the roadmap fixture).
 
 ## Working here

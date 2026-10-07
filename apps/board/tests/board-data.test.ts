@@ -4,10 +4,10 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { applyEvent, foldLedger } from '../../../packages/actions/src/index.ts';
+import { applyEvent, eventBoard, foldLedger } from '../../../packages/actions/src/index.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
-import { boardData, canApply, drewOn } from '../src/board/board-data.ts';
+import { boardData, canApply, pageConditions } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
 
 let h: Harness;
@@ -54,14 +54,18 @@ test('lines applied one at a time to a held state give the same board as folding
   assert.deepEqual(asJson(boardData(held, 'pricing')), asJson(boardData(foldLedger(lines), 'pricing')));
 });
 
-test('drewOn: a batch redrew a board only with an agent drawing line on that board', async () => {
-  const s = foldLedger(await allLines());
+test('pageConditions: the page reads the conditions table; marks never the open board, and a person act is not news', async () => {
   const lines = await allLines();
-  const node = lines.find((e) => e.type === 'node' && e.board === 'pricing')!;
-  const act = lines.find((e) => e.type === 'act' && e.action === 'comment')!;
-  assert.equal(drewOn(s, [node], 'pricing'), true);
-  assert.equal(drewOn(s, [node], 'roadmap'), false);
-  assert.equal(drewOn(s, [act], 'roadmap'), false);
+  const s = foldLedger(lines);
+  const open = pageConditions(s, 'pricing');
+  assert.deepEqual(open.marks, { roadmap: 'new' }, 'every board but the open one, before any board seen');
+  assert.equal(open.drawn, Math.max(...lines.filter((e) => e.type === 'node' && e.board === 'pricing').map((e) => e.seq)));
+  const head = s.heads.get('roadmap')!;
+  applyEvent(s, { v: 8, seq: s.seq + 1, at: '2026-10-07T00:00:00Z', by: 'person', type: 'seen', board: 'roadmap', head });
+  assert.deepEqual(pageConditions(s, 'pricing').marks, {}, 'the board seen ends it');
+  const comment = lines.find((e) => e.type === 'act' && e.action === 'comment' && eventBoard(s, e) === 'roadmap')!;
+  applyEvent(s, { ...comment, seq: s.seq + 1 } as LedgerEvent);
+  assert.deepEqual(pageConditions(s, 'pricing').marks, {}, 'the person acting never marks a board changed');
 });
 
 test('a container note and a container place (3_FE_04): the folded board still equals get_board', async () => {

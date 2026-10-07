@@ -5,12 +5,15 @@
 // Env: VB_PORT (4466), VB_PROJECT (repo root), VB_SEED (a fixture ledger copied in when the
 // project has no ledger yet; the fixture itself is never written), VB_WATCH (`1`: watch mode, dev
 // only; dist/ is watched and `watch_project` sends `build` so an open page reloads, api.md 79).
+// One server per ledger: `.visionboard/lock` (server/lock.ts) refuses a second one, here or on
+// another computer sharing the folder. Every mode releases it on exit.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
-import { ledgerPath, openLedger } from './server/ledger.ts';
+import { DATA_DIR, ledgerPath, openLedger } from './server/ledger.ts';
+import { BEAT_MS, holderMessage, takeLock } from './server/lock.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '../..');
@@ -37,19 +40,38 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
 }
 
 const FILE = ledgerPath(PROJECT);
+const taken = takeLock(path.join(PROJECT, DATA_DIR), PORT);
+if (!taken.ok) {
+  console.error(holderMessage(taken.holder));
+  process.exit(1);
+}
+const { lock } = taken;
+if (taken.replaced) {
+  const { host, pid, beat } = taken.replaced;
+  console.log(`Replaced a stale lock (computer "${host}", process ${pid}, last beat ${beat}).`);
+}
+process.on('exit', () => lock.release());
+setInterval(() => lock.beat(), BEAT_MS).unref();
+
 const seeded = seed(FILE, process.env.VB_SEED);
 const build = process.env.VB_WATCH === '1' ? watchBuild(DIST) : undefined;
 const server = createBoardServer({ ledger: openLedger(FILE), dist: DIST, build });
 
-if (build) {
-  const stop = () => {
-    build.close();
-    server.closeAllConnections();
-    server.close(() => process.exit(0));
-  };
-  process.once('SIGINT', stop);
-  process.once('SIGTERM', stop);
-}
+const stop = () => {
+  lock.release();
+  build?.close();
+  server.closeAllConnections();
+  server.close(() => process.exit(0));
+};
+process.once('SIGINT', stop);
+process.once('SIGTERM', stop);
+
+server.on('error', (err: NodeJS.ErrnoException) => {
+  console.error(err.code === 'EADDRINUSE'
+    ? `Port ${PORT} is already in use. Stop what is using it, or set VB_PORT to another port.`
+    : `The server could not start: ${err.message}`);
+  process.exit(1); // the exit handler releases the lock
+});
 
 server.listen(PORT, '127.0.0.1', () => {
   if (seeded) console.log(`Seeded the project ledger from ${process.env.VB_SEED}`);

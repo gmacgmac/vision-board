@@ -6,13 +6,14 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 7;
+export const LEDGER_FORMAT = 8;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
  * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
  * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
- * in place of `n` (api.md 71-76). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7] as const;
+ * in place of `n` (api.md 71-76); v8 adds a grant request and a revoke for a whole board, `region`
+ * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -36,6 +37,10 @@ export const CONTAINER_PLACES: ReadonlySet<ActionId> = new Set(['pin', 'unpin'])
  * `region` (the shape rules then forbid `n`, `ver` and `nodes`). */
 export const isContainerAct = (e: { action: ActionId; region?: string | undefined }): boolean =>
   e.region !== undefined && CONTAINER_ACTIONS.has(e.action);
+
+/** The card an act names first: its `n`, or the first of its group's `nodes`. Its board is the
+ * act's board (packages/actions `scopeOf` builds on this). */
+export const actCard = (e: { n?: number | undefined; nodes?: number[] | undefined }): number | undefined => e.n ?? e.nodes?.[0];
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',
@@ -109,7 +114,8 @@ export interface NodeEvent extends Base, Keyed { type: 'node'; board: string; n:
 export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: number; to: number; label?: string }
 /** A person's action from the action registry. `ver` = the node version they were looking at;
  * `proposal` = the `seq` of the proposal they are accepting; `request` = the `seq` of the
- * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes; `note` =
+ * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes (from the
+ * container in `region`, or with no `region` from the board); `note` =
  * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,
  * and `kind` = what an edited note now asks for (api.md 58-61). `nodes` = the items a note on a
  * group of cards is on, in place of `n` and `ver` (api.md 62), or the cards a group `move` puts in
@@ -122,7 +128,9 @@ export interface ActEvent extends Base {
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
 }
-export interface SeenEvent extends Base { type: 'seen'; n: number; ver: number }
+/** The person has seen version `ver` of node `n` (D-018), or, from v8, has looked at `board` up to
+ * its line `head` (api.md 87). */
+export type SeenEvent = Base & { type: 'seen' } & ({ n: number; ver: number } | { board: string; head: number });
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
 export interface ReplyEvent extends Base, Keyed { type: 'reply'; n: number; text: string; to?: number }
 /** The agent proposes a decision; only the person can make it (D-018). */
@@ -132,9 +140,10 @@ export interface ProposeEvent extends Base, Keyed {
 export interface ParkEvent extends Base, Keyed { type: 'park'; n: number; bundle: ParkBundle }
 /** An agent joins the project (D-027). Its stamped `agent` is the new agent id. */
 export interface JoinEvent extends Base { type: 'join'; label: string }
-/** An agent asks the person for write access to one container (api.md 15, 23). */
+/** An agent asks the person for write access to one container, or with no `region` to the whole
+ * board (api.md 15, 81). */
 export interface GrantRequestEvent extends Base, Keyed {
-  type: 'grant-request'; board: string; region: string; reason: string;
+  type: 'grant-request'; board: string; region?: string; reason: string;
 }
 
 export type LedgerEvent =

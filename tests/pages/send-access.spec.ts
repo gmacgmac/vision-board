@@ -153,6 +153,31 @@ test('Refuse with a note sends deny with the note; the request goes and no holde
   expect((await holdersNow(page)).map((h) => h.agent)).not.toContain(a.agent);
 });
 
+test('a request for the whole board: Allow lists the agent under Agents, and Remove access takes the board back (D-034)', async ({ page, request }) => {
+  const a = await join(request, 'Roadmap chat');
+  const asked = await request.post('/api/grants', { headers: bearer(a), data: { board: BOARD, reason: 'I add the roadmap items.' } });
+  expect(asked.status(), await asked.text()).toBe(201);
+  const before = await head(page);
+  await openAccess(page);
+  const ask = page.locator('.vb-access-row').filter({ hasText: 'Roadmap chat wants to draw on this board' });
+  await expect(ask).toContainText('I add the roadmap items.');
+  await ask.getByRole('button', { name: 'Allow Roadmap chat to draw on this board' }).click();
+  await expect(ask).toHaveCount(0);
+  await expect(page.locator('#toast')).toHaveText('Roadmap chat can now draw on this board');
+  const agents = page.locator('.vb-toolbar .vb-agents');
+  await agents.locator('summary').click();
+  await expect(agents.locator('.vb-agents-row').first()).toHaveText(new RegExp(`${CREATOR}\\s*made this board`));
+  await agents.getByRole('button', { name: "Remove Roadmap chat's access to this board" }).click();
+  const dialog = page.getByRole('dialog', { name: "Remove Roadmap chat's access?" });
+  await expect(dialog).toContainText('Roadmap chat will no longer be able to draw on this board');
+  await dialog.getByRole('button', { name: 'Remove access' }).click();
+  await expect(page.locator('#toast')).toHaveText('Roadmap chat can no longer draw on this board');
+  await expect(agents.locator('.vb-agents-row', { hasText: 'Roadmap chat' })).toHaveCount(0);
+  expect((await ledgerAfter(page, before)).filter((e) => e.type === 'act').map((e) => [e.action, e.region])).toEqual([
+    ['grant', undefined], ['revoke', undefined],
+  ]);
+});
+
 // ---- The gallery's Agent access section ----
 
 const section = (page: Page) => page.locator('section[data-feature="agentAccess"]');
@@ -165,13 +190,18 @@ test('gallery: the Agent access section shows by default and not with -agentAcce
   await expect(section(page)).toBeVisible();
 });
 
-test('gallery: two requests with one refusing note open, frames with two holders, and every Send state', async ({ page }) => {
+test('gallery: three requests (one for the board) with one refusing note open, the Agents list, frames with two holders, and every Send state', async ({ page }) => {
   await page.goto('/gallery.html');
   const s = section(page);
-  await expect(s.locator('.vb-access-row')).toHaveCount(2);
-  await expect(s.getByRole('region', { name: '2 agents ask for access' })).toBeVisible();
+  await expect(s.locator('.vb-access-row')).toHaveCount(3);
+  await expect(s.getByRole('region', { name: '3 agents ask for access' })).toBeVisible();
   await expect(s.locator('.vb-access-note')).toHaveCount(1);
   await expect(s.getByLabel('Note for Launch plan chat (optional)')).toBeVisible();
+  await expect(s.locator('.vb-access-row').nth(2)).toContainText('Support chat wants to draw on this board');
+  await expect(s.getByRole('button', { name: 'Allow Support chat to draw on this board' })).toBeVisible();
+  const agents = s.locator('.vb-agents');
+  await expect(agents.locator('.vb-agents-row')).toHaveText([/Pricing chat\s*made this board/, /Docs chat\s*Remove access/]);
+  await expect(agents.getByRole('button', { name: "Remove Docs chat's access to this board" })).toBeVisible();
   await expect(s.locator('vb-region')).toHaveCount(2);
   for (const f of await s.locator('vb-region').all()) {
     await expect(f.locator('.vb-region-count')).toHaveText('0 of 1 decided');
@@ -297,7 +327,8 @@ test('Remove access shows on hover, asks to confirm, and Cancel keeps the holder
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await expect(dialog).toBeHidden();
   await expect(holder).toBeVisible();
-  expect(await ledgerAfter(page, before)).toEqual([]);
+  // Nothing recorded but the board seen that opening the board sends (awareness tables FE_01).
+  expect((await ledgerAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
   await holder.click();
   await dialog.getByRole('button', { name: 'Remove access' }).click();
   await expect(holder).toHaveCount(0);

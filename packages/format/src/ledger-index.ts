@@ -1,7 +1,7 @@
 // Contextual ledger rules: identity and order (D-017, D-018). The index is the smallest state
 // needed to judge the next event; the ledger module (step 2) folds the full board state.
 import type { ActEvent, LedgerEvent } from './ledger.ts';
-import { CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
+import { actCard, CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
 import { eventProblems } from './ledger-shape.ts';
 
 export interface LedgerIndex {
@@ -13,17 +13,20 @@ export interface LedgerIndex {
   proposals: Map<number, { n: number; ver: number }>;
   /** Agent ids that have joined (D-027). */
   agents: Set<string>;
-  /** Container (`containerKey`) -> the agent whose v3 line created it. v2 regions have none. */
+  /** Board or container (`accessKey`) -> the agent whose v3 line created it. v2 lines made none. */
   creators: Map<string, string>;
-  /** Container -> the agents that hold it now: its creator and every grant, minus revocations
-   * (api.md 23). */
+  /** Board or container (`accessKey`) -> the agents that hold it now (api.md 81-82). A container:
+   * its creator and every grant, minus revocations. A board: its creator, every agent granted the
+   * board, and every agent that created or was granted a container on it, minus board revocations;
+   * so an agent that wrote on a board before board access keeps it (D-034). */
   holders: Map<string, Set<string>>;
   /** `grant-request` seq -> the request, and the seq of the act that answered it. */
   requests: Map<number, GrantRequest>;
 }
 
+/** A grant request: for `region` on `board`, or with no `region` for the whole board. */
 export interface GrantRequest {
-  agent?: string; board: string; region: string;
+  agent?: string; board: string; region?: string;
   answer?: { action: 'grant' | 'deny'; seq: number };
 }
 
@@ -34,6 +37,26 @@ export const emptyIndex = (): LedgerIndex => ({
 
 /** One key per container (a region, D-011). Ids cannot contain `/`, so the key is unambiguous. */
 export const containerKey = (board: string, region: string): string => `${board}/${region}`;
+
+/** The key `creators` and `holders` use: the board's id for the whole board (no `region`), else
+ * the container's `containerKey`. Board ids hold no `/`, so the two never meet. */
+export const accessKey = (board: string, region?: string): string =>
+  region === undefined ? board : containerKey(board, region);
+
+/** How a problem names a board or a container. */
+const accessName = (board: string, region?: string): string => region === undefined ? `board ${board}` : `${board}/${region}`;
+
+/** Why `holder` cannot be revoked from the board, or the container in `region`, or undefined when
+ * it can: a creator stays, and only a holder can be removed (api.md 16, 82). The ledger and the
+ * person's act check both ask here. */
+export function revokeProblem(ix: LedgerIndex, board: string, region: string | undefined, holder: string): string | undefined {
+  const k = accessKey(board, region);
+  const what = accessName(board, region);
+  if (ix.creators.get(k) === holder)
+    return `holder: "${holder}" created ${what}, and a ${region === undefined ? 'board' : 'container'}'s creator cannot be removed`;
+  if (!ix.holders.get(k)?.has(holder)) return `holder: "${holder}" does not hold ${what}`;
+  return undefined;
+}
 
 /** Problems with `e` coming next after `ix`. Assumes `e` is well formed (eventProblems). */
 export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
@@ -83,24 +106,30 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
         else if (prop.ver !== cur) p.push(`proposal: out of date, node ${e.n} changed since it was made`);
       }
       break;
-    case 'seen': case 'propose': verAtMost(e.n, e.ver); break;
+    case 'seen':
+      if ('n' in e) verAtMost(e.n, e.ver);
+      else if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
+      else if (e.head > ix.seq) p.push(`head: the ledger is at line ${ix.seq}`);
+      break;
+    case 'propose': verAtMost(e.n, e.ver); break;
     case 'reply': case 'park': node(e.n); break;
     case 'join':
       if (e.agent !== undefined && ix.agents.has(e.agent)) p.push(`agent: "${e.agent}" has already joined`);
       break;
     case 'grant-request': {
       if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
-      else if (!ix.boards.get(e.board)!.has(e.region)) p.push(`region: unknown "${e.region}"`);
+      else if (e.region !== undefined && !ix.boards.get(e.board)!.has(e.region)) p.push(`region: unknown "${e.region}"`);
       const open = openRequestOf(ix, e.agent, e.board, e.region);
-      if (open !== undefined) p.push(`board: this agent already has open grant request ${open} for ${e.board}/${e.region}`);
+      if (open !== undefined) p.push(`board: this agent already has open grant request ${open} for ${accessName(e.board, e.region)}`);
       break;
     }
   }
   return p;
 }
 
-/** The `seq` of `agent`'s unanswered grant request for the container, if any (api.md 26). */
-export function openRequestOf(ix: LedgerIndex, agent: string | undefined, board: string, region: string): number | undefined {
+/** The `seq` of `agent`'s unanswered grant request for the container, or with no `region` for
+ * the board, if any (api.md 26). */
+export function openRequestOf(ix: LedgerIndex, agent: string | undefined, board: string, region?: string): number | undefined {
   for (const [seq, r] of ix.requests) {
     if (!r.answer && r.agent === agent && r.board === board && r.region === region) return seq;
   }
@@ -124,7 +153,7 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
   switch (e.action) {
     case 'mode': region(); break;
     case 'move': {
-      const board = ix.nodes.get(e.n ?? e.nodes![0]!)?.board;
+      const board = ix.nodes.get(actCard(e)!)?.board;
       if (board !== undefined && e.region !== LATER_REGION && !ix.boards.get(board)?.has(e.region!))
         p.push(`region: unknown "${e.region}" on board "${board}"`);
       break;
@@ -136,12 +165,11 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
       else if (r.answer) p.push(`request: grant request ${e.request} was already answered`);
       break;
     }
-    case 'revoke':
-      if (ix.creators.get(containerKey(e.board!, e.region!)) === e.holder)
-        p.push(`holder: "${e.holder}" created ${e.board}/${e.region}, and a container's creator cannot be removed`);
-      else if (!ix.holders.get(containerKey(e.board!, e.region!))?.has(e.holder!))
-        p.push(`holder: "${e.holder}" does not hold ${e.board}/${e.region}`);
+    case 'revoke': {
+      const problem = revokeProblem(ix, e.board!, e.region, e.holder!);
+      if (problem) p.push(problem);
       break;
+    }
   }
 }
 
@@ -149,7 +177,10 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
 export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   ix.seq = e.seq;
   switch (e.type) {
-    case 'board': ix.boards.set(e.board, new Set()); break;
+    case 'board':
+      ix.boards.set(e.board, new Set());
+      if (e.v !== 2 && e.agent !== undefined) create(ix, e.board, e.agent);
+      break;
     case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;
     case 'node':
       ix.nodes.set(e.n, { board: e.board, ver: e.ver });
@@ -158,21 +189,32 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
     case 'propose': ix.proposals.set(e.seq, { n: e.n, ver: e.ver }); break;
     case 'join': if (e.agent !== undefined) ix.agents.add(e.agent); break;
     case 'grant-request':
-      ix.requests.set(e.seq, { board: e.board, region: e.region, ...(e.agent !== undefined && { agent: e.agent }) });
+      ix.requests.set(e.seq, {
+        board: e.board, ...(e.region !== undefined && { region: e.region }), ...(e.agent !== undefined && { agent: e.agent }),
+      });
       break;
     case 'act': indexAct(ix, e); break;
   }
 }
 
-/** A region id seen for the first time is a new container; a v3 writer becomes its holder. */
+/** `agent` holds the board or container at `key`. */
+const hold = (ix: LedgerIndex, key: string, agent: string) => ix.holders.set(key, (ix.holders.get(key) ?? new Set()).add(agent));
+
+/** `agent`'s v3 line created the board or container at `key`: it is its creator and a holder. */
+function create(ix: LedgerIndex, key: string, agent: string): void {
+  ix.creators.set(key, agent);
+  hold(ix, key, agent);
+}
+
+/** A region id seen for the first time is a new container; a v3 writer creates it, and so holds
+ * its board too (D-034). */
 function indexRegion(ix: LedgerIndex, board: string, region: string, agent: string | undefined): void {
   const regions = ix.boards.get(board);
   if (!regions || regions.has(region)) return;
   regions.add(region);
   if (agent === undefined) return;
-  const k = containerKey(board, region);
-  ix.creators.set(k, agent);
-  ix.holders.set(k, new Set([agent]));
+  create(ix, containerKey(board, region), agent);
+  hold(ix, board, agent);
 }
 
 function indexAct(ix: LedgerIndex, e: ActEvent): void {
@@ -180,11 +222,12 @@ function indexAct(ix: LedgerIndex, e: ActEvent): void {
     const r = ix.requests.get(e.request!);
     if (!r) return;
     r.answer = { action: e.action, seq: e.seq };
+    // A grant on a container is a grant on its board too (D-034).
     if (e.action === 'grant' && r.agent !== undefined) {
-      const k = containerKey(r.board, r.region);
-      ix.holders.set(k, (ix.holders.get(k) ?? new Set()).add(r.agent));
+      hold(ix, r.board, r.agent);
+      if (r.region !== undefined) hold(ix, containerKey(r.board, r.region), r.agent);
     }
-  } else if (e.action === 'revoke') ix.holders.get(containerKey(e.board!, e.region!))?.delete(e.holder!);
+  } else if (e.action === 'revoke') ix.holders.get(accessKey(e.board!, e.region))?.delete(e.holder!);
 }
 
 export interface ReadLedger { events: LedgerEvent[]; problems: string[]; index: LedgerIndex }

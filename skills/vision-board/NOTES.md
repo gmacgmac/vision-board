@@ -24,11 +24,22 @@ and describes the retired view files, so it needs a full rewrite on the MCP/API.
 - 2026-10-06, agent: the agent picks modes blind; it can't see the result without a browser.
   The skill should describe what each mode looks like.
 
+## Naming
+
+- 2026-10-07, maintainer: the skill says "Give the board a title. Don't include Vision Board in
+  it." Name the board for its subject only, short enough for the toolbar picker.
+
 ## Access
 
 - 2026-10-06, maintainer: a chat that creates a board or container holds its write grant and can
   edit and update it freely. Writing to one it did not create needs `request_grant` and the
   person's yes. The agent didn't know creating a board needed no grant; say so up front.
+- 2026-10-07, maintainer (D-034, BE_03): access is two levels now, board first. A chat holds a
+  board it created, or one the person granted it (`request_grant` with just `board`); on it, it
+  makes and edits its own containers freely. Another agent's container still needs that
+  container's grant (`board` and `region`), which brings the board too. Only a board's creator
+  rewrites its `board` item. The skill should say: ask for the board before writing on a board
+  you didn't create, then ask once for whatever `needs-grant` names.
 
 ## Reading answers
 

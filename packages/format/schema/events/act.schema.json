@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json",
   "title": "Act event",
   "description": "One action from the action registry. `rules` says which fields each action needs; whether it is person-only lives in packages/actions.",
   "$comment": "Was: rule 8; api.md 9",
@@ -10,21 +10,21 @@
       "required": ["action"],
       "properties": {
         "action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send", "note-edit", "note-remove", "move"], "description": "Which action to take, from the action registry."},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the action is about."},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context`, `deny` and `note-edit` (the note's new text)."},
-        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted."},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the action is about."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context`, `deny` and `note-edit` (the note's new text)."},
+        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted."},
         "x": {"type": "number", "description": "Where to place the node across, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container."},
         "y": {"type": "number", "description": "Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container."},
-        "board": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `revoke` and `send`, and for a note on or a place for a whole container (with `region`)."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode` and `revoke`; for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/mode", "description": "The layout mode to set, for `mode`."},
-        "request": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
-        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`."},
-        "size": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."},
-        "note": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/seq", "description": "The `seq` of the `comment` or `context` act that made the note, for `note-edit` and `note-remove`."},
-        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/noteKind", "description": "What the edited note now asks for, for `note-edit`: `comment` or `context`. Left out, the note keeps its kind."},
-        "nodes": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/nodeNumbers", "description": "A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container."}
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `revoke` and `send`, and for a note on or a place for a whole container (with `region`)."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/mode", "description": "The layout mode to set, for `mode`."},
+        "request": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
+        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board."},
+        "size": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."},
+        "note": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/seq", "description": "The `seq` of the `comment` or `context` act that made the note, for `note-edit` and `note-remove`."},
+        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/noteKind", "description": "What the edited note now asks for, for `note-edit`: `comment` or `context`. Left out, the note keeps its kind."},
+        "nodes": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/nodeNumbers", "description": "A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container."}
       }
     },
     "sent": {
@@ -32,8 +32,8 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/rules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/rules"}
       ],
       "unevaluatedProperties": false
     },
@@ -42,12 +42,12 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/events/act.schema.json#/$defs/rules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/rules"}
       ],
       "unevaluatedProperties": false
     },
@@ -153,7 +153,7 @@
         },
         {
           "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "revoke"}}},
-          "then": {"type": "object", "required": ["holder", "board", "region"]}
+          "then": {"type": "object", "required": ["holder", "board"]}
         },
         {
           "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "size"}}},

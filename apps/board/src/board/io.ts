@@ -96,6 +96,17 @@ export const sendAct = (id: string, fields: ActFields) =>
     board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
+/** The client for a call made as the page goes away: its request outlives the page (keepalive). */
+const leavingClient = createClient({ fetch: (url, init) => globalThis.fetch(url, { ...init, keepalive: true }) });
+
+/** The person has looked at `board` up to its line `head` (a board seen, api.md 87). `leaving`: the
+ * page is going away, so the request outlives it and nothing waits for the answer. */
+export function markBoardSeen(board: string, head: number, leaving = false): Promise<unknown> {
+  const input = { board, body: { board, head } };
+  if (leaving) return leavingClient.call('mark_seen', input).catch(() => undefined);
+  return call(() => asPerson(() => client.call('mark_seen', input)));
+}
+
 /** What the project's live stream reports (`watch_project`, api.md 78-80). */
 export interface ProjectEvents {
   /** The project ledger gained line `seq` (the agent drew, or another tab acted). */

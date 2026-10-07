@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v7 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70 and 71-76.
+// Ledger lines for the schema tests (schema.test.ts): a valid v8 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81 and 87.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 7, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 7, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 8, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 8, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -84,10 +84,11 @@ export const BROKEN: [string, Rec][] = [
   ['join without label', patch(V.join!, 'label', DROP)],
   ['join without its agent id', patch(V.join!, 'agent', DROP)],
   ['grant-request without reason', patch(V['grant-request']!, 'reason', DROP)],
+  ['grant-request without board', patch(V['grant-request']!, 'board', DROP)],
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v8', patch(V.board!, 'v', 8)],
+  ['unknown format v9', patch(V.board!, 'v', 9)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -129,6 +130,7 @@ export const BROKEN: [string, Rec][] = [
   ['grant naming a node', act('grant', { n: 1 })],
   ['deny naming a node', act('deny', { n: 1 })],
   ['revoke without holder', act('revoke', { holder: undefined })],
+  ['revoke without board', act('revoke', { board: undefined })],
   ['revoke with a free-form holder', act('revoke', { holder: 'kiro' })],
   ['revoke naming a node', act('revoke', { n: 1 })],
   ['size without size', act('size', { size: undefined })],
@@ -178,5 +180,13 @@ export const BROKEN: [string, Rec][] = [
   ['node written by a person', { ...V.node!, by: 'person' }],
   ['seen written by an agent', { ...V.seen!, by: 'agent', agent: 'a-abcd1234' }],
   ['grant-request for a bad region id', patch(V['grant-request']!, 'region', '-x')],
+  ['seen with neither a node nor a board', { ...PERSON, type: 'seen' }],
+  ['seen with n and no ver', patch(V.seen!, 'ver', DROP)],
+  ['seen with a board and no head', { ...PERSON, type: 'seen', board: 'b' }],
+  ['seen with a head and no board', { ...PERSON, type: 'seen', head: 3 }],
+  ['seen with both a node and a board', { ...V.seen!, board: 'b', head: 3 }],
+  ['seen with a node and a head', { ...V.seen!, head: 3 }],
+  ['seen with a head of 0', { ...PERSON, type: 'seen', board: 'b', head: 0 }],
+  ['seen with a bad board id', { ...PERSON, type: 'seen', board: 'Plan A', head: 3 }],
   ['a line that is not an object', [] as unknown as Rec],
 ];

@@ -1,19 +1,23 @@
 <!-- The toolbar: board picker, board title and version, counts, the zoom group and the board-wide
-     buttons. A board drawn after the page opened shows " · new" in the picker, and a chip counts
-     them until each has been opened (FE_02 ruling 3); the chip sits in the counts' live region.
-     Send to agent shows with the agentAccess flag. Zoom out/Fit/Zoom in are one command table
+     buttons. The picker marks a board the person has not opened " · new" and one an agent wrote on
+     since they last looked " · changed", never the open one, and a chip counts both (the conditions
+     table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
+     Send to agent and the board's Agents list show with the agentAccess flag. Zoom out/Fit/Zoom in are one command table
      (board/commands.ts) shared with the selection bar and the keys (3_FE_02 ruling 5). -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
   import SendButton from './SendButton.svelte';
+  import BoardAgents from './BoardAgents.svelte';
   import { commandTitle, HEADER_COMMANDS } from '../board/commands.ts';
   import type { CommandId } from '../board/commands.ts';
 
-  let { onboard, oncommand, onhide, onsend }: {
+  let { onboard, oncommand, onhide, onsend, onrevoke }: {
     onboard: (id: string) => void;
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
+    /** Remove an agent's access to the open board (BoardAgents). */
+    onrevoke: (agent: string) => Promise<void>;
   } = $props();
 
   const THEMES = ['system', 'light', 'dark'] as const;
@@ -29,7 +33,7 @@
 
   const nextTheme = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]!; };
   const label = (title: string) => title.replace(/[&<>"]/g, '');
-  const fresh = $derived(shell.newBoards.size);
+  const updated = $derived(Object.keys(shell.boardMarks).length);
 </script>
 
 <header class="vb-toolbar">
@@ -38,13 +42,13 @@
   <select id="board" class="vb-select" value={shell.boardId}
     onchange={(e) => onboard(e.currentTarget.value)}>
     {#each shell.boards as b (b.board)}
-      <option value={b.board}>{label(b.title)} · v{b.seq}{shell.newBoards.has(b.board) ? ' · new' : ''}</option>
+      <option value={b.board}>{label(b.title)} · v{b.seq}{shell.boardMarks[b.board] ? ` · ${shell.boardMarks[b.board]}` : ''}</option>
     {/each}
   </select>
   <h1 id="title" class="vb-title">{shell.title}</h1>
   <span id="version" class="vb-chip" hidden={shell.version === null} title={shell.summary}>v{shell.version}</span>
   <div id="counts" class="vb-counts" aria-live="polite">
-    {#if fresh}<span id="new-boards" class="vb-chip" data-tone="new">{fresh} new board{fresh === 1 ? '' : 's'}</span>{/if}
+    {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new">{updated} board{updated === 1 ? '' : 's'} updated</span>{/if}
     {#if shell.version !== null}
       <span class="vb-chip" data-tone="open"><b>{shell.counts.open}</b> open</span>
       <span class="vb-chip" data-tone="decided"><b>{shell.counts.decided}</b> decided</span>
@@ -65,6 +69,9 @@
       aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>
       Reply{shell.answered ? ` (${shell.answered})` : ''}
     </button>
-    {#if shell.agentAccess && shell.version !== null}<SendButton {onsend} />{/if}
+    {#if shell.agentAccess && shell.version !== null}
+      <BoardAgents holders={shell.boardHolders} {onrevoke} />
+      <SendButton {onsend} />
+    {/if}
   </div>
 </header>

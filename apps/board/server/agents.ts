@@ -59,12 +59,12 @@ function writeHashes(file: string, hashes: AgentHash[]): void {
   fs.renameSync(tmp, file);
 }
 
-/** `.visionboard/.gitignore` names agents.json, so the hashes are never committed. */
-function ignoreAgents(dir: string): void {
+/** `.visionboard/.gitignore` names `name`, so the file is never committed. */
+export function ignoreInGit(dir: string, name: string): void {
   const file = path.join(dir, GITIGNORE);
   const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  if (text.split(/\r?\n/).some((line) => line.trim() === AGENTS_FILE)) return;
-  fs.writeFileSync(file, `${text}${text && !text.endsWith('\n') ? '\n' : ''}${AGENTS_FILE}\n`);
+  if (text.split(/\r?\n/).some((line) => line.trim() === name)) return;
+  fs.writeFileSync(file, `${text}${text && !text.endsWith('\n') ? '\n' : ''}${name}\n`);
 }
 
 /** The agents store in the project's data folder (`.visionboard`). Read once, on first use. */
@@ -82,7 +82,7 @@ export function openAgents(dir: string): Agents {
     add(agent, secret) {
       const next = [...all(), { agent, sha256: sha256(secret).toString('hex') }];
       fs.mkdirSync(dir, { recursive: true });
-      ignoreAgents(dir);
+      ignoreInGit(dir, AGENTS_FILE);
       writeHashes(file, next);
       hashes = next;
     },

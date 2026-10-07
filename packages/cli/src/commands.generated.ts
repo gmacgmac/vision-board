@@ -93,18 +93,18 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "join", operationId: "join", takesBody: true,
     summary: "Join as an agent",
-    description: "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: call `request_grant` for write access. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
+    description: "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
     inputs: [
       {"name":"label","in":"body","type":"string","required":true,"description":"A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."},
     ],
   },
   {
     name: "request-grant", operationId: "request_grant", takesBody: true,
-    summary: "Ask for write access to a container",
-    description: "Ask the person for write access to one container, named by `board` and `region`. Call it once when `write_board` answers `needs-grant`, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for that container it is returned with `replayed: true`; if you already hold the container you get `{ held: true }`.",
+    summary: "Ask for write access to a board or a container",
+    description: "Ask the person for write access to a board, or to one container on it. Ask for the board first: before you write anything on a board you did not create, call this with just `board`. Then, for another agent's container, call it with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for it, that request is returned with `replayed: true`; if you already hold it you get `{ held: true }`.",
     inputs: [
-      {"name":"board","in":"body","type":"string","required":true,"description":"The board that holds the container."},
-      {"name":"region","in":"body","type":"string","required":true,"description":"The container (region) you need to write to."},
+      {"name":"board","in":"body","type":"string","required":true,"description":"The board you need to write to, or that holds the container."},
+      {"name":"region","in":"body","type":"string","required":false,"description":"The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it."},
       {"name":"reason","in":"body","type":"string","required":true,"description":"Why you need write access, so the person can decide."},
       {"name":"key","in":"body","type":"string","required":false,"description":"The agent's retry key, scoped to the agent across the project"},
     ],
@@ -112,7 +112,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "write-board", operationId: "write_board", takesBody: true,
     summary: "Write to a board",
-    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose` or `park`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (items waiting for your answer). An item in a container you do not hold fails with `needs-grant`. You cannot decide an item: `propose` acknowledge or drop and the person decides.",
+    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose` or `park`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (items waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide an item: `propose` acknowledge or drop and the person decides.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"items","in":"body","type":"json","required":true,"description":"The items to write, run in order (1 to 200); each has a `type`."},

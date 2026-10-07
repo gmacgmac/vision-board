@@ -16,7 +16,7 @@ const on = { board: 'roadmap', region: 'review' };
 
 test('a container note: show_container, get_board and check_responses carry its latest words', async () => {
   const stored = await h.ok('act', act({ action: 'comment', ...on, text: 'Is review its own stage?' }));
-  assert.deepEqual([stored.v, stored.action, stored.region, stored.n], [7, 'comment', 'review', undefined]);
+  assert.deepEqual([stored.v, stored.action, stored.region, stored.n], [8, 'comment', 'review', undefined]);
   await h.ok('act', act({ action: 'note-edit', ...on, note: stored.seq, text: 'Should review be its own stage?' }));
   const box = await h.ok('show_container', { board: 'roadmap', region: 'review' });
   assert.deepEqual(box.notes.map((x: any) => [x.seq, x.text, x.sent]), [[stored.seq, 'Should review be its own stage?', undefined]]);

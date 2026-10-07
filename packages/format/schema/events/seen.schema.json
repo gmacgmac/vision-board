@@ -1,23 +1,36 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/7/events/seen.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json",
   "title": "Seen event",
-  "description": "The person has seen version `ver` of node `n`.",
-  "$comment": "Was: D-018",
+  "description": "The person has seen version `ver` of node `n`, or (from v8) board `board` up to line `head`.",
+  "$comment": "Was: D-018; api.md 87",
   "$defs": {
     "core": {
       "type": "object",
-      "required": ["n", "ver"],
       "properties": {
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the person has seen."},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/version", "description": "The version of that node the person has seen."}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/nodeNumber", "description": "The number of the node the person has seen."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/version", "description": "The version of that node the person has seen."},
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id", "description": "The board the person has looked at, with `head`, in place of `n` and `ver`."},
+        "head": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/seq", "description": "The board's last line the person has seen: its `seq` in `list_boards` when the page showed it."}
       }
+    },
+    "rules": {
+      "description": "One node version (`n` and `ver`) or one board up to a line (`board` and `head`), never both.",
+      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 87",
+      "type": "object",
+      "oneOf": [
+        {"type": "object", "required": ["n", "ver"], "not": {"anyOf": [{"required": ["board"]}, {"required": ["head"]}]}},
+        {"type": "object", "required": ["board", "head"], "not": {"anyOf": [{"required": ["n"]}, {"required": ["ver"]}]}}
+      ]
     },
     "sent": {
       "type": "object",
       "required": ["type"],
       "properties": {"type": {"const": "seen"}},
-      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/7/events/seen.schema.json#/$defs/core"}],
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/rules"}
+      ],
       "unevaluatedProperties": false
     },
     "stored": {
@@ -25,11 +38,12 @@
       "required": ["type"],
       "properties": {"type": {"const": "seen"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/7/events/seen.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/rules"},
         {"type": "object", "properties": {"by": {"const": "person", "description": "Who wrote the line; always `person` for this event."}}}
       ],
       "unevaluatedProperties": false

@@ -19,6 +19,8 @@ export class Viewport {
   hideFar: boolean;
   /** Called after every change of pan or zoom, so overlays can follow their card. */
   onApply: (() => void) | null = null;
+  /** A fit asked for while the stage had no room (a hidden pane or tab), done once it has room. */
+  private waiting: Box | null = null;
 
   constructor(stage: HTMLElement, world: HTMLElement, hideFar = false) {
     this.stage = stage;
@@ -41,12 +43,14 @@ export class Viewport {
   }
 
   panBy(dx: number, dy: number): void {
+    this.waiting = null;
     this.x += dx;
     this.y += dy;
     this.apply();
   }
 
   zoomAt(clientX: number, clientY: number, factor: number): void {
+    this.waiting = null;
     const r = this.stage.getBoundingClientRect();
     const p = this.toWorld(clientX, clientY);
     this.k = Math.min(MAX_K, Math.max(MIN_K, this.k * factor));
@@ -61,6 +65,7 @@ export class Viewport {
 
   /** Go back to a view `snapshot` returned; the zoom is clamped to what the board allows. */
   restore(v: ViewSnapshot): void {
+    this.waiting = null;
     this.k = Math.min(MAX_K, Math.max(MIN_K, v.k));
     this.x = v.x;
     this.y = v.y;
@@ -72,9 +77,23 @@ export class Viewport {
     this.zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor);
   }
 
+  /** Whether the stage has room to show a board; a view worked out without room is meaningless. */
+  get sized(): boolean {
+    const r = this.stage.getBoundingClientRect();
+    return r.width > 64 && r.height > 64;
+  }
+
+  /** The stage changed size: do a fit that was waiting for room, else just redraw. */
+  resized(): void {
+    if (this.waiting && this.sized) this.fit(this.waiting, false);
+    else this.apply();
+  }
+
   fit(b: Box, animate = true): void {
     const r = this.stage.getBoundingClientRect();
     if (!b.w || !b.h) return;
+    this.waiting = this.sized ? null : b;
+    if (this.waiting) return;
     this.k = Math.min(1.1, Math.max(MIN_K, Math.min((r.width - 64) / b.w, (r.height - 64) / b.h)));
     this.x = (r.width - b.w * this.k) / 2 - b.x * this.k;
     this.y = (r.height - b.h * this.k) / 2 - b.y * this.k;

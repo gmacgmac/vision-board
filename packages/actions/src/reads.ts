@@ -8,9 +8,10 @@ import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
 import { containerNotes, containerPin, noteJson } from './containers.ts';
-import { canWrite, creatorOf, grantRequests, holders } from './grants.ts';
-import { movedFrom, regionOf } from './moves.ts';
-import { pendingItems, unseenItems } from './pending.ts';
+import { CONDITIONS, conditionsOf } from './conditions.ts';
+import { creatorOf, holders } from './grants.ts';
+import { mayAnswer } from './permissions.ts';
+import { placeOf } from './references.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
 
@@ -48,15 +49,18 @@ export interface ContainerDetail {
 
 /** An unanswered grant request as the board page shows it (`get_board`): which container, why,
  * and the asking agent's id and the label it joined with. */
-export interface AccessRequest { seq: number; region: string; reason: string; at: string; agent?: string; label?: string }
+/** An open grant request; with no `region` it asks for the whole board (api.md 81). */
+export interface AccessRequest { seq: number; region?: string; reason: string; at: string; agent?: string; label?: string }
 
-/** One holder of a container, with its label; `creator` marks the agent that made the region,
- * which the person cannot remove (api.md 23). */
+/** One holder of a board or a container, with its label; `creator` marks the agent that made it,
+ * which the person cannot remove (api.md 23, 82). */
 export interface AccessHolder { agent: string; label: string; creator?: true }
 
-/** Who may write where on one board: the open requests and each region's holders. Either is
- * left out when it is empty, so a board with no agents carries neither (api.md 32). */
-export interface BoardAccess { requests?: AccessRequest[]; holders?: Record<string, AccessHolder[]> }
+/** Who may write where on one board: the open requests, the board's holders and each region's.
+ * Each is left out when it is empty, so a board with no agents carries none (api.md 32). */
+export interface BoardAccess {
+  requests?: AccessRequest[]; boardHolders?: AccessHolder[]; holders?: Record<string, AccessHolder[]>;
+}
 
 /** An item not yet decided (`list_open`, and `pending` on a write answer). */
 export interface OpenItem {
@@ -70,9 +74,9 @@ const versionView = ({ ver, at, agent, ...node }: LedgerNode['versions'][number]
   ({ ver, at, ...(agent !== undefined && { agent }), node });
 
 /** Where node `n` is, and where the agent has it when the person moved it (api.md 68). */
-const placeOf = (s: LedgerState, n: number) => {
-  const from = movedFrom(s, n);
-  return { region: regionOf(s, n)!, ...(from !== undefined && { moved_from: from }) };
+const whereIs = (s: LedgerState, n: number) => {
+  const p = placeOf(s, n)!;
+  return { region: p.region, ...(p.region !== p.drawn && { moved_from: p.drawn }) };
 };
 
 /** Everything known about node `n`, or undefined when there is no such node. */
@@ -84,7 +88,7 @@ export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
   const seen = s.seen.get(n);
   const park = s.parks.get(n);
   return {
-    n, board: node.board, ...placeOf(s, n),
+    n, board: node.board, ...whereIs(s, n),
     ...(last.item && { status: s.items.get(n)?.status ?? 'open' }),
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
@@ -113,7 +117,7 @@ export function linkedDetails(s: LedgerState, n: number): NodeDetail[] {
 export function containerDetail(s: LedgerState, board: string, region: string): ContainerDetail | undefined {
   const r = s.boards.get(board)?.regions.find((x) => x.id === region);
   if (!r) return undefined;
-  const nodes = nodesOf(s, board).filter((x) => regionOf(s, x.n) === region || x.versions.some((v) => v.region === region));
+  const nodes = nodesOf(s, board).filter((x) => placeOf(s, x.n)?.region === region || x.versions.some((v) => v.region === region));
   const pin = containerPin(s, board, region);
   return {
     board, region: { ...r }, holders: holders(s, board, region),
@@ -123,42 +127,55 @@ export function containerDetail(s: LedgerState, board: string, region: string): 
   };
 }
 
-/** The open grant requests on `board`, oldest first, and each region's holders, creator first
- * (`get_board`, D-027). Labels come from each agent's `join`. */
+/** The open grant requests on `board` (the `grant.requested` row), oldest first, the board's
+ * holders and each region's, creator first (`get_board`, D-027, D-034). Labels come from each
+ * agent's `join`. */
 export function boardAccess(s: LedgerState, board: string): BoardAccess {
   const label = (agent: string) => s.agents.get(agent) ?? agent;
-  const requests: AccessRequest[] = grantRequests(s, board).filter((r) => !r.answer).map((r) => ({
-    seq: r.seq, region: r.region, reason: r.reason, at: r.at,
-    ...(r.agent !== undefined && { agent: r.agent, label: label(r.agent) }),
-  }));
-  const held: Record<string, AccessHolder[]> = {};
-  for (const r of s.boards.get(board)?.regions ?? []) {
-    const creator = creatorOf(s, board, r.id);
-    const list = holders(s, board, r.id)
+  const requests = CONDITIONS['grant.requested'].derive(s, { board }).map(({ seq, container }): AccessRequest => {
+    const { agent } = s.index.requests.get(seq!)!;
+    const { reason, at } = s.grantNotes.get(seq!)!;
+    return { seq: seq!, ...(container !== undefined && { region: container }), reason, at, ...(agent !== undefined && { agent, label: label(agent) }) };
+  });
+  /** The holders of the board, or with `region` of one container, creator first. */
+  const of = (region?: string): AccessHolder[] => {
+    const creator = creatorOf(s, board, region);
+    return holders(s, board, region)
       .map((agent): AccessHolder => ({ agent, label: label(agent), ...(agent === creator && { creator: true as const }) }))
       .sort((a, b) => Number(b.creator ?? false) - Number(a.creator ?? false));
+  };
+  const held: Record<string, AccessHolder[]> = {};
+  for (const r of s.boards.get(board)?.regions ?? []) {
+    const list = of(r.id);
     if (list.length) held[r.id] = list;
   }
-  return { ...(requests.length > 0 && { requests }), ...(Object.keys(held).length > 0 && { holders: held }) };
+  const boardHolders = of();
+  return {
+    ...(requests.length > 0 && { requests }), ...(boardHolders.length > 0 && { boardHolders }),
+    ...(Object.keys(held).length > 0 && { holders: held }),
+  };
 }
 
-/** The items on `board` not yet decided, by number, with why each waits for the agent and
- * whether the person has a version still to see (api.md 36, D-018). With `agent`, only the items
- * it may answer: in a container it holds, or whose latest version it wrote (api.md 41). */
+/** The items on `board` not yet decided, by number, with why each waits for the agent
+ * (`item.owed`: its ask's kind, else `later`) and whether the person has a version still to see
+ * (`item.unseen`) (api.md 36, D-018). With `agent`, only the items it may answer: in a container
+ * it holds, or whose latest version it wrote (api.md 41). A container's owed note has no place
+ * here: `openItem` is a card's shape (api.md 73, `openContainers`). */
 export function openItems(s: LedgerState, board: string, agent?: string): OpenItem[] {
-  // A container's owed note has no place here: `openItem` is a card's shape (api.md 73).
-  const pending = new Map(pendingItems(s, board, agent).filter((p) => p.region === undefined).map((p) => [p.n, p]));
-  const unseen = new Set(unseenItems(s, board).map((u) => u.n));
+  const pending = new Map<number, NonNullable<OpenItem['pending']>>();
+  const unseen = new Set<number>();
+  for (const c of conditionsOf(s, { board, agent })) {
+    if (c.kind === 'item.owed') pending.set(c.n!, s.asks.get(c.seq!)?.kind ?? 'later');
+    if (c.kind === 'item.unseen') unseen.add(c.n!);
+  }
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
     const v = latest(node);
     const status = s.items.get(node.n)?.status ?? 'open';
-    if (!v.item || DECIDED.has(status)) continue;
-    if (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.n }) !== 'ok') continue;
-    const p = pending.get(node.n);
-    const why = p?.ask?.kind ?? (p?.later !== undefined ? 'later' : undefined);
+    if (!v.item || DECIDED.has(status) || (agent !== undefined && !mayAnswer(s, agent, node.n))) continue;
+    const why = pending.get(node.n);
     out.push({
-      board, n: node.n, ver: v.ver, ...placeOf(s, node.n), kind: v.kind, title: v.title, status,
+      board, n: node.n, ver: v.ver, ...whereIs(s, node.n), kind: v.kind, title: v.title, status,
       ...(why && { pending: why }), ...(unseen.has(node.n) && { unseen: true as const }),
     });
   }
@@ -168,13 +185,13 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
 /** A whole container whose latest note waits for the agent (api.md 73, 77). */
 export interface OpenContainer { board: string; region: string; title: string; pending: 'comment' | 'context'; note: number }
 
-/** The containers on `board` whose latest standing note has no answer yet, for the agents that may
- * answer them (api.md 77); `openItems` stays cards only. */
+/** The containers on `board` whose latest standing note has no answer yet (`container.owed`), for
+ * the agents that may answer them (api.md 77); `openItems` stays cards only. */
 export function openContainers(s: LedgerState, board: string, agent?: string): OpenContainer[] {
   const regions = s.boards.get(board)?.regions ?? [];
-  return pendingItems(s, board, agent).flatMap((p) => {
-    const r = p.region !== undefined && p.ask ? regions.find((x) => x.id === p.region) : undefined;
-    return r && p.ask ? [{ board, region: r.id, title: r.title, pending: p.ask.kind, note: p.ask.seq }] : [];
+  return conditionsOf(s, { board, agent }).flatMap((c) => {
+    const r = c.kind === 'container.owed' ? regions.find((x) => x.id === c.container) : undefined;
+    return r ? [{ board, region: r.id, title: r.title, pending: s.asks.get(c.seq!)!.kind, note: c.seq! }] : [];
   });
 }
 

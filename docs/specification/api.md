@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-07 (project stream, watch mode build event)
+updated: 2026-10-07 (board access, ledger v8: 81-86; board seen and conditions: 87-89)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -130,11 +130,11 @@ packages/format/schema/openapi.json               every operation, input, output
     `request_grant`, and the person must approve again. For MCP, `secret` is a tool argument;
     `VB_AGENT_SECRET` in the environment means one identity for every chat that shares that MCP
     configuration, so it is meant for `vb` and single-chat setups.
-23. **Containers** are regions (D-011), named by `board` and `region`. A container's holders are
+23. *(Replaced by 81.)* **Containers** are regions (D-011), named by `board` and `region`. A container's holders are
     the agent that created the region, plus every agent the person granted it to, minus revoked
     ones. They are folded from the ledger, never stored anywhere else. Regions written by v2
     lines have no holder, so any v3 write to them needs a grant.
-24. **What each write needs.** One `write_board` call writes one board, the one in the path.
+24. *(Replaced by 83.)* **What each write needs.** One `write_board` call writes one board, the one in the path.
     - New board (`board` item), or a new region id: no grant; the writer becomes its holder.
     - Existing region id (an update to its title, mode or lanes): the region.
     - New node: its `node.region`.
@@ -143,13 +143,13 @@ packages/format/schema/openapi.json               every operation, input, output
     - `link` / `unlink`: the `from` node's region. Both nodes must be on this board.
     - `reply`, `propose`, `park`: the node's current region, or the agent wrote the node's latest
       version. So an author can still answer a node the person moved to Later.
-25. **No grant, no write.** The item fails with `needs-grant` and the `{ board, region }` it
+25. *(Replaced by 84.)* **No grant, no write.** The item fails with `needs-grant` and the `{ board, region }` it
     needs. The detail says: call `request_grant` once, wait for the person's answer in
     `check_responses`, then resend the same items with the same keys.
-26. `request_grant` while the same agent already has an open request for that container returns
+26. *(Replaced by 85.)* `request_grant` while the same agent already has an open request for that container returns
     that request with `replayed: true`, so an agent in a loop cannot flood the person. A holder
     gets `{ held: true }`.
-27. Limit (vision.md § Many chats, one board): this runs on one machine, so it stops mistakes
+27. *(Kept in 86.)* Limit (vision.md § Many chats, one board): this runs on one machine, so it stops mistakes
     and wrong-container writes, not attackers.
 
 ## Requests
@@ -210,8 +210,8 @@ packages/format/schema/openapi.json               every operation, input, output
 |---|---|---|
 | `bad-request` | 400 | Not JSON, a bad id in the path, a bad query |
 | `not-authenticated` | 401 | An agent write with no secret, or one the server does not know |
-| `forbidden` | 403 | Host or Origin not allowed; a person route called as an agent, or the reverse |
-| `needs-grant` | 403 | The agent does not hold the container (usually per item) |
+| `forbidden` | 403 | Host or Origin not allowed; a person route called as an agent, or the reverse; a `board` item from an agent that did not make that board (84) |
+| `needs-grant` | 403 | The agent does not hold the board, or the container (usually per item; 84) |
 | `not-found` | 404 | No such board, node, region or route |
 | `method-not-allowed` | 405 | Known path, wrong method |
 | `conflict` | 409 | `base` is stale, or a key is reused for different content (usually per item) |
@@ -236,10 +236,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `check_responses` | `GET /api/boards/{board}/responses` | anyone | The person's actions after `after`, and answers to the caller's grant requests; `wait` (0-60 s) holds the call until the person presses Send or answers a request; a timed-out wait returns `{ responses: [], head }` |
 | `read_ledger` | `GET /api/ledger` | anyone | Every ledger line after `after`, from anyone, oldest first; `board` filters (through a node's board for lines that name only a node); JSON, or `application/jsonl` |
 | `join` | `POST /api/agents` | agent | Get an agent id and secret; grants nothing |
-| `request_grant` | `POST /api/grants` | agent | Ask the person for write access to one container |
+| `request_grant` | `POST /api/grants` | agent | Ask the person for write access to a board, or to one container on it (85) |
 | `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`; per-item results |
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8) |
-| `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018) |
+| `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
 | `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
 
@@ -461,3 +461,87 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 80. **Board heads in the fold.** `list_boards`' `seq`, each board's own last line, is kept by the
     fold (`LedgerState.heads`, set in `applyEvent` through `eventBoard`) and read with `boardList`,
     so the server and the page, which applies each line as it arrives, give the same number.
+
+## Ledger v8 additions: board access, then container access (BE_03, D-034)
+
+81. `LEDGER_FORMAT` becomes 8 and every ledger `$id` moves to `.../schema/ledger/8/`; `openapi.json`
+    `info.version` becomes 1.6.0. Only adds: v2 through v7 lines stay valid. **Holders** (replaces
+    23) are folded from the ledger, never stored anywhere else (`LedgerIndex.creators` and
+    `holders`, keyed by `accessKey`: the board's id, or `containerKey` for a container). A
+    container's holders are the agent whose line created the region plus every agent the person
+    granted it to, minus revoked ones. A **board's** holders are the agent whose `board` line made
+    it (its creator), every agent the person granted the board, and every agent that created a
+    region on it or was granted one of its containers, minus board revocations; so an agent that
+    already wrote on a board keeps every write it could make before. Lines written in v2 make no
+    holder, so any write to a v2 board or region needs a grant.
+82. **A board, not a container.** `grant-request { board, reason }` with no `region` asks for the
+    whole board; `revoke { holder, board }` with no `region` takes it back. `grant` and `deny`
+    answer either kind of request. A grant on a container grants its board too. A board's creator
+    cannot be revoked, as a container's cannot; revoking an agent that does not hold the board is
+    refused (`invalid`, pointer `/holder`). A board revoke leaves the agent's containers as they
+    are, but it can write nothing on the board until the person grants the board again.
+83. **What each write needs** (replaces 24). One row per write item in the permissions table
+    (`PERMISSIONS` in `packages/actions/src/permissions.ts`, D-033), read alike by `write_board`,
+    `pending` and `list_open`. Board first: an agent writes on a board only when it holds it, then
+    in a container only when it holds that too. One `write_board` call writes one board, the one in
+    the path.
+    - `board`: a new id needs nothing, and the writer becomes its creator and holder. An existing
+      id only its creator may write (its title and summary); for now the ledger refuses a second
+      `board` line from anyone (`invalid`, "already exists"), and the person can rename any board.
+    - `region`: a new id needs the board; an existing id needs that region.
+    - `node`: a new node needs its `node.region`; a new version needs the region the card is in now
+      (the person's move wins, 68; a card in Later is judged by where its agent drew it, 70) and,
+      if it moves, the target region too; then the board.
+    - `link` / `unlink`: the `from` node's region, then the board. Both nodes on this board.
+    - `reply`, `propose`, `park`: the agent that wrote the node's latest version needs only the
+      board, so it can still answer a node the person moved; any other agent, the node's region.
+    Where a region is missing, the answer names it (its grant brings the board); else the board.
+    An unknown board, region or node is judged by the ledger's own checks instead, so the agent is
+    told what is wrong rather than to ask for a grant it cannot get.
+84. **No grant, no write** (replaces 25). The item fails with `needs-grant` carrying `board`, and
+    `region` when it needs a container. The detail says: call `request_grant` once (with just the
+    board, for a board), wait for the person's answer in `check_responses`, then resend the same
+    items with the same keys. A `board` item for a board another agent made fails with `forbidden`:
+    no grant gives it.
+85. **`request_grant`** (replaces 26) takes `region` as optional: without it, the request is for
+    the board. While the same agent has an open request for the same board or container, that
+    request is returned with `replayed: true`, so an agent in a loop cannot flood the person; a
+    holder gets `{ held: true }`. The answer leaves `region` out for a board. The `join`,
+    `request_grant` and `write_board` descriptions and the MCP instructions tell an agent to ask
+    for a board it did not create before writing on it.
+86. **What every read shows.** `get_board` adds `boardHolders` (the agents that may write on the
+    board, creator first and marked `creator`; left out when none, 32), and a request for the whole
+    board in `requests` has no `region`. On the page (agentAccess flag) the requests strip shows a
+    board request as "<agent> wants to draw on this board", with the same Allow and Refuse, and the
+    header's **Agents** list shows the board's holders, each but the creator with Remove access
+    (confirmed, then `revoke` with no `region`). The limit of 27 stands: this runs on one machine,
+    so it stops mistakes and wrong-board writes, not attackers.
+
+## Ledger v8 additions: board seen and the conditions table (BE_04, D-033)
+
+87. **Board seen.** `seen` gains a board form, `{ board, head }`: the person has looked at this
+    board up to its line `head` (its `seq` in `list_boards`). It names a node (`n`, `ver`) or a
+    board (`board`, `head`), never both (`$defs/rules`, a `oneOf`). It is added to v8, which no
+    release has carried yet, so the format is not bumped; `openapi.json` `info.version` becomes 1.7.0 and
+    `mark_seen`'s body is that `oneOf`, with `board` the same as the path's. The ledger refuses an
+    unknown board and a `head` above the ledger's last line. The fold keeps the highest `head` per
+    board (`LedgerState.seenBoards`). A board seen is on its board (`scopeOf`, `read_ledger`'s
+    board filter) but is not a change to it, so it moves no head (80). The page sends it when one
+    is due (`boardNews`): when it opens a board, when it leaves it (a switch, or the page going
+    away) and, while the board stays open, at most once a minute when an agent's line arrives.
+88. **The conditions table.** What needs attention is one row per kind in `CONDITIONS`
+    (`packages/actions/src/conditions.ts`): `item.owed`, `container.owed`, `item.unseen`,
+    `grant.requested`, `board.drawn`, `board.new`, `board.changed`. `conditionsOf(state, { board,
+    agent })` returns ids only (`{ kind, board, container?, n?, seq? }`). `list_open`'s `pending`
+    and `unseen`, its `containers`, and `write_board`'s `pending` and `containers` read it, as do
+    `get_board`'s `requests` and the page. With an agent, rows for the person only are left out and
+    the rest are scoped through the permissions table (83): an item it may `reply` on, a container
+    it may edit, so an agent revoked from a board is no longer told what is owed there, and
+    `check_responses` no longer passes it the container notes and `mode` acts on that board. An
+    item owes its unanswered ask first, else its "later" (36).
+89. **Board new and changed** are durable: `board.new` is a board other than the open one with no
+    board seen; `board.changed` one with an agent's line above its board seen (the fold's
+    `agentHeads`: drawing, replies, proposals, requests), so the person's own acts never mark a
+    board changed. Both read `boardNews` (conditions.ts). `board.drawn` is an agent
+    drawing line (`board`, `region`, `node`, `link`, `unlink`) on the open board after its board
+    seen. All three survive a reload and read the same on every computer that shares the ledger.

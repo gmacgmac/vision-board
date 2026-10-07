@@ -87,3 +87,27 @@ test('a region written by a v2 line has no holder', () => {
   assert.deepEqual(problems, []);
   assert.equal(index.holders.has(containerKey('b', 'r')), false);
 });
+
+test('board access (D-034): a request for the whole board, once while open; a grant holds the board; its creator stays', () => {
+  const events = [...base(), agent(B, { type: 'grant-request', board: 'b', reason: 'The whole board.' }),
+    agent(B, { type: 'grant-request', board: 'b', reason: 'Again.' }), person({ action: 'grant', request: 7 }),
+    person({ action: 'revoke', holder: A, board: 'b' }), person({ action: 'revoke', holder: B, board: 'b' }),
+    person({ action: 'revoke', holder: B, board: 'b' })];
+  const { problems, index } = read(events);
+  assert.deepEqual(problems, [
+    'line 8: board: this agent already has open grant request 7 for board b',
+    `line 10: holder: "${A}" created board b, and a board's creator cannot be removed`,
+    `line 12: holder: "${B}" does not hold board b`,
+  ]);
+  assert.deepEqual(index.requests.get(7), { agent: B, board: 'b', answer: { action: 'grant', seq: 9 } });
+  assert.equal(index.creators.get('b'), A);
+  assert.deepEqual([...index.holders.get('b')!], [A]);
+});
+
+test('board seen (api.md 87): a known board, up to a line already written', () => {
+  const seen = (board: string, head: number) => ({ v: 8, seq: ++seq, at, by: 'person', type: 'seen', board, head });
+  const ok = read([...base(), seen('b', 6), seen('b', 2)]);
+  assert.deepEqual(ok.problems, []);
+  assert.deepEqual(read([...base(), seen('nope', 6)]).problems, ['line 7: board: unknown "nope"']);
+  assert.deepEqual(read([...base(), seen('b', 7)]).problems, ['line 7: head: the ledger is at line 6']);
+});

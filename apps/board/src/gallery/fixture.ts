@@ -2,9 +2,10 @@
 // through the same checks and folds the live board uses. Nothing here is hand-written markup.
 import type { View } from '../../../../packages/format/src/index.ts';
 import { boardView, readLedger } from '../../../../packages/format/src/index.ts';
-import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardAccess, boardState, foldLedger, pendingItems } from '../../../../packages/actions/src/index.ts';
+import { boardAccess, boardState, foldLedger } from '../../../../packages/actions/src/index.ts';
+import { pageConditions } from '../board/board-data.ts';
 import ledgerText from './gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */
@@ -33,6 +34,8 @@ export interface Fixture {
   state: BoardState;
   /** Open grant requests and each region's holders, as `get_board` gives them. */
   access: BoardAccess;
+  /** The notes board's holders (D-034): its creator and an agent the person granted the board. */
+  boardAgents: AccessHolder[];
   /** The notes board, for the note pin, the "Your note" block and the note bubble. */
   notes: { view: View; state: BoardState };
   /** The containers board (3_FE_04): container notes before and after a Send, and a moved container. */
@@ -40,12 +43,11 @@ export interface Fixture {
   containerNotes: Containers;
 }
 
-/** A board of container samples; `owed` as the board page reads it (region-notes.ts owedRegions). */
+/** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
 export interface Containers { view: View; state: BoardState; owed: ReadonlySet<string> }
 
 function containers(ledger: LedgerState, board: string): Containers {
-  const owed = new Set(pendingItems(ledger, board).flatMap((p) => (p.region === undefined ? [] : [p.region])));
-  return { view: boardView(ledger, board), state: boardState(ledger, board), owed };
+  return { view: boardView(ledger, board), state: boardState(ledger, board), owed: pageConditions(ledger, board).owed };
 }
 
 /** Fails loudly on a bad fixture: a gallery drawn from invalid data would prove nothing. */
@@ -55,6 +57,7 @@ export function loadFixture(): Fixture {
   const ledger = foldLedger(events);
   return {
     view: boardView(ledger, BOARD), state: boardState(ledger, BOARD), access: boardAccess(ledger, BOARD),
+    boardAgents: boardAccess(ledger, NOTES_BOARD).boardHolders ?? [],
     notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD) },
     containers: containers(ledger, CONTAINERS_BOARD), containerNotes: containers(ledger, CONTAINER_NOTES_BOARD),
   };

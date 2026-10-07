@@ -4,16 +4,9 @@
 // ledger, reset on reload, ruling 3), and each shown block's height as that container's head
 // inset for the layout (`vb-region-note-resize`), so showing one note lays out that one
 // container and those below make room. Every write goes through the controller's `attempt`.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { pendingItems } from '../../../../packages/actions/src/index.ts';
 import type { RegionNoteEventDetail, RegionNoteResizeDetail, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { REGION_NOTE_EVENT, REGION_NOTE_RESIZE_EVENT } from '../../../../packages/ui/src/index.ts';
 import type { ActFields } from './io.ts';
-
-/** The containers on `board` the agent still owes an answer on (`regionState`'s `owed`): a sent
- *  note whose container is not here was answered and loses its badge (ruling 1). */
-export const owedRegions = (s: LedgerState, board: string): Set<string> =>
-  new Set(pendingItems(s, board).flatMap((p) => (p.region === undefined ? [] : [p.region])));
 
 export interface RegionNoteDeps {
   stage: HTMLElement;

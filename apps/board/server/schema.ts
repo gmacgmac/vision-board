@@ -12,7 +12,7 @@ import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/7/ledger-event.schema.json`;
+export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/8/ledger-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
 export interface SchemaProblem { pointer: string; detail: string }

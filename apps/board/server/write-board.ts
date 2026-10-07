@@ -14,7 +14,7 @@ import { ProblemError, problem } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/7/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -162,12 +162,19 @@ function checkBoard(b: Batch, s: LedgerState, i: number, e: Rec): void {
   }
 }
 
-/** No grant, no write (api.md 25). */
-function checkGrant(b: Batch, s: LedgerState, e: Rec): void {
+/** No grant, no write (api.md 25, 83-84): the permissions table's answer for this item. */
+function checkGrant(b: Batch, s: LedgerState, i: number, e: Rec): void {
   const need = canWrite(s, b.agent, e as unknown as WriteItem);
   if (need === 'ok') return;
-  fail('needs-grant', `You do not hold the container "${need.region}" on board "${need.board}". Call request_grant once, wait for the person's answer in check_responses, then resend the same items with the same keys.`,
-    { board: need.board, region: need.region });
+  if (need === 'creator') {
+    fail('forbidden', `Only the agent that created board "${b.board}" can change its title and summary. Leave the board item out and write your regions and nodes.`,
+      { errors: [{ pointer: `/items/${i}/type`, detail: `board "${b.board}" was created by another agent` }] });
+  }
+  const what = need.region === undefined
+    ? `You may not write on board "${need.board}" yet: another agent made it. Call request_grant once with just the board`
+    : `You do not hold the container "${need.region}" on board "${need.board}". Call request_grant once`;
+  fail('needs-grant', `${what}, wait for the person's answer in check_responses, then resend the same items with the same keys.`,
+    { board: need.board, ...(need.region !== undefined && { region: need.region }) });
 }
 
 /** Append through the ledger module; its problems point into this item. A `/board` pointer
@@ -195,7 +202,7 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
   const s = b.ledger.state();
   checkBase(s, i, item, e);
   checkBoard(b, s, i, e);
-  checkGrant(b, s, e);
+  checkGrant(b, s, i, e);
   return append(b, i, key, e);
 }
 

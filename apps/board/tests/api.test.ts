@@ -165,6 +165,18 @@ test('act and mark_seen: one stored line each, 201', async () => {
   assert.deepEqual(open.items.map((x: any) => [x.n, x.unseen]), [[h.seeded.q, undefined]]);
 });
 
+test('mark_seen for a board (api.md 87): stored with board and head, it moves no head; another board, a mixed body or a line not yet written is refused', async () => {
+  const seqOf = async () => (await h.ok('list_boards')).boards.find((b: any) => b.board === 'pricing').seq;
+  const before = await seqOf();
+  const seen = await h.ok('mark_seen', { board: 'pricing', body: { board: 'pricing', head: before } });
+  assert.deepEqual([h.last().status, seen.type, seen.board, seen.head, seen.by], [201, 'seen', 'pricing', before, 'person']);
+  assert.equal(h.ledger.state().seenBoards.get('pricing'), before);
+  assert.equal(await seqOf(), before, 'the person looking is not a change to the board');
+  await h.fails('mark_seen', { board: 'pricing', body: { board: 'roadmap', head: 1 } }, 422, 'invalid');
+  await h.fails('mark_seen', { board: 'pricing', body: { board: 'pricing', head: 1, n: h.seeded.q, ver: 1 } }, 422, 'invalid');
+  await h.fails('mark_seen', { board: 'pricing', body: { board: 'pricing', head: head() + 5 } }, 422, 'invalid');
+});
+
 test('watch_board: server-sent change events with { seq }', async () => {
   const stop = new AbortController();
   const res = await fetch(`${h.base}/api/boards/pricing/events`, { signal: stop.signal });

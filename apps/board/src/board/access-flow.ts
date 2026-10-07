@@ -1,6 +1,7 @@
-// The person's side of agent access as page actions (agentAccess flag, D-027): Allow or Refuse a
-// grant request, and Remove access, each sent through the controller's one act path. The words and
-// acts themselves are plain data in access.ts. Split out of controller.ts (N12_FE_01).
+// The person's side of agent access as page actions (agentAccess flag, D-027, D-034): Allow or
+// Refuse a grant request, and Remove access to a container or the board, each sent through the
+// controller's one act path. The words and acts themselves are plain data in access.ts. Split out
+// of controller.ts (N12_FE_01).
 import type { ActFields, BoardData } from './io.ts';
 import { answerAct, answerWords, revokeAct, revokeWords } from './access.ts';
 import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
@@ -14,7 +15,8 @@ export interface AccessDeps {
 
 export interface AccessFlow {
   answer(request: number, answer: 'grant' | 'deny', text?: string): Promise<boolean>;
-  revoke(region: string, holder: string): Promise<void>;
+  /** Remove `holder` from the container in `region`, or with none from the board. */
+  revoke(region: string | undefined, holder: string): Promise<void>;
 }
 
 export function createAccessFlow(d: AccessDeps): AccessFlow {

@@ -401,3 +401,24 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   (`wirePlates`, tried 2026-10-06); blur on by default, which costs drawing time on large boards
   (rule 15).
 - **Task**: [[cortex-tasks/board/2026-10-06_board-ui_wire-layers.md]] (written once the work lands)
+
+## D-033 Awareness tables: references, permissions, conditions
+- **Date**: 2026-10-07 · **Status**: Accepted · **From**: maintainer (chat 176-207), after nclite and Uplynk Studio
+- **Decision**: What belongs to what, who may write what, and what needs attention are each one
+  typed table in `packages/actions`, derived from the folded ledger and read alike by the server,
+  the page and agents. A new kind without a row is a type error; every row has a test. A check
+  needed in more than one place is a row, never a local check.
+- **Why**: The same facts were worked out in several places and drifted.
+- **Alternative rejected**: Leaving each check where it is used; nclite's stored notices table
+  (the ledger is already the history).
+- **Task**: [[cortex-tasks/board/2026-10-07_board-actions_awareness-tables/PLAN.md]]
+
+## D-034 Board access, then container access (replaces D-027's open container creation)
+- **Date**: 2026-10-07 · **Status**: Accepted · **From**: maintainer (chat 170C-171, 206, 208)
+- **Decision**: An agent writes to a board only if it created the board or the person granted it.
+  On such a board it creates and edits its own containers; another agent's container still needs
+  that container's grant. Among agents, only a board's creator changes its title and summary; the
+  person can rename any board. Grants attach to the agent's one secret.
+- **Why**: A board is a topic; nothing on it can be deleted yet, so a stray write is permanent.
+- **Alternative rejected**: Container grants only (any agent writes to any board).
+- **Task**: [[cortex-tasks/board/2026-10-07_board-actions_awareness-tables/PLAN.md]]
