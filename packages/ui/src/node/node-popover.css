@@ -1,0 +1,70 @@
+/* The card's bottom-edge tabs and the card popover (proposals FE_01 rulings 1-3, mockup 03 option C;
+   node-popover.ts). Tokens only. The tabs sit in gaps cut from the bottom border, like the number
+   and kind on the top one; each is hidden until it applies, so the card never changes size. The box
+   is the note preview's (tip/tip.css `.vb-tip`, node.css `.vb-note-tip`), beside the card, shown
+   while `data-open` is on it, which also raises the card above its neighbours. */
+
+vb-node .vb-node-btabs { position: absolute; left: 14px; bottom: -11px; display: flex; gap: var(--vb-space-2); }
+vb-node .vb-node-btab {
+  position: relative; display: inline-flex; align-items: center; height: 20px; padding: 0 var(--vb-space-2); cursor: pointer;
+  border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-sm); background: var(--vb-accent-soft);
+  box-shadow: 0 0 0 var(--vb-space-1) var(--gap); color: var(--vb-accent-text); white-space: nowrap;
+  font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); letter-spacing: 0.06em; text-transform: uppercase;
+  transition: border-color var(--vb-motion-fast), background var(--vb-motion-fast);
+}
+vb-node .vb-node-btab[hidden] { display: none; }
+/* Two tabs or more (a proposal and "N updates", FE_02) reach under the footer's buttons. The buttons
+   rise to the footer's top and the row drops 2px, so each tab's 24px target circle clears them (WCAG
+   2.5.8) while the card keeps its size and the row stays clear of the card below. */
+vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) .vb-node-actions { align-self: flex-start; margin-top: -3px; }
+vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) { bottom: -13px; }
+/* A 24px hit area, without growing the tab. */
+vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
+vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }
+vb-node .vb-node-btab:active { transform: translateY(1px); }
+vb-node .vb-node-btab:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+/* Out of date (ruling 3): the CHANGED family, amber, in place of the accent. */
+vb-node .vb-node-btab[data-stale] {
+  border-color: color-mix(in srgb, var(--vb-state-context) 45%, var(--vb-line)); background: var(--vb-state-context-soft); color: var(--vb-state-context);
+}
+vb-node .vb-node-btab[data-stale]:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); }
+/* NEW (stage5-follow-ups FE_01): the "new" tone, like the toolbar's chip (board.css `.vb-chip[data-tone='new']`).
+   A label, not a button: nothing to open, so no pointer, no hover and no hit area. */
+vb-node .vb-node-btab[data-tab='new'] { cursor: default; pointer-events: none; background: var(--vb-accent-soft); color: var(--vb-accent); }
+vb-node .vb-node-btab[data-tab='new']::after { content: none; }
+
+/* The box: beside the card at its top, with a bridge over the gap so the pointer can cross onto it. */
+vb-node .vb-card-pop {
+  top: 0; left: calc(100% + var(--vb-space-3)); width: var(--vb-card-w); max-height: 320px; overflow: auto;
+  padding: var(--vb-space-3); font-weight: var(--vb-weight-regular); cursor: default; user-select: text;
+}
+vb-node .vb-card-pop::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--vb-space-3); height: auto; }
+vb-node .vb-card-pop[data-open] { display: grid; gap: var(--vb-space-3); }
+vb-node .vb-card-pop:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-node:has(.vb-card-pop[data-open]) { z-index: 4; }
+
+/* A proposal in the box: who, what, from where and when, the reason it is out of date, the buttons. */
+vb-node .vb-prop { display: grid; gap: var(--vb-space-1); }
+vb-node .vb-prop + .vb-prop { padding-top: var(--vb-space-3); border-top: 1px solid var(--vb-line); }
+vb-node .vb-prop[aria-busy='true'] { opacity: 0.6; cursor: progress; }
+vb-node .vb-prop p { margin: 0; }
+vb-node .vb-prop-head {
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-accent-text);
+}
+vb-node .vb-prop[data-stale] .vb-prop-head { color: var(--vb-ink-subtle); }
+vb-node .vb-prop-what { font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
+vb-node .vb-prop-from { font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
+vb-node .vb-prop-why { font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--vb-state-context); }
+vb-node .vb-prop-acts { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-1); }
+vb-node .vb-pop-btn {
+  height: 26px; padding: 0 var(--vb-space-3); cursor: pointer; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
+  background: var(--vb-surface-raised); color: var(--vb-ink-strong); font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font);
+}
+vb-node .vb-pop-btn:hover { background: var(--vb-surface-sunken); }
+vb-node .vb-pop-btn:active { transform: translateY(1px); }
+vb-node .vb-pop-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-node .vb-pop-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
+vb-node .vb-pop-primary:hover { background: var(--vb-accent-fill-hover); }
+/* Out of date, Accept can't be pressed; it stays focusable so its reason is read (aria-describedby). */
+vb-node .vb-pop-btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; }
+vb-node .vb-pop-primary[aria-disabled='true']:hover { background: var(--vb-accent-fill); }

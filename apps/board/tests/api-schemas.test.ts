@@ -20,7 +20,7 @@ test('problem: RFC 9457 members and the extensions, closed; a write item\'s form
   assert.notDeepEqual(schemaProblems(`${API}problem.schema.json#/$defs/item`, PROBLEM), []);
 });
 
-test('write-request: { items }, at most 200, each one of the eight sent forms, no board in an item', () => {
+test('write-request: { items }, at most 200, each one of the nine sent forms, no board in an item', () => {
   const node = { type: 'node', node: { region: 'options', kind: 'note', title: 'A note' } };
   assert.deepEqual(problems('write-request', { items: [node] }), []);
   assert.notDeepEqual(problems('write-request', { items: Array.from({ length: 201 }, () => node) }), []);
@@ -29,8 +29,21 @@ test('write-request: { items }, at most 200, each one of the eight sent forms, n
   assert.notDeepEqual(problems('write-request', { items: [{ ...node, board: 'pricing' }] }), []);
   assert.notDeepEqual(problems('write-request', { items: [{ type: 'act', action: 'ack', n: 1, ver: 1 }] }), []);
   assert.notDeepEqual(problems('write-request', { items: [node], extra: true }), []);
-  for (const type of ['board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park'])
+  for (const type of ['board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'append'])
     assert.notDeepEqual(problems('write-item', { type }), [], `${type} with no fields`);
+});
+
+test('append (api.md 95): n as a number or a key, text, base and key; nothing else', () => {
+  const ok = { type: 'append', n: 4, text: 'One more finding.' };
+  assert.deepEqual(problems('write-item', ok), []);
+  assert.deepEqual(problems('write-item', { ...ok, n: { key: 'q-1' }, base: 2, key: 'add-1' }), []);
+  assert.notDeepEqual(problems('write-item', { ...ok, text: ' ' }), [], 'blank text');
+  assert.notDeepEqual(problems('write-item', { ...ok, text: 'x'.repeat(8001) }), [], 'over the body limit');
+  assert.notDeepEqual(problems('write-item', { type: 'append', text: 'No card.' }), [], 'no n');
+  assert.notDeepEqual(problems('write-item', { type: 'append', n: 4 }), [], 'no text');
+  assert.notDeepEqual(problems('write-item', { ...ok, node: { title: 'T' } }), [], 'no node fields');
+  assert.notDeepEqual(problems('write-item', { ...ok, board: 'b' }), [], 'no board');
+  assert.notDeepEqual(problems('write-item', { ...ok, ver: 2 }), [], 'no ver');
 });
 
 test('write-result: one result per item, a success or a failure with a problem that has no status', () => {

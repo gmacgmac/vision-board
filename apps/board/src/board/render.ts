@@ -5,7 +5,7 @@
 import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { AccessHolder, BoardState } from '../../../../packages/actions/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { CardReply, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
 import { LATER_REGION } from '../../../../packages/format/src/index.ts';
 import { work } from './work.ts';
@@ -28,9 +28,11 @@ export interface RegionSet {
   sync(view: View): void;
   /** Place and update each frame; true when any frame moved or changed size. `holders` (the
    * agentAccess flag): region id -> the agents that hold it. `owed`: the containers the agent
-   * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). */
+   * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). `replies`: the agent's replies to show
+   * under container notes (the cardReplies flag, FE_03). */
   place(
     layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>, owed?: ReadonlySet<string>,
+    replies?: readonly CardReply[],
   ): boolean;
   clear(): void;
 }
@@ -68,14 +70,14 @@ export function createRegionSet(host: HTMLElement): RegionSet {
         prev = el;
       }
     },
-    place(layout, view, s, holders, owed) {
+    place(layout, view, s, holders, owed, replies) {
       const placed = new Set(layout.nodes.keys());
       let moved = false;
       for (const r of layout.regions) {
         const el = els.get(r.id);
         if (!el) continue;
         const box = JSON.stringify(r.box);
-        const st = regionState(r, view, s, placed, holders?.[r.id], owed);
+        const st = regionState(r, view, s, placed, holders?.[r.id], owed, replies);
         const state = JSON.stringify(st);
         const was = shown.get(r.id);
         if (was?.box !== box) {

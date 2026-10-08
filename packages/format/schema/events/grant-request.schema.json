@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/9/events/grant-request.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/10/events/grant-request.schema.json",
   "title": "Grant request event",
   "description": "An agent asks the person for write access to a board, or to one container on it.",
   "$comment": "Was: api.md 15, 81",
@@ -9,9 +9,9 @@
       "type": "object",
       "required": ["board", "reason"],
       "properties": {
-        "board": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/id", "description": "The board you need to write to, or that holds the container."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/id", "description": "The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it."},
-        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/longText", "description": "Why you need write access, so the person can decide."}
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id", "description": "The board you need to write to, or that holds the container."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id", "description": "The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it."},
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/longText", "description": "Why you need write access, so the person can decide."}
       }
     },
     "sent": {
@@ -19,11 +19,11 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "grant-request"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/key"}
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/9/events/grant-request.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/10/events/grant-request.schema.json#/$defs/core"
         }
       ],
       "unevaluatedProperties": false
@@ -33,18 +33,18 @@
       "required": ["type"],
       "properties": {"type": {"const": "grant-request"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/9/events/grant-request.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/10/events/grant-request.schema.json#/$defs/core"
         },
         {
           "type": "object",
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/key"}
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key"}
           }
         }
       ],

@@ -3,7 +3,7 @@
 // disabled while no selected card is pinned; with no selection R still resets the focused card;
 // a past version refuses it. A board of its own, written by an agent through the API.
 import type { APIRequestContext, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
@@ -62,6 +62,7 @@ test('Reset places puts the selected pinned cards back and leaves the others; R 
   for (const n of [a, b, c]) await nudge(page, n);
 
   await select(page, a, b);
+  await openSelectionBar(page);
   await expect(reset(page)).toBeEnabled();
   await reset(page).click();
   await expect(card(page, a)).not.toHaveAttribute('data-pinned', '');
@@ -80,7 +81,8 @@ test('Reset places puts the selected pinned cards back and leaves the others; R 
   await expect(card(page, b)).not.toHaveAttribute('data-pinned', '');
   await expect(card(page, c)).toHaveAttribute('data-pinned', '');
 
-  // With nothing selected, R resets the focused card.
+  // With nothing selected, R resets the focused card. The first Esc closes the open bar, the second clears.
+  await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
   await card(page, c).focus();
@@ -90,8 +92,10 @@ test('Reset places puts the selected pinned cards back and leaves the others; R 
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await select(page, a, b);
+    await openSelectionBar(page);
     await expect(reset(page)).toBeDisabled();
     await expectNoAxeViolations(page, ['target-size']);
+    await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
   }
 });

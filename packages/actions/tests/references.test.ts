@@ -94,7 +94,7 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('link', l.agent(A, { type: 'link', from: 1, to: 3 }), on('b', 'r', [1, 3]));
   at('unlink', l.agent(A, { type: 'unlink', from: 1, to: 3 }), on('b', 'r', [1, 3]));
   at('reply', l.agent(B, { type: 'reply', n: 3, text: 'Done.' }), on('b', 'q', [3]));
-  at('propose', l.agent(A, { type: 'propose', n: 4, ver: 1, action: 'ack', reason: 'Settled.' }), on('b2', 'x', [4]));
+  const proposed = at('propose', l.agent(A, { type: 'propose', n: 4, ver: 1, action: 'ack', reason: 'Settled.' }), on('b2', 'x', [4]));
   at('park', l.agent(A, { type: 'park', n: 2, bundle }), on('b', 'r', [2]));
   at('seen', l.seen(4, 1), on('b2', 'x', [4]));
   at('a board seen', l.seenBoard('b', l.seq), { board: 'b', cards: [] });
@@ -104,6 +104,9 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:deny', l.act({ action: 'deny', request: refused, text: 'Not now.' }), on('b', 'r'));
   at('act:revoke', l.act({ action: 'revoke', board: 'b', region: 'q', holder: A }), on('b', 'q'));
   at('act:ack', l.act({ action: 'ack', n: 1, ver: 1 }), on('b', 'r', [1]));
+  l.v = 10; // api.md 93
+  at('act:reject', l.act({ action: 'reject', n: 4, proposal: proposed }), on('b2', 'x', [4]));
+  l.v = 7;
   at('act:drop', l.act({ action: 'drop', n: 4, ver: 1 }), on('b2', 'x', [4]));
   at('act:reopen', l.act({ action: 'reopen', n: 1, ver: 1 }), on('b', 'r', [1]));
   const group = at('act:comment', l.act({ action: 'comment', nodes: [1, 2], text: 'Same question.' }), on('b', 'r', [1, 2]));

@@ -19,17 +19,33 @@ vb-selection-bar[hidden] { display: none; }
 vb-selection-bar:not(:has(.vb-sb-count)) { padding-left: 5px; }
 vb-selection-bar .vb-sb-count { margin-right: var(--vb-space-1); font-variant-numeric: tabular-nums; }
 
-vb-selection-bar .vb-sb-btn {
+vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill) {
   display: inline-flex; align-items: center; height: 28px; padding: 0 var(--vb-space-3); cursor: pointer;
   border: 1px solid transparent; border-radius: var(--vb-radius-md); background: transparent;
   color: var(--vb-ink-strong); font: inherit; font-weight: var(--vb-weight-medium);
 }
 vb-selection-bar .vb-sb-btn:disabled { color: var(--vb-ink-subtle); cursor: not-allowed; }
-vb-selection-bar .vb-sb-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
-vb-selection-bar .vb-sb-btn:active:not(:disabled) { transform: translateY(1px); }
-vb-selection-bar .vb-sb-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+/* data-look draws a state without the pointer: the gallery's samples only. */
+vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):is(:hover, [data-look='hover']):not(:disabled) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
+vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):active:not(:disabled) { transform: translateY(1px); }
+vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-selection-bar .vb-sb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
-vb-selection-bar .vb-sb-primary:hover { background: var(--vb-accent-fill-hover); }
+/* As specific as the plain hover above, and after it: the primary darkens its accent fill (light)
+   or lightens it (dark) under the same ink, as the toolbar's .vb-btn-primary does (FE_02 ruling 4). */
+vb-selection-bar .vb-sb-primary:is(:hover, [data-look='hover']):not(:disabled) { border-color: var(--vb-accent-fill-hover); background: var(--vb-accent-fill-hover); }
+
+/* The compact bar and its pill (selectionPill flag, stage5-follow-ups FE_02 rulings 1-2): less
+   padding and gap, 24px buttons (the WCAG 2.5.8 minimum); over a selection the pill comes first
+   and the buttons show only while it is open. The chevron points the way the bar opens. */
+vb-selection-bar[data-pill] { gap: var(--vb-space-1); padding: var(--vb-space-1); border-radius: var(--vb-radius-md); }
+vb-selection-bar[data-pill] :is(.vb-sb-btn, .vb-sb-pill) { height: 24px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm); }
+vb-selection-bar[data-pill]:not([data-open]) .vb-sb-pill ~ .vb-sb-btn { display: none; }
+vb-selection-bar .vb-sb-pill { gap: var(--vb-space-2); font-weight: var(--vb-weight-bold); font-variant-numeric: tabular-nums; }
+vb-selection-bar .vb-sb-chevron {
+  width: 6px; height: 6px; margin-right: 2px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg); transition: transform var(--vb-motion-fast) var(--vb-ease);
+}
+vb-selection-bar[data-open] .vb-sb-chevron { transform: rotate(135deg); margin: 0 0 0 2px; }
 
 /* The lasso: drawn by the page while a Shift+drag runs, never a pointer target. */
 .vb-lasso {

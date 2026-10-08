@@ -2,7 +2,7 @@
 // 1-7). Runs last on the shared server, on the roadmap board; the group notes it writes it takes
 // back (note-remove), so every card is left as it was found.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -71,8 +71,8 @@ async function boxOf(page: Page, ids: (number | string)[]): Promise<{ x: number;
   };
 }
 
-/** The bar's buttons, by their visible words. */
-const barButtons = (page: Page) => bar(page).locator('button').allInnerTexts();
+/** The bar's buttons a person can see, by their visible words (with the pill closed, only the pill). */
+const barButtons = (page: Page) => bar(page).getByRole('button').allInnerTexts();
 
 test('Shift+drag on a background draws the dashed lasso; the cards it touches replace the selection', async ({ page }) => {
   await openBoard(page);
@@ -121,16 +121,21 @@ test('the selection bar: N selected, Comment, Move to, Reset places, Zoom to sel
   await clickCard(page, 14, ['Shift']);
   await expect(bar(page)).toBeVisible();
   await expect(bar(page)).toContainText('2 selected');
-  expect(await barButtons(page)).toEqual(['Comment', 'Move to', 'Reset places', 'Zoom to selection', 'Clear']);
+  // The pill opens it (stage5-follow-ups FE_02); the pill stays its first item.
+  expect(await barButtons(page)).toEqual(['2 selected']);
+  await openSelectionBar(page);
+  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Zoom to selection', 'Clear']);
   const sel = await boxOf(page, [13, 14]);
   const b = (await bar(page).boundingBox())!;
   expect(b.y + b.height).toBeLessThanOrEqual(sel.y);
   expect(Math.abs(b.x + b.width / 2 - (sel.x + sel.r) / 2)).toBeLessThan(2);
-  // A pan carries it along; it draws above the cards and moves none of them.
+  // A pan carries it along (and closes it back to its pill, still centred above the selection); it
+  // draws above the cards and moves none of them.
   const p = await emptyPoint(page);
   await drag(page, p, { x: p.x + 60, y: p.y + 40 });
   const moved = (await bar(page).boundingBox())!;
-  expect([Math.round(moved.x - b.x), Math.round(moved.y - b.y)]).toEqual([60, 40]);
+  expect([Math.round(moved.x + moved.width / 2 - b.x - b.width / 2), Math.round(moved.y + moved.height - b.y - b.height)]).toEqual([60, 40]);
+  await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Clear' }).click();
   expect(await selectedIds(page)).toEqual([]);
   await expect(bar(page)).toBeHidden();
@@ -155,6 +160,7 @@ test('Zoom to selection fits the selected cards; Z does the same', async ({ page
   const fit = await view(page);
   await clickCard(page, 12);
   await clickCard(page, 17, ['Shift']);
+  await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Zoom to selection' }).click();
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
   const stage = (await page.locator('#stage').boundingBox())!;
@@ -204,6 +210,7 @@ test('Comment on a group: one note, saved once, the same pin on every card, edit
   await clickCard(page, b, ['Shift']);
   await clickCard(page, c, ['Shift']);
   const before = await head(page);
+  await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Comment' }).click();
   await expect(bubble(page)).toBeVisible();
   await expect(bubble(page)).toHaveAttribute('aria-label', `Note on 3 cards: ${a}, ${b}, ${c}`);
@@ -240,6 +247,7 @@ test('Comment with one card selected is that card\'s own note', async ({ page })
   await openBoard(page);
   const [a] = await freeCards(page, [12, 13, 14, 15, 16, 17], 1);
   await clickCard(page, a!);
+  await openSelectionBar(page);
   await bar(page).getByRole('button', { name: 'Comment' }).click();
   await expect(bubble(page)).toHaveAttribute('aria-label', `Note on ${a}`);
   await page.keyboard.press('Escape');

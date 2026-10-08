@@ -88,3 +88,10 @@ export async function expectNoAxeViolations(page: Page, known: string[] = []): P
   const found = (await axeFindings(page)).filter((v) => !known.includes(v.id));
   expect(found, describe(found)).toEqual([]);
 }
+
+/** Open the selection bar from its pill (selectionPill flag, stage5-follow-ups FE_02), so its
+ *  buttons show; with the flag off, or the bar already open, it does nothing. */
+export async function openSelectionBar(page: Page): Promise<void> {
+  const pill = page.locator('vb-selection-bar .vb-sb-pill');
+  if (await pill.count() && (await pill.getAttribute('aria-expanded')) === 'false') await pill.click();
+}

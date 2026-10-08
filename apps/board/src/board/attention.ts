@@ -1,9 +1,12 @@
 // What needs the person's attention on the page (FE_01, D-033), read from the conditions table
 // (packages/actions conditions.ts) and never from page-local sets: the picker's " · new" and
 // " · changed" marks (`board.new`, `board.changed`, never on the open board), the container badges
-// (`container.owed`), the requests the strip announces (`grant.requested` lines in the batch) and
-// the "agent drew" toast (`board.drawn`, when its line is in the batch). `pageConditions`
-// (board-data.ts, also the gallery's) is the one read; this runs it after every batch and switch,
+// (`container.owed`), the requests the strip announces (`grant.requested` lines in the batch), the
+// proposals on the cards and the bar (`proposal.open`, `proposal.stale`; announced when their line
+// is in the batch), the changed cards (`item.unseen`, update-flow.ts), the cards awaiting a handover
+// (`item.awaiting`, parking.ts) and the "agent drew" toast
+// (`board.drawn`, when its line is in the batch). `pageConditions` (board-data.ts, also the
+// gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
 // stays open, at most once a minute when an agent's line arrives. Never while a past version of
@@ -11,6 +14,7 @@
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardNews } from '../../../../packages/actions/src/index.ts';
+import type { ProposalFound } from './board-data.ts';
 import { pageConditions } from './board-data.ts';
 import { markBoardSeen } from './io.ts';
 import { shell } from '../shell/shell.svelte.ts';
@@ -36,11 +40,23 @@ export interface Attention {
   switched(from: string): void;
   /** The containers on the open board the agent owes an answer on: their badges. */
   owed(): ReadonlySet<string>;
+  /** The agent's proposals on the open board not yet answered (proposal-flow.ts). */
+  proposals(): readonly ProposalFound[];
+  /** The items on the open board whose latest version the person has not seen (update-flow.ts). */
+  unseen(): ReadonlySet<number>;
+  /** The items the agent added in the open board's latest round and the person has not seen: NEW (update-flow.ts). */
+  fresh(): ReadonlySet<number>;
+  /** The items on the open board in Later whose handover is still owed (parking.ts). */
+  awaiting(): ReadonlySet<number>;
   destroy(): void;
 }
 
 export function createAttention(d: AttentionDeps): Attention {
   let owed = new Set<string>();
+  let proposals: ProposalFound[] = [];
+  let unseen: ReadonlySet<number> = new Set();
+  let fresh: ReadonlySet<number> = new Set();
+  let awaiting: ReadonlySet<number> = new Set();
   let timer = 0;
   let sentAt = 0;
   /** board -> the head last sent, so a board seen still on its way is not sent twice. */
@@ -72,9 +88,15 @@ export function createAttention(d: AttentionDeps): Attention {
     if (!s) return false;
     const c = pageConditions(s, d.board());
     owed = c.owed;
+    proposals = c.proposals;
+    unseen = c.unseen;
+    fresh = c.fresh;
+    awaiting = c.awaiting;
     if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
     const news = c.requests.filter((seq) => seq >= from);
     if (news.length) shell.requestNews = news;
+    const proposed = c.proposals.map((p) => p.seq).filter((seq) => seq >= from);
+    if (proposed.length) shell.proposalNews = proposed;
     return c.drawn !== undefined && c.drawn >= from;
   }
 
@@ -95,6 +117,10 @@ export function createAttention(d: AttentionDeps): Attention {
       read(Infinity);
     },
     owed: () => owed,
+    proposals: () => proposals,
+    unseen: () => unseen,
+    fresh: () => fresh,
+    awaiting: () => awaiting,
     destroy() {
       clearTimeout(timer);
       removeEventListener('pagehide', leave);

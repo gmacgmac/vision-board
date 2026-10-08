@@ -5,7 +5,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '../../../packages/format/src/index.ts';
 import type { ActEvent } from '../../../packages/format/src/index.ts';
-import { boardAccess, boardState, foldLedger, statusOf, validateAct } from '../../../packages/actions/src/index.ts';
+import { boardAccess, boardState, conditionsOf, foldLedger, statusOf, validateAct } from '../../../packages/actions/src/index.ts';
+import { pageConditions } from '../src/board/board-data.ts';
+import { unseenCount, unseenSteps } from '../src/board/updates.ts';
 
 const FILE = new URL('../src/gallery/gallery.ledger.jsonl', import.meta.url);
 const lines = fs.readFileSync(FILE, 'utf8').trim().split('\n');
@@ -57,4 +59,32 @@ test('gallery ledger: the container samples have a sent container note, three no
   const notes = Object.fromEntries([...state.regionNotes].map(([id, ns]) => [id, ns.map((n) => n.sent === true)]));
   assert.deepEqual(notes, { 'c-sent': [true], 'c-hover': [false], 'c-focus': [false], 'c-open': [false] });
   assert.deepEqual([...state.regionPins.keys()], ['c-moved']);
+});
+
+test('gallery ledger: the proposals samples have an open proposal, one out of date, two on one card and one at rest', () => {
+  const s = foldLedger(events);
+  const found = conditionsOf(s, { board: 'proposals' }).filter((c) => c.kind.startsWith('proposal.')).map((c) => [c.n, c.kind]);
+  assert.deepEqual(found.sort(), [[92, 'proposal.open'], [93, 'proposal.stale'], [94, 'proposal.open'], [94, 'proposal.open'], [95, 'proposal.open']]);
+});
+
+test('gallery ledger: the changed cards samples have two cards seen at version 1 and changed three times, one changed once', () => {
+  const s = foldLedger(events);
+  const unseen = [...pageConditions(s, 'updates').unseen];
+  assert.deepEqual(unseen.map((n) => [n, unseenCount(s, n)]), [[96, 3], [97, 3], [98, 1]]);
+  assert.deepEqual(unseenSteps(s, 97, () => '').map((x) => x.changes.map((c) => `${c.change} ${c.field}`)),
+    [['added body'], ['changed title'], ['changed body', 'added tags', 'removed size']]);
+});
+
+test('gallery ledger: the changed cards board has one NEW card, drawn after the person first opened it, and no other', () => {
+  const s = foldLedger(events);
+  assert.deepEqual([...pageConditions(s, 'updates').fresh], [103]);
+  for (const board of ['gallery', 'notes', 'containers', 'container-notes', 'proposals', 'parking']) assert.deepEqual([...pageConditions(s, board).fresh], [], board);
+});
+
+test('gallery ledger: the parking samples have a card awaiting its handover, one parked, a reply under a note and one naming none', () => {
+  const s = foldLedger(events);
+  const found = conditionsOf(s, { board: 'parking' }).filter((c) => c.kind === 'item.awaiting').map((c) => c.n);
+  assert.deepEqual(found, [99]);
+  assert.deepEqual([...s.parks.keys()], [100]);
+  assert.deepEqual([101, 102].map((n) => s.replies.get(n)!.map((r) => r.to !== undefined)), [[true], [false]]);
 });

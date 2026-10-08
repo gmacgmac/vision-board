@@ -3,6 +3,8 @@
 // canvas; the bar is placed with `placeBar` exactly as the board places it. The cards are the
 // gallery's own non-item samples (topic, note): the bar is what the sample is about, not a card's
 // footer buttons, which a 300-400px stage would otherwise squeeze under the target-size minimum.
+// With the selectionPill flag (stage5-follow-ups FE_02) the samples are the compact bar's: the
+// pill, the open bar, its hover (drawn with data-look) and the area bar.
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
 import { barView, placeBar } from '../../../../packages/ui/src/index.ts';
@@ -18,6 +20,10 @@ interface Sample {
   /** Reset places has no moved card to act on: disabled. */
   none?: boolean;
   stage: { w: number; h: number };
+  /** The compact bar (selectionPill): its pill open or closed. */
+  pill?: { open: boolean };
+  /** Buttons drawn hovered (data-look), by command id. */
+  hover?: string[];
 }
 
 const SAMPLES: Sample[] = [
@@ -26,6 +32,18 @@ const SAMPLES: Sample[] = [
     area: false, none: true, stage: { w: 680, h: 220 } },
   { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group, not an item'],
     area: true, stage: { w: 400, h: 180 } },
+];
+
+const TWO = ['Topic: a heading for a group, not an item', 'Note: the agent remarks, nothing to answer'];
+const PILL_SAMPLES: Sample[] = [
+  { caption: 'Two cards selected: the pill, closed. A click or Enter opens the bar', titles: TWO,
+    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: false } },
+  { caption: 'The pill open: the compact bar, the pill first. A press outside, a pan or Esc closes it', titles: TWO,
+    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true } },
+  { caption: 'Hover: Comment (the primary) on its hover fill, Move to on the plain hover', titles: TWO,
+    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true }, hover: ['comment', 'move'] },
+  { caption: 'A lasso that touched no card: the compact area bar', titles: ['Topic: a heading for a group, not an item'],
+    area: true, stage: { w: 400, h: 180 }, pill: { open: true } },
 ];
 
 function sample(s: Sample, fx: Fixture): HTMLElement {
@@ -43,11 +61,15 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
     return c;
   });
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
-  const view = s.area ? barView(0, barButtons(AREA_COMMANDS)) : barView(cards.length, barButtons(SELECTION_COMMANDS, false, s.none ? ['reset-places'] : []));
+  const view = s.area ? barView(0, barButtons(AREA_COMMANDS), s.pill)
+    : barView(cards.length, barButtons(SELECTION_COMMANDS, false, s.none ? ['reset-places'] : []), s.pill);
   bar.show(view);
+  for (const id of s.hover ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'hover');
   stage.append(list, bar);
   requestAnimationFrame(() => {
-    const boxes = cards.map((c) => ({ x: c.offsetLeft, y: c.offsetTop, w: c.offsetWidth, h: c.offsetHeight }));
+    // Screen boxes on the stage: the cards are placed by a transform, which offsetLeft ignores.
+    const at = stage.getBoundingClientRect();
+    const boxes = cards.map((c) => c.getBoundingClientRect()).map((r) => ({ x: r.left - at.left, y: r.top - at.top, w: r.width, h: r.height }));
     const box = {
       x: Math.min(...boxes.map((b) => b.x)), y: Math.min(...boxes.map((b) => b.y)),
       w: Math.max(...boxes.map((b) => b.x + b.w)) - Math.min(...boxes.map((b) => b.x)),
@@ -60,8 +82,9 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
   return fig;
 }
 
-export function selectionBarSamples(body: HTMLElement, fx: Fixture): void {
+/** `pill`: the selectionPill flag, read by the gallery's entry point. */
+export function selectionBarSamples(body: HTMLElement, fx: Fixture, pill = false): void {
   const row = el('div', 'g-bubbles');
-  row.append(...SAMPLES.map((s) => sample(s, fx)));
+  row.append(...(pill ? PILL_SAMPLES : SAMPLES).map((s) => sample(s, fx)));
   body.append(group('Every state', 'Centred above the selection, below it when there is no room; the lasso it follows is .vb-lasso. One command table drives the bar, the header buttons and the keys.', row));
 }

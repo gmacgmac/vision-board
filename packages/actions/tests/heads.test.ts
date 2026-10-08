@@ -29,7 +29,8 @@ function walkedHeads(s: LedgerState, events: readonly LedgerEvent[]): Map<string
   const out = new Map<string, number>();
   for (const e of events) {
     const board = eventBoard(s, e);
-    if (board !== undefined) out.set(board, e.seq);
+    // The person's board seen is not a line of the board's own (api.md 87): it never moves the head.
+    if (board !== undefined && !(e.type === 'seen' && 'board' in e)) out.set(board, e.seq);
   }
   return out;
 }

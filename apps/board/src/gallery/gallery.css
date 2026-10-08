@@ -91,3 +91,12 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-agents .vb-agents-panel { position: static; margin-top: var(--vb-space-1); }
 /* The app icon samples (navigation FE_05): side by side, aligned on their bottoms. */
 .g-icons { display: flex; align-items: flex-end; gap: var(--vb-space-5); }
+
+/* Agent proposals samples (proposals flag): Accept all's list drawn as the confirm dialog shows it. */
+.g-confirm-head { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
+/* Open boxes reach past their card; one card per row, so none covers the next or runs off the page. */
+.g-tips-stack { flex-direction: column; row-gap: var(--vb-space-6); padding-bottom: calc(var(--vb-space-6) * 4); }
+/* Parking (FE_03): the handover box is tall, so its group leaves room below the card it opens from. */
+[data-feature='parking'] .g-tips-stack { padding-bottom: 300px; }
+/* Changed cards (FE_02): the gallery's "You're up to date" sample stays, where the board's fades. */
+[data-feature='card-updates'] .vb-step-done { animation: none; }

@@ -4,7 +4,8 @@
 // while the pointer crosses onto it), persistent (it stays while focus is in the group) and
 // dismissible without moving anything (Esc). Browser only. The helper draws nothing: it sets one
 // attribute on the host while the tip should show, and the pattern's CSS reads it. Touch has no
-// hover: a tap on the anchor opens it, a tap outside closes it.
+// hover: a tap on the anchor opens it, a tap outside closes it. With `opens` (the card popover,
+// proposals FE_01), a click or Enter on the anchor opens it for good, so its buttons can be reached.
 import type { PreviewEvent } from '../region/region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from '../region/region-preview.ts';
 
@@ -19,6 +20,12 @@ export interface HoverTipOptions {
   attr: string;
   /** Whether there is anything to show right now (e.g. the text is cut); read on each change. */
   needed?: () => boolean;
+  /** The anchor is a button that opens the tip for good (the card popover, node/node-popover.ts):
+   * a click, by any pointer or Enter, opens it, so what is in it can be reached, and a second one
+   * closes it. It stays open until Esc, a press outside or focus leaving the group. */
+  opens?: boolean;
+  /** Told each time the tip shows or hides. */
+  onToggle?: (on: boolean) => void;
 }
 
 export interface HoverTip {
@@ -37,6 +44,7 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
   function step(e: PreviewEvent) {
     state = previewStep(state, e);
     const on = previewShown(state, o.needed?.() ?? true);
+    if (on !== host.hasAttribute(o.attr)) o.onToggle?.(on);
     host.toggleAttribute(o.attr, on);
     // Esc and a press outside are heard on the page only while the tip is open.
     if (on) {
@@ -71,12 +79,17 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
     touch = e.pointerType === 'touch';
   });
   host.addEventListener('click', (e) => {
-    if (touch && within(e.target, o.anchor)) step('tap');
+    if (o.opens && within(e.target, o.anchor)) step(state.tapped ? 'escape' : 'tap');
+    else if (touch && within(e.target, o.anchor)) step('tap');
     touch = false;
   });
   host.addEventListener('focusin', (e) => step(inTip(e.target) ? 'focus-in' : 'focus-out'));
   host.addEventListener('focusout', (e) => {
-    if (!inTip((e as FocusEvent).relatedTarget)) step('focus-out');
+    const to = (e as FocusEvent).relatedTarget;
+    if (inTip(to)) return;
+    step('focus-out');
+    // Opened for good, it still closes once focus moves on to something else.
+    if (o.opens && to) step('outside');
   });
 
   return { close: () => step('close') };

@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v9 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87 and 90.
+// Ledger lines for the schema tests (schema.test.ts): a valid v10 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90 and 93.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 9, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 9, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 10, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 10, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -38,7 +38,7 @@ export const ACTS: Record<string, Rec> = {
   deny: { request: 5, text: 'Not this one.' }, revoke: { holder: 'a-abcd1234', board: 'b', region: 'plan' },
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
-  move: { n: 1, ver: 1, region: 'plan' },
+  move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -88,7 +88,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v10', patch(V.board!, 'v', 10)],
+  ['unknown format v11', patch(V.board!, 'v', 11)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -192,5 +192,10 @@ export const BROKEN: [string, Rec][] = [
   ['a person board line before v9', { ...PERSON, v: 8, type: 'board', board: 'b', title: 'Mine' }],
   ['a person board line without a title', { ...PERSON, type: 'board', board: 'b' }],
   ['a person board line with a region', { ...PERSON, type: 'board', board: 'b', title: 'Mine', region: 'plan' }],
+  // api.md 93: a reject names its card and the proposal it turns down.
+  ['reject without proposal', act('reject', { proposal: undefined })],
+  ['reject without n', act('reject', { n: undefined })],
+  ['reject of a group', act('reject', { n: undefined, nodes: [1, 2] })],
+  ['reject with proposal 0', act('reject', { proposal: 0 })],
   ['a line that is not an object', [] as unknown as Rec],
 ];

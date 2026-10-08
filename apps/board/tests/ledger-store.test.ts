@@ -134,7 +134,7 @@ test('a stale proposal cannot be accepted', () => {
   ledger.append(node('Item 1, changed', 1), AGENT);
   const problems = problemsOf(() =>
     ledger.append({ type: 'act', action: 'drop', n: 1, ver: 2, proposal: prop.seq }, PERSON));
-  assert.match(problems.join(), /out of date/);
+  assert.match(problems.join(), /1 changed after this was proposed; ask the agent to look again/);
   assert.equal(ledger.state().items.has(1), false);
   assert.equal(ledger.state().proposals.get(prop.seq)!.decidedBy, undefined);
 });

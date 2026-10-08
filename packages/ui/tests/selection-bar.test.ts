@@ -47,3 +47,22 @@ test('boxes: between two corners, touching, and around several', () => {
   assert.deepEqual(boxAround([a, { x: 20, y: -5, w: 5, h: 5 }]), { x: 0, y: -5, w: 25, h: 15 });
   assert.equal(boxAround([]), undefined);
 });
+
+// stage5-follow-ups FE_02 (flag selectionPill): over a selection the bar starts as a pill.
+test('barView with the pill: the label and whether it is open; the area bar is compact with no pill state', () => {
+  const buttons = [{ id: 'comment', label: 'Comment', primary: true }];
+  assert.deepEqual(barView(3, buttons, { open: false }), { name: 'Selection: 3 selected', count: '3 selected', buttons, pill: true, open: false });
+  assert.equal(barView(1, buttons, { open: true }).open, true);
+  assert.deepEqual(barView(0, buttons, { open: true }), { name: 'Area', count: '', buttons, pill: true });
+  assert.equal(barView(3, buttons).pill, undefined, 'no pill without the flag');
+});
+
+test('template with the pill: a button with the count and a chevron first, then every command button', () => {
+  const html = selectionBarTemplate(barView(3, [{ id: 'clear', label: 'Clear' }], { open: false }));
+  assert.equal(html, '<button type="button" class="vb-sb-pill" aria-expanded="false">3 selected<span class="vb-sb-chevron" aria-hidden="true"></span></button>'
+    + '<button type="button" class="vb-sb-btn" data-command="clear">Clear</button>');
+  // Open or closed draws the same markup: the element sets aria-expanded and data-open, so the
+  // pill keeps its focus when it opens.
+  assert.equal(selectionBarTemplate(barView(3, [{ id: 'clear', label: 'Clear' }], { open: true })), html);
+  assert.doesNotMatch(selectionBarTemplate(barView(0, [{ id: 'zoom-area', label: 'Zoom to this area' }], { open: false })), /vb-sb-pill/);
+});

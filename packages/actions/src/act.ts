@@ -10,6 +10,7 @@ import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
 import type { Ask } from './notes.ts';
 import { cardsOf, isNote, liveNotes } from './notes.ts';
+import { standing } from './proposals.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
 type Rule = (e: ActEvent, s: LedgerState, board: string | undefined, p: string[]) => void;
@@ -103,7 +104,22 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   }
   if (def.text === 'required' && !e.text?.trim()) p.push('text: required');
   if (node && !p.length) noteRules(e, s, node.board, p);
+  if (node && !p.length) proposalProblems(e, s, p);
   return p;
+}
+
+/** An act naming a proposal (api.md 93): one on the same card, not yet decided. Accepting it is
+ * the proposal's own action, and only while the card is at the version it was made on; a reject
+ * clears one that is out of date too. */
+function proposalProblems(e: ActEvent, s: LedgerState, p: string[]): void {
+  if (e.proposal === undefined) return;
+  const prop = s.proposals.get(e.proposal);
+  if (!prop || prop.n !== e.n) return void p.push(`proposal: ${e.proposal} is not a proposal on item ${e.n}`);
+  const at = standing(s, prop);
+  if (!at) p.push(`proposal: proposal ${e.proposal} was already decided`);
+  else if (e.action === 'reject') return;
+  else if (e.action !== prop.action) p.push(`proposal: proposal ${e.proposal} is to ${ACTIONS[prop.action].label.toLowerCase()}; accept it with ${prop.action}, or reject it`);
+  else if (at === 'stale') p.push(`proposal: ${e.n} changed after this was proposed; ask the agent to look again`);
 }
 
 /** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named node is an item that

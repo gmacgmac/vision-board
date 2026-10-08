@@ -5,10 +5,11 @@
 // move of 50 cards lays out its two containers once (3_FE_03 ruling 9). The person's board lines
 // (New board, Rename board: `put_board`, api.md 90) go out here too. While a past version of
 // the board shows (versions.ts), every act is refused here, before it is sent: the one funnel
-// (navigation FE_01 ruling 5).
+// (navigation FE_01 ruling 5). A card seen (FE_02: selecting a changed card, a step of its
+// stepper) goes out here too, in order, so every line the person adds has one way out.
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { ActFields, BoardFields } from './io.ts';
-import { ApiError, putBoard, sendAct } from './io.ts';
+import { ApiError, markCardSeen, putBoard, sendAct } from './io.ts';
 
 export interface SenderDeps {
   board(): string;
@@ -33,6 +34,8 @@ export interface Sender {
   /** Send `steps` in order, the acts of one step side by side, and draw once at the end. Stops
    *  after a step with a refusal; true when every act was recorded. */
   run(steps: readonly (readonly ActFields[])[]): Promise<boolean>;
+  /** Mark each card's version seen, one after another, and draw once at the end; true when all were recorded. */
+  seen(marks: readonly { n: number; ver: number }[]): Promise<boolean>;
   /** A batch is running: the board is drawn when it ends, not before. */
   readonly held: boolean;
   /** Resolves once no act is on its way (the test hook's `idle`). */
@@ -84,19 +87,26 @@ export function createSender(d: SenderDeps): Sender {
     return true;
   }
 
+  /** Hold every draw while `work` runs, then draw once. */
+  async function held<T>(work: () => Promise<T>): Promise<T> {
+    hold += 1;
+    try {
+      return await tracked(work());
+    } finally {
+      hold -= 1;
+      d.redraw();
+    }
+  }
+
   return {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
     board: (id, fields) => send(() => putBoard(id, fields)),
-    async run(list) {
-      hold += 1;
-      try {
-        return await tracked(steps(list));
-      } finally {
-        hold -= 1;
-        d.redraw();
-      }
-    },
+    run: (list) => held(() => steps(list)),
+    seen: (marks) => held(async () => {
+      for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver))) !== null) return false;
+      return true;
+    }),
     get held() { return hold > 0; },
     async idle() {
       while (sending.size) await Promise.allSettled([...sending]);

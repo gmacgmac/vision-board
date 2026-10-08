@@ -258,12 +258,14 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 
-  // With the agentAccess, wireLayers, versionView and keyBubble flags off (on by default), so their
-  // sections are not in the full page (components.md § Feature flags); send-access.spec.ts,
-  // wires.spec.ts, versions.spec.ts and key-bubble.spec.ts have those sections' own screenshots.
+  // With the agentAccess, wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies
+  // and selectionPill flags off (on by default), so their sections are not in the full page (components.md
+  // § Feature flags); send-access.spec.ts, wires.spec.ts, versions.spec.ts, key-bubble.spec.ts,
+  // proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts and selection-pill.spec.ts have
+  // those sections' own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill');
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });

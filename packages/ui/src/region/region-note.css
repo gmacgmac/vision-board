@@ -93,3 +93,20 @@ vb-region .vb-nblock-more {
 }
 vb-region .vb-nblock-more[hidden] { display: none; }
 vb-region .vb-nblock-more:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+
+/* The agent's replies under the note (cardReplies flag, FE_03): neutral, set in by a rule, cut at three
+   lines like the note until the block's "Show all". */
+vb-region .vb-nblock-replies { display: grid; gap: var(--vb-space-1); }
+vb-region .vb-nblock-replies:empty { display: none; }
+vb-region .vb-nblock-reply {
+  display: grid; gap: var(--vb-space-1); margin-left: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-raised);
+}
+vb-region .vb-nblock-reply .vb-nblock-who { color: var(--vb-ink); }
+vb-region .vb-nblock-reply-text {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+  max-height: calc(var(--vb-text-md) * 1.5 * 3); line-height: 1.5; color: var(--vb-ink-strong); overflow-wrap: anywhere;
+}
+vb-region .vb-region-note-block[data-expanded] .vb-nblock-reply-text { display: grid; max-height: none; -webkit-line-clamp: none; line-clamp: none; }
+vb-region .vb-nblock-reply-text :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }

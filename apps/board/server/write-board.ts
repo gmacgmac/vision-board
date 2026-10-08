@@ -5,7 +5,7 @@
 // items naming a failed item's key, directly or through another failed item.
 import { createHash } from 'node:crypto';
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { latest } from '../../../packages/format/src/index.ts';
+import { LIMITS, codePoints, latest } from '../../../packages/format/src/index.ts';
 import type { LedgerState, WriteItem } from '../../../packages/actions/src/index.ts';
 import { canWrite } from '../../../packages/actions/src/index.ts';
 import type { Ledger } from './ledger.ts';
@@ -14,7 +14,7 @@ import { ProblemError, problem } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -119,6 +119,24 @@ function eventOf(b: Batch, item: Rec): Rec {
   return ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
 }
 
+/** An `append` as the `node` line it is stored as (api.md 95): the version it adds to (the latest,
+ * or on a retry the one before the line its key stored) with `text` after a blank line at the end
+ * of the body, every other field as it was. */
+function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec {
+  const n = item.n as number;
+  const node = b.ledger.state().nodes.get(n);
+  if (!node) fail('invalid', `There is no node ${n}. Name a node by its number, or by the key of the node item that made it.`, { errors: [{ pointer: `/items/${i}/n`, detail: `unknown node ${n}` }] });
+  const stored = key === undefined ? undefined : storedFor(b, key);
+  const from = stored?.type === 'node' && stored.n === n ? node.versions[stored.ver - 2] : undefined;
+  const { ver: _ver, at: _at, agent: _agent, ...was } = from ?? latest(node);
+  const body = was.body === undefined ? String(item.text) : `${was.body}\n\n${String(item.text)}`;
+  if (codePoints(body) > LIMITS.body) {
+    fail('invalid', `With this text, node ${n}'s body would be ${codePoints(body)} characters, and the limit is ${LIMITS.body}. Send less, or rewrite the node with a node item.`,
+      { errors: [{ pointer: `/items/${i}/text`, detail: `the body would be over ${LIMITS.body} characters` }] });
+  }
+  return { type: 'node', board: b.board, n, node: { ...was, body }, ...(item.key !== undefined && { key: item.key }) };
+}
+
 function written(i: number, key: string | undefined, e: LedgerEvent, replayed = false): WriteResult {
   return {
     index: i, ...(key !== undefined && { key }), ok: true, seq: e.seq,
@@ -198,7 +216,7 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
     fail('invalid', 'This item does not fit the write-item schema. Fix the fields listed in errors and send it again.', { errors: under(i, errors) });
   }
   const item = raw as Rec;
-  const e = eventOf(b, resolve(b, i, item));
+  const e = item.type === 'append' ? appended(b, i, resolve(b, i, item), key) : eventOf(b, resolve(b, i, item));
   const replayed = key === undefined ? undefined : replay(b, i, key, e);
   if (replayed) return replayed;
   const s = b.ledger.state();

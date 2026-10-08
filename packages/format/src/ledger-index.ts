@@ -104,7 +104,8 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
         const prop = ix.proposals.get(e.proposal);
         const cur = ix.nodes.get(e.n!)?.ver;
         if (!prop || prop.n !== e.n) p.push(`proposal: no proposal ${e.proposal} for node ${e.n}`);
-        else if (prop.ver !== cur) p.push(`proposal: out of date, node ${e.n} changed since it was made`);
+        // An out-of-date proposal can't be accepted, but it can be turned down (api.md 93).
+        else if (prop.ver !== cur && e.action !== 'reject') p.push(`proposal: out of date, node ${e.n} changed since it was made`);
       }
       break;
     case 'seen':

@@ -8,7 +8,7 @@
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import type { NodeSize, View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import type { NodeTemplateOptions, VbNodeElement } from '../../../../packages/ui/src/index.ts';
+import type { CardConditions, NodeTemplateOptions, VbNodeElement } from '../../../../packages/ui/src/index.ts';
 import { nodeState } from '../../../../packages/ui/src/index.ts';
 import { readingOrder } from './render.ts';
 import { work } from './work.ts';
@@ -23,9 +23,9 @@ export interface CardSync {
 export interface CardSet {
   readonly els: Map<string, VbNodeElement>;
   /** Bring every card in line with `view`; `versions` (node id -> `ver`) says which the agent redrew,
-   *  `selected` which the person has selected. */
+   *  `selected` which the person has selected, `facts` what the conditions table says of each (FE_01). */
   sync(view: View, state: BoardState, versions: Readonly<Record<string, number>>, selected: (id: string) => boolean,
-    tier?: (n: ViewNode) => NodeSize): CardSync;
+    tier?: (n: ViewNode) => NodeSize, facts?: (n: ViewNode) => CardConditions): CardSync;
   /** Update the cards `ids` for a state the last sync did not see (the selection), and nothing else. */
   restate(ids: readonly string[]): void;
   /** Read the sizes of `ids` into `sizes`. */
@@ -37,7 +37,9 @@ export interface CardSet {
 }
 
 interface Kept { ver: number | undefined; state: string }
-interface Last { view: View; state: BoardState; selected: (id: string) => boolean; tier?: (n: ViewNode) => NodeSize }
+interface Last {
+  view: View; state: BoardState; selected: (id: string) => boolean; tier?: (n: ViewNode) => NodeSize; facts?: (n: ViewNode) => CardConditions;
+}
 /** The place last written to a card, and how the browser read the transform back: a drag writes
  * the transform itself, so a card is placed again when its transform no longer reads back. */
 interface Placed { want: string; read: string; hidden: boolean }
@@ -51,7 +53,7 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
 
   /** Update card `n` when what it shows changed (always after a render); true when it did. */
   function apply(n: ViewNode, el: VbNodeElement, l: Last, rendered: boolean): boolean {
-    const st = nodeState(n, l.state, l.tier?.(n), l.selected(n.id));
+    const st = nodeState(n, l.state, l.tier?.(n), l.selected(n.id), l.facts?.(n));
     const key = JSON.stringify(st);
     const was = kept.get(n.id);
     if (!rendered && was?.state === key) return false;
@@ -74,8 +76,8 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
 
   return {
     els,
-    sync(view, state, versions, selected, tier) {
-      const l: Last = { view, state, selected, ...(tier && { tier }) };
+    sync(view, state, versions, selected, tier, facts) {
+      const l: Last = { view, state, selected, ...(tier && { tier }), ...(facts && { facts }) };
       last = l;
       byId = null;
       const dirty: string[] = [];

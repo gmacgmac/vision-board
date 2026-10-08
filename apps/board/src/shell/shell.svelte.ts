@@ -4,15 +4,24 @@
 import type { AccessHolder, BoardActionId, BoardListItem, BoardRun } from '../../../../packages/actions/src/index.ts';
 import type { BoardMark } from '../board/board-data.ts';
 import type { ContainerRow } from '../board/finder.ts';
+import type { ProposalRow } from '../board/proposals.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
 
-/** A confirmation the page asks for before a decision that takes something away (rule 8). */
+/** One line of a confirm step's list: a card's number and what is done to it. */
+export interface ConfirmItem { ref: string; text: string }
+
+/** What a confirm step lists (Accept all, proposals FE_01): what it does, and what it leaves out. */
+export interface ConfirmList { items: readonly ConfirmItem[]; skipped?: readonly ConfirmItem[] }
+
+/** A confirmation the page asks for before a decision that takes something away (rule 8), or one
+ * that makes several at once (Accept all). */
 export interface ConfirmRequest {
   heading: string;
   body: string;
   /** The confirming button's text, for example "Remove access". */
   confirm: string;
+  list?: ConfirmList;
   resolve(ok: boolean): void;
 }
 
@@ -67,6 +76,10 @@ export const shell = $state({
   boardHolders: [] as AccessHolder[],
   /** What the selection's live region says ("3 cards selected", "Selection cleared"), 3_FE_01. */
   selection: '',
+  /** The agent's open proposals on the open board, newest first (the proposals flag, FE_01): the bar. */
+  proposals: [] as ProposalRow[],
+  /** The proposals that arrived in the latest batch that brought any: the bar announces them. */
+  proposalNews: [] as number[],
 });
 
 let toastTimer = 0;
@@ -78,9 +91,9 @@ export function toast(text: string, tone: Toast['tone'] = 'info'): void {
   toastTimer = window.setTimeout(() => { shell.toast = null; }, tone === 'error' ? 6000 : 2200);
 }
 
-/** Opens the confirm dialog. Resolves true when confirmed, false when cancelled. */
-export function askConfirm(heading: string, body: string, confirm: string): Promise<boolean> {
+/** Opens the confirm dialog, with `list` under its words. Resolves true when confirmed, false when cancelled. */
+export function askConfirm(heading: string, body: string, confirm: string, list?: ConfirmList): Promise<boolean> {
   return new Promise((resolve) => {
-    shell.confirm = { heading, body, confirm, resolve };
+    shell.confirm = { heading, body, confirm, ...(list && { list }), resolve };
   });
 }

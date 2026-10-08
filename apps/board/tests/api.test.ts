@@ -79,9 +79,10 @@ test('list_open: undecided items, with pending and unseen only when they apply',
   const { q, d } = h.seeded;
   const pricing = await h.ok('list_open', { board: 'pricing' });
   assert.equal(pricing.head, head());
-  // q's comment has a reply, but the person has not seen version 2; d waits for a park bundle.
+  // q's comment has a reply, but the person has not seen version 2; d waits for a park bundle,
+  // and saving it for later counted as seeing it (api.md 94).
   assert.deepEqual(pricing.items.map((x: any) => [x.n, x.ver, x.status, x.pending, x.unseen]), [
-    [q, 2, 'commented', undefined, true], [d, 1, 'later', 'later', true]]);
+    [q, 2, 'commented', undefined, true], [d, 1, 'later', 'later', undefined]]);
   const roadmap = await h.ok('list_open', { board: 'roadmap' });
   assert.deepEqual(roadmap.items.find((x: any) => x.n === 1).pending, 'comment');
   assert.equal(roadmap.items.some((x: any) => x.n === 7), false, 'a topic is not an item');

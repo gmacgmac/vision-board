@@ -144,7 +144,7 @@ const SHAPES: Record<EventType, Shape> = {
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject']);
 /** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
@@ -198,6 +198,7 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'send') need('board', 'send: board required');
   if (ON_NOTE.has(a)) need('note', `note: the seq of the comment or context act that made the note`);
   if (a === 'note-edit') need('text', 'text: required');
+  if (a === 'reject') need('proposal', 'proposal: the seq of the propose event being turned down');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
 }
 

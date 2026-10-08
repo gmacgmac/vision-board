@@ -16,8 +16,10 @@ export { canWrite, mayAnswer, mayAnswerIn, PERMISSIONS } from './permissions.ts'
 export type { Need, Verdict, WriteItem, WriteKind } from './permissions.ts';
 export { pendingItems, responsesAfter } from './pending.ts';
 export type { PendingItem } from './pending.ts';
-export { boardNews, CONDITION_KINDS, CONDITIONS, conditionsOf } from './conditions.ts';
-export type { Audience, Condition, ConditionContext, ConditionKind, ConditionRow, Shows } from './conditions.ts';
+export { boardNews, clearsOnSelect, CONDITION_KINDS, CONDITIONS, conditionsOf } from './conditions.ts';
+export type { Audience, ClearedBy, Condition, ConditionContext, ConditionKind, ConditionRow, Shows } from './conditions.ts';
 export { boardAccess, boardList, boardVersions, containerDetail, linkedDetails, nodeDetail, openContainers, openItems } from './reads.ts';
 export type { AccessHolder, AccessRequest, BoardAccess, BoardListItem, BoardVersions, ContainerDetail, NodeDetail, NodeVersionView, OpenContainer, OpenItem } from './reads.ts';
 export { replyText } from './reply.ts';
+export { versionChanges } from './changes.ts';
+export type { Change, ChangeField, FieldChange } from './changes.ts';

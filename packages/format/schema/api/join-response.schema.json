@@ -11,7 +11,7 @@
   ],
   "properties": {
     "agent": {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/agentId",
+      "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentId",
       "description": "Your agent id."
     },
     "secret": {

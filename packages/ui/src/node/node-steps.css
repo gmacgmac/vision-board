@@ -1,0 +1,42 @@
+/* A changed card (proposals-seen-parking FE_02 ruling 3, mockup 03 Part B option B; node-core.ts
+   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css) in the CHANGED
+   family, amber, like an out-of-date proposal's. Opened, the card grows by one section for the step
+   shown, right under its text, and its footer becomes the stepper (data-stepping). Tokens only. */
+
+vb-node .vb-node-btab[data-tab='updates'] {
+  border-color: color-mix(in srgb, var(--vb-state-context) 45%, var(--vb-line)); background: var(--vb-state-context-soft); color: var(--vb-state-context);
+}
+vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); }
+
+/* The step: version, when and who; the change chips; what the text gained. Opaque, so its text
+   reads the same over a see-through card (wireLayers). */
+vb-node .vb-node-steps:not([hidden]) {
+  display: grid; gap: var(--vb-space-2); padding: 10px var(--vb-space-3); border-radius: var(--vb-radius-md);
+  border: 1px solid color-mix(in srgb, var(--vb-state-context) 35%, var(--vb-line));
+  background: color-mix(in srgb, var(--vb-state-context) 7%, var(--vb-surface-card));
+}
+vb-node .vb-node-steps p { margin: 0; }
+vb-node .vb-step-head { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); color: var(--vb-ink); }
+vb-node .vb-step-chips { display: flex; flex-wrap: wrap; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
+vb-node .vb-step-chips li {
+  padding: 1px 7px; border-radius: var(--vb-radius-pill); font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); white-space: nowrap;
+}
+vb-node .vb-step-chips [data-change='added'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
+vb-node .vb-step-chips [data-change='changed'] { background: var(--vb-state-context-soft); color: var(--vb-state-context); }
+/* Removed reads in the drop fill's red: the plain one is under Lc 45 on its tint in dark. */
+vb-node .vb-step-chips [data-change='removed'] { background: var(--vb-state-drop-soft); color: var(--vb-state-drop-fill); }
+vb-node .vb-step-line { font-size: var(--vb-text-sm); line-height: 1.45; color: var(--vb-ink); overflow-wrap: anywhere; }
+vb-node .vb-step-line .vb-md-p { font-size: inherit; line-height: inherit; }
+/* "You're up to date": it fades just before the page folds the section away (update-flow.ts
+   UP_TO_DATE_MS); with reduced motion it stays until then. */
+vb-node .vb-step-done { font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); color: var(--vb-state-ack); }
+vb-node .vb-node-steps:has(> .vb-step-done) { padding: 0; border-color: transparent; background: none; }
+@media (prefers-reduced-motion: no-preference) {
+  vb-node .vb-step-done { animation: vb-step-fade 500ms ease-in 1700ms forwards; }
+}
+@keyframes vb-step-fade { to { opacity: 0; } }
+
+/* The stepper takes the footer's place: "Update 2 of 3", Back, Next. */
+vb-node[data-stepping] .vb-node-foot > :not(.vb-node-stepnav) { display: none; }
+vb-node .vb-node-stepnav:not([hidden]) { flex: 1; display: flex; align-items: center; gap: var(--vb-space-2); padding-right: var(--vb-space-1); }
+vb-node .vb-node-stepcount { flex: 1; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); color: var(--vb-state-context); }

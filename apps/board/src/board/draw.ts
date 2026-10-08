@@ -6,7 +6,7 @@
 // (opening a board, a rebuild) throws everything away and draws from scratch.
 import type { NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { CardConditions, CardReply, VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { holdersOf } from './access.ts';
 import { createCardSet } from './cards.ts';
 import type { BoardData } from './io.ts';
@@ -46,6 +46,10 @@ export interface DrawDeps {
   insets(): Map<string, number>;
   /** The containers the agent still owes an answer on (a sent note's badge, step 4G ruling 1). */
   owed(): ReadonlySet<string>;
+  /** What the conditions table says about card `n` (its proposals, FE_01). */
+  facts(n: ViewNode): CardConditions;
+  /** The agent's replies to show under container notes (parking.ts, FE_03). */
+  replies(): readonly CardReply[];
 }
 
 export interface Drawing {
@@ -103,7 +107,7 @@ export function createDrawing(d: DrawDeps): Drawing {
       sizes.clear();
     }
     const tier = d.sizing ? (n: ViewNode): NodeSize => tierOf(n, data.state) : undefined;
-    const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier);
+    const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier, d.facts);
     if (fresh || sync.created) noAnim();
     regions.sync(data.view);
     cards.measure(sync.dirty, sizes);
@@ -115,7 +119,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     work.containersLaidOut += run.laidOut.length;
     work.containers.push(...run.laidOut);
     layout = run.layout;
-    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed());
+    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies());
     if (cards.place(layout) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);

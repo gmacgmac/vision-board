@@ -4,7 +4,11 @@
 import '../styles/board.css';
 import '../styles/access.css';
 import '../styles/key-help.css';
+import '../styles/proposals.css';
 import '../../../../packages/ui/src/node/node.css';
+import '../../../../packages/ui/src/node/node-popover.css';
+import '../../../../packages/ui/src/node/node-steps.css';
+import '../../../../packages/ui/src/node/node-parking.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/region/region-note.css';
@@ -29,6 +33,9 @@ import { wireSection } from './wire-section.ts';
 import { versionSection } from './version-section.ts';
 import { keyHelpSection } from './key-help-section.ts';
 import { appIconSection } from './app-icon-section.ts';
+import { parkingSection } from './parking-section.ts';
+import { proposalsSection } from './proposals-section.ts';
+import { updatesSection } from './updates-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -48,7 +55,8 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   node: nodeSamples,
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
-  'selection-bar': selectionBarSamples,
+  // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
+  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags())),
 };
 
 const files = import.meta.glob<PatternInfo>('../../../../packages/ui/src/*/pattern.json', { eager: true, import: 'default' });
@@ -111,6 +119,9 @@ function build(): void {
   if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
   if (flagOn('versionView', flags)) main.append(versionSection(fx));
   if (flagOn('keyBubble', flags)) main.append(keyHelpSection());
+  if (flagOn('proposals', flags)) main.append(proposalsSection(fx));
+  if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags)));
+  if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
 }

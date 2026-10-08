@@ -1,5 +1,5 @@
-<!-- The page shell: toolbar, the requests strip (agentAccess flag) or, while a past version shows,
-     its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
+<!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals bar (proposals
+     flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
      toast, the confirm dialog and the New board / Rename board dialog (boardEdit flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->
 <script lang="ts">
@@ -11,6 +11,7 @@
   import ConfirmDialog from './ConfirmDialog.svelte';
   import BoardDialog from './BoardDialog.svelte';
   import AccessRequests from './AccessRequests.svelte';
+  import ProposalsBar from './ProposalsBar.svelte';
   import VersionBanner from './VersionBanner.svelte';
   import KeyHelp from './KeyHelp.svelte';
   import { flagOn } from '../../../../packages/format/src/index.ts';
@@ -45,9 +46,13 @@
 />
 {#if shell.past}
   <VersionBanner run={shell.past} onback={() => void board?.showVersion(null)} />
-{:else if shell.agentAccess}
-  <AccessRequests requests={shell.requests} news={shell.requestNews}
-    onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)} />
+{:else}
+  {#if shell.agentAccess}
+    <AccessRequests requests={shell.requests} news={shell.requestNews}
+      onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)} />
+  {/if}
+  <ProposalsBar rows={shell.proposals} news={shell.proposalNews}
+    onreview={() => board?.proposals.review()} onacceptall={() => void board?.proposals.acceptAll()} />
 {/if}
 
 <main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}>

@@ -3,8 +3,9 @@
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
-// and each board's own last line, last drawing line and last agent line. Pure: same events, same
-// state. Events are assumed valid (readLedger in packages/format checks them first).
+// and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts).
+// Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
+// first).
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
@@ -16,6 +17,8 @@ import { applyContainerAct, containerState } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
 import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
 import { eventBoard, placeOf } from './references.ts';
+import { closeProposals, endProposal } from './proposals.ts';
+import { addDrawing, seeBoard } from './rounds.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -39,8 +42,10 @@ export interface LedgerReply { seq: number; at: string; text: string; to?: numbe
 export interface Proposal {
   seq: number; at: string; n: number; ver: number; action: ProposeEvent['action'];
   reason: string; source?: string; agent?: string;
-  /** `seq` of the person's act that accepted it. */
+  /** `seq` of the person's act that ended it, and how (api.md 93): `accepted` by the act naming it
+   * with its own action, `rejected`, or `closed` by an acknowledge or drop on its card. */
   decidedBy?: number;
+  outcome?: 'accepted' | 'rejected' | 'closed';
 }
 
 /** What the pending rules need per node (api.md 36): the person's latest comment or "needs
@@ -102,9 +107,15 @@ export interface LedgerState extends DrawnState {
   agentHeads: Map<string, number>;
   /** board -> the highest `head` of the person's board `seen` (api.md 87): `board.new`, `board.changed`. */
   seenBoards: Map<string, number>;
+  /** board -> the `head` of the person's first board seen on it: before a Send, `item.new` (rounds.ts). */
+  firstSeenBoards: Map<string, number>;
   /** board -> the end of each run of agent drawing lines on it, oldest first: its versions
    * (reads.ts `boardVersions`). */
   runs: Map<string, BoardRun[]>;
+  /** board -> `seq` of its latest round's first drawing line, once a Send was answered (rounds.ts). */
+  rounds: Map<string, number>;
+  /** n -> `seq` of the line that drew its first version: conditions `item.new`. */
+  firstDrawn: Map<number, number>;
 }
 
 /** The last line of one run of drawing lines by one agent on one board, with no other line on
@@ -120,6 +131,7 @@ export const emptyState = (): LedgerState => ({
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
+  rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -146,7 +158,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   // The person's `board` line (a rename, api.md 90) is no agent drawing: no toast, no version.
   if (board !== undefined && DRAWING_EVENTS.has(e.type) && e.by === 'agent') {
     s.drawnHeads.set(board, e.seq);
-    addRun(s, board, e, before);
+    addDrawing(s, board, e, before);
   }
   if (board !== undefined && e.by === 'agent') s.agentHeads.set(board, e.seq);
   if ('key' in e && e.key !== undefined && e.agent !== undefined) {
@@ -156,10 +168,10 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   switch (e.type) {
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
-    case 'act': s.acts.push(e); applyAct(s, e); break;
+    case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); break;
     case 'seen':
       if ('n' in e) s.seen.set(e.n, Math.max(s.seen.get(e.n) ?? 0, e.ver));
-      else s.seenBoards.set(e.board, Math.max(s.seenBoards.get(e.board) ?? 0, e.head));
+      else seeBoard(s, e.board, e.head);
       break;
     case 'reply':
       push(s.replies, e.n, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
@@ -172,16 +184,6 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
       break;
     case 'park': s.parks.set(e.n, e.bundle); marksOf(s, e.n).park = e.seq; break;
   }
-}
-
-/** A drawing line extends the board's last run when it follows that run's end on the board and
- * comes from the same agent; else it starts a new run. */
-function addRun(s: LedgerState, board: string, e: LedgerEvent, before: number | undefined): void {
-  const runs = s.runs.get(board) ?? [];
-  s.runs.set(board, runs);
-  const last = runs.at(-1);
-  if (last && last.seq === before && last.agent === e.agent) runs.pop();
-  runs.push({ seq: e.seq, at: e.at, ...(e.agent !== undefined && { agent: e.agent }) });
 }
 
 function applyAct(s: LedgerState, e: ActEvent): void {
@@ -202,6 +204,7 @@ function applyAct(s: LedgerState, e: ActEvent): void {
       }
       break;
     case 'size': if (e.size === 'auto') s.sizes.delete(e.n!); else s.sizes.set(e.n!, e.size!); break;
+    case 'reject': endProposal(s.proposals.get(e.proposal!), e.seq, 'rejected'); break;
     case 'send': s.lastSend.set(e.board!, e.seq); break;
     case 'deny': {
       const note = s.grantNotes.get(e.request!);
@@ -233,8 +236,14 @@ function applyItemAct(s: LedgerState, e: ActEvent): void {
   else logOf(e.n!).decisions.push({ seq: e.seq, action: e.action });
   for (const n of cards) restate(s, n, logOf(n));
   if (e.action === 'later') marksOf(s, e.n!).later = e.seq;
-  const prop = e.proposal === undefined ? undefined : s.proposals.get(e.proposal);
-  if (prop) prop.decidedBy = e.seq;
+  if (e.action === 'ack' || e.action === 'drop') closeProposals(s, e);
+}
+
+/** Any person act naming cards, but a Send, counts as seeing each one's latest version (api.md 94):
+ * `seen` is raised, never lowered. A note on or a place for a whole container names no card. */
+function seeCards(s: LedgerState, e: ActEvent): void {
+  if (e.action === 'send' || isContainerAct(e)) return;
+  for (const n of e.nodes ?? (e.n === undefined ? [] : [e.n])) s.seen.set(n, Math.max(s.seen.get(n) ?? 0, s.nodes.get(n)!.versions.at(-1)!.ver));
 }
 
 /** Card `n`'s status, notes and owed ask, from its log. */

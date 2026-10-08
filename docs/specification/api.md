@@ -568,3 +568,61 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the latest title and summary; `read_ledger` returns the raw line. The page offers both from
     the board picker (`BOARD_ACTIONS` in the action registry: New board, Rename board), through
     the one sender, refused while a past version shows.
+
+## Ledger v10 additions: proposals, seen and append (proposals-seen-parking BE_01)
+
+93. `LEDGER_FORMAT` becomes 10 and every ledger `$id` moves to `.../schema/ledger/10/`;
+    `openapi.json` `info.version` becomes 1.9.0. Only adds: v2 through v9 lines stay valid. **The
+    person rejects a proposal** with a new person act, `reject { n, proposal }` (`proposal` is the
+    propose line's `seq`; no status, no reply word: it is not a decision on the item). Accepting
+    stays the proposal's own action (`ack` or `drop`) carrying `proposal`. The act rules
+    (`validateAct`, `proposalProblems` in `act.ts`; the server and the page run the same) refuse an
+    act whose `proposal` is not a proposal on the same card, one already decided ("proposal 812
+    was already decided"), an accept whose action is not the proposal's, and an accept made after
+    the card moved past the proposal's `ver` ("47 changed after this was proposed; ask the agent
+    to look again"). An out-of-date proposal can still be rejected, which clears it; the ledger's
+    context check allows that too. The server runs an act's rules before the ledger's context
+    check, so the person reads these words, not the ledger's. **Ending.** The fold sets a
+    proposal's `decidedBy` and `outcome`: `rejected` by a `reject`, `accepted` by the act that
+    names it, and `closed` for every other open proposal on a card the person acknowledges or
+    drops, through a proposal or not. `show_node`'s proposals carry both, or neither while open.
+94. **Seen by acting.** Any person act that names a card (`n` or `nodes`; every action but
+    `send`, and not a note on or place for a whole container) also counts as the person seeing
+    each named card's latest version at that line: the fold raises `seen`, never lowers it. No
+    `seen` line is written. Tabbing past or hovering is not seeing (the page's rule).
+95. **`append`**, a new write item, `{ type: 'append', key?, n, text, base? }`: the server stores
+    it as an ordinary `node` line, a new version of card `n` with `text` added to the end of its
+    body after a blank line (or as the body, when there is none), every other field carried over.
+    The joined body must fit the node body limit (8000), else the item fails `invalid` at `text`.
+    It is checked like a node update: the permissions table (83), `base` (30), and the retry key
+    (29), which a retry with the same text answers `replayed`. The result has `n`, `ver` and
+    `title`, as a node's. The ledger gains no event type; only `write-item.schema.json`, the MCP
+    tool and the `vb` command (generated) change. `reply` stays the answer to one of the person's
+    notes.
+96. **Conditions rows** (88): `proposal.open`, about a card, for the person, on the card and the
+    strip: a proposal not yet answered on an undecided item, made on the card's latest version;
+    `proposal.stale`, the same once the card has a newer version (it ends on a reject or a
+    decision on the card); `item.awaiting`, about a card, for both, on the card: an item in Later
+    with no park after its "later" (the same helper as `item.owed`'s "later", so it is checked in
+    one place). `item.unseen` is now for both and shown on the card; the page reads it as `ver >
+    max(seen, 1)`, so a card at version 1 carries no "updates" tab. The agent's reading
+    (`list_open`'s `unseen`) is unchanged.
+
+## NEW cards and what clears a label (stage5-follow-ups BE_01, D-033)
+
+97. **`item.new`**, about a card, for the person, on the card (its NEW tab): an undecided item the
+    agent first drew in the board's latest round, with no `seen` at any version: NEW only on a card
+    the agent adds after the person has already opened the board. A round starts at the first
+    agent drawing line after a Send that came after the previous round's start; before any, at the
+    `head` of the person's first board seen on that board (87), so whatever was drawn when they
+    first opened it, by any number of agents, is never NEW, and with no board seen no card on it is
+    (`packages/actions/src/rounds.ts`; the fold's `rounds`, `firstDrawn` and `firstSeenBoards`,
+    beside `seenBoards`). It ends when the
+    person selects the card (its `seen`), acts on it (94), decides it, or the next round starts
+    (a Send, then the agent drawing again). The page leaves a NEW card out of `item.unseen` (NEW
+    only, no "N updates" tab); `list_open`'s `unseen` is unchanged, and agents are not told
+    `item.new`. **`clearedBy`.** Every conditions row names what the person does that clears it:
+    `select`, `act` or `round`, on a row shown on a card, else none. `item.new` is cleared by all
+    three, `item.unseen` by `select` and `act`, the rest by none of them. The page reads it
+    (`clearsOnSelect(kind)`) to know which labels selecting a card ends, so it sends that card's
+    `seen`; a test checks each row's `clearedBy` against the fold. No contract change.

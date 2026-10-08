@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-item.schema.json",
   "title": "Write item",
-  "description": "One of the eight sent forms, by `type`. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
-  "$comment": "Was: api.md 24, 34",
+  "description": "One of the nine sent forms, by `type`: the eight ledger events' sent forms, and `append`, which the server stores as a `node` line. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+  "$comment": "Was: api.md 24, 34, 95",
   "type": "object",
   "required": [
     "type"
@@ -13,28 +13,42 @@
   },
   "oneOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/board.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/board.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/region.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/region.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/node.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/node.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/link.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/link.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/unlink.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/unlink.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/reply.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/reply.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/propose.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/propose.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/9/events/park.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/10/events/park.schema.json#/$defs/sent"
+    },
+    {
+      "title": "Append",
+      "description": "Add text to the end of node `n`'s body, after a blank line, as a new version; every other field stays as it is. The server stores it as an ordinary `node` line.",
+      "type": "object",
+      "required": ["type", "n", "text"],
+      "properties": {
+        "type": {"const": "append"},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeRef"},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key"}
+      },
+      "unevaluatedProperties": false
     }
   ]
 }

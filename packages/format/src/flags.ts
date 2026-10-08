@@ -63,6 +63,36 @@ export const FLAGS = {
     default: true,
     description: 'The board picker ends with New board… and Rename board…, each opening a small dialog (title, optional summary) that writes the person\'s `board` line through `put_board` (api.md 90); a new board\'s id is made from its title and it opens at once. Off while a past version shows. Off, only agents make boards and nobody renames them (N22).',
   },
+  proposals: {
+    // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_01); ?flags=-proposals turns it off.
+    default: true,
+    description: 'An agent\'s proposal to acknowledge or drop a card shows as a PROPOSAL tab on its bottom edge (OUT OF DATE once the card changed); the tab opens a box beside the card with Reject and Accept. A bar above the board counts them, with Review and Accept all (api.md 93). Off while a past version shows. Off, proposals stay in the ledger unseen on the page.',
+  },
+  cardUpdates: {
+    // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_02); ?flags=-cardUpdates turns it off.
+    default: true,
+    description: 'A card the agent changed since the person last saw it (past version 1) carries an "N updates" tab on its bottom edge; the tab expands the card in place to step through each unseen version (when, who, change chips), each step marking that version seen, until "You\'re up to date". Selecting a card marks its latest version seen. Off while a past version shows. Off, no tab and no seen on select.',
+  },
+  newCards: {
+    // On by default (maintainer, 2026-10-08, stage5-follow-ups FE_01); ?flags=-newCards turns it off.
+    default: true,
+    description: 'A card the agent added after the person first opened the board (`item.new`, api.md 97) carries a NEW tab on its bottom edge until the person selects or acts on it, or the next round starts (a Send, then the agent drawing again). A new card shows NEW only, never "N updates". Selecting a card sends seen for each card condition whose `clearedBy` names select. Off while a past version shows. Off, no NEW tab and the card shows its updates as before.',
+  },
+  handover: {
+    // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_03); ?flags=-handover turns it off.
+    default: true,
+    description: 'A card saved for later whose handover the agent still owes says "Awaiting" in its footer (tip: "Awaiting context"). Once the agent writes the handover, a HANDOVER tab on the card\'s bottom edge opens it in a box beside the card: situation, background, assessment, recommendation, then the sources (D-020). Off, the card shows "Saved for later" and the handover stays in the ledger unseen on the page.',
+  },
+  cardReplies: {
+    // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_03); ?flags=-cardReplies turns it off.
+    default: true,
+    description: 'An agent\'s reply shows under the note it answers, on a card or in a container\'s note block: "Agent reply" with the agent\'s label, as Markdown, cut like a note with the same full-text preview. A reply naming no note shows after the card\'s notes. Replies are read-only. Off, replies stay in the ledger unseen on the page.',
+  },
+  selectionPill: {
+    // On by default (maintainer, 2026-10-08, stage5-follow-ups FE_02); ?flags=-selectionPill turns it off.
+    default: true,
+    description: 'With cards selected, the selection bar is a small pill ("3 selected" and a chevron); a click or Enter on it opens a more compact bar with the same commands, which stays open until a press outside it, a pan, Esc or the selection clearing. A new selection starts closed; the selection\'s keys work either way. Off, the full bar shows on every selection.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

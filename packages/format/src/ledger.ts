@@ -6,21 +6,22 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 9;
+export const LEDGER_FORMAT = 10;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
  * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
  * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
  * in place of `n` (api.md 71-76); v8 adds a grant request and a revoke for a whole board, `region`
  * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87); v9 lets
- * the person write a `board` line, creating or renaming a board (api.md 90). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
+ * the person write a `board` line, creating or renaming a board (api.md 90); v10 adds `reject`,
+ * the person turning down an agent's proposal (api.md 93). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
@@ -117,7 +118,8 @@ export interface RegionEvent extends Base, Keyed { type: 'region'; board: string
 export interface NodeEvent extends Base, Keyed { type: 'node'; board: string; n: number; ver: number; node: NodeBody }
 export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: number; to: number; label?: string }
 /** A person's action from the action registry. `ver` = the node version they were looking at;
- * `proposal` = the `seq` of the proposal they are accepting; `request` = the `seq` of the
+ * `proposal` = the `seq` of the proposal they are accepting (an `ack` or `drop`, the proposal's
+ * own action) or turning down (`reject`, api.md 93); `request` = the `seq` of the
  * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes (from the
  * container in `region`, or with no `region` from the board); `note` =
  * the `seq` of the `comment` or `context` act whose note a `note-edit` or `note-remove` changes,

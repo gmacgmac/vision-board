@@ -1,0 +1,27 @@
+/* The proposals bar and Accept all's list (proposals flag, FE_01 ruling 4). Tokens only. The bar is
+   the requests strip (access.css `.vb-access`), under it when both show; on the board it moves the
+   stage down by its own height (--vb-proposals-h, board.css). */
+
+.vb-proposals { align-items: center; }
+.vb-proposals[data-placement='board'] { top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px)); padding-top: var(--vb-space-1); padding-bottom: var(--vb-space-1); }
+.vb-proposals .vb-access-title { padding-top: 0; }
+.vb-proposals-stale { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap; }
+.vb-proposals .vb-access-actions { margin-left: auto; }
+
+/* The list in a confirm step (ConfirmList.svelte, mockup 03 `.apply-list`): one row per card, its
+   number as the card's number tab, then what is done to it; what is left out under its own title. */
+.vb-confirm-list { display: grid; gap: var(--vb-space-1); margin: 0 0 var(--vb-space-3); padding: 0; list-style: none; }
+.vb-confirm-list li {
+  display: flex; align-items: center; gap: var(--vb-space-2); padding: var(--vb-space-2) var(--vb-space-3);
+  border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); font-size: var(--vb-text-md); color: var(--vb-ink-strong);
+}
+.vb-nref {
+  display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 20px; padding: 0 6px;
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm); background: var(--vb-surface-card);
+  color: var(--vb-ink-strong); font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font-mono); font-variant-numeric: tabular-nums;
+}
+.vb-confirm-skip-title {
+  margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
+  letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink-subtle);
+}
+.vb-confirm-skip li { background: none; border: 1px dashed var(--vb-line-strong); color: var(--vb-ink); font-size: var(--vb-text-sm); }

@@ -8,8 +8,10 @@
 import type { Mode, Region } from '../../../format/src/index.ts';
 import { MODES } from '../../../format/src/index.ts';
 import { esc } from '../node/node-template.ts';
+import { renderMarkdown } from '../markdown/render.ts';
 import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
 import type { RegionHolder } from './region-core.ts';
+import type { ReplyEntry } from '../node/node-core.ts';
 import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT } from './region-core.ts';
 import { COG_ICON, EYE_ICON, MODE_ICON } from './region-icons.ts';
 
@@ -60,10 +62,16 @@ const noteBlock = (id: string, title: string): string => {
     + '<div class="vb-nblock-top"><span class="vb-nblock-who">Your note</span><span class="vb-note-state"></span>'
     + `<span class="vb-nblock-acts">${noteButton('edit', 'Edit', `Edit note on container ${title}`)}`
     + `${noteButton('remove', 'Remove', `Remove note on container ${title}`)}<span class="vb-nblock-ro"></span></span></div>`
-    + `<p class="vb-nblock-text" id="${ids.noteText}"></p>`
+    + `<p class="vb-nblock-text" id="${ids.noteText}"></p><div class="vb-nblock-replies"></div>`
     + `<button type="button" class="vb-nblock-more" aria-expanded="false" aria-controls="${ids.noteText}" hidden>Show all</button>`
     + '</section>';
 };
+
+/** The agent's replies under the note block's text (FE_03 ruling 3): "Agent reply · label" over
+ * the words as Markdown, each cut at three lines like the note until the block's "Show all". */
+export const nblockRepliesMarkup = (replies: readonly ReplyEntry[]): string => replies.map((r) =>
+  `<div class="vb-nblock-reply" data-reply="${r.seq}"><span class="vb-nblock-who">${esc(r.who)}</span>`
+  + `<div class="vb-nblock-reply-text">${renderMarkdown(r.text)}</div></div>`).join('');
 
 /** One layout icon: a radio in the row's radiogroup, out of the tab order until `update` makes the
  * checked one the row's single Tab stop. `data-mode` / `data-region` are the page's click wiring. */

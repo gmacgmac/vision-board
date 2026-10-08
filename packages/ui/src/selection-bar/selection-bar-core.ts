@@ -27,16 +27,17 @@ export function placeBar(box: StageBox, bar: StageSize, stage: StageSize): BarPl
 export interface BarButton { id: string; label: string; primary?: boolean; disabled?: boolean }
 
 /** What the bar says: `name` is its accessible name, `count` the words before the buttons (empty
- *  for the area bar, which only offers to zoom). */
-export interface BarView { name: string; count: string; buttons: BarButton[] }
+ *  for the area bar, which only offers to zoom). `pill` (the selectionPill flag, stage5-follow-ups
+ *  FE_02): the compact bar, whose count is a pill that shows the buttons only while `open`. */
+export interface BarView { name: string; count: string; buttons: BarButton[]; pill?: true; open?: boolean }
 
 export const selectedCount = (n: number): string => `${n} selected`;
 
-/** The bar over a selection of `n` cards, or over an area a lasso drew round no card. */
-export function barView(n: number, buttons: BarButton[]): BarView {
-  return n > 0
-    ? { name: `Selection: ${selectedCount(n)}`, count: selectedCount(n), buttons }
-    : { name: 'Area', count: '', buttons };
+/** The bar over a selection of `n` cards, or over an area a lasso drew round no card; with `pill`,
+ *  the compact bar, its pill open or closed (the area bar has no pill: it is always open). */
+export function barView(n: number, buttons: BarButton[], pill?: { open: boolean }): BarView {
+  if (n === 0) return { name: 'Area', count: '', buttons, ...(pill && { pill: true }) };
+  return { name: `Selection: ${selectedCount(n)}`, count: selectedCount(n), buttons, ...(pill && { pill: true, open: pill.open }) };
 }
 
 /** The box two corners of a drag span, in any order. */

@@ -40,8 +40,9 @@ export interface PointerHandlers {
 }
 
 /** Nothing inside these starts a gesture: they are controls with their own click (a container's
- * tools, the note bubble the person types in, a note on a card that opens it, the selection bar). */
-const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note, vb-selection-bar';
+ * tools, the note bubble the person types in, a note on a card that opens it, the selection bar, a
+ * card's popover box). */
+const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-note-bubble, .vb-node-note, .vb-node-reply, vb-selection-bar, .vb-card-pop';
 /** Where the middle button keeps its own meaning (a link opens in a new tab; a field pastes). */
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** The one place a card is moved from (ruling 4): the kind tab with its grip dots. */

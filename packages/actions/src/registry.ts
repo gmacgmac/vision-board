@@ -55,6 +55,9 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // Ledger v6 (api.md 66-70): put cards in a container on their board or in the built-in Later.
   // The person's move wins over the agent's region (3_FE_03 ruling 2).
   move: { id: 'move', label: 'Move to', ...person, onItem: false },
+  // Ledger v10 (api.md 93): turn down an agent's proposal, named by its `seq`. Not a decision on
+  // the item, so no status; accepting is the proposal's own action (`ack` or `drop`) with `proposal`.
+  reject: { id: 'reject', label: 'Reject', ...person, onItem: true },
 };
 
 /** The review buttons an item offers. */

@@ -24,6 +24,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   putBack(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
+  /** Accept or Reject in a card's proposal box (the proposals flag, proposal-flow.ts). */
+  answer(id: string, proposal: number, answer: 'accept' | 'reject'): void;
   /** A card nudged by keys to `box`: it becomes a pin. */
   pin(id: string, box: Box): void;
   /** A container nudged by keys (3_FE_04): its frame's top left to `at`, as a container pin. */
@@ -65,6 +67,10 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const t = e.target as HTMLElement;
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
+    // An out-of-date Accept is aria-disabled: it says why, and does nothing.
+    const answer = t.closest<HTMLButtonElement>('button[data-answer]');
+    if (answer?.getAttribute('aria-disabled') === 'true') return;
+    if (answer) return h.answer(cardOf(answer), Number(answer.dataset.proposal), answer.dataset.answer === 'accept' ? 'accept' : 'reject');
     const note = t.closest<HTMLElement>('[data-note]');
     if (note && !t.closest('a') && !selectingIn(note)) return h.showNote(cardOf(note), Number(note.dataset.note));
     const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');

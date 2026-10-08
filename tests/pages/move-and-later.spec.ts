@@ -3,7 +3,7 @@
 // every card it moves it puts back in its own container, unpinned and open, so the files after it
 // find the board as it was.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -212,6 +212,7 @@ test('Shift+M lists the containers, Later last; Enter moves the selection, Esc c
   await page.keyboard.press('Escape');
   await expect(menu(page)).toHaveCount(0);
   expect(await selectedIds(page)).toEqual(['1', '2']);
+  await openSelectionBar(page);
   await page.locator('vb-selection-bar').getByRole('button', { name: 'Move to' }).click();
   await menu(page).getByRole('menuitem', { name: 'Review' }).click();
   await expect.poll(() => inFrame(page, 1, 'review')).toBe(true);

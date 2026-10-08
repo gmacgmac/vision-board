@@ -85,8 +85,8 @@ const wrongCaller = (e: Rec): PointerError => ({
     : `only an agent writes a ${String(e.type)} event`,
 });
 
-/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, the
- * context and the action rules. */
+/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then
+ * an act's action rules, so the person reads their plain words first (api.md 93), then the context. */
 function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
   if (!isRec(input)) return [{ pointer: '', detail: 'the event must be an object' }];
   const hand = (list: string[]) => list.map((t) => pointerError(t, e));
@@ -97,9 +97,8 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
   const shape = eventProblems(e);
   if (shape.length) return hand(shape);
   const event = e as unknown as LedgerEvent;
-  const context = contextProblems(ix, event);
-  if (context.length || event.type !== 'act') return hand(context);
-  return hand(validateAct(event as ActEvent, s, board));
+  const rules = event.type === 'act' ? validateAct(event as ActEvent, s, board) : [];
+  return hand(rules.length ? rules : contextProblems(ix, event));
 }
 
 /** Open a ledger file (absent = empty). Bad lines are reported through `warn` and skipped, so one

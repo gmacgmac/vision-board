@@ -6,14 +6,17 @@
 // the area bar, whose one command zooms there; the area is kept here only, never stored (rule 9).
 // The bar sits over the selection whenever it is not empty and no note bubble is open, and follows
 // pan and zoom; it and the lasso are drawn on the stage, above the cards, and touch none of them.
+// With the selectionPill flag (stage5-follow-ups FE_02) the bar over a selection starts as a pill
+// that opens it (selection-pill.ts).
 import type { BoardLayout, Box } from '../../../../packages/layout/src/index.ts';
 import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
-import type { CommandEventDetail } from '../../../../packages/ui/src/index.ts';
+import type { CommandEventDetail, ToggleEventDetail } from '../../../../packages/ui/src/index.ts';
 import { barView, boxAround, boxBetween, placeBar, touches } from '../../../../packages/ui/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS } from './commands.ts';
 import type { NoteFlow } from './notes.ts';
 import type { Selection } from './selection.ts';
+import { createPill } from './selection-pill.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface SelectionFlowDeps {
@@ -35,6 +38,8 @@ export interface SelectionFlowDeps {
   resetPlaces(ids: readonly string[]): void;
   /** A past version shows (versions.ts): the commands that act are off. */
   readOnly(): boolean;
+  /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
+  pill: boolean;
 }
 
 export interface SelectionFlow {
@@ -48,6 +53,8 @@ export interface SelectionFlow {
   place(): void;
   /** Forget the lassoed area (a background click, Esc, a new selection). */
   dismissArea(): void;
+  /** Esc: close the open bar back to its pill; false when there was none to close. */
+  collapse(): boolean;
   destroy(): void;
 }
 
@@ -67,6 +74,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   d.stage.append(lasso, bar);
   /** The world box a lasso drew round no card, while its area bar is up. */
   let area: Box | null = null;
+  const pill = d.pill ? createPill({ stage: d.stage, bar, selection: d.selection, changed: () => place() }) : null;
 
   const onStage = (p: Point): Point => {
     const r = d.stage.getBoundingClientRect();
@@ -100,7 +108,9 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const world = area ?? worldBoxOf(d.layout(), sel);
     if (d.notes.open || !world) return void (bar.hidden = true);
     const off = sel.some(d.pinned) ? [] : ['reset-places' as const];
-    bar.show(area ? barView(0, barButtons(AREA_COMMANDS)) : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off)));
+    const compact = pill ? { open: pill.open } : undefined;
+    bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
+      : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off), compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }));
   }
@@ -173,9 +183,11 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const id = (e as CustomEvent<CommandEventDetail>).detail.command;
     if (isCommand(id)) command(id);
   });
+  bar.addEventListener('vb-toggle', (e) => pill?.set((e as CustomEvent<ToggleEventDetail>).detail.open));
 
   return {
     lassoMove, lassoEnd, lassoCancel: () => { lasso.hidden = true; }, command, place, dismissArea,
-    destroy() { bar.remove(); lasso.remove(); },
+    collapse: () => pill?.collapse() ?? false,
+    destroy() { pill?.destroy(); bar.remove(); lasso.remove(); },
   };
 }

@@ -422,3 +422,12 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: A board is a topic; nothing on it can be deleted yet, so a stray write is permanent.
 - **Alternative rejected**: Container grants only (any agent writes to any board).
 - **Task**: [[cortex-tasks/board/2026-10-07_board-actions_awareness-tables/PLAN.md]]
+
+## D-035 Short muted detail lines take the label bar
+- **Date**: 2026-10-08 · **Status**: Accepted · **From**: maintainer, Stage 5 verify (266)
+- **Decision**: A short line of supporting detail in muted text (a source and time, a count, an
+  author beside a title) is measured at the label tier, APCA Lc 45 or more; longer muted text
+  stays at Lc 60. `--vb-ink-subtle` stays as it is (dark Lc 48.8 on a card).
+- **Why**: The maintainer judged it readable by eye in use.
+- **Alternative rejected**: Raising the dark value to `#b6b6be` (Lc 61.9).
+- **Task**: [[cortex-tasks/board/2026-10-08_board-app_stage5-follow-ups/PLAN.md]]

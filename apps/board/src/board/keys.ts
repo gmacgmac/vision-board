@@ -37,7 +37,8 @@ const BY_KEY = new Map(
 export function bindKeys(h: KeyHandlers): () => void {
   const onKey = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
-    if (e.defaultPrevented || target.closest('input, textarea, select, dialog')) return;
+    // A card's popover box (its Accept, its Reject) takes no card shortcuts: A there is not Acknowledge.
+    if (e.defaultPrevented || target.closest('input, textarea, select, dialog, .vb-card-pop')) return;
     if (e.key === 'Escape') return h.escape();
     if (e.metaKey || e.ctrlKey) return;
     const id = target.closest<HTMLElement>('vb-node')?.dataset.id ?? null;

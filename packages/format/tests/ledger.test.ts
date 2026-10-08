@@ -46,6 +46,14 @@ test('a proposal made before the node changed cannot be accepted', () => {
   assert.ok(validateLedger(ls).some((p) => p.includes('proposal: out of date')));
 });
 
+test('an out-of-date proposal can still be rejected (api.md 93)', () => {
+  const ls = lines().slice(0, 14);
+  ls.push(JSON.stringify({ ...ev(4), seq: 15, ver: 2, node: { ...ev(4).node, title: 'Changed' } }));
+  const { ver: _ver, action: _action, ...accept } = ev(14);
+  ls.push(JSON.stringify({ ...accept, v: 10, seq: 16, action: 'reject' }));
+  assert.deepEqual(validateLedger(ls), []);
+});
+
 test('a parked item needs a full handover bundle', () => {
   const e = ev(11);
   delete e.bundle.assessment;

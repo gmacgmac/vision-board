@@ -8,7 +8,7 @@ import type { RegionNoteAction, RegionNoteEventDetail, RegionNoteResizeDetail, R
 import { REGION_NOTE_EVENT, REGION_NOTE_RESIZE_EVENT } from './region-core.ts';
 import type { PreviewEvent } from './region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
-import { regionIds } from './region-template.ts';
+import { nblockRepliesMarkup, regionIds } from './region-template.ts';
 
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
@@ -33,6 +33,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
   let note: RegionNoteState | undefined;
   let expanded = false;
   let lastHeight = 0;
+  let repliesSrc: string | undefined;
   let touch = false;
   let openAtPress = false;
   const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => measure());
@@ -141,7 +142,10 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     const block = q(BLOCK);
     const text = q('.vb-nblock-text');
     const more = q<HTMLButtonElement>('.vb-nblock-more');
-    if (block && text && more && !block.hidden && !expanded) more.hidden = text.scrollHeight <= text.clientHeight;
+    const cut = (el: Element) => el.scrollHeight > el.clientHeight;
+    if (block && text && more && !block.hidden && !expanded) {
+      more.hidden = !cut(text) && ![...block.querySelectorAll('.vb-nblock-reply-text')].some(cut);
+    }
     const h = height();
     if (h === lastHeight) return;
     lastHeight = h;
@@ -170,6 +174,13 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     for (const el of host.querySelectorAll<HTMLElement>('.vb-note-pop-text, .vb-nblock-text')) el.textContent = next?.text ?? '';
     const ro = q('.vb-nblock-ro');
     if (ro) ro.textContent = next?.readOnlyText ?? '';
+    const replies = q('.vb-nblock-replies');
+    // Markup from nblockRepliesMarkup, which escapes every text run and renders the Markdown safely.
+    const src = JSON.stringify(next?.replies ?? []);
+    if (replies && repliesSrc !== src) {
+      repliesSrc = src;
+      replies.innerHTML = nblockRepliesMarkup(next?.replies ?? []);
+    }
     for (const b of host.querySelectorAll<HTMLButtonElement>('.vb-region-note-block [data-note-act]')) b.hidden = !next?.editable;
     const edit = q('.vb-note-pop [data-note-act="edit"]');
     // A sent note opens read-only in the bubble: the preview's button says so.
@@ -196,6 +207,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     if (block) observer?.observe(block);
     state = PREVIEW_CLOSED;
     host.removeAttribute('data-preview');
+    repliesSrc = undefined;
   }
 
   return { bind, apply, shown, height, close: () => step('close') };

@@ -6,6 +6,12 @@ import type { AccessHolder, BoardAccess, BoardRun, BoardState } from '../../../.
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardAccess, boardState, boardVersions, foldLedger } from '../../../../packages/actions/src/index.ts';
 import { pageConditions } from '../board/board-data.ts';
+import type { ProposalRow } from '../board/proposals.ts';
+import { proposalRows } from '../board/proposals.ts';
+import { versionTime } from '../board/versions.ts';
+import type { CardConditions, CardReply, CardUpdates } from '../../../../packages/ui/src/index.ts';
+import { createParking } from '../board/parking.ts';
+import { unseenCount, unseenSteps } from '../board/updates.ts';
 import ledgerText from './gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */
@@ -28,6 +34,17 @@ export const REGION_SIZES = 'sizes';
 export const FRAME_PREFIX = 'frame-';
 /** The agent access section's frames (agentAccess flag): created by one agent, granted to another. */
 export const REGIONS_HELD = ['held', 'held-hover'] as const;
+/** The board the proposals samples use (proposals flag, FE_01): an open proposal, one out of date,
+ *  two on one card and one at rest. */
+export const PROPOSALS_BOARD = 'proposals';
+/** The board the changed cards samples use (cardUpdates flag, FE_02): two cards seen at version 1
+ *  and changed three times since, one with a proposal now out of date, one never seen and
+ *  changed once, and one the agent added after the person first opened the board (NEW, FE_01 of the Stage 5 follow-ups). */
+export const UPDATES_BOARD = 'updates';
+/** The board the parking and replies samples use (handover and cardReplies flags, FE_03): a card
+ *  awaiting its handover, one with it written, one with a reply under its note, one with a reply that
+ *  names no note. */
+export const PARKING_BOARD = 'parking';
 
 export interface Fixture {
   view: View;
@@ -43,6 +60,13 @@ export interface Fixture {
   containerNotes: Containers;
   /** The main board's latest past version (`boardVersions`), for the past-version banner. */
   pastVersion: BoardRun;
+  /** The proposals board, with its open proposals as the page reads them (proposal-flow.ts). */
+  proposals: { view: View; state: BoardState; rows: ProposalRow[] };
+  /** The changed cards board, with each card's updates and every step, as the page reads them (update-flow.ts). */
+  updates: { view: View; state: BoardState; cards: Map<number, Required<Pick<CardUpdates, 'count' | 'steps'>>>; rows: ProposalRow[]; fresh: ReadonlySet<number> };
+  /** The parking board, with each card's awaiting, handover and replies as the page reads them (parking.ts), and the
+   *  replies that answer container notes (the container notes board's "Answered" one). */
+  parking: { view: View; state: BoardState; cards: Map<number, CardConditions>; containerReplies: readonly CardReply[] };
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -57,11 +81,31 @@ export function loadFixture(): Fixture {
   const { events, problems } = readLedger(ledgerText.split('\n'));
   if (problems.length) throw new Error(`gallery.ledger.jsonl: ${problems.join('; ')}`);
   const ledger = foldLedger(events);
+  const parking = createParking({
+    handover: true, replies: true, state: () => ledger, awaiting: () => pageConditions(ledger, PARKING_BOARD).awaiting, readOnly: () => false,
+  });
+  parking.refresh();
+  const parkingView = boardView(ledger, PARKING_BOARD);
   return {
     view: boardView(ledger, BOARD), state: boardState(ledger, BOARD), access: boardAccess(ledger, BOARD),
     boardAgents: boardAccess(ledger, NOTES_BOARD).boardHolders ?? [],
     notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD) },
     containers: containers(ledger, CONTAINERS_BOARD), containerNotes: containers(ledger, CONTAINER_NOTES_BOARD),
     pastVersion: boardVersions(ledger, BOARD)!.past[0]!,
+    proposals: {
+      view: boardView(ledger, PROPOSALS_BOARD), state: boardState(ledger, PROPOSALS_BOARD),
+      rows: proposalRows(ledger, pageConditions(ledger, PROPOSALS_BOARD).proposals, versionTime),
+    },
+    updates: {
+      view: boardView(ledger, UPDATES_BOARD), state: boardState(ledger, UPDATES_BOARD),
+      cards: new Map([...pageConditions(ledger, UPDATES_BOARD).unseen].map((n) =>
+        [n, { count: unseenCount(ledger, n), steps: unseenSteps(ledger, n, versionTime) }])),
+      rows: proposalRows(ledger, pageConditions(ledger, UPDATES_BOARD).proposals, versionTime),
+      fresh: pageConditions(ledger, UPDATES_BOARD).fresh,
+    },
+    parking: {
+      view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),
+      cards: new Map(parkingView.nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const]))),
+    },
   };
 }

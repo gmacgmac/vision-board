@@ -258,7 +258,11 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    centres it above the selection's screen box, below when there is no room above, kept inside the
    stage; it draws above the cards and moves nothing, and follows pan, zoom and a changed
    selection through the same `place()` the note bubble uses. `vb-command` events name the
-   pressed button's `CommandId`; the element never acts itself (rule 8).
+   pressed button's `CommandId`; the element never acts itself (rule 8). With the `selectionPill`
+   flag (stage5-follow-ups FE_02, on by default) the bar is compact and over a selection starts as
+   a pill ("3 selected" and a chevron, `aria-expanded`): its `vb-toggle` opens it, and
+   `board/selection-pill.ts` closes it on a press outside, a wheel pan, Esc (focus back on the
+   pill) or the selection clearing. The selection's keys work with it closed.
 4. **Group notes.** Comment on two or more selected cards opens one note on the group
    (`notes.ts` `group()`, `BubbleInput.numbers`): the bubble's head names every item ("Note on 3
    cards: 12, 14, 15") instead of a number chip, and its act carries `nodes` in place of `n`/`ver`

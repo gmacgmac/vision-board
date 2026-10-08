@@ -113,6 +113,15 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     l.agent(A, { type: 'reply', n: 1, text: 'More.', to: note });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'container.owed'), [], 'a reply naming it ends it');
   },
+  'item.new': () => { // the round rules in detail: rounds.test.ts
+    const l = v8();
+    const fresh = () => of(l.state(), { board: 'b' }, 'item.new').map((c) => c.n);
+    l.seenBoard('b', l.seq);
+    l.node(B, 5, 1, { region: 'q' });
+    assert.deepEqual(fresh(), [5], 'only what was drawn after the first board seen; its board only');
+    l.seen(5, 1);
+    assert.deepEqual(fresh(), [], 'the person\'s seen ends it');
+  },
   'item.unseen': () => {
     const l = v8();
     const unseen = (board: string) => of(l.state(), { board }, 'item.unseen').map((c) => c.n);
@@ -122,6 +131,53 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'item.unseen'), [{ kind: 'item.unseen', board: 'b', n: 1 }], 'a newer version');
     assert.deepEqual(unseen('b2'), [4]);
+  },
+  'item.awaiting': () => {
+    const l = v8();
+    const awaiting = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'item.awaiting');
+    const later = l.act({ action: 'later', n: 1, ver: 1 });
+    assert.deepEqual(awaiting(), [{ kind: 'item.awaiting', board: 'b', n: 1, seq: later }]);
+    assert.equal(awaiting({ board: 'b', agent: A }).length, 1, 'A drew it, and is told too');
+    assert.deepEqual(awaiting({ board: 'b', agent: B }), [], 'B may not answer it');
+    l.agent(A, { type: 'park', n: 1, bundle });
+    assert.deepEqual(awaiting(), [], 'a park ends it');
+    const again = l.act({ action: 'later', n: 1, ver: 1 });
+    assert.deepEqual(awaiting().map((c) => c.seq), [again], 'a "later" after the park is owed again');
+    l.act({ action: 'reopen', n: 1, ver: 1 });
+    assert.deepEqual(awaiting(), [], 'leaving Later ends it');
+  },
+  'proposal.open': () => {
+    const l = v8();
+    l.v = 10;
+    const open = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'proposal.open');
+    const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
+    assert.deepEqual(open(), [{ kind: 'proposal.open', board: 'b', n: 1, seq: drop }]);
+    assert.deepEqual([open({ board: 'b2' }), open({ board: 'b', agent: A })], [[], []], 'its board only, and the person\'s row only');
+    l.act({ action: 'reject', n: 1, proposal: drop });
+    assert.deepEqual(open(), [], 'a reject ends it');
+    l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'ack', reason: 'Settled in chat.' });
+    l.act({ action: 'ack', n: 1, ver: 1 });
+    assert.deepEqual(open(), [], 'a decision on the card ends it, through the proposal or not');
+    l.agent(B, { type: 'propose', n: 2, ver: 1, action: 'ack', reason: 'Done.' });
+    l.node(B, 2, 2, { region: 'q', body: 'Changed.' });
+    assert.deepEqual(open(), [], 'a newer version makes it stale');
+  },
+  'proposal.stale': () => {
+    const l = v8();
+    l.v = 10;
+    const stale = () => of(l.state(), { board: 'b' }, 'proposal.stale');
+    const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
+    assert.deepEqual(stale(), []);
+    l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
+    assert.deepEqual(stale(), [{ kind: 'proposal.stale', board: 'b', n: 1, seq: drop }]);
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'proposal.open'), [], 'never both');
+    l.act({ action: 'reject', n: 1, proposal: drop });
+    assert.deepEqual(stale(), [], 'a reject ends it');
+    l.agent(A, { type: 'propose', n: 1, ver: 2, action: 'ack', reason: 'Settled.' });
+    l.node(A, 1, 3, { region: 'r', body: 'Changed again.' });
+    assert.equal(stale().length, 1);
+    l.act({ action: 'drop', n: 1, ver: 3 });
+    assert.deepEqual(stale(), [], 'a decision on the card ends it');
   },
   'grant.requested': () => {
     const l = v8();
@@ -192,6 +248,7 @@ for (const kind of CONDITION_KINDS) {
     assert.ok(['person', 'agent', 'both'].includes(row.audience));
     assert.equal(row.shows.length > 0, row.audience !== 'agent', 'the page shows what the person is told');
     assert.ok(row.trueWhen.length > 0 && row.endsWhen.length > 0);
+    assert.ok(row.clearedBy.length === 0 || row.shows.includes('card'), 'only a card\'s label is cleared by the person (rounds.test.ts)');
     ROW_CASES[kind]();
   });
 }

@@ -4,7 +4,8 @@
 import type { Mode, Region, View } from '../../../format/src/index.ts';
 import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
 import { DECIDED, statusOf } from '../../../actions/src/index.ts';
-import { isItem } from '../node/node-core.ts';
+import type { CardReply, ReplyEntry } from '../node/node-core.ts';
+import { isItem, replyEntry } from '../node/node-core.ts';
 
 /** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
  * so a new mode fails to compile here. */
@@ -77,6 +78,8 @@ export interface RegionNoteState {
   editable: boolean;
   /** In place of Edit and Remove once sent: why the block is read-only. */
   readOnlyText: string;
+  /** The agent's replies that name this note, oldest first (the cardReplies flag, FE_03); none left out. */
+  replies?: ReplyEntry[];
 }
 
 /** The stage of a container's latest note. `owed`: the agent still owes an answer on it (the
@@ -91,14 +94,16 @@ export const noteBadge = (stage: RegionNoteStage | undefined): RegionBadge =>
   stage === 'unsent' ? 'unsent' : stage === 'sent' ? 'sent' : 'none';
 
 /** The latest of a container's notes, as `RegionNoteState`; undefined when it has none. */
-export function regionNote(notes: readonly ItemNote[] | undefined, owed = true): RegionNoteState | undefined {
+export function regionNote(notes: readonly ItemNote[] | undefined, owed = true, replies: readonly CardReply[] = []): RegionNoteState | undefined {
   const note = notes?.at(-1);
   if (!note) return undefined;
   const stage = noteStage(note, owed);
+  const answers = replies.filter((r) => r.to === note.seq).map(replyEntry);
   return {
     seq: note.seq, stage, badge: noteBadge(stage), stateText: NOTE_STAGE_TEXT[stage], text: note.text ?? '',
     editable: stage === 'unsent',
     readOnlyText: stage === 'sent' ? 'Read-only until the agent answers' : stage === 'answered' ? 'Read-only' : '',
+    ...(answers.length && { replies: answers }),
   };
 }
 
@@ -163,17 +168,19 @@ export function regionHolders(list: readonly { agent: string; label: string; cre
  * notes come from `s.regionPins` and `s.regionNotes` (3_FE_04); its title, for Comment's name,
  * from `r` or else the view. `owed` is the set of container ids the agent still owes an answer on
  * (the `region` of each container entry in `pendingItems`): a sent note whose container is not in
- * it was answered and loses its badge. Left out, every sent note counts as waiting.
+ * it was answered and loses its badge. Left out, every sent note counts as waiting. `replies`: the
+ * agent's replies on the page (the cardReplies flag); those naming the latest note show under it.
  */
 export function regionState(
   r: Pick<Region, 'id' | 'mode'> & Partial<Pick<Region, 'title'>>, view: View, s: BoardState, placed: ReadonlySet<string>,
   holders?: readonly { agent: string; label: string; creator?: boolean }[], owed?: ReadonlySet<string>,
+  replies?: readonly CardReply[],
 ): RegionState {
   const nodes = view.nodes.filter((n) => n.region === r.id);
   const items = nodes.filter(isItem);
   const decided = items.filter((n) => DECIDED.has(statusOf(s, n.id))).length;
   const title = r.title ?? view.regions.find((g) => g.id === r.id)?.title ?? r.id;
-  const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true);
+  const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true, replies);
   return {
     mode: r.mode,
     countText: items.length ? `${decided} of ${items.length} decided` : '',

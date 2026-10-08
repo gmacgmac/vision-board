@@ -51,8 +51,17 @@ and describes the retired view files, so it needs a full rewrite on the MCP/API.
   Send. Send is the "I'm done" signal that ends a `wait`. The person wasn't sure what Send does.
 - 2026-10-06, agent: to answer a note on a whole container, `reply` on any card with `to` set to
   the note's `seq` (api.md 73). The tool description doesn't say this; `reply` requires `n`.
+- 2026-10-08, maintainer (stage5-follow-ups BE_01): when the person takes a card out of Later and
+  saves it for later again, a fresh handover is owed: write a new `park` for it with what is known
+  now, not the old one. The card shows no old handover until the new one comes.
 
 ## Writing
 
 - 2026-10-06, agent: one `write_board` call with keys for every item, links naming cards by key,
   worked first time. Linking by key before numbers exist felt natural.
+- 2026-10-08, maintainer (proposals-seen-parking BE_01, api.md 93, 95): to add to a card, write
+  `append { n, text }`: the text goes on the end of its body as a new version, so you never
+  rewrite the card to add a finding. `reply` stays the answer to one of the person's notes.
+- 2026-10-08, maintainer (same): a proposal made on an older version of a card can't be accepted;
+  the person sees "changed after this was proposed". After you edit a card, propose again on its
+  new version. The person can now reject a proposal; `show_node` says how each one ended.

@@ -4,10 +4,10 @@
 // one wire them to the canvas: boards.ts (boot, picker, kept view), attention.ts (marks, badges,
 // toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
 // access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes),
-// selection.ts and selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins,
-// modes, sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts), versions.ts (the
-// version dropdown, the read-only past view), finder.ts (the container finder), board-edit.ts (New
-// board, Rename board). Plain TypeScript (D-005).
+// selection.ts and selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes,
+// sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts), versions.ts (the version
+// dropdown, the read-only past view), finder.ts (the container finder), board-edit.ts (New board,
+// Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards), parking.ts (handover, replies). Plain TypeScript (D-005).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -33,6 +33,9 @@ import { createContainerDrag } from './container-drag.ts';
 import { createSender } from './sender.ts';
 import { type BoardEdit, createBoardEdit } from './board-edit.ts';
 import { createVersions } from './versions.ts';
+import { createProposalFlow, type ProposalFlow } from './proposal-flow.ts';
+import { createUpdateFlow } from './update-flow.ts';
+import { createParking } from './parking.ts';
 import { containerRows, zoomToContainer } from './finder.ts';
 import type { CommandId } from './commands.ts';
 import { exposeWork } from './work.ts';
@@ -52,6 +55,8 @@ export interface Board {
   toggleHide(): void;
   /** Allow or Refuse a grant request, Remove access (agentAccess flag, access-flow.ts). */
   access: AccessFlow;
+  /** The proposals bar's Review and Accept all (proposals flag, proposal-flow.ts). */
+  proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
   /** Send to agent; null when recorded, else the problem's detail. */
   send(): Promise<string | null>;
   /** New board or Rename board from the picker (board-edit.ts). */
@@ -65,9 +70,10 @@ export function createBoard(els: BoardElements): Board {
   const { stage, world } = els;
   const vp = new Viewport(stage, world, flagOn('hideControlsZoomedOut', pageFlags())); // N13, rule 12
   // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests,
-  // holders and Send (agentAccess, D-027); connectors behind frames and cards (wireLayers, D-032).
+  // holders and Send (agentAccess, D-027); connectors behind frames and cards (wireLayers, D-032);
+  // the agent's proposals on cards and the bar (proposals, FE_01); changed cards and seen (cardUpdates, FE_02); NEW (newCards).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder] = [on('nodeSize'), on('agentAccess'), on('wireLayers'), on('containerFinder')];
+  const [sizing, access, layers, finder, proposing, updating, newCards] = [on('nodeSize'), on('agentAccess'), on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -105,7 +111,8 @@ export function createBoard(els: BoardElements): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, layers, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(),
+    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n) }),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => { drawing.restate(c.changed); shell.selection = c.text; flow.dismissArea(); flow.place(); });
@@ -144,6 +151,7 @@ export function createBoard(els: BoardElements): Board {
     S.data = { ...d, view: placedView(d.view, d.state, { later: S.later }) };
     // The selection survives a redraw; ids that left the board drop out of it (ruling 8).
     selection.keep(view().nodes.map((n) => n.id));
+    proposals.refresh(); updates.refresh(); parking.refresh();
     Object.assign(shell, { title: view().title, summary: view().summary ?? '' }, !shell.versionView && { version: view().version });
     drawing.draw(full);
     regionNotes.apply(drawing.frames);
@@ -169,7 +177,15 @@ export function createBoard(els: BoardElements): Board {
    * and the stored line comes back and is applied in place (sender.ts). */
   const sender = createSender({ board: () => S.id, own: (e) => live.own(e), redraw: () => redraw(), fail, readOnly: () => !!versions.state });
   const { attempt, record } = sender;
-
+  const proposals = createProposalFlow({
+    on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
+    ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast,
+  });
+  const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
+    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw() });
+  /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
+  const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state,
+    awaiting: () => attention.awaiting(), readOnly: () => !!versions.state });
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
@@ -190,7 +206,7 @@ export function createBoard(els: BoardElements): Board {
   });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
-    stage, vp, selection, notes, layout: () => drawing.layout,
+    stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state,
   });
   vp.onApply = () => { notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
@@ -222,26 +238,19 @@ export function createBoard(els: BoardElements): Board {
   // While a past version shows, the handlers that act do nothing (versions.ts `guard`).
   const unbind = bindStage(stage, vp, versions.guard({
     act: (id, a) => void act(id, a),
-    showNote: (id, seq) => notes.show(id, seq),
-    setSize: places.setSize,
+    answer: (id, seq, a) => void proposals.answer(id, seq, a),
+    showNote: (id, seq) => notes.show(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode),
-    resetRegion: (region) => void places.resetRegion(region),
+    resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
-    putBack: (region) => void places.putBack(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
-    pin: (id, box) => void places.pin(id, box),
-    pinRegion: (region, at) => void frames.pin(region, at),
-    frameStart: frames.start,
-    frameMove: frames.move,
-    frameEnd: (d) => void frames.end(d),
+    pin: (id, box) => void places.pin(id, box), pinRegion: (region, at) => void frames.pin(region, at),
+    frameStart: frames.start, frameMove: frames.move, frameEnd: (d) => void frames.end(d),
     regionCommand: (_id, region) => notes.container(region, 'comment'),
     unpin: (id) => void places.unpin(id),
-    layout: () => drawing.layout,
-    view,
+    layout: () => drawing.layout, view,
     drawDrag: (layout, id) => drawing.wiresFor(layout, id),
-    carried: moves.carried,
-    dragStart: moves.dragStart,
-    dragOver: moves.dragOver,
+    carried: moves.carried, dragStart: moves.dragStart, dragOver: moves.dragOver,
     drop: (boxes, at) => void moves.drop(boxes, at),
     step: (from, dir) => {
       const next = focus.neighbour(from, dir);
@@ -249,19 +258,16 @@ export function createBoard(els: BoardElements): Board {
     },
     command: (id, key) => flow.command(id, key),
     toggleHide,
-    lassoMove: flow.lassoMove,
-    lassoEnd: flow.lassoEnd,
-    lassoCancel: flow.lassoCancel,
-    pick: (id, add) => selection.select([id], add ? 'toggle' : 'only'),
-    toggle: (id) => selection.select([id], 'toggle'),
-    clear: () => { selection.clear(); flow.dismissArea(); },
-    // Esc closes an open bubble first, then leaves a past version, else clears the selection (ruling 1).
+    lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
+    pick: (id, add) => { selection.select([id], add ? 'toggle' : 'only'); updates.saw([id]); },
+    toggle: (id) => selection.select([id], 'toggle'), clear: () => { selection.clear(); flow.dismissArea(); },
+    // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else clears the selection (ruling 1).
     escape: () => {
       if (notes.open) return notes.close();
+      if (flow.collapse()) return;
       if (versions.state) return void versions.show(null);
       shell.replyOpen = false;
-      flow.dismissArea();
-      selection.clear();
+      flow.dismissArea(); selection.clear();
     },
   }), () => { if (drawing.layout) vp.resized(); });
 
@@ -275,11 +281,7 @@ export function createBoard(els: BoardElements): Board {
 
   exposeWork({
     async rebuild() { await live.load(); redraw(true); },
-    async idle() {
-      await sender.idle();
-      await live.sync();
-      while (S.frame) await nextFrame();
-    },
+    async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
   });
 
   return {
@@ -290,8 +292,9 @@ export function createBoard(els: BoardElements): Board {
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
     toggleHide,
     access: accessFlow,
+    proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     saveBoard: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo }).save,
-    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy].forEach((f) => f()),
+    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy].forEach((f) => f()),
   };
 }

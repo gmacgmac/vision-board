@@ -39,10 +39,11 @@ export interface Versions {
   guard(h: StageHandlers): StageHandlers;
 }
 
-/** The stage handlers that lead to a person act: a review button or key, a note, a size, a layout
- * mode, a place, a move, access. The rest (selection, lasso, view commands, Esc) stay. */
+/** The stage handlers that lead to a person act: a review button or key, a proposal's answer, a
+ * note, a size, a layout mode, a place, a move, access. The rest (selection, lasso, view commands,
+ * Esc) stay. */
 const ACTING = [
-  'act', 'showNote', 'setSize', 'setMode', 'resetRegion', 'regionComment', 'putBack', 'revoke', 'pin', 'pinRegion',
+  'act', 'answer', 'showNote', 'setSize', 'setMode', 'resetRegion', 'regionComment', 'putBack', 'revoke', 'pin', 'pinRegion',
   'frameStart', 'frameMove', 'frameEnd', 'regionCommand', 'unpin', 'dragStart', 'dragOver', 'drop',
 ] as const satisfies readonly (keyof StageHandlers)[];
 

@@ -233,7 +233,8 @@ test('a plain drag on the title line pans and writes nothing; Shift+drag on it d
     await expect(page.locator('.vb-lasso')).toBeVisible();
   });
   await page.keyboard.up('Shift');
-  expect(await head(page)).toBe(before);
+  // The lasso writes no act; the cards it selects are marked seen (proposals-seen-parking FE_02).
+  expect((await linesAfter(page, before)).filter((e) => e.type !== 'seen')).toEqual([]);
 });
 
 test('dropped over another container, the dropped one stays and the other makes room: no overlaps', async ({ page }) => {

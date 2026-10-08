@@ -32,6 +32,8 @@ export interface ActFields {
   kind?: NoteKind;
   /** A note on a group of cards (`comment`, 3_FE_02): the items it is on, in place of `n`. */
   nodes?: number[];
+  /** An agent's proposal answered (api.md 93): accepted with its own action, or `reject`. */
+  proposal?: number;
 }
 
 export class ApiError extends Error {
@@ -113,6 +115,10 @@ export function markBoardSeen(board: string, head: number, leaving = false): Pro
   if (leaving) return leavingClient.call('mark_seen', input).catch(() => undefined);
   return call(() => asPerson(() => client.call('mark_seen', input)));
 }
+
+/** The person has seen version `ver` of card `n` (D-018): a card seen; the stored line. */
+export const markCardSeen = (board: string, n: number, ver: number) =>
+  call(() => asPerson(() => client.call<LedgerEvent>('mark_seen', { board, body: { n, ver } })));
 
 /** What the project's live stream reports (`watch_project`, api.md 78-80). */
 export interface ProjectEvents {

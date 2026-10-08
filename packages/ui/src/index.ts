@@ -3,6 +3,7 @@
 export * from './node/node-core.ts';
 export * from './node/node-template.ts';
 export * from './node/node-icons.ts';
+export { POPOVER_OPEN } from './node/node-popover.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';
 export * from './region/region-template.ts';
@@ -13,7 +14,7 @@ export * from './note-bubble/note-bubble-template.ts';
 export type { NoteChoice, NoteEventDetail, VbNoteBubbleElement } from './note-bubble/vb-note-bubble.ts';
 export * from './selection-bar/selection-bar-core.ts';
 export * from './selection-bar/selection-bar-template.ts';
-export type { CommandEventDetail, VbSelectionBarElement } from './selection-bar/vb-selection-bar.ts';
+export type { CommandEventDetail, ToggleEventDetail, VbSelectionBarElement } from './selection-bar/vb-selection-bar.ts';
 export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';
 export type { MarkdownOptions } from './markdown/render.ts';
 export { bindHoverTip } from './tip/hover-tip.ts';
