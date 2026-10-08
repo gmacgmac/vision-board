@@ -4,7 +4,7 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
 
@@ -235,7 +235,8 @@ export function eventProblems(input: unknown): string[] {
   fieldProblems(rest, { req: [...STAMP.req, ...shape.req], fields }, '', p);
   // From v3 the stamped agent is an agent id; on v2 any name (api.md 11).
   if (agent !== undefined) (e.v === 2 ? text() : agentId)(agent, 'agent', p);
-  if (AGENT_EVENTS.has(t) && e.by !== 'agent') p.push(`${t}: written by an agent`);
+  const personToo = e.by === 'person' && (e.v as number) >= (PERSON_TOO[t] ?? Infinity);
+  if (AGENT_EVENTS.has(t) && e.by !== 'agent' && !personToo) p.push(`${t}: written by an agent`);
   if (PERSON_EVENTS.has(t) && e.by !== 'person') p.push(`${t}: written by a person`);
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');
   if (t === 'act') actRules(e, p);

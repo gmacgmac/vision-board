@@ -25,7 +25,7 @@ test('the route table has one entry per operation, with the right auth', () => {
   const auth = Object.fromEntries(Object.values(OPERATIONS).map((o) => [o.operationId, o.auth]));
   assert.deepEqual(auth, {
     list_boards: 'none', get_board: 'none', show_node: 'none', show_container: 'none', list_open: 'none', check_responses: 'none',
-    read_ledger: 'none', join: 'none', request_grant: 'agent', write_board: 'agent', act: 'person', mark_seen: 'person', watch_board: 'none', watch_project: 'none',
+    read_ledger: 'none', join: 'none', request_grant: 'agent', write_board: 'agent', act: 'person', mark_seen: 'person', put_board: 'person', watch_board: 'none', watch_project: 'none',
   });
 });
 

@@ -14,7 +14,7 @@ import { ProblemError, problem } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -167,11 +167,13 @@ function checkGrant(b: Batch, s: LedgerState, i: number, e: Rec): void {
   const need = canWrite(s, b.agent, e as unknown as WriteItem);
   if (need === 'ok') return;
   if (need === 'creator') {
-    fail('forbidden', `Only the agent that created board "${b.board}" can change its title and summary. Leave the board item out and write your regions and nodes.`,
-      { errors: [{ pointer: `/items/${i}/type`, detail: `board "${b.board}" was created by another agent` }] });
+    const person = s.index.creators.get(b.board) === undefined; // no agent creator: the person made it (D-034)
+    fail('forbidden', `${person ? 'Only the person can' : `Only the agent that created board "${b.board}" can`} change its title and summary. Leave the board item out and write your regions and nodes.`,
+      { errors: [{ pointer: `/items/${i}/type`, detail: `board "${b.board}" was ${person ? 'made by the person' : 'created by another agent'}` }] });
   }
+  const maker = s.index.creators.get(need.board) === undefined ? 'the person' : 'another agent';
   const what = need.region === undefined
-    ? `You may not write on board "${need.board}" yet: another agent made it. Call request_grant once with just the board`
+    ? `You may not write on board "${need.board}" yet: ${maker} made it. Call request_grant once with just the board`
     : `You do not hold the container "${need.region}" on board "${need.board}". Call request_grant once`;
   fail('needs-grant', `${what}, wait for the person's answer in check_responses, then resend the same items with the same keys.`,
     { board: need.board, ...(need.region !== undefined && { region: need.region }) });

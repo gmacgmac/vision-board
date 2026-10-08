@@ -2,10 +2,13 @@
 // past 300 lines). One act goes through the I/O module and is drawn as soon as its answer is
 // applied; a batch (moves.ts: a move, then the cards' pins and status acts) runs step by step,
 // each step's acts side by side, and the board is drawn ONCE when the last answer is in, so a
-// move of 50 cards lays out its two containers once (3_FE_03 ruling 9).
+// move of 50 cards lays out its two containers once (3_FE_03 ruling 9). The person's board lines
+// (New board, Rename board: `put_board`, api.md 90) go out here too. While a past version of
+// the board shows (versions.ts), every act is refused here, before it is sent: the one funnel
+// (navigation FE_01 ruling 5).
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
-import type { ActFields } from './io.ts';
-import { ApiError, sendAct } from './io.ts';
+import type { ActFields, BoardFields } from './io.ts';
+import { ApiError, putBoard, sendAct } from './io.ts';
 
 export interface SenderDeps {
   board(): string;
@@ -14,12 +17,19 @@ export interface SenderDeps {
   redraw(): void;
   /** Show a refusal (the error toast). */
   fail(err: unknown): void;
+  /** A past version shows: the board is read-only. */
+  readOnly(): boolean;
 }
+
+/** Why an act is refused while a past version shows. */
+export const READ_ONLY = 'This is a past version, read-only. Go back to now to respond.';
 
 export interface Sender {
   /** Send one act and draw it; null when it was recorded, else the problem's detail. */
   attempt(fields: ActFields): Promise<string | null>;
   record(fields: ActFields): Promise<boolean>;
+  /** Create board `id`, or rename it; null when recorded, else the problem's detail. */
+  board(id: string, fields: BoardFields): Promise<string | null>;
   /** Send `steps` in order, the acts of one step side by side, and draw once at the end. Stops
    *  after a step with a refusal; true when every act was recorded. */
   run(steps: readonly (readonly ActFields[])[]): Promise<boolean>;
@@ -44,25 +54,31 @@ export function createSender(d: SenderDeps): Sender {
     }
   }
 
-  async function send(fields: ActFields): Promise<string | null> {
+  /** Send one call that answers a stored line, and apply it. */
+  async function send(call: () => Promise<LedgerEvent>): Promise<string | null> {
+    if (d.readOnly()) {
+      d.fail(new ApiError(READ_ONLY));
+      return READ_ONLY;
+    }
     try {
-      await tracked(sendAct(d.board(), fields).then((e) => d.own(e)));
+      await tracked(call().then((e) => d.own(e)));
       return null;
     } catch (err) {
       d.fail(err);
       return err instanceof ApiError ? err.message : String(err);
     }
   }
+  const act = (fields: ActFields) => send(() => sendAct(d.board(), fields));
 
   async function attempt(fields: ActFields): Promise<string | null> {
-    const problem = await send(fields);
+    const problem = await act(fields);
     if (problem === null) d.redraw();
     return problem;
   }
 
   async function steps(list: readonly (readonly ActFields[])[]): Promise<boolean> {
     for (const step of list) {
-      const answers = await Promise.all(step.map(send));
+      const answers = await Promise.all(step.map(act));
       if (answers.some((a) => a !== null)) return false;
     }
     return true;
@@ -71,6 +87,7 @@ export function createSender(d: SenderDeps): Sender {
   return {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
+    board: (id, fields) => send(() => putBoard(id, fields)),
     async run(list) {
       hold += 1;
       try {

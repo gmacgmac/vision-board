@@ -24,8 +24,9 @@ vb-selection-bar .vb-sb-btn {
   border: 1px solid transparent; border-radius: var(--vb-radius-md); background: transparent;
   color: var(--vb-ink-strong); font: inherit; font-weight: var(--vb-weight-medium);
 }
-vb-selection-bar .vb-sb-btn:hover { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
-vb-selection-bar .vb-sb-btn:active { transform: translateY(1px); }
+vb-selection-bar .vb-sb-btn:disabled { color: var(--vb-ink-subtle); cursor: not-allowed; }
+vb-selection-bar .vb-sb-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
+vb-selection-bar .vb-sb-btn:active:not(:disabled) { transform: translateY(1px); }
 vb-selection-bar .vb-sb-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-selection-bar .vb-sb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
 vb-selection-bar .vb-sb-primary:hover { background: var(--vb-accent-fill-hover); }

@@ -111,3 +111,15 @@ test('board seen (api.md 87): a known board, up to a line already written', () =
   assert.deepEqual(read([...base(), seen('nope', 6)]).problems, ['line 7: board: unknown "nope"']);
   assert.deepEqual(read([...base(), seen('b', 7)]).problems, ['line 7: head: the ledger is at line 6']);
 });
+
+test('a person board line (api.md 90): creates a board with no creator, renames any board; an agent may not rename', () => {
+  const board = (e: object) => ({ v: 9, seq: ++seq, at, by: 'person', type: 'board', ...e });
+  const events = [...base(), board({ board: 'mine', title: 'Mine' }), board({ board: 'b', title: 'Renamed' }),
+    { ...agent(A, { type: 'board', board: 'b', title: 'Again' }), v: 9 }, { ...agent(A, { type: 'board', board: 'mine', title: 'Taken' }), v: 9 }];
+  const { problems, index } = read(events);
+  assert.deepEqual(problems, ['line 9: board: "b" already exists', 'line 10: board: "mine" already exists']);
+  assert.equal(index.creators.has('mine'), false);
+  assert.equal(index.holders.has('mine'), false);
+  assert.deepEqual([...index.boards.get('b')!], ['r'], 'a rename keeps the board\'s containers');
+  assert.equal(index.creators.get('b'), A, 'and its creator');
+});

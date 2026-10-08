@@ -76,11 +76,13 @@ for (const theme of THEMES) {
     expect(small.filter((t) => /vb-act|vb-size|vb-mode/.test(t)), small.join('\n')).toEqual([]);
   });
 
-  // With the agentAccess flag off (on by default), as every screenshot taken before a flag must be
-  // (components.md § Feature flags); send-access.spec.ts covers the board with it on.
+  // With the agentAccess, versionView and containerFinder flags off (on by default), as every
+  // screenshot taken before a flag must be (components.md § Feature flags); send-access.spec.ts,
+  // versions.spec.ts and finder.spec.ts cover the board with them on. The key bubble (keyBubble flag,
+  // key-bubble.spec.ts) stays on: it replaces the key bar this screenshot used to show.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page, '?flags=-agentAccess');
+    await openBoard(page, '?flags=-agentAccess,-versionView,-containerFinder');
     await expect(page).toHaveScreenshot(`board-${theme}.png`);
   });
 }

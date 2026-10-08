@@ -23,10 +23,9 @@ body {
   display: flex; align-items: center; gap: var(--vb-space-3); padding: 0 var(--vb-space-4);
   background: var(--vb-surface-region); border-bottom: 1px solid var(--vb-line);
 }
-.vb-brand span {
-  display: block; width: 22px; height: 22px; border-radius: var(--vb-radius-sm);
-  background: conic-gradient(var(--vb-state-ack), var(--vb-accent), var(--vb-state-later), var(--vb-state-context), var(--vb-state-ack));
-}
+/* The app icon (navigation FE_05): the A · Flow drawing in the brand teal; the outputs are fainter. */
+.vb-brand { display: block; flex-shrink: 0; width: 24px; height: 24px; color: var(--vb-brand-mark); }
+.vb-brand .vb-brand-out { opacity: 0.5; }
 .vb-title { margin: 0; font-size: var(--vb-text-lg); font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .vb-counts { display: flex; gap: var(--vb-space-2); }
@@ -34,6 +33,16 @@ body {
 .vb-toolbar-end { margin-left: auto; display: flex; gap: var(--vb-space-2); flex-shrink: 0; }
 .vb-toolbar-end .vb-btn { white-space: nowrap; }
 /* The zoom group (3_FE_02 ruling 5): three buttons with no gap between, like a segmented control. */
+.vb-btn-icon { display: none; width: 18px; height: 18px; flex-shrink: 0; }
+/* A narrow window: Hide decided, Theme and Reply show their icon only, and the counts their numbers; the words
+   stay for screen readers and the title tooltip says them too. */
+@media (max-width: 1500px) {
+  .vb-toolbar-end .vb-btn-icon { display: block; }
+  .vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip-word {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .vb-toolbar-end :is(#hide, #theme, #reply-toggle) { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
+}
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }
 .vb-zoom .vb-btn + .vb-btn { border-left: 1px solid var(--vb-line-strong); }
@@ -42,6 +51,11 @@ body {
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
   height: 32px; padding: 0 var(--vb-space-3); cursor: pointer;
 }
+/* The container finder (navigation FE_02): a menu that shows its name, not the longest container. */
+/* The board picker gives up room first, as the title did (ellipsis), but never under 220px; the other
+   dropdowns keep their text whole. The end group makes room by showing icons (below). */
+.vb-toolbar > #board { min-width: 220px; }
+.vb-select-menu { width: 8.5em; flex-shrink: 0; }
 .vb-btn:hover { background: var(--vb-surface-sunken); }
 /* data-look draws a state without the pointer: the gallery's samples only. */
 .vb-btn:active, .vb-btn[data-look='pressed'] { transform: translateY(1px); }
@@ -64,8 +78,9 @@ body {
 /* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */
 .vb-ground { background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
   background-size: 22px 22px; }
-/* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset. */
-.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px)) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+/* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset;
+   --vb-banner-h the same for the past-version banner (VersionBanner.svelte). */
+.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }
@@ -103,6 +118,25 @@ body {
 .vb-lane.odd { fill: transparent; }
 .vb-lane-label { font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); fill: var(--vb-ink-subtle); }
 
+/* A past version (navigation FE_01, versionView flag): the banner under the header, and the board
+   read-only. The world carries data-readonly; every control that acts is hidden (the card's review
+   buttons, size control and note pin, a container's grip, tools and note buttons, a holder's
+   Remove access), and the kind tab no longer looks like a handle. The page's handlers and sender.ts
+   refuse the rest; selection, zoom and pan stay. */
+.vb-banner {
+  display: flex; align-items: center; gap: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-4);
+  background: var(--vb-accent-soft); color: var(--vb-ink-strong); border-bottom: 1px solid var(--vb-line);
+}
+.vb-banner[data-placement='board'] { position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: 5; }
+.vb-banner[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
+.vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
+.vb-banner-text b { font-weight: var(--vb-weight-bold); }
+.vb-world[data-readonly] :is(.vb-node-actions, .vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove) { visibility: hidden; }
+.vb-world[data-readonly] :is(.vb-size, .vb-note-pin) { display: none; }
+.vb-world[data-readonly] .vb-holder { pointer-events: none; }
+.vb-world[data-readonly] vb-node .vb-node-kind { cursor: inherit; }
+.vb-world[data-readonly] vb-node .vb-node-kind::before { display: none; }
+
 /* Messages */
 .vb-message {
   position: absolute; inset: 0; display: grid; place-items: center; white-space: pre-line; text-align: center;
@@ -114,11 +148,6 @@ body {
   background: var(--vb-ink-strong); color: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
 }
 .vb-toast[data-tone='error'] { background: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
-.vb-help {
-  position: fixed; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: 4; font-size: var(--vb-text-xs);
-  color: var(--vb-ink-subtle); background: var(--vb-surface-region); border: 1px solid var(--vb-line);
-  border-radius: var(--vb-radius-md); padding: var(--vb-space-1) var(--vb-space-3); pointer-events: none;
-}
 kbd {
   font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;
   border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
@@ -148,10 +177,20 @@ code { font-family: var(--vb-font-mono); }
 .vb-dialog::backdrop { background: var(--vb-scrim); }
 .vb-dialog h2 { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); color: var(--vb-ink-strong); }
 .vb-dialog-item { margin: 0 0 var(--vb-space-3); color: var(--vb-ink-subtle); }
-.vb-dialog textarea {
+.vb-dialog textarea, .vb-dialog .vb-input {
   width: 100%; font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); padding: var(--vb-space-2); resize: vertical;
 }
+/* The board dialog's fields (BoardDialog.svelte): a label above each, the problem below them. */
+.vb-dialog .vb-field { display: block; margin: var(--vb-space-3) 0 var(--vb-space-1); font-weight: 600; color: var(--vb-ink-strong); }
+.vb-field-note { font-weight: 400; color: var(--vb-ink-subtle); }
+.vb-dialog .vb-input:hover, .vb-dialog textarea:hover { border-color: var(--vb-accent); }
+.vb-dialog .vb-input:user-invalid { border-color: var(--vb-state-drop); }
+.vb-dialog-problem {
+  margin: var(--vb-space-3) 0 0; padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong);
+  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft); border-radius: var(--vb-radius-sm);
+}
+.vb-btn[aria-busy='true'] { cursor: progress; }
 .vb-dialog-hint { margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
 .vb-dialog-actions { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-4); }
 

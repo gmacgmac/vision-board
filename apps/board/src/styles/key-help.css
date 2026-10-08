@@ -1,0 +1,36 @@
+/* The key commands bubble (navigation FE_04, keyBubble flag; shell/KeyHelp.svelte): a round "?" at
+   the board's bottom left and the box it opens above itself (the tip box and its open rules are
+   tip/tip.css and tip/hover-tip.ts, which set data-keys-open on .vb-keys). Tokens only. */
+.vb-keys[data-placement='board'] { position: fixed; left: var(--vb-space-4); bottom: var(--vb-space-3); z-index: 4; }
+.vb-keys { --vb-keys-btn: 32px; }
+/* In the gallery the box is held inside the sample: the button sits at its foot, the box above it. */
+.vb-keys[data-placement='gallery'] { position: relative; display: flex; align-items: flex-end; }
+.vb-keys[data-placement='gallery'][data-keys-open] { min-height: 26rem; }
+.vb-keys[data-placement='gallery'] .vb-keys-tip { bottom: calc(var(--vb-keys-btn) + var(--vb-space-1)); }
+.vb-keys-btn {
+  display: grid; place-items: center; width: var(--vb-keys-btn); height: var(--vb-keys-btn); padding: 0; border-radius: var(--vb-radius-pill);
+  font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font); cursor: help;
+  color: var(--vb-ink-strong); background: var(--vb-surface-region); border: 1px solid var(--vb-line-strong);
+}
+.vb-keys-btn:hover { background: var(--vb-surface-sunken); }
+.vb-keys-btn:active { transform: translateY(1px); }
+.vb-keys[data-keys-open] .vb-keys-btn { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
+/* Above the button: the bridge fills the gap under the box so the pointer stays inside it. */
+.vb-keys .vb-keys-tip {
+  left: 0; bottom: calc(100% + var(--vb-space-1)); width: max-content; max-width: min(34rem, calc(100vw - 2 * var(--vb-space-4)));
+  padding: var(--vb-space-3) var(--vb-space-4);
+}
+/* The list scrolls inside the box on a short window; the box itself clips nothing, so its bridge works. */
+.vb-keys-body { max-height: calc(100vh - var(--vb-toolbar-h) - 6 * var(--vb-space-5)); overflow-y: auto; columns: 2 15rem; column-gap: var(--vb-space-5); }
+.vb-keys .vb-keys-tip::before { top: 100%; bottom: auto; }
+.vb-keys[data-keys-open] .vb-keys-tip { display: block; }
+.vb-keys-group { break-inside: avoid; margin-bottom: var(--vb-space-3); }
+.vb-keys-head {
+  margin: 0 0 var(--vb-space-1); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font);
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--vb-ink-subtle);
+}
+.vb-keys-list { margin: 0; }
+.vb-keys-row { display: flex; justify-content: space-between; gap: var(--vb-space-4); padding: 2px 0; }
+.vb-keys-row dt { margin: 0; }
+.vb-keys-row dd { margin: 0; display: flex; align-items: center; gap: 2px; white-space: nowrap; text-align: right; }
+.vb-keys-or { color: var(--vb-ink-subtle); }

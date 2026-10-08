@@ -102,7 +102,14 @@ export interface LedgerState extends DrawnState {
   agentHeads: Map<string, number>;
   /** board -> the highest `head` of the person's board `seen` (api.md 87): `board.new`, `board.changed`. */
   seenBoards: Map<string, number>;
+  /** board -> the end of each run of agent drawing lines on it, oldest first: its versions
+   * (reads.ts `boardVersions`). */
+  runs: Map<string, BoardRun[]>;
 }
+
+/** The last line of one run of drawing lines by one agent on one board, with no other line on
+ * that board between them (a board seen is none): one version of the board, "v<seq>". */
+export interface BoardRun { seq: number; at: string; agent?: string }
 
 /** The agent's drawing lines: what "the agent drew" means (conditions `board.drawn`, the page's toast). */
 export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board', 'region', 'node', 'link', 'unlink']);
@@ -112,7 +119,7 @@ export const emptyState = (): LedgerState => ({
   replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
-  drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(),
+  drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -134,8 +141,13 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   applyDrawn(s, e);
   indexEvent(s.index, e);
   const board = eventBoard(s, e);
+  const before = board === undefined ? undefined : s.heads.get(board);
   if (board !== undefined && !(e.type === 'seen' && 'board' in e)) s.heads.set(board, e.seq);
-  if (board !== undefined && DRAWING_EVENTS.has(e.type)) s.drawnHeads.set(board, e.seq);
+  // The person's `board` line (a rename, api.md 90) is no agent drawing: no toast, no version.
+  if (board !== undefined && DRAWING_EVENTS.has(e.type) && e.by === 'agent') {
+    s.drawnHeads.set(board, e.seq);
+    addRun(s, board, e, before);
+  }
   if (board !== undefined && e.by === 'agent') s.agentHeads.set(board, e.seq);
   if ('key' in e && e.key !== undefined && e.agent !== undefined) {
     const keys = s.keys.get(e.agent) ?? new Map<string, number>();
@@ -160,6 +172,16 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
       break;
     case 'park': s.parks.set(e.n, e.bundle); marksOf(s, e.n).park = e.seq; break;
   }
+}
+
+/** A drawing line extends the board's last run when it follows that run's end on the board and
+ * comes from the same agent; else it starts a new run. */
+function addRun(s: LedgerState, board: string, e: LedgerEvent, before: number | undefined): void {
+  const runs = s.runs.get(board) ?? [];
+  s.runs.set(board, runs);
+  const last = runs.at(-1);
+  if (last && last.seq === before && last.agent === e.agent) runs.pop();
+  runs.push({ seq: e.seq, at: e.at, ...(e.agent !== undefined && { agent: e.agent }) });
 }
 
 function applyAct(s: LedgerState, e: ActEvent): void {

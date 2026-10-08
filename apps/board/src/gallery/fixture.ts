@@ -2,9 +2,9 @@
 // through the same checks and folds the live board uses. Nothing here is hand-written markup.
 import type { View } from '../../../../packages/format/src/index.ts';
 import { boardView, readLedger } from '../../../../packages/format/src/index.ts';
-import type { AccessHolder, BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, BoardAccess, BoardRun, BoardState } from '../../../../packages/actions/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardAccess, boardState, foldLedger } from '../../../../packages/actions/src/index.ts';
+import { boardAccess, boardState, boardVersions, foldLedger } from '../../../../packages/actions/src/index.ts';
 import { pageConditions } from '../board/board-data.ts';
 import ledgerText from './gallery.ledger.jsonl?raw';
 
@@ -41,6 +41,8 @@ export interface Fixture {
   /** The containers board (3_FE_04): container notes before and after a Send, and a moved container. */
   containers: Containers;
   containerNotes: Containers;
+  /** The main board's latest past version (`boardVersions`), for the past-version banner. */
+  pastVersion: BoardRun;
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -60,5 +62,6 @@ export function loadFixture(): Fixture {
     boardAgents: boardAccess(ledger, NOTES_BOARD).boardHolders ?? [],
     notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD) },
     containers: containers(ledger, CONTAINERS_BOARD), containerNotes: containers(ledger, CONTAINER_NOTES_BOARD),
+    pastVersion: boardVersions(ledger, BOARD)!.past[0]!,
   };
 }

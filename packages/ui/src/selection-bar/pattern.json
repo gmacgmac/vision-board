@@ -2,17 +2,17 @@
   "name": "selection-bar",
   "title": "Selection bar and lasso",
   "tag": "vb-selection-bar",
-  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Zoom to selection and Clear. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2).",
+  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Zoom to selection and Clear. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2).",
   "files": {
     "core": "selection-bar-core.ts (placeBar, barView, boxBetween, touches, boxAround; no DOM)",
     "template": "selection-bar-template.ts (selectionBarTemplate: the only place the markup is built)",
     "element": "vb-selection-bar.ts (defineVbSelectionBar, VbSelectionBarElement; light DOM)",
     "styles": "selection-bar.css (scoped by the tag, and .vb-lasso; tokens only)"
   },
-  "states": ["selection", "area", "above", "below", "hidden", "hover", "focus", "pressed", "lasso"],
+  "states": ["selection", "area", "above", "below", "hidden", "hover", "focus", "pressed", "disabled", "lasso"],
   "parts": {
     "vb-sb-count": "'3 selected'; absent on the area bar",
-    "vb-sb-btn": "one button per command the page passes (data-command); vb-sb-primary for Comment"
+    "vb-sb-btn": "one button per command the page passes (data-command); vb-sb-primary for Comment; disabled when the command has nothing to act on (Reset places with no moved card selected)"
   },
   "attributes": {
     "role": "toolbar (set by show)",

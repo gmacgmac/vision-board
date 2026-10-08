@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#0d9488"
+  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <style>
+    .src, .out { fill: #0d9488; stroke: none; }
+    .out { opacity: 0.5; }
+    @media (prefers-color-scheme: dark) { svg { stroke: #2dd4bf; } .src, .out { fill: #2dd4bf; } }
+  </style>
+  <path d="M7 12C12 12 12 4 17 4M7 12h10M7 12C12 12 12 20 17 20" />
+  <rect class="src" x="1" y="9" width="6" height="6" rx="1.5" />
+  <rect class="out" x="17" y="2" width="6" height="4" rx="1" />
+  <rect class="out" x="17" y="10" width="6" height="4" rx="1" />
+  <rect class="out" x="17" y="18" width="6" height="4" rx="1" />
+</svg>

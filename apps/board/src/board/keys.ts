@@ -83,6 +83,7 @@ export function bindKeys(h: KeyHandlers): () => void {
       e.preventDefault();
       return h.act(id, BY_KEY.get(key)!);
     }
+    // R with no selection (a selection's R is Reset places, commands.ts): the focused card's reset.
     if (id && key === 'r') return h.unpin(id);
     if (key === 'h') return h.toggleHide();
   };

@@ -73,8 +73,9 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     return x;
   };
   switch (e.type) {
+    // The person may rename any board (D-034, api.md 90); an agent's second line is refused.
     case 'board':
-      if (ix.boards.has(e.board)) p.push(`board: "${e.board}" already exists`);
+      if (ix.boards.has(e.board) && e.by !== 'person') p.push(`board: "${e.board}" already exists`);
       break;
     case 'region':
       if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
@@ -178,7 +179,7 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
   ix.seq = e.seq;
   switch (e.type) {
     case 'board':
-      ix.boards.set(e.board, new Set());
+      if (!ix.boards.has(e.board)) ix.boards.set(e.board, new Set());
       if (e.v !== 2 && e.agent !== undefined) create(ix, e.board, e.agent);
       break;
     case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;

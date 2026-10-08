@@ -2,9 +2,10 @@
 // suggestion in the View, and the registry entries for people and agents.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { ACTION_IDS, boardView, validateView } from '../../format/src/index.ts';
 import {
-  ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, boardState, replyText,
+  ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, BOARD_ACTION_IDS, BOARD_ACTIONS, boardState, replyText,
 } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 
@@ -31,6 +32,17 @@ test('registry: agent actions are records, by the agent, with their inputs named
     assert.ok(!(ACTION_IDS as readonly string[]).includes(id), `${id} is not an act`);
   }
   assert.deepEqual(AGENT_ACTIONS.request_grant.inputs, { board: 'required', region: 'required', reason: 'required' });
+});
+
+test('registry: board actions are the person\'s, unconfirmed, with put_board\'s body as their inputs (api.md 90)', () => {
+  assert.deepEqual(Object.keys(BOARD_ACTIONS), [...BOARD_ACTION_IDS]);
+  const core = JSON.parse(fs.readFileSync(new URL('../../format/schema/events/board.schema.json', import.meta.url), 'utf8')).$defs.core;
+  const inputs = Object.fromEntries(Object.keys(core.properties).map((k) => [k, core.required.includes(k) ? 'required' : 'optional']));
+  for (const id of BOARD_ACTION_IDS) {
+    const def = BOARD_ACTIONS[id];
+    assert.deepEqual([def.by, def.needsConfirmation, def.inputs], ['person', false, inputs], id);
+    assert.ok(!(ACTION_IDS as readonly string[]).includes(id), `${id} is not an act`);
+  }
 });
 
 test('agents: id to the label it joined with', () => {

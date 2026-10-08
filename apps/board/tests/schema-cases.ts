@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v8 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81 and 87.
+// Ledger lines for the schema tests (schema.test.ts): a valid v9 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87 and 90.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 8, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 8, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 9, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 9, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -88,7 +88,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v9', patch(V.board!, 'v', 9)],
+  ['unknown format v10', patch(V.board!, 'v', 10)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -188,5 +188,9 @@ export const BROKEN: [string, Rec][] = [
   ['seen with a node and a head', { ...V.seen!, head: 3 }],
   ['seen with a head of 0', { ...PERSON, type: 'seen', board: 'b', head: 0 }],
   ['seen with a bad board id', { ...PERSON, type: 'seen', board: 'Plan A', head: 3 }],
+  // api.md 90: the person writes a `board` line from v9 only, with the board's fields only.
+  ['a person board line before v9', { ...PERSON, v: 8, type: 'board', board: 'b', title: 'Mine' }],
+  ['a person board line without a title', { ...PERSON, type: 'board', board: 'b' }],
+  ['a person board line with a region', { ...PERSON, type: 'board', board: 'b', title: 'Mine', region: 'plan' }],
   ['a line that is not an object', [] as unknown as Rec],
 ];

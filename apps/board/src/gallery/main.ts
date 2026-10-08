@@ -3,6 +3,7 @@
 // files, so a new pattern without a gallery entry shows up here as a gap and fails the page test.
 import '../styles/board.css';
 import '../styles/access.css';
+import '../styles/key-help.css';
 import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
@@ -25,6 +26,9 @@ import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
 import { wireSection } from './wire-section.ts';
+import { versionSection } from './version-section.ts';
+import { keyHelpSection } from './key-help-section.ts';
+import { appIconSection } from './app-icon-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -105,6 +109,9 @@ function build(): void {
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
   if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
   if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
+  if (flagOn('versionView', flags)) main.append(versionSection(fx));
+  if (flagOn('keyBubble', flags)) main.append(keyHelpSection());
+  main.append(appIconSection());
   document.body.append(head, main);
 }
 

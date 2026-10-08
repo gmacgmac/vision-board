@@ -6,14 +6,15 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 8;
+export const LEDGER_FORMAT = 9;
 /** Every format a reader accepts. Each format only adds to the one before, so older lines stay
  * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
  * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
  * in place of `n` (api.md 71-76); v8 adds a grant request and a revoke for a whole board, `region`
- * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8] as const;
+ * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87); v9 lets
+ * the person write a `board` line, creating or renaming a board (api.md 90). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -52,6 +53,9 @@ export type EventType = (typeof EVENT_TYPES)[number];
 export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
   'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request',
 ]);
+/** Agent event types a person may also write, from the format given: the person's `board` line
+ * creates a board or renames one (`put_board`, api.md 90). */
+export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9 };
 /** Event types only a person writes. */
 export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 

@@ -89,3 +89,5 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The header's Agents list (D-034), open in the page flow: its panel sits under its button. */
 .g-agents .vb-agents { display: inline-block; }
 .g-agents .vb-agents-panel { position: static; margin-top: var(--vb-space-1); }
+/* The app icon samples (navigation FE_05): side by side, aligned on their bottoms. */
+.g-icons { display: flex; align-items: flex-end; gap: var(--vb-space-5); }

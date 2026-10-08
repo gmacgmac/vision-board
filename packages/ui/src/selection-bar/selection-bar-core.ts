@@ -24,7 +24,7 @@ export function placeBar(box: StageBox, bar: StageSize, stage: StageSize): BarPl
 }
 
 /** One button: `id` is what the `vb-command` event names; the page's command table supplies it. */
-export interface BarButton { id: string; label: string; primary?: boolean }
+export interface BarButton { id: string; label: string; primary?: boolean; disabled?: boolean }
 
 /** What the bar says: `name` is its accessible name, `count` the words before the buttons (empty
  *  for the area bar, which only offers to zoom). */

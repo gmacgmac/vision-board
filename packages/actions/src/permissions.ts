@@ -63,7 +63,9 @@ type Rule<K extends WriteKind> = (s: LedgerState, agent: string, item: WriteItem
 /** Each kind of write item's rule: a new kind without a row is a type error (D-033). */
 export const PERMISSIONS: { [K in WriteKind]: Rule<K> } = {
   // A new board is its writer's. An existing board's line (its title and summary) only its creator
-  // may write (D-034); today the context check refuses a second `board` line from anyone.
+  // may write (D-034); today the context check refuses a second `board` line from any agent, and
+  // the person renames. A board the person made (api.md 90) has no agent creator and no holders:
+  // no agent may write its line, and every other row asks for the board.
   board: (s, agent, i) => !s.index.boards.has(i.board) || s.index.creators.get(i.board) === agent ? 'ok' : 'creator',
   // A new container on a board the agent holds; an existing one needs its own grant.
   region: (s, agent, i) => container(s, agent, { board: i.board, region: i.region.id }) ?? board(s, agent, i.board) ?? 'ok',

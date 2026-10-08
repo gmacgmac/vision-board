@@ -35,6 +35,7 @@ test('template: the count then one button per command, escaped; the primary mark
   assert.equal(html, '<span class="vb-sb-count">2 selected</span>'
     + '<button type="button" class="vb-sb-btn vb-sb-primary" data-command="comment">Comment</button>'
     + '<button type="button" class="vb-sb-btn" data-command="clear">Clear &#60;x&#62;</button>');
+  assert.match(selectionBarTemplate(barView(1, [{ id: 'reset-places', label: 'Reset places', disabled: true }])), /data-command="reset-places" disabled>/);
   assert.doesNotMatch(selectionBarTemplate(barView(0, [{ id: 'zoom-area', label: 'Zoom to this area' }])), /vb-sb-count/);
 });
 

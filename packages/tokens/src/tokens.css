@@ -73,6 +73,7 @@
 
   /* Accent and focus */
   --vb-brand: #fb1fa7;
+  --vb-brand-mark: light-dark(#0d9488, #2dd4bf); /* The app icon's teal (N21): APCA Lc 64.5 on the light toolbar, 66.6 on the dark one. */
   --vb-accent: light-dark(#d4138a, #ff5cbe);
   --vb-accent-text: light-dark(#c81784, #ff66c2); /* dark nudged from #ff5cbe */
   --vb-accent-fill: light-dark(#d4138a, #ff85cf); /* dark nudged from #ff5cbe */

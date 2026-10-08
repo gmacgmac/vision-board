@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/board-request.schema.json",
+  "title": "Board request",
+  "description": "`{ title, summary? }`: the board's title and, optionally, what it is for. A new board id creates the board; an existing one is renamed, its summary replaced (left out, it is cleared).",
+  "$comment": "Was: api.md 90",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "https://vision-board.invalid/schema/ledger/9/events/board.schema.json#/$defs/core"
+    }
+  ],
+  "unevaluatedProperties": false
+}

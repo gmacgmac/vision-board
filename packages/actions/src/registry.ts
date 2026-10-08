@@ -87,3 +87,23 @@ export const AGENT_ACTIONS: Record<AgentActionId, AgentActionDef> = {
     inputs: { board: 'required', region: 'required', reason: 'required' },
   },
 };
+
+/** What the person does to a whole board besides an `act`: a person `board` line through
+ * `put_board` (api.md 90, D-034), from the board picker. Not decisions, so no confirmation. */
+export const BOARD_ACTION_IDS = ['new-board', 'rename-board'] as const;
+export type BoardActionId = (typeof BOARD_ACTION_IDS)[number];
+
+export interface BoardActionDef extends Common {
+  id: BoardActionId;
+  by: 'person';
+  needsConfirmation: false;
+  /** The inputs the person gives, by name: `put_board`'s body. */
+  inputs: Readonly<Record<string, 'required' | 'optional'>>;
+}
+
+const boardInputs = { title: 'required', summary: 'optional' } as const;
+
+export const BOARD_ACTIONS: Record<BoardActionId, BoardActionDef> = {
+  'new-board': { id: 'new-board', label: 'New board', ...person, inputs: boardInputs },
+  'rename-board': { id: 'rename-board', label: 'Rename board', ...person, inputs: boardInputs },
+};

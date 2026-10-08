@@ -15,13 +15,15 @@ interface Sample {
   caption: string;
   titles: string[];
   area: boolean;
+  /** Reset places has no moved card to act on: disabled. */
+  none?: boolean;
   stage: { w: number; h: number };
 }
 
 const SAMPLES: Sample[] = [
-  { caption: 'Over two selected cards: Comment, Move to, Zoom to selection, Clear',
+  { caption: 'Over two selected cards: Comment, Move to, Reset places (disabled: neither card has been moved), Zoom to selection, Clear',
     titles: ['Topic: a heading for a group, not an item', 'Note: the agent remarks, nothing to answer'],
-    area: false, stage: { w: 680, h: 220 } },
+    area: false, none: true, stage: { w: 680, h: 220 } },
   { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group, not an item'],
     area: true, stage: { w: 400, h: 180 } },
 ];
@@ -41,7 +43,7 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
     return c;
   });
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
-  const view = s.area ? barView(0, barButtons(AREA_COMMANDS)) : barView(cards.length, barButtons(SELECTION_COMMANDS));
+  const view = s.area ? barView(0, barButtons(AREA_COMMANDS)) : barView(cards.length, barButtons(SELECTION_COMMANDS, false, s.none ? ['reset-places'] : []));
   bar.show(view);
   stage.append(list, bar);
   requestAnimationFrame(() => {

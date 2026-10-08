@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/8/events/join.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/9/events/join.schema.json",
   "title": "Join event",
   "description": "An agent joins the project with a label; its stamped `agent` is the new agent id.",
   "$comment": "Was: api.md 14, 21",
@@ -9,7 +9,7 @@
       "type": "object",
       "required": ["label"],
       "properties": {
-        "label": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/agentLabel", "description": "A short name for this chat or agent, such as \"Pricing chat\"; the person sees it when you ask for access."}
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/agentLabel", "description": "A short name for this chat or agent, such as \"Pricing chat\"; the person sees it when you ask for access."}
       }
     },
     "sent": {
@@ -18,7 +18,7 @@
       "properties": {
         "type": {"const": "join"}
       },
-      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/8/events/join.schema.json#/$defs/core"}],
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/9/events/join.schema.json#/$defs/core"}],
       "unevaluatedProperties": false
     },
     "stored": {
@@ -26,17 +26,17 @@
       "required": ["type"],
       "properties": {"type": {"const": "join"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/8/events/join.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/9/events/join.schema.json#/$defs/core"},
         {
           "type": "object",
           "required": ["agent"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "agent": {"$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/agentId", "description": "The new agent id."}
+            "agent": {"$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/agentId", "description": "The new agent id."}
           }
         }
       ],

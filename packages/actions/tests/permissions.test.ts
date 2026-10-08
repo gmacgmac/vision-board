@@ -59,6 +59,18 @@ const ROW_CASES: Record<WriteKind, () => void> = {
     assert.equal(canWrite(s, A, { type: 'board', board: 'b' }), 'ok', 'its creator (the context check still refuses a second line)');
     assert.equal(canWrite(s, B, { type: 'board', board: 'b' }), 'creator', 'a holder of the board is not its creator');
     assert.equal(canWrite(boardAsked('grant').state(), C, { type: 'board', board: 'b' }), 'creator', 'no grant makes another creator');
+    // A board the person made (api.md 90) has no agent creator: no agent writes its line, and every
+    // agent asks for the board before writing on it (D-034), until the person grants it.
+    const l = scene();
+    l.v = 9;
+    l.personBoard('mine', 'Mine');
+    const p = l.state();
+    for (const agent of [A, B, C]) {
+      assert.equal(canWrite(p, agent, { type: 'board', board: 'mine' }), 'creator', agent);
+      assert.deepEqual(canWrite(p, agent, { type: 'region', board: 'mine', region: { id: 'fresh' } }), need('mine'), agent);
+    }
+    l.act({ action: 'grant', request: l.agent(C, { type: 'grant-request', board: 'mine', reason: 'Drawing the plan.' }) });
+    assert.equal(canWrite(l.state(), C, { type: 'region', board: 'mine', region: { id: 'fresh' } }), 'ok', 'once granted');
   },
   region: () => {
     const s = scene().state();

@@ -11,7 +11,7 @@ import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/sr
 import type { CommandEventDetail } from '../../../../packages/ui/src/index.ts';
 import { barView, boxAround, boxBetween, placeBar, touches } from '../../../../packages/ui/src/index.ts';
 import type { CommandId } from './commands.ts';
-import { AREA_COMMANDS, barButtons, isCommand, SELECTION_COMMANDS } from './commands.ts';
+import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS } from './commands.ts';
 import type { NoteFlow } from './notes.ts';
 import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
@@ -29,6 +29,12 @@ export interface SelectionFlowDeps {
   /** Move to (3_FE_03 ruling 8): open the list of containers for the selection, under `anchor`
    *  (the bar, or the selection when the bar is hidden), in stage pixels. */
   openMove(ids: readonly string[], anchor: StageBox): void;
+  /** Whether card `id` has been moved by hand (a pin). */
+  pinned(id: string): boolean;
+  /** Reset places (navigation FE_03): put these cards back where layout places them. */
+  resetPlaces(ids: readonly string[]): void;
+  /** A past version shows (versions.ts): the commands that act are off. */
+  readOnly(): boolean;
 }
 
 export interface SelectionFlow {
@@ -93,7 +99,8 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const sel = d.selection.selected();
     const world = area ?? worldBoxOf(d.layout(), sel);
     if (d.notes.open || !world) return void (bar.hidden = true);
-    bar.show(area ? barView(0, barButtons(AREA_COMMANDS)) : barView(sel.length, barButtons(SELECTION_COMMANDS)));
+    const off = sel.some(d.pinned) ? [] : ['reset-places' as const];
+    bar.show(area ? barView(0, barButtons(AREA_COMMANDS)) : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off)));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }));
   }
@@ -118,6 +125,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
 
   function command(id: CommandId, key?: string): boolean {
     const layout = d.layout();
+    if (COMMANDS[id].acts && d.readOnly()) return false;
     switch (id) {
       case 'zoom-in': d.vp.zoomCentre(1.2); return true;
       case 'zoom-out': d.vp.zoomCentre(1 / 1.2); return true;
@@ -131,6 +139,12 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         const b = bar.getBoundingClientRect();
         d.openMove(sel, bar.hidden ? toStage(world) : { x: b.left - s.left, y: b.top - s.top, w: b.width, h: b.height });
         return true;
+      }
+      // Every selected card at once; with no selection, R is the focused card's own reset.
+      case 'reset-places': {
+        const sel = d.selection.selected();
+        if (sel.length) d.resetPlaces(sel.filter(d.pinned));
+        return sel.length > 0;
       }
       case 'clear':
         if (!d.selection.selected().length) return false;

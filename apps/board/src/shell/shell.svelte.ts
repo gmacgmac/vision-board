@@ -1,8 +1,9 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, confirm dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { AccessHolder, BoardListItem } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, BoardActionId, BoardListItem, BoardRun } from '../../../../packages/actions/src/index.ts';
 import type { BoardMark } from '../board/board-data.ts';
+import type { ContainerRow } from '../board/finder.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
 
@@ -22,6 +23,9 @@ export type SendState = 'idle' | 'sending' | 'sent' | 'error';
  * title, left out for a request for the whole board (D-034); `label` the asking agent's. */
 export interface AccessRequestRow { seq: number; label: string; container?: string; reason: string }
 
+/** The New board or Rename board dialog (BoardDialog), with the words it opens with. */
+export interface BoardDialogRequest { action: BoardActionId; title: string; summary: string }
+
 export const shell = $state({
   /** The picker's list, from the held state after every batch (boards.ts `listed`). */
   boards: [] as BoardListItem[],
@@ -30,7 +34,19 @@ export const shell = $state({
    * board. Replaced, never changed in place. */
   boardMarks: {} as Record<string, BoardMark>,
   title: 'Vision Board',
+  /** The open board's version: with the versionView flag its own last line ("now", board/versions.ts),
+   * else the ledger's latest line; null before a board opens. */
   version: null as number | null,
+  /** The versionView flag: the version dropdown in place of the title and the version chip. */
+  versionView: false,
+  /** The open board's past versions, newest first (the dropdown below "now"). */
+  versions: [] as BoardRun[],
+  /** The past version on show, read-only, or null for now. */
+  past: null as BoardRun | null,
+  /** A past version is being read. */
+  loadingVersion: false,
+  /** The container finder's rows, board order, Later last; none with the containerFinder flag off. */
+  containers: [] as ContainerRow[],
   summary: '',
   counts: { open: 0, decided: 0, later: 0 },
   answered: 0,
@@ -40,6 +56,8 @@ export const shell = $state({
   message: null as string | null,
   toast: null as Toast | null,
   confirm: null as ConfirmRequest | null,
+  /** The New board or Rename board dialog, open while set (navigation BE_01). */
+  boardDialog: null as BoardDialogRequest | null,
   /** The agentAccess flag: Send to agent, the requests strip and the holders on each frame. */
   agentAccess: false,
   requests: [] as AccessRequestRow[],

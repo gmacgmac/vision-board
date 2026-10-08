@@ -40,6 +40,10 @@ and describes the retired view files, so it needs a full rewrite on the MCP/API.
   container's grant (`board` and `region`), which brings the board too. Only a board's creator
   rewrites its `board` item. The skill should say: ask for the board before writing on a board
   you didn't create, then ask once for whatever `needs-grant` names.
+- 2026-10-08, maintainer (navigation BE_01, api.md 90-91): the person can now make a board (and
+  rename any board) from the picker. A board the person made has no agent creator, so no agent
+  holds it: call `request_grant` with just its `board` and wait for the yes before writing on it.
+  An agent can never rewrite its `board` item (`forbidden`).
 
 ## Reading answers
 

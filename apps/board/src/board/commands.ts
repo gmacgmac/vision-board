@@ -5,7 +5,7 @@
 // so none is a ledger event (rule 8 covers the note and the move themselves, which are written
 // through the action layer).
 
-export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
+export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
 
 export interface CommandDef {
@@ -17,6 +17,8 @@ export interface CommandDef {
   primary?: boolean;
   /** The header button's text, when it is a symbol rather than the label. */
   glyph?: string;
+  /** It leads to a person act (a note, a move): off while a past version shows (versions.ts). */
+  acts?: true;
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
@@ -24,20 +26,22 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   fit: { label: 'Fit', keys: ['f'] },
   'zoom-in': { label: 'Zoom in', keys: ['+', '='], glyph: '+' },
   // N, and C when two or more are selected (C alone is a card's own comment, keys.ts).
-  comment: { label: 'Comment', keys: ['n', 'c'], primary: true },
+  comment: { label: 'Comment', keys: ['n', 'c'], primary: true, acts: true },
   // The list of the board's containers, Later last (3_FE_03 ruling 8, move-menu.ts).
-  move: { label: 'Move to', keys: ['shift+m'] },
+  move: { label: 'Move to', keys: ['shift+m'], acts: true },
+  // R with a selection; with none, R is the focused card's own reset (keys.ts).
+  'reset-places': { label: 'Reset places', keys: ['r'], acts: true },
   'zoom-selection': { label: 'Zoom to selection', keys: ['z'] },
   clear: { label: 'Clear', keys: [] },
   'zoom-area': { label: 'Zoom to this area', keys: [] },
   // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
   // container's note, a comment as N is for the selection. Those keys mean this only there.
-  'container-note': { label: 'Comment on container', keys: ['c', 'n'] },
+  'container-note': { label: 'Comment on container', keys: ['c', 'n'], acts: true },
 };
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
-export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'zoom-selection', 'clear'];
+export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'zoom-selection', 'clear'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
 /** The commands whose keys apply on a focused container's title line, before any other meaning. */
 export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
@@ -55,7 +59,7 @@ export const regionCommandForKey = (key: string): CommandId | undefined => ON_RE
 export const isCommand = (s: string | undefined): s is CommandId => COMMAND_IDS.includes(s as CommandId);
 
 /** A key as a hint shows it: "Shift+M", "Z". */
-const keyText = (key: string) => key.split('+').filter(Boolean).map((k) => (k === 'shift' ? 'Shift' : k.toUpperCase())).join('+')
+export const keyText = (key: string) => key.split('+').filter(Boolean).map((k) => (k === 'shift' ? 'Shift' : k.toUpperCase())).join('+')
   || key;
 
 /** A button's tooltip: its label and its key ("Zoom in · +"). */
@@ -64,6 +68,8 @@ export function commandTitle(id: CommandId): string {
   return key ? `${COMMANDS[id].label} · ${keyText(key)}` : COMMANDS[id].label;
 }
 
-/** The bar's buttons for a list of commands. */
-export const barButtons = (ids: readonly CommandId[]) =>
-  ids.map((id) => ({ id, label: COMMANDS[id].label, ...(COMMANDS[id].primary && { primary: true }) }));
+/** The bar's buttons for a list of commands; with `readOnly`, none that acts; `off` are disabled. */
+export const barButtons = (ids: readonly CommandId[], readOnly = false, off: readonly CommandId[] = []) =>
+  ids.filter((id) => !(readOnly && COMMANDS[id].acts)).map((id) => ({
+    id, label: COMMANDS[id].label, ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
+  }));

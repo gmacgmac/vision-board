@@ -1,7 +1,8 @@
 // The page follows the project (found-in-use FE_02): it listens to `watch_project` from the moment
 // it opens, so the first board drawn into an empty project opens by itself (ruling 4), a board drawn
 // later joins the picker as "new" with a chip while the open board stays (ruling 3), the picker's
-// labels follow every append (ruling 2), and a reload keeps the board's zoom and position unless
+// labels follow every append (ruling 2; titles only since navigation FE_01, the versions are the
+// version dropdown's, versions.spec.ts), and a reload keeps the board's zoom and position unless
 // keepView is off (ruling 5). The marks come from the conditions table and the person's board seen
 // (awareness tables FE_01): " · changed" when an agent wrote on a board since the person last looked,
 // after a reload and in another browser too, never for the person's own acts; the "agent drew" toast
@@ -94,7 +95,7 @@ test('a board drawn later joins the picker as new, with a chip, and the open boa
   await seeAll(page);
   const title = await page.locator('#title').textContent();
   await write(request, '', await join(request, '', 'Later chat'), 'live-new', drawn('Drawn later'));
-  await expect(option(page, 'live-new')).toHaveText(/^Drawn later · v\d+ · new$/);
+  await expect(option(page, 'live-new')).toHaveText('Drawn later · new');
   await expect(chip(page)).toHaveText('1 board updated');
   await expect(page.locator('#board')).toHaveValue('roadmap');
   await expect(page.locator('#title')).toHaveText(title!);
@@ -106,22 +107,19 @@ test('a board drawn later joins the picker as new, with a chip, and the open boa
   }
   await page.locator('#board').selectOption('live-new');
   await expect(page.locator('#title')).toHaveText('Drawn later');
-  await expect(option(page, 'live-new')).toHaveText(/^Drawn later · v\d+$/);
+  await expect(option(page, 'live-new')).toHaveText('Drawn later');
   await expect(chip(page)).toHaveCount(0);
 });
 
-test('a picker label follows an append to its board', async ({ page, request }) => {
+test('a picker label is its board\'s title, and an append marks it changed', async ({ page, request }) => {
   const a = await join(request, '', 'Label chat');
   await write(request, '', a, 'live-label', drawn('Label board'));
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
   const label = option(page, 'live-label');
-  await expect(label).toHaveText(/^Label board · v\d+$/);
-  const before = Number(/v(\d+)/.exec((await label.textContent())!)![1]);
+  await expect(label).toHaveText('Label board');
   await write(request, '', a, 'live-label', [card('And which one waits?')]);
-  await expect(label).not.toHaveText(`Label board · v${before}`);
-  expect(Number(/v(\d+)/.exec((await label.textContent())!)![1])).toBeGreaterThan(before);
-  await expect(label).toHaveText(/^Label board · v\d+ · changed$/);
+  await expect(label).toHaveText('Label board · changed');
   await expect(page.locator('#board')).toHaveValue('roadmap');
 });
 
@@ -146,18 +144,18 @@ test('a board an agent changed is marked "changed", after a reload and in anothe
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
   const mark = option(page, 'live-changed');
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+$/);
+  await expect(mark).toHaveText('Changed elsewhere');
   // The person's own act on it is not news.
   const ack = await page.request.post('/api/boards/live-changed/act', { data: { type: 'act', action: 'ack', n: await firstItem(page, 'live-changed'), ver: 1 } });
   expect(ack.status(), await ack.text()).toBe(201);
   await idle(page);
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+$/);
+  await expect(mark).toHaveText('Changed elsewhere');
   // An agent's line is.
   await write(request, '', a, 'live-changed', [card('And this one?')]);
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+ · changed$/);
+  await expect(mark).toHaveText('Changed elsewhere · changed');
   await expect(chip(page)).toHaveText('1 board updated');
   await page.reload();
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+ · changed$/);
+  await expect(mark).toHaveText('Changed elsewhere · changed');
   const other = await browser.newPage();
   await other.goto(`${new URL(page.url()).origin}/#roadmap`);
   await expect(option(other, 'live-changed')).toHaveText(/ · changed$/);
@@ -170,9 +168,9 @@ test('a board an agent changed is marked "changed", after a reload and in anothe
   await page.locator('#board').selectOption('live-changed');
   await expect(page.locator('#title')).toHaveText('Changed elsewhere');
   await page.locator('#board').selectOption('roadmap');
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+$/);
+  await expect(mark).toHaveText('Changed elsewhere');
   await page.reload();
-  await expect(mark).toHaveText(/^Changed elsewhere · v\d+$/);
+  await expect(mark).toHaveText('Changed elsewhere');
 });
 
 test('the agent drawing on the open board shows the toast; the person acting does not', async ({ page, request }) => {

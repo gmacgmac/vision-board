@@ -1,4 +1,4 @@
-// Ledger v8 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81): the JSON Schema is the one source, and the hand validator
+// Ledger v9 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/8/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/9/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v8 lines for every event type and action ----
+// ---- 3. Valid v9 lines for every event type and action ----
 
-test('every event type has a valid v8 line, and every one passes both validators', () => {
+test('every event type has a valid v9 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v8 line, and every one passes both validators
   }
 });
 
-test('every action has a valid v8 act, and every one passes both validators', () => {
+test('every action has a valid v9 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -93,6 +93,8 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     { ...PERSON, type: 'act', action: 'revoke', holder: 'a-abcd1234', board: 'b' },
     // api.md 87: a seen for a whole board names `board` and `head` in place of `n` and `ver`.
     { ...PERSON, type: 'seen', board: 'b', head: 12 },
+    // api.md 90: from v9 the person writes a `board` line, creating or renaming a board.
+    { ...PERSON, type: 'board', board: 'b', title: 'Pricing for 2027', summary: 'What we charge.' },
   ];
   for (const e of lines) assert.deepEqual(verdict(e), { schema: true, hand: true }, JSON.stringify(e).slice(0, 80));
 });

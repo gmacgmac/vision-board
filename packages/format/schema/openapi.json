@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -139,6 +139,99 @@
           },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "put_board",
+        "x-agent": false,
+        "summary": "Create or rename a board, as the person",
+        "description": "Create a board, or rename one, as the person: `title` and an optional `summary` (left out, the summary is cleared). A new board id creates the board, with no agent creator, so every agent must ask for it with `request_grant` before writing on it; an existing id renames that board. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the stored ledger line.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/boardRequest"
+              },
+              "example": {
+                "title": "Pricing for 2027",
+                "summary": "What we charge, and why."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The board was renamed: the stored line.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/board"
+                },
+                "example": {
+                  "v": 9,
+                  "seq": 60,
+                  "at": "2026-10-08T09:00:00Z",
+                  "by": "person",
+                  "type": "board",
+                  "board": "pricing",
+                  "title": "Pricing for 2027",
+                  "summary": "What we charge, and why."
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The board was created: the stored line.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/board"
+                },
+                "example": {
+                  "v": 9,
+                  "seq": 60,
+                  "at": "2026-10-08T09:00:00Z",
+                  "by": "person",
+                  "type": "board",
+                  "board": "pricing",
+                  "title": "Pricing for 2027",
+                  "summary": "What we charge, and why."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
           },
           "500": {
             "$ref": "#/components/responses/serverError"
@@ -1298,6 +1391,9 @@
       "seenRequest": {
         "$ref": "https://vision-board.invalid/schema/api/seen-request.schema.json"
       },
+      "boardRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/board-request.schema.json"
+      },
       "listBoardsResponse": {
         "$ref": "https://vision-board.invalid/schema/api/list-boards-response.schema.json"
       },
@@ -1326,40 +1422,40 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/8/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/9/events/grant-request.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -1413,7 +1509,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -1422,7 +1518,7 @@
         "description": "The node number.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/nodeNumber"
+          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/nodeNumber"
         }
       },
       "regionPath": {
@@ -1431,7 +1527,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -1440,7 +1536,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/8/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/9/common.schema.json#/$defs/id"
         }
       },
       "after": {

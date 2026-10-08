@@ -96,6 +96,13 @@ export const sendAct = (id: string, fields: ActFields) =>
     board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
+/** What the person gives a board: `put_board`'s body (api.md 90). */
+export interface BoardFields { title: string; summary?: string }
+
+/** Create board `id`, or rename it when it exists (api.md 90); the stored `board` line. */
+export const putBoard = (id: string, fields: BoardFields) =>
+  call(() => asPerson(() => client.call<LedgerEvent>('put_board', { board: id, body: fields })));
+
 /** The client for a call made as the page goes away: its request outlives the page (keepalive). */
 const leavingClient = createClient({ fetch: (url, init) => globalThis.fetch(url, { ...init, keepalive: true }) });
 

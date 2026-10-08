@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-07 (board access, ledger v8: 81-86; board seen and conditions: 87-89)
+updated: 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -240,6 +240,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`; per-item results |
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
+| `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
 | `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
 
@@ -545,3 +546,25 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     board changed. Both read `boardNews` (conditions.ts). `board.drawn` is an agent
     drawing line (`board`, `region`, `node`, `link`, `unlink`) on the open board after its board
     seen. All three survive a reload and read the same on every computer that shares the ledger.
+
+## Ledger v9 additions: the person's board (navigation BE_01, D-034)
+
+90. `LEDGER_FORMAT` becomes 9 and every ledger `$id` moves to `.../schema/ledger/9/`; `openapi.json`
+    `info.version` becomes 1.8.0. Only adds: v2 through v8 lines stay valid. **The person writes a
+    `board` line** through `put_board`, `PUT /api/boards/{board}` (`x-agent: false`, the person
+    cookie, 20), body `{ title, summary? }` (`api/board-request.schema.json`, the board event's
+    `core`, closed). A new id creates the board (201); an existing one is renamed (200): its title
+    and summary are replaced, `summary` left out clears it, and its containers, cards and holders
+    stay. Both answer the stored line. The stored `board` schema takes `by: person` from v9 only
+    (`$defs/rules`; the hand twin is `PERSON_TOO`). The ledger's context check (replacing 83's
+    "from anyone") refuses a second `board` line from any agent and allows the person's.
+91. **Who may write on it** (D-034). A board the person made has no agent creator and no holders,
+    so the permissions table (83) asks every agent for the board (`needs-grant`, `board` only) and
+    refuses any agent's `board` item there (`forbidden`, 84); a board grant (82) lets an agent
+    draw on it. No agent may rename a board it did not create; today no agent renames at all.
+92. **What it changes, and what not.** The person's `board` line is on its board (`scopeOf`) and
+    moves its head (80), but it is not an agent drawing line: it makes no version (`runs`), no
+    `board.drawn` and no `board.changed` (88-89). `list_boards`, `get_board` and every read show
+    the latest title and summary; `read_ledger` returns the raw line. The page offers both from
+    the board picker (`BOARD_ACTIONS` in the action registry: New board, Rename board), through
+    the one sender, refused while a past version shows.

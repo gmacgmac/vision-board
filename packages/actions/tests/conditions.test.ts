@@ -144,6 +144,10 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'the board seen ends it');
     l.act({ action: 'ack', n: 1, ver: 1 });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'the person acting is not drawing');
+    l.v = 9;
+    l.personBoard('b', 'Renamed'); // api.md 90
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn'), [], 'nor is the person renaming it');
+    assert.deepEqual([l.state().boards.get('b')!.title, l.state().boards.get('b')!.regions.length], ['Renamed', 4], 'a rename keeps its containers');
     const again = l.node(B, 2, 2, { region: 'q' });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'board.drawn').map((c) => c.seq), [again]);
   },

@@ -6,8 +6,8 @@
 // (board-data.ts, also the gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
-// stays open, at most once a minute when an agent's line arrives. Never while viewing a past
-// version (not built yet).
+// stays open, at most once a minute when an agent's line arrives. Never while a past version of
+// the board shows (versions.ts): the person is not looking at now.
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardNews } from '../../../../packages/actions/src/index.ts';
@@ -23,6 +23,8 @@ export interface AttentionDeps {
   /** The open board's id; '' before one opens. */
   board(): string;
   fail(err: unknown): void;
+  /** A past version of the open board shows: no board seen. */
+  readOnly(): boolean;
 }
 
 export interface Attention {
@@ -48,7 +50,7 @@ export function createAttention(d: AttentionDeps): Attention {
   function see(board: string, leaving = false) {
     const s = d.state();
     const head = s?.heads.get(board);
-    if (!s || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
+    if (!s || d.readOnly() || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
     sent.set(board, head);
     sentAt = Date.now();
     markBoardSeen(board, head, leaving).catch((err: unknown) => {
@@ -60,7 +62,7 @@ export function createAttention(d: AttentionDeps): Attention {
   /** While a board stays open: a board seen when one is due, at most once a minute. */
   function keep() {
     const s = d.state();
-    if (timer || !s || !d.board() || !boardNews(s, d.board())) return;
+    if (timer || !s || d.readOnly() || !d.board() || !boardNews(s, d.board())) return;
     timer = window.setTimeout(() => { timer = 0; see(d.board()); }, Math.max(0, sentAt + SEEN_EVERY_MS - Date.now()));
   }
 

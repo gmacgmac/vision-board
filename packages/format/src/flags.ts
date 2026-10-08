@@ -43,6 +43,26 @@ export const FLAGS = {
     default: true,
     description: 'A card note cut at three lines shows its full text, as Markdown, in a box beside the card on hover and on keyboard focus (WCAG 1.4.13: hoverable, persistent, Esc dismisses); a click still opens the note bubble; off, a cut note has no preview.',
   },
+  versionView: {
+    // On by default (maintainer, 2026-10-07, navigation FE_01); ?flags=-versionView turns it off.
+    default: true,
+    description: 'The toolbar shows each fact once: the picker holds titles only, the title heading is for screen readers, and a version dropdown lists the board\'s own versions; choosing a past one shows the board as it was, read-only, under a "Back to now" banner. Off, the toolbar shows the title and the ledger\'s latest line as before.',
+  },
+  containerFinder: {
+    // On by default (maintainer, 2026-10-07, navigation FE_02); ?flags=-containerFinder turns it off.
+    default: true,
+    description: 'A Containers dropdown in the toolbar lists every container on the board with its card count, Later always last (greyed when empty); choosing one zooms to it and focuses its title; it works in a past version too (N18).',
+  },
+  keyBubble: {
+    // On by default (maintainer, 2026-10-07, navigation FE_04); ?flags=-keyBubble turns it off.
+    default: true,
+    description: 'The key help along the bottom is a small "?" bubble at the bottom left: hover, focus or the ? key lists every command (grouped Items, Selection, Board, View), generated from the command table and the action registry; Esc closes it. Off, the board shows no key help (N20).',
+  },
+  boardEdit: {
+    // On by default (maintainer, 2026-10-07, navigation BE_01 ruling 3); ?flags=-boardEdit turns it off.
+    default: true,
+    description: 'The board picker ends with New board… and Rename board…, each opening a small dialog (title, optional summary) that writes the person\'s `board` line through `put_board` (api.md 90); a new board\'s id is made from its title and it opens at once. Off while a past version shows. Off, only agents make boards and nobody renames them (N22).',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

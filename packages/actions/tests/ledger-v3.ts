@@ -30,6 +30,8 @@ export class Ledger {
   seen(n: number, ver: number): number { return this.add({ by: 'person', type: 'seen', n, ver }); }
   /** The person has looked at `board` up to line `head` (api.md 87). */
   seenBoard(board: string, head: number): number { return this.add({ by: 'person', type: 'seen', board, head }); }
+  /** The person creates or renames `board` (a v9 line, api.md 90). */
+  personBoard(board: string, title: string): number { return this.add({ by: 'person', type: 'board', board, title }); }
   /** A v2 line, written by a named agent the old way. */
   v2(e: object): number {
     this.lines.push(JSON.stringify({ v: 2, seq: ++this.seq, at: stamp(this.seq), by: 'agent', agent: 'kiro', ...e }));

@@ -19,6 +19,8 @@ export interface PlaceDeps {
   /** Send one act; true when it was recorded. */
   record(fields: ActFields): Promise<boolean>;
   redraw(): void;
+  /** Send steps of acts side by side and draw once (sender.ts `run`). */
+  run(steps: ActFields[][]): Promise<boolean>;
   /** Hide the connectors until the relayout a container's move causes has drawn (draw.ts). */
   settle(): void;
 }
@@ -29,6 +31,8 @@ export interface Places {
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): Promise<void>;
   resetRegion(region: string): Promise<void>;
+  /** Reset places for a selection (navigation FE_03): one `unpin` per pinned card, one redraw. */
+  resetCards(ids: readonly string[]): Promise<void>;
   /** "Put container back" (3_FE_04 ruling 7): the container returns to where layout puts it. */
   putBack(region: string): Promise<void>;
 }
@@ -57,6 +61,10 @@ export function createPlaces(d: PlaceDeps): Places {
     async resetRegion(region) {
       const ids = d.view().nodes.filter((n) => n.region === region && d.state().pins.has(n.id)).map((n) => n.id);
       for (const id of ids) if (!(await d.record({ action: 'unpin', ...d.target(id) }))) break;
+    },
+    async resetCards(ids) {
+      const acts = ids.filter((id) => d.state().pins.has(id)).map((id): ActFields => ({ action: 'unpin', ...d.target(id) }));
+      if (acts.length) await d.run([acts]);
     },
     async putBack(region) {
       if (!d.state().regionPins.has(region)) return;

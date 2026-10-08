@@ -16,4 +16,6 @@ export * from './selection-bar/selection-bar-template.ts';
 export type { CommandEventDetail, VbSelectionBarElement } from './selection-bar/vb-selection-bar.ts';
 export { renderMarkdown, MARKDOWN_MAX } from './markdown/render.ts';
 export type { MarkdownOptions } from './markdown/render.ts';
+export { bindHoverTip } from './tip/hover-tip.ts';
+export type { HoverTip, HoverTipOptions } from './tip/hover-tip.ts';
 export { defineBoardElements } from './elements.ts';

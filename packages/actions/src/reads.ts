@@ -4,7 +4,7 @@
 // Optional fields are left out when they do not apply (api.md 32).
 import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { latest, nodesOf } from '../../format/src/index.ts';
-import type { ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
+import type { BoardRun, ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
 import { containerNotes, containerPin, noteJson } from './containers.ts';
@@ -201,3 +201,15 @@ export interface BoardListItem { board: string; title: string; seq: number }
 /** Every board, in the order drawn, with its title and its own last line (`list_boards`). */
 export const boardList = (s: LedgerState): BoardListItem[] =>
   [...s.boards.values()].map((b) => ({ board: b.id, title: b.title, seq: s.heads.get(b.id)! }));
+
+/** A board's versions (navigation FE_01 ruling 2): `now`, its own last line (fold.ts `heads`, so
+ * other boards and the person's board seen never move it), and the past ones, newest first: each
+ * run of agent drawing lines that ended before it (fold.ts `runs`), "v<seq>" with its time.
+ * Undefined for a board with no lines. */
+export interface BoardVersions { now: number; past: BoardRun[] }
+
+export function boardVersions(s: LedgerState, board: string): BoardVersions | undefined {
+  const now = s.heads.get(board);
+  if (now === undefined) return undefined;
+  return { now, past: (s.runs.get(board) ?? []).filter((r) => r.seq < now).reverse() };
+}

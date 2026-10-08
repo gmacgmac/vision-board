@@ -1,5 +1,5 @@
 // The write operations. The caller is already known (callers.ts, from the operation's `security`):
-// the person for `act` and `mark_seen`, an agent for `request_grant` and `write_board`, nobody for
+// the person for `act`, `mark_seen` and `put_board`, an agent for `request_grant` and `write_board`, nobody for
 // `join`, the one credential-free write. Each body fits the operation's request schema first
 // (pointers into the body, api.md 38), then the ledger module's own checks as it appends.
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
@@ -63,6 +63,15 @@ const markSeen: Handler = async ({ req, res, params, ledger }) => {
     throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
   onBoard(ledger.state(), board, e.n);
   sendJson(res, 201, ledger.append({ ...e, type: 'seen' }, { by: 'person' }));
+};
+
+/** The person creates the board in the path, or renames it (api.md 90, D-034): a person `board`
+ * line. A board the person made has no agent creator, so every agent asks for it. */
+const putBoard: Handler = async ({ req, res, params, ledger }) => {
+  const board = String(params.board);
+  const b = await body('put_board', req);
+  const created = !ledger.state().boards.has(board);
+  sendJson(res, created ? 201 : 200, ledger.append({ ...b, type: 'board', board }, { by: 'person' }));
 };
 
 /** A new agent: id and secret, shown once. The hash is stored before the `join` line is
@@ -131,5 +140,5 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
 };
 
 export const WRITES = {
-  act, mark_seen: markSeen, join, request_grant: requestGrant, write_board: writeBoard,
+  act, mark_seen: markSeen, put_board: putBoard, join, request_grant: requestGrant, write_board: writeBoard,
 } satisfies Record<string, Handler>;

@@ -14,7 +14,7 @@ import type { Viewport } from './viewport.ts';
 export interface PointerHandlers {
   box(id: string): Box | undefined;
   /** The cards a drag on `id`'s kind tab carries: the selection when `id` is in it, else `id`
-   *  alone (3_FE_03 ruling 4). */
+   *  alone (3_FE_03 ruling 4); none when no card may move (a past version, navigation FE_01). */
   carried(id: string): string[];
   /** The drag passed its threshold: the cards start moving (Later shows as a drop target). */
   dragStart(ids: readonly string[]): void;
@@ -72,7 +72,9 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   /** The cards a drag on `id` carries, each with its element and box; `id` first. */
   function carriedFrom(id: string): Carried[] {
     const out: Carried[] = [];
-    for (const c of [id, ...h.carried(id).filter((x) => x !== id)]) {
+    const ids = h.carried(id);
+    if (!ids.length) return out;
+    for (const c of [id, ...ids.filter((x) => x !== id)]) {
       const el = stage.querySelector<HTMLElement>(`vb-node[data-id="${CSS.escape(c)}"]`);
       const box0 = h.box(c);
       if (el && box0) out.push({ id: c, el, box0 });

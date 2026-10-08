@@ -45,7 +45,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: [['list']],
-  outputDir: path.join(ROOT, 'test-results'),
+  // Outside the repo (tracker N25): the repo sits in a synced folder, and Dropbox syncing the
+  // traces of the 1,000-card board while the run goes on made context teardown time out.
+  outputDir: path.join(os.tmpdir(), `vision-board-test-results-${PORT}`),
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFileName}/{arg}-{platform}{ext}',
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,

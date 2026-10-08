@@ -27,8 +27,11 @@ export const emptyDrawn = (): DrawnState =>
 export function applyDrawn(s: DrawnState, e: LedgerEvent): void {
   s.seq = e.seq;
   switch (e.type) {
+    // A second line (the person's rename, api.md 90) replaces the title and summary only.
     case 'board':
-      s.boards.set(e.board, { id: e.board, title: e.title, ...(e.summary && { summary: e.summary }), regions: [] });
+      s.boards.set(e.board, {
+        id: e.board, title: e.title, ...(e.summary && { summary: e.summary }), regions: s.boards.get(e.board)?.regions ?? [],
+      });
       break;
     case 'region': {
       const regions = s.boards.get(e.board)?.regions;
