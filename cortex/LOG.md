@@ -128,3 +128,4 @@
 [[2026-10-08 09:30]] [board-app] VERIFY_01 fixes: picker width, dialog reset, person-board wording → Task: [[cortex-tasks/board/2026-10-07_board-app_navigation/VERIFY_01_end-to-end.md]]
 [[2026-10-08 10:30]] [board-app] VERIFY_01: navigation set checked on a copy of the maintainer's ledger and over MCP; three bugs fixed → Task: [[cortex-tasks/board/2026-10-07_board-app_navigation/VERIFY_01_end-to-end.md]]
 [[2026-10-08 10:30]] [board-app] Completed set: Navigation - Toolbar, Versions, Finder, Keys, Icon, New Board; tracker U11, N18-N22 removed → Task: [[cortex-tasks/board/2026-10-07_board-app_navigation/TASK-STATUS.md]]
+[[2026-10-08 11:00]] [project-docs] Handover before compaction; next is Stage 5 (proposals, seen, parking) → Notes: `cortex-tasks/board/2026-10-01_board-v3/HANDOVER-2026-10-08.md`
