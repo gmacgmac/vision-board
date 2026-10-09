@@ -137,7 +137,7 @@ export const CONDITIONS: Rows = {
   },
   'item.new': {
     about: 'card', audience: 'person', shows: ['card'], clearedBy: ['select', 'act', 'round'],
-    trueWhen: 'An undecided item the agent first drew in the board\'s latest round (rounds.ts: after the person\'s first board seen on it, or once a Send was answered, from the first drawing after it), with no seen at any version: the card\'s NEW tab.',
+    trueWhen: 'An undecided item the agent first drew in the board\'s latest round (rounds.ts: after the person\'s first board seen on it, or after the agent\'s first drawing with a card when they opened it with none, so a first drawing is never new; or once a Send was answered, from the first drawing after it), with no seen at any version: the card\'s NEW tab.',
     endsWhen: 'The person selecting it (its `seen`), any act of theirs naming it but a Send (api.md 94), or the next round: a Send, then the agent drawing again.',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => itemsOn(s, board, ctx).flatMap((x) => {
       const seq = s.firstDrawn.get(x.n) ?? 0;

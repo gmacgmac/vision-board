@@ -80,6 +80,10 @@ export const shell = $state({
   proposals: [] as ProposalRow[],
   /** The proposals that arrived in the latest batch that brought any: the bar announces them. */
   proposalNews: [] as number[],
+  /** The chatPanel flag: the chat sidebar and its toolbar button (chat-panel FE_02). */
+  chatPanel: false,
+  /** The chat sidebar is open (ChatSidebar.svelte keeps it per viewer). */
+  chatOpen: false,
 });
 
 let toastTimer = 0;

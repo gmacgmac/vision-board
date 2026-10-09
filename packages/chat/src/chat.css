@@ -1,0 +1,106 @@
+/* The chat's styles (D-037; FE_01 ruling 4). The chat reads only its own --chat-* custom
+   properties, which the host maps to its tokens (the board: apps/board/src/styles/chat-host.css).
+   Each has a neutral fallback here, read once into a private --_* property on the chat's elements,
+   so every rule below uses the private name. A host loads this one file; it pulls in the
+   patterns' own files. Light DOM: every rule is scoped by a chat tag or a chat-* class. */
+@import './feed/feed.css';
+@import './message/message.css';
+@import './approval/approval.css';
+@import './composer/composer.css';
+@import './header/header.css';
+
+:where(.chat-panel, chat-feed, chat-message, chat-approval, chat-composer, chat-header) {
+  /* Type */
+  --_font: var(--chat-font, system-ui, sans-serif);
+  --_font-mono: var(--chat-font-mono, ui-monospace, monospace);
+  --_text: var(--chat-text, 13px);
+  --_text-sm: var(--chat-text-sm, 12px);
+  --_text-xs: var(--chat-text-xs, 11px);
+  --_medium: var(--chat-weight-medium, 550);
+  --_bold: var(--chat-weight-bold, 680);
+  /* Ink: --_ink-strong and --_ink for reading text, --_ink-subtle for short labels only */
+  --_ink-strong: var(--chat-ink-strong, light-dark(#1c1c1e, #ececee));
+  --_ink: var(--chat-ink, light-dark(#3e3e44, #c6c6cb));
+  --_ink-subtle: var(--chat-ink-subtle, light-dark(#69696f, #9f9fa6));
+  --_ink-on-fill: var(--chat-ink-on-fill, light-dark(#ffffff, #10121a));
+  /* Surfaces and lines */
+  --_surface: var(--chat-surface, light-dark(#ffffff, #1b1b1d));
+  --_surface-sunken: var(--chat-surface-sunken, light-dark(#f0f0f2, #232326));
+  --_line: var(--chat-line, light-dark(#e2e2e6, #2b2b2f));
+  --_line-strong: var(--chat-line-strong, light-dark(#cbcbd1, #3b3b41));
+  /* Accent: the person's side, chips, the primary action and focus */
+  --_accent: var(--chat-accent, light-dark(#3a5bc7, #8aa4f0));
+  --_accent-fill: var(--chat-accent-fill, light-dark(#3a5bc7, #a3b8f4));
+  --_accent-fill-hover: var(--chat-accent-fill-hover, light-dark(#2f4ca8, #bccaf7));
+  --_accent-soft: var(--chat-accent-soft, light-dark(#ebeffb, #1e2333));
+  --_accent-line: var(--chat-accent-line, light-dark(#bccaf2, #34406a));
+  --_accent-text: var(--chat-accent-text, light-dark(#3452b8, #94acf2));
+  --_focus: var(--chat-focus, light-dark(#3a5bc7, #8aa4f0));
+  /* Meaning: an approval waiting, allowed, denied or failed */
+  --_warn: var(--chat-warn, light-dark(#8f6408, #e0ad4a));
+  --_warn-soft: var(--chat-warn-soft, light-dark(#faf3e4, #2a2417));
+  --_ok: var(--chat-ok, light-dark(#23804a, #4cc47f));
+  --_danger: var(--chat-danger, light-dark(#c03838, #f07474));
+  /* Space, radius, motion */
+  --_space-1: var(--chat-space-1, 4px);
+  --_space-2: var(--chat-space-2, 8px);
+  --_space-3: var(--chat-space-3, 12px);
+  --_space-4: var(--chat-space-4, 16px);
+  --_radius-sm: var(--chat-radius-sm, 6px);
+  --_radius: var(--chat-radius, 10px);
+  --_radius-lg: var(--chat-radius-lg, 14px);
+  --_radius-pill: var(--chat-radius-pill, 999px);
+  --_motion: var(--chat-motion, 120ms);
+  --_target: var(--chat-target, 24px);
+}
+
+/* The panel: the header, the feed taking the room left, the composer. Hosts may place the three
+   elements themselves instead. */
+.chat-panel {
+  display: flex; flex-direction: column; min-height: 0; height: 100%;
+  font: var(--_text) / 1.45 var(--_font); color: var(--_ink); background: var(--_surface);
+}
+.chat-panel > chat-feed { flex: 1; min-height: 0; }
+
+:where(chat-feed, chat-message, chat-approval, chat-composer, chat-header) { box-sizing: border-box; }
+:where(chat-feed, chat-message, chat-approval, chat-composer, chat-header) *,
+:where(chat-feed, chat-message, chat-approval, chat-composer, chat-header) *::before { box-sizing: inherit; }
+:where(chat-feed, chat-approval, chat-composer, chat-header) [hidden] { display: none !important; }
+:where(chat-feed, chat-approval, chat-composer, chat-header) :focus-visible {
+  outline: 2px solid var(--_focus); outline-offset: 2px;
+}
+
+/* Read by screen readers, not drawn. */
+.chat-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* A button: the header's and an approval's. */
+.chat-btn {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 30px; padding: 0 var(--_space-3);
+  font: var(--_medium) var(--_text-sm) / 1 var(--_font); color: var(--_ink-strong); white-space: nowrap;
+  background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius-sm); cursor: pointer;
+  transition: background var(--_motion);
+}
+.chat-btn:hover:not(:disabled), .chat-btn[data-look='hover'] { background: var(--_surface-sunken); }
+.chat-btn:active:not(:disabled) { transform: translateY(1px); }
+.chat-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.chat-btn-primary { color: var(--_ink-on-fill); background: var(--_accent-fill); border-color: var(--_accent-fill); }
+.chat-btn-primary:hover:not(:disabled), .chat-btn-primary[data-look='hover'] { background: var(--_accent-fill-hover); }
+
+/* A chip: a card (its number) or a note, sent with a message or attached in the composer. */
+.chat-chips { display: flex; flex-wrap: wrap; gap: var(--_space-1); margin: 0; padding: 0; list-style: none; }
+.chat-chip {
+  display: inline-flex; align-items: center; gap: var(--_space-1); max-width: 240px; min-height: var(--_target);
+  padding: 0 var(--_space-2) 0 3px; font: var(--_medium) var(--_text-sm) / 1.2 var(--_font); color: var(--_ink-strong);
+  background: var(--_accent-soft); border: 1px solid var(--_accent-line); border-radius: var(--_radius-pill);
+}
+.chat-chip-n {
+  flex: none; min-width: 18px; height: 18px; padding: 0 5px; display: grid; place-items: center;
+  font: var(--_bold) var(--_text-xs) / 1 var(--_font); color: var(--_ink-on-fill);
+  background: var(--_accent-fill); border-radius: var(--_radius-pill);
+}
+.chat-chip-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-chip-x {
+  flex: none; display: grid; place-items: center; width: var(--_target); height: var(--_target); margin-right: -6px; padding: 0;
+  color: var(--_ink); background: none; border: 0; border-radius: var(--_radius-pill); cursor: pointer;
+}
+.chat-chip-x:hover { color: var(--_ink-strong); background: var(--_accent-line); }

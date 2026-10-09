@@ -1,0 +1,27 @@
+/* <chat-header>: the agent and model on the first line, across the whole width so a picker always
+   shows its full label (FIX_01 ruling 6); the status (a dot and a word) under them, with Stop and
+   New session on its right. One shape in every state at a sidebar's width; a host narrower still
+   lets the model picker wrap to a line of its own. --_* properties: chat.css. */
+chat-header {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+  gap: var(--_space-1) var(--_space-3); padding: var(--_space-2) var(--_space-3);
+  font: var(--_text) / 1.3 var(--_font); color: var(--_ink); border-bottom: 1px solid var(--_line);
+}
+chat-header .chat-hd-who { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-1) var(--_space-2); min-width: 0; }
+chat-header .chat-hd-agent { font-weight: var(--_bold); color: var(--_ink-strong); }
+chat-header .chat-hd-model { color: var(--_ink-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+chat-header .chat-hd-sep { color: var(--_ink-subtle); }
+/* A picker never shrinks below its label. */
+chat-header .chat-hd-pick {
+  flex: none; max-width: 100%; height: 28px; padding: 0 var(--_space-1); font: inherit; color: var(--_ink-strong);
+  background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius-sm);
+}
+chat-header .chat-hd-status {
+  grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: var(--_space-2); margin: 0;
+  font: var(--_medium) var(--_text-sm) / 1.2 var(--_font); color: var(--_ink);
+}
+chat-header .chat-hd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--_ink-subtle); }
+chat-header .chat-hd-status[data-tone='active'] .chat-hd-dot { background: var(--_accent); }
+chat-header .chat-hd-status[data-tone='attention'] .chat-hd-dot { background: var(--_warn); }
+chat-header .chat-hd-status[data-tone='danger'] .chat-hd-dot { background: var(--_danger); }
+chat-header .chat-hd-acts { grid-column: 2; grid-row: 2; display: flex; gap: var(--_space-2); }

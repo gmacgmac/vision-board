@@ -1,0 +1,50 @@
+/* <chat-approval>: nclite's ApprovalAsk. A warn-edged card: the band (what kind of change, the time
+   left), the question, the subject in a mono block, then the answers, the allows on the left and
+   Deny alone on the right. Settled, it goes quiet and says how. --_* properties: chat.css. */
+chat-approval {
+  display: block; overflow: hidden; font: var(--_text) / 1.45 var(--_font); color: var(--_ink);
+  background: var(--_surface); border: 1px solid var(--_warn); border-radius: var(--_radius-lg);
+}
+chat-approval .chat-ask-band {
+  display: flex; align-items: center; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3);
+  background: var(--_warn-soft); border-bottom: 1px solid var(--_line);
+}
+chat-approval .chat-ask-family {
+  font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_warn);
+}
+chat-approval .chat-ask-ttl { margin-left: auto; font: var(--_text-sm) / 1.2 var(--_font-mono); color: var(--_ink); }
+chat-approval .chat-ask-what { margin: var(--_space-3) var(--_space-3) 0; font-weight: var(--_bold); color: var(--_ink-strong); }
+chat-approval :is(.chat-ask-subject, .chat-ask-preview) {
+  margin: var(--_space-2) var(--_space-3) 0; padding: var(--_space-2) var(--_space-3);
+  font: var(--_text-sm) / 1.5 var(--_font-mono); color: var(--_ink-strong);
+  background: var(--_surface-sunken); border: 1px solid var(--_line); border-radius: var(--_radius-sm);
+}
+chat-approval .chat-ask-subject { overflow-wrap: anywhere; }
+chat-approval .chat-ask-preview { max-height: 168px; overflow: auto; white-space: pre; }
+chat-approval :is(.chat-ask-risks, .chat-ask-paths) {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--_space-1) var(--_space-2); margin: var(--_space-2) var(--_space-3) 0;
+}
+chat-approval .chat-ask-key { font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.06em; text-transform: uppercase; color: var(--_ink-subtle); }
+chat-approval :is(.chat-ask-risks, .chat-ask-paths) ul { display: contents; }
+chat-approval :is(.chat-ask-risks, .chat-ask-paths) li {
+  list-style: none; padding: 1px var(--_space-2); font: var(--_text-xs) / 1.5 var(--_font-mono); color: var(--_ink-strong);
+  background: var(--_surface-sunken); border-radius: var(--_radius-sm);
+}
+chat-approval .chat-ask-risks li { box-shadow: inset 0 0 0 1px var(--_warn); }
+chat-approval .chat-ask-acts {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-2); padding: var(--_space-3);
+}
+/* Deny keeps its distance from the allows, alone at the end, so a slip can't cross; the time
+   line goes under them (nclite's narrow layout: a sidebar is never wide). */
+chat-approval .chat-btn[data-choice='deny'] { margin-left: auto; }
+chat-approval .chat-ask-lapse { order: 1; flex-basis: 100%; font-size: var(--_text-xs); color: var(--_ink-subtle); }
+chat-approval[aria-busy='true'] .chat-btn { cursor: progress; }
+chat-approval .chat-ask-outcome { margin: var(--_space-3); font: var(--_medium) var(--_text-sm) / 1.3 var(--_font); color: var(--_ink-subtle); }
+chat-approval .chat-ask-outcome[data-tone='ok'] { color: var(--_ok); }
+chat-approval .chat-ask-outcome[data-tone='danger'] { color: var(--_danger); }
+chat-approval .chat-ask-error { margin: 0 var(--_space-3) var(--_space-3); font-size: var(--_text-sm); color: var(--_danger); }
+
+/* Settled, closed or lapsed: nothing left to answer, so the card stops calling for attention. */
+chat-approval:not([data-phase='open']) { border-color: var(--_line-strong); }
+chat-approval:not([data-phase='open']) .chat-ask-band { background: var(--_surface-sunken); }
+chat-approval:not([data-phase='open']) .chat-ask-family { color: var(--_ink-subtle); }

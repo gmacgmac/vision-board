@@ -7,7 +7,8 @@
 // selection.ts and selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes,
 // sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts), versions.ts (the version
 // dropdown, the read-only past view), finder.ts (the container finder), board-edit.ts (New board,
-// Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards), parking.ts (handover, replies). Plain TypeScript (D-005).
+// Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards), parking.ts (handover, replies),
+// chat-bridge.ts (the chat panel's side of the board, chatPanel flag). Plain TypeScript (D-005).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -38,6 +39,7 @@ import { createUpdateFlow } from './update-flow.ts';
 import { createParking } from './parking.ts';
 import { containerRows, zoomToContainer } from './finder.ts';
 import type { CommandId } from './commands.ts';
+import type { ChatBridge } from './chat-bridge.ts';
 import { exposeWork } from './work.ts';
 import { pageFlags } from '../flags.ts';
 import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
@@ -66,7 +68,7 @@ export interface Board {
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-export function createBoard(els: BoardElements): Board {
+export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const { stage, world } = els;
   const vp = new Viewport(stage, world, flagOn('hideControlsZoomedOut', pageFlags())); // N13, rule 12
   // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests,
@@ -158,6 +160,7 @@ export function createBoard(els: BoardElements): Board {
     renderCounts();
     notes.place();
     flow.place();
+    chat?.drawn();
     if (drew) toast(`The agent drew v${shell.version}`);
   }
 
@@ -182,7 +185,7 @@ export function createBoard(els: BoardElements): Board {
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast,
   });
   const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
-    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw() });
+    readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chat?.source(n) });
   /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
   const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state,
     awaiting: () => attention.awaiting(), readOnly: () => !!versions.state });
@@ -212,6 +215,9 @@ export function createBoard(els: BoardElements): Board {
   vp.onApply = () => { notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
+  /** The chat panel's side of the board (chat-bridge.ts): chips from the notes and the selection, a change chip's zoom. */
+  const unchat = chat?.board({ stage, data: () => S.data, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
+    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id) });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({
@@ -246,19 +252,12 @@ export function createBoard(els: BoardElements): Board {
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
     pin: (id, box) => void places.pin(id, box), pinRegion: (region, at) => void frames.pin(region, at),
     frameStart: frames.start, frameMove: frames.move, frameEnd: (d) => void frames.end(d),
-    regionCommand: (_id, region) => notes.container(region, 'comment'),
-    unpin: (id) => void places.unpin(id),
-    layout: () => drawing.layout, view,
-    drawDrag: (layout, id) => drawing.wiresFor(layout, id),
+    regionCommand: (_id, region) => notes.container(region, 'comment'), unpin: (id) => void places.unpin(id),
+    layout: () => drawing.layout, view, drawDrag: (layout, id) => drawing.wiresFor(layout, id),
     carried: moves.carried, dragStart: moves.dragStart, dragOver: moves.dragOver,
     drop: (boxes, at) => void moves.drop(boxes, at),
-    step: (from, dir) => {
-      const next = focus.neighbour(from, dir);
-      if (next) drawing.cards.get(next)?.focus({ preventScroll: true });
-    },
-    command: (id, key) => flow.command(id, key),
-    toggleHide,
-    lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
+    step: (from, dir) => { const next = focus.neighbour(from, dir); if (next) drawing.cards.get(next)?.focus({ preventScroll: true }); },
+    command: (id, key) => flow.command(id, key), toggleHide, lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
     pick: (id, add) => { selection.select([id], add ? 'toggle' : 'only'); updates.saw([id]); },
     toggle: (id) => selection.select([id], 'toggle'), clear: () => { selection.clear(); flow.dismissArea(); },
     // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else clears the selection (ruling 1).
@@ -295,6 +294,6 @@ export function createBoard(els: BoardElements): Board {
     proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     saveBoard: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo }).save,
-    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy].forEach((f) => f()),
+    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, unchat ?? (() => {})].forEach((f) => f()),
   };
 }

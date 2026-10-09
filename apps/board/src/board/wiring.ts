@@ -124,10 +124,12 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     },
   });
   const unbindSize = bindSizeControl(stage);
-  window.addEventListener('resize', onResize);
+  // The stage's own size, not the window's: the chat sidebar (chatPanel flag) and the strips change it too.
+  const sized = new ResizeObserver(() => onResize());
+  sized.observe(stage);
   return () => {
     unbindKeys();
     unbindSize();
-    window.removeEventListener('resize', onResize);
+    sized.disconnect();
   };
 }

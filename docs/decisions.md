@@ -107,7 +107,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: none (maintainer ruling in chat).
 
 ## D-010 The board talks to the agent through kiro-cli
-- **Date**: 2026-10-01 · **Status**: Accepted · **From**: maintainer, first-look v2 item 25
+- **Date**: 2026-10-01 · **Status**: Superseded by D-036 · **From**: maintainer, first-look v2 item 25
 - **Decision**: The board has one chat, in a panel on the right, powered by kiro-cli (`kiro-cli
   acp`) running on the maintainer's subscription. The agent updates the board through a tool call
   that writes a validated view. Its final text appears in the chat. The person's notes enter the
@@ -431,3 +431,28 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: The maintainer judged it readable by eye in use.
 - **Alternative rejected**: Raising the dark value to `#b6b6be` (Lc 61.9).
 - **Task**: [[cortex-tasks/board/2026-10-08_board-app_stage5-follow-ups/PLAN.md]]
+
+## D-036 The chat panel drives CLI agents through our own adapters (replaces D-010)
+- **Date**: 2026-10-08 · **Status**: Accepted · **From**: maintainer (chat 279-313)
+- **Decision**: The board's chat panel drives a CLI agent through one adapter interface in
+  `packages/agent`, shaped after the Agent Client Protocol: Claude CLI first (one process per
+  message, stream-json, session resume), then Kiro CLI (ACP), others later. The CLI keeps its own
+  tools and settings; the board adds the vb MCP server and a pause before file edits and shell
+  commands that asks the person, as nclite gates its tools. No adapter packages. The chat record
+  is the CLI's own transcript, not the ledger.
+- **Why**: A native chat beside the board with the agents the person already uses, in a shape
+  that moves into nclite as a chat mode.
+- **Alternative rejected**: kiro-cli only with the narrowest tool set (D-010); the Claude ACP
+  adapter package (near-daily releases, bundles its own CLI).
+- **Task**: [[cortex-tasks/board/2026-10-08_board-agent_chat-panel/PLAN.md]]
+
+## D-037 `packages/chat`; the chat and agent packages stand alone
+- **Date**: 2026-10-08 · **Status**: Accepted · **From**: maintainer (chat 313)
+- **Decision**: A new package, `packages/chat`: the chat panel's framework-free core and plain web
+  components, styled only through `--chat-*` custom properties that each host maps to its
+  tokens. `packages/chat` and `packages/agent` import nothing from this repo (their D-016 layers
+  become empty); the board app holds the bridge between chat and board.
+- **Why**: The panel is built to become nclite's vision board chat mode.
+- **Alternative rejected**: Building the panel inside `apps/board`, which would tie it to the
+  board.
+- **Task**: [[cortex-tasks/board/2026-10-08_board-agent_chat-panel/PLAN.md]]

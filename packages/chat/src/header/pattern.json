@@ -1,0 +1,23 @@
+{
+  "name": "chat-header",
+  "title": "Chat header",
+  "tag": "chat-header",
+  "description": "The session's agent and model (a picker when there is a choice) on the first line, across the width so a picker always shows its full label; under them its status from the chat conditions table, with Stop and New session on the right.",
+  "files": {
+    "core": "header-core.ts (headerView, DEFAULT_MODEL; no DOM). The status: conditions.ts (chatStatus, canStop)",
+    "template": "header-template.ts (headerTemplate)",
+    "element": "chat-header.ts (defineChatHeader, ChatHeaderElement; light DOM)",
+    "styles": "header.css (through chat.css)"
+  },
+  "states": ["ready", "working", "waiting for you", "can't send", "stopped", "error", "with a picker"],
+  "attributes": { "data-status": "ready | busy | waiting | blocked | stopped | error" },
+  "methods": { "show(view)": "draws it from headerView; focus stays on the button it was on" },
+  "events": [
+    "chat-stop (bubbles): Stop pressed while a turn runs",
+    "chat-new-session (bubbles): the host confirms, then starts a session with no memory",
+    "chat-pick (bubbles): detail { field: 'agent' | 'model', id }, for the next session"
+  ],
+  "whenToUse": "Above the feed.",
+  "whenNotToUse": "The board's toolbar.",
+  "accessibility": "The status reads 'Status: Working'; its dot is decoration. Stop is disabled when there is nothing to stop. Pickers are labelled 'Agent' and 'Model'."
+}

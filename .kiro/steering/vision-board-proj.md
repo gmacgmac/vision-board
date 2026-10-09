@@ -182,6 +182,18 @@ Use these words consistently in code, docs and the UI.
 - **Note**: a person's comment pinned to one or more nodes.
 - **Decided**: an item whose response closes it; it moves out of the open set.
 
+## Running the board and connecting an agent
+
+- Board: `npm run board`, then open http://localhost:4466 (`npm run board:watch` reloads the page
+  on changes). One server per ledger; the lock refuses a second.
+- MCP server `vb` (any client): command `/usr/local/bin/node` (check `which node` on another
+  computer), args `["<repo>/packages/mcp/bin/vb-mcp.ts"]`, env
+  `{ "VB_SERVER": "http://127.0.0.1:4466" }`, where `<repo>` is this folder's absolute path.
+  Claude Code: `claude mcp add vb --env VB_SERVER=http://127.0.0.1:4466 -- <node>
+  <repo>/packages/mcp/bin/vb-mcp.ts` (add `-s user` for every project). Kiro: the same entry in
+  `.kiro/settings/mcp.json` or `~/.kiro/settings/mcp.json`. Leave `VB_AGENT_SECRET` unset so
+  each chat joins as its own agent. Details: `packages/mcp/README.md`.
+
 ## Running the prototype
 
 - Architect: `node prototypes/architect/app/server.mjs`, then open http://localhost:4455.

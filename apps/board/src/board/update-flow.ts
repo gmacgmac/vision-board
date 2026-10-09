@@ -40,6 +40,8 @@ export interface UpdateDeps {
   /** Send card seen lines in order (the sender). */
   seen(marks: readonly SeenMark[]): Promise<boolean>;
   redraw(): void;
+  /** The stepper's link to where card `n` was last changed (the chat, chat-bridge.ts), if anywhere. */
+  source?(n: number): string | undefined;
 }
 
 export interface UpdateFlow {
@@ -158,7 +160,8 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
       if (!d.readOnly() && fresh().has(n.n)) return { new: true };
       const o = open.get(n.n);
       const count = counts.get(n.n) ?? 0;
-      return o ? { updates: { count, steps: o.steps, at: o.at } } : count ? { updates: { count } } : NONE;
+      const source = o && d.source?.(n.n);
+      return o ? { updates: { count, steps: o.steps, at: o.at, ...(source && { source }) } } : count ? { updates: { count } } : NONE;
     },
     saw(ids) {
       const s = current();

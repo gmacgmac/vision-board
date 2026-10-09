@@ -8,9 +8,9 @@ keywords: [skill, agent, layout, grants, notes]
 
 # Skill notes
 
-Not instructions. A running record of what real use showed, so the skill rewrite (N17) starts
-from evidence. Add a dated line per observation; say who saw it. `SKILL.md` is still draft v0
-and describes the retired view files, so it needs a full rewrite on the MCP/API.
+Not instructions. A running record of what real use showed, so changes to the skill start from
+evidence. Add a dated line per observation; say who saw it. `SKILL.md` v1 (2026-10-09, chat-panel
+T_01) was written from these notes; `scenarios.md` holds the runs it is tested against.
 
 ## Choosing a layout
 
@@ -23,6 +23,14 @@ and describes the retired view files, so it needs a full rewrite on the MCP/API.
   every card, or put a stand-alone card in another container.
 - 2026-10-06, agent: the agent picks modes blind; it can't see the result without a browser.
   The skill should describe what each mode looks like.
+- 2026-10-09, maintainer (chat 345-348, after a Kiro run in the chat panel): links are not the
+  default. Card numbers already give the reading order (like numbered points in chat); a link
+  shows a real flow or dependency only. Information and choices stay unlinked. A board's
+  generic state is the grid, read in rows; flow is a specific layout someone picks for a flow.
+- 2026-10-09, orchestrator: in that run Kiro chose `list` for both containers (one column, so
+  the cards stacked downward) and linked the agenda cards ("then", "shapes"). Skill v1 steered
+  it there: its layout table suggests `list` for ordered items and says "link every card" in
+  flow and lanes, with no "don't link what isn't a flow". Fix in the skill's next version.
 
 ## Naming
 

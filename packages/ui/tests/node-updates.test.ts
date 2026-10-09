@@ -86,3 +86,10 @@ test('markup: what the text gained reads as Markdown, like the body it joins (VE
   assert.match(html, /<strong>declined<\/strong>/);
   assert.equal(html.includes('**'), false);
 });
+
+test('markup: a source link, escaped, only when the page gives one (the board\'s chat, chat-panel FE_02)', () => {
+  const one: CardStep[] = [{ ver: 2, when: 'now', changes: [] }];
+  const html = stepMarkup(withUpdates({ count: 1, steps: one, at: 0, source: 'Show <in> the chat' }).updates!);
+  assert.match(html, /<button type="button" class="vb-step-src" data-source>Show &#60;in&#62; the chat<\/button>$/);
+  assert.doesNotMatch(stepMarkup(withUpdates({ count: 1, steps: one, at: 0 }).updates!), /data-source/);
+});

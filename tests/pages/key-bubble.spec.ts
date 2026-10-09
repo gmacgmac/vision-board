@@ -89,7 +89,7 @@ test('flag off (?flags=-keyBubble): no bubble and no key bar', async ({ page }) 
 for (const theme of THEMES) {
   test(`axe passes with the bubble shut and open (${theme}), and the open list matches its screenshot`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page);
+    await openBoard(page, '?flags=-chatPanel');
     await expectCleanBoard(page);
     await button(page).focus();
     await expect(list(page)).toBeVisible();
@@ -114,7 +114,7 @@ test('gallery: the Key commands section shows by default and not with -keyBubble
 for (const theme of THEMES) {
   test(`gallery: the sample passes axe and matches its screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html');
+    await page.goto('/gallery.html?flags=-chatPanel');
     await expect(section(page)).toBeVisible();
     await expectNoAxeViolations(page);
     await expect(section(page)).toHaveScreenshot(`key-bubble-gallery-${theme}.png`);

@@ -116,6 +116,8 @@ export interface LedgerState extends DrawnState {
   rounds: Map<string, number>;
   /** n -> `seq` of the line that drew its first version: conditions `item.new`. */
   firstDrawn: Map<number, number>;
+  /** board -> its first card line and the index in `runs` of the run it came in (rounds.ts). */
+  firstCards: Map<string, { seq: number; run: number }>;
 }
 
 /** The last line of one run of drawing lines by one agent on one board, with no other line on
@@ -131,7 +133,7 @@ export const emptyState = (): LedgerState => ({
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
-  rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(),
+  rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */

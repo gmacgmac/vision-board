@@ -19,10 +19,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const SPEC = path.join(ROOT, 'packages/format/schema/openapi.json');
 export const OUT = path.join(ROOT, 'packages/format/src/operations.generated.ts');
 export const SCHEMA_DIR = path.join(ROOT, 'packages/format/schema');
+/** The format's schemas and the chat package's own contract (api.md 98), which the spec references by `$id`. */
+export const SCHEMA_DIRS = [SCHEMA_DIR, path.join(ROOT, 'packages/chat/schema')];
 export const COMMANDS_OUT = path.join(ROOT, 'packages/cli/src/commands.generated.ts');
 export const TOOLS_OUT = path.join(ROOT, 'packages/mcp/src/tools.generated.json');
 export const REFERENCE_OUT = path.join(ROOT, 'docs/specification/api-reference.md');
-const SCHEME_AUTH = { agentSecret: 'agent', personCookie: 'person' };
+const SCHEME_AUTH = { agentSecret: 'agent', personCookie: 'person', runToken: 'run' };
 
 /** Who a call needs to be: `none` when any caller may (an empty requirement is an alternative). */
 export function authOf(operationId, security) {
@@ -67,7 +69,7 @@ export function render(doc) {
     '// The route table: every operation\'s id, method, path and path parameters, whether agents get it,',
     '// and which credential it needs. Callers read this, never openapi.json, so the page bundle stays small.',
     '',
-    "export type OperationAuth = 'none' | 'agent' | 'person';",
+    "export type OperationAuth = 'none' | 'agent' | 'person' | 'run';",
     '',
     'export interface OperationInfo {',
     '  readonly operationId: string;',
@@ -78,7 +80,7 @@ export function render(doc) {
     '  readonly pathParams: readonly string[];',
     '  /** True when MCP and `vb` get this operation. */',
     '  readonly xAgent: boolean;',
-    '  /** `agent`: Bearer secret. `person`: the page cookie. `none`: no credentials needed. */',
+    '  /** `agent`: Bearer secret. `person`: the page cookie. `run`: a chat session\'s run token. `none`: no credentials needed. */',
     '  readonly auth: OperationAuth;',
     '}',
     '',
@@ -91,9 +93,9 @@ export function render(doc) {
   ].join('\n');
 }
 
-/** Every JSON Schema under `dir` (the vendored OpenAPI schema aside), by `$id`. */
-export function loadSchemas(dir = SCHEMA_DIR, out = new Map()) {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+/** Every JSON Schema under `dirs` (the vendored OpenAPI schema aside), by `$id`. */
+export function loadSchemas(dirs = SCHEMA_DIRS, out = new Map()) {
+  for (const dir of [dirs].flat()) for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const file = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name !== 'vendor') loadSchemas(file, out);

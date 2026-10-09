@@ -1,0 +1,45 @@
+/* The chat's --chat-* properties mapped to the board's tokens (D-037; packages/chat/src/chat.css
+   lists them with their neutral fallbacks). The chat reads nothing else, so this file is the
+   whole of how the board styles it. Colour pairs measured with APCA-W3 0.0.98G-4g, light and
+   dark (rule 3, D-035): cortex-tasks/board/2026-10-08_board-agent_chat-panel/FE_01_chat-package.md. */
+:root {
+  --chat-font: var(--vb-font);
+  --chat-font-mono: var(--vb-font-mono);
+  --chat-text: var(--vb-text-md);
+  --chat-text-sm: var(--vb-text-sm);
+  --chat-text-xs: var(--vb-text-xs);
+  --chat-weight-medium: var(--vb-weight-medium);
+  --chat-weight-bold: var(--vb-weight-bold);
+
+  --chat-ink-strong: var(--vb-ink-strong);
+  --chat-ink: var(--vb-ink);
+  --chat-ink-subtle: var(--vb-ink-subtle);
+  --chat-ink-on-fill: var(--vb-ink-on-fill);
+  --chat-surface: var(--vb-surface-region);
+  --chat-surface-sunken: var(--vb-surface-sunken);
+  --chat-line: var(--vb-line);
+  --chat-line-strong: var(--vb-line-strong);
+
+  --chat-accent: var(--vb-accent);
+  --chat-accent-fill: var(--vb-accent-fill);
+  --chat-accent-fill-hover: var(--vb-accent-fill-hover);
+  --chat-accent-soft: var(--vb-accent-soft);
+  --chat-accent-line: var(--vb-accent-line);
+  --chat-accent-text: var(--vb-accent-text);
+  --chat-focus: var(--vb-focus);
+
+  --chat-warn: var(--vb-state-context);
+  --chat-warn-soft: var(--vb-state-context-soft);
+  --chat-ok: var(--vb-state-ack);
+  --chat-danger: var(--vb-state-drop);
+
+  --chat-space-1: var(--vb-space-1);
+  --chat-space-2: var(--vb-space-2);
+  --chat-space-3: var(--vb-space-3);
+  --chat-space-4: var(--vb-space-4);
+  --chat-radius-sm: var(--vb-radius-sm);
+  --chat-radius: var(--vb-radius-md);
+  --chat-radius-lg: var(--vb-radius-lg);
+  --chat-radius-pill: var(--vb-radius-pill);
+  --chat-motion: var(--vb-motion-fast);
+}

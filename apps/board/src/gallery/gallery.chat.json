@@ -1,0 +1,30 @@
+{
+  "session": [
+    {"kind":"message_in","text":"Draw two questions for the release on the scratch board.","chips":[{"kind":"card","ref":3,"label":"Release plan"}],"at":"2026-10-08T21:39:08Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":1},
+    {"kind":"tool_activity","call":"toolu_fixture01","tool":"ToolSearch","state":"running","at":"2026-10-08T21:39:09Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":2},
+    {"kind":"tool_activity","call":"toolu_fixture01","tool":"ToolSearch","state":"done","at":"2026-10-08T21:39:10Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":3},
+    {"kind":"tool_activity","call":"toolu_fixture02","tool":"write_board","state":"running","board":"scratch","at":"2026-10-08T21:39:11Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":4},
+    {"kind":"tool_activity","call":"toolu_fixture02","tool":"write_board","state":"done","board":"scratch","cards":[1,2],"head":5,"at":"2026-10-08T21:39:12Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":5},
+    {"kind":"message_out","text":"I wrote the \"Scratch\" board in one call, with an `ideas` grid region holding the question cards \"Ship on Friday?\" and \"Add dark mode?\". All four items succeeded.","at":"2026-10-08T21:39:13Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":6},
+    {"kind":"system","text":"Done.","turn":"done","at":"2026-10-08T21:39:14Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":7},
+    {"kind":"message_in","text":"Now save a note to notes.txt.","chips":[{"kind":"note","ref":41,"label":"Keep a written record"}],"at":"2026-10-08T21:39:15Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":8},
+    {"kind":"tool_activity","call":"toolu_fixture03","tool":"Write","state":"running","at":"2026-10-08T21:39:16Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":9},
+    {"kind":"approval_request","approvalId":"ap-1","facts":{"kind":"write","op":"create","path":"/home/someone/project/notes.txt","preview":"hello\n"},"expiresAt":"2026-10-08T21:41:17Z","at":"2026-10-08T21:39:17Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":10},
+    {"kind":"approval_result","approvalId":"ap-1","approved":false,"status":"denied","at":"2026-10-08T21:39:18Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":11},
+    {"kind":"tool_activity","call":"toolu_fixture03","tool":"Write","state":"failed","at":"2026-10-08T21:39:19Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":12},
+    {"kind":"message_out","text":"The write was refused, so `notes.txt` was not created.","at":"2026-10-08T21:39:20Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":13},
+    {"kind":"system","text":"Done.","turn":"done","at":"2026-10-08T21:39:21Z","session":"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37","seq":14}
+  ],
+  "stopped": [
+    {"kind":"message_in","text":"Run the tests and tell me what fails.","at":"2026-10-08T21:45:00Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":1},
+    {"kind":"tool_activity","call":"toolu_fixture10","tool":"Bash","state":"running","at":"2026-10-08T21:45:01Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":2},
+    {"kind":"approval_request","approvalId":"ap-2","facts":{"kind":"command","command":"npm test","risks":[],"paths":[]},"expiresAt":"2026-10-08T21:47:02Z","at":"2026-10-08T21:45:02Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":3},
+    {"kind":"approval_result","approvalId":"ap-2","approved":false,"status":"released","at":"2026-10-08T21:45:03Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":4},
+    {"kind":"tool_activity","call":"toolu_fixture10","tool":"Bash","state":"failed","at":"2026-10-08T21:45:04Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":5},
+    {"kind":"system","text":"Stopped.","turn":"stopped","at":"2026-10-08T21:45:05Z","session":"7d2e9b14-0c3a-4f5e-8b61-2a9c4d7e3f10","seq":6}
+  ],
+  "error": [
+    {"kind":"message_in","text":"Tidy up the board.","at":"2026-10-08T21:50:00Z","session":"c41f8a27-6e9d-4b30-a5c2-8f1e7d3b9a64","seq":1},
+    {"kind":"system","text":"Claude Code ended without a result.","turn":"error","at":"2026-10-08T21:50:01Z","session":"c41f8a27-6e9d-4b30-a5c2-8f1e7d3b9a64","seq":2}
+  ]
+}

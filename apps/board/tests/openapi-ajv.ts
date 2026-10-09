@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv/dist/2020.js';
-import { SCHEMA_BASE, schemaFiles } from '../server/schema.ts';
+import { SCHEMA_BASE, allSchemaFiles } from '../server/schema.ts';
 
 export type Rec = Record<string, any>;
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -48,7 +48,7 @@ export function forAjv(node: any): any {
   return out;
 }
 export const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, discriminator: true });
-for (const { schema } of schemaFiles()) ajv.addSchema(schema);
+for (const { schema } of allSchemaFiles()) ajv.addSchema(schema);
 ajv.addSchema({ $id: COMPONENTS_ID, $defs: forAjv(doc.components.schemas) });
 const compiled = new Map<string, ValidateFunction>();
 export function compileInline(schema: Rec): ValidateFunction {

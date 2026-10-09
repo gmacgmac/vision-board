@@ -42,7 +42,13 @@ the body. The page calls the server only through `packages/client`, wrapped by
 operation's `security`: the person by the `vb_person` cookie set with the page (fresh at each start),
 an agent by its Bearer secret. `server/agents.ts` is the only module that touches
 `.visionboard/agents.json` (one SHA-256 per agent, git-ignored), and `server/write-board.ts` runs a
-`write_board` batch item by item (keys, `base`, grants, then the ledger module).
+`write_board` batch item by item (keys, `base`, grants, then the ledger module). The chat routes
+(`server/chat.ts`, api.md 98-107) run sessions through `packages/agent`: `server/chat-sessions.ts`
+starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
+module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the
+session's agent and gives its secret to the vb MCP server only, `server/chat-session.ts` stamps and
+streams a session's events, `server/chat-approvals.ts` holds the gate's asks, and
+`server/chat-prompt.ts` spells out the message's chips.
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the

@@ -126,14 +126,15 @@ export interface CardStep { ver: number; when: string; agent?: string; changes: 
 
 /** A changed card (`item.unseen`, past version 1): `count`, the versions the person has not seen;
  *  while the stepper is open, `steps`, the versions it steps through, oldest first, and `at`, the one
- *  shown, `steps.length` once past the last ("You're up to date"). */
-export interface CardUpdates { count: number; steps?: readonly CardStep[]; at?: number }
+ *  shown, `steps.length` once past the last ("You're up to date"); `source`, the words of a link to
+ *  where its latest change came from (the board's chat, chat-panel FE_02), none for no link. */
+export interface CardUpdates { count: number; steps?: readonly CardStep[]; at?: number; source?: string }
 
 /** One change chip: "+ body", "~ title", "- tags". */
 export interface UpdateChip { change: Change; text: string }
 
 /** The step shown: the section's name, its line, chips and what the text gained; the footer's count. */
-export interface UpdateStep { label: string; head: string; chips: UpdateChip[]; lines: string[]; count: string; first: boolean }
+export interface UpdateStep { label: string; head: string; chips: UpdateChip[]; lines: string[]; count: string; first: boolean; source?: string }
 
 /** The "N updates" tab and the stepper (mockup 03 Part B, option B). `tab` is empty once up to date. */
 export interface UpdatesView { tab: string; label: string; open: boolean; done: boolean; step?: UpdateStep }
@@ -159,8 +160,7 @@ function stepLines(changes: readonly FieldChange[]): string[] {
 /** The tab and the stepper for a changed item; undefined with nothing unseen and no stepper open. */
 export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefined {
   if (!isItem(n) || !u || (!u.steps && u.count < 1)) return undefined;
-  const { steps } = u;
-  const k = steps?.length ?? u.count;
+  const { steps } = u, k = steps?.length ?? u.count;
   const tab = `${k} update${k === 1 ? '' : 's'}`;
   const at = u.at ?? 0;
   if (!steps) return { tab, label: `${tab} since you last looked. Show them`, open: false, done: false };
@@ -170,7 +170,7 @@ export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefin
   return {
     tab, label: `${tab} since you last looked. Hide them`, open: true, done: false,
     step: {
-      label: `${count}, v${s.ver}`, head: `v${s.ver} · ${s.when} · ${s.agent ?? 'the agent'}`, count, first: at === 0,
+      label: `${count}, v${s.ver}`, head: `v${s.ver} · ${s.when} · ${s.agent ?? 'the agent'}`, count, first: at === 0, ...(u.source && { source: u.source }),
       chips: s.changes.map((c) => ({ change: c.change, text: `${SIGN[c.change]} ${c.field}` })), lines: stepLines(s.changes),
     },
   };

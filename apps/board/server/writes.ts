@@ -24,7 +24,7 @@ const invalid = (errors: { pointer: string; detail: string }[]) =>
   problem('invalid', 'The request does not fit the schema. Fix the fields listed in errors and send it again.', { errors });
 
 /** The body, checked against the operation's request schema. */
-async function body(id: OperationId, req: Ctx['req'], limit = BODY_LIMIT): Promise<Record<string, unknown>> {
+export async function body(id: OperationId, req: Ctx['req'], limit = BODY_LIMIT): Promise<Record<string, unknown>> {
   const value = await readJson(req, limit);
   const errors = bodyProblems(id, value);
   if (errors.length) throw invalid(errors);

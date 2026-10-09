@@ -1,0 +1,23 @@
+{
+  "name": "chat-feed",
+  "title": "Chat feed",
+  "tag": "chat-feed",
+  "description": "The conversation: the person's messages with their chips, the agent's words (interim, then the reply), a change chip for each board write, approval cards settled in place and system lines; under it one quiet status line while the agent works. Tools never show raw (PLAN ruling 6).",
+  "files": {
+    "core": "feed-core.ts (applyEvent, applyEvents, EMPTY_CHAT, ChatState, FeedEntry, activityLine, changeLabel; no DOM)",
+    "template": "feed-template.ts (feedTemplate, systemTemplate, changeTemplate)",
+    "element": "chat-feed.ts (defineChatFeed, ChatFeedElement; light DOM)",
+    "styles": "feed.css (through chat.css; --chat-* only)"
+  },
+  "states": ["empty", "thinking", "tool running", "drawing on the board", "writing", "waiting for an answer", "stopped", "error"],
+  "attributes": { "data-busy": "true while a turn runs (set by show)" },
+  "methods": {
+    "configure(o)": "render (the host's Markdown renderer), boardName (a board's title for change chips), empty, label, clock",
+    "show(state)": "draws the state from the core: adds and redraws only new or changed entries (an unchanged entry is the same object), keeps the view at the bottom when it was there, ticks open approvals every second",
+    "answerFailed(approvalId, message)": "the answer did not go through: its card says why and takes clicks again"
+  },
+  "events": ["chat-change (bubbles): detail { board, cards, head? }, a change chip clicked; the host shows the cards"],
+  "whenToUse": "The words of one chat session, beside the board or in another host.",
+  "whenNotToUse": "The board's own history (the ledger), or anything a tool returned raw.",
+  "accessibility": "The log is role=log, polite, named 'Conversation' and focusable so it scrolls by keyboard. Each message starts with a hidden 'You:' or 'Agent:'. The status line is role=status, outside the log. Change chips are buttons."
+}

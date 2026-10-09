@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -1345,6 +1345,518 @@
           }
         }
       }
+    },
+    "/api/boards/{board}/chats": {
+      "get": {
+        "operationId": "list_chats",
+        "x-agent": false,
+        "summary": "List a board's chat sessions",
+        "description": "List the chat sessions on a board, newest first; the first is the one in use. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The board's sessions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/chatListResponse"
+                },
+                "example": {
+                  "sessions": [
+                    {
+                      "session": "3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37",
+                      "board": "pricing",
+                      "agent": "claude",
+                      "model": "opus",
+                      "created": "2026-10-08T09:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "start_chat",
+        "x-agent": false,
+        "summary": "Start a chat session on a board",
+        "description": "Start a new chat session on a board with a command-line agent (`claude` or `kiro`) and, optionally, a model. The new session replaces the board's current one and starts with no memory; starting it is the person's click, so it grants the board to the session's agent. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the session.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/chatStartRequest"
+              },
+              "example": {
+                "agent": "claude",
+                "model": "opus"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new session.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/chatSession"
+                },
+                "example": {
+                  "session": "3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37",
+                  "board": "pricing",
+                  "agent": "claude",
+                  "model": "opus",
+                  "created": "2026-10-08T09:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/chats/{session}/messages": {
+      "post": {
+        "operationId": "send_chat",
+        "x-agent": false,
+        "summary": "Send the person's message to the agent",
+        "description": "Send the person's message to the session's agent, with notes (by `seq`) and cards (by number) attached as chips; it also sends the board's round, as the board's Send does. The agent answers on the session's event stream. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `message_in` event, at once; `conflict` while the agent is still answering.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sessionPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/chatMessageRequest"
+              },
+              "example": {
+                "text": "Draw the pricing options.",
+                "cards": [
+                  4
+                ],
+                "notes": [
+                  81
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "The message, as its event; the agent is answering.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/chatEvent"
+                },
+                "example": {
+                  "at": "2026-10-08T09:00:00Z",
+                  "session": "3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37",
+                  "seq": 1,
+                  "kind": "message_in",
+                  "text": "Draw the pricing options.",
+                  "chips": [
+                    {
+                      "kind": "card",
+                      "ref": 4,
+                      "label": "Pricing tiers"
+                    },
+                    {
+                      "kind": "note",
+                      "ref": 81,
+                      "label": "Too many tiers?"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/chatConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/chats/{session}/stop": {
+      "post": {
+        "operationId": "stop_chat",
+        "x-agent": false,
+        "summary": "Stop the agent's turn",
+        "description": "Stop the agent's turn in a session: its process is ended and any approval still waiting is released, denied. The session stays and can take the next message. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns `stopped`, false when nothing was running.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sessionPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Whether a turn was stopped.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/chatStopResponse"
+                },
+                "example": {
+                  "stopped": true
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/chats/{session}/approvals/{approval}": {
+      "post": {
+        "operationId": "answer_approval",
+        "x-agent": false,
+        "summary": "Answer an approval",
+        "description": "Allow or deny a file change or command the agent is waiting on, `once` (the default) or for the rest of the `session` for that kind of change. The first answer wins: an approval already settled is a `conflict`, and one past its time limit stays denied. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `approval_result` event.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sessionPath"
+          },
+          {
+            "$ref": "#/components/parameters/approvalPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/approvalAnswer"
+              },
+              "example": {
+                "approved": true,
+                "scope": "once"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The settled approval, as its event.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/chatEvent"
+                },
+                "example": {
+                  "at": "2026-10-08T09:00:00Z",
+                  "session": "3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37",
+                  "seq": 7,
+                  "kind": "approval_result",
+                  "approvalId": "ap-1",
+                  "approved": true,
+                  "status": "approved",
+                  "scope": "once"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/chatConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/chats/{session}/events": {
+      "get": {
+        "operationId": "watch_chat",
+        "x-agent": false,
+        "summary": "Watch a chat session",
+        "description": "Stream a session's chat events as server-sent `chat` events, each with its `seq` as the event id: first every event after `after`, then each new one as it happens. A client that reconnects passes the last `seq` it saw. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. The connection stays open until the client closes it.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sessionPath"
+          },
+          {
+            "$ref": "#/components/parameters/chatAfter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream of server-sent events.",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "$ref": "#/components/schemas/sseChat"
+                },
+                "examples": {
+                  "text": {
+                    "summary": "The agent's words",
+                    "dataValue": {
+                      "id": "3",
+                      "event": "chat",
+                      "data": "{\"at\":\"2026-10-08T09:00:00Z\",\"session\":\"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37\",\"seq\":3,\"kind\":\"message_out\",\"text\":\"I drew three options.\"}"
+                    },
+                    "serializedValue": "id: 3\nevent: chat\ndata: {\"at\":\"2026-10-08T09:00:00Z\",\"session\":\"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37\",\"seq\":3,\"kind\":\"message_out\",\"text\":\"I drew three options.\"}\n\n"
+                  },
+                  "write": {
+                    "summary": "A board write, done",
+                    "dataValue": {
+                      "id": "4",
+                      "event": "chat",
+                      "data": "{\"at\":\"2026-10-08T09:00:00Z\",\"session\":\"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37\",\"seq\":4,\"kind\":\"tool_activity\",\"call\":\"toolu-01\",\"tool\":\"write_board\",\"state\":\"done\",\"board\":\"pricing\",\"cards\":[4,5,6],\"head\":91}"
+                    },
+                    "serializedValue": "id: 4\nevent: chat\ndata: {\"at\":\"2026-10-08T09:00:00Z\",\"session\":\"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37\",\"seq\":4,\"kind\":\"tool_activity\",\"call\":\"toolu-01\",\"tool\":\"write_board\",\"state\":\"done\",\"board\":\"pricing\",\"cards\":[4,5,6],\"head\":91}\n\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/chatNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/run/approvals": {
+      "post": {
+        "operationId": "ask_approval",
+        "x-agent": false,
+        "summary": "Ask the person before a file change or command",
+        "description": "Tell the server, as facts, what the agent is about to change (a file write) or run (a shell command), and wait until it is settled. Only the gate hook of a running chat session calls this, with that session's run token; the person's cookie is refused with `forbidden`. The person is asked unless an answer kept for the session decides; silence past the time limit, a Stop or a new message is a denial. It returns `approved`, and how it was settled.",
+        "security": [
+          {
+            "runToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/approvalFacts"
+              },
+              "examples": {
+                "write": {
+                  "summary": "A file edit",
+                  "dataValue": {
+                    "kind": "write",
+                    "op": "edit",
+                    "path": "/home/someone/project/notes.md",
+                    "preview": "- old line\n+ new line"
+                  }
+                },
+                "command": {
+                  "summary": "A shell command",
+                  "dataValue": {
+                    "kind": "command",
+                    "command": "rm -rf build",
+                    "risks": [
+                      "rm-recursive"
+                    ],
+                    "paths": [
+                      "build"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "How it was settled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/approvalOutcome"
+                },
+                "example": {
+                  "approved": false,
+                  "status": "denied",
+                  "approvalId": "ap-1"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1361,6 +1873,12 @@
         "name": "vb_person",
         "description": "Set by the server when it serves the board page; the page sends it.",
         "x-comment": "Was: api.md 20"
+      },
+      "runToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The run token the server gives one chat session's gate hook, sent as `Authorization: Bearer <token>`. It opens only the gate's route, and only while that session runs.",
+        "x-comment": "Was: api.md 102"
       }
     },
     "schemas": {
@@ -1500,6 +2018,36 @@
         "discriminator": {
           "propertyName": "type"
         }
+      },
+      "chatEvent": {
+        "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json"
+      },
+      "approvalFacts": {
+        "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/facts"
+      },
+      "approvalAnswer": {
+        "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/answer"
+      },
+      "approvalOutcome": {
+        "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/outcome"
+      },
+      "chatStartRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/chat-start-request.schema.json"
+      },
+      "chatSession": {
+        "$ref": "https://vision-board.invalid/schema/api/chat-session.schema.json"
+      },
+      "chatListResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/chat-list-response.schema.json"
+      },
+      "chatMessageRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/chat-message-request.schema.json"
+      },
+      "chatStopResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/chat-stop-response.schema.json"
+      },
+      "sseChat": {
+        "$ref": "https://vision-board.invalid/schema/api/sse-chat.schema.json"
       }
     },
     "parameters": {
@@ -1573,6 +2121,33 @@
         "required": false,
         "schema": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/linked"
+        }
+      },
+      "sessionPath": {
+        "name": "session",
+        "in": "path",
+        "description": "The chat session id, from start_chat or list_chats.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/sessionId"
+        }
+      },
+      "approvalPath": {
+        "name": "approval",
+        "in": "path",
+        "description": "The approval id, from its approval_request event.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId"
+        }
+      },
+      "chatAfter": {
+        "name": "after",
+        "in": "query",
+        "description": "A chat event's `seq`: stream what came after it. 0 (the default) replays the session from the start.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/after"
         }
       }
     },
@@ -1743,6 +2318,38 @@
               "title": "Server error",
               "status": 500,
               "detail": "Something went wrong on the server. Try again; if it keeps failing, tell the person."
+            }
+          }
+        }
+      },
+      "chatNotFound": {
+        "description": "No such board, chat session or approval.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/not-found",
+              "title": "Not found",
+              "status": 404,
+              "detail": "There is no chat session \"3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37\" on this server. Call list_chats to see the board's sessions."
+            }
+          }
+        }
+      },
+      "chatConflict": {
+        "description": "The session is busy, or the approval is already settled.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/conflict",
+              "title": "Conflict",
+              "status": 409,
+              "detail": "The agent is still answering the last message. Wait for it, or press Stop."
             }
           }
         }

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/sse-chat.schema.json",
+  "title": "Chat event stream item",
+  "description": "A `chat` event whose `data` is one chat event as JSON and whose `id` is that event's `seq`.",
+  "$comment": "Was: api.md 101; OpenAPI 3.2.1 4.14.4",
+  "type": "object",
+  "required": ["event", "data", "id"],
+  "properties": {
+    "event": {"const": "chat", "description": "The event name; always `chat`."},
+    "id": {"type": "string", "pattern": "^[1-9][0-9]*$", "description": "The chat event's `seq`; a client that reconnects passes the last one as `after`."},
+    "data": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentSchema": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json"},
+      "description": "JSON text: one chat event."
+    },
+    "retry": {"type": "integer", "minimum": 0, "description": "How many milliseconds a client waits before it reconnects."}
+  },
+  "unevaluatedProperties": false
+}

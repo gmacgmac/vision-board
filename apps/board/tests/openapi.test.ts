@@ -55,7 +55,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.9.0');
+  assert.equal(doc.info.version, '1.10.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });
@@ -72,10 +72,11 @@ test('the OpenAPI check can fail: a misspelt field, a wrong type and a missing v
   assert.equal(broken((d) => { d.components.securitySchemes.agentSecret.type = 'bearer'; }), false);
 });
 
-test('security schemes: a Bearer secret and the vb_person cookie', () => {
+test('security schemes: a Bearer secret, the vb_person cookie and a Bearer run token', () => {
   assert.deepEqual([doc.components.securitySchemes.agentSecret.type, doc.components.securitySchemes.agentSecret.scheme], ['http', 'bearer']);
   const cookie = doc.components.securitySchemes.personCookie;
   assert.deepEqual([cookie.type, cookie.in, cookie.name], ['apiKey', 'cookie', 'vb_person']);
+  assert.deepEqual([doc.components.securitySchemes.runToken.type, doc.components.securitySchemes.runToken.scheme], ['http', 'bearer']);
 });
 
 // ---- 2. Our own checks (api.md 50, 52) ----
@@ -86,11 +87,11 @@ test('operationIds are unique snake_case names an MCP client accepts', () => {
   for (const id of ids) assert.match(id, /^[a-z][a-z0-9_]{0,39}$/, id);
 });
 
-test('x-agent is a boolean on every operation and true exactly for the agent rows of api.md', () => {
+test('x-agent is a boolean on every operation and true exactly for the agent rows of api.md (not person, page or gate)', () => {
   for (const { id, op } of ops) assert.equal(typeof op['x-agent'], 'boolean', id);
   for (const row of tableRows()) {
     const o = ops.find((x) => x.id === row.id);
-    assert.equal(o?.op['x-agent'], row.who !== 'person' && row.who !== 'page', row.id);
+    assert.equal(o?.op['x-agent'], !['person', 'page', 'gate'].includes(row.who), row.id);
   }
 });
 
@@ -212,7 +213,7 @@ test('every example validates against its schema, and every request and success 
 test('the serialized examples say the same as the data: jsonl lines and the server-sent event', () => {
   const ledger = doc.paths['/api/ledger'].get.responses['200'].content['application/jsonl'].examples.lines;
   assert.deepEqual(ledger.serializedValue.trim().split('\n').map((l: string) => JSON.parse(l)), ledger.dataValue);
-  const streams = ['/api/boards/{board}/events', '/api/events'].map((p) => doc.paths[p].get.responses['200'].content['text/event-stream']);
+  const streams = ['/api/boards/{board}/events', '/api/events', '/api/chats/{session}/events'].map((p) => doc.paths[p].get.responses['200'].content['text/event-stream']);
   for (const sse of streams.flatMap((s) => Object.values<Rec>(s.examples))) {
     const fields = Object.fromEntries(sse.serializedValue.trim().split('\n').map((l: string) => l.split(': ')));
     assert.deepEqual(fields, sse.dataValue);

@@ -6,6 +6,7 @@
 import type { ActEvent, ActionId, ActSize, LedgerEvent, Mode, NoteKind, View } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
+import type { ApprovalAnswer, ChatEvent } from '../../../../packages/chat/src/index.ts';
 
 /** One board as the page draws it. `versions`: node id -> latest `ver`, sent back with an act;
  * `head`: the ledger's latest `seq`; `access`: open grant requests and each region's holders. */
@@ -137,4 +138,69 @@ export function watchProject(on: ProjectEvents): () => void {
     if (event === 'change') on.change(Number(data.seq));
     else if (typeof data.build === 'string') on.build(data.build);
   }, () => on.open());
+}
+
+// ---- the chat (chat-panel FE_02, api.md 98-107) ---------------------------------------------
+
+/** One chat session on a board (`start_chat`, `list_chats`). */
+export interface ChatSessionInfo { session: string; board: string; agent: 'claude' | 'kiro'; model?: string; created: string }
+
+/** What a message carries: the words, the notes by `seq` and the cards by number. */
+export interface ChatMessageBody { text: string; notes?: number[]; cards?: number[] }
+
+const person = <T>(run: () => Promise<T>) => call(() => asPerson(run));
+
+/** The board's sessions, newest first; the first is the one in use. */
+export const listChats = (board: string) =>
+  person(() => client.call<{ sessions: ChatSessionInfo[] }>('list_chats', { board }));
+
+/** A new session on `board`; starting one grants the board to its agent (api.md 106). */
+export const startChat = (board: string, agent: ChatSessionInfo['agent'], model?: string) =>
+  person(() => client.call<ChatSessionInfo>('start_chat', { board, body: { agent, ...(model && { model }) } }));
+
+/** The person's message; the answer is its `message_in` event. `conflict` while the agent answers. */
+export const sendChat = (session: string, body: ChatMessageBody) =>
+  person(() => client.call<ChatEvent>('send_chat', { session, body }));
+
+export const stopChat = (session: string) => person(() => client.call<{ stopped: boolean }>('stop_chat', { session }));
+
+export const answerApproval = (session: string, approval: string, answer: ApprovalAnswer) =>
+  person(() => client.call('answer_approval', { session, approval, body: answer }));
+
+/** How long the chat stream waits before it opens again after it dropped. */
+const CHAT_RETRY_MS = 2000;
+
+/** Follow a session's events (`watch_chat`, like `watch_project`): every event after `after()`, then
+ * each new one. `first` is true for the first event after each (re)open. When the stream drops it
+ * opens again from the latest event held, after `check()` (a person call, so a stale cookie after a
+ * server restart reloads the page, `asPerson`). A stop function. */
+export function watchChat(session: string, after: () => number, on: (e: ChatEvent, first: boolean) => void, check: () => Promise<unknown>): () => void {
+  let source: EventSource | null = null;
+  let timer = 0;
+  let stopped = false;
+  const retry = () => {
+    timer = window.setTimeout(() => { check().then(open, () => { if (!stopped) retry(); }); }, CHAT_RETRY_MS);
+  };
+  function open() {
+    if (stopped) return;
+    let first = true;
+    const es = new EventSource(client.url('watch_chat', { session, after: after() }));
+    source = es;
+    es.addEventListener('chat', (m) => {
+      let e: ChatEvent;
+      try { e = JSON.parse((m as MessageEvent<string>).data) as ChatEvent; } catch { return; /* not JSON: ignored */ }
+      on(e, first);
+      first = false;
+    });
+    es.addEventListener('error', () => {
+      es.close();
+      if (!stopped && source === es) retry();
+    });
+  }
+  open();
+  return () => {
+    stopped = true;
+    clearTimeout(timer);
+    source?.close();
+  };
 }

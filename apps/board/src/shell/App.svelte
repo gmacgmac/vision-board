@@ -1,11 +1,11 @@
 <!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals bar (proposals
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
-     toast, the confirm dialog and the New board / Rename board dialog (boardEdit flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
+     the chat sidebar (chatPanel flag), toast, the confirm dialog and the New board / Rename board dialog (boardEdit flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { createBoard, type Board } from '../board/controller.ts';
-  import { shell } from './shell.svelte.ts';
+  import { askConfirm, shell, toast } from './shell.svelte.ts';
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
@@ -14,6 +14,9 @@
   import ProposalsBar from './ProposalsBar.svelte';
   import VersionBanner from './VersionBanner.svelte';
   import KeyHelp from './KeyHelp.svelte';
+  import ChatSidebar from './ChatSidebar.svelte';
+  import { createChatBridge } from '../board/chat-bridge.ts';
+  import { createChatPanel, type ChatPanel } from '../board/chat-panel.ts';
   import { flagOn } from '../../../../packages/format/src/index.ts';
   import { pageFlags } from '../flags.ts';
 
@@ -25,9 +28,27 @@
   let wiresTop: SVGSVGElement;
   let board: Board | null = $state(null);
   const keyBubble = flagOn('keyBubble', pageFlags());
+  /** The chat beside the board (chatPanel flag, chat-panel FE_02): the bridge joins its two sides. */
+  shell.chatPanel = flagOn('chatPanel', pageFlags());
+  const bridge = shell.chatPanel ? createChatBridge() : undefined;
+  let chat: ChatPanel | null = $state(null);
+  $effect(() => {
+    const [c, id, past] = [chat, shell.boardId, !!shell.past];
+    untrack(() => c?.show(id, past));
+  });
+
+  function hostChat(panel: HTMLElement) {
+    const c = createChatPanel(panel, {
+      bridge: bridge!, confirm: askConfirm, toast,
+      boardName: (id) => shell.boards.find((b) => b.board === id)?.title ?? id,
+      open: async () => { shell.chatOpen = true; await tick(); },
+    });
+    chat = c;
+    return () => { c.destroy(); chat = null; };
+  }
 
   onMount(() => {
-    const b = createBoard({ stage, world, regions, cards, wires, wiresTop });
+    const b = createBoard({ stage, world, regions, cards, wires, wiresTop }, bridge);
     board = b;
     void b.boot();
     return () => b.destroy();
@@ -70,6 +91,7 @@
 <ReplyPanel />
 
 {#if keyBubble}<KeyHelp />{/if}
+{#if bridge}<ChatSidebar onhost={hostChat} />{/if}
 
 <div id="toast" class="vb-toast" role="alert" hidden={!shell.toast} data-tone={shell.toast?.tone}>
   {shell.toast?.text ?? ''}

@@ -9,23 +9,26 @@ import type { Agents } from './agents.ts';
 import type { BuildWatch } from './build-watch.ts';
 import type { CallerEnv } from './callers.ts';
 import { callerOf } from './callers.ts';
+import type { Chats } from './chat-sessions.ts';
 import type { Caller, Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import type { ParamSpec } from './spec.ts';
 import { SPECS, coerce, paramProblems } from './spec.ts';
 
-/** What the server holds for every request: the callers' env, and the build in watch mode. */
-export interface ServerEnv extends CallerEnv { build?: BuildWatch | undefined }
+/** What the server holds for every request: the callers' env, the chat sessions, and the build in
+ * watch mode. */
+export interface ServerEnv extends CallerEnv { chats: () => Chats; build?: BuildWatch | undefined }
 
 /** What a handler gets: the request, its parsed parameters (defaults filled in), the ledger, the
- * agents store, the caller the operation's `security` allowed (api.md 20-22) and, in watch mode
- * only, the build being served (api.md 79). */
+ * agents store, the chat sessions, the caller the operation's `security` allowed (api.md 20-22)
+ * and, in watch mode only, the build being served (api.md 79). */
 export interface Ctx {
   req: IncomingMessage;
   res: ServerResponse;
   params: Record<string, unknown>;
   ledger: Ledger;
   agents: () => Agents;
+  chats: () => Chats;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
   build?: BuildWatch | undefined;
@@ -58,7 +61,7 @@ export function matchRoute(method: string, pathname: string):
   return allow.length ? { allow } : null;
 }
 
-const NAMES: Record<string, string> = { board: 'board id', n: 'node number', region: 'region id' };
+const NAMES: Record<string, string> = { board: 'board id', n: 'node number', region: 'region id', session: 'chat session id', approval: 'approval id' };
 
 function readParam(p: ParamSpec, raw: string): unknown {
   const value = coerce(p.type, raw);
@@ -109,5 +112,5 @@ export async function dispatch(
   }
   const params = readParams(match.id, match.raw, url.searchParams);
   const caller = callerOf(req, match.id, env);
-  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, caller, build: env.build });
+  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, chats: env.chats, caller, build: env.build });
 }

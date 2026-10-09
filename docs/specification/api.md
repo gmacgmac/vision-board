@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92)
+updated: 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -243,6 +243,13 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
 | `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
+| `start_chat` | `POST /api/boards/{board}/chats` | person | `{ agent, model? }`: a new chat session on the board, replacing its current one (101) |
+| `list_chats` | `GET /api/boards/{board}/chats` | person | `{ sessions }`, newest first; the first is the one in use (101) |
+| `send_chat` | `POST /api/chats/{session}/messages` | person | `{ text, notes?, cards? }`: the person's message and chips; 202 with its `message_in` event (101) |
+| `stop_chat` | `POST /api/chats/{session}/stop` | person | Stop the agent's turn; `{ stopped }` (101) |
+| `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on; the `approval_result` event (100, 101) |
+| `watch_chat` | `GET /api/chats/{session}/events` | person | Server-sent `chat` events after `after`, each with its `seq` as the id (101) |
+| `ask_approval` | `POST /api/run/approvals` | gate | Approval facts from a chat session's gate hook, with its run token; waits for the answer (102) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
@@ -612,12 +619,15 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 97. **`item.new`**, about a card, for the person, on the card (its NEW tab): an undecided item the
     agent first drew in the board's latest round, with no `seen` at any version: NEW only on a card
-    the agent adds after the person has already opened the board. A round starts at the first
+    the agent adds after the person has already opened the board and after its first drawing. A round starts at the first
     agent drawing line after a Send that came after the previous round's start; before any, at the
-    `head` of the person's first board seen on that board (87), so whatever was drawn when they
-    first opened it, by any number of agents, is never NEW, and with no board seen no card on it is
-    (`packages/actions/src/rounds.ts`; the fold's `rounds`, `firstDrawn` and `firstSeenBoards`,
-    beside `seenBoards`). It ends when the
+    later of the `head` of the person's first board seen on that board (87) and, when the board had
+    no card then, the end of the agent's first drawing with a card (the run its first card came in;
+    FIX_01 ruling 7). So whatever was drawn when they first opened it, by any number of agents, is
+    never NEW; a board opened while empty shows no NEW on its first drawing, even with a Send (a
+    chat message) before it, and no Send starts a round before the board's first card; with no
+    board seen no card on it is (`packages/actions/src/rounds.ts`; the fold's `rounds`,
+    `firstDrawn`, `firstCards` and `firstSeenBoards`, beside `seenBoards`). It ends when the
     person selects the card (its `seen`), acts on it (94), decides it, or the next round starts
     (a Send, then the agent drawing again). The page leaves a NEW card out of `item.unseen` (NEW
     only, no "N updates" tab); `list_open`'s `unseen` is unchanged, and agents are not told
@@ -626,3 +636,90 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     three, `item.unseen` by `select` and `act`, the rest by none of them. The page reads it
     (`clearsOnSelect(kind)`) to know which labels selecting a card ends, so it sends that card's
     `seen`; a test checks each row's `clearedBy` against the fold. No contract change.
+
+## The chat panel (chat-panel BE_01, D-036, D-037)
+
+98. **The chat's own contract.** A chat event belongs to the chat package, not the ledger:
+    `packages/chat/schema/chat-event.schema.json`, `$id` `.../schema/chat/1/chat-event.schema.json`,
+    versioned in its path like the ledger's. It references nothing in `packages/format` (D-037), so
+    it moves into nclite whole. The server's schema registry (`allSchemaFiles` in
+    `apps/board/server/schema.ts`) and the generators (`SCHEMA_DIRS` in `scripts/gen-api.mjs`) load
+    it beside the format's, and `openapi.json` references it by `$id` (`chatEvent`, `approvalFacts`,
+    `approvalAnswer`, `approvalOutcome`). `info.version` becomes 1.10.0. The ledger format does not
+    change: nothing about a chat is written to the ledger; the CLI's own transcript is the record.
+99. **Events** are `{ kind, at, session, seq, ... }`, closed, discriminated on `kind`. nclite's
+    kinds: `message_in` (`text`, `chips?` of `{ kind: note | card, ref, label }`), `message_out`
+    (`text`, and `interim: true` only for a finished block of text mid-turn; absent means the reply
+    the turn ended on, nclite's rule), `approval_request` (`approvalId`, `facts`, `expiresAt`),
+    `approval_result` (`approvalId`, `approved`, `status`, `scope?`) and `system` (`text`, and
+    `turn` of `done`, `stopped` or `error` when the line ends the agent's turn). New:
+    `tool_activity`, with the call's id (`call`), the tool's short name (`tool`), `state`
+    (`running`, `done`, `failed`) and, for a board write, `board`, `cards` and `head`. A tool's raw
+    input or output is never a field, and the schema refuses one. `seq` numbers a session's events
+    from 1; the host stamps `at`, `session` and `seq`.
+100. **Approvals** follow nclite (`container/approval-ask.ts`, `engine/approvals/facts.ts`): facts,
+    never a sentence. `write { op, path, preview? }`, `op` one of `create`, `replace`, `edit`,
+    `append`, with a preview of the change of up to 2000 characters; or `command { command, risks,
+    paths }`, where `risks` and `paths` may be empty (no risk patterns are matched yet). A path
+    holds no control, line-break or text-direction character. The person's answer is `{ approved,
+    scope? }`, `scope` `once` (the default) or `session` (that kind of change, for the rest of the
+    session). The gate is told `{ approved, status, approvalId?, scope?, asked? }`: `status` is
+    `approved`, `denied`, `expired` (nobody answered by `expiresAt`) or `released` (a Stop or a new
+    message ended the wait), `approved` is true exactly when `status` is `approved`, only a yes has
+    a `scope`, and `asked: false` means an answer kept for the session decided.
+101. **Sessions** (`start_chat`, `list_chats`): a session is `{ session, board, agent, model?,
+    created }`, `agent` `claude` or `kiro`. One per board is in use, the newest; starting one is
+    the person's click, so it grants the board to the session's agent. **Messages** (`send_chat`):
+    `{ text, notes?, cards? }`, notes by `seq` and cards by number, answered 202 with the
+    `message_in` event, or `conflict` while the agent is still answering. `stop_chat` answers `{
+    stopped }`. `answer_approval`: the first answer wins, and a settled approval is a `conflict`.
+    **The stream** (`watch_chat`) is `text/event-stream` of `chat` events
+    (`api/sse-chat.schema.json`), each with its `seq` as the event `id`: every event after `after`
+    (default 0, the whole session), then each new one, like `watch_project` (78).
+102. **Who.** Every chat route is the person's: `x-agent: false` and the `vb_person` cookie, refused
+    to an agent as in 20. The one exception is `ask_approval`, `POST /api/run/approvals` (nclite's
+    run door): only a running session's gate hook calls it, with that session's run token as
+    `Authorization: Bearer <token>` (the `runToken` scheme; `auth: 'run'` in the route table; `gate`
+    in the table above). The caller check refuses the person cookie there (`forbidden`) and a call
+    without a Bearer token (`not-authenticated`); the handler checks that the token names a running
+    session.
+103. *(Done by 105-107.)* **Until the server runs sessions** (chat-panel BE_03), `apps/board/server/chat.ts` answers every
+    chat route `not-found` and the gate `not-authenticated`, so the contract, the route table and
+    the caller checks come first (rule 6).
+104. How the chat pattern is built and how another host uses it: [chat.md](./chat.md).
+105. **The server's sessions** (chat-panel BE_03). `apps/board/server/chat-sessions.ts` is the only
+    thing that starts a CLI. Its index, `.visionboard/chat-sessions.json` (`chat-index.ts`, checked
+    on read and write, git-ignored, readable by this user only), keeps every session started, oldest
+    first: the session as `list_chats` shows it plus `agentId`, the board agent the server joined for
+    it (never a secret). A session not loaded since the server started is loaded on first use of any
+    of its routes, and its CLI resumes its own transcript. Events are kept in memory only and
+    numbered from 1 at each server start, so an `after` past the latest event starts the stream over.
+    A session loaded again after a restart starts with one `system` line (no `turn`): "Earlier
+    messages aren't shown after a restart; the agent still remembers them." (FIX_01 ruling 4).
+106. **The agent's board access** (`chat-access.ts`). On `start_chat` the server joins an agent
+    labelled `<CLI> chat <the session id's first 8 characters>`, appends its `grant-request` for the
+    board and the person's `grant` of it. The secret goes only into the vb MCP server's environment
+    (`VB_AGENT_SECRET`); with it set, the MCP instructions say not to join and to leave `secret`
+    out. Secrets are never stored: after a restart the same agent gets a fresh one (one more hash
+    in `agents.json`). The agent may call the vb tools, `ToolSearch`, `Read`, `Glob`, `Grep` and the
+    gated tools, which the gate asks about; its instructions are `skills/vision-board/SKILL.md`.
+107. **Turns and approvals** (`chat-session.ts`, `chat-approvals.ts`). `send_chat` records the
+    board's Send (`act` `send`) only once the message is accepted and its turn started; a message to
+    a session while a new one is starting on its board is a `conflict` (FIX_01 ruling 1), and the
+    page holds a message sent then until the new session has started and sends it there. The prompt is the text, then "Attached from
+    the board:" with each note's words and the cards it is on and each card's number and title,
+    then `Board: <id>`. A message while the turn runs releases its waiting approvals and is a
+    `conflict`. The run token (32 random bytes, per session and server start) opens `ask_approval`
+    only while a turn runs. An approval waits 120 seconds (`expired`); a yes for the `session` is
+    kept per kind of facts (`write` or `command`) while the session stays loaded. Stop, a new
+    session on the board and the server closing release the approvals and stop the CLI.
+108. **Kiro** (chat-panel BE_04). `start_chat` with `agent: 'kiro'` runs `kiro-cli acp` (engine v2, the
+    CLI's default) through `packages/agent/src/kiro.ts`; its session id is Kiro's own UUID, and the
+    CLI process stays up between turns (Stop sends `session/cancel` and kills it after 3 s only if
+    it ignores that; a new session on the board and the server closing end it). Kiro's permission requests become the
+    same `approval_request`/`answer_approval` flow: the `vb` tools and reading go unasked, a file
+    change or a command is asked, anything else is refused; a "for this session" yes is kept by the
+    server (Kiro is always answered with its one-time option). No model list is offered for Kiro
+    (`--model` is passed when a model is given). Usage is not reported by Kiro's ACP v2. A board
+    write's cards and head come from the tool call's `rawOutput` (kiro-cli 2.28.0 sends an MCP tool's
+    result there, `{ items: [{ Json: { content } }] }`, and no `content`), so its change chip zooms.

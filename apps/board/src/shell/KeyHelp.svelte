@@ -8,12 +8,14 @@
   import { onMount } from 'svelte';
   import { bindHoverTip } from '../../../../packages/ui/src/index.ts';
   import { keyGroups } from '../board/key-help.ts';
+  import { flagOn } from '../../../../packages/format/src/index.ts';
+  import { pageFlags } from '../flags.ts';
 
   let { placement = 'board' }: { placement?: 'board' | 'gallery' } = $props();
 
   const uid = $props.id();
   const OPEN = 'data-keys-open';
-  const groups = keyGroups();
+  const groups = keyGroups({ chat: flagOn('chatPanel', pageFlags()) });
   let host: HTMLElement;
   let button: HTMLButtonElement;
 

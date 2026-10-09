@@ -15,9 +15,13 @@ import '../../../../packages/ui/src/region/region-note.css';
 import '../../../../packages/ui/src/tip/tip.css';
 import '../../../../packages/ui/src/note-bubble/note-bubble.css';
 import '../../../../packages/ui/src/selection-bar/selection-bar.css';
+import '../../../../packages/chat/src/chat.css';
+import '../styles/chat-host.css';
+import '../styles/chat-sidebar.css';
 import './gallery.css';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
+import { defineChatElements } from '../../../../packages/chat/src/index.ts';
 import { pageFlags } from '../flags.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
@@ -36,6 +40,7 @@ import { appIconSection } from './app-icon-section.ts';
 import { parkingSection } from './parking-section.ts';
 import { proposalsSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
+import { chatSection } from './chat-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -122,9 +127,11 @@ function build(): void {
   if (flagOn('proposals', flags)) main.append(proposalsSection(fx));
   if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags)));
   if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
+  if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
 }
 
 defineBoardElements();
+defineChatElements();
 build();

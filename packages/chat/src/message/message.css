@@ -1,0 +1,18 @@
+/* <chat-message>: the person's words on the right in the accent's soft fill, with their chips
+   under them; the agent's on the left in the sunken fill. Words said partway through a turn are
+   drawn lighter: an outline, no fill. --_* properties: chat.css. */
+chat-message { display: flex; flex-direction: column; gap: var(--_space-1); min-width: 0; max-width: 88%; }
+chat-message[data-from='person'] { align-self: flex-end; align-items: flex-end; }
+chat-message[data-from='agent'] { align-self: flex-start; max-width: 100%; }
+chat-message .chat-bubble {
+  max-width: 100%; padding: var(--_space-2) var(--_space-3); overflow-wrap: anywhere;
+  font: var(--_text) / 1.5 var(--_font); color: var(--_ink-strong);
+  border: 1px solid transparent; border-radius: var(--_radius-lg);
+}
+chat-message[data-from='person'] .chat-bubble { background: var(--_accent-soft); border-color: var(--_accent-line); border-bottom-right-radius: var(--_radius-sm); }
+chat-message[data-from='agent'] .chat-bubble { color: var(--_ink); background: var(--_surface-sunken); border-bottom-left-radius: var(--_radius-sm); }
+chat-message[data-interim] .chat-bubble { background: none; border-color: var(--_line-strong); }
+chat-message .chat-bubble > :first-child { margin-top: 0; }
+chat-message .chat-bubble > :last-child { margin-bottom: 0; }
+chat-message :is(.chat-own, .chat-plain) { margin: 0; white-space: pre-wrap; }
+chat-message .chat-chips { justify-content: flex-end; }

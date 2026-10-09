@@ -41,7 +41,12 @@ body {
   .vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip-word {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
   }
-  .vb-toolbar-end :is(#hide, #theme, #reply-toggle) { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
+  .vb-toolbar-end :is(#hide, #theme, #reply-toggle, #chat-toggle) { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
+}
+/* A window under 1200px with every toolbar control showing (Chat, Send to agent): the gaps and side padding
+   tighten so the toolbar stays whole; the board picker keeps its 220px. */
+@media (max-width: 1200px) {
+  .vb-toolbar { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }
@@ -80,8 +85,9 @@ body {
   background-size: 22px 22px; }
 /* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset;
    --vb-banner-h the same for the past-version banner (VersionBanner.svelte), and --vb-proposals-h
-   for the proposals bar (ProposalsBar.svelte). */
-.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px) + var(--vb-proposals-h, 0px)) 0 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+   for the proposals bar (ProposalsBar.svelte); --vb-chat-w the chat sidebar's width while it is open
+   (ChatSidebar.svelte, styles/chat-sidebar.css), so the stage shrinks beside it. */
+.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px) + var(--vb-proposals-h, 0px)) var(--vb-chat-w, 0px) 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }
@@ -156,7 +162,7 @@ kbd {
 
 /* Reply panel */
 .vb-reply {
-  position: fixed; top: calc(var(--vb-toolbar-h) + var(--vb-space-3)); right: var(--vb-space-3); bottom: var(--vb-space-3);
+  position: fixed; top: calc(var(--vb-toolbar-h) + var(--vb-space-3)); right: calc(var(--vb-chat-w, 0px) + var(--vb-space-3)); bottom: var(--vb-space-3);
   width: min(420px, 92vw); z-index: 6; display: flex; flex-direction: column; gap: var(--vb-space-2);
   padding: var(--vb-space-4); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
   border: 1px solid var(--vb-line); box-shadow: var(--vb-shadow-lift);

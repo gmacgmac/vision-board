@@ -27,6 +27,12 @@ vb-node .vb-step-chips [data-change='changed'] { background: var(--vb-state-cont
 vb-node .vb-step-chips [data-change='removed'] { background: var(--vb-state-drop-soft); color: var(--vb-state-drop-fill); }
 vb-node .vb-step-line { font-size: var(--vb-text-sm); line-height: 1.45; color: var(--vb-ink); overflow-wrap: anywhere; }
 vb-node .vb-step-line .vb-md-p { font-size: inherit; line-height: inherit; }
+/* The link to where the change came from (the board's chat, chat-panel FE_02): a link's look, a button's job. */
+vb-node .vb-step-src {
+  justify-self: start; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--vb-accent-text); text-decoration: underline;
+}
+vb-node .vb-step-src:hover { text-decoration-thickness: 2px; }
 /* "You're up to date": it fades just before the page folds the section away (update-flow.ts
    UP_TO_DATE_MS); with reduced motion it stays until then. */
 vb-node .vb-step-done { font-size: var(--vb-text-sm); font-weight: var(--vb-weight-bold); color: var(--vb-state-ack); }

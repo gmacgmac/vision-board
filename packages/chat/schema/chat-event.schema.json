@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json",
+  "title": "Chat event",
+  "description": "One event in a chat session, by its `kind`: the person's message, the agent's words, a tool the agent is using, an approval asked or settled, or a system line. The host stamps `at`, `session` and `seq`. A tool's raw input and output are never part of an event.",
+  "$comment": "The chat package's own contract (D-036, D-037; api.md 98-101). Kinds follow nclite's EVENT_KINDS (engine/store/log.ts) plus tool_activity; approval facts follow nclite's container/approval-ask.ts. Versioned in the $id path like the ledger's.",
+  "type": "object",
+  "required": ["kind"],
+  "discriminator": {"propertyName": "kind"},
+  "oneOf": [
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/messageIn"},
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/messageOut"},
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/toolActivity"},
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalRequest"},
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalResult"},
+    {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/system"}
+  ],
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+      "description": "A UTC time, such as 2026-10-08T09:00:00Z."
+    },
+    "sessionId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "A chat session id: lowercase letters, digits and hyphens, up to 64, not starting with a hyphen (a UUID fits)."
+    },
+    "approvalId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "An approval id, as the approval request gave it: lowercase letters, digits and hyphens, up to 64."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The event's place in its session, from 1. A client that reconnects passes the last one it saw."
+    },
+    "text": {
+      "type": "string",
+      "pattern": "\\S",
+      "maxLength": 100000,
+      "description": "Words, not blank, up to 100,000 characters."
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^[^\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069]+$",
+      "description": "A file or folder path, up to 4096 characters, with no control, line-break or text-direction character.",
+      "$comment": "As nclite's LINE_BREAKING (engine/approvals/facts.ts): the path is the subject of the question the person reads."
+    },
+    "agent": {
+      "enum": ["claude", "kiro"],
+      "description": "Which command-line agent runs the session: `claude` (Claude Code) or `kiro` (Kiro CLI)."
+    },
+    "model": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\[\\]-]{0,79}$",
+      "description": "The model the agent uses, as the agent's own command line names it (such as `opus`); left out for the agent's default."
+    },
+    "stamp": {
+      "type": "object",
+      "description": "What every event carries: when, which session, and its place in the session.",
+      "required": ["kind", "at", "session", "seq"],
+      "properties": {
+        "at": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When it happened."},
+        "session": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/sessionId", "description": "The session it belongs to."},
+        "seq": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/seq"}
+      }
+    },
+    "chip": {
+      "type": "object",
+      "description": "Something the person attached to a message: one of their notes or one card.",
+      "required": ["kind", "ref", "label"],
+      "properties": {
+        "kind": {"enum": ["note", "card"], "description": "`note` (one of the person's notes) or `card`."},
+        "ref": {"type": "integer", "minimum": 1, "description": "The note's `seq`, or the card's number."},
+        "label": {"type": "string", "pattern": "\\S", "maxLength": 200, "description": "What the chip shows: the card's title, or the start of the note."}
+      },
+      "unevaluatedProperties": false
+    },
+    "messageIn": {
+      "type": "object",
+      "description": "The person's message.",
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"const": "message_in", "description": "Always `message_in`."},
+        "text": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/text", "description": "What the person wrote."},
+        "chips": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/chip"},
+          "description": "The notes and cards sent with it; left out when none."
+        }
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
+      "unevaluatedProperties": false
+    },
+    "messageOut": {
+      "type": "object",
+      "description": "The agent's words: a finished block of text partway through its turn (`interim`), or the reply it ended on.",
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"const": "message_out", "description": "Always `message_out`."},
+        "text": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/text", "description": "What the agent said."},
+        "interim": {"const": true, "description": "Present, and true, only for words said partway through the turn; absent means the reply the turn ended on."}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
+      "unevaluatedProperties": false
+    },
+    "toolActivity": {
+      "type": "object",
+      "description": "A tool the agent is using, by its short name and state. For a board write it also names the board, the cards and the ledger position, so the page can show what changed. Never the tool's raw input or output.",
+      "required": ["kind", "call", "tool", "state"],
+      "properties": {
+        "kind": {"const": "tool_activity", "description": "Always `tool_activity`."},
+        "call": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,128}$", "description": "The agent's id for this tool call, so its `running` and its end pair up."},
+        "tool": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,80}$", "description": "The tool's short name, such as `Read`, `Bash` or `write_board`."},
+        "state": {"enum": ["running", "done", "failed"], "description": "`running`, then `done` or `failed`."},
+        "board": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "For a board write: the board it wrote on."},
+        "cards": {
+          "type": "array",
+          "maxItems": 200,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1, "description": "A card number."},
+          "description": "For a board write that is done: the numbers of the cards it drew or changed."
+        },
+        "head": {"type": "integer", "minimum": 0, "description": "For a board write that is done: the ledger position after it."}
+      },
+      "dependentRequired": {"cards": ["board"], "head": ["board"]},
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
+      "unevaluatedProperties": false
+    },
+    "approvalRequest": {
+      "type": "object",
+      "description": "The agent is waiting to change a file or run a command until the person allows or denies it; silence past `expiresAt` is a denial.",
+      "required": ["kind", "approvalId", "facts", "expiresAt"],
+      "properties": {
+        "kind": {"const": "approval_request", "description": "Always `approval_request`."},
+        "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval's id; the person's answer names it."},
+        "facts": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/facts"},
+        "expiresAt": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When the request lapses, denied."}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
+      "unevaluatedProperties": false
+    },
+    "approvalResult": {
+      "type": "object",
+      "description": "How an approval was settled: allowed, denied, lapsed, or released by a Stop or a new message.",
+      "required": ["kind", "approvalId", "approved", "status"],
+      "properties": {
+        "kind": {"const": "approval_result", "description": "Always `approval_result`."},
+        "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval it settles."},
+        "approved": {"type": "boolean", "description": "True only when the person allowed it."},
+        "status": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/status"},
+        "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope"}
+      },
+      "allOf": [
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/settled"}
+      ],
+      "unevaluatedProperties": false
+    },
+    "system": {
+      "type": "object",
+      "description": "A line from the host, not the agent: a session started or resumed, a turn ended, stopped or failed.",
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {"const": "system", "description": "Always `system`."},
+        "text": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/text", "description": "What happened, in plain words."},
+        "turn": {"enum": ["done", "stopped", "error"], "description": "Present when this line ends the agent's turn: `done`, `stopped` (the person pressed Stop) or `error`."}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
+      "unevaluatedProperties": false
+    },
+    "writeFacts": {
+      "type": "object",
+      "description": "A file the agent is about to create or change.",
+      "required": ["kind", "op", "path"],
+      "properties": {
+        "kind": {"const": "write", "description": "Always `write`."},
+        "op": {"enum": ["create", "replace", "edit", "append"], "description": "`create` a new file, `replace` one whole, `edit` part of one, or `append` to one."},
+        "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "The file."},
+        "preview": {"type": "string", "maxLength": 2000, "description": "A short preview of the change, for the person to read; left out when there is nothing to show."}
+      },
+      "unevaluatedProperties": false
+    },
+    "commandFacts": {
+      "type": "object",
+      "description": "A shell command the agent is about to run.",
+      "required": ["kind", "command", "risks", "paths"],
+      "properties": {
+        "kind": {"const": "command", "description": "Always `command`."},
+        "command": {"type": "string", "pattern": "\\S", "maxLength": 20000, "description": "The command, exactly as it would run."},
+        "risks": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "A risk's name, such as `rm-recursive`."},
+          "description": "The names of the risky patterns the command matched; empty when none was recognised."
+        },
+        "paths": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path"},
+          "description": "The files and folders the command names; empty when none was recognised."
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "facts": {
+      "type": "object",
+      "description": "What the agent is about to do, as facts, never a sentence: a file write or a shell command.",
+      "required": ["kind"],
+      "discriminator": {"propertyName": "kind"},
+      "oneOf": [
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/writeFacts"},
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/commandFacts"}
+      ]
+    },
+    "status": {
+      "enum": ["approved", "denied", "expired", "released"],
+      "description": "`approved` or `denied` by the person (or by an answer kept for the session), `expired` (nobody answered in time) or `released` (a Stop or a new message ended the wait)."
+    },
+    "scope": {
+      "enum": ["once", "session"],
+      "description": "How long a yes holds: `once`, or for the rest of the `session` for that kind of change."
+    },
+    "settled": {
+      "description": "`approved` is true exactly when `status` is `approved`, and only a yes has a `scope`.",
+      "type": "object",
+      "if": {"type": "object", "required": ["status"], "properties": {"status": {"const": "approved"}}},
+      "then": {"type": "object", "properties": {"approved": {"const": true}}},
+      "else": {"type": "object", "properties": {"approved": {"const": false}}, "not": {"required": ["scope"]}}
+    },
+    "answer": {
+      "type": "object",
+      "description": "The person's answer to an approval request.",
+      "required": ["approved"],
+      "properties": {
+        "approved": {"type": "boolean", "description": "True to allow it, false to deny it. Required: there is no default."},
+        "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope", "description": "How long a yes holds: `once` (the default) or for the rest of the `session`."}
+      },
+      "unevaluatedProperties": false
+    },
+    "outcome": {
+      "type": "object",
+      "description": "What the gate is told: go on only when `approved` is true.",
+      "required": ["approved", "status"],
+      "properties": {
+        "approved": {"type": "boolean", "description": "True to go on; anything else is a refusal the agent is told."},
+        "status": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/status"},
+        "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval the person was asked; left out when nobody was asked."},
+        "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope"},
+        "asked": {"const": false, "description": "Present, and false, only when nobody was asked: an answer kept for the session decided."}
+      },
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/settled"}],
+      "unevaluatedProperties": false
+    }
+  }
+}

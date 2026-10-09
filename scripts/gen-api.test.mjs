@@ -18,6 +18,7 @@ test('auth: an empty requirement means anyone; otherwise the one scheme named', 
   assert.equal(authOf('x', [{}, { agentSecret: [] }]), 'none');
   assert.equal(authOf('x', [{ agentSecret: [] }]), 'agent');
   assert.equal(authOf('x', [{ personCookie: [] }]), 'person');
+  assert.equal(authOf('x', [{ runToken: [] }]), 'run');
   assert.throws(() => authOf('x', [{ agentSecret: [] }, { personCookie: [] }]), /one scheme/);
   assert.throws(() => authOf('x', [{ oauth: [] }]), /unknown security scheme/);
 });

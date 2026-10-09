@@ -1,0 +1,231 @@
+// The Kiro adapter end to end against a fake `kiro-cli acp` (tests/fake-kiro.ts) replaying one
+// recorded real turn: the handshake and the board's tool server in session/new (env as name/value
+// pairs, the secret there only); the instructions leading the first message only; the turn's
+// updates; the permission requests answered through the board's approval route (the board's own
+// tool without asking, a file change asked, the person's answer as the option); resuming with
+// session/load and the servers again; cancel; the time limit; a tool server that never starts; a
+// CLI that cannot start.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import type { AgentUpdate, Facts, KiroAdapterOptions, StartOptions } from '../src/index.ts';
+import { createKiroAdapter } from '../src/index.ts';
+import { FAKE_KIRO, KIRO_DENIED, KIRO_DRAW, collect } from './support.ts';
+
+const dir = mkdtempSync(path.join(tmpdir(), 'agent-kiro-'));
+const instructions = path.join(dir, 'instructions.md');
+writeFileSync(instructions, '# Instructions\nDraw on the board.\n');
+let notes = 0;
+
+/** A stand-in for the board's approval route: records the facts and the token, answers `approve`. */
+async function gateServer(approve: boolean) {
+  const asked: { facts: Facts; token: string | undefined }[] = [];
+  const server = http.createServer((req, res) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => {
+      asked.push({ facts: JSON.parse(body), token: req.headers.authorization });
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(approve ? { approved: true, status: 'approved', scope: 'once' } : { approved: false, status: 'denied' }));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/run/approvals`;
+  return { asked, url, close: () => { server.closeAllConnections(); server.close(); } };
+}
+
+const START = (url = 'http://127.0.0.1:1/api/run/approvals'): StartOptions => ({
+  cwd: dir,
+  mcpServers: { vb: { command: '/usr/local/bin/node', args: ['vb-mcp.ts'], env: { VB_SERVER: 'http://127.0.0.1:4466', VB_AGENT_SECRET: 'not-a-real-secret' } } },
+  instructionsFile: instructions,
+  allowedTools: ['mcp__vb__*'],
+  gate: { url, token: 'run-token' },
+});
+
+function fake(mode = 'replay', options: KiroAdapterOptions = {}, fixture = KIRO_DENIED) {
+  const note = path.join(dir, `note-${++notes}.jsonl`);
+  const env: NodeJS.ProcessEnv = { ...process.env, FAKE_KIRO_FIXTURE: fixture, FAKE_KIRO_MODE: mode, FAKE_KIRO_NOTE: note };
+  const adapter = createKiroAdapter({ command: { file: process.execPath, args: [FAKE_KIRO] }, env, log: () => {}, ...options });
+  const given = (): any[] => (existsSync(note) ? readFileSync(note, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
+  const sent = (method: string) => given().filter((n) => n.method === method);
+  return { adapter, given, sent };
+}
+
+const kinds = (updates: AgentUpdate[]) => updates.map((u) => (u.type === 'tool' ? `${u.tool}:${u.state}` : u.type));
+const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+const until = async (what: () => boolean) => { for (let i = 0; i < 300 && !what(); i++) await new Promise((r) => setTimeout(r, 20)); };
+test.after(() => rmSync(dir, { recursive: true, force: true }));
+
+test('a turn: handshake, the tool server in session/new, the instructions first, the updates, the permissions answered', async () => {
+  const gate = await gateServer(false);
+  const { adapter, sent, given } = fake();
+  assert.equal(adapter.agent, 'kiro');
+  const session = await adapter.start(START(gate.url));
+  assert.match(session.id, /^[a-z0-9][a-z0-9-]{0,63}$/);
+  assert.deepEqual(sent('initialize')[0].params.clientCapabilities, {}, 'no fs or terminal offered');
+  const [made] = sent('session/new');
+  assert.equal(made.params.cwd, dir);
+  assert.deepEqual(made.params.mcpServers, [{
+    name: 'vb', command: '/usr/local/bin/node', args: ['vb-mcp.ts'],
+    env: [{ name: 'VB_SERVER', value: 'http://127.0.0.1:4466' }, { name: 'VB_AGENT_SECRET', value: 'not-a-real-secret' }],
+  }]);
+  assert.ok(!made.args.join(' ').includes('not-a-real-secret'), 'the secret is not on the command line');
+
+  const updates = await collect(session.prompt('Draw two cards.'));
+  assert.deepEqual(kinds(updates), ['text', 'write_board:running', 'write:running', 'write_board:failed', 'write:failed', 'text', 'done']);
+  assert.deepEqual(updates[0], { type: 'text', text: 'I\'ll draw the two cards and create the file in parallel.', interim: true });
+  assert.deepEqual(updates[1], { type: 'tool', call: 'toolu-1', tool: 'write_board', state: 'running', board: 'pricing' });
+  assert.deepEqual(updates[2], { type: 'tool', call: 'toolu-2', tool: 'write', state: 'running' });
+  assert.deepEqual(updates[3], { type: 'tool', call: 'toolu-1', tool: 'write_board', state: 'failed', board: 'pricing' });
+  assert.equal((updates[5] as { interim: boolean }).interim, false);
+  assert.match((updates[5] as { text: string }).text, /^Both actions were denied/);
+  assert.deepEqual(updates[6], { type: 'done', usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 } });
+
+  const [asked] = sent('session/prompt');
+  assert.equal(asked.params.sessionId, session.id);
+  assert.ok(asked.params.prompt[0].text.startsWith('# Instructions\nDraw on the board.'));
+  assert.ok(asked.params.prompt[0].text.endsWith('Draw two cards.'));
+  // The board's own tool went ahead unasked; the file create was asked (facts, the run token), refused.
+  assert.deepEqual(gate.asked.map((a) => [a.token, a.facts]), [[
+    'Bearer run-token', { kind: 'write', op: 'create', path: '/private/work/project/note.txt', preview: 'hi\n' },
+  ]]);
+  const answers = Object.fromEntries(given().filter((n) => n.answered).map((n) => [n.answered, n.result.outcome.optionId]));
+  assert.deepEqual(answers, { 'req-1': 'reject_once', 'req-2': 'allow_once' }, 'req-1 the file (denied), req-2 the board tool (allowed)');
+  gate.close();
+  session.close?.();
+});
+
+test('a real successful board write: its cards and head come from the update\'s rawOutput, so the chip can zoom', async () => {
+  const { adapter, given } = fake('replay', {}, KIRO_DRAW);
+  const session = await adapter.start(START());
+  try {
+    const updates = await collect(session.prompt('Add one card.'));
+    assert.deepEqual(kinds(updates), ['text', 'write_board:running', 'write_board:done', 'text', 'done']);
+    assert.deepEqual(updates[2], { type: 'tool', call: 'toolu-1', tool: 'write_board', state: 'done', board: 'pricing', cards: [20], head: 57 });
+    assert.deepEqual(given().filter((n) => n.answered).map((n) => n.result.outcome.optionId), ['allow_once'], 'the board tool goes ahead unasked');
+  } finally { session.close?.(); }
+});
+
+test('the person\'s yes is the one-time allow option, and only that', async () => {
+  const gate = await gateServer(true);
+  const { adapter, given } = fake();
+  const session = await adapter.start(START(gate.url));
+  await collect(session.prompt('go'));
+  const options = given().filter((n) => n.answered).map((n) => n.result.outcome.optionId);
+  assert.deepEqual(options.sort(), ['allow_once', 'allow_once']);
+  gate.close();
+  session.close?.();
+});
+
+test('an unreachable approval route is a refusal, never a yes', async () => {
+  const { adapter, given } = fake();
+  const session = await adapter.start(START());
+  await collect(session.prompt('go'));
+  assert.deepEqual(given().filter((n) => n.answered).map((n) => n.result.outcome.optionId).sort(), ['allow_once', 'reject_once']);
+  session.close?.();
+});
+
+test('the instructions lead the first message only; a loaded session never gets them again', async () => {
+  const { adapter, sent } = fake();
+  const first = await adapter.start(START());
+  await collect(first.prompt('one'));
+  await collect(first.prompt('two'));
+  assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two');
+  first.close?.();
+  const resumed = fake();
+  const again = await resumed.adapter.start({ ...START(), sessionId: first.id });
+  await collect(again.prompt('three'));
+  assert.equal(resumed.sent('session/prompt')[0].params.prompt[0].text, 'three');
+  again.close?.();
+});
+
+test('resume: session/load with the id and the tool servers again; the replayed history is not a turn', async () => {
+  const { adapter, sent } = fake();
+  const session = await adapter.start({ ...START(), sessionId: '00000000-0000-4000-8000-000000000001' });
+  const [loaded] = sent('session/load');
+  assert.equal(loaded.params.sessionId, '00000000-0000-4000-8000-000000000001');
+  assert.equal(loaded.params.mcpServers[0].name, 'vb');
+  assert.equal(loaded.params.mcpServers[0].env[1].name, 'VB_AGENT_SECRET');
+  assert.equal(sent('session/new').length, 0);
+  const updates = await collect(session.prompt('hi'));
+  assert.ok(!updates.some((u) => u.type === 'text' && /earlier/.test(u.text)), 'replayed history is dropped');
+  await assert.rejects(adapter.start({ ...START(), sessionId: 'Not A Session' }), /Not a session id/);
+  session.close?.();
+});
+
+test('a model is passed on the command line', async () => {
+  const { adapter, sent } = fake();
+  const session = await adapter.start({ ...START(), model: 'claude-sonnet-4' });
+  assert.deepEqual(sent('initialize')[0].args.slice(-2), ['--model', 'claude-sonnet-4']);
+  session.close?.();
+});
+
+test('cancel: session/cancel ends the turn stopped; close ends the process', async () => {
+  const { adapter, sent, given } = fake('hang');
+  const session = await adapter.start(START());
+  const turn = collect(session.prompt('wait'));
+  await until(() => sent('session/prompt').length > 0);
+  session.cancel();
+  assert.deepEqual(kinds(await turn), ['text', 'stopped']);
+  assert.equal(sent('session/cancel')[0].params.sessionId, session.id);
+  const { pid } = given()[0];
+  assert.equal(alive(pid), true, 'the process stays for the next turn');
+  session.close?.();
+  await until(() => !alive(pid));
+  assert.equal(alive(pid), false);
+});
+
+test('cancel: a Kiro that ignores it is killed after the grace', async () => {
+  const { adapter, sent, given } = fake('stubborn', { killGraceMs: 200 });
+  const session = await adapter.start(START());
+  const turn = collect(session.prompt('wait'));
+  await until(() => sent('session/prompt').length > 0);
+  await new Promise((r) => setTimeout(r, 300));
+  const at = Date.now();
+  session.cancel();
+  assert.deepEqual(kinds(await turn), ['stopped']);
+  assert.ok(Date.now() - at >= 150, 'the kill waited for the grace');
+  assert.equal(alive(given()[0].pid), false);
+  session.close?.();
+});
+
+test('a Kiro that ended between turns is started again and the session loaded', async () => {
+  const { adapter, sent, given } = fake();
+  const session = await adapter.start(START());
+  await collect(session.prompt('one'));
+  const { pid } = given()[0];
+  process.kill(pid);
+  await until(() => !alive(pid));
+  const updates = await collect(session.prompt('two'));
+  assert.equal(updates.at(-1)?.type, 'done');
+  const [loaded] = sent('session/load');
+  assert.deepEqual([loaded.params.sessionId, loaded.params.mcpServers[0].name], [session.id, 'vb']);
+  assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two', 'the instructions are already in the history');
+  session.close?.();
+});
+
+test('the time limit stops a turn that runs too long, as an error', async () => {
+  const { adapter } = fake('hang', { turnLimitMs: 300 });
+  const session = await adapter.start(START());
+  const updates = await collect(session.prompt('wait'));
+  assert.deepEqual(kinds(updates), ['text', 'error']);
+  assert.match((updates[1] as { message: string }).message, /did not finish within 0 minutes and was stopped/);
+  session.close?.();
+});
+
+test('a tool server that never starts ends the turn in an error before anything is sent', async () => {
+  const { adapter, sent } = fake('no-servers', { serversWaitMs: 300 });
+  const session = await adapter.start(START());
+  assert.deepEqual(await collect(session.prompt('hi')), [{ type: 'error', message: 'The vb tool server did not start in Kiro, so the turn was not run.' }]);
+  assert.equal(sent('session/prompt').length, 0);
+  session.close?.();
+});
+
+test('a CLI that cannot start is an error from start', async () => {
+  const adapter = createKiroAdapter({ command: { file: path.join(dir, 'no-such-kiro') }, env: {}, log: () => {} });
+  await assert.rejects(adapter.start(START()), /Kiro could not be started: .*ENOENT/);
+});

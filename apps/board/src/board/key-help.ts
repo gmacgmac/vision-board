@@ -33,8 +33,11 @@ const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
   View: [['Zoom', ['Ctrl+scroll']], ['This list', ['?']]],
 };
 
-/** The groups with their rows, in order; a group with no row is left out. */
-export function keyGroups(): { group: KeyGroup; rows: KeyRow[] }[] {
+/** The chat sidebar's key (chatPanel flag, ChatSidebar.svelte): in Board, with the flag on. */
+const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the chat', ['T']];
+
+/** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel flag. */
+export function keyGroups({ chat = false }: { chat?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
     .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
   const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length)
@@ -42,6 +45,7 @@ export function keyGroups(): { group: KeyGroup; rows: KeyRow[] }[] {
   return KEY_GROUPS.map((group) => ({
     group,
     rows: [...(group === 'Items' ? items : commands(group)),
-      ...OTHER[group].map(([label, keys], i) => ({ id: `other:${group}.${i}`, label, keys }))],
+      ...OTHER[group].map(([label, keys], i) => ({ id: `other:${group}.${i}`, label, keys })),
+      ...(chat && group === 'Board' ? [{ id: 'other:chat', label: CHAT_ROW[0], keys: CHAT_ROW[1] }] : [])],
   })).filter((g) => g.rows.length);
 }

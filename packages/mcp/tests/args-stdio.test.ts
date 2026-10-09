@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { PassThrough } from 'node:stream';
 import { createInterface } from 'node:readline';
 import type { McpServer, RpcResponse } from '../src/index.ts';
-import { TOOLS, checkArgs, serveStdio, split, routeOf } from '../src/index.ts';
+import { INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, TOOLS, checkArgs, createMcpServer, serveStdio, split, routeOf } from '../src/index.ts';
 
 const input = (name: string) => TOOLS.get(name)!.inputSchema;
 
@@ -43,6 +43,18 @@ test('split: path and query by name, body fields into the body, the secret only 
   assert.deepEqual(split(routeOf('write_board'), { board: 'b', items: [], secret: 'own' }),
     { input: { board: 'b', body: { items: [] } }, secret: 'own' });
   assert.deepEqual(split(routeOf('join'), { label: 'L', secret: 'ignored' }, 'env'), { input: { body: { label: 'L' } } });
+});
+
+test('with VB_AGENT_SECRET set, the instructions say the identity is given: no join, no secret to save', async () => {
+  const init = async (secret?: string) => {
+    const r = await createMcpServer({ base: 'http://127.0.0.1:1', ...(secret && { secret }) })
+      .handle({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: LEGACY } });
+    return (r as unknown as { result: { instructions: string } }).result.instructions;
+  };
+  assert.equal(await init(), INSTRUCTIONS);
+  assert.equal(await init('s'.repeat(43)), INSTRUCTIONS_JOINED);
+  assert.match(INSTRUCTIONS_JOINED, /do not call `join`/);
+  assert.doesNotMatch(INSTRUCTIONS_JOINED, /save/);
 });
 
 test('stdio: requests run at once and answer by id; a cancelled one is never answered; end of input ends it', async () => {

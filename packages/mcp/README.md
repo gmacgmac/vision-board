@@ -13,7 +13,9 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
 ## Settings
 
 - `VB_SERVER`: the board server. Default `http://127.0.0.1:4466`.
-- `VB_AGENT_SECRET` (optional): the secret for every call that does not pass a `secret` argument.
+- `VB_AGENT_SECRET` (optional): the secret for every call that does not pass a `secret` argument. When it is set, the
+  instructions tell the agent its identity is given (no `join`, no secret to save, no `secret`
+  argument). The board's chat panel sets it for each agent it starts (api.md 106).
 
 ## Adding it to a client
 

@@ -93,6 +93,11 @@ export const FLAGS = {
     default: true,
     description: 'With cards selected, the selection bar is a small pill ("3 selected" and a chevron); a click or Enter on it opens a more compact bar with the same commands, which stays open until a press outside it, a pan, Esc or the selection clearing. A new selection starts closed; the selection\'s keys work either way. Off, the full bar shows on every selection.',
   },
+  chatPanel: {
+    // On by default (maintainer, 2026-10-09, chat-panel VERIFY_01); ?flags=-chatPanel turns it off.
+    default: true,
+    description: 'The chat panel (D-036, D-037): a sidebar on the right where the person talks to a command-line agent beside the board. Its words show in the feed, its board writes as change chips that zoom to the cards, its file edits and shell commands wait for Allow or Deny. Off, no panel (and the gallery has no chat section).',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

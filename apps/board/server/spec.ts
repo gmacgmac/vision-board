@@ -23,10 +23,10 @@ export interface ParamSpec {
   description: string;
 }
 
-/** Who may call an operation, from its `security` (api.md 20-22, 41): `person` needs the person
- * cookie, `agent` a Bearer secret, `optional-agent` takes a Bearer secret to scope a read, and
- * `none` takes no credentials. */
-export type Security = 'none' | 'person' | 'agent' | 'optional-agent';
+/** Who may call an operation, from its `security` (api.md 20-22, 41, 102): `person` needs the person
+ * cookie, `agent` a Bearer secret, `optional-agent` takes a Bearer secret to scope a read, `run` a
+ * chat session's run token, and `none` takes no credentials. */
+export type Security = 'none' | 'person' | 'agent' | 'optional-agent' | 'run';
 
 export interface OperationSpec {
   params: ParamSpec[];
@@ -41,6 +41,7 @@ export interface OperationSpec {
 function securityOf(list: Rec[] | undefined): Security {
   const names = (list ?? []).map((req) => Object.keys(req).join(','));
   if (names.includes('personCookie')) return 'person';
+  if (names.includes('runToken')) return 'run';
   if (!names.includes('agentSecret')) return 'none';
   return names.includes('') ? 'optional-agent' : 'agent';
 }

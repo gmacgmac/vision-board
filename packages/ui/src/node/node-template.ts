@@ -73,14 +73,16 @@ const STEP_NAV = '<div class="vb-node-stepnav" hidden><span class="vb-node-stepc
 export const stepsId = (n: ViewNode): string => `vb-steps-${n.id}`;
 
 /** The step section's contents (FE_02 ruling 3, mockup 03 Part B option B): the version, when and
- * who; the change chips; what the text gained. Past the last step, "You're up to date". */
+ * who; the change chips; what the text gained; a link to where the change came from (`data-source`,
+ * the page's chat). Past the last step, "You're up to date". */
 export function stepMarkup(v: UpdatesView): string {
   if (!v.step) return v.done ? '<p class="vb-step-done">You\'re up to date</p>' : '';
-  const { head, chips, lines } = v.step;
+  const { head, chips, lines, source } = v.step;
+  const link = source ? `<button type="button" class="vb-step-src" data-source>${esc(source)}</button>` : '';
   const list = chips.length
     ? `<ul class="vb-step-chips" aria-label="Changes">${chips.map((c) => `<li data-change="${c.change}">${esc(c.text)}</li>`).join('')}</ul>` : '';
   // What the text gained is Markdown like the body it joins (D-023); the renderer escapes it.
-  return `<p class="vb-step-head">${esc(head)}</p>${list}${lines.map((l) => `<div class="vb-step-line">${renderMarkdown(l)}</div>`).join('')}`;
+  return `<p class="vb-step-head">${esc(head)}</p>${list}${lines.map((l) => `<div class="vb-step-line">${renderMarkdown(l)}</div>`).join('')}${link}`;
 }
 
 /** The tabs on the bottom border (FE_01 ruling 2): each popover's, opening its box beside the card

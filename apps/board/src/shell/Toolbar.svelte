@@ -6,7 +6,7 @@
      With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it. The picker marks a board the person has not opened " · new" and one an agent wrote on
      since they last looked " · changed", never the open one, and a chip counts both (the conditions
      table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
-     Send to agent and the board's Agents list show with the agentAccess flag. Zoom out/Fit/Zoom in are one command table
+     Send to agent and the board's Agents list show with the agentAccess flag; Chat, last, with the chatPanel flag (ChatSidebar). Zoom out/Fit/Zoom in are one command table
      (board/commands.ts) shared with the selection bar and the keys (3_FE_02 ruling 5).
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows.
@@ -144,6 +144,10 @@
     {#if shell.agentAccess && shell.version !== null && !shell.past}
       <BoardAgents holders={shell.boardHolders} {onrevoke} />
       <SendButton {onsend} />
+    {/if}
+    {#if shell.chatPanel}
+      <button type="button" class="vb-btn" id="chat-toggle" title="Chat · T" aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
+        aria-controls="chat" onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
     {/if}
   </div>
 </header>

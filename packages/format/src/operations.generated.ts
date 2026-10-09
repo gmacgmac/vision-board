@@ -2,7 +2,7 @@
 // The route table: every operation's id, method, path and path parameters, whether agents get it,
 // and which credential it needs. Callers read this, never openapi.json, so the page bundle stays small.
 
-export type OperationAuth = 'none' | 'agent' | 'person';
+export type OperationAuth = 'none' | 'agent' | 'person' | 'run';
 
 export interface OperationInfo {
   readonly operationId: string;
@@ -13,7 +13,7 @@ export interface OperationInfo {
   readonly pathParams: readonly string[];
   /** True when MCP and `vb` get this operation. */
   readonly xAgent: boolean;
-  /** `agent`: Bearer secret. `person`: the page cookie. `none`: no credentials needed. */
+  /** `agent`: Bearer secret. `person`: the page cookie. `run`: a chat session's run token. `none`: no credentials needed. */
   readonly auth: OperationAuth;
 }
 
@@ -77,6 +77,34 @@ export const OPERATIONS = {
   watch_project: {
     operationId: 'watch_project', method: 'GET', path: '/api/events',
     pathParams: [], xAgent: false, auth: 'none',
+  },
+  list_chats: {
+    operationId: 'list_chats', method: 'GET', path: '/api/boards/{board}/chats',
+    pathParams: ['board'], xAgent: false, auth: 'person',
+  },
+  start_chat: {
+    operationId: 'start_chat', method: 'POST', path: '/api/boards/{board}/chats',
+    pathParams: ['board'], xAgent: false, auth: 'person',
+  },
+  send_chat: {
+    operationId: 'send_chat', method: 'POST', path: '/api/chats/{session}/messages',
+    pathParams: ['session'], xAgent: false, auth: 'person',
+  },
+  stop_chat: {
+    operationId: 'stop_chat', method: 'POST', path: '/api/chats/{session}/stop',
+    pathParams: ['session'], xAgent: false, auth: 'person',
+  },
+  answer_approval: {
+    operationId: 'answer_approval', method: 'POST', path: '/api/chats/{session}/approvals/{approval}',
+    pathParams: ['session', 'approval'], xAgent: false, auth: 'person',
+  },
+  watch_chat: {
+    operationId: 'watch_chat', method: 'GET', path: '/api/chats/{session}/events',
+    pathParams: ['session'], xAgent: false, auth: 'person',
+  },
+  ask_approval: {
+    operationId: 'ask_approval', method: 'POST', path: '/api/run/approvals',
+    pathParams: [], xAgent: false, auth: 'run',
   },
 } as const satisfies Record<string, OperationInfo>;
 

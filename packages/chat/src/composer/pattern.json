@@ -1,0 +1,27 @@
+{
+  "name": "chat-composer",
+  "title": "Composer",
+  "tag": "chat-composer",
+  "description": "The person's message: the chips the host attaches (on the board, unsent notes and selected cards), each removable, the text and Send, and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer).",
+  "files": {
+    "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, COMPOSER_KEYS; no DOM)",
+    "template": "composer-template.ts (composerTemplate, chipsTemplate, lineTemplate)",
+    "element": "chat-composer.ts (defineChatComposer, ChatComposerElement; light DOM)",
+    "styles": "composer.css (through chat.css)"
+  },
+  "states": ["empty", "with chips", "typing", "waiting while the agent works", "shut"],
+  "attributes": { "data-shut": "the host's blocked reason applies: the text can't be typed in" },
+  "methods": {
+    "show(view)": "Send allowed, the line, the placeholder, shut or not (from composerView)",
+    "setChips(chips)": "the chips attached",
+    "clear()": "empties the words and the chips once the message went through",
+    "text, chips, focusText()": "the words typed, the chips, focus into the text"
+  },
+  "events": [
+    "chat-send (bubbles): detail { text, chips }; Enter or Send, only with words and while the conditions allow. The words stay until clear()",
+    "chat-chip-remove (bubbles): detail { chip }; the chip is taken off and focus goes back to the text"
+  ],
+  "whenToUse": "Writing to the agent.",
+  "whenNotToUse": "A note on a card (the note bubble).",
+  "accessibility": "The text is labelled 'Message to the agent'. Enter sends, Shift+Enter breaks the line. Each chip's remove button is named 'Remove Card 12: <title>' or 'Remove Note: <text>', 24px square."
+}

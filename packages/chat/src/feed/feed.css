@@ -1,0 +1,47 @@
+/* <chat-feed>: the log that scrolls, its empty line, and the one status line under it while the
+   agent works. Change chips and system lines are the feed's own rows. --_* properties: chat.css. */
+chat-feed {
+  display: flex; flex-direction: column; min-height: 0;
+  font: var(--_text) / 1.45 var(--_font); color: var(--_ink);
+}
+chat-feed .chat-log {
+  flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: var(--_space-3); padding: var(--_space-3);
+}
+/* The log takes focus to scroll by keyboard; its ring sits inside, as the panel clips outside. */
+chat-feed .chat-log:focus-visible { outline-offset: -2px; }
+chat-feed .chat-empty { margin: auto; padding: var(--_space-4); text-align: center; color: var(--_ink); }
+chat-feed .chat-empty:not([hidden]) + .chat-log { flex: 0; padding: 0; }
+chat-feed .chat-row { display: flex; flex-direction: column; min-width: 0; }
+
+/* The status line: quiet, one line, with a pulse that stops under reduced motion. */
+chat-feed .chat-activity {
+  display: flex; align-items: center; gap: var(--_space-2); margin: 0; padding: 0 var(--_space-3);
+  font-size: var(--_text-sm); color: var(--_ink-subtle);
+}
+chat-feed .chat-activity[data-on] { padding-block: var(--_space-1) var(--_space-2); }
+chat-feed .chat-activity[data-on]::before {
+  content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--_accent);
+  animation: chat-pulse 1.2s ease-in-out infinite;
+}
+@keyframes chat-pulse { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { chat-feed .chat-activity[data-on]::before { animation: none; } }
+
+/* A change chip: what a board write did; a click shows it on the board. */
+chat-feed .chat-change {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: var(--_space-2); max-width: 100%; min-height: 28px;
+  padding: 0 var(--_space-3); font: var(--_medium) var(--_text-sm) / 1.2 var(--_font); color: var(--_accent-text);
+  background: var(--_accent-soft); border: 1px solid var(--_accent-line); border-radius: var(--_radius-pill); cursor: pointer;
+  transition: border-color var(--_motion);
+}
+chat-feed .chat-change:hover, chat-feed .chat-change[data-look='hover'] { border-color: var(--_accent); }
+chat-feed .chat-change-icon { flex: none; }
+chat-feed .chat-change-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+chat-feed .chat-change-cards { flex: none; font-weight: var(--_bold); color: var(--_ink-strong); }
+
+/* A system line: the host's words, centred and quiet; an error stands out by its edge. */
+chat-feed .chat-system { margin: 0; text-align: center; font-size: var(--_text-sm); color: var(--_ink-subtle); }
+chat-feed .chat-system[data-turn='error'] {
+  padding: var(--_space-2) var(--_space-3); text-align: start; color: var(--_ink-strong);
+  background: var(--_surface-sunken); border-left: 3px solid var(--_danger); border-radius: var(--_radius-sm);
+}

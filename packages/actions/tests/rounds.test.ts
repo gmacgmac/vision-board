@@ -89,6 +89,45 @@ test('with no board seen, no card is new, even after a Send and more drawing', (
   assert.deepEqual(fresh(l.state()), []);
 });
 
+/** A board the person made and opened while empty, then a Send (the chat's message), then A's
+ * first drawing: region `r`, items 1 and 2 (VERIFY_01 bug 7). */
+function openedEmpty(): Ledger {
+  const l = new Ledger();
+  l.v = 10;
+  l.agent(A, { type: 'join', label: 'Pricing chat' });
+  l.seenBoard('b', l.personBoard('b', 'Board'));
+  send(l);
+  l.region(A, 'r');
+  l.node(A, 1, 1, { region: 'r' });
+  l.node(A, 2, 1, { region: 'r' });
+  return l;
+}
+
+test('a board opened while empty: the agent\'s first drawing is never new, even with a Send before it', () => {
+  const l = openedEmpty();
+  assert.equal(roundStart(l.state(), 'b'), l.seq, 'the end of the first drawing');
+  assert.deepEqual(fresh(l.state()), []);
+  send(l);
+  l.node(A, 3, 1, { region: 'r' });
+  assert.deepEqual(fresh(l.state()), [3], 'the next round is new as before');
+});
+
+test('an agent\'s empty board opened, then its cards: the first drawing with a card is not new; a region alone does not end it', () => {
+  const l = new Ledger();
+  l.v = 10;
+  l.agent(A, { type: 'join', label: 'Pricing chat' });
+  l.agent(A, { type: 'board', board: 'b', title: 'Board' });
+  l.region(A, 'r');
+  l.seenBoard('b', l.seq);
+  send(l);
+  l.region(A, 'q');
+  send(l);
+  l.node(A, 1, 1, { region: 'r' });
+  assert.deepEqual(fresh(l.state()), [], 'no round started before the first card; the card came in the first drawing');
+  l.node(B, 2, 1, { region: 'q' });
+  assert.deepEqual(fresh(l.state()), [2], 'another agent\'s drawing after it is new');
+});
+
 test('item.new: a freshly opened board has none; a card drawn after the first board seen, before any Send, is new, for the person only', () => {
   assert.deepEqual(fresh(opened().state()), []);
   const l = added();

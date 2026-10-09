@@ -1,5 +1,6 @@
 // The ledger's JSON Schemas through ajv (D-026, api.md 12): the only module that imports ajv. It
-// loads every `*.schema.json` under packages/format/schema/ by its `$id`, compiles with Ajv2020
+// loads every `*.schema.json` under packages/format/schema/ and the chat package's own contract
+// (packages/chat/schema/, api.md 98) by its `$id`, compiles with Ajv2020
 // (strict mode, all errors, the discriminator), and turns ajv's errors into plain-English
 // problems with a JSON Pointer each (api.md 38, 40). Server and tests only: the page never
 // imports it, so ajv never reaches the page bundle (rule 15).
@@ -10,9 +11,12 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 
 export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema/', import.meta.url));
+/** The chat package's schemas (D-037): its own contract, which openapi.json references by `$id`. */
+export const CHAT_SCHEMA_DIR = fileURLToPath(new URL('../../../packages/chat/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
 export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/10/ledger-event.schema.json`;
+export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
 export interface SchemaProblem { pointer: string; detail: string }
@@ -30,6 +34,9 @@ export function schemaFiles(dir = SCHEMA_DIR): { file: string; schema: SchemaDoc
   return out.sort((a, b) => a.file.localeCompare(b.file));
 }
 
+/** Every schema the server knows: the format's and the chat package's. */
+export const allSchemaFiles = (): { file: string; schema: SchemaDoc }[] => [...schemaFiles(), ...schemaFiles(CHAT_SCHEMA_DIR)];
+
 let shared: Ajv2020 | undefined;
 
 /** One ajv instance holding every schema, created on first use. */
@@ -39,7 +46,7 @@ function ajv(): Ajv2020 {
   // field in `required` beside the `allOf` branch that defines it (the stamp, the core), and
   // strictRequired only looks at the same schema object.
   const a = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, discriminator: true });
-  for (const { schema } of schemaFiles()) a.addSchema(schema);
+  for (const { schema } of allSchemaFiles()) a.addSchema(schema);
   return (shared = a);
 }
 
@@ -102,11 +109,15 @@ function plain(e: ErrorObject): SchemaProblem {
       const extra = String(p.unevaluatedProperty ?? p.additionalProperty);
       return { pointer: child(at, extra), detail: `unknown field \`${extra}\`` };
     }
-    case 'discriminator':
+    case 'discriminator': {
+      // `type` for a ledger line; `kind` for a chat event or approval facts.
+      const tag = String(p.tag ?? 'type');
+      const what = tag === 'type' ? 'event type' : tag;
       return {
-        pointer: child(at, 'type'),
-        detail: p.error === 'mapping' ? `unknown event type ${quote(p.tagValue)}` : '`type` must be text naming the event type',
+        pointer: child(at, tag),
+        detail: p.error === 'mapping' ? `unknown ${what} ${quote(p.tagValue)}` : `\`${tag}\` must be text naming the ${what}`,
       };
+    }
     case 'type': return { pointer: at, detail: `${f} must be ${String(p.type).split(',').map((t) => TYPES[t] ?? t).join(' or ')}` };
     case 'pattern': return { pointer: at, detail: `${f} ${PATTERNS[String(p.pattern)] ?? 'is not in the expected form'}` };
     case 'maxLength': return { pointer: at, detail: `${f} is longer than ${String(p.limit)} characters` };

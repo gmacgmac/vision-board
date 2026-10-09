@@ -17,7 +17,8 @@ board v3 is in progress (`cortex-tasks/tracker.md`).
 | `packages/layout/` | Layout engine: modes, region packing, connector routing |
 | `packages/ui/` | Visual patterns: node, link, region, note (core, template, element) |
 | `packages/tokens/` | Design tokens and contrast checks |
-| `packages/agent/` | (planned) The kiro-cli connection behind one interface |
+| `packages/agent/` | Command-line agents behind one adapter interface (Claude first), the approval gate hook and the mapper to chat events (D-036, D-037) |
+| `packages/chat/` | The chat panel: its own event contract (`schema/`), then a framework-free core and web components (D-037) |
 | `packages/cli/` | (planned) The `vb` command: validate, reply, wait |
 | `packages/mcp/` | The MCP server (`npm run mcp`): one tool per agent operation, generated from the API spec |
 | `skills/` | Agent instructions: how any agent draws a board and reads replies |

@@ -37,3 +37,9 @@ test('the groups come in the ruled order, each with rows, and no row id repeats'
   const ids = rows().map((r) => r.id);
   assert.equal(new Set(ids).size, ids.length);
 });
+
+test('with the chatPanel flag, Board lists T for the chat sidebar; without it, nothing', () => {
+  const chat = (on: boolean) => keyGroups({ chat: on }).find((g) => g.group === 'Board')!.rows.filter((r) => r.id === 'other:chat');
+  assert.deepEqual(chat(true).map((r) => r.keys), [['T']]);
+  assert.deepEqual(chat(false), []);
+});

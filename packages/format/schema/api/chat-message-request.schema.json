@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/chat-message-request.schema.json",
+  "title": "Chat message request",
+  "description": "`{ text, notes?, cards? }`: the person's message, with the notes (by `seq`) and cards (by number) attached to it as chips.",
+  "$comment": "Was: api.md 101",
+  "type": "object",
+  "required": ["text"],
+  "properties": {
+    "text": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/text", "description": "What the person wrote."},
+    "notes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true,
+      "items": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq", "description": "A note's `seq`."},
+      "description": "The person's notes sent with the message, by the `seq` that made each; left out when none."
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "uniqueItems": true,
+      "items": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber", "description": "A card number."},
+      "description": "The cards sent with the message, by number; left out when none."
+    }
+  },
+  "unevaluatedProperties": false
+}

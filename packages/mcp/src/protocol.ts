@@ -5,7 +5,7 @@
 // rest of this process. Every result carries `resultType: "complete"` and `serverInfo` in `_meta`.
 // Logs go to stderr only: no `notifications/message` is ever sent, so none is sent unasked.
 import { callTool } from './call-tool.ts';
-import { CACHE, CAPABILITIES, INSTRUCTIONS, LEGACY, META, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
+import { CACHE, CAPABILITIES, INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, META, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
 import type { RpcMessage, RpcResponse } from './rpc.ts';
 import { CODES, RpcError, errorResponse, isRecord } from './rpc.ts';
 import { TOOL_FILE } from './tools.ts';
@@ -48,18 +48,19 @@ function checkEra(params: Readonly<Record<string, unknown>>, legacy: boolean): v
 
 export function createMcpServer(opts: ServerOptions): McpServer {
   const log = opts.log ?? (() => {});
+  const instructions = opts.secret ? INSTRUCTIONS_JOINED : INSTRUCTIONS;
   /** Set by `initialize`: legacy semantics for this process (stdio is one client). */
   let legacy = false;
 
   async function result(method: string, params: Readonly<Record<string, unknown>>, signal?: AbortSignal): Promise<Record<string, unknown>> {
     if (method === 'initialize') {
       legacy = true;
-      return { protocolVersion: LEGACY, capabilities: CAPABILITIES, serverInfo: SERVER_INFO, instructions: INSTRUCTIONS };
+      return { protocolVersion: LEGACY, capabilities: CAPABILITIES, serverInfo: SERVER_INFO, instructions };
     }
     checkEra(params, legacy);
     switch (method) {
       case 'server/discover':
-        return { supportedVersions: SUPPORTED_VERSIONS, capabilities: CAPABILITIES, instructions: INSTRUCTIONS, ...CACHE };
+        return { supportedVersions: SUPPORTED_VERSIONS, capabilities: CAPABILITIES, instructions, ...CACHE };
       case 'ping':
         return {};
       case 'tools/list':

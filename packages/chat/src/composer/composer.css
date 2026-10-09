@@ -1,0 +1,36 @@
+/* <chat-composer>: the Architect composer. The attached chips above a rounded box holding the text
+   and Send, and one line under it (the keys, why Send waits, or why it is shut).
+   --_* properties: chat.css. */
+chat-composer {
+  display: grid; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3) var(--_space-3);
+  font: var(--_text) / 1.45 var(--_font); color: var(--_ink); border-top: 1px solid var(--_line);
+}
+chat-composer .chat-cmp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-1) var(--_space-2); }
+chat-composer .chat-cmp-label {
+  font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
+}
+chat-composer .chat-cmp-box {
+  display: flex; align-items: flex-end; gap: var(--_space-2); padding: var(--_space-1) var(--_space-1) var(--_space-1) var(--_space-3);
+  background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius-lg);
+  transition: border-color var(--_motion);
+}
+chat-composer .chat-cmp-box:focus-within { border-color: var(--_focus); box-shadow: 0 0 0 1px var(--_focus); }
+chat-composer .chat-cmp-text {
+  flex: 1; min-width: 0; min-height: 3em; max-height: 180px; field-sizing: content; padding: var(--_space-2) 0; resize: none;
+  font: var(--_text) / 1.45 var(--_font); color: var(--_ink-strong); background: none; border: 0; outline: 0;
+}
+chat-composer .chat-cmp-text::placeholder { color: var(--_ink-subtle); }
+chat-composer .chat-cmp-send {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  color: var(--_ink-on-fill); background: var(--_accent-fill); border: 0; border-radius: var(--_radius); cursor: pointer;
+}
+chat-composer .chat-cmp-send:hover:not(:disabled) { background: var(--_accent-fill-hover); }
+chat-composer .chat-cmp-send:disabled { color: var(--_ink-subtle); background: var(--_surface-sunken); cursor: default; }
+chat-composer .chat-cmp-line { margin: 0; font-size: var(--_text-xs); color: var(--_ink-subtle); }
+chat-composer kbd {
+  padding: 0 3px; font: var(--_text-xs) / 1.4 var(--_font-mono); color: var(--_ink);
+  border: 1px solid var(--_line-strong); border-radius: 4px;
+}
+/* Shut (a past version, an agent that would not start): the box greys and the reason is read. */
+chat-composer[data-shut] .chat-cmp-box { background: var(--_surface-sunken); border-color: var(--_line); }
+chat-composer[data-shut] .chat-cmp-line { font-size: var(--_text-sm); color: var(--_ink); }
