@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BAR_EDGE, BAR_GAP, barView, boxAround, boxBetween, placeBar, selectionBarTemplate, touches,
+  BAR_EDGE, BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, selectionBarTemplate, TAB_CLEAR_MAX,
+  TAB_CLEAR_MIN, TAB_RISE, touches,
 } from '../src/index.ts';
 
 const STAGE = { w: 1000, h: 600 };
@@ -65,4 +66,24 @@ test('template with the pill: a button with the count and a chevron first, then 
   // pill keeps its focus when it opens.
   assert.equal(selectionBarTemplate(barView(3, [{ id: 'clear', label: 'Clear' }], { open: true })), html);
   assert.doesNotMatch(selectionBarTemplate(barView(0, [{ id: 'zoom-area', label: 'Zoom to this area' }], { open: false })), /vb-sb-pill/);
+});
+
+// Page-polish ruling C: over cards the bar clears their tabs, which scale with zoom while the bar
+// does not. The three zooms are the board's (apps/board viewport.ts: MIN_K 0.2, the default 1,
+// MAX_K 2.5).
+test('pillGap: the tabs\' rise at the zoom plus a clear space from the minimum (zoomed out) to the maximum (zoomed in)', () => {
+  const clear = (k: number) => pillGap(k) - TAB_RISE * k;
+  assert.equal(clear(0.2), TAB_CLEAR_MIN);
+  assert.equal(clear(1), 8);
+  assert.equal(clear(2.5), TAB_CLEAR_MAX);
+  assert.equal(pillGap(0.2), 6);
+  assert.equal(pillGap(1), 18);
+  assert.equal(pillGap(2.5), 41);
+  for (const k of [0.2, 0.5, 1, 1.5, 2, 2.5]) assert.ok(clear(k) >= TAB_CLEAR_MIN && clear(k) <= TAB_CLEAR_MAX, `k ${k}`);
+  assert.ok(pillGap(0.2) < pillGap(1) && pillGap(1) < pillGap(2.5), 'it grows with zoom');
+});
+
+test('placeBar: a gap given puts the bar that far above the selection; below it keeps BAR_GAP', () => {
+  assert.equal(placeBar({ x: 400, y: 200, w: 200, h: 100 }, BAR, STAGE, pillGap(2.5)).y, 200 - 41 - BAR.h);
+  assert.deepEqual(placeBar({ x: 400, y: 40, w: 200, h: 100 }, BAR, STAGE, pillGap(2.5)), { side: 'below', x: 350, y: 140 + BAR_GAP });
 });

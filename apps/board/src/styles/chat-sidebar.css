@@ -4,7 +4,7 @@
    grip: drag it, or focus it and use the arrow keys. The chat inside styles itself (chat-host.css). */
 .vb-chat {
   position: fixed; right: 0; bottom: 0; z-index: 4; width: var(--vb-chat-w);
-  top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px) + var(--vb-proposals-h, 0px));
+  top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px));
   display: flex; flex-direction: column; border-left: 1px solid var(--vb-line); background: var(--vb-surface-region);
 }
 .vb-chat > .chat-panel { flex: 1; min-height: 0; }

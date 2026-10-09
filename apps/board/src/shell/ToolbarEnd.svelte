@@ -1,0 +1,65 @@
+<!-- The toolbar's end group: the zoom group (one command table, board/commands.ts), then the board-wide
+     buttons. With the toolbarMenu flag (`menu`): Agents and Send to agent (agentAccess flag, when
+     `holders` is given), Chat (chatPanel flag) and the "⋯" menu holding Theme, Hide decided and
+     Reply (ToolbarMenu); a narrow toolbar (`[data-narrow]`, Toolbar.svelte) shows Agents, Send and
+     Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide decided,
+     Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. The gallery
+     passes `placement` 'gallery' (no board ids) and `menuOpen`. -->
+<script lang="ts">
+  import { shell } from './shell.svelte.ts';
+  import SendButton from './SendButton.svelte';
+  import BoardAgents from './BoardAgents.svelte';
+  import ButtonIcon from './ButtonIcon.svelte';
+  import ToolbarMenu from './ToolbarMenu.svelte';
+  import { commandTitle, HEADER_COMMANDS } from '../board/commands.ts';
+  import type { CommandId } from '../board/commands.ts';
+  import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
+
+  let { theme, ontheme, oncommand, onhide, onsend, onrevoke, holders, chat, menu, placement = 'board', menuOpen = false }: {
+    theme: string;
+    ontheme: () => void;
+    oncommand: (id: CommandId) => void;
+    onhide: () => void;
+    onsend: () => Promise<string | null>;
+    onrevoke: (agent: string) => Promise<void>;
+    /** The board's holders, when Agents and Send to agent show; null hides both. */
+    holders: AccessHolder[] | null;
+    chat: boolean;
+    /** The toolbarMenu flag. */
+    menu: boolean;
+    placement?: 'board' | 'gallery';
+    menuOpen?: boolean;
+  } = $props();
+
+  const board = $derived(placement === 'board');
+</script>
+
+<div class="vb-toolbar-end">
+  <div class="vb-zoom" role="group" aria-label="Zoom">
+    {#each HEADER_COMMANDS as id (id)}
+      <button type="button" class="vb-btn" title={commandTitle(id)} aria-label={commandTitle(id).split(' · ')[0]}
+        onclick={() => oncommand(id)}>{id === 'fit' ? 'Fit' : id === 'zoom-out' ? '−' : '+'}</button>
+    {/each}
+  </div>
+  {#if !menu}
+    <button type="button" class="vb-btn vb-btn-iconic" id="hide" aria-pressed={shell.hide} title="Hide decided items · H"
+      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">Hide decided</span></button>
+    <button type="button" class="vb-btn vb-btn-iconic" id="theme" title="Theme: {theme}" onclick={ontheme}>
+      <ButtonIcon name="theme" /><span class="vb-btn-text">Theme: {theme}</span>
+    </button>
+    <button type="button" class="vb-btn vb-btn-primary vb-btn-iconic" id="reply-toggle" title="Reply" aria-expanded={shell.replyOpen}
+      aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>
+      <ButtonIcon name="reply" /><span class="vb-btn-text">Reply{shell.answered ? ` (${shell.answered})` : ''}</span>
+    </button>
+  {/if}
+  {#if holders}
+    <BoardAgents {holders} {onrevoke} icon={menu} />
+    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} />
+  {/if}
+  {#if chat}
+    <button type="button" class="vb-btn vb-btn-iconic" id={board ? 'chat-toggle' : undefined}
+      title={menu ? 'Open or close the chat · T' : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
+      aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
+  {/if}
+  {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {placement} open={menuOpen} />{/if}
+</div>

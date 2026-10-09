@@ -5,13 +5,16 @@
 // `list_boards`; its marks are attention.ts's), and the open board never changes by itself, except
 // that an empty project opens the first board drawn.
 // Each board's zoom and position are kept (kept-view.ts, keepView flag) and restored on open.
+// The board opened is kept too, so a page opened with no board in its hash reopens it (start-board.ts).
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import { boardList } from '../../../../packages/actions/src/index.ts';
 import { createKeptView } from './kept-view.ts';
+import { LAST_BOARD_KEY, startBoard } from './start-board.ts';
 import type { Live } from './live.ts';
 import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
 import { work } from './work.ts';
+import { keep, kept as keptValue } from '../shell/kept.ts';
 import { shell } from '../shell/shell.svelte.ts';
 
 export interface BoardsDeps {
@@ -65,6 +68,7 @@ export function createBoards(d: BoardsDeps): Boards {
     const layout = d.layout();
     if (!kept.restore(id) && layout) d.vp.fit(layout.bounds, false);
     history.replaceState(null, '', `#${encodeURIComponent(id)}`);
+    keep(LAST_BOARD_KEY, id);
     if (drawn) return;
     drawn = true;
     // The first draw ends once the frame it was drawn for has been shown.
@@ -96,8 +100,8 @@ export function createBoards(d: BoardsDeps): Boards {
           shell.message = WAITING;
           return;
         }
-        const wanted = decodeURIComponent(location.hash.slice(1));
-        switchTo(list.some((b) => b.board === wanted) ? wanted : list[0]!.board);
+        const hash = decodeURIComponent(location.hash.slice(1));
+        switchTo(startBoard(list.map((b) => b.board), hash, keptValue(LAST_BOARD_KEY)));
       } catch (err) {
         d.fail(err);
         shell.message = 'Could not reach the board server. Start it with: npm run board';

@@ -7,7 +7,7 @@
 // pill, the open bar, its hover (drawn with data-look) and the area bar.
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
-import { barView, placeBar } from '../../../../packages/ui/src/index.ts';
+import { BAR_GAP, barView, pillGap, placeBar } from '../../../../packages/ui/src/index.ts';
 import { AREA_COMMANDS, barButtons, SELECTION_COMMANDS } from '../board/commands.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
@@ -75,7 +75,8 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
       w: Math.max(...boxes.map((b) => b.x + b.w)) - Math.min(...boxes.map((b) => b.x)),
       h: Math.max(...boxes.map((b) => b.y + b.h)) - Math.min(...boxes.map((b) => b.y)),
     };
-    bar.place(placeBar(box, { w: bar.offsetWidth, h: bar.offsetHeight }, s.stage));
+    // The cards here are at zoom 1, so the bar clears their tabs as the board's does at 1.
+    bar.place(placeBar(box, { w: bar.offsetWidth, h: bar.offsetHeight }, s.stage, s.area ? BAR_GAP : pillGap(1)));
   });
   const fig = el('figure', 'g-bubble');
   fig.append(stage, el('figcaption', 'g-note', s.caption));

@@ -98,6 +98,11 @@ export const FLAGS = {
     default: true,
     description: 'The chat panel (D-036, D-037): a sidebar on the right where the person talks to a command-line agent beside the board. Its words show in the feed, its board writes as change chips that zoom to the cards, its file edits and shell commands wait for Allow or Deny. Off, no panel (and the gallery has no chat section).',
   },
+  toolbarMenu: {
+    // On by default (maintainer, 2026-10-09, toolbar icons and menu); ?flags=-toolbarMenu turns it off.
+    default: true,
+    description: 'Theme, Hide decided and Reply move into a "⋯" menu at the end of the toolbar (a click or Enter opens it; Esc, a click outside or a choice closes it; H still hides decided items), and Agents (with its holder count), Send to agent and Chat show an icon only on a narrow window, so no toolbar control is cut off from 768px up. Off, the toolbar is as it was.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

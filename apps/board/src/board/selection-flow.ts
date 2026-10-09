@@ -11,7 +11,7 @@
 import type { BoardLayout, Box } from '../../../../packages/layout/src/index.ts';
 import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
 import type { CommandEventDetail, ToggleEventDetail } from '../../../../packages/ui/src/index.ts';
-import { barView, boxAround, boxBetween, placeBar, touches } from '../../../../packages/ui/src/index.ts';
+import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, touches } from '../../../../packages/ui/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS } from './commands.ts';
 import type { NoteFlow } from './notes.ts';
@@ -112,7 +112,9 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
       : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off), compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
-    bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }));
+    // Over cards it clears their tabs at any zoom (pillGap); the area bar has no tabs under it.
+    const gap = area ? BAR_GAP : pillGap(d.vp.k);
+    bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, gap));
   }
 
   function dismissArea() {

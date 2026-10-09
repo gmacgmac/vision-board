@@ -81,6 +81,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-bubble { margin: 0; display: flex; flex-direction: column; gap: var(--vb-space-1); }
 .g-bubble .g-note { margin: 0; }
 .g-bubble-stage { position: relative; border-radius: var(--vb-radius-lg); }
+/* The proposals notice, or its pill, over a card (proposals-section.ts). */
+.g-notice-stage { width: 640px; height: 190px; overflow: hidden; }
 
 /* See-through cards sample (wireLayers flag): a stage that takes the board's .vb-world rules
    (board.css) but flows in the page. The connector layer sits at z-index -1, so the stage makes
@@ -89,6 +91,11 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The header's Agents list (D-034), open in the page flow: its panel sits under its button. */
 .g-agents .vb-agents { display: inline-block; }
 .g-agents .vb-agents-panel { position: static; margin-top: var(--vb-space-1); }
+/* The toolbar's end group (toolbarMenu flag, toolbar-section.ts): a strip in the toolbar's look; the open
+   menu hangs below its button, so that sample keeps room for it. */
+.g-toolbar { display: flex; align-items: center; padding: var(--vb-space-2) var(--vb-space-4); background: var(--vb-surface-region);
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
+.g-toolbar[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 4); align-items: flex-start; }
 /* The app icon samples (navigation FE_05): side by side, aligned on their bottoms. */
 .g-icons { display: flex; align-items: flex-end; gap: var(--vb-space-5); }
 

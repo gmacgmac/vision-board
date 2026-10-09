@@ -15,10 +15,29 @@ export interface BarPlacement { side: BarSide; x: number; y: number }
 /** `v` within [lo, hi]; `lo` when the range is empty. */
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
-/** The bar centred on `box` (the selection on the stage), above it, else below it. */
-export function placeBar(box: StageBox, bar: StageSize, stage: StageSize): BarPlacement {
+/** How far a card's top tabs (number, kind, moved-by-you, size) rise above its box, in world
+ *  pixels: node.css sets them at `top: -11px` inside the card's 1px border. */
+export const TAB_RISE = 10;
+/** The clear space between the bar's bottom and the tabs, in screen pixels: TAB_CLEAR_PER_K per
+ *  unit of zoom, never under TAB_CLEAR_MIN (zoomed out) nor over TAB_CLEAR_MAX (zoomed in). */
+export const TAB_CLEAR_MIN = 4;
+export const TAB_CLEAR_MAX = 16;
+export const TAB_CLEAR_PER_K = 8;
+
+/** The bar over a selection of cards at zoom `k` (page-polish ruling C): the space from the
+ *  selection's top edge to the bar's bottom, in screen pixels. The bar does not scale with zoom
+ *  but the cards' tabs do, so it is the tabs' rise at this zoom plus a clear space that grows
+ *  with zoom between its minimum and maximum: the bar never covers the tabs, and a press near
+ *  them grabs the card, not the bar. */
+export function pillGap(k: number): number {
+  return TAB_RISE * k + clamp(TAB_CLEAR_PER_K * k, TAB_CLEAR_MIN, TAB_CLEAR_MAX);
+}
+
+/** The bar centred on `box` (the selection on the stage), `gap` above it (BAR_GAP, or `pillGap`
+ *  over cards), else BAR_GAP below it. */
+export function placeBar(box: StageBox, bar: StageSize, stage: StageSize, gap = BAR_GAP): BarPlacement {
   const x = clamp(box.x + box.w / 2 - bar.w / 2, BAR_EDGE, stage.w - BAR_EDGE - bar.w);
-  const above = box.y - BAR_GAP - bar.h;
+  const above = box.y - gap - bar.h;
   if (above >= BAR_EDGE) return { side: 'above', x, y: above };
   return { side: 'below', x, y: clamp(box.y + box.h + BAR_GAP, BAR_EDGE, stage.h - BAR_EDGE - bar.h) };
 }

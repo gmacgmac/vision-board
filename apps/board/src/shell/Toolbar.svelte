@@ -6,20 +6,19 @@
      With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it. The picker marks a board the person has not opened " · new" and one an agent wrote on
      since they last looked " · changed", never the open one, and a chip counts both (the conditions
      table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
-     Send to agent and the board's Agents list show with the agentAccess flag; Chat, last, with the chatPanel flag (ChatSidebar). Zoom out/Fit/Zoom in are one command table
-     (board/commands.ts) shared with the selection bar and the keys (3_FE_02 ruling 5).
+     The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
+     flag, Chat with the chatPanel flag (ChatSidebar), and with the toolbarMenu flag the "⋯" menu
+     (ToolbarMenu) holding Theme, Hide decided and Reply.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows.
-     The picker never goes under 220px; below a window width the end group's Hide decided, Theme
-     and Reply shrink to icon buttons (ButtonIcon), and the counts show their numbers only (title and
-     screen readers keep the words), all in board.css. -->
+     The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
+     carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
+     counts show their numbers only (title and screen readers keep the words), all in board.css. -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
-  import SendButton from './SendButton.svelte';
-  import BoardAgents from './BoardAgents.svelte';
+  import { MediaQuery } from 'svelte/reactivity';
   import AppIcon from './AppIcon.svelte';
-  import ButtonIcon from './ButtonIcon.svelte';
-  import { commandTitle, HEADER_COMMANDS } from '../board/commands.ts';
+  import ToolbarEnd from './ToolbarEnd.svelte';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
   import type { CommandId } from '../board/commands.ts';
@@ -56,6 +55,9 @@
   const updated = $derived(Object.keys(shell.boardMarks).length);
 
   const boardEdit = flagOn('boardEdit', pageFlags());
+  const toolbarMenu = flagOn('toolbarMenu', pageFlags());
+  /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
+  const narrow = new MediaQuery('max-width: 1500px');
   /** A picker entry that opens the board dialog: never a board id, which holds no ":". */
   const entry = (id: BoardActionId) => `:${id}`;
 
@@ -75,7 +77,7 @@
   }
 </script>
 
-<header class="vb-toolbar">
+<header class="vb-toolbar" data-narrow={narrow.current || undefined} data-menu={toolbarMenu || undefined}>
   <AppIcon />
   {#if shell.versionView}<h1 id="title" class="vb-visually-hidden">{shell.title}</h1>{/if}
   <label class="vb-visually-hidden" for="board">Board</label>
@@ -125,29 +127,6 @@
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
     {/if}
   </div>
-  <div class="vb-toolbar-end">
-    <div class="vb-zoom" role="group" aria-label="Zoom">
-      {#each HEADER_COMMANDS as id (id)}
-        <button type="button" class="vb-btn" title={commandTitle(id)} aria-label={commandTitle(id).split(' · ')[0]}
-          onclick={() => oncommand(id)}>{id === 'fit' ? 'Fit' : id === 'zoom-out' ? '−' : '+'}</button>
-      {/each}
-    </div>
-    <button type="button" class="vb-btn" id="hide" aria-pressed={shell.hide} title="Hide decided items · H"
-      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">Hide decided</span></button>
-    <button type="button" class="vb-btn" id="theme" title="Theme: {theme}" onclick={nextTheme}>
-      <ButtonIcon name="theme" /><span class="vb-btn-text">Theme: {theme}</span>
-    </button>
-    <button type="button" class="vb-btn vb-btn-primary" id="reply-toggle" title="Reply" aria-expanded={shell.replyOpen}
-      aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>
-      <ButtonIcon name="reply" /><span class="vb-btn-text">Reply{shell.answered ? ` (${shell.answered})` : ''}</span>
-    </button>
-    {#if shell.agentAccess && shell.version !== null && !shell.past}
-      <BoardAgents holders={shell.boardHolders} {onrevoke} />
-      <SendButton {onsend} />
-    {/if}
-    {#if shell.chatPanel}
-      <button type="button" class="vb-btn" id="chat-toggle" title="Chat · T" aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
-        aria-controls="chat" onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
-    {/if}
-  </div>
+  <ToolbarEnd {theme} ontheme={nextTheme} {oncommand} {onhide} {onsend} {onrevoke} chat={shell.chatPanel} menu={toolbarMenu}
+    holders={shell.agentAccess && shell.version !== null && !shell.past ? shell.boardHolders : null} />
 </header>

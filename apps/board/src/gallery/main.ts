@@ -41,6 +41,7 @@ import { parkingSection } from './parking-section.ts';
 import { proposalsSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { chatSection } from './chat-section.ts';
+import { toolbarSection } from './toolbar-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -128,6 +129,7 @@ function build(): void {
   if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags)));
   if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
+  if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
 }

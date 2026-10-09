@@ -1,10 +1,11 @@
 // The Move to list (3_FE_03 ruling 8): Shift+M, or the selection bar's Move to, opens a small menu
 // of the board's containers, Later last, under the bar. Up and Down (Home, End) move between them,
 // Enter or a click moves the selection there, Esc or a click elsewhere closes it and gives focus
-// back. A container the selection cannot go in (Later, when a card cannot be saved for later) is
+// back (menu-keys.ts). A container the selection cannot go in (Later, when a card cannot be saved for later) is
 // shown disabled. The menu handles its own keys, so none reaches the board's shortcuts (keys.ts).
 // It is drawn on the stage, above the cards, and touches none of them.
 import type { StageBox } from '../../../../packages/ui/src/index.ts';
+import { menuKeydown } from './menu-keys.ts';
 
 export interface MoveTarget { id: string; title: string; disabled?: boolean }
 
@@ -81,20 +82,7 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
     close();
     d.pick(b.dataset.region!);
   });
-  el.addEventListener('keydown', (e) => {
-    e.stopPropagation();
-    const list = items();
-    const at = list.indexOf(document.activeElement as HTMLButtonElement);
-    const to = (i: number) => { e.preventDefault(); list[(i + list.length) % list.length]?.focus({ preventScroll: true }); };
-    switch (e.key) {
-      case 'ArrowDown': return to(at + 1);
-      case 'ArrowUp': return to(at - 1);
-      case 'Home': return to(0);
-      case 'End': return to(list.length - 1);
-      case 'Escape': e.preventDefault(); return close();
-      case 'Tab': return close(false);
-    }
-  });
+  el.addEventListener('keydown', (e) => menuKeydown(e, items(), close));
 
   return {
     get open() { return !el.hidden; },

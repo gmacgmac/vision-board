@@ -1,6 +1,7 @@
 // The stage's input wiring: the click delegate for every button on cards and frames, the pointer
-// (select, move by the kind tab, pan, lasso), the keyboard and the size control. Each control calls one
-// handler; what the handler does lives in the controller. Split out of controller.ts (N12_FE_01).
+// (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
+// focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
+// controller. Split out of controller.ts (N12_FE_01).
 import type { ActionId, ActSize, Mode } from '../../../../packages/format/src/index.ts';
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import { routeLinks } from '../../../../packages/layout/src/index.ts';
@@ -10,6 +11,7 @@ import type { KeyHandlers } from './keys.ts';
 import { bindKeys } from './keys.ts';
 import type { PointerHandlers } from './pointer.ts';
 import { bindPointer } from './pointer.ts';
+import { bindPointerFocus } from './pointer-focus.ts';
 import { bindSizeControl, isSizePick } from './size.ts';
 import type { Viewport } from './viewport.ts';
 
@@ -124,12 +126,15 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     },
   });
   const unbindSize = bindSizeControl(stage);
+  // A card a pointer focused draws no focus ring until the keyboard moves focus (pointer-focus.ts).
+  const unbindFocus = bindPointerFocus(stage);
   // The stage's own size, not the window's: the chat sidebar (chatPanel flag) and the strips change it too.
   const sized = new ResizeObserver(() => onResize());
   sized.observe(stage);
   return () => {
     unbindKeys();
     unbindSize();
+    unbindFocus();
     sized.disconnect();
   };
 }

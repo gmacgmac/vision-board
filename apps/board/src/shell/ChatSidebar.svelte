@@ -7,6 +7,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { shell } from './shell.svelte.ts';
+  import { keep, kept } from './kept.ts';
 
   let { onhost, placement = 'board' }: {
     /** Fill the panel; returns what undoes it. */
@@ -20,20 +21,14 @@
   const [MIN, START, STEP] = [360, 400, 16];
   const onBoard = () => placement === 'board';
 
-  const read = (key: string): string | null => {
-    try { return localStorage.getItem(key); } catch { return null; }
-  };
-  const keep = (key: string, value: string) => {
-    try { localStorage.setItem(key, value); } catch { /* storage refused (a private window's policy): not kept */ }
-  };
   /** The widest it goes: the board keeps at least 480px. */
   const widest = () => Math.max(MIN, Math.min(720, window.innerWidth - 480));
   const clamp = (w: number) => Math.round(Math.min(widest(), Math.max(MIN, w)));
 
-  let width = $state(clamp(Number(read(WIDTH_KEY)) || START));
+  let width = $state(clamp(Number(kept(WIDTH_KEY)) || START));
   let dragging = $state(false);
   let panel: HTMLElement;
-  if (onBoard()) shell.chatOpen = read(OPEN_KEY) === '1';
+  if (onBoard()) shell.chatOpen = kept(OPEN_KEY) === '1';
   let was = shell.chatOpen;
 
   onMount(() => {

@@ -147,7 +147,10 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
     await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note 1');
     await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
     await expect(page.locator('#counts')).toContainText('2 decided');
-    await expect(page.getByRole('button', { name: 'Reply (3)' })).toBeVisible();
+    // Reply sits in the toolbar's "⋯" menu (toolbarMenu flag).
+    await page.locator('#toolbar-menu').click();
+    await expect(page.getByRole('menuitem', { name: 'Reply (3)' })).toBeVisible();
+    await page.keyboard.press('Escape');
   };
   await expectAnswers();
   await page.reload();

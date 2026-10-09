@@ -1,4 +1,4 @@
-<!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals bar (proposals
+<!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals notice (proposals
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
      the chat sidebar (chatPanel flag), toast, the confirm dialog and the New board / Rename board dialog (boardEdit flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->

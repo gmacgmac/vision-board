@@ -1,12 +1,57 @@
-/* The proposals bar and Accept all's list (proposals flag, FE_01 ruling 4). Tokens only. The bar is
-   the requests strip (access.css `.vb-access`), under it when both show; on the board it moves the
-   stage down by its own height (--vb-proposals-h, board.css). */
+/* The proposals notice and Accept all's list (proposals flag; FE_01 ruling 4, proposals-notice
+   rulings 1-5). Tokens only. The notice floats over the board's top left, under the toolbar and the
+   requests strip (--vb-strip-h), and moves nothing. See-through: the raised surface at half
+   strength over a gentle blur of the board, a hairline and a small radius (the selection bar's glass,
+   lighter); one element, nothing animated. Under the toolbar's layer, so its menus pass over it.
+   Hidden, it is only its pill (the bare number), in the same place. Revision 2: narrow and stacked,
+   count with Hide, Review, Accept all. Page polish (2026-10-09): a wider step between Review and
+   Accept all; the notice and the pill outlined in the page's accent (decoration tier, Lc 30); the
+   number does not move when the pill opens (the pill's padding is the notice's, below). */
 
-.vb-proposals { align-items: center; }
-.vb-proposals[data-placement='board'] { top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px)); padding-top: var(--vb-space-1); padding-bottom: var(--vb-space-1); }
-.vb-proposals .vb-access-title { padding-top: 0; }
-.vb-proposals-stale { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap; }
-.vb-proposals .vb-access-actions { margin-left: auto; }
+.vb-proposals {
+  display: flex; flex-direction: column; gap: var(--vb-space-1); width: calc(var(--vb-card-w) - var(--vb-space-6)); padding: var(--vb-space-1) var(--vb-space-2) var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-accent); border-radius: var(--vb-radius-sm);
+  background: color-mix(in srgb, var(--vb-surface-raised) 50%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: var(--vb-ink-strong);
+}
+.vb-proposals[data-placement='board'] {
+  position: fixed; z-index: 4; left: var(--vb-space-3); top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-space-2));
+  max-width: calc(100vw - var(--vb-chat-w, 0px) - 2 * var(--vb-space-3));
+}
+.vb-proposals[data-placement='gallery'] { position: absolute; left: var(--vb-space-3); top: var(--vb-space-3); }
+.vb-proposals[data-hidden] { width: auto; padding: 0; flex-direction: row; }
+
+/* Row 1: the count (and, smaller and muted, how many are out of date) wraps inside its own space;
+   Hide stays at the row's end. Rows 2 and 3 are the buttons, the notice's full width. */
+.vb-proposals-head { display: flex; align-items: flex-start; gap: var(--vb-space-2); }
+.vb-proposals-text { flex: 1 1 0; min-width: 0; padding-top: var(--vb-space-1); }
+/* The count's line and the pill's share one font, so the number's line box is the same in both. */
+.vb-proposals-text, .vb-proposals-title, .vb-proposals .vb-proposals-pill { font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); }
+.vb-proposals-title { display: inline; margin: 0; color: var(--vb-ink-strong); }
+.vb-proposals-n { font-variant-numeric: tabular-nums; }
+.vb-proposals-stale { display: inline; margin: 0; font-size: var(--vb-text-xs); color: var(--vb-ink); }
+.vb-proposals > .vb-btn { width: 100%; }
+/* Page polish ruling A: Review and Accept all a clear step apart (8px, twice the rows' gap). */
+.vb-proposals > .vb-btn + .vb-btn { margin-top: var(--vb-space-1); }
+
+/* Hide and the pill: plain on the glass, the selection bar's hover; the chevron points the way the
+   notice goes (left, into the pill). */
+.vb-proposals :is(.vb-proposals-hide, .vb-proposals-pill) {
+  border: 0; border-radius: var(--vb-radius-sm); background: transparent; cursor: pointer; color: var(--vb-ink-strong);
+}
+.vb-proposals .vb-proposals-hide {
+  display: inline-flex; align-items: center; justify-content: center; flex: none; height: 26px; min-width: 26px; padding: 0 var(--vb-space-2);
+}
+.vb-proposals :is(.vb-proposals-hide, .vb-proposals-pill):is(:hover, [data-look='hover']) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
+.vb-proposals :is(.vb-proposals-hide, .vb-proposals-pill):active { transform: translateY(1px); }
+/* The pill is the bare number, filling the section (whose accent border it shows). Its padding is
+   the notice's own inset to the count: the section's top padding plus the text's, and its left
+   padding, so the number sits exactly where the notice's count does (page polish ruling A). */
+.vb-proposals .vb-proposals-pill {
+  display: block; padding: calc(var(--vb-space-1) + var(--vb-space-1)) var(--vb-space-3); text-align: start;
+}
+.vb-proposals-chevron { width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(135deg); margin-left: 2px; }
 
 /* The list in a confirm step (ConfirmList.svelte, mockup 03 `.apply-list`): one row per card, its
    number as the card's number tab, then what is done to it; what is left out under its own title. */

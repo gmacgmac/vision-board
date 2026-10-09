@@ -4,11 +4,12 @@
   "tag": "vb-selection-bar",
   "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Zoom to selection and Clear. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2). With the selectionPill flag the bar is compact (24px buttons) and over a selection starts as a pill, \"3 selected\" and a chevron, that opens it (stage5-follow-ups FE_02).",
   "files": {
-    "core": "selection-bar-core.ts (placeBar, barView, boxBetween, touches, boxAround; no DOM)",
+    "core": "selection-bar-core.ts (placeBar, pillGap, barView, boxBetween, touches, boxAround; no DOM)",
     "template": "selection-bar-template.ts (selectionBarTemplate: the only place the markup is built)",
     "element": "vb-selection-bar.ts (defineVbSelectionBar, VbSelectionBarElement; light DOM)",
     "styles": "selection-bar.css (scoped by the tag, and .vb-lasso; tokens only)"
   },
+  "placement": "Over a selection of cards the bar sits pillGap(zoom) above the selection's top edge (page polish ruling C): the cards' top tabs scale with zoom (TAB_RISE, 10 world px above the card) and the bar does not, so the gap is the tabs' rise at that zoom plus a clear space of 8px per unit of zoom, never under 4px (zoomed out) nor over 16px (zoomed in): 6px at zoom 0.2, 18px at 1, 41px at 2.5. The bar never covers the tabs, so a press on them grabs the card. The area bar (no cards under it) and the bar below a selection keep BAR_GAP (12px).",
   "states": ["selection", "area", "above", "below", "hidden", "hover", "focus", "pressed", "disabled", "lasso", "pill closed", "pill open"],
   "parts": {
     "vb-sb-count": "'3 selected'; absent on the area bar and with the pill",

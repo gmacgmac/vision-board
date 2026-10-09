@@ -25,6 +25,11 @@ test('agentAccess is on by default, and -agentAccess turns it off', () => {
   assert.equal(flagOn('agentAccess', parseFlags('-agentAccess').overrides), false);
 });
 
+test('toolbarMenu is on by default (maintainer, 2026-10-09), and -toolbarMenu turns it off', () => {
+  assert.equal(flagOn('toolbarMenu'), true);
+  assert.equal(flagOn('toolbarMenu', parseFlags('-toolbarMenu').overrides), false);
+});
+
 test('an override wins over the default, either way', () => {
   assert.equal(flagOn('nodeSize', { nodeSize: true }), true);
   assert.equal(flagOn('nodeSize', { nodeSize: false }), false);

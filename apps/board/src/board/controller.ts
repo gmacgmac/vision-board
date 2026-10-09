@@ -57,7 +57,7 @@ export interface Board {
   toggleHide(): void;
   /** Allow or Refuse a grant request, Remove access (agentAccess flag, access-flow.ts). */
   access: AccessFlow;
-  /** The proposals bar's Review and Accept all (proposals flag, proposal-flow.ts). */
+  /** The proposals notice's Review and Accept all (proposals flag, proposal-flow.ts). */
   proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
   /** Send to agent; null when recorded, else the problem's detail. */
   send(): Promise<string | null>;

@@ -237,6 +237,13 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    The stage is `user-select: none` and a card's content `user-select: text`.
 4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
    else clears the selection.
+5. **The focus ring** (`pointer-focus.ts`, `bindPointerFocus`, bound by `wiring.ts`): a card a
+   pointer press focused carries `data-pointer-focus`, and `node.css` draws no ring on it when a
+   key that moves no focus (Z, Esc, Space, the other commands) makes the browser match
+   `:focus-visible`. Focus moved by the keyboard (Tab, Shift+Tab, arrows, J/K, a command that
+   focuses another card) never carries it, so a card the keyboard focused keeps its ring (WCAG
+   2.4.7). The selected look is the clicked card's only mark
+   (`cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md`).
 
 ## The lasso, the selection bar and view commands (3_FE_02)
 
@@ -262,7 +269,13 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    flag (stage5-follow-ups FE_02, on by default) the bar is compact and over a selection starts as
    a pill ("3 selected" and a chevron, `aria-expanded`): its `vb-toggle` opens it, and
    `board/selection-pill.ts` closes it on a press outside, a wheel pan, Esc (focus back on the
-   pill) or the selection clearing. The selection's keys work with it closed.
+   pill) or the selection clearing. The selection's keys work with it closed. **Clear of the
+   tabs** (page polish ruling C, `cortex-tasks/board/2026-10-09_board-app_page-polish.md`): over
+   cards the bar sits `pillGap(k)` above the selection, not `BAR_GAP`, because the cards' top tabs
+   (number, kind) scale with the zoom `k` and the bar does not. `pillGap(k) = TAB_RISE * k +
+   clamp(8k, 4, 16)`: the tabs' rise (10 world px) plus a clear space from 4px zoomed out to 16px
+   zoomed in (6px at 0.2, 18px at 1, 41px at 2.5), so it never covers the tabs and a press there
+   grabs the card. The area bar and the bar below a selection keep `BAR_GAP` (12px).
 4. **Group notes.** Comment on two or more selected cards opens one note on the group
    (`notes.ts` `group()`, `BubbleInput.numbers`): the bubble's head names every item ("Note on 3
    cards: 12, 14, 15") instead of a number chip, and its act carries `nodes` in place of `n`/`ver`
@@ -335,9 +348,22 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
 3. **The key bubble** (`keyBubble` flag). The round "?" at the bottom left lists every key. It is
    generated from `COMMANDS` and the registry `ACTIONS`, never written twice (see 3_FE_02 item 6).
    Code: `apps/board/src/board/key-help.ts`, `shell/KeyHelp.svelte`, `styles/key-help.css`.
-4. **The toolbar keeps its room** (verification fix). The board picker never goes under 220px (its
-   title truncates inside). Below 1500px the end group's Hide decided, Theme and Reply show an icon
+4. **The toolbar keeps its room** (verification fix). The board picker never goes under 220px from a
+   1024px window up (its title truncates inside). At 1500px and below the toolbar carries
+   `data-narrow` (`shell/Toolbar.svelte`, a `MediaQuery`): the end group's text buttons show an icon
    only (`shell/ButtonIcon.svelte`) and the counts, with the "boards updated" chip, show their
-   numbers only; the words stay for screen readers and the title tooltip says them. `tests/pages/toolbar.spec.ts`
-   checks 1100, 1280 and 1440px (with that chip showing): picker 220px or more, no overflow, every
-   control named (axe).
+   numbers only; the words stay for screen readers and the title tooltip says them.
+5. **Toolbar icons and the "⋯" menu** (`toolbarMenu` flag, on by default; task
+   `cortex-tasks/board/2026-10-09_board-app_toolbar-icons-menu.md`). Theme, Hide decided and Reply
+   move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`): rows with their icon and
+   key, Hide decided a `menuitemcheckbox`; a click or Enter opens it and focuses the first row; Up,
+   Down, Home, End, Esc (focus back on "⋯") and Tab are the Move to list's keys, one helper for both
+   (`board/menu-keys.ts`); a press outside or a choice closes it; H works on the board and in the
+   menu. Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
+   their icon only when narrow. The smallest supported width is 768px: at 1000px and below the
+   gaps tighten, the app icon steps aside, the picker may go to 150px, the version and containers
+   dropdowns take 6em and the count chips draw closer, so every control stays whole. The end group is
+   `shell/ToolbarEnd.svelte`, which the gallery mounts wide, narrow and with the menu open. Off, the
+   toolbar is as it was. `tests/pages/toolbar.spec.ts` checks 1500, 1440, 1280, 1200, 1100, 1024,
+   900 and 768px (with that chip showing): nothing clipped, overlapping or scrolling, every control
+   named with a tooltip, the open menu inside the window, axe light and dark.

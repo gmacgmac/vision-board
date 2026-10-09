@@ -1,10 +1,10 @@
 // Gallery entry for the agent's proposals (proposals flag, FE_01, D-018): the PROPOSAL tab at rest,
 // the card popover open on an open proposal, on an out-of-date one and on two proposals on one card,
-// the bar above the board and Accept all's list. Shown only with the flag on, so ?flags=-proposals
+// the notice over the board and its pill, and Accept all's list. Shown only with the flag on, so ?flags=-proposals
 // draws the gallery as it was. The cards are real <vb-node> elements updated with `nodeState` and the
 // fixture ledger's proposals, read through the conditions table as the board reads them; the open
-// boxes are forced open (`data-open`, the attribute the popover sets). The bar and the list are the
-// board's own Svelte components, mounted in the page flow.
+// boxes are forced open (`data-open`, the attribute the popover sets). The notice and the list are the
+// board's own Svelte components; the notice and its pill sit over a card on the board's ground.
 import { mount } from 'svelte';
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
@@ -27,10 +27,14 @@ function card(n: ViewNode, fx: Fixture, open: boolean): VbNodeElement {
   return node;
 }
 
-function bar(fx: Fixture): HTMLElement {
-  const host = el('div', 'g-access');
-  mount(ProposalsBar, { target: host, props: { rows: fx.proposals.rows, placement: 'gallery', onreview: () => {}, onacceptall: () => {} } });
-  return host;
+/** The notice, or its pill, over a card on the board's ground, so the see-through shows. */
+function notice(fx: Fixture, n: ViewNode, collapsed: boolean): HTMLElement {
+  const stage = el('div', 'g-bubble-stage g-notice-stage vb-ground');
+  const c = card(n, fx, false);
+  c.style.transform = 'translate(48px, 18px)';
+  stage.append(cardList(collapsed ? 'A card under the pill' : 'A card under the notice', c));
+  mount(ProposalsBar, { target: stage, props: { rows: fx.proposals.rows, placement: 'gallery', collapsed, onreview: () => {}, onacceptall: () => {} } });
+  return stage;
 }
 
 function acceptAll(fx: Fixture): HTMLElement {
@@ -51,6 +55,7 @@ export function proposalsSection(fx: Fixture): HTMLElement {
   meta.append(el('code', undefined, 'ack · drop · reject, with proposal'), ' · feature flag proposals (D-018, api.md 93), on by default · off with ?flags=-proposals');
   const nodes = fx.proposals.view.nodes;
   const rest = nodes.filter((n) => n.kind === 'finding').map((n) => card(n, fx, false));
+  const finding = nodes.find((n) => n.kind === 'finding')!;
   const open = cardList('Cards with their proposal box open', ...nodes.filter((n) => n.kind !== 'finding').map((n) => card(n, fx, true)));
   open.classList.add('g-tips', 'g-tips-stack');
   box.append(heading,
@@ -58,7 +63,8 @@ export function proposalsSection(fx: Fixture): HTMLElement {
     meta,
     group('The tab', 'PROPOSAL on the bottom edge. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the tab.', cardList('A card with a proposal', ...rest)),
     group('The box', 'Who proposes, what, from where and when, then Reject and Accept. Out of date (the card changed since): the tab says so, the box says why, and Accept can\'t be pressed; Reject still clears it. Several on one card: newest first.', open),
-    group('The bar', 'Above the board while any proposal is open: Review opens the first card\'s box; Accept all lists what it applies first.', bar(fx)),
+    group('The notice', 'Over the board\'s top left while any proposal is open, see-through, and it moves nothing: Review opens the first card\'s box; Accept all lists what it applies first; Hide or Esc collapses it to the pill, kept for this viewer.', notice(fx, finding, false)),
+    group('The pill', 'The notice hidden, in the same place: the count, kept up to date. A press brings the notice back.', notice(fx, finding, true)),
     group('Accept all', 'The confirm step: the newest proposal on each card that is not out of date, in card order; the rest are not included, with why.', acceptAll(fx)));
   return box;
 }

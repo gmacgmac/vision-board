@@ -94,7 +94,7 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
   await expect(tab(page, n)).toHaveAttribute('aria-label', `Proposal on item ${n}`);
   await expect(card(page, n)).toHaveAttribute('aria-label', new RegExp(`, Open, 1 proposal$`));
   expect(await card(page, n).evaluate((e) => (e as HTMLElement).offsetHeight), 'the card never changes size for a tab').toBe(height);
-  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal from the agent');
+  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
   await expect(bar(page).getByRole('button', { name: 'Accept all (1)' })).toBeVisible();
   await expect(page.locator('span[aria-live="polite"]').filter({ hasText: 'proposes' }))
     .toHaveText(`Pricing chat proposes: the client declined, on item ${n}`);
@@ -159,7 +159,7 @@ test('out of date: the tab and the box say so, Accept is aria-disabled and does 
   await write(request, d, [{ type: 'append', n, text: 'The credit amount is in.' }]);
   await expect(tab(page, n)).toHaveText('Out of date');
   await expect(tab(page, n)).toHaveAttribute('data-stale', '');
-  await expect(bar(page)).toContainText('1 proposal from the agent');
+  await expect(bar(page)).toContainText('1 proposal');
   await expect(bar(page)).toContainText('· 1 out of date');
   await expect(bar(page).getByRole('button', { name: /^Accept all/ })).toHaveCount(0);
   const before = await head(page);
@@ -185,7 +185,7 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   await propose(request, d, c, 'ack', 'the sheet confirms it');
   await propose(request, d, c, 'drop', 'the new prices remove it');
   await open(page, d);
-  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('4 proposals from the agent');
+  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('4 proposals');
   await expect(bar(page)).toContainText('· 1 out of date');
   // Two proposals on one card: the box lists both, newest first.
   await tab(page, c).click();
@@ -207,7 +207,7 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   await expect(card(page, c)).toHaveAttribute('data-status', 'dropped');
   await expect(card(page, b)).toHaveAttribute('data-status', 'open');
   await expect(tab(page, b)).toHaveText('Out of date');
-  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal from the agent');
+  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
   expect((await actsAfter(page, d.board, before)).map((e) => [e.action, e.n])).toEqual([['drop', a], ['drop', c]]);
 });
 
@@ -291,12 +291,12 @@ test('gallery: the Agent proposals section shows by default and not with -propos
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html');
   const s = section(page);
-  await expect(s.locator('vb-node')).toHaveCount(4);
+  await expect(s.locator('vb-node')).toHaveCount(6);
   await expect(s.locator('.vb-card-pop[data-open]')).toHaveCount(3);
   await expect(s.locator('.vb-node-btab[data-stale]')).toHaveText('Out of date');
   await expect(s.locator('.vb-card-pop[data-open] .vb-prop')).toHaveCount(4);
   await expect(s.locator('.vb-pop-btn[aria-disabled="true"]')).toHaveCount(1);
-  await expect(s.locator('.vb-proposals h2')).toHaveText('5 proposals from the agent');
+  await expect(s.locator('.vb-proposals h2')).toHaveText('5 proposals');
   await expect(s.locator('.vb-confirm-list:not(.vb-confirm-skip) li')).toHaveCount(3);
   await expect(s.locator('.vb-confirm-skip li')).toHaveCount(2);
 });

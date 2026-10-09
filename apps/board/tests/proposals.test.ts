@@ -49,8 +49,8 @@ test('rows: newest first, worded from the ledger, the agent named by its label',
   assert.deepEqual(rows.map((r) => [r.n, r.action, r.stale]), [[3, 'drop', false], [3, 'ack', false], [2, 'ack', true], [1, 'drop', false]]);
   assert.deepEqual(rows.at(-1), { n: 1, seq: rows.at(-1)!.seq, action: 'drop', reason: 'the client declined', when: '13:08', stale: false,
     source: 'Email pasted in chat', agent: 'Pricing chat' });
-  assert.deepEqual(barWords(rows), { count: '4 proposals from the agent', stale: '1 out of date' });
-  assert.deepEqual(barWords(rows.slice(0, 1)), { count: '1 proposal from the agent', stale: '' });
+  assert.deepEqual(barWords(rows), { count: '4 proposals', stale: '1 out of date', n: '4', noun: 'proposals' });
+  assert.deepEqual(barWords(rows.slice(0, 1)), { count: '1 proposal', stale: '', n: '1', noun: 'proposal' });
 });
 
 test('acts: accept is the proposal\'s own action at the card\'s version; reject names it', () => {

@@ -40,15 +40,15 @@ const verb = (row: ProposalRow) => ACTIONS[row.action].label.toLowerCase();
 export const answerDone = (row: ProposalRow, answer: ProposalAnswer): string =>
   `${answer === 'accept' ? 'Accepted' : 'Rejected'}: ${verb(row)} ${row.n}`;
 
-/** The bar's words (ruling 4): "3 proposals from the agent", and "1 out of date" when any is. */
-export function barWords(rows: readonly ProposalRow[]): { count: string; stale: string } {
+/** The notice's words (ruling 4; proposals-notice ruling 3 and revision 2): "3 proposals", "1 out
+ *  of date" when any is, and `n`, the pill's bare number while the notice is hidden. The count is
+ *  `n` then `noun`, so the notice can set the number apart and keep it where the pill shows it
+ *  (page-polish ruling A). */
+export function barWords(rows: readonly ProposalRow[]): { count: string; stale: string; n: string; noun: string } {
   const k = rows.length;
-  const agents = new Set(rows.map((r) => r.agent)).size;
   const stale = rows.filter((r) => r.stale).length;
-  return {
-    count: `${k} proposal${k === 1 ? '' : 's'} from ${agents > 1 ? `${agents} agents` : 'the agent'}`,
-    stale: stale ? `${stale} out of date` : '',
-  };
+  const noun = k === 1 ? 'proposal' : 'proposals';
+  return { count: `${k} ${noun}`, stale: stale ? `${stale} out of date` : '', n: String(k), noun };
 }
 
 /** Accept all: on each card the newest proposal not out of date, in card order; the rest are not
