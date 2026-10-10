@@ -3,10 +3,13 @@
 // keyboard (breadcrumb, recent first, folders with a board marked, found with Open, not found with
 // Create, Esc); Open reloads the page onto the other folder's boards, and another open page follows;
 // Create lands on an empty project; the chat panel's agent works in the folder now open; axe light
-// and dark with the picker open; flag off is the board as it was. The server is this file's own
-// (folder-server.ts) with a temp home folder, never the real one; each test starts on `start`.
+// and dark with the picker open; flag off is the board as it was; the Cloud storage group on the
+// home listing (folder-links-cloud task) by pointer and keyboard, axe light and dark. The server is
+// this file's own (folder-server.ts) with a temp home folder, never the real one; each test starts
+// on `start`.
 import type { Page } from '@playwright/test';
 import fs from 'node:fs';
+import path from 'node:path';
 import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
@@ -169,6 +172,77 @@ for (const theme of ['light', 'dark'] as Theme[]) {
   });
 }
 
+// ---- The Cloud storage group (folder-links-cloud task): ~/Library/CloudStorage's real folders ----
+const places = (page: Page) => dialog(page).getByRole('list', { name: 'Cloud storage' }).getByRole('button');
+const crumbs = (page: Page) => dialog(page).getByRole('navigation', { name: 'Folder path' }).getByRole('button');
+
+/** With a cloud storage place in the temp home and no recent folders, run `body`; then go back to
+ * `start` and remove the place. */
+async function withCloud(body: (repo: string) => Promise<void>) {
+  const repo = srv.addCloud();
+  fs.rmSync(path.join(srv.home, '.visionboard', 'recent.json'), { force: true });
+  try { await body(repo); } finally {
+    await srv.open(srv.start);
+    srv.removeCloud();
+  }
+}
+
+test('Cloud storage by pointer: the place by its real name, browsing under real names, Open', async ({ page }) => {
+  await withCloud(async () => {
+    await open(page);
+    await menuButton(page).click();
+    await row(page).click();
+    await expect(places(page)).toHaveText(['Cloud-Example']);
+    // Home's link to the place is not listed (ruling 1); Library is, as before.
+    await expect(rows(page)).toHaveText(['Library', 'projects']);
+    await places(page).click();
+    await expect(crumbs(page)).toHaveText(['~', 'Library', 'CloudStorage', 'Cloud-Example']);
+    await expect(places(page)).toHaveCount(0);
+    await expect(rows(page)).toHaveText([/^repo\s*board, has a Vision Board$/]);
+    await rows(page).click();
+    await expect(status(page)).toHaveText('Vision Board found (1 board)');
+    await accept(page).click();
+    await expect(page).toHaveTitle('repo · Vision Board');
+    await expect(card(page)).toHaveText(['Cloud card']);
+    await menuButton(page).click();
+    await expect(row(page)).toHaveAttribute('title', 'Open another folder (open now: ~/Library/CloudStorage/Cloud-Example/repo)');
+  });
+});
+
+test('Cloud storage by keyboard: Shift+Tab from the first folder in ~ reaches the place; Enter goes in', async ({ page }) => {
+  await withCloud(async () => {
+    await open(page);
+    await menuButton(page).focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(rows(page).first()).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(places(page).first()).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(crumbs(page)).toHaveText(['~', 'Library', 'CloudStorage', 'Cloud-Example']);
+    await expect(rows(page).first()).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(status(page)).toHaveText('Vision Board found (1 board)');
+    await expect(accept(page)).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveTitle('repo · Vision Board');
+  });
+});
+
+for (const theme of ['light', 'dark'] as Theme[]) {
+  test(`the picker with Cloud storage passes axe (${theme})`, async ({ page }) => {
+    await withCloud(async () => {
+      await setTheme(page, theme);
+      await open(page);
+      await menuButton(page).click();
+      await row(page).click();
+      await expect(places(page)).toHaveText(['Cloud-Example']);
+      await expectNoAxeViolations(page);
+    });
+  });
+}
+
 // ---- The gallery's folder picker section (openFolder flag) ----
 const section = (page: Page) => page.locator('section[data-feature="openFolder"]');
 
@@ -177,9 +251,9 @@ test('gallery: the folder picker section shows by default in each state, and not
   await expect(page.locator('section[data-pattern]').first()).toBeVisible();
   await expect(section(page)).toHaveCount(0);
   await page.goto('/gallery.html');
-  await expect(section(page).locator('.vb-folder-dialog')).toHaveCount(6);
+  await expect(section(page).locator('.vb-folder-dialog')).toHaveCount(7);
   await expect(section(page).locator('.vb-folder-status')).toHaveText([
-    'No Vision Board here', 'Vision Board found (3 boards)', 'No Vision Board here', 'Reading folders…',
+    'Choose a project folder under ~', 'No Vision Board here', 'Vision Board found (3 boards)', 'No Vision Board here', 'Reading folders…',
     'Vision Board found (3 boards)', 'Vision Board found (3 boards)',
   ]);
   await expect(section(page).locator('[id^="folder-dialog"]')).toHaveCount(0);

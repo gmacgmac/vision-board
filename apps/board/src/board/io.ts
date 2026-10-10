@@ -213,8 +213,8 @@ export interface FolderInfo { path: string; name: string; found: boolean; boards
 /** One folder in a listing: its name (its `~/...` name in the recent list), path and whether it has a board. */
 export interface FolderEntry { name: string; path: string; hasBoard: boolean }
 
-/** `list_folders`: a folder, the folders in it and the recent ones. */
-export interface FolderList extends FolderInfo { parent?: string; folders: FolderEntry[]; recent: FolderEntry[]; more?: true }
+/** `list_folders`: a folder, the folders in it and the recent ones; on home, the cloud storage places. */
+export interface FolderList extends FolderInfo { parent?: string; folders: FolderEntry[]; recent: FolderEntry[]; places?: FolderEntry[]; more?: true }
 
 /** The folder the server has open. */
 export const getProject = () => person(() => client.call<FolderInfo>('get_project'));

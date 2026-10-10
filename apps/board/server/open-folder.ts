@@ -1,12 +1,12 @@
 // The open-folder operations (open-folder task, api.md 109-111): the open folder, the folders
-// under home with the recent list, and opening another folder. The caller check has already run:
-// all three are the person's (the `vb_person` cookie). Paths are checked in folders.ts; the switch
-// itself is project.ts's.
+// under home with the recent list (on home's own listing, also the cloud storage places), and
+// opening another folder. The caller check has already run: all three are the person's (the
+// `vb_person` cookie). Paths are checked in folders.ts; the switch itself is project.ts's.
 import path from 'node:path';
 import { boardList } from '../../../packages/actions/src/index.ts';
 import type { Handler, HandlerTable } from './dispatch.ts';
 import type { FolderEntry } from './folders.ts';
-import { childFolders, countBoards, displayName, hasBoard, resolveFolder } from './folders.ts';
+import { childFolders, cloudPlaces, countBoards, displayName, hasBoard, resolveFolder } from './folders.ts';
 import type { OpenFolder, Project } from './project.ts';
 import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
@@ -39,9 +39,10 @@ const listFolders: Handler = ({ res, params, project }) => {
   const { home } = project;
   const dir = resolveFolder(home, typeof params.path === 'string' ? params.path : home);
   const { folders, more } = childFolders(dir);
+  const places = dir === home ? cloudPlaces(home) : undefined;
   sendJson(res, 200, {
     ...shown(project, dir), ...(dir !== home && { parent: path.dirname(dir) }),
-    folders, recent: recent(home), ...(more && { more: true }),
+    folders, recent: recent(home), ...(places && { places }), ...(more && { more: true }),
   });
 };
 

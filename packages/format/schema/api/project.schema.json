@@ -39,7 +39,7 @@
       "description": "One folder in a listing: its name, its path and whether it has a Vision Board.",
       "required": ["name", "path", "hasBoard"],
       "properties": {
-        "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName", "description": "The folder's own name in a folder's list; its display name (`~/...`) in the recent list."},
+        "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName", "description": "The folder's own name in a folder's list and in the cloud storage list (`places`); its display name (`~/...`) in the recent list."},
         "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
         "hasBoard": {"type": "boolean", "description": "True when it has a `.visionboard/ledger.jsonl` file."}
       },

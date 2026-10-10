@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.13.0",
+    "version": "1.14.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -2048,7 +2048,7 @@
         "operationId": "list_folders",
         "x-agent": false,
         "summary": "List folders under the home folder",
-        "description": "List one folder under the home folder (the home folder itself when `path` is left out): whether it has a Vision Board and how many boards, the folders in it, each marked when it has one, and the folders opened lately. Folder names only: never a file's name or contents, never a hidden folder, `node_modules` or a link. A path outside the home folder, or reached through a hidden folder, is refused with `forbidden`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "description": "List one folder under the home folder (the home folder itself when `path` is left out): whether it has a Vision Board and how many boards, the folders in it, each marked when it has one, and the folders opened lately. On the home folder's listing it adds `places`, the cloud storage folders (`~/Library/CloudStorage`, when that folder exists) under their real names, each checked like any other folder. Folder names only: never a file's name or contents, never a hidden folder, `node_modules` or a link. A path outside the home folder, or reached through a hidden folder, is refused with `forbidden`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
         "security": [
           {
             "personCookie": []

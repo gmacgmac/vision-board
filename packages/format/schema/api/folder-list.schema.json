@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/folder-list.schema.json",
   "title": "Folders",
-  "description": "`{ path, name, found, boards?, parent?, folders, recent, more? }`: one folder under the home folder, whether it has a Vision Board, the folders in it and the folders opened lately. Folder names only, never a file's name or contents.",
+  "description": "`{ path, name, found, boards?, parent?, folders, recent, places?, more? }`: one folder under the home folder, whether it has a Vision Board, the folders in it, the folders opened lately and, on the home folder's listing, the cloud storage folders. Folder names only, never a file's name or contents.",
   "$comment": "Was: api.md 109 (open-folder task, U12)",
   "type": "object",
   "required": ["path", "name", "found", "folders", "recent"],
@@ -23,6 +23,12 @@
       "maxItems": 10,
       "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/entry"},
       "description": "The folders opened lately, newest first, each still there and under the home folder; `name` is its display name."
+    },
+    "places": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/entry"},
+      "description": "The cloud storage folders (the folders in `~/Library/CloudStorage`, where macOS keeps Dropbox and the like), by name; given only on the home folder's listing and only when that folder exists. Each is a real folder (not a link) that passes the same checks as `path`; one that does not is left out. `name` is its own name and `path` its real path, so browsing it goes on under the real names."
     },
     "more": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more", "description": "Present when the folder holds more folders than `folders` lists."}
   },

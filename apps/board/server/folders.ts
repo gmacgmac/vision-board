@@ -4,6 +4,9 @@
 // home may be hidden (a name starting with a dot) or `node_modules`; and it must be a folder.
 // Listings hold folder names only: never a file's name or contents, never a hidden folder,
 // `node_modules` or a link. Whether a folder has a Vision Board is whether its ledger file exists.
+// The cloud storage places (folder-links-cloud task) are the real folders in `~/Library/CloudStorage`,
+// where macOS keeps Dropbox and the like (home only holds links to them, and links are not listed);
+// each passes the same checks, so a place is just another folder under home, by its real path.
 import fs from 'node:fs';
 import path from 'node:path';
 import { boardList } from '../../../packages/actions/src/index.ts';
@@ -12,6 +15,12 @@ import { problem } from './problem.ts';
 
 /** The most folders one listing holds; `more` says there were more. */
 export const MAX_FOLDERS = 500;
+
+/** The most cloud storage places one listing holds. */
+export const MAX_PLACES = 20;
+
+/** Where macOS keeps cloud storage folders, under home. */
+const CLOUD_STORAGE = path.join('Library', 'CloudStorage');
 
 /** One folder in a listing (`project.schema.json` `entry`). */
 export interface FolderEntry { name: string; path: string; hasBoard: boolean }
@@ -60,17 +69,40 @@ export function resolveFolder(home: string, raw: string): string {
   return real;
 }
 
+const UNREADABLE = 'The board server is not allowed to read this folder (macOS may need Files and Folders access for the app that started the board). Choose another one.';
+
+/** The real folders in `dir` (no link, hidden folder or `node_modules`), by name. */
+function folderNames(dir: string): string[] {
+  let entries: fs.Dirent[];
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { throw problem('forbidden', UNREADABLE); }
+  return entries.filter((e) => e.isDirectory() && !skipped(e.name)).map((e) => e.name)
+    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }) || (a < b ? -1 : 1));
+}
+
 /** The folders in `dir`, by name; at most MAX_FOLDERS. */
 export function childFolders(dir: string): { folders: FolderEntry[]; more: boolean } {
-  let entries: fs.Dirent[];
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch {
-    throw problem('forbidden', 'The board server is not allowed to read this folder. Choose another one.');
-  }
-  const names = entries.filter((e) => e.isDirectory() && !skipped(e.name)).map((e) => e.name)
-    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }) || (a < b ? -1 : 1));
+  const names = folderNames(dir);
   const folders = names.slice(0, MAX_FOLDERS).map((name) => {
     const p = path.join(dir, name);
     return { name, path: p, hasBoard: hasBoard(p) };
   });
   return { folders, more: names.length > MAX_FOLDERS };
+}
+
+/** The cloud storage places: each real folder in `~/Library/CloudStorage` that passes resolveFolder,
+ * by its own name and real path; at most MAX_PLACES. Undefined when that folder is not there, can't
+ * be read or fails the checks (other systems get none). */
+export function cloudPlaces(home: string): FolderEntry[] | undefined {
+  let names: string[];
+  let root: string;
+  try {
+    root = resolveFolder(home, path.join(home, CLOUD_STORAGE));
+    names = folderNames(root);
+  } catch { return undefined; }
+  return names.flatMap((name) => {
+    try {
+      const real = resolveFolder(home, path.join(root, name));
+      return [{ name, path: real, hasBoard: hasBoard(real) }];
+    } catch { return []; }
+  }).slice(0, MAX_PLACES);
 }

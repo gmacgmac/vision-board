@@ -1,9 +1,11 @@
 <!-- The folder picker's contents (openFolder flag, open-folder task, api.md 110, 113): a breadcrumb
-     under ~ (each part a button), the recent folders, then the folders in the chosen one, a folder
-     with a Vision Board marked; choosing one lists it. Under them, whether the chosen folder has a
-     Vision Board ("Vision Board found (N boards)" with Open, or "No Vision Board here" with Create),
-     and Cancel. A view only: FolderDialog.svelte holds it in the modal dialog and does the calls;
-     the gallery draws it in each state (loading, found, not found, problem, opening). `uid` keeps
+     under ~ (each part a button), on the home folder the Cloud storage places (folder-links-cloud
+     task: the real folders in ~/Library/CloudStorage, by their real names), the recent folders, then
+     the folders in the chosen one, a folder with a Vision Board marked; choosing one lists it.
+     Under them, whether the chosen folder has a Vision Board ("Vision Board found (N boards)" with
+     Open, or "No Vision Board here" with Create), and Cancel. A view only: FolderDialog.svelte holds
+     it in the modal dialog and does the calls; the gallery draws it in each state (home, loading,
+     found, not found, problem, opening). `uid` keeps
      its ids apart. Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
 <script lang="ts">
   import type { FolderEntry, FolderList } from '../board/io.ts';
@@ -44,10 +46,10 @@
   const action = $derived(listing?.found || isHome ? (busy ? 'Opening…' : 'Open') : busy ? 'Creating…' : 'Create');
 </script>
 
-{#snippet row(f: FolderEntry)}
+{#snippet row(f: FolderEntry, icon: 'folder' | 'cloud' = 'folder')}
   <li>
     <button type="button" class="vb-folder-row" onclick={() => onchoose(f.path)} disabled={busy}>
-      <ButtonIcon name="folder" /><span class="vb-folder-name">{f.name}</span>
+      <ButtonIcon name={icon} /><span class="vb-folder-name">{f.name}</span>
       {#if f.hasBoard}<span class="vb-chip vb-folder-mark" data-tone="new" aria-hidden="true">board</span><span class="vb-visually-hidden">, has a Vision Board</span>{/if}
     </button>
   </li>
@@ -65,6 +67,10 @@
 </nav>
 {#if listing}
 <div class="vb-folder-lists" aria-busy={loading}>
+  {#if listing.places?.length}
+    <h3 class="vb-folder-head" id="{uid}-cloud">Cloud storage</h3>
+    <ul class="vb-folder-list vb-folder-places" aria-labelledby="{uid}-cloud">{#each listing.places as f (f.path)}{@render row(f, 'cloud')}{/each}</ul>
+  {/if}
   {#if recent.length}
     <h3 class="vb-folder-head" id="{uid}-recent">Recent</h3>
     <ul class="vb-folder-list" aria-labelledby="{uid}-recent">{#each recent as f (f.path)}{@render row(f)}{/each}</ul>

@@ -372,8 +372,10 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `cortex-tasks/board/2026-10-09_board-app_open-folder.md`, api.md 109-113). The "⋯" menu ends with
    Open folder… (its tooltip names the open folder, as the page title does). It opens
    `shell/FolderDialog.svelte`, a native modal dialog holding `shell/FolderPicker.svelte`: a breadcrumb
-   of buttons under `~`, the recent folders (the open one left out), then the folders in the chosen
-   one, a folder with a Vision Board marked with a "board" chip. Choosing a folder lists it and says
+   of buttons under `~`, on the home folder a "Cloud storage" group (the `places` of api.md 110, a
+   cloud icon, by their real names; task `2026-10-10_board-app_folder-links-cloud.md`), the recent
+   folders (the open one left out), then the folders in the chosen one, a folder with a Vision Board
+   marked with a "board" chip. Choosing a place lists it like any folder, under its real names. Choosing a folder lists it and says
    "Vision Board found (N boards)" with Open, or "No Vision Board here" with Create; focus goes to Open
    when found, else to the first folder in it, else to Create. Esc, Cancel or the backdrop closes it.
    Open or Create switches the server's folder and reloads the page without its board hash; another

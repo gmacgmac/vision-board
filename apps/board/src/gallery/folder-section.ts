@@ -1,7 +1,8 @@
 // Gallery entry for the folder picker (openFolder flag, open-folder task): the board's own
 // FolderPicker, drawn in the dialog's box in the page flow (not modal) from fixture listings, in each
-// state: a folder with a Vision Board (Open), one without (Create), reading the first listing, a
-// refusal kept in the dialog, and Open on its way. Paths are examples under a made-up home folder.
+// state: the home folder with its Cloud storage places (folder-links-cloud task), a folder with a
+// Vision Board (Open), one without (Create), reading the first listing, a refusal kept in the
+// dialog, and Open on its way. Paths are examples under a made-up home folder.
 // Shown only with the flag on, so ?flags=-openFolder draws the gallery as it was.
 import { mount } from 'svelte';
 import FolderPicker from '../shell/FolderPicker.svelte';
@@ -14,6 +15,12 @@ const RECENT = [
   { name: '~/projects/example', path: at('projects/example'), hasBoard: true },
   { name: '~/notes/2026-plans', path: at('notes/2026-plans'), hasBoard: true },
 ];
+const CLOUD = `${HOME}/Library/CloudStorage`;
+const HOME_LIST: FolderList = {
+  path: HOME, name: '~', found: false, recent: RECENT,
+  places: [{ name: 'Cloud-Example', path: `${CLOUD}/Cloud-Example`, hasBoard: false }, { name: 'Cloud-Team', path: `${CLOUD}/Cloud-Team`, hasBoard: false }],
+  folders: [{ name: 'Library', path: at('Library'), hasBoard: false }, { name: 'notes', path: at('notes'), hasBoard: false }, { name: 'projects', path: at('projects'), hasBoard: false }],
+};
 const PROJECTS: FolderList = {
   path: at('projects'), name: '~/projects', found: false, parent: HOME, recent: RECENT,
   folders: [
@@ -49,8 +56,9 @@ export function folderSection(): HTMLElement {
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'FolderDialog · FolderPicker'), ' · feature flag openFolder, on by default · off with ?flags=-openFolder');
   box.append(heading,
-    el('p', 'g-desc', 'Open folder… in the "⋯" menu: the folders under the home folder, recent first, a folder with a Vision Board marked. Choosing one lists it and says whether it has a Vision Board, with Open or Create; the folder open now is never offered again.'),
+    el('p', 'g-desc', 'Open folder… in the "⋯" menu: the folders under the home folder, cloud storage and recent first, a folder with a Vision Board marked. Choosing one lists it and says whether it has a Vision Board, with Open or Create; the folder open now is never offered again.'),
     meta,
+    group('Home', 'The first listing: the Cloud storage places (the real folders in ~/Library/CloudStorage, by their real names), recent, then the folders in ~; no board is made in ~ itself.', sample(HOME_LIST)),
     group('A folder and what is in it', 'Recent first (the folder open now left out), then the folders in ~/projects; choosing one lists it.', sample(PROJECTS)),
     group('Found', 'The chosen folder has a Vision Board: Open, focused.', sample(EXAMPLE)),
     group('Not found', 'No Vision Board here: Create makes .visionboard and an empty ledger, then the board opens on it.', sample(NEW_APP)),

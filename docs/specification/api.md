@@ -744,7 +744,15 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `not-found`. The answer is that folder (`found`, `boards`, `parent` but for home itself), the
     folders in it by name (at most 500, then `more`), each with `hasBoard`, and `recent`. Hidden
     folders, `node_modules` and links are left out. Folder names only: never a file's name or
-    contents. **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }`, newest
+    contents. A folder the server may not read is `forbidden`, saying macOS may need Files and
+    Folders access for the app that started the board. **Cloud storage** (folder-links-cloud task,
+    `openapi.json` 1.14.0): the home folder's listing adds `places`, the real folders in
+    `~/Library/CloudStorage` (where macOS keeps Dropbox and the like; home only holds links to them,
+    and links are not listed), at most 20, by their own names, each passing the checks above (one
+    that is a link, hidden, or leads out of home is left out). Only on the home listing and only
+    when that folder exists, so other systems get none. A place is just a folder under home: its
+    path, display name (`~/Library/CloudStorage/...`), recent entry, lock and open folder are its
+    real path, and an agent working through home's link matches it (114). **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }`, newest
     first, at most 10, written atomically and readable by this user only. It is checked on read; a
     bad file is ignored (an empty list), never fatal. Listed, each entry must still be a folder under
     home. It is a per-person setting, so it lives in home, not in a repo.
