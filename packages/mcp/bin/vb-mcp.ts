@@ -4,11 +4,14 @@
 // secret for every call that does not pass its own. Every call names the folder this server works
 // in (VB_PROJECT, else the nearest folder with a Vision Board at or above the working folder), so
 // the board refuses it when another folder is open. Logs go to stderr; stdout is the protocol.
-import { createMcpServer, projectOf, serveStdio } from '../src/index.ts';
+import fs from 'node:fs';
+import path from 'node:path';
+import { projectOf } from '../../client/src/index.ts';
+import { createMcpServer, serveStdio } from '../src/index.ts';
 
 const base = (process.env.VB_SERVER || 'http://127.0.0.1:4466').replace(/\/+$/, '');
 const secret = process.env.VB_AGENT_SECRET || undefined;
-const project = projectOf(process.env, process.cwd());
+const project = projectOf(process.env, process.cwd(), { fs, path });
 const log = (line: string) => { process.stderr.write(`${line}\n`); };
 
 log(`vb-mcp: serving the board API at ${base} over stdio, ${project ? `working in ${project}` : 'in no project folder (calls are not checked)'}`);

@@ -11,6 +11,8 @@ export interface Setup {
   answers?: Response[];
   /** Replace fetch outright (for a dropped connection). */
   fetch?: typeof fetch;
+  /** The project folder this run works in (`Io.project`). */
+  project?: string;
 }
 export interface Result { code: number; out: string; err: string; requests: Seen[] }
 
@@ -36,6 +38,7 @@ export async function exec(argv: string[], setup: Setup = {}): Promise<Result> {
     readFile: (file) => setup.files?.[file] ?? (() => { throw new Error(`ENOENT: ${file}`); })(),
     env: setup.env ?? {},
     fetch: setup.fetch ?? stub,
+    ...(setup.project && { project: setup.project }),
   };
   result.code = await run(argv, io);
   return result;

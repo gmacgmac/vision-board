@@ -8,7 +8,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { INSTRUCTIONS, INSTRUCTIONS_JOINED, createMcpServer, projectOf } from '../src/index.ts';
+import { projectOf as projectIn } from '../../client/src/index.ts';
+import { INSTRUCTIONS, INSTRUCTIONS_JOINED, createMcpServer } from '../src/index.ts';
+
+const projectOf = (env: { VB_PROJECT?: string }, cwd: string) => projectIn(env, cwd, { fs, path });
 import { MODERN_META } from './support.ts';
 
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-mcp-project-')));

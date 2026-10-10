@@ -787,7 +787,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     generic answer. Found: `wrong-folder`, never "join again". Both refusals say the same: "The
     board has switched to `~/projects/b`. Your work is in `~/projects/a`. Ask the person to open it
     again; don't join here."
-116. **The `vb` MCP server names its folder** (`packages/mcp/src/project.ts` `projectOf`), worked out
+116. **The `vb` MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
     once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
     with `.visionboard/ledger.jsonl` (a home folder that only keeps `recent.json` is no project),
     else none. `packages/client` sends it as `VB-Project` on every call (`project` option). The

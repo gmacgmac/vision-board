@@ -7,7 +7,6 @@ export type { StdioStreams } from './stdio.ts';
 export { callTool, failureText, split } from './call-tool.ts';
 export type { CallContext, ToolResult } from './call-tool.ts';
 export { checkArgs } from './check-args.ts';
-export { projectOf } from './project.ts';
 export type { Checked } from './check-args.ts';
 export { TOOL_FILE, TOOLS, routeOf } from './tools.ts';
 export type { JsonSchema, Route, ToolDef, ToolFile } from './tools.ts';

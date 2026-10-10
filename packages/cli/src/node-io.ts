@@ -1,5 +1,7 @@
 // The real `Io` for the executable: process streams, the file system and the environment.
 import fs from 'node:fs';
+import path from 'node:path';
+import { projectOf } from '../../client/src/index.ts';
 import type { Io } from './run.ts';
 
 async function readAll(stream: NodeJS.ReadableStream): Promise<string> {
@@ -9,11 +11,13 @@ async function readAll(stream: NodeJS.ReadableStream): Promise<string> {
 }
 
 export function nodeIo(): Io {
+  const project = projectOf(process.env, process.cwd(), { fs, path });
   return {
     stdout: (text) => { process.stdout.write(text); },
     stderr: (text) => { process.stderr.write(text); },
     readStdin: () => readAll(process.stdin),
     readFile: (file) => fs.readFileSync(file, 'utf8'),
     env: process.env,
+    ...(project && { project }),
   };
 }

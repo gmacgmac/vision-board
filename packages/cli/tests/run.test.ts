@@ -34,6 +34,11 @@ test('the secret comes from --secret, then VB_AGENT_SECRET, and goes out as a Be
   assert.equal((await exec(['list-boards'])).requests[0]!.headers.Authorization, undefined);
 });
 
+test('the project folder goes out as VB-Project (D-039); none, no header', async () => {
+  assert.equal((await exec(['list-boards'], { project: '/work/projects/a' })).requests[0]!.headers['VB-Project'], '/work/projects/a');
+  assert.equal((await exec(['list-boards'])).requests[0]!.headers['VB-Project'], undefined);
+});
+
 test('--text prints key: value lines through the generic formatter', async () => {
   const r = await exec(['list-boards', '--text'], { answers: [json({ boards: [{ board: 'roadmap', seq: 51 }], head: 51 })] });
   assert.equal(r.out, 'boards[0].board: roadmap\nboards[0].seq: 51\nhead: 51\n');

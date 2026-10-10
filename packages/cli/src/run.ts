@@ -21,6 +21,8 @@ export interface Io {
   env: Readonly<Record<string, string | undefined>>;
   /** Replaces the global `fetch`, for tests. */
   fetch?: typeof fetch;
+  /** The project folder this run works in, sent as `VB-Project` (D-039); none, nothing is sent. */
+  project?: string;
 }
 
 const HELP_WORDS = ['help', '--help', '-h'];
@@ -70,7 +72,7 @@ async function call(command: CommandInfo, parsed: Parsed, io: Io): Promise<numbe
   const built = assemble(command, parsed, jsonBody);
   if (!built.ok) return usage(io, built.message, command);
   const secret = parsed.secret ?? io.env.VB_AGENT_SECRET;
-  const client = createClient({ base, ...(secret && { secret }), ...(io.fetch && { fetch: io.fetch }) });
+  const client = createClient({ base, ...(secret && { secret }), ...(io.project && { project: io.project }), ...(io.fetch && { fetch: io.fetch }) });
   try {
     const answer = await client.call(command.operationId as OperationId, built.input);
     io.stdout(`${parsed.text ? formatText(answer) : JSON.stringify(answer, null, 2)}\n`);

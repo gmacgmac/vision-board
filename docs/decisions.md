@@ -456,3 +456,29 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: Building the panel inside `apps/board`, which would tie it to the
   board.
 - **Task**: [[cortex-tasks/board/2026-10-08_board-agent_chat-panel/PLAN.md]]
+
+## D-038 The open folder changes at run time; the recent list lives in home
+- **Date**: 2026-10-10 · **Status**: Accepted · **From**: maintainer (chat 400A, 408A, 445)
+- **Decision**: The board server opens one project folder at a time and can switch it in place
+  (`open_project`, person only, folders under the home folder only, resolved with realpath, never
+  home itself): the new folder's lock first, then chats stop, live streams end, the old lock goes.
+  Recent folders are a per-person setting in `~/.visionboard/recent.json`; at start `VB_PROJECT`
+  wins, then the last folder opened, then the repo.
+- **Why**: The maintainer works across repos and should not restart the server with an env
+  variable to change folder.
+- **Alternative rejected**: One server per folder on its own port (several servers to start and
+  track); a recent list inside a repo (it is personal, not the project's).
+- **Task**: [[cortex-tasks/board/2026-10-09_board-app_open-folder.md]]
+
+## D-039 Agents say which folder they work in
+- **Date**: 2026-10-10 · **Status**: Accepted · **From**: maintainer (chat 435-436, 446)
+- **Decision**: Every agent operation takes an optional `VB-Project` header (the agent's folder);
+  the server refuses a call for another folder, and a secret known to a recent folder's agents,
+  with `wrong-folder` (409) naming both folders, never "join again". The `vb` MCP and the `vb` CLI
+  send the header (`VB_PROJECT`, else the nearest project at or above the working folder); `join`
+  and `list_boards` name the open folder.
+- **Why**: Once the board can switch folder (D-038), an agent left behind would join the new
+  folder and draw its work there, or read another project's card 12 as its own.
+- **Alternative rejected**: One agents file across folders (an identity would follow the person
+  into every repo); refusing only writes (reads would still mislead).
+- **Task**: [[cortex-tasks/board/2026-10-10_board-security_folder-mismatch.md]]

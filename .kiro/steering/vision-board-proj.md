@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-02
+> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-10
 
 # Vision Board — Project Rules
 
@@ -185,14 +185,19 @@ Use these words consistently in code, docs and the UI.
 ## Running the board and connecting an agent
 
 - Board: `npm run board`, then open http://localhost:4466 (`npm run board:watch` reloads the page
-  on changes). One server per ledger; the lock refuses a second.
+  on changes). It opens `VB_PROJECT` when set, else the folder last opened from the board, else
+  this repo. "⋯" › Open folder… opens another project folder under your home folder (or creates
+  its `.visionboard/`) in place of this one; every open page reloads onto it, running chats stop,
+  and agents join again. One server per ledger; the lock refuses a second.
 - MCP server `vb` (any client): command `/usr/local/bin/node` (check `which node` on another
   computer), args `["<repo>/packages/mcp/bin/vb-mcp.ts"]`, env
   `{ "VB_SERVER": "http://127.0.0.1:4466" }`, where `<repo>` is this folder's absolute path.
   Claude Code: `claude mcp add vb --env VB_SERVER=http://127.0.0.1:4466 -- <node>
   <repo>/packages/mcp/bin/vb-mcp.ts` (add `-s user` for every project). Kiro: the same entry in
   `.kiro/settings/mcp.json` or `~/.kiro/settings/mcp.json`. Leave `VB_AGENT_SECRET` unset so
-  each chat joins as its own agent. Details: `packages/mcp/README.md`.
+  each chat joins as its own agent. The MCP names the folder it works in (`VB_PROJECT`, else the
+  project it was started in); when the board has another folder open, every call answers
+  `wrong-folder`, and the agent stops and tells you. Details: `packages/mcp/README.md`.
 
 ## Running the prototype
 

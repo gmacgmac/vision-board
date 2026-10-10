@@ -180,3 +180,12 @@ the MCP bullet, add after "Leave `VB_AGENT_SECRET` unset so each chat joins as i
 > its own (rulings 435-436). Rejected: one agents file across folders (an identity would follow
 > the person into every repo), and refusing only writes (reads would still mislead). Task:
 > `cortex-tasks/board/2026-10-10_board-security_folder-mismatch.md`.
+
+### Follow-up (orchestrator, 2026-10-10; maintainer 445-449)
+
+D-038 and D-039 accepted and appended to `docs/decisions.md`; both steering lines applied. The `vb`
+CLI now sends `VB-Project` too (449): `projectOf` moved to `packages/client/src/project.ts`
+(exported from the client's front door; the page loads the client, so callers hand in Node's
+`fs` and `path`); `packages/cli/src/node-io.ts` works it out and `run.ts` passes `Io.project` to
+the client; test first in `packages/cli/tests/run.test.ts`. api.md 116 updated. Gates all exit 0
+(`npm test` 922 + 6, `check`, `verify`, `gen -- --check`, `test:pages` 307).
