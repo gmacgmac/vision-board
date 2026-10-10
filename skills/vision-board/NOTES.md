@@ -73,3 +73,17 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
 - 2026-10-08, maintainer (same): a proposal made on an older version of a card can't be accepted;
   the person sees "changed after this was proposed". After you edit a card, propose again on its
   new version. The person can now reject a proposal; `show_node` says how each one ended.
+
+## Skill v2 run (every-node T_01)
+
+- 2026-10-10, agent: four print-mode turns of `claude` 2.1.295 (Sonnet 5.5, its default) on a test
+  server, scenarios 11, 10 (own chat and panel) and a panel board drawn from another board. Every
+  container `grid`, no links, no `item`; it asked with `question`, `decision` and `action` cards
+  and explained with findings, risks and notes. A comment on three mixed cards got one `reply`
+  (`to` = the note) plus `append`s where the decision belonged; the commented question was taken
+  as answered, not asked again. A More context got a reply, a Later a full `park`.
+- 2026-10-10, agent: in the same run the chat words were long: own chat listed every card's
+  content, the panel a paragraph per group. v2 adds "In both: a line or two, never the cards'
+  content"; the one panel turn after it was two short paragraphs, still more than one line.
+- 2026-10-10, agent: in the panel it read with `check_responses` and did not start the turn with
+  `list_open`; after a round it once called a risk "still open" (only cards that ask are open).

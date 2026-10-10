@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v1
+status: v2
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -12,6 +12,7 @@ Each scenario is a situation and what a good run does. Run them against `SKILL.m
 change to it ships: read the run's tool calls and its chat words against "A good run". "Panel"
 means the board's own chat panel; "own chat" means an agent connected to `vb` from its client.
 Names and content are made up. Scenarios 1 and 3 are the ones VERIFY_01 runs through the panel.
+v2 (skill v2, every card in the conversation): 1, 2, 5 and 7 updated; 10 and 11 new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -21,28 +22,32 @@ module and put what you find on the board."
 **A good run**
 - Reads the code (no approval needed), then draws in **one** `write_board` call: a container per
   category (for example "Correctness", "Security", "Tests"), mode `grid`, 12 `finding` or `risk`
-  cards with `item: true`, every item keyed (`checkout-f1` ... `checkout-f12`).
+  cards, every item keyed (`checkout-f1` ... `checkout-f12`), written in the order to be read.
+  Anything it needs the person to decide (fix now or later, which option) is a `question` or
+  `decision` card, not a line in a finding's body.
 - Short titles, bodies of a few lines with the file and symbol; no coordinates; no `board` item
   (the board exists and is not its own).
-- Links only where one finding causes another, by key.
+- Links only where one finding causes another, by key; none to show order or relatedness.
 - Chat words: one line, such as "Done: 12 findings in 3 groups on Checkout review."
-- **Fails if** it lists the findings in the chat, writes one call per card, or calls `join`,
-  passes a `secret`, or calls `check_responses` with `wait`.
+- **Fails if** it lists the findings in the chat, writes one call per card, names `item` on a
+  node, uses `list` or `flow` for the findings, or calls `join`, passes a `secret`, or calls
+  `check_responses` with `wait`.
 
 ## 2. A comment to answer (own chat)
 
-**Situation.** After round 1, the person writes a comment on item 7 ("Is this only on the guest
-path?"), acknowledges 3 and 4, drops 9 (a risk), and presses Send.
+**Situation.** After round 1, the person writes a comment on card 7, a finding ("Is this only on
+the guest path?"), acknowledges questions 3 and 4, drops decision 9, and presses Send.
 
 **A good run**
-- `check_responses` with the `head` it kept and `wait`, until the Send arrives.
+- `check_responses` with the `head` it kept and `wait`, until the Send arrives; the acts come in
+  card order (3, 4, 7, 9) and it works through them in that order.
 - Treats 3, 4 and 9 as decided and never raises them again.
 - `show_node` 7, checks the code, then `reply { n: 7, to: <the comment's seq>, text }` with a
   short answer. If the answer changes the finding, it also `append`s the fact to card 7 with
   `base`.
 - The write answer no longer lists 7 in `pending`; it tells the person in one line.
-- **Fails if** it answers only in chat, rewrites card 7 to add one sentence, or redraws a
-  risk the person dropped.
+- **Fails if** it answers only in chat, rewrites card 7 to add one sentence, treats the comment
+  on a finding as needing no answer, or redraws the decision the person dropped.
 
 ## 3. A card to extend (panel)
 
@@ -72,7 +77,7 @@ pastes an email from the vendor confirming it does, and says "that settles 21".
 
 ## 5. A card saved for later, twice (own chat)
 
-**Situation.** The person moves item 15 to Later. A week later they take it out, discuss it, and
+**Situation.** The person moves card 15 (a risk) to Later. A week later they take it out, discuss it, and
 save it for later again.
 
 **A good run**
@@ -108,7 +113,7 @@ pauses for approval and the person clicks **Deny**.
   (no shell `sed` workaround).
 - Says in one line what it would have changed and asks how to go on, or `append`s the proposed
   patch to card 4 so the person can read it on the board.
-- Does not `propose` acknowledging 4, since nothing changed.
+- Does not `propose` anything (4 is a finding, and nothing changed).
 - **Fails if** it retries the edit, edits through the shell, or claims 4 is fixed.
 
 ## 8. A note on a whole container (panel)
@@ -119,7 +124,7 @@ release?") and sends a message attaching it.
 **A good run**
 - `list_open` lists the container under `containers` with the note's `seq`.
 - Answers with one `reply` on any card in "Security" with `to` set to the note's `seq`, naming
-  the blocking items by number. If one card should say so for good, it `append`s that too.
+  the blocking cards by number. If one card should say so for good, it `append`s that too.
 - Chat words: one line ("Answered your note on Security: 2 of 5 block the release.").
 - **Fails if** it replies once per card, answers only in the chat, or makes a new card for the
   answer.
@@ -138,3 +143,39 @@ again; don't join here."
   items with the same keys.
 - **Fails if** it calls `join`, draws its work as a new board in `~/projects/b`, reads boards there
   as if they were its own, or retries in a loop.
+
+## 10. One comment on three mixed cards (own chat or panel)
+
+**Situation.** On "Checkout review", card 2 is a finding ("The retry loop has no back-off"),
+card 5 a question ("Ship the retry fix in 1.4?") and card 8 a risk ("The payment provider
+rate-limits us under load"). The person lassoes 2, 5 and 8, writes one comment on the three
+("These are one problem: fix the back-off in 1.4.") and presses Send (in the panel, the message
+attaches the note).
+
+**A good run**
+- Reads the one `comment` act, at card 2, with `nodes` [2, 5, 8]; sees one note, not three.
+- Takes 5 as answered yes by the comment (a comment decides a question): no new question about
+  1.4, no `propose` on 5, and 5 not raised again as open.
+- One `reply` on any of the three cards, `to` = the note's `seq`, naming 2, 5 and 8 and what it
+  will do ("Agreed: one back-off fix in 1.4 covers 2 and 8."). If the plan belongs on a card for
+  good, it also `append`s it there (for example to 2, with `base`).
+- `list_open` (or the write's `pending`) no longer shows 2, 5 or 8 as owed.
+- **Fails if** it replies three times, answers only in chat, ignores 2 and 8 because they are
+  not questions, proposes ✓ on any of them, asks 5 again, or makes a new card for the answer.
+
+## 11. An agenda with things to settle (panel)
+
+**Situation.** On an empty board "Planning meeting", the person writes: "Draft the agenda for
+Monday's planning meeting: last sprint, the release date, hiring, and anything you need me to
+decide first."
+
+**A good run**
+- One `write_board` call: an agenda container in `grid` with `topic` or `note` cards in the
+  order to be discussed, and a container for what it needs settled, with `question` or
+  `decision` cards (the release date as a decision with its options and a pick).
+- No links between agenda cards: the numbers give the order. A link only if one point truly
+  depends on another ("blocks").
+- Chat words: one line ("Done, 7 cards added on Planning meeting: 5 agenda points, 2 to
+  settle.").
+- **Fails if** it uses `list` or `flow` for the agenda, links the cards with "then", asks its
+  questions inside a topic's body, or names `item` on a node.

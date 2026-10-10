@@ -15,7 +15,7 @@ tracker: cortex-tasks/tracker.md#U13
 | 1 | BE_01 | 1 | [Contract: the kind decides, numbers on every node](./BE_01_contract.md) | Opus 5.5 | Completed with BE_02/FE_01 (gates at FE_01) | Contract stands; ruling A: gates checked at the end of FE_01 |
 | 2 | BE_02 | 2 | [Action layer and server](./BE_02_actions-server.md) | Opus 5.5 | Completed (gates at FE_01) | check, verify, gen-check green; unit red only gallery-fixture (3, FE_01) |
 | 3 | FE_01 | 3 | [The page: every card numbered and answerable](./FE_01_page.md) | Opus 5.5 | Completed | All five gates exit 0 (BE_01, BE_02, FE_01 together); 32 screenshots updated after review |
-| 4 | T_01 | 4 | [The skill](./T_01_skill.md) | Opus 5.5 | Planned | |
+| 4 | T_01 | 4 | [The skill](./T_01_skill.md) | Opus 5.5 | Completed | Skill v2, scenarios 10-11, 4-turn real run (Sonnet 5.5); five gates exit 0 |
 | 5 | VERIFY_01 | 5 | [By hand with real agents](./VERIFY_01_by-hand.md) | Orchestrator | Planned | |
 
 Gates after every task, run by the orchestrator: `npm test`, `npm run check`, `npm run verify`,
@@ -60,4 +60,13 @@ ask / tell; `every-node.spec.ts` + unit tests. Expectations moved by rulings: bo
 count, a proposal fixture, gallery kinds. 32 baselines updated after viewing each. Gates: test, check,
 verify, gen-check, test:pages (314) all 0. Steering terminology wording proposed in FE_01's notes.
 ### T_01
+`SKILL.md` v2: no `item`; "Kinds: the kind decides" (ask with question/decision/action, explain with
+the rest); "What the person's buttons mean" (one meaning on every card); grid by default, links only
+for real flows, write in reading order; answers in card order; owe reply/append per note, park per
+Later; one reply per group note; propose only on cards that ask; chat words a line or two, never the
+cards' content. `scenarios.md` v2 (1, 2, 5, 7 updated; 10 three mixed cards, 11 agenda). Run:
+`claude` 2.1.295 (Sonnet 5.5), test server on 4482, 4 turns: layout, kinds, group reply, appends,
+park all good; chat words too long (rule added, better after, still over a line); a panel turn
+skipped `list_open`. `NOTES.md` has the evidence. Gates: test 948+6, check, verify, gen-check,
+test:pages 314, all 0.
 ### VERIFY_01
