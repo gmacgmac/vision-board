@@ -22,8 +22,8 @@ const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
 export interface ChatServer {
   base: string;
   fake: ReturnType<typeof fakeChat>;
-  /** An agent's write on `board`; the results, each `ok`. */
-  write(board: string, items: unknown[]): Promise<{ n?: number }[]>;
+  /** An agent's write on `board` (this server's test agent, or the agent whose `secret` is given); the results, each `ok`. */
+  write(board: string, items: unknown[], secret?: string): Promise<{ n?: number }[]>;
   /** A person's act on `board`, with the page's cookie. */
   act(board: string, body: Record<string, unknown>): Promise<void>;
   /** Hold every session start until the returned release is called. */
@@ -53,8 +53,8 @@ export async function startChatServer(): Promise<ChatServer> {
   const { secret } = await post('/api/agents', { label: 'Page test agent' }, {}) as { secret: string };
   return {
     base, fake,
-    async write(board, items) {
-      const out = await post(`/api/boards/${board}/write`, { items }, { Authorization: `Bearer ${secret}` }) as { results: { ok: boolean; n?: number }[] };
+    async write(board, items, as = secret) {
+      const out = await post(`/api/boards/${board}/write`, { items }, { Authorization: `Bearer ${as}` }) as { results: { ok: boolean; n?: number }[] };
       if (!out.results.every((x) => x.ok)) throw new Error(`the write failed: ${JSON.stringify(out.results)}`);
       return out.results;
     },

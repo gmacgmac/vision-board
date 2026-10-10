@@ -10,13 +10,14 @@ import { applyEvents, composerView, EMPTY_CHAT, headerView } from '../../../../p
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import { nodeState, renderMarkdown } from '../../../../packages/ui/src/index.ts';
 import { mount } from 'svelte';
+import { MODELS } from '../board/chat-panel.ts';
 import ChatSidebar from '../shell/ChatSidebar.svelte';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
 import scenesText from './gallery.chat.json?raw';
 
-type Scene = 'session' | 'stopped' | 'error';
+type Scene = 'session' | 'stopped' | 'error' | 'send';
 const SCENES = JSON.parse(scenesText) as Record<Scene, ChatEvent[]>;
 
 interface Sample {
@@ -30,6 +31,8 @@ interface Sample {
   now?: string;
   chips?: Chip[];
   header?: Partial<HeaderInput>;
+  /** What the empty feed says, when not the board's. */
+  empty?: string;
 }
 
 const AGENTS = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
@@ -49,6 +52,9 @@ const SAMPLES: Sample[] = [
   { state: 'blocked', caption: 'Blocked: the host says why no message can go', scene: 'session', upTo: 7, host: { blocked: PAST } },
   { state: 'stopped', caption: 'Stopped: the wait was released and the turn ended', scene: 'stopped', upTo: ALL },
   { state: 'error', caption: 'Error: the turn failed; the next message clears it', scene: 'error', upTo: ALL },
+  { state: 'send-queued', caption: 'Send to agent while it works: the answers wait for the turn to end', scene: 'send', upTo: 3 },
+  { state: 'send-handed', caption: 'Then they go: the board\'s answers as one message, in card order', scene: 'send', upTo: ALL },
+  { state: 'folder', caption: 'A folder with no board: the agent may draw the first one', scene: 'session', upTo: 0, empty: 'No boards here yet. Ask the agent to draw one.' },
 ];
 
 /** Fills `box` with the chat's elements in the sample's state. */
@@ -56,13 +62,13 @@ function fill(box: HTMLElement, s: Sample): void {
   const state = applyEvents(EMPTY_CHAT, SCENES[s.scene].slice(0, s.upTo));
   const host = s.host ?? {};
   const header = document.createElement('chat-header') as ChatHeaderElement;
-  header.show(headerView({ agent: 'claude', model: 'sonnet', agents: [AGENTS[0]!], ...s.header }, state, host));
+  header.show(headerView({ agent: 'claude', model: 'claude-sonnet-5-5[1m]', agents: [AGENTS[0]!], models: MODELS.claude, ...s.header }, state, host));
   const feed = document.createElement('chat-feed') as ChatFeedElement;
   const now = Date.parse(s.now ?? '2026-10-08T21:39:00Z');
   feed.configure({
     render: (src) => renderMarkdown(src),
     boardName: (id) => (id === 'scratch' ? 'Scratch' : id),
-    empty: 'No messages yet. Ask the agent about this board.',
+    empty: s.empty ?? 'No messages yet. Ask the agent about this board.',
     clock: () => now,
   });
   feed.show(state);

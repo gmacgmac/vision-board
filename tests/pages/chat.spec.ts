@@ -7,7 +7,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error'];
+const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error', 'send-queued', 'send-handed', 'folder'];
 const sample = (page: Page, state: string) => page.locator(`.g-chat-sample[data-state="${state}"]`);
 
 /** Collects the chat's events on the page, in order. */
@@ -43,6 +43,11 @@ test('every state is drawn: a header, a named polite log and a labelled composer
   }
   await expect(sample(page, 'empty').locator('.chat-empty')).toHaveText('No messages yet. Ask the agent about this board.');
   await expect(sample(page, 'empty').getByRole('combobox', { name: 'Agent' })).toHaveValue('claude');
+  // The board's Send (panel-send FE_01): the waiting line, then the answers as one message; a folder with no board.
+  await expect(sample(page, 'send-queued').locator('.chat-system')).toHaveText('Your answers go to the agent when it finishes this turn.');
+  await expect(sample(page, 'send-handed').locator('chat-message[data-from="person"]').last()).toContainText('The person updated the board:');
+  await expect(sample(page, 'folder').locator('.chat-empty')).toHaveText('No boards here yet. Ask the agent to draw one.');
+  await expect(sample(page, 'empty').getByRole('combobox', { name: 'Model' }).locator('option:checked')).toHaveText('Sonnet 5.5');
 });
 
 test('the status line and the header follow the turn', async ({ page }) => {

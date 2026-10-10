@@ -35,16 +35,20 @@
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const bridge = shell.chatPanel ? createChatBridge() : undefined;
   let chat: ChatPanel | null = $state(null);
+  // The chat talks about the open board, or in the folder ('') once boot found no board in it.
   $effect(() => {
-    const [c, id, past] = [chat, shell.boardId, !!shell.past];
+    const [c, id, past] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past];
     untrack(() => c?.show(id, past));
   });
+  /** Send to agent; with the chat, it waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
+  const send = (b: Board) => (chat ? chat.boardSend(b.send) : b.send());
 
   function hostChat(panel: HTMLElement) {
     const c = createChatPanel(panel, {
       bridge: bridge!, confirm: askConfirm, toast,
       boardName: (id) => shell.boards.find((b) => b.board === id)?.title ?? id,
       open: async () => { shell.chatOpen = true; await tick(); },
+      waiting: (on) => { shell.sendWaiting = on; },
     });
     chat = c;
     return () => { c.destroy(); chat = null; };
@@ -65,7 +69,7 @@
   ongo={(id) => board?.goToContainer(id)}
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
-  onsend={() => board?.send() ?? Promise.resolve('The board is not ready yet.')}
+  onsend={() => (board ? send(board) : Promise.resolve('The board is not ready yet.'))}
   onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
 />
 {#if shell.past}

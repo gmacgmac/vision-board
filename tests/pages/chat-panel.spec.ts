@@ -240,12 +240,12 @@ test('after a reload the panel attaches to the board\'s newest session and shows
   await open(page);
   await toggle(page).click();
   const model = side(page).getByRole('combobox', { name: 'Model' });
-  await model.selectOption({ label: 'Sonnet' });
+  await model.selectOption({ label: 'Sonnet 5.5' });
   await page.getByRole('dialog', { name: 'Start a new session?' }).getByRole('button', { name: 'New session' }).click();
   await expect(side(page).locator('.chat-empty')).toBeVisible();
   await page.reload();
   await expect(side(page)).toBeVisible();
-  await expect(model.locator('option:checked')).toHaveText('Sonnet');
+  await expect(model.locator('option:checked')).toHaveText('Sonnet 5.5');
   const given = await send(page, 'Still there?');
   const { sessions } = await (await page.request.get(`${srv.base}/api/boards/scratch/chats`)).json() as { sessions: { session: string }[] };
   expect(given.args[5], 'the session the run was for').toBe(sessions[0]!.session);

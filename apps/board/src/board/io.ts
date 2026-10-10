@@ -142,8 +142,9 @@ export function watchProject(on: ProjectEvents): () => void {
 
 // ---- the chat (chat-panel FE_02, api.md 98-107) ---------------------------------------------
 
-/** One chat session on a board (`start_chat`, `list_chats`). */
-export interface ChatSessionInfo { session: string; board: string; agent: 'claude' | 'kiro'; model?: string; created: string }
+/** One chat session on a board (`start_chat`, `list_chats`), or in the folder on no board yet
+ * (`start_folder_chat`, `list_folder_chats`, api.md 122): `board` left out until its agent creates one. */
+export interface ChatSessionInfo { session: string; board?: string; agent: 'claude' | 'kiro'; model?: string; created: string }
 
 /** What a message carries: the words, the notes by `seq` and the cards by number. */
 export interface ChatMessageBody { text: string; notes?: number[]; cards?: number[] }
@@ -157,6 +158,14 @@ export const listChats = (board: string) =>
 /** A new session on `board`; starting one grants the board to its agent (api.md 106). */
 export const startChat = (board: string, agent: ChatSessionInfo['agent'], model?: string) =>
   person(() => client.call<ChatSessionInfo>('start_chat', { board, body: { agent, ...(model && { model }) } }));
+
+/** The folder's sessions on no board, newest first; a session leaves the list once its agent creates a board. */
+export const listFolderChats = () =>
+  person(() => client.call<{ sessions: ChatSessionInfo[] }>('list_folder_chats'));
+
+/** A new session in the folder, on no board; it grants nothing (api.md 122). */
+export const startFolderChat = (agent: ChatSessionInfo['agent'], model?: string) =>
+  person(() => client.call<ChatSessionInfo>('start_folder_chat', { body: { agent, ...(model && { model }) } }));
 
 /** The person's message; the answer is its `message_in` event. `conflict` while the agent answers. */
 export const sendChat = (session: string, body: ChatMessageBody) =>

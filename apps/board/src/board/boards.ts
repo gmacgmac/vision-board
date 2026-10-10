@@ -3,7 +3,8 @@
 // opens another board from the held state, with no fetch, since the state holds them all. The
 // picker's list is worked out from the held state after every batch (`boardList`, the same read as
 // `list_boards`; its marks are attention.ts's), and the open board never changes by itself, except
-// that an empty project opens the first board drawn.
+// that an empty project opens the first board drawn, and a board a chat in the folder drew opens
+// (`jump`, panel-send ruling 2): now, or once its line arrives.
 // Each board's zoom and position are kept (kept-view.ts, keepView flag) and restored on open.
 // The board opened is kept too, so a page opened with no board in its hash reopens it (start-board.ts);
 // with the openFolder flag it is kept per folder (folder.ts), and the plain key is the fallback.
@@ -37,6 +38,8 @@ export interface BoardsDeps {
 export interface Boards {
   boot(): Promise<void>;
   switchTo(id: string): void;
+  /** Open board `id` now when it is held, else as soon as its line arrives (a chat's first board). */
+  jump(id: string): void;
   /** The held state changed: rebuild the picker's list; on an empty project, open the first board
    * drawn. */
   listed(): void;
@@ -54,6 +57,8 @@ export function createBoards(d: BoardsDeps): Boards {
   /** Boot has read the ledger: from then on the first board drawn into an empty project opens. */
   let booted = false;
   let drawn = false;
+  /** A board to open as soon as it is held (`jump`). */
+  let pending: string | null = null;
   const kept = createKeptView(d.vp, d.id, d.keepView);
   const openFolder = openFolderOn();
   /** Where the board last looked at is kept: per folder once the folder is known. */
@@ -83,6 +88,7 @@ export function createBoards(d: BoardsDeps): Boards {
 
   function switchTo(id: string) {
     shell.boardId = id;
+    shell.noBoards = false;
     open(id);
   }
 
@@ -91,7 +97,13 @@ export function createBoards(d: BoardsDeps): Boards {
     if (!s || !booted) return;
     const list = boardList(s);
     shell.boards = list;
+    if (pending && s.boards.has(pending)) return jump(pending);
     if (!d.id() && list.length) switchTo(list[0]!.board);
+  }
+
+  function jump(id: string) {
+    pending = d.live.state?.boards.has(id) ? null : id;
+    if (!pending && d.id() !== id) switchTo(id);
   }
 
   return {
@@ -104,6 +116,7 @@ export function createBoards(d: BoardsDeps): Boards {
         shell.boards = list;
         unwatch = d.live.watch(openFolder ? folderMoved : undefined);
         if (!list.length) {
+          shell.noBoards = true;
           shell.message = WAITING;
           return;
         }
@@ -117,6 +130,7 @@ export function createBoards(d: BoardsDeps): Boards {
       }
     },
     switchTo,
+    jump,
     listed,
     moved: kept.moved,
     stop() {

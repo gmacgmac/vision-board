@@ -12,7 +12,7 @@ import { applyEvents, CHAT_CHANGE_EVENT, CHAT_CHIP_REMOVE_EVENT, EMPTY_CHAT } fr
 import { boardData } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
 import { boardChips, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL, unsentNotes } from '../src/board/chat-bridge.ts';
-import { blockedReason, follow, messageBody, NO_BOARD, PAST } from '../src/board/chat-panel.ts';
+import { blockedReason, follow, LOADING, messageBody, PAST } from '../src/board/chat-panel.ts';
 import { createSelection } from '../src/board/selection.ts';
 
 const A = 'a-aaaa1111';
@@ -87,7 +87,7 @@ function bridged() {
   const offBoard = bridge.board({
     stage: new EventTarget() as HTMLElement, data: () => data[open]!, id: () => open, selection, readOnly: () => false,
     zoom: () => log.push(`zoom ${selection.selected().join(' ')}`), switchTo: (id) => { open = id; log.push(`open ${id}`); },
-    toast: (t) => log.push(`toast ${t}`),
+    jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`),
   });
   bridge.chat({ panel: panel as HTMLElement, composer: composer as ChatComposerElement, state: () => chat, reveal: (key) => { log.push(`reveal ${key}`); } });
   const raise = (type: string, detail: unknown) => panel.dispatchEvent(new CustomEvent(type, { detail }));
@@ -122,7 +122,11 @@ test('chat to board: a change chip selects its cards and zooms; on another board
   assert.deepEqual(t.log.filter((l) => !l.startsWith('chips')), ['zoom 1 2', 'open c', 'zoom 4', 'toast Those cards are no longer on the board.']);
   assert.equal(t.bridge.source(4), SOURCE_LABEL);
   assert.equal(t.bridge.source(1), undefined, 'card 1 is on board b; board c is open');
+  t.bridge.open('launch');
+  assert.equal(t.log.at(-1), 'jump launch', 'a folder chat\'s first board opens once it is held (panel-send ruling 2)');
   t.offBoard();
+  t.bridge.open('launch');
+  assert.equal(t.log.at(-1), 'jump launch', 'no board side, nothing opens');
   assert.equal(t.bridge.source(4), undefined, 'no board side, no link');
 });
 
@@ -137,7 +141,8 @@ test('the stream: an event at or before the last held, first after a reopen, sta
 test('the message\'s body and why no message can go', () => {
   assert.deepEqual(messageBody('Hi', [card(2), note(10, 'x'), card(3)]), { text: 'Hi', notes: [10], cards: [2, 3] });
   assert.deepEqual(messageBody('Hi', []), { text: 'Hi' });
-  assert.equal(blockedReason('', true, 'refused'), NO_BOARD);
+  assert.equal(blockedReason(null, true, 'refused'), LOADING, 'the page does not know the board or the folder yet');
+  assert.equal(blockedReason('', false), undefined, 'a folder with no board takes a message (panel-send ruling 2)');
   assert.equal(blockedReason('b', true, 'refused'), PAST);
   assert.equal(blockedReason('b', false, 'Kiro is not available.'), 'Kiro is not available.');
   assert.equal(blockedReason('b', false), undefined);

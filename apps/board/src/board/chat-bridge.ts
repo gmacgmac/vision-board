@@ -3,7 +3,8 @@
 // composer's chips; a chip the person takes off stays off (a card's until the selection changes),
 // and the chips a message carried go with it. Chat to board: a change chip selects its cards and
 // zooms to them (Zoom to selection), opening their board first when it is another one; a changed
-// card's stepper links to the board write in the chat that last changed it. The board side attaches
+// card's stepper links to the board write in the chat that last changed it; a chat in the folder's
+// first board opens when drawn (`open`, panel-send ruling 2). The board side attaches
 // from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // The pure parts are unit-tested under Node.
 import type { ChangeEntry, ChatChangeDetail, ChatChipRemoveDetail, ChatComposerElement, ChatState, Chip } from '../../../../packages/chat/src/index.ts';
@@ -67,6 +68,8 @@ export interface BoardSide {
   zoom(): void;
   /** Open another board; it is drawn before this returns (boards.ts). */
   switchTo(board: string): void;
+  /** Open a board now when it is held, else once its line arrives (boards.ts `jump`). */
+  jump(board: string): void;
   toast(text: string): void;
 }
 
@@ -89,6 +92,8 @@ export interface ChatBridge {
   source(n: number): string | undefined;
   /** A message went with `chips`: they are spent. */
   sent(chips: readonly Chip[]): void;
+  /** The chat's agent drew `board`, its session's first: open it. */
+  open(board: string): void;
 }
 
 export function createChatBridge(): ChatBridge {
@@ -155,5 +160,6 @@ export function createChatBridge(): ChatBridge {
       for (const chip of spent) off.add(chipKey(chip));
       chips();
     },
+    open: (board) => b?.jump(board),
   };
 }

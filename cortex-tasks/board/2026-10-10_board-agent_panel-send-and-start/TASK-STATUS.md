@@ -13,7 +13,7 @@ tracker: cortex-tasks/tracker.md#N30,N31
 | # | ID | Task | Model | Status | Notes |
 |---|-----|------|-------|--------|-------|
 | 1 | BE_01 | Contract and server | Opus 5.5 | Completed 2026-10-10 | Gates green; api.md 121-122 |
-| 2 | FE_01 | Page | Opus 5.5 | Planned | |
+| 2 | FE_01 | Page | Opus 5.5 | Completed 2026-10-10 | Gates green; 8 screenshots updated |
 | 3 | T_01 | Skill | Opus 5.5 | Planned | |
 | 4 | VERIFY_01 | By hand | Orchestrator | Planned | |
 
@@ -73,5 +73,58 @@ answer them; `check_responses` with its secret leaves them out too). (4) What th
 is kept in memory; after a restart the message covers from the Send before. No protected file needs a
 change; no decision entry proposed.
 ### FE_01
+_Status:_ Completed 2026-10-10. Five gates exit 0, one after another (unit 969 + timing 6, check, verify,
+gen-check, pages 324).
+
+**CLI check (ruling 5).** `~/.local/bin/claude -p --model 'claude-opus-5-5[1m]' 'Reply with OK'` and the
+same with `claude-sonnet-5-5[1m]`: both answered `OK`. `chat-panel.ts` `MODELS.claude` is now Default,
+`claude-opus-5-5[1m]` "Opus 5.5", `claude-sonnet-5-5[1m]` "Sonnet 5.5"; a page test checks the session
+stores the id and the CLI gets `--model claude-opus-5-5[1m]`.
+
+**Send (ruling 1).** The button still calls the one `send` act; App.svelte routes it through
+`ChatPanel.boardSend(send)`: when the panel's session is on the open board and busy, and the act was
+recorded while the same message (`lastAsk`, the key of the person's last message) is still the one being
+answered, the panel holds `wait` and tells the shell (`shell.sendWaiting`); the next `message_in` ends it
+(render clears it). A session change or board load clears it too. `SendButton.svelte` gains the
+`waiting` state ("Waiting for agent", a still clock mark, `access.css` `.vb-send-wait`; title and live
+region "Your answers go to the agent when it finishes this turn"; clickable, a second Send is covered by
+the server); when the wait ends it shows "Sent" for a moment. The multi-line `message_in` already keeps
+its lines (`.chat-own` is pre-wrap); seen in the gallery and page tests, no change to packages/chat.
+
+**Folder (ruling 2).** `io.ts` `listFolderChats`, `startFolderChat`; `ChatSessionInfo.board` optional.
+`NO_BOARD` is gone: `blockedReason(board | null, past, refused)` blocks only while the page doesn't yet
+know where it is (`LOADING`); '' is the folder (App passes it once boot sets the new `shell.noBoards`, so a
+page with boards never asks for folder sessions). The empty feed then says "No boards here yet. Ask the
+agent to draw one." A folder session's done board write (`firstBoard`) calls the bridge's new `open`,
+which calls `boards.ts` `jump` (opens now, or as soon as the board's line arrives, so the tool event
+coming before the ledger line never shows "There is no board"). The board's first line also opens it by
+the existing empty-project rule. `load(board)` keeps following a folder session while the board's
+`list_chats` is read; when it lists the same session first the conversation carries on unreset.
+controller.ts stays at 299 lines (the `jump` dep is on the existing bridge line).
+
+**Tests.** Unit: `apps/board/tests/chat-panel.test.ts` (waiting, first board, model ids), bridge `open`
+and `blockedReason` in `chat-bridge.test.ts`, the gallery's Send scene against the server's words in
+`chat-fixture.test.ts`. Pages: new `tests/pages/chat-send.spec.ts` (empty folder → chat → the agent's
+first board opens, same session, next message names the board; Send idle posts the message; Send busy
+waits, Stop, the answers go; the labels; axe light and dark while waiting and after) on
+`chat-server.ts` (its `write` can now write as another agent's secret); `chat-panel.spec.ts` picks
+"Sonnet 5.5"; chat.spec and send-access.spec count the new gallery states.
+
+**Gallery.** Send to agent: Waiting. Chat panel: `send-queued`, `send-handed` (a new `send` scene in
+`gallery.chat.json`) and `folder`; the samples' header now shows the model picker with the exact labels.
+**Screenshots updated (diffs viewed first):** chat.spec (new samples, model picker), send-access.spec
+(the Waiting button), toolbar.spec and open-folder.spec (no visual change: the sections below the chat
+section moved by a fraction of a pixel, text antialiasing only).
+
+**Docs.** `docs/specification/chat.md` "On the board" (folder, `boardSend`, waiting, model labels).
+
+**For the maintainer.** (1) The handed-over message shows as the person's bubble ("You: The person
+updated the board: ..."), its last line agent-facing ("These are the person's answers up to head N...").
+It reads fine; a distinct look (a "From the board" label, the head line muted) would need a host hook in
+packages/chat, left out. (2) In an empty folder, if another agent draws a board first, the page opens
+that board (existing rule) and the panel leaves the folder session; the folder session's own first board
+then doesn't open by itself. (3) The board's "No boards yet. Waiting for an agent to draw." message is
+unchanged; it could mention the chat (proposed words: "No boards yet. Ask the agent in the chat (T), or
+wait for an agent to draw."). (4) No protected file needs a change.
 ### T_01
 ### VERIFY_01

@@ -54,7 +54,7 @@
   {/if}
   {#if holders}
     <BoardAgents {holders} {onrevoke} icon={menu} />
-    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} />
+    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} waiting={shell.sendWaiting} />
   {/if}
   {#if chat}
     <button type="button" class="vb-btn vb-btn-iconic" id={board ? 'chat-toggle' : undefined}

@@ -11,10 +11,12 @@ import type { AgentUpdate } from '../../../packages/agent/src/index.ts';
 import { ClaudeStream, factsFor, toChatEvent } from '../../../packages/agent/src/index.ts';
 import type { ChatEvent } from '../../../packages/chat/src/index.ts';
 import { activityLine, applyEvents, CHAT_EVENT_KINDS, chatStatus, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
+import { ROUND_HEAD } from '../server/chat-round.ts';
+import { QUEUED } from '../server/chat-session.ts';
 import { CHAT_EVENT_ID, CHAT_SCHEMA_DIR, schemaFiles, schemaProblems } from '../server/schema.ts';
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
-const SCENES = JSON.parse(read('../src/gallery/gallery.chat.json')) as Record<'session' | 'stopped' | 'error', ChatEvent[]>;
+const SCENES = JSON.parse(read('../src/gallery/gallery.chat.json')) as Record<'session' | 'stopped' | 'error' | 'send', ChatEvent[]>;
 const replay = (name: string): AgentUpdate[] => {
   const stream = new ClaudeStream(['vb'], () => {});
   const lines = read(`../../../packages/agent/tests/fixtures/${name}`).split('\n').filter(Boolean);
@@ -63,4 +65,14 @@ test('the reducer over the recorded turns: the person, the change chip, the repl
   assert.equal(chatStatus(applyEvents(EMPTY_CHAT, SCENES.session.slice(0, 10))).kind, 'waiting');
   assert.equal(chatStatus(applyEvents(EMPTY_CHAT, SCENES.stopped)).kind, 'stopped');
   assert.equal(chatStatus(applyEvents(EMPTY_CHAT, SCENES.error)).kind, 'error');
+});
+
+test('the board\'s Send in the gallery speaks the server\'s words: the waiting line, then the message after the turn ends', () => {
+  const texts = SCENES.send.map((e) => ('text' in e ? e.text : ''));
+  assert.ok(texts.includes(QUEUED));
+  const handed = SCENES.send.at(-1)!;
+  assert.equal(handed.kind, 'message_in');
+  assert.equal(handed.kind === 'message_in' && handed.text.split('\n')[0], ROUND_HEAD);
+  const end = SCENES.send.at(-2)!;
+  assert.equal(end.kind === 'system' && end.turn, 'done', 'it follows the turn-end line');
 });

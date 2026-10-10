@@ -217,7 +217,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
   /** The chat panel's side of the board (chat-bridge.ts): chips from the notes and the selection, a change chip's zoom. */
   const unchat = chat?.board({ stage, data: () => S.data, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
-    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id) });
+    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id), jump: (id) => boards.jump(id) });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({

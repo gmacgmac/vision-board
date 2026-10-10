@@ -212,7 +212,9 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   await expect(s.locator('vb-region[data-region="held-hover"] .vb-holder-remove')).toBeVisible();
   await expect(s.locator('vb-region[data-region="held"] .vb-holder-remove')).toBeHidden();
   const states = await s.locator('.vb-send').evaluateAll((els) => els.map((e) => `${e.getAttribute('data-state')}/${e.getAttribute('data-look') ?? ''}`));
-  expect(states).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/']);
+  expect(states).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/', 'waiting/']);
+  await expect(s.locator('.vb-send[data-state="waiting"]')).toHaveText('Waiting for agent');
+  await expect(s.locator('.vb-send[data-state="waiting"]')).not.toHaveAttribute('aria-disabled', 'true');
   await expect(s.locator('.vb-send[data-state="sending"] .vb-spinner')).toBeVisible();
   await expect(s.locator('.vb-send[data-state="sending"]')).toHaveAttribute('aria-disabled', 'true');
   await expect(s.locator('#send')).toHaveCount(0);

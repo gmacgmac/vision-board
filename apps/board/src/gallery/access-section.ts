@@ -31,6 +31,7 @@ const SENDS: { caption: string; state: SendState; look?: 'hover' | 'focus' | 'pr
   { caption: 'Sending', state: 'sending' },
   { caption: 'Sent', state: 'sent' },
   { caption: 'Error', state: 'error' },
+  { caption: 'Waiting: sent while the chat\'s agent works', state: 'waiting' },
 ];
 
 /** The fixture in the shape the page loads, so the strip's rows come from the same function. */

@@ -1,0 +1,166 @@
+// The chat panel with the board's Send and in a folder with no board (panel-send FE_01): in an empty
+// folder the chat works, its agent is told no board is open, and the first board it draws opens with
+// the conversation still there (the same session, listed first on that board); Send to agent with a
+// session on the board hands the agent the answers as one message, at once when it is idle; pressed
+// while it works, the button waits until the turn ends and the answers go; the model picker names
+// exact models; axe light and dark. The server is chat-server.ts with the agent package's fake
+// `claude`, never the real one, on its own empty project.
+import type { Page } from '@playwright/test';
+import type { ChatServer } from './chat-server.ts';
+import { startChatServer } from './chat-server.ts';
+import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import type { Theme } from './helpers.ts';
+
+test.describe.configure({ mode: 'serial' });
+
+const ROUND_HEAD = 'The person updated the board:';
+const QUEUED = 'Your answers go to the agent when it finishes this turn.';
+
+let srv: ChatServer;
+let runs = 0;
+test.beforeAll(async () => { srv = await startChatServer(); });
+test.afterAll(async () => { await srv.close(); });
+
+const side = (page: Page) => page.locator('#chat');
+const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
+const log = (page: Page) => side(page).getByRole('log', { name: 'Conversation' });
+const status = (page: Page) => side(page).locator('.chat-hd-status');
+const mine = (page: Page) => log(page).locator('chat-message[data-from="person"]');
+const replies = (page: Page) => log(page).locator('chat-message[data-from="agent"]');
+const sendButton = (page: Page) => page.locator('#send');
+
+/** Open the page (on `board`, or the folder) with the chat panel open. */
+async function open(page: Page, board = '') {
+  await page.goto(`${srv.base}/?vbwork${board ? `#${board}` : ''}`);
+  if (board) await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
+  await page.locator('#chat-toggle').click();
+  await expect(side(page)).toBeVisible();
+}
+
+/** Send `words` from the composer; the fake's run for it, once it started. */
+async function send(page: Page, words: string) {
+  await text(page).fill(words);
+  await text(page).press('Enter');
+  return srv.fake.run(++runs);
+}
+
+/** The message Send hands the agent: the head line, the board, then the answer `line` first. */
+function expectRound(prompt: string, line: string) {
+  const lines = prompt.split('\n');
+  expect(lines[0]).toBe(ROUND_HEAD);
+  expect(lines[1]).toMatch(/^Board "Scratch" \(v\d+\)$/);
+  expect(lines[2]).toBe(line);
+}
+
+/** The board's sessions, newest first. */
+async function sessionsOn(page: Page, board: string) {
+  return (await (await page.request.get(`${srv.base}/api/boards/${board}/chats`)).json() as { sessions: { session: string; model?: string }[] }).sessions;
+}
+
+const card = (key: string, title: string) => ({ type: 'node', key, node: { region: 'ideas', kind: 'question', title } });
+
+test('an empty folder: the chat works, and the first board its agent draws opens with the conversation on it', async ({ page }) => {
+  await open(page);
+  await expect(page.locator('#message')).toContainText('No boards yet');
+  await expect(side(page).locator('.chat-empty')).toHaveText('No boards here yet. Ask the agent to draw one.');
+  await expect(status(page)).toHaveText('Status: Ready');
+  await expectNoAxeViolations(page);
+  // The fake replays a turn whose board write names "scratch" before that board is held: it opens once drawn.
+  const given = await send(page, 'Draw a board for the release');
+  expect(given.prompt).toContain('No board is open in this folder yet');
+  await expect(replies(page)).toContainText('I wrote the "Scratch" board');
+  await expect(page.locator('#message')).toContainText('No boards yet');
+  const secret = given.mcpConfig.mcpServers.vb!.env.VB_AGENT_SECRET!;
+  await srv.write('scratch', [
+    { type: 'board', key: 'board', title: 'Scratch' }, { type: 'region', key: 'ideas', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },
+    card('q1', 'Ship on Friday?'), card('q2', 'Add dark mode?'),
+  ], secret);
+  await expect(page.locator('vb-node')).toHaveCount(2);
+  await expect(page).toHaveURL(/#scratch$/);
+  await expect(mine(page)).toHaveText([/Draw a board for the release$/]);
+  expect((await sessionsOn(page, 'scratch'))[0]!.session, 'the same session, first on its board').toBe(given.args[5]);
+  // The next message goes to the same session, now on the board.
+  const next = await send(page, 'Now refine it');
+  expect(next.args[5]).toBe(given.args[5]);
+  expect(next.prompt).toContain('Board: scratch');
+  await expect(replies(page)).toHaveCount(2);
+  await expect(status(page)).toHaveText('Status: Ready');
+});
+
+test('Send to agent while it is idle hands it the answers as one message, in card order', async ({ page }) => {
+  await open(page, 'scratch');
+  await srv.act('scratch', { action: 'ack', n: 1, ver: 1 });
+  await sendButton(page).click();
+  await expect(sendButton(page)).toHaveAttribute('data-state', 'sent');
+  const given = await srv.fake.run(++runs);
+  expectRound(given.prompt, '1 (question): yes');
+  const round = mine(page).last();
+  await expect(round).toContainText(ROUND_HEAD);
+  await expect(round).toContainText('1 (question): yes');
+  await expect(status(page)).toHaveText('Status: Ready');
+});
+
+/** The agent mid-turn (the fake hangs), the person's `act` on the board and Send to agent pressed: the button waits. */
+async function sendWhileBusy(page: Page, act: Record<string, unknown>) {
+  srv.fake.mode('hang');
+  await send(page, 'Think it over');
+  await expect(status(page)).toHaveText('Status: Working');
+  await srv.act('scratch', act);
+  await sendButton(page).click();
+  await expect(sendButton(page)).toHaveAttribute('data-state', 'waiting');
+}
+
+/** Stop the turn; the held answers go to a run that replays and ends. */
+async function stopAndHandOver(page: Page) {
+  srv.fake.mode('replay');
+  await side(page).getByRole('button', { name: 'Stop' }).click();
+  return srv.fake.run(++runs);
+}
+
+test('Send to agent while it works waits, then the answers go when the turn ends', async ({ page }) => {
+  await open(page, 'scratch');
+  try {
+    await sendWhileBusy(page, { action: 'ack', n: 2, ver: 1 });
+    await expect(sendButton(page)).toHaveText('Waiting for agent');
+    await expect(sendButton(page)).toHaveAttribute('title', 'Your answers go to the agent when it finishes this turn');
+    await expect(log(page).locator('.chat-system').last()).toHaveText(QUEUED);
+    const given = await stopAndHandOver(page);
+    expectRound(given.prompt, '2 (question): yes');
+    await expect(sendButton(page)).not.toHaveAttribute('data-state', 'waiting');
+    await expect(mine(page).last()).toContainText('2 (question): yes');
+    await expect(status(page)).toHaveText('Status: Ready');
+  } finally {
+    srv.fake.mode('replay');
+  }
+});
+
+test('the model picker names exact models; the one picked is the session\'s and the CLI\'s', async ({ page }) => {
+  await open(page, 'scratch');
+  const model = side(page).getByRole('combobox', { name: 'Model' });
+  await expect(model.locator('option')).toHaveText(['Default', 'Opus 5.5', 'Sonnet 5.5']);
+  expect(await model.locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value))).toEqual(['', 'claude-opus-5-5[1m]', 'claude-sonnet-5-5[1m]']);
+  await model.selectOption({ label: 'Opus 5.5' });
+  await page.getByRole('dialog', { name: 'Start a new session?' }).getByRole('button', { name: 'New session' }).click();
+  await expect(side(page).locator('.chat-empty')).toBeVisible();
+  expect((await sessionsOn(page, 'scratch'))[0]!.model).toBe('claude-opus-5-5[1m]');
+  const given = await send(page, 'Which model are you?');
+  expect(given.args.slice(given.args.indexOf('--model'), given.args.indexOf('--model') + 2)).toEqual(['--model', 'claude-opus-5-5[1m]']);
+  await expect(status(page)).toHaveText('Status: Ready');
+});
+
+for (const theme of ['dark', 'light'] as Theme[]) {
+  test(`axe passes with Send waiting, then with the answers handed over (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await open(page, 'scratch');
+    try {
+      await sendWhileBusy(page, { action: 'comment', n: 1, ver: 1, text: `Checked in ${theme}` });
+      await expectNoAxeViolations(page);
+      await stopAndHandOver(page);
+      await expect(mine(page).last()).toContainText(ROUND_HEAD);
+      await expect(status(page)).toHaveText('Status: Ready');
+      await expectNoAxeViolations(page);
+    } finally {
+      srv.fake.mode('replay');
+    }
+  });
+}

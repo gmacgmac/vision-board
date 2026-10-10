@@ -71,7 +71,12 @@ reopened from the latest event held; a repeat of an earlier one then means the s
 the server's first line then says the earlier messages aren't shown), and the elements' events answered
 through `board/io.ts`. A message starts a session when the board has none, and one sent while a session
 starts (from the New session confirm on) waits for it and goes there;
-the composer is shut with the reason for no board, a past version or a refused start.
+the composer is shut with the reason for a page still loading, a past version or a refused start. In a
+folder with no board the panel talks in the folder (`start_folder_chat`, `list_folder_chats`); the first
+board its agent draws opens (its board write's `tool_activity`, or the board's first line), and the panel
+stays on the same session there. Send to agent goes through the panel (`boardSend`): pressed while the
+agent is mid-turn, the button shows "Waiting for agent" until the answers go, at the next `message_in`.
+The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context).
 `board/chat-bridge.ts` is the only file that knows both sides: the selected cards and unsent notes as
 chips; a change chip selects and zooms to its cards (opening their board first); a changed card's
 stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
