@@ -91,3 +91,19 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   turn narrating its steps; Claude kept to one or two lines. Kiro read ✗ on a yes/no question as
   "dropped, settled" rather than "No". The skill should say: on a question, ✓ is Yes and ✗ is No;
   in the panel, say nothing until the turn's one-line summary.
+
+## Skill v2.1 (panel-send T_01)
+
+- 2026-10-10, agent: v2.1 answers the U13 VERIFY_01 lines above. In the panel: write no text
+  during a turn (every block shows as a chat message), end with one or two lines; on a question ✓
+  is "yes" and ✗ is "no", on an action ✓ is "done" (`check_responses` `means`, reply lines
+  `2 (question): no`), and ✗ on a question is an answer to act on, not a dismissal; the Send
+  message ("The person updated the board:", card-ordered lines, a head line) is acted on as it
+  stands, with `show_node` only for a `ver` or a note's `seq`, never re-fetched; a message ending
+  "No board is open in this folder yet." gets a board named for its subject in the first
+  `write_board` call. Scenarios 12 and 13 added.
+- 2026-10-10, agent: one print-mode turn of `claude` (Sonnet 5.5, its default) on a test server,
+  scenario 12 with the panel's no-board prompt: no text before the write; one `write_board` that
+  created "Office move" (`office-move`) with a decisions `grid` (3 questions, 2 decisions, 1
+  action), a linked `flow` of 7 steps and a risks `grid`; every item ok, no `join`, no grant. Its
+  closing words were three sentences, one more than asked; keys began `om-`, not the board id.

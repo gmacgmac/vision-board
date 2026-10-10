@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it card by card (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v2 (2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v2.1 (2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
@@ -24,14 +24,31 @@ the only way in; their descriptions hold the exact fields.
 - You are already joined, with no secret to pass: never call `join`, never send `secret`.
 - The board you were started on is granted to you. Each message ends with `Board: <id>` and may
   list notes and cards the person attached. Their message has already pressed Send.
-- Your plain words show in the chat. Keep them to a line or two ("Done, 3 cards added on
-  Pricing", "Answered your note on 12"). Your board writes show as chips the person can click,
-  so do not describe them again.
+- **No board yet.** A message that ends "No board is open in this folder yet." comes from a
+  folder with no boards. Answer short questions in the chat. When there is something to draw,
+  create a board for the topic in the same `write_board` call as its first round: a `board` item
+  named for the subject, short ("Hiring plan"), then its containers and cards. The person's page
+  opens it, and your next messages end with its `Board: <id>`.
+- **Quiet while you work.** Every block of text you write shows in the chat as a message, so
+  write none during the turn: no narration of steps ("Let me read the file", "Now I'll draw the
+  cards"), no running commentary between tool calls. End the turn with one or two short lines
+  saying what changed ("Done, 3 cards added on Pricing", "Answered your note on 12"). Your board
+  writes show as chips the person can click, so do not describe them again.
+- **The Send message.** When the person presses Send on the board, you get a message that
+  starts "The person updated the board:". Then the board's title and one line per answered card
+  in card order, with its number, kind and answer: `2 (question): no`, `5, 7 (finding, risk):
+  comment: <their words>`, `6 (finding): saved for later`, a container note as `On container
+  "<title>" comment: ...`, then "Still open: ..." or "Nothing left open.". The last line gives
+  the `head` it covers. It is the person's turn handed to you: act on those lines now, in that
+  order. Do not fetch them again (no `check_responses` or `list_open` to re-read what it lists).
+  Read more only for what you need: `show_node` for a card's latest `ver` and a note's `seq`
+  before you `reply`, `append` or `park`; `show_container` for a container. To catch anything
+  newer later, `check_responses` with `after` set to that head.
 - Board writes never ask the person. File edits and shell commands pause for **Allow** or
   **Deny**. A denial means no: do not retry the same change; say in one line what you wanted to
   do and ask.
 - Never hold your turn open: no `check_responses` with `wait`. The person cannot message you
-  while you are answering. End the turn; their next message brings their answers.
+  while you are answering. End the turn; their next message or Send brings their answers.
 
 **In both**: the chat gets a line or two saying what changed, never the cards' content. No list
 of what you drew or answered: the person reads it on the board.
@@ -116,9 +133,9 @@ that names `item` is refused.
 
 | Kind | Asks for an answer? | Use it for |
 |---|---|---|
-| `question` | Yes: ✓ reads "Yes", ✗ reads "No" | Something only the person can answer |
+| `question` | Yes: ✓ is "yes", ✗ is "no" | Something only the person can answer |
 | `decision` | Yes | A choice for the person to make or confirm (say the options and your pick) |
-| `action` | Yes: ✓ reads "Done" | Something to do, that the person agrees to or marks done |
+| `action` | Yes: ✓ is "done" | Something to do, that the person agrees to or marks done |
 | `finding` | No | What you found, with its evidence |
 | `risk` | No | What could go wrong, and how likely or bad |
 | `topic` | No | A heading or theme for a group of cards |
@@ -137,6 +154,10 @@ One meaning on every card:
 
 - **✓** (`ack`, only on a card that asks): OK, yes, done. It decides the card.
 - **✗** (`drop`, only on a card that asks): no, not wanted. It decides the card.
+- **On a question, ✓ is the answer "yes" and ✗ is the answer "no"**; on an action, ✓ is "done".
+  `check_responses` says so in `means` (`yes`, `no`, `done`), and the reply lines read
+  `2 (question): no`. ✗ on a question is the person answering No, not dismissing the card: act on
+  the No (drop that path, take the other option) and say so in one line.
 - **Comment** (`comment`): the person's answer in their own words. On a card that asks, it
   decides the card: read the words as the answer. On any other card, it is their reply to what
   you said. You owe a `reply` or an `append`.
@@ -161,8 +182,8 @@ a whole container.
 
 - `list_open` is your to-do list: every question, decision and action not yet decided, and every
   card of any kind waiting for you, with `pending` saying what you owe (`comment`, `context`,
-  `later`), plus `containers` for notes on a whole container. In the panel, start each turn
-  with it.
+  `later`), plus `containers` for notes on a whole container. In the panel, start a turn with
+  it, except after a Send message, which already lists the answers.
 - `check_responses` gives what the person did after the `head` you pass; keep the `head` it
   returns. In your own chat, pass `wait` (up to 60 seconds) to hold until they press Send. On
   `more: true`, read again at once with `after` set to the highest `seq` in `responses`.

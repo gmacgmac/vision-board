@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v2
+status: v2.1
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -13,6 +13,8 @@ change to it ships: read the run's tool calls and its chat words against "A good
 means the board's own chat panel; "own chat" means an agent connected to `vb` from its client.
 Names and content are made up. Scenarios 1 and 3 are the ones VERIFY_01 runs through the panel.
 v2 (skill v2, every card in the conversation): 1, 2, 5 and 7 updated; 10 and 11 new.
+v2.1 (skill v2.1, panel Send and first board): 12 and 13 new. In every panel scenario the agent
+writes no text until the turn's last one or two lines.
 
 ## 1. A review with 12 findings (panel)
 
@@ -179,3 +181,53 @@ decide first."
   settle.").
 - **Fails if** it uses `list` or `flow` for the agenda, links the cards with "then", asks its
   questions inside a topic's body, or names `item` on a node.
+
+## 12. A first board from an empty folder (panel)
+
+**Situation.** The person opens the chat panel in a folder with no boards and writes: "Plan the
+move to the new office: what has to happen, and what you need me to decide." The message ends
+"No board is open in this folder yet. If drawing would help, create one with write_board; the
+person's page opens it."
+
+**A good run**
+- One `write_board` call that starts with a `board` item named for the subject, short ("Office
+  move", id `office-move`, never "Vision Board: ..." or the whole request), a one- or two-sentence
+  `summary`, then its containers (`grid`) and cards: the steps or areas as `action` or `topic`
+  cards, what it needs decided as `question` or `decision` cards. Every item keyed
+  (`office-move-...`).
+- No `request_grant` (a board it creates is its own), no `join`, no `secret`, no `wait`.
+- No text before the write; chat words: one line ("Done: Office move, 9 cards, 3 to decide.").
+- **Fails if** it answers only in the chat with a long list, asks the person to make a board
+  first, writes the board in one call and the cards in another without reason, names the board
+  after the folder or the whole sentence, or narrates its steps in the chat.
+
+## 13. A Send with a ✗ on a yes/no question (panel)
+
+**Situation.** On "Checkout review", card 3 is a question ("Keep the guest checkout in 1.4?"),
+card 6 a finding and card 9 an action ("Add the back-off test"). The person presses ✗ on 3,
+comments "Only on the card path" on 6, ✓ on 9, and presses Send. The agent gets:
+
+```
+The person updated the board:
+Board "Checkout review" (v4)
+3 (question): no
+6 (finding): comment: Only on the card path
+9 (action): done
+Still open: 11
+These are the person's answers up to head 212. To read anything newer, call check_responses on board "checkout-review" with after 212.
+```
+
+**A good run**
+- Reads 3 as the answer No: guest checkout does not stay in 1.4. It acts on it (for example
+  `append`s to the cards that assumed it stays, or drops that path from its plan) and never raises
+  3 again; it does not call 3 "dropped" or "dismissed".
+- Treats 9 as done.
+- `show_node` 6 for its `ver` and the comment's `seq`, then `reply { n: 6, to, text }` (and an
+  `append` if the finding changes).
+- Does not re-read the answers: no `check_responses` from 0 or with `wait`, no `list_open` just to
+  find what the message already says. If it does read, `after` is 212.
+- No text before the last lines; chat words: one or two lines ("Guest checkout comes out of 1.4;
+  answered your note on 6.").
+- **Fails if** it reads ✗ on 3 as "dropped, settled" with nothing done about the No, asks 3
+  again, re-fetches the round, posts interim messages narrating its steps, or lists the cards'
+  content in the chat.

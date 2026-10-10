@@ -14,7 +14,7 @@ tracker: cortex-tasks/tracker.md#N30,N31
 |---|-----|------|-------|--------|-------|
 | 1 | BE_01 | Contract and server | Opus 5.5 | Completed 2026-10-10 | Gates green; api.md 121-122 |
 | 2 | FE_01 | Page | Opus 5.5 | Completed 2026-10-10 | Gates green; 8 screenshots updated |
-| 3 | T_01 | Skill | Opus 5.5 | Planned | |
+| 3 | T_01 | Skill | Opus 5.5 | Completed 2026-10-10 | Gates green; skill v2.1, scenarios 12-13, one real run |
 | 4 | VERIFY_01 | By hand | Orchestrator | Planned | |
 
 ## Implementation Notes
@@ -127,4 +127,38 @@ then doesn't open by itself. (3) The board's "No boards yet. Waiting for an agen
 unchanged; it could mention the chat (proposed words: "No boards yet. Ask the agent in the chat (T), or
 wait for an agent to draw."). (4) No protected file needs a change.
 ### T_01
+_Status:_ Completed 2026-10-10. Five gates exit 0, one after another (unit 969 + timing 6, check, verify,
+gen-check, pages 324). No code changed.
+
+**Skill v2.1** (`skills/vision-board/SKILL.md`, frontmatter `status`). "In the board's chat panel" gains
+three points: **No board yet** (a message ending "No board is open in this folder yet.", `NO_BOARD` in
+`chat-prompt.ts`: short questions in chat; to draw, a `board` item named for the subject, short, in the
+same `write_board` call as the first round; later messages end `Board: <id>`); **Quiet while you
+work** (every text block shows as a chat message: no narration between tool calls, end with one or two
+lines); **The Send message** (its shape as `chat-round.ts` `roundText` + `replyText` write it: the head
+line, the board line, `2 (question): no`, group and container lines, Still open, the head line; act on
+it now in that order; no `check_responses`/`list_open` re-read; `show_node` only for a `ver` or a
+note's `seq`, which the lines don't carry; later reads `after` that head). ✓/✗ words: the kinds table
+says ✓ is "yes" / ✗ is "no" on a question, ✓ is "done" on an action; "What the person's buttons mean"
+adds that `means` and the reply lines say so and that ✗ on a question is the answer No to act on, not
+a dismissal. `list_open` at the start of a panel turn, except after a Send message. Other text unchanged.
+
+**Scenarios** (`scenarios.md` v2.1): 12, a first board from an empty folder (panel); 13, a Send with ✗
+on a yes/no question, ✓ on an action and a comment on a finding, the exact message quoted. The header
+says every panel scenario expects no text until the last line or two. **NOTES.md**: a dated v2.1 line
+and the run below.
+
+**Run** (one turn, scenario 12, on my own server: port 4485, a scratch project and a scratch HOME,
+joined over HTTP, `claude -p` 2.1.295 with the skill as `--append-system-prompt-file`, vb via
+`--mcp-config` + `--strict-mcp-config`, Sonnet 5.5 default, the prompt exactly as `folderPrompt`
+makes it; server stopped after). No text before the write; one `write_board` creating "Office move"
+(`office-move`): a decisions `grid` (3 questions, 2 decisions, 1 action), a linked `flow` of 7 steps,
+a risks `grid`; every item ok; no `join`, no grant. Its closing words were three sentences (one more
+than asked); keys began `om-` rather than the board id. Scenario 13 and Kiro are left to VERIFY_01.
+
+**For the maintainer.** (1) The Send message's lines carry no note `seq`, so a `reply` still needs one
+`show_node` per commented card; adding the `seq` to the line (e.g. `6 (finding): comment 214: ...`)
+would save that read but changes `replyText` (the person-facing Reply panel too); left as is. (2) ✗ on
+a decision and on an action reads "drop" in the lines and has no `means` (ruling 4 gives words only for
+question and action ✓); the skill keeps "no, not wanted" for those. (3) No protected file needs a change.
 ### VERIFY_01
