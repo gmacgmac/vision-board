@@ -5,18 +5,17 @@
 // and kind as tabs in gaps cut from the top border, kind icon, state word and buttons in a footer.
 import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
-import { ACTIONS } from '../../../actions/src/index.ts';
+import { ACTIONS, actionWord } from '../../../actions/src/index.ts';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry, UpdatesView } from './node-core.ts';
 import { buttonLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
-import { actionWord } from './action-words.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
 
-/** A review button; its tooltip reads the card's word for it, "Yes" on a question (action-words.ts). */
+/** A review button; its tooltip reads the card's word for it, "Yes" on a question (packages/actions action-words.ts). */
 const button = (a: ActionId, n: ViewNode): string =>
   `<button type="button" class="vb-act" data-act="${a}" aria-label="${esc(buttonLabel(a, n))}"`
   + ` title="${esc(actionWord(a, n.kind))}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">`

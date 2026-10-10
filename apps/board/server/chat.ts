@@ -1,5 +1,6 @@
-// The chat operations (api.md 98-104, chat-panel BE_03): start and list a board's sessions, send the
-// person's message (it also sends the board's round, as the board's Send does), stop a turn, answer
+// The chat operations (api.md 98-104, 121-122, chat-panel BE_03): start and list a board's sessions,
+// or the folder's on no board, send the person's message (it also sends the board's round, as the
+// board's Send does; a session on no board sends none), stop a turn, answer
 // an approval, watch a session's events, and the gate's ask. The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
@@ -40,6 +41,16 @@ const listChats: Handler = ({ res, params, ledger, chats }) => {
   sendJson(res, 200, { sessions: chats().list(board) });
 };
 
+/** A session in the folder, on no board until its agent creates one (panel-send ruling 2). */
+const startFolderChat: Handler = async ({ req, res, chats }) => {
+  const b = await body('start_folder_chat', req);
+  sendJson(res, 201, await chats().start(undefined, b.agent as ChatSession['agent'], b.model as string | undefined));
+};
+
+const listFolderChats: Handler = ({ res, chats }) => {
+  sendJson(res, 200, { sessions: chats().list(undefined) });
+};
+
 /** The person's message: chips worked out, the turn started, then the board's Send recorded (only
  * for a message accepted). A message while the agent is still answering releases its waiting
  * approvals and is refused. */
@@ -54,7 +65,7 @@ const sendChat: Handler = async (ctx) => {
   const { board } = live.record;
   const { prompt, chips } = promptFor(ledger.state(), board, msg);
   const accepted = live.send(prompt, { kind: 'message_in', text: msg.text, ...(chips.length > 0 && { chips }) });
-  ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
+  if (board !== undefined) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
   sendJson(res, 202, accepted);
 };
 
@@ -100,9 +111,11 @@ const askApproval: Handler = async ({ req, res, chats }) => {
   if (!res.destroyed) sendJson(res, 200, outcome);
 };
 
-export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval'> = {
+export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval'> = {
   start_chat: startChat,
   list_chats: listChats,
+  start_folder_chat: startFolderChat,
+  list_folder_chats: listFolderChats,
   send_chat: sendChat,
   stop_chat: stopChat,
   answer_approval: answerApproval,

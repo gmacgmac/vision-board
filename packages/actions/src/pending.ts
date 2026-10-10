@@ -7,6 +7,8 @@ import { conditionsOf } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { scopeOf } from './references.ts';
+import { ACTIONS } from './registry.ts';
+import type { ReplyScope } from './reply.ts';
 
 /** One item the agent owes an answer on. `ask`: the person's latest comment or "needs context"
  * that nothing answers yet. `later`: the `seq` of the "later" that has no park bundle after it.
@@ -54,6 +56,21 @@ export function responsesAfter(s: LedgerState, board: string, after: number, age
     if (shown) out.push(shown);
   }
   return out;
+}
+
+/** The cards and containers the person answered on `board` after `since`: an act on an item (✓,
+ * ✗, a note, Later, Reopen, a note changed or removed, a proposal turned down) or a note on a whole
+ * container, as `check_responses` reports them (with `agent`, only what concerns it). The round
+ * Send hands the chat panel's agent (reply.ts `replyText`, panel-send ruling 1). */
+export function replyScope(s: LedgerState, board: string, since: number, agent?: string): ReplyScope {
+  const cards = new Set<number>();
+  const regions = new Set<string>();
+  for (const e of responsesAfter(s, board, since, agent)) {
+    if (!ACTIONS[e.action].onItem) continue;
+    for (const n of scopeOf(s, e).cards) cards.add(n);
+    if (isContainerAct(e)) regions.add(e.region!);
+  }
+  return { since, cards, regions };
 }
 
 /** How an act reads to an agent whose cursor is `after` (api.md 61). A note is its `comment` or

@@ -70,7 +70,7 @@ test('ids do not change when nodes are reordered or one is removed (rule 10)', (
 
 test('replyText reads boardView + boardState', () => {
   assert.equal(replyText(boardView(state, BOARD), boardState(state, BOARD)), [
-    'Board "Login page review" (v15)', '1 comment: Who asked for it?', '3 drop', '4 later',
+    'Board "Login page review" (v15)', '1 (question): comment: Who asked for it?', '3 (decision): drop', '4 (risk): saved for later',
     'Nothing left open.',
   ].join('\n'));
 });

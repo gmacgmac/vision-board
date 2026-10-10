@@ -26,7 +26,7 @@ test('the route table has one entry per operation, with the right auth', () => {
   assert.deepEqual(auth, {
     list_boards: 'none', get_board: 'none', show_node: 'none', show_container: 'none', list_open: 'none', check_responses: 'none',
     read_ledger: 'none', join: 'none', request_grant: 'agent', write_board: 'agent', act: 'person', mark_seen: 'person', put_board: 'person', watch_board: 'none', watch_project: 'none',
-    start_chat: 'person', list_chats: 'person', send_chat: 'person', stop_chat: 'person', answer_approval: 'person', watch_chat: 'person',
+    start_chat: 'person', list_chats: 'person', start_folder_chat: 'person', list_folder_chats: 'person', send_chat: 'person', stop_chat: 'person', answer_approval: 'person', watch_chat: 'person',
     ask_approval: 'run', get_project: 'person', list_folders: 'person', open_project: 'person',
   });
 });

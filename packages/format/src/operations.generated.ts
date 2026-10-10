@@ -86,6 +86,14 @@ export const OPERATIONS = {
     operationId: 'start_chat', method: 'POST', path: '/api/boards/{board}/chats',
     pathParams: ['board'], xAgent: false, auth: 'person',
   },
+  list_folder_chats: {
+    operationId: 'list_folder_chats', method: 'GET', path: '/api/chats',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
+  start_folder_chat: {
+    operationId: 'start_folder_chat', method: 'POST', path: '/api/chats',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
   send_chat: {
     operationId: 'send_chat', method: 'POST', path: '/api/chats/{session}/messages',
     pathParams: ['session'], xAgent: false, auth: 'person',

@@ -71,7 +71,7 @@ test('the numbered reply and show_node use the latest text', () => {
   l.act({ action: 'note-edit', n: 1, note, text: 'Edited words' });
   const s = l.state();
   const reply = replyText(boardView(s, 'b'), boardState(s, 'b'));
-  assert.match(reply, /^1 comment: Edited words$/m);
+  assert.match(reply, /^1 \(question\): comment: Edited words$/m);
   assert.doesNotMatch(reply, /Why per seat/);
   assert.deepEqual(nodeDetail(s, 1)!.notes.map((x) => [x.seq, x.text]), [[note, 'Edited words']]);
 });

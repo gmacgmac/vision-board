@@ -22,10 +22,11 @@ call the same actions, and each one is recorded in the project ledger as an `act
   read by `clearsOnSelect`); `conditionsOf`, everything that needs attention for a board and an
   asking agent; `boardNews`, the one rule behind `board.new` and `board.changed`; where a board's
   latest round starts, for `item.new`, is `rounds.ts`),
-  what an agent owes and the person's responses (`pendingItems`, `responsesAfter`, in
+  what an agent owes and the person's responses (`pendingItems`, `responsesAfter`, `replyScope`, in
   `pending.ts`), the API's read views (`nodeDetail`, `linkedDetails`, `containerDetail`,
-  `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), and the numbered reply
-  (`replyText`).
+  `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), the numbered reply
+  (`replyText`), and what ✓ and ✗ mean on each kind (`MEANINGS`, `meaningOf`, `actionWord`, in
+  `action-words.ts`), which the buttons, the key help, `check_responses` (`means`) and the reply read.
 - **Awareness tables** (D-033): what belongs to what (`REFERENCES`), who may write what
   (`PERMISSIONS`) and what needs attention (`CONDITIONS`) are each one typed table, derived from
   the folded ledger; a new kind without a row is a type error, and every row has a test. A check

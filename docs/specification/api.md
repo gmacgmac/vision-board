@@ -240,13 +240,15 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `join` | `POST /api/agents` | agent | Get an agent id and secret; grants nothing |
 | `request_grant` | `POST /api/grants` | agent | Ask the person for write access to a board, or to one container on it (85) |
 | `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`; per-item results |
-| `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8) |
+| `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8); a `send` also hands the board's chat session the answers (121) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
 | `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
 | `start_chat` | `POST /api/boards/{board}/chats` | person | `{ agent, model? }`: a new chat session on the board, replacing its current one (101) |
 | `list_chats` | `GET /api/boards/{board}/chats` | person | `{ sessions }`, newest first; the first is the one in use (101) |
+| `start_folder_chat` | `POST /api/chats` | person | `{ agent, model? }`: a new chat session in the folder, on no board until its agent creates one (122) |
+| `list_folder_chats` | `GET /api/chats` | person | `{ sessions }` on no board yet, newest first; the first is the one in use (122) |
 | `send_chat` | `POST /api/chats/{session}/messages` | person | `{ text, notes?, cards? }`: the person's message and chips; 202 with its `message_in` event (101) |
 | `stop_chat` | `POST /api/chats/{session}/stop` | person | Stop the agent's turn; `{ stopped }` (101) |
 | `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on; the `approval_result` event (100, 101) |
@@ -847,3 +849,38 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     clicks. `limit` cuts in ledger order before the sort (`responsesPage`), so with `more: true`
     the next page is `after` the highest `seq` in `responses` (`head` is past what was cut). A
     container note's act carries no `nodes`: the agent reads its cards with `show_container`.
+
+## The chat panel: Send hands over the answers, first board from the chat (panel-send BE_01)
+
+121. **Send hands over the answers, in plain words.** `info.version` becomes 1.15.0. What ✓ and ✗
+    mean on a kind is one table, `packages/actions/src/action-words.ts` (`MEANINGS`, moved from
+    `packages/ui`): `yes` and `no` on a question, `done` for ✓ on an action, nothing elsewhere. The
+    agent reads it three ways (ruling 4): `check_responses` reports a ✓ or ✗ with `means` when its
+    card's kind (now) gives it a word (the response schema's `reported` act, never stored in the
+    ledger); the numbered reply (`replyText`) puts each card's kind and its word on its line, "2
+    (question): no", "5, 7 (finding, risk): comment: ...", "6 (finding): saved for later" (Later's
+    reply word is now "saved for later"); and the Send message. **The Send message** (ruling 1):
+    when the board has a chat session (`current`, the newest on it), an `act` `send` also hands that
+    session's agent one message, which is both its prompt and its `message_in`: "The person updated
+    the board:", the numbered reply limited to the cards and containers answered after the last one
+    it was told (`replyScope`: ✓, ✗, a note, Later, Reopen, a note changed or removed, a proposal
+    turned down; only the notes made since; "Still open" is the whole board's), then "These are the
+    person's answers up to head N. To read anything newer, call check_responses on board "b" with
+    after N." (`chat-round.ts`). "The last one it was told" is kept in memory per session; after a
+    restart it is the Send before. While a turn runs the message waits (one at most; the `system`
+    line "Your answers go to the agent when it finishes this turn." says so once) and goes when the
+    turn ends, however it ends, its text made then, so a second Send meanwhile is covered by the
+    same message. The `act` answer is not held for it; a session that can't be loaded leaves the Send
+    as it was. A board with no session: nothing changes. `send_chat` still records the Send
+    without this message (its own text is the prompt).
+122. **A session in the folder** (ruling 2). `start_folder_chat` (`POST /api/chats`) starts a
+    session with no board; `list_folder_chats` (`GET /api/chats`) lists the sessions on no board,
+    newest first, the first in use (one in use in the folder, as on a board). `board` is optional
+    in `chat-session.schema.json`. The server joins its agent and grants nothing. Its messages take
+    no chips (`invalid` at `/notes/i`, `/cards/i`), record no Send, and end "No board is open in this
+    folder yet. If drawing would help, create one with write_board; the person's page opens it." in
+    place of `Board: <id>`. When its agent creates a board (a `board` line by that agent, which is
+    the board's creator), the session moves to it: the index entry gets `board`
+    (`chat-index.ts` `attach`, once), it leaves `list_folder_chats` and is the one in use in
+    `list_chats` on that board; the creator needs no grant. The page follows the same session id;
+    the board write's `tool_activity` names the board to open.

@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import { KINDS } from '../../format/src/index.ts';
-import { actionWord, esc, KIND_ICON, nodeTemplate, notesMarkup, offers } from '../src/index.ts';
+import { actionWord } from '../../actions/src/index.ts';
+import { esc, KIND_ICON, nodeTemplate, notesMarkup, offers } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });

@@ -35,12 +35,14 @@ export function newIdentity(ledger: Ledger, agents: Agents): Identity {
 }
 
 /** Join as `identity` (the hash first, then the `join` line, as `join` does), then ask for the
- * board and record the person's grant of it. */
-export function joinAndGrant(ledger: Ledger, agents: Agents, identity: Identity, label: string, board: string): void {
+ * board and record the person's grant of it. With no board (a session started in the folder), only
+ * the join: its agent may create a board, and the creator needs no grant (panel-send ruling 2). */
+export function joinAndGrant(ledger: Ledger, agents: Agents, identity: Identity, label: string, board?: string): void {
   const { agentId, secret } = identity;
   agents.add(agentId, secret);
   const agent = { by: 'agent', agent: agentId } as const;
   ledger.append({ type: 'join', label }, agent);
+  if (board === undefined) return;
   const request = ledger.append({ type: 'grant-request', board, reason: 'The person started a chat on this board.' }, agent).seq;
   ledger.append({ type: 'act', action: 'grant', request }, { by: 'person' }, { board });
 }

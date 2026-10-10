@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-10-09
+updated: 2026-10-10
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -39,7 +39,15 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
    gate) posts the facts to `ask_approval` with the session's run token and waits. The server
    streams an `approval_request`; the person's answer (`answer_approval`) becomes an
    `approval_result`, and the gate lets the tool run or refuses it, which the agent is told.
-5. **Versions.** A change to the chat schema moves its `$id` to the next number (`.../chat/2/...`),
+5. **The board's Send.** With a session on the board, the board's Send (an `act` `send`) hands the
+   session's agent one message, which the feed shows as the person's: "The person updated the
+   board:", the numbered reply of what was answered since it was last told (each card's kind and
+   word, "2 (question): no"), and the `head` it covers. While a turn runs it waits and goes when the
+   turn ends (api.md 121, `apps/board/server/chat-round.ts`).
+6. **A session in the folder.** In a folder with no board the session starts on no board
+   (`start_folder_chat`); its agent is told so and may create one, and the session moves to the
+   first board its agent creates (api.md 122).
+7. **Versions.** A change to the chat schema moves its `$id` to the next number (`.../chat/2/...`),
    as the ledger's does; new versions only add, so older events stay valid.
 
 ## The panel (packages/chat)

@@ -82,7 +82,7 @@ export interface Harness {
 export interface Joined { agent: string; secret: string; client: Client }
 
 const PERSON_OPS: ReadonlySet<OperationId> = new Set([
-  'act', 'mark_seen', 'put_board', 'start_chat', 'list_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
+  'act', 'mark_seen', 'put_board', 'start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
   'get_project', 'list_folders', 'open_project',
 ]);
 

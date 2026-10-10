@@ -11,7 +11,7 @@ import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { checkAnswer, doc } from './openapi-ajv.ts';
 
-const PERSON_CHAT = ['start_chat', 'list_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat'] as const;
+const PERSON_CHAT = ['start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat'] as const;
 const SESSION = '3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37';
 
 test('the chat operations are person-only and never offered to agents; the gate takes a run token', () => {
@@ -38,6 +38,8 @@ test('a chat route without the person cookie, or from an agent, is forbidden', a
   const calls: [typeof PERSON_CHAT[number], Rec][] = [
     ['start_chat', { board: 'roadmap', body: { agent: 'claude' } }],
     ['list_chats', { board: 'roadmap' }],
+    ['start_folder_chat', { body: { agent: 'claude' } }],
+    ['list_folder_chats', {}],
     ['send_chat', { session: SESSION, body: { text: 'Hello.' } }],
     ['stop_chat', { session: SESSION }],
     ['answer_approval', { session: SESSION, approval: 'ap-1', body: { approved: true } }],

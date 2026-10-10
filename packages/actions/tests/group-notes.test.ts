@@ -148,9 +148,9 @@ test('the numbered reply names the group once, with its numbers', () => {
   l.act({ action: 'comment', nodes: [1, 2], text: 'Same question' });
   const s = l.state();
   const reply = replyText(boardView(s, 'b'), boardState(s, 'b'));
-  assert.match(reply, /^1, 2 comment: Same question$/m);
-  assert.match(reply, /^3 ok$/m);
-  assert.doesNotMatch(reply, /^1 comment/m);
+  assert.match(reply, /^1, 2 \(question, question\): comment: Same question$/m);
+  assert.match(reply, /^3 \(question\): yes$/m);
+  assert.doesNotMatch(reply, /^1 \(question\): comment/m);
   assert.doesNotMatch(reply, /Still open: .*\b[12]\b/);
   assert.equal(reply.match(/Same question/g)!.length, 1);
 });

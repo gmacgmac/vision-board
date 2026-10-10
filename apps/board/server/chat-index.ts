@@ -1,8 +1,10 @@
 // The chat sessions index (chat-panel BE_03 ruling 2, api.md 101): the only module that reads or
 // writes `<project>/.visionboard/chat-sessions.json`. One entry per session ever started, oldest
 // first: the session as list_chats shows it, plus `agentId`, the board identity the server joined
-// for it (never a secret). Every entry is checked on read and before a write (rule 7); a damaged
-// file is refused, never silently rewritten. Git-ignored from the first write.
+// for it (never a secret). A session started in the folder has no board until its agent creates
+// one (panel-send ruling 2); then `attach` gives it that board, once. Every entry is checked on
+// read and before a write (rule 7); a damaged file is refused, never silently rewritten.
+// Git-ignored from the first write.
 import fs from 'node:fs';
 import path from 'node:path';
 import { ignoreInGit } from './agents.ts';
@@ -15,7 +17,8 @@ const AGENT_ID = /^a-[a-z0-9]{8}$/;
 /** One session as the chat routes show it (`chat-session.schema.json`). */
 export interface ChatSession {
   session: string;
-  board: string;
+  /** None yet for a session started in the folder (api.md 122). */
+  board?: string;
   agent: 'claude' | 'kiro';
   model?: string;
   created: string;
@@ -29,6 +32,9 @@ export interface ChatIndex {
   all(): readonly StoredSession[];
   /** Record a new session (file first). */
   add(entry: StoredSession): void;
+  /** Give a session with no board its board (file first). The entry is changed in place, so a
+   * loaded session's record sees it. */
+  attach(session: string, board: string): void;
 }
 
 /** The public shape: the stored entry without its agent id. */
@@ -65,16 +71,25 @@ export function openChatIndex(dir: string): ChatIndex {
   const file = path.join(dir, CHAT_SESSIONS_FILE);
   let entries: StoredSession[] | undefined;
   const all = () => (entries ??= readEntries(file));
+  const save = (next: StoredSession[]) => {
+    const problems = next.flatMap(entryProblems);
+    if (problems.length) throw new Error(`not a valid chat session: ${problems.join('; ')}`);
+    fs.mkdirSync(dir, { recursive: true });
+    ignoreInGit(dir, CHAT_SESSIONS_FILE);
+    writeEntries(file, next);
+  };
   return {
     all,
     add(entry) {
-      const problems = entryProblems(entry);
-      if (problems.length) throw new Error(`not a valid chat session: ${problems.join('; ')}`);
       const next = [...all(), entry];
-      fs.mkdirSync(dir, { recursive: true });
-      ignoreInGit(dir, CHAT_SESSIONS_FILE);
-      writeEntries(file, next);
+      save(next);
       entries = next;
+    },
+    attach(session, board) {
+      const entry = all().find((e) => e.session === session);
+      if (!entry || entry.board !== undefined) return;
+      save(all().map((e) => (e === entry ? { ...e, board } : e)));
+      entry.board = board;
     },
   };
 }

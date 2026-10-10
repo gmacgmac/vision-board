@@ -47,8 +47,9 @@ an agent by its Bearer secret. `server/agents.ts` is the only module that touche
 starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
 module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the
 session's agent and gives its secret to the vb MCP server only, `server/chat-session.ts` stamps and
-streams a session's events, `server/chat-approvals.ts` holds the gate's asks, and
-`server/chat-prompt.ts` spells out the message's chips.
+streams a session's events, `server/chat-approvals.ts` holds the gate's asks,
+`server/chat-prompt.ts` spells out the message's chips, and `server/chat-round.ts` writes the message
+the board's Send hands a session (api.md 121-122).
 
 The open folder (api.md 109-112): `server/project.ts` holds the folder the server has open (its
 ledger, lock, agents and chats) and is the only code that switches it (`open_project`): the new

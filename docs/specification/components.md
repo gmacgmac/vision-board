@@ -394,10 +394,11 @@ behind the `everyNode` flag (on by default; `?flags=-everyNode`).
    and Later, and every other kind Comment, More context and Later. Off, `numberedView`
    (`apps/board/src/board/board-data.ts`) drops the number from cards that need no answer, so they
    draw with no number, buttons or tabs and take no note.
-2. **One meaning, the card's words.** `packages/ui/src/node/action-words.ts` (`KIND_WORDS`,
-   `actionWord`) is the one table of what a button reads on a kind: ✓ and ✗ say "Yes" and "No" on a
+2. **One meaning, the card's words.** `packages/actions/src/action-words.ts` (`MEANINGS`,
+   `actionWord`) is the one table of what a button means on a kind: ✓ and ✗ say "Yes" and "No" on a
    question, ✓ "Done" on an action, in their tooltips; the accessible name keeps the registry's word.
-   The key help lists "Acknowledge (Yes, Done)" and "Drop (No)" from the same table.
+   The key help lists "Acknowledge (Yes, Done)" and "Drop (No)" from the same table, and the agent
+   reads the same words (`means` in `check_responses`, the numbered reply; api.md 121).
 3. **Comment on any group.** The selection's Comment takes every selected card, any kinds: one note
    on exactly those cards (`selection-flow.ts` `comment`); one card alone is its own note.
 4. **Counts and states.** The toolbar and container counts count only cards that need an answer

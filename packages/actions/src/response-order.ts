@@ -5,7 +5,9 @@
 // request or a revoke, which is on no card, after the cards. A Send ends its batch. Acts at one
 // place stay in the order made. The ledger keeps the order of the clicks. Pure.
 import type { ActEvent } from '../../format/src/index.ts';
-import { isContainerAct, nodesOf } from '../../format/src/index.ts';
+import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
+import type { Meaning } from './action-words.ts';
+import { meaningOf } from './action-words.ts';
 import type { LedgerState } from './fold.ts';
 import { responsesAfter } from './pending.ts';
 import { placeOf, scopeOf } from './references.ts';
@@ -38,10 +40,22 @@ export function inCardOrder(s: LedgerState, acts: readonly ActEvent[]): ActEvent
   return out;
 }
 
-/** `check_responses` (api.md 31, 120): at most `limit` of the person's acts on `board` after
- * `after`, cut in ledger order, then put in card order. `more` when the cut left some out: the next
+/** An act as `check_responses` reports it: with `means`, the word ✓ or ✗ says on its card's kind. */
+export type ReportedAct = ActEvent & { means?: Meaning };
+
+/** What an ✓ or ✗ means on its card's kind now (action-words.ts, panel-send ruling 4): "yes" or "no"
+ * on a question, "done" for ✓ on an action; nothing elsewhere. */
+function reported(s: LedgerState, e: ActEvent): ReportedAct {
+  const node = (e.action === 'ack' || e.action === 'drop') && e.n !== undefined ? s.nodes.get(e.n) : undefined;
+  const means = node && meaningOf(e.action, latest(node).kind);
+  return means ? { ...e, means } : e;
+}
+
+/** `check_responses` (api.md 31, 120, 121): at most `limit` of the person's acts on `board` after
+ * `after`, cut in ledger order, then put in card order, each ✓ or ✗ with what it `means`. `more` when the cut left some out: the next
  * page is after the highest `seq` in `responses` (`head` is the ledger's latest line, past them). */
-export function responsesPage(s: LedgerState, board: string, after: number, limit: number, agent?: string): { responses: ActEvent[]; more?: true } {
+export function responsesPage(s: LedgerState, board: string, after: number, limit: number, agent?: string): { responses: ReportedAct[]; more?: true } {
   const all = responsesAfter(s, board, after, agent);
-  return { responses: inCardOrder(s, all.slice(0, limit)), ...(all.length > limit && { more: true as const }) };
+  const responses = inCardOrder(s, all.slice(0, limit)).map((e) => reported(s, e));
+  return { responses, ...(all.length > limit && { more: true as const }) };
 }

@@ -102,5 +102,5 @@ test('replyText leaves out send, size, grant, deny and revoke', () => {
   l.act({ action: 'send', board: 'b' });
   const s = l.state();
   const text = replyText(boardView(s, 'b'), boardState(s, 'b')).split('\n');
-  assert.deepEqual(text.slice(1), ['1 ok', 'Still open: 2, 3']);
+  assert.deepEqual(text.slice(1), ['1 (question): yes', 'Still open: 2, 3']);
 });

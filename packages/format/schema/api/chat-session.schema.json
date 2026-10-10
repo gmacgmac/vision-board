@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/chat-session.schema.json",
   "title": "Chat session",
-  "description": "One chat session on a board: its id, the agent and model it runs, and when it started.",
-  "$comment": "Was: api.md 101",
+  "description": "One chat session: its id, its board (none yet for a session started in a folder with no board open), the agent and model it runs, and when it started.",
+  "$comment": "Was: api.md 101, 122",
   "type": "object",
-  "required": ["session", "board", "agent", "created"],
+  "required": ["session", "agent", "created"],
   "properties": {
     "session": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/sessionId", "description": "The session's id; the chat routes name it in their path."},
-    "board": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id", "description": "The board the session belongs to."},
+    "board": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id", "description": "The board the session belongs to. Left out while a session started in the folder has none: it moves to the first board its agent creates, and keeps it."},
     "agent": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/agent"},
     "model": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/model"},
     "created": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp", "description": "When the session started."}

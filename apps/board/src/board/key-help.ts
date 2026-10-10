@@ -2,12 +2,11 @@
 // table (commands.ts `COMMANDS`) and the action registry (`ACTIONS`), so a command or action with a
 // key cannot be left out. Every group takes the commands `GROUP_OF` assigns it (a Record over every
 // command id, so adding a command without a group fails the type check) and Items takes every
-// registry action that has a key, naming the words it reads on some kinds (action-words.ts). `OTHER`
+// registry action that has a key, naming the words it reads on some kinds (packages/actions action-words.ts). `OTHER`
 // holds only the inputs neither table owns: moving between cards, Space, Alt+arrows, H, and the
 // pointer gestures.
 import type { ActionId } from '../../../../packages/format/src/index.ts';
-import { ACTIONS } from '../../../../packages/actions/src/index.ts';
-import { otherWords } from '../../../../packages/ui/src/index.ts';
+import { ACTIONS, otherWords } from '../../../../packages/actions/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
 

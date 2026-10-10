@@ -3,7 +3,7 @@
   "$id": "https://vision-board.invalid/schema/api/check-responses-response.schema.json",
   "title": "The person's responses",
   "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests), each batch up to a Send sorted by card number. `more` is true when `limit` cut the list, which it cuts in ledger order: read the rest with `after` set to the highest `seq` in `responses`. A wait that timed out answers `{ responses: [], head }`.",
-  "$comment": "Was: api.md 31, 43, 120",
+  "$comment": "Was: api.md 31, 43, 120, 121",
   "type": "object",
   "required": [
     "responses",
@@ -13,9 +13,9 @@
     "responses": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/11/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/api/check-responses-response.schema.json#/$defs/reported"
       },
-      "description": "The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made."
+      "description": "The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made. A ✓ or ✗ on a question or an action carries `means`, the word it says there (`yes`, `no`, `done`)."
     },
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
@@ -24,5 +24,42 @@
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more"
     }
   },
-  "unevaluatedProperties": false
+  "unevaluatedProperties": false,
+  "$defs": {
+    "reported": {
+      "type": "object",
+      "description": "One stored `act` line as the agent reads it, plus `means` on a ✓ or ✗ whose card's kind gives it a word.",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "const": "act"
+        },
+        "means": {
+          "enum": [
+            "yes",
+            "no",
+            "done"
+          ],
+          "description": "What the ✓ or ✗ means on its card's kind: `yes` (✓) or `no` (✗) on a question, `done` (✓) on an action. Left out wherever the act means itself, such as ✗ on an action or ✓ on a finding. Not stored in the ledger."
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/stamp"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/stampAgent"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/11/events/act.schema.json#/$defs/core"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/11/events/act.schema.json#/$defs/rules"
+        }
+      ],
+      "unevaluatedProperties": false
+    }
+  }
 }

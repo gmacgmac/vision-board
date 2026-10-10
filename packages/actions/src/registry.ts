@@ -46,7 +46,7 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   drop: { id: 'drop', label: 'Drop', key: 'x', ...decision, onItem: true, status: 'dropped', reply: 'drop' },
   comment: { id: 'comment', label: 'Comment', key: 'c', ...person, onItem: true, text: 'required', reply: 'comment' },
   context: { id: 'context', label: 'More context', key: 'm', ...person, onItem: true, text: 'optional', status: 'context', reply: 'more context' },
-  later: { id: 'later', label: 'Save for later', key: 'l', ...decision, onItem: true, status: 'later', reply: 'later' },
+  later: { id: 'later', label: 'Save for later', key: 'l', ...decision, onItem: true, status: 'later', reply: 'saved for later' },
   reopen: { id: 'reopen', label: 'Reopen', key: 'o', ...person, onItem: true, status: 'open' },
   pin: { id: 'pin', label: 'Move', ...person, onItem: false },
   unpin: { id: 'unpin', label: 'Reset position', ...person, onItem: false },

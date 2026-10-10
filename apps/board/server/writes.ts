@@ -38,11 +38,17 @@ function agentOf(caller: Ctx['caller']): string {
   return caller.agent;
 }
 
-/** One person action from the action registry, on the board in the path (rule 8). */
-const act: Handler = async ({ req, res, params, ledger }) => {
+/** One person action from the action registry, on the board in the path (rule 8). A Send also
+ * hands the board's chat session the person's answers (api.md 121), after the answer: a session
+ * that can't be loaded leaves the Send as it was. */
+const act: Handler = async ({ req, res, params, ledger, chats }) => {
   const board = requireBoard(ledger.state(), params.board);
   const e = await body('act', req);
-  sendJson(res, 201, ledger.append(e, { by: 'person' }, { board }));
+  const stored = ledger.append(e, { by: 'person' }, { board });
+  sendJson(res, 201, stored);
+  if (stored.type === 'act' && stored.action === 'send') {
+    chats().round(board, stored.seq).catch((err) => console.error(`chat: the Send's answers were not handed over: ${err instanceof Error ? err.message : String(err)}`));
+  }
 };
 
 /** The node must be on the board in the path. */
