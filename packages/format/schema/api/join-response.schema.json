@@ -7,7 +7,8 @@
   "type": "object",
   "required": [
     "agent",
-    "secret"
+    "secret",
+    "project"
   ],
   "properties": {
     "agent": {
@@ -16,6 +17,10 @@
     },
     "secret": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/secret"
+    },
+    "project": {
+      "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName",
+      "description": "The folder the board server has open, as the person reads it (`~/projects/example`): check it is the folder you work in."
     }
   },
   "unevaluatedProperties": false

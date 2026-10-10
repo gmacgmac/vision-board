@@ -50,6 +50,14 @@ session's agent and gives its secret to the vb MCP server only, `server/chat-ses
 streams a session's events, `server/chat-approvals.ts` holds the gate's asks, and
 `server/chat-prompt.ts` spells out the message's chips.
 
+The open folder (api.md 109-112): `server/project.ts` holds the folder the server has open (its
+ledger, lock, agents and chats) and is the only code that switches it (`open_project`): the new
+folder's lock first, then the chats stop, the live streams end, the old lock goes. `server/folders.ts`
+is the only module that looks at other folders, all under the home folder (realpath, no hidden
+folder or `node_modules`); `server/recent.ts` is the only module that touches
+`~/.visionboard/recent.json` and picks the start folder. `server/open-folder.ts` answers the three
+routes. `createBoardServer({ home })` takes the home folder, so tests use a temp one.
+
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the
 patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from the patterns'
@@ -65,8 +73,9 @@ roadmap fixture ledger, and the performance budgets on port 4469 from a generate
 - **Used by**: nothing (apps are never imported, D-016).
 - **Run**: `npm run board` (builds, then serves the repo's own project ledger), or `npm run dev`
   (serves `temp/demo`, seeded once from the roadmap fixture ledger), then open
-  http://localhost:4466. `VB_PROJECT` picks the project folder; `VB_SEED` names a ledger copied
-  in when the project has none yet.
+  http://localhost:4466. `VB_PROJECT` picks the project folder (without it, the folder last opened
+  from the board, else this repo); "⋯" › Open folder… opens another one; `VB_SEED` names a ledger
+  copied in when the project has none yet.
   `npm run board:watch` is for working on the board: it rebuilds the page on save, restarts the
   server only when server code changes, and reloads the open page with its view kept (dev only;
   `npm run board` never reloads). `npm run watch` alone only rebuilds. `npm run check` type-checks `src/`.

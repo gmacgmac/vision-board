@@ -55,7 +55,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.10.0');
+  assert.equal(doc.info.version, '1.12.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });
@@ -134,6 +134,15 @@ test('a 401 sends WWW-Authenticate and a 405 sends Allow', () => {
     if (op.responses['401']) assert.equal(op.responses['401'].$ref, '#/components/responses/notAuthenticated', id);
     if (op.responses['405']) assert.equal(op.responses['405'].$ref, '#/components/responses/methodNotAllowed', id);
   }
+});
+
+test('every agent operation takes the VB-Project header and may answer 409 wrong-folder; no other does (api.md 114)', () => {
+  for (const { id, op } of ops) {
+    const header = (op.parameters ?? []).some((p: Rec) => p.$ref === '#/components/parameters/projectHeader');
+    assert.equal(header, op['x-agent'], `${id} header`);
+    assert.equal(op.responses['409']?.$ref === '#/components/responses/wrongFolder', op['x-agent'], `${id} 409`);
+  }
+  assert.deepEqual([doc.components.parameters.projectHeader.in, doc.components.parameters.projectHeader.name], ['header', 'VB-Project']);
 });
 
 test('reads are limited as api.md says: after, limit (100, 500), wait (0-60), linked', () => {
@@ -239,7 +248,7 @@ test('every operation in api.md is in openapi.json, with its method and path, an
 test('the problem codes are the codes of api.md 40', () => {
   const section = apiMd.split(/^## Errors$/m)[1]!.split(/^## /m)[0]!;
   const codes = [...section.matchAll(/^\| `([a-z-]+)` \| (\d{3}) \|/gm)].map((m) => m[1]!);
-  assert.equal(codes.length, 12);
+  assert.equal(codes.length, 13);
   const problem = schemaFiles().find((f) => f.schema.$id === `${API}problem.schema.json`)!.schema as Rec;
   const inPattern = /\(([^)]+)\)\$$/.exec(problem.$defs.code.pattern)![1]!.split('|');
   assert.deepEqual([...inPattern].sort(), [...codes].sort());

@@ -19,6 +19,8 @@ export interface Given {
   gate: { url: string; token: string };
   mcpConfig: { mcpServers: Record<string, { command: string; args: string[]; env: Record<string, string> }> };
   pid: number;
+  /** The folder the CLI ran in. */
+  cwd: string;
 }
 
 export type Event = Record<string, any> & { kind: string; seq: number };

@@ -66,7 +66,8 @@ function paramSpec(p: Rec): ParamSpec {
 function operationSpec(id: OperationId): OperationSpec {
   const { method, path } = OPERATIONS[id];
   const op: Rec = doc.paths[path][method.toLowerCase()];
-  const params = ((op.parameters ?? []) as Rec[]).map((p) => paramSpec(local(p)));
+  // Header parameters (`VB-Project`) are read by their own module (caller-folder.ts), not here.
+  const params = ((op.parameters ?? []) as Rec[]).map(local).filter((p) => p.in !== 'header').map(paramSpec);
   const ref = op.requestBody?.content?.['application/json']?.schema;
   return {
     params, ...(ref && { body: String(local(ref).$ref) }),

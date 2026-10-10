@@ -31,7 +31,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-boards", operationId: "list_boards", takesBody: false,
     summary: "List the boards",
-    description: "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
+    description: "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `project`, the folder the board has open (`~/projects/example`), `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
     inputs: [],
   },
   {
@@ -93,7 +93,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "join", operationId: "join", takesBody: true,
     summary: "Join as an agent",
-    description: "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
+    description: "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. It answers `project`, the folder the board has open: check it is the folder you work in. If a write answers `not-authenticated`, join again and ask for your grants again; if a call answers `wrong-folder`, the board has another folder open: stop and tell the person, and do not join. This is the one write that needs no credentials.",
     inputs: [
       {"name":"label","in":"body","type":"string","required":true,"description":"A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."},
     ],

@@ -67,7 +67,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
   /** What the adapter needs for one session: the vb server with its secret, and the gate. */
   const options = (secret: string, token: string, extra: Partial<StartOptions>): StartOptions => ({
     cwd, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS,
-    mcpServers: { vb: vbServer(base(), secret) }, gate: { url: `${base()}/api/run/approvals`, token },
+    mcpServers: { vb: vbServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
   });
 
   const keep = (record: StoredSession, adapterSession: Parameters<typeof createLiveSession>[1], token: string, resumed = false) => {

@@ -3,6 +3,7 @@
 // arranges the page, the canvas stays framework-free).
 import type { AccessHolder, BoardActionId, BoardListItem, BoardRun } from '../../../../packages/actions/src/index.ts';
 import type { BoardMark } from '../board/board-data.ts';
+import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
 import type { ProposalRow } from '../board/proposals.ts';
 
@@ -84,6 +85,10 @@ export const shell = $state({
   chatPanel: false,
   /** The chat sidebar is open (ChatSidebar.svelte keeps it per viewer). */
   chatOpen: false,
+  /** The folder the server has open (openFolder flag, board/folder.ts); null until read, or with the flag off. */
+  folder: null as FolderInfo | null,
+  /** The folder picker is open (FolderDialog.svelte). */
+  folderDialog: false,
 });
 
 let toastTimer = 0;

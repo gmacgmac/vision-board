@@ -8,6 +8,7 @@ import type { OperationId } from '../../../packages/format/src/index.ts';
 import { openRequestOf } from '../../../packages/format/src/index.ts';
 import { newSecret } from './agents.ts';
 import { BODY_LIMIT, KIB, readJson } from './body.ts';
+import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
 import { requireBoard } from './reads.ts';
@@ -76,14 +77,14 @@ const putBoard: Handler = async ({ req, res, params, ledger }) => {
 
 /** A new agent: id and secret, shown once. The hash is stored before the `join` line is
  * appended, so a secret the server hands out is always one it knows (api.md 21). */
-const join: Handler = async ({ req, res, ledger, agents }) => {
+const join: Handler = async ({ req, res, ledger, agents, project }) => {
   const { label } = await body('join', req, JOIN_LIMIT);
   const store = agents();
   const agent = store.mint(ledger.state().index.agents);
   const secret = newSecret();
   store.add(agent, secret);
   ledger.append({ type: 'join', label }, { by: 'agent', agent });
-  sendJson(res, 201, { agent, secret });
+  sendJson(res, 201, { agent, secret, project: openName(project) });
 };
 
 /** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a

@@ -18,6 +18,7 @@ import '../../../../packages/ui/src/selection-bar/selection-bar.css';
 import '../../../../packages/chat/src/chat.css';
 import '../styles/chat-host.css';
 import '../styles/chat-sidebar.css';
+import '../styles/folder-dialog.css';
 import './gallery.css';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
@@ -42,6 +43,7 @@ import { proposalsSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { chatSection } from './chat-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
+import { folderSection } from './folder-section.ts';
 
 interface PatternInfo {
   name: string;
@@ -130,6 +132,7 @@ function build(): void {
   if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
+  if (flagOn('openFolder', flags)) main.append(folderSection());
   main.append(appIconSection());
   document.body.append(head, main);
 }

@@ -52,7 +52,8 @@ export function rekey(agents: Agents, agentId: string): string {
   return secret;
 }
 
-/** The vb MCP server for one session: the board server and the secret, in its environment only. */
-export function vbServer(base: string, secret: string): McpServer {
-  return { command: process.execPath, args: ['--no-warnings', VB_MCP], env: { VB_SERVER: base, VB_AGENT_SECRET: secret } };
+/** The vb MCP server for one session: the board server, the secret (in its environment only) and
+ * the open folder the CLI works in, so its calls match it (folder-mismatch ruling 4). */
+export function vbServer(base: string, secret: string, project: string): McpServer {
+  return { command: process.execPath, args: ['--no-warnings', VB_MCP], env: { VB_SERVER: base, VB_AGENT_SECRET: secret, VB_PROJECT: project } };
 }

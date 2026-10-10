@@ -30,6 +30,11 @@ test('toolbarMenu is on by default (maintainer, 2026-10-09), and -toolbarMenu tu
   assert.equal(flagOn('toolbarMenu', parseFlags('-toolbarMenu').overrides), false);
 });
 
+test('openFolder is on by default (maintainer, 2026-10-09, U12), and -openFolder turns it off', () => {
+  assert.equal(flagOn('openFolder'), true);
+  assert.equal(flagOn('openFolder', parseFlags('-openFolder').overrides), false);
+});
+
 test('an override wins over the default, either way', () => {
   assert.equal(flagOn('nodeSize', { nodeSize: true }), true);
   assert.equal(flagOn('nodeSize', { nodeSize: false }), false);

@@ -81,6 +81,8 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | U3 | Node ledger | **Problem:** "47" can't be traced across chats or compactions, and nothing makes the agent answer every flagged item. **Example:** a parked item picked up a week later in a new chat. **Solution:** per-project ledger, one API (HTTP, MCP, `vb`), proposals, seen badges, parking bundles (D-017 to D-021). | Maintainer, 2026-10-02 · `cortex-tasks/board/2026-10-02_board-node-ledger/PLAN.md` |
 | U4 | Board API pattern | **Problem:** agents can't check replies, write nodes with per-item answers or look up a node by number, and nothing stops code drifting from the contract. **Example:** a parked item a week later in a new chat. **Solution:** OpenAPI as the one source; routes, `vb`, MCP and docs derived and drift-tested (D-022, `docs/specification/api.md`). **Built 2026-10-05, awaiting maintainer review** (D-026 to D-029; HTTP, `vb`, MCP). | Maintainer, 2026-10-02 · `cortex-tasks/board/2026-10-02_board-api-pattern/PLAN.md` |
 | U7 | Card width adapts to content | **Problem:** every card is one fixed width (248px), so long text makes a tall, narrow card that is hard to read. **Example:** a finding with a long body. **Solution:** a few width steps as tokens, picked by a pure rule from the amount of content (characters, lists), inside layout so the same input gives the same picture; to be designed with the maintainer. Pairs with L4 (very long cards). **Built 2026-10-05 behind `nodeSize`, awaiting maintainer review** (D-030, mockup 07 option A). | Maintainer, 2026-10-04 (489) |
+| U12 | Open a folder from the board | **Problem:** the board works only in the folder it was started for, so it can't be used on another repo without a restart and an env variable. **Example:** reviewing work in a second project. **Solution:** "⋯" Open folder…, a picker under home, found or Create, the server switches folder in place (chat 400-412). | Maintainer, 2026-10-09 · `cortex-tasks/board/2026-10-09_board-app_open-folder.md` |
+| U13 | Every node is part of the conversation | **Problem:** only cards marked as needing a response get a number and actions, so the person can't comment on, drop or save any other card; a group comment silently skips them. **Example:** selecting one plain card and pressing Comment does nothing (`selection-flow.ts` `comment`). **Solution:** every node numbered with the same actions; questions still need answers; planned with the maintainer (handover 2026-10-09 B, chat 406-411). | Maintainer, 2026-10-09 |
 
 ## NEAR TERM
 
@@ -102,6 +104,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N24 | Delete and clean up cards and containers | **Problem:** nothing on a board can be removed, so a mistaken or stray write stays for ever. **Example:** an agent writing to the wrong board. **Solution:** unknown; pairs with N14 (purge) and U10. | Maintainer, 2026-10-07 (170C) |
 | N26 | Other proposals: content changes, and agents without write access | **Problem:** a proposal can only acknowledge or drop a card. **Example:** an agent that may read a board but not write on it suggests a change to a card. **Solution:** the card proposal box (Stage 5, `bindCardPopover`) carries the new kinds; needs a contract change and a permissions row. | Maintainer, 2026-10-08 (220) |
 | N27 | Selection bar covers an open card box | **Problem:** the floating selection bar draws above an open proposal or handover box, hiding its top line. **Solution:** hide or move the bar while a card box is open. | VERIFY, Stage 5, 2026-10-08 |
+| N28 | Launcher and desktop app | **Problem:** starting the board means typing `npm run board` in this repo. **Example:** opening the board without a terminal. **Solution:** a launcher on a fixed port with Launch/Stop/Open, a registry of running boards so `vb-mcp` finds its board by folder, a small app built per computer (chat 398, 402, 403). Paused by the maintainer until U12 is in use. | Maintainer, 2026-10-09 |
 
 ## MEDIUM TERM
 
@@ -120,12 +123,13 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | L3 | Hosted version | **Problem:** it may become a product. **Example:** maintainer, framework interview. **Solution:** add SvelteKit (D-012) and swap `packages/agent` for a hosted connection. | D-012 |
 | L4 | Expand a long card into a modal | **Problem:** a card with a lot of text grows too tall. **Example:** a finding with a long evidence list. **Solution:** a max card height from a token with a "Show more" control first; a modal that shows the full content later. | Maintainer, 2026-10-02 |
 | L5 | Self-host Architect's fonts | **Problem:** Figtree, Bricolage Grotesque and IBM Plex Mono load from Google, which rule 18 forbids, so the board uses system fonts. **Example:** mockup 01b. **Solution:** a decision entry, then bundle the OFL-licensed font files. | D-024, 2026-10-02 |
+| L6 | One board views a second ledger | **Problem:** a board shows one folder's ledger only. **Example:** looking at another repo's board, copying a card across, then closing it. **Solution:** unknown; needs U12 first. | Maintainer, 2026-10-09 (407A) |
 
 ## PARKED
 
 | ID | Item | Waiting on | Source |
 |---|---|---|---|
-| — | — | Nothing parked | — |
+| N29 | Seen indicator on cards | **Problem:** the board shows no mark for cards the person has looked at; "seen" is only recorded for cards with a NEW or "N updates" tab and only clears those tabs. **Solution:** maybe a small unread dot (mockup, chat 432A), or nothing if NEW covers it. **Waiting on:** the maintainer trying the existing NEW and updates tabs in real use. | Maintainer, 2026-10-10 (431-432) |
 
 ---
 

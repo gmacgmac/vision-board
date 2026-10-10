@@ -48,6 +48,11 @@ test('a write sends its body as JSON, and the secret as a Bearer header', () => 
   assert.equal(buildRequest(BASE, 'read_ledger', {}, { accept: 'application/jsonl' }).headers.Accept, 'application/jsonl');
 });
 
+test('a folder is sent as VB-Project, percent-encoded so the header stays ASCII; none, no header', () => {
+  assert.equal(buildRequest(BASE, 'list_boards', {}, { project: '/home/example/my projects/café' }).headers['VB-Project'], '/home/example/my%20projects/caf%C3%A9');
+  assert.equal(buildRequest(BASE, 'list_boards').headers['VB-Project'], undefined);
+});
+
 test('a missing path parameter, a body on a GET or an unknown operation is refused before any request', async () => {
   const { calls, fetch } = fake(() => json({}));
   const client = createClient({ base: BASE, fetch });

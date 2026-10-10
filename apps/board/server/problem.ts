@@ -17,6 +17,7 @@ export const PROBLEMS = {
   'depends-on-failed': { status: 422, title: 'Depends on a failed item' },
   invalid: { status: 422, title: 'Invalid' },
   'server-error': { status: 500, title: 'Server error' },
+  'wrong-folder': { status: 409, title: 'Wrong folder' },
 } as const;
 
 export type ProblemCode = keyof typeof PROBLEMS;

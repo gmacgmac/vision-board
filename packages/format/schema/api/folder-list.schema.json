@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/folder-list.schema.json",
+  "title": "Folders",
+  "description": "`{ path, name, found, boards?, parent?, folders, recent, more? }`: one folder under the home folder, whether it has a Vision Board, the folders in it and the folders opened lately. Folder names only, never a file's name or contents.",
+  "$comment": "Was: api.md 109 (open-folder task, U12)",
+  "type": "object",
+  "required": ["path", "name", "found", "folders", "recent"],
+  "properties": {
+    "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
+    "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName"},
+    "found": {"type": "boolean", "description": "True when this folder has a Vision Board: open it with open_project; else create one there with `create: true`."},
+    "boards": {"type": "integer", "minimum": 0, "description": "How many boards its ledger holds; given only when `found` is true."},
+    "parent": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath", "description": "The folder above, left out for the home folder itself."},
+    "folders": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/entry"},
+      "description": "The folders in it, by name; hidden folders (a name starting with a dot), `node_modules` and links are left out."
+    },
+    "recent": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/entry"},
+      "description": "The folders opened lately, newest first, each still there and under the home folder; `name` is its display name."
+    },
+    "more": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/more", "description": "Present when the folder holds more folders than `folders` lists."}
+  },
+  "unevaluatedProperties": false
+}

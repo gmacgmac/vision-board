@@ -15,6 +15,8 @@ export interface ServerOptions {
   readonly base: string;
   /** VB_AGENT_SECRET: the secret for calls that do not pass `secret`. */
   readonly secret?: string;
+  /** The folder this server works in (`projectOf`), sent as `VB-Project` on every call. */
+  readonly project?: string;
   readonly fetch?: typeof fetch;
   /** Where log lines go (stderr in the executable). */
   readonly log?: (line: string) => void;
@@ -66,7 +68,10 @@ export function createMcpServer(opts: ServerOptions): McpServer {
       case 'tools/list':
         return { tools: TOOL_FILE.tools, ...CACHE };
       case 'tools/call':
-        return { ...await callTool(params, { base: opts.base, ...(opts.secret && { secret: opts.secret }), ...(opts.fetch && { fetch: opts.fetch }), ...(signal && { signal }) }) };
+        return { ...await callTool(params, {
+          base: opts.base, ...(opts.secret && { secret: opts.secret }), ...(opts.project && { project: opts.project }),
+          ...(opts.fetch && { fetch: opts.fetch }), ...(signal && { signal }),
+        }) };
       default:
         throw new RpcError(CODES.methodNotFound, `Method not found: ${method}`);
     }

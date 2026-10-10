@@ -59,6 +59,9 @@ export interface ClientOptions {
   base?: string;
   /** An agent's secret from `join`, sent as `Authorization: Bearer <secret>`. */
   secret?: string;
+  /** The folder the agent works in, an absolute path, sent as `VB-Project` so the server refuses a
+   * call when it has another folder open (`wrong-folder`, api.md 114). */
+  project?: string;
   fetch?: typeof fetch;
 }
 
@@ -95,7 +98,7 @@ export function urlFor(base: string, id: OperationId, input: CallInput = {}): st
 
 /** The whole request for `id`: method, URL, headers and JSON body. */
 export function buildRequest(
-  base: string, id: OperationId, input: CallInput = {}, opts: { secret?: string; accept?: string } = {},
+  base: string, id: OperationId, input: CallInput = {}, opts: { secret?: string; project?: string; accept?: string } = {},
 ): BuiltRequest {
   const op = OPERATIONS[id];
   const url = urlFor(base, id, input);
@@ -105,6 +108,7 @@ export function buildRequest(
     Accept: opts.accept === 'application/jsonl' ? 'application/jsonl' : 'application/json, application/problem+json',
     ...(takesBody && { 'Content-Type': 'application/json' }),
     ...(opts.secret && { Authorization: `Bearer ${opts.secret}` }),
+    ...(opts.project && { 'VB-Project': encodeURI(opts.project) }),
   };
   return { method: op.method, url, headers, ...(takesBody && { body: JSON.stringify(input.body ?? {}) }) };
 }
@@ -155,7 +159,8 @@ export function createClient(opts: ClientOptions = {}): Client {
   return {
     async call<T>(id: OperationId, input: CallInput = {}, callOpts: CallOptions = {}): Promise<T> {
       const r = buildRequest(base, id, input, {
-        ...(opts.secret && { secret: opts.secret }), ...(callOpts.accept && { accept: callOpts.accept }),
+        ...(opts.secret && { secret: opts.secret }), ...(opts.project && { project: opts.project }),
+        ...(callOpts.accept && { accept: callOpts.accept }),
       });
       const res = await send(r.url, {
         method: r.method, headers: r.headers, credentials: 'same-origin',

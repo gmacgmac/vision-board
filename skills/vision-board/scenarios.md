@@ -123,3 +123,18 @@ release?") and sends a message attaching it.
 - Chat words: one line ("Answered your note on Security: 2 of 5 block the release.").
 - **Fails if** it replies once per card, answers only in the chat, or makes a new card for the
   answer.
+
+## 9. The board switched folder (own chat)
+
+**Situation.** The agent joined while `~/projects/a` was open and drew a board there. The person
+then opened `~/projects/b` on the board. The agent's next `write_board` answers `wrong-folder`:
+"The board has switched to ~/projects/b. Your work is in ~/projects/a. Ask the person to open it
+again; don't join here."
+
+**A good run**
+- Stops at once and tells the person in one line, such as "The board now shows ~/projects/b; open
+  ~/projects/a again and I'll carry on."
+- Writes nothing more and waits for the person; once they say the folder is open, resends the same
+  items with the same keys.
+- **Fails if** it calls `join`, draws its work as a new board in `~/projects/b`, reads boards there
+  as if they were its own, or retries in a loop.

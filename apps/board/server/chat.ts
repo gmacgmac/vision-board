@@ -10,7 +10,7 @@ import { promptFor } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
-import { requireBoard } from './reads.ts';
+import { endWhenClosed, requireBoard } from './reads.ts';
 import { sendJson } from './respond.ts';
 import { body } from './writes.ts';
 
@@ -73,8 +73,9 @@ const answerApproval: Handler = async ({ req, res, params, chats }) => {
 };
 
 /** Every event after `after`, then each new one. An `after` past the latest event is from before
- * the server restarted (events are numbered again from 1), so the stream starts over. */
-const watchChat: Handler = async ({ res, params, chats }) => {
+ * the server restarted (events are numbered again from 1), so the stream starts over. It ends when
+ * the folder closes (a switch, api.md 111). */
+const watchChat: Handler = async ({ res, params, chats, closed }) => {
   const live = await chats().live(String(params.session));
   const asked = Number(params.after);
   const after = asked > live.last() ? 0 : asked;
@@ -84,6 +85,7 @@ const watchChat: Handler = async ({ res, params, chats }) => {
   for (const e of live.after(after)) send(e);
   const off = live.subscribe(send);
   const beat = setInterval(() => res.write(': beat\n\n'), 20000);
+  endWhenClosed(res, closed);
   res.on('close', () => { off(); clearInterval(beat); });
 };
 

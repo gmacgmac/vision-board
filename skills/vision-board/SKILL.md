@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it point by point (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v1 (2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v1.1 (2026-10-10, the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
@@ -55,6 +55,8 @@ hold the exact fields.
 - **An item fails `needs-grant`**: call `request_grant` once for exactly what it names. Asking
   again returns the open request (`replayed: true`), so never loop. When the answer comes,
   resend the same items with the same keys.
+- **A call fails `wrong-folder`**: the board has another project folder open. Stop, tell the
+  person in one line what it says, and do not `join` or write until they open your folder again.
 - **Waiting for the answer**: in your own chat, `check_responses` with `wait` until a `grant` or
   `deny` for your request arrives. In the panel, say in one line what you asked for and end the
   turn. After a `deny`, do not ask for the same thing again unless the person tells you to.

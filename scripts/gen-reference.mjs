@@ -3,7 +3,7 @@
 // operation, in route-table order: its names, who may call it, what it does, its inputs, the
 // fields of its success answer, every error, and the spec's own examples. Pure; gen-api.mjs
 // writes the file and `--check` compares it.
-import { lookup } from './openapi-refs.mjs';
+import { lookup, resolveParam } from './openapi-refs.mjs';
 import { inputSources, shape } from './schema-shape.mjs';
 
 const WHO = { none: 'anyone (no credentials)', agent: 'an agent (Bearer secret from `join`)', person: 'the person (the board page cookie)', run: 'a chat session\'s gate hook (Bearer run token)' };
@@ -88,7 +88,10 @@ function successParts(doc, schemas, op) {
 function section(doc, schemas, o) {
   const op = doc.paths[o.path][o.method.toLowerCase()];
   const doors = o.xAgent ? `MCP tool ${code(o.operationId)}, \`vb\` command ${code(`vb ${o.operationId.replaceAll('_', '-')}`)}` : 'not offered to agents (`x-agent: false`)';
-  const inputs = inputSources(o.operationId, op, doc, schemas, true);
+  // Header inputs (`VB-Project`) are listed too; they are not tool arguments or `vb` flags.
+  const headers = (op.parameters ?? []).map((p) => resolveParam(doc, p)).filter((p) => p.in === 'header')
+    .map((p) => ({ name: p.name, in: 'header', schema: p.schema ?? {}, home: doc, required: p.required === true, description: p.description ?? '' }));
+  const inputs = [...inputSources(o.operationId, op, doc, schemas, true), ...headers];
   const body = op.requestBody?.content?.['application/json'];
   return [
     `## ${code(o.operationId)}`, '',

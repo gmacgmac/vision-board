@@ -59,8 +59,10 @@ test('join, grant and seen: closed bodies; the secret is 32 bytes of base64url',
   assert.deepEqual(problems('join-request', { label: 'Pricing chat' }), []);
   assert.notDeepEqual(problems('join-request', { label: 'Pricing chat', key: 'k' }), []);
   assert.notDeepEqual(problems('join-request', { label: ' ' }), []);
-  assert.deepEqual(problems('join-response', { agent: 'a-k3m9x2pq', secret: 'ffwviAc-sVj5m18PEV0ZM0canfMeJizkYZEfaHD0o1o' }), []);
-  assert.notDeepEqual(problems('join-response', { agent: 'a-k3m9x2pq', secret: 'short' }), []);
+  const joined = { agent: 'a-k3m9x2pq', secret: 'ffwviAc-sVj5m18PEV0ZM0canfMeJizkYZEfaHD0o1o', project: '~/projects/example' };
+  assert.deepEqual(problems('join-response', joined), []);
+  assert.notDeepEqual(problems('join-response', { ...joined, secret: 'short' }), []);
+  assert.notDeepEqual(problems('join-response', { agent: joined.agent, secret: joined.secret }), [], 'project is required');
   assert.deepEqual(problems('grant-request-body', { board: 'pricing', region: 'later', reason: 'why', key: 'k' }), []);
   assert.notDeepEqual(problems('grant-request-body', { board: 'pricing', region: 'later' }), []);
   assert.deepEqual(problems('grant-response', { request: 54, board: 'pricing', region: 'later', replayed: true }), []);

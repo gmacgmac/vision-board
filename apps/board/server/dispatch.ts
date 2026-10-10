@@ -7,21 +7,23 @@ import type { OperationId } from '../../../packages/format/src/index.ts';
 import { OPERATIONS } from '../../../packages/format/src/index.ts';
 import type { Agents } from './agents.ts';
 import type { BuildWatch } from './build-watch.ts';
-import type { CallerEnv } from './callers.ts';
+import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf } from './callers.ts';
 import type { Chats } from './chat-sessions.ts';
 import type { Caller, Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
+import type { Project } from './project.ts';
 import type { ParamSpec } from './spec.ts';
 import { SPECS, coerce, paramProblems } from './spec.ts';
 
-/** What the server holds for every request: the callers' env, the chat sessions, and the build in
- * watch mode. */
-export interface ServerEnv extends CallerEnv { chats: () => Chats; build?: BuildWatch | undefined }
+/** What the server holds for every request: the person's token, the open folder (project.ts),
+ * and the build in watch mode. */
+export interface ServerEnv { person: string; project: Project; build?: BuildWatch | undefined }
 
-/** What a handler gets: the request, its parsed parameters (defaults filled in), the ledger, the
- * agents store, the chat sessions, the caller the operation's `security` allowed (api.md 20-22)
- * and, in watch mode only, the build being served (api.md 79). */
+/** What a handler gets: the request, its parsed parameters (defaults filled in), the open folder's
+ * ledger, agents store and chat sessions, the signal that ends its streams when the folder closes,
+ * the project (to switch folders, api.md 111), the caller the operation's `security` allowed
+ * (api.md 20-22) and, in watch mode only, the build being served (api.md 79). */
 export interface Ctx {
   req: IncomingMessage;
   res: ServerResponse;
@@ -29,6 +31,9 @@ export interface Ctx {
   ledger: Ledger;
   agents: () => Agents;
   chats: () => Chats;
+  /** Aborted when this folder closes (a switch, the server closing): a stream or held read ends. */
+  closed: AbortSignal;
+  project: Project;
   /** The person, an agent, or undefined for a read without credentials. */
   caller: Caller | undefined;
   build?: BuildWatch | undefined;
@@ -99,7 +104,8 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
 }
 
 /** Answer one /api request through the route table and the handler table: route, parameters,
- * then the caller, then the handler (so nothing is read from an unauthorised body). */
+ * then, for an agent operation, the caller's folder (api.md 114), then the caller, then the
+ * handler (so nothing is read from an unauthorised body). */
 export async function dispatch(
   req: IncomingMessage, res: ServerResponse, url: URL, env: ServerEnv, handlers: HandlerTable,
 ): Promise<void> {
@@ -111,6 +117,14 @@ export async function dispatch(
     throw problem('method-not-allowed', `This path answers ${allow} only.`, { headers: { Allow: allow } });
   }
   const params = readParams(match.id, match.raw, url.searchParams);
-  const caller = callerOf(req, match.id, env);
-  await handlers[match.id]({ req, res, params, ledger: env.ledger, agents: env.agents, chats: env.chats, caller, build: env.build });
+  const open = env.project.current();
+  const folder = { home: env.project.home, dir: open.dir };
+  if (SPECS[match.id].agent) checkFolder(req, folder);
+  const caller = callerOf(req, match.id, {
+    person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret),
+  });
+  await handlers[match.id]({
+    req, res, params, ledger: open.ledger, agents: open.agents, chats: open.chats, closed: open.closed,
+    project: env.project, caller, build: env.build,
+  });
 }

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/project.schema.json",
+  "title": "The open folder",
+  "description": "`{ path, name, found, boards? }`: the folder the board server has open, whose `.visionboard/ledger.jsonl` every other operation reads and writes.",
+  "$comment": "Was: api.md 109 (open-folder task, U12)",
+  "type": "object",
+  "required": ["path", "name", "found"],
+  "properties": {
+    "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
+    "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName"},
+    "found": {"type": "boolean", "description": "True when the folder has a Vision Board: a `.visionboard/ledger.jsonl` file."},
+    "boards": {"type": "integer", "minimum": 0, "description": "How many boards its ledger holds; given only when `found` is true."}
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "folderPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^/[^\\u0000-\\u001f\\u007f]*$",
+      "description": "A folder's absolute path on the computer running the board server, as the server gave it"
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "The folder as the person reads it: under the home folder it starts with `~` (`~/projects/example`); elsewhere it is the absolute path"
+    },
+    "folderHeader": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12288,
+      "pattern": "^/[!-~]*$",
+      "description": "A folder's absolute path percent-encoded the way `encodeURI` does it, so the header stays printable ASCII: `/Users/example/My%20projects/a`"
+    },
+    "entry": {
+      "type": "object",
+      "description": "One folder in a listing: its name, its path and whether it has a Vision Board.",
+      "required": ["name", "path", "hasBoard"],
+      "properties": {
+        "name": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/displayName", "description": "The folder's own name in a folder's list; its display name (`~/...`) in the recent list."},
+        "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
+        "hasBoard": {"type": "boolean", "description": "True when it has a `.visionboard/ledger.jsonl` file."}
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -3,6 +3,7 @@
 // its stdin and stdout exactly as an MCP client would. Not a test itself (no .test.ts).
 import { spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
@@ -50,12 +51,14 @@ export interface Session {
   close(): Promise<void>;
 }
 
-/** Spawn the MCP server with exactly these extra environment variables. */
+/** Spawn the MCP server with exactly these extra environment variables, in the temp folder (in no
+ * project, so it names no folder: the repo's own `.visionboard/` is not the fixture server's). */
 export function startMcp(env: Record<string, string>): Session {
   const childEnv: Record<string, string | undefined> = { ...process.env };
   delete childEnv.VB_AGENT_SECRET;
   delete childEnv.VB_SERVER;
-  const child = spawn(process.execPath, [BIN], { stdio: ['pipe', 'pipe', 'pipe'], env: { ...childEnv, ...env } });
+  delete childEnv.VB_PROJECT;
+  const child = spawn(process.execPath, [BIN], { stdio: ['pipe', 'pipe', 'pipe'], cwd: tmpdir(), env: { ...childEnv, ...env } });
   child.stderr!.resume(); // logs; read so the pipe never fills
   const lines: any[] = [];
   const waiting = new Map<number | string, (msg: any) => void>();

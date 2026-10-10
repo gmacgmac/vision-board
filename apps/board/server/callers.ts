@@ -8,6 +8,7 @@ import type { IncomingMessage } from 'node:http';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import type { Agents } from './agents.ts';
 import type { Caller, Ledger } from './ledger.ts';
+import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
 import { SPECS } from './spec.ts';
 
@@ -47,8 +48,14 @@ const BEARER = /^Bearer +(\S+)\s*$/i;
 /** The token of an `Authorization: Bearer` header, if the request sends one. */
 export const bearerOf = (req: IncomingMessage): string | undefined => BEARER.exec(req.headers.authorization ?? '')?.[1];
 
-/** What the caller check needs from the server. */
-export interface CallerEnv { person: string; agents: () => Agents; ledger: Ledger }
+/** What the caller check needs from the server. `elsewhere` is the refusal for a secret another
+ * folder's agents know (caller-folder.ts), asked before the generic "join again". */
+export interface CallerEnv {
+  person: string;
+  agents: () => Agents;
+  ledger: Ledger;
+  elsewhere?: ((secret: string) => ProblemError | undefined) | undefined;
+}
 
 /** The agent a Bearer secret names; 401 with `WWW-Authenticate` when it is missing or unknown. */
 function agentOf(req: IncomingMessage, env: CallerEnv): Caller {
@@ -57,7 +64,7 @@ function agentOf(req: IncomingMessage, env: CallerEnv): Caller {
   if (!m) throw problem('not-authenticated', NO_SECRET, { headers: REALM });
   const index = env.ledger.state().index;
   const agent = env.agents().find(m[1]!, (id) => index.agents.has(id));
-  if (!agent) throw problem('not-authenticated', UNKNOWN_SECRET, { headers: REALM });
+  if (!agent) throw env.elsewhere?.(m[1]!) ?? problem('not-authenticated', UNKNOWN_SECRET, { headers: REALM });
   return { by: 'agent', agent };
 }
 

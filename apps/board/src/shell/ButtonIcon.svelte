@@ -1,9 +1,10 @@
 <!-- A toolbar button's icon (verification fix): on a narrow window the end group's text buttons
      show this and keep their words for screen readers (board.css, .vb-btn-text). Same drawing
      style as AppIcon: a 24px grid, 1.5 stroke, currentColor. With the toolbarMenu flag: Agents (a
-     bot), Send to agent (a bot with a send arrow), Reply (a quote mark) and the "⋯" menu (more). -->
+     bot), Send to agent (a bot with a send arrow), Reply (a quote mark) and the "⋯" menu (more); with the openFolder flag,
+     Open folder… (a folder). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -24,6 +25,8 @@
     <path d="M10 12H5V7h5v5c0 3-1.5 5-4.5 6" /><path d="M19 12h-5V7h5v5c0 3-1.5 5-4.5 6" />
   {:else if name === 'more'}
     <circle cx="5" cy="12" r="1.5" fill="currentColor" /><circle cx="12" cy="12" r="1.5" fill="currentColor" /><circle cx="19" cy="12" r="1.5" fill="currentColor" />
+  {:else if name === 'folder'}
+    <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
   {:else}
     <path d="M4 5h16v11H9l-5 4z" />
   {/if}

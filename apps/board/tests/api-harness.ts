@@ -67,8 +67,8 @@ export interface Harness {
   seeded: Seeded;
   /** Join over HTTP; the client sends the new secret. */
   join(label: string): Promise<Joined>;
-  /** A client sending this secret as a Bearer. */
-  agent(secret: string): Client;
+  /** A client sending this secret as a Bearer and, when given, `project` as its folder (`VB-Project`). */
+  agent(secret: string | undefined, project?: string): Client;
   /** The last answer any client received, parsed by media type. */
   last(): Answer;
   /** Call, check the answer against the spec, return the value. `as` picks the caller; person
@@ -83,6 +83,7 @@ export interface Joined { agent: string; secret: string; client: Client }
 
 const PERSON_OPS: ReadonlySet<OperationId> = new Set([
   'act', 'mark_seen', 'put_board', 'start_chat', 'list_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
+  'get_project', 'list_folders', 'open_project',
 ]);
 
 const mediaOf = (h: Headers) => (h.get('content-type') ?? '').split(';')[0]!.trim();
@@ -95,8 +96,9 @@ async function parsed(res: Response, media: string): Promise<unknown> {
 }
 
 /** `watch`: as `VB_WATCH=1`, the server watches `dist` and sends `build` on `watch_project`.
- * `chat`: the CLIs a chat runs (a fake one in tests) and the approval time limit. */
-export async function startBoard({ watch = false, chat }: { watch?: boolean; chat?: BoardServerOptions['chat'] } = {}): Promise<Harness> {
+ * `chat`: the CLIs a chat runs (a fake one in tests) and the approval time limit. `home`: the
+ * person's home folder for the folder routes (a temp folder; never the real one in a test). */
+export async function startBoard({ watch = false, chat, home }: { watch?: boolean; chat?: BoardServerOptions['chat']; home?: string } = {}): Promise<Harness> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-api-'));
   const file = ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -107,7 +109,9 @@ export async function startBoard({ watch = false, chat }: { watch?: boolean; cha
   const ledger = openLedger(file, () => {});
   const seeded = seedMore(ledger);
   const build = watch ? watchBuild(dist) : undefined;
-  const server = createBoardServer({ ledger, dist, build, chat });
+  // A temp home folder unless the test brings its own: no test reads the real one (api.md 112).
+  const ownHome = home ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), 'vb-home-'));
+  const server = createBoardServer({ ledger, dist, build, chat, home: home ?? fs.realpathSync(ownHome!) });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
@@ -122,7 +126,8 @@ export async function startBoard({ watch = false, chat }: { watch?: boolean; cha
   };
   const client = createClient({ base, fetch: recording() });
   const person = createClient({ base, fetch: recording({ Cookie: cookie }) });
-  const agent = (secret: string) => createClient({ base, secret, fetch: recording() });
+  const agent = (secret: string | undefined, project?: string) =>
+    createClient({ base, ...(secret && { secret }), ...(project && { project }), fetch: recording() });
   const pick = (id: OperationId, as?: Client) => as ?? (PERSON_OPS.has(id) ? person : client);
   const h: Harness = {
     base, project: dir, dist, client, person, cookie, ledger, seeded, agent,
@@ -148,7 +153,10 @@ export async function startBoard({ watch = false, chat }: { watch?: boolean; cha
     close: () => new Promise<void>((resolve) => {
       build?.close();
       server.closeAllConnections();
-      server.close(() => { fs.rmSync(dir, { recursive: true, force: true }); resolve(); });
+      server.close(() => {
+        for (const d of [dir, ownHome]) if (d) fs.rmSync(d, { recursive: true, force: true });
+        resolve();
+      });
     }),
   };
   return h;

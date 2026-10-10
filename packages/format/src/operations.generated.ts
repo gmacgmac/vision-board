@@ -106,6 +106,18 @@ export const OPERATIONS = {
     operationId: 'ask_approval', method: 'POST', path: '/api/run/approvals',
     pathParams: [], xAgent: false, auth: 'run',
   },
+  get_project: {
+    operationId: 'get_project', method: 'GET', path: '/api/project',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
+  open_project: {
+    operationId: 'open_project', method: 'POST', path: '/api/project',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
+  list_folders: {
+    operationId: 'list_folders', method: 'GET', path: '/api/folders',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
 } as const satisfies Record<string, OperationInfo>;
 
 export type OperationId = keyof typeof OPERATIONS;

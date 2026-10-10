@@ -24,7 +24,7 @@
   "$defs": {
     "code": {
       "type": "string",
-      "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error)$",
+      "pattern": "^https://vision-board\\.invalid/problems/(bad-request|not-authenticated|forbidden|needs-grant|not-found|method-not-allowed|conflict|too-large|unsupported-media-type|depends-on-failed|invalid|server-error|wrong-folder)$",
       "description": "`https://vision-board.invalid/problems/<code>`; the codes are listed in the API reference.",
       "$comment": "Was: api.md 40"
     },

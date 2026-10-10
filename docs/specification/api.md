@@ -127,7 +127,8 @@ packages/format/schema/openapi.json               every operation, input, output
 22. **Keeping an identity.** The secret is the agent's identity, so `join`'s description tells
     the agent to save its id and secret in its durable notes, because a compaction loses its
     context. An unknown secret gets `not-authenticated`, whose detail says: join again, then call
-    `request_grant`, and the person must approve again. For MCP, `secret` is a tool argument;
+    `request_grant`, and the person must approve again (unless a recent folder's agents know it:
+    `wrong-folder`, 115). For MCP, `secret` is a tool argument;
     `VB_AGENT_SECRET` in the environment means one identity for every chat that shares that MCP
     configuration, so it is meant for `vb` and single-chat setups.
 23. *(Replaced by 81.)* **Containers** are regions (D-011), named by `board` and `region`. A container's holders are
@@ -220,6 +221,7 @@ packages/format/schema/openapi.json               every operation, input, output
 | `depends-on-failed` | 422 | The item depends on an item that failed (per item) |
 | `invalid` | 422 | Fails the schema or a context rule |
 | `server-error` | 500 | Anything unexpected; details go to the server log, not the answer |
+| `wrong-folder` | 409 | The board has another folder open: an agent call's `VB-Project` names another folder, or its secret is an agent's of a folder opened before (114, 115) |
 
 ## Operations
 
@@ -250,6 +252,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on; the `approval_result` event (100, 101) |
 | `watch_chat` | `GET /api/chats/{session}/events` | person | Server-sent `chat` events after `after`, each with its `seq` as the id (101) |
 | `ask_approval` | `POST /api/run/approvals` | gate | Approval facts from a chat session's gate hook, with its run token; waits for the answer (102) |
+| `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }` (109) |
+| `list_folders` | `GET /api/folders` | person | One folder under home (`path`, default home): found or not, its folders marked `hasBoard`, and `recent` (109, 110) |
+| `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
@@ -723,3 +728,72 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     (`--model` is passed when a model is given). Usage is not reported by Kiro's ACP v2. A board
     write's cards and head come from the tool call's `rawOutput` (kiro-cli 2.28.0 sends an MCP tool's
     result there, `{ items: [{ Json: { content } }] }`, and no `content`), so its change chip zooms.
+
+## Opening a folder from the board (open-folder task, U12, D-038 proposed)
+
+109. **The open folder.** The server has one folder open at a time, and every other operation
+    reads and writes its ledger, `<folder>/.visionboard/ledger.jsonl` (D-017). `get_project` shows
+    it: `path` (absolute), `name` (`~/...` under the home folder, else the absolute path), `found`
+    (it has a ledger) and `boards` (how many, when found). `openapi.json` `info.version` becomes
+    1.11.0. All three routes are the person's: `x-agent: false` and the `vb_person` cookie, refused
+    to an agent or a run token as in 20. The ledger format does not change.
+110. **Folders, under home only** (`list_folders`, `apps/board/server/folders.ts`). `path` (default:
+    the home folder) is resolved with `realpath` and must be the home folder or under it, so neither
+    `..` nor a link leads out; it must be a folder, and no part of it under home may be hidden (a
+    name starting with a dot) or `node_modules`. Outside: `forbidden`; not there or not a folder:
+    `not-found`. The answer is that folder (`found`, `boards`, `parent` but for home itself), the
+    folders in it by name (at most 500, then `more`), each with `hasBoard`, and `recent`. Hidden
+    folders, `node_modules` and links are left out. Folder names only: never a file's name or
+    contents. **Recent** is `~/.visionboard/recent.json` (`server/recent.ts`): `{ folders }`, newest
+    first, at most 10, written atomically and readable by this user only. It is checked on read; a
+    bad file is ignored (an empty list), never fatal. Listed, each entry must still be a folder under
+    home. It is a per-person setting, so it lives in home, not in a repo.
+111. **Switching** (`open_project { path, create? }`, `server/project.ts`). The same checks as 110,
+    then, in order: take the new folder's lock (`conflict` with the holder message when another
+    server holds it; nothing changed); without `create`, a folder with no ledger is `not-found`
+    before any lock is taken; with it, `.visionboard/` (its `.gitignore` names `lock`, as at start)
+    and an empty ledger are made; open its ledger (a failure lets go of the new lock: `conflict`,
+    nothing changed); stop every chat (its CLI works in the old folder); end every live stream
+    (`watch_project`, `watch_board`, `watch_chat`) and every held `check_responses`, so pages
+    reconnect and reload; let go of the old lock; swap the ledger, its agents and its chats; keep
+    the old folder (when under home) and the new one in recent. Opening the folder already open
+    changes nothing. Agents follow the open folder: each folder keeps its own `agents.json`, so an
+    agent's old secret is not known in the new folder; it gets `wrong-folder` naming both folders
+    (115), or `not-authenticated` (22) when the old folder is not in recent. The person's
+    cookie stays valid: it belongs to the server, not the folder. The chat panel's agent works in
+    the open folder (`chat-sessions.ts` `cwd`).
+112. **At start** (`apps/board/server.ts`, `startFolder`): `VB_PROJECT` wins; else the newest
+    recent folder, if it is still a folder under home; else this repo. Start-up never writes
+    `recent.json`: only `open_project` does. Tests pass their own home folder
+    (`createBoardServer({ home })`), so no test reads or writes the real one.
+113. **The page** (`openFolder` flag, on by default). The "⋯" menu's last row, "Open folder…",
+    opens the folder picker (`shell/FolderDialog.svelte`); the page title and the row's tooltip name
+    the open folder. The page keeps its last board per folder (`vb.lastBoard:<path>`, falling back to
+    `vb.lastBoard`). When the live stream opens again it asks `get_project`, and a different folder
+    reloads the page (without its board hash). Off, the page never calls these routes.
+
+## An agent from another folder (folder-mismatch task, U12)
+
+114. **The caller's folder** (`apps/board/server/caller-folder.ts`). Every agent operation
+    (`x-agent: true`) takes an optional `VB-Project` header: the folder the agent works in, an
+    absolute path percent-encoded as `encodeURI` does it (`project.schema.json` `folderHeader`;
+    anything else is `bad-request`). Before the caller check, the dispatcher compares its real path
+    with the open folder's: the open folder or a folder inside it matches; anything else is
+    `wrong-folder` (409), and nothing is read or written. No header, nothing is checked (an agent
+    started outside any project). Person routes and the page never send it and are never checked.
+    `openapi.json` `info.version` becomes 1.12.0.
+115. **A secret from a folder left behind.** A Bearer secret the open folder's agents do not know is
+    looked for in the recent folders' `agents.json` (hashes only, read, never written) before the
+    generic answer. Found: `wrong-folder`, never "join again". Both refusals say the same: "The
+    board has switched to `~/projects/b`. Your work is in `~/projects/a`. Ask the person to open it
+    again; don't join here."
+116. **The `vb` MCP server names its folder** (`packages/mcp/src/project.ts` `projectOf`), worked out
+    once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
+    with `.visionboard/ledger.jsonl` (a home folder that only keeps `recent.json` is no project),
+    else none. `packages/client` sends it as `VB-Project` on every call (`project` option). The
+    instructions (`INSTRUCTIONS`, `INSTRUCTIONS_JOINED`) and the skill say: on `wrong-folder`, stop,
+    tell the person, and do not join.
+117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
+    display name (`~/projects/example`), so an agent can check where it is. The chat panel's CLI runs
+    in the open folder and its `vb` MCP gets `VB_PROJECT` set to it (`chat-access.ts` `vbServer`),
+    so it always matches; a switch stops its chats (111).

@@ -16,6 +16,8 @@ export interface CallContext {
   readonly base: string;
   /** VB_AGENT_SECRET, used when a call that takes the secret does not pass `secret`. */
   readonly secret?: string;
+  /** The folder this server works in, sent as `VB-Project` (api.md 116). */
+  readonly project?: string;
   readonly fetch?: typeof fetch;
   readonly signal?: AbortSignal;
 }
@@ -68,7 +70,7 @@ export async function callTool(params: Readonly<Record<string, unknown>>, ctx: C
     return text(`The arguments do not fit ${name}:\n${checked.problems.join('\n')}`, true);
   }
   const { input, secret } = split(routeOf(name), checked.value as Record<string, unknown>, ctx.secret);
-  const client = createClient({ base: ctx.base, ...(secret && { secret }), ...(ctx.fetch && { fetch: ctx.fetch }) });
+  const client = createClient({ base: ctx.base, ...(secret && { secret }), ...(ctx.project && { project: ctx.project }), ...(ctx.fetch && { fetch: ctx.fetch }) });
   let answer: unknown;
   try {
     answer = await client.call(name as OperationId, input, { ...(ctx.signal && { signal: ctx.signal }) });

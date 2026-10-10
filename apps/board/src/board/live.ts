@@ -7,7 +7,8 @@
 // is applied from its answer when it is the next line. A full fetch happens again only when the
 // ledger went back (another project, a reset) or a line has a format the page cannot apply.
 // In watch mode (dev only) the stream also names the built page: the first id is kept, and a
-// different one reloads the page, whose view is already saved (FE_02 ruling 6).
+// different one reloads the page, whose view is already saved (FE_02 ruling 6). With the openFolder
+// flag the stream is ended by a folder switch; reopened, it reloads the page when the folder changed.
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { applyEvent, foldLedger } from '../../../../packages/actions/src/index.ts';
@@ -25,8 +26,9 @@ export interface Live {
   sync(): Promise<void>;
   /** An act the page sent: applied in place when it is the next line, else read with the rest. */
   own(e: LedgerEvent): Promise<void>;
-  /** Follow the project's live stream; a stop function. */
-  watch(): () => void;
+  /** Follow the project's live stream; a stop function. `reopened`, when given, is asked first each
+   * time the stream opens again; true means the page is going away (another folder, folder.ts). */
+  watch(reopened?: () => Promise<boolean>): () => void;
   /** Resolves when no read is in flight. */
   settled(): Promise<void>;
 }
@@ -103,16 +105,21 @@ export function createLive(onLines: OnLines): Live {
       if (state && !reading && e.seq === state.seq + 1 && apply([e])) return;
       await sync();
     },
-    watch() {
+    watch(reopened) {
       let build: string | null = null;
+      let opened = false;
       return watchProject({
         change: (seq) => { if (!state || seq > state.seq) void sync(); },
         build: (id) => {
           if (build === null) build = id;
           else if (id !== build) location.reload();
         },
-        // On (re)connecting, catch up on anything appended while the stream was not open.
-        open: () => void sync(),
+        // On (re)connecting, catch up on anything appended while the stream was not open; on a
+        // reconnect, first make sure the server still has the page's folder open.
+        open: () => {
+          if (!opened || !reopened) { opened = true; void sync(); return; }
+          void reopened().then((leaving) => { if (!leaving) void sync(); });
+        },
       });
     },
     settled: async () => { while (reading) await reading; },

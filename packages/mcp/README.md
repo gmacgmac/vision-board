@@ -16,6 +16,11 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
 - `VB_AGENT_SECRET` (optional): the secret for every call that does not pass a `secret` argument. When it is set, the
   instructions tell the agent its identity is given (no `join`, no secret to save, no `secret`
   argument). The board's chat panel sets it for each agent it starts (api.md 106).
+- `VB_PROJECT` (optional): the folder this agent works in (api.md 116). Left out, it is the
+  nearest folder at or above the server's working folder with `.visionboard/ledger.jsonl` (a client
+  starts it in your project), else none. Every call sends it as `VB-Project`, and the board refuses
+  the call with `wrong-folder` when it has another folder open, so an agent never reads or draws on
+  the wrong project. With none, calls are not checked. The chat panel sets it to the open folder.
 
 ## Adding it to a client
 
@@ -51,7 +56,9 @@ An agent calls `join` once and gets an agent id and a secret. The secret is the 
 it should save both in its durable notes, because a context compaction loses them, and it passes
 the secret as the `secret` argument of `write_board`, `request_grant`, `list_open` and
 `check_responses`. An unknown secret answers `not-authenticated`: join again, ask for the grants
-again, and the person approves again.
+again, and the person approves again. A secret from a folder the board had open before answers
+`wrong-folder` instead: the agent stops and tells the person, and does not join (api.md 115).
+`join` and `list_boards` answer `project`, the folder the board has open.
 
 `VB_AGENT_SECRET` in the `env` above makes one identity for every chat that shares that MCP
 configuration, so two chats would write as one agent and share its grants. Set it only for a
@@ -60,7 +67,7 @@ single-chat setup (or for `vb`); for several chats, leave it out and let each ch
 - **Depends on**: `packages/format`, `packages/client`.
 - **Used by**: MCP clients (Kiro, Claude Code, Cursor), through `bin/vb-mcp.ts`.
 - **Public API** (`src/index.ts`): `createMcpServer`, `serveStdio`, `callTool`, `checkArgs`,
-  `split`, `failureText`, the generated `TOOLS`/`TOOL_FILE`, the version constants and `RpcError`.
+  `split`, `failureText`, `projectOf`, the generated `TOOLS`/`TOOL_FILE`, the version constants and `RpcError`.
 - **Tests**: `tests/` (the generated list against the spec and every client's limits, the argument
   check and stdio framing in process, and modern and legacy sessions over a spawned server against
   a real board server).

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/open-project-request.schema.json",
+  "title": "Open a folder",
+  "description": "`{ path, create? }`: the folder to open, under the home folder, and whether to create its Vision Board when it has none.",
+  "$comment": "Was: api.md 109 (open-folder task, U12)",
+  "type": "object",
+  "required": ["path"],
+  "properties": {
+    "path": {"$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"},
+    "create": {"type": "boolean", "default": false, "description": "True makes `.visionboard/` and an empty ledger when the folder has none; false (the default) refuses such a folder with `not-found`."}
+  },
+  "unevaluatedProperties": false
+}

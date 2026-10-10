@@ -1,24 +1,25 @@
 // The board server as a request listener: the guard, then /api through the dispatcher and the
 // built page from dist/ for everything else. Every error is a problem (api.md 38); anything
 // unexpected logs its stack to stderr and answers `server-error`. The person cookie is minted
-// here, once per start, and set with the page (api.md 20). The chat sessions are opened on first
-// use, and every CLI they started is stopped when the server closes or the process exits.
-// server.ts only starts it.
+// here, once per start, and set with the page (api.md 20); it stays valid when the open folder
+// changes. The open folder, with its ledger, lock, agents and chats, is project.ts's (api.md 111):
+// its chats are opened on first use, and its CLIs stopped and its lock let go when the server
+// closes or the process exits. server.ts only starts it.
+import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import path from 'node:path';
-import type { Agents } from './agents.ts';
-import { openAgents } from './agents.ts';
+import os from 'node:os';
 import type { BuildWatch } from './build-watch.ts';
 import { newPersonToken, personCookie } from './callers.ts';
-import type { ChatAdapters, Chats } from './chat-sessions.ts';
-import { openChats } from './chat-sessions.ts';
+import type { ChatAdapters } from './chat-sessions.ts';
 import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
 import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
 import type { Ledger } from './ledger.ts';
+import type { Lock } from './lock.ts';
 import { ProblemError, problem, sendProblem, serverError } from './problem.ts';
+import { openProject } from './project.ts';
 import { resolveStatic, sendStatic } from './static.ts';
 
 const SECURITY_HEADERS = {
@@ -29,7 +30,13 @@ const SECURITY_HEADERS = {
 };
 
 export interface BoardServerOptions {
+  /** The first open folder's ledger. */
   ledger: Ledger;
+  /** Its lock, when the caller took one (server.ts): beaten while held, let go on a switch or close. */
+  lock?: Lock | undefined;
+  /** The person's home folder: the folder routes stay under it (default: the real one). Tests pass a
+   * temp folder, so no test reads or writes the real home. */
+  home?: string | undefined;
   /** The built page (apps/board/dist). */
   dist: string;
   /** Watch mode only (`VB_WATCH=1`): the build being served, for `watch_project`'s `build` event. */
@@ -40,26 +47,17 @@ export interface BoardServerOptions {
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
-export function createBoardServer({ ledger, dist, build, chat }: BoardServerOptions): http.Server {
-  let agents: Agents | undefined;
-  let chats: Chats | undefined;
-  const stopChats = () => chats?.close();
-  const getAgents = () => (agents ??= openAgents(path.dirname(ledger.file)));
-  const base = () => `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const env: ServerEnv = {
-    ledger, person: newPersonToken(), agents: getAgents, build,
-    chats: () => {
-      if (chats) return chats;
-      process.on('exit', stopChats);
-      return (chats = openChats({ ledger, agents: getAgents, base, adapters: chat?.adapters, approvalTtlMs: chat?.approvalTtlMs }));
-    },
-  };
+export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat }: BoardServerOptions): http.Server {
+  const port = () => (server.address() as AddressInfo).port;
+  const project = openProject({
+    ledger, lock, home: fs.realpathSync(home), port, base: () => `http://127.0.0.1:${port()}`, chat,
+  });
+  const env: ServerEnv = { person: newPersonToken(), project, build };
   const server = http.createServer(async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
     try {
-      const port = (server.address() as AddressInfo).port;
-      guard(req, port);
-      const url = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
+      guard(req, port());
+      const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
       if (req.method !== 'GET') throw problem('method-not-allowed', 'The page answers GET only.', { headers: { Allow: 'GET' } });
       const file = resolveStatic(url.pathname, dist);
@@ -72,9 +70,6 @@ export function createBoardServer({ ledger, dist, build, chat }: BoardServerOpti
       else res.end();
     }
   });
-  server.on('close', () => {
-    process.off('exit', stopChats);
-    stopChats();
-  });
+  server.on('close', () => project.close());
   return server;
 }

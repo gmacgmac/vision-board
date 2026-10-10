@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.10.0",
+    "version": "1.12.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -19,7 +19,7 @@
         "operationId": "list_boards",
         "x-agent": true,
         "summary": "List the boards",
-        "description": "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
+        "description": "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `project`, the folder the board has open (`~/projects/example`), `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
         "security": [],
         "responses": {
           "200": {
@@ -37,7 +37,8 @@
                       "seq": 41
                     }
                   ],
-                  "head": 52
+                  "head": 52,
+                  "project": "~/projects/example"
                 }
               }
             }
@@ -51,10 +52,18 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ]
       }
     },
     "/api/boards/{board}": {
@@ -67,6 +76,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -139,6 +151,9 @@
           },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
           },
           "500": {
             "$ref": "#/components/responses/serverError"
@@ -255,6 +270,9 @@
           },
           {
             "$ref": "#/components/parameters/linked"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -361,6 +379,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
@@ -380,6 +401,9 @@
           },
           {
             "$ref": "#/components/parameters/regionPath"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -470,6 +494,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
@@ -491,6 +518,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -535,6 +565,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
@@ -565,6 +598,9 @@
           },
           {
             "$ref": "#/components/parameters/wait"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -618,6 +654,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
@@ -640,6 +679,9 @@
           },
           {
             "$ref": "#/components/parameters/boardQuery"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "responses": {
@@ -744,6 +786,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "500": {
             "$ref": "#/components/responses/serverError"
           }
@@ -755,7 +800,7 @@
         "operationId": "join",
         "x-agent": true,
         "summary": "Join as an agent",
-        "description": "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. If a write answers `not-authenticated`, join again and ask for your grants again. This is the one write that needs no credentials.",
+        "description": "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. It answers `project`, the folder the board has open: check it is the folder you work in. If a write answers `not-authenticated`, join again and ask for your grants again; if a call answers `wrong-folder`, the board has another folder open: stop and tell the person, and do not join. This is the one write that needs no credentials.",
         "security": [],
         "requestBody": {
           "required": true,
@@ -780,7 +825,8 @@
                 },
                 "example": {
                   "agent": "a-k3m9x2pq",
-                  "secret": "ffwviAc-sVj5m18PEV0ZM0canfMeJizkYZEfaHD0o1o"
+                  "secret": "ffwviAc-sVj5m18PEV0ZM0canfMeJizkYZEfaHD0o1o",
+                  "project": "~/projects/example"
                 }
               }
             }
@@ -794,6 +840,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -806,7 +855,12 @@
           "500": {
             "$ref": "#/components/responses/serverError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ]
       }
     },
     "/api/grants": {
@@ -908,6 +962,9 @@
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
           },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
           "413": {
             "$ref": "#/components/responses/tooLarge"
           },
@@ -920,7 +977,12 @@
           "500": {
             "$ref": "#/components/responses/serverError"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ]
       }
     },
     "/api/boards/{board}/write": {
@@ -937,6 +999,9 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
           }
         ],
         "requestBody": {
@@ -1050,6 +1115,9 @@
           },
           "405": {
             "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
           },
           "413": {
             "$ref": "#/components/responses/tooLarge"
@@ -1857,6 +1925,200 @@
           }
         }
       }
+    },
+    "/api/project": {
+      "get": {
+        "operationId": "get_project",
+        "x-agent": false,
+        "summary": "Show the open folder",
+        "description": "Show the folder the board server has open: its absolute path, its name as the person reads it (starting with `~` under the home folder), whether it has a Vision Board and how many boards that holds. Every other operation reads and writes this folder's ledger. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The open folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/project"
+                },
+                "example": {
+                  "path": "/home/example/projects/example",
+                  "name": "~/projects/example",
+                  "found": true,
+                  "boards": 3
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "post": {
+        "operationId": "open_project",
+        "x-agent": false,
+        "summary": "Open another folder",
+        "description": "Open another folder under the home folder in place of the one open now, on the same server and port. The server takes the folder's lock first and changes nothing if it can't; then it stops every running chat, ends every live stream (so every open page reloads onto the new folder), lets go of the old folder's lock, and keeps the folder in the recent list. A folder with no Vision Board is refused with `not-found` unless `create` is true, which makes `.visionboard/` and an empty ledger there. Agents join again after a switch: each folder keeps its own agents, so an old secret gets `not-authenticated`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the folder now open.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openProjectRequest"
+              },
+              "examples": {
+                "open": {
+                  "summary": "Open a folder that has a Vision Board",
+                  "dataValue": {
+                    "path": "/home/example/projects/example"
+                  }
+                },
+                "create": {
+                  "summary": "Create a Vision Board in a folder and open it",
+                  "dataValue": {
+                    "path": "/home/example/projects/new-app",
+                    "create": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The folder now open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/project"
+                },
+                "example": {
+                  "path": "/home/example/projects/example",
+                  "name": "~/projects/example",
+                  "found": true,
+                  "boards": 3
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/folderForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/folderNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/folderConflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/folders": {
+      "get": {
+        "operationId": "list_folders",
+        "x-agent": false,
+        "summary": "List folders under the home folder",
+        "description": "List one folder under the home folder (the home folder itself when `path` is left out): whether it has a Vision Board and how many boards, the folders in it, each marked when it has one, and the folders opened lately. Folder names only: never a file's name or contents, never a hidden folder, `node_modules` or a link. A path outside the home folder, or reached through a hidden folder, is refused with `forbidden`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/folderQuery"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder and the folders in it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/folderList"
+                },
+                "example": {
+                  "path": "/home/example/projects",
+                  "name": "~/projects",
+                  "found": false,
+                  "parent": "/home/example",
+                  "folders": [
+                    {
+                      "name": "example",
+                      "path": "/home/example/projects/example",
+                      "hasBoard": true
+                    },
+                    {
+                      "name": "new-app",
+                      "path": "/home/example/projects/new-app",
+                      "hasBoard": false
+                    }
+                  ],
+                  "recent": [
+                    {
+                      "name": "~/projects/example",
+                      "path": "/home/example/projects/example",
+                      "hasBoard": true
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/folderForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/folderNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2048,6 +2310,15 @@
       },
       "sseChat": {
         "$ref": "https://vision-board.invalid/schema/api/sse-chat.schema.json"
+      },
+      "project": {
+        "$ref": "https://vision-board.invalid/schema/api/project.schema.json"
+      },
+      "folderList": {
+        "$ref": "https://vision-board.invalid/schema/api/folder-list.schema.json"
+      },
+      "openProjectRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/open-project-request.schema.json"
       }
     },
     "parameters": {
@@ -2149,6 +2420,25 @@
         "schema": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/after"
         }
+      },
+      "folderQuery": {
+        "name": "path",
+        "in": "query",
+        "description": "A folder under the home folder, as list_folders or get_project gave it; left out, the home folder.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderPath"
+        }
+      },
+      "projectHeader": {
+        "name": "VB-Project",
+        "in": "header",
+        "description": "The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked.",
+        "required": false,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderHeader"
+        },
+        "example": "/Users/example/projects/a"
       }
     },
     "responses": {
@@ -2350,6 +2640,70 @@
               "title": "Conflict",
               "status": 409,
               "detail": "The agent is still answering the last message. Wait for it, or press Stop."
+            }
+          }
+        }
+      },
+      "folderForbidden": {
+        "description": "The folder is outside the home folder or hidden, or the wrong kind of caller used this route.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/forbidden",
+              "title": "Forbidden",
+              "status": 403,
+              "detail": "Only folders under your home folder can be opened, and not hidden ones. Choose a folder under ~."
+            }
+          }
+        }
+      },
+      "folderNotFound": {
+        "description": "No such folder, or (open_project without `create`) no Vision Board in it.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/not-found",
+              "title": "Not found",
+              "status": 404,
+              "detail": "No Vision Board here: ~/projects/new-app has no .visionboard/ledger.jsonl. Send create: true to make one, or choose another folder."
+            }
+          }
+        }
+      },
+      "folderConflict": {
+        "description": "Another board server holds the folder's ledger, or its ledger could not be made or read; the open folder is unchanged.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/conflict",
+              "title": "Conflict",
+              "status": 409,
+              "detail": "Another board server holds this ledger: computer \"example-laptop\", process 4242, port 4466, running since 2026-10-09T09:00:00.000Z. Stop that server first."
+            }
+          }
+        }
+      },
+      "wrongFolder": {
+        "description": "The board server has another folder open: the `VB-Project` header names a different folder, or the secret belongs to an agent of a folder opened before. Nothing was read or written. Stop and tell the person; do not join here.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/wrong-folder",
+              "title": "Wrong folder",
+              "status": 409,
+              "detail": "The board has switched to ~/projects/b. Your work is in ~/projects/a. Ask the person to open it again; don't join here."
             }
           }
         }

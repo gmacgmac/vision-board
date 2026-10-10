@@ -5,11 +5,13 @@
 // `list_boards`; its marks are attention.ts's), and the open board never changes by itself, except
 // that an empty project opens the first board drawn.
 // Each board's zoom and position are kept (kept-view.ts, keepView flag) and restored on open.
-// The board opened is kept too, so a page opened with no board in its hash reopens it (start-board.ts).
+// The board opened is kept too, so a page opened with no board in its hash reopens it (start-board.ts);
+// with the openFolder flag it is kept per folder (folder.ts), and the plain key is the fallback.
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import { boardList } from '../../../../packages/actions/src/index.ts';
 import { createKeptView } from './kept-view.ts';
 import { LAST_BOARD_KEY, startBoard } from './start-board.ts';
+import { folderMoved, lastBoardKey, loadFolder, openFolderOn } from './folder.ts';
 import type { Live } from './live.ts';
 import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
@@ -53,6 +55,9 @@ export function createBoards(d: BoardsDeps): Boards {
   let booted = false;
   let drawn = false;
   const kept = createKeptView(d.vp, d.id, d.keepView);
+  const openFolder = openFolderOn();
+  /** Where the board last looked at is kept: per folder once the folder is known. */
+  let lastKey = LAST_BOARD_KEY;
 
   /** Draw board `id` from the held state; no fetch, the state holds every board. */
   function open(id: string) {
@@ -68,7 +73,8 @@ export function createBoards(d: BoardsDeps): Boards {
     const layout = d.layout();
     if (!kept.restore(id) && layout) d.vp.fit(layout.bounds, false);
     history.replaceState(null, '', `#${encodeURIComponent(id)}`);
-    keep(LAST_BOARD_KEY, id);
+    keep(lastKey, id);
+    if (lastKey !== LAST_BOARD_KEY) keep(LAST_BOARD_KEY, id);
     if (drawn) return;
     drawn = true;
     // The first draw ends once the frame it was drawn for has been shown.
@@ -91,17 +97,20 @@ export function createBoards(d: BoardsDeps): Boards {
   return {
     async boot() {
       try {
-        await d.live.load();
+        const [, folder] = await Promise.all([d.live.load(), openFolder ? loadFolder() : null]);
+        lastKey = lastBoardKey(folder);
         const list = boardList(d.live.state!);
         booted = true;
         shell.boards = list;
-        unwatch = d.live.watch();
+        unwatch = d.live.watch(openFolder ? folderMoved : undefined);
         if (!list.length) {
           shell.message = WAITING;
           return;
         }
         const hash = decodeURIComponent(location.hash.slice(1));
-        switchTo(startBoard(list.map((b) => b.board), hash, keptValue(LAST_BOARD_KEY)));
+        const ids = list.map((b) => b.board);
+        const last = [keptValue(lastKey), keptValue(LAST_BOARD_KEY)].find((x) => x !== null && ids.includes(x)) ?? null;
+        switchTo(startBoard(ids, hash, last));
       } catch (err) {
         d.fail(err);
         shell.message = 'Could not reach the board server. Start it with: npm run board';

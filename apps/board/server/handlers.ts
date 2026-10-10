@@ -2,7 +2,8 @@
 // a missing or extra entry a type error, and api-dispatch.test.ts checks the keys at run time.
 import { CHAT } from './chat.ts';
 import type { HandlerTable } from './dispatch.ts';
+import { OPEN_FOLDER } from './open-folder.ts';
 import { READS } from './reads.ts';
 import { WRITES } from './writes.ts';
 
-export const HANDLERS: HandlerTable = { ...READS, ...WRITES, ...CHAT };
+export const HANDLERS: HandlerTable = { ...READS, ...WRITES, ...CHAT, ...OPEN_FOLDER };

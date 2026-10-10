@@ -1,6 +1,7 @@
 <!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals notice (proposals
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
-     the chat sidebar (chatPanel flag), toast, the confirm dialog and the New board / Rename board dialog (boardEdit flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
+     the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag)
+     and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
@@ -15,6 +16,7 @@
   import VersionBanner from './VersionBanner.svelte';
   import KeyHelp from './KeyHelp.svelte';
   import ChatSidebar from './ChatSidebar.svelte';
+  import FolderDialog from './FolderDialog.svelte';
   import { createChatBridge } from '../board/chat-bridge.ts';
   import { createChatPanel, type ChatPanel } from '../board/chat-panel.ts';
   import { flagOn } from '../../../../packages/format/src/index.ts';
@@ -28,6 +30,7 @@
   let wiresTop: SVGSVGElement;
   let board: Board | null = $state(null);
   const keyBubble = flagOn('keyBubble', pageFlags());
+  const openFolder = flagOn('openFolder', pageFlags());
   /** The chat beside the board (chatPanel flag, chat-panel FE_02): the bridge joins its two sides. */
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const bridge = shell.chatPanel ? createChatBridge() : undefined;
@@ -99,3 +102,4 @@
 
 <ConfirmDialog />
 <BoardDialog onsave={(action, fields) => board?.saveBoard(action, fields) ?? Promise.resolve('The board is not ready yet.')} />
+{#if openFolder}<FolderDialog />{/if}

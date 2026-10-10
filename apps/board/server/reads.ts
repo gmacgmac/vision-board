@@ -7,6 +7,7 @@ import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
   boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter,
 } from '../../../packages/actions/src/index.ts';
+import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
 import { sendJson, sendJsonLines, wantsJsonLines } from './respond.ts';
@@ -24,9 +25,9 @@ function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true }
   return { list: list.slice(0, max), ...(list.length > max && { more: true as const }) };
 }
 
-const listBoards: Handler = ({ res, ledger }) => {
+const listBoards: Handler = ({ res, ledger, project }) => {
   const s = ledger.state();
-  sendJson(res, 200, { boards: boardList(s), head: s.seq });
+  sendJson(res, 200, { project: openName(project), boards: boardList(s), head: s.seq });
 };
 
 const getBoard: Handler = ({ res, params, ledger }) => {
@@ -83,18 +84,21 @@ const wakes = (s: LedgerState, board: string, e: LedgerEvent, agent: string | un
   e.type === 'act' && (e.action === 'send' || e.action === 'grant' || e.action === 'deny') && eventBoard(s, e) === board &&
   (agent === undefined || responsesAfter(s, board, e.seq - 1, agent).some((x) => x.seq === e.seq));
 
-/** Hold until `stop` says so, `seconds` pass, or the caller goes away. True if the caller is still there. */
-function hold({ res, ledger }: Ctx, seconds: number, stop: (e: LedgerEvent) => boolean): Promise<boolean> {
+/** Hold until `stop` says so, `seconds` pass, the caller goes away or the folder closes (a switch,
+ * api.md 111). True if the caller is still there. */
+function hold({ res, ledger, closed }: Ctx, seconds: number, stop: (e: LedgerEvent) => boolean): Promise<boolean> {
   return new Promise((resolve) => {
     const done = () => {
       clearTimeout(timer);
       off();
       res.off('close', done);
+      closed.removeEventListener('abort', done);
       resolve(!res.destroyed && !res.writableEnded);
     };
     const timer = setTimeout(done, seconds * 1000);
     const off = ledger.onAppend((e) => { if (stop(e)) done(); });
     res.on('close', done);
+    closed.addEventListener('abort', done);
   });
 }
 
@@ -131,14 +135,23 @@ const readLedger: Handler = ({ req, res, params, ledger }) => {
 type Send = (event: string, data: object) => void;
 
 /** A server-sent event stream (api.md 44): `retry` first, `change { seq }` on every append, a
- * comment every 20 s. `more` adds other events and returns their off switches. */
-function stream({ res, ledger }: Ctx, more: (send: Send) => (() => void)[] = () => []): void {
+ * comment every 20 s. `more` adds other events and returns their off switches. It ends when the
+ * folder closes (a switch, api.md 111), so the page reconnects to the new folder. */
+function stream({ res, ledger, closed }: Ctx, more: (send: Send) => (() => void)[] = () => []): void {
   res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
   res.write('retry: 2000\n\n');
   const send: Send = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   const offs = [ledger.onAppend((e) => send('change', { seq: e.seq })), ...more(send)];
   const beat = setInterval(() => res.write(': beat\n\n'), 20000);
+  endWhenClosed(res, closed);
   res.on('close', () => { for (const off of offs) off(); clearInterval(beat); });
+}
+
+/** End a stream when its folder closes. */
+export function endWhenClosed(res: Ctx['res'], closed: AbortSignal): void {
+  const end = () => res.end();
+  closed.addEventListener('abort', end, { once: true });
+  res.on('close', () => closed.removeEventListener('abort', end));
 }
 
 /** One board's stream; refused with `not-found` for an unknown board. */
