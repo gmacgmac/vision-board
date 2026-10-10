@@ -185,3 +185,4 @@
 [[2026-10-10 23:48]] [board-agent] T_01: skill v2.1 (panel: quiet turns, the Send message, a first board from an empty folder, yes/no/done words); scenarios 12-13; one real-model run → Task: [[cortex-tasks/board/2026-10-10_board-agent_panel-send-and-start/TASK-STATUS.md]]
 [[2026-10-10 23:58]] [board-agent] Panel Send and first board completed; VERIFY_01 with Claude and Kiro passed; tracker N30/N31 removed, N33 (empty Send) and N34 (chat words) added → Task: [[cortex-tasks/board/2026-10-10_board-agent_panel-send-and-start/TASK-STATUS.md]]
 [[2026-10-11 00:21]] [project-docs] Tracker: N33 ruling (Send disabled with nothing new), N34 adds the Kiro agent and model check → Notes: `cortex-tasks/tracker.md` (N33, N34)
+[[2026-10-11 00:35]] [project-docs] Steering: response rule refined (number only what needs an answer, no bare numbers, context on references, question last; maintainer 505) → Notes: `.kiro/steering/vision-board-proj.md` (How to respond to the maintainer)

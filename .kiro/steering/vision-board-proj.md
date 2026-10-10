@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-10
+> **Version**: 0.2 (DRAFT, awaiting maintainer review) | **Updated**: 2026-10-11
 
 # Vision Board — Project Rules
 
@@ -30,8 +30,17 @@ wait for a maintainer's yes.
 ## How to respond to the maintainer
 
 Whenever a response has more than a couple of points to react to (findings, options, questions,
-suggestions, action items), write it as one numbered list:
-Reply as one numbered list that keeps counting across headings and across replies for the whole conversation (never restart at 1), with sub-points lettered under their number (72A, 72B). One point per number, so the maintainer can answer "72 ok, 75 skip".
+suggestions, action items), write them as one numbered list. The list keeps counting across
+headings and across replies for the whole conversation (never restart at 1); sub-points are
+lettered under their number (72A, 72B). One point per number, so the maintainer can answer
+"72 ok, 75 skip".
+
+- **Number only what needs the maintainer's answer or attention.** Plain status (done,
+  committed, checks passed) goes in a short line above the list, unnumbered.
+- **Never a bare number for anything else.** Write "card 6", "tracker N33", "D-040", "commit
+  b68e280", so a reply number is the only bare number.
+- **Refer back with a few words of context:** "(398, the launcher)", not just "398".
+- **Put the question last.** End with what needs answering, by its number.
 
 This is the text form of the board: when the list gets long, offer to draw it on the board.
 
