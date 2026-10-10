@@ -95,13 +95,13 @@ async function step(page: Page, request: APIRequestContext, a: Agent, r: Random,
     return 'mode';
   }
   if (kind === 6 || a.own.length < 2) {
-    const [res] = await write(request, a, [{ type: 'node', node: { region: a.region, kind: r.pick(['question', 'finding', 'risk']), title: `Agent card ${i}`, item: true } }]);
+    const [res] = await write(request, a, [{ type: 'node', node: { region: a.region, kind: r.pick(['question', 'finding', 'risk']), title: `Agent card ${i}` } }]);
     a.own.push(res!.n!);
     return 'agent adds a card';
   }
   if (kind === 7) {
     const mine = r.pick(a.own);
-    await write(request, a, [{ type: 'node', n: mine, node: { region: a.region, kind: 'finding', title: `Agent card ${mine}, v${i}`, body: 'Longer now. '.repeat(r.int(30)), item: true } }]);
+    await write(request, a, [{ type: 'node', n: mine, node: { region: a.region, kind: 'finding', title: `Agent card ${mine}, v${i}`, body: 'Longer now. '.repeat(r.int(30)) } }]);
     return `agent redraws ${mine}`;
   }
   const [from, to] = [r.pick(a.own), r.pick([...a.own, ...ITEMS.slice(0, 3)])];

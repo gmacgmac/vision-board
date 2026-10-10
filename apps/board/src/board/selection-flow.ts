@@ -25,7 +25,7 @@ export interface SelectionFlowDeps {
   selection: Selection;
   layout(): BoardLayout | null;
   notes: NoteFlow;
-  /** The card's item number; undefined for a card that is not an item (it takes no note). */
+  /** The card's number; undefined for a card drawn with none (the everyNode flag off): it takes no note. */
   item(id: string): number | undefined;
   /** Comment with one card selected: that card's own note, as C on it (2e). */
   commentOn(id: string): void;
@@ -123,8 +123,9 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     place();
   }
 
-  /** Comment: a note on the selected items as a group (two or more), or the one item's own note.
-   *  C means this only with two or more selected; alone it is the focused card's comment. */
+  /** Comment: one note on exactly the selected cards, any kinds (every-node ruling 4), two or more,
+   *  or the one card's own note. C means this only with two or more selected; alone it is the
+   *  focused card's comment. A card with no number (the everyNode flag off) takes no note. */
   function comment(key?: string): boolean {
     const items = d.selection.selected().filter((id) => d.item(id) !== undefined)
       .sort((a, b) => d.item(a)! - d.item(b)!);

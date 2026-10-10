@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v10 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90 and 93.
+// Ledger lines for the schema tests (schema.test.ts): a valid v11 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93 and 118.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 10, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 10, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 11, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 11, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -16,7 +16,7 @@ export const VALID: Record<string, Rec> = {
   region: { ...AGENT, type: 'region', board: 'b', region: { id: 'plan', title: 'Plan', mode: 'lanes', lanes: ['Now', 'Later'] } },
   node: {
     ...AGENT, type: 'node', board: 'b', n: 1, ver: 1, key: 'q-1',
-    node: { region: 'plan', kind: 'question', title: 'Keep it?', body: 'Why.', item: true, lane: 'Now', tags: ['t'], emphasis: true, size: 'm' },
+    node: { region: 'plan', kind: 'question', title: 'Keep it?', body: 'Why.', lane: 'Now', tags: ['t'], emphasis: true, size: 'm' },
   },
   link: { ...AGENT, type: 'link', from: 1, to: 2, label: 'shapes', key: 'l-1' },
   unlink: { ...AGENT, type: 'unlink', from: 1, to: 2 },
@@ -88,7 +88,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v11', patch(V.board!, 'v', 11)],
+  ['unknown format v12', patch(V.board!, 'v', 12)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -197,5 +197,8 @@ export const BROKEN: [string, Rec][] = [
   ['reject without n', act('reject', { n: undefined })],
   ['reject of a group', act('reject', { n: undefined, nodes: [1, 2] })],
   ['reject with proposal 0', act('reject', { proposal: 0 })],
+  // api.md 118: from v11 the kind decides; a node line naming `item` is refused, true or false.
+  ['a v11 node naming item', patch(V.node!, 'node.item', true)],
+  ['a v11 node with item false', patch(V.node!, 'node.item', false)],
   ['a line that is not an object', [] as unknown as Rec],
 ];

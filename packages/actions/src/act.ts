@@ -38,8 +38,8 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
 };
 
 /** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
- * sent to; the container one of that board's, or its Later, which takes only items that can be
- * saved for later. Any card moves between containers, an item or not. */
+ * sent to; the container one of that board's, or its Later, which takes only cards whose kind can
+ * be saved for later (every kind, api.md 118). Any card moves between containers. */
 function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
   const field = e.nodes ? 'nodes' : 'n';
   const cards = e.nodes ?? [e.n!];
@@ -60,8 +60,8 @@ function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p:
   }
   for (const n of cards) {
     const v = latest(s.nodes.get(n)!);
-    if (!v.item || !NODE_TYPES[v.kind].actions.includes('later'))
-      p.push(`region: Later takes only items that can be saved for later; node ${n} is ${v.item ? `a ${v.kind}, which can't` : 'not a numbered item'}`);
+    if (!NODE_TYPES[v.kind].actions.includes('later'))
+      p.push(`region: Later takes only cards that can be saved for later; node ${n} is a ${v.kind}, which can't`);
   }
 }
 
@@ -97,7 +97,6 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   const node = e.n === undefined ? undefined : s.nodes.get(e.n);
   if (!node) p.push(`n: unknown node ${String(e.n)}`);
   else if (board !== undefined && node.board !== board) p.push(`n: node ${e.n} is on board "${node.board}", not "${board}"`);
-  else if (def.onItem && !latest(node).item) p.push(`n: node ${e.n} is not a numbered item`);
   else if (ITEM_ACTIONS.includes(e.action)) {
     const kind = latest(node).kind;
     if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: a ${kind} doesn't offer this`);
@@ -122,8 +121,8 @@ function proposalProblems(e: ActEvent, s: LedgerState, p: string[]): void {
   else if (at === 'stale') p.push(`proposal: ${e.n} changed after this was proposed; ask the agent to look again`);
 }
 
-/** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named node is an item that
- * offers the action, all on one board, the board the act was sent to. The one-note-per-card rule
+/** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named card's kind offers the
+ * action (the kind decides, api.md 118), all on one board, the board the act was sent to. The one-note-per-card rule
  * is for notes on one card: a card may also be in a group note not yet sent (ruling 3). */
 function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): string[] {
   const p: string[] = [];
@@ -133,8 +132,7 @@ function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): 
     if (!node) { p.push(`nodes: unknown node ${n}`); continue; }
     boards.add(node.board);
     const v = latest(node);
-    if (!v.item) p.push(`nodes: node ${n} is not a numbered item`);
-    else if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${n} is a ${v.kind}, which doesn't offer ${e.action}`);
+    if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${n} is a ${v.kind}, which doesn't offer ${e.action}`);
   }
   const [only] = boards;
   if (boards.size > 1) p.push(`nodes: a note on a group names items on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);

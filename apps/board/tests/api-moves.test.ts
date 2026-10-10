@@ -15,7 +15,7 @@ const act = (body: object) => ({ board: 'roadmap', body: { type: 'act', ...body 
 
 test('a move: show_node, list_open, show_container and get_board show where the card is and where the agent has it', async () => {
   const stored = await h.ok('act', act({ action: 'move', n: 4, region: 'review' }));
-  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [10, 'move', 4, 'review']);
+  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [11, 'move', 4, 'review']);
   const node = await h.ok('show_node', { board: 'roadmap', n: 4 });
   assert.deepEqual([node.region, node.moved_from], ['review', 'prove']);
   const open = await h.ok('list_open', { board: 'roadmap' });
@@ -40,11 +40,10 @@ test('a group move into Later, then back: one act with nodes; moved_from goes on
   assert.equal((await h.ok('get_board', { board: 'roadmap' })).state.moves, undefined, 'left out when no card is moved');
 });
 
-test('refused: an unknown container, a card that cannot be saved for later, no container named', async () => {
+// Every kind offers Later now (api.md 118), so no card is refused a place there.
+test('refused: an unknown container, no container named', async () => {
   let p = await h.fails('act', act({ action: 'move', n: 4, region: 'nowhere' }), 422, 'invalid');
   assert.equal(p.errors[0]!.pointer, '/region');
-  p = await h.fails('act', act({ action: 'move', n: 7, region: 'later' }), 422, 'invalid');
-  assert.match(p.errors[0]!.detail, /Later/);
   p = await h.fails('act', act({ action: 'move', n: 4 }), 422, 'invalid');
   assert.equal(p.errors[0]!.pointer, '/region');
 });

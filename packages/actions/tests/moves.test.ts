@@ -111,12 +111,14 @@ test('reads show where an item is and where the agent has it: list_open and show
   assert.deepEqual(open, [[1, LATER_REGION, 'r'], [2, 'q', 'r'], [3, LATER_REGION, 'q']]);
 });
 
-test('validateAct: person only, cards on the board it was sent to, Later only for an item that offers it', () => {
+test('validateAct: person only, cards on the board it was sent to, Later for any kind (api.md 118)', () => {
   const l = moves();
   const s = l.state();
   assert.deepEqual(validateAct(next(l, { n: 1, region: 'q' }), s, 'b'), []);
   assert.deepEqual(validateAct(next(l, { nodes: [1, 3], region: LATER_REGION }), s, 'b'), []);
   assert.deepEqual(validateAct(next(l, { n: 5, region: 'q' }), s, 'b'), [], 'a topic moves between containers');
+  assert.deepEqual(validateAct(next(l, { n: 5, region: LATER_REGION }), s, 'b'), [], 'a topic can be saved for later');
+  assert.deepEqual(validateAct(next(l, { nodes: [1, 5], region: LATER_REGION }), s, 'b'), []);
   const refused = (f: Partial<ActEvent>, word: string, board = 'b') => {
     const p = validateAct(next(l, f), s, board);
     assert.ok(p.some((x) => x.includes(word)), `${JSON.stringify(f)}: ${p.join('; ')}`);
@@ -125,8 +127,6 @@ test('validateAct: person only, cards on the board it was sent to, Later only fo
   refused({ n: 1, region: 'nowhere' }, 'unknown "nowhere"');
   refused({ nodes: [1, 4], region: 'r' }, 'one board');
   refused({ n: 4, region: 'x' }, 'not "b"');
-  refused({ n: 5, region: LATER_REGION }, 'Later');
-  refused({ nodes: [1, 5], region: LATER_REGION }, 'Later');
   const agent = { ...next(l, { n: 1, region: 'q' }), by: 'agent' as const, agent: A };
   assert.ok(validateAct(agent, s, 'b')[0]!.includes('only the person'));
 });
@@ -143,7 +143,7 @@ test('placedView: each card in its container, the built-in Later last, shown onl
   assert.deepEqual(v.regions.map((r) => r.id), ['r', 'q', LATER_REGION]);
   assert.deepEqual(v.nodes.map((n) => [n.id, n.region]), [['1', LATER_REGION], ['2', 'r'], ['3', 'r'], ['5', 'r']]);
   // Ids and numbers never change on a move (rule 10).
-  assert.deepEqual(v.nodes.map((n) => n.n ?? null), [1, 2, 3, null]);
+  assert.deepEqual(v.nodes.map((n) => n.n), [1, 2, 3, 5]);
 });
 
 test('a board whose older lines drew its own region named later keeps one Later frame', () => {

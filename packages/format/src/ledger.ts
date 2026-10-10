@@ -6,16 +6,17 @@
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 10;
-/** Every format a reader accepts. Each format only adds to the one before, so older lines stay
- * valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
+export const LEDGER_FORMAT = 11;
+/** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
+ * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
  * container (api.md 66-70); v7 adds notes on and places for a whole container, `board` + `region`
  * in place of `n` (api.md 71-76); v8 adds a grant request and a revoke for a whole board, `region`
  * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87); v9 lets
  * the person write a `board` line, creating or renaming a board (api.md 90); v10 adds `reject`,
- * the person turning down an agent's proposal (api.md 93). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+ * the person turning down an agent's proposal (api.md 93); v11 takes `item` away from a node: the
+ * kind decides (api.md 118). Older lines carrying it stay valid and every reader ignores it. */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -85,12 +86,19 @@ interface Base {
 /** On every agent-written event but `join`: the agent's retry key (api.md 13, 29). */
 interface Keyed { key?: string }
 
-/** What the agent says about a node. `item` = it asks the person for a response. */
+/** Why a v11 node line may not name `item` (api.md 118); the node schema's `noItem` says the same
+ * and a test checks they agree. */
+export const ITEM_REMOVED = 'Removed in ledger v11: the kind decides whether a card asks for an answer. '
+  + 'Draw a question, decision or action card to ask the person; every other kind takes a comment, more context or Later.';
+
+/** What the agent says about a node. Its `kind` decides whether it asks for an answer
+ * (`NODE_TYPES`, api.md 118). */
 export interface NodeBody {
   region: string;
   kind: Kind;
   title: string;
   body?: string;
+  /** On lines from v10 and older only; every reader ignores it (api.md 118). */
   item?: boolean;
   lane?: string;
   tags?: string[];

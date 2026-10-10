@@ -14,7 +14,7 @@ import {
   pendingItems, REFERENCE_KINDS, responsesAfter,
 } from '../src/index.ts';
 import { cardsOf, latestAsk } from '../src/notes.ts';
-import { DECIDED } from '../src/registry.ts';
+import { CLOSED } from '../src/registry.ts';
 import { A, B, C, Ledger, scene } from './ledger-v3.ts';
 
 const FIXTURES = [
@@ -24,7 +24,8 @@ const FIXTURES = [
   '../../../apps/board/src/gallery/gallery.ledger.jsonl',
 ];
 
-// ---- The oracle: the checks this table replaced, as they were (pending.ts, reads.ts). ----
+// ---- The oracle: the checks this table replaced (pending.ts, reads.ts), moved to every card and
+// to ✓ or ✗ closing a card (every-node BE_02, api.md 120): a comment decides but stays owed. ----
 
 const replied = (s: LedgerState, seq: number, cards: number[]) =>
   (cards.length ? cards.map((n) => s.replies.get(n) ?? []) : [...s.replies.values()]).some((rs) => rs.some((r) => r.to === seq));
@@ -33,7 +34,7 @@ const replied = (s: LedgerState, seq: number, cards: number[]) =>
 function oldOwedOn(s: LedgerState, node: LedgerNode): { ask?: number; later?: number } | undefined {
   const status = s.items.get(node.n)?.status ?? 'open';
   const m = s.marks.get(node.n);
-  if (!m || DECIDED.has(status)) return undefined;
+  if (!m || CLOSED.has(status)) return undefined;
   const { ask } = m;
   const made = ask && s.asks.get(ask.seq);
   const answered = ask && (latest(node).ver > ask.ver || replied(s, ask.seq, made ? cardsOf(made) : [node.n]));
@@ -46,7 +47,7 @@ function oldOwedOn(s: LedgerState, node: LedgerNode): { ask?: number; later?: nu
 function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
   const items: Condition[] = [];
   for (const node of nodesOf(s, board)) {
-    if (!latest(node).item || (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.n }) !== 'ok')) continue;
+    if (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.n }) !== 'ok') continue;
     const o = oldOwedOn(s, node);
     if (o) items.push({ kind: 'item.owed', board, n: node.n, seq: (o.ask ?? o.later)! });
   }
@@ -61,7 +62,7 @@ function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
 
 /** pending.ts `unseenItems`. */
 const oldUnseen = (s: LedgerState, board: string): number[] => nodesOf(s, board)
-  .filter((x) => latest(x).item && latest(x).ver > (s.seen.get(x.n) ?? 0)).map((x) => x.n).sort((a, b) => a - b);
+  .filter((x) => latest(x).ver > (s.seen.get(x.n) ?? 0)).map((x) => x.n).sort((a, b) => a - b);
 
 /** reads.ts `boardAccess`'s open requests. */
 const oldOpenRequests = (s: LedgerState, board: string): number[] => grantRequests(s, board).filter((r) => !r.answer).map((r) => r.seq);

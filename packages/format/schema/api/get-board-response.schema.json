@@ -61,10 +61,10 @@
         "modes": {
           "type": "object",
           "propertyNames": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id"
           },
           "additionalProperties": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/mode"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/mode"
           },
           "description": "Region id to the person's layout choice"
         },
@@ -74,7 +74,7 @@
             "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
           },
           "additionalProperties": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeSize"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeSize"
           },
           "description": "The person's size per node; left out when none is set",
           "$comment": "Was: api.md 17"
@@ -85,7 +85,7 @@
             "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
           },
           "additionalProperties": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id"
           },
           "description": "The container the person put a node in, by node id, for each node not in the region the agent drew it in (`later` is the board's built-in Later); left out when none is moved. It wins over the node's region in `view`, as a pin wins over the layout.",
           "$comment": "Was: api.md 68"
@@ -93,7 +93,7 @@
         "containerNotes": {
           "type": "object",
           "propertyNames": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id"
           },
           "additionalProperties": {
             "type": "array",
@@ -107,7 +107,7 @@
         "containerPins": {
           "type": "object",
           "propertyNames": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id"
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id"
           },
           "additionalProperties": {
             "type": "object",
@@ -131,7 +131,7 @@
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
       },
       "additionalProperties": {
-        "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version"
+        "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/version"
       },
       "description": "Each node's latest version number, by node id."
     },
@@ -149,27 +149,27 @@
         ],
         "properties": {
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
             "description": "The request's `seq`; the person answers it with `grant` or `deny`."
           },
           "region": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
             "description": "The container the agent asked for; left out when it asked for the whole board."
           },
           "reason": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/longText",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/longText",
             "description": "Why the agent asked."
           },
           "at": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/timestamp",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp",
             "description": "When the agent asked."
           },
           "agent": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentId",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentId",
             "description": "The agent that asked."
           },
           "label": {
-            "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentLabel",
+            "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentLabel",
             "description": "The label the asking agent joined with"
           }
         },
@@ -190,7 +190,7 @@
       "description": "Region id to the agents that hold it now, creator first; a region with none, and a board with none, are left out.",
       "$comment": "Was: api.md 23; api.md 32",
       "propertyNames": {
-        "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id"
+        "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id"
       },
       "additionalProperties": {
         "type": "array",
@@ -212,11 +212,11 @@
       ],
       "properties": {
         "agent": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentId",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentId",
           "description": "The holder's agent id."
         },
         "label": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentLabel",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentLabel",
           "description": "The label the holder joined with."
         },
         "creator": {

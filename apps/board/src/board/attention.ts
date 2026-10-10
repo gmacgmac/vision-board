@@ -48,6 +48,8 @@ export interface Attention {
   fresh(): ReadonlySet<number>;
   /** The items on the open board in Later whose handover is still owed (parking.ts). */
   awaiting(): ReadonlySet<number>;
+  /** The cards on the open board owed an answer or a handover (`item.owed`): "Hide decided" keeps them. */
+  owedCards(): ReadonlySet<number>;
   destroy(): void;
 }
 
@@ -57,6 +59,7 @@ export function createAttention(d: AttentionDeps): Attention {
   let unseen: ReadonlySet<number> = new Set();
   let fresh: ReadonlySet<number> = new Set();
   let awaiting: ReadonlySet<number> = new Set();
+  let owedCards: ReadonlySet<number> = new Set();
   let timer = 0;
   let sentAt = 0;
   /** board -> the head last sent, so a board seen still on its way is not sent twice. */
@@ -92,6 +95,7 @@ export function createAttention(d: AttentionDeps): Attention {
     unseen = c.unseen;
     fresh = c.fresh;
     awaiting = c.awaiting;
+    owedCards = c.owedCards;
     if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
     const news = c.requests.filter((seq) => seq >= from);
     if (news.length) shell.requestNews = news;
@@ -121,6 +125,7 @@ export function createAttention(d: AttentionDeps): Attention {
     unseen: () => unseen,
     fresh: () => fresh,
     awaiting: () => awaiting,
+    owedCards: () => owedCards,
     destroy() {
       clearTimeout(timer);
       removeEventListener('pagehide', leave);

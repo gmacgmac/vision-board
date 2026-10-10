@@ -7,14 +7,14 @@
 // row reads folded indexes (marks, asks, replies, seen, heads, requests, proposals), per board;
 // none walks the events. Pure.
 import type { LedgerNode } from '../../format/src/index.ts';
-import { latest, nodesOf } from '../../format/src/index.ts';
+import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { cardsOf, latestAsk } from './notes.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import type { ReferenceKind } from './references.ts';
 import { standing } from './proposals.ts';
 import { inLatestRound } from './rounds.ts';
-import { DECIDED } from './registry.ts';
+import { CLOSED, isDecided } from './registry.ts';
 
 export const CONDITION_KINDS = [
   'item.owed', 'container.owed', 'item.new', 'item.unseen', 'item.awaiting', 'proposal.open', 'proposal.stale', 'grant.requested',
@@ -52,10 +52,14 @@ export interface ConditionRow {
 const boardsIn = (s: LedgerState, ctx: ConditionContext): string[] =>
   ctx.board === undefined ? [...s.boards.keys()] : s.boards.has(ctx.board) ? [ctx.board] : [];
 
-/** The items on `board`, by number; for an agent, only those it may answer (api.md 41). */
-const itemsOn = (s: LedgerState, board: string, ctx: ConditionContext): LedgerNode[] => nodesOf(s, board)
-  .filter((x) => latest(x).item && (ctx.agent === undefined || mayAnswer(s, ctx.agent, x.n)))
+/** Every card on `board`, by number (every-node ruling 5, assumption A: the card rows are on
+ * every card, api.md 120); for an agent, only those it may answer (api.md 41). */
+const cardsOn = (s: LedgerState, board: string, ctx: ConditionContext): LedgerNode[] => nodesOf(s, board)
+  .filter((x) => ctx.agent === undefined || mayAnswer(s, ctx.agent, x.n))
   .sort((a, b) => a.n - b.n);
+
+/** Whether card `node` is decided: only a card that needs an answer can be (registry.ts). */
+const decided = (s: LedgerState, node: LedgerNode): boolean => isDecided(latest(node).kind, s.items.get(node.n)?.status ?? 'open');
 
 /** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
  * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a
@@ -65,13 +69,13 @@ function replied(s: LedgerState, seq: number, cards: number[]): boolean {
   return on.some((rs) => rs.some((r) => r.to === seq));
 }
 
-/** What the agent owes on an item (api.md 36): the `seq` of the person's latest comment or "needs
- * context" that no newer version or reply answers, else of a "later" with no park after it. A
- * decided item owes nothing. */
+/** What the agent owes on a card (api.md 36, 120): the `seq` of the person's latest comment or
+ * "needs context" that no newer version or reply answers, else of a "later" with no park after it.
+ * A card closed with ✓ or ✗ owes nothing; a comment that decides a card is still owed (ruling 5). */
 function owedOn(s: LedgerState, node: LedgerNode): number | undefined {
   const status = s.items.get(node.n)?.status ?? 'open';
   const m = s.marks.get(node.n);
-  if (!m || DECIDED.has(status)) return undefined;
+  if (!m || CLOSED.has(status)) return undefined;
   const { ask } = m;
   const made = ask && s.asks.get(ask.seq);
   if (ask && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.n])) return ask.seq;
@@ -84,12 +88,14 @@ function awaitingPark(s: LedgerState, n: number): number | undefined {
   return s.items.get(n)?.status === 'later' && m?.later !== undefined && (m.park ?? 0) < m.later ? m.later : undefined;
 }
 
-/** The proposals on undecided items on the boards asked about that stand `at` (proposals.ts). */
+/** The proposals on cards that need an answer and are not closed (✓ or ✗ ends a proposal, so a
+ * comment leaves it standing), on the boards asked about, that stand `at` (proposals.ts). An old
+ * board's proposal on another kind never shows (api.md 120). */
 const proposalsAt = (s: LedgerState, ctx: ConditionContext, at: 'open' | 'stale'): Condition[] => {
   const boards = new Set(boardsIn(s, ctx));
   return [...s.proposals.values()].flatMap((p) => {
     const node = s.nodes.get(p.n);
-    if (!node || !boards.has(node.board) || !latest(node).item || DECIDED.has(s.items.get(p.n)?.status ?? 'open')) return [];
+    if (!node || !boards.has(node.board) || !NODE_TYPES[latest(node).kind].answer || CLOSED.has(s.items.get(p.n)?.status ?? 'open')) return [];
     return standing(s, p) === at ? [{ kind: `proposal.${at}` as const, board: node.board, n: p.n, seq: p.seq }] : [];
   });
 };
@@ -118,9 +124,9 @@ type Rows = Record<ConditionKind, ConditionRow>;
 export const CONDITIONS: Rows = {
   'item.owed': {
     about: 'card', audience: 'agent', shows: [], clearedBy: [],
-    trueWhen: 'An open item has a latest comment or "needs context" that no newer version or reply answers, or a "later" with no park after it.',
-    endsWhen: 'A reply naming the note, a newer version, a park after the "later", or the person deciding the item.',
-    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => itemsOn(s, board, ctx).flatMap((x) => {
+    trueWhen: 'A card of any kind not closed with ✓ or ✗ has a latest comment or "needs context" that no newer version or reply answers, or a "later" with no park after it (api.md 120).',
+    endsWhen: 'A reply naming the note, a newer version, a park after the "later", or the person closing the card with ✓ or ✗.',
+    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx).flatMap((x) => {
       const seq = owedOn(s, x);
       return seq === undefined ? [] : [{ kind: 'item.owed' as const, board, n: x.n, seq }];
     })),
@@ -137,40 +143,40 @@ export const CONDITIONS: Rows = {
   },
   'item.new': {
     about: 'card', audience: 'person', shows: ['card'], clearedBy: ['select', 'act', 'round'],
-    trueWhen: 'An undecided item the agent first drew in the board\'s latest round (rounds.ts: after the person\'s first board seen on it, or after the agent\'s first drawing with a card when they opened it with none, so a first drawing is never new; or once a Send was answered, from the first drawing after it), with no seen at any version: the card\'s NEW tab.',
+    trueWhen: 'A card of any kind, not decided (registry.ts `isDecided`), that the agent first drew in the board\'s latest round (rounds.ts: after the person\'s first board seen on it, or after the agent\'s first drawing with a card when they opened it with none, so a first drawing is never new; or once a Send was answered, from the first drawing after it), with no seen at any version: the card\'s NEW tab.',
     endsWhen: 'The person selecting it (its `seen`), any act of theirs naming it but a Send (api.md 94), or the next round: a Send, then the agent drawing again.',
-    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => itemsOn(s, board, ctx).flatMap((x) => {
+    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx).flatMap((x) => {
       const seq = s.firstDrawn.get(x.n) ?? 0;
-      const fresh = !s.seen.has(x.n) && !DECIDED.has(s.items.get(x.n)?.status ?? 'open') && inLatestRound(s, board, seq);
+      const fresh = !s.seen.has(x.n) && !decided(s, x) && inLatestRound(s, board, seq);
       return fresh ? [{ kind: 'item.new' as const, board, n: x.n, seq }] : [];
     })),
   },
   'item.unseen': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: ['select', 'act'],
-    trueWhen: 'An item\'s latest version is newer than the one the person last saw (D-018). The page shows it as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
+    trueWhen: 'A card\'s latest version is newer than the one the person last saw (D-018). The page shows it as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
     endsWhen: 'The person\'s `seen` for that version, or any act of theirs naming the card but a Send (api.md 94).',
-    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => itemsOn(s, board, ctx)
+    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx)
       .filter((x) => latest(x).ver > (s.seen.get(x.n) ?? 0)).map((x) => ({ kind: 'item.unseen' as const, board, n: x.n }))),
   },
   'item.awaiting': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: [],
-    trueWhen: 'An item in Later has no park after its "later": the agent still owes its handover (D-020).',
-    endsWhen: 'A park after the "later", or the item leaving Later.',
-    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => itemsOn(s, board, ctx).flatMap((x) => {
+    trueWhen: 'A card of any kind in Later has no park after its "later": the agent still owes its handover (D-020).',
+    endsWhen: 'A park after the "later", or the card leaving Later.',
+    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx).flatMap((x) => {
       const seq = awaitingPark(s, x.n);
       return seq === undefined ? [] : [{ kind: 'item.awaiting' as const, board, n: x.n, seq }];
     })),
   },
   'proposal.open': {
     about: 'card', audience: 'person', shows: ['card', 'strip'], clearedBy: [],
-    trueWhen: 'An agent proposed acknowledging or dropping an undecided item, on its latest version, and the person has not answered (api.md 93).',
-    endsWhen: 'The person accepting or rejecting it, a decision on the card, or a newer version (then `proposal.stale`).',
+    trueWhen: 'An agent proposed acknowledging or dropping a card that needs an answer and is not closed, on its latest version, and the person has not answered (api.md 93, 120).',
+    endsWhen: 'The person accepting or rejecting it, ✓ or ✗ on the card, or a newer version (then `proposal.stale`).',
     derive: (s, ctx) => proposalsAt(s, ctx, 'open'),
   },
   'proposal.stale': {
     about: 'card', audience: 'person', shows: ['card', 'strip'], clearedBy: [],
-    trueWhen: 'A proposal not yet answered on an undecided item whose card has a newer version than the one it was made on: it can only be rejected (api.md 93).',
-    endsWhen: 'The person rejecting it, or a decision on the card.',
+    trueWhen: 'A proposal not yet answered on a card that needs an answer and is not closed, with a newer version than the one it was made on: it can only be rejected (api.md 93).',
+    endsWhen: 'The person rejecting it, or ✓ or ✗ on the card.',
     derive: (s, ctx) => proposalsAt(s, ctx, 'stale'),
   },
   'grant.requested': {

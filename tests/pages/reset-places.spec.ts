@@ -20,7 +20,7 @@ async function draw(request: APIRequestContext, board: string): Promise<void> {
   const items = [
     { type: 'board', title: 'Reset board' },
     { type: 'region', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },
-    ...TITLES.map((title) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title, item: true } })),
+    ...TITLES.map((title) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title } })),
   ];
   const r = await request.post(`/api/boards/${board}/write`, { headers: { Authorization: `Bearer ${secret}` }, data: { items } });
   expect(r.status(), await r.text()).toBe(200);
@@ -108,7 +108,7 @@ test('a past version has no Reset places, and R sends nothing there', async ({ p
     const out = await r.json() as { results: { seq?: number }[] };
     return Math.max(...out.results.map((x) => x.seq ?? 0));
   };
-  const item = (title: string) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title, item: true } });
+  const item = (title: string) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title } });
   await write([{ type: 'board', title: 'Reset board' }, { type: 'region', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } }, item('One'), item('Two')]);
   // Person acts end the agent's runs: card 1 pinned inside the second, an ack closes it.
   await page.goto('/?vbwork#reset-past');

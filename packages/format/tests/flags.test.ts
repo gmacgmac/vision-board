@@ -35,6 +35,11 @@ test('openFolder is on by default (maintainer, 2026-10-09, U12), and -openFolder
   assert.equal(flagOn('openFolder', parseFlags('-openFolder').overrides), false);
 });
 
+test('everyNode is on by default (maintainer, 2026-10-10, every-node FE_01), and -everyNode turns it off', () => {
+  assert.equal(flagOn('everyNode'), true);
+  assert.equal(flagOn('everyNode', parseFlags('-everyNode').overrides), false);
+});
+
 test('an override wins over the default, either way', () => {
   assert.equal(flagOn('nodeSize', { nodeSize: true }), true);
   assert.equal(flagOn('nodeSize', { nodeSize: false }), false);

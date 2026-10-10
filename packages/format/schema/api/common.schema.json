@@ -63,8 +63,8 @@
         "context",
         "later"
       ],
-      "description": "Why an item waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle",
-      "$comment": "Was: api.md 36"
+      "description": "Why a card of any kind waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle",
+      "$comment": "Was: api.md 36, 120"
     },
     "secret": {
       "type": "string",
@@ -84,7 +84,7 @@
       ],
       "properties": {
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The `seq` of the `comment` or `context` act that made the note; `note-edit`, `note-remove` and a `reply`'s `to` name it by this."
         },
         "kind": {
@@ -95,11 +95,11 @@
           "description": "`comment` or `context` (a request for more context)."
         },
         "text": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/longText",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/longText",
           "description": "The person's words."
         },
         "at": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/timestamp",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp",
           "description": "When the person wrote it."
         },
         "sent": {
@@ -107,7 +107,7 @@
           "description": "The person has pressed Send since writing it, so it is history and can no longer be edited or removed"
         },
         "nodes": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumbers",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumbers",
           "description": "For a note on a group of cards: every item it is on. Left out for a note on one card."
         }
       },
@@ -142,23 +142,23 @@
       ],
       "properties": {
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The reply's ledger line."
         },
         "at": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/timestamp",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp",
           "description": "When the agent replied."
         },
         "text": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/longText",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/longText",
           "description": "The agent's answer."
         },
         "to": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The `seq` of the person's action this answers."
         },
         "agent": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/text",
           "description": "The agent that replied."
         }
       },
@@ -178,19 +178,19 @@
       ],
       "properties": {
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The proposal's ledger line."
         },
         "at": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/timestamp",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp",
           "description": "When the agent proposed it."
         },
         "n": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber",
           "description": "The node the proposal is about."
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/version",
           "description": "The node version the proposal is about."
         },
         "action": {
@@ -201,19 +201,19 @@
           "description": "`ack` (acknowledge) or `drop`."
         },
         "reason": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/longText",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/longText",
           "description": "Why the agent proposed it."
         },
         "source": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/source",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/source",
           "description": "Where the evidence is."
         },
         "agent": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/text",
           "description": "The agent that proposed it."
         },
         "decidedBy": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The `seq` of the person's action that ended it; absent while it waits."
         },
         "outcome": {
@@ -239,15 +239,15 @@
       ],
       "properties": {
         "from": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber",
           "description": "The node the link starts at."
         },
         "to": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber",
           "description": "The node the link ends at."
         },
         "label": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/linkLabel",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/linkLabel",
           "description": "What the link means, in a few words."
         }
       },
@@ -263,19 +263,19 @@
       ],
       "properties": {
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/version",
           "description": "The version number, from 1."
         },
         "at": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/timestamp",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp",
           "description": "When this version was written."
         },
         "agent": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/text",
           "description": "The agent that wrote this version."
         },
         "node": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/events/node.schema.json#/$defs/body",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/events/node.schema.json#/$defs/body",
           "description": "What the agent said in this version."
         }
       },
@@ -289,6 +289,7 @@
         "n",
         "board",
         "region",
+        "status",
         "versions",
         "notes",
         "replies",
@@ -297,33 +298,34 @@
       ],
       "properties": {
         "n": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber",
           "description": "The node number."
         },
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The board the node is on."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The container the node is in now."
         },
         "moved_from": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The region the agent drew the node in, when the person moved it to `region`; left out when it is where the agent drew it",
           "$comment": "Was: api.md 68"
         },
         "status": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus",
-          "description": "Only for an item (its latest version has `item: true`)"
+          "description": "Where the card stands with the person; every card has one. Only a question, decision or action is decided (acknowledged, dropped or commented).",
+          "$comment": "Was: api.md 118, 120"
         },
         "size": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeSize",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeSize",
           "description": "The person's size; it wins over the agent's suggestion in `versions`",
           "$comment": "Was: api.md 17"
         },
         "seen": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/version",
           "description": "The latest version the person has seen"
         },
         "versions": {
@@ -356,7 +358,7 @@
           "description": "The agent's proposed decisions on the node."
         },
         "park": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/events/park.schema.json#/$defs/bundle",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/events/park.schema.json#/$defs/bundle",
           "description": "The handover bundle, when the node has been saved for later."
         },
         "links": {
@@ -379,8 +381,8 @@
     },
     "openItem": {
       "type": "object",
-      "description": "An item not yet decided. `pending` and `unseen` are left out when they do not apply",
-      "$comment": "Was: api.md 32",
+      "description": "An open card: a question, decision or action not yet decided, or a card of any kind that waits for the agent (`pending`). `pending` and `unseen` are left out when they do not apply",
+      "$comment": "Was: api.md 32, 120",
       "required": [
         "board",
         "n",
@@ -392,37 +394,37 @@
       ],
       "properties": {
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The board the item is on."
         },
         "n": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber",
           "description": "The item number."
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/version",
           "description": "The item's latest version."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The container the item is in."
         },
         "moved_from": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The region the agent drew the item in, when the person moved it to `region`; left out when it is where the agent drew it",
           "$comment": "Was: api.md 68"
         },
         "kind": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/kind",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/kind",
           "description": "What the node is."
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/title",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/title",
           "description": "The item's title."
         },
         "status": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus",
-          "description": "Where the item stands with the person."
+          "description": "Where the card stands with the person."
         },
         "pending": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/pendingReason"
@@ -441,15 +443,15 @@
       "required": ["board", "region", "title", "pending", "note"],
       "properties": {
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The board the container is on."
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
           "description": "The container."
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/title",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/title",
           "description": "The container's title."
         },
         "pending": {
@@ -457,7 +459,7 @@
           "description": "What the note asks for: a comment, or more context."
         },
         "note": {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq",
           "description": "The `seq` of the note waiting for an answer."
         }
       },

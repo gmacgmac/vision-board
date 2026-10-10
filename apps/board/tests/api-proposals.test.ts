@@ -18,7 +18,7 @@ before(async () => {
   B = await h.join('Review chat');
   const r = await write(A, [
     { type: 'board', title: 'Notes' }, { type: 'region', region: { id: 'a', title: 'A', mode: 'grid' } },
-    { type: 'node', key: 'q', node: { region: 'a', kind: 'question', title: 'Q', body: 'First line.', item: true, tags: ['t'] } },
+    { type: 'node', key: 'q', node: { region: 'a', kind: 'question', title: 'Q', body: 'First line.', tags: ['t'] } },
     { type: 'node', node: { region: 'a', kind: 'note', title: 'No body' } },
   ]);
   n = r.results[2].n;
@@ -36,7 +36,7 @@ test('append: a new version with the text after a blank line, every other field 
   const r = await write(A, [{ type: 'append', n, text: 'Second line.', key: 'add-1' }, { type: 'append', n: bare, text: 'Now one.' }]);
   assert.deepEqual(codes(r), ['ok', 'ok']);
   assert.deepEqual([r.results[0].n, r.results[0].ver, r.results[0].title], [n, 2, 'Q']);
-  assert.deepEqual(await body(n), { region: 'a', kind: 'question', title: 'Q', body: 'First line.\n\nSecond line.', item: true, tags: ['t'] });
+  assert.deepEqual(await body(n), { region: 'a', kind: 'question', title: 'Q', body: 'First line.\n\nSecond line.', tags: ['t'] });
   assert.equal((await body(bare)).body, 'Now one.');
   assert.equal(h.ledger.events().at(-1)!.type, 'node', 'stored as an ordinary node line');
 });
@@ -66,7 +66,7 @@ test('act: the person rejects a proposal; an out-of-date accept and a decided pr
   const [drop, ack] = p.results.map((x: any) => x.seq);
   const act = (b: object) => ({ board: 'notes', body: { type: 'act', ...b } });
   const rejected = await h.ok('act', act({ action: 'reject', n, proposal: drop }));
-  assert.deepEqual([rejected.v, rejected.action, rejected.proposal], [10, 'reject', drop]);
+  assert.deepEqual([rejected.v, rejected.action, rejected.proposal], [11, 'reject', drop]);
   let problem = await h.fails('act', act({ action: 'drop', n, ver: 2, proposal: drop }), 422, 'invalid');
   assert.deepEqual(problem.errors, [{ pointer: '/proposal', detail: `proposal: proposal ${drop} was already decided` }]);
   await write(A, [{ type: 'append', n, text: 'Third line.' }]);
@@ -75,4 +75,13 @@ test('act: the person rejects a proposal; an out-of-date accept and a decided pr
   await h.ok('act', act({ action: 'reject', n, proposal: ack }));
   const shown = (await h.ok('show_node', { board: 'notes', n })).proposals.map((x: any) => [x.seq, x.outcome]);
   assert.deepEqual(shown, [[drop, 'rejected'], [ack, 'rejected']]);
+});
+
+test('propose: only on a card that needs an answer; on any other kind it fails in plain words (api.md 120)', async () => {
+  const before = h.ledger.state().seq;
+  const r = await write(A, [{ type: 'propose', n: bare, ver: 2, action: 'ack', reason: 'Done.', key: 'p-note' }]);
+  assert.deepEqual(codes(r), ['invalid']);
+  assert.deepEqual(r.results[0].problem.errors, [{ pointer: '/items/0/n', detail: `node ${bare} is a note, which asks for no answer` }]);
+  assert.match(r.results[0].problem.detail, /question, decision or action/);
+  assert.equal(h.ledger.state().seq, before, 'nothing written');
 });

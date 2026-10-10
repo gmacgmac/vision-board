@@ -15,7 +15,7 @@ async function draw(request: APIRequestContext, title: string): Promise<string> 
   const items = [
     { type: 'board', title },
     { type: 'region', region: { id: 'r', title: 'Ideas', mode: 'grid' } },
-    { type: 'node', node: { region: 'r', kind: 'question', title, item: true } },
+    { type: 'node', node: { region: 'r', kind: 'question', title } },
   ];
   const w = await request.post(`/api/boards/${board}/write`, { headers: { Authorization: `Bearer ${secret}` }, data: { items } });
   expect(w.status(), await w.text()).toBe(200);

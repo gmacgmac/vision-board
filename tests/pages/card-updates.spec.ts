@@ -40,7 +40,7 @@ async function draw(request: APIRequestContext, count = 1): Promise<Drawn> {
   const results = await write(request, d, [
     { type: 'board', title: 'Updates' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
-    ...Array.from({ length: count }, (_, i) => ({ type: 'node', node: { region: 'p', kind: 'risk', title: `Card ${i + 1}`, body: 'Offered on the last call.', item: true } })),
+    ...Array.from({ length: count }, (_, i) => ({ type: 'node', node: { region: 'p', kind: 'risk', title: `Card ${i + 1}`, body: 'Offered on the last call.' } })),
   ]);
   return { ...d, n: results.slice(2).map((x) => x.n!) };
 }
@@ -49,7 +49,7 @@ const append = (request: APIRequestContext, d: Drawn, n: number, text: string) =
 const APPENDED = 'The credit amount is in.';
 /** A new version with a new title and the body as it is after one append of `APPENDED`. */
 const retitle = (request: APIRequestContext, d: Drawn, n: number, title: string) =>
-  write(request, d, [{ type: 'node', n, node: { region: 'p', kind: 'risk', title, body: `Offered on the last call.\n\n${APPENDED}`, item: true } }]);
+  write(request, d, [{ type: 'node', n, node: { region: 'p', kind: 'risk', title, body: `Offered on the last call.\n\n${APPENDED}` } }]);
 
 /** Open the board and wait until it has drawn. */
 async function open(page: Page, d: Drawn, query = ''): Promise<void> {

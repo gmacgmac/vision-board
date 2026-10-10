@@ -43,3 +43,13 @@ test('with the chatPanel flag, Board lists T for the chat sidebar; without it, n
   assert.deepEqual(chat(true).map((r) => r.keys), [['T']]);
   assert.deepEqual(chat(false), []);
 });
+
+// every-node ruling 3, assumption B: A and X mean one thing everywhere; the list says how they read
+// on a question (Yes, No) and on an action (Done).
+test('Items: Acknowledge and Drop name the words they read on a question and an action', () => {
+  const items = keyGroups().find((g) => g.group === 'Items')!.rows;
+  const label = (id: string) => items.find((r) => r.id === `action:${id}`)!.label;
+  assert.equal(label('ack'), 'Acknowledge (Yes, Done)');
+  assert.equal(label('drop'), 'Drop (No)');
+  assert.equal(label('comment'), 'Comment');
+});

@@ -39,7 +39,7 @@ async function draw(request: APIRequestContext, count = 1): Promise<Drawn> {
   const results = await write(request, d, [
     { type: 'board', title: 'Parking' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
-    ...Array.from({ length: count }, (_, i) => ({ type: 'node', node: { region: 'p', kind: 'question', title: `Card ${i + 1}`, item: true } })),
+    ...Array.from({ length: count }, (_, i) => ({ type: 'node', node: { region: 'p', kind: 'question', title: `Card ${i + 1}` } })),
   ]);
   return { ...d, n: results.slice(2).map((x) => x.n!) };
 }

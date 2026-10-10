@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/check-responses-response.schema.json",
   "title": "The person's responses",
-  "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests). `more` is true when `limit` cut the list. A wait that timed out answers `{ responses: [], head }`.",
-  "$comment": "Was: api.md 31, 43",
+  "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests), each batch up to a Send sorted by card number. `more` is true when `limit` cut the list, which it cuts in ledger order: read the rest with `after` set to the highest `seq` in `responses`. A wait that timed out answers `{ responses: [], head }`.",
+  "$comment": "Was: api.md 31, 43, 120",
   "type": "object",
   "required": [
     "responses",
@@ -13,9 +13,9 @@
     "responses": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/10/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/11/events/act.schema.json#/$defs/stored"
       },
-      "description": "The person's actions after `after`, oldest first."
+      "description": "The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made."
     },
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"

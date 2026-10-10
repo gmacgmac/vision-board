@@ -15,7 +15,7 @@ export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema
 export const CHAT_SCHEMA_DIR = fileURLToPath(new URL('../../../packages/chat/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/10/ledger-event.schema.json`;
+export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/11/ledger-event.schema.json`;
 export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
@@ -38,10 +38,13 @@ export function schemaFiles(dir = SCHEMA_DIR): { file: string; schema: SchemaDoc
 export const allSchemaFiles = (): { file: string; schema: SchemaDoc }[] => [...schemaFiles(), ...schemaFiles(CHAT_SCHEMA_DIR)];
 
 let shared: Ajv2020 | undefined;
+/** Every schema by its `$id`, for the words a schema gives a field it refuses (`removedWords`). */
+const byId = new Map<string, unknown>();
 
 /** One ajv instance holding every schema, created on first use. */
 function ajv(): Ajv2020 {
   if (shared) return shared;
+  for (const { schema } of allSchemaFiles()) byId.set(schema.$id, schema);
   // Strict mode, every rule an error, except strictRequired: the three layers of api.md 6 name a
   // field in `required` beside the `allOf` branch that defines it (the stamp, the core), and
   // strictRequired only looks at the same schema object.
@@ -95,6 +98,16 @@ const TYPES: Record<string, string> = {
 
 const quote = (v: unknown) => JSON.stringify(v);
 
+/** The `description` beside a `not: {}`, a field a format took away (api.md 118): its schema path
+ * names the `$id` and the pointer to the `not`; the words say what replaced the field. */
+function removedWords(schemaPath: string): string | undefined {
+  const [id, pointer = ''] = schemaPath.split('#');
+  const keys = pointer.split('/').slice(1, -1).map((k) => k.replace(/~1/g, '/').replace(/~0/g, '~'));
+  const at = keys.reduce<unknown>((o, k) => (o && typeof o === 'object' ? (o as Record<string, unknown>)[k] : undefined), byId.get(id!));
+  const words = at && typeof at === 'object' ? (at as Record<string, unknown>).description : undefined;
+  return typeof words === 'string' ? words : undefined;
+}
+
 /** One plain-English problem for one ajv error. */
 function plain(e: ErrorObject): SchemaProblem {
   const p = e.params as Record<string, unknown>;
@@ -130,6 +143,10 @@ function plain(e: ErrorObject): SchemaProblem {
     case 'enum': return { pointer: at, detail: `${f} must be one of ${(p.allowedValues as unknown[]).map(String).join(', ')}` };
     case 'const': return { pointer: at, detail: `${f} must be ${quote(p.allowedValue)} here` };
     case 'false schema': return { pointer: at, detail: `${f} is not allowed here` };
+    case 'not': {
+      const words = removedWords(e.schemaPath);
+      return { pointer: at, detail: words ? `${f} is not allowed here. ${words}` : `${f} is not valid` };
+    }
     case 'anyOf': return { pointer: at, detail: `${f} must be a node number or { "key": "…" }` };
     default: return { pointer: at, detail: `${f} is not valid` };
   }

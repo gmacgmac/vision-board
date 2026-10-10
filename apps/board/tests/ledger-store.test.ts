@@ -33,7 +33,7 @@ function seeded(count = 2) {
 }
 
 const node = (title: string, n?: number) =>
-  ({ type: 'node', board: 'review', ...(n !== undefined && { n }), node: { region: 'main', kind: 'question', title, item: true } });
+  ({ type: 'node', board: 'review', ...(n !== undefined && { n }), node: { region: 'main', kind: 'question', title } });
 
 /** The pointer errors of the `invalid` problem `fn` throws, as "pointer detail". */
 const problemsOf = (fn: () => unknown): string[] => {

@@ -5,7 +5,7 @@ import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter,
+  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter, responsesPage,
 } from '../../../packages/actions/src/index.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
@@ -102,9 +102,10 @@ function hold({ res, ledger, closed }: Ctx, seconds: number, stop: (e: LedgerEve
   });
 }
 
-/** The person's acts after `after`. With `wait`, the call is held until a Send or a grant answer
- * on this board, unless one is already there; when the wait runs out the answer is whatever came
- * after `after` (often `{ responses: [], head }`), so a comment is never skipped by the cursor. */
+/** The person's acts after `after`, each batch in card order (api.md 120: `responsesPage`). With
+ * `wait`, the call is held until a Send or a grant answer on this board, unless one is already
+ * there; when the wait runs out the answer is whatever came after `after` (often
+ * `{ responses: [], head }`), so a comment is never skipped by the cursor. */
 const checkResponses: Handler = async (ctx) => {
   const { res, params, ledger } = ctx;
   const board = requireBoard(ledger.state(), params.board);
@@ -116,8 +117,8 @@ const checkResponses: Handler = async (ctx) => {
   if (wait > 0 && !since().some(wake)) {
     if (!(await hold(ctx, wait, wake))) return;
   }
-  const { list, more } = page(since(), params.limit);
-  sendJson(res, 200, { responses: list, head: ledger.state().seq, ...(more && { more }) });
+  const s = ledger.state();
+  sendJson(res, 200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq });
 };
 
 /** Ledger lines after `after`, oldest first, optionally one board's; JSON, or JSON Lines when

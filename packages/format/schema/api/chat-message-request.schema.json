@@ -13,7 +13,7 @@
       "minItems": 1,
       "maxItems": 200,
       "uniqueItems": true,
-      "items": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/seq", "description": "A note's `seq`."},
+      "items": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/seq", "description": "A note's `seq`."},
       "description": "The person's notes sent with the message, by the `seq` that made each; left out when none."
     },
     "cards": {
@@ -21,7 +21,7 @@
       "minItems": 1,
       "maxItems": 200,
       "uniqueItems": true,
-      "items": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber", "description": "A card number."},
+      "items": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber", "description": "A card number."},
       "description": "The cards sent with the message, by number; left out when none."
     }
   },

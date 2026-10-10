@@ -42,11 +42,11 @@ test('fold: the parked bundle, the reply and the accepted proposal', () => {
   assert.deepEqual([prop.n, prop.action, prop.decidedBy, prop.agent], [3, 'drop', 15, 'kiro']);
 });
 
-test('boardView is a valid view keyed by String(n); only items carry n', () => {
+test('boardView is a valid view keyed by String(n); every node carries n (api.md 118)', () => {
   const view = boardView(state, BOARD);
   assert.deepEqual(validateView(view), []);
   assert.equal(view.version, 15);
-  assert.deepEqual(view.nodes.map((x) => [x.id, x.n]), [['1', 1], ['2', undefined], ['3', 3], ['4', 4]]);
+  assert.deepEqual(view.nodes.map((x) => [x.id, x.n]), [['1', 1], ['2', 2], ['3', 3], ['4', 4]]);
   assert.deepEqual(view.links, [{ from: '2', to: '1' }]);
   assert.throws(() => boardView(state, 'ghost'), /unknown board/);
 });
@@ -82,7 +82,7 @@ test('validateAct follows the registry', () => {
   assert.deepEqual(validateAct(act({}), state), []);
   assert.ok(validateAct(act({ by: 'agent' }), state).some((p) => p.includes('only the person')));
   assert.ok(validateAct(act({ by: 'agent', action: 'comment', text: 'hi' }), state).some((p) => p.includes('only the person')));
-  assert.ok(validateAct(act({ n: 2 }), state).some((p) => p.includes('not a numbered item')));
+  assert.ok(validateAct(act({ n: 2 }), state).some((p) => p.includes("a topic doesn't offer this")));
   assert.ok(validateAct(act({ n: 99 }), state).some((p) => p.includes('unknown node')));
   assert.ok(validateAct(act({ action: 'comment', text: ' ' }), state).includes('text: required'));
   assert.deepEqual(validateAct(act({ action: 'mode', board: BOARD, region: 'findings', mode: 'list' }), state), []);

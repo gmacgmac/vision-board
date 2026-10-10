@@ -3,6 +3,7 @@
 export * from './node/node-core.ts';
 export * from './node/node-template.ts';
 export * from './node/node-icons.ts';
+export * from './node/action-words.ts';
 export { POPOVER_OPEN } from './node/node-popover.ts';
 export type { VbNodeElement } from './node/vb-node.ts';
 export * from './region/region-core.ts';

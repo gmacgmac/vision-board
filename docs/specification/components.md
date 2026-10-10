@@ -32,8 +32,9 @@ pattern's markup or styles it.
   because three layers read it: the action layer refuses an action the type doesn't offer, the
   layout engine will read outlines and ports, and the UI draws it. `format` is the only layer all
   three may import (D-016).
-- A `NodeType` holds what is true of the type everywhere: `label` and `actions` (the review
-  actions an item of this type offers) today, and `outline` and `ports` (D-013) once the first
+- A `NodeType` holds what is true of the type everywhere: `label`, `answer` (the kind asks for an
+  answer: question, decision, action) and `actions` (`ANSWER_ACTIONS` or `NOTE_ACTIONS`, api.md 118)
+  today, and `outline` and `ports` (D-013) once the first
   non-card shape is built (§ Shapes).
 - **Presentation keyed by type lives in `packages/ui`** (an icon, a body template for unusual
   content), as `Record<Kind, …>` so the compiler fails when a kind is added and its entry is not.
@@ -380,3 +381,30 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    last board is kept per folder. Styles: `styles/folder-dialog.css`. The gallery draws the picker in
    each state (`gallery/folder-section.ts`); `tests/pages/open-folder.spec.ts` covers it. Off, the menu
    and title are as before and the page never calls the folder routes.
+
+## Every card in the conversation (every-node FE_01)
+
+Task set `cortex-tasks/board/2026-10-10_board-actions_every-node/` (rulings 1-4, 6; api.md 118-120),
+behind the `everyNode` flag (on by default; `?flags=-everyNode`).
+
+1. **Numbers and buttons from the kind.** Every card shows its number; `offers` reads
+   `NODE_TYPES[kind].actions`, so a question, decision or action draws ✓, ✗, Comment, More context
+   and Later, and every other kind Comment, More context and Later. Off, `numberedView`
+   (`apps/board/src/board/board-data.ts`) drops the number from cards that need no answer, so they
+   draw with no number, buttons or tabs and take no note.
+2. **One meaning, the card's words.** `packages/ui/src/node/action-words.ts` (`KIND_WORDS`,
+   `actionWord`) is the one table of what a button reads on a kind: ✓ and ✗ say "Yes" and "No" on a
+   question, ✓ "Done" on an action, in their tooltips; the accessible name keeps the registry's word.
+   The key help lists "Acknowledge (Yes, Done)" and "Drop (No)" from the same table.
+3. **Comment on any group.** The selection's Comment takes every selected card, any kinds: one note
+   on exactly those cards (`selection-flow.ts` `comment`); one card alone is its own note.
+4. **Counts and states.** The toolbar and container counts count only cards that need an answer
+   (`counts`, `regionState`); a plain card's comment, more context or Later shows its usual state
+   token on the card and counts nowhere. No new colour.
+5. **Hide decided** keeps a decided card while the agent owes it an answer (`item.owed`, read into
+   `pageConditions` `owedCards`), so the reply lands where the person can see it; it hides once
+   nothing is owed (`decidedIds`).
+6. Tests: `tests/pages/every-node.spec.ts` (numbers, tooltips, a plain card commented by key, a
+   lasso of mixed cards commented once, counts, hide while owed, the flag off, axe light and dark);
+   the gallery's node section shows the cards that ask and the cards that tell in every status each
+   can reach.

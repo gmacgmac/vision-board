@@ -15,7 +15,9 @@ const PATTERNS: PatternInfo[] = readdirSync(UI, { withFileTypes: true })
   .map((d) => JSON.parse(readFileSync(`${UI}${d.name}/pattern.json`, 'utf8')) as PatternInfo);
 
 const THEMES: Theme[] = ['dark', 'light'];
-const KINDS = ['question', 'finding', 'decision', 'risk', 'action'];
+// every-node ruling 2: the kind decides. A card that asks takes ✓ and ✗; one that tells never does.
+const ASKS = ['question', 'decision', 'action'];
+const TELLS = ['finding', 'risk', 'topic', 'note'];
 const STATUSES = ['open', 'acknowledged', 'dropped', 'commented', 'context', 'later'];
 
 test.beforeEach(async ({ page }) => {
@@ -35,16 +37,26 @@ test('every pattern has a section with samples of its own element', async ({ pag
   }
 });
 
-test('node: every kind in every status it can reach', async ({ page }) => {
-  const matrix = page.locator('section[data-pattern="node"] .g-matrix');
-  for (const kind of KINDS) {
+test('node: every kind in every status it can reach, cards that ask apart from cards that tell', async ({ page }) => {
+  const [asks, tells] = [page.locator('section[data-pattern="node"] .g-matrix').nth(0), page.locator('section[data-pattern="node"] .g-matrix').nth(1)];
+  for (const kind of [...ASKS, ...TELLS]) {
     for (const status of STATUSES) {
-      // A finding offers no Drop, so there is no dropped finding.
-      const count = kind === 'finding' && status === 'dropped' ? 0 : 1;
-      await expect(matrix.locator(`vb-node[data-kind="${kind}"][data-status="${status}"]`), `${kind} / ${status}`).toHaveCount(count);
+      const closed = status === 'acknowledged' || status === 'dropped';
+      const where = ASKS.includes(kind) ? asks : tells;
+      await expect(where.locator(`vb-node[data-kind="${kind}"][data-status="${status}"]`), `${kind} / ${status}`).toHaveCount(closed && !ASKS.includes(kind) ? 0 : 1);
     }
   }
-  await expect(matrix.locator('vb-node')).toHaveCount(29);
+  await expect(asks.locator('vb-node')).toHaveCount(18);
+  await expect(tells.locator('vb-node')).toHaveCount(16);
+  // Every card is numbered; ✓ and ✗ only on cards that ask, with the card's words in their tooltips.
+  await expect(asks.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
+  await expect(tells.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
+  await expect(tells.locator('button[data-act="ack"], button[data-act="drop"]')).toHaveCount(0);
+  await expect(tells.locator('vb-node').first().locator('button[data-act]')).toHaveCount(3);
+  await expect(asks.locator('vb-node[data-kind="question"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Yes · a');
+  await expect(asks.locator('vb-node[data-kind="question"] button[data-act="drop"]').first()).toHaveAttribute('title', 'No · x');
+  await expect(asks.locator('vb-node[data-kind="action"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Done · a');
+  await expect(asks.locator('vb-node[data-kind="decision"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Acknowledge · a');
 });
 
 test('node: the other states are drawn', async ({ page }) => {
@@ -64,12 +76,13 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
   await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
   await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(1);
-  // Topics and notes are not items: no number, no status, no buttons.
+  // A topic and a note are numbered and take a comment, more context and Later (every-node ruling 2).
+  const others = node.locator('[aria-label="Other node states"]');
   for (const kind of ['topic', 'note']) {
-    const card = node.locator(`vb-node[data-kind="${kind}"]`);
+    const card = others.locator(`vb-node[data-kind="${kind}"]`);
     await expect(card).toHaveCount(1);
-    await expect(card.locator('button')).toHaveCount(0);
-    await expect(card.locator('.vb-node-num')).toHaveCount(0);
+    await expect(card.locator('button[data-act]')).toHaveCount(3);
+    await expect(card.locator('.vb-node-num')).toHaveCount(1);
   }
 });
 
@@ -86,7 +99,7 @@ test('region: each mode, the count, the empty message and no count; Later and a 
     await expect(frame.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
   }
   await expect(frames.locator('.vb-region-empty:visible')).toHaveCount(2);
-  const bare = frames.filter({ has: page.locator('h2:text-is("No items, so no count")') });
+  const bare = frames.filter({ has: page.locator('h2:text-is("Nothing to decide, so no count")') });
   await expect(bare.locator('.vb-region-count')).toHaveText('');
   // Later: fixed (no layout icons, the cog its one stop), holding the fixture's two moved cards;
   // an empty one lit as the drop target, with its own empty message.
@@ -97,7 +110,8 @@ test('region: each mode, the count, the empty message and no count; Later and a 
     await expect(f.locator('[role="radio"]')).toHaveCount(0);
     await expect(f.locator('.vb-cog')).toHaveAttribute('tabindex', '0');
   }
-  await expect(page.locator('vb-region[data-region="later"] .vb-region-count')).toHaveText(/of 2 decided$/);
+  // Of its two cards, finding 2 needs no answer and counts nowhere; decision 3 does (every-node ruling 6).
+  await expect(page.locator('vb-region[data-region="later"] .vb-region-count')).toHaveText(/of 1 decided$/);
   const drop = page.locator('vb-region[data-drop]');
   await expect(drop).toHaveCount(1);
   await expect(drop.locator('.vb-region-empty')).toHaveText('Drop a card here to save it for later.');

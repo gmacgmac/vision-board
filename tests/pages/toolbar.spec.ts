@@ -29,7 +29,7 @@ async function setUp(page: Page, request: APIRequestContext): Promise<void> {
   expect(granted.status(), await granted.text()).toBe(201);
   const items = [
     { type: 'region', region: { id: 'roles', title: 'Roles', mode: 'grid' } },
-    { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?', item: true } },
+    { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?' } },
   ];
   // A board the agent made that the person has not opened: the "boards updated" chip shows too.
   const other = await request.post(`${EMPTY_BASE}/api/boards/another-board/write`, { headers, data: { items: [{ type: 'board', title: 'Another board' }] } });

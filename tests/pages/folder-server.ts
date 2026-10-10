@@ -38,7 +38,7 @@ function seed(dir: string, board: string, title: string): void {
   ledger.append({ type: 'join', label: 'Folder test agent' }, AGENT);
   ledger.append({ type: 'board', board, title: `${title} board` }, AGENT);
   ledger.append({ type: 'region', board, region: { id: 'ideas', title: 'Ideas', mode: 'grid' } }, AGENT);
-  ledger.append({ type: 'node', board, node: { region: 'ideas', kind: 'question', title, item: true } }, AGENT);
+  ledger.append({ type: 'node', board, node: { region: 'ideas', kind: 'question', title } }, AGENT);
 }
 
 export async function startFolderServer(): Promise<FolderServer> {

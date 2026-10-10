@@ -9,7 +9,7 @@
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
 } from '../../format/src/index.ts';
-import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, nodesOf } from '../../format/src/index.ts';
+import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
 import type { Place } from './containers.ts';
@@ -287,9 +287,9 @@ export function boardState(s: LedgerState, board: string): BoardState {
 /** One item's status on a board; an item nobody has answered is open. */
 export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(id)?.status ?? 'open';
 
-/** How many of a board's items are decided, saved for later, and still open. */
+/** How many of a board's cards that need an answer (api.md 118) are decided, later, still open. */
 export function counts(view: View, s: BoardState) {
-  const items = view.nodes.filter((n) => n.n !== undefined);
+  const items = view.nodes.filter((n) => NODE_TYPES[n.kind].answer);
   const st = items.map((n) => statusOf(s, n.id));
   return {
     total: items.length,

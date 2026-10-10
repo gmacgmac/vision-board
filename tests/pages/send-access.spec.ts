@@ -49,7 +49,7 @@ async function ensureBoard(request: APIRequestContext): Promise<void> {
     data: { items: [
       { type: 'board', title: 'Agent access' },
       { type: 'region', region: { id: REGION, title: CONTAINER, mode: 'grid' } },
-      { type: 'node', node: { region: REGION, kind: 'question', title: 'Which annual plans keep the old price?', item: true } },
+      { type: 'node', node: { region: REGION, kind: 'question', title: 'Which annual plans keep the old price?' } },
     ] },
   });
   expect(r.status(), await r.text()).toBe(200);

@@ -2,9 +2,12 @@
 // table (commands.ts `COMMANDS`) and the action registry (`ACTIONS`), so a command or action with a
 // key cannot be left out. Every group takes the commands `GROUP_OF` assigns it (a Record over every
 // command id, so adding a command without a group fails the type check) and Items takes every
-// registry action that has a key. `OTHER` holds only the inputs neither table owns: moving
-// between cards, Space, Alt+arrows, H, and the pointer gestures.
+// registry action that has a key, naming the words it reads on some kinds (action-words.ts). `OTHER`
+// holds only the inputs neither table owns: moving between cards, Space, Alt+arrows, H, and the
+// pointer gestures.
+import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
+import { otherWords } from '../../../../packages/ui/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
 
@@ -36,10 +39,16 @@ const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
 /** The chat sidebar's key (chatPanel flag, ChatSidebar.svelte): in Board, with the flag on. */
 const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the chat', ['T']];
 
+/** An action's label with the words it reads on some kinds: "Acknowledge (Yes, Done)" (every-node ruling 3). */
+const withWords = (a: ActionId, label: string): string => {
+  const words = otherWords(a);
+  return words.length ? `${label} (${words.join(', ')})` : label;
+};
+
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel flag. */
 export function keyGroups({ chat = false }: { chat?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
-    .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
+    .map((a) => ({ id: `action:${a.id}`, label: withWords(a.id, a.label), keys: [a.key!.toUpperCase()] }));
   const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length)
     .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].label, keys: COMMANDS[id].keys.map(keyText) }));
   return KEY_GROUPS.map((group) => ({

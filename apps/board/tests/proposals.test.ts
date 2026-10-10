@@ -24,7 +24,7 @@ function ledger(): LedgerState {
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
-    node(1, 1), node(2, 1, 'action'), node(3, 1, 'risk'), node(4, 1),
+    node(1, 1), node(2, 1, 'action'), node(3, 1, 'decision'), node(4, 1),
     propose(1, 'drop', 'the client declined', 'Email pasted in chat'), propose(2, 'ack', 'the draft is done'), node(2, 2, 'action'),
     propose(3, 'ack', 'the sheet confirms it'), propose(3, 'drop', 'the new prices remove it'), propose(4, 'ack', 'settled'),
     line({ by: 'person', type: 'act', action: 'reject', n: 4, proposal: seq }),

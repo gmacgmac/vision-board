@@ -28,13 +28,13 @@ interface Sample {
 
 const SAMPLES: Sample[] = [
   { caption: 'Over two selected cards: Comment, Move to, Reset places (disabled: neither card has been moved), Zoom to selection, Clear',
-    titles: ['Topic: a heading for a group, not an item', 'Note: the agent remarks, nothing to answer'],
+    titles: ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'],
     area: false, none: true, stage: { w: 680, h: 220 } },
-  { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group, not an item'],
+  { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group of cards'],
     area: true, stage: { w: 400, h: 180 } },
 ];
 
-const TWO = ['Topic: a heading for a group, not an item', 'Note: the agent remarks, nothing to answer'];
+const TWO = ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'];
 const PILL_SAMPLES: Sample[] = [
   { caption: 'Two cards selected: the pill, closed. A click or Enter opens the bar', titles: TWO,
     area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: false } },
@@ -42,7 +42,7 @@ const PILL_SAMPLES: Sample[] = [
     area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true } },
   { caption: 'Hover: Comment (the primary) on its hover fill, Move to on the plain hover', titles: TWO,
     area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true }, hover: ['comment', 'move'] },
-  { caption: 'A lasso that touched no card: the compact area bar', titles: ['Topic: a heading for a group, not an item'],
+  { caption: 'A lasso that touched no card: the compact area bar', titles: ['Topic: a heading for a group of cards'],
     area: true, stage: { w: 400, h: 180 }, pill: { open: true } },
 ];
 

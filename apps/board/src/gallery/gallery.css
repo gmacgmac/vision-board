@@ -57,10 +57,6 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
   width: var(--vb-card-w); margin: 0; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
   letter-spacing: 0.04em; text-transform: uppercase; color: var(--vb-ink-subtle);
 }
-.g-gap {
-  flex: none; width: var(--vb-card-w); padding: var(--vb-space-3); border: 1px dashed var(--vb-line-strong);
-  border-radius: var(--vb-radius-md); font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
-}
 
 /* Node size samples (nodeSize flag only): on the board's canvas, with room above each row for the
    size pill, which lifts above a card's top edge. .g-focused draws the focus ring on one sample,

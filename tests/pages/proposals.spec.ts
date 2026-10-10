@@ -40,7 +40,7 @@ async function draw(request: APIRequestContext, kinds: string[] = ['question']):
   const results = await write(request, d, [
     { type: 'board', title: 'Proposals' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
-    ...kinds.map((kind, i) => ({ type: 'node', node: { region: 'p', kind, title: `Card ${i + 1}`, body: 'Offered on the last call.', item: true } })),
+    ...kinds.map((kind, i) => ({ type: 'node', node: { region: 'p', kind, title: `Card ${i + 1}`, body: 'Offered on the last call.' } })),
   ]);
   return { ...d, n: results.slice(2).map((x) => x.n!) };
 }
@@ -177,7 +177,8 @@ test('out of date: the tab and the box say so, Accept is aria-disabled and does 
 });
 
 test('Accept all lists what it applies and what it skips, then applies it in order', async ({ page, request }) => {
-  const d = await draw(request, ['question', 'action', 'risk']);
+  // A proposal stands only on a card that needs an answer (every-node, api.md 120): the third a decision, not a risk.
+  const d = await draw(request, ['question', 'action', 'decision']);
   const [a, b, c] = d.n as [number, number, number];
   await propose(request, d, a, 'drop', 'the client declined');
   await propose(request, d, b, 'ack', 'the draft is done');

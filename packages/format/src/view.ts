@@ -8,7 +8,7 @@ export const FORMAT_VERSION = 1;
 export const MODES = ['grid', 'flow', 'lanes', 'radial', 'list'] as const;
 export type Mode = (typeof MODES)[number];
 
-/** Node kinds the agent draws from. Items (nodes with a number) can be responded to. */
+/** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). */
 export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -30,7 +30,7 @@ export interface ViewNode {
   kind: Kind;
   title: string;
   body?: string;
-  /** Stable item number, unique across the whole session. Present = needs a response. */
+  /** Stable node number, unique across the project. `boardView` sets it on every node (api.md 118). */
   n?: number;
   /** lanes mode: which lane. */
   lane?: string;

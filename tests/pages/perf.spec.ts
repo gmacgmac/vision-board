@@ -55,9 +55,9 @@ async function redraw(page: Page, request: APIRequestContext, a: Agent, ns: numb
     view: { nodes: (NodeBody & { id: string; n?: number })[] }; versions: Record<string, number>;
   };
   const items = ns.map((n) => {
-    const { id: _id, n: item, ...node } = view.view.nodes.find((x) => x.id === String(n))!;
+    const { id: _id, n: _n, ...node } = view.view.nodes.find((x) => x.id === String(n))!;
     const body = `${node.body ?? ''}\n\n${line}`.trim();
-    return { type: 'node', n, base: view.versions[String(n)], node: { ...node, ...(item !== undefined && { item: true }), body } };
+    return { type: 'node', n, base: view.versions[String(n)], node: { ...node, body } };
   });
   const r = await request.post(`${PERF_BASE}/api/boards/${BIG.board}/write`, { headers: { Authorization: `Bearer ${a.secret}` }, data: { items } });
   expect(r.status(), await r.text()).toBe(200);

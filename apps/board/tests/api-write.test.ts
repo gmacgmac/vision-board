@@ -26,7 +26,7 @@ async function write(who: Joined | Client, board: string, items: unknown[]): Pro
 }
 const codes = (r: any) => r.results.map((x: any) => (x.ok ? 'ok' : x.problem.type.split('/').pop()));
 const region = (id: string, extra = {}) => ({ type: 'region', region: { id, title: id.toUpperCase(), mode: 'grid', ...extra } });
-const node = (where: string, title: string, extra = {}) => ({ type: 'node', node: { region: where, kind: 'question', title, item: true }, ...extra });
+const node = (where: string, title: string, extra = {}) => ({ type: 'node', node: { region: where, kind: 'question', title }, ...extra });
 
 /** Ask for a container, or with no region the board, as `who` and have the person grant it. */
 async function grant(who: Joined, board: string, regionId?: string): Promise<void> {

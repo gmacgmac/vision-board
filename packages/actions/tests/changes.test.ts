@@ -31,14 +31,15 @@ test('the title, kind and container change; the title carries what it now reads'
   ]);
 });
 
-test('tags, item and size: added, changed and removed', () => {
+test('tags and size: added, changed and removed; an old item mark is no change (api.md 118)', () => {
   const tagged = { ...v1, tags: ['pricing'], size: 's' as const };
   assert.deepEqual(versionChanges(v1, tagged), [{ field: 'tags', change: 'added' }, { field: 'size', change: 'added' }]);
   assert.deepEqual(versionChanges(tagged, { ...tagged, tags: ['pricing', 'renewals'], size: 'l' }),
     [{ field: 'tags', change: 'changed' }, { field: 'size', change: 'changed' }]);
   assert.deepEqual(versionChanges(tagged, { ...v1, tags: [], item: false }),
-    [{ field: 'tags', change: 'removed' }, { field: 'item', change: 'removed' }, { field: 'size', change: 'removed' }]);
-  assert.deepEqual(versionChanges({ ...v1, item: false }, v1), [{ field: 'item', change: 'added' }]);
+    [{ field: 'tags', change: 'removed' }, { field: 'size', change: 'removed' }]);
+  const { item: _item, ...unmarked } = v1;
+  assert.deepEqual(versionChanges(v1, unmarked), []);
 });
 
 test('no previous version: every field it has is added', () => {

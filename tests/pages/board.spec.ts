@@ -1,5 +1,5 @@
 // The board page (index.html), served from a fresh copy of the roadmap fixture ledger (4 regions,
-// 17 nodes, 16 of them items). The tests run in this order on one server: read-only checks and
+// 17 cards, every one numbered, 14 of them a question, decision or action that needs an answer). The tests run in this order on one server: read-only checks and
 // screenshots first, then the ones that answer items and change layouts, which change the ledger.
 import type { Locator, Page } from '@playwright/test';
 import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
@@ -27,7 +27,8 @@ test('the board loads with every region and card', async ({ page }) => {
   await expect(page.locator('vb-region')).toHaveCount(REGIONS.length);
   for (const id of REGIONS) await expect(page.locator(`vb-region[data-region="${id}"]`)).toBeVisible();
   await expect(page.locator('vb-node:visible')).toHaveCount(NODES);
-  await expect(page.locator('#counts')).toContainText('16 open');
+  // Only cards that need an answer count (every-node ruling 6): the finding, topic and risk don't.
+  await expect(page.locator('#counts')).toContainText('14 open');
   await expect(page.locator('#counts')).toContainText('0 decided');
 });
 
@@ -146,7 +147,8 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
     await expect(card(page, 3)).toHaveAttribute('data-status', 'commented');
     await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note 1');
     await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
-    await expect(page.locator('#counts')).toContainText('2 decided');
+    // A comment decides a card that needs an answer, as ✓ and ✗ do (every-node ruling 3): 3 is an action.
+    await expect(page.locator('#counts')).toContainText('3 decided');
     // Reply sits in the toolbar's "⋯" menu (toolbarMenu flag).
     await page.locator('#toolbar-menu').click();
     await expect(page.getByRole('menuitem', { name: 'Reply (3)' })).toBeVisible();

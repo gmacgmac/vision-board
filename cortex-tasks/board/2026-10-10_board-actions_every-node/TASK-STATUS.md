@@ -12,9 +12,9 @@ tracker: cortex-tasks/tracker.md#U13
 
 | # | ID | Wave | Task | Model | Status | Notes |
 |---|-----|------|------|-------|--------|-------|
-| 1 | BE_01 | 1 | [Contract: the kind decides, numbers on every node](./BE_01_contract.md) | Opus 5.5 | Planned | |
-| 2 | BE_02 | 2 | [Action layer and server](./BE_02_actions-server.md) | Opus 5.5 | Planned | |
-| 3 | FE_01 | 3 | [The page: every card numbered and answerable](./FE_01_page.md) | Opus 5.5 | Planned | |
+| 1 | BE_01 | 1 | [Contract: the kind decides, numbers on every node](./BE_01_contract.md) | Opus 5.5 | Completed with BE_02/FE_01 (gates at FE_01) | Contract stands; ruling A: gates checked at the end of FE_01 |
+| 2 | BE_02 | 2 | [Action layer and server](./BE_02_actions-server.md) | Opus 5.5 | Completed (gates at FE_01) | check, verify, gen-check green; unit red only gallery-fixture (3, FE_01) |
+| 3 | FE_01 | 3 | [The page: every card numbered and answerable](./FE_01_page.md) | Opus 5.5 | Completed | All five gates exit 0 (BE_01, BE_02, FE_01 together); 32 screenshots updated after review |
 | 4 | T_01 | 4 | [The skill](./T_01_skill.md) | Opus 5.5 | Planned | |
 | 5 | VERIFY_01 | 5 | [By hand with real agents](./VERIFY_01_by-hand.md) | Orchestrator | Planned | |
 
@@ -31,13 +31,33 @@ real home-folder files. Page tests share ports: one page-testing agent at a time
 | Kinds that need an answer, action lists | `packages/format/src/node-types.ts` (`NODE_TYPES[kind].answer`, `ANSWER_ACTIONS`, `NOTE_ACTIONS`) | BE_01 | all |
 | Ledger v11 node event (no `item`) | `packages/format/schema/events/node.schema.json` | BE_01 | BE_02, T_01 |
 | View `n` on every node | `packages/format/src/board-view.ts` | BE_01 | FE_01 |
-| Decided statuses | `packages/actions/src/registry.ts` `DECIDED` | BE_01 | BE_02, FE_01 |
-| Response order | `packages/actions/src/pending.ts` `responsesAfter` | BE_02 | T_01 |
+| Decided statuses | `packages/actions/src/registry.ts` `DECIDED`, `CLOSED`, `isDecided` | BE_01, BE_02 | FE_01 |
+| Response order | `packages/actions/src/response-order.ts` `inCardOrder`, `responsesPage` | BE_02 | T_01 |
 
 ## Implementation Notes
 
 ### BE_01
+Contract done (ledger v11, `NODE_TYPES.answer`, `ANSWER_ACTIONS`/`NOTE_ACTIONS`, `n` on every
+node, OpenAPI 1.13.0, gen, api.md 118-119). Forced: `act.ts` kind decides (BE_02 step 1);
+interim readers by `NODE_TYPES[kind].answer`. `DECIDED` + `commented` deferred to BE_02 (it
+broke owed and `list_open`). Gates: check, verify, gen-check green; `npm test` 4 red (gallery
+fixture); `test:pages` 100 red (gallery page throws on the Changed cards section, counts, risk-based
+specs, screenshots). Options A/B/C and D-040 wording in the task file.
 ### BE_02
+Built on BE_01's tree (ruling A). `DECIDED` + `commented`, new `CLOSED` (✓/✗) and `isDecided`;
+conditions on every card (a comment decides an answer card and stays owed); `list_open` = answer
+cards not decided + any card owed; `show_node` `status` on every card (required); `propose` on a
+non-answer card refused at write (`proposeProblem`); `response-order.ts` (`inCardOrder`,
+`responsesPage`: cut in ledger order, then sorted; next page `after` the highest `seq`); MCP
+instructions; api.md 120; `decidedIds` and region decided count use `isDecided`. Gates: check,
+verify, gen-check, timing 0; unit 938 pass, 3 fail (gallery-fixture, FE_01). `test:pages` 38 red
+(was 100): gallery data, counts, kinds, screenshots; list in BE_02's notes for FE_01.
 ### FE_01
+Tooltips from `action-words.ts` (Yes/No on a question, Done on an action; key help too); region
+count answer kinds only; Hide decided keeps an owed card (`owedCards`, `decidedIds(d, owed)`); flag
+`everyNode` (`numberedView`); gallery ledger rebuilt by kind class, node gallery split into cards that
+ask / tell; `every-node.spec.ts` + unit tests. Expectations moved by rulings: board counts, Later
+count, a proposal fixture, gallery kinds. 32 baselines updated after viewing each. Gates: test, check,
+verify, gen-check, test:pages (314) all 0. Steering terminology wording proposed in FE_01's notes.
 ### T_01
 ### VERIFY_01

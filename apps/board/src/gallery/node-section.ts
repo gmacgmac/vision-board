@@ -1,5 +1,6 @@
-// Gallery entry for <vb-node>: every item kind in every status, then the other states (pinned,
-// emphasis, tags, notes, non-items, long text, lifted). Each card is a real <vb-node>: rendered
+// Gallery entry for <vb-node>: the cards that ask and the cards that tell, each kind in every status
+// it can reach (every-node FE_01), then the other states (pinned, emphasis, tags, notes, topic and
+// note, long text, lifted). Each card is a real <vb-node>: rendered
 // from a ledger node and updated with `nodeState`, exactly as the board does.
 import type { Kind, ViewNode } from '../../../../packages/format/src/index.ts';
 import { KINDS, NODE_TYPES } from '../../../../packages/format/src/index.ts';
@@ -17,7 +18,11 @@ const LIVE_CLASS: Record<string, string> = { 'Being dragged': 'dragging' };
 const SELECTED = new Set(['Selected']);
 
 const STATUSES = Object.keys(STATUS_LABEL) as ItemStatus[];
-const ITEM_KINDS = KINDS.filter((k) => NODE_TYPES[k].actions.length > 0);
+/** The kinds that need an answer, and the rest (every-node ruling 2): one matrix each. */
+const ASKS = KINDS.filter((k) => NODE_TYPES[k].answer);
+const TELLS = KINDS.filter((k) => !NODE_TYPES[k].answer);
+/** A card that needs no answer offers no ✓ or ✗, so it never reaches acknowledged or dropped. */
+const TELL_STATUSES = STATUSES.filter((s) => s !== 'acknowledged' && s !== 'dropped');
 
 /** A real <vb-node>, rendered and updated as the board does. The Markdown and note bubble sections
  * draw their cards with it too; `state` is the notes board's for the note samples. */
@@ -30,27 +35,18 @@ export function card(n: ViewNode, fx: Fixture, state = fx.state): VbNodeElement 
   return node;
 }
 
-/** A finding offers no Drop, so one cell of the grid is empty by design. */
-const gap = (kind: Kind, status: ItemStatus): HTMLElement => {
-  const cell = el('div', 'g-gap', `A ${NODE_TYPES[kind].label.toLowerCase()} has no ${STATUS_LABEL[status].toLowerCase()} state`);
-  cell.setAttribute('aria-hidden', 'true');
-  return cell;
-};
-
-function matrix(fx: Fixture): HTMLElement {
+/** Columns are `kinds`, rows `statuses`: one card in each cell, from the fixture's kinds region. */
+function matrix(fx: Fixture, kinds: readonly Kind[], statuses: readonly ItemStatus[]): HTMLElement {
   const grid = el('div', 'g-matrix');
   const heads = el('div', 'g-cards g-kind-heads');
   heads.setAttribute('aria-hidden', 'true');
-  heads.append(...ITEM_KINDS.map((k) => el('p', 'g-kind-head', NODE_TYPES[k].label)));
+  heads.append(...kinds.map((k) => el('p', 'g-kind-head', NODE_TYPES[k].label)));
   const top = el('div', 'g-row');
   top.append(el('p', 'g-row-label'), heads);
   grid.append(top);
   const nodes = fx.view.nodes.filter((n) => n.region === REGION_KINDS);
-  for (const status of STATUSES) {
-    const cells = ITEM_KINDS.map((kind) => {
-      const n = nodes.find((x) => x.kind === kind && statusOf(fx.state, x.id) === status);
-      return n ? card(n, fx) : gap(kind, status);
-    });
+  for (const status of statuses) {
+    const cells = kinds.map((kind) => card(nodes.find((x) => x.kind === kind && statusOf(fx.state, x.id) === status)!, fx));
     const row = el('div', 'g-row');
     row.append(el('p', 'g-row-label', STATUS_LABEL[status]), cardList(`${STATUS_LABEL[status]}, one card of each kind`, ...cells));
     grid.append(row);
@@ -77,8 +73,11 @@ function notePreviews(fx: Fixture): HTMLElement {
 export function nodeSamples(body: HTMLElement, fx: Fixture): void {
   const others = fx.view.nodes.filter((n) => n.region === REGION_OTHER).map((n) => card(n, fx));
   body.append(
-    group('Every kind in every status', 'Columns are kinds, rows are the status the person gave. Topics and notes are not items, so they have no status.', matrix(fx)),
-    group('Other states', 'Pinned, emphasis, tags, a note, an edited note, a long note asking for more context, topic and note (not items), long text, the lifted look while dragging, and selected (its name ends ", selected"). Focus is checked on the board page.',
+    group('Cards that ask, in every status', 'A question, decision or action needs an answer: ✓, ✗ or a comment decides it (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action). Columns are kinds, rows the status the person gave.',
+      matrix(fx, ASKS, STATUSES)),
+    group('Cards that tell, in every status', 'Every other kind is numbered and takes a comment, more context or Later, never ✓ or ✗, and counts in no "decided" total.',
+      matrix(fx, TELLS, TELL_STATUSES)),
+    group('Other states', 'Pinned, emphasis, tags, a note, an edited note, a long note asking for more context, a topic and a note, long text, the lifted look while dragging, and selected (its name ends ", selected"). Focus is checked on the board page.',
       cardList('Other node states', ...others)),
     group('Notes on a card', 'A numbered pin on the top-right corner (the latest note) and the "Your note" block, latest first: a note not yet sent is pink; sent notes are grey and say Sent. A click on the pin or a note opens it in the note bubble.',
       cardList('Note states', ...fx.notes.view.nodes.map((n) => card(n, fx, fx.notes.state)))),

@@ -75,29 +75,31 @@ test('show_container: the region as stored, its holders and every node it has he
   await h.fails('show_container', { board: 'pricing', region: 'nope' }, 404, 'not-found');
 });
 
-test('list_open: undecided items, with pending and unseen only when they apply', async () => {
-  const { q, d } = h.seeded;
+test('list_open: open cards and cards owed an answer, with pending and unseen only when they apply', async () => {
+  const { d } = h.seeded;
   const pricing = await h.ok('list_open', { board: 'pricing' });
   assert.equal(pricing.head, head());
-  // q's comment has a reply, but the person has not seen version 2; d waits for a park bundle,
-  // and saving it for later counted as seeing it (api.md 94).
+  // q's comment decided it and has a reply, so it is not open (api.md 120); d waits for a park
+  // bundle, and saving it for later counted as seeing it (api.md 94).
   assert.deepEqual(pricing.items.map((x: any) => [x.n, x.ver, x.status, x.pending, x.unseen]), [
-    [q, 2, 'commented', undefined, true], [d, 1, 'later', 'later', undefined]]);
+    [d, 1, 'later', 'later', undefined]]);
   const roadmap = await h.ok('list_open', { board: 'roadmap' });
   assert.deepEqual(roadmap.items.find((x: any) => x.n === 1).pending, 'comment');
-  assert.equal(roadmap.items.some((x: any) => x.n === 7), false, 'a topic is not an item');
+  assert.equal(roadmap.items.some((x: any) => x.n === 7), false, 'a topic nobody asked about is not open');
 });
 
-test('check_responses: the person\'s acts after `after`, cut by `limit` with `more`', async () => {
-  const { comment, later } = h.seeded;
+test('check_responses: the person\'s acts after `after` in card order, cut by `limit` in ledger order with `more`', async () => {
+  const { comment, later, q, d } = h.seeded;
   const all = await h.ok('check_responses', { board: 'pricing' });
-  assert.deepEqual(all.responses.map((e: any) => e.action), ['comment', 'later', 'size']);
+  // Sorted by card number (api.md 120): q's comment and size, then d's later; the ledger has later before size.
+  assert.ok(q < d);
+  assert.deepEqual(all.responses.map((e: any) => [e.action, e.n]), [['comment', q], ['size', q], ['later', d]]);
   assert.equal(all.head, head());
   assert.equal('more' in all, false);
-  const first = await h.ok('check_responses', { board: 'pricing', limit: 1 });
-  assert.deepEqual([first.responses.map((e: any) => e.seq), first.more], [[comment], true]);
-  const rest = await h.ok('check_responses', { board: 'pricing', after: comment });
-  assert.deepEqual(rest.responses.map((e: any) => e.seq)[0], later);
+  const first = await h.ok('check_responses', { board: 'pricing', limit: 2 });
+  assert.deepEqual([first.responses.map((e: any) => e.seq), first.more], [[comment, later], true], 'the first two lines, then sorted');
+  const rest = await h.ok('check_responses', { board: 'pricing', after: Math.max(...first.responses.map((e: any) => e.seq)) });
+  assert.deepEqual(rest.responses.map((e: any) => e.action), ['size'], 'the next page starts after the highest seq');
   const none = await h.ok('check_responses', { board: 'pricing', after: head() });
   assert.deepEqual(none, { responses: [], head: head() });
 });
@@ -162,8 +164,10 @@ test('act and mark_seen: one stored line each, 201', async () => {
   assert.equal(mode.mode, 'list');
   const seen = await h.ok('mark_seen', { board: 'pricing', body: { n: h.seeded.q, ver: 2 } });
   assert.deepEqual([seen.type, seen.n, seen.ver, seen.by], ['seen', h.seeded.q, 2, 'person']);
+  const node = await h.ok('show_node', { board: 'pricing', n: h.seeded.q });
+  assert.equal(node.seen, 2);
   const open = await h.ok('list_open', { board: 'pricing' });
-  assert.deepEqual(open.items.map((x: any) => [x.n, x.unseen]), [[h.seeded.q, undefined]]);
+  assert.deepEqual(open.items, [], 'd acknowledged; q decided by its answered comment');
 });
 
 test('mark_seen for a board (api.md 87): stored with board and head, it moves no head; another board, a mixed body or a line not yet written is refused', async () => {

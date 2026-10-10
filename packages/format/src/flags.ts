@@ -108,6 +108,11 @@ export const FLAGS = {
     default: true,
     description: 'The "⋯" menu ends with Open folder…, a picker of the folders under the home folder (recent first, a folder with a Vision Board marked) that opens one, or creates its Vision Board, in place of the open folder (api.md 109-113); every open page then reloads onto it. The page title names the open folder and the last board is kept per folder. Off, the page never asks which folder is open.',
   },
+  everyNode: {
+    // On by default (maintainer, 2026-10-10, every-node PLAN rulings 1-4, FE_01); ?flags=-everyNode turns it off.
+    default: true,
+    description: 'Every card shows its number and the buttons its kind offers: a question, decision or action ✓, ✗, Comment, More context and Later (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action); every other kind Comment, More context and Later. Comment on a selection takes any cards. Off, only cards that need an answer show a number and buttons (api.md 118-120).',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

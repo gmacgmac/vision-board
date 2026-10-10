@@ -9,7 +9,7 @@ import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const region = (id: string, title: string) => ({ type: 'region', region: { id, title, mode: 'grid' } });
-const card = (r: string, title: string) => ({ type: 'node', node: { region: r, kind: 'question', title, item: true } });
+const card = (r: string, title: string) => ({ type: 'node', node: { region: r, kind: 'question', title } });
 
 async function join(request: APIRequestContext): Promise<string> {
   const r = await request.post('/api/agents', { data: { label: 'Finder chat' } });

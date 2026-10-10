@@ -1,4 +1,4 @@
-// Ledger v10 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93): the JSON Schema is the one source, and the hand validator
+// Ledger v11 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, KINDS, LIMITS, MODES, NODE_SIZES,
-  TIMESTAMP_PATTERN, eventProblems, readLedger,
+  ITEM_REMOVED, TIMESTAMP_PATTERN, eventProblems, readLedger,
 } from '../../../packages/format/src/index.ts';
 import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/10/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/11/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v10 lines for every event type and action ----
+// ---- 3. Valid v11 lines for every event type and action ----
 
-test('every event type has a valid v10 line, and every one passes both validators', () => {
+test('every event type has a valid v11 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v10 line, and every one passes both validator
   }
 });
 
-test('every action has a valid v10 act, and every one passes both validators', () => {
+test('every action has a valid v11 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -95,8 +95,25 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     { ...PERSON, type: 'seen', board: 'b', head: 12 },
     // api.md 90: from v9 the person writes a `board` line, creating or renaming a board.
     { ...PERSON, type: 'board', board: 'b', title: 'Pricing for 2027', summary: 'What we charge.' },
+    // api.md 118: a line from v10 or older may still carry `item`; readers ignore it.
+    patch(patch(VALID.node!, 'v', 10), 'node.item', true),
+    patch(patch(patch(VALID.node!, 'v', 2), 'agent', 'kiro'), 'node.item', false),
   ];
   for (const e of lines) assert.deepEqual(verdict(e), { schema: true, hand: true }, JSON.stringify(e).slice(0, 80));
+});
+
+// ---- 2a. Ledger v11: the kind decides; `item` is refused with words saying what replaced it ----
+
+test('a v11 node line or a sent node naming item gets one problem saying the kind decides', () => {
+  const removed = [{ pointer: '/node/item', detail: `\`item\` is not allowed here. ${ITEM_REMOVED}` }];
+  assert.deepEqual(ledgerLineProblems(JSON.stringify(patch(V.node!, 'node.item', true))), removed);
+  const node = { region: 'plan', kind: 'question', title: 'T', item: true };
+  assert.deepEqual(schemaProblems(`${eventId('node')}#/$defs/sent`, { type: 'node', node }), removed);
+  assert.deepEqual(eventProblems(patch(V.node!, 'node.item', true)), [`node.item: ${ITEM_REMOVED}`]);
+});
+
+test('the schema words for a removed item are ITEM_REMOVED', () => {
+  assert.equal(doc(eventId('node')).$defs.noItem.properties.node.properties.item.description, ITEM_REMOVED);
 });
 
 // ---- 2. Broken lines: one rule each; both validators refuse every one ----

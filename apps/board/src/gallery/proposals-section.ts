@@ -53,18 +53,19 @@ export function proposalsSection(fx: Fixture): HTMLElement {
   heading.id = 'feature-proposals';
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'ack · drop · reject, with proposal'), ' · feature flag proposals (D-018, api.md 93), on by default · off with ?flags=-proposals');
+  // The fixture draws the three cards shown with their box open first, then the one at rest.
   const nodes = fx.proposals.view.nodes;
-  const rest = nodes.filter((n) => n.kind === 'finding').map((n) => card(n, fx, false));
-  const finding = nodes.find((n) => n.kind === 'finding')!;
-  const open = cardList('Cards with their proposal box open', ...nodes.filter((n) => n.kind !== 'finding').map((n) => card(n, fx, true)));
+  const atRest = nodes.at(-1)!;
+  const rest = [card(atRest, fx, false)];
+  const open = cardList('Cards with their proposal box open', ...nodes.slice(0, -1).map((n) => card(n, fx, true)));
   open.classList.add('g-tips', 'g-tips-stack');
   box.append(heading,
     el('p', 'g-desc', 'An agent proposes to acknowledge or drop a card, say from an email the person pasted into the chat; only the person decides. The card gets a tab on its bottom edge and never changes size; the tab opens a box beside it.'),
     meta,
     group('The tab', 'PROPOSAL on the bottom edge. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the tab.', cardList('A card with a proposal', ...rest)),
     group('The box', 'Who proposes, what, from where and when, then Reject and Accept. Out of date (the card changed since): the tab says so, the box says why, and Accept can\'t be pressed; Reject still clears it. Several on one card: newest first.', open),
-    group('The notice', 'Over the board\'s top left while any proposal is open, see-through, and it moves nothing: Review opens the first card\'s box; Accept all lists what it applies first; Hide or Esc collapses it to the pill, kept for this viewer.', notice(fx, finding, false)),
-    group('The pill', 'The notice hidden, in the same place: the count, kept up to date. A press brings the notice back.', notice(fx, finding, true)),
+    group('The notice', 'Over the board\'s top left while any proposal is open, see-through, and it moves nothing: Review opens the first card\'s box; Accept all lists what it applies first; Hide or Esc collapses it to the pill, kept for this viewer.', notice(fx, atRest, false)),
+    group('The pill', 'The notice hidden, in the same place: the count, kept up to date. A press brings the notice back.', notice(fx, atRest, true)),
     group('Accept all', 'The confirm step: the newest proposal on each card that is not out of date, in card order; the rest are not included, with why.', acceptAll(fx)));
   return box;
 }

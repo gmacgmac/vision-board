@@ -3,7 +3,7 @@
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
 // Optional fields are left out when they do not apply (api.md 32).
 import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
-import { latest, nodesOf } from '../../format/src/index.ts';
+import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { BoardRun, ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
@@ -13,7 +13,7 @@ import { creatorOf, holders } from './grants.ts';
 import { mayAnswer } from './permissions.ts';
 import { placeOf } from './references.ts';
 import type { ItemStatus } from './registry.ts';
-import { DECIDED } from './registry.ts';
+import { isDecided } from './registry.ts';
 
 /** One version of a node: what the agent said, when, and who. */
 export interface NodeVersionView { ver: number; at: string; agent?: string; node: NodeBody }
@@ -26,8 +26,8 @@ export interface NodeDetail {
   region: string;
   /** Where the agent has it, when the person put it somewhere else (3_FE_03 ruling 2). */
   moved_from?: string;
-  /** Only for an item (its latest version has `item: true`). */
-  status?: ItemStatus;
+  /** Where the card stands with the person; every card has one (api.md 120). */
+  status: ItemStatus;
   /** The person's size pick; it wins over the agent's suggestion. */
   size?: NodeSize;
   /** The latest version the person has seen. */
@@ -62,7 +62,8 @@ export interface BoardAccess {
   requests?: AccessRequest[]; boardHolders?: AccessHolder[]; holders?: Record<string, AccessHolder[]>;
 }
 
-/** An item not yet decided (`list_open`, and `pending` on a write answer). */
+/** A card still open for the person or the agent (`list_open`, and `pending` on a write answer):
+ * one that needs an answer and is not decided, or any card owing an answer or a handover. */
 export interface OpenItem {
   board: string; n: number; ver: number; region: string; moved_from?: string; kind: NodeBody['kind']; title: string;
   status: ItemStatus;
@@ -70,7 +71,8 @@ export interface OpenItem {
   unseen?: true;
 }
 
-const versionView = ({ ver, at, agent, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
+/** One version as `show_node` gives it; an old line's `item` mark is left out (api.md 118). */
+const versionView = ({ ver, at, agent, item: _item, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
   ({ ver, at, ...(agent !== undefined && { agent }), node });
 
 /** Where node `n` is, and where the agent has it when the person moved it (api.md 68). */
@@ -89,7 +91,7 @@ export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
   const park = s.parks.get(n);
   return {
     n, board: node.board, ...whereIs(s, n),
-    ...(last.item && { status: s.items.get(n)?.status ?? 'open' }),
+    status: s.items.get(n)?.status ?? 'open',
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
     versions: node.versions.map(versionView),
@@ -156,11 +158,12 @@ export function boardAccess(s: LedgerState, board: string): BoardAccess {
   };
 }
 
-/** The items on `board` not yet decided, by number, with why each waits for the agent
- * (`item.owed`: its ask's kind, else `later`) and whether the person has a version still to see
- * (`item.unseen`) (api.md 36, D-018). With `agent`, only the items it may answer: in a container
- * it holds, or whose latest version it wrote (api.md 41). A container's owed note has no place
- * here: `openItem` is a card's shape (api.md 73, `openContainers`). */
+/** The open cards on `board`, by number: every card that needs an answer and is not decided, and
+ * any card of any kind the agent owes an answer or a handover on (api.md 120), with why each waits
+ * for the agent (`item.owed`: its ask's kind, else `later`) and whether the person has a version
+ * still to see (`item.unseen`) (api.md 36, D-018). With `agent`, only the cards it may answer: in
+ * a container it holds, or whose latest version it wrote (api.md 41). A container's owed note has
+ * no place here: `openItem` is a card's shape (api.md 73, `openContainers`). */
 export function openItems(s: LedgerState, board: string, agent?: string): OpenItem[] {
   const pending = new Map<number, NonNullable<OpenItem['pending']>>();
   const unseen = new Set<number>();
@@ -172,8 +175,9 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
   for (const node of nodesOf(s, board)) {
     const v = latest(node);
     const status = s.items.get(node.n)?.status ?? 'open';
-    if (!v.item || DECIDED.has(status) || (agent !== undefined && !mayAnswer(s, agent, node.n))) continue;
     const why = pending.get(node.n);
+    const open = NODE_TYPES[v.kind].answer && !isDecided(v.kind, status);
+    if (!(open || why) || (agent !== undefined && !mayAnswer(s, agent, node.n))) continue;
     out.push({
       board, n: node.n, ver: v.ver, ...whereIs(s, node.n), kind: v.kind, title: v.title, status,
       ...(why && { pending: why }), ...(unseen.has(node.n) && { unseen: true as const }),

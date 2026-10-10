@@ -2,7 +2,7 @@
 // the person takes. How one ends, folded by fold.ts, and where an open one stands, read by the act
 // rules (act.ts) and the conditions table (conditions.ts). Pure.
 import type { ActEvent } from '../../format/src/index.ts';
-import { latest } from '../../format/src/index.ts';
+import { latest, NODE_TYPES } from '../../format/src/index.ts';
 import type { LedgerState, Proposal } from './fold.ts';
 
 /** A proposal still open ends at `seq`; one already ended keeps how it ended. */
@@ -23,4 +23,13 @@ export function standing(s: LedgerState, p: Proposal): 'open' | 'stale' | undefi
   if (p.decidedBy !== undefined) return undefined;
   const node = s.nodes.get(p.n);
   return node && latest(node).ver > p.ver ? 'stale' : 'open';
+}
+
+/** Why an agent may not propose on card `n`, or undefined when it may (api.md 120): a proposal is
+ * to acknowledge or drop, so only a card that needs an answer takes one. An unknown card is the
+ * ledger's to report. */
+export function proposeProblem(s: LedgerState, n: number): string | undefined {
+  const node = s.nodes.get(n);
+  const kind = node && latest(node).kind;
+  return kind === undefined || NODE_TYPES[kind].answer ? undefined : `node ${n} is a ${kind}, which asks for no answer`;
 }

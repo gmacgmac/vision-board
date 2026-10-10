@@ -26,7 +26,7 @@ async function write(request: APIRequestContext, d: Pick<Drawn, 'secret' | 'boar
   return body.results;
 }
 
-const cardItem = (title: string) => ({ type: 'node', node: { region: 'p', kind: 'risk', title, body: 'Offered on the last call.', item: true } });
+const cardItem = (title: string) => ({ type: 'node', node: { region: 'p', kind: 'risk', title, body: 'Offered on the last call.' } });
 
 /** A board of its own with `count` cards, drawn by a new agent. */
 async function draw(request: APIRequestContext, count = 1): Promise<Drawn> {

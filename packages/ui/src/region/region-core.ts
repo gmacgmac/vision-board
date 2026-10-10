@@ -2,8 +2,9 @@
 // No DOM, so every rule here is unit-tested under plain Node; the element only applies the
 // result. Geometry (position, size) is the page's job and is not here.
 import type { Mode, Region, View } from '../../../format/src/index.ts';
+import { NODE_TYPES } from '../../../format/src/index.ts';
 import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
-import { DECIDED, statusOf } from '../../../actions/src/index.ts';
+import { isDecided, statusOf } from '../../../actions/src/index.ts';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
 import { isItem, replyEntry } from '../node/node-core.ts';
 
@@ -177,8 +178,9 @@ export function regionState(
   replies?: readonly CardReply[],
 ): RegionState {
   const nodes = view.nodes.filter((n) => n.region === r.id);
-  const items = nodes.filter(isItem);
-  const decided = items.filter((n) => DECIDED.has(statusOf(s, n.id))).length;
+  // Only cards that need an answer count (every-node ruling 6): a numbered plain card never does.
+  const items = nodes.filter((n) => isItem(n) && NODE_TYPES[n.kind].answer);
+  const decided = items.filter((n) => isDecided(n.kind, statusOf(s, n.id))).length;
   const title = r.title ?? view.regions.find((g) => g.id === r.id)?.title ?? r.id;
   const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true, replies);
   return {

@@ -9,15 +9,17 @@ import { ACTIONS } from '../../../actions/src/index.ts';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry, UpdatesView } from './node-core.ts';
 import { buttonLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
+import { actionWord } from './action-words.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
 
+/** A review button; its tooltip reads the card's word for it, "Yes" on a question (action-words.ts). */
 const button = (a: ActionId, n: ViewNode): string =>
   `<button type="button" class="vb-act" data-act="${a}" aria-label="${esc(buttonLabel(a, n))}"`
-  + ` title="${esc(ACTIONS[a].label)}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">`
+  + ` title="${esc(actionWord(a, n.kind))}${ACTIONS[a].key ? ` · ${ACTIONS[a].key}` : ''}">`
   + `${svgIcon(ACTION_ICON[a] ?? '', 20, 'vb-act-icon')}</button>`;
 
 /** The tabs on the top border: number (items only), kind, and the moved-by-you marker. An item

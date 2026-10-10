@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/10/events/link.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/11/events/link.schema.json",
   "title": "Link event",
   "description": "An agent links two nodes. `from` and `to` take a number or `{ key }` when sent.",
   "$comment": "Was: api.md 35",
@@ -8,7 +8,7 @@
     "core": {
       "type": "object",
       "properties": {
-        "label": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/linkLabel", "description": "What the link means, in a few words."}
+        "label": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/linkLabel", "description": "What the link means, in a few words."}
       }
     },
     "sent": {
@@ -16,11 +16,11 @@
       "required": ["type", "from", "to"],
       "properties": {
         "type": {"const": "link"},
-        "from": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeRef"},
-        "to": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeRef"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key"}
+        "from": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeRef"},
+        "to": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeRef"},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/key"}
       },
-      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/10/events/link.schema.json#/$defs/core"}],
+      "allOf": [{"$ref": "https://vision-board.invalid/schema/ledger/11/events/link.schema.json#/$defs/core"}],
       "unevaluatedProperties": false
     },
     "stored": {
@@ -28,19 +28,19 @@
       "required": ["type"],
       "properties": {"type": {"const": "link"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/10/events/link.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/11/events/link.schema.json#/$defs/core"},
         {
           "type": "object",
           "required": ["from", "to"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "from": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber", "description": "The node the link starts at."},
-            "to": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/nodeNumber", "description": "The node the link ends at."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key"}
+            "from": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber", "description": "The node the link starts at."},
+            "to": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/nodeNumber", "description": "The node the link ends at."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/key"}
           }
         }
       ],

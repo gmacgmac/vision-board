@@ -60,8 +60,8 @@ test('validateAct: items on one board, the board the act was sent to', () => {
   refused({ nodes: [1, 4] }, 'one board');
   refused({ nodes: [1, 2] }, 'board "b"', 'b2');
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'note', title: 'Plain' } });
-  const p = validateAct(next(l, { action: 'comment', nodes: [1, 5], text: 'x' }), l.state(), 'b');
-  assert.ok(p.some((x) => x.includes('not a numbered item')), p.join('; '));
+  // Any cards, any kinds: the kind decides, and every kind takes a comment (api.md 118).
+  assert.deepEqual(validateAct(next(l, { action: 'comment', nodes: [1, 5], text: 'x' }), l.state(), 'b'), []);
 });
 
 test('one note under one seq, on every card it names; each card reads commented', () => {

@@ -17,8 +17,9 @@ const note = (text: string, kind: ItemNote['kind'] = 'comment', sent = false): I
 const withItem = (status: ItemStatus, notes: ItemNote[] = []): BoardState =>
   board({ items: new Map([['1', { status, notes }]]) });
 
-test('a numbered finding offers everything but drop', () =>
-  assert.deepEqual(offers(node({ kind: 'finding', n: 5 })), ['ack', 'comment', 'context', 'later']));
+// The kind decides (api.md 118): a card that needs no answer offers a note and Later, never a decision.
+test('a numbered finding offers comment, context and later', () =>
+  assert.deepEqual(offers(node({ kind: 'finding', n: 5 })), ['comment', 'context', 'later']));
 
 test('a numbered question offers all five review actions', () =>
   assert.deepEqual(offers(node({ kind: 'question', n: 2 })), ['ack', 'drop', 'comment', 'context', 'later']));
@@ -63,7 +64,7 @@ test('nodeState: an item with no response is open, unpressed and has no note', (
 
 test('nodeState: pressed covers only the actions the type offers', () =>
   assert.deepEqual(Object.keys(nodeState(node({ kind: 'finding', n: 2 }), board()).pressed),
-    ['ack', 'comment', 'context', 'later']));
+    ['comment', 'context', 'later']));
 
 test('nodeState: a non-item has no status word, no pressed buttons and a plain label', () => {
   const st = nodeState(node({ kind: 'topic', title: 'Stack' }), board());

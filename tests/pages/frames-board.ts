@@ -38,7 +38,7 @@ export async function ensureBoard(request: APIRequestContext, worker: number): P
   expect(j.status(), await j.text()).toBe(201);
   fx.secret = ((await j.json()) as { secret: string }).secret;
   const node = (region: string, title: string, key: string) =>
-    ({ type: 'node', key, node: { region, kind: 'question', title, item: true } });
+    ({ type: 'node', key, node: { region, kind: 'question', title } });
   const { results } = await agentWrite(request, [
     { type: 'board', title: 'Frames' },
     { type: 'region', region: { id: 'plan', title: 'Plan', mode: 'grid' } },

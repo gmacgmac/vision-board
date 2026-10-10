@@ -20,8 +20,9 @@ function load(extra: Partial<ActEvent>[] = []) {
 
 const state = load();
 const view = boardView(state, BOARD);
-const item = view.nodes.find((x) => x.n !== undefined)!.n!;
-const plain = Number(view.nodes.find((x) => x.n === undefined)!.id);
+/** The first card that needs an answer, and the first that doesn't (the kind decides, api.md 118). */
+const item = view.nodes.find((x) => NODE_TYPES[x.kind].answer)!.n!;
+const plain = view.nodes.find((x) => !NODE_TYPES[x.kind].answer && x.kind !== 'finding')!.n!;
 const act = (f: Partial<ActEvent>): ActEvent =>
   ({ v: 2, seq: lines.length + 1, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', n: item, ver: 1, ...f });
 
@@ -38,8 +39,8 @@ test('agents may not comment or ask for context either', () => {
     assert.ok(validateAct(act({ by: 'agent', action, text: 'hi' }), state).some((p) => p.includes('only the person')), action);
 });
 
-test('item actions reject non-item nodes and unknown nodes', () => {
-  assert.ok(validateAct(act({ n: plain }), state).some((p) => p.includes('not a numbered item')));
+test('a card refuses a review action its kind does not offer; an unknown node is refused', () => {
+  assert.ok(validateAct(act({ n: plain }), state).some((p) => p.includes("doesn't offer this")));
   assert.ok(validateAct(act({ n: 999 }), state).some((p) => p.includes('unknown')));
 });
 
@@ -74,15 +75,16 @@ test('fold: pins, unpins and modes', () => {
   assert.equal(s.modes.get(BOARD)!.get(region), 'grid');
 });
 
-test('counts split decided, later and open', () => {
-  const items = view.nodes.filter((x) => x.n !== undefined).map((x) => x.n!);
+test('counts split decided, later and open, over the cards that need an answer', () => {
+  const items = view.nodes.filter((x) => NODE_TYPES[x.kind].answer).map((x) => x.n!);
   const s = load([{ action: 'ack', n: items[0], ver: 1 }, { action: 'later', n: items[1], ver: 1 }]);
   const c = counts(boardView(s, BOARD), boardState(s, BOARD));
   assert.deepEqual(c, { total: items.length, decided: 1, later: 1, open: items.length - 2 });
 });
 
-// Node types decide which review actions an item offers (D-015, components.md).
-/** The fixture plus a numbered topic and a numbered note, so validateAct meets items of those types. */
+// Node types decide which review actions a card offers (D-015, components.md); the kind decides
+// (api.md 118): five on a question, decision or action, three on any other kind.
+/** The fixture plus a topic and a note that an old line marked `item`, which every reader ignores. */
 function withNumberedPlain() {
   const nodes = (['topic', 'note'] as const).map((kind, i) => JSON.stringify({
     v: 2, seq: lines.length + 1 + i, at: `2026-10-02T09:30:0${i}Z`, by: 'agent', agent: 'kiro', type: 'node',
@@ -92,23 +94,26 @@ function withNumberedPlain() {
   assert.deepEqual(read.problems, []);
   return foldLedger(read.events);
 }
-const FIVE_ACTIONS = ['ack', 'drop', 'comment', 'context', 'later'] as const;
-const finding = view.nodes.find((x) => x.n !== undefined && x.kind === 'finding')!.n!;
+const finding = view.nodes.find((x) => x.kind === 'finding')!.n!;
 
-test('a finding does not offer drop; the problem names the kind', () =>
-  assert.deepEqual(validateAct(act({ n: finding, action: 'drop' }), state), ["drop: a finding doesn't offer this"]));
+test('a finding offers no decision: ack and drop are refused, naming the kind', () => {
+  for (const action of ['ack', 'drop'] as const)
+    assert.deepEqual(validateAct(act({ n: finding, action }), state), [`${action}: a finding doesn't offer this`]);
+});
 
-test('a finding still offers ack, comment, context and later', () => {
-  for (const action of ['ack', 'comment', 'context', 'later'] as const)
+test('a finding offers comment, context and later', () => {
+  for (const action of ['comment', 'context', 'later'] as const)
     assert.deepEqual(validateAct(act({ n: finding, action, text: 'why' }), state), [], action);
 });
 
-test('every review action is refused on a numbered topic or note', () => {
+test('a topic or note offers comment, context and later and never a decision, an old item mark or not', () => {
   const s = withNumberedPlain();
-  for (const [n, kind] of [[100, 'topic'], [101, 'note']] as const)
-    for (const action of FIVE_ACTIONS)
-      assert.deepEqual(
-        validateAct(act({ n, action, text: 'why' }), s), [`${action}: a ${kind} doesn't offer this`], `${kind} ${action}`);
+  for (const [n, kind] of [[100, 'topic'], [101, 'note']] as const) {
+    for (const action of ['ack', 'drop'] as const)
+      assert.deepEqual(validateAct(act({ n, action }), s), [`${action}: a ${kind} doesn't offer this`], `${kind} ${action}`);
+    for (const action of ['comment', 'context', 'later'] as const)
+      assert.deepEqual(validateAct(act({ n, action, text: 'why' }), s), [], `${kind} ${action}`);
+  }
 });
 
 test('reopen, pin and unpin are not restricted by type', () => {

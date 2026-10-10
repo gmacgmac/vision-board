@@ -24,18 +24,22 @@ test('gallery ledger: every act is one its node type offers, by the person', () 
   });
 });
 
-test('gallery ledger: every item kind appears in every status it can reach', () => {
+// every-node ruling 2: every kind takes a comment, more context and Later; only a card that needs an
+// answer takes ✓ and ✗, so only those reach acknowledged and dropped. Exactly one card per cell.
+test('gallery ledger: every kind appears once in every status it can reach, and in no other', () => {
   const s = foldLedger(events);
   const view = boardView(s, 'gallery');
   const state = boardState(s, 'gallery');
-  const cells = new Set(view.nodes.filter((n) => n.region === 'kinds').map((n) => `${n.kind}/${statusOf(state, n.id)}`));
+  const cells = view.nodes.filter((n) => n.region === 'kinds').map((n) => `${n.kind}/${statusOf(state, n.id)}`);
   const statuses = ['open', 'acknowledged', 'dropped', 'commented', 'context', 'later'];
-  for (const kind of KINDS.filter((k) => NODE_TYPES[k].actions.length > 0)) {
+  const closes: Record<string, string> = { acknowledged: 'ack', dropped: 'drop' };
+  for (const kind of KINDS) {
     for (const status of statuses) {
-      const reachable = !(status === 'dropped' && !NODE_TYPES[kind].actions.includes('drop'));
-      assert.equal(cells.has(`${kind}/${status}`), reachable, `${kind} / ${status}`);
+      const reachable = !closes[status] || NODE_TYPES[kind].actions.includes(closes[status] as never);
+      assert.equal(cells.filter((c) => c === `${kind}/${status}`).length, reachable ? 1 : 0, `${kind} / ${status}`);
     }
   }
+  assert.equal(cells.length, 3 * 6 + 4 * 4);
 });
 
 test('gallery ledger: a region frame exists for every layout mode', () => {

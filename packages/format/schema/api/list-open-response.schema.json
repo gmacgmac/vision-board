@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-open-response.schema.json",
-  "title": "Open items",
-  "description": "Items not yet decided. With a Bearer secret, only the containers the caller holds.",
-  "$comment": "Was: api.md 41",
+  "title": "Open cards",
+  "description": "The questions, decisions and actions not yet decided, and every card of any kind that waits for the agent's answer or handover. With a Bearer secret, only the containers the caller holds.",
+  "$comment": "Was: api.md 41, 120",
   "type": "object",
   "required": [
     "head",
@@ -18,7 +18,7 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/openItem"
       },
-      "description": "The items not yet decided."
+      "description": "The open cards, by number."
     },
     "containers": {
       "type": "array",

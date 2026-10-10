@@ -10,7 +10,7 @@
   ],
   "properties": {
     "label": {
-      "$ref": "https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/agentLabel",
+      "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentLabel",
       "description": "A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."
     }
   },

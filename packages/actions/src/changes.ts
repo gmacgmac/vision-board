@@ -4,19 +4,19 @@
 // change carries what it now reads. The card's change chips read this. Pure.
 import type { NodeBody } from '../../format/src/index.ts';
 
-export type ChangeField = 'title' | 'body' | 'tags' | 'kind' | 'item' | 'size' | 'container';
+export type ChangeField = 'title' | 'body' | 'tags' | 'kind' | 'size' | 'container';
 export type Change = 'added' | 'changed' | 'removed';
 
 /** One field's change; `text`: a body's added text, or the title as it now reads. */
 export interface FieldChange { field: ChangeField; change: Change; text?: string }
 
-/** A field's value as compared: absent when the version has none (an empty tag list, `item` false). */
+/** A field's value as compared: absent when the version has none (an empty tag list). An old line's
+ * `item` mark is not compared: the kind decides (api.md 118). */
 const VALUE: Record<ChangeField, (b: NodeBody) => string | undefined> = {
   title: (b) => b.title,
   body: (b) => b.body || undefined,
   tags: (b) => (b.tags?.length ? JSON.stringify(b.tags) : undefined),
   kind: (b) => b.kind,
-  item: (b) => (b.item ? 'item' : undefined),
   size: (b) => b.size,
   container: (b) => b.region,
 };

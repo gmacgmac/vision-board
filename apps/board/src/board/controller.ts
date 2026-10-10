@@ -13,7 +13,7 @@ import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../
 import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
 import { createBoards } from './boards.ts';
-import { boardData, decidedIds } from './board-data.ts';
+import { boardData, decidedIds, numberedView } from './board-data.ts';
 import { createAttention } from './attention.ts';
 import { type BoardElements, createDrawing } from './draw.ts';
 import { createLive } from './live.ts';
@@ -75,7 +75,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // holders and Send (agentAccess, D-027); connectors behind frames and cards (wireLayers, D-032);
   // the agent's proposals on cards and the bar (proposals, FE_01); changed cards and seen (cardUpdates, FE_02); NEW (newCards).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards] = [on('nodeSize'), on('agentAccess'), on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode] = [on('nodeSize'), on('agentAccess'), on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -100,7 +100,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** A node act names the node by number and the version the person was looking at. */
   const target = (id: string) => ({ n: Number(id), ver: S.data!.versions[id] });
 
-  const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data) : new Set());
+  const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive(onLines);
   const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state });
@@ -150,7 +150,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     const d = boardData(s, S.id);
     S.drawn = d.view;
     // Each card in the container the person put it in, Later last (3_FE_03 rulings 2 and 5).
-    S.data = { ...d, view: placedView(d.view, d.state, { later: S.later }) };
+    S.data = { ...d, view: numberedView(placedView(d.view, d.state, { later: S.later }), everyNode) }; // numbers on every card (everyNode)
     // The selection survives a redraw; ids that left the board drop out of it (ruling 8).
     selection.keep(view().nodes.map((n) => n.id));
     proposals.refresh(); updates.refresh(); parking.refresh();

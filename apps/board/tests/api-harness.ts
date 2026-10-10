@@ -35,7 +35,7 @@ function seedMore(ledger: Ledger): Seeded {
   add({ type: 'board', board: 'pricing', title: 'Pricing options', key: 'pricing-board' });
   add({ type: 'region', board: 'pricing', region: { id: 'options', title: 'Options', mode: 'grid', columns: 2 } });
   const node = (title: string, kind: string, n?: number) =>
-    add({ type: 'node', board: 'pricing', ...(n && { n }), node: { region: 'options', kind, title, item: true } });
+    add({ type: 'node', board: 'pricing', ...(n && { n }), node: { region: 'options', kind, title } });
   const q = node('Flat fee or per seat?', 'question') as { n: number };
   const d = node('Choose the launch price', 'decision') as { n: number };
   add({ type: 'link', from: q.n, to: d.n, label: 'blocks' });

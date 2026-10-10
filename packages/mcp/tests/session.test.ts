@@ -69,7 +69,7 @@ test('join: an agent id and a secret, once', async () => {
   secret = r.secret;
 });
 
-const QUESTION = { type: 'node', key: 'mcp-q', node: { region: 'options', kind: 'question', title: 'Monthly or yearly billing?', item: true } };
+const QUESTION = { type: 'node', key: 'mcp-q', node: { region: 'options', kind: 'question', title: 'Monthly or yearly billing?' } };
 
 test('write_board: on a board granted to it, a new region is written; an item in a container it does not hold fails needs-grant; not an error', async () => {
   // D-034: ask for another agent's board first.

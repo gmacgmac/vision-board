@@ -2,6 +2,7 @@
 // context: ...". Paste it into chat, or let the agent read the ledger directly. Reads one board as
 // `boardView` (packages/format) + `boardState` (fold.ts) give it.
 import type { View } from '../../format/src/index.ts';
+import { NODE_TYPES } from '../../format/src/index.ts';
 import type { BoardState, ItemNote } from './fold.ts';
 import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
@@ -14,6 +15,7 @@ const STATUS_REPLY: Partial<Record<ItemStatus, string>> = {
 /** The person's responses as one line per item, and one line per note on a group naming all its
  * items once ("12, 14, 15 comment: ..."), in number order (3_FE_02 ruling 4). */
 export function replyText(view: View, s: BoardState): string {
+  // Every card may carry a response; only one that needs an answer is still open without one (api.md 118).
   const items = view.nodes.filter((n) => n.n !== undefined).sort((a, b) => a.n! - b.n!);
   const lines: { at: number; text: string }[] = [];
   const open: number[] = [];
@@ -28,7 +30,7 @@ export function replyText(view: View, s: BoardState): string {
     const word = st && !(grouped && !own.length && st.status === 'context') ? STATUS_REPLY[st.status] : undefined;
     const text = own.map((x) => x.text).join(' / ');
     if (!word && !text) {
-      if (!grouped) open.push(n.n!);
+      if (!grouped && NODE_TYPES[n.kind].answer) open.push(n.n!);
       continue;
     }
     lines.push({ at: n.n!, text: `${n.n} ${word ?? 'comment'}${text ? `: ${text}` : ''}` });

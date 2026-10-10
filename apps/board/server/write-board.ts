@@ -1,20 +1,20 @@
 // `write_board` (api.md 24-25, 29-37): one agent's batch of write items for the board in the
 // path, run in order, one result each. Per item: the write-item schema, then its `{ key }` node
-// references, then its own retry key (before grants), then `base`, then the board and the grant,
-// then the ledger module's own checks as it appends. One failure never stops the rest, except
-// items naming a failed item's key, directly or through another failed item.
+// references, then its own retry key (before grants), then `base`, then the board, a proposal's
+// card kind and the grant, then the ledger module's own checks as it appends. One failure never
+// stops the rest, except items naming a failed item's key, directly or through another failed item.
 import { createHash } from 'node:crypto';
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { LIMITS, codePoints, latest } from '../../../packages/format/src/index.ts';
 import type { LedgerState, WriteItem } from '../../../packages/actions/src/index.ts';
-import { canWrite } from '../../../packages/actions/src/index.ts';
+import { canWrite, proposeProblem } from '../../../packages/actions/src/index.ts';
 import type { Ledger } from './ledger.ts';
 import type { PointerError, ProblemBody, ProblemCode, ProblemExtras } from './problem.ts';
 import { ProblemError, problem } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/10/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -128,7 +128,8 @@ function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec 
   if (!node) fail('invalid', `There is no node ${n}. Name a node by its number, or by the key of the node item that made it.`, { errors: [{ pointer: `/items/${i}/n`, detail: `unknown node ${n}` }] });
   const stored = key === undefined ? undefined : storedFor(b, key);
   const from = stored?.type === 'node' && stored.n === n ? node.versions[stored.ver - 2] : undefined;
-  const { ver: _ver, at: _at, agent: _agent, ...was } = from ?? latest(node);
+  // An old card's `item` mark stays behind: a v11 line names none (api.md 118).
+  const { ver: _ver, at: _at, agent: _agent, item: _item, ...was } = from ?? latest(node);
   const body = was.body === undefined ? String(item.text) : `${was.body}\n\n${String(item.text)}`;
   if (codePoints(body) > LIMITS.body) {
     fail('invalid', `With this text, node ${n}'s body would be ${codePoints(body)} characters, and the limit is ${LIMITS.body}. Send less, or rewrite the node with a node item.`,
@@ -180,6 +181,14 @@ function checkBoard(b: Batch, s: LedgerState, i: number, e: Rec): void {
   }
 }
 
+/** A proposal only on a card that needs an answer (api.md 120): ✓ and ✗ are on no other kind. */
+function checkProposal(s: LedgerState, i: number, e: Rec): void {
+  const why = e.type === 'propose' && typeof e.n === 'number' ? proposeProblem(s, e.n) : undefined;
+  if (why === undefined) return;
+  fail('invalid', `You can propose only on a question, decision or action card: ${why}. Answer it with a reply instead.`,
+    { errors: [{ pointer: `/items/${i}/n`, detail: why }] });
+}
+
 /** No grant, no write (api.md 25, 83-84): the permissions table's answer for this item. */
 function checkGrant(b: Batch, s: LedgerState, i: number, e: Rec): void {
   const need = canWrite(s, b.agent, e as unknown as WriteItem);
@@ -222,6 +231,7 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
   const s = b.ledger.state();
   checkBase(s, i, item, e);
   checkBoard(b, s, i, e);
+  checkProposal(s, i, e);
   checkGrant(b, s, i, e);
   return append(b, i, key, e);
 }

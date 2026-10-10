@@ -174,7 +174,7 @@ test('in a past version New board and Rename board are off', async ({ page, requ
   expect((await write(request, agent, 'hiring-plan', [region])).every((x) => x.ok)).toBe(true);
   const renamed = await page.request.put(`${EMPTY_BASE}/api/boards/hiring-plan`, { data: { title: 'Hiring 2027' } });
   expect(renamed.status(), await renamed.text()).toBe(200);
-  const card = { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?', item: true } };
+  const card = { type: 'node', node: { region: 'roles', kind: 'question', title: 'Which role first?' } };
   expect((await write(request, agent, 'hiring-plan', [card])).every((x) => x.ok)).toBe(true);
   await idle(page);
   const past = page.locator('#version option').nth(1);

@@ -65,8 +65,9 @@ export const nodesOf = (s: DrawnState, board: string): LedgerNode[] =>
 /** The latest version of a node. */
 export const latest = (node: LedgerNode): NodeVersion => node.versions[node.versions.length - 1]!;
 
-/** One board as the `View` the layout engine and the page read. Node id = `String(n)`; `n` is
- * set only on items (latest version has `item: true`). `version` = the ledger position. */
+/** One board as the `View` the layout engine and the page read. Node id = `String(n)`, and every
+ * node carries its number `n` (api.md 118); an old `item` mark is left out. `version` = the ledger
+ * position. */
 export function boardView(s: DrawnState, board: string): View {
   const b = s.boards.get(board);
   if (!b) throw new Error(`unknown board "${board}"`);
@@ -83,6 +84,6 @@ export function boardView(s: DrawnState, board: string): View {
 }
 
 function viewNode(n: number, v: NodeVersion): ViewNode {
-  const { ver: _ver, at: _at, agent: _agent, item, ...body } = v;
-  return { id: String(n), ...body, ...(item && { n }) };
+  const { ver: _ver, at: _at, agent: _agent, item: _item, ...body } = v;
+  return { id: String(n), ...body, n };
 }

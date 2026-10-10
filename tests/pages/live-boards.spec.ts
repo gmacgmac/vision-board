@@ -30,7 +30,7 @@ async function write(request: APIRequestContext, base: string, a: Agent, board: 
   expect((await r.json() as { results: { ok: boolean }[] }).results.every((x) => x.ok)).toBe(true);
 }
 
-const card = (title: string) => ({ type: 'node', node: { region: REGION, kind: 'question', title, item: true } });
+const card = (title: string) => ({ type: 'node', node: { region: REGION, kind: 'question', title } });
 /** A new board with one container and one card. */
 const drawn = (title: string) => [
   { type: 'board', title },

@@ -58,6 +58,15 @@ test('the count ignores nodes that are not items, and is empty when there are no
   assert.equal(regionState(region, view([node({ id: 't', kind: 'topic' })]), board(), drawn('t')).countText, '');
 });
 
+// every-node ruling 6: "N of M decided" counts only cards that need an answer; a numbered plain
+// card, commented or not, counts nowhere (assumption C).
+test('the count counts only cards that need an answer, numbered or not', () => {
+  const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, kind: 'finding' }), node({ id: '3', n: 3, kind: 'topic' })]);
+  const s = deciding(['1', 'commented'], ['2', 'commented']);
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3')).countText, '1 of 1 decided');
+  assert.equal(regionState(region, view([node({ id: '3', n: 3, kind: 'topic' })]), board(), drawn('3')).countText, '');
+});
+
 test('the count only looks at the nodes of this region', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, region: 'other' })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'acknowledged']);

@@ -797,3 +797,45 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     display name (`~/projects/example`), so an agent can check where it is. The chat panel's CLI runs
     in the open folder and its `vb` MCP gets `VB_PROJECT` set to it (`chat-access.ts` `vbServer`),
     so it always matches; a switch stops its chats (111).
+
+## Ledger v11: the kind decides (every-node BE_01, D-040 proposed)
+
+118. **The kind decides.** `LEDGER_FORMAT` becomes 11 and every ledger `$id` moves to
+    `.../schema/ledger/11/`; `openapi.json` `info.version` becomes 1.13.0. The first format that
+    takes something away (11): a node names no `item`. A v11 stored line, or a sent node item,
+    naming `item` (true or false) is refused with one problem at `/node/item` saying what replaced
+    it (`ITEM_REMOVED`; the node schema's `noItem`, which a test keeps equal to it). Lines from v2
+    to v10 that carry `item` stay valid (the node schema's `rules`, `if` on `v`), and every reader
+    ignores it: `boardView`, `show_node`'s versions, the card's change chips (`versionChanges`),
+    and an `append`, which carries no `item` onto the new line. `NODE_TYPES[kind].answer` is true
+    for `question`, `decision` and `action`: they offer `ANSWER_ACTIONS` (ack, drop, comment,
+    context, later); every other kind offers `NOTE_ACTIONS` (comment, context, later) and never
+    blocks. The act rules (`validateAct`) check an act on a card against its kind's list only: a
+    note on a group (63) takes any cards of any kinds, and Later (66) takes any card.
+119. **Every node carries its number.** The View sets `n` on every node (`boardView`), and the
+    view schema requires it. Counts (`counts`) are over the cards that need an answer; the numbered
+    reply (`replyText`) has a line for any card the person answered and lists as still open only
+    cards that need an answer. The action layer's other readers follow in 120; the page's `isItem`
+    still reads `n`, so every card shows its number and its kind's buttons (every-node FE_01).
+
+## Every card in the conversation (every-node BE_02, D-040 proposed)
+
+120. **Decided, owed and open, by kind.** `DECIDED` is ✓, ✗ or a comment (`acknowledged`,
+    `dropped`, `commented`), and only a card that needs an answer is ever decided (`isDecided`);
+    more context keeps it open. `CLOSED` is ✓ or ✗: nothing is owed on a closed card and its
+    proposals end, so a comment that decides a card is still owed a `reply` or an `append`
+    (ruling 5). On every card of every kind: `item.owed` (a comment or more context with no answer,
+    or a Later with no park), `item.new`, `item.unseen` and `item.awaiting`; so `pending` on a
+    write answer and the NEW and updates tabs cover every card. `proposal.open` and
+    `proposal.stale` stand on a card that needs an answer until ✓ or ✗; an old board's proposal on
+    another kind never shows, and a new `propose` on one fails `invalid` at `/items/{i}/n`
+    (`proposeProblem`). `list_open` lists every question, decision and action not decided plus
+    every card of any kind owed an answer or a handover. `show_node` and `show_container` give
+    every card its `status` (required). `check_responses` sorts each batch, the acts up to and
+    ending with a Send, by card number (`inCardOrder`): an act at its lowest card (a note on a
+    group at the lowest of its cards), a note on, a place for or the layout (`mode`) of a whole
+    container at the lowest card in it now, or first when it holds none, a grant answer or a revoke
+    after the cards; acts at one place keep the order made, and the ledger keeps the order of the
+    clicks. `limit` cuts in ledger order before the sort (`responsesPage`), so with `more: true`
+    the next page is `after` the highest `seq` in `responses` (`head` is past what was cut). A
+    container note's act carries no `nodes`: the agent reads its cards with `show_container`.

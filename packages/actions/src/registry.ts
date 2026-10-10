@@ -1,10 +1,19 @@
 // Every thing a person or agent can do on the board, declared once (project rule 8, api.md 19).
 // Person actions are `act` events (`ActionId`); agent actions are their own records, written
 // through `write_board` or `request_grant`, never as an `act`.
-import type { ActionId } from '../../format/src/index.ts';
+import type { ActionId, Kind } from '../../format/src/index.ts';
+import { NODE_TYPES } from '../../format/src/index.ts';
 
 export type ItemStatus = 'open' | 'acknowledged' | 'dropped' | 'commented' | 'context' | 'later';
-export const DECIDED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped']);
+/** The statuses that decide a card that needs an answer (every-node ruling 3, api.md 120): ✓, ✗
+ * or a comment. More context keeps it open. A card of any other kind is never decided. */
+export const DECIDED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped', 'commented']);
+/** The statuses that close a card outright, ✓ or ✗ (on an old board, any kind, ruling 8): nothing is
+ * owed on it and its proposals end. A comment decides but stays owed an answer (ruling 5). */
+export const CLOSED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped']);
+
+/** Whether a card of `kind` in `status` is decided: only a card that needs an answer can be. */
+export const isDecided = (kind: Kind, status: ItemStatus): boolean => NODE_TYPES[kind].answer && DECIDED.has(status);
 
 /** What every registry entry says, for people and agents alike. */
 interface Common {

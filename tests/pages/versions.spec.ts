@@ -31,7 +31,7 @@ async function write(request: APIRequestContext, a: Agent, board: string, items:
   return Math.max(...out.results.map((x) => x.seq ?? 0));
 }
 
-const card = (title: string) => ({ type: 'node', node: { region: REGION, kind: 'question', title, item: true } });
+const card = (title: string) => ({ type: 'node', node: { region: REGION, kind: 'question', title } });
 
 /** The board's own head, from `list_boards`. */
 async function headOf(request: APIRequestContext, board: string): Promise<number> {

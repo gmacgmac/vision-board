@@ -2,7 +2,7 @@
   "name": "node",
   "title": "Board node",
   "tag": "vb-node",
-  "description": "Anything the agent draws on the board, as one generic element whatever its type (D-015). Numbered nodes are items: they show the review buttons their type offers (NODE_TYPES) and reflect the person's response.",
+  "description": "Anything the agent draws on the board, as one generic element whatever its type (D-015). A numbered node (every card, with the everyNode flag) shows the review buttons its kind offers (NODE_TYPES: five on a question, decision or action, three on every other kind) and reflects the person's response.",
   "files": {
     "core": "node-core.ts (nodeState, nodeLabel, offers, isPressed; no DOM)",
     "template": "node-template.ts (nodeTemplate: the only place the markup is built)",

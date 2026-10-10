@@ -4,7 +4,8 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS,
+  PERSON_EVENTS, PERSON_TOO,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
 
@@ -242,6 +243,8 @@ export function eventProblems(input: unknown): string[] {
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');
   if (t === 'act') actRules(e, p);
   if (t === 'seen') seenRules(e, p);
+  // From v11 the kind decides; `item` stays readable on older lines (api.md 118).
+  if (t === 'node' && (e.v as number) >= 11 && isRec(e.node) && e.node.item !== undefined) p.push(`node.item: ${ITEM_REMOVED}`);
   return p;
 }
 

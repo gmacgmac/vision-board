@@ -163,7 +163,8 @@ test('Later shows while a card is dragged; a drop there saves it for later, and 
   await page.mouse.up();
   await expect.poll(() => inFrame(page, 5, 'later')).toBe(true);
   await expect(card(page, 5)).toHaveAttribute('data-status', 'later');
-  await expect(page.locator('#counts [data-tone="later"] b')).toHaveText('1');
+  // Card 5 is a finding: Later takes any card, but only cards that need an answer count (every-node ruling 6).
+  await expect(page.locator('#counts [data-tone="later"] b')).toHaveText('0');
   expect(await regionOf(page, 5)).toBe('later');
   // Out of Later, into another container: moved there and reopened.
   await drag(page, await tabOf(page, 5), await emptyIn(page, 'review'));
