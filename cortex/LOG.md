@@ -168,3 +168,4 @@
 [[2026-10-10 09:12]] [board-app] Open folder and the folder-mismatch guard checked by hand together; fixed Create in the home folder itself (refused, picker says choose a project folder) → Task: [[cortex-tasks/board/2026-10-09_board-app_open-folder.md]]
 [[2026-10-10 10:58]] [project-docs] D-038 and D-039 accepted (maintainer 445-446); steering: running the board and the MCP's folder (447-448) → Notes: `docs/decisions.md` (D-038, D-039), `.kiro/steering/vision-board-proj.md` (Running the board and connecting an agent)
 [[2026-10-10 10:58]] [board-agent] vb CLI sends its project folder as VB-Project (maintainer 449); projectOf moved to the client front door → Task: [[cortex-tasks/board/2026-10-10_board-security_folder-mismatch.md]]
+[[2026-10-10 11:41]] [board-actions] Planned U13 every node is part of the conversation (5 tasks), awaiting the maintainer's go → Task: [[cortex-tasks/board/2026-10-10_board-actions_every-node/TASK-STATUS.md]]
