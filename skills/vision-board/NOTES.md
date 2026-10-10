@@ -87,3 +87,7 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   content"; the one panel turn after it was two short paragraphs, still more than one line.
 - 2026-10-10, agent: in the panel it read with `check_responses` and did not start the turn with
   `list_open`; after a round it once called a risk "still open" (only cards that ask are open).
+- 2026-10-10, orchestrator (U13 VERIFY_01, chat panel): Kiro posted 3-4 interim chat messages per
+  turn narrating its steps; Claude kept to one or two lines. Kiro read ✗ on a yes/no question as
+  "dropped, settled" rather than "No". The skill should say: on a question, ✓ is Yes and ✗ is No;
+  in the panel, say nothing until the turn's one-line summary.

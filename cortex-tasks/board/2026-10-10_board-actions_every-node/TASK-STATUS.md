@@ -1,7 +1,8 @@
 ---
 task_name: Every node is part of the conversation
 created: 2026-10-10
-status: planned
+status: completed
+completed: 2026-10-10
 categories: [board-actions, board-format, board-ui, board-agent]
 tracker: cortex-tasks/tracker.md#U13
 ---
@@ -16,7 +17,7 @@ tracker: cortex-tasks/tracker.md#U13
 | 2 | BE_02 | 2 | [Action layer and server](./BE_02_actions-server.md) | Opus 5.5 | Completed (gates at FE_01) | check, verify, gen-check green; unit red only gallery-fixture (3, FE_01) |
 | 3 | FE_01 | 3 | [The page: every card numbered and answerable](./FE_01_page.md) | Opus 5.5 | Completed | All five gates exit 0 (BE_01, BE_02, FE_01 together); 32 screenshots updated after review |
 | 4 | T_01 | 4 | [The skill](./T_01_skill.md) | Opus 5.5 | Completed | Skill v2, scenarios 10-11, 4-turn real run (Sonnet 5.5); five gates exit 0 |
-| 5 | VERIFY_01 | 5 | [By hand with real agents](./VERIFY_01_by-hand.md) | Orchestrator | Planned | |
+| 5 | VERIFY_01 | 5 | [By hand with real agents](./VERIFY_01_by-hand.md) | Orchestrator | Completed | Claude and Kiro rounds passed; 4 findings for the maintainer |
 
 Gates after every task, run by the orchestrator: `npm test`, `npm run check`, `npm run verify`,
 `npm run gen -- --check`, `npm run test:pages`. No git commits or stash by sub-agents. Each task
@@ -70,3 +71,4 @@ park all good; chat words too long (rule added, better after, still over a line)
 skipped `list_open`. `NOTES.md` has the evidence. Gates: test 948+6, check, verify, gen-check,
 test:pages 314, all 0.
 ### VERIFY_01
+_Status:_ Completed. Claude and Kiro through the chat panel: every card numbered, plain cards three actions, a three-card comment, Later on a finding, answers in card order, nothing left owed. Findings in the task file (Send does not start a panel turn; no first board from the panel; Kiro narrates; ✗ read as "dropped" not "No").
