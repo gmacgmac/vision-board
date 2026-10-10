@@ -1,7 +1,8 @@
 ---
 task_name: Chat panel - Send hands over the answers, first board from the chat
 created: 2026-10-10
-status: in-progress
+status: completed
+completed: 2026-10-11
 tracker: cortex-tasks/tracker.md#N30,N31
 ---
 
@@ -15,7 +16,7 @@ tracker: cortex-tasks/tracker.md#N30,N31
 | 1 | BE_01 | Contract and server | Opus 5.5 | Completed 2026-10-10 | Gates green; api.md 121-122 |
 | 2 | FE_01 | Page | Opus 5.5 | Completed 2026-10-10 | Gates green; 8 screenshots updated |
 | 3 | T_01 | Skill | Opus 5.5 | Completed 2026-10-10 | Gates green; skill v2.1, scenarios 12-13, one real run |
-| 4 | VERIFY_01 | By hand | Orchestrator | Planned | |
+| 4 | VERIFY_01 | By hand | Orchestrator | Completed | Claude and Kiro passed; 3 findings |
 
 ## Implementation Notes
 
@@ -162,3 +163,17 @@ would save that read but changes `replyText` (the person-facing Reply panel too)
 a decision and on an action reads "drop" in the lines and has no `means` (ruling 4 gives words only for
 question and action ✓); the skill keeps "no, not wanted" for those. (3) No protected file needs a change.
 ### VERIFY_01
+_Status:_ Completed (orchestrator, test server 4486, a scratch empty folder).
+- Claude: in the empty folder the panel said "No boards here yet. Ask the agent to draw one."; one
+  message made "Newsletter signup review" (5 cards) and the page opened it. ✗ on question 3, ✓ on
+  action 5, a comment on finding 2, then **Send only**: the chat got "The person updated the board:
+  … 2 (finding): comment: … 3 (question): no 5 (action): done Still open: 4 … up to head 17" and
+  Claude acted at once (appended a consent line to 2, replied, "since you answered no on 3").
+  Closing words 3 sentences. Its first summary after drawing listed every card (long).
+- Kiro (new session, same board): asked for a grant on Claude's container (correct), one line after
+  the grant; ✗ on question 6 then Send: "6 (question): no" read as "answered No … settled".
+- Findings: (1) Send with no new answers still posts a message ("Still open: 4, 6" only) and the
+  agent spends a turn on it; (2) Kiro still joins its reasoning into the chat (2-4 sentences before
+  the summary), Claude's first summary is long: the skill alone narrows it but doesn't hold it to a
+  line; (3) at the default fit zoom card buttons are hidden (N13), so clicks land on the wrong card
+  easily.
