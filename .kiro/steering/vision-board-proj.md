@@ -175,7 +175,8 @@ Use these words consistently in code, docs and the UI.
 - **View**: one version of the board the agent wrote (`view-vN.json`). Views are immutable.
 - **Transcript**: the append-only record of what the person did (`transcript.jsonl`).
 - **Region**: an area of the board with one **layout mode** (flow, lanes, radial, text, grid...).
-- **Node**: anything drawn. **Item**: a node that needs a response; it has a stable **number**.
+- **Node**: anything drawn. **Item**: a card that needs an answer (a question, decision or
+  action). Every node has a stable **number**.
 - **Node type**: an entry in the fixed set of building blocks the agent draws from. It declares
   its fields and which **actions** it offers.
 - **Link**: a connection between nodes, possibly across regions.

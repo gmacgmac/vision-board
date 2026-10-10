@@ -175,3 +175,4 @@
 [[2026-10-10 13:38]] [board-agent] T_01: skill v2 (the kind decides, every card answerable, grid default, links only for flows, answers in card order, owed reply/append/park), scenarios 10-11, 4-turn real-model run → Task: [[cortex-tasks/board/2026-10-10_board-actions_every-node/T_01_skill.md]]
 [[2026-10-10 13:49]] [board-actions] U13 every node is part of the conversation completed; VERIFY_01 by hand with Claude and Kiro passed → Task: [[cortex-tasks/board/2026-10-10_board-actions_every-node/TASK-STATUS.md]]
 [[2026-10-10 13:49]] [project-docs] Tracker: removed U12 and U13 (completed), added N30 (Send starts the panel turn) and N31 (first board from the panel) → Notes: `cortex-tasks/tracker.md`
+[[2026-10-10 22:09]] [project-docs] D-040 accepted (maintainer 471); steering terminology: Item is a card that needs an answer, every node numbered → Notes: `docs/decisions.md` (D-040), `.kiro/steering/vision-board-proj.md` (Vision Board terminology)

@@ -482,3 +482,18 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: One agents file across folders (an identity would follow the person
   into every repo); refusing only writes (reads would still mislead).
 - **Task**: [[cortex-tasks/board/2026-10-10_board-security_folder-mismatch.md]]
+
+## D-040 The kind decides what needs an answer; every node is numbered
+- **Date**: 2026-10-10 · **Status**: Accepted · **From**: maintainer (chat 416-455, 471)
+- **Decision**: A card's kind decides whether it asks for an answer: `question`, `decision` and
+  `action` offer acknowledge, drop, comment, more context and later, and are counted and owed until
+  answered (✓, ✗ or a comment decides; more context keeps it open); every other kind offers
+  comment, more context and later and never blocks. Every node shows its number. The node event's
+  `item` mark is removed in ledger v11 (refused on new writes, ignored on older lines). This
+  supersedes the part of D-017 that gave numbers only to items. The `everyNode` flag off can't
+  restore the old look, since the old mark is gone; accepted, as no old boards need it.
+- **Why**: The board is a threaded conversation: the person must be able to answer any card, and
+  one rule by kind is simpler and more predictable for agents than a separate mark.
+- **Alternative rejected**: The agent's `item` mark deciding (one more thing for the agent to get
+  wrong); per-kind action lists (a finding couldn't be dropped or a topic commented).
+- **Task**: [[cortex-tasks/board/2026-10-10_board-actions_every-node/PLAN.md]]
