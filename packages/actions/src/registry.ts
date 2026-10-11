@@ -72,6 +72,11 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
 /** The review buttons an item offers. */
 export const ITEM_ACTIONS: readonly ActionId[] = ['ack', 'drop', 'comment', 'context', 'later'];
 
+/** Whether a person act is an answer: an act on an item (✓, ✗, a note, More context, Later, Reopen,
+ * a note changed or removed, a proposal turned down) or a note on a whole container. What the Send
+ * message carries (pending.ts `replyScope`) and what Send waits for (conditions `board.unsent`). */
+export const isAnswer = (action: ActionId): boolean => ACTIONS[action].onItem;
+
 /** What an agent can do besides drawing: write items (`reply`, `propose`, `park`) and the
  * `request_grant` operation (api.md 19, 24-26, 42). */
 export const AGENT_ACTION_IDS = ['reply', 'propose', 'park', 'request_grant'] as const;

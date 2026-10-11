@@ -68,6 +68,16 @@ test('pageConditions: the page reads the conditions table; marks never the open 
   assert.deepEqual(pageConditions(s, 'pricing').marks, {}, 'the person acting never marks a board changed');
 });
 
+test('pageConditions: unsent (`board.unsent`) is what Send to agent waits for, on the open board only', async () => {
+  const s = foldLedger(await allLines());
+  const act = (f: object) => applyEvent(s, { v: 8, seq: s.seq + 1, at: '2026-10-11T00:00:00Z', by: 'person', type: 'act', ...f } as LedgerEvent);
+  for (const board of ['pricing', 'roadmap']) act({ action: 'send', board });
+  assert.equal(pageConditions(s, 'pricing').unsent, false, 'nothing new since the Send');
+  act({ action: 'comment', board: 'pricing', region: s.boards.get('pricing')!.regions[0]!.id, text: 'Why?' });
+  assert.equal(pageConditions(s, 'pricing').unsent, true, 'a note on a container is new');
+  assert.equal(pageConditions(s, 'roadmap').unsent, false, 'another board is not');
+});
+
 test('a container note and a container place (3_FE_04): the folded board still equals get_board', async () => {
   const body = (f: object) => ({ board: 'roadmap', body: { type: 'act', board: 'roadmap', region: 'build', ...f } });
   const note = await h.ok<{ seq: number }>('act', body({ action: 'comment', text: 'Thin enough?' }));

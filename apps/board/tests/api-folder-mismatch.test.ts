@@ -24,6 +24,7 @@ const b = path.join(home, 'projects', 'my b');
 const inB = path.join(b, 'docs', 'notes');
 const link = path.join(home, 'b-link');
 const WRONG = "The board has switched to ~/projects/my b. Your work is in ~/projects/a. Ask the person to open it again; don't join here.";
+const JOIN_AGAIN = 'This board now has your folder open (~/projects/my b). Your secret is from ~/projects/a — call join again.';
 const REGION = { items: [{ type: 'region', key: 'r-1', region: { id: 'r', title: 'R', mode: 'grid' } }] };
 let h: Harness;
 let agentA: Joined;
@@ -72,6 +73,19 @@ test('after a switch, a secret from the folder left gets wrong-folder naming bot
     assert.equal(h.last().headers.get('www-authenticate'), null);
   }
   assert.equal(fs.readFileSync(ledgerPath(b), 'utf8'), before, 'nothing was written in the open folder');
+});
+
+test('working in the open folder with a secret from a folder joined earlier: told to join again here (field report batch 1, ruling 2)', async () => {
+  const before = fs.readFileSync(ledgerPath(b), 'utf8');
+  for (const dir of [b, inB]) {
+    const refused = await h.fails('write_board', { board: 'plans-b', body: REGION }, 401, 'not-authenticated', h.agent(agentA.secret, dir));
+    assert.equal(refused.detail, JOIN_AGAIN, dir);
+    assert.match(h.last().headers.get('www-authenticate') ?? '', /^Bearer/);
+  }
+  assert.equal((await h.fails('list_open', { board: 'plans-b' }, 401, 'not-authenticated', h.agent(agentA.secret, b))).detail, JOIN_AGAIN);
+  assert.equal(fs.readFileSync(ledgerPath(b), 'utf8'), before, 'nothing was written');
+  const joined = await h.ok('join', { body: { label: 'Folder A agent, here now' } }, { as: h.agent(undefined, b) });
+  await h.ok('list_open', { board: 'plans-b' }, { as: h.agent(joined.secret, b) });
 });
 
 test('a header naming another folder is refused on reads, join and writes; nothing is read or written', async () => {

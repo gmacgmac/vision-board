@@ -103,8 +103,9 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N26 | Other proposals: content changes, and agents without write access | **Problem:** a proposal can only acknowledge or drop a card. **Example:** an agent that may read a board but not write on it suggests a change to a card. **Solution:** the card proposal box (Stage 5, `bindCardPopover`) carries the new kinds; needs a contract change and a permissions row. | Maintainer, 2026-10-08 (220) |
 | N27 | Selection bar covers an open card box | **Problem:** the floating selection bar draws above an open proposal or handover box, hiding its top line. **Solution:** hide or move the bar while a card box is open. | VERIFY, Stage 5, 2026-10-08 |
 | N28 | Launcher and desktop app | **Problem:** starting the board means typing `npm run board` in this repo. **Example:** opening the board without a terminal. **Solution:** a launcher on a fixed port with Launch/Stop/Open, a registry of running boards so `vb-mcp` finds its board by folder, a small app built per computer (chat 398, 402, 403). Paused by the maintainer until U12 is in use. | Maintainer, 2026-10-09 |
-| N33 | Send with nothing new posts an empty round | **Problem:** in the chat panel, Send with no new answers still posts "The person updated the board: … Still open: 4, 6", and the agent spends a turn on it. **Example:** VERIFY_01 of the panel Send set (2026-10-10). **Solution (maintainer 499):** Send is disabled while there is nothing new to send, with a tooltip saying so (the same as `check_responses` answering nothing new). | VERIFY, 2026-10-10; maintainer 2026-10-11 |
 | N34 | Agents' chat words still run long in the panel | **Problem:** skill v2.1 asks for silence then one or two lines; Kiro still joins its reasoning into the chat and Claude's first summary lists every card. **Example:** VERIFY_01 of the panel Send set. **Solution:** maybe the panel folds a turn's earlier text into a "steps" line (474C option the maintainer set aside for the skill-only route); revisit after more use. Also check (maintainer 500): the panel starts Kiro with no `--agent` and no `--model` (its own defaults); a Kiro custom agent (`kiro-cli acp --agent`) could carry the skill as its prompt, and a Kiro model choice could match Claude's. | VERIFY, 2026-10-10; maintainer 2026-10-11 |
+| N35 | Card numbers per board | **Problem:** card numbers count across every board in the project, so a new board's first card is 33. **Example:** field report 73 (nclite, board `multi-bot`): risk cards written as "card 1" had to be fixed. **Solution:** each board numbers its cards from 1 (maintainer 2026-10-11); planned with retire in field-report batch 2. | Maintainer, 2026-10-11 (73) |
+| N36 | Flag a card for yourself | **Problem:** the person has no private mark for "this matters, come back to it"; Later goes to the agent and owes a handover. **Example:** maintainer 2026-10-11. **Solution:** a person-only flag stored in the ledger, never sent to agents (not in `check_responses`, the Send message or agent reads); candidate for field-report batch 2. Replaces the parked seen indicator (N29). | Maintainer, 2026-10-11 |
 
 ## MEDIUM TERM
 
@@ -129,7 +130,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 
 | ID | Item | Waiting on | Source |
 |---|---|---|---|
-| N29 | Seen indicator on cards | **Problem:** the board shows no mark for cards the person has looked at; "seen" is only recorded for cards with a NEW or "N updates" tab and only clears those tabs. **Solution:** maybe a small unread dot (mockup, chat 432A), or nothing if NEW covers it. **Waiting on:** the maintainer trying the existing NEW and updates tabs in real use. | Maintainer, 2026-10-10 (431-432) |
+| — | — | Nothing parked | — |
 
 ---
 

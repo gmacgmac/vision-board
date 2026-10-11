@@ -212,7 +212,9 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   await expect(s.locator('vb-region[data-region="held-hover"] .vb-holder-remove')).toBeVisible();
   await expect(s.locator('vb-region[data-region="held"] .vb-holder-remove')).toBeHidden();
   const states = await s.locator('.vb-send').evaluateAll((els) => els.map((e) => `${e.getAttribute('data-state')}/${e.getAttribute('data-look') ?? ''}`));
-  expect(states).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/', 'waiting/']);
+  expect(states).toEqual(['idle/', 'idle/hover', 'idle/focus', 'idle/pressed', 'sending/', 'sent/', 'error/', 'waiting/', 'disabled/']);
+  await expect(s.locator('.vb-send[data-state="disabled"]')).toHaveAttribute('aria-disabled', 'true');
+  await expect(s.locator('.vb-send[data-state="disabled"]')).toHaveAttribute('title', 'Nothing new to send');
   await expect(s.locator('.vb-send[data-state="waiting"]')).toHaveText('Waiting for agent');
   await expect(s.locator('.vb-send[data-state="waiting"]')).not.toHaveAttribute('aria-disabled', 'true');
   await expect(s.locator('.vb-send[data-state="sending"] .vb-spinner')).toBeVisible();
@@ -281,14 +283,24 @@ test('keyboard: focus on a holder shows Remove access; Enter, then Tab to confir
   expect((await holdersNow(page)).map((h) => h.agent)).not.toContain(a.agent);
 });
 
+/** The person answers on the board (setup): a note on its one card, so Send has something to send
+ * (field report batch 1, ruling 1). */
+async function answer(page: Page): Promise<void> {
+  const b = await (await page.request.get(`/api/boards/${BOARD}`)).json() as { view: { nodes: { id: string }[] }; versions: Record<string, number> };
+  const id = b.view.nodes[0]!.id;
+  const r = await page.request.post(`/api/boards/${BOARD}/act`, { data: { type: 'act', action: 'comment', n: Number(id), ver: b.versions[id], text: 'Which plans?' } });
+  expect(r.status(), await r.text()).toBe(201);
+}
+
 test('keyboard: Tab reaches Send to agent, and Enter sends', async ({ page }) => {
+  await answer(page);
   const before = await head(page);
   await openAccess(page);
   await tabTo(page, page.locator('#send'));
   await page.keyboard.press('Enter');
   await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
   await expect(page.locator('#send')).toBeFocused();
-  expect(await ledgerAfter(page, before)).toEqual([expect.objectContaining({ action: 'send', board: BOARD })]);
+  expect((await ledgerAfter(page, before)).filter((e) => e.type === 'act')).toEqual([expect.objectContaining({ action: 'send', board: BOARD })]);
 });
 
 for (const theme of THEMES) {
@@ -341,6 +353,7 @@ test('Remove access shows on hover, asks to confirm, and Cancel keeps the holder
 });
 
 test('Send records a send act on the board, read back through read_ledger', async ({ page }) => {
+  await answer(page);
   const before = await head(page);
   await openAccess(page);
   const send = page.getByRole('button', { name: 'Send to agent' });
@@ -349,10 +362,10 @@ test('Send records a send act on the board, read back through read_ledger', asyn
   await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
   await expect(page.locator('#send')).toHaveText(/Sent/);
   await expect(page.getByRole('status').filter({ hasText: 'Sent to the agent' })).toHaveCount(1);
-  const lines = await ledgerAfter(page, before);
+  const lines = (await ledgerAfter(page, before)).filter((e) => e.type === 'act');
   expect(lines).toEqual([expect.objectContaining({ type: 'act', action: 'send', board: BOARD, by: 'person' })]);
-  // "Sent" is brief: the button goes back to idle.
-  await expect(page.locator('#send')).toHaveAttribute('data-state', 'idle', { timeout: 5000 });
+  // "Sent" is brief; then nothing is new, so the button is disabled until the next answer.
+  await expect(page.locator('#send')).toHaveAttribute('data-state', 'disabled', { timeout: 5000 });
 });
 
 test('a request that arrives while the page is open shows in the strip and is announced', async ({ page, request }) => {

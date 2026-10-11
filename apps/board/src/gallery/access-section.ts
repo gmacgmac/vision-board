@@ -32,6 +32,7 @@ const SENDS: { caption: string; state: SendState; look?: 'hover' | 'focus' | 'pr
   { caption: 'Sent', state: 'sent' },
   { caption: 'Error', state: 'error' },
   { caption: 'Waiting: sent while the chat\'s agent works', state: 'waiting' },
+  { caption: 'Disabled: nothing new to send', state: 'disabled' },
 ];
 
 /** The fixture in the shape the page loads, so the strip's rows come from the same function. */

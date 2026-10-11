@@ -47,7 +47,9 @@ export interface ProposalFound { n: number; seq: number; stale: boolean }
  * answered (`proposal.open`, `proposal.stale`); `fresh`, the items the agent added in the board's
  * latest round and the person has not seen (`item.new`); `unseen`, the items whose latest version
  * the person has not seen (`item.unseen`), but a `fresh` one (NEW only); `awaiting`, the items in Later whose handover the agent still owes
- * (`item.awaiting`); `owedCards`, every card owed an answer or a handover (`item.owed`). Lines, so a batch's news can be told. */
+ * (`item.awaiting`); `owedCards`, every card owed an answer or a handover (`item.owed`); `unsent`,
+ * whether the person answered since the board's last Send, so Send to agent has something to send
+ * (`board.unsent`). Lines, so a batch's news can be told. */
 export interface PageConditions {
   marks: Record<string, BoardMark>;
   owed: Set<string>;
@@ -59,10 +61,11 @@ export interface PageConditions {
   awaiting: Set<number>;
   /** The cards the agent owes an answer or a handover (`item.owed`): "Hide decided" keeps them. */
   owedCards: Set<number>;
+  unsent: boolean;
 }
 
 export function pageConditions(s: LedgerState, board: string): PageConditions {
-  const out: PageConditions = { marks: {}, owed: new Set(), requests: [], proposals: [], fresh: new Set(), unseen: new Set(), awaiting: new Set(), owedCards: new Set() };
+  const out: PageConditions = { marks: {}, owed: new Set(), requests: [], proposals: [], fresh: new Set(), unseen: new Set(), awaiting: new Set(), owedCards: new Set(), unsent: false };
   for (const c of conditionsOf(s, { board })) {
     if (c.kind === 'board.new' || c.kind === 'board.changed') out.marks[c.board] = c.kind === 'board.new' ? 'new' : 'changed';
     else if (c.kind === 'container.owed') out.owed.add(c.container!);
@@ -72,6 +75,7 @@ export function pageConditions(s: LedgerState, board: string): PageConditions {
     else if (c.kind === 'item.unseen') out.unseen.add(c.n!);
     else if (c.kind === 'item.awaiting') out.awaiting.add(c.n!);
     else if (c.kind === 'item.owed') out.owedCards.add(c.n!);
+    else if (c.kind === 'board.unsent') out.unsent = true;
     else if (c.kind === 'proposal.open' || c.kind === 'proposal.stale') out.proposals.push({ n: c.n!, seq: c.seq!, stale: c.kind === 'proposal.stale' });
   }
   for (const n of out.fresh) out.unseen.delete(n);

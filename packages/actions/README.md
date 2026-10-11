@@ -21,7 +21,8 @@ call the same actions, and each one is recorded in the project ledger as an `act
   holds and ends, and, for a card's label, what the person does that clears it (`clearedBy`,
   read by `clearsOnSelect`); `conditionsOf`, everything that needs attention for a board and an
   asking agent; `boardNews`, the one rule behind `board.new` and `board.changed`; where a board's
-  latest round starts, for `item.new`, is `rounds.ts`),
+  latest round starts, for `item.new`, is `rounds.ts`; what the next Send carries, for
+  `board.unsent`, is `unsent.ts`, by `isAnswer` in the registry, the test `replyScope` uses too),
   what an agent owes and the person's responses (`pendingItems`, `responsesAfter`, `replyScope`, in
   `pending.ts`), the API's read views (`nodeDetail`, `linkedDetails`, `containerDetail`,
   `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), the numbered reply

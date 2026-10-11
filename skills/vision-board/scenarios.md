@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v2.1
+status: v2.2
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -15,6 +15,7 @@ Names and content are made up. Scenarios 1 and 3 are the ones VERIFY_01 runs thr
 v2 (skill v2, every card in the conversation): 1, 2, 5 and 7 updated; 10 and 11 new.
 v2.1 (skill v2.1, panel Send and first board): 12 and 13 new. In every panel scenario the agent
 writes no text until the turn's last one or two lines.
+v2.2 (skill v2.2, field report batch 1): 14 new, from the first real use's lanes board.
 
 ## 1. A review with 12 findings (panel)
 
@@ -231,3 +232,30 @@ These are the person's answers up to head 212. To read anything newer, call chec
 - **Fails if** it reads ✗ on 3 as "dropped, settled" with nothing done about the No, asks 3
   again, re-fetches the round, posts interim messages narrating its steps, or lists the cards'
   content in the chat.
+
+## 14. A plan across areas: lanes or flow (panel)
+
+**Situation.** From the first real use (field report, 2026-10-11; content made up here). On an
+empty board "Multi-bot chat", the person writes: "Plan adding a second bot to the chat: what each
+part (server, page, docs) has to do, in order." Most steps depend on a step in another part: the
+page's bot picker needs the server's bot list; the docs need the picker; the server's routing
+needs a decision from the person.
+
+**A good run**
+- Sees that most links would cross areas, so it does **not** use `lanes` (lanes share one column
+  grid by link depth, so cross-lane links draw long lines). It groups the steps by phase in one
+  `flow` (for example "Decide", "Build", "Ship"), or a `grid` per phase, with each card's area in
+  its text ("Server: ..."), and writes what crosses as words in the body ("needs card 41"), using
+  the numbers the board gave (`write_board`'s `n`), never assuming the board starts at 1.
+- Links only for a real "blocks" or "then" inside the sequence; none to show order.
+- What it needs decided (which bot answers first, the routing rule) is a `question` or
+  `decision` card, not a line in a step.
+- Titles name the step, never its number ("Add the bot list endpoint", never "Step 2: ...").
+- No `size` unless a card's content needs it.
+- Chat words: one line ("Done: Multi-bot chat, 9 steps in 3 phases, 2 to decide.").
+- Later, when the person comments that the plan should go page-first: it draws a new container
+  for the new order rather than rewriting each old card (and, once `retire` exists, retires the
+  old one).
+- **Fails if** it draws `lanes` with most links crossing lanes, numbers steps in titles, writes
+  "card 1" for a board whose cards start higher, or rewrites every old card in place for a new
+  direction.

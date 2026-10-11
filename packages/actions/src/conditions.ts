@@ -15,17 +15,18 @@ import type { ReferenceKind } from './references.ts';
 import { standing } from './proposals.ts';
 import { inLatestRound } from './rounds.ts';
 import { CLOSED, isDecided } from './registry.ts';
+import { unsentOn } from './unsent.ts';
 
 export const CONDITION_KINDS = [
   'item.owed', 'container.owed', 'item.new', 'item.unseen', 'item.awaiting', 'proposal.open', 'proposal.stale', 'grant.requested',
-  'board.drawn', 'board.new', 'board.changed',
+  'board.drawn', 'board.new', 'board.changed', 'board.unsent',
 ] as const;
 export type ConditionKind = (typeof CONDITION_KINDS)[number];
 
 /** Who is told: the person (the page), agents (their reads), or both. */
 export type Audience = 'person' | 'agent' | 'both';
-/** Where the page shows a condition; none for one only agents read. */
-export type Shows = 'picker' | 'card' | 'container' | 'strip' | 'toast';
+/** Where the page shows a condition; none for one only agents read. `send`: Send to agent. */
+export type Shows = 'picker' | 'card' | 'container' | 'strip' | 'toast' | 'send';
 /** What the person does that ends a card's label: `select` the card (the page sends its `seen`),
  * `act` on it (any act naming it but a Send, api.md 94), or the next `round` starting (a Send, then
  * the agent drawing again: rounds.ts). */
@@ -208,6 +209,15 @@ export const CONDITIONS: Rows = {
     trueWhen: 'A board other than the open one has an agent\'s line after the person\'s board seen on it; the person\'s own acts never count.',
     endsWhen: 'The person\'s board seen at or after that line.',
     derive: (s, ctx) => marked(s, ctx, 'board.changed'),
+  },
+  'board.unsent': {
+    about: 'board', audience: 'person', shows: ['send'], clearedBy: [],
+    trueWhen: 'The open board has an answer of the person\'s since its last Send that the Send message carries (registry.ts `isAnswer`, unsent.ts): ✓, ✗, a note, More context, Later, Reopen, a proposal turned down, a note on a whole container. A move into or out of Later counts through its Later or Reopen; arranging the board alone (pin, size, mode, a move between containers) and a note removed before Send do not. Send to agent is enabled only then (field report batch 1, ruling 1).',
+    endsWhen: 'The person\'s Send on the board.',
+    derive: (s, ctx) => {
+      const seq = ctx.board === undefined ? undefined : unsentOn(s, ctx.board);
+      return seq === undefined ? [] : [{ kind: 'board.unsent', board: ctx.board!, seq }];
+    },
   },
 };
 

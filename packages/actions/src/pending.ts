@@ -7,7 +7,7 @@ import { conditionsOf } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { scopeOf } from './references.ts';
-import { ACTIONS } from './registry.ts';
+import { isAnswer } from './registry.ts';
 import type { ReplyScope } from './reply.ts';
 
 /** One item the agent owes an answer on. `ask`: the person's latest comment or "needs context"
@@ -66,7 +66,7 @@ export function replyScope(s: LedgerState, board: string, since: number, agent?:
   const cards = new Set<number>();
   const regions = new Set<string>();
   for (const e of responsesAfter(s, board, since, agent)) {
-    if (!ACTIONS[e.action].onItem) continue;
+    if (!isAnswer(e.action)) continue;
     for (const n of scopeOf(s, e).cards) cards.add(n);
     if (isContainerAct(e)) regions.add(e.region!);
   }

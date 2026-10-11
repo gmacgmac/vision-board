@@ -35,7 +35,13 @@
 
 /* Send to agent */
 .vb-send { display: inline-flex; align-items: center; gap: var(--vb-space-2); }
-.vb-send[aria-disabled='true'] { cursor: progress; }
+.vb-send[data-state='sending'] { cursor: progress; }
+/* Nothing new to send (conditions `board.unsent`): a quiet outline in place of the accent fill, no
+   hover or press; still focusable, and its title says why. */
+.vb-send[data-state='disabled'], .vb-send[data-state='disabled']:hover {
+  background: var(--vb-surface-card); border-color: var(--vb-line-strong); color: var(--vb-ink-subtle); cursor: not-allowed;
+}
+.vb-send[data-state='disabled']:active { transform: none; }
 .vb-send[data-state='error'] { background: var(--vb-state-drop-fill); border-color: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
 .vb-send-mark { font-weight: var(--vb-weight-bold); }
 .vb-spinner {

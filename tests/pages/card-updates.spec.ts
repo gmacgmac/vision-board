@@ -195,10 +195,36 @@ test('Send leaves the tabs; tabbing past and hovering send nothing', async ({ pa
   await card(page, n).hover();
   await page.locator('#stage').focus();
   await tabTo(page, tab(page, n));
+  // Something to send that names no card (Send waits for an answer: field report batch 1, ruling 1).
+  const note = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', action: 'comment', board: d.board, region: 'p', text: 'All of these?' } });
+  expect(note.status(), await note.text()).toBe(201);
   await page.getByRole('button', { name: 'Send to agent' }).click();
   await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
   await expect(tab(page, n)).toHaveText('1 update');
   expect(await seenAfter(page, d.board, before)).toEqual([]);
+});
+
+test('the tab is small and quiet (field report batch 1, ruling 3): muted ink, lower case, a 24px target, amber when hovered', async ({ page, request }) => {
+  const d = await draw(request);
+  const [n] = d.n as [number];
+  await append(request, d, n, APPENDED);
+  await open(page, d);
+  await expect(tab(page, n)).toHaveText('1 update');
+  const look = () => tab(page, n).evaluate((e) => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--vb-ink-subtle)';
+    e.closest('vb-node')!.append(probe);
+    const muted = getComputedStyle(probe).color;
+    probe.remove();
+    const s = getComputedStyle(e);
+    const after = getComputedStyle(e, '::after');
+    const h = (e as HTMLElement).offsetHeight; // layout pixels: the board's zoom scales the rect
+    return { muted, color: s.color, transform: s.textTransform, height: h, target: h - parseFloat(after.top) - parseFloat(after.bottom) };
+  });
+  const rest = await look();
+  expect(rest).toMatchObject({ color: rest.muted, transform: 'none', height: 18, target: 24 });
+  await tab(page, n).hover();
+  await expect.poll(async () => (await look()).color).not.toBe(rest.muted);
 });
 
 test('keyboard only: Enter on the tab opens with focus on Next, Esc folds back to the tab, Space on a card marks it seen', async ({ page, request }) => {

@@ -546,7 +546,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     away) and, while the board stays open, at most once a minute when an agent's line arrives.
 88. **The conditions table.** What needs attention is one row per kind in `CONDITIONS`
     (`packages/actions/src/conditions.ts`): `item.owed`, `container.owed`, `item.unseen`,
-    `grant.requested`, `board.drawn`, `board.new`, `board.changed`. `conditionsOf(state, { board,
+    `grant.requested`, `board.drawn`, `board.new`, `board.changed` (and later rows: `board.unsent`, 123). `conditionsOf(state, { board,
     agent })` returns ids only (`{ kind, board, container?, n?, seq? }`). `list_open`'s `pending`
     and `unseen`, its `containers`, and `write_board`'s `pending` and `containers` read it, as do
     `get_board`'s `requests` and the page. With an agent, rows for the person only are left out and
@@ -884,3 +884,24 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     (`chat-index.ts` `attach`, once), it leaves `list_folder_chats` and is the one in use in
     `list_chats` on that board; the creator needs no grant. The page follows the same session id;
     the board write's `tool_activity` names the board to open.
+
+## Field report, batch 1 (2026-10-11)
+
+123. **Nothing new to send** (ruling 1, tracker N33). A person row in the conditions table,
+    `board.unsent` (shown on Send to agent, `shows: ['send']`): the open board has an answer of the
+    person's since its last Send that the Send message carries (`registry.ts` `isAnswer`, the same
+    test `replyScope` uses: ✓, ✗, a note, More context, Later, Reopen, a proposal turned down, a note
+    on a whole container). A move into or out of Later counts through the Later or Reopen written
+    with it; a pin, a size, a mode or a move between containers alone does not; a note written and
+    removed before Send leaves nothing. The fold keeps, per board, the lines since its last Send
+    (`unsent.ts`, `LedgerState.unsent`), so the row reads an index and walks no events. While it does
+    not hold, Send to agent is disabled: quiet, `aria-disabled`, still focusable, its title (and so
+    its description) "Nothing new to send"; a click or Enter records nothing. No contract change:
+    the server still records any `send` it is sent (`send_chat` and agents' reads are unchanged).
+124. **Join again after a folder switch** (ruling 2). When an agent's `VB-Project` header names the
+    open folder (or a folder inside it) but its secret is known only to a recent folder it joined
+    before (115), the answer is `not-authenticated` (401, with `WWW-Authenticate`), not
+    `wrong-folder`: "This board now has your folder open (`~/projects/b`). Your secret is from
+    `~/projects/a` — call join again." Its folder is open now, so joining here is right; the MCP
+    instructions already say to join again on `not-authenticated`. Without a header the answer is
+    `wrong-folder` as before (115), and a header naming another folder is refused first (114).

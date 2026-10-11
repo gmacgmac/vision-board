@@ -107,3 +107,20 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   created "Office move" (`office-move`) with a decisions `grid` (3 questions, 2 decisions, 1
   action), a linked `flow` of 7 steps and a risks `grid`; every item ok, no `join`, no grant. Its
   closing words were three sentences, one more than asked; keys began `om-`, not the board id.
+
+## Skill v2.2 (field report batch 1)
+
+- 2026-10-11, maintainer (the field report from the first real use: an nclite chat, board
+  `multi-bot`, skill v2.1; as summarised in `cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md`
+  ruling 4 and tracker N35; the report itself is not in the repo): (12) in `lanes` a card's
+  column is its link depth across the whole container (`packages/layout/src/modes/lanes.ts`,
+  `layersOf`: the longest chain of links), so cross-lane links drew long lines. (13) A lane is one
+  area or owner with its own sequence; when most links cross lanes, one `flow` grouped by phase
+  reads better, with cross-lane needs in the card text ("needs card 5"). (14) Card numbers are the
+  reading order: no step numbers in titles. (15) When the direction changes, draw a new container
+  (and retire the old one once `retire` exists); rewrite a card in place only for the same
+  subject. (17) What `s`, `m` and `l` are for, and that the person's size wins. (73, N35) Card
+  numbers count across the project, so a new board started at 33 and risk cards written as "card
+  1" had to be fixed.
+- 2026-10-11, agent: v2.2 puts each of those in the skill and adds scenario 14 (lanes or flow).
+  Not run against a model in this task (rule 17): scenario 14 is there for the maintainer's run.

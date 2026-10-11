@@ -139,12 +139,14 @@ server, the page and (through the API) agents. Nothing in them is stored, so not
   then container (D-034).
 - **Conditions** (`conditions.ts`, `CONDITIONS`, `conditionsOf`): what needs attention. Each row
   says what it is about (a reference kind), who is told (person, agent, both), where the page
-  shows it (picker, card, container, strip, toast), when it holds and when it ends, and how it is
+  shows it (picker, card, container, strip, toast, Send), when it holds and when it ends, and how it is
   derived. A condition is ids only (`{ kind, board, container?, n?, seq? }`); a component looks up
   the words it shows. An agent's rows are scoped through `PERMISSIONS`.
 
 On the page, one read (`pageConditions`, `apps/board/src/board/board-data.ts`, also the gallery's)
-gives the picker marks, the container badges, the open requests and `board.drawn`;
+gives the picker marks, the container badges, the open requests, `board.drawn` and whether Send to
+agent has anything to send (`board.unsent`: without it the button is disabled, "Nothing new to
+send", api.md 123);
 `attention.ts` runs it after every batch and on every switch, decides what is news (a request or a
 drawing line in the batch), and sends the board seen that ends the marks. Components only render.
 
@@ -411,3 +413,19 @@ behind the `everyNode` flag (on by default; `?flags=-everyNode`).
    lasso of mixed cards commented once, counts, hide while owed, the flag off, axe light and dark);
    the gallery's node section shows the cards that ask and the cards that tell in every status each
    can reach.
+
+## Field report, batch 1 (2026-10-11)
+
+Task `cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md`.
+
+1. **Send to agent, disabled.** `SendButton.svelte` gains the `disabled` state (the shell's
+   `unsent`, from `pageConditions`, `board.unsent`; api.md 123): a quiet outline in place of the
+   accent fill (`--vb-surface-card`, `--vb-line-strong`, the words in `--vb-ink-subtle`: APCA light
+   Lc 76.2, dark 48.8, a short label at Lc 45), no hover or press, `aria-disabled` and still in the
+   tab order, its title "Nothing new to send". A click, Enter or Space records nothing. The gallery's
+   Send row shows it after Waiting. Tests: `tests/pages/send-nothing-new.spec.ts`.
+2. **The "N updates" tab, smaller and quieter** (`packages/ui/src/node/node-steps.css`): lower case,
+   medium weight, 18px tall with 4px sides (the other bottom tabs stay 20px, uppercase; 1px margins
+   keep it centred on the edge beside them), `--vb-ink-subtle` on `--vb-surface-card` (a status
+   word: Lc 76.2 light, 48.8 dark). Hovered or open, its edge takes `--vb-state-context` and its
+   words `--vb-ink`. Still a button with a 24px target, still opens the stepper.

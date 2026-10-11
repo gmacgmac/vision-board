@@ -1,12 +1,17 @@
 /* A changed card (proposals-seen-parking FE_02 ruling 3, mockup 03 Part B option B; node-core.ts
-   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css) in the CHANGED
-   family, amber, like an out-of-date proposal's. Opened, the card grows by one section for the step
-   shown, right under its text, and its footer becomes the stepper (data-stepping). Tokens only. */
+   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css), small and
+   quiet (field report batch 1, ruling 3): lower case, medium weight, less padding, the muted ink on
+   the card's surface (a status word, APCA Lc 45: light 76.2, dark 48.8). Hovered or open, its edge
+   takes the CHANGED family's amber and its words the ink. It is still a button with a 24px target (its ::after),
+   and its 1px margins keep it centred on the bottom edge like the 20px tabs beside it.
+   Opened, the card grows by one section for the step shown, right under its text, and its footer
+   becomes the stepper (data-stepping). Tokens only. */
 
 vb-node .vb-node-btab[data-tab='updates'] {
-  border-color: color-mix(in srgb, var(--vb-state-context) 45%, var(--vb-line)); background: var(--vb-state-context-soft); color: var(--vb-state-context);
+  align-self: center; height: 18px; margin-block: 1px; padding: 0 var(--vb-space-1); border-color: var(--vb-line-strong); background: var(--vb-surface-card);
+  color: var(--vb-ink-subtle); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none;
 }
-vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); }
+vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
 
 /* The step: version, when and who; the change chips; what the text gained. Opaque, so its text
    reads the same over a see-through card (wireLayers). */

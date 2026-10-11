@@ -4,8 +4,8 @@
 // (`container.owed`), the requests the strip announces (`grant.requested` lines in the batch), the
 // proposals on the cards and the bar (`proposal.open`, `proposal.stale`; announced when their line
 // is in the batch), the changed cards (`item.unseen`, update-flow.ts), the cards awaiting a handover
-// (`item.awaiting`, parking.ts) and the "agent drew" toast
-// (`board.drawn`, when its line is in the batch). `pageConditions` (board-data.ts, also the
+// (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`) and the
+// "agent drew" toast (`board.drawn`, when its line is in the batch). `pageConditions` (board-data.ts, also the
 // gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
@@ -97,6 +97,7 @@ export function createAttention(d: AttentionDeps): Attention {
     awaiting = c.awaiting;
     owedCards = c.owedCards;
     if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
+    shell.unsent = c.unsent;
     const news = c.requests.filter((seq) => seq >= from);
     if (news.length) shell.requestNews = news;
     const proposed = c.proposals.map((p) => p.seq).filter((seq) => seq >= from);

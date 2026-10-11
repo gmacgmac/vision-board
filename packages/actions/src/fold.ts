@@ -3,7 +3,8 @@
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
-// and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts).
+// and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
+// and what its next Send carries (unsent.ts).
 // Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
 // first).
 import type {
@@ -19,6 +20,7 @@ import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.
 import { eventBoard, placeOf } from './references.ts';
 import { closeProposals, endProposal } from './proposals.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
+import { foldUnsent } from './unsent.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -79,6 +81,8 @@ export interface LedgerState extends DrawnState {
   modes: Map<string, Map<string, Mode>>;
   /** board -> `seq` of the person's latest Send. */
   lastSend: Map<string, number>;
+  /** board -> the lines since its last Send that the next Send carries (unsent.ts): `board.unsent`. */
+  unsent: Map<string, Set<number>>;
   /** agent -> retry key -> `seq` of the event that carried it, across the project (api.md 29). */
   keys: Map<string, Map<string, number>>;
   /** n -> latest version the person has seen. */
@@ -129,7 +133,7 @@ export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board'
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
-  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(),
+  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(), unsent: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
@@ -170,7 +174,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   switch (e.type) {
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
-    case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); break;
+    case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); if (board !== undefined) foldUnsent(s, board, e); break;
     case 'seen':
       if ('n' in e) s.seen.set(e.n, Math.max(s.seen.get(e.n) ?? 0, e.ver));
       else seeBoard(s, e.board, e.head);
@@ -208,11 +212,7 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     case 'size': if (e.size === 'auto') s.sizes.delete(e.n!); else s.sizes.set(e.n!, e.size!); break;
     case 'reject': endProposal(s.proposals.get(e.proposal!), e.seq, 'rejected'); break;
     case 'send': s.lastSend.set(e.board!, e.seq); break;
-    case 'deny': {
-      const note = s.grantNotes.get(e.request!);
-      if (note && e.text) note.text = e.text;
-      break;
-    }
+    case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
     case 'grant': case 'revoke': break; // holders live in the index
     default: applyItemAct(s, e);
   }

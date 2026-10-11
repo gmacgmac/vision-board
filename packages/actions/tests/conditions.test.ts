@@ -235,6 +235,13 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(of(l.state(), {}, 'board.changed').map((c) => c.seq), [reply], 'an agent\'s reply counts, not only drawing');
     assert.equal(boardNews(l.state(), 'b2')?.kind, 'board.changed', 'the same answer for the open board');
   },
+  'board.unsent': () => { // what counts in detail: unsent.test.ts
+    const l = v8();
+    const ack = l.act({ action: 'ack', n: 1, ver: 1 });
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'board.unsent'), [{ kind: 'board.unsent', board: 'b', seq: ack }]);
+    l.act({ action: 'send', board: 'b' });
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'board.unsent'), [], 'a Send ends it');
+  },
 };
 
 test('coverage: every condition kind has a row and a case', () => {
@@ -280,20 +287,4 @@ test('a board revoke (D-034) ends what the agent is told it owes there, and the 
   assert.deepEqual([openItems(l.state(), 'b', B), openContainers(l.state(), 'b', B)], [[], []]);
   assert.deepEqual(heard(), [revoke], 'it hears only that it lost the board');
   assert.deepEqual(kinds(l.state(), { board: 'b' }, 'item.owed', 'container.owed').map((c) => c.seq), [card, note], 'still owed to the board');
-});
-
-// ---- Board seen in the fold. ----
-
-test('a board seen keeps the highest head and moves no board head; the node form is unchanged', () => {
-  const l = v8();
-  const head = l.state().heads.get('b')!;
-  l.seenBoard('b', head);
-  l.seenBoard('b', 2);
-  l.seen(1, 1);
-  const s = l.state();
-  assert.equal(s.seenBoards.get('b'), head);
-  assert.equal(s.heads.get('b'), l.seq, 'the node seen is on board b, as before');
-  l.seenBoard('b', l.seq);
-  assert.equal(l.state().heads.get('b'), s.heads.get('b'), 'the board seen is not');
-  assert.equal(l.state().seen.get(1), 1);
 });

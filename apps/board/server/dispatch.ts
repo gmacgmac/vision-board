@@ -119,9 +119,9 @@ export async function dispatch(
   const params = readParams(match.id, match.raw, url.searchParams);
   const open = env.project.current();
   const folder = { home: env.project.home, dir: open.dir };
-  if (SPECS[match.id].agent) checkFolder(req, folder);
+  const here = SPECS[match.id].agent && checkFolder(req, folder);
   const caller = callerOf(req, match.id, {
-    person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret),
+    person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret, here),
   });
   await handlers[match.id]({
     req, res, params, ledger: open.ledger, agents: open.agents, chats: open.chats, closed: open.closed,

@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it card by card (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v2.1 (2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v2.2 (2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers count across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
@@ -93,7 +93,7 @@ a chat reply.
 | `grid` | Cards in rows, about √n columns (or `columns`) | Almost everything: findings, questions, options, an agenda |
 | `list` | One column, stacking downward | A short ranked set (3 to 5); several lists side by side |
 | `flow` | Left to right along links, with branches | A real sequence: steps, a decision path, a pipeline |
-| `lanes` | Several left-to-right flows stacked, one per lane | Steps split by owner or area (`lanes`, and each card's `lane`) |
+| `lanes` | Several left-to-right flows stacked, one per lane, on one shared column grid | Steps split by owner or area, each lane its own sequence (`lanes`, and each card's `lane`) |
 | `radial` | Rings around one centre card (`center` = its number) | Options or ideas around one topic |
 
 - **Links only for a real flow or dependency** ("blocks", "causes", "then" in a process). Never
@@ -103,6 +103,14 @@ a chat reply.
   A tall `list` pushes cards off screen; prefer `grid`.
 - In `flow` and `lanes`, every card is a step linked into the sequence. A card with no links
   lands in the first column, so cards that are not steps belong in a `grid` container beside it.
+- **How `lanes` places cards**: the lanes share one column grid, and a card's column is its link
+  depth across the whole container (the longest chain of links leading to it), not its place in
+  its own lane. A link from one lane to another pushes the target, and everything after
+  it, to the right, so cross-lane links draw long lines across the board.
+- **When to use `lanes`**: a lane is one area or owner running its own sequence; its links stay
+  inside the lane, and a link across lanes is a rare handoff. When most links would cross lanes,
+  don't use lanes: group the steps by phase in one `flow` (or a `grid` per phase), give each card
+  its area in the text, and write what crosses in the card's body ("needs card 5").
 - Several small containers, one per category, read better than one large one.
 - The person may switch a container's mode (a `mode` act). Keep their choice.
 - `center` takes a card number, which a card only has once written: draw the radial container
@@ -113,6 +121,12 @@ a chat reply.
 - Draw a whole round in one `write_board` call (up to 200 items, run in order): the board,
   containers, cards, then links. Cards are numbered in the order written, so write them in the
   order you want them read.
+- **Card numbers are the reading order.** Never put step numbers in titles ("Step 3: ...",
+  "1. Set up ..."): the card's number already shows it, and a title number goes wrong as soon as
+  a card is added or moved.
+- **Card numbers count across the whole project** (for now), so a new board's first card may be
+  33. Refer to cards by the numbers the board shows (the `n` in `write_board`'s answer, or
+  `get_board`), never assume a board starts at 1, in chat or in a card's text.
 - **Give every item a `key`.** Keys are yours across the whole project, so start them with the
   board (`pricing-f3`). A resend with the same key and content is answered `replayed` and writes
   nothing; the same key with different content fails `conflict`. A new version of a card takes a
@@ -120,7 +134,11 @@ a chat reply.
 - Name cards by key before they have numbers: `{ "type": "link", "from": { "key": "pricing-f1" },
   "to": { "key": "pricing-f2" }, "label": "blocks" }`.
 - **Title** one line. **Body** short Markdown: paragraphs, bold, lists, `###` small labels, `>`
-  callouts, short code blocks. `size` (`s`, `m`, `l`) is only a suggestion; `emphasis` sparingly.
+  callouts, short code blocks. `emphasis` sparingly.
+- **Card sizes** are three widths: `s` for a short card (a question, a line or two), `m` for a
+  paragraph, a short list or a little code, `l` for long text, code blocks or a long list. Leave
+  `size` out and the engine picks one from the body's length; suggest one only when the content
+  needs it. The person's size wins: never set a size on a card they resized.
 - **Never write coordinates.** The engine places cards; the person's moves and sizes win.
 - Card numbers never change. Name cards by number in chat ("see 47").
 - Each item is answered on its own. Fix the failed ones and resend only those, with the same
@@ -177,6 +195,9 @@ a whole container.
   `ver` you read; on `conflict`, read it again and redo the change on the new version.
 - A changed card shows the person its new version until they look at it (`unseen` in
   `list_open`).
+- **When the direction changes** (a new plan, a different way to group the work), draw a new
+  container for it rather than rewriting the old cards one by one; once `retire` exists, retire
+  the old container. Rewrite a card in place only when it is still the same subject.
 
 ## Reading the person's answers
 

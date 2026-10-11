@@ -107,6 +107,9 @@ test('after a Send and a new drawing, the older NEW goes and only the newer card
   await open(page, d);
   const older = await add(request, d, 'Card 2');
   await expect(tag(page, older)).toBeVisible();
+  // Something to send that names no card, so it ends no NEW (Send waits for an answer: field report batch 1, ruling 1).
+  const note = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', action: 'comment', board: d.board, region: 'p', text: 'All of these?' } });
+  expect(note.status(), await note.text()).toBe(201);
   await page.getByRole('button', { name: 'Send to agent' }).click();
   await expect(page.locator('#send')).toHaveAttribute('data-state', 'sent');
   await expect(tag(page, older), 'a Send alone ends nothing').toBeVisible();

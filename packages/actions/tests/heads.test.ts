@@ -10,6 +10,7 @@ import type { LedgerEvent } from '../../format/src/index.ts';
 import { readLedger } from '../../format/src/index.ts';
 import type { LedgerState } from '../src/index.ts';
 import { applyEvent, boardList, emptyState, eventBoard, foldLedger } from '../src/index.ts';
+import { scene } from './ledger-v3.ts';
 
 const FIXTURES = [
   '../../format/fixtures/roadmap.ledger.jsonl',
@@ -58,4 +59,20 @@ test('boardList: every board with its title and its own last line, in the order 
   assert.deepEqual(list.map((b) => b.board), [...s.boards.keys()]);
   for (const b of list) assert.deepEqual(b, { board: b.board, title: s.boards.get(b.board)!.title, seq: s.heads.get(b.board) });
   assert.deepEqual(boardList(emptyState()), []);
+});
+
+// The person's board seen in the fold (api.md 87): its own map, never a board head.
+test('a board seen keeps the highest head and moves no board head; the node form is unchanged', () => {
+  const l = scene();
+  l.v = 8;
+  const head = l.state().heads.get('b')!;
+  l.seenBoard('b', head);
+  l.seenBoard('b', 2);
+  l.seen(1, 1);
+  const s = l.state();
+  assert.equal(s.seenBoards.get('b'), head);
+  assert.equal(s.heads.get('b'), l.seq, 'the node seen is on board b, as before');
+  l.seenBoard('b', l.seq);
+  assert.equal(l.state().heads.get('b'), s.heads.get('b'), 'the board seen is not');
+  assert.equal(l.state().seen.get(1), 1);
 });

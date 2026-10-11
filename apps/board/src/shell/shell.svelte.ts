@@ -27,7 +27,7 @@ export interface ConfirmRequest {
 }
 
 /** The Send to agent button's own states; hover, focus and pressed are CSS. */
-export type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'waiting';
+export type SendState = 'idle' | 'sending' | 'sent' | 'error' | 'waiting' | 'disabled';
 
 /** One open grant request as the strip shows it (agentAccess flag): `container` is the region's
  * title, left out for a request for the whole board (D-034); `label` the asking agent's. */
@@ -89,6 +89,9 @@ export const shell = $state({
   chatOpen: false,
   /** Send to agent was pressed while the chat's agent was mid-turn: the answers go when it ends (board/chat-panel.ts). */
   sendWaiting: false,
+  /** The person answered on the open board since its last Send (`board.unsent`, board/attention.ts):
+   * without it Send to agent is disabled, "Nothing new to send". */
+  unsent: false,
   /** The folder the server has open (openFolder flag, board/folder.ts); null until read, or with the flag off. */
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */

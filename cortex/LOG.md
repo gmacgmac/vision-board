@@ -187,3 +187,6 @@
 [[2026-10-11 00:21]] [project-docs] Tracker: N33 ruling (Send disabled with nothing new), N34 adds the Kiro agent and model check → Notes: `cortex-tasks/tracker.md` (N33, N34)
 [[2026-10-11 00:35]] [project-docs] Steering: response rule refined (number only what needs an answer, no bare numbers, context on references, question last; maintainer 505) → Notes: `.kiro/steering/vision-board-proj.md` (How to respond to the maintainer)
 [[2026-10-11 11:46]] [board-agent] Researched Kiro agent configuration; draft vision-board agent → Task: [[cortex-tasks/board/2026-10-11_board-agent_kiro-agent-config.md]]
+[[2026-10-11 11:46]] [project-docs] Tracker: N35 card numbers per board, N36 flag a card for yourself (replaces parked N29); batch 1 of the field report started → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
+[[2026-10-11 12:09]] [board-app] Field report batch 1: Send disabled with nothing new (conditions row board.unsent, fold unsent.ts), join again when the open folder is the agent's own (401), a smaller quieter N updates tab, skill v2.2 with scenario 14 → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
+[[2026-10-11 12:15]] [project-docs] Tracker: N33 done (field report batch 1) → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
