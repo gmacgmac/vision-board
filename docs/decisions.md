@@ -497,3 +497,23 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: The agent's `item` mark deciding (one more thing for the agent to get
   wrong); per-kind action lists (a finding couldn't be dropped or a topic commented).
 - **Task**: [[cortex-tasks/board/2026-10-10_board-actions_every-node/PLAN.md]]
+
+## D-041 Each board numbers its cards; the ledger number stays the identity
+- **Date**: 2026-10-11 · **Status**: Accepted · **From**: maintainer (chat 511, 516, 519, 520, 524, 531; tracker N35)
+- **Decision**: Each board numbers its cards from 1 in the order drawn (`n`), and every request,
+  answer, MCP tool, `vb` command and the page name a card by its number on the operation's board.
+  The project-wide ledger number, given once and never reused, stays the card's identity: `id` in
+  code, `n` in the file (unchanged on every line), never shown and never in an agent's answer.
+  Board numbers are worked out on read (ledger v12), so existing boards are renumbered; the server
+  translates at its edge. A retired card keeps its number; no number is given twice on a board. No
+  feature may remove card lines from the ledger, or board numbers would shift (a purge hides lines,
+  never deletes them). Supersedes the numbering part of D-017 (numbers per project).
+- **Why**: A board's first card should be 1 (field report, N35). D-017 rejected per-board numbers
+  because renumbering would repoint references; here nothing that points at a card changes: every
+  line, index and reference keeps the identity, a card never changes board, so (board, number) and
+  identity map one to one for ever. Only numbers people wrote inside old notes can disagree
+  (accepted).
+- **Alternative rejected**: (board, number) as the identity everywhere (rewrites every index and
+  rule for no gain); project numbers taught to the agent (the field report's complaint stands);
+  writing `id` on new lines (the file would hold two names for one thing for ever).
+- **Task**: [[cortex-tasks/board/2026-10-11_board-format_field-report-batch-2/PLAN.md]]

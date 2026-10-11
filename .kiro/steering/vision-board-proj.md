@@ -109,7 +109,8 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
    carries no hue in any palette. Measure with APCA-W3 0.0.98G-4g, light and dark. A pair under
    its bar is reported, never shipped quietly; a colour that fails is fixed in its token, not per
    screen. The maintainer may overrule a tier by eye, recorded as a decision (D-009). Node states
-   (open, acknowledged, dropped, commented, needs context, saved for later, decided) are tokens too.
+   (open, acknowledged, dropped, commented, needs context, saved for later, decided, flagged) are
+   tokens too.
 4. **Every state gives visual feedback.** Controls: idle, hover, focus, pressed, loading,
    success, error, disabled. Data views: loading, empty, error, partial, stale. Review items:
    every item state above. States are part of the pattern, so a screen gets them by reusing it.
@@ -185,7 +186,9 @@ Use these words consistently in code, docs and the UI.
 - **Transcript**: the append-only record of what the person did (`transcript.jsonl`).
 - **Region**: an area of the board with one **layout mode** (flow, lanes, radial, text, grid...).
 - **Node**: anything drawn. **Item**: a card that needs an answer (a question, decision or
-  action). Every node has a stable **number**.
+  action). Every node has a stable **number** on its board (1, 2, 3... in the order drawn); the
+  ledger knows it by an identity no answer shows (D-041).
+- **Flag**: the person's private mark on a card, kept in the ledger and never sent to an agent.
 - **Node type**: an entry in the fixed set of building blocks the agent draws from. It declares
   its fields and which **actions** it offers.
 - **Link**: a connection between nodes, possibly across regions.
