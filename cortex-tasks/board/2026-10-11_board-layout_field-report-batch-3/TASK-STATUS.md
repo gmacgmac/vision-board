@@ -1,17 +1,17 @@
 ---
 task_name: Field report batch 3 - layout
 created: 2026-10-11
-status: planned
+status: in-progress
 tracker: cortex-tasks/tracker.md#M2
 ---
 
 # Field report batch 3 - Task Status
 
-> **Plan**: [PLAN.md](./PLAN.md). Needs the maintainer's go.
+> **Plan**: [PLAN.md](./PLAN.md). Go given (538).
 
 | # | ID | Task | Model | Status | Notes |
 |---|-----|------|-------|--------|-------|
-| 1 | BE_01 | Contract | Opus 5.5 | Planned | |
+| 1 | BE_01 | Contract | Opus 5.5 | In progress | |
 | 2 | BE_02 | Layout engine | Opus 5.5 | Planned | |
 | 3 | BE_03 | Server and actions | Opus 5.5 | Planned | |
 | 4 | FE_01 | Page | Opus 5.5 | Planned | |

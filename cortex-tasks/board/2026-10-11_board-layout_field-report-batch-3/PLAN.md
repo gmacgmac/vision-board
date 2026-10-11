@@ -1,7 +1,7 @@
 ---
 task_name: Field report batch 3 - layout, lines, labels, alignment, widths, show_layout
 created: 2026-10-11
-status: planned
+status: in-progress
 categories: [board-layout, board-format, board-app, board-ui, board-agent]
 tracker: cortex-tasks/tracker.md#M2
 ---
@@ -9,7 +9,7 @@ tracker: cortex-tasks/tracker.md#M2
 # Field report batch 3: layout — Plan
 
 > **From**: the field report (points 1-5, 10, 16; nclite board `multi-bot`) and the maintainer,
-> 2026-10-11 (chat 508, 509, 510, 512) · **Needs**: the maintainer's review and go
+> 2026-10-11 (chat 508, 509, 510, 512, 537, 538) · **Go**: given (538)
 
 ## What happened (the evidence)
 
