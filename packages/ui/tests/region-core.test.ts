@@ -6,7 +6,7 @@ import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
 import type { RegionNoteStage } from '../src/index.ts';
 import {
   agentChoiceText, commentLabel, MODE_HINT, retiredMarker, MODE_LABEL, NOTE_STAGE_TEXT, noteBadge, noteStage, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT,
-  RESET_NONE_HINT, regionColour, regionHolders, regionNote, regionState,
+  RESET_NONE_HINT, regionColour, regionHolders, regionNote, regionState, WIDTHS_LABEL, widthsTip,
 } from '../src/index.ts';
 
 const region: Region = { id: 'r', title: 'R', mode: 'grid' };
@@ -92,7 +92,7 @@ test('the empty message shows only when the layout drew none of the region\'s no
 
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
-  assert.deepEqual(st, { mode: 'grid', countText: '', canReset: false, canPutBack: false, commentLabel: 'Comment on container R', showEmpty: true });
+  assert.deepEqual(st, { mode: 'grid', widths: 'match', countText: '', canReset: false, canPutBack: false, commentLabel: 'Comment on container R', showEmpty: true });
 });
 
 test('Put container back is enabled only while the container itself has a place (3_FE_04 ruling 7)', () => {
@@ -174,4 +174,18 @@ test('retiredMarker: "N cards retired", named with the version it opens', () => 
   assert.deepEqual(retiredMarker(1, 40), { text: '1 card retired', label: '1 card retired from this container. Show v40, where it last appeared', version: 40 });
   assert.deepEqual(retiredMarker(3, 12), { text: '3 cards retired', label: '3 cards retired from this container. Show v12, where they last appeared', version: 12 });
   assert.deepEqual(retiredMarker(2), { text: '2 cards retired', label: '2 cards retired from this container' });
+});
+
+// Field report batch 3 ruling 5: the widths in force are the person's, else the agent's, else the
+// shown mode's default (match for grid and column, own for the rest), as the layout reads them.
+test('regionState: the card widths in force, the person\'s first, then the agent\'s, then the shown mode\'s default', () => {
+  const v = view([node({})]);
+  assert.equal(regionState({ id: 'r', mode: 'grid' }, v, board(), drawn('1')).widths, 'match');
+  assert.equal(regionState({ id: 'r', mode: 'flow' }, v, board(), drawn('1')).widths, 'own');
+  const agent: View = { ...v, regions: [{ ...region, widths: 'own' }] };
+  assert.equal(regionState({ id: 'r', mode: 'grid' }, agent, board(), drawn('1')).widths, 'own');
+  assert.equal(regionState({ id: 'r', mode: 'grid' }, agent, board({ widths: new Map([['r', 'match']]) }), drawn('1')).widths, 'match');
+  assert.equal(regionState({ id: 'r', mode: 'flow' }, v, board({ widths: new Map([['other', 'match']]) }), drawn('1')).widths, 'own');
+  assert.equal(WIDTHS_LABEL, 'Match card widths');
+  assert.deepEqual([widthsTip('match'), widthsTip('own')], ['Card widths: Match', 'Card widths: Own']);
 });

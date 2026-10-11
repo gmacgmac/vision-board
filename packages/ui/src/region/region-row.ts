@@ -13,6 +13,7 @@ export type RegionOpen = 'modes' | 'menu';
 
 const RADIO = 'button[role="radio"]';
 const COMMENT = 'button.vb-region-comment';
+const WIDTHS = 'button.vb-widths';
 const COG = 'button.vb-cog';
 const ITEM = '[role="menuitem"]';
 
@@ -28,8 +29,9 @@ export interface ModeRow {
 export function bindModeRow(host: HTMLElement): ModeRow {
   const q = <T extends HTMLElement>(s: string) => host.querySelector<T>(s);
   const radios = () => [...host.querySelectorAll<HTMLButtonElement>(RADIO)];
-  /** The row's stops in order: the six layouts, Comment (3_FE_04), then the cog. */
-  const stops = () => [...host.querySelectorAll<HTMLButtonElement>(`${RADIO}, ${COMMENT}, ${COG}`)];
+  /** The row's stops in order: the six layouts, Match card widths (widthsControl flag), Comment
+   * (3_FE_04), then the cog. */
+  const stops = () => [...host.querySelectorAll<HTMLButtonElement>(`${RADIO}, ${WIDTHS}, ${COMMENT}, ${COG}`)];
   const tools = () => q<HTMLElement>('.vb-region-tools');
   const inTools = (n: EventTarget | null) => n instanceof Node && !!tools()?.contains(n);
   const inRow = (n: EventTarget | null) => n instanceof Node && !!q('.vb-mode-row')?.contains(n);
@@ -136,7 +138,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     const t = e.target as HTMLElement;
     const radio = t.closest<HTMLElement>(RADIO);
     if (radio) openModes(radio.dataset.mode as Mode);
-    else if (t.closest(COG) || t.closest(COMMENT)) closeModes();
+    else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
   });
 
   // Leaving the row and the popover closes it, unless the keyboard is using the row.
@@ -162,8 +164,9 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   host.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest(RADIO) || t.closest(COMMENT)) {
-      // A pick, or Comment (its click bubbles on to the page, which opens the note bubble).
+    if (t.closest(RADIO) || t.closest(COMMENT) || t.closest(WIDTHS)) {
+      // A pick, Match card widths or Comment (its click bubbles on to the page, which sends the act
+      // or opens the note bubble).
       closeMenu(false);
       return closeModes();
     }

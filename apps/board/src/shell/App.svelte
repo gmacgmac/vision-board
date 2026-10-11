@@ -28,6 +28,7 @@
   let cards: HTMLElement;
   let wires: SVGSVGElement;
   let wiresTop: SVGSVGElement;
+  let marks: HTMLElement;
   let board: Board | null = $state(null);
   const keyBubble = flagOn('keyBubble', pageFlags());
   const openFolder = flagOn('openFolder', pageFlags());
@@ -39,6 +40,11 @@
   $effect(() => {
     const [c, id, past] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past];
     untrack(() => c?.show(id, past));
+  });
+  // The viewer's alignment (alignSetting flag, field report batch 3 ruling 4) changed in the "⋯" menu: lay out again.
+  $effect(() => {
+    void shell.align;
+    untrack(() => board?.relayout());
   });
   /** Send to agent; with the chat, it is the chat's message with no words when the board's session has
    *  something attached, and waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
@@ -57,7 +63,7 @@
   }
 
   onMount(() => {
-    const b = createBoard({ stage, world, regions, cards, wires, wiresTop }, bridge);
+    const b = createBoard({ stage, world, regions, cards, wires, wiresTop, marks }, bridge);
     board = b;
     void b.boot();
     return () => b.destroy();
@@ -92,6 +98,8 @@
     <svg id="wires" class="vb-wires" aria-hidden="true" bind:this={wires}></svg>
     <div id="cards" class="vb-cards" role="list" aria-label="Items, in number order" bind:this={cards}></div>
     <svg id="wires-top" class="vb-wires vb-wires-top" aria-hidden="true" bind:this={wiresTop}></svg>
+    <!-- Markers for link labels with no room on their line (linkLabels flag, board/link-marks.ts). -->
+    <div id="link-marks" class="vb-link-marks" role="group" aria-label="Link labels" hidden bind:this={marks}></div>
   </div>
   <div id="message" class="vb-message" role="status" hidden={shell.message === null}>{shell.message ?? ''}</div>
 </main>

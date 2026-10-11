@@ -51,6 +51,10 @@ export const PARKING_BOARD = 'parking';
  *  a container of three cards, two flagged by the person (one redrawn since), and a container two
  *  cards were retired from, one at a time, after the person had answered on the board. */
 export const MARKS_BOARD = 'marks';
+/** The board the layout samples use (field report batch 3, FE_01): a flow whose links' labels fit
+ *  or do not, a row of cards of three heights, and two columns of S, M and L cards, one under the
+ *  column's default (match) and one the person set to own widths. */
+export const LAYOUT_BOARD = 'layout';
 
 export interface Fixture {
   view: View;
@@ -75,6 +79,8 @@ export interface Fixture {
   parking: { view: View; state: BoardState; cards: Map<number, CardConditions>; containerReplies: readonly CardReply[] };
   /** The marks board, with each container's "N cards retired" marker as the page works it out (retired.ts). */
   marks: { view: View; state: BoardState; retired: ReadonlyMap<string, RetiredCount> };
+  /** The layout board, drawn through the board's own drawing (mini-board.ts). */
+  layout: { view: View; state: BoardState };
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -112,6 +118,7 @@ export function loadFixture(): Fixture {
       fresh: pageConditions(ledger, UPDATES_BOARD).fresh,
     },
     marks: { view: boardView(ledger, MARKS_BOARD), state: boardState(ledger, MARKS_BOARD), retired: retiredCounts(ledger, MARKS_BOARD) },
+    layout: { view: boardView(ledger, LAYOUT_BOARD), state: boardState(ledger, LAYOUT_BOARD) },
     parking: {
       view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),
       cards: new Map(parkingView.nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const]))),

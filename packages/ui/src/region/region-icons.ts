@@ -19,6 +19,15 @@ export const MODE_ICON: Record<Mode, string> = {
   row: '<rect x="2.5" y="8" width="5.5" height="8" rx="1.5"/><rect x="9.25" y="8" width="5.5" height="8" rx="1.5"/><rect x="16" y="8" width="5.5" height="8" rx="1.5"/>',
 };
 
+/** The Match card widths switch (field report batch 3 ruling 5): three cards between two rules, all
+ * one width (match), or ragged from one rule (own); the switch shows the one in force. */
+export const WIDTHS_ICON = {
+  match: '<path d="M3 3v18M21 3v18"/><rect x="6" y="4" width="12" height="4" rx="1.5"/><rect x="6" y="10" width="12" height="4" rx="1.5"/>'
+    + '<rect x="6" y="16" width="12" height="4" rx="1.5"/>',
+  own: '<path d="M3 3v18"/><rect x="6" y="4" width="12" height="4" rx="1.5"/><rect x="6" y="10" width="6" height="4" rx="1.5"/>'
+    + '<rect x="6" y="16" width="9" height="4" rx="1.5"/>',
+} as const;
+
 /** The container settings cog. */
 export const COG_ICON = '<circle cx="12" cy="12" r="3"/>'
   + '<path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/>';

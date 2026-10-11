@@ -1,8 +1,8 @@
 // Where the person puts things (split out of controller.ts in 3_FE_01, which grew it past 300
 // lines): a card dropped from its kind tab or nudged by Alt+arrows becomes a pin, R and Reset
-// places take pins away, and the layout mode and the size tier are the person's picks. Every write
+// places take pins away, and the layout mode, the card widths and the size tier are the person's picks. Every write
 // goes through the controller's `record`, so through the action layer and the I/O module (rule 8).
-import type { ActSize, Mode, View } from '../../../../packages/format/src/index.ts';
+import type { ActSize, Mode, View, Widths } from '../../../../packages/format/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import type { Box, BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { ActFields } from './io.ts';
@@ -30,6 +30,8 @@ export interface Places {
   unpin(id: string): Promise<void>;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): Promise<void>;
+  /** Match card widths in a container's mode row (field report batch 3 ruling 5): the person's act. */
+  setWidths(region: string, widths: Widths): Promise<void>;
   resetRegion(region: string): Promise<void>;
   /** Reset places for a selection (navigation FE_03): one `unpin` per pinned card, one redraw. */
   resetCards(ids: readonly string[]): Promise<void>;
@@ -57,6 +59,9 @@ export function createPlaces(d: PlaceDeps): Places {
       if (!(await d.record({ action: 'mode', region, mode }))) return;
       const r = regionBox(region);
       if (r) d.vp.reveal(r.box);
+    },
+    async setWidths(region, widths) {
+      await d.record({ action: 'widths', region, widths });
     },
     async resetRegion(region) {
       const ids = d.view().nodes.filter((n) => n.region === region && d.state().pins.has(n.id)).map((n) => n.id);

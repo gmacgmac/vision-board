@@ -136,3 +136,13 @@ test('the title line holds the retired marker after the count, hidden until upda
   assert.match(html, /<span class="vb-region-count"><\/span><button type="button" class="vb-region-retired" hidden><\/button><span class="vb-region-holders">/);
   assert.match(regionTemplate(region, { fixed: true }), /class="vb-region-retired" hidden/, 'Later too: a card can be retired from it');
 });
+
+// Field report batch 3 ruling 5 (widthsControl flag): Match card widths, a switch after the divider,
+// before Comment; out of the tab order until the row makes it a stop; none without the flag, none in
+// a fixed frame (the board sets Later's layout).
+test('the mode row: Match card widths, a switch after the divider, only with the widths option and never in a fixed frame', () => {
+  const html = regionTemplate(region, { widths: true });
+  assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-widths" role="switch" aria-checked="false" tabindex="-1" aria-label="Match card widths" data-region="review"><svg class="vb-mode-icon vb-widths-match"[^>]*>.*?<\/svg><svg class="vb-mode-icon vb-widths-own"[^>]*>.*?<\/svg><\/button><button type="button" class="vb-mseg vb-region-comment"/);
+  assert.ok(!regionTemplate(region).includes('vb-widths'), 'no switch without the option');
+  assert.ok(!regionTemplate(region, { widths: true, fixed: true }).includes('vb-widths'), 'no switch in a fixed frame');
+});

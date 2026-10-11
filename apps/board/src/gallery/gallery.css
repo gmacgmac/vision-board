@@ -85,6 +85,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
    (board.css) but flows in the page. The connector layer sits at z-index -1, so the stage makes
    its own stacking context to keep it above the stage's own canvas. */
 .g-wire-stage.vb-world { position: relative; isolation: isolate; width: calc(var(--vb-card-w) * 3); height: calc(var(--vb-space-6) * 11); border-radius: var(--vb-radius-lg); }
+/* A mini board (mini-board.ts, field report batch 3): the board's own world on the canvas, sized by
+   the page to the drawn board; its own stacking context, so the connectors behind the frames stay
+   above the canvas and a floating label stays inside the sample. */
+.g-mini { position: relative; isolation: isolate; overflow: hidden; max-width: 100%; border-radius: var(--vb-radius-lg); }
 /* The header's Agents list (D-034), open in the page flow: its panel sits under its button. */
 .g-agents .vb-agents { display: inline-block; }
 .g-agents .vb-agents-panel { position: static; margin-top: var(--vb-space-1); }

@@ -30,16 +30,18 @@ async function press(page: Page, n: number, key: string): Promise<void> {
 
 const box = async (page: Page, sel: ReturnType<Page['locator']>) => (await sel.boundingBox())!;
 
-test('C opens the bubble on the card\'s right with focus in the text; Enter adds the note, focus returns', async ({ page }) => {
+test('C opens the bubble beside the card with focus in the text; Enter adds the note, focus returns', async ({ page }) => {
   await openBoard(page);
   await press(page, 4, 'c');
   const b = bubble(page);
   await expect(b).toHaveAttribute('role', 'dialog');
   await expect(page.getByRole('dialog', { name: 'Note on 4' })).toBeVisible();
-  await expect(b).toHaveAttribute('data-side', 'right');
+  // Its right, unless that would cover card 5's footer buttons (field report batch 3 FE_01): here,
+  // zoomed out to fit, it has no clear place there and opens on the left.
+  await expect(b).toHaveAttribute('data-side', 'left');
   await expect(text(page)).toBeFocused();
   const [c, o] = [await box(page, card(page, 4)), await box(page, b)];
-  expect(o.x).toBeGreaterThan(c.x + c.width);
+  expect(o.x + o.width).toBeLessThan(c.x);
   await page.keyboard.type('First line');
   await page.keyboard.press('Shift+Enter');
   await page.keyboard.type('second line');
@@ -167,12 +169,11 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     await openBoard(page);
     await zoomToFull(page);
-    // On card 6, the last in its row, the bubble opens over empty board. Beside card 4 it covers
-    // card 5, and since a flow row lines up by its tops (field-report batch 3 ruling 4) card 5's
-    // buttons sit at the bubble's edge, which axe reports as a target too small: a matter for the
-    // bubble's placement (BE_02 hand-off to FE_01), not for the bubble this test checks.
-    await press(page, 6, 'c');
-    await expect(page.getByRole('dialog', { name: 'Note on 6' })).toBeVisible();
+    // Beside card 4 the bubble covers card 5; it opens clear of card 5's footer buttons (field
+    // report batch 3 FE_01), so none of them sits at its edge as a target too small.
+    await press(page, 4, 'c');
+    // The Send above made 4's note history, so C starts a new one.
+    await expect(page.getByRole('dialog', { name: 'Note on 4' })).toBeVisible();
     await expectNoAxeViolations(page);
     await page.keyboard.press('Escape');
   });

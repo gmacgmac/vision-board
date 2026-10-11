@@ -139,6 +139,28 @@ body {
 .vb-wires.settling .vb-wire { opacity: 0; }
 .vb-wire { transition: opacity var(--vb-motion-fast) linear; }
 .vb-wire-label { font: var(--vb-text-xs) var(--vb-font); fill: var(--vb-ink-subtle); paint-order: stroke; stroke: var(--vb-surface-canvas); stroke-width: 4px; }
+/* A label on its line (linkLabels flag, link-labels.ts): a canvas-coloured tag, so the line does not
+   show through, as wide as the layout kept for it. A label with no room is a marker (link-marks.ts):
+   a ring on the line in a 24px target, in its own layer above the cards; hovering or focusing it
+   floats the label (the shared tip, tip/tip.css) above everything (z 5, over an open frame's 4). */
+.vb-wire-tag rect { fill: var(--vb-surface-canvas); }
+.vb-wire-tag .vb-wire-label { stroke: none; }
+.vb-link-marks { position: absolute; left: 0; top: 0; }
+.vb-link-mark { position: absolute; left: -12px; top: -12px; z-index: 1; }
+.vb-link-mark[data-tip-open] { z-index: 5; }
+.vb-link-mark-btn {
+  display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--vb-wire); cursor: help;
+}
+.vb-link-mark-btn::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; background: var(--vb-surface-canvas);
+}
+.vb-link-mark-btn:hover, .vb-link-mark[data-tip-open] .vb-link-mark-btn { color: var(--vb-wire-hot); }
+.vb-link-mark-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+.vb-link-mark-btn:active { transform: scale(0.9); }
+.vb-link-mark .vb-link-tip { top: calc(100% + var(--vb-space-1)); left: 50%; transform: translateX(-50%); }
+.vb-link-mark[data-tip-open] .vb-link-tip { display: block; }
+.vb-wires.settling ~ .vb-link-marks { opacity: 0; }
 .vb-lane { fill: var(--vb-lane-band); }
 .vb-lane.odd { fill: transparent; }
 .vb-lane-label { font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); fill: var(--vb-ink-subtle); }

@@ -3,9 +3,10 @@
      style as AppIcon: a 24px grid, 1.5 stroke, currentColor. With the toolbarMenu flag: Agents (a
      bot), Send to agent (a bot with a send arrow), Reply (a quote mark) and the "⋯" menu (more); with the openFolder flag,
      Open folder… (a folder); in the folder picker, a cloud storage place (a cloud); with the cardFlag flag,
-     the "N flagged" chip (a flag, its cloth filled). -->
+     the "N flagged" chip (a flag, its cloth filled); with the alignSetting flag, Centre cards (three cards
+     of different heights centred on a line). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -30,6 +31,8 @@
     <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
   {:else if name === 'flag'}
     <path d="M6 21V4" /><path d="M6 5h12l-3 4.5 3 4.5H6z" fill="currentColor" />
+  {:else if name === 'align'}
+    <path d="M2 12h20" /><rect x="4" y="8" width="4" height="8" rx="1" /><rect x="10" y="5" width="4" height="14" rx="1" /><rect x="16" y="9" width="4" height="6" rx="1" />
   {:else if name === 'cloud'}
     <path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5z" />
   {:else}

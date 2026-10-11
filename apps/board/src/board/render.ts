@@ -39,7 +39,8 @@ export interface RegionSet {
   clear(): void;
 }
 
-export function createRegionSet(host: HTMLElement): RegionSet {
+/** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag). */
+export function createRegionSet(host: HTMLElement, opts: { widths?: boolean } = {}): RegionSet {
   const els = new Map<string, VbRegionElement>();
   const drawn = new Map<string, string>();
   const shown = new Map<string, { box: string; state: string }>();
@@ -63,7 +64,7 @@ export function createRegionSet(host: HTMLElement): RegionSet {
           els.set(r.id, el);
         }
         if (drawn.get(r.id) !== key) {
-          el.render(r, r.id === LATER_REGION ? LATER_FRAME : undefined);
+          el.render(r, r.id === LATER_REGION ? LATER_FRAME : { widths: opts.widths === true });
           drawn.set(r.id, key);
           shown.delete(r.id);
         }

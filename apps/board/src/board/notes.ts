@@ -18,6 +18,7 @@ import type { ActFields } from './io.ts';
 import type { AskDiscard } from './note-discard.ts';
 import { bindDiscard, mayLeave } from './note-discard.ts';
 import type { Viewport } from './viewport.ts';
+import { footersNear } from './bubble-clear.ts';
 
 export interface NoteDeps {
   stage: HTMLElement;
@@ -228,7 +229,9 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     const at = anchorBox(open);
     if (!at) return close(false);
     const size = { w: bubble.offsetWidth, h: bubble.offsetHeight };
-    bubble.place(placeBubble(at, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }));
+    // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).
+    const avoid = footersNear(d.layout(), d.card, d.vp, at, size, open.anchor);
+    bubble.place(placeBubble(at, size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, avoid));
   }
 
   function close(focus = true) {

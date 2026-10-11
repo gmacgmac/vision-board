@@ -1,8 +1,8 @@
 // Region pattern, layer 1 (core): what a region's frame shows for the person's current state.
 // No DOM, so every rule here is unit-tested under plain Node; the element only applies the
 // result. Geometry (position, size) is the page's job and is not here.
-import type { Mode, Region, View } from '../../../format/src/index.ts';
-import { NODE_TYPES } from '../../../format/src/index.ts';
+import type { Mode, Region, View, Widths } from '../../../format/src/index.ts';
+import { NODE_TYPES, widthsOf } from '../../../format/src/index.ts';
 import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
 import { isDecided, statusOf } from '../../../actions/src/index.ts';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
@@ -30,6 +30,11 @@ export const MODE_HINT: Record<Mode, string> = {
 /** The popover's foot: the layout the agent drew the container in (the view's mode, not the
  * person's pick). */
 export const agentChoiceText = (mode: Mode): string => `The agent chose ${MODE_LABEL[mode]} for this container.`;
+
+/** The Match card widths switch's name (widthsControl flag, field report batch 3 ruling 5); its
+ * state is `aria-checked`, and its tooltip says which widths are in force (`widthsTip`). */
+export const WIDTHS_LABEL = 'Match card widths';
+export const widthsTip = (w: Widths): string => `Card widths: ${w === 'match' ? 'Match' : 'Own'}`;
 
 /** Under a disabled "Reset places" in the settings menu: why there is nothing to reset. */
 export const RESET_NONE_HINT = 'No cards moved';
@@ -135,6 +140,9 @@ export interface RegionNoteResizeDetail { region: string; height: number }
 export interface RegionState {
   /** The layout mode in force (the engine's choice, after the person's pick). */
   mode: Mode;
+  /** The card widths in force (`widthsOf`: the person's, else the agent's, else the mode's default):
+   * the Match card widths switch is on for `match`. */
+  widths: Widths;
   /** "<decided> of <items> decided"; empty when the region has no items. */
   countText: string;
   /** Whether "Reset places" in the settings menu is enabled: at least one node of the region is
@@ -203,6 +211,7 @@ export function regionState(
   const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true, replies);
   return {
     mode: r.mode,
+    widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id)),
     countText: items.length ? `${decided} of ${items.length} decided` : '',
     canReset: nodes.some((n) => s.pins.has(n.id)),
     canPutBack: s.regionPins.has(r.id),

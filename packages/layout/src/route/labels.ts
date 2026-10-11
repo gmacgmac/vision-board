@@ -33,5 +33,27 @@ export function placeLabel(pts: Point[], text: string, cards: readonly Box[], ta
     taken.push(box);
     return { ...at, fits: true };
   }
-  return { ...along(pts, Math.min(FROM_PORT + 4, lengthOf(pts) / 2)), fits: false };
+  return { ...markerAt(pts, cards, taken), fits: false };
+}
+
+/** A marker's room on the page: a 24 px target (WCAG 2.5.8), px. */
+export const MARK = 24;
+/** How far apart the places a marker tries are along its line, px. */
+const MARK_STEP = 4;
+
+/** Where a marker goes: the first point on the line from near the source whose target covers no
+ *  card, label or earlier marker (added to `taken`); with none in the first half of the line, the
+ *  first point anyway (FE_01: two markers 18 px apart were one target over another). */
+function markerAt(pts: Point[], cards: readonly Box[], taken: Box[]): Point {
+  const first = Math.min(FROM_PORT + 4, lengthOf(pts) / 2);
+  const box = (p: Point) => ({ x: p.x - MARK / 2, y: p.y - MARK / 2, w: MARK, h: MARK });
+  for (let d = first; d <= lengthOf(pts) / 2; d += MARK_STEP) {
+    const p = along(pts, d);
+    if (cards.some((c) => overlaps(box(p), c, 1)) || taken.some((t) => overlaps(box(p), t, 1))) continue; // 1 px spare for rounding
+    taken.push(box(p));
+    return p;
+  }
+  const p = along(pts, first);
+  taken.push(box(p));
+  return p;
 }

@@ -46,6 +46,8 @@ import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
 import { flagSection } from './flag-section.ts';
 import { retiredSection } from './retired-section.ts';
+import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
+import { drawMiniBoards } from './mini-board.ts';
 
 interface PatternInfo {
   name: string;
@@ -137,8 +139,12 @@ function build(): void {
   if (flagOn('openFolder', flags)) main.append(folderSection());
   if (flagOn('cardFlag', flags)) main.append(flagSection(fx));
   if (flagOn('retiredMarker', flags)) main.append(retiredSection(fx));
+  if (flagOn('linkLabels', flags)) main.append(linkLabelSection(fx));
+  if (flagOn('alignSetting', flags)) main.append(alignSection(fx));
+  if (flagOn('widthsControl', flags)) main.append(widthsSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
+  drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
 
 defineBoardElements();

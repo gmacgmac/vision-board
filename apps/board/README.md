@@ -26,7 +26,14 @@ The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), s
 card identity, while everything it draws and sends names a card by its number on its board (api.md
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
 flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retired.ts`, retiredMarker
-flag) and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller.
+flag) and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
+3: `wires.ts` draws a link's label on its line where the layout found it room (`link-labels.ts`)
+and a marker that floats the label on hover and focus where it did not (`link-marks.ts`, linkLabels
+flag); `cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the
+switch in each frame's mode row) at the width it is drawn at; the viewer's alignment is the "⋯"
+menu's Centre cards (`src/shell/align.ts`, alignSetting flag); and `bubble-clear.ts` keeps the note
+bubble clear of a neighbouring card's footer buttons. The gallery draws these through the board's
+own drawing (`src/gallery/mini-board.ts`).
 
 One server per ledger: `server.ts` takes `<VB_PROJECT>/.visionboard/lock` (`server/lock.ts`)
 before it opens the ledger, because a second writer would fork it. The file is JSON (`host`, `pid`,

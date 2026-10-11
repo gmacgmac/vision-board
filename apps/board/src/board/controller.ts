@@ -1,16 +1,14 @@
-// The board controller: holds the project ledger state (live.ts), works the open board out from it
-// (board-data.ts), draws what changed (draw.ts), and routes every person action through the action
-// layer and the I/O module. Layout, formats and actions live in packages/; the modules beside this
-// one wire them to the canvas: boards.ts (boot, picker, kept view), attention.ts (marks, badges,
-// toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
-// access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes),
-// selection.ts and selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes,
-// sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts), versions.ts (the version
-// dropdown, the read-only past view), finder.ts (the container finder), board-edit.ts (New board,
-// Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards), parking.ts (handover, replies),
-// chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the person's flag,
-// cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts
-// (the toolbar's numbers). Plain TypeScript (D-005).
+// The board controller: holds the project ledger state (live.ts), works the open board out from it (board-data.ts), draws
+// what changed (draw.ts), and routes every person action through the action layer and the I/O module. Layout, formats and
+// actions live in packages/; the modules beside this one wire them to the canvas: boards.ts (boot, picker, kept view),
+// attention.ts (marks, badges, toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
+// access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes), selection.ts and
+// selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes, card widths, sizes), moves.ts (containers,
+// Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), finder.ts (the
+// container finder), board-edit.ts (New board, Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards),
+// parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
+// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts (the
+// toolbar's numbers). Plain TypeScript (D-005).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -59,6 +57,7 @@ export interface Board {
   command(id: CommandId): void;
   goToContainer(id: string): boolean;
   toggleHide(): void;
+  relayout(): void; // the viewer's alignment changed (alignSetting flag, field report batch 3 ruling 4): lay out again
   /** Allow or Refuse a grant request, Remove access (agentAccess flag, access-flow.ts). */
   access: AccessFlow;
   /** The proposals notice's Review and Accept all (proposals flag, proposal-flow.ts). */
@@ -77,12 +76,12 @@ const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() 
 export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const { stage, world } = els;
   const vp = new Viewport(stage, world, flagOn('hideControlsZoomedOut', pageFlags())); // N13, rule 12
-  // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests,
-  // holders and Send (agentAccess, D-027); connectors behind frames and cards (wireLayers, D-032);
-  // the agent's proposals on cards and the bar (proposals, FE_01); changed cards and seen (cardUpdates, FE_02); NEW (newCards).
+  // Behind flags (rule 12): card size tiers and their control (nodeSize, D-030); grant requests, holders and Send (agentAccess, D-027);
+  // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
+  // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring] = [on('nodeSize'), on('agentAccess'), on('wireLayers'),
-    on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl] = [on('nodeSize'), on('agentAccess'),
+    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -121,7 +120,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, vp, sizing, access, layers, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, vp, sizing, access, layers, labels, widthsControl, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, retired: () => S.retired,
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n) }),
   });
@@ -245,7 +244,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq) => void showVersion(seq),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq) => notes.show(id, seq), setSize: places.setSize,
-    setMode: (region, mode) => void places.setMode(region, mode),
+    setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
     ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
@@ -290,6 +289,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
     toggleHide,
+    relayout: () => { if (S.data) redraw(); },
     access: accessFlow,
     proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)

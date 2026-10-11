@@ -138,8 +138,9 @@ test('the "⋯" menu: Theme, Hide decided and Reply as rows with their keys; a c
   await expect(menu(page)).toBeVisible();
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true');
   const rows = menu(page).locator('[role^="menuitem"]');
-  // The openFolder flag (on by default) adds Open folder… last (open-folder.spec.ts tests it).
-  await expect(rows).toHaveText([/Theme: system/, /Hide decided.*H/, /Reply/, /Open folder…/]);
+  // The alignSetting flag (on by default) adds Centre cards after Hide decided (layout-controls.spec.ts
+  // tests it), the openFolder flag Open folder… last (open-folder.spec.ts).
+  await expect(rows).toHaveText([/Theme: system/, /Hide decided.*H/, /Centre cards/, /Reply/, /Open folder…/]);
   await expect(rows.first()).toBeFocused();
   // Hide decided: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
   await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide decided/ })).toHaveAttribute('aria-checked', 'false');
@@ -183,11 +184,11 @@ test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide de
   await page.keyboard.press('ArrowDown');
   await expect(rows.nth(1)).toBeFocused();
   await page.keyboard.press('End');
-  await expect(rows.nth(3)).toBeFocused();
+  await expect(rows.nth(4)).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(rows.nth(0)).toBeFocused();
   await page.keyboard.press('ArrowUp');
-  await expect(rows.nth(3)).toBeFocused();
+  await expect(rows.nth(4)).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(menu(page)).toBeHidden();
   await expect(menuButton(page)).toBeFocused();

@@ -4,9 +4,13 @@
 // touches moved, or when a neighbour on the same side of a card moved its port. The SVG's children
 // stay in the order a full draw writes them: lanes, then connectors, then labels, each in link order.
 // With the wireLayers flag (D-032) the page puts this SVG behind frames and cards, and `top`, an SVG
-// above the cards, repeats the focused card's connectors.
+// above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on
+// its line where the layout found it room (link-labels.ts), else a marker does (link-marks.ts, in
+// `marks`, a layer outside this SVG); off, every label is drawn at the middle of its line.
 import type { BoardLayout, Route } from '../../../../packages/layout/src/index.ts';
 import { esc } from '../../../../packages/ui/src/index.ts';
+import { fitLabel, labelElement, labelMarkup, tagAt } from './link-labels.ts';
+import { createLinkMarks } from './link-marks.ts';
 import { work } from './work.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -14,7 +18,7 @@ const NS = 'http://www.w3.org/2000/svg';
 const marker = (id: string) =>
   `<marker id="${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1L9 5L1 9z"/></marker>`;
 
-interface Drawn { path: SVGPathElement; label: SVGTextElement | null; look: string }
+interface Drawn { path: SVGPathElement; label: SVGGElement | null; look: string }
 
 export interface Wires {
   /** Draw `layout`'s connectors; `focus` is the card whose links are highlighted. */
@@ -24,7 +28,11 @@ export interface Wires {
 
 const keyOf = (r: Route) => `${r.from}>${r.to}`;
 
-export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
+/** `top`: the layer above the cards (wireLayers flag); `labels`: the linkLabels flag, with `marks`, the
+ *  markers' layer. */
+export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }): Wires {
+  const on = !!labels;
+  const marks = labels && createLinkMarks(labels.marks);
   let groups: { lanes: SVGGElement; paths: SVGGElement; labels: SVGGElement } | null = null;
   let lanesSrc = '';
   let topSrc = '';
@@ -41,9 +49,10 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
   }
 
   /** The focused card's connectors and labels, drawn again above the cards. */
-  const topOf = (routes: Route[]) => routes.map((r) =>
-    `<path class="vb-wire hot" d="${r.d}" marker-end="url(#arrow-hot)"/>`
-    + (r.label ? `<text class="vb-wire-label" x="${r.mid.x}" y="${r.mid.y - 6}" text-anchor="middle">${esc(r.label)}</text>` : '')).join('');
+  const topOf = (routes: Route[]) => routes.map((r) => {
+    const at = tagAt(r, on);
+    return `<path class="vb-wire hot" d="${r.d}" marker-end="url(#arrow-hot)"/>` + (at ? labelMarkup(r.label!, at, on) : '');
+  }).join('');
 
   function lanesOf(layout: BoardLayout): string {
     return layout.regions.flatMap((r) => (r.lanes ?? []).map((l, i) =>
@@ -83,10 +92,12 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
       }
       let prevPath: Element | null = null;
       let prevLabel: Element | null = null;
+      const fit: SVGGElement[] = [];
       for (const r of layout.routes) {
         const key = keyOf(r);
         const h = hot(r);
-        const look = `${r.d}|${h}|${r.label ?? ''}|${r.mid.x},${r.mid.y}`;
+        const at = tagAt(r, on);
+        const look = `${r.d}|${h}|${r.label ?? ''}|${at ? `${at.x},${at.y}` : ''}`;
         let d = drawn.get(key);
         if (!d) {
           d = { path: document.createElementNS(NS, 'path'), label: null, look: '' };
@@ -96,13 +107,9 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
           d.path.setAttribute('class', `vb-wire${h ? ' hot' : ''}`);
           d.path.setAttribute('d', r.d);
           d.path.setAttribute('marker-end', `url(#${h ? 'arrow-hot' : 'arrow'})`);
-          if (r.label) {
-            d.label ??= document.createElementNS(NS, 'text');
-            d.label.setAttribute('class', 'vb-wire-label');
-            d.label.setAttribute('x', String(r.mid.x));
-            d.label.setAttribute('y', String(r.mid.y - 6));
-            d.label.setAttribute('text-anchor', 'middle');
-            d.label.textContent = r.label;
+          if (at) {
+            d.label = labelElement(r.label!, at, on, d.label ?? undefined);
+            fit.push(d.label);
           } else {
             d.label?.remove();
             d.label = null;
@@ -117,12 +124,16 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement): Wires {
           prevLabel = d.label;
         }
       }
+      // Reads after the writes: a label the font runs wider than its tag is squeezed into it.
+      if (on) fit.forEach(fitLabel);
+      marks?.draw(layout.routes);
     },
     clear() {
       groups = null;
       svg.innerHTML = '';
       if (top) top.innerHTML = topSrc = '';
       drawn.clear();
+      marks?.clear();
     },
   };
 }

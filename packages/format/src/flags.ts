@@ -123,6 +123,21 @@ export const FLAGS = {
     default: true,
     description: 'A container the agent retired cards from, one at a time, shows a small "N cards retired" marker in its title line; it opens the board version where they last appeared (read-only, with the versionView flag). Retired cards and containers are gone from the board either way. Off, no marker.',
   },
+  linkLabels: {
+    // On by default (field report batch 3 ruling 3, FE_01); ?flags=-linkLabels turns it off.
+    default: true,
+    description: 'A link\'s label sits on its line near the source end, on a background so the line does not show through, wherever the layout found it room (`Route.labelAt.fits`); where it did not, a small marker sits on the line, and hovering or focusing the marker floats the label above everything (WCAG 1.4.13: hoverable, persistent, Esc dismisses). Off, every label is drawn at the middle of its line as before.',
+  },
+  alignSetting: {
+    // On by default (field report batch 3 ruling 4, FE_01); ?flags=-alignSetting turns it off.
+    default: true,
+    description: 'The "⋯" menu has Centre cards, a per-viewer setting kept in this browser (vb.align) and never sent to an agent: off (the default), a row of cards lines up by their tops and a column by their left edges; on, both are centred. Off, the menu has no such row and cards line up by their tops and left edges.',
+  },
+  widthsControl: {
+    // On by default (field report batch 3 ruling 5, FE_01); ?flags=-widthsControl turns it off.
+    default: true,
+    description: 'Each container\'s mode row has a Match card widths switch: on, every card in a column takes the width of its widest card; off, each card keeps its own width. It sends the person\'s `widths` act (api.md 132); the agent may set a container\'s widths when drawing. Off, no switch; the agent\'s or the layout\'s default widths still apply.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

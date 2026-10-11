@@ -2,7 +2,7 @@
 // (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
 // focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
 // controller. Split out of controller.ts (N12_FE_01).
-import type { ActionId, ActSize, Mode } from '../../../../packages/format/src/index.ts';
+import type { ActionId, ActSize, Mode, Widths } from '../../../../packages/format/src/index.ts';
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import { routeLinks } from '../../../../packages/layout/src/index.ts';
 import type { View } from '../../../../packages/format/src/index.ts';
@@ -19,6 +19,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   showNote(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
+  /** Match card widths in a container's mode row (widthsControl flag): the widths a press sets. */
+  setWidths(region: string, widths: Widths): void;
   resetRegion(region: string): void;
   /** A container's title line (3_FE_04): Comment and the cog's "Put container back". The note
    *  preview and block report their own presses (vb-region-note, region-notes.ts). */
@@ -86,6 +88,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (sizeBtn && isSizePick(pick)) return h.setSize(cardOf(sizeBtn), pick);
     const modeBtn = t.closest<HTMLButtonElement>('button[data-mode]');
     if (modeBtn) return h.setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
+    const widthsBtn = t.closest<HTMLButtonElement>('button.vb-widths[data-widths]');
+    if (widthsBtn) return h.setWidths(widthsBtn.dataset.region!, widthsBtn.dataset.widths as Widths);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');
     if (reset) return h.resetRegion(reset.dataset.reset!);
     const back = t.closest<HTMLButtonElement>('button[data-put-back]');

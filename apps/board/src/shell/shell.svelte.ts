@@ -6,6 +6,8 @@ import type { BoardMark } from '../board/board-data.ts';
 import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
 import type { ProposalRow } from '../board/proposals.ts';
+import type { Align } from '../../../../packages/layout/src/index.ts';
+import { keptAlign } from './align.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
 
@@ -67,6 +69,9 @@ export const shell = $state({
   replyText: '',
   replyOpen: false,
   hide: false,
+  /** The viewer's alignment (alignSetting flag, field report batch 3 ruling 4): the "⋯" menu's Centre
+   *  cards; kept in this browser (align.ts). The board lays out again when it changes (App.svelte). */
+  align: keptAlign() as Align,
   message: null as string | null,
   toast: null as Toast | null,
   confirm: null as ConfirmRequest | null,

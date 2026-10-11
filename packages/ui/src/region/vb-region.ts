@@ -7,7 +7,7 @@
 // settings menu are region-row.ts.
 import type { Mode, Region } from '../../../format/src/index.ts';
 import type { RegionState } from './region-core.ts';
-import { regionColour } from './region-core.ts';
+import { regionColour, widthsTip } from './region-core.ts';
 import type { ModeRow, RegionOpen } from './region-row.ts';
 import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
@@ -73,6 +73,7 @@ export function defineVbRegion(): void {
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-mode]'))
         b.setAttribute('aria-checked', String(b.dataset.mode === st.mode));
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.toggleAttribute('data-current', t.dataset.tile === st.mode);
+      this.applyWidths(st);
       this.row.sync();
       this.piece('.vb-region-count').textContent = st.countText;
       const reset = this.piece('[data-reset]');
@@ -119,6 +120,15 @@ export function defineVbRegion(): void {
 
     titleLine(): HTMLElement {
       return this.piece('.vb-region-head');
+    }
+
+    /** The Match card widths switch (widthsControl flag): on for `match`; a press sends the other. */
+    private applyWidths(st: RegionState): void {
+      const b = this.querySelector<HTMLButtonElement>('.vb-widths');
+      if (!b) return;
+      b.setAttribute('aria-checked', String(st.widths === 'match'));
+      b.title = widthsTip(st.widths);
+      b.dataset.widths = st.widths === 'match' ? 'own' : 'match';
     }
 
     /** "N cards retired" (retiredMarker flag): its words and name, and the version a press opens;

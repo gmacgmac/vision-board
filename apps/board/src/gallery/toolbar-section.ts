@@ -39,6 +39,6 @@ export function toolbarSection(fx: Fixture): HTMLElement {
     meta,
     group('Wide', 'A window wider than 1500px: the buttons show their words.', sample(fx, false)),
     group('Narrow', 'A window of 1500px or less: Agents, Send to agent and Chat show their icon (Agents with its count); the words stay for screen readers and the tooltip says them.', sample(fx, true)),
-    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide decided is a checkbox row; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, true)));
+    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide decided is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, true)));
   return box;
 }

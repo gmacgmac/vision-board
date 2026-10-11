@@ -54,3 +54,28 @@ test('labelSize grows with the text', () => {
   assert.ok(labelSize('a much longer label').w > labelSize('yes').w);
   assert.equal(labelSize('yes').h, labelSize('no').h);
 });
+
+// FE_01 (accessibility): a marker is a 24 px target on the page (WCAG 2.5.8), so two markers never
+// sit closer than that; one whose place near the source is taken moves on along its own line.
+test('markers keep a target\'s room from each other and from cards, each on its own line', () => {
+  const boxes = new Map<string, Box>([
+    ['a', { x: 0, y: 100, w: 200, h: 100 }], ['b', { x: 272, y: 0, w: 200, h: 100 }], ['c', { x: 272, y: 200, w: 200, h: 100 }],
+  ]);
+  const links: Link[] = [{ from: 'a', to: 'b', label: 'a label far too long for its line' }, { from: 'a', to: 'c', label: 'another label far too long' }];
+  const routes = routeLinks(links, boxes, g(boxes));
+  const lines = routeLines(links, boxes, g(boxes));
+  const [p, q] = routes.map((r) => r.labelAt!);
+  assert.deepEqual([p!.fits, q!.fits], [false, false]);
+  assert.ok(Math.max(Math.abs(p!.x - q!.x), Math.abs(p!.y - q!.y)) >= 24, JSON.stringify([p, q]));
+  routes.forEach((r, i) => {
+    const at = r.labelAt!;
+    const target = { x: at.x - 12, y: at.y - 12, w: 24, h: 24 };
+    assert.ok(![...boxes.values()].some((c) => overlaps(target, c)), `marker ${i} clear of the cards`);
+    const pts = lines[i]!.pts;
+    const on = pts.slice(1).some((b, j) => {
+      const a = pts[j]!;
+      return Math.min(a.x, b.x) - 0.1 <= at.x && at.x <= Math.max(a.x, b.x) + 0.1 && Math.min(a.y, b.y) - 0.1 <= at.y && at.y <= Math.max(a.y, b.y) + 0.1;
+    });
+    assert.ok(on, `marker ${i} on its line`);
+  });
+});

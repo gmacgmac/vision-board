@@ -2,7 +2,7 @@
 // every step of a seeded random sequence it shows exactly what a page that opened afresh on the
 // same ledger shows: every card's markup, place and size, every frame, every connector and lane,
 // the counts. The sequence mixes the person's acts (sent by the page itself and by "another tab"),
-// and an agent drawing: new cards, new versions, links and a container change.
+// and an agent drawing: new cards, new versions, links and a container change (its mode or card widths).
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
 import { PERF_BASE } from './perf-server.ts';
@@ -92,8 +92,12 @@ async function step(page: Page, request: APIRequestContext, a: Agent, r: Random,
     return `unpin or size ${n}`;
   }
   if (kind === 5) {
-    await act(page, { action: 'mode', board: BOARD, region: r.pick([...REGIONS, a.region]), mode: r.pick(MODES) });
-    return 'mode';
+    const region = r.pick([...REGIONS, a.region]);
+    // A container's card widths (field report batch 3 ruling 5), as often as its mode: a widened
+    // card's height is measured at its drawn width, which a fresh page must agree with.
+    if (r.int(2)) await act(page, { action: 'widths', board: BOARD, region, widths: r.pick(['match', 'own']) });
+    else await act(page, { action: 'mode', board: BOARD, region, mode: r.pick(MODES) });
+    return `mode or widths in ${region}`;
   }
   if (kind === 6 || a.own.length < 2) {
     const [res] = await write(request, a, [{ type: 'node', node: { region: a.region, kind: r.pick(['question', 'finding', 'risk']), title: `Agent card ${i}` } }]);

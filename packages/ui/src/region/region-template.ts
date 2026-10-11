@@ -12,8 +12,8 @@ import { renderMarkdown } from '../markdown/render.ts';
 import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
 import type { RegionHolder } from './region-core.ts';
 import type { ReplyEntry } from '../node/node-core.ts';
-import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT } from './region-core.ts';
-import { COG_ICON, EYE_ICON, MODE_ICON } from './region-icons.ts';
+import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT, WIDTHS_LABEL } from './region-core.ts';
+import { COG_ICON, EYE_ICON, MODE_ICON, WIDTHS_ICON } from './region-icons.ts';
 
 /** The ids the element ties together with aria-describedby / aria-controls. */
 export const regionIds = (id: string) => ({
@@ -79,6 +79,15 @@ const modeButton = (m: Mode, id: string): string =>
   `<button type="button" class="vb-mseg" role="radio" aria-checked="false" tabindex="-1" aria-label="${MODE_LABEL[m]}"`
   + ` data-mode="${m}" data-region="${esc(id)}">${svgIcon(MODE_ICON[m], 24, 'vb-mode-icon')}</button>`;
 
+/** Match card widths (widthsControl flag, field report batch 3 ruling 5): a switch in the row, after
+ * the layouts' divider, on while every card in a column takes its widest card's width. `update`
+ * sets `aria-checked`, the title and `data-widths`, the value a press sends (the page's click
+ * wiring, with `data-region`); both icons are drawn and region.css shows the one in force. */
+const widthsSwitch = (id: string): string =>
+  `<button type="button" class="vb-mseg vb-widths" role="switch" aria-checked="false" tabindex="-1" aria-label="${WIDTHS_LABEL}"`
+  + ` data-region="${esc(id)}">${svgIcon(WIDTHS_ICON.match, 24, 'vb-mode-icon vb-widths-match')}`
+  + `${svgIcon(WIDTHS_ICON.own, 24, 'vb-mode-icon vb-widths-own')}</button>`;
+
 /** The popover (mockup 05 .mode-pop): one tile per layout with its one-liner, then the foot. The
  * line under the tiles shows the highlighted layout's one-liner in the compact layout only. */
 const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
@@ -105,8 +114,9 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>): string => {
 /** How a frame is built. `fixed`: its layout is set by the board, so it has no layout icons and
  * no popover, only the cog (the built-in Later, 3_FE_03 ruling 5); it takes no note either, so no
  * Comment, note preview or note block, but keeps its grip (Later can be placed). `empty`: the
- * message it shows when the layout drew none of its cards, in place of `EMPTY_DECIDED`. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string }
+ * message it shows when the layout drew none of its cards, in place of `EMPTY_DECIDED`. `widths`:
+ * the Match card widths switch (widthsControl flag); a fixed frame never has it. */
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean }
 
 /** The empty message of an ordinary frame: every card it has is decided and hidden. */
 export const EMPTY_DECIDED = 'Everything here is decided.';
@@ -121,7 +131,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
   const notes = !opts.fixed;
   const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
   const row = `<div class="vb-mode-row"${opts.fixed ? '' : ` role="radiogroup" aria-label="Layout for ${title}"`}>`
-    + modes + (notes ? commentButton(r.id, title) : '')
+    + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`

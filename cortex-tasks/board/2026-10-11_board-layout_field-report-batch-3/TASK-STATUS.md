@@ -14,7 +14,7 @@ tracker: cortex-tasks/tracker.md#M2
 | 1 | BE_01 | Contract | Opus 5.5 | Done (contract; 1 gate red until BE_03) | `widths` (v13), `show_layout`, `LayoutStructure`; api.md 132-134 |
 | 2 | BE_02 | Layout engine | Opus 5.5 | Done (1 gate red until BE_03, as BE_01) | Layered lanes, gutter routing with tracks, label places, align and widths inputs, `structureOf` |
 | 3 | BE_03 | Server and actions | Opus 5.5 | Done (all five gates green) | `show_layout` handler, `widths` folded, `state.widths`, act rule; api-layout and widths tests |
-| 4 | FE_01 | Page | Opus 5.5 | Planned | |
+| 4 | FE_01 | Page | Opus 5.5 | Done (all five gates green) | Labels and markers, Centre cards, Match card widths switch, widened-card height, bubble clear of footers, gallery |
 | 5 | T_01 | Skill | Opus 5.5 | Planned | |
 | 6 | VERIFY_01 | By hand | Orchestrator | Planned | |
 
@@ -277,5 +277,91 @@ with "was retired" in the detail. In lanes mode a card's `row` is its place in t
 in that column. `empty` in a lanes container counts lane x column cells, so a lane no card uses
 adds a whole column count (the test's 3-lane, 3-column container with an unused lane: `empty` 5).
 ### FE_01
+
+**Status**: done 2026-10-11. All five gates exit 0.
+
+**Built.**
+- **Flags** (`packages/format/src/flags.ts`, on by default): `linkLabels`, `alignSetting`, `widthsControl`;
+  read once in `controller.ts` and passed down (components.md § Feature flags).
+- **Labels (ruling 3)**: `wires.ts` draws from `route.labelAt` through `link-labels.ts`: where it fits,
+  a canvas-coloured tag (`labelSize` wide, `LABEL_H` high) with the text centred, squeezed by
+  `textLength` only if the page's font runs it wider (measured once per text, after the writes);
+  the top layer repeats it for the focused card. Where it does not fit, `link-marks.ts`: a 24 px
+  button (a ring on the line) in its own layer `#link-marks` (App.svelte; outside the aria-hidden
+  SVG), named "Link from 4 to 5: <label>", Tab after the cards, its label in the shared hover tip
+  (`bindHoverTip`: hover, focus, Esc closes, hoverable) at z 5, above open frames and cards.
+  Off: the old text at `mid`.
+- **Found and fixed in the layout** (`packages/layout/src/route/labels.ts` `markerAt`, test first in
+  `labels.test.ts`): two markers from neighbouring ports sat 18 px apart, one 24 px target over the
+  other (axe target-size). A marker now takes the first point along its own line, from near the
+  source, whose 24 px target (1 px spare) covers no card, label or earlier marker.
+- **Alignment (ruling 4)**: "Centre cards", a `menuitemcheckbox` in the "⋯" menu after Hide decided
+  (ToolbarMenu.svelte, new `align` icon), off by default; `shell.align`, kept in this browser as
+  `vb.align` (`src/shell/align.ts` over `kept.ts`); App.svelte's effect calls `board.relayout()`;
+  `DrawDeps.align` -> `LayoutInputs.align` (`start` with the flag off, whatever is kept).
+- **Widths (ruling 5)**: `draw.ts` passes `widths` per region =
+  `widthsOf(modes.get(r) ?? r.mode, r.widths, state.widths.get(r))` (the server's expression). The
+  switch: `button.vb-widths[role=switch]` "Match card widths" in the mode row after the divider,
+  before Comment (region-template `widths` option, never in a fixed frame); `aria-checked`, title
+  "Card widths: Match | Own" (`widthsTip`), the checked look and the match/own icon; one of the
+  row's roving stops (arrows reach it, Space/Enter press it); `RegionState.widths` (region-core).
+  A press sends `act { action: 'widths', board, region, widths }` (wiring.ts -> places.ts
+  `setWidths`; io.ts `NAMES_BOARD` + `widths`). States: idle, hover, focus, pressed (the row's
+  segment looks), on/off; an error is the act's error toast, as the mode's; read-only past version:
+  the guarded handler does nothing, as the mode's. In a frame under 440 px the switch hides with the
+  unchecked layouts until the row expands, and an expanded row's icons are 24 px wide, so it stays
+  a target's room clear of the grip (found by the containers and send-access axe tests).
+- **Widened card height (BE_02 note 3)**: the gap showed (a widened card wraps less). `cards.ts`
+  measures each card's own width and its height at the width it was last drawn at;
+  `remeasure(layout, sizes)` measures again any card the layout now draws at another width, and
+  `draw.ts` lays the board out once more when a height changed (counted in `work`). Converges in
+  one extra run (widths depend on widths only). `same-picture.spec.ts` now sends `widths` acts as
+  often as mode acts, so a fresh page must agree.
+- **Note bubble (BE_02 note 4)**: `placeBubble(card, bubble, stage, avoid)`: keeps clear of the
+  strips in `avoid` by moving up or down its side (arrow still on the card), then the other side,
+  then below the card; covers them only when nothing is clear (tests first, note-bubble.test.ts).
+  `bubble-clear.ts` `footersNear` gives the footer strips of the cards within reach (layout boxes,
+  footer offset read from the card). `notes.spec.ts`'s axe test is back on card 4.
+- **Gallery** (`layout-section.ts`, `mini-board.ts`: the board's own `createDrawing` on one container
+  of a new fixture board `layout`, 22 lines at v13 with a person's `widths` act): Link labels (fits +
+  two markers; a marker floating), Card alignment (top; centred), Card widths (match, focused; own,
+  hovered). Region pattern.json `flaggedStates.widths`.
+- **Tests**: unit (region-core, region-template, note-bubble, labels, kept); page
+  `layout-controls.spec.ts` (17: tag size and centring, flag off; marker hover/focus/Esc and name;
+  Centre cards centres, is kept over a reload, off again, flag off ignores a kept centre; widths
+  switch states, a click and the keyboard send the act, column at 464 with 24 px gaps under match
+  and own; flag off; bubble beside card 4 clear of card 5's footer; axe light/dark with the switch
+  focused and the menu open; three gallery sections axe + screenshots; sections only with flags);
+  toolbar.spec (the menu's rows), notes.spec (zoomed out to fit, the bubble on card 4 now opens on
+  the left: its right had no clear place), gallery.spec (full-page screenshot with the three flags off).
+
+**APCA**: no new pair. Label text `--vb-ink-subtle` on the tag's `--vb-surface-canvas` (the pair the
+label had): Lc 70.3 light, 49.6 dark (short-label tier 45). Marker ring `--vb-wire` on canvas: 55.8 /
+32.8 (decoration 30); hot `--vb-wire-hot` (accent): 66.1 / 48.5. Tip, switch and menu row use
+existing pairs.
+
+**Screenshots** (each diff viewed first):
+- `board.spec.ts` board-light/dark: each frame's mode row gains the switch; "informs" moved from
+  mid-line to its tag near its source. No card or frame moved.
+- `toolbar.spec.ts` toolbar-light/dark: the open menu has Centre cards after Hide decided (and the
+  caption says so).
+- New: `layout-controls.spec.ts` link-labels, alignment, card-widths (light and dark).
+- Not changed: the full gallery screenshot (taken with the three flags off).
+
+**Gates.** `verify` ok (0 warnings); `gen --check` current; `check` svelte-check 0, tsc 0; `npm test`
+1116 pass, `test:timing` 7 pass (layout 1,000 cards 4.0 ms); `test:pages` 377 passed.
+
+**Readings for the maintainer** (each easy to turn):
+1. The switch reads "Match card widths" (a switch, on = match) with the title "Card widths: Match |
+   Own", rather than a two-option control: one 24 px segment in an already long row.
+2. Centre cards is one checkbox row (off = top and left), like Hide decided; with the toolbarMenu
+   flag off there is no menu, so no alignment control (the layout keeps top and left).
+3. A marker is named with the card ids of the page ("Link from 4 to 5: ..."), which are the board
+   numbers; the gallery's second copies carry a suffix.
+4. The bubble may now open below a card (over the next container's title line) when neither side
+   is clear of footers; in the roadmap's "Prove the idea" row at full zoom that is what card 4 does.
+
+**For T_01.** Nothing in the skill depends on the page; labels the agent writes now show on the line
+only when short enough for the stretch (about 4 characters between flow columns), else as a marker.
 ### T_01
 ### VERIFY_01

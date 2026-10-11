@@ -3,7 +3,7 @@
 // (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActionId, ActSize, LedgerEvent, LedgerLine, Mode, NoteKind, View } from '../../../../packages/format/src/index.ts';
+import type { ActionId, ActSize, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
 import { fromLine } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
@@ -23,6 +23,8 @@ export interface ActFields {
   y?: number;
   region?: string;
   mode?: Mode;
+  /** `widths`: the person's card widths for the container in `region` (field report batch 3 ruling 5). */
+  widths?: Widths;
   size?: ActSize;
   /** `grant` and `deny`: the `seq` of the grant request answered. */
   request?: number;
@@ -92,7 +94,7 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
 }
 
 /** Acts the schema asks to name their board (api.md 16): it is always the board they are sent to. */
-const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'send', 'revoke']);
+const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke']);
 /** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
 const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'note-edit', 'note-remove', 'pin', 'unpin']);
 const namesBoard = (f: ActFields) =>

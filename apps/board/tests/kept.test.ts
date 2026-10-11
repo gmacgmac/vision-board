@@ -38,3 +38,18 @@ test('kept: no storage at all reads as nothing kept', () => {
     assert.doesNotThrow(() => keep('vb.test', '1'));
   });
 });
+
+// Field report batch 3 ruling 4: the viewer's alignment, kept per viewer; anything else is the default.
+test('keptAlign: centre once kept, else top and left (start), whatever storage holds or refuses', async () => {
+  const { ALIGN_KEY, keepAlign, keptAlign } = await import('../src/shell/align.ts');
+  const map = new Map<string, string>();
+  withStorage({ getItem: (k: string) => map.get(k) ?? null, setItem: (k: string, v: string) => map.set(k, v) }, () => {
+    assert.equal(keptAlign(), 'start');
+    keepAlign('center');
+    assert.deepEqual([map.get(ALIGN_KEY), keptAlign()], ['center', 'center']);
+    map.set(ALIGN_KEY, 'middle');
+    assert.equal(keptAlign(), 'start');
+  });
+  const refuse = () => { throw new Error('SecurityError'); };
+  withStorage({ getItem: refuse, setItem: refuse }, () => assert.equal(keptAlign(), 'start'));
+});

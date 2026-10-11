@@ -45,6 +45,33 @@ test('placeBubble: follows the card, so a zoomed or panned card box moves it', (
   assert.deepEqual([b.x - a.x, b.y - a.y], [40 - 140, 30]);
 });
 
+// Field report batch 3 (BE_02's hand-off): beside a card, the bubble covers its neighbour, and in a
+// row lined up by its tops the neighbour's footer buttons sat under the bubble's edge. `avoid` lists
+// such strips; the bubble moves up or down its side, the arrow still on the card, or to the other side.
+test('placeBubble: clear of the strips to avoid, moved up its side with the arrow still on the card', () => {
+  const card = { x: 100, y: 200, w: 280, h: 160 };
+  const footer = { x: 400, y: 340, w: 280, h: 36 };
+  const p = placeBubble(card, bubble, stage, [footer]);
+  assert.equal(p.side, 'right');
+  assert.equal(p.y + bubble.h, footer.y - BUBBLE_EDGE, 'ends just above the strip');
+  assert.equal(p.y + p.arrow, card.y + 14 + 22, 'the arrow still points at the card\'s top part');
+  assert.deepEqual(placeBubble(card, bubble, stage, [{ ...footer, x: 900 }]), placeBubble(card, bubble, stage), 'a strip elsewhere changes nothing');
+});
+
+test('placeBubble: the other side when its own side has no clear place, then below, and as before when none has', () => {
+  const card = { x: 400, y: 200, w: 280, h: 160 };
+  // A strip on the right the bubble can move neither above nor below while pointing at the card.
+  const right = { x: 700, y: 150, w: 280, h: 300 };
+  const p = placeBubble(card, bubble, stage, [right]);
+  assert.equal(p.side, 'left');
+  assert.equal(p.y, 214);
+  const left = { x: 0, y: 150, w: 380, h: 300 };
+  const below = placeBubble(card, bubble, stage, [right, left]);
+  assert.deepEqual([below.side, below.x, below.y], ['below', 400, 200 + 160 + BUBBLE_GAP], 'neither side clear: below the card, when that is');
+  const under = { x: 400, y: 400, w: 280, h: 40 };
+  assert.deepEqual(placeBubble(card, bubble, stage, [right, left, under]), placeBubble(card, bubble, stage), 'covered every way: the first choice');
+});
+
 test('bubbleView: the head, buttons and hint for a new note, an edit and a sent note', () => {
   const add = bubbleView({ mode: 'new', kind: 'comment', number: 42 });
   assert.deepEqual([add.heading, add.primary, add.cancel, add.remove, add.hint],

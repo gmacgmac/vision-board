@@ -25,18 +25,51 @@ const CORNER = 16;
 /** `v` within [lo, hi]; `lo` when the range is empty (a bubble taller than the stage). */
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
-/** The bubble beside `card` (its box on the stage) inside a stage of `stage` size. */
-export function placeBubble(card: StageBox, bubble: StageSize, stage: StageSize): Placement {
+/** Whether two stage boxes overlap. */
+const meets = (a: StageBox, b: StageBox) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/** The bubble at `x` on one side of `card`: at its usual height when that is clear of `avoid`, else
+ *  the nearest height above or below a strip in the way that is clear, inside the stage, with the
+ *  arrow still on the card's top part; undefined when there is none. */
+function clearAt(x: number, card: StageBox, bubble: StageSize, stage: StageSize, avoid: readonly StageBox[]): number | undefined {
+  const at = card.y + BUBBLE_DROP + BUBBLE_ARROW_AT;
+  const y0 = clamp(card.y + BUBBLE_DROP, BUBBLE_EDGE, stage.h - BUBBLE_EDGE - bubble.h);
+  const clear = (y: number) => !avoid.some((a) => meets({ x, y, ...bubble }, a));
+  if (clear(y0)) return y0;
+  const fits = (y: number) => y >= BUBBLE_EDGE && y + bubble.h <= stage.h - BUBBLE_EDGE && at - y >= CORNER && at - y <= bubble.h - CORNER;
+  const tries = avoid.flatMap((a) => [a.y - BUBBLE_EDGE - bubble.h, a.y + a.h + BUBBLE_EDGE]).filter((y) => fits(y) && clear(y));
+  return tries.sort((a, b) => Math.abs(a - y0) - Math.abs(b - y0))[0];
+}
+
+/** The bubble beside `card` (its box on the stage) inside a stage of `stage` size. `avoid`: strips it
+ *  should leave clear, such as a neighbouring card's footer buttons (field report batch 3): it moves
+ *  up or down its side, then tries the other side, then below the card, and covers them only when
+ *  none is clear. */
+export function placeBubble(card: StageBox, bubble: StageSize, stage: StageSize, avoid: readonly StageBox[] = []): Placement {
   const right = card.x + card.w + BUBBLE_GAP;
   const left = card.x - BUBBLE_GAP - bubble.w;
-  const fitsRight = right + bubble.w <= stage.w - BUBBLE_EDGE;
-  const fitsLeft = left >= BUBBLE_EDGE;
-  if (fitsRight || fitsLeft) {
+  const sides = ([['right', right], ['left', left]] as const)
+    .filter(([side, x]) => (side === 'right' ? x + bubble.w <= stage.w - BUBBLE_EDGE : x >= BUBBLE_EDGE));
+  if (sides.length) {
+    const arrowAt = (y: number) => clamp(card.y + BUBBLE_DROP + BUBBLE_ARROW_AT - y, CORNER, bubble.h - CORNER);
+    for (const [side, x] of sides) {
+      const y = clearAt(x, card, bubble, stage, avoid);
+      if (y !== undefined) return { side, x, y, arrow: arrowAt(y) };
+    }
+    // Neither side clear: below the card, when that is clear and inside the stage.
+    const under = below(card, bubble, stage);
+    if (avoid.length && under.y + bubble.h <= stage.h - BUBBLE_EDGE && !avoid.some((a) => meets({ x: under.x, y: under.y, ...bubble }, a))) return under;
+    // Covered every way: the first side, at its usual height. The arrow keeps pointing at the
+    // card's top part when the bubble is pushed up or down.
+    const [side, x] = sides[0]!;
     const y = clamp(card.y + BUBBLE_DROP, BUBBLE_EDGE, stage.h - BUBBLE_EDGE - bubble.h);
-    // The arrow keeps pointing at the card's top part when the bubble is pushed up or down.
-    const arrow = clamp(card.y + BUBBLE_DROP + BUBBLE_ARROW_AT - y, CORNER, bubble.h - CORNER);
-    return { side: fitsRight ? 'right' : 'left', x: fitsRight ? right : left, y, arrow };
+    return { side, x, y, arrow: arrowAt(y) };
   }
+  return below(card, bubble, stage);
+}
+
+/** Under the card, the arrow under its middle. */
+function below(card: StageBox, bubble: StageSize, stage: StageSize): Placement {
   const x = clamp(card.x, BUBBLE_EDGE, stage.w - BUBBLE_EDGE - bubble.w);
   const arrow = clamp(card.x + card.w / 2 - x, CORNER, bubble.w - CORNER);
   return { side: 'below', x, y: card.y + card.h + BUBBLE_GAP, arrow };

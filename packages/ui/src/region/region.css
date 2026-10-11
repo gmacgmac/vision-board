@@ -106,7 +106,8 @@ vb-region .vb-mode-row {
   background: var(--vb-surface-card); box-shadow: 0 0 0 6px var(--vb-surface-canvas);
 }
 /* Collapsed (under 440px of frame, where the full row would leave under ~200px for the label
-   side): only the checked icon, Comment and the cog show. Hovering or focusing the row expands it to all
+   side): only the checked icon, Comment and the cog show (Match card widths waits for the row to
+   expand too). Hovering or focusing the row expands it to all
    six layout icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
    it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
    never reflows the frame. */
@@ -115,13 +116,17 @@ vb-region .vb-mode-row {
      anchored under it would start at the line's centre, under the row. Keep the row's own height
      (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
   vb-region .vb-region-tools { min-height: 32px; }
-  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']) {
+  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
+  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-widths {
     width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
   vb-region .vb-mode-row:hover, vb-region .vb-mode-row:focus-within {
     position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
     box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
   }
+  /* Expanded, each icon takes the 24px target and no more, so the row stays a target's room clear of
+     the grip even in the narrowest frame (one S card). */
+  vb-region .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
 }
 vb-region .vb-mseg {
   display: grid; place-items: center; width: 28px; height: 24px; padding: 0; cursor: pointer;
@@ -140,6 +145,9 @@ vb-region .vb-mode-icon, vb-region .vb-mtile-icon {
 }
 vb-region .vb-mode-icon { width: 15px; height: 15px; }
 vb-region .vb-mode-div { width: 1px; height: 16px; margin: 0 3px; background: var(--vb-line-strong); }
+/* Match card widths (widthsControl flag): a switch after the divider, drawn in the checked look while
+   on; it shows the widths in force, matched (on) or each card's own (off). */
+vb-region .vb-widths[aria-checked='true'] .vb-widths-own, vb-region .vb-widths:not([aria-checked='true']) .vb-widths-match { display: none; }
 
 /* While the popover or the menu is open the frame is drawn above every card (an overlay: nothing
    moves or resizes, README pick 5). Only the top line takes the pointer then, so the cards inside

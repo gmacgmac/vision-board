@@ -3,7 +3,8 @@
 // the agent drew a new version of it, updated only when what it shows changed (`nodeState`), and
 // measured only then. Reads of sizes come after every write of the batch, and places are written
 // after both. A card the layout widens (Match widths, field-report batch 3 ruling 5) is drawn at
-// that width, and measured at its own. DOM order stays reading order, which is also tab order. A change of the selection
+// that width: its size is its own width and its height at the width drawn (it wraps less, so it is
+// shorter), measured again whenever that width changes (`remeasure`), so no gap opens under it. DOM order stays reading order, which is also tab order. A change of the selection
 // (3_FE_01 ruling 10) goes through `restate`: it updates only the cards named, measures nothing and
 // places nothing, since the selected look changes no card's size.
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
@@ -29,8 +30,12 @@ export interface CardSet {
     tier?: (n: ViewNode) => NodeSize, facts?: (n: ViewNode) => CardConditions): CardSync;
   /** Update the cards `ids` for a state the last sync did not see (the selection), and nothing else. */
   restate(ids: readonly string[]): void;
-  /** Read the sizes of `ids` into `sizes`. */
+  /** Read the sizes of `ids` into `sizes`: each card's own width, and its height at the width it was
+   *  last drawn at. */
   measure(ids: readonly string[], sizes: Map<string, Size>): void;
+  /** Measure again, at the layout's width, each card the layout draws at a width its height was not
+   *  measured at; returns the cards whose height changed (the page then lays out again). */
+  remeasure(layout: BoardLayout, sizes: Map<string, Size>): string[];
   /** Write each card's place, and its width where the layout's differs from its own (`sizes`);
    *  true when any card moved, changed width, or was shown or hidden. */
   place(layout: BoardLayout, sizes: ReadonlyMap<string, Size>): boolean;
@@ -51,6 +56,8 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
   const els = new Map<string, VbNodeElement>();
   const kept = new Map<string, Kept>();
   const placed = new Map<string, Placed>();
+  /** The width each card's height was measured at ('' for its own). */
+  const measuredAt = new Map<string, string>();
   let last: Last | null = null;
   let byId: Map<string, ViewNode> | null = null;
 
@@ -77,6 +84,21 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
     }
   }
 
+  /** Each card's height at a width ('' for its own), into `sizes`: writes, then reads. The width
+   *  stays written; `place` writes it again if the layout says otherwise. */
+  function heightsAt(at: readonly (readonly [string, string])[], sizes: Map<string, Size>) {
+    for (const [id, width] of at) {
+      const el = els.get(id)!;
+      el.removeAttribute('data-offscreen');
+      if (width) el.style.width = width;
+      else el.style.removeProperty('width');
+    }
+    for (const [id, width] of at) {
+      sizes.set(id, { w: sizes.get(id)!.w, h: els.get(id)!.offsetHeight });
+      measuredAt.set(id, width);
+    }
+  }
+
   return {
     els,
     sync(view, state, versions, selected, tier, facts) {
@@ -93,6 +115,7 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
         els.delete(id);
         kept.delete(id);
         placed.delete(id);
+        measuredAt.delete(id);
       }
       for (const n of view.nodes) {
         let el = els.get(n.id);
@@ -123,7 +146,7 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
     },
     measure(ids, sizes) {
       // Writes first: a hidden or off-screen card has no real size until it is drawn, and a widened
-      // card is measured at its own width.
+      // card is measured at its own width, then its height at the width it is drawn at.
       for (const id of ids) {
         const el = els.get(id);
         if (!el) continue;
@@ -131,12 +154,28 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
         el.removeAttribute('data-offscreen');
         el.style.removeProperty('width');
       }
+      const wide: string[] = [];
       for (const id of ids) {
         const el = els.get(id);
         if (!el) continue;
         sizes.set(id, { w: el.offsetWidth, h: el.offsetHeight });
+        measuredAt.set(id, '');
+        if (placed.get(id)?.width) wide.push(id);
         work.cardsMeasured += 1;
       }
+      heightsAt(wide.map((id) => [id, placed.get(id)!.width]), sizes);
+    },
+    remeasure(layout, sizes) {
+      const due: [string, string][] = [];
+      for (const [id, s] of sizes) {
+        const b = layout.nodes.get(id);
+        const width = b && b.w !== s.w ? `${b.w}px` : '';
+        if (b && els.has(id) && (measuredAt.get(id) ?? '') !== width) due.push([id, width]);
+      }
+      const before = new Map(due.map(([id]) => [id, sizes.get(id)!.h]));
+      heightsAt(due, sizes);
+      work.cardsMeasured += due.length;
+      return due.filter(([id]) => sizes.get(id)!.h !== before.get(id)).map(([id]) => id);
     },
     place(layout, sizes) {
       let moved = false;
@@ -163,6 +202,7 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
       els.clear();
       kept.clear();
       placed.clear();
+      measuredAt.clear();
     },
   };
 }
