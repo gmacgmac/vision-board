@@ -129,4 +129,9 @@ connecting an agent), not applied:
 >   `skills/vision-board/SKILL.md`) and starts `kiro-cli acp --agent vision-board --model <claude-opus-5.5 |
 >   claude-sonnet-5.5> --effort high`. `VB_KIRO_AGENT=0` leaves `~/.kiro` alone.
 
-**Validation**: VALIDATION_PENDING
+**Validation**: `npm test` (992 pass), `npm run check`, `npm run verify` (after `npm run map`), `npm run gen --
+--check`, `npm run test:pages` (332 pass) all exit 0, run one after another. A first full page run failed
+at 12:37 because a second `playwright test` (not started by this task: another session's, same port 4468
+and results folder) began mid-run, removed the shared temp folder and stopped the server; after it ended,
+the gates were run again from the top and passed. The new Kiro page test runs first in
+`chat-send.spec.ts`, before any session exists (picking an agent with a session in use starts a new one).
