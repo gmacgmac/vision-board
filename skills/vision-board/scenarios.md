@@ -200,8 +200,7 @@ decide first. A row for the agenda is fine."
 
 **Situation.** The person opens the chat panel in a folder with no boards and writes: "Plan the
 move to the new office: what has to happen, and what you need me to decide." The message ends
-"No board is open in this folder yet. If drawing would help, create one with write_board; the
-person's page opens it."
+"No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person's page opens it."
 
 **A good run**
 - First turn: no write; one or two lines suggesting the structure ("A row per area (building,

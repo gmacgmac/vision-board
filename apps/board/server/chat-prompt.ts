@@ -54,7 +54,7 @@ export const ONLY_ATTACHED = 'Attached from the board.';
 export const wordsOf = (msg: ChatMessage): string => (msg.text?.trim() ? msg.text : '');
 
 /** What a session on no board is told after the person's words. */
-export const NO_BOARD = 'No board is open in this folder yet. If drawing would help, create one with write_board; the person\'s page opens it.';
+export const NO_BOARD = 'No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person\'s page opens it.';
 
 /** One message: the words, the selected cards, the notes, the board's answers (`round`) and the board; `invalid` for a
  * note or card not on `board`. A note among the `round`'s answers is checked, then left out. */

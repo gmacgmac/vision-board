@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓, ✗, a comment, more context, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -27,10 +27,11 @@ their descriptions hold the exact fields.
 - **Numbers belong to the board.** Never write a number into a card's title or text: no
   "Step 3: ...", no "1." lists (bullets are fine). When you mention a card, in the chat or in a
   reply, use its board number ("card 12"); a card can say "needs card 5".
-- **The chat says what changed, in one or two plain lines**: no bullets, headings, numbered list
-  or summary of the cards; the person reads those on the board ("Added 6 risks on Pricing; card 4
-  asks about the deadline."). An assumption or caveat worth keeping is a card, not a chat
-  paragraph. A short answer with nothing to react to can stay a chat line.
+- **When you changed the board, the chat says "Done."** and nothing more: the change chips show
+  what changed, and the person reads the cards on the board. Add one short line only when the
+  person must do something the board can't show ("Done. Allow the file write to finish."). Never
+  bullets, headings, numbered lists or a summary of the cards; an assumption or caveat worth
+  keeping is a card. A short answer with nothing drawn can stay a chat line.
 - **Consolidation is the person's call.** Never distil, merge or retire cards on your own
   (Retiring and distilling).
 
@@ -52,7 +53,8 @@ their descriptions hold the exact fields.
   opens it, and your next messages end with its `Board: <id>`.
 - **Quiet while you work.** Every block of text you write shows as a chat message, so write none
   during the turn: no narration ("Let me read the file"), no commentary between tool calls. End
-  the turn with one or two lines. Your board writes show as chips the person can click.
+  the turn with "Done." when you changed the board. Your board writes show as chips the person
+  can click.
 - **One message carries everything**, in blocks separated by a blank line, empty ones left out:
   1. Their words.
   2. `The person selected these cards:` then `- Card <n>: <title>` per card. "These", "this one"

@@ -878,8 +878,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     session with no board; `list_folder_chats` (`GET /api/chats`) lists the sessions on no board,
     newest first, the first in use (one in use in the folder, as on a board). `board` is optional
     in `chat-session.schema.json`. The server joins its agent and grants nothing. Its messages take
-    no chips (`invalid` at `/notes/i`, `/cards/i`), record no Send, and end "No board is open in this
-    folder yet. If drawing would help, create one with write_board; the person's page opens it." in
+    no chips (`invalid` at `/notes/i`, `/cards/i`), record no Send, and end "No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person's page opens it." in
     place of `Board: <id>`. When its agent creates a board (a `board` line by that agent, which is
     the board's creator), the session moves to it: the index entry gets `board`
     (`chat-index.ts` `attach`, once), it leaves `list_folder_chats` and is the one in use in

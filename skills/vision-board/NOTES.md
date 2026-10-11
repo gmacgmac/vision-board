@@ -216,3 +216,4 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   The panel's no-board line ("If drawing would help, create one with write_board") pulled one run
   into drawing first; the skill now overrides it, but the line itself could say "suggest the
   structure first" (server wording in `apps/board/server/chat-prompt.ts` `NO_BOARD`, not changed).
+- 2026-10-11, maintainer (601-602): when the agent changed the board, its chat says only "Done." (one short line more only for something the board can't show); the panel's no-board line now asks the agent to suggest the structure first (skill v3.1).
