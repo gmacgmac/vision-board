@@ -119,6 +119,27 @@ test('no words: the context alone goes; the toolbar\'s Send is the same message'
   await expect(sendButton(page)).toHaveAttribute('title', NOTHING);
 });
 
+test('a comment shows as one answers chip and no note chip; the note\'s words go once in the message, as the answer', async ({ page }) => {
+  await open(page, 'scratch');
+  const note = 'Ask the venue first';
+  await card(page, 2).focus();
+  await page.keyboard.press('c');
+  await page.getByLabel('Note text').fill(note);
+  await page.keyboard.press('Enter');
+  await expect(answers(page)).toHaveText('1 answer since your last Send');
+  await expect(side(page).locator('chat-composer .chat-chip')).toHaveCount(1);
+  await expect(side(page).locator('chat-composer .chat-chip', { hasText: note })).toHaveCount(0);
+  await answers(page).click();
+  await expect(lines(page).filter({ hasText: note })).toHaveCount(1);
+  await text(page).fill('Go');
+  await text(page).press('Enter');
+  const given = await srv.fake.run(++runs);
+  expect(given.prompt.split(note).length - 1).toBe(1);
+  expect(given.prompt).not.toContain('Attached from the board');
+  expect(given.prompt).toContain(`2 (question): no: ${note}`);
+  await expect(status(page)).toHaveText('Status: Ready');
+});
+
 test('nothing at all: submit and Send are disabled together; a selected card enables both', async ({ page }) => {
   await open(page, 'scratch');
   await expect(submit(page)).toBeDisabled();

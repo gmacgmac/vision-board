@@ -54,7 +54,10 @@ test('one message: the words, the attached cards and notes, then the answers in 
   const head = h.ledger.state().acts.findLast((e) => e.action === 'send')!.seq - 1;
   const parts = given.prompt.split('\n\n');
   assert.equal(parts[0], 'Write the tasks for these.');
-  assert.equal(parts[1], `Attached from the board:\n- Note ${note} on card ${d} "Choose the launch price": After the launch.\n- Card ${q}: Flat fee or per seat? (with the numbers)`);
+  // The note is one of the answers (below), so it is not attached as well (chat-no-double-note ruling 3); the card is both
+  // selected and answered, so it stays, with nothing of its answer (ruling 4).
+  assert.equal(parts[1], `Attached from the board:\n- Card ${q}: Flat fee or per seat? (with the numbers)`);
+  assert.equal(given.prompt.split('After the launch.').length - 1, 1, 'the note\'s words go once');
   const round = parts[2]!.split('\n');
   assert.equal(round[0], ROUND_HEAD);
   assert.match(round[1]!, /^Board "Pricing options" \(v\d+\)$/);
@@ -65,7 +68,8 @@ test('one message: the words, the attached cards and notes, then the answers in 
   assert.equal(parts.at(-1), 'Board: pricing');
   assert.equal(sends(), before + 1, 'recorded as the board\'s Send');
   assert.deepEqual([accepted.kind, accepted.text], ['message_in', `Write the tasks for these.\n\n${parts[2]}`]);
-  assert.deepEqual(accepted.chips.map((c: { kind: string }) => c.kind), ['note', 'card']);
+  assert.deepEqual(accepted.chips.map((c: { kind: string }) => c.kind), ['card'], 'no chip for the answered note');
+  assert.equal(accepted.text.split('After the launch.').length - 1, 1);
   assert.deepEqual(schemaProblems(CHAT_EVENT_ID, accepted), []);
   await readChat(h.base, h.cookie, session, turns(runs));
 });
@@ -96,6 +100,19 @@ test('no words, a card attached: the card goes, the bubble saying so', async () 
   const given = await fake.run(++runs);
   assert.equal(given.prompt, `Attached from the board:\n- Card ${q}: Flat fee or per seat? (with the numbers)\n\nBoard: pricing`);
   assert.equal(accepted.text, ONLY_ATTACHED);
+  await readChat(h.base, h.cookie, session, turns(runs));
+});
+
+test('a note named alone that is among the answers goes once, as the answer; no chip, no "Attached"', async () => {
+  const { q } = h.seeded;
+  const note = (await act({ action: 'comment', n: q, ver: 2, text: 'Check with finance.' })).seq;
+  const accepted = await message({ notes: [note] });
+  const given = await fake.run(++runs);
+  assert.ok(given.prompt.startsWith(`${ROUND_HEAD}\n`), given.prompt);
+  assert.doesNotMatch(given.prompt, /Attached from the board/);
+  assert.equal(given.prompt.split('Check with finance.').length - 1, 1);
+  assert.equal(accepted.chips, undefined);
+  assert.equal(accepted.text, given.prompt.replace('\n\nBoard: pricing', ''));
   await readChat(h.base, h.cookie, session, turns(runs));
 });
 

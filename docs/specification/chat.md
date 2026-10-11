@@ -46,7 +46,9 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
    the attached and the answers go alone; that is what the board's Send is when the board has a
    session. A message with something attached waits while a turn runs and goes when it ends, built
    then; a second one meanwhile joins it. It counts as the board's Send when it goes (api.md 121,
-   131; `apps/board/server/chat-prompt.ts` `promptFor`, `chat-round.ts`).
+   131; `apps/board/server/chat-prompt.ts` `promptFor`, `chat-round.ts`). A note goes once, as its
+   answer: the composer offers no chip for an unsent note, and a note chip that is among the answers
+   is dropped from "Attached". A selected card stays attached, with nothing of its answer.
 6. **A session in the folder.** In a folder with no board the session starts on no board
    (`start_folder_chat`); its agent is told so and may create one, and the session moves to the
    first board its agent creates (api.md 122).
@@ -89,9 +91,9 @@ words (`sendsInChat`), so the two are enabled and disabled together (`shell.chat
 "Waiting for agent" until the next `message_in`.
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
-`board/chat-bridge.ts` is the only file that knows both sides: the selected cards and unsent notes as
-chips; a change chip selects and zooms to its cards (opening their board first); a changed card's
-stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
+`board/chat-bridge.ts` is the only file that knows both sides: the selected cards as
+chips (the unsent notes are in the answers chip); a change chip selects and zooms to its cards
+(opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
 
 ## Another host
 

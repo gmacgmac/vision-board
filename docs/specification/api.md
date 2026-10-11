@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-11 (the chat carries the board: 131; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-11 (the chat carries the board: 131, a note sent once; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -985,7 +985,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     session, `send_chat` builds one message (`chat-prompt.ts` `promptFor`, the one builder; the
     board's Send uses it too): the person's words (`text`, now optional: left out when they wrote
     nothing), then "Attached from the board:" with each note and card, then the Send message of 121
-    for what the session's agent was not yet told (`chat-round.ts` `roundText`, left out when there
+    for what the session's agent was not yet told (`chat-round.ts` `roundOf`, left out when there
     is nothing), then `Board: <id>`. Its `message_in` shows the words and the answers, with the
     chips; with neither, "Attached from the board.". It is recorded as the board's Send when it
     goes, so 121's "send_chat records the Send without this message" no longer holds. Nothing at
@@ -999,3 +999,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     its own) and joins a message waiting. Sessions now show `agentId` (`chat-session.schema.json`,
     required), the agent id the session's agent writes as, never a secret, so the page can show
     the same answer lines the message carries (`replyScope` with that agent, 41).
+    A note is sent once (chat-no-double-note): a note chip whose note is among the answers the
+    message carries (`chat-round.ts` `roundOf`, whose `notes` are the ones `replyLines` wrote) is
+    still checked (`invalid` when it is not on the board) but left out of "Attached" and of the
+    `message_in` chips; a note the agent is told no answer for stays attached. A card stays
+    attached as `- Card n: title` even when answered, with nothing of its answer. The page no
+    longer offers unsent notes as chips (the answers chip stands for them).

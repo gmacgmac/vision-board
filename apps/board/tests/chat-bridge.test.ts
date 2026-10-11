@@ -14,7 +14,7 @@ import { applyEvents, CHAT_CHANGE_EVENT, CHAT_CHIP_REMOVE_EVENT, EMPTY_CHAT } fr
 import { boardData } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
 import {
-  answerLines, answersContext, boardChips, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL, unsentNotes,
+  answerLines, answersContext, boardChips, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL,
 } from '../src/board/chat-bridge.ts';
 import { blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/board/chat-panel.ts';
 import { createSelection } from '../src/board/selection.ts';
@@ -54,10 +54,6 @@ const b = boardData(s, 'b');
 const card = (ref: number, label = `Card ${ref}`): Chip => ({ kind: 'card', ref, label });
 const note = (ref: number, label: string): Chip => ({ kind: 'note', ref, label });
 
-test('the unsent notes: oldest first, a group\'s once, the container\'s too; none sent, none without words', () => {
-  assert.deepEqual(unsentNotes(b), [note(10, 'Why this one?'), note(11, 'Merge these'), note(13, 'Order them')]);
-});
-
 test('the answers since the last Send: the lines the next message carries, for the session\'s agent only', () => {
   const lines = answerLines(s, 'b', A);
   assert.deepEqual(lines, answerLines(s, 'b'), 'the board\'s creator may answer every card');
@@ -71,9 +67,10 @@ test('the answers since the last Send: the lines the next message carries, for t
   assert.equal(answersContext([]), null);
 });
 
-test('the selected cards in the order selected, their titles on one line; then the notes; a chip taken off stays off', () => {
+test('the selected cards in the order selected, their titles on one line; no unsent note is a chip (the answers carry it)', () => {
   assert.deepEqual(selectedCards(b, ['3', '1', 'nope']), [card(3), card(1, 'Ship on Friday?')]);
-  assert.deepEqual(boardChips(b, ['2'], new Set(['note-11'])), [card(2), note(10, 'Why this one?'), note(13, 'Order them')]);
+  assert.deepEqual(boardChips(b, ['2', '3'], new Set(['card-3'])), [card(2)]);
+  assert.deepEqual(boardChips(b, [], new Set()), [], 'three unsent notes, no chip');
 });
 
 test('Send is the chat\'s message with no words only with the board\'s session and something attached', () => {
@@ -132,19 +129,19 @@ function bridged() {
   };
 }
 
-test('board to chat: the selection and the notes become chips; one taken off stays off; the chips a message carried go', () => {
+test('board to chat: the selection becomes chips, the notes do not; one taken off stays off until the selection changes; the chips a message carried go', () => {
   const t = bridged();
-  assert.deepEqual(t.chips(), ['note-10', 'note-11', 'note-13']);
+  assert.deepEqual(t.chips(), [], 'unsent notes show in the answers context, not as chips');
+  assert.equal(t.context()?.lines.length, 3);
   t.selection.select(['2'], 'only');
-  assert.deepEqual(t.chips(), ['card-2', 'note-10', 'note-11', 'note-13']);
+  assert.deepEqual(t.chips(), ['card-2']);
   t.raise(CHAT_CHIP_REMOVE_EVENT, { chip: card(2) });
-  t.raise(CHAT_CHIP_REMOVE_EVENT, { chip: note(13, 'Order them') });
   t.bridge.refresh();
-  assert.deepEqual(t.chips(), ['note-10', 'note-11']);
-  // A card taken off comes back with the next change of selection; a note stays off.
+  assert.deepEqual(t.chips(), []);
+  // A card taken off comes back with the next change of selection.
   t.selection.select(['2', '3'], 'only');
-  assert.deepEqual(t.chips(), ['card-2', 'card-3', 'note-10', 'note-11']);
-  t.bridge.sent([card(2), card(3), note(10, 'Why this one?'), note(11, 'Merge these')]);
+  assert.deepEqual(t.chips(), ['card-2', 'card-3']);
+  t.bridge.sent([card(2), card(3)]);
   assert.deepEqual(t.chips(), []);
   const drawn = t.log.filter((l) => l !== 'changed').length;
   t.bridge.refresh();

@@ -26,15 +26,16 @@ function statusWord(n: ViewNode, status: ItemStatus): string | undefined {
 
 const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;
 
-/** The reply in its three parts: the board's line, the answer lines, and the "Still open" line. */
-export interface ReplyLines { head: string; lines: string[]; tail: string }
+/** The reply in its three parts: the board's line, the answer lines, and the "Still open" line; and
+ * the `seq` of every note its lines carry, so the chat does not send a note a second time. */
+export interface ReplyLines { head: string; lines: string[]; tail: string; notes: number[] }
 
 /** The person's responses as one line per card, and one line per note on a group naming all its
  * cards once ("12, 14 (finding, risk): comment: ..."), in number order (3_FE_02 ruling 4). */
-export const replyText = (view: View, s: BoardState, scope?: ReplyScope): string => {
-  const r = replyLines(view, s, scope);
-  return [r.head, ...r.lines, r.tail].join('\n');
-};
+export const replyText = (view: View, s: BoardState, scope?: ReplyScope): string => joinReply(replyLines(view, s, scope));
+
+/** The reply's parts as the text of `replyText`. */
+export const joinReply = (r: ReplyLines): string => [r.head, ...r.lines, r.tail].join('\n');
 
 /** `replyText` in its parts, so the chat's composer can show the answer lines alone (the one writer). */
 export function replyLines(view: View, s: BoardState, scope?: ReplyScope): ReplyLines {
@@ -44,6 +45,7 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
   const lines: { at: number; text: string }[] = [];
   const open: number[] = [];
   const groups = new Map<number, ItemNote>();
+  const notesRead: number[] = [];
   for (const n of items) {
     const st = s.items.get(n.id);
     const notes = st?.notes ?? [];
@@ -54,11 +56,14 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
     if (!word && !own.length && !grouped && NODE_TYPES[n.kind].answer) open.push(n.n!);
     if (scope && !scope.cards.has(n.n!)) continue;
     for (const x of notes) if (x.nodes && fresh(scope)(x)) groups.set(x.seq, x);
-    const text = own.filter(fresh(scope)).map((x) => x.text).join(' / ');
+    const fresher = own.filter(fresh(scope));
+    const text = fresher.map((x) => x.text).join(' / ');
     if (!word && !text) continue;
+    notesRead.push(...fresher.map((x) => x.seq));
     lines.push({ at: n.n!, text: `${n.n} (${n.kind}): ${word ?? 'comment'}${text ? `: ${text}` : ''}` });
   }
   for (const g of groups.values()) {
+    notesRead.push(g.seq);
     const kinds = g.nodes!.map((x) => kindOf.get(x) ?? '?').join(', ');
     lines.push({ at: Math.min(...g.nodes!), text: `${g.nodes!.join(', ')} (${kinds}): ${ACTIONS[g.kind].reply}: ${g.text}` });
   }
@@ -67,8 +72,10 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
   for (const r of view.regions) {
     if (scope && !scope.regions.has(r.id)) continue;
     const notes = (s.regionNotes.get(r.id) ?? []).filter(fresh(scope));
-    if (notes.length) lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
+    if (!notes.length) continue;
+    notesRead.push(...notes.map((x) => x.seq));
+    lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
   }
   const tail = open.length ? `Still open: ${open.join(', ')}` : 'Nothing left open.';
-  return { head: `Board "${view.title}" (v${view.version})`, lines: lines.map((l) => l.text), tail };
+  return { head: `Board "${view.title}" (v${view.version})`, lines: lines.map((l) => l.text), tail, notes: notesRead };
 }

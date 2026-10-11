@@ -1,7 +1,7 @@
 // The chat sidebar on the board and its bridge (chat-panel FE_02, chatPanel flag, on by default):
 // closed at first, opened and closed by the toolbar's Chat button and T, the stage shrinking beside
 // it; its width set by dragging its edge or by the arrow keys, kept with whether it is open; the
-// selected cards and the unsent notes as chips, a message going with them, the agent's words and
+// selected cards as chips (the unsent notes are in the answers chip), a message going with them, the agent's words and
 // its change chip, which selects and zooms to the cards; a changed card's link back to the chat;
 // the session again after a reload; Allow and Deny on what the gate asks; Stop; a past version;
 // New session, a message sent while it starts, and the newest session after a reload (FIX_01);
@@ -103,16 +103,19 @@ test('a message: the chips go with it; the agent\'s words show; its change chip 
   await toggle(page).click();
   await expect(side(page).locator('.chat-empty')).toHaveText('No messages yet. Ask the agent about this board.');
   await expect(status(page)).toHaveText('Status: Ready');
-  await expect(chips(page)).toHaveText(['NoteKeep it short']);
+  // The unsent note is not a chip (chat-no-double-note ruling 2): the answers chip stands for it.
+  await expect(chips(page)).toHaveCount(0);
+  await expect(side(page).locator('button.chat-cmp-ctx')).toHaveText('1 answer since your last Send');
   await page.locator('vb-node[data-id="2"] .vb-node-title').click();
-  await expect(chips(page)).toHaveText(['2Add dark mode?', 'NoteKeep it short']);
+  await expect(chips(page)).toHaveText(['2Add dark mode?']);
   const given = await send(page, 'Draw two questions');
-  expect(given.prompt).toMatch(/^Draw two questions\n\nAttached from the board:\n- Note \d+ on card 1 "Ship on Friday\?": Keep it short\n- Card 2: Add dark mode\?\n/);
+  expect(given.prompt).toMatch(/^Draw two questions\n\nAttached from the board:\n- Card 2: Add dark mode\?\n/);
+  expect(given.prompt).not.toContain('- Note ');
   expect(given.prompt).toContain('Board: scratch');
   await expect(log(page).locator('chat-message[data-from="person"]')).toContainText('Draw two questions');
   await expect(log(page).locator('chat-message[data-from="agent"]')).toContainText('I wrote the "Scratch" board in one call');
   await expect(status(page)).toHaveText('Status: Ready');
-  // The message took its chips: the note is sent with the round, the card's chip is spent.
+  // The message took its chips: the card's chip is spent.
   await expect(chips(page)).toHaveCount(0);
   await expect(text(page)).toHaveValue('');
   // The change chip: both cards selected and zoomed to.

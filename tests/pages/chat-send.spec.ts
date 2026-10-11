@@ -144,6 +144,26 @@ test('Send to agent while it works waits, then the answers go when the turn ends
   }
 });
 
+for (const theme of ['dark', 'light'] as Theme[]) {
+  test(`axe passes with Send waiting, then with the answers handed over (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await open(page, 'scratch');
+    try {
+      await sendWhileBusy(page, { action: 'comment', n: 1, ver: 1, text: `Checked in ${theme}` });
+      await expectNoAxeViolations(page);
+      await stopAndHandOver(page);
+      // The comment goes as the answer in the Send message: the session's agent drew the board, so it is told it.
+      await expect(mine(page).last()).toContainText(`Checked in ${theme}`);
+      await expect(status(page)).toHaveText('Status: Ready');
+      await expectNoAxeViolations(page);
+    } finally {
+      srv.fake.mode('replay');
+    }
+  });
+}
+
+// Last: it starts a new session whose agent has not been granted the first agent's container, so it is told
+// no answer there (api.md 41), and the comment would not reach it.
 test('the model picker names exact models; the one picked is the session\'s and the CLI\'s', async ({ page }) => {
   await open(page, 'scratch');
   const model = side(page).getByRole('combobox', { name: 'Model' });
@@ -157,22 +177,3 @@ test('the model picker names exact models; the one picked is the session\'s and 
   expect(given.args.slice(given.args.indexOf('--model'), given.args.indexOf('--model') + 2)).toEqual(['--model', 'claude-opus-5-5[1m]']);
   await expect(status(page)).toHaveText('Status: Ready');
 });
-
-for (const theme of ['dark', 'light'] as Theme[]) {
-  test(`axe passes with Send waiting, then with the answers handed over (${theme})`, async ({ page }) => {
-    await setTheme(page, theme);
-    await open(page, 'scratch');
-    try {
-      await sendWhileBusy(page, { action: 'comment', n: 1, ver: 1, text: `Checked in ${theme}` });
-      await expectNoAxeViolations(page);
-      await stopAndHandOver(page);
-      // The session is the model picker's new one: its agent holds the board, not the first agent's
-      // container, so it is told no answer there (api.md 41) and the comment goes as its note chip.
-      await expect(mine(page).last()).toContainText(`Checked in ${theme}`);
-      await expect(status(page)).toHaveText('Status: Ready');
-      await expectNoAxeViolations(page);
-    } finally {
-      srv.fake.mode('replay');
-    }
-  });
-}

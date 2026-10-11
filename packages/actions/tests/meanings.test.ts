@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { boardView } from '../../format/src/index.ts';
-import { actionWord, boardState, meaningOf, otherWords, replyScope, replyText, responsesPage } from '../src/index.ts';
+import { actionWord, boardState, meaningOf, replyLines, otherWords, replyScope, replyText, responsesPage } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';
 
 test('one table: yes and no on a question, done for ✓ on an action, nothing elsewhere', () => {
@@ -60,9 +60,9 @@ test('a round: only what was answered after the cursor, with only the newer note
   l.act({ action: 'comment', board: 'b', region: 'q', text: 'Old container note.' });
   const since = l.act({ action: 'send', board: 'b' });
   l.act({ action: 'drop', n: 1, ver: 1 });
-  l.act({ action: 'comment', n: 6, ver: 1, text: 'New words.' });
+  const newWords = l.act({ action: 'comment', n: 6, ver: 1, text: 'New words.' });
   l.act({ action: 'size', n: 2, size: 'l' });
-  l.act({ action: 'comment', board: 'b', region: 'r', text: 'All of r.' });
+  const allOfR = l.act({ action: 'comment', board: 'b', region: 'r', text: 'All of r.' });
   l.act({ action: 'send', board: 'b' });
   const s = l.state();
   const scope = replyScope(s, 'b', since);
@@ -70,5 +70,6 @@ test('a round: only what was answered after the cursor, with only the newer note
   assert.deepEqual(replyText(boardView(s, 'b'), boardState(s, 'b'), scope).split('\n').slice(1), [
     '1 (question): no', '5 (finding): comment: New words.', 'On container "r" comment: All of r.', 'Still open: 3, 4',
   ]);
+  assert.deepEqual(replyLines(boardView(s, 'b'), boardState(s, 'b'), scope).notes.sort(), [newWords, allOfR].sort(), 'the reply names the notes its lines carry, no others');
   assert.deepEqual(replyScope(s, 'b', s.seq).cards.size, 0, 'nothing after the latest line');
 });

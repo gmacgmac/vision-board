@@ -17,7 +17,8 @@ import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
 import { promptFor, wordsOf } from './chat-prompt.ts';
-import { previousSend, roundText } from './chat-round.ts';
+import type { Round } from './chat-round.ts';
+import { previousSend, roundOf } from './chat-round.ts';
 import type { ChatEvent, LiveSession } from './chat-session.ts';
 import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import type { Ledger } from './ledger.ts';
@@ -151,10 +152,10 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
 
   const current = (board: Place) => entries().findLast((e) => e.board === board);
 
-  /** The answers on `board` the session's agent has not been told, as the round's text. */
-  function unsaid(live: LiveSession, board: string, before: number): string | undefined {
+  /** The answers on `board` the session's agent has not been told, as the round. */
+  function unsaid(live: LiveSession, board: string, before: number): Round | undefined {
     const s = ledger.state();
-    return roundText(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
+    return roundOf(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
   }
 
   /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */

@@ -1,13 +1,15 @@
 // The bridge between the chat panel and the board (chat-panel FE_02 ruling 3, D-037): the only file
-// that knows both sides. Board to chat: the selected cards and the person's unsent notes become the
-// composer's chips; a chip the person takes off stays off (a card's until the selection changes),
-// and the chips a message carried go with it; the person's answers since the board's last Send are
-// the composer's context, "3 answers since your last Send", opening to the lines the next message
-// carries (chat-board-context ruling 1: packages/actions `replyLines`, the Send message's writer). Chat to board: a change chip selects its cards and
-// zooms to them (Zoom to selection), opening their board first when it is another one; a changed
-// card's stepper links to the board write in the chat that last changed it; a chat in the folder's
-// first board opens when drawn (`open`, panel-send ruling 2). The board side attaches
-// from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
+// that knows both sides. Board to chat: the selected cards become the composer's chips; a chip the
+// person takes off stays off until the selection changes, and the chips a message carried go with
+// it; the person's answers since the board's last Send are the composer's context, "3 answers since
+// your last Send", opening to the lines the next message carries (chat-board-context ruling 1:
+// packages/actions `replyLines`, the Send message's writer). Their notes are among those lines, so
+// they are no chips: a note goes once, as its answer (chat-no-double-note ruling 2). Chat to board:
+// a change chip selects its cards and zooms to them (Zoom to selection), opening their board first
+// when it is another one; a changed card's stepper links to the board write in the chat that last
+// changed it; a chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The
+// board side attaches from the controller, the chat side from the sidebar (chat-panel.ts); each
+// detaches on its own.
 // The pure parts are unit-tested under Node.
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardState, replyLines, replyScope } from '../../../../packages/actions/src/index.ts';
@@ -36,18 +38,9 @@ export function selectedCards(d: BoardData, ids: readonly string[]): Chip[] {
   });
 }
 
-/** The person's notes on the board that no Send carried yet, oldest first: on cards (a note on a
- *  group once) and on whole containers. A More context with no words carries nothing. */
-export function unsentNotes(d: BoardData): Chip[] {
-  const notes = [...[...d.state.items.values()].flatMap((i) => i.notes), ...[...d.state.regionNotes.values()].flat()];
-  const out = new Map<number, Chip>();
-  for (const x of notes) if (!x.sent && x.text.trim() && !out.has(x.seq)) out.set(x.seq, { kind: 'note', ref: x.seq, label: clip(x.text) });
-  return [...out.values()].sort((a, b) => a.ref - b.ref);
-}
-
-/** The composer's chips: the selected cards, then the unsent notes, but those taken off (`off`, by `chipKey`). */
+/** The composer's chips: the selected cards, but those taken off (`off`, by `chipKey`). */
 export const boardChips = (d: BoardData, selected: readonly string[], off: ReadonlySet<string>): Chip[] =>
-  [...selectedCards(d, selected), ...unsentNotes(d)].filter((c) => !off.has(chipKey(c)));
+  selectedCards(d, selected).filter((c) => !off.has(chipKey(c)));
 
 /** The person's answers on `board` since its last Send, as the lines the next message hands `agent`
  *  (the session's agent: only what it may answer, as the server builds it; every answer with none). */

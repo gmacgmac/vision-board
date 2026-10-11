@@ -30,7 +30,7 @@ export { boardNews, clearsOnSelect, CONDITION_KINDS, CONDITIONS, conditionsOf } 
 export type { Audience, ClearedBy, Condition, ConditionContext, ConditionKind, ConditionRow, Shows } from './conditions.ts';
 export { boardAccess, boardList, boardVersions, containerDetail, linkedDetails, nodeDetail, openContainers, openItems } from './reads.ts';
 export type { AccessHolder, AccessRequest, BoardAccess, BoardListItem, BoardVersions, ContainerDetail, NodeDetail, NodeVersionView, OpenContainer, OpenItem } from './reads.ts';
-export { replyLines, replyText } from './reply.ts';
+export { joinReply, replyLines, replyText } from './reply.ts';
 export type { ReplyLines, ReplyScope } from './reply.ts';
 export { actionWord, MEANINGS, meaningOf, otherWords } from './action-words.ts';
 export type { Meaning } from './action-words.ts';
