@@ -7,7 +7,9 @@
 // (`open_project`, server/project.ts, which then holds the lock).
 // Env: VB_PORT (4466), VB_PROJECT (see above), VB_SEED (a fixture ledger copied in when the
 // project has no ledger yet; the fixture itself is never written), VB_WATCH (`1`: watch mode, dev
-// only; dist/ is watched and `watch_project` sends `build` so an open page reloads, api.md 79).
+// only; dist/ is watched and `watch_project` sends `build` so an open page reloads, api.md 79),
+// VB_KIRO_AGENT (`0`: don't write Kiro's agent file, `~/.kiro/agents/vision-board.json`, which the
+// server otherwise keeps current at start, N34 ruling 1; the page tests' servers set it).
 // One server per ledger: `.visionboard/lock` (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit.
 import fs from 'node:fs';
@@ -60,7 +62,8 @@ process.on('exit', () => lock.release());
 
 const seeded = seed(FILE, process.env.VB_SEED);
 const build = process.env.VB_WATCH === '1' ? watchBuild(DIST) : undefined;
-const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build });
+const chat = { kiroAgent: process.env.VB_KIRO_AGENT !== '0' };
+const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat });
 
 // Closing the server stops the chats and lets go of the open folder's lock (server/project.ts).
 const stop = () => {

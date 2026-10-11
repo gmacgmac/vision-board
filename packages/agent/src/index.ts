@@ -17,6 +17,7 @@ export { AcpConnection, NOT_OFFERED, RpcError } from './acp.ts';
 export type { AcpHandlers } from './acp.ts';
 export { createKiroAdapter } from './kiro.ts';
 export type { KiroAdapterOptions } from './kiro.ts';
+export { KIRO_AGENT, KIRO_AGENT_DRAFT, KIRO_DEFAULT_MODEL, KIRO_EFFORT, kiroAgentFile, kiroAgentText, sessionProblem, writeKiroAgent } from './kiro-agent.ts';
 export { KiroTurn } from './kiro-turn.ts';
 export { outcome, pickOption, readRequest, verdictFor } from './kiro-permission.ts';
 export type { PermissionRequest, Verdict } from './kiro-permission.ts';

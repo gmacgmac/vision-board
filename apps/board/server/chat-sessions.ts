@@ -32,6 +32,8 @@ export interface ChatOptions {
   adapters?: ChatAdapters | undefined;
   /** How long an approval waits (tests shorten it). */
   approvalTtlMs?: number | undefined;
+  /** Why an agent cannot start on this server (Kiro's agent file not written, N34 ruling 1). */
+  blocked?: Partial<Record<ChatSession['agent'], string>> | undefined;
 }
 
 /** Where a session is: a board, or `undefined` for the folder (a session on no board yet). */
@@ -64,7 +66,7 @@ const notFound = (id: string) =>
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs }: ChatOptions): Chats {
+export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {} }: ChatOptions): Chats {
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
   let index: ChatIndex | undefined;
@@ -92,6 +94,8 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
   async function load(record: StoredSession): Promise<LiveSession> {
     const make = adapters[record.agent];
     if (!make) throw problem('conflict', `${agentName(record.agent)} is not available on this server, so this session cannot run.`);
+    const why = blocked[record.agent];
+    if (why) throw problem('conflict', `${agentName(record.agent)} could not be started: ${why}`);
     const token = newRunToken();
     try {
       const extra = { sessionId: record.session, ...(record.model && { model: record.model }) };
@@ -132,6 +136,8 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
           errors: [{ pointer: '/agent', detail: `${agent} cannot be started here; use one of: ${Object.keys(adapters).join(', ')}` }],
         });
       }
+      const why = blocked[agent];
+      if (why) throw problem('invalid', `${agentName(agent)} could not be started.`, { errors: [{ pointer: '/agent', detail: why }] });
       const identity = newIdentity(ledger, agents());
       const token = newRunToken();
       let started;

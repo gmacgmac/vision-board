@@ -46,7 +46,9 @@ an agent by its Bearer secret. `server/agents.ts` is the only module that touche
 (`server/chat.ts`, api.md 98-107) run sessions through `packages/agent`: `server/chat-sessions.ts`
 starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
 module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the
-session's agent and gives its secret to the vb MCP server only, `server/chat-session.ts` stamps and
+session's agent, gives its secret to the vb MCP server only and keeps Kiro's agent file
+(`~/.kiro/agents/vision-board.json`) current at start (`chat: { kiroAgent: true }`, as server.ts
+does unless `VB_KIRO_AGENT=0`), `server/chat-session.ts` stamps and
 streams a session's events, `server/chat-approvals.ts` holds the gate's asks,
 `server/chat-prompt.ts` spells out the message's chips, and `server/chat-round.ts` writes the message
 the board's Send hands a session (api.md 121-122).
@@ -76,7 +78,7 @@ roadmap fixture ledger, and the performance budgets on port 4469 from a generate
   (serves `temp/demo`, seeded once from the roadmap fixture ledger), then open
   http://localhost:4466. `VB_PROJECT` picks the project folder (without it, the folder last opened
   from the board, else this repo); "⋯" › Open folder… opens another one; `VB_SEED` names a ledger
-  copied in when the project has none yet.
+  copied in when the project has none yet; `VB_KIRO_AGENT=0` leaves `~/.kiro` alone (the page tests' servers).
   `npm run board:watch` is for working on the board: it rebuilds the page on save, restarts the
   server only when server code changes, and reloads the open page with its view kept (dev only;
   `npm run board` never reloads). `npm run watch` alone only rebuilds. `npm run check` type-checks `src/`.

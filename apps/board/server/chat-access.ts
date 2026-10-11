@@ -3,10 +3,12 @@
 // person's grant of the board to it (starting the session was the person's click). The secret goes
 // only to the vb MCP server, in its environment (`VB_AGENT_SECRET`), so it never appears in a tool
 // call, the CLI's command line, the transcript or a chat event. Secrets are never stored: after a
-// restart the server gives the same agent a fresh one (`rekey`).
+// restart the server gives the same agent a fresh one (`rekey`). Kiro gets the skill as its agent's
+// prompt instead (N34 ruling 1): the server keeps `~/.kiro/agents/vision-board.json` current at start
+// (`keepKiroAgent`), and a failure to write it stops only Kiro, saying why.
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '../../../packages/agent/src/index.ts';
-import { GATED_TOOLS } from '../../../packages/agent/src/index.ts';
+import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '../../../packages/agent/src/index.ts';
 import type { Agents } from './agents.ts';
 import { newSecret } from './agents.ts';
 import type { ChatSession } from './chat-index.ts';
@@ -58,4 +60,15 @@ export function rekey(agents: Agents, agentId: string): string {
  * the open folder the CLI works in, so its calls match it (folder-mismatch ruling 4). */
 export function vbServer(base: string, secret: string, project: string): McpServer {
   return { command: process.execPath, args: ['--no-warnings', VB_MCP], env: { VB_SERVER: base, VB_AGENT_SECRET: secret, VB_PROJECT: project } };
+}
+
+/** Keep Kiro's agent file under `home` current, its prompt this repo's skill (N34 ruling 1); why it
+ * could not be, when it could not (a Kiro start then says so; nothing else stops). */
+export function keepKiroAgent(home: string): string | undefined {
+  try {
+    writeKiroAgent(home, INSTRUCTIONS_FILE);
+    return undefined;
+  } catch (err) {
+    return `The Kiro agent file ${kiroAgentFile(home)} could not be written: ${err instanceof Error ? err.message : String(err)}. Check that folder's permissions, then restart the board.`;
+  }
 }

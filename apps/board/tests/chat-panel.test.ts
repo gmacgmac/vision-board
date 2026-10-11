@@ -2,12 +2,13 @@
 // while the person's last message is the one the agent was answering when Send was pressed, and
 // stops waiting at the next message (the answers handed over); a session in the folder opens the
 // first board its agent drew, a board's session never jumps; the model picker names exact models
-// (ruling 5), the 1M context as before.
+// (ruling 5), the 1M context as before; Kiro's are Opus 5.5 (first, so it is what picking Kiro
+// gives) and Sonnet 5.5, never `auto` (N34 ruling 3).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ChatEvent } from '../../../packages/chat/src/index.ts';
 import { applyEvents, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
-import { firstBoard, lastAsk, MODELS } from '../src/board/chat-panel.ts';
+import { firstBoard, firstModel, lastAsk, MODELS } from '../src/board/chat-panel.ts';
 import type { ChatSessionInfo } from '../src/board/io.ts';
 
 const S = 'session-1';
@@ -41,4 +42,11 @@ test('the model picker names exact models, with the 1M context; Default stays fi
   assert.deepEqual(MODELS.claude, [
     { id: '', label: 'Default' }, { id: 'claude-opus-5-5[1m]', label: 'Opus 5.5' }, { id: 'claude-sonnet-5-5[1m]', label: 'Sonnet 5.5' },
   ]);
+});
+
+test('Kiro offers Opus 5.5 (picked with Kiro) and Sonnet 5.5 by Kiro\'s ids, and never auto', () => {
+  assert.deepEqual(MODELS.kiro, [{ id: 'claude-opus-5.5', label: 'Opus 5.5' }, { id: 'claude-sonnet-5.5', label: 'Sonnet 5.5' }]);
+  assert.equal(firstModel('kiro'), 'claude-opus-5.5');
+  assert.equal(firstModel('claude'), '', 'Claude still starts on its default');
+  assert.ok(!MODELS.kiro.some((m) => m.id === 'auto' || m.id === ''), 'no auto, and no left-out model for Kiro');
 });

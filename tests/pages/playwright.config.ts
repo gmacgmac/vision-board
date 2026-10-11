@@ -35,7 +35,8 @@ const serve = (start: string) => [
 const SERVE = serve('npm run build && node apps/board/server.ts');
 const SERVE_PERF = serve('node tests/pages/perf-ledger.ts "$VB_SEED" && node apps/board/server.ts');
 const SERVE_EMPTY = serve('node apps/board/server.ts');
-const env = process.env as Record<string, string>;
+// The servers never write Kiro's agent file into the real home (server.ts, VB_KIRO_AGENT).
+const env = { ...(process.env as Record<string, string>), VB_KIRO_AGENT: '0' };
 
 export default defineConfig({
   testDir: '.',

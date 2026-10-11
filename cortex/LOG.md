@@ -190,3 +190,5 @@
 [[2026-10-11 11:46]] [project-docs] Tracker: N35 card numbers per board, N36 flag a card for yourself (replaces parked N29); batch 1 of the field report started → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
 [[2026-10-11 12:09]] [board-app] Field report batch 1: Send disabled with nothing new (conditions row board.unsent, fold unsent.ts), join again when the open folder is the agent's own (401), a smaller quieter N updates tab, skill v2.2 with scenario 14 → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
 [[2026-10-11 12:15]] [project-docs] Tracker: N33 done (field report batch 1) → Task: [[cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md]]
+[[2026-10-11 12:23]] [board-format] Planned field report batch 2 (retire, card numbers per board, the flag, column and row), awaiting review → Task: [[cortex-tasks/board/2026-10-11_board-format_field-report-batch-2/TASK-STATUS.md]]
+[[2026-10-11 12:42]] [board-agent] Kiro in the panel runs as the vision-board agent on Opus/Sonnet 5.5 (effort high); tracker N34 done → Task: [[cortex-tasks/board/2026-10-11_board-agent_kiro-agent-panel.md]]

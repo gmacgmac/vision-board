@@ -1,10 +1,11 @@
 // The Kiro adapter end to end against a fake `kiro-cli acp` (tests/fake-kiro.ts) replaying one
 // recorded real turn: the handshake and the board's tool server in session/new (env as name/value
-// pairs, the secret there only); the instructions leading the first message only; the turn's
-// updates; the permission requests answered through the board's approval route (the board's own
+// pairs, the secret there only); the turn's updates; the permission requests answered through the board's approval route (the board's own
 // tool without asking, a file change asked, the person's answer as the option); resuming with
 // session/load and the servers again; cancel; the time limit; a tool server that never starts; a
-// CLI that cannot start.
+// CLI that cannot start. N34: Kiro starts as the vision-board agent (`--agent`, its file in a temp
+// home), on the chosen model (Opus 5.5 when none is), effort high; a missing agent or a model the
+// session does not offer stops it before any prompt; the skill is the agent's, never in a message.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -13,12 +14,16 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { AgentUpdate, Facts, KiroAdapterOptions, StartOptions } from '../src/index.ts';
-import { createKiroAdapter } from '../src/index.ts';
+import { createKiroAdapter, writeKiroAgent } from '../src/index.ts';
 import { FAKE_KIRO, KIRO_DENIED, KIRO_DRAW, collect } from './support.ts';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'agent-kiro-'));
 const instructions = path.join(dir, 'instructions.md');
 writeFileSync(instructions, '# Instructions\nDraw on the board.\n');
+/** The home the fake looks in for `.kiro/agents/vision-board.json`; `bare` has none. */
+const home = path.join(dir, 'home');
+const bare = path.join(dir, 'bare');
+writeKiroAgent(home, instructions);
 let notes = 0;
 
 /** A stand-in for the board's approval route: records the facts and the token, answers `approve`. */
@@ -46,9 +51,9 @@ const START = (url = 'http://127.0.0.1:1/api/run/approvals'): StartOptions => ({
   gate: { url, token: 'run-token' },
 });
 
-function fake(mode = 'replay', options: KiroAdapterOptions = {}, fixture = KIRO_DENIED) {
+function fake(mode = 'replay', options: KiroAdapterOptions = {}, fixture = KIRO_DENIED, extra: NodeJS.ProcessEnv = {}) {
   const note = path.join(dir, `note-${++notes}.jsonl`);
-  const env: NodeJS.ProcessEnv = { ...process.env, FAKE_KIRO_FIXTURE: fixture, FAKE_KIRO_MODE: mode, FAKE_KIRO_NOTE: note };
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, FAKE_KIRO_FIXTURE: fixture, FAKE_KIRO_MODE: mode, FAKE_KIRO_NOTE: note, ...extra };
   const adapter = createKiroAdapter({ command: { file: process.execPath, args: [FAKE_KIRO] }, env, log: () => {}, ...options });
   const given = (): any[] => (existsSync(note) ? readFileSync(note, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
   const sent = (method: string) => given().filter((n) => n.method === method);
@@ -60,7 +65,7 @@ const alive = (pid: number) => { try { process.kill(pid, 0); return true; } catc
 const until = async (what: () => boolean) => { for (let i = 0; i < 300 && !what(); i++) await new Promise((r) => setTimeout(r, 20)); };
 test.after(() => rmSync(dir, { recursive: true, force: true }));
 
-test('a turn: handshake, the tool server in session/new, the instructions first, the updates, the permissions answered', async () => {
+test('a turn: handshake, the tool server in session/new, the person\'s words alone, the updates, the permissions answered', async () => {
   const gate = await gateServer(false);
   const { adapter, sent, given } = fake();
   assert.equal(adapter.agent, 'kiro');
@@ -87,8 +92,7 @@ test('a turn: handshake, the tool server in session/new, the instructions first,
 
   const [asked] = sent('session/prompt');
   assert.equal(asked.params.sessionId, session.id);
-  assert.ok(asked.params.prompt[0].text.startsWith('# Instructions\nDraw on the board.'));
-  assert.ok(asked.params.prompt[0].text.endsWith('Draw two cards.'));
+  assert.equal(asked.params.prompt[0].text, 'Draw two cards.', 'the skill is the agent\'s prompt, not the message\'s');
   // The board's own tool went ahead unasked; the file create was asked (facts, the run token), refused.
   assert.deepEqual(gate.asked.map((a) => [a.token, a.facts]), [[
     'Bearer run-token', { kind: 'write', op: 'create', path: '/private/work/project/note.txt', preview: 'hi\n' },
@@ -129,12 +133,12 @@ test('an unreachable approval route is a refusal, never a yes', async () => {
   session.close?.();
 });
 
-test('the instructions lead the first message only; a loaded session never gets them again', async () => {
+test('no message carries the instructions, in a new session or a loaded one', async () => {
   const { adapter, sent } = fake();
   const first = await adapter.start(START());
   await collect(first.prompt('one'));
   await collect(first.prompt('two'));
-  assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two');
+  assert.deepEqual(sent('session/prompt').map((p) => p.params.prompt[0].text), ['one', 'two']);
   first.close?.();
   const resumed = fake();
   const again = await resumed.adapter.start({ ...START(), sessionId: first.id });
@@ -157,11 +161,32 @@ test('resume: session/load with the id and the tool servers again; the replayed 
   session.close?.();
 });
 
-test('a model is passed on the command line', async () => {
+test('Kiro starts as the vision-board agent, on the chosen model (Opus 5.5 when none is), effort high', async () => {
   const { adapter, sent } = fake();
-  const session = await adapter.start({ ...START(), model: 'claude-sonnet-4' });
-  assert.deepEqual(sent('initialize')[0].args.slice(-2), ['--model', 'claude-sonnet-4']);
+  const session = await adapter.start({ ...START(), model: 'claude-sonnet-5.5' });
+  assert.deepEqual(sent('initialize')[0].args, ['--agent', 'vision-board', '--model', 'claude-sonnet-5.5', '--effort', 'high']);
   session.close?.();
+  const plain = fake();
+  const other = await plain.adapter.start(START());
+  assert.deepEqual(plain.sent('initialize')[0].args.slice(-5), ['vision-board', '--model', 'claude-opus-5.5', '--effort', 'high']);
+  other.close?.();
+});
+
+test('a missing vision-board agent (Kiro then starts kiro_default) stops the session before any prompt', async () => {
+  const { adapter, sent, given } = fake('replay', {}, KIRO_DENIED, { HOME: bare });
+  await assert.rejects(adapter.start(START()), /kiro_default, not the vision-board agent.*\.kiro\/agents\/vision-board\.json/s);
+  assert.equal(sent('session/prompt').length, 0);
+  const { pid } = given()[0];
+  await until(() => !alive(pid));
+  assert.equal(alive(pid), false, 'its process is ended');
+});
+
+test('a model the session does not offer is refused before any prompt; auto never runs', async () => {
+  const { adapter, sent } = fake('replay', {}, KIRO_DENIED, { FAKE_KIRO_MODELS: 'auto,claude-sonnet-5.5' });
+  await assert.rejects(adapter.start({ ...START(), model: 'claude-opus-5.5' }), /does not offer the model claude-opus-5\.5.*auto, claude-sonnet-5\.5/s);
+  await assert.rejects(adapter.start({ ...START(), model: 'auto' }), /auto/);
+  assert.equal(sent('session/prompt').length, 0);
+  assert.ok(!sent('initialize').some((n) => n.args.includes('auto')), 'auto never reaches the command line');
 });
 
 test('cancel: session/cancel ends the turn stopped; close ends the process', async () => {
@@ -204,7 +229,7 @@ test('a Kiro that ended between turns is started again and the session loaded', 
   assert.equal(updates.at(-1)?.type, 'done');
   const [loaded] = sent('session/load');
   assert.deepEqual([loaded.params.sessionId, loaded.params.mcpServers[0].name], [session.id, 'vb']);
-  assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two', 'the instructions are already in the history');
+  assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two');
   session.close?.();
 });
 

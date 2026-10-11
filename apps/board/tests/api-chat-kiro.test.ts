@@ -3,7 +3,9 @@
 // records the grant; the secret reaches only the tool server's environment in session/new; a
 // file change in the turn becomes an approval_request on the chat stream, and the person's answer
 // goes back to Kiro as the option; the events are schema-valid; Stop and the server closing end
-// the Kiro process.
+// the Kiro process. N34: the server writes Kiro's agent file under its home at start (a temp home
+// here) and Kiro starts as that agent, the skill its prompt and never the message's; a file that
+// cannot be written leaves the server running and refuses a Kiro start, saying why.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -11,6 +13,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createKiroAdapter } from '../../../packages/agent/src/index.ts';
+import { INSTRUCTIONS_FILE } from '../server/chat-access.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -22,14 +25,28 @@ const FAKE_KIRO = agentTests('fake-kiro.ts');
 const KIRO_DENIED = agentTests('fixtures/kiro-denied.jsonl');
 const work = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-'));
 const note = path.join(work, 'notes.jsonl');
-const env: NodeJS.ProcessEnv = { ...process.env, FAKE_KIRO_FIXTURE: KIRO_DENIED, FAKE_KIRO_MODE: 'replay', FAKE_KIRO_NOTE: note };
+const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-home-')));
+const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, FAKE_KIRO_FIXTURE: KIRO_DENIED, FAKE_KIRO_MODE: 'replay', FAKE_KIRO_NOTE: note };
 const adapter = () => createKiroAdapter({ command: { file: process.execPath, args: [FAKE_KIRO] }, env, log: () => {} });
 const notes = (): any[] => (fs.existsSync(note) ? fs.readFileSync(note, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 let h: Harness;
-before(async () => { h = await startBoard({ chat: { adapters: { kiro: adapter } } }); });
-after(async () => { await h.close(); fs.rmSync(work, { recursive: true, force: true }); });
+const board = () => startBoard({ home, chat: { adapters: { kiro: adapter }, kiroAgent: true } });
+before(async () => { h = await board(); });
+after(async () => {
+  await h.close();
+  for (const d of [work, home]) fs.rmSync(d, { recursive: true, force: true });
+});
 
 const valid = (events: Event[]) => { for (const e of events) assert.deepEqual(schemaProblems(CHAT_EVENT_ID, e), [], JSON.stringify(e)); };
+
+test('start-up writes the agent file under home: the repo\'s skill as its prompt, by an absolute path', () => {
+  const file = path.join(home, '.kiro', 'agents', 'vision-board.json');
+  const made = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert.equal(made.name, 'vision-board');
+  assert.equal(made.prompt, `file://${INSTRUCTIONS_FILE}`);
+  assert.ok(path.isAbsolute(INSTRUCTIONS_FILE) && fs.existsSync(INSTRUCTIONS_FILE));
+  assert.deepEqual(fs.readdirSync(path.join(home, '.kiro'), { recursive: true }).sort(), ['agents', path.join('agents', 'vision-board.json')]);
+});
 
 test('start: Kiro joins the board as its agent; a message becomes a turn; a file change asks the person; the answer reaches Kiro', async () => {
   const before = h.ledger.state().seq;
@@ -66,8 +83,9 @@ test('start: Kiro joins the board as its agent; a message becomes a turn; a file
   }
   const options = sent.filter((n) => n.answered).map((n) => n.result.outcome.optionId).sort();
   assert.deepEqual(options, ['allow_once', 'allow_once'], 'the person\'s yes and the board tool\'s own go-ahead');
+  assert.deepEqual(made.args, ['--agent', 'vision-board', '--model', 'claude-opus-5.5', '--effort', 'high']);
   const prompt = sent.find((n) => n.method === 'session/prompt').params.prompt[0].text as string;
-  assert.ok(prompt.includes('# Vision Board') && prompt.endsWith('Board: pricing'), 'the skill leads, the board id ends');
+  assert.equal(prompt, 'Draw two cards.\n\nBoard: pricing', 'the person\'s words and the board id; the skill is the agent\'s');
 });
 
 test('Stop ends the turn, and closing the server ends the Kiro process', async () => {
@@ -81,5 +99,19 @@ test('Stop ends the turn, and closing the server ends the Kiro process', async (
   valid(events);
   await h.close();
   await gone(pid);
-  h = await startBoard({ chat: { adapters: { kiro: adapter } } });
+  h = await board();
+});
+
+test('an agent file that cannot be written: the server runs, and a Kiro start is refused saying why', async () => {
+  const blocked = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-blocked-')));
+  fs.writeFileSync(path.join(blocked, '.kiro'), 'a file where the folder should be');
+  const b = await startBoard({ home: blocked, chat: { adapters: { kiro: adapter }, kiroAgent: true } });
+  try {
+    await b.ok('list_boards');
+    const refused = await b.fails('start_chat', { board: 'pricing', body: { agent: 'kiro' } }, 422, 'invalid');
+    assert.match([refused.detail, ...refused.errors.map((e) => e.detail)].join(' '), /Kiro agent file .*vision-board\.json.* could not be written/);
+  } finally {
+    await b.close();
+    fs.rmSync(blocked, { recursive: true, force: true });
+  }
 });

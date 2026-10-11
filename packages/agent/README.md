@@ -34,9 +34,17 @@ uses it: `docs/specification/chat.md`.
   `session/load` when it has ended; `session/prompt` per turn (`prompt: [{ type: 'text' }]`, not
   `content`: Kiro answers a `content` prompt with nothing); `session/cancel` to stop (killed after
   3 s if Kiro ignores it); `close()` ends the process. The `vb` MCP server goes in `mcpServers` with its `env` as name/value
-  pairs (so the secret is only there), and again in every `session/load`. Kiro has no "append to the
-  system prompt", so the instructions file leads a new session's first message (a loaded session has it in
-  its history). The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
+  pairs (so the secret is only there), and again in every `session/load`. **The agent** (`src/kiro-agent.ts`,
+  N34): Kiro starts as `kiro-cli acp --agent vision-board --model <model> --effort high`, the model the host
+  names or `claude-opus-5.5` (never `auto`, which is refused). The agent is a file the host writes with
+  `writeKiroAgent(home, skill)`: `<home>/.kiro/agents/vision-board.json`, this package's draft
+  (`kiro/vision-board.agent.json`) with `prompt` as `file://<absolute skill path>`, rewritten only when its
+  content differs, nothing else in `.kiro` touched. Its prompt is the skill, so no message carries the
+  instructions file (that is Claude's). Kiro starts `kiro_default` without a word when the agent is missing,
+  so `session/new` must report `modes.currentModeId` `vision-board` and list the model in
+  `models.availableModels` (`sessionProblem`); anything else ends the session before any prompt, saying
+  why (a `session/load` is checked on what it reports). The draft's tools: `read`, `grep`, `glob`, `write`,
+  `shell`, `@vb`; reading and `@vb` pre-approved, `write` and `shell` left to ask. The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
   (20 s) and ends the turn in an error when one never starts. Updates: `agent_message_chunk` text
   (held a block, as Claude's), `tool_call`/`tool_call_update` by `toolCallId` (name from
   `_meta.kiro.toolName`; a board write names its board and, when done, its cards and head from the
@@ -49,7 +57,9 @@ uses it: `docs/specification/chat.md`.
   command is asked; anything else (a web fetch, another MCP server's tool) is refused. Only
   `allow_once`/`reject_once` are ever chosen, so Kiro keeps no trust of its own from us; "for this
   session" is the board server's to remember. Kiro's own tools keep Kiro's settings. Tests use
-  `tests/fake-kiro.ts` replaying `tests/fixtures/kiro-denied.jsonl` (writes refused) and
+  `tests/fake-kiro.ts` (it starts as `--agent` only when `$HOME/.kiro/agents/<name>.json` exists, and
+  reports modes and models as kiro-cli 2.29.1 does; tests give it a temp home) replaying
+  `tests/fixtures/kiro-denied.jsonl` (writes refused) and
   `kiro-draw.jsonl` (a successful board write), real turns (kiro-cli 2.28.0) scrubbed of ids, paths
   and the secret.
 - **The gate** (`bin/gate.ts`, `src/gate.ts`, `src/approvals.ts`): an inline `--settings`
@@ -75,7 +85,7 @@ and its Claude harness (`container/harness-claude.ts`) is where these flags were
 
 - **Depends on**: nothing in this repo (its D-016 layer is empty).
 - **Used by**: `apps/board` (the chat sessions, chat-panel BE_03).
-- **Public API** (`src/index.ts`): the types above, `createClaudeAdapter`, `createKiroAdapter`, `KiroTurn`, `AcpConnection`, `ClaudeStream`,
+- **Public API** (`src/index.ts`): the types above, `createClaudeAdapter`, `createKiroAdapter`, `writeKiroAgent`, `kiroAgentFile`, `KIRO_AGENT`, `KiroTurn`, `AcpConnection`, `ClaudeStream`,
   `buildClaudeArgs`, `gateSettings`, `toChatEvent`, `factsFor`, `refusalFor`, `decide`, `runGate`.
 - **Tests**: `tests/` (arguments, the stream against two recorded real turns in
   `tests/fixtures/claude-*.jsonl` scrubbed of ids, paths and secrets, the adapters against fake CLIs

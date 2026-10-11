@@ -4,14 +4,18 @@
 // when it has ended; `session/prompt` per turn; `session/cancel` to stop. The board's tool server
 // goes in `session/new` and again in every `session/load` (Kiro does not keep it). Permission
 // requests become the board's approvals (kiro-permission.ts) over the same route the Claude gate
-// uses. Kiro has no "append to the system prompt", so the instructions file leads the first message.
+// uses. Kiro starts as the vision-board agent (kiro-agent.ts, N34): the skill is the agent's own
+// prompt, so no message carries it (`instructionsFile` is Claude's), on the model asked for (Opus 5.5
+// when none is, never `auto`) at effort high; a session that is not that agent, or does not offer
+// that model, ends before any prompt.
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import type { AgentAdapter, AgentSession, AgentUpdate, StartOptions } from './adapter.ts';
 import type { AcpHandlers } from './acp.ts';
 import { AcpConnection, NOT_OFFERED, RpcError } from './acp.ts';
 import { refusalFor } from './approvals.ts';
 import { askOverHttp } from './gate.ts';
+import { KIRO_AGENT, KIRO_DEFAULT_MODEL, KIRO_EFFORT, sessionProblem } from './kiro-agent.ts';
 import { KiroTurn } from './kiro-turn.ts';
 import { outcome, pickOption, readRequest, verdictFor } from './kiro-permission.ts';
 import { KILL_GRACE_MS, TURN_LIMIT_MS } from './claude.ts';
@@ -69,26 +73,23 @@ class KiroSession implements AgentSession {
   id: string;
   private readonly start: StartOptions;
   private readonly opts: Opts;
-  private readonly instructions: string;
+  private readonly model: string;
   private conn: AcpConnection | undefined;
   private turn: Turn | null = null;
   private ready = new Set<string>();
-  /** Whether the instructions have gone in: a new session's first message, never a loaded one's. */
-  private instructed: boolean;
   private closed = false;
 
   constructor(start: StartOptions, opts: Opts) {
     this.start = start;
     this.opts = opts;
-    this.instructions = start.instructionsFile ? readFileSync(start.instructionsFile, 'utf8').trim() : '';
+    this.model = start.model ?? KIRO_DEFAULT_MODEL;
     this.id = start.sessionId ?? '';
-    this.instructed = start.sessionId !== undefined;
   }
 
   /** Start the CLI, say hello, and open the session (new, or loaded when there is an id). */
   async open(): Promise<void> {
     const { opts, start } = this;
-    const args = [...(opts.command.args ?? ['acp']), ...(start.model ? ['--model', start.model] : [])];
+    const args = [...(opts.command.args ?? ['acp']), '--agent', KIRO_AGENT, '--model', this.model, '--effort', KIRO_EFFORT];
     const child = spawn(opts.command.file, args, { cwd: start.cwd, stdio: ['pipe', 'pipe', 'pipe'], env: opts.env });
     this.ready = new Set();
     const handlers: AcpHandlers = {
@@ -109,11 +110,14 @@ class KiroSession implements AgentSession {
       }));
       if (this.id === '') {
         const made = await conn.request<{ sessionId?: string }>('session/new', { cwd: start.cwd, mcpServers: servers });
+        const problem = sessionProblem(made, this.model, true);
+        if (problem) throw new Error(problem);
         this.id = String(made.sessionId ?? '');
         if (!SESSION_ID.test(this.id)) throw new Error('Kiro answered with a session id this board cannot keep.');
       } else {
         if (init.agentCapabilities?.loadSession !== true) throw new Error('This Kiro cannot load an earlier session.');
-        await conn.request('session/load', { sessionId: this.id, cwd: start.cwd, mcpServers: servers });
+        const problem = sessionProblem(await conn.request('session/load', { sessionId: this.id, cwd: start.cwd, mcpServers: servers }), this.model, false);
+        if (problem) throw new Error(problem);
       }
     } catch (err) {
       const tail = conn.stderrTail();
@@ -189,11 +193,9 @@ class KiroSession implements AgentSession {
       if (!this.conn?.alive) await this.open();
       const problem = await this.serversReady();
       if (problem) return say({ type: 'error', message: problem });
-      const lead = this.instructed || this.instructions === '' ? '' : `${this.instructions}\n\n---\n\nThe person's message:\n\n`;
       const answer = await this.conn!.request<{ stopReason?: string }>('session/prompt', {
-        sessionId: this.id, prompt: [{ type: 'text', text: `${lead}${text}` }],
+        sessionId: this.id, prompt: [{ type: 'text', text }],
       });
-      this.instructed = true;
       if (turn.timedOut) {
         for (const u of turn.mapper.end('cancelled')) if (u.type !== 'stopped') say(u);
         return say({ type: 'error', message: `The agent did not finish within ${Math.round(this.opts.turnLimitMs / 60_000)} minutes and was stopped.` });
@@ -240,6 +242,7 @@ export function createKiroAdapter(options: KiroAdapterOptions = {}): AgentAdapte
     agent: 'kiro',
     async start(start) {
       if (start.sessionId !== undefined && !SESSION_ID.test(start.sessionId)) throw new Error(`Not a session id: ${start.sessionId}`);
+      if (start.model === 'auto') throw new Error('Kiro\'s auto model is not used here: name a model.');
       const session = new KiroSession(start, opts);
       await session.open();
       return session;

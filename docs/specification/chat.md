@@ -76,7 +76,8 @@ folder with no board the panel talks in the folder (`start_folder_chat`, `list_f
 board its agent draws opens (its board write's `tool_activity`, or the board's first line), and the panel
 stays on the same session there. Send to agent goes through the panel (`boardSend`): pressed while the
 agent is mid-turn, the button shows "Waiting for agent" until the answers go, at the next `message_in`.
-The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context).
+The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
+ids for Kiro, see § Kiro).
 `board/chat-bridge.ts` is the only file that knows both sides: the selected cards and unsent notes as
 chips; a change chip selects and zooms to its cards (opening their board first); a changed card's
 stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
@@ -95,3 +96,14 @@ see its README for the protocol notes). It has no hook to gate, so its `session/
 calls are mapped to the same facts and the same `ask_approval` route inside the adapter: the chat
 panel's Allow and Deny work for it unchanged. The board's own tools (`vb`) and reading go ahead
 unasked; a file change or a command is asked; any other request is refused.
+
+Kiro runs as the `vision-board` agent (N34): at start the board server keeps
+`~/.kiro/agents/vision-board.json` current (`chat-access.ts` `keepKiroAgent`, from
+`packages/agent/kiro/vision-board.agent.json` with the skill as its prompt by an absolute `file://` path;
+written only when it differs, nothing else in `~/.kiro` touched; `VB_KIRO_AGENT=0` skips it, as the page
+tests' servers do). A file that cannot be written stops nothing else: a Kiro start is refused with the
+reason, shown in the panel. Kiro starts with `--agent vision-board --model <model> --effort high`; a
+session that is not that agent, or does not offer the model, ends before any prompt with a clear error.
+The skill is the agent's prompt, so the person's message goes to Kiro as it is. The model picker offers
+Kiro's Opus 5.5 (`claude-opus-5.5`, what picking Kiro gives) and Sonnet 5.5 (`claude-sonnet-5.5`), never
+`auto`.

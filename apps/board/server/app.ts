@@ -4,13 +4,15 @@
 // here, once per start, and set with the page (api.md 20); it stays valid when the open folder
 // changes. The open folder, with its ledger, lock, agents and chats, is project.ts's (api.md 111):
 // its chats are opened on first use, and its CLIs stopped and its lock let go when the server
-// closes or the process exits. server.ts only starts it.
+// closes or the process exits. Kiro's agent file is kept current here, at start, when asked
+// (chat-access.ts `keepKiroAgent`). server.ts only starts it.
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import type { BuildWatch } from './build-watch.ts';
 import { newPersonToken, personCookie } from './callers.ts';
+import { keepKiroAgent } from './chat-access.ts';
 import type { ChatAdapters } from './chat-sessions.ts';
 import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
@@ -41,16 +43,20 @@ export interface BoardServerOptions {
   dist: string;
   /** Watch mode only (`VB_WATCH=1`): the build being served, for `watch_project`'s `build` event. */
   build?: BuildWatch | undefined;
-  /** The CLIs a chat can run (default: Claude Code) and the approval time limit; tests set both. */
-  chat?: { adapters?: ChatAdapters; approvalTtlMs?: number } | undefined;
+  /** The CLIs a chat can run (default: Claude Code and Kiro) and the approval time limit; tests set
+   * both. `kiroAgent`: keep Kiro's agent file under `home` current at start (server.ts does; a test
+   * that does passes a temp home), N34 ruling 1. */
+  chat?: { adapters?: ChatAdapters; approvalTtlMs?: number; kiroAgent?: boolean } | undefined;
 }
 
 /** An http.Server for the board. The Host check uses the port it is actually listening on, so a
  * test can listen on port 0. The agents store sits beside the ledger and is opened on first use. */
 export function createBoardServer({ ledger, lock, home = os.homedir(), dist, build, chat }: BoardServerOptions): http.Server {
   const port = () => (server.address() as AddressInfo).port;
+  const realHome = fs.realpathSync(home);
+  const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
   const project = openProject({
-    ledger, lock, home: fs.realpathSync(home), port, base: () => `http://127.0.0.1:${port()}`, chat,
+    ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...chat, ...(kiro && { blocked: { kiro } }) },
   });
   const env: ServerEnv = { person: newPersonToken(), project, build };
   const server = http.createServer(async (req, res) => {

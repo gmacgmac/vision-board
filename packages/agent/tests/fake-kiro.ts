@@ -9,8 +9,13 @@
 //   hang              the first chunk, then wait; session/cancel ends the turn as "cancelled"
 //   stubborn          as hang, but session/cancel is ignored (only a kill ends it)
 //   no-servers        never says the tool server is ready
+// As the real one (kiro-cli 2.29.1): `--agent <name>` starts as that agent only when
+// `$HOME/.kiro/agents/<name>.json` exists, else silently as `kiro_default`; `session/new` answers with
+// `modes.currentModeId` and `models` (`availableModels`: FAKE_KIRO_MODELS, comma-separated, or a
+// short real list; `currentModelId`: `--model`, else the agent file's `model`, else `auto`).
 // Not a test itself (no .test.ts).
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import { createInterface } from 'node:readline';
 
 type Msg = { id?: number | string; method?: string; params?: any; result?: any };
@@ -28,6 +33,19 @@ const turnStart = lines.indexOf(lines.find((m) => m.result?.sessionId)!) + 2; //
 const ending = lines.findLast((m) => m.result?.stopReason)!;
 const turn = lines.slice(turnStart, lines.indexOf(ending));
 const session: string = created.sessionId;
+
+const flag = (name: string) => { const i = process.argv.indexOf(name); return i < 0 ? undefined : process.argv[i + 1]; };
+const agentFile = flag('--agent') && path.join(process.env.HOME ?? '', '.kiro', 'agents', `${flag('--agent')}.json`);
+const agent = agentFile && existsSync(agentFile) ? JSON.parse(readFileSync(agentFile, 'utf8')) : undefined;
+const offered = (process.env.FAKE_KIRO_MODELS ?? 'auto,claude-opus-5.5,claude-sonnet-5.5,claude-haiku-4.5').split(',');
+const newSession = {
+  ...created,
+  modes: { currentModeId: agent ? flag('--agent') : 'kiro_default', availableModes: [] },
+  models: {
+    currentModelId: flag('--model') ?? agent?.model ?? 'auto',
+    availableModels: offered.map((id) => ({ modelId: id, name: id })),
+  },
+};
 
 const answers = new Map<string | number, (result: unknown) => void>();
 let promptId: number | string | undefined;
@@ -62,7 +80,7 @@ createInterface({ input: process.stdin }).on('line', (line) => {
     case 'initialize': return send({ id: m.id, result: initResult });
     case 'session/new':
       if (mode !== 'no-servers') send(ready as Record<string, unknown>);
-      return send({ id: m.id, result: created });
+      return send({ id: m.id, result: newSession });
     case 'session/load':
       history('An earlier message.', 'user_message_chunk');
       history('An earlier reply.', 'agent_message_chunk');

@@ -28,12 +28,15 @@ import { answerApproval, ApiError, listChats, listFolderChats, sendChat, startCh
 type Agent = ChatSessionInfo['agent'];
 
 export const AGENTS: readonly ChatOption[] = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
-/** The models each agent offers; '' is its default. Claude's by exact id, with the 1M context
- *  (chat-panel PLAN ruling 7, panel-send ruling 5; the CLI was checked to take both ids). */
+/** The models each agent offers, the first what picking the agent gives; '' is its default. Claude's
+ *  by exact id, with the 1M context (chat-panel PLAN ruling 7, panel-send ruling 5; the CLI was checked
+ *  to take both ids). Kiro's by Kiro's ids, Opus 5.5 first and never `auto` (N34 ruling 3). */
 export const MODELS: Record<Agent, readonly ChatOption[]> = {
   claude: [{ id: '', label: 'Default' }, { id: 'claude-opus-5-5[1m]', label: 'Opus 5.5' }, { id: 'claude-sonnet-5-5[1m]', label: 'Sonnet 5.5' }],
-  kiro: [],
+  kiro: [{ id: 'claude-opus-5.5', label: 'Opus 5.5' }, { id: 'claude-sonnet-5.5', label: 'Sonnet 5.5' }],
 };
+/** The model picking `agent` gives. */
+export const firstModel = (agent: Agent): string => MODELS[agent][0]?.id ?? '';
 export const LOADING = 'Loading…';
 export const PAST = 'A past version of the board is showing. Go back to now to send a message.';
 /** What the empty feed says on a board, and in a folder with no board. */
@@ -219,7 +222,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
 
   function picked({ field, id }: ChatPickDetail) {
     const now = st.session ? { agent: st.session.agent, model: st.session.model ?? '' } : st.pick;
-    const next: Pick = field === 'agent' ? { agent: id as Agent, model: '' } : { ...now, model: id };
+    const next: Pick = field === 'agent' ? { agent: id as Agent, model: firstModel(id as Agent) } : { ...now, model: id };
     if (st.session) return void renew(next);
     Object.assign(st, { pick: next, refused: undefined });
     render();

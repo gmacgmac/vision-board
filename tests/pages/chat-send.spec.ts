@@ -3,7 +3,7 @@
 // the conversation still there (the same session, listed first on that board); Send to agent with a
 // session on the board hands the agent the answers as one message, at once when it is idle; pressed
 // while it works, the button waits until the turn ends and the answers go; the model picker names
-// exact models; axe light and dark. The server is chat-server.ts with the agent package's fake
+// exact models, Kiro's its two (N34); axe light and dark. The server is chat-server.ts with the agent package's fake
 // `claude`, never the real one, on its own empty project.
 import type { Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
@@ -58,6 +58,16 @@ async function sessionsOn(page: Page, board: string) {
 }
 
 const card = (key: string, title: string) => ({ type: 'node', key, node: { region: 'ideas', kind: 'question', title } });
+
+test('picking Kiro offers Opus 5.5, picked with it, and Sonnet 5.5 by Kiro\'s ids, never auto (N34)', async ({ page }) => {
+  // First, before any session: the pick is the next session's, so nothing starts.
+  await open(page);
+  await side(page).getByRole('combobox', { name: 'Agent' }).selectOption({ label: 'Kiro' });
+  const model = side(page).getByRole('combobox', { name: 'Model' });
+  await expect(model.locator('option')).toHaveText(['Opus 5.5', 'Sonnet 5.5']);
+  expect(await model.locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value))).toEqual(['claude-opus-5.5', 'claude-sonnet-5.5']);
+  await expect(model.locator('option:checked')).toHaveText('Opus 5.5');
+});
 
 test('an empty folder: the chat works, and the first board its agent draws opens with the conversation on it', async ({ page }) => {
   await open(page);

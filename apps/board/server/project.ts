@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Agents } from './agents.ts';
 import { openAgents } from './agents.ts';
-import type { ChatAdapters, Chats } from './chat-sessions.ts';
+import type { ChatAdapters, ChatOptions, Chats } from './chat-sessions.ts';
 import { openChats } from './chat-sessions.ts';
 import { displayName, hasBoard, isUnder } from './folders.ts';
 import type { Ledger } from './ledger.ts';
@@ -40,7 +40,7 @@ export interface ProjectOptions {
   /** The port the server listens on (for a new lock) and its own address (for the chats' vb server). */
   port: () => number;
   base: () => string;
-  chat?: { adapters?: ChatAdapters | undefined; approvalTtlMs?: number | undefined } | undefined;
+  chat?: { adapters?: ChatAdapters | undefined; approvalTtlMs?: number | undefined; blocked?: ChatOptions['blocked'] } | undefined;
 }
 
 export interface Project {
@@ -68,7 +68,9 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   return {
     get dir() { return (dir ??= real(path.dirname(data()))); },
     ledger, lock, closed: abort.signal, agents: getAgents,
-    chats: () => (chats ??= openChats({ ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs })),
+    chats: () => (chats ??= openChats({
+      ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
+    })),
     close() {
       chats?.close();
       abort.abort();
