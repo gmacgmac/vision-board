@@ -1,13 +1,13 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it card by card (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v2.2 (2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers count across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v2.3 (2026-10-11, field report batch 2: numbers from 1 on each board, retire, `column` and `row`, the flag is not yours to see, the panel's one message with words, attachments and answers, no ledger read; v2.2 2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers counted across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
 
-The board is a conversation in cards. You explain and ask through cards; every card has a number,
-and the person can answer any of them: comment on it, ask you for more context, or save it for
+The board is a conversation in cards. You explain and ask through cards; every card has a number
+on its board (1, 2, 3...), and the person can answer any of them: comment on it, ask you for more context, or save it for
 later. Cards that ask something (`question`, `decision`, `action`) also take ✓ and ✗. The person
 presses **Send** when done; you read their answers back, answer, and redraw. The `vb` tools are
 the only way in; their descriptions hold the exact fields.
@@ -22,8 +22,7 @@ the only way in; their descriptions hold the exact fields.
 
 **In the board's chat panel** (the board started you):
 - You are already joined, with no secret to pass: never call `join`, never send `secret`.
-- The board you were started on is granted to you. Each message ends with `Board: <id>` and may
-  list notes and cards the person attached. Their message has already pressed Send.
+- The board you were started on is granted to you. Each message ends with `Board: <id>`.
 - **No board yet.** A message that ends "No board is open in this folder yet." comes from a
   folder with no boards. Answer short questions in the chat. When there is something to draw,
   create a board for the topic in the same `write_board` call as its first round: a `board` item
@@ -34,21 +33,34 @@ the only way in; their descriptions hold the exact fields.
   cards"), no running commentary between tool calls. End the turn with one or two short lines
   saying what changed ("Done, 3 cards added on Pricing", "Answered your note on 12"). Your board
   writes show as chips the person can click, so do not describe them again.
-- **The Send message.** When the person presses Send on the board, you get a message that
-  starts "The person updated the board:". Then the board's title and one line per answered card
-  in card order, with its number, kind and answer: `2 (question): no`, `5, 7 (finding, risk):
-  comment: <their words>`, `6 (finding): saved for later`, a container note as `On container
-  "<title>" comment: ...`, then "Still open: ..." or "Nothing left open.". The last line gives
-  the `head` it covers. It is the person's turn handed to you: act on those lines now, in that
-  order. Do not fetch them again (no `check_responses` or `list_open` to re-read what it lists).
-  Read more only for what you need: `show_node` for a card's latest `ver` and a note's `seq`
-  before you `reply`, `append` or `park`; `show_container` for a container. To catch anything
-  newer later, `check_responses` with `after` set to that head.
+- **One message carries everything.** The person's message and Send are one thing: each
+  message is the person's turn handed to you, in up to four blocks, separated by a blank line,
+  any of the first three left out when empty:
+  1. Their words.
+  2. `Attached from the board:` then a line per note and card they selected:
+     `- Note <seq> on card <n> "<title>": <their words>` (or `on container "<id>"`) and
+     `- Card <n>: <title>`.
+  3. The Send message: their answers since you were last told. It starts "The person updated the
+     board:", then the board's title and one line per answered card in card order, with its
+     number, kind and answer: `2 (question): no`, `5, 7 (finding, risk): comment: <their words>`,
+     `6 (finding): saved for later`, a container note as `On container "<title>" comment: ...`,
+     then "Still open: ..." or "Nothing left open.", and a last line giving the `head` it covers.
+  4. `Board: <id>`.
+- **Act on the words, with the answers as context.** When there are words, they are the
+  request: "for the ones I ticked, write the tasks" means the cards whose answer line gives ✓'s word (`yes`, `done`, `ok`).
+  The attached cards and notes are what the words are about. Still answer every comment, More
+  context and Later in the answer lines, in card order (see Answering). A message with no words
+  is the person pressing Send: act on the answer lines, in that order.
+- **Don't fetch it again**: no `check_responses` or `list_open` to re-read what the message
+  lists. Read more only for what you need: `show_node` for a card's latest `ver` and a note's
+  `seq` before you `reply`, `append` or `park`; `show_container` for a container. To catch
+  anything newer later, `check_responses` with `after` set to the message's head.
 - Board writes never ask the person. File edits and shell commands pause for **Allow** or
   **Deny**. A denial means no: do not retry the same change; say in one line what you wanted to
   do and ask.
-- Never hold your turn open: no `check_responses` with `wait`. The person cannot message you
-  while you are answering. End the turn; their next message or Send brings their answers.
+- Never hold your turn open: no `check_responses` with `wait`. What the person sends
+  while you are answering waits until your turn ends. End the turn; their next message brings
+  their answers.
 
 **In both**: the chat gets a line or two saying what changed, never the cards' content. No list
 of what you drew or answered: the person reads it on the board.
@@ -91,16 +103,22 @@ a chat reply.
 | Mode | What it looks like | Use it for |
 |---|---|---|
 | `grid` | Cards in rows, about √n columns (or `columns`) | Almost everything: findings, questions, options, an agenda |
-| `list` | One column, stacking downward | A short ranked set (3 to 5); several lists side by side |
-| `flow` | Left to right along links, with branches | A real sequence: steps, a decision path, a pipeline |
+| `column` | One column, top to bottom in card order | A short ranked set (3 to 5); several columns side by side |
+| `row` | One row, left to right in card order, no links needed | A short ordered set read across (3 to 6): stages, options in order |
+| `flow` | Left to right along links, with branches; it only follows links | A real sequence: steps, a decision path, a pipeline |
 | `lanes` | Several left-to-right flows stacked, one per lane, on one shared column grid | Steps split by owner or area, each lane its own sequence (`lanes`, and each card's `lane`) |
 | `radial` | Rings around one centre card (`center` = its number) | Options or ideas around one topic |
 
 - **Links only for a real flow or dependency** ("blocks", "causes", "then" in a process). Never
   link to show reading order or that cards are related: the numbers and the container do that.
   Information and choices stay unlinked.
-- A screen is wider than it is tall: a long sequence goes in a horizontal `flow`, not a `list`.
-  A tall `list` pushes cards off screen; prefer `grid`.
+- `list` is now `column`: a write naming `list` is refused.
+- A screen is wider than it is tall: a long sequence goes in a horizontal `flow` (or a short one
+  in a `row`), not a `column`. A tall `column` or a long `row` pushes cards off screen; prefer
+  `grid`.
+- `row` shows a short sequence across the screen with no links (stages, a short timeline). When
+  a step truly needs the one before it ("then", "blocks") or the path branches, use `flow` with
+  links: `flow` places cards only by their links.
 - In `flow` and `lanes`, every card is a step linked into the sequence. A card with no links
   lands in the first column, so cards that are not steps belong in a `grid` container beside it.
 - **How `lanes` places cards**: the lanes share one column grid, and a card's column is its link
@@ -124,9 +142,13 @@ a chat reply.
 - **Card numbers are the reading order.** Never put step numbers in titles ("Step 3: ...",
   "1. Set up ..."): the card's number already shows it, and a title number goes wrong as soon as
   a card is added or moved.
-- **Card numbers count across the whole project** (for now), so a new board's first card may be
-  33. Refer to cards by the numbers the board shows (the `n` in `write_board`'s answer, or
-  `get_board`), never assume a board starts at 1, in chat or in a card's text.
+- **Each board numbers its cards from 1**, in the order drawn, and a number never changes or
+  goes to another card on that board. `write_board`'s answer gives each new card's `n`; until a
+  card has one, name it by its `key` within the write. Never guess a new card's number in text
+  (a reply, a body) in the same call: name it by its title there, or write the number in a
+  later call once the answer has given it. Every read (`get_board`, `show_node`, `list_open`,
+  `check_responses`, the Send message) names cards by their number on that board, so "card 3"
+  always means one board's card 3: in chat about two boards, say which.
 - **Give every item a `key`.** Keys are yours across the whole project, so start them with the
   board (`pricing-f3`). A resend with the same key and content is answered `replayed` and writes
   nothing; the same key with different content fails `conflict`. A new version of a card takes a
@@ -140,7 +162,7 @@ a chat reply.
   `size` out and the engine picks one from the body's length; suggest one only when the content
   needs it. The person's size wins: never set a size on a card they resized.
 - **Never write coordinates.** The engine places cards; the person's moves and sizes win.
-- Card numbers never change. Name cards by number in chat ("see 47").
+- Name cards by number in chat ("see 7").
 - Each item is answered on its own. Fix the failed ones and resend only those, with the same
   keys. `pending` in the answer lists what you still owe the person.
 
@@ -195,16 +217,36 @@ a whole container.
   `ver` you read; on `conflict`, read it again and redo the change on the new version.
 - A changed card shows the person its new version until they look at it (`unseen` in
   `list_open`).
+- Rewrite or append to a card in place only when it is still the same subject.
+
+## Retiring cards
+
+`retire` takes cards off the board for good: `{ "type": "retire", "n": 4, "key": "pricing-r4" }`
+for one card, or `{ "type": "retire", "region": "plan-v1", "key": "pricing-r-plan-v1" }` for a
+container and every card in it now. The answer's `retired` lists the numbers it took.
+
 - **When the direction changes** (a new plan, a different way to group the work), draw a new
-  container for it rather than rewriting the old cards one by one; once `retire` exists, retire
-  the old container. Rewrite a card in place only when it is still the same subject.
+  container with new cards for it and retire the old container, in the same `write_board` call:
+  the new container and cards first, then the `retire`. Never rewrite the old cards one by one
+  into the new plan.
+- Retire a single card that no longer belongs (superseded, a duplicate, a wrong turn).
+- **Answer first.** A retire is refused while a card it takes still owes the person something: a
+  comment or More context with no `reply` or `append`, or a Later with no `park`; and a
+  container's retire waits while a note on the container has no reply. Answer it first (earlier
+  in the same call is fine); after a refusal, answer, then send the retire again with the same
+  key. Nothing the person asked for goes missing.
+- A retired card keeps its number, and its history stays readable (`show_node` answers it with
+  `retired`); the number is never given to another card. The person can still see it in the
+  board's past versions.
+- Retire only on containers you hold (your own, or granted), as for any other change.
 
 ## Reading the person's answers
 
 - `list_open` is your to-do list: every question, decision and action not yet decided, and every
   card of any kind waiting for you, with `pending` saying what you owe (`comment`, `context`,
-  `later`), plus `containers` for notes on a whole container. In the panel, start a turn with
-  it, except after a Send message, which already lists the answers.
+  `later`), plus `containers` for notes on a whole container. In the panel, a message that
+  carries the Send message already lists the answers; use `list_open` when one does not and you
+  need to know what is still owed.
 - `check_responses` gives what the person did after the `head` you pass; keep the `head` it
   returns. In your own chat, pass `wait` (up to 60 seconds) to hold until they press Send. On
   `more: true`, read again at once with `after` set to the highest `seq` in `responses`.
@@ -219,6 +261,10 @@ a whole container.
   board: keep it that way).
 - A card decided by ✓ or ✗ is settled: never raise it again. A card decided by a comment is
   settled by those words: act on them.
+- **The flag** is the person's private mark on a card. No read of yours shows it and nothing is
+  owed for it: there is nothing to do.
+- Your reads are `list_boards`, `get_board`, `show_node`, `show_container`, `list_open` and
+  `check_responses`. There is no ledger read for agents.
 
 ## Answering
 

@@ -124,3 +124,25 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   1" had to be fixed.
 - 2026-10-11, agent: v2.2 puts each of those in the skill and adds scenario 14 (lanes or flow).
   Not run against a model in this task (rule 17): scenario 14 is there for the maintainer's run.
+
+## Skill v2.3 (field report batch 2)
+
+- 2026-10-11, agent (batch 2 T_01; D-041, field report 7-9 and 15, tracker N35, N36, and the
+  chat-context task): v2.3 says each board numbers its cards from 1 and a number never changes
+  (the write's answer gives `n`; keys name cards within a write); drops v2.2's "numbers count
+  across the project"; adds `retire` (a new container and the old one retired when the direction
+  changes; refused while a comment, More context or Later is owed, so answer first and resend with
+  the same key; a retired card keeps its number); renames `list` to `column` (`list` is refused)
+  and adds `row`; `flow` only follows links; the flag is the person's and no agent read shows it;
+  the panel's one message (words, "Attached from the board:", the Send message, `Board: <id>`),
+  acted on as words with the answers as context; `read_ledger` is no longer an agent tool.
+  Scenarios 15 (restructure with retire) and 16 (one message with words, a card and answers).
+- 2026-10-11, agent: one print-mode turn of `claude` 2.1.295 (Sonnet 5.5, its default) on a test
+  server, scenario 15 as a panel message ("Let's go page-first instead: redo the plan." /
+  `Board: multi-bot`; the board's `plan` flow of 9 cards, ✓ on decision 2, More context on 6
+  unanswered). One `get_board`, then one `write_board`: `reply` on 6 first, a new `plan-v2` flow
+  with 7 cards (numbered 10 to 16) and links, then `retire { region: "plan" }` (answered
+  `retired` 1 to 9, `pending` empty). It carried 2's decision into the new routing card and did
+  not ask it again. Gaps: its reply named a new card "(7)" before the write had numbered it (it
+  was 11), so v2.3 adds "never guess a new card's number in text in the same call"; it set `size`
+  on every card; its closing words were four short paragraphs, not one or two lines.

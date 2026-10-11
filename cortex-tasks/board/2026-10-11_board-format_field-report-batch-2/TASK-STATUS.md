@@ -14,7 +14,7 @@ tracker: cortex-tasks/tracker.md#N24,N35,N36
 | 1 | BE_01 | Contract, ledger v12 | Opus 5.5 | Contract done; gates wait on BE_02 | Contract tests, verify, gen green; check/test red by design (see notes) |
 | 2 | BE_02 | Actions and server | Opus 5.5 | Done | check, verify, gen green; npm test 1017/1021, the 4 failing are FE_01's (see notes) |
 | 3 | FE_01 | Page | Opus 5.5 | Done | check, test 1041/1041, verify, gen, test:pages 347/347 green (see notes) |
-| 4 | T_01 | Skill | Opus 5.5 | Planned | |
+| 4 | T_01 | Skill | Opus 5.5 | Done | Skill v2.3, scenarios 15-16, one claude -p run of 15; five gates green (see notes) |
 | 5 | VERIFY_01 | By hand | Orchestrator | Planned | |
 
 ## Implementation Notes
@@ -371,4 +371,55 @@ current; `npm run test:pages` 347 passed, 0 failed.
    "**Flag**: the person's private mark on a card, kept in the ledger and never sent to an agent."
 
 ### T_01
+
+**Status**: done 2026-10-11. Skill v2.3 (`skills/vision-board/SKILL.md`), scenarios v2.3, NOTES.
+
+**Changed in the skill.**
+- **Numbers per board** (D-041): "every card has a number on its board (1, 2, 3...)"; Writing
+  cards: each board numbers from 1 in drawing order, a number never changes or moves; the write's
+  answer gives `n`, keys name cards within a write; every read names board numbers, so say which
+  board in chat. v2.2's "numbers count across the project" is gone. New from the run below:
+  never guess a new card's number in text (a reply, a body) in the same call.
+- **Retiring cards** (new section; field 7-9, 15): the two item forms with keys; the answer's
+  `retired`; when the direction changes, a new container and new cards, then the old container
+  retired in the same call (never rewrite the old cards one by one); a single superseded card;
+  answer first (refused while a comment, More context or Later is owed, and a container's note
+  unreplied: BE_02 deviation 2), then resend with the same key; a retired card keeps its number
+  and history (`show_node` `retired`), never reused; only containers you hold. "Changing a card"
+  keeps "rewrite in place only for the same subject".
+- **Modes**: the table has `column` (was `list`) and `row` (left to right in card order, no
+  links); `flow` "only follows links"; `list` is refused; when `row` versus `flow`.
+- **The flag**: the person's private mark; no agent read shows it; nothing to do.
+- **The panel's one message** (chat-context notes): the four blocks (words; "Attached from the
+  board:" with the note and card line forms; the Send message; `Board: <id>`); act on the words
+  with the answers as context (example: "the ones I ticked" = lines with ✓'s word `yes`/`done`/
+  `ok`, from `action-words.ts` and the registry's `reply`); still answer every comment, More
+  context and Later in card order; a message with no words is Send; never re-read with
+  `check_responses`/`list_open`. `list_open` at a panel turn's start only when the message has no
+  Send block. "The person cannot message you while you are answering" became "what they send
+  waits until your turn ends".
+- **Reads**: the agent's reads listed; no ledger read for agents (`read_ledger` is the page's).
+- Status line v2.3 with the history kept.
+
+**Scenarios** (v2.3): 1 and 11 fail on `column`/`row`/`flow` for findings or an agenda; 14 uses
+board numbers (no "the board may start at 33") and hands the restructure to 15; new 15 (the
+direction changes: reply on the owed card first, a new container, `retire { region }`, same key
+after a refusal) and 16 (one message: words + a selected card + answers; "the two I said yes to").
+
+**Run** (optional check done): one print-mode turn, `claude` 2.1.295, Sonnet 5.5 (default), skill
+v2.3 as `--append-system-prompt-file`, a test server on 4487 (`VB_PROJECT` and `HOME` in the
+scratchpad, `VB_KIRO_AGENT=0`), `--mcp-config` temp file with the seeding agent's
+`VB_AGENT_SECRET`, `--strict-mcp-config`, `--allowedTools mcp__vb__*`, `--no-session-persistence`.
+Scenario 15 as a panel message. Good: `get_board`, then one `write_board`: `reply` on 6 (the owed
+More context) first, a new `plan-v2` flow (cards 10-16, linked), then `retire { region: "plan" }`
+→ `retired` 1-9, `pending` empty; 2's decision carried into the new routing card, not re-asked.
+Gaps: its reply guessed a new card's number ("card (7)"; it became 11) → the new skill line above;
+it set `size` on every card; its closing words were four short paragraphs. Server stopped; no
+process of mine left running (the vb-mcp processes alive predate this task).
+
+**Gates** (one after another): `npm test` exit 0 (1053/1053, timing 6/6); `npm run check` 0;
+`npm run verify` 0 (0 warnings); `npm run gen -- --check` 0; `npm run test:pages` 0 (357 passed).
+
+**Protected files**: none needs a change for the skill.
+
 ### VERIFY_01
