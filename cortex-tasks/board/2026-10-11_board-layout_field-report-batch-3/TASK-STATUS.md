@@ -1,7 +1,8 @@
 ---
 task_name: Field report batch 3 - layout
 created: 2026-10-11
-status: in-progress
+status: completed
+completed: 2026-10-11
 tracker: cortex-tasks/tracker.md#M2
 ---
 
@@ -16,7 +17,7 @@ tracker: cortex-tasks/tracker.md#M2
 | 3 | BE_03 | Server and actions | Opus 5.5 | Done (all five gates green) | `show_layout` handler, `widths` folded, `state.widths`, act rule; api-layout and widths tests |
 | 4 | FE_01 | Page | Opus 5.5 | Done (all five gates green) | Labels and markers, Centre cards, Match card widths switch, widened-card height, bubble clear of footers, gallery |
 | 5 | T_01 | Skill | Opus 5.5 | Done (all five gates green) | Skill v2.5: `show_layout` once, lanes now, widths, short labels; scenario 17; two runs |
-| 6 | VERIFY_01 | By hand | Orchestrator | Planned | |
+| 6 | VERIFY_01 | By hand | Orchestrator | Completed | Round-1 shape redrawn; skill gap on container-per-area |
 
 ## Implementation Notes
 
@@ -438,3 +439,13 @@ test server on 4489 with `HOME` and `VB_PROJECT` in the scratchpad, `VB_KIRO_AGE
 3. `size` on every card again (as in batch 2's run) and long closing words in own chat: not this
    task's subject; noted.
 ### VERIFY_01
+_Status:_ Completed (orchestrator, test server 4491). The field report's round-1 shape drawn through the
+API (5 lanes, 16 cards, 16 links, 8 between lanes, labels on the handoffs): 34 of 34 items written
+(links name cards by `{ key }`). On the board: every lane starts at the left (Cost model and Email
+adapter in column 1), no line runs under a card, no shared trunks, labels sit near their source
+("carries", "exposes", "drives", "limits", "secures", "feeds", "load"); 9 columns because the
+handoff chain is 9 long. `show_layout`: lanes, 9 columns, 16 links, 6 crossing, 29 empty, which
+skill v2.5's thresholds read as "regroup by phase in a flow" (the field report's own cure).
+Screenshot sent to the maintainer. The agent side was run by T_01 (two Claude runs: `show_layout`
+called once per container, labels one word, no widths set); open: the model drew a container per
+area with links between containers, `size` on every card, long closing words.

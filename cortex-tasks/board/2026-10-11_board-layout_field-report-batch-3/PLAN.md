@@ -1,7 +1,7 @@
 ---
 task_name: Field report batch 3 - layout, lines, labels, alignment, widths, show_layout
 created: 2026-10-11
-status: in-progress
+status: completed
 categories: [board-layout, board-format, board-app, board-ui, board-agent]
 tracker: cortex-tasks/tracker.md#M2
 ---
