@@ -35,8 +35,14 @@ headings and across replies for the whole conversation (never restart at 1); sub
 lettered under their number (72A, 72B). One point per number, so the maintainer can answer
 "72 ok, 75 skip".
 
-- **Number only what needs the maintainer's answer or attention.** Plain status (done,
-  committed, checks passed) goes in a short line above the list, unnumbered.
+- **Number every point the maintainer might reply to**, including deviations, notes and things
+  to know. Only a single status line above the list stays unnumbered.
+- **Only when a Vision Board is available and the conversation runs through it: the board's card
+  numbers are the numbering.** Put each point on its own card. The board numbers every card, so
+  never write a number into a card's title or text. When you mention a card in the chat or in a
+  reply, use its board number ("card 12"). Don't also write a numbered list in the chat, because
+  two numbering schemes side by side get confused; keep the chat to a line or two saying what
+  changed on the board.
 - **Never a bare number for anything else.** Write "card 6", "tracker N33", "D-040", "commit
   b68e280", so a reply number is the only bare number.
 - **Refer back with a few words of context:** "(398, the launcher)", not just "398".
