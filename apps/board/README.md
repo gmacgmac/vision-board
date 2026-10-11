@@ -58,8 +58,9 @@ session's agent, gives its secret to the vb MCP server only and keeps Kiro's age
 (`~/.kiro/agents/vision-board.json`) current at start (`chat: { kiroAgent: true }`, as server.ts
 does unless `VB_KIRO_AGENT=0`), `server/chat-session.ts` stamps and
 streams a session's events, `server/chat-approvals.ts` holds the gate's asks,
-`server/chat-prompt.ts` spells out the message's chips, and `server/chat-round.ts` writes the message
-the board's Send hands a session (api.md 121-122).
+`server/chat-prompt.ts` builds the one message (the words, the chips spelled out, the board's
+answers, the board), `server/chat-round.ts` writes the answers part, the board's Send message, and
+`server/chat-sessions.ts` `tell` hands it over, holding one while a turn runs (api.md 121-122, 131).
 
 The open folder (api.md 109-112): `server/project.ts` holds the folder the server has open (its
 ledger, lock, agents and chats) and is the only code that switches it (`open_project`): the new

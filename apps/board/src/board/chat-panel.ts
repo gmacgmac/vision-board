@@ -8,10 +8,15 @@
 // (confirmed) and the agent or model picked (a new session, confirmed, once one is in use). Why no
 // message can go is the host's (`ChatHost.blocked`): the page still loading, a past version, a refused
 // start. In a folder with no board (board '') it talks in the folder (`start_folder_chat`); the first
-// board its agent draws opens, and the panel stays on that session (panel-send ruling 2). The board's
-// Send goes through `boardSend`: pressed while the agent works, it waits until the answers go, at
-// the next message (ruling 1; the server holds them). The board's side (chips, change chips, the
-// stepper's link, opening a board) is the bridge's (chat-bridge.ts); this file knows a board only by its id.
+// board its agent draws opens, and the panel stays on that session (panel-send ruling 2). On a board
+// every message carries the person's answers since the last Send (the composer's context, from the
+// bridge), and may go with no words when something is attached, or while the agent works, held until
+// its turn ends (chat-board-context rulings 1-3, 5: `ChatHost.holds`). The board's Send goes through
+// `boardSend`: with the board's session and something attached it is that message with no words
+// (ruling 4); else the `send` act, which waits while the agent works (panel-send ruling 1). Held
+// either way, Send shows it waiting until the next message. The board's side (chips, the answers,
+// change chips, the stepper's link, opening a board) is the bridge's (chat-bridge.ts); this file
+// knows a board only by its id.
 import type {
   ChatAnswerDetail, ChatComposerElement, ChatEvent, ChatFeedElement, ChatHeaderElement, ChatHost, ChatOption,
   ChatPickDetail, ChatSendDetail, ChatState, Chip,
@@ -67,12 +72,17 @@ const listFor = (board?: string) => (board ? listChats(board) : listFolderChats(
 export const follow = (s: ChatState, e: ChatEvent, first: boolean): ChatState =>
   applyEvent(first && e.seq <= s.seq ? EMPTY_CHAT : s, e);
 
-/** The message's body from the composer: the words, the notes by `seq`, the cards by number. */
+/** The message's body from the composer: the words (none when blank), the notes by `seq`, the cards by number. */
 export function messageBody(text: string, chips: readonly Chip[]): ChatMessageBody {
   const of = (kind: Chip['kind']) => chips.filter((c) => c.kind === kind).map((c) => c.ref);
   const [notes, cards] = [of('note'), of('card')];
-  return { text, ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }) };
+  return { ...(text.trim() && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }) };
 }
+
+/** Whether the board's Send is the chat's message with no words: the session is on the open board
+ *  and something is attached (ruling 4). */
+export const sendsInChat = (s: ChatSessionInfo | null, board: string | null, attached: boolean): boolean =>
+  attached && !!board && s?.board === board;
 
 export interface ChatPanelDeps {
   bridge: ChatBridge;
@@ -84,6 +94,8 @@ export interface ChatPanelDeps {
   open(): Promise<void>;
   /** Whether Send is waiting for the agent's turn to end (the Send button's waiting state). */
   waiting(on: boolean): void;
+  /** Whether Send has something to send in the chat (`sendsInChat`): it is enabled for it. */
+  attached(on: boolean): void;
 }
 
 export interface ChatPanel {
@@ -117,12 +129,16 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   let unfollow = () => {};
   let loads = 0;
   let waitShown = false;
+  let attachedShown = false;
+  const inChat = () => sendsInChat(st.session, st.board, composer.attached);
 
   function render() {
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
     if (waitShown !== (st.wait !== null)) d.waiting((waitShown = st.wait !== null));
+    if (attachedShown !== inChat()) d.attached((attachedShown = inChat()));
     const blocked = blockedReason(st.board, st.past, st.refused);
-    const host: ChatHost = blocked ? { blocked } : {};
+    // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
+    const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
     const now: Pick = st.session ? { agent: st.session.agent, model: st.session.model ?? '' } : st.pick;
     header.show(headerView({ agent: now.agent, model: now.model, agents: AGENTS, models: MODELS[now.agent] }, st.chat, host));
     feed.show(st.chat);
@@ -138,6 +154,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   function use(s: ChatSessionInfo) {
     unfollow();
     Object.assign(st, { session: s, chat: EMPTY_CHAT, refused: undefined, wait: null });
+    d.bridge.refresh();
     render();
     unfollow = watchChat(s.session, () => st.chat.seq, (e, first) => {
       const drew = firstBoard(st.session, e);
@@ -151,6 +168,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     unfollow();
     unfollow = () => {};
     Object.assign(st, { session: null, chat: EMPTY_CHAT });
+    d.bridge.refresh();
   }
 
   /** The newest session on `board` ('' the folder). A session in the folder is followed on while its
@@ -167,6 +185,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
       if (at !== loads) return;
       if (moving && newest?.session === moving.session) {
         st.session = newest;
+        d.bridge.refresh();
         return render();
       }
       if (moving) { drop(); render(); }
@@ -200,17 +219,26 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     }
   }
 
-  async function send({ text, chips }: ChatSendDetail) {
-    if (st.sending || st.board === null) return;
+  /** The message: null once it went or waits for the turn to end (Send then shows it waiting),
+   *  else the problem, which a toast also says. */
+  async function send({ text, chips }: ChatSendDetail): Promise<string | null> {
+    if (st.sending || st.board === null) return 'A message is already on its way.';
     st.sending = true;
+    const ask = lastAsk(st.chat);
     try {
       // A start already under way says itself why it failed; the composer keeps the text.
       const s = st.starting ? await st.starting.catch(() => null) : st.session ?? (await start(st.pick));
-      if (!s) return;
-      await sendChat(s.session, messageBody(text, chips));
+      if (!s) return 'The agent did not start.';
+      const answer = await sendChat(s.session, messageBody(text, chips));
       composer.clear();
       d.bridge.sent(chips);
-    } catch (err) { fail(err); } finally { st.sending = false; }
+      // Held while the agent works: Send waits until the next message is the person's.
+      if (answer.kind === 'system' && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
+      return null;
+    } catch (err) {
+      fail(err);
+      return err instanceof ApiError ? err.message : String(err);
+    } finally { st.sending = false; }
   }
 
   /** A new session with `pick` once confirmed; held from the ask, as the dialog's answer comes a moment
@@ -238,7 +266,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   on<ChatPickDetail>(CHAT_PICK_EVENT, picked);
 
   const detach = d.bridge.chat({
-    panel, composer, state: () => st.chat,
+    panel, composer, state: () => st.chat, changed: render,
+    agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
     async reveal(key) {
       await d.open();
       const row = feed.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
@@ -255,6 +284,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
       render();
     },
     async boardSend(act) {
+      // With the board's session and something attached, Send is the message with no words (ruling 4).
+      if (inChat()) return send({ text: '', chips: [...composer.chips] });
       const s = st.session;
       const ask = s && s.board !== undefined && s.board === st.board && st.chat.busy ? lastAsk(st.chat) : null;
       const problem = await act();

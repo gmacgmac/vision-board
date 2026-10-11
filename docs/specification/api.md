@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-11 (ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-11 (the chat carries the board: 131; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -249,7 +249,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `list_chats` | `GET /api/boards/{board}/chats` | person | `{ sessions }`, newest first; the first is the one in use (101) |
 | `start_folder_chat` | `POST /api/chats` | person | `{ agent, model? }`: a new chat session in the folder, on no board until its agent creates one (122) |
 | `list_folder_chats` | `GET /api/chats` | person | `{ sessions }` on no board yet, newest first; the first is the one in use (122) |
-| `send_chat` | `POST /api/chats/{session}/messages` | person | `{ text, notes?, cards? }`: the person's message and chips; 202 with its `message_in` event (101) |
+| `send_chat` | `POST /api/chats/{session}/messages` | person | `{ text?, notes?, cards? }`: the person's message, chips and the board's new answers as one message; 202 with its `message_in` event, or the wait's `system` line (101, 131) |
 | `stop_chat` | `POST /api/chats/{session}/stop` | person | Stop the agent's turn; `{ stopped }` (101) |
 | `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on; the `approval_result` event (100, 101) |
 | `watch_chat` | `GET /api/chats/{session}/events` | person | Server-sent `chat` events after `after`, each with its `seq` as the id (101) |
@@ -978,3 +978,24 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     its lines are as the file holds them, cards by identity and flags included, so no agent reads
     it; the MCP tool and the `vb` command are gone. An agent reads `check_responses`, `get_board`,
     `show_node`, `show_container` and `list_open`, which speak board numbers and show no flag.
+
+## The chat carries the board (chat-board-context, 2026-10-11)
+
+131. **One message carries the board** (rulings 1-5). `info.version` becomes 1.17.0. On a board
+    session, `send_chat` builds one message (`chat-prompt.ts` `promptFor`, the one builder; the
+    board's Send uses it too): the person's words (`text`, now optional: left out when they wrote
+    nothing), then "Attached from the board:" with each note and card, then the Send message of 121
+    for what the session's agent was not yet told (`chat-round.ts` `roundText`, left out when there
+    is nothing), then `Board: <id>`. Its `message_in` shows the words and the answers, with the
+    chips; with neither, "Attached from the board.". It is recorded as the board's Send when it
+    goes, so 121's "send_chat records the Send without this message" no longer holds. Nothing at
+    all to send (no words, no chips, nothing new for this agent) is `invalid` at `/text`; a folder
+    session still takes words only. While a turn runs, words alone are still a `conflict` (107);
+    a message with chips or new answers waits instead (202 with the `system` line "Your message
+    goes to the agent when it finishes this turn.", or 121's line with no words), one per session:
+    a second message meanwhile joins it (both messages' words, every chip), and it is built when
+    the turn ends, so it carries every answer up to then. The board's Send (`act` `send`) with a
+    session hands over only when there is something new for its agent (no "Still open" message on
+    its own) and joins a message waiting. Sessions now show `agentId` (`chat-session.schema.json`,
+    required), the agent id the session's agent writes as, never a secret, so the page can show
+    the same answer lines the message carries (`replyScope` with that agent, 41).

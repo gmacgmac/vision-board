@@ -40,7 +40,8 @@ async function open(page: Page, flags = 'chatPanel') {
 const side = (page: Page) => page.locator('#chat');
 const toggle = (page: Page) => page.locator('#chat-toggle');
 const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
-const chips = (page: Page) => side(page).locator('chat-composer .chat-chip');
+/** The chips the person can take off (the answers' chip, chat-board-context, is not one). */
+const chips = (page: Page) => side(page).locator('chat-composer .chat-chip:not(.chat-cmp-ctx)');
 const log = (page: Page) => side(page).getByRole('log', { name: 'Conversation' });
 const status = (page: Page) => side(page).locator('.chat-hd-status');
 const width = (page: Page) => side(page).evaluate((el) => Math.round(el.getBoundingClientRect().width));

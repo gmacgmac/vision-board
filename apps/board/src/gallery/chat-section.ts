@@ -5,7 +5,9 @@
 // `applyEvents` for the feed, the conditions table for the header and the composer. Shown only
 // with the flag on, so the gallery without it is unchanged. Then the board with the sidebar open
 // (chat-panel FE_02): the board's own ChatSidebar, mounted in the page flow.
-import type { ChatEvent, ChatFeedElement, ChatHeaderElement, ChatComposerElement, ChatHost, Chip, HeaderInput } from '../../../../packages/chat/src/index.ts';
+import type {
+  ChatEvent, ChatFeedElement, ChatHeaderElement, ChatComposerElement, ChatHost, Chip, ComposerContext, HeaderInput,
+} from '../../../../packages/chat/src/index.ts';
 import { applyEvents, composerView, EMPTY_CHAT, headerView } from '../../../../packages/chat/src/index.ts';
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import { nodeState, renderMarkdown } from '../../../../packages/ui/src/index.ts';
@@ -33,11 +35,20 @@ interface Sample {
   header?: Partial<HeaderInput>;
   /** What the empty feed says, when not the board's. */
   empty?: string;
+  /** The composer's context (the board's answers since the last Send), opened when `open`. */
+  context?: ComposerContext;
+  open?: boolean;
 }
 
 const AGENTS = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
 const ALL = Number.MAX_SAFE_INTEGER;
 const PAST = 'A past version of the board is showing. Go back to now to send a message.';
+/** The board's answers since the last Send, as the composer shows them (chat-board-context ruling 1). */
+const ANSWERS: ComposerContext = {
+  label: '3 answers since your last Send',
+  lines: ['2 (question): yes', '5 (finding): comment: Check this with the support team first', '7 (action): done'],
+};
+const ON_A_BOARD: ChatHost = { holds: true };
 
 const SAMPLES: Sample[] = [
   { state: 'empty', caption: 'Empty: a new session; two cards and a note attached; the agent can still be picked',
@@ -54,6 +65,12 @@ const SAMPLES: Sample[] = [
   { state: 'error', caption: 'Error: the turn failed; the next message clears it', scene: 'error', upTo: ALL },
   { state: 'send-queued', caption: 'Send to agent while it works: the answers wait for the turn to end', scene: 'send', upTo: 3 },
   { state: 'send-handed', caption: 'Then they go: the board\'s answers as one message, in card order', scene: 'send', upTo: ALL },
+  { state: 'answers', caption: 'The board\'s answers since the last Send: one chip with the cards; no words needed to send',
+    scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS, chips: [{ kind: 'card', ref: 7, label: 'Book the venue' }] },
+  { state: 'answers-open', caption: 'The chip opened: the lines the message carries, as the agent reads them',
+    scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS, open: true },
+  { state: 'answers-working', caption: 'While the agent works: what is attached goes when it finishes',
+    scene: 'session', upTo: 4, host: ON_A_BOARD, context: ANSWERS },
   { state: 'folder', caption: 'A folder with no board: the agent may draw the first one', scene: 'session', upTo: 0, empty: 'No boards here yet. Ask the agent to draw one.' },
 ];
 
@@ -75,6 +92,8 @@ function fill(box: HTMLElement, s: Sample): void {
   const composer = document.createElement('chat-composer') as ChatComposerElement;
   composer.show(composerView(state, host));
   composer.setChips(s.chips ?? []);
+  composer.setContext(s.context ?? null);
+  if (s.open) composer.querySelector<HTMLElement>('button.chat-cmp-ctx')?.click();
   box.append(header, feed, composer);
 }
 

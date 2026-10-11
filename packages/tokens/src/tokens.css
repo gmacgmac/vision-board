@@ -91,6 +91,7 @@
   --vb-state-comment: var(--vb-accent-text);
   --vb-state-context: light-dark(#b97c0c, #e6af45);
   --vb-state-later: light-dark(#7257c6, #a48ef2);
+  --vb-state-flag: light-dark(#c2410c, #fb923c); /* the person's private flag (D-041 set, N36) */
   --vb-state-ack-soft: color-mix(in srgb, var(--vb-state-ack) 12%, var(--vb-surface-card));
   --vb-state-drop-soft: color-mix(in srgb, var(--vb-state-drop) 12%, var(--vb-surface-card));
   --vb-state-comment-soft: var(--vb-accent-soft);

@@ -9,8 +9,11 @@ export const CHAT_CONDITION_KINDS = ['busy', 'waiting', 'blocked', 'stopped', 'e
 export type ChatConditionKind = (typeof CHAT_CONDITION_KINDS)[number];
 
 /** What the host knows that no event says: why the chat can't take a message just now (a past
- *  version of the board showing, the agent refused to start, an older session), in plain words. */
-export interface ChatHost { blocked?: string }
+ *  version of the board showing, the agent refused to start, an older session), in plain words; and
+ *  whether it `holds` a message with something attached (chips or the composer's context): it then
+ *  takes one with no words, and one sent while the agent works, which it sends when the turn ends
+ *  (the board: its cards, notes and answers). */
+export interface ChatHost { blocked?: string; holds?: boolean }
 
 /** How the header's status reads: `active` (working), `attention` (the person is needed),
  *  `quiet`, or `danger`. */

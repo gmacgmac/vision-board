@@ -149,10 +149,10 @@ export function watchProject(on: ProjectEvents): () => void {
 
 /** One chat session on a board (`start_chat`, `list_chats`), or in the folder on no board yet
  * (`start_folder_chat`, `list_folder_chats`, api.md 122): `board` left out until its agent creates one. */
-export interface ChatSessionInfo { session: string; board?: string; agent: 'claude' | 'kiro'; model?: string; created: string }
+export interface ChatSessionInfo { session: string; board?: string; agent: 'claude' | 'kiro'; model?: string; created: string; agentId: string }
 
 /** What a message carries: the words, the notes by `seq` and the cards by number. */
-export interface ChatMessageBody { text: string; notes?: number[]; cards?: number[] }
+export interface ChatMessageBody { text?: string; notes?: number[]; cards?: number[] }
 
 const person = <T>(run: () => Promise<T>) => call(() => asPerson(run));
 

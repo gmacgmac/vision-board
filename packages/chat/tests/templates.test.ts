@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ChangeEntry } from '../src/index.ts';
 import {
-  applyEvents, changeTemplate, chipsTemplate, composerTemplate, composerView, DEFAULT_MODEL, EMPTY_CHAT, feedTemplate, headerTemplate,
+  applyEvents, changeTemplate, chipsTemplate, composerTemplate, composerView, contextTemplate, DEFAULT_MODEL, EMPTY_CHAT, feedTemplate, headerTemplate,
   headerView, lineTemplate, messageTemplate, plainText, sendIntent, systemTemplate, withoutChip,
 } from '../src/index.ts';
 import { stamp, TURN } from './support.ts';
@@ -49,9 +49,40 @@ test('composer: Send only with words while the chat lets it; the reason when shu
   assert.equal(shut.shut, 'A past version is showing.');
   assert.equal(lineTemplate(shut), 'A past version is showing.');
   assert.equal(lineTemplate(composerView(EMPTY_CHAT)), '<kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line');
-  assert.equal(sendIntent('  ', true), 'skip');
-  assert.equal(sendIntent('Go', false), 'skip');
-  assert.equal(sendIntent('Go', true), 'send');
+  assert.equal(sendIntent('  ', { send: true }), 'skip');
+  assert.equal(sendIntent('Go', { send: false }), 'skip');
+  assert.equal(sendIntent('Go', { send: true }), 'send');
+  assert.equal(sendIntent('', { send: true }, true), 'skip', 'without a host that holds them, chips alone send nothing');
+});
+
+test('composer, with a host that holds what is attached: no words with something attached goes, also while the agent works', () => {
+  const busy = applyEvents(EMPTY_CHAT, stamp(TURN.slice(0, 1)));
+  const idle = composerView(EMPTY_CHAT, { holds: true });
+  assert.deepEqual(idle, { send: true, attach: true, hint: 'Enter send · Shift+Enter new line', placeholder: 'Message the agent' });
+  assert.equal(sendIntent('', idle, true), 'send');
+  assert.equal(sendIntent('', idle, false), 'skip', 'nothing at all');
+  assert.equal(sendIntent('Go', idle, false), 'send', 'words alone, as before');
+  const working = composerView(busy, { holds: true });
+  assert.equal(working.send, false);
+  assert.match(working.hint, /^The agent is working\. What is attached goes when it finishes/);
+  assert.equal(sendIntent('And this', working, true), 'send', 'held until the turn ends');
+  assert.equal(sendIntent('And this', working, false), 'skip', 'words alone wait for Stop');
+  const shut = composerView(EMPTY_CHAT, { holds: true, blocked: 'A past version is showing.' });
+  assert.equal(shut.attach, undefined);
+  assert.equal(sendIntent('', shut, true), 'skip');
+});
+
+test('composer: the context chip opens to its lines; with none it is a plain chip; never removable', () => {
+  const ctx = { label: '2 answers since your last Send', lines: ['2 (question): yes', '5 (finding): comment: <too long>'] };
+  const closed = chipsTemplate([], ctx, false, 'ctx-1');
+  assert.match(closed, /<button type="button" class="chat-chip chat-cmp-ctx" aria-expanded="false"><span class="chat-chip-t">2 answers since your last Send<\/span>/);
+  assert.doesNotMatch(closed, /chat-cmp-ctx-lines|chat-chip-x/);
+  const open = chipsTemplate([{ kind: 'card', ref: 3, label: 'Plan' }], ctx, true, 'ctx-1');
+  assert.ok(open.indexOf('data-chip="card-3"') < open.indexOf('chat-cmp-ctx'), 'the chips first, then the context');
+  assert.match(open, /aria-expanded="true" aria-controls="ctx-1"/);
+  assert.match(open, /<ul class="chat-cmp-ctx-lines" id="ctx-1" aria-label="2 answers since your last Send"><li>2 \(question\): yes<\/li><li>5 \(finding\): comment: &lt;too long&gt;<\/li><\/ul>$/);
+  assert.equal(contextTemplate({ label: 'Changes since your last Send', lines: [] }, true, 'x'),
+    '<span class="chat-chip chat-cmp-ctx"><span class="chat-chip-t">Changes since your last Send</span></span>');
 });
 
 test('composer: a labelled text and Send; each chip removable by name', () => {

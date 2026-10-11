@@ -1,7 +1,8 @@
 // The board's Send hands the chat session the person's answers (panel-send ruling 1, api.md 121),
 // with the agent package's fake `claude`: no session, nothing changes; with one, the Send's message
 // is the session's prompt and its `message_in`: "The person updated the board:", the numbered reply
-// of what was answered since it was last told (each card's kind and word), and the head it covers.
+// of what was answered since it was last told (each card's kind and word), and the head it covers;
+// the prompt then names the board, as every message does (chat-board-context ruling 2).
 // While a turn runs it waits (one system line, one message however many Sends) and goes when the
 // turn ends, made then.
 import { test, after, before } from 'node:test';
@@ -54,10 +55,11 @@ test('with a session, Send hands it the answers in card order with their words, 
   assert.deepEqual(lines.slice(2), [
     `${q} (question): yes`, 'Nothing left open.',
     `These are the person's answers up to head ${sent.seq}. To read anything newer, call check_responses on board "pricing" with after ${sent.seq}.`,
+    '', 'Board: pricing',
   ]);
   const events = await readChat(h.base, h.cookie, session, turns(1));
   for (const e of events) assert.deepEqual(schemaProblems(CHAT_EVENT_ID, e), [], JSON.stringify(e));
-  assert.deepEqual([events[0]!.kind, events[0]!.text], ['message_in', run.prompt], 'the feed shows the message as sent');
+  assert.deepEqual([events[0]!.kind, events[0]!.text], ['message_in', run.prompt.replace('\n\nBoard: pricing', '')], 'the feed shows the answers as sent');
   const responses = await h.ok('check_responses', { board: 'pricing', after: 0 });
   assert.equal(responses.responses.find((e: { action: string }) => e.action === 'ack').means, 'yes');
 });
@@ -81,7 +83,7 @@ test('while a turn runs the Send waits, once, and goes when the turn ends with e
   assert.equal(events.filter((e) => e.text === QUEUED).length, 1, 'one waiting line for two Sends');
   assert.equal(waiting.at(-1)!.text, QUEUED);
   const stopped = events.findIndex((e) => e.turn === 'stopped');
-  assert.deepEqual([events[stopped + 1]!.kind, events[stopped + 1]!.text], ['message_in', run.prompt], 'it goes when the turn ends');
+  assert.deepEqual([events[stopped + 1]!.kind, `${events[stopped + 1]!.text}\n\nBoard: pricing`], ['message_in', run.prompt], 'it goes when the turn ends');
   const lines = run.prompt.split('\n');
   assert.match(lines.find((l) => l.startsWith(`${q} `))!, /^\d+ \(question\): .*: Per seat, then\.$/);
   assert.match(lines.find((l) => l.startsWith(`${d} `))!, /^\d+ \(decision\): .*: Too early\.$/);

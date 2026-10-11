@@ -3,8 +3,9 @@
 // 1; a session loaded again after a restart starts with one line saying so), who is watching, the
 // turn in progress, its approvals and its run token. One turn at a time; the adapter's updates are
 // forwarded as chat events (`toChatEvent`). A message posted while a turn runs (the board's Send,
-// panel-send ruling 1) waits, one at most, and goes when the turn ends, its text made then. The
-// CLI's own transcript is the record, so nothing here is written to disk.
+// panel-send ruling 1; the person's message with the board's answers, chat-board-context ruling 5)
+// waits, one at most, and goes when the turn ends, its text made then. The CLI's own transcript is
+// the record, so nothing here is written to disk.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { AgentSession, ChatEventDraft } from '../../../packages/agent/src/index.ts';
 import { toChatEvent } from '../../../packages/agent/src/index.ts';
@@ -14,6 +15,8 @@ import type { StoredSession } from './chat-index.ts';
 import type { Chip } from './chat-prompt.ts';
 
 export type MessageIn = { kind: 'message_in'; text: string; chips?: Chip[] };
+/** A message as it goes: the agent's prompt and the person's `message_in`. */
+export interface Built { prompt: string; message: MessageIn }
 export type Draft = ChatEventDraft | ApprovalDraft | MessageIn;
 /** A chat event as the stream and the routes send it (`chat-event.schema.json`). */
 export type ChatEvent = Draft & { at: string; session: string; seq: number };
@@ -33,10 +36,12 @@ export interface LiveSession {
   subscribe(fn: (e: ChatEvent) => void): () => void;
   /** Record the person's message and run the turn in the background: the `message_in` event. */
   send(prompt: string, message: MessageIn): ChatEvent;
-  /** A message whose text is both the prompt and the `message_in` (the board's Send): sent now
-   * when no turn runs, else held until the turn ends (a system line says so) and its text made
-   * then; posting again while one waits keeps the one. False once the session is closed. */
-  post(text: () => string): 'sent' | 'queued' | false;
+  /** A message built when it goes (the board's answers with the person's words, if any): built and
+   * sent now when no turn runs, else held until the turn ends (the system line `line` says so,
+   * once) and built then; posting again while one waits replaces it. Answers the `message_in`
+   * sent now or the system line of the wait; undefined once the session is closed, or when the
+   * message built now is empty. A build that throws now throws to the caller. */
+  post(build: () => Built | undefined, line?: string): ChatEvent | undefined;
   /** Stop the running turn, releasing its approvals; false when nothing was running. */
   stop(): boolean;
   /** Stop for good: on a new session for the board, and when the server stops. */
@@ -47,6 +52,8 @@ export interface LiveSession {
 export const RESTARTED = 'Earlier messages aren\'t shown after a restart; the agent still remembers them.';
 /** The line when the board's Send waits for the turn to end. */
 export const QUEUED = 'Your answers go to the agent when it finishes this turn.';
+/** The line when the person's message with the board's answers waits for the turn to end. */
+export const QUEUED_WORDS = 'Your message goes to the agent when it finishes this turn.';
 
 /** A fresh run token: 32 random bytes, base64url. */
 export const newRunToken = (): string => randomBytes(32).toString('base64url');
@@ -68,7 +75,8 @@ export function createLiveSession(
   const listeners = new Set<(e: ChatEvent) => void>();
   let busy = false;
   let closed = false;
-  let held: (() => string) | undefined;
+  let held: (() => Built | undefined) | undefined;
+  let waitLine: ChatEvent | undefined;
 
   function emit(draft: Draft): ChatEvent {
     const event = { at: new Date().toISOString(), session: record.session, seq: events.length + 1, ...draft } as ChatEvent;
@@ -92,7 +100,8 @@ export function createLiveSession(
       busy = false;
       const next = held;
       held = undefined;
-      if (next && !closed) postNow(next);
+      waitLine = undefined;
+      if (next && !closed) postHeld(next);
     }
   }
 
@@ -103,10 +112,14 @@ export function createLiveSession(
     return event;
   }
 
-  function postNow(text: () => string): void {
+  const postNow = (build: () => Built | undefined): ChatEvent | undefined => {
+    const b = build();
+    return b && start(b.prompt, b.message);
+  };
+
+  function postHeld(build: () => Built | undefined): void {
     try {
-      const words = text();
-      start(words, { kind: 'message_in', text: words });
+      postNow(build);
     } catch (err) {
       emit({ kind: 'system', text: `The board's answers could not be sent: ${reason(err)}` });
     }
@@ -127,15 +140,12 @@ export function createLiveSession(
       if (busy || closed) throw new Error('the session is busy or closed');
       return start(prompt, message);
     },
-    post(text) {
-      if (closed) return false;
-      if (!busy) {
-        postNow(text);
-        return 'sent';
-      }
-      if (!held) emit({ kind: 'system', text: QUEUED });
-      held = text;
-      return 'queued';
+    post(build, line = QUEUED) {
+      if (closed) return undefined;
+      if (!busy) return postNow(build);
+      waitLine ??= emit({ kind: 'system', text: line });
+      held = build;
+      return waitLine;
     },
     stop() {
       if (!busy) return false;
@@ -146,6 +156,7 @@ export function createLiveSession(
     close() {
       closed = true;
       held = undefined;
+      waitLine = undefined;
       approvals.release();
       agent.cancel();
       agent.close?.();

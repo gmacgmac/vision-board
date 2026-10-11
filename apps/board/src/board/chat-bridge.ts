@@ -1,14 +1,21 @@
 // The bridge between the chat panel and the board (chat-panel FE_02 ruling 3, D-037): the only file
 // that knows both sides. Board to chat: the selected cards and the person's unsent notes become the
 // composer's chips; a chip the person takes off stays off (a card's until the selection changes),
-// and the chips a message carried go with it. Chat to board: a change chip selects its cards and
+// and the chips a message carried go with it; the person's answers since the board's last Send are
+// the composer's context, "3 answers since your last Send", opening to the lines the next message
+// carries (chat-board-context ruling 1: packages/actions `replyLines`, the Send message's writer). Chat to board: a change chip selects its cards and
 // zooms to them (Zoom to selection), opening their board first when it is another one; a changed
 // card's stepper links to the board write in the chat that last changed it; a chat in the folder's
 // first board opens when drawn (`open`, panel-send ruling 2). The board side attaches
 // from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // The pure parts are unit-tested under Node.
-import type { ChangeEntry, ChatChangeDetail, ChatChipRemoveDetail, ChatComposerElement, ChatState, Chip } from '../../../../packages/chat/src/index.ts';
+import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import { boardState, replyLines, replyScope } from '../../../../packages/actions/src/index.ts';
+import type {
+  ChangeEntry, ChatChangeDetail, ChatChipRemoveDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
+} from '../../../../packages/chat/src/index.ts';
 import { CHAT_CHANGE_EVENT, CHAT_CHIP_REMOVE_EVENT, chipKey } from '../../../../packages/chat/src/index.ts';
+import { boardView } from '../../../../packages/format/src/index.ts';
 import type { BoardData } from './io.ts';
 import type { Selection } from './selection.ts';
 
@@ -42,6 +49,18 @@ export function unsentNotes(d: BoardData): Chip[] {
 export const boardChips = (d: BoardData, selected: readonly string[], off: ReadonlySet<string>): Chip[] =>
   [...selectedCards(d, selected), ...unsentNotes(d)].filter((c) => !off.has(chipKey(c)));
 
+/** The person's answers on `board` since its last Send, as the lines the next message hands `agent`
+ *  (the session's agent: only what it may answer, as the server builds it; every answer with none). */
+export function answerLines(s: LedgerState, board: string, agent?: string): string[] {
+  const scope = replyScope(s, board, s.lastSend.get(board) ?? 0, agent);
+  if (scope.cards.size === 0 && scope.regions.size === 0) return [];
+  return replyLines(boardView(s, board), boardState(s, board), scope).lines;
+}
+
+/** The composer's context for those lines; none when there are none. */
+export const answersContext = (lines: readonly string[]): ComposerContext | null =>
+  lines.length ? { label: `${lines.length} ${lines.length === 1 ? 'answer' : 'answers'} since your last Send`, lines } : null;
+
 /** The board write in the chat that last changed card `n` on `board`. */
 export const lastChange = (s: ChatState, board: string, n: number): ChangeEntry | undefined =>
   s.entries.findLast((e): e is ChangeEntry => e.type === 'change' && e.board === board && e.cards.includes(n));
@@ -60,6 +79,8 @@ export interface BoardSide {
   stage: HTMLElement;
   /** The open board as drawn; null before one opens. */
   data(): BoardData | null;
+  /** The ledger as folded now (not a past version's); null before it is read. */
+  ledger(): LedgerState | null;
   id(): string;
   selection: Selection;
   /** A past version shows: no chips (no message can go). */
@@ -79,6 +100,10 @@ export interface ChatSide {
   panel: HTMLElement;
   composer: ChatComposerElement;
   state(): ChatState;
+  /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
+  agent(): string | undefined;
+  /** The chips or the context changed. */
+  changed(): void;
   /** Open the sidebar at feed entry `key`. */
   reveal(key: string): void | Promise<void>;
 }
@@ -86,8 +111,8 @@ export interface ChatSide {
 export interface ChatBridge {
   board(side: BoardSide): () => void;
   chat(side: ChatSide): () => void;
-  /** The board was drawn: the notes or the board may have changed. */
-  drawn(): void;
+  /** The board was drawn, or the chat's session changed: the chips and the answers may have. */
+  refresh(): void;
   /** The stepper link's words for card `n`, when a board write in the chat changed it. */
   source(n: number): string | undefined;
   /** A message went with `chips`: they are spent. */
@@ -100,12 +125,19 @@ export function createChatBridge(): ChatBridge {
   let b: BoardSide | null = null;
   let c: ChatSide | null = null;
   const off = new Set<string>();
+  /** The context last given to the composer, as text. */
+  let shown = 'null';
 
   function chips() {
     const d = b?.data();
     if (!b || !c || !d) return;
     const next = b.readOnly() ? [] : boardChips(d, b.selection.selected(), off);
     if (!same(next, c.composer.chips)) c.composer.setChips(next);
+    const s = b.ledger();
+    const context = b.readOnly() || !s ? null : answersContext(answerLines(s, b.id(), c.agent()));
+    const key = JSON.stringify(context);
+    if (key !== shown) { shown = key; c.composer.setContext(context); }
+    c.changed();
   }
 
   function zoomTo(cards: readonly number[]) {
@@ -145,6 +177,7 @@ export function createChatBridge(): ChatBridge {
     },
     chat(side) {
       c = side;
+      shown = 'null';
       side.panel.addEventListener(CHAT_CHANGE_EVENT, onChange);
       side.panel.addEventListener(CHAT_CHIP_REMOVE_EVENT, onRemove);
       chips();
@@ -154,7 +187,7 @@ export function createChatBridge(): ChatBridge {
         c = null;
       };
     },
-    drawn: chips,
+    refresh: chips,
     source: (n) => (b && c && lastChange(c.state(), b.id(), n) ? SOURCE_LABEL : undefined),
     sent(spent) {
       for (const chip of spent) off.add(chipKey(chip));

@@ -40,7 +40,8 @@
     const [c, id, past] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past];
     untrack(() => c?.show(id, past));
   });
-  /** Send to agent; with the chat, it waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
+  /** Send to agent; with the chat, it is the chat's message with no words when the board's session has
+   *  something attached, and waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
   const send = (b: Board) => (chat ? chat.boardSend(b.send) : b.send());
 
   function hostChat(panel: HTMLElement) {
@@ -49,6 +50,7 @@
       boardName: (id) => shell.boards.find((b) => b.board === id)?.title ?? id,
       open: async () => { shell.chatOpen = true; await tick(); },
       waiting: (on) => { shell.sendWaiting = on; },
+      attached: (on) => { shell.chatAttached = on; },
     });
     chat = c;
     return () => { c.destroy(); chat = null; };

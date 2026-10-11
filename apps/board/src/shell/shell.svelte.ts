@@ -94,6 +94,9 @@ export const shell = $state({
   /** The person answered on the open board since its last Send (`board.unsent`, board/attention.ts):
    * without it Send to agent is disabled, "Nothing new to send". */
   unsent: false,
+  /** The chat has something to send with Send on the open board (cards or notes attached, or the
+   * answers; board/chat-panel.ts `sendsInChat`): Send is enabled for it too (chat-board-context ruling 4). */
+  chatAttached: false,
   /** The folder the server has open (openFolder flag, board/folder.ts); null until read, or with the flag off. */
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */

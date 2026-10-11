@@ -6,6 +6,17 @@ chat-composer {
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink); border-top: 1px solid var(--_line);
 }
 chat-composer .chat-cmp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-1) var(--_space-2); }
+/* The host's context chip (the board's answers since the last Send): a chip that opens its lines,
+   which take the row's whole width under the chips. */
+chat-composer .chat-cmp-ctx { max-width: none; padding: 0 var(--_space-2); font: inherit; font-weight: var(--_medium); font-size: var(--_text-sm); }
+chat-composer button.chat-cmp-ctx { cursor: pointer; }
+chat-composer button.chat-cmp-ctx:hover { border-color: var(--_accent); }
+chat-composer .chat-cmp-ctx-mark { flex: none; color: var(--_ink); transition: transform var(--_motion); }
+chat-composer .chat-cmp-ctx[aria-expanded='true'] .chat-cmp-ctx-mark { transform: rotate(180deg); }
+chat-composer .chat-cmp-ctx-lines {
+  flex-basis: 100%; display: grid; gap: 2px; max-height: 160px; overflow: auto; margin: 0; padding: var(--_space-2) var(--_space-3);
+  list-style: none; font-size: var(--_text-sm); color: var(--_ink); background: var(--_surface-sunken); border-radius: var(--_radius);
+}
 chat-composer .chat-cmp-label {
   font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
 }

@@ -171,7 +171,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     renderCounts();
     notes.place();
     flow.place();
-    chat?.drawn();
+    chat?.refresh();
     if (drew) toast(`The agent drew v${shell.version}`);
   }
 
@@ -222,7 +222,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const flags = createFlagFlow({ on: flagging, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
     drawn: (id) => !!drawing.layout?.nodes.has(id), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
   /** The chat panel's side of the board (chat-bridge.ts): chips from the notes and the selection, a change chip's zoom. */
-  const unchat = chat?.board({ stage, data: () => S.data, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
+  const unchat = chat?.board({ stage, data: () => S.data, ledger: () => live.state, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
     zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id), jump: (id) => boards.jump(id) });
 
   /** The review buttons and their keys on one card (item-acts.ts). */

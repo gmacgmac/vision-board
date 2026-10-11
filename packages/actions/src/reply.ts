@@ -26,9 +26,18 @@ function statusWord(n: ViewNode, status: ItemStatus): string | undefined {
 
 const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;
 
+/** The reply in its three parts: the board's line, the answer lines, and the "Still open" line. */
+export interface ReplyLines { head: string; lines: string[]; tail: string }
+
 /** The person's responses as one line per card, and one line per note on a group naming all its
  * cards once ("12, 14 (finding, risk): comment: ..."), in number order (3_FE_02 ruling 4). */
-export function replyText(view: View, s: BoardState, scope?: ReplyScope): string {
+export const replyText = (view: View, s: BoardState, scope?: ReplyScope): string => {
+  const r = replyLines(view, s, scope);
+  return [r.head, ...r.lines, r.tail].join('\n');
+};
+
+/** `replyText` in its parts, so the chat's composer can show the answer lines alone (the one writer). */
+export function replyLines(view: View, s: BoardState, scope?: ReplyScope): ReplyLines {
   // Every card may carry a response; only one that needs an answer is still open without one (api.md 118).
   const items = view.nodes.filter((n) => n.n !== undefined).sort((a, b) => a.n! - b.n!);
   const kindOf = new Map(items.map((n) => [n.n!, n.kind]));
@@ -60,7 +69,6 @@ export function replyText(view: View, s: BoardState, scope?: ReplyScope): string
     const notes = (s.regionNotes.get(r.id) ?? []).filter(fresh(scope));
     if (notes.length) lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
   }
-  const head = `Board "${view.title}" (v${view.version})`;
-  const tail = open.length ? [`Still open: ${open.join(', ')}`] : ['Nothing left open.'];
-  return [head, ...lines.map((l) => l.text), ...tail].join('\n');
+  const tail = open.length ? `Still open: ${open.join(', ')}` : 'Nothing left open.';
+  return { head: `Board "${view.title}" (v${view.version})`, lines: lines.map((l) => l.text), tail };
 }

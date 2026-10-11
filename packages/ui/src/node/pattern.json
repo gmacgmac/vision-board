@@ -50,7 +50,7 @@
     "data-awaiting": "present while the handover is owed (FE_03, set by update): the footer reads \"Awaiting\"",
     "data-status-tip-open": "on the card while the tip over \"Awaiting\" shows (hover over the state; set by the shared hover tip)",
     "data-stepping": "present while the stepper shows a step (FE_02, set by update): the footer shows the stepper only",
-    "data-flagged": "cardFlag flag only (field report batch 2 ruling 3): present while the person flagged the card (set by update from BoardState.flags); the flag button (vb-flag, data-flag, last in the footer's toolbar after Later, drawn by render with { flag: true }) is then aria-pressed with its cloth filled in the proposed --vb-state-flag (the risk kind's orange until tokens.css has it). The person's private mark: never sent to an agent"
+    "data-flagged": "cardFlag flag only (field report batch 2 ruling 3): present while the person flagged the card (set by update from BoardState.flags); the flag button (vb-flag, data-flag, last in the footer's toolbar after Later, drawn by render with { flag: true }) is then aria-pressed with its cloth filled in --vb-state-flag (the flag's own colour, not a kind's). The person's private mark: never sent to an agent"
   },
   "methods": {
     "render(n: ViewNode, opts?: { sizeControl, flag })": "once per view version: data-*, role, tabindex, --kind, innerHTML = nodeTemplate(n, opts)",

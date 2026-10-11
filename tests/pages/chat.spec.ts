@@ -7,7 +7,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error', 'send-queued', 'send-handed', 'folder'];
+const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error', 'send-queued', 'send-handed', 'answers', 'answers-open', 'answers-working', 'folder'];
 const sample = (page: Page, state: string) => page.locator(`.g-chat-sample[data-state="${state}"]`);
 
 /** Collects the chat's events on the page, in order. */
@@ -112,6 +112,36 @@ test('composer: Enter sends the words and chips, Shift+Enter breaks the line; a 
   expect(await events(page)).toHaveLength(2);
   await expect(sample(page, 'blocked').getByRole('textbox', { name: 'Message to the agent' })).toBeDisabled();
   await expect(sample(page, 'blocked').locator('.chat-cmp-line')).toHaveText(/A past version of the board is showing/);
+});
+
+test('composer: the board\'s answers are one chip that opens to its lines by keyboard; with it Send goes with no words, also while the agent works', async ({ page }) => {
+  await listen(page);
+  const s = sample(page, 'answers');
+  const chip = s.getByRole('button', { name: '3 answers since your last Send' });
+  await expect(chip).toHaveAttribute('aria-expanded', 'false');
+  await expect(s.getByRole('list', { name: '3 answers since your last Send' })).toHaveCount(0);
+  await chip.focus();
+  await page.keyboard.press('Enter');
+  await expect(chip).toBeFocused();
+  await expect(chip).toHaveAttribute('aria-expanded', 'true');
+  const lines = s.getByRole('list', { name: '3 answers since your last Send' });
+  await expect(lines.getByRole('listitem')).toHaveText(['2 (question): yes', '5 (finding): comment: Check this with the support team first', '7 (action): done']);
+  await expect(chip).toHaveAttribute('aria-controls', (await lines.getAttribute('id'))!);
+  await page.keyboard.press('Space');
+  await expect(chip).toHaveAttribute('aria-expanded', 'false');
+  // No words: Send is on, and goes with the chips (the host adds its answers).
+  await expect(s.getByRole('button', { name: 'Remove 3 answers since your last Send' })).toHaveCount(0);
+  await s.getByRole('button', { name: 'Send', exact: true }).click();
+  await expect(sample(page, 'answers-open').getByRole('list', { name: '3 answers since your last Send' }).getByRole('listitem')).toHaveCount(3);
+  // While the agent works, what is attached waits: Send stays on and says so.
+  const working = sample(page, 'answers-working');
+  await expect(working.locator('.chat-cmp-line')).toHaveText('The agent is working. What is attached goes when it finishes; Stop it to send words alone.');
+  await working.getByRole('textbox', { name: 'Message to the agent' }).fill('And these');
+  await working.getByRole('textbox', { name: 'Message to the agent' }).press('Enter');
+  expect(await events(page)).toEqual([
+    { type: 'chat-send', detail: { text: '', chips: [{ kind: 'card', ref: 7, label: 'Book the venue' }] } },
+    { type: 'chat-send', detail: { text: 'And these', chips: [] } },
+  ]);
 });
 
 test('change chip, Stop, New session and the agent picker raise their events', async ({ page }) => {

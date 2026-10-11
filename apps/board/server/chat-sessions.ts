@@ -3,8 +3,10 @@
 // the old one's CLI. The index (chat-index.ts) keeps every session, so after a reload or a restart
 // a session is loaded again on first use and its CLI resumes its own transcript. Every CLI process
 // is stopped when the server closes. A session may start in the folder with no board; it moves to
-// the first board its agent creates (panel-send ruling 2). The board's Send hands the session in use
-// on the board the person's answers since it was last told (`round`, ruling 1).
+// the first board its agent creates (panel-send ruling 2). A board session's agent is handed the
+// person's answers since it was last told with every message (`tell`, chat-board-context ruling 2),
+// and the board's Send hands them on their own (`round`, panel-send ruling 1): one builder,
+// chat-prompt.ts `promptFor`. A message with something attached waits while a turn runs (ruling 5).
 import path from 'node:path';
 import { creatorOf } from '../../../packages/actions/src/index.ts';
 import type { AgentAdapter, StartOptions } from '../../../packages/agent/src/index.ts';
@@ -13,9 +15,11 @@ import type { Agents } from './agents.ts';
 import { CHAT_TOOLS, INSTRUCTIONS_FILE, agentName, chatLabel, joinAndGrant, newIdentity, rekey, vbServer } from './chat-access.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
+import type { ChatMessage } from './chat-prompt.ts';
+import { promptFor, wordsOf } from './chat-prompt.ts';
 import { previousSend, roundText } from './chat-round.ts';
-import type { LiveSession } from './chat-session.ts';
-import { createLiveSession, hasToken, newRunToken } from './chat-session.ts';
+import type { ChatEvent, LiveSession } from './chat-session.ts';
+import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 
@@ -49,8 +53,15 @@ export interface Chats {
   /** Whether a new session is starting there (its current one then takes no message). */
   starting(board: Place): boolean;
   /** The board's Send `send` (its `seq`): hand the session in use on the board the person's answers
-   * since it was last told, now or when its turn ends; nothing when the board has no session. */
+   * since it was last told, now or when its turn ends; nothing when the board has no session or
+   * there is nothing new for its agent. */
   round(board: string, send: number): Promise<'sent' | 'queued' | undefined>;
+  /** The person's message `msg` to `live`, on its board: the words, the chips and the answers since
+   * its agent was last told, as one message, recording the board's Send when it goes. Sent now, or,
+   * while a turn runs and something is attached, held with any message already waiting and sent
+   * when the turn ends. The `message_in`, the wait's system line, `busy` for words alone while a
+   * turn runs, or undefined when there is nothing to send. */
+  tell(live: LiveSession, msg: ChatMessage): ChatEvent | 'busy' | undefined;
   /** A session, loaded and ready (resumed after a restart); `not-found` when there is none. */
   live(id: string): Promise<LiveSession>;
   /** A session already loaded in this server, if it is. */
@@ -66,6 +77,23 @@ const notFound = (id: string) =>
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
+/** A message waiting for a turn to end: the person's words and chips, the Send it covers from, and
+ * whether it records a Send when it goes (the board's Send recorded its own). */
+interface Held { msg: ChatMessage; before: number; record: boolean }
+
+const union = (a: number[] = [], b: number[] = []) => [...new Set([...a, ...b])];
+
+/** A message joined to the one already waiting: both messages' words, every chip, the earlier Send. */
+function joined(was: Held | undefined, next: Held): Held {
+  if (!was) return next;
+  const text = [wordsOf(was.msg), wordsOf(next.msg)].filter(Boolean).join('\n\n');
+  const [notes, cards] = [union(was.msg.notes, next.msg.notes), union(was.msg.cards, next.msg.cards)];
+  return {
+    msg: { ...(text && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }) },
+    before: Math.min(was.before, next.before), record: was.record || next.record,
+  };
+}
+
 export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {} }: ChatOptions): Chats {
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
@@ -77,6 +105,8 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
   const starts = new Map<string, number>();
   /** Per session, the ledger line its last round covered (in memory: after a restart, the Send before). */
   const told = new Map<string, number>();
+  /** Per session, the message waiting for its turn to end (`joined`). */
+  const waiting = new Map<string, Held>();
   const key = (board: Place) => board ?? '';
 
   /** What the adapter needs for one session: the vb server with its secret, and the gate. */
@@ -121,6 +151,28 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
 
   const current = (board: Place) => entries().findLast((e) => e.board === board);
 
+  /** The answers on `board` the session's agent has not been told, as the round's text. */
+  function unsaid(live: LiveSession, board: string, before: number): string | undefined {
+    const s = ledger.state();
+    return roundText(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
+  }
+
+  /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */
+  function deliver(live: LiveSession, board: string, held: Held): ChatEvent | undefined {
+    const id = live.record.session;
+    if (live.busy) waiting.set(id, held);
+    return live.post(() => {
+      waiting.delete(id);
+      const s = ledger.state();
+      const round = unsaid(live, board, held.before);
+      const built = promptFor(s, board, held.msg, round);
+      if (!round && !wordsOf(held.msg) && !built.chips.length) return undefined;
+      told.set(id, s.seq);
+      if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
+      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(built.chips.length > 0 && { chips: built.chips }) } };
+    }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
+  }
+
   /** A session on no board moves to the first board its own agent creates (panel-send ruling 2). */
   const offAppend = ledger.onAppend((e) => {
     if (e.type !== 'board' || e.by !== 'agent' || !index) return;
@@ -156,7 +208,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       };
       joinAndGrant(ledger, agents(), identity, chatLabel(agent, started.id), board);
       const old = current(board);
-      if (old) sessions.get(old.session)?.close();
+      if (old) { sessions.get(old.session)?.close(); waiting.delete(old.session); }
       store().add(record);
       keep(record, started, token);
       return publicSession(record);
@@ -167,13 +219,17 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
     async round(board, send) {
       const record = current(board);
       if (!record || starts.has(key(board))) return undefined;
-      const id = record.session;
-      return (await live(id)).post(() => {
-        const s = ledger.state();
-        const since = told.get(id) ?? previousSend(s, board, send);
-        told.set(id, s.seq);
-        return roundText(s, board, since, record.agentId);
-      }) || undefined;
+      const session = await live(record.session);
+      if (!session.busy && !unsaid(session, board, send)) return undefined;
+      const e = deliver(session, board, joined(waiting.get(record.session), { msg: {}, before: send, record: false }));
+      return e === undefined ? undefined : e.kind === 'message_in' ? 'sent' : 'queued';
+    },
+    tell(session, msg) {
+      const board = session.record.board!;
+      const attached = Boolean(msg.notes?.length || msg.cards?.length) || unsaid(session, board, Infinity) !== undefined;
+      if (session.busy && !attached) return 'busy';
+      if (!attached && !wordsOf(msg)) return undefined;
+      return deliver(session, board, joined(session.busy ? waiting.get(session.record.session) : undefined, { msg, before: Infinity, record: true }));
     },
     live,
     loaded: (id) => sessions.get(id),

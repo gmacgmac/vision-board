@@ -1,6 +1,9 @@
 // Composer pattern, layer 1 (core): what the composer says and allows (PLAN ruling 9; the Architect
 // composer). The text and the removable chips the host attaches (on the board: the person's unsent
-// notes and the selected cards); Send only with words and while the chat conditions let it. No DOM.
+// notes and the selected cards), and the host's context, one chip that opens to its lines (on the
+// board: the answers since the last Send). Send with words while the chat conditions let it; with a
+// host that holds what is attached (`ChatHost.holds`), also with something attached and no words,
+// and while the agent works. No DOM.
 import type { Chip } from '../events.ts';
 import type { ChatHost } from '../conditions.ts';
 import { canSend } from '../conditions.ts';
@@ -9,6 +12,9 @@ import type { ChatState } from '../feed/feed-core.ts';
 export interface ComposerView {
   /** Whether a message can go now (the chat conditions). */
   send: boolean;
+  /** The host holds what is attached (`ChatHost.holds`): with something attached a message can go
+   *  with no words, and while the agent works. */
+  attach?: boolean;
   /** Why the composer is shut, when it is: the host's blocked reason. The text can't be typed in. */
   shut?: string;
   /** The line under the box: why Send waits while the agent works, else the keys. */
@@ -16,17 +22,26 @@ export interface ComposerView {
   placeholder: string;
 }
 
+/** What the host attaches beside the chips: one chip, `label`, that opens to its `lines`. */
+export interface ComposerContext { label: string; lines: readonly string[] }
+
 export const COMPOSER_KEYS = 'Enter send · Shift+Enter new line';
+const WORKING = 'The agent is working. Stop it to send now.';
+const HOLDING = 'The agent is working. What is attached goes when it finishes; Stop it to send words alone.';
 
 export function composerView(s: ChatState, host: ChatHost = {}, placeholder = 'Message the agent'): ComposerView {
   const send = canSend(s, host);
   if (host.blocked) return { send, shut: host.blocked, hint: '', placeholder };
-  return { send, hint: send ? COMPOSER_KEYS : 'The agent is working. Stop it to send now.', placeholder };
+  const attach = host.holds === true;
+  return { send, ...(attach && { attach }), hint: send ? COMPOSER_KEYS : attach ? HOLDING : WORKING, placeholder };
 }
 
-/** What Send does with the words typed: blank words send nothing (a message needs words). */
-export function sendIntent(text: string, send: boolean): 'send' | 'skip' {
-  return send && text.trim() !== '' ? 'send' : 'skip';
+/** What Send does: words go while the chat lets them; with `attached` (chips or the context) and a
+ *  host that holds them, a message goes with no words, and while the agent works. */
+export function sendIntent(text: string, v: Pick<ComposerView, 'send' | 'attach' | 'shut'>, attached = false): 'send' | 'skip' {
+  if (v.shut !== undefined) return 'skip';
+  if (v.attach && attached) return 'send';
+  return v.send && text.trim() !== '' ? 'send' : 'skip';
 }
 
 /** A chip's stable key, as its remove button names it. */

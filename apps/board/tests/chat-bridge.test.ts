@@ -2,17 +2,21 @@
 // parts: the chips come from the selected cards and the unsent notes (a group's note once, a
 // container's too, a sent one or one with no words never); a chip taken off stays off; a change
 // chip selects and zooms to its cards, opening their board first; the stepper's link finds the
-// write that last changed a card; the stream starts over when the server did; a message's body.
+// write that last changed a card; the stream starts over when the server did; a message's body. The
+// person's answers since the last Send are the composer's context, the lines the next message
+// carries, for the session's agent (chat-board-context ruling 1).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '../../../packages/format/src/index.ts';
 import { foldLedger } from '../../../packages/actions/src/index.ts';
-import type { ChatComposerElement, ChatEvent, ChatState, Chip } from '../../../packages/chat/src/index.ts';
+import type { ChatComposerElement, ChatEvent, ChatState, Chip, ComposerContext } from '../../../packages/chat/src/index.ts';
 import { applyEvents, CHAT_CHANGE_EVENT, CHAT_CHIP_REMOVE_EVENT, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
 import { boardData } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
-import { boardChips, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL, unsentNotes } from '../src/board/chat-bridge.ts';
-import { blockedReason, follow, LOADING, messageBody, PAST } from '../src/board/chat-panel.ts';
+import {
+  answerLines, answersContext, boardChips, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL, unsentNotes,
+} from '../src/board/chat-bridge.ts';
+import { blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/board/chat-panel.ts';
 import { createSelection } from '../src/board/selection.ts';
 
 const A = 'a-aaaa1111';
@@ -54,9 +58,31 @@ test('the unsent notes: oldest first, a group\'s once, the container\'s too; non
   assert.deepEqual(unsentNotes(b), [note(10, 'Why this one?'), note(11, 'Merge these'), note(13, 'Order them')]);
 });
 
+test('the answers since the last Send: the lines the next message carries, for the session\'s agent only', () => {
+  const lines = answerLines(s, 'b', A);
+  assert.deepEqual(lines, answerLines(s, 'b'), 'the board\'s creator may answer every card');
+  assert.deepEqual(lines, [
+    '2 (question): comment: Why this one?', '2, 3 (question, question): comment: Merge these', 'On container "R" comment: Order them',
+  ], 'More context on 3 with no words reads on the group\'s line');
+  assert.deepEqual(answerLines(s, 'b', 'a-bbbb2222'), [], 'an agent that may answer none of them is told none');
+  assert.deepEqual(answerLines(s, 'c'), [], 'nothing answered on board c');
+  assert.deepEqual(answersContext(lines), { label: '3 answers since your last Send', lines });
+  assert.deepEqual(answersContext(lines.slice(0, 1))?.label, '1 answer since your last Send');
+  assert.equal(answersContext([]), null);
+});
+
 test('the selected cards in the order selected, their titles on one line; then the notes; a chip taken off stays off', () => {
   assert.deepEqual(selectedCards(b, ['3', '1', 'nope']), [card(3), card(1, 'Ship on Friday?')]);
   assert.deepEqual(boardChips(b, ['2'], new Set(['note-11'])), [card(2), note(10, 'Why this one?'), note(13, 'Order them')]);
+});
+
+test('Send is the chat\'s message with no words only with the board\'s session and something attached', () => {
+  const on = { session: 's1', board: 'b', agent: 'claude' as const, created: '2026-10-09T09:00:00Z', agentId: A };
+  assert.equal(sendsInChat(on, 'b', true), true);
+  assert.equal(sendsInChat(on, 'b', false), false, 'nothing attached: the Send act, as with no session');
+  assert.equal(sendsInChat(on, 'c', true), false, 'the session is another board\'s');
+  assert.equal(sendsInChat({ ...on, board: undefined }, 'b', true), false, 'a folder session moving to the board');
+  assert.equal(sendsInChat(null, 'b', true), false, 'no session: Send as today');
 });
 
 const at = (n: number) => `2026-10-09T10:00:${String(n).padStart(2, '0')}Z`;
@@ -82,17 +108,28 @@ function bridged() {
   let open = 'b';
   const data: Record<string, BoardData> = { b, c: boardData(s, 'c') };
   let chips: readonly Chip[] = [];
-  const composer = { get chips() { return chips; }, setChips(c: readonly Chip[]) { chips = c; log.push(`chips ${c.map((x) => `${x.kind}-${x.ref}`).join(' ')}`); } };
+  let context: ComposerContext | null = null;
+  const composer = {
+    get chips() { return chips; }, setChips(c: readonly Chip[]) { chips = c; log.push(`chips ${c.map((x) => `${x.kind}-${x.ref}`).join(' ')}`); },
+    setContext(c: ComposerContext | null) { context = c; log.push(`context ${c?.label ?? 'none'}`); },
+  };
+  let agent: string | undefined = A;
   const panel = new EventTarget();
   const bridge = createChatBridge();
   const offBoard = bridge.board({
-    stage: new EventTarget() as HTMLElement, data: () => data[open]!, id: () => open, selection, readOnly: () => false,
+    stage: new EventTarget() as HTMLElement, data: () => data[open]!, ledger: () => s, id: () => open, selection, readOnly: () => false,
     zoom: () => log.push(`zoom ${selection.selected().join(' ')}`), switchTo: (id) => { open = id; log.push(`open ${id}`); },
     jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`),
   });
-  bridge.chat({ panel: panel as HTMLElement, composer: composer as ChatComposerElement, state: () => chat, reveal: (key) => { log.push(`reveal ${key}`); } });
+  bridge.chat({
+    panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, state: () => chat, agent: () => agent,
+    changed: () => log.push('changed'), reveal: (key) => { log.push(`reveal ${key}`); },
+  });
   const raise = (type: string, detail: unknown) => panel.dispatchEvent(new CustomEvent(type, { detail }));
-  return { bridge, selection, log, raise, offBoard, chips: () => chips.map((x) => `${x.kind}-${x.ref}`) };
+  return {
+    bridge, selection, log, raise, offBoard, chips: () => chips.map((x) => `${x.kind}-${x.ref}`), context: () => context,
+    agentIs: (id: string | undefined) => { agent = id; },
+  };
 }
 
 test('board to chat: the selection and the notes become chips; one taken off stays off; the chips a message carried go', () => {
@@ -102,16 +139,32 @@ test('board to chat: the selection and the notes become chips; one taken off sta
   assert.deepEqual(t.chips(), ['card-2', 'note-10', 'note-11', 'note-13']);
   t.raise(CHAT_CHIP_REMOVE_EVENT, { chip: card(2) });
   t.raise(CHAT_CHIP_REMOVE_EVENT, { chip: note(13, 'Order them') });
-  t.bridge.drawn();
+  t.bridge.refresh();
   assert.deepEqual(t.chips(), ['note-10', 'note-11']);
   // A card taken off comes back with the next change of selection; a note stays off.
   t.selection.select(['2', '3'], 'only');
   assert.deepEqual(t.chips(), ['card-2', 'card-3', 'note-10', 'note-11']);
   t.bridge.sent([card(2), card(3), note(10, 'Why this one?'), note(11, 'Merge these')]);
   assert.deepEqual(t.chips(), []);
-  const drawn = t.log.length;
-  t.bridge.drawn();
-  assert.equal(t.log.length, drawn, 'the same chips are not set again');
+  const drawn = t.log.filter((l) => l !== 'changed').length;
+  t.bridge.refresh();
+  assert.equal(t.log.filter((l) => l !== 'changed').length, drawn, 'the same chips and context are not set again');
+});
+
+test('board to chat: the answers are the composer\'s context, for the session\'s agent; another board has its own', () => {
+  const t = bridged();
+  assert.equal(t.context()?.label, '3 answers since your last Send');
+  assert.deepEqual(t.context()?.lines, answerLines(s, 'b', A));
+  t.agentIs('a-bbbb2222');
+  t.bridge.refresh();
+  assert.equal(t.context(), null, 'a session whose agent is told none of them');
+  t.agentIs(undefined);
+  t.bridge.refresh();
+  assert.equal(t.context()?.label, '3 answers since your last Send', 'no session yet: every answer');
+  t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [1] });
+  t.bridge.refresh();
+  assert.equal(t.context(), null, 'board c has none');
+  assert.equal(t.log.at(-1), 'changed', 'the panel hears of it');
 });
 
 test('chat to board: a change chip selects its cards and zooms; on another board, that board opens first', () => {
@@ -120,7 +173,7 @@ test('chat to board: a change chip selects its cards and zooms; on another board
   assert.deepEqual(t.selection.selected(), ['1', '2']);
   t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [1], head: 43 });
   t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [4] });
-  assert.deepEqual(t.log.filter((l) => !l.startsWith('chips')), ['zoom 1 2', 'open c', 'zoom 1', 'toast Those cards are no longer on the board.'],
+  assert.deepEqual(t.log.filter((l) => !/^(chips|context|changed)/.test(l)), ['zoom 1 2', 'open c', 'zoom 1', 'toast Those cards are no longer on the board.'],
     'board c has one card, its 1: the ledger\'s 4 is no number there');
   assert.equal(t.bridge.source(1), SOURCE_LABEL);
   assert.equal(t.bridge.source(2), undefined, 'card 2 changed on board b; board c is open');
@@ -143,6 +196,7 @@ test('the stream: an event at or before the last held, first after a reopen, sta
 test('the message\'s body and why no message can go', () => {
   assert.deepEqual(messageBody('Hi', [card(2), note(10, 'x'), card(3)]), { text: 'Hi', notes: [10], cards: [2, 3] });
   assert.deepEqual(messageBody('Hi', []), { text: 'Hi' });
+  assert.deepEqual(messageBody('  ', [card(2)]), { cards: [2] }, 'no words: none sent (chat-board-context ruling 3)');
   assert.equal(blockedReason(null, true, 'refused'), LOADING, 'the page does not know the board or the folder yet');
   assert.equal(blockedReason('', false), undefined, 'a folder with no board takes a message (panel-send ruling 2)');
   assert.equal(blockedReason('b', true, 'refused'), PAST);

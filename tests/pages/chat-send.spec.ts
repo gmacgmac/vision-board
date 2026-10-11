@@ -166,7 +166,9 @@ for (const theme of ['dark', 'light'] as Theme[]) {
       await sendWhileBusy(page, { action: 'comment', n: 1, ver: 1, text: `Checked in ${theme}` });
       await expectNoAxeViolations(page);
       await stopAndHandOver(page);
-      await expect(mine(page).last()).toContainText(ROUND_HEAD);
+      // The session is the model picker's new one: its agent holds the board, not the first agent's
+      // container, so it is told no answer there (api.md 41) and the comment goes as its note chip.
+      await expect(mine(page).last()).toContainText(`Checked in ${theme}`);
       await expect(status(page)).toHaveText('Status: Ready');
       await expectNoAxeViolations(page);
     } finally {

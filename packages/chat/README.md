@@ -23,7 +23,7 @@ template (one pure function to markup), an element (light DOM, defined lazily), 
 | `feed/` | `<chat-feed>`: the log, the status line, change chips, system lines | `applyEvent`, `ChatState`, `activityLine`, `changeLabel` |
 | `message/` | `<chat-message>`: one message, the person's with chips | (template only) |
 | `approval/` | `<chat-approval>`: Allow once, Allow for this session, Deny | `approvalView`, `APPROVAL_CHOICES`, `timeLeft` |
-| `composer/` | `<chat-composer>`: text and removable chips | `composerView`, `sendIntent` |
+| `composer/` | `<chat-composer>`: text, removable chips, the host's context chip | `composerView`, `sendIntent` |
 | `header/` | `<chat-header>`: agent, model, status, Stop, New session | `headerView` |
 
 `src/conditions.ts` is the chat's conditions table (PLAN ruling 11): busy, waiting (for an
@@ -45,9 +45,15 @@ stream.onmessage = (e) => {                      // the host's stream of chat ev
   state = applyEvent(state, JSON.parse(e.data));
   feed.show(state);
   header.show(headerView({ agent: 'claude', model }, state, host));
-  composer.show(composerView(state, host));       // host = { blocked?: 'why no message can go' }
+  composer.show(composerView(state, host));       // host = { blocked?: 'why no message can go', holds?: true }
 };
 ```
+
+A host may attach more than chips: `composer.setContext({ label, lines })` shows one chip, not
+removable, that opens to its lines (the board: "3 answers since your last Send" and the answer
+lines), for what the host sends with every message. With `host.holds` the composer's Send also
+takes a message with no words when anything is attached, and one while the agent works, which the
+host holds and sends when the turn ends; without it, a message needs words, as before.
 
 The elements raise events and never call a server: `chat-send` `{ text, chips }`,
 `chat-chip-remove` `{ chip }`, `chat-answer` `{ approvalId, answer }`, `chat-change`

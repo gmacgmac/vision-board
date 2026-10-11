@@ -1,7 +1,7 @@
 // The chat sessions index (chat-panel BE_03 ruling 2, api.md 101): the only module that reads or
 // writes `<project>/.visionboard/chat-sessions.json`. One entry per session ever started, oldest
-// first: the session as list_chats shows it, plus `agentId`, the board identity the server joined
-// for it (never a secret). A session started in the folder has no board until its agent creates
+// first: the session as list_chats shows it, with `agentId`, the board identity the server joined
+// for it (never a secret; the page reads which answers that agent is told, api.md 131). A session started in the folder has no board until its agent creates
 // one (panel-send ruling 2); then `attach` gives it that board, once. Every entry is checked on
 // read and before a write (rule 7); a damaged file is refused, never silently rewritten.
 // Git-ignored from the first write.
@@ -12,7 +12,6 @@ import { SCHEMA_BASE, schemaProblems } from './schema.ts';
 
 export const CHAT_SESSIONS_FILE = 'chat-sessions.json';
 const SESSION_ID = `${SCHEMA_BASE}schema/api/chat-session.schema.json`;
-const AGENT_ID = /^a-[a-z0-9]{8}$/;
 
 /** One session as the chat routes show it (`chat-session.schema.json`). */
 export interface ChatSession {
@@ -22,10 +21,12 @@ export interface ChatSession {
   agent: 'claude' | 'kiro';
   model?: string;
   created: string;
+  /** The agent id it writes on the board as. */
+  agentId: string;
 }
 
-/** What the index keeps: the session and the agent id it writes on the board as. */
-export interface StoredSession extends ChatSession { agentId: string }
+/** What the index keeps: the session as the routes show it. */
+export type StoredSession = ChatSession;
 
 export interface ChatIndex {
   /** Every session, oldest first. */
@@ -37,16 +38,13 @@ export interface ChatIndex {
   attach(session: string, board: string): void;
 }
 
-/** The public shape: the stored entry without its agent id. */
-export const publicSession = ({ agentId: _, ...session }: StoredSession): ChatSession => session;
+/** The public shape: a copy of the stored entry. */
+export const publicSession = (session: StoredSession): ChatSession => ({ ...session });
 
 /** Problems with one entry, as text; empty means valid. */
 export function entryProblems(entry: unknown): string[] {
   if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) return ['an entry is not an object'];
-  const { agentId, ...session } = entry as Record<string, unknown>;
-  const out = schemaProblems(SESSION_ID, session).map((p) => `${p.pointer || '/'} ${p.detail}`);
-  if (typeof agentId !== 'string' || !AGENT_ID.test(agentId)) out.push('/agentId must be an agent id such as a-k3m9x2pq');
-  return out;
+  return schemaProblems(SESSION_ID, entry).map((p) => `${p.pointer || '/'} ${p.detail}`);
 }
 
 function readEntries(file: string): StoredSession[] {

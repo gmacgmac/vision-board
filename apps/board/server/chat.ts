@@ -1,13 +1,15 @@
-// The chat operations (api.md 98-104, 121-122, chat-panel BE_03): start and list a board's sessions,
-// or the folder's on no board, send the person's message (it also sends the board's round, as the
-// board's Send does; a session on no board sends none), stop a turn, answer
+// The chat operations (api.md 98-104, 121-122, 131, chat-panel BE_03): start and list a board's
+// sessions, or the folder's on no board, send the person's message (with the board's answers since
+// its agent was last told, as one message, chat-board-context; a session on no board sends none),
+// stop a turn, answer
 // an approval, watch a session's events, and the gate's ask. The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
 import type { ApprovalAnswer, Facts } from '../../../packages/agent/src/index.ts';
 import { REALM, bearerOf } from './callers.ts';
 import type { ChatSession } from './chat-index.ts';
-import { promptFor } from './chat-prompt.ts';
+import type { ChatMessage } from './chat-prompt.ts';
+import { promptFor, wordsOf } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -16,6 +18,8 @@ import { sendJson } from './respond.ts';
 import { body } from './writes.ts';
 
 const NO_RUN = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
+const BUSY = 'The agent is still answering the last message. Wait for it, or press Stop.';
+const NOTHING = 'There is nothing to send: write a message, attach cards or notes, or answer on the board first.';
 
 /** The session in the path, loaded; it must be the one in use on its board, with no new one
  * starting there, to take a message. */
@@ -51,22 +55,33 @@ const listFolderChats: Handler = ({ res, chats }) => {
   sendJson(res, 200, { sessions: chats().list(undefined) });
 };
 
-/** The person's message: chips worked out, the turn started, then the board's Send recorded (only
- * for a message accepted). A message while the agent is still answering releases its waiting
- * approvals and is refused. */
+/** Words alone while the agent is still answering: its waiting approvals released, and refused. */
+function busy(live: { approvals: { release(): void } }): never {
+  live.approvals.release();
+  throw problem('conflict', BUSY);
+}
+
+const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: 'no words, nothing attached and no new answers on the board' }] });
+
+/** The person's message. On a board, one message with the chips and the board's answers since its
+ * agent was last told, recorded as the board's Send when it goes (chat-sessions.ts `tell`); with
+ * something attached it waits while the agent works (202 with the wait's system line). In the
+ * folder, the words alone. Words alone while the agent is still answering are refused. */
 const sendChat: Handler = async (ctx) => {
-  const { req, res, ledger } = ctx;
+  const { req, res, ledger, chats } = ctx;
   const live = await inUse(ctx);
-  const msg = await body('send_chat', req) as { text: string; notes?: number[]; cards?: number[] };
-  if (live.busy) {
-    live.approvals.release();
-    throw problem('conflict', 'The agent is still answering the last message. Wait for it, or press Stop.');
-  }
+  const msg = await body('send_chat', req) as ChatMessage;
   const { board } = live.record;
-  const { prompt, chips } = promptFor(ledger.state(), board, msg);
-  const accepted = live.send(prompt, { kind: 'message_in', text: msg.text, ...(chips.length > 0 && { chips }) });
-  if (board !== undefined) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
-  sendJson(res, 202, accepted);
+  const built = promptFor(ledger.state(), board, msg);
+  if (board === undefined) {
+    if (live.busy) busy(live);
+    if (!wordsOf(msg)) throw nothing();
+    return sendJson(res, 202, live.send(built.prompt, { kind: 'message_in', text: built.text }));
+  }
+  const told = chats().tell(live, msg);
+  if (told === 'busy') busy(live);
+  if (!told) throw nothing();
+  sendJson(res, 202, told);
 };
 
 /** Stop the running turn; a session not loaded since the server started has none. */

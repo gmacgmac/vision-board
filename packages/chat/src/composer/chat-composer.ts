@@ -1,10 +1,11 @@
 // Composer pattern, layer 3 (element): <chat-composer>, in light DOM. The text and the chips the
-// host attaches, each removable. Enter sends, Shift+Enter breaks the line. It raises `chat-send`
-// (the words and the chips) and `chat-chip-remove`; it never calls the server, and it keeps the
-// words until the host calls `clear()` once the message went through. Browser only.
+// host attaches, each removable, and the host's context chip (`setContext`), which opens and closes
+// its lines. Enter sends, Shift+Enter breaks the line. It raises `chat-send` (the words and the
+// chips) and `chat-chip-remove`; it never calls the server, and it keeps the words until the host
+// calls `clear()` once the message went through. Browser only.
 import type { Chip } from '../events.ts';
 import { TEXT_MAX } from '../events.ts';
-import type { ComposerView } from './composer-core.ts';
+import type { ComposerContext, ComposerView } from './composer-core.ts';
 import { chipKey, COMPOSER_KEYS, sendIntent, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate } from './composer-template.ts';
 
@@ -20,11 +21,17 @@ export interface ChatComposerElement extends HTMLElement {
   show(v: ComposerView): void;
   setChips(chips: readonly Chip[]): void;
   readonly chips: readonly Chip[];
+  /** The host's context beside the chips (null: none); it goes with every message the host sends. */
+  setContext(context: ComposerContext | null): void;
+  /** Whether anything is attached: a chip or the context. */
+  readonly attached: boolean;
   text: string;
   /** Empties the words and the chips (the message went through). */
   clear(): void;
   focusText(): void;
 }
+
+let made = 0;
 
 export function defineChatComposer(): void {
   if (customElements.get(CHAT_COMPOSER_TAG)) return;
@@ -32,6 +39,9 @@ export function defineChatComposer(): void {
   class ChatComposer extends HTMLElement implements ChatComposerElement {
     private view: ComposerView = { send: true, hint: COMPOSER_KEYS, placeholder: 'Message the agent' };
     private current: readonly Chip[] = [];
+    private context: ComposerContext | null = null;
+    private open = false;
+    private readonly linesId = `chat-cmp-ctx-${++made}`;
 
     constructor() {
       super();
@@ -39,6 +49,7 @@ export function defineChatComposer(): void {
         const t = e.target as HTMLElement;
         const x = t.closest<HTMLButtonElement>('button.chat-chip-x');
         if (x) return this.removeChip(x.dataset.chip ?? '');
+        if (t.closest('button.chat-cmp-ctx')) return this.toggle();
         if (t.closest('button.chat-cmp-send')) this.send();
       });
       this.addEventListener('keydown', (e) => {
@@ -69,14 +80,21 @@ export function defineChatComposer(): void {
 
     setChips(chips: readonly Chip[]): void {
       this.current = [...chips];
-      this.box();
-      const row = this.querySelector<HTMLElement>('.chat-cmp-chips')!;
-      row.innerHTML = chipsTemplate(this.current);
-      row.hidden = this.current.length === 0;
+      this.drawChips();
     }
 
     get chips(): readonly Chip[] {
       return this.current;
+    }
+
+    setContext(context: ComposerContext | null): void {
+      this.context = context;
+      if (!context?.lines.length) this.open = false;
+      this.drawChips();
+    }
+
+    get attached(): boolean {
+      return this.current.length > 0 || this.context !== null;
     }
 
     get text(): string {
@@ -104,17 +122,35 @@ export function defineChatComposer(): void {
       this.innerHTML = composerTemplate('Message to the agent', TEXT_MAX);
       ta = this.querySelector<HTMLTextAreaElement>('textarea.chat-cmp-text')!;
       this.show(this.view);
-      this.setChips(this.current);
+      this.drawChips();
       return ta;
+    }
+
+    /** The chips row, the context's lines with it; Send follows what is attached. Focus on the
+     *  context chip stays on it when the row is drawn again. */
+    private drawChips(): void {
+      this.box();
+      const row = this.querySelector<HTMLElement>('.chat-cmp-chips')!;
+      const focused = row.contains(document.activeElement) && document.activeElement?.matches('button.chat-cmp-ctx');
+      row.innerHTML = chipsTemplate(this.current, this.context, this.open, this.linesId);
+      row.hidden = !this.attached;
+      if (focused) this.querySelector<HTMLElement>('button.chat-cmp-ctx')?.focus();
+      this.syncSend();
+    }
+
+    /** Open or close the context's lines. */
+    private toggle(): void {
+      this.open = !this.open;
+      this.drawChips();
     }
 
     private syncSend(): void {
       const b = this.querySelector<HTMLButtonElement>('button.chat-cmp-send');
-      if (b) b.disabled = sendIntent(this.text, this.view.send) === 'skip';
+      if (b) b.disabled = sendIntent(this.text, this.view, this.attached) === 'skip';
     }
 
     private send(): void {
-      if (sendIntent(this.text, this.view.send) === 'skip') return;
+      if (sendIntent(this.text, this.view, this.attached) === 'skip') return;
       const detail: ChatSendDetail = { text: this.text, chips: [...this.current] };
       this.dispatchEvent(new CustomEvent<ChatSendDetail>(CHAT_SEND_EVENT, { bubbles: true, detail }));
     }

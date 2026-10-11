@@ -14,7 +14,7 @@ import type { ChatSessionInfo } from '../src/board/io.ts';
 const S = 'session-1';
 let seq = 0;
 const ev = (e: object): ChatEvent => ({ at: '2026-10-10T10:00:00Z', session: S, seq: ++seq, ...e }) as ChatEvent;
-const folder: ChatSessionInfo = { session: S, agent: 'claude', created: '2026-10-10T10:00:00Z' };
+const folder: ChatSessionInfo = { session: S, agent: 'claude', created: '2026-10-10T10:00:00Z', agentId: 'a-aaaa1111' };
 
 test('Send while the agent works waits for the next message; the answers going ends it', () => {
   seq = 0;
