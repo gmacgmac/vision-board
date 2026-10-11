@@ -125,7 +125,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     work.containers.push(...run.laidOut);
     layout = run.layout;
     const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies(), d.retired?.());
-    if (cards.place(layout) || framesMoved || fresh) settleWires();
+    if (cards.place(layout, sizes) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);
   }

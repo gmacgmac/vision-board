@@ -72,6 +72,8 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // bind: F is Fit today.
   flag: { id: 'flag', label: 'Flag', ...person, onItem: false },
   unflag: { id: 'unflag', label: 'Remove flag', ...person, onItem: false },
+  // Ledger v13 (api.md 132): a container's card widths, Match or Own, from its toolbar like the mode.
+  widths: { id: 'widths', label: 'Card widths', ...person, onItem: false },
 };
 
 /** The review buttons an item offers. */

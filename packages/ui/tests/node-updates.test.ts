@@ -9,7 +9,7 @@ import { nodeState, nodeTemplate, stepMarkup } from '../src/index.ts';
 
 const r: ViewNode = { id: '44', n: 44, region: 'r', kind: 'risk', title: 'The floor undercuts self-serve' };
 const board = (): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
 const steps: CardStep[] = [
   { ver: 2, when: '30 Sep, 15:40', agent: 'Pricing chat', changes: [{ field: 'body', change: 'added', text: 'The credit   amount\nis in.' }] },
   { ver: 3, when: '30 Sep, 15:41', changes: [{ field: 'title', change: 'changed', text: 'The floor undercuts self-serve at 35+ seats' }, { field: 'tags', change: 'removed' }] },

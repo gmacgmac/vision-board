@@ -3,6 +3,7 @@
 // A timing test: it runs alone, in its own serial step (`npm run test:timing`, N12_FE_01 ruling 7).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import type { View } from '../../format/src/index.ts';
 import { boardView, foldDrawn, readLedger } from '../../format/src/index.ts';
 import { layoutBoard } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
@@ -43,5 +44,36 @@ test(`layout of ${view.nodes.length} cards with 3 pins per container, each on a 
   }
   const ms = time(() => layoutBoard(view, sizes, { pins }));
   console.log(`[N12] layout, ${view.nodes.length} cards, ${pins.size} pins: ${ms.toFixed(1)} ms`);
+  assert.ok(ms < BUDGET_MS, `${ms.toFixed(1)} ms`);
+});
+
+/** mulberry32, so the dense board is the same every run. */
+function rng(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Routing around cards (field-report batch 3 ruling 2) costs most where links are many: 1,000 cards
+// in 20 flow and lanes containers with 60 links each, at random, inside the same budget.
+test(`layout of 1000 cards with 1200 links in flow and lanes stays under ${BUDGET_MS} ms`, () => {
+  const r = rng(9);
+  const dense: View = { format: 1, session: 'dense', version: 1, title: 'Dense', regions: [], nodes: [], links: [] };
+  for (let g = 0; g < 20; g++) {
+    dense.regions.push({ id: `g${g}`, title: `G${g}`, mode: g % 2 ? 'lanes' : 'flow', lanes: ['a', 'b', 'c', 'd', 'e'] });
+    for (let i = 0; i < 50; i++) dense.nodes.push({ id: `g${g}n${i}`, region: `g${g}`, kind: 'finding', title: 't', lane: 'abcde'[Math.floor(r() * 5)]! });
+    for (let k = 0; k < 60; k++) {
+      const [a, b] = [Math.floor(r() * 50), Math.floor(r() * 50)];
+      if (a !== b) dense.links.push({ from: `g${g}n${Math.min(a, b)}`, to: `g${g}n${Math.max(a, b)}` });
+    }
+  }
+  const sz = new Map<string, Size>(dense.nodes.map((n, i) => [n.id, { w: [280, 360, 464][i % 3]!, h: 110 + (i % 5) * 30 }]));
+  const ms = time(() => layoutBoard(dense, sz));
+  console.log(`[M2] layout, ${dense.nodes.length} cards, ${dense.links.length} links: ${ms.toFixed(1)} ms`);
   assert.ok(ms < BUDGET_MS, `${ms.toFixed(1)} ms`);
 });

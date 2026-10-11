@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.17.0",
+    "version": "1.18.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -474,6 +474,97 @@
                       ]
                     }
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/boards/{board}/regions/{region}/layout": {
+      "get": {
+        "operationId": "show_layout",
+        "x-agent": true,
+        "summary": "Read how one container is arranged",
+        "description": "Read how the board arranges one container, as structure only: the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by its number on this board, how many of the container's links cross another link, and how many cells are empty. Pass the board id and the region id. Call it once after you first draw a `flow` or `lanes` container to check it reads well (few crossings, few empty cells), and redraw if it does not; don't call it after every write. It is not in `write_board`'s answer.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/regionPath"
+          },
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The container's arrangement.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/showLayoutResponse"
+                },
+                "example": {
+                  "head": 52,
+                  "board": "roadmap",
+                  "region": "plan",
+                  "mode": "lanes",
+                  "widths": "own",
+                  "lanes": [
+                    "Now",
+                    "Next"
+                  ],
+                  "columns": 3,
+                  "cards": [
+                    {
+                      "n": 1,
+                      "lane": "Now",
+                      "column": 1,
+                      "row": 1
+                    },
+                    {
+                      "n": 2,
+                      "lane": "Now",
+                      "column": 2,
+                      "row": 1
+                    },
+                    {
+                      "n": 3,
+                      "lane": "Next",
+                      "column": 2,
+                      "row": 1
+                    },
+                    {
+                      "n": 4,
+                      "lane": "Next",
+                      "column": 3,
+                      "row": 1
+                    }
+                  ],
+                  "links": 3,
+                  "crossing": 0,
+                  "empty": 2
                 }
               }
             }
@@ -983,7 +1074,7 @@
         "operationId": "write_board",
         "x-agent": true,
         "summary": "Write to a board",
-        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good (kept in its history, numbers never reused); a card still waiting for your answer can't be retired until you answer it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can comment on, ask about or save any node. A node names no `item` (ledger v11), and a region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right); `list` is now `column`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide a card: `propose` acknowledge or drop on a question, decision or action and the person decides; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
+        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good (kept in its history, numbers never reused); a card still waiting for your answer can't be retired until you answer it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can comment on, ask about or save any node. A node names no `item` (ledger v11), and a region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right); `list` is now `column`. A region may set `widths`, `match` or `own`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide a card: `propose` acknowledge or drop on a question, decision or action and the person decides; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
         "security": [
           {
             "agentSecret": []
@@ -1131,7 +1222,7 @@
         "operationId": "act",
         "x-agent": false,
         "summary": "Record one action by the person",
-        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, edit or remove a note not yet sent, save for later, reopen, move, reset, change layout, resize, grant or deny a request, revoke, send, or reject an agent's proposal. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
+        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, or reject an agent's proposal. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -2292,6 +2383,9 @@
       "showContainerResponse": {
         "$ref": "https://vision-board.invalid/schema/api/show-container-response.schema.json"
       },
+      "showLayoutResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/show-layout-response.schema.json"
+      },
       "listOpenResponse": {
         "$ref": "https://vision-board.invalid/schema/api/list-open-response.schema.json"
       },
@@ -2308,43 +2402,43 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/12/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/13/events/retire.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -2440,7 +2534,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -2458,7 +2552,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -2467,7 +2561,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
         }
       },
       "after": {

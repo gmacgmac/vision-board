@@ -10,7 +10,7 @@ const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
 
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 
 const picks = (html: string): string[] => [...html.matchAll(/data-size-pick="(\w+)"/g)].map((m) => m[1]!);
 

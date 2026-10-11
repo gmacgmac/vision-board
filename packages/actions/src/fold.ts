@@ -10,7 +10,7 @@
 // Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
 // first).
 import type {
-  ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent,
+  ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
 } from '../../format/src/index.ts';
 import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
 import type { Place } from './containers.ts';
@@ -67,6 +67,8 @@ export interface LedgerState extends DrawnState {
   sizes: Map<number, NodeSize>;
   /** board -> region -> the person's layout choice. */
   modes: Map<string, Map<string, Mode>>;
+  /** board -> region -> the person's card widths choice (api.md 132), folded like `modes`. */
+  widths: Map<string, Map<string, Widths>>;
   /** board -> `seq` of the person's latest Send. */
   lastSend: Map<string, number>;
   /** board -> the lines since its last Send that the next Send carries (unsent.ts): `board.unsent`. */
@@ -127,7 +129,7 @@ export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board'
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
-  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), lastSend: new Map(), unsent: new Map(),
+  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), widths: new Map(), lastSend: new Map(), unsent: new Map(),
   keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
@@ -198,6 +200,11 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     case 'mode': {
       const regions = s.modes.get(e.board!) ?? new Map<string, Mode>();
       s.modes.set(e.board!, regions.set(e.region!, e.mode!));
+      break;
+    }
+    case 'widths': {
+      const regions = s.widths.get(e.board!) ?? new Map<string, Widths>();
+      s.widths.set(e.board!, regions.set(e.region!, e.widths!));
       break;
     }
     case 'pin': s.pins.set(e.id!, { x: e.x!, y: e.y! }); break;

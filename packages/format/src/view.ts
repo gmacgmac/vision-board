@@ -14,6 +14,21 @@ export type Mode = (typeof MODES)[number];
  * to `column` (api.md 129). A v12 line naming one is refused with `LIST_RENAMED` (ledger.ts). */
 export const RENAMED_MODES: Readonly<Record<string, Mode>> = { list: 'column' };
 
+/** How wide a container's cards are (api.md 132): `match`, every card in a column as wide as the
+ * column's widest card, or `own`, each card its own width. */
+export const WIDTHS = ['match', 'own'] as const;
+export type Widths = (typeof WIDTHS)[number];
+
+/** Each mode's card widths when neither the person nor the agent set them (field-report batch 3
+ * ruling 5, api.md 132): the one place they are defined. */
+export const DEFAULT_WIDTHS: Readonly<Record<Mode, Widths>> = {
+  grid: 'match', column: 'match', flow: 'own', row: 'own', lanes: 'own', radial: 'own',
+};
+
+/** The card widths in effect for a container shown in `mode`: the person's choice wins, then the
+ * container's own (`Region.widths`), then the mode's default (api.md 132). */
+export const widthsOf = (mode: Mode, own?: Widths, chosen?: Widths): Widths => chosen ?? own ?? DEFAULT_WIDTHS[mode];
+
 /** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). */
 export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'] as const;
 export type Kind = (typeof KINDS)[number];
@@ -28,6 +43,8 @@ export interface Region {
   center?: string;
   /** grid mode: column count hint. */
   columns?: number;
+  /** The agent's card widths (api.md 132); left out, the mode decides (`widthsOf`). */
+  widths?: Widths;
 }
 
 export interface ViewNode {

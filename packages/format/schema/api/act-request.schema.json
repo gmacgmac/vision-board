@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/act-request.schema.json",
   "title": "Action request",
-  "description": "One action from the action registry, as the person sends it: the `act` sent form. The board is the path; a `mode`, `send` or `revoke` action names the same board.",
+  "description": "One action from the action registry, as the person sends it: the `act` sent form. The board is the path; a `mode`, `widths`, `send` or `revoke` action names the same board.",
   "$comment": "Was: api.md 6, 16",
-  "$ref": "https://vision-board.invalid/schema/ledger/12/events/act.schema.json#/$defs/sent"
+  "$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/sent"
 }

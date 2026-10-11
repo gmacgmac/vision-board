@@ -38,6 +38,10 @@ export const OPERATIONS = {
     operationId: 'show_container', method: 'GET', path: '/api/boards/{board}/regions/{region}',
     pathParams: ['board', 'region'], xAgent: true, auth: 'none',
   },
+  show_layout: {
+    operationId: 'show_layout', method: 'GET', path: '/api/boards/{board}/regions/{region}/layout',
+    pathParams: ['board', 'region'], xAgent: true, auth: 'none',
+  },
   list_open: {
     operationId: 'list_open', method: 'GET', path: '/api/boards/{board}/open',
     pathParams: ['board'], xAgent: true, auth: 'none',

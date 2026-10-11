@@ -8,7 +8,7 @@ import { nodeState, nodeTemplate } from '../src/index.ts';
 
 const r: ViewNode = { id: '44', n: 44, region: 'r', kind: 'risk', title: 'The floor undercuts self-serve' };
 const board = (): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
 
 test('no new fact: no NEW, the name as before', () => {
   assert.equal(nodeState(r, board()).fresh, undefined);

@@ -9,7 +9,7 @@ import { FLAG_KEY, flagLabel, nodeState, nodeTemplate } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '3', region: 'r', kind: 'question', title: 'T', n: 3, ...f });
 const board = (flags: string[] = []): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(flags) });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(flags) });
 
 test('the flag button sits last in the card\'s toolbar, after Later, only with the option on', () => {
   const html = nodeTemplate(node({}), { flag: true });

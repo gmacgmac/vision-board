@@ -1,5 +1,11 @@
 export { layoutBoard, layoutRegion, MODE_FNS, packRegions } from './board.ts';
-export { routeLinks, roundedPath } from './route.ts';
+export type { RegionOptions } from './board.ts';
+export { routeLines, routeLinks } from './route/route.ts';
+export type { Routed } from './route/route.ts';
+export { roundedPath } from './route/path.ts';
+export { crossingLines, crossingPoints } from './route/crossings.ts';
+export { labelSize, LABEL_H } from './route/labels.ts';
+export { structureOf } from './structure.ts';
 export { boundsOf, overlaps } from './geometry.ts';
 export { autoTier, measureBody, sizeTier, TIERS } from './size.ts';
 export type { BodyMeasure } from './size.ts';

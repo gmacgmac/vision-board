@@ -105,7 +105,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       if (!layout) return;
       const nodes = new Map(layout.nodes);
       for (const [id, box] of boxes) nodes.set(id, box);
-      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes) }, boxes.keys().next().value!);
+      // Routed as the settled board routes them: round the cards of each container (groups).
+      h.drawDrag({ ...layout, nodes, routes: routeLinks(h.view().links, nodes, layout.groups) }, boxes.keys().next().value!);
       h.dragOver(at);
     },
     dragEnd: (boxes, at) => h.drop(boxes, at),

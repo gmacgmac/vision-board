@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/show-layout-response.schema.json",
+  "title": "Container layout",
+  "description": "How the board arranges one container, as structure only (no pixel sizes): the mode and card widths in effect, each card's column and row (and lane in `lanes` mode), how many of its links cross another link and how many cells are empty. Worked out by the layout package from the container's cards, links and mode.",
+  "$comment": "Was: api.md 133",
+  "type": "object",
+  "required": ["head", "board", "region", "mode", "widths", "columns", "cards", "links", "crossing", "empty"],
+  "properties": {
+    "head": {
+      "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
+    },
+    "board": {
+      "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id",
+      "description": "The board the container is on."
+    },
+    "region": {
+      "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id",
+      "description": "The container's id."
+    },
+    "mode": {
+      "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/mode",
+      "description": "The mode the board shows: the person's choice when they made one, else the container's."
+    },
+    "widths": {
+      "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/widths",
+      "description": "The card widths in effect: the person's choice, else the container's, else the mode's default."
+    },
+    "lanes": {
+      "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/lanes",
+      "description": "The lane names, top to bottom, in `lanes` mode; left out in every other mode."
+    },
+    "columns": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many columns the container uses (0 when it holds no card); in `radial` mode, how many rings, the centre being the first."
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "$ref": "https://vision-board.invalid/schema/api/show-layout-response.schema.json#/$defs/cell"
+      },
+      "description": "Every card in the container now (the person's moves count; retired cards are left out), in card-number order."
+    },
+    "links": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many links join two cards in this container."
+    },
+    "crossing": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many of those links cross at least one other link. 0 is the aim."
+    },
+    "empty": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many cells hold no card. A cell is a column and row (in `lanes` mode, a lane and column, its cards stacked inside); within the columns and rows the container uses. Always 0 in `radial` mode."
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "cell": {
+      "type": "object",
+      "required": ["n", "column", "row"],
+      "properties": {
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber"
+        },
+        "lane": {
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/lane",
+          "description": "The lane the card is in, in `lanes` mode."
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The card's column, from 1 at the left; in `radial` mode, its ring, 1 being the centre."
+        },
+        "row": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The card's row, from 1 at the top; in `lanes` mode, its place in its lane's stack in that column; in `radial` mode, its place around the ring."
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -6,10 +6,10 @@
 // `seq`), never a separate file. Meaning only, never coordinates except a person's pin (rule 9).
 // The shape's one source is the JSON Schema in packages/format/schema/ (rule 6, api.md 5-11);
 // these types are hand-written and a test checks they agree with it (api.md 2).
-import type { Kind, Region } from './view.ts';
+import type { Kind, Region, Widths } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 12;
+export const LEDGER_FORMAT = 13;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -20,14 +20,15 @@ export const LEDGER_FORMAT = 12;
  * the person turning down an agent's proposal (api.md 93); v11 takes `item` away from a node: the
  * kind decides (api.md 118). Older lines carrying it stay valid and every reader ignores it. v12
  * adds `retire` and the person's `flag` and `unflag`, renames mode `list` to `column` (older lines
- * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+ * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). v13 adds a
+ * container's card `widths`, on a region and as the person's `widths` act (api.md 132). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'widths',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
@@ -158,10 +159,11 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * place of `n` (and `ver`, `nodes`), a `comment`, `context`, `note-edit` or `note-remove` is about a
  * note on that whole container and a `pin` or `unpin` about its place, `x`/`y` then in board
  * coordinates (api.md 71). `nodes` are card identities. A `flag` or `unflag` names one card by `id`
- * and nothing else (api.md 128). */
+ * and nothing else (api.md 128). A `widths` act sets a container's card widths (`board`, `region`,
+ * `widths`), like `mode` (api.md 132). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; id?: number; ver?: number; text?: string; proposal?: number;
-  x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];
+  x?: number; y?: number; board?: string; region?: string; mode?: Region['mode']; widths?: Widths;
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
 }
 /** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to

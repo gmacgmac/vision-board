@@ -1,4 +1,4 @@
-// Ledger v12 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130): the JSON Schema is the one source, and the hand validator
+// Ledger v13 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130, 132): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, KINDS, LIMITS, MODES, NODE_SIZES,
-  ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, eventProblems, readLedger,
+  ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, WIDTHS, eventProblems, readLedger,
 } from '../../../packages/format/src/index.ts';
 import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/12/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/13/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v12 lines for every event type and action ----
+// ---- 3. Valid v13 lines for every event type and action ----
 
-test('every event type has a valid v12 line, and every one passes both validators', () => {
+test('every event type has a valid v13 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v12 line, and every one passes both validator
   }
 });
 
-test('every action has a valid v12 act, and every one passes both validators', () => {
+test('every action has a valid v13 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -74,6 +74,8 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     { ...VALID.node, node: { ...VALID.node!.node, title: '😀'.repeat(200) } },
     { ...VALID.region, region: { id: 'grid', title: 'Grid', mode: 'grid', columns: 12 } },
     { ...VALID.region, region: { id: 'radial', title: 'Hub', mode: 'radial', center: 7 } },
+    // api.md 132: a region may set its card widths.
+    { ...VALID.region, region: { id: 'grid', title: 'Grid', mode: 'grid', widths: 'own' } },
     // api.md 62: `nodes` in place of `n` and `ver`, on a comment or a context with words.
     { ...PERSON, type: 'act', action: 'comment', ...GROUP },
     { ...PERSON, type: 'act', action: 'context', ...GROUP, nodes: Array.from({ length: 500 }, (_, i) => i + 1) },
@@ -233,7 +235,7 @@ const unionTypes = () => (doc(LEDGER_EVENT_ID).oneOf as Rec[]).map((b) => {
   return doc(id!).$defs.stored.properties.type.const;
 });
 
-test('EVENT_TYPES, ACTION_IDS, KINDS, MODES and the sizes equal the schema enums', () => {
+test('EVENT_TYPES, ACTION_IDS, KINDS, MODES, the sizes and WIDTHS equal the schema enums', () => {
   const common = doc(COMMON).$defs;
   assert.deepEqual(unionTypes(), [...EVENT_TYPES]);
   assert.deepEqual(doc(eventId('act')).$defs.core.properties.action.enum, [...ACTION_IDS]);
@@ -241,6 +243,7 @@ test('EVENT_TYPES, ACTION_IDS, KINDS, MODES and the sizes equal the schema enums
   assert.deepEqual(common.mode.enum, [...MODES]);
   assert.deepEqual(common.nodeSize.enum, [...NODE_SIZES]);
   assert.deepEqual(common.actSize.enum, [...ACT_SIZES]);
+  assert.deepEqual(common.widths.enum, [...WIDTHS]);
 });
 
 test('LIMITS and the patterns equal the schema', () => {
@@ -282,4 +285,12 @@ test('every schema file compiles, with every $defs entry, and no $ref leaves htt
     for (const ref of refsOf(schema)) assert.ok(ref.startsWith(SCHEMA_BASE), `${rel}: ${ref}`);
   }
   for (const type of EVENT_TYPES) for (const form of ['core', 'sent', 'stored']) assert.ok(doc(eventId(type)).$defs[form], `${type} ${form}`);
+});
+
+test('card widths (api.md 132): a region and a widths act name match or own, and the act its container', () => {
+  assert.deepEqual(sent('region', { region: { id: 'r', title: 'R', mode: 'flow', widths: 'match' } }), []);
+  assert.deepEqual(sent('act', { action: 'widths', board: 'b', region: 'r', widths: 'own' }), []);
+  assert.deepEqual(ledgerLineProblems(JSON.stringify(patch(V.region!, 'region.widths', 'auto'))).map((p) => p.pointer), ['/region/widths']);
+  assert.deepEqual(ledgerLineProblems(JSON.stringify(act('widths', { widths: undefined }))), [{ pointer: '/widths', detail: '`widths` is required' }]);
+  assert.deepEqual(eventProblems(JSON.parse(JSON.stringify(act('widths', { region: undefined })))), ['widths: board and region required']);
 });

@@ -1,13 +1,15 @@
-// The read operations (api.md Operations, 31, 41, 43, 44, 78-80): every answer carries `head`, the
-// ledger's latest `seq`. The shapes are built by packages/actions; nothing is folded here. A read
+// The read operations (api.md Operations, 31, 41, 43, 44, 78-80, 133): every answer carries `head`,
+// the ledger's latest `seq`. The shapes are built by packages/actions (and `show_layout`'s by
+// packages/layout); nothing is folded here. A read
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { boardView, latest, nodesOf, toLine } from '../../../packages/format/src/index.ts';
+import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
   boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
-  responsesAfter, responsesPage,
+  placedView, responsesAfter, responsesPage,
 } from '../../../packages/actions/src/index.ts';
+import { structureOf } from '../../../packages/layout/src/index.ts';
 import { cardOn } from './edge.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
@@ -41,6 +43,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
     view: boardView(s, id),
     state: {
       items: Object.fromEntries(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
+      ...(st.widths.size > 0 && { widths: Object.fromEntries(st.widths) }),
       ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
       ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),
       ...containerJson(st),
@@ -69,6 +72,33 @@ const showContainer: Handler = ({ res, params, ledger }) => {
   const detail = containerDetail(s, board, region);
   if (!detail) throw problem('not-found', `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
   sendJson(res, 200, { head: s.seq, ...detail });
+};
+
+/** How the board arranges one container (api.md 133), structure only: the cards in it now (the
+ * person's moves count, retired cards are out) in card order, the links between them, the mode the
+ * board shows and the card widths in effect, worked out by the layout package as the page lays them
+ * out. Board numbers out: a View node's id is its number. A retired container, like an unknown one
+ * or the built-in Later, is `not-found`: nothing is arranged in it. */
+const showLayout: Handler = ({ res, params, ledger }) => {
+  const s = ledger.state();
+  const board = requireBoard(s, params.board);
+  const region = String(params.region);
+  const drawn = boardView(s, board);
+  const r = drawn.regions.find((x) => x.id === region);
+  if (!r) {
+    throw problem('not-found', s.retiredRegions.has(containerKey(board, region))
+      ? `Container "${region}" on board "${board}" was retired, so nothing is arranged in it. Call get_board to see its regions.`
+      : `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
+  }
+  const st = boardState(s, board);
+  const view = placedView(drawn, st);
+  const mode = st.modes.get(region) ?? r.mode;
+  const widths = widthsOf(mode, r.widths, st.widths.get(region));
+  const out = structureOf(r, view.nodes.filter((n) => n.region === region), view.links, mode, widths);
+  sendJson(res, 200, {
+    head: s.seq, board, region, mode, widths, ...(out.lanes && { lanes: out.lanes }), columns: out.columns,
+    cards: out.cards.map(({ id, ...cell }) => ({ n: Number(id), ...cell })), links: out.links, crossing: out.crossing, empty: out.empty,
+  });
 };
 
 /** The agent a scoped read is for: the Bearer caller, if any (api.md 41). */
@@ -175,7 +205,7 @@ const watchProject: Handler = (ctx) => stream(ctx, (send) => {
 });
 
 export const READS = {
-  list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer,
+  list_boards: listBoards, get_board: getBoard, show_node: showNode, show_container: showContainer, show_layout: showLayout,
   list_open: listOpen, check_responses: checkResponses, read_ledger: readLedger, watch_board: watchBoard,
   watch_project: watchProject,
 } satisfies Record<string, Handler>;

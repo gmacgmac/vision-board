@@ -2,7 +2,8 @@
 // and 4, performance.md approaches 1 and 3). A card is created once; it is rendered again only when
 // the agent drew a new version of it, updated only when what it shows changed (`nodeState`), and
 // measured only then. Reads of sizes come after every write of the batch, and places are written
-// after both. DOM order stays reading order, which is also tab order. A change of the selection
+// after both. A card the layout widens (Match widths, field-report batch 3 ruling 5) is drawn at
+// that width, and measured at its own. DOM order stays reading order, which is also tab order. A change of the selection
 // (3_FE_01 ruling 10) goes through `restate`: it updates only the cards named, measures nothing and
 // places nothing, since the selected look changes no card's size.
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
@@ -30,8 +31,9 @@ export interface CardSet {
   restate(ids: readonly string[]): void;
   /** Read the sizes of `ids` into `sizes`. */
   measure(ids: readonly string[], sizes: Map<string, Size>): void;
-  /** Write each card's place; true when any card moved or was shown or hidden. */
-  place(layout: BoardLayout): boolean;
+  /** Write each card's place, and its width where the layout's differs from its own (`sizes`);
+   *  true when any card moved, changed width, or was shown or hidden. */
+  place(layout: BoardLayout, sizes: ReadonlyMap<string, Size>): boolean;
   /** Remove every card (another board, or a rebuild). */
   clear(): void;
 }
@@ -41,8 +43,9 @@ interface Last {
   view: View; state: BoardState; selected: (id: string) => boolean; tier?: (n: ViewNode) => NodeSize; facts?: (n: ViewNode) => CardConditions;
 }
 /** The place last written to a card, and how the browser read the transform back: a drag writes
- * the transform itself, so a card is placed again when its transform no longer reads back. */
-interface Placed { want: string; read: string; hidden: boolean }
+ * the transform itself, so a card is placed again when its transform no longer reads back. `width`:
+ * the width written ('' for the card's own), as the browser reads it back (measuring clears it). */
+interface Placed { want: string; read: string; hidden: boolean; width: string }
 
 export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): CardSet {
   const els = new Map<string, VbNodeElement>();
@@ -119,12 +122,14 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
       }
     },
     measure(ids, sizes) {
-      // Writes first: a hidden or off-screen card has no real size until it is drawn.
+      // Writes first: a hidden or off-screen card has no real size until it is drawn, and a widened
+      // card is measured at its own width.
       for (const id of ids) {
         const el = els.get(id);
         if (!el) continue;
         el.hidden = false;
         el.removeAttribute('data-offscreen');
+        el.style.removeProperty('width');
       }
       for (const id of ids) {
         const el = els.get(id);
@@ -133,16 +138,21 @@ export function createCardSet(host: HTMLElement, opts: NodeTemplateOptions): Car
         work.cardsMeasured += 1;
       }
     },
-    place(layout) {
+    place(layout, sizes) {
       let moved = false;
       for (const [id, el] of els) {
         const b = layout.nodes.get(id);
         const was = placed.get(id);
         const want = b ? `translate(${b.x}px, ${b.y}px)` : was?.want ?? '';
-        if (was && was.want === want && was.read === el.style.transform && was.hidden === el.hidden && el.hidden === !b) continue;
+        const own = sizes.get(id)?.w;
+        const width = b && own !== undefined && b.w !== own ? `${b.w}px` : '';
+        if (was && was.want === want && was.read === el.style.transform && was.hidden === el.hidden && el.hidden === !b
+          && was.width === width && el.style.width === width) continue;
         el.hidden = !b;
         if (want) el.style.transform = want;
-        placed.set(id, { want, read: el.style.transform, hidden: el.hidden });
+        if (width) el.style.width = width;
+        else el.style.removeProperty('width');
+        placed.set(id, { want, read: el.style.transform, hidden: el.hidden, width });
         work.cardsPlaced += 1;
         moved = true;
       }

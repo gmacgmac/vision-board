@@ -104,7 +104,7 @@ const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   comment: onCards, context: onCards, 'note-edit': onCards, 'note-remove': onCards, pin: onCards, unpin: onCards,
   reject: onCards, flag: onCards, unflag: onCards,
   move: (s, e) => ({ ...onCards(s, e), container: e.region! }),
-  mode: onContainer, revoke: onAccess,
+  mode: onContainer, widths: onContainer, revoke: onAccess,
   grant: (s, e) => R.request.lookup(s, e.request!) ?? none(),
   deny: (s, e) => R.request.lookup(s, e.request!) ?? none(),
   send: (s, e) => R.board.lookup(s, e.board!),

@@ -1,5 +1,5 @@
 import type { ViewNode } from '../../../format/src/index.ts';
-import type { Box, ModeFn } from '../types.ts';
+import type { Box, Cell, ModeFn } from '../types.ts';
 import { GAP } from '../types.ts';
 import { normalise } from '../geometry.ts';
 
@@ -46,11 +46,18 @@ export const radial: ModeFn = ({ region, nodes, links, sizes }) => {
   }
 
   const pos = new Map<string, Box>();
+  // Structure (show_layout): the ring is the column (1 = the centre), the place round it the row,
+  // clockwise from the top, as `assign` walks the wedges.
+  const cells = new Map<string, Cell>();
+  const placed: number[] = [];
   const assign = (id: string, a0: number, a1: number) => {
     const s = sizes.get(id)!;
     const a = (a0 + a1) / 2;
-    const r = radius[depth.get(id)!]!;
+    const d = depth.get(id)!;
+    const r = radius[d]!;
     pos.set(id, { x: r * Math.cos(a) - s.w / 2, y: r * Math.sin(a) - s.h / 2, ...s });
+    placed[d] = (placed[d] ?? 0) + 1;
+    cells.set(id, { column: d + 1, row: placed[d] });
     let at = a0;
     for (const k of children.get(id)!) {
       const span = ((a1 - a0) * leaves.get(k)!) / leaves.get(id)!;
@@ -59,7 +66,7 @@ export const radial: ModeFn = ({ region, nodes, links, sizes }) => {
     }
   };
   assign(root, -Math.PI / 2, (3 * Math.PI) / 2);
-  return { pos: normalise(pos) };
+  return { pos: normalise(pos), cells };
 };
 
 function pickCentre(hint: string | undefined, nodes: ViewNode[], adj: Map<string, string[]>) {

@@ -1,8 +1,8 @@
 // One board as the page reads it beside `boardView` (packages/format): the person's responses,
-// pins, sizes, moves, modes, container places and notes, and the person's flags, keyed like the
+// pins, sizes, moves, modes, card widths, container places and notes, and the person's flags, keyed like the
 // View, by node id = the card's board number as text (api.md 125). Cards retired from the board
 // are left out (api.md 127). `get_board` sends all of it but the flags (api.md 128). Pure.
-import type { Mode, NodeSize, View } from '../../format/src/index.ts';
+import type { Mode, NodeSize, View, Widths } from '../../format/src/index.ts';
 import { containerKey, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import { flagsOn } from './card-flags.ts';
 import type { Place } from './containers.ts';
@@ -22,6 +22,8 @@ export interface BoardState {
   items: Map<string, ItemState>;
   pins: Map<string, { x: number; y: number }>;
   modes: Map<string, Mode>;
+  /** Region id -> the person's card widths choice (api.md 132); it wins over the region's own. */
+  widths: Map<string, Widths>;
   /** The person's card size picks (D-030); a node with none follows the agent or the auto tier. */
   sizes: Map<string, NodeSize>;
   moves: Map<string, string>;
@@ -35,9 +37,9 @@ export interface BoardState {
 
 /** The person's responses on one board, keyed like `boardView` (`String(n)`). */
 export function boardState(s: LedgerState, board: string): BoardState {
-  const modes = [...(s.modes.get(board) ?? [])].filter(([r]) => !s.retiredRegions.has(containerKey(board, r)));
+  const here = <V>(m: Map<string, V> | undefined) => new Map([...(m ?? [])].filter(([r]) => !s.retiredRegions.has(containerKey(board, r))));
   const out: BoardState = {
-    items: new Map(), pins: new Map(), modes: new Map(modes), sizes: new Map(), moves: new Map(),
+    items: new Map(), pins: new Map(), modes: here(s.modes.get(board)), widths: here(s.widths.get(board)), sizes: new Map(), moves: new Map(),
     ...containerState(s, board), flags: new Set(flagsOn(s, board).map((id) => String(numberOf(s, id)))),
   };
   for (const { id } of nodesOf(s, board)) {

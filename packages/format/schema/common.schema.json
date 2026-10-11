@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/12/common.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/13/common.schema.json",
   "title": "Shared ledger definitions",
   "description": "Ids, text, limits, enums and the server's stamp, shared by every event schema. Lengths count code points. The hand validator (packages/format/src/ledger-shape.ts) gives the same verdict.",
   "$comment": "Was: docs/specification/api.md 5-11",
@@ -11,29 +11,30 @@
     "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$" },
     "seq": { "type": "integer", "minimum": 1 },
     "nodeNumber": { "type": "integer", "minimum": 1, "description": "A card. On a ledger line, its ledger number: its identity in the project, given once by the server and never reused. In a request or an answer, its number on the board the operation names: 1, 2, 3... in the order drawn, never reused.", "$comment": "Was: D-017, D-041, api.md 125" },
-    "nodeNumbers": { "type": "array", "minItems": 2, "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/nodeNumber" }, "description": "Two or more distinct node numbers, each once.", "$comment": "Was: api.md 62, 66" },
-    "cards": { "type": "array", "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/nodeNumber" }, "description": "The cards a retire took off the board, by ledger number, each once.", "$comment": "Was: api.md 126" },
+    "nodeNumbers": { "type": "array", "minItems": 2, "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeNumber" }, "description": "Two or more distinct node numbers, each once.", "$comment": "Was: api.md 62, 66" },
+    "cards": { "type": "array", "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeNumber" }, "description": "The cards a retire took off the board, by ledger number, each once.", "$comment": "Was: api.md 126" },
     "version": { "type": "integer", "minimum": 1 },
-    "title": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 200 },
-    "regionTitle": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
-    "nodeBody": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 8000 },
-    "longText": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 4000 },
-    "summary": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 2000 },
-    "linkLabel": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
-    "agentLabel": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
-    "tag": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
-    "lane": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
-    "source": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 500 },
-    "key": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 64, "description": "The agent's retry key, scoped to the agent across the project", "$comment": "Was: api.md 13, 29" },
-    "person": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
-    "tags": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/tag" } },
-    "lanes": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/lane" } },
-    "sources": { "type": "array", "maxItems": 20, "items": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/source" } },
+    "title": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 200 },
+    "regionTitle": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "nodeBody": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 8000 },
+    "longText": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 4000 },
+    "summary": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 2000 },
+    "linkLabel": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "agentLabel": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "tag": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
+    "lane": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
+    "source": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 500 },
+    "key": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 64, "description": "The agent's retry key, scoped to the agent across the project", "$comment": "Was: api.md 13, 29" },
+    "person": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
+    "tags": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/tag" } },
+    "lanes": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/lane" } },
+    "sources": { "type": "array", "maxItems": 20, "items": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/source" } },
     "columns": { "type": "integer", "minimum": 1, "maximum": 12 },
     "kind": { "enum": ["question", "finding", "decision", "risk", "action", "topic", "note"] },
     "mode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row"], "description": "How a container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order).", "$comment": "Was: api.md 129" },
     "lineMode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row", "list"], "description": "A mode as a ledger line may name it: `list` on lines from ledger v11 and older only, read as `column`.", "$comment": "Was: api.md 129" },
     "notList": { "not": { "const": "list" }, "description": "Renamed in ledger v12: `list` is now `column` (cards top to bottom in card order); `row` lays them left to right, and `flow` follows the links.", "$comment": "Was: api.md 129" },
+    "widths": { "enum": ["match", "own"], "description": "How wide a container's cards are: `match`, every card in a column as wide as the column's widest card, or `own`, each card its own width. Left out, the container's mode decides: `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`.", "$comment": "Was: api.md 132" },
     "nodeSize": { "enum": ["s", "m", "l"] },
     "actSize": { "enum": ["s", "m", "l", "auto"] },
     "noteKind": { "enum": ["comment", "context"], "description": "What a person's note asks for: a comment, or more context", "$comment": "Was: api.md 59" },
@@ -41,11 +42,11 @@
       "description": "A card named by its number on the board the write names, or by the key of the item that made it. Sent forms only.",
       "$comment": "Was: api.md 35",
       "anyOf": [
-        { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/nodeNumber" },
+        { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeNumber" },
         {
           "type": "object",
           "required": ["key"],
-          "properties": { "key": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/key" } },
+          "properties": { "key": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/key" } },
           "unevaluatedProperties": false
         }
       ]
@@ -56,22 +57,22 @@
       "type": "object",
       "required": ["v", "seq", "at", "by"],
       "properties": {
-        "v": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "description": "The ledger format version of the line: 2 to 12."},
-        "seq": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/seq", "description": "The line's position in the ledger."},
-        "at": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/timestamp", "description": "When the server wrote the line."},
+        "v": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], "description": "The ledger format version of the line: 2 to 13."},
+        "seq": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq", "description": "The line's position in the ledger."},
+        "at": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/timestamp", "description": "When the server wrote the line."},
         "by": {"enum": ["person", "agent"], "description": "Who wrote the line: `person` or `agent`."},
-        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text", "description": "The agent that wrote the line: an agent id from v3, any name on v2."},
-        "person": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/person", "description": "The person's name, written only once a board has more than one person."}
+        "agent": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text", "description": "The agent that wrote the line: an agent id from v3, any name on v2."},
+        "person": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/person", "description": "The person's name, written only once a board has more than one person."}
       }
     },
     "stampAgent": {
       "description": "From v3 `agent` is an agent id.",
       "$comment": "Kept apart from `stamp` because ajv only credits the fields of a referenced schema whose own `if` is dynamic when that schema passes, so one bad agent would make every stamp field read as unknown; `stamp` stays static and always vouches for them.",
       "type": "object",
-      "if": { "type": "object", "required": ["v"], "properties": { "v": { "enum": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12] } } },
+      "if": { "type": "object", "required": ["v"], "properties": { "v": { "enum": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] } } },
       "then": {
         "type": "object",
-        "properties": { "agent": { "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/agentId" } }
+        "properties": { "agent": { "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/agentId" } }
       }
     }
   }

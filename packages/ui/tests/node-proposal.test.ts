@@ -9,7 +9,7 @@ import { nodeState, nodeTemplate, proposalsMarkup } from '../src/index.ts';
 
 const q: ViewNode = { id: '47', n: 47, region: 'r', kind: 'question', title: 'Will they take the discount?' };
 const board = (): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set() });
 const prop = (f: Partial<CardProposal> = {}): CardProposal =>
   ({ seq: 812, action: 'drop', reason: 'the client declined', when: 'Oct 8, 13:48', stale: false, ...f });
 const withProps = (...list: CardProposal[]) => nodeState(q, board(), undefined, false, { proposals: list });

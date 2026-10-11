@@ -7,7 +7,7 @@
   "type": "object",
   "allOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/12/events/board.schema.json#/$defs/core"
+      "$ref": "https://vision-board.invalid/schema/ledger/13/events/board.schema.json#/$defs/core"
     }
   ],
   "unevaluatedProperties": false

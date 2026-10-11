@@ -36,16 +36,22 @@ test('column: top to bottom in card order, whatever order the cards come in', ()
   assert.deepEqual(['n1', 'n2', 'n3'].map((id) => pos.get(id)!.y).every((y, i, ys) => i === 0 || y > ys[i - 1]!), true);
 });
 
+/** Lanes stack the cards one lane holds in one column: n1 leads to n2 and n3, which share column 2. */
+const stackedLane = () => MODE_FNS.lanes({
+  region: { id: 'r', title: 'R', mode: 'lanes', lanes: ['L'] }, nodes, sizes,
+  links: [{ from: 'n1', to: 'n2' }, { from: 'n1', to: 'n3' }],
+});
+
 test('lanes: cards stacked in one column of a lane are GAP apart', () => {
-  const { pos } = run('lanes', ['L']);
+  const { pos } = stackedLane();
   const ys = nodes.map((n) => pos.get(n.id)!).sort((a, b) => a.y - b.y);
-  const stacked = ys.filter((b) => b.x === ys[0]!.x);
+  const stacked = ys.filter((b) => b.x === pos.get('n2')!.x);
   assert.ok(stacked.length >= 2, 'the sample stacks cards');
   for (let i = 1; i < stacked.length; i++) assert.equal(stacked[i]!.y - (stacked[i - 1]!.y + stacked[i - 1]!.h), GAP);
 });
 
 test('lanes: a lane stays tall enough for its stack', () => {
-  const { pos, lanes } = run('lanes', ['L']);
+  const { pos, lanes } = stackedLane();
   const bottom = Math.max(...nodes.map((n) => pos.get(n.id)!.y + pos.get(n.id)!.h));
   assert.ok(lanes![0]!.h >= bottom - lanes![0]!.y);
 });

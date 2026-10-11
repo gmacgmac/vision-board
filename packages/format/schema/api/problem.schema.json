@@ -41,7 +41,7 @@
           "description": "A JSON Pointer into the request body, such as /items/2/node/title"
         },
         "detail": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text",
           "description": "What is wrong at that pointer."
         }
       },
@@ -61,11 +61,11 @@
           "$ref": "https://vision-board.invalid/schema/api/problem.schema.json#/$defs/code"
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text",
           "description": "A short name for the kind of error; the same for every problem with this `type`."
         },
         "detail": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/text",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/text",
           "description": "Plain English for an agent to act on: what is wrong and what to do"
         },
         "errors": {
@@ -76,15 +76,15 @@
           "description": "Where in the request body each fault is, when there is more than one."
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/version",
           "description": "`conflict`: the node's current version"
         },
         "board": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id",
           "description": "`needs-grant`: the board the agent needs, or the board the region is on"
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id",
           "description": "`needs-grant`: the region the agent needs; left out when it needs the board"
         }
       }

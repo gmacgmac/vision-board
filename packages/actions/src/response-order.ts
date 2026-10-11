@@ -1,8 +1,8 @@
 // The order the agent reads the person's responses in (every-node PLAN ruling 7, api.md 120). Each
 // batch, the acts up to a Send, is sorted by card number: an act on cards goes in at its lowest card
-// (a note on a group at the lowest of its cards); a note on, a place for or the layout of a whole
-// container at the lowest card in it now, or first when it holds none; an answer to a grant
-// request or a revoke, which is on no card, after the cards. A Send ends its batch. Acts at one
+// (a note on a group at the lowest of its cards); a note on, a place for, the layout or the card
+// widths of a whole container at the lowest card in it now, or first when it holds none; an answer
+// to a grant request or a revoke, which is on no card, after the cards. A Send ends its batch. Acts at one
 // place stay in the order made. The ledger keeps the order of the clicks. Pure.
 import type { ActEvent } from '../../format/src/index.ts';
 import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
@@ -17,7 +17,7 @@ import { placeOf, scopeOf } from './references.ts';
 function placeIn(s: LedgerState, e: ActEvent): number {
   const { board, container, cards } = scopeOf(s, e);
   if (cards.length) return Math.min(...cards);
-  if (!(isContainerAct(e) || e.action === 'mode') || board === undefined) return Infinity;
+  if (!(isContainerAct(e) || e.action === 'mode' || e.action === 'widths') || board === undefined) return Infinity;
   const inside = nodesOf(s, board).filter((x) => placeOf(s, x.id)?.region === container).map((x) => x.id);
   return inside.length ? Math.min(...inside) : -Infinity;
 }

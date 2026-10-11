@@ -42,7 +42,7 @@ function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
     case 'send': return true;
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
     case 'revoke': return e.holder === agent;
-    case 'mode': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
+    case 'mode': case 'widths': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
     default: return scopeOf(s, e).cards.some((id) => mayAnswer(s, agent, id));
   }
 }

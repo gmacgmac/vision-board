@@ -1,13 +1,14 @@
 // Layout per container, kept between draws (N12_FE_01 ruling 3, performance.md approach 2). Each
 // container's result from `layoutRegion` is kept with a key of everything it read: the region, its
 // mode, its visible nodes (id, kind, lane, measured size, pin) in view order, the links inside
-// it, and its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3). A draw lays
+// it, its head inset (the shown note block's height, 3_FE_04 step 4G ruling 3), its card widths
+// and the viewer's alignment (field-report batch 3 rulings 4 and 5). A draw lays
 // out again only the containers whose key changed, then packs every container and routes the
 // links (cheap). The layout functions stay pure; only this cache lives in the page.
 // Same input, same picture: a test drives random changes and holds the result equal to
 // `layoutBoard` after each one.
-import type { Link, Mode, View, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout, Point, RegionPiece, Size } from '../../../../packages/layout/src/index.ts';
+import type { Link, Mode, View, ViewNode, Widths } from '../../../../packages/format/src/index.ts';
+import type { Align, BoardLayout, Point, RegionPiece, Size } from '../../../../packages/layout/src/index.ts';
 import { layoutRegion, packRegions } from '../../../../packages/layout/src/index.ts';
 
 export interface LayoutInputs {
@@ -20,6 +21,11 @@ export interface LayoutInputs {
   /** Region id -> the shown note block's height (3_FE_04 step 4G): that container's own input, so
    * it is in that container's key alone; showing one note lays out that one container. */
   headInsets?: Map<string, number>;
+  /** Region id -> the card widths in effect (`widthsOf`: the person's, the region's, the mode's
+   *  default). A region left out gets the layout's own `widthsOf(mode, region.widths)`. */
+  widths?: Map<string, Widths>;
+  /** The viewer's alignment (ruling 4); absent: `start`. Every container reads it. */
+  align?: Align;
 }
 
 export interface LayoutRun {
@@ -42,7 +48,7 @@ const nodeKey = (n: ViewNode, s: Size | undefined, pin: Point | undefined) =>
 export function createLayoutCache(): LayoutCache {
   let kept = new Map<string, { key: string; piece: RegionPiece }>();
   return {
-    run(view, sizes, { pins, modes, hidden, regionPins, headInsets }) {
+    run(view, sizes, { pins, modes, hidden, regionPins, headInsets, widths, align }) {
       const nodes = new Map<string, ViewNode[]>();
       const regionOf = new Map<string, string>();
       for (const n of view.nodes) {
@@ -65,13 +71,15 @@ export function createLayoutCache(): LayoutCache {
         const mode = modes.get(region.id);
         // 0, negative or absent are all no inset (LayoutOptions.headInsets): one key for them.
         const inset = Math.max(0, headInsets?.get(region.id) ?? 0);
+        const chosen = widths?.get(region.id);
         const key = JSON.stringify([
-          region, mode ?? null, inset, own.map((n) => nodeKey(n, sizes.get(n.id), pins.get(n.id))), inner.map((l) => [l.from, l.to]),
+          region, mode ?? null, inset, chosen ?? null, align ?? 'start',
+          own.map((n) => nodeKey(n, sizes.get(n.id), pins.get(n.id))), inner.map((l) => [l.from, l.to]),
         ]);
         const old = kept.get(region.id);
         let piece = old?.key === key ? old.piece : undefined;
         if (!piece) {
-          piece = layoutRegion(region, own, inner, sizes, { mode, pins, headInset: inset });
+          piece = layoutRegion(region, own, inner, sizes, { mode, pins, headInset: inset, widths: chosen, align });
           laidOut.push(region.id);
         }
         next.set(region.id, { key, piece });

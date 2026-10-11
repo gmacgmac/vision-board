@@ -7,7 +7,7 @@ import {
   ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, LIST_RENAMED, NODE_SIZES,
   NOTE_KINDS, PERSON_EVENTS, PERSON_TOO, PRIVATE_ACTIONS,
 } from './ledger.ts';
-import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES } from './view.ts';
+import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES, WIDTHS } from './view.ts';
 
 /** Every mode a stored line may name: today's, and the old names older lines carry (api.md 129). */
 const LINE_MODES = [...MODES, ...Object.keys(RENAMED_MODES)];
@@ -98,7 +98,7 @@ const REGION: Shape = {
   req: ['id', 'title', 'mode'],
   fields: {
     id, title: text(LIMITS.regionTitle), mode: oneOf(LINE_MODES), lanes: list(text(LIMITS.lane), LIMITS.lanes),
-    center: nodeNumber, columns: int(`whole number from 1 to ${LIMITS.columns}`, LIMITS.columns),
+    center: nodeNumber, columns: int(`whole number from 1 to ${LIMITS.columns}`, LIMITS.columns), widths: oneOf(WIDTHS),
   },
 };
 const lanesRule = (r: Rec, f: string, p: string[]) => {
@@ -137,7 +137,7 @@ const SHAPES: Record<EventType, Shape> = {
       proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(LINE_MODES),
       request: int('seq of a grant-request event'), holder: agentId, size: oneOf(ACT_SIZES),
       note: int('seq of the comment or context act that made the note'), kind: oneOf(NOTE_KINDS),
-      nodes: nodeNumbers,
+      nodes: nodeNumbers, widths: oneOf(WIDTHS),
     },
   },
   seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int('seq of a line') } },
@@ -195,6 +195,11 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'mode') {
     if (!has('board') || !has('region')) p.push('mode: board and region required');
     need('mode', `mode: one of ${MODES.join(', ')}`);
+  }
+  // A container's card widths, like its mode (api.md 132).
+  if (a === 'widths') {
+    if (!has('board') || !has('region')) p.push('widths: board and region required');
+    need('widths', `widths: one of ${WIDTHS.join(', ')}`);
   }
   if (a === 'move') need('region', 'region: the container to move the cards to');
   const group = has('nodes');

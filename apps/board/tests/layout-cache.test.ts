@@ -142,3 +142,20 @@ test('a shown container note lays out exactly that container; hiding it restores
   assert.deepEqual(hidden.laidOut, [id]);
   assert.deepEqual(hidden.layout, before);
 });
+
+test('card widths lay out exactly their container; the alignment lays out every container; both equal layoutBoard', () => {
+  const view = load('roadmap');
+  const sizes = new Map(view.nodes.map((n, i) => [n.id, { w: 240 + (i % 3) * 40, h: 96 + (i % 4) * 18 }]));
+  const inputs: LayoutInputs = { pins: new Map(), modes: new Map(), hidden: new Set<string>() };
+  const cache = createLayoutCache();
+  cache.run(view, sizes, inputs);
+  const id = view.regions[0]!.id;
+  const own = { ...inputs, widths: new Map([[id, 'own' as const]]) };
+  const run = cache.run(view, sizes, own);
+  assert.deepEqual(run.laidOut, [id]);
+  assert.deepEqual(run.layout, layoutBoard(view, sizes, own));
+  const centred = { ...own, align: 'center' as const };
+  const all = cache.run(view, sizes, centred);
+  assert.deepEqual(all.laidOut, view.regions.map((r) => r.id));
+  assert.deepEqual(all.layout, layoutBoard(view, sizes, centred));
+});

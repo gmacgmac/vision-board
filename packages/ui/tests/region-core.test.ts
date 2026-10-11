@@ -14,7 +14,7 @@ const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 
 const view = (nodes: ViewNode[]): View =>
   ({ format: 1, session: 's', title: 'B', version: 1, regions: [region], nodes, links: [] });
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 const deciding = (...entries: [string, ItemStatus][]): BoardState =>
   board({ items: new Map(entries.map(([id, status]) => [id, { status, notes: [] }])) });
 const drawn = (...ids: string[]): ReadonlySet<string> => new Set(ids);

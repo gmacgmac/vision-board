@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-11 (the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -234,6 +234,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty) |
 | `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes |
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
+| `show_layout` | `GET /api/boards/{board}/regions/{region}/layout` | anyone | How the board arranges one container, structure only: mode and widths in effect, each card's lane, column and row, how many links cross, how many cells are empty (133) |
 | `list_open` | `GET /api/boards/{board}/open` | anyone | Items not yet decided, with `pending` (36) and `unseen` (a newer version than the person last saw) |
 | `check_responses` | `GET /api/boards/{board}/responses` | anyone | The person's actions after `after`, and answers to the caller's grant requests; `wait` (0-60 s) holds the call until the person presses Send or answers a request; a timed-out wait returns `{ responses: [], head }` |
 | `read_ledger` | `GET /api/ledger` | person | Every ledger line after `after`, from anyone, oldest first, as the file holds it (cards by ledger number, flags included: 125, 128); `board` filters (through a node's board for lines that name only a node); JSON, or `application/jsonl` |
@@ -1012,3 +1013,44 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     packages/actions `boardBlocks` (the selection, then the notes, then `roundOf`, which moved there
     from `chat-round.ts`): the server's prompt and the page's preview of it (the composer's one chip,
     "3 answers · 2 selected", ruling 2) read the same function. No route or schema changes.
+
+## Ledger v13: card widths, `show_layout` (field-report batch 3 BE_01)
+
+132. **Card widths** (ruling 5). `LEDGER_FORMAT` becomes 13 and every ledger `$id` moves to
+    `.../schema/ledger/13/`; `openapi.json` `info.version` becomes 1.18.0. Only adds: v2 to v12
+    lines stay valid. A container's cards are `match` (every card in a column as wide as that
+    column's widest card) or `own` (each card its own width): common `widths`, `WIDTHS`. The agent
+    may set `widths` on a region item (the region schema, `Region.widths`, the View's region); the
+    person sets it from the container's toolbar with the act `widths { board, region, widths }`,
+    shaped and checked like `mode` (both fields required, the container must exist on the board,
+    `ledger-index.ts` `actContext`; registry `widths`, person, no confirmation, not an answer;
+    scope the container, `references.ts`). What is in effect: the person's latest choice, else the
+    region's, else the default of the mode the board shows (`DEFAULT_WIDTHS`, the one place:
+    `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`; `widthsOf(mode,
+    own?, chosen?)`). So a person who changes the mode and never chose widths gets the new mode's
+    default. `get_board`'s `state.widths` is region id to the person's choice, left out when none.
+    `check_responses` reports a `widths` act as it reports `mode` (a container act, sorted at the
+    lowest card in it), to the agents that may answer in that container.
+133. **`show_layout`** (ruling 6), `GET /api/boards/{board}/regions/{region}/layout`, `x-agent`,
+    read-only (MCP tool `show_layout`, `vb show-layout`): how the board arranges one container,
+    structure only, no pixel sizes and no pins. The answer (`show-layout-response.schema.json`):
+    `head`, `board`, `region`, `mode` (the person's choice, else the container's), `widths` (as 132),
+    `lanes` (in `lanes` mode), `columns` (rings in `radial`), `cards` (every card in the container
+    now, the person's moves counting and retired cards left out, in card-number order, each
+    `{ n, lane?, column, row }`, from 1 at the left and top; in `lanes`, `row` is the card's place
+    in its lane's stack in that column; in `radial`, `column` is the ring, the centre 1, and `row`
+    the place around it), `links` (links joining two of those cards), `crossing` (how many of them
+    cross at least one other link) and `empty` (cells with no card inside the columns and rows used;
+    a cell is a column and row, in `lanes` a lane and column; 0 in `radial`). The server works it out
+    with the layout package from the same cards, links and mode the page draws
+    (`packages/layout` `structureOf`, `LayoutStructure`, `CardCell`: node ids there, board numbers in
+    the answer), taking every card at one size (280 by 120), so `crossing` is the arrangement's,
+    routed as the page routes it, not one viewer's measured picture.
+    Not in `write_board`'s answer. The same refusals as `show_container`: an unknown board or
+    container, or `later`, is `not-found`; a retired container is `not-found` too (nothing is
+    arranged). The skill calls it once after the first draw of a `flow` or `lanes` container,
+    never after every write.
+134. **Alignment is per viewer** (ruling 4): top-aligned horizontal layouts and left-aligned vertical
+    ones by default, set in the page's "⋯" menu and kept in that browser. It is never written to
+    the ledger and no agent reads it, so the contract does not change; `show_layout` is the same
+    whatever a viewer chose.

@@ -1,7 +1,7 @@
 # packages/format
 
 The format the agent and the board share: the project ledger (`.visionboard/ledger.jsonl`,
-format 12, readers accept 2 to 12; D-017, api.md 125-130), one event per line for every card's
+format 13, readers accept 2 to 13; D-017, api.md 125-132), one event per line for every card's
 identity, versions, the person's actions, the agent's replies, proposals, parking bundles,
 retires, joins and grant requests. A card's identity is its ledger number: the file writes it `n`,
 code calls it `id` (`fromLine`, `toLine`); every request and answer names a card by its board
@@ -22,7 +22,8 @@ never a file. The format-1 view files and transcript are archived in
 - **Depends on**: nothing.
 - **Used by**: `packages/actions`, `packages/layout`, `packages/ui`, `apps/board`.
 - **Public API** (`src/index.ts`): view types and constants (`View`, `ViewNode`, `Region`,
-  `Link`, `MODES`, `KINDS`, `ID_PATTERN`, `FORBIDDEN_KEYS`), `validateView`; ledger types
+  `Link`, `MODES`, `KINDS`, `ID_PATTERN`, `FORBIDDEN_KEYS`; card widths `WIDTHS`, `DEFAULT_WIDTHS`,
+  `widthsOf`, api.md 132), `validateView`; ledger types
   (`LedgerEvent` and one type per event, `NodeBody`, `ParkBundle`, `LedgerRegion`, `EVENT_TYPES`,
   `RetireEvent`, `LEDGER_FORMAT`, `LEDGER_FORMATS`, `ActionId`, `ACTION_IDS`, `PRIVATE_ACTIONS`,
   `isPrivateAct`, `CARD_EVENTS`, `NODE_SIZES`, `ACT_SIZES`, `RENAMED_MODES`, `LIST_RENAMED`),

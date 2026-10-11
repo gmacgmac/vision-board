@@ -19,11 +19,8 @@ type Rule = (e: ActEvent, s: LedgerState, board: string | undefined, p: string[]
 
 /** Acts that name a board or a request, not a node. */
 const RULES: Partial<Record<ActEvent['action'], Rule>> = {
-  mode: (e, s, board, p) => {
-    onBoard(e.board, board, p);
-    if (!s.boards.get(e.board!)?.regions.some((r) => r.id === e.region))
-      p.push(`region: unknown "${String(e.region)}"; pick a region on board "${String(e.board)}"`);
-  },
+  mode: (e, s, board, p) => onContainer(e, s, board, p),
+  widths: (e, s, board, p) => onContainer(e, s, board, p),
   send: (e, s, board, p) => {
     onBoard(e.board, board, p);
     if (!s.boards.has(e.board!)) p.push(`board: unknown "${String(e.board)}"`);
@@ -65,6 +62,13 @@ function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p:
     if (!NODE_TYPES[v.kind].actions.includes('later'))
       p.push(`region: Later takes only cards that can be saved for later; node ${cardName(s)(id)} is a ${v.kind}, which can't`);
   }
+}
+
+/** The layout or card widths of a container (api.md 16, 132): a region on the board it was sent to. */
+function onContainer(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
+  onBoard(e.board, board, p);
+  if (!s.boards.get(e.board!)?.regions.some((r) => r.id === e.region))
+    p.push(`region: unknown "${String(e.region)}"; pick a region on board "${String(e.board)}"`);
 }
 
 /** The act was sent to `board` but names `named`. */

@@ -141,7 +141,7 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
   return p;
 }
 
-/** The container rules of an `act`: mode, move, grant, deny, revoke and send (api.md 16, 23, 66),
+/** The container rules of an `act`: mode, widths, move, grant, deny, revoke and send (api.md 16, 23, 66, 132),
  * and a note on or a place for a whole container (api.md 72). */
 function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
   const region = () => { if (!ix.boards.get(e.board!)?.has(e.region!)) p.push(`region: unknown "${e.region}"`); };
@@ -156,7 +156,7 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
     return;
   }
   switch (e.action) {
-    case 'mode': region(); break;
+    case 'mode': case 'widths': region(); break;
     case 'move': {
       const board = ix.nodes.get(actCard(e)!)?.board;
       if (board === undefined || e.region === LATER_REGION || ix.boards.get(board)?.has(e.region!)) break;

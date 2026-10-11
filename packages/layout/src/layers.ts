@@ -1,6 +1,7 @@
 // Shared by flow and lanes: longest-path layering and barycentre ordering (from Architect's
-// `layout`, generalised: column widths come from the widest node, not a constant).
-import type { Link, ViewNode } from '../../format/src/index.ts';
+// `layout`, generalised: column widths come from the widest node, not a constant), cycle breaking,
+// and the column widths `match` reads (ruling 5).
+import type { Link, ViewNode, Widths } from '../../format/src/index.ts';
 import type { Size } from './types.ts';
 import { COL_GAP } from './types.ts';
 
@@ -44,10 +45,49 @@ export function layersOf(nodes: ViewNode[], g: Graph): Map<string, number> {
   return memo;
 }
 
+/** The graph without the links that close a cycle: a depth-first walk in node order (successors
+ *  in link order) drops each link back to a node still on the walk. Deterministic. */
+export function acyclic(nodes: ViewNode[], g: Graph): Graph {
+  const preds = new Map(nodes.map((n) => [n.id, [] as string[]]));
+  const succs = new Map(nodes.map((n) => [n.id, [] as string[]]));
+  const state = new Map<string, 1 | 2>();
+  for (const n of nodes) {
+    if (state.has(n.id)) continue;
+    // An explicit stack, so a long chain cannot overflow the call stack.
+    const stack: { id: string; i: number }[] = [{ id: n.id, i: 0 }];
+    state.set(n.id, 1);
+    while (stack.length) {
+      const top = stack[stack.length - 1]!;
+      const next = (g.succs.get(top.id) ?? [])[top.i++];
+      if (next === undefined) { state.set(top.id, 2); stack.pop(); continue; }
+      if (state.get(next) === 1) continue;
+      succs.get(top.id)!.push(next);
+      preds.get(next)!.push(top.id);
+      if (!state.has(next)) { state.set(next, 1); stack.push({ id: next, i: 0 }); }
+    }
+  }
+  return { preds, succs };
+}
+
+/** Each column's width: its widest card. */
+export function columnWidths(cols: Map<string, number>, sizes: Map<string, Size>): number[] {
+  const widths: number[] = [];
+  for (const [id, c] of cols) widths[c] = Math.max(widths[c] ?? 0, sizes.get(id)?.w ?? 0);
+  return widths;
+}
+
+/** Under `match`, every card's size with its column's widest width (ruling 5); else `sizes`. */
+export function matched(cols: Map<string, number>, sizes: Map<string, Size>, widths?: Widths): Map<string, Size> {
+  if (widths !== 'match') return sizes;
+  const w = columnWidths(cols, sizes);
+  const out = new Map(sizes);
+  for (const [id, c] of cols) { const s = sizes.get(id); if (s) out.set(id, { w: w[c]!, h: s.h }); }
+  return out;
+}
+
 /** x of each layer's left edge, from the widest node in that layer. */
 export function columnX(layers: Map<string, number>, sizes: Map<string, Size>, x0 = 0): number[] {
-  const widths: number[] = [];
-  for (const [id, l] of layers) widths[l] = Math.max(widths[l] ?? 0, sizes.get(id)?.w ?? 0);
+  const widths = columnWidths(layers, sizes);
   const xs: number[] = [];
   let x = x0;
   for (let l = 0; l < widths.length; l++) {
@@ -57,9 +97,10 @@ export function columnX(layers: Map<string, number>, sizes: Map<string, Size>, x
   return xs;
 }
 
-/** Order ids by desired centre, pack top-down without overlap, recentre on the wishes. */
+/** Order ids by desired anchor, pack top-down without overlap, recentre on the wishes. The anchor
+ *  is the point `f` of the way down a card: 0.5 its centre, 0 its top (top alignment). */
 export function place(
-  ids: string[], want: (id: string) => number, h: (id: string) => number, gap: number,
+  ids: string[], want: (id: string) => number, h: (id: string) => number, gap: number, f = 0.5,
 ): Map<string, number> {
   const order = ids.map((id, i) => ({ id, i, c: want(id) }));
   order.sort((a, b) => a.c - b.c || a.i - b.i);
@@ -67,10 +108,10 @@ export function place(
   let cursor = -Infinity;
   let drift = 0;
   for (const o of order) {
-    const t = Math.max(o.c - h(o.id) / 2, cursor);
+    const t = Math.max(o.c - h(o.id) * f, cursor);
     top.set(o.id, t);
     cursor = t + h(o.id) + gap;
-    drift += t + h(o.id) / 2 - o.c;
+    drift += t + h(o.id) * f - o.c;
   }
   const shift = order.length ? drift / order.length : 0;
   for (const [id, t] of top) top.set(id, t - shift);

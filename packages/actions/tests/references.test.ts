@@ -119,6 +119,7 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:unpin', l.act({ action: 'unpin', board: 'b', region: 'r' }), on('b', 'r'));
   at('act:size', l.act({ action: 'size', n: 3, size: 'l' }), on('b', 'q', [3]));
   at('act:mode', l.act({ action: 'mode', board: 'b', region: 'q', mode: 'grid' }), on('b', 'q'));
+  at('act:widths', l.act({ action: 'widths', board: 'b', region: 'q', widths: 'own' }), on('b', 'q'));
   at('act:move', l.act({ action: 'move', nodes: [1, 2], region: LATER_REGION }), on('b', LATER_REGION, [1, 2]));
   at('act:send', l.act({ action: 'send', board: 'b' }), { board: 'b', cards: [] });
   at('a card in Later', l.agent(A, { type: 'reply', n: 1, text: 'Parked.' }), on('b', LATER_REGION, [1]));
