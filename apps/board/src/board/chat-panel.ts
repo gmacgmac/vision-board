@@ -33,15 +33,18 @@ import { answerApproval, ApiError, listChats, listFolderChats, sendChat, startCh
 type Agent = ChatSessionInfo['agent'];
 
 export const AGENTS: readonly ChatOption[] = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
-/** The models each agent offers, the first what picking the agent gives; '' is its default. Claude's
- *  by exact id, with the 1M context (chat-panel PLAN ruling 7, panel-send ruling 5; the CLI was checked
- *  to take both ids). Kiro's by Kiro's ids, Opus 5.5 first and never `auto` (N34 ruling 3). */
+/** The models each agent offers, the first what picking the agent gives; '' is its default. Claude's by
+ *  exact id, with the 1M context (panel-send ruling 5). Kiro's by Kiro's ids, never `auto` (N34 ruling 3). */
 export const MODELS: Record<Agent, readonly ChatOption[]> = {
   claude: [{ id: '', label: 'Default' }, { id: 'claude-opus-5-5[1m]', label: 'Opus 5.5' }, { id: 'claude-sonnet-5-5[1m]', label: 'Sonnet 5.5' }],
   kiro: [{ id: 'claude-opus-5.5', label: 'Opus 5.5' }, { id: 'claude-sonnet-5.5', label: 'Sonnet 5.5' }],
 };
-/** The model picking `agent` gives. */
-export const firstModel = (agent: Agent): string => MODELS[agent][0]?.id ?? '';
+export const firstModel = (agent: Agent): string => MODELS[agent][0]?.id ?? ''; // what picking `agent` gives
+/** The model a session runs: the one recorded, else the agent's first (Kiro with none runs Opus 5.5). */
+export const shownModel = (agent: Agent, model?: string): string => model || firstModel(agent);
+/** What the header shows: the session in use, else the pick (none in use, or its start was refused). */
+export const shownPick = (s: ChatSessionInfo | null, refused: string | undefined, pick: Pick): Pick => (
+  s && refused === undefined ? { agent: s.agent, model: shownModel(s.agent, s.model) } : pick);
 export const LOADING = 'Loading…';
 export const PAST = 'A past version of the board is showing. Go back to now to send a message.';
 /** What the empty feed says on a board, and in a folder with no board. */
@@ -126,11 +129,10 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     /** A session starting (New session, a pick, a first message): a message waits for it. */
     starting: null as Promise<ChatSessionInfo | null> | null,
   };
-  let unfollow = () => {};
-  let loads = 0;
-  let waitShown = false;
-  let attachedShown = false;
+  let [unfollow, loads] = [() => {}, 0];
+  let [waitShown, attachedShown] = [false, false];
   const inChat = () => sendsInChat(st.session, st.board, composer.attached);
+  const current = (): Pick => shownPick(st.session, st.refused, st.pick);
 
   function render() {
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
@@ -139,8 +141,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     const blocked = blockedReason(st.board, st.past, st.refused);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
-    const now: Pick = st.session ? { agent: st.session.agent, model: st.session.model ?? '' } : st.pick;
-    header.show(headerView({ agent: now.agent, model: now.model, agents: AGENTS, models: MODELS[now.agent] }, st.chat, host));
+    const { agent, model } = current();
+    header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent] }, st.chat, host));
     feed.show(st.chat);
     composer.show(composerView(st.chat, host));
   }
@@ -249,8 +251,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   }
 
   function picked({ field, id }: ChatPickDetail) {
-    const now = st.session ? { agent: st.session.agent, model: st.session.model ?? '' } : st.pick;
-    const next: Pick = field === 'agent' ? { agent: id as Agent, model: firstModel(id as Agent) } : { ...now, model: id };
+    const next: Pick = field === 'agent' ? { agent: id as Agent, model: firstModel(id as Agent) } : { ...current(), model: id };
     if (st.session) return void renew(next);
     Object.assign(st, { pick: next, refused: undefined });
     render();
@@ -262,7 +263,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     if (st.session) answerApproval(st.session.session, approvalId, answer).catch((err) => feed.answerFailed(approvalId, (err as Error).message));
   });
   on(CHAT_STOP_EVENT, () => st.session && stopChat(st.session.session).catch(fail));
-  on(CHAT_NEW_SESSION_EVENT, () => renew(st.session ? { agent: st.session.agent, model: st.session.model ?? '' } : st.pick));
+  on(CHAT_NEW_SESSION_EVENT, () => renew(current()));
   on<ChatPickDetail>(CHAT_PICK_EVENT, picked);
 
   const detach = d.bridge.chat({

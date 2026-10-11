@@ -2,7 +2,7 @@
   "name": "vision-board",
   "description": "Draws its output on the Vision Board and reads the person's answers back (the board's chat panel).",
   "prompt": "file://../../../skills/vision-board/SKILL.md",
-  "resources": [],
+  "resources": ["file://.kiro/steering/**/*.md", "skill://.kiro/skills/**/SKILL.md"],
   "mcpServers": {},
   "includeMcpJson": false,
   "tools": ["read", "grep", "glob", "write", "shell", "@vb"],

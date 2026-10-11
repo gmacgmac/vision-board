@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ChatEvent } from '../../../packages/chat/src/index.ts';
 import { applyEvents, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
-import { firstBoard, firstModel, lastAsk, MODELS } from '../src/board/chat-panel.ts';
+import { firstBoard, firstModel, lastAsk, MODELS, shownModel, shownPick } from '../src/board/chat-panel.ts';
 import type { ChatSessionInfo } from '../src/board/io.ts';
 
 const S = 'session-1';
@@ -49,4 +49,22 @@ test('Kiro offers Opus 5.5 (picked with Kiro) and Sonnet 5.5 by Kiro\'s ids, and
   assert.equal(firstModel('kiro'), 'claude-opus-5.5');
   assert.equal(firstModel('claude'), '', 'Claude still starts on its default');
   assert.ok(!MODELS.kiro.some((m) => m.id === 'auto' || m.id === ''), 'no auto, and no left-out model for Kiro');
+});
+
+test('a session with no model recorded shows what the agent runs: Kiro Opus 5.5, Claude its Default (N37)', () => {
+  assert.equal(shownModel('kiro', undefined), 'claude-opus-5.5');
+  assert.equal(shownModel('kiro', ''), 'claude-opus-5.5');
+  assert.equal(shownModel('kiro', 'claude-sonnet-5.5'), 'claude-sonnet-5.5');
+  assert.equal(shownModel('claude', undefined), '');
+  assert.equal(shownModel('claude', 'claude-opus-5-5[1m]'), 'claude-opus-5-5[1m]');
+});
+
+test('the header shows the pick when a start was refused, else the session in use (N37)', () => {
+  const claude = { session: 's', agent: 'claude' as const, model: 'claude-opus-5-5[1m]', created: '', agentId: 'a' };
+  const kiro = { agent: 'kiro' as const, model: 'claude-opus-5.5' };
+  assert.deepEqual(shownPick(claude, undefined, kiro), { agent: 'claude', model: 'claude-opus-5-5[1m]' });
+  assert.deepEqual(shownPick(claude, 'Kiro could not be started.', kiro), kiro, 'refused: Kiro and its models, not the session\'s Claude');
+  assert.deepEqual(shownPick(null, undefined, kiro), kiro);
+  const bare = { session: 's', agent: 'kiro' as const, created: '', agentId: 'a' };
+  assert.deepEqual(shownPick(bare, undefined, { agent: 'claude', model: '' }), kiro, 'a Kiro session with no model shows Opus 5.5');
 });

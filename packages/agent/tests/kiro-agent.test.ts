@@ -68,3 +68,12 @@ test('a relative prompt path is refused; a folder that cannot be written throws'
   assert.throws(() => writeKiroAgent(h, skill), /EEXIST|ENOTDIR/);
 });
 
+
+test('the open project\'s own steering is always loaded and its skills on demand, from the working folder (N37-context ruling 1)', () => {
+  const h = home();
+  const { file } = writeKiroAgent(h, skill);
+  const draft = JSON.parse(readFileSync(KIRO_AGENT_DRAFT, 'utf8'));
+  const expected = ['file://.kiro/steering/**/*.md', 'skill://.kiro/skills/**/SKILL.md'];
+  assert.deepEqual(draft.resources, expected, 'the draft');
+  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')).resources, expected, 'the written file, relative: Kiro resolves them from its working folder');
+});

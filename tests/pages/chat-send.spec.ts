@@ -177,3 +177,43 @@ test('the model picker names exact models; the one picked is the session\'s and 
   expect(given.args.slice(given.args.indexOf('--model'), given.args.indexOf('--model') + 2)).toEqual(['--model', 'claude-opus-5-5[1m]']);
   await expect(status(page)).toHaveText('Status: Ready');
 });
+
+// After the last: Kiro's models follow the agent in every path (N37). The fake process stands in for Kiro.
+test('the model picker follows the agent: picking Kiro, a New session, a Kiro session with no model, and back to Claude (N37)', async ({ page }) => {
+  await open(page, 'scratch');
+  const pick = (name: string) => side(page).getByRole('combobox', { name });
+  const options = async () => pick('Model').locator('option').allTextContents();
+  // Confirm the dialog and wait for the session to be on the board (its start finishes after the click).
+  const newSession = async () => {
+    const before = (await sessionsOn(page, 'scratch')).length;
+    await page.getByRole('dialog', { name: 'Start a new session?' }).getByRole('button', { name: 'New session' }).click();
+    await expect.poll(async () => (await sessionsOn(page, 'scratch')).length).toBe(before + 1);
+  };
+  // A Claude session in use: picking Kiro asks, then Kiro's two models show with Opus 5.5 picked.
+  await pick('Agent').selectOption({ label: 'Kiro' });
+  await newSession();
+  await expect(pick('Agent').locator('option:checked')).toHaveText('Kiro');
+  await expect(pick('Model').locator('option')).toHaveText(['Opus 5.5', 'Sonnet 5.5']);
+  await expect(pick('Model').locator('option:checked')).toHaveText('Opus 5.5');
+  expect((await sessionsOn(page, 'scratch'))[0]!.model).toBe('claude-opus-5.5');
+  // New session keeps the agent and the model.
+  await pick('Model').selectOption({ label: 'Sonnet 5.5' });
+  await newSession();
+  await side(page).getByRole('button', { name: 'New session' }).click();
+  await newSession();
+  await expect(pick('Model').locator('option:checked')).toHaveText('Sonnet 5.5');
+  expect(await options()).toEqual(['Opus 5.5', 'Sonnet 5.5']);
+  // A Kiro session recorded with no model (started through the API) shows Opus 5.5, what Kiro runs.
+  const made = await page.request.post(`${srv.base}/api/boards/scratch/chats`, { data: { agent: 'kiro' } });
+  expect(made.status()).toBe(201);
+  expect((await sessionsOn(page, 'scratch'))[0]!.model).toBeUndefined();
+  await page.reload();
+  await expect(side(page)).toBeVisible();
+  await expect(pick('Agent').locator('option:checked')).toHaveText('Kiro');
+  await expect(pick('Model').locator('option:checked')).toHaveText('Opus 5.5');
+  // And back to Claude: its Default, Opus 5.5 and Sonnet 5.5.
+  await pick('Agent').selectOption({ label: 'Claude' });
+  await newSession();
+  await expect(pick('Model').locator('option')).toHaveText(['Default', 'Opus 5.5', 'Sonnet 5.5']);
+  await expect(pick('Model').locator('option:checked')).toHaveText('Default');
+});

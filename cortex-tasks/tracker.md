@@ -103,7 +103,6 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N26 | Other proposals: content changes, and agents without write access | **Problem:** a proposal can only acknowledge or drop a card. **Example:** an agent that may read a board but not write on it suggests a change to a card. **Solution:** the card proposal box (Stage 5, `bindCardPopover`) carries the new kinds; needs a contract change and a permissions row. | Maintainer, 2026-10-08 (220) |
 | N27 | Selection bar covers an open card box | **Problem:** the floating selection bar draws above an open proposal or handover box, hiding its top line. **Solution:** hide or move the bar while a card box is open. | VERIFY, Stage 5, 2026-10-08 |
 | N28 | Launcher and desktop app | **Problem:** starting the board means typing `npm run board` in this repo. **Example:** opening the board without a terminal. **Solution:** a launcher on a fixed port with Launch/Stop/Open, a registry of running boards so `vb-mcp` finds its board by folder, a small app built per computer (chat 398, 402, 403). Paused by the maintainer until U12 is in use. | Maintainer, 2026-10-09 |
-| N37 | Model picker after switching to Kiro | **Problem:** choosing Kiro in the chat header leaves the model picker on Claude's options ("Default"), though the session starts on Opus 5.5. **Example:** batch 2 VERIFY_01. **Solution:** the picker follows the chosen agent's models (`chat-panel.ts` `MODELS`, `firstModel`). | VERIFY, 2026-10-11 |
 
 ## MEDIUM TERM
 

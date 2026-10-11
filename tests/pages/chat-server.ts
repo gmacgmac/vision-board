@@ -41,7 +41,9 @@ export async function startChatServer(): Promise<ChatServer> {
     const inner = fake.adapters.claude!();
     return { agent: inner.agent, async start(o) { await held; return inner.start(o); } };
   };
-  const server = createBoardServer({ ledger: openLedger(file, () => {}), dist: DIST, chat: { adapters: { claude } } });
+  // A Kiro that is the same fake process (only the picker and the session record are under test).
+  const kiro = (): AgentAdapter => ({ ...claude(), agent: 'kiro' });
+  const server = createBoardServer({ ledger: openLedger(file, () => {}), dist: DIST, chat: { adapters: { claude, kiro } } });
   await new Promise<void>((resolve) => server.listen(CHAT_PORT, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')?.[1] ?? '';

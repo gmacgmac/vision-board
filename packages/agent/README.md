@@ -40,7 +40,10 @@ uses it: `docs/specification/chat.md`.
   `writeKiroAgent(home, skill)`: `<home>/.kiro/agents/vision-board.json`, this package's draft
   (`kiro/vision-board.agent.json`) with `prompt` as `file://<absolute skill path>`, rewritten only when its
   content differs, nothing else in `.kiro` touched. Its prompt is the skill, so no message carries the
-  instructions file (that is Claude's). Kiro starts `kiro_default` without a word when the agent is missing,
+  instructions file (that is Claude's). The draft's `resources` load the open project's own steering
+  (`file://.kiro/steering/**/*.md`, always) and skills (`skill://.kiro/skills/**/SKILL.md`, on demand), relative
+  because Kiro resolves them from its working folder, which in the panel is the open project (N37-context).
+  Kiro starts `kiro_default` without a word when the agent is missing,
   so `session/new` must report `modes.currentModeId` `vision-board` and list the model in
   `models.availableModels` (`sessionProblem`); anything else ends the session before any prompt, saying
   why (a `session/load` is checked on what it reports). The draft's tools: `read`, `grep`, `glob`, `write`,

@@ -119,4 +119,8 @@ reason, shown in the panel. Kiro starts with `--agent vision-board --model <mode
 session that is not that agent, or does not offer the model, ends before any prompt with a clear error.
 The skill is the agent's prompt, so the person's message goes to Kiro as it is. The model picker offers
 Kiro's Opus 5.5 (`claude-opus-5.5`, what picking Kiro gives) and Sonnet 5.5 (`claude-sonnet-5.5`), never
-`auto`.
+`auto`; a session recorded with no model shows Opus 5.5 (what Kiro runs), and picking Claude shows its Default,
+Opus 5.5 and Sonnet 5.5 (N37).
+The agent also reads the open project's own steering (`.kiro/steering/**/*.md`, always) and lists its skills
+(`.kiro/skills/**/SKILL.md`, loaded on demand): the draft's `resources` are relative to Kiro's working folder, which
+in the panel is the open project.
