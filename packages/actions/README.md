@@ -32,7 +32,9 @@ call the same actions, and each one is recorded in the project ledger as an `act
   what an agent owes and the person's responses (`pendingItems`, `responsesAfter`, `replyScope`, in
   `pending.ts`), the API's read views (`nodeDetail`, `linkedDetails`, `containerDetail`,
   `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), the numbered reply
-  (`replyText`, in parts `replyLines` for the chat's answers chip), and what ✓ and ✗ mean on each kind (`MEANINGS`, `meaningOf`, `actionWord`, in
+  (`replyText`, in parts `replyLines`), what a chat message carries from the board (`board-message.ts`:
+  `boardBlocks`, the selection headed "The person selected these cards:" then `roundOf`, the answers
+  since the agent was last told; one writer for the server's prompt and the composer's preview), and what ✓ and ✗ mean on each kind (`MEANINGS`, `meaningOf`, `actionWord`, in
   `action-words.ts`), which the buttons, the key help, `check_responses` (`means`) and the reply read.
 - **Awareness tables** (D-033): what belongs to what (`REFERENCES`), who may write what
   (`PERMISSIONS`) and what needs attention (`CONDITIONS`) are each one typed table, derived from

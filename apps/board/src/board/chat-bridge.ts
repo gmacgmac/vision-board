@@ -1,23 +1,22 @@
 // The bridge between the chat panel and the board (chat-panel FE_02 ruling 3, D-037): the only file
-// that knows both sides. Board to chat: the selected cards become the composer's chips; a chip the
-// person takes off stays off until the selection changes, and the chips a message carried go with
-// it; the person's answers since the board's last Send are the composer's context, "3 answers since
-// your last Send", opening to the lines the next message carries (chat-board-context ruling 1:
-// packages/actions `replyLines`, the Send message's writer). Their notes are among those lines, so
-// they are no chips: a note goes once, as its answer (chat-no-double-note ruling 2). Chat to board:
-// a change chip selects its cards and zooms to them (Zoom to selection), opening their board first
-// when it is another one; a changed card's stepper links to the board write in the chat that last
-// changed it; a chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The
-// board side attaches from the controller, the chat side from the sidebar (chat-panel.ts); each
-// detaches on its own.
+// that knows both sides. Board to chat: the composer shows one chip for everything a message carries
+// from the board, "3 answers · 2 selected" (composer-one-chip ruling 1): the selected cards, in the
+// order selected, and the person's answers since the board's last Send. It opens a preview of
+// exactly that text, built by packages/actions `boardBlocks` and `roundOf`, the writer the server's
+// prompt uses (ruling 2). There is no chip per card: to leave one out, deselect it; the cards a
+// message carried are spent until the selection changes. Notes are among the answers, so they are
+// no chips: a note goes once, as its answer (chat-no-double-note ruling 2). Chat to board: a change
+// chip selects its cards and zooms to them (Zoom to selection), opening their board first when it is
+// another one; a changed card's stepper links to the board write in the chat that last changed it; a
+// chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
+// attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // The pure parts are unit-tested under Node.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardState, replyLines, replyScope } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState, SelectedCard } from '../../../../packages/actions/src/index.ts';
+import { boardBlocks, roundOf } from '../../../../packages/actions/src/index.ts';
 import type {
-  ChangeEntry, ChatChangeDetail, ChatChipRemoveDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
+  ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
 } from '../../../../packages/chat/src/index.ts';
-import { CHAT_CHANGE_EVENT, CHAT_CHIP_REMOVE_EVENT, chipKey } from '../../../../packages/chat/src/index.ts';
-import { boardView } from '../../../../packages/format/src/index.ts';
+import { CHAT_CHANGE_EVENT } from '../../../../packages/chat/src/index.ts';
 import type { BoardData } from './io.ts';
 import type { Selection } from './selection.ts';
 
@@ -30,29 +29,32 @@ const clip = (text: string): string => {
   return flat.length <= LABEL_MAX ? flat : `${flat.slice(0, LABEL_MAX - 1)}…`;
 };
 
-/** The selected cards, in the order they were selected; a node with no number is no card. */
-export function selectedCards(d: BoardData, ids: readonly string[]): Chip[] {
-  return ids.flatMap((id): Chip[] => {
+/** The selected cards, in the order they were selected, by number and title; a node with no number is no card. */
+export function selectedCards(d: BoardData, ids: readonly string[]): SelectedCard[] {
+  return ids.flatMap((id): SelectedCard[] => {
     const n = d.view.nodes.find((x) => x.id === id);
-    return n?.n === undefined ? [] : [{ kind: 'card', ref: n.n, label: clip(n.title) || `Card ${n.n}` }];
+    return n?.n === undefined ? [] : [{ n: n.n, title: n.title }];
   });
 }
 
-/** The composer's chips: the selected cards, but those taken off (`off`, by `chipKey`). */
-export const boardChips = (d: BoardData, selected: readonly string[], off: ReadonlySet<string>): Chip[] =>
-  selectedCards(d, selected).filter((c) => !off.has(chipKey(c)));
+/** The cards the next message carries: the selected ones, but those a message already took (`spent`). */
+export const boardCards = (d: BoardData, selected: readonly string[], spent: ReadonlySet<number>): SelectedCard[] =>
+  selectedCards(d, selected).filter((c) => !spent.has(c.n));
 
-/** The person's answers on `board` since its last Send, as the lines the next message hands `agent`
- *  (the session's agent: only what it may answer, as the server builds it; every answer with none). */
-export function answerLines(s: LedgerState, board: string, agent?: string): string[] {
-  const scope = replyScope(s, board, s.lastSend.get(board) ?? 0, agent);
-  if (scope.cards.size === 0 && scope.regions.size === 0) return [];
-  return replyLines(boardView(s, board), boardState(s, board), scope).lines;
+/** A card as the message's chip: its body's `cards`, the label the feed shows. */
+export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title) || `Card ${c.n}` });
+
+const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/** The composer's one chip on `board`: "3 answers · 2 selected" (either part alone), opening to exactly
+ *  what the next message carries from the board: `cards`, then the answers since the board's last
+ *  Send as `agent` is told them (the session's agent: only what it may answer, as the server builds
+ *  it; every answer with none). None when there is nothing. */
+export function boardContext(s: LedgerState, board: string, cards: readonly SelectedCard[], agent?: string): ComposerContext | null {
+  const round = roundOf(s, board, s.lastSend.get(board) ?? 0, agent);
+  const parts = [round && count(round.count, 'answer'), cards.length > 0 && `${cards.length} selected`].filter(Boolean);
+  return parts.length ? { label: parts.join(' · '), text: boardBlocks(cards, round) } : null;
 }
-
-/** The composer's context for those lines; none when there are none. */
-export const answersContext = (lines: readonly string[]): ComposerContext | null =>
-  lines.length ? { label: `${lines.length} ${lines.length === 1 ? 'answer' : 'answers'} since your last Send`, lines } : null;
 
 /** The board write in the chat that last changed card `n` on `board`. */
 export const lastChange = (s: ChatState, board: string, n: number): ChangeEntry | undefined =>
@@ -64,9 +66,6 @@ export function cardIds(d: BoardData, cards: readonly number[]): string[] {
   return cards.map(String).filter((id) => on.has(id));
 }
 
-const same = (a: readonly Chip[], b: readonly Chip[]) =>
-  a.length === b.length && a.every((c, i) => chipKey(c) === chipKey(b[i]!) && c.label === b[i]!.label);
-
 /** What the bridge needs of the board (controller.ts). */
 export interface BoardSide {
   stage: HTMLElement;
@@ -76,7 +75,7 @@ export interface BoardSide {
   ledger(): LedgerState | null;
   id(): string;
   selection: Selection;
-  /** A past version shows: no chips (no message can go). */
+  /** A past version shows: nothing attached (no message can go). */
   readOnly(): boolean;
   /** Zoom to the selection (the selection bar's Zoom to selection). */
   zoom(): void;
@@ -95,7 +94,7 @@ export interface ChatSide {
   state(): ChatState;
   /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
   agent(): string | undefined;
-  /** The chips or the context changed. */
+  /** What is attached changed. */
   changed(): void;
   /** Open the sidebar at feed entry `key`. */
   reveal(key: string): void | Promise<void>;
@@ -104,11 +103,13 @@ export interface ChatSide {
 export interface ChatBridge {
   board(side: BoardSide): () => void;
   chat(side: ChatSide): () => void;
-  /** The board was drawn, or the chat's session changed: the chips and the answers may have. */
+  /** The board was drawn, or the chat's session changed: the cards and the answers may have. */
   refresh(): void;
+  /** The selected cards the next message carries, as its chips. */
+  chips(): Chip[];
   /** The stepper link's words for card `n`, when a board write in the chat changed it. */
   source(n: number): string | undefined;
-  /** A message went with `chips`: they are spent. */
+  /** A message went with `chips`: those cards are spent until the selection changes. */
   sent(chips: readonly Chip[]): void;
   /** The chat's agent drew `board`, its session's first: open it. */
   open(board: string): void;
@@ -117,17 +118,20 @@ export interface ChatBridge {
 export function createChatBridge(): ChatBridge {
   let b: BoardSide | null = null;
   let c: ChatSide | null = null;
-  const off = new Set<string>();
+  /** The cards a message already took, by number. */
+  const spent = new Set<number>();
   /** The context last given to the composer, as text. */
   let shown = 'null';
 
-  function chips() {
+  const cards = (): SelectedCard[] => {
     const d = b?.data();
-    if (!b || !c || !d) return;
-    const next = b.readOnly() ? [] : boardChips(d, b.selection.selected(), off);
-    if (!same(next, c.composer.chips)) c.composer.setChips(next);
+    return !b || !d || b.readOnly() ? [] : boardCards(d, b.selection.selected(), spent);
+  };
+
+  function attach() {
+    if (!b || !c || !b.data()) return;
     const s = b.ledger();
-    const context = b.readOnly() || !s ? null : answersContext(answerLines(s, b.id(), c.agent()));
+    const context = b.readOnly() || !s ? null : boardContext(s, b.id(), cards(), c.agent());
     const key = JSON.stringify(context);
     if (key !== shown) { shown = key; c.composer.setContext(context); }
     c.changed();
@@ -148,7 +152,6 @@ export function createChatBridge(): ChatBridge {
     if (board !== b.id()) b.switchTo(board);
     if (board === b.id()) zoomTo(cards);
   };
-  const onRemove = (e: Event) => { off.add(chipKey((e as CustomEvent<ChatChipRemoveDetail>).detail.chip)); };
   /** The stepper's link on a changed card (packages/ui `stepMarkup`). */
   const onStage = (e: MouseEvent) => {
     const link = (e.target as Element).closest<HTMLElement>('vb-node [data-source]');
@@ -162,29 +165,28 @@ export function createChatBridge(): ChatBridge {
       b = side;
       side.stage.addEventListener('click', onStage);
       const unlisten = side.selection.onChange(() => {
-        for (const k of off) if (k.startsWith('card-')) off.delete(k);
-        chips();
+        spent.clear();
+        attach();
       });
-      chips();
+      attach();
       return () => { side.stage.removeEventListener('click', onStage); unlisten(); b = null; };
     },
     chat(side) {
       c = side;
       shown = 'null';
       side.panel.addEventListener(CHAT_CHANGE_EVENT, onChange);
-      side.panel.addEventListener(CHAT_CHIP_REMOVE_EVENT, onRemove);
-      chips();
+      attach();
       return () => {
         side.panel.removeEventListener(CHAT_CHANGE_EVENT, onChange);
-        side.panel.removeEventListener(CHAT_CHIP_REMOVE_EVENT, onRemove);
         c = null;
       };
     },
-    refresh: chips,
+    refresh: attach,
+    chips: () => cards().map(cardChip),
     source: (n) => (b && c && lastChange(c.state(), b.id(), n) ? SOURCE_LABEL : undefined),
-    sent(spent) {
-      for (const chip of spent) off.add(chipKey(chip));
-      chips();
+    sent(took) {
+      for (const chip of took) if (chip.kind === 'card') spent.add(chip.ref);
+      attach();
     },
     open: (board) => b?.jump(board),
   };

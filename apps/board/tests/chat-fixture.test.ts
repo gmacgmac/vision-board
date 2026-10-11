@@ -11,7 +11,7 @@ import type { AgentUpdate } from '../../../packages/agent/src/index.ts';
 import { ClaudeStream, factsFor, toChatEvent } from '../../../packages/agent/src/index.ts';
 import type { ChatEvent } from '../../../packages/chat/src/index.ts';
 import { activityLine, applyEvents, CHAT_EVENT_KINDS, chatStatus, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
-import { ROUND_HEAD } from '../server/chat-round.ts';
+import { ROUND_HEAD } from '../../../packages/actions/src/index.ts';
 import { QUEUED } from '../server/chat-session.ts';
 import { CHAT_EVENT_ID, CHAT_SCHEMA_DIR, schemaFiles, schemaProblems } from '../server/schema.ts';
 

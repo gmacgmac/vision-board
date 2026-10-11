@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-11 (the chat carries the board: 131, a note sent once; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-11 (the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1005,3 +1005,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `message_in` chips; a note the agent is told no answer for stays attached. A card stays
     attached as `- Card n: title` even when answered, with nothing of its answer. The page no
     longer offers unsent notes as chips (the answers chip stands for them).
+    The selection has its own heading (composer-one-chip ruling 3): after the words comes "The
+    person selected these cards:" with a `- Card n: title` line per card, so "these" means the
+    selection, then any note an older client still names under "Attached from the board:", then the
+    answers, then `Board: <id>`. What a message carries from the board is written once, by
+    packages/actions `boardBlocks` (the selection, then the notes, then `roundOf`, which moved there
+    from `chat-round.ts`): the server's prompt and the page's preview of it (the composer's one chip,
+    "3 answers · 2 selected", ruling 2) read the same function. No route or schema changes.

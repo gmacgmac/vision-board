@@ -40,8 +40,10 @@ async function open(page: Page, flags = 'chatPanel') {
 const side = (page: Page) => page.locator('#chat');
 const toggle = (page: Page) => page.locator('#chat-toggle');
 const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
-/** The chips the person can take off (the answers' chip, chat-board-context, is not one). */
+/** Chips but the composer's one (composer-one-chip ruling 1): the board attaches no other. */
 const chips = (page: Page) => side(page).locator('chat-composer .chat-chip:not(.chat-cmp-ctx)');
+/** The composer's one chip: what goes from the board. */
+const attached = (page: Page) => side(page).locator('chat-composer .chat-cmp-ctx');
 const log = (page: Page) => side(page).getByRole('log', { name: 'Conversation' });
 const status = (page: Page) => side(page).locator('.chat-hd-status');
 const width = (page: Page) => side(page).evaluate((el) => Math.round(el.getBoundingClientRect().width));
@@ -98,25 +100,26 @@ test('resize: dragging the edge and the arrow keys set the width, kept with the 
   expect(await width(page)).toBe(484);
 });
 
-test('a message: the chips go with it; the agent\'s words show; its change chip selects and zooms to the cards', async ({ page }) => {
+test('a message: the selected card goes with it; the agent\'s words show; its change chip selects and zooms to the cards', async ({ page }) => {
   await open(page);
   await toggle(page).click();
   await expect(side(page).locator('.chat-empty')).toHaveText('No messages yet. Ask the agent about this board.');
   await expect(status(page)).toHaveText('Status: Ready');
-  // The unsent note is not a chip (chat-no-double-note ruling 2): the answers chip stands for it.
+  // The unsent note is not a chip (chat-no-double-note ruling 2): the one chip counts it as an answer.
   await expect(chips(page)).toHaveCount(0);
-  await expect(side(page).locator('button.chat-cmp-ctx')).toHaveText('1 answer since your last Send');
+  await expect(attached(page)).toHaveText('1 answer');
   await page.locator('vb-node[data-id="2"] .vb-node-title').click();
-  await expect(chips(page)).toHaveText(['2Add dark mode?']);
+  await expect(attached(page)).toHaveText('1 answer · 1 selected');
+  await expect(chips(page)).toHaveCount(0);
   const given = await send(page, 'Draw two questions');
-  expect(given.prompt).toMatch(/^Draw two questions\n\nAttached from the board:\n- Card 2: Add dark mode\?\n/);
+  expect(given.prompt).toMatch(/^Draw two questions\n\nThe person selected these cards:\n- Card 2: Add dark mode\?\n\n/);
   expect(given.prompt).not.toContain('- Note ');
   expect(given.prompt).toContain('Board: scratch');
   await expect(log(page).locator('chat-message[data-from="person"]')).toContainText('Draw two questions');
   await expect(log(page).locator('chat-message[data-from="agent"]')).toContainText('I wrote the "Scratch" board in one call');
   await expect(status(page)).toHaveText('Status: Ready');
-  // The message took its chips: the card's chip is spent.
-  await expect(chips(page)).toHaveCount(0);
+  // The message took the card: it is spent until the selection changes.
+  await expect(attached(page).filter({ hasText: 'selected' })).toHaveCount(0);
   await expect(text(page)).toHaveValue('');
   // The change chip: both cards selected and zoomed to.
   await page.locator('#stage').focus();
@@ -153,7 +156,7 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await toggle(page).click();
     await expect(log(page).locator('chat-message[data-from="agent"]')).toBeVisible();
     await page.locator('vb-node[data-id="2"] .vb-node-title').click();
-    await expect(chips(page)).toHaveCount(1);
+    await expect(attached(page)).toContainText('1 selected');
     await expectNoAxeViolations(page);
   });
 }
@@ -195,7 +198,7 @@ test('a past version: the composer is shut and says why; back to now, it opens a
   await expect(text(page)).toBeDisabled();
   await expect(side(page).locator('.chat-cmp-line')).toHaveText('A past version of the board is showing. Go back to now to send a message.');
   await expect(status(page)).toHaveText('Status: Can\'t send');
-  await expect(chips(page)).toHaveCount(0);
+  await expect(attached(page)).toHaveCount(0);
   await page.getByRole('button', { name: 'Back to now' }).click();
   await expect(text(page)).toBeEnabled();
   await expect(chips(page)).toHaveCount(0);

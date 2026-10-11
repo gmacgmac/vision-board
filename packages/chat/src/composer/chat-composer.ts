@@ -1,13 +1,15 @@
 // Composer pattern, layer 3 (element): <chat-composer>, in light DOM. The text and the chips the
-// host attaches, each removable, and the host's context chip (`setContext`), which opens and closes
-// its lines. Enter sends, Shift+Enter breaks the line. It raises `chat-send` (the words and the
-// chips) and `chat-chip-remove`; it never calls the server, and it keeps the words until the host
+// host attaches, each removable, and the host's context chip (`setContext`), which opens a preview
+// of exactly what goes: on hover (it stays while the pointer is on the chip or the preview), or by
+// click, Enter or Space (it stays until pressed again, Esc, or focus leaves both); Esc closes it with
+// focus on the chip. Enter sends, Shift+Enter breaks the line. It raises `chat-send` (the words and
+// the chips) and `chat-chip-remove`; it never calls the server, and it keeps the words until the host
 // calls `clear()` once the message went through. Browser only.
 import type { Chip } from '../events.ts';
 import { TEXT_MAX } from '../events.ts';
 import type { ComposerContext, ComposerView } from './composer-core.ts';
 import { chipKey, COMPOSER_KEYS, sendIntent, withoutChip } from './composer-core.ts';
-import { chipsTemplate, composerTemplate, lineTemplate } from './composer-template.ts';
+import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
 
 export const CHAT_COMPOSER_TAG = 'chat-composer';
 export const CHAT_SEND_EVENT = 'chat-send';
@@ -21,7 +23,8 @@ export interface ChatComposerElement extends HTMLElement {
   show(v: ComposerView): void;
   setChips(chips: readonly Chip[]): void;
   readonly chips: readonly Chip[];
-  /** The host's context beside the chips (null: none); it goes with every message the host sends. */
+  /** The host's context beside the chips (null: none): one chip, its summary, opening a preview of
+   *  exactly what goes; it goes with every message the host sends. */
   setContext(context: ComposerContext | null): void;
   /** Whether anything is attached: a chip or the context. */
   readonly attached: boolean;
@@ -32,6 +35,10 @@ export interface ChatComposerElement extends HTMLElement {
 }
 
 let made = 0;
+/** How long the preview opened by hover stays after the pointer leaves, so it can cross to it. */
+const HOVER_GRACE_MS = 200;
+const CHIP = 'button.chat-cmp-ctx';
+const POP = '.chat-cmp-pop';
 
 export function defineChatComposer(): void {
   if (customElements.get(CHAT_COMPOSER_TAG)) return;
@@ -40,8 +47,15 @@ export function defineChatComposer(): void {
     private view: ComposerView = { send: true, hint: COMPOSER_KEYS, placeholder: 'Message the agent' };
     private current: readonly Chip[] = [];
     private context: ComposerContext | null = null;
-    private open = false;
-    private readonly linesId = `chat-cmp-ctx-${++made}`;
+    /** The preview: closed, opened by hover, or held open (click, Enter, Space). */
+    private open: false | 'hover' | 'held' = false;
+    private leaving = 0;
+    private drawing = false;
+    /** Whether the pointer is on the chip or the preview. */
+    private over = false;
+    /** Closed by the person while the pointer is on them: hover opens it again only after leaving. */
+    private quiet = false;
+    private readonly popId = `chat-cmp-pop-${++made}`;
 
     constructor() {
       super();
@@ -49,10 +63,21 @@ export function defineChatComposer(): void {
         const t = e.target as HTMLElement;
         const x = t.closest<HTMLButtonElement>('button.chat-chip-x');
         if (x) return this.removeChip(x.dataset.chip ?? '');
-        if (t.closest('button.chat-cmp-ctx')) return this.toggle();
+        if (t.closest(CHIP)) return this.toggle();
         if (t.closest('button.chat-cmp-send')) this.send();
       });
+      this.addEventListener('pointerover', (e) => this.hover(e.target as Element));
+      this.addEventListener('pointerout', (e) => this.hover(e.relatedTarget as Element | null));
+      this.addEventListener('focusout', (e) => {
+        if (this.open === 'held' && !this.drawing && !this.inPreview(e.relatedTarget as Element | null)) this.preview(false);
+      });
       this.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && this.open) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.close();
+          return this.querySelector<HTMLElement>(CHIP)?.focus();
+        }
         if ((e.target as HTMLElement).localName !== 'textarea') return;
         if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
           e.preventDefault();
@@ -62,8 +87,19 @@ export function defineChatComposer(): void {
       this.addEventListener('input', () => this.syncSend());
     }
 
+    /** A press anywhere off the chip and the preview closes one held open. */
+    private readonly away = (e: PointerEvent) => {
+      if (this.open === 'held' && !this.inPreview(e.target as Element)) this.preview(false);
+    };
+
     connectedCallback(): void {
       this.box();
+      document.addEventListener('pointerdown', this.away);
+    }
+
+    disconnectedCallback(): void {
+      document.removeEventListener('pointerdown', this.away);
+      window.clearTimeout(this.leaving);
     }
 
     show(v: ComposerView): void {
@@ -89,7 +125,7 @@ export function defineChatComposer(): void {
 
     setContext(context: ComposerContext | null): void {
       this.context = context;
-      if (!context?.lines.length) this.open = false;
+      if (!context?.text) this.open = false;
       this.drawChips();
     }
 
@@ -126,22 +162,69 @@ export function defineChatComposer(): void {
       return ta;
     }
 
-    /** The chips row, the context's lines with it; Send follows what is attached. Focus on the
-     *  context chip stays on it when the row is drawn again. */
+    /** The chips row, the preview with it; Send follows what is attached. Focus on the context chip
+     *  or in the preview, and the preview's scroll, stay when the row is drawn again. */
     private drawChips(): void {
       this.box();
       const row = this.querySelector<HTMLElement>('.chat-cmp-chips')!;
-      const focused = row.contains(document.activeElement) && document.activeElement?.matches('button.chat-cmp-ctx');
-      row.innerHTML = chipsTemplate(this.current, this.context, this.open, this.linesId);
+      const active = document.activeElement;
+      const focused = active && row.contains(active) ? [CHIP, POP].find((sel) => active.matches(sel)) : undefined;
+      const scrolled = this.querySelector<HTMLElement>(POP)?.scrollTop ?? 0;
+      this.drawing = true;
+      row.innerHTML = chipsTemplate(this.current, this.context, this.open !== false, this.popId);
+      this.drawing = false;
       row.hidden = !this.attached;
-      if (focused) this.querySelector<HTMLElement>('button.chat-cmp-ctx')?.focus();
+      const pop = this.querySelector<HTMLElement>(POP);
+      if (pop) pop.scrollTop = scrolled;
+      if (focused) this.querySelector<HTMLElement>(focused)?.focus({ preventScroll: true });
       this.syncSend();
     }
 
-    /** Open or close the context's lines. */
+    /** Click, Enter or Space on the chip: hold the preview open, or close it. */
     private toggle(): void {
-      this.open = !this.open;
-      this.drawChips();
+      if (this.open === 'held') this.close(); else this.preview('held');
+    }
+
+    private close(): void {
+      this.quiet = this.over;
+      this.preview(false);
+    }
+
+    /** Open or close the preview in place: the chip under the pointer is never drawn again. */
+    private preview(open: false | 'hover' | 'held'): void {
+      window.clearTimeout(this.leaving);
+      if (open === this.open) return;
+      this.open = open;
+      const chip = this.querySelector<HTMLElement>(CHIP);
+      this.drawing = true;
+      this.querySelector(POP)?.remove();
+      this.drawing = false;
+      if (!chip || !this.context) return;
+      chip.setAttribute('aria-expanded', String(open !== false));
+      if (open === false) return chip.removeAttribute('aria-controls');
+      chip.setAttribute('aria-controls', this.popId);
+      this.querySelector('.chat-cmp-chips')!.insertAdjacentHTML('beforeend', previewTemplate(this.context, this.popId));
+    }
+
+    /** Whether `el` is the context chip or in its preview. */
+    private inPreview(el: Element | null): boolean {
+      return !!el && !!el.closest(`${CHIP}, ${POP}`) && this.contains(el);
+    }
+
+    /** The pointer is now on `el`: on the chip or the preview it opens (or stays); off them, a
+     *  preview opened by hover closes after a moment. */
+    private hover(el: Element | null): void {
+      this.over = this.inPreview(el);
+      if (this.over) {
+        window.clearTimeout(this.leaving);
+        if (!this.open && !this.quiet && this.querySelector(CHIP)) this.preview('hover');
+        return;
+      }
+      this.quiet = false;
+      if (this.open === 'hover') {
+        window.clearTimeout(this.leaving);
+        this.leaving = window.setTimeout(() => this.preview(false), HOVER_GRACE_MS);
+      }
     }
 
     private syncSend(): void {

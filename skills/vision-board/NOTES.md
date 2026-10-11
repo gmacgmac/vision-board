@@ -146,3 +146,4 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   not ask it again. Gaps: its reply named a new card "(7)" before the write had numbered it (it
   was 11), so v2.3 adds "never guess a new card's number in text in the same call"; it set `size`
   on every card; its closing words were four short paragraphs, not one or two lines.
+- 2026-10-11, orchestrator: skill v2.4: the panel message's selection block ("The person selected these cards:", right after the words; a message about them is like a group comment), from the composer task.

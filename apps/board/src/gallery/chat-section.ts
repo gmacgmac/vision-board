@@ -9,6 +9,7 @@ import type {
   ChatEvent, ChatFeedElement, ChatHeaderElement, ChatComposerElement, ChatHost, Chip, ComposerContext, HeaderInput,
 } from '../../../../packages/chat/src/index.ts';
 import { applyEvents, composerView, EMPTY_CHAT, headerView } from '../../../../packages/chat/src/index.ts';
+import { ROUND_HEAD, selectionText } from '../../../../packages/actions/src/index.ts';
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import { nodeState, renderMarkdown } from '../../../../packages/ui/src/index.ts';
 import { mount } from 'svelte';
@@ -35,7 +36,7 @@ interface Sample {
   header?: Partial<HeaderInput>;
   /** What the empty feed says, when not the board's. */
   empty?: string;
-  /** The composer's context (the board's answers since the last Send), opened when `open`. */
+  /** The composer's one chip (the board's selected cards and answers since the last Send), opened when `open`. */
   context?: ComposerContext;
   open?: boolean;
 }
@@ -43,15 +44,19 @@ interface Sample {
 const AGENTS = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
 const ALL = Number.MAX_SAFE_INTEGER;
 const PAST = 'A past version of the board is showing. Go back to now to send a message.';
-/** The board's answers since the last Send, as the composer shows them (chat-board-context ruling 1). */
-const ANSWERS: ComposerContext = {
-  label: '3 answers since your last Send',
-  lines: ['2 (question): yes', '5 (finding): comment: Check this with the support team first', '7 (action): done'],
-};
+/** What a message carries from the board, as the composer shows it (composer-one-chip rulings 1-3):
+ *  the selected cards, then the answers since the last Send, in the server's words (packages/actions). */
+const SELECTED = [{ n: 7, title: 'Book the venue' }, { n: 3, title: 'Ship on Friday?' }];
+const ROUND = [
+  ROUND_HEAD, 'Board "Launch" (v4)', '2 (question): yes', '5 (finding): comment: Check this with the support team first', '7 (action): done',
+  'Still open: 3', 'These are the person\'s answers up to head 42. To read anything newer, call check_responses on board "launch" with after 42.',
+].join('\n');
+const ANSWERS: ComposerContext = { label: '3 answers · 1 selected', text: `${selectionText(SELECTED.slice(0, 1))}\n\n${ROUND}` };
+const PICKED: ComposerContext = { label: '2 selected', text: selectionText(SELECTED) };
 const ON_A_BOARD: ChatHost = { holds: true };
 
 const SAMPLES: Sample[] = [
-  { state: 'empty', caption: 'Empty: a new session; two cards and a note attached; the agent can still be picked',
+  { state: 'empty', caption: 'Empty: a new session; chips a host attaches, each removable (the board attaches one chip instead); the agent can still be picked',
     scene: 'session', upTo: 0, header: { agents: AGENTS },
     chips: [{ kind: 'card', ref: 3, label: 'Release plan' }, { kind: 'card', ref: 7, label: 'Ship on Friday?' }, { kind: 'note', ref: 41, label: 'Keep a written record' }] },
   { state: 'thinking', caption: 'Thinking: the message is sent, nothing back yet', scene: 'session', upTo: 1 },
@@ -65,9 +70,11 @@ const SAMPLES: Sample[] = [
   { state: 'error', caption: 'Error: the turn failed; the next message clears it', scene: 'error', upTo: ALL },
   { state: 'send-queued', caption: 'Send to agent while it works: the answers wait for the turn to end', scene: 'send', upTo: 3 },
   { state: 'send-handed', caption: 'Then they go: the board\'s answers as one message, in card order', scene: 'send', upTo: ALL },
-  { state: 'answers', caption: 'The board\'s answers since the last Send: one chip with the cards; no words needed to send',
-    scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS, chips: [{ kind: 'card', ref: 7, label: 'Book the venue' }] },
-  { state: 'answers-open', caption: 'The chip opened: the lines the message carries, as the agent reads them',
+  { state: 'answers', caption: 'One chip for what goes from the board: the answers since the last Send and the selected cards; no words needed to send',
+    scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS },
+  { state: 'selected', caption: 'Cards selected and nothing answered: the chip says so alone; deselect a card to leave it out',
+    scene: 'session', upTo: 0, host: ON_A_BOARD, context: PICKED },
+  { state: 'answers-open', caption: 'The chip opened (hover, click, Enter or Space; Esc closes): exactly what the agent receives from the board',
     scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS, open: true },
   { state: 'answers-working', caption: 'While the agent works: what is attached goes when it finishes',
     scene: 'session', upTo: 4, host: ON_A_BOARD, context: ANSWERS },
@@ -106,8 +113,8 @@ function panel(s: Sample): HTMLElement {
 /** The board with the sidebar open (FE_02): the board's own ChatSidebar, in the page flow, beside a
  *  stretch of the board's ground, a card selected and so attached. */
 const ON_BOARD: Sample = {
-  state: 'board', caption: '', scene: 'session', upTo: 6, header: { agents: AGENTS },
-  chips: [{ kind: 'card', ref: 1, label: 'Ship on Friday?' }],
+  state: 'board', caption: '', scene: 'session', upTo: 6, header: { agents: AGENTS }, host: ON_A_BOARD,
+  context: { label: '1 selected', text: selectionText([{ n: 1, title: 'Ship on Friday?' }]) },
 };
 
 function onBoard(fx: Fixture): HTMLElement {
@@ -144,6 +151,6 @@ export function chatSection(fx: Fixture): HTMLElement {
     el('p', 'g-desc', 'The chat beside the board (D-036, D-037): the agent\'s words, its board writes as change chips, and its file changes and shell commands waiting for Allow or Deny. Styled only by --chat-* properties, mapped to the board\'s tokens in chat-host.css.'),
     meta,
     group('Every state', 'Fed by the recorded Claude turns as chat events. The header\'s status and the composer follow the chat conditions table.', row),
-    group('On the board', 'The sidebar on the right, the board shrinking beside it. The toolbar\'s Chat button and T open and close it; its left edge drags (or takes the arrow keys) to set its width. Selected cards and unsent notes ride along as chips; a change chip zooms to its cards.', onBoard(fx)));
+    group('On the board', 'The sidebar on the right, the board shrinking beside it. The toolbar\'s Chat button and T open and close it; its left edge drags (or takes the arrow keys) to set its width. What goes from the board (the selected cards, the answers since the last Send) is one chip that previews it; a change chip zooms to its cards.', onBoard(fx)));
   return box;
 }

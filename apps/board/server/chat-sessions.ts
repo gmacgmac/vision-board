@@ -8,7 +8,8 @@
 // and the board's Send hands them on their own (`round`, panel-send ruling 1): one builder,
 // chat-prompt.ts `promptFor`. A message with something attached waits while a turn runs (ruling 5).
 import path from 'node:path';
-import { creatorOf } from '../../../packages/actions/src/index.ts';
+import type { Round } from '../../../packages/actions/src/index.ts';
+import { creatorOf, roundOf } from '../../../packages/actions/src/index.ts';
 import type { AgentAdapter, StartOptions } from '../../../packages/agent/src/index.ts';
 import { createClaudeAdapter, createKiroAdapter } from '../../../packages/agent/src/index.ts';
 import type { Agents } from './agents.ts';
@@ -17,8 +18,7 @@ import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
 import { promptFor, wordsOf } from './chat-prompt.ts';
-import type { Round } from './chat-round.ts';
-import { previousSend, roundOf } from './chat-round.ts';
+import { previousSend } from './chat-round.ts';
 import type { ChatEvent, LiveSession } from './chat-session.ts';
 import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import type { Ledger } from './ledger.ts';

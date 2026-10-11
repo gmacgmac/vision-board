@@ -51,6 +51,8 @@
   --_radius-lg: var(--chat-radius-lg, 14px);
   --_radius-pill: var(--chat-radius-pill, 999px);
   --_motion: var(--chat-motion, 120ms);
+  /* A layer over the rest: the composer's preview */
+  --_shadow: var(--chat-shadow, 0 8px 24px light-dark(rgb(0 0 0 / 0.14), rgb(0 0 0 / 0.5)));
   --_target: var(--chat-target, 24px);
 }
 

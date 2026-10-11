@@ -32,6 +32,8 @@ export { boardAccess, boardList, boardVersions, containerDetail, linkedDetails, 
 export type { AccessHolder, AccessRequest, BoardAccess, BoardListItem, BoardVersions, ContainerDetail, NodeDetail, NodeVersionView, OpenContainer, OpenItem } from './reads.ts';
 export { joinReply, replyLines, replyText } from './reply.ts';
 export type { ReplyLines, ReplyScope } from './reply.ts';
+export { boardBlocks, ROUND_HEAD, roundOf, SELECTED_HEAD, selectionText } from './board-message.ts';
+export type { Round, SelectedCard } from './board-message.ts';
 export { actionWord, MEANINGS, meaningOf, otherWords } from './action-words.ts';
 export type { Meaning } from './action-words.ts';
 export { versionChanges } from './changes.ts';

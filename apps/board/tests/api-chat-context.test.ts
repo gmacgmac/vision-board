@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ONLY_ATTACHED } from '../server/chat-prompt.ts';
-import { ROUND_HEAD } from '../server/chat-round.ts';
+import { ROUND_HEAD, SELECTED_HEAD } from '../../../packages/actions/src/index.ts';
+import { NOTES_HEAD, ONLY_ATTACHED } from '../server/chat-prompt.ts';
 import { QUEUED_WORDS } from '../server/chat-session.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
@@ -44,7 +44,7 @@ test('a session names the agent id it writes as, the one in the index', async ()
   await act({ action: 'grant', request });
 });
 
-test('one message: the words, the attached cards and notes, then the answers in card order and the head line, then the board', async () => {
+test('one message: the words, "The person selected these cards:", then the answers in card order and the head line, then the board', async () => {
   const { q, d } = h.seeded;
   await act({ action: 'ack', n: q, ver: 2 });
   const note = (await act({ action: 'comment', n: d, ver: 1, text: 'After the launch.' })).seq;
@@ -56,7 +56,8 @@ test('one message: the words, the attached cards and notes, then the answers in 
   assert.equal(parts[0], 'Write the tasks for these.');
   // The note is one of the answers (below), so it is not attached as well (chat-no-double-note ruling 3); the card is both
   // selected and answered, so it stays, with nothing of its answer (ruling 4).
-  assert.equal(parts[1], `Attached from the board:\n- Card ${q}: Flat fee or per seat? (with the numbers)`);
+  assert.equal(parts[1], `${SELECTED_HEAD}\n- Card ${q}: Flat fee or per seat? (with the numbers)`, 'the selection right after the words, before the answers (composer-one-chip ruling 3)');
+  assert.doesNotMatch(given.prompt, /Attached from the board/);
   assert.equal(given.prompt.split('After the launch.').length - 1, 1, 'the note\'s words go once');
   const round = parts[2]!.split('\n');
   assert.equal(round[0], ROUND_HEAD);
@@ -98,7 +99,7 @@ test('no words, a card attached: the card goes, the bubble saying so', async () 
   const { q } = h.seeded;
   const accepted = await message({ cards: [q] });
   const given = await fake.run(++runs);
-  assert.equal(given.prompt, `Attached from the board:\n- Card ${q}: Flat fee or per seat? (with the numbers)\n\nBoard: pricing`);
+  assert.equal(given.prompt, `${SELECTED_HEAD}\n- Card ${q}: Flat fee or per seat? (with the numbers)\n\nBoard: pricing`);
   assert.equal(accepted.text, ONLY_ATTACHED);
   await readChat(h.base, h.cookie, session, turns(runs));
 });
@@ -109,7 +110,7 @@ test('a note named alone that is among the answers goes once, as the answer; no 
   const accepted = await message({ notes: [note] });
   const given = await fake.run(++runs);
   assert.ok(given.prompt.startsWith(`${ROUND_HEAD}\n`), given.prompt);
-  assert.doesNotMatch(given.prompt, /Attached from the board/);
+  assert.ok(!given.prompt.includes(NOTES_HEAD));
   assert.equal(given.prompt.split('Check with finance.').length - 1, 1);
   assert.equal(accepted.chips, undefined);
   assert.equal(accepted.text, given.prompt.replace('\n\nBoard: pricing', ''));
@@ -136,7 +137,7 @@ test('while the agent works: words alone are refused; with something attached it
     await gone(busy.pid);
     const given = await fake.run(++runs);
     const parts = given.prompt.split('\n\n');
-    assert.deepEqual(parts.slice(0, 2), ['And this one.', `Attached from the board:\n- Card ${d}: Choose the launch price`]);
+    assert.deepEqual(parts.slice(0, 2), ['And this one.', `${SELECTED_HEAD}\n- Card ${d}: Choose the launch price`]);
     assert.match(given.prompt, new RegExp(`^${q} \\(question\\): .*Per seat, then\\.$`, 'm'));
     assert.match(given.prompt, new RegExp(`^${d} \\(decision\\): drop`, 'm'), 'built when it went: the drop after the first wait is in');
     const events = await readChat(h.base, h.cookie, session, turns(runs));

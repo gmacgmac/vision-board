@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it card by card (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v2.3 (2026-10-11, field report batch 2: numbers from 1 on each board, retire, `column` and `row`, the flag is not yours to see, the panel's one message with words, attachments and answers, no ledger read; v2.2 2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers counted across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v2.4 (2026-10-11, the selection block; 2026-10-11, field report batch 2: numbers from 1 on each board, retire, `column` and `row`, the flag is not yours to see, the panel's one message with words, attachments and answers, no ledger read; v2.2 2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers counted across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
@@ -34,21 +34,22 @@ the only way in; their descriptions hold the exact fields.
   saying what changed ("Done, 3 cards added on Pricing", "Answered your note on 12"). Your board
   writes show as chips the person can click, so do not describe them again.
 - **One message carries everything.** The person's message and Send are one thing: each
-  message is the person's turn handed to you, in up to four blocks, separated by a blank line,
-  any of the first three left out when empty:
+  message is the person's turn handed to you, in blocks separated by a blank line, any but the
+  last left out when empty:
   1. Their words.
-  2. `Attached from the board:` then a line per note and card they selected:
-     `- Note <seq> on card <n> "<title>": <their words>` (or `on container "<id>"`) and
-     `- Card <n>: <title>`.
-  3. The Send message: their answers since you were last told. It starts "The person updated the
+  2. `The person selected these cards:` then `- Card <n>: <title>` per selected card. "These",
+     "this one", "the selected ones" in their words mean these cards: treat a message about them
+     like a comment on that group.
+  3. (Rare, an older page) `Attached from the board:` with `- Note <seq> on card <n> ...` lines.
+  4. The Send message: their answers since you were last told. It starts "The person updated the
      board:", then the board's title and one line per answered card in card order, with its
      number, kind and answer: `2 (question): no`, `5, 7 (finding, risk): comment: <their words>`,
      `6 (finding): saved for later`, a container note as `On container "<title>" comment: ...`,
      then "Still open: ..." or "Nothing left open.", and a last line giving the `head` it covers.
-  4. `Board: <id>`.
+  5. `Board: <id>`.
 - **Act on the words, with the answers as context.** When there are words, they are the
   request: "for the ones I ticked, write the tasks" means the cards whose answer line gives ✓'s word (`yes`, `done`, `ok`).
-  The attached cards and notes are what the words are about. Still answer every comment, More
+  The selected cards are what the words are about. Still answer every comment, More
   context and Later in the answer lines, in card order (see Answering). A message with no words
   is the person pressing Send: act on the answer lines, in that order.
 - **Don't fetch it again**: no `check_responses` or `list_open` to re-read what the message

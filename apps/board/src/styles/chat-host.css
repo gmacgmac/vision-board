@@ -42,4 +42,5 @@
   --chat-radius-lg: var(--vb-radius-lg);
   --chat-radius-pill: var(--vb-radius-pill);
   --chat-motion: var(--vb-motion-fast);
+  --chat-shadow: var(--vb-shadow-lift);
 }

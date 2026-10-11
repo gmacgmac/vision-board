@@ -23,7 +23,7 @@ template (one pure function to markup), an element (light DOM, defined lazily), 
 | `feed/` | `<chat-feed>`: the log, the status line, change chips, system lines | `applyEvent`, `ChatState`, `activityLine`, `changeLabel` |
 | `message/` | `<chat-message>`: one message, the person's with chips | (template only) |
 | `approval/` | `<chat-approval>`: Allow once, Allow for this session, Deny | `approvalView`, `APPROVAL_CHOICES`, `timeLeft` |
-| `composer/` | `<chat-composer>`: text, removable chips, the host's context chip | `composerView`, `sendIntent` |
+| `composer/` | `<chat-composer>`: text, removable chips, the host's context chip and its preview | `composerView`, `sendIntent` |
 | `header/` | `<chat-header>`: agent, model, status, Stop, New session | `headerView` |
 
 `src/conditions.ts` is the chat's conditions table (PLAN ruling 11): busy, waiting (for an
@@ -49,9 +49,12 @@ stream.onmessage = (e) => {                      // the host's stream of chat ev
 };
 ```
 
-A host may attach more than chips: `composer.setContext({ label, lines })` shows one chip, not
-removable, that opens to its lines (the board: "3 answers since your last Send" and the answer
-lines), for what the host sends with every message. With `host.holds` the composer's Send also
+A host may attach more than chips: `composer.setContext({ label, text })` shows one chip, not
+removable, summarising what the host sends with every message (the board: "3 answers · 2 selected",
+its selected cards and the answers since the last Send, and no other chips). Hovering it, or click,
+Enter or Space, opens a preview over the feed, "What the agent receives", of `text` exactly as it goes;
+hover keeps it while the pointer is on the chip or the preview, a click holds it until clicked again,
+and Esc closes it with focus back on the chip. With `host.holds` the composer's Send also
 takes a message with no words when anything is attached, and one while the agent works, which the
 host holds and sends when the turn ends; without it, a message needs words, as before.
 

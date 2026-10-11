@@ -1,7 +1,8 @@
 // Composer pattern, layer 1 (core): what the composer says and allows (PLAN ruling 9; the Architect
-// composer). The text and the removable chips the host attaches (on the board: the person's unsent
-// notes and the selected cards), and the host's context, one chip that opens to its lines (on the
-// board: the answers since the last Send). Send with words while the chat conditions let it; with a
+// composer). The text, the removable chips a host may attach, and the host's context: one chip
+// summarising what the message carries, which opens a preview of exactly that text (on the board:
+// "3 answers · 2 selected", the selected cards and the answers since the last Send; the board attaches
+// no other chips, composer-one-chip ruling 1). Send with words while the chat conditions let it; with a
 // host that holds what is attached (`ChatHost.holds`), also with something attached and no words,
 // and while the agent works. No DOM.
 import type { Chip } from '../events.ts';
@@ -22,8 +23,12 @@ export interface ComposerView {
   placeholder: string;
 }
 
-/** What the host attaches beside the chips: one chip, `label`, that opens to its `lines`. */
-export interface ComposerContext { label: string; lines: readonly string[] }
+/** What the host sends with every message: one chip, `label` (its summary), that opens a preview of
+ *  `text`, exactly what goes, shown as it is ('' for no preview). */
+export interface ComposerContext { label: string; text: string }
+
+/** The preview's name and heading. */
+export const PREVIEW_LABEL = 'What the agent receives';
 
 export const COMPOSER_KEYS = 'Enter send · Shift+Enter new line';
 const WORKING = 'The agent is working. Stop it to send now.';

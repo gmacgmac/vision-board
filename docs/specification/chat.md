@@ -40,15 +40,19 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
    streams an `approval_request`; the person's answer (`answer_approval`) becomes an
    `approval_result`, and the gate lets the tool run or refuses it, which the agent is told.
 5. **The board's answers ride with every message.** On a board, each message the person sends is
-   one message to the agent: their words, the cards and notes attached, then "The person updated
-   the board:", the numbered reply of what was answered since the agent was last told (each card's
-   kind and word, "2 (question): no") and the `head` it covers, then the board's id. With no words,
-   the attached and the answers go alone; that is what the board's Send is when the board has a
-   session. A message with something attached waits while a turn runs and goes when it ends, built
-   then; a second one meanwhile joins it. It counts as the board's Send when it goes (api.md 121,
-   131; `apps/board/server/chat-prompt.ts` `promptFor`, `chat-round.ts`). A note goes once, as its
-   answer: the composer offers no chip for an unsent note, and a note chip that is among the answers
-   is dropped from "Attached". A selected card stays attached, with nothing of its answer.
+   one message to the agent: their words, then "The person selected these cards:" with the cards
+   selected (right after the words, so "these" means the selection: a message about selected cards
+   works like a group comment), then "The person updated the board:", the numbered reply of what was
+   answered since the agent was last told (each card's kind and word, "2 (question): no") and the
+   `head` it covers, then the board's id. With no words, the selection and the answers go alone;
+   that is what the board's Send is when the board has a session. A message with something attached
+   waits while a turn runs and goes when it ends, built then; a second one meanwhile joins it. It
+   counts as the board's Send when it goes (api.md 121, 131; `apps/board/server/chat-prompt.ts`
+   `promptFor`). What it carries from the board has one writer, packages/actions `boardBlocks` and
+   `roundOf`, which the page's preview reads too. A note goes once, as its answer: the composer
+   offers no chip for an unsent note, and a note chip an older client still sends is dropped when
+   it is among the answers, else listed under "Attached from the board:" after the selection. A
+   selected card stays in the selection, with nothing of its answer.
 6. **A session in the folder.** In a folder with no board the session starts on no board
    (`start_folder_chat`); its agent is told so and may create one, and the session moves to the
    first board its agent creates (api.md 122).
@@ -79,10 +83,14 @@ starts (from the New session confirm on) waits for it and goes there;
 the composer is shut with the reason for a page still loading, a past version or a refused start. In a
 folder with no board the panel talks in the folder (`start_folder_chat`, `list_folder_chats`); the first
 board its agent draws opens (its board write's `tool_activity`, or the board's first line), and the panel
-stays on the same session there. The composer shows the person's answers since the board's last Send
-as one chip, "3 answers since your last Send", not removable, which opens to the lines the message
-carries (`chat-bridge.ts` `answerLines`: packages/actions `replyLines` with the session's `agentId`, so
-only what its agent is told; with no session yet, every answer). The page tells the composer it holds
+stays on the same session there. The composer shows one chip for everything the message carries
+from the board (composer-one-chip ruling 1), "3 answers · 2 selected" (either part alone), not
+removable; there is no chip per card, and to leave a card out the person deselects it. Hovering it, or
+click, Enter or Space, opens a preview over the feed of exactly the text the agent receives from the
+board (`chat-bridge.ts` `boardContext`: packages/actions `boardBlocks` and `roundOf` with the session's
+`agentId`, the server's own writer, so only what its agent is told; with no session yet, every
+answer); hover keeps it while the pointer is on the chip or the preview, a click holds it until
+clicked again, and Esc closes it with focus on the chip. The page tells the composer it holds
 what is attached (`ChatHost.holds`): with a chip or the answers it sends with no words, and while the
 agent works (held; the line under the box says so). Send to agent goes through the panel
 (`boardSend`): with the board's session and something attached it is the composer's message with no
@@ -91,8 +99,8 @@ words (`sendsInChat`), so the two are enabled and disabled together (`shell.chat
 "Waiting for agent" until the next `message_in`.
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
-`board/chat-bridge.ts` is the only file that knows both sides: the selected cards as
-chips (the unsent notes are in the answers chip); a change chip selects and zooms to its cards
+`board/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
+as the composer's one chip (the cards a message took are spent until the selection changes); a change chip selects and zooms to its cards
 (opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
 
 ## Another host

@@ -68,7 +68,8 @@ test('a message: chips, the board\'s Send, the prompt, and the turn streamed in 
   assert.deepEqual(events.map((e) => e.kind), ['message_in', 'tool_activity', 'tool_activity', 'tool_activity', 'tool_activity', 'message_out', 'system']);
   assert.deepEqual([events[4]!.tool, events[4]!.cards, events.at(-1)!.turn], ['write_board', [1, 2], 'done']);
   const run = await fake.run(1);
-  assert.equal(run.prompt, `Draw the options.\n\nAttached from the board:\n- Note ${comment} on card ${q} "${title}": Why per seat?\n- Card ${q}: ${title}\n\nBoard: pricing`);
+  // The selection right after the words (composer-one-chip ruling 3), then the note an older client names.
+  assert.equal(run.prompt, `Draw the options.\n\nThe person selected these cards:\n- Card ${q}: ${title}\n\nAttached from the board:\n- Note ${comment} on card ${q} "${title}": Why per seat?\n\nBoard: pricing`);
   const flag = (name: string) => run.args[run.args.indexOf(name) + 1];
   assert.deepEqual([flag('--session-id'), flag('--model'), flag('--append-system-prompt-file')], [first.session, 'sonnet', INSTRUCTIONS_FILE]);
   assert.ok(run.args.includes('mcp__vb__*'));

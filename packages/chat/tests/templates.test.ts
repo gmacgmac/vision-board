@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import type { ChangeEntry } from '../src/index.ts';
 import {
   applyEvents, changeTemplate, chipsTemplate, composerTemplate, composerView, contextTemplate, DEFAULT_MODEL, EMPTY_CHAT, feedTemplate, headerTemplate,
-  headerView, lineTemplate, messageTemplate, plainText, sendIntent, systemTemplate, withoutChip,
+  headerView, lineTemplate, messageTemplate, plainText, previewTemplate, sendIntent, systemTemplate, withoutChip,
 } from '../src/index.ts';
 import { stamp, TURN } from './support.ts';
 
@@ -72,17 +72,22 @@ test('composer, with a host that holds what is attached: no words with something
   assert.equal(sendIntent('', shut, true), 'skip');
 });
 
-test('composer: the context chip opens to its lines; with none it is a plain chip; never removable', () => {
-  const ctx = { label: '2 answers since your last Send', lines: ['2 (question): yes', '5 (finding): comment: <too long>'] };
+test('composer: the context chip opens a preview of exactly what goes, as typed; with none it is a plain chip; never removable', () => {
+  const text = 'The person selected these cards:\n- Card 3: <Plan>\n\nThe person updated the board:\n2 (question): yes';
+  const ctx = { label: '1 answer · 1 selected', text };
   const closed = chipsTemplate([], ctx, false, 'ctx-1');
-  assert.match(closed, /<button type="button" class="chat-chip chat-cmp-ctx" aria-expanded="false"><span class="chat-chip-t">2 answers since your last Send<\/span>/);
-  assert.doesNotMatch(closed, /chat-cmp-ctx-lines|chat-chip-x/);
+  assert.match(closed, /<button type="button" class="chat-chip chat-cmp-ctx" aria-expanded="false"><span class="chat-chip-t">1 answer · 1 selected<\/span>/);
+  assert.doesNotMatch(closed, /chat-cmp-pop|chat-chip-x/);
   const open = chipsTemplate([{ kind: 'card', ref: 3, label: 'Plan' }], ctx, true, 'ctx-1');
   assert.ok(open.indexOf('data-chip="card-3"') < open.indexOf('chat-cmp-ctx'), 'the chips first, then the context');
   assert.match(open, /aria-expanded="true" aria-controls="ctx-1"/);
-  assert.match(open, /<ul class="chat-cmp-ctx-lines" id="ctx-1" aria-label="2 answers since your last Send"><li>2 \(question\): yes<\/li><li>5 \(finding\): comment: &lt;too long&gt;<\/li><\/ul>$/);
-  assert.equal(contextTemplate({ label: 'Changes since your last Send', lines: [] }, true, 'x'),
+  assert.ok(open.endsWith(previewTemplate(ctx, 'ctx-1')), 'the preview after the chips');
+  assert.equal(previewTemplate(ctx, 'ctx-1'), '<div class="chat-cmp-pop" id="ctx-1" role="region" aria-label="What the agent receives" tabindex="0">'
+    + '<p class="chat-cmp-pop-h" aria-hidden="true">What the agent receives</p>'
+    + '<pre class="chat-cmp-pop-text">The person selected these cards:\n- Card 3: &lt;Plan&gt;\n\nThe person updated the board:\n2 (question): yes</pre></div>');
+  assert.equal(contextTemplate({ label: 'Changes since your last Send', text: '' }, true, 'x'),
     '<span class="chat-chip chat-cmp-ctx"><span class="chat-chip-t">Changes since your last Send</span></span>');
+  assert.doesNotMatch(chipsTemplate([], { label: 'Nothing to show', text: '' }, true, 'x'), /chat-cmp-pop/, 'no text, no preview');
 });
 
 test('composer: a labelled text and Send; each chip removable by name', () => {

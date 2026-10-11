@@ -2,19 +2,19 @@
   "name": "chat-composer",
   "title": "Composer",
   "tag": "chat-composer",
-  "description": "The person's message: the chips the host attaches (on the board, unsent notes and selected cards), each removable, the host's context chip that opens to its lines (on the board, the answers since the last Send), the text and Send, and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer).",
+  "description": "The person's message: the chips a host may attach, each removable; the host's context chip, one summary of what every message carries (on the board, \"3 answers · 2 selected\": the selected cards and the answers since the last Send, and no other chips), which opens a preview of exactly that text; the text and Send; and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer).",
   "files": {
-    "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, ComposerContext, COMPOSER_KEYS; no DOM)",
-    "template": "composer-template.ts (composerTemplate, chipsTemplate, contextTemplate, lineTemplate)",
+    "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, ComposerContext, PREVIEW_LABEL, COMPOSER_KEYS; no DOM)",
+    "template": "composer-template.ts (composerTemplate, chipsTemplate, contextTemplate, previewTemplate, lineTemplate)",
     "element": "chat-composer.ts (defineChatComposer, ChatComposerElement; light DOM)",
     "styles": "composer.css (through chat.css)"
   },
-  "states": ["empty", "with chips", "with the context, closed and open", "typing", "waiting while the agent works", "holding: what is attached waits for the turn to end", "shut"],
+  "states": ["empty", "with chips", "with the context, closed", "the preview open by hover, held open by click, Enter or Space", "typing", "waiting while the agent works", "holding: what is attached waits for the turn to end", "shut"],
   "attributes": { "data-shut": "the host's blocked reason applies: the text can't be typed in" },
   "methods": {
     "show(view)": "Send allowed, the line, the placeholder, shut or not (from composerView)",
     "setChips(chips)": "the chips attached",
-    "setContext(context)": "the host's context { label, lines } beside the chips, or null; it is not removable and goes with every message the host sends",
+    "setContext(context)": "the host's context { label, text } beside the chips, or null: one chip, its summary, opening a preview of text exactly as it goes; not removable, it goes with every message the host sends",
     "clear()": "empties the words and the chips once the message went through",
     "text, chips, attached, focusText()": "the words typed, the chips, whether a chip or the context is attached, focus into the text"
   },
@@ -24,5 +24,5 @@
   ],
   "whenToUse": "Writing to the agent.",
   "whenNotToUse": "A note on a card (the note bubble).",
-  "accessibility": "The text is labelled 'Message to the agent'. Enter sends, Shift+Enter breaks the line. Each chip's remove button is named 'Remove Card 12: <title>' or 'Remove Note: <text>', 24px square. The context chip is a button named by its label, with aria-expanded; opened, its lines are a list named by the label and controlled by it, and focus stays on the chip."
+  "accessibility": "The text is labelled 'Message to the agent'. Enter sends, Shift+Enter breaks the line. Each chip's remove button is named 'Remove Card 12: <title>' or 'Remove Note: <text>', 24px square. The context chip is a button named by its summary, with aria-expanded; open, it controls the preview, a focusable region named 'What the agent receives' (a long one scrolls by keyboard). Hover opens it and keeps it while the pointer is on the chip or the preview; click, Enter or Space hold it open or close it; Esc closes it, focus on the chip, and goes no further (the board's Esc does not run)."
 }

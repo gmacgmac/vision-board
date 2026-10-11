@@ -9,14 +9,14 @@
 // message can go is the host's (`ChatHost.blocked`): the page still loading, a past version, a refused
 // start. In a folder with no board (board '') it talks in the folder (`start_folder_chat`); the first
 // board its agent draws opens, and the panel stays on that session (panel-send ruling 2). On a board
-// every message carries the person's answers since the last Send (the composer's context, from the
-// bridge), and may go with no words when something is attached, or while the agent works, held until
-// its turn ends (chat-board-context rulings 1-3, 5: `ChatHost.holds`). The board's Send goes through
-// `boardSend`: with the board's session and something attached it is that message with no words
-// (ruling 4); else the `send` act, which waits while the agent works (panel-send ruling 1). Held
-// either way, Send shows it waiting until the next message. The board's side (chips, the answers,
-// change chips, the stepper's link, opening a board) is the bridge's (chat-bridge.ts); this file
-// knows a board only by its id.
+// every message carries the selected cards and the answers since the last Send (the composer's one
+// chip, from the bridge, composer-one-chip ruling 1), and may go with no words when something is
+// attached, or while the agent works, held until its turn ends (chat-board-context rulings 1-3, 5:
+// `ChatHost.holds`). The board's Send goes through `boardSend`: with the board's session and something
+// attached it is that message with no words (ruling 4); else the `send` act, which waits while the
+// agent works (panel-send ruling 1). Held either way, Send shows it waiting until the next message.
+// The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
+// bridge's (chat-bridge.ts); this file knows a board only by its id.
 import type {
   ChatAnswerDetail, ChatComposerElement, ChatEvent, ChatFeedElement, ChatHeaderElement, ChatHost, ChatOption,
   ChatPickDetail, ChatSendDetail, ChatState, Chip,
@@ -223,10 +223,10 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
 
   /** The message: null once it went or waits for the turn to end (Send then shows it waiting),
    *  else the problem, which a toast also says. */
-  async function send({ text, chips }: ChatSendDetail): Promise<string | null> {
+  async function send({ text, chips: own }: ChatSendDetail): Promise<string | null> {
     if (st.sending || st.board === null) return 'A message is already on its way.';
     st.sending = true;
-    const ask = lastAsk(st.chat);
+    const [ask, chips] = [lastAsk(st.chat), [...own, ...d.bridge.chips()]];
     try {
       // A start already under way says itself why it failed; the composer keeps the text.
       const s = st.starting ? await st.starting.catch(() => null) : st.session ?? (await start(st.pick));
@@ -286,7 +286,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     },
     async boardSend(act) {
       // With the board's session and something attached, Send is the message with no words (ruling 4).
-      if (inChat()) return send({ text: '', chips: [...composer.chips] });
+      if (inChat()) return send({ text: '', chips: [] });
       const s = st.session;
       const ask = s && s.board !== undefined && s.board === st.board && st.chat.busy ? lastAsk(st.chat) : null;
       const problem = await act();

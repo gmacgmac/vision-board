@@ -2,20 +2,27 @@
    and Send, and one line under it (the keys, why Send waits, or why it is shut).
    --_* properties: chat.css. */
 chat-composer {
-  display: grid; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3) var(--_space-3);
+  position: relative; display: grid; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3) var(--_space-3);
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink); border-top: 1px solid var(--_line);
 }
 chat-composer .chat-cmp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-1) var(--_space-2); }
-/* The host's context chip (the board's answers since the last Send): a chip that opens its lines,
-   which take the row's whole width under the chips. */
+/* The host's context chip (the board's "3 answers · 2 selected"): a chip that opens a preview of
+   exactly what goes, over the feed, the composer's width; long text scrolls inside it. */
 chat-composer .chat-cmp-ctx { max-width: none; padding: 0 var(--_space-2); font: inherit; font-weight: var(--_medium); font-size: var(--_text-sm); }
 chat-composer button.chat-cmp-ctx { cursor: pointer; }
-chat-composer button.chat-cmp-ctx:hover { border-color: var(--_accent); }
+chat-composer button.chat-cmp-ctx:hover, chat-composer button.chat-cmp-ctx[aria-expanded='true'] { border-color: var(--_accent); }
 chat-composer .chat-cmp-ctx-mark { flex: none; color: var(--_ink); transition: transform var(--_motion); }
 chat-composer .chat-cmp-ctx[aria-expanded='true'] .chat-cmp-ctx-mark { transform: rotate(180deg); }
-chat-composer .chat-cmp-ctx-lines {
-  flex-basis: 100%; display: grid; gap: 2px; max-height: 160px; overflow: auto; margin: 0; padding: var(--_space-2) var(--_space-3);
-  list-style: none; font-size: var(--_text-sm); color: var(--_ink); background: var(--_surface-sunken); border-radius: var(--_radius);
+chat-composer .chat-cmp-pop {
+  position: absolute; z-index: 1; left: var(--_space-3); right: var(--_space-3); bottom: calc(100% - var(--_space-1));
+  display: grid; gap: var(--_space-1); max-height: min(320px, 60vh); overflow: auto; padding: var(--_space-2) var(--_space-3);
+  background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius); box-shadow: var(--_shadow);
+}
+chat-composer .chat-cmp-pop-h {
+  margin: 0; font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
+}
+chat-composer .chat-cmp-pop-text {
+  margin: 0; font: var(--_text-sm) / 1.45 var(--_font); color: var(--_ink); white-space: pre-wrap; overflow-wrap: anywhere;
 }
 chat-composer .chat-cmp-label {
   font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
