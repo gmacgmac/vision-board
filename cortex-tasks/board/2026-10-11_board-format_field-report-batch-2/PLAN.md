@@ -1,7 +1,7 @@
 ---
 task_name: Field report batch 2 - retire, card numbers per board, the flag, column and row
 created: 2026-10-11
-status: in-progress
+status: completed
 categories: [board-format, board-actions, board-app, board-ui, board-agent]
 tracker: cortex-tasks/tracker.md#N24,N35,N36
 ---

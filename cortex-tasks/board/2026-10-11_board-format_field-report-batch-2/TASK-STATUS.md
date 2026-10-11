@@ -1,7 +1,8 @@
 ---
 task_name: Field report batch 2 - retire, card numbers per board, the flag, column and row
 created: 2026-10-11
-status: in-progress
+status: completed
+completed: 2026-10-11
 tracker: cortex-tasks/tracker.md#N24,N35,N36
 ---
 
@@ -15,7 +16,7 @@ tracker: cortex-tasks/tracker.md#N24,N35,N36
 | 2 | BE_02 | Actions and server | Opus 5.5 | Done | check, verify, gen green; npm test 1017/1021, the 4 failing are FE_01's (see notes) |
 | 3 | FE_01 | Page | Opus 5.5 | Done | check, test 1041/1041, verify, gen, test:pages 347/347 green (see notes) |
 | 4 | T_01 | Skill | Opus 5.5 | Done | Skill v2.3, scenarios 15-16, one claude -p run of 15; five gates green (see notes) |
-| 5 | VERIFY_01 | By hand | Orchestrator | Planned | |
+| 5 | VERIFY_01 | By hand | Orchestrator | Completed | Claude and Kiro passed; 1 finding |
 
 ## Implementation Notes
 
@@ -423,3 +424,19 @@ process of mine left running (the vb-mcp processes alive predate this task).
 **Protected files**: none needs a change for the skill.
 
 ### VERIFY_01
+_Status:_ Completed (orchestrator, test server 4488, a scratch empty folder; also covers the chat-context
+and double-note tasks).
+- Claude: "Team offsite" drawn from the empty folder; cards numbered 1-6; a `column` (Decide) and a
+  `row` (Notes) container laid out as named; closing words two lines. ✓ on question 1, Shift+F on
+  finding 5 ("1 flagged" chip), a comment on finding 4, action 3 selected: the composer showed card 3
+  and "2 answers since your last Send" (the flag not counted), no note chip. One message with words:
+  the words, "1 (question): yes", "4 (finding): comment: …" once, card 3 attached. Claude added a
+  checklist to card 3, retired card 6, replied on 4; three lines. Notes showed "1 card retired from
+  this container", opening v20 with card 6. No agent read (responses, show_node, get_board, open)
+  mentions the flag; `read_ledger` refuses an agent.
+- Kiro (new session, Opus 5.5 by the session record): asked for the Decide grant (correct), one line;
+  added question 7 (6 not reused), one line. ✗ on 7, then the toolbar Send with no words: the chat
+  got "7 (question): no … Still open: 2, 3"; Kiro: "That settles card 7 … cards 2 and 3 are still
+  open." Quiet throughout.
+- Finding: after switching the agent to Kiro, the model picker kept Claude's options and showed
+  "Default", though the session started on claude-opus-5.5 (display only).
