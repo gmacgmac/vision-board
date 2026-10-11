@@ -1,7 +1,7 @@
 ---
 task_name: Field report batch 2 - retire, card numbers per board, the flag, column and row
 created: 2026-10-11
-status: planned
+status: in-progress
 categories: [board-format, board-actions, board-app, board-ui, board-agent]
 tracker: cortex-tasks/tracker.md#N24,N35,N36
 ---
@@ -9,7 +9,7 @@ tracker: cortex-tasks/tracker.md#N24,N35,N36
 # Field report batch 2 — Plan
 
 > **From**: the field report (points 7-9, 15) and the maintainer, 2026-10-11 (chat 511, 516, 519,
-> 520; tracker N35, N36) · **Needs**: the maintainer's review and go · One data-format change
+> 520, 524; tracker N35, N36) · **Go**: given (524) · One data-format change
 > (ledger v12), contract first.
 
 ## Rulings (maintainer; do not reopen)
@@ -56,7 +56,13 @@ complaint stands).
 | T_01 | Skill: numbers start at 1 per board; retire and restructuring (field 15); `column` and `row`; the flag is invisible to agents | Opus 5.5 |
 | VERIFY_01 | By hand with Claude and Kiro: draw, renumbered old board, retire a container, a refused retire while a comment is owed, flag cards and check no agent read shows them | Orchestrator |
 
-## Assumptions to confirm
+## Also ruled (524)
+
+- **Names in code:** the internal card identity is `id`; the board number is `n`; never mixed. The
+  action layer and server are renamed mechanically (tests catch slips). D-041 records the design and
+  supersedes the numbering part of D-017.
+
+## Assumptions (accepted, 524)
 
 - A. The flag: a small flag button on every card (beside Later), key F, a "N flagged" chip in the
   toolbar that steps through them; flagged cards keep their flag after a redraw.

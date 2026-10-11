@@ -208,6 +208,10 @@ Use these words consistently in code, docs and the UI.
   each chat joins as its own agent. The MCP names the folder it works in (`VB_PROJECT`, else the
   project it was started in); when the board has another folder open, every call answers
   `wrong-folder`, and the agent stops and tells you. Details: `packages/mcp/README.md`.
+- Kiro in the chat panel runs as the `vision-board` agent: the board keeps
+  `~/.kiro/agents/vision-board.json` current when it starts (its prompt is this repo's
+  `skills/vision-board/SKILL.md`) and starts `kiro-cli acp --agent vision-board --model
+  <claude-opus-5.5 | claude-sonnet-5.5> --effort high`. `VB_KIRO_AGENT=0` leaves `~/.kiro` alone.
 
 ## Running the prototype
 
