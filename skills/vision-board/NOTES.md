@@ -147,3 +147,24 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   was 11), so v2.3 adds "never guess a new card's number in text in the same call"; it set `size`
   on every card; its closing words were four short paragraphs, not one or two lines.
 - 2026-10-11, orchestrator: skill v2.4: the panel message's selection block ("The person selected these cards:", right after the words; a message about them is like a group comment), from the composer task.
+
+## Skill v2.5 (field report batch 3)
+
+- 2026-10-11, agent (batch 3 T_01; PLAN rulings 1, 3, 5, 6, api.md 132-133): v2.5 adds `show_layout`
+  once after the first draw of a `flow` or `lanes` container (what it answers; many crossings: cut
+  links, move a card's lane; lanes spread thin: regroup by phase or switch the region to `flow`;
+  one check, one redraw at most), says how lanes place cards now (columns by link depth, each lane
+  packed left, unlinked cards in free cells, lines never under a card), card `widths` (defaults,
+  set only when the content asks, the person's choice wins) and short link labels (shown near the
+  source only where they fit, else a marker). Scenario 17 (the round 1 shape). Thresholds
+  calibrated on that shape with `structureOf` at one card size: as `lanes` 6 columns, 2 of 16 links
+  crossing, 16 of 30 cells empty; the same cards as one `flow` 4 crossing, 20 empty; with only the
+  8 in-lane links, 0 crossing, 5 empty. So "about a quarter of the links crossing" or "more empty
+  cells than cards" flags a tangle, and the round 1 shape sits at the edge.
+
+- 2026-10-11, agent: two print-mode turns of `claude` 2.1.295 (Sonnet 5.5) on a test server, scenario
+  17's content in own chat. Both called `show_layout` once per container after the first write (4
+  flows the first time, only the branching one the second), never again, kept labels to one word
+  and set no `widths`; all crossings 0, no redraw. Both drew a container per area with 7 or 8 links
+  between containers (which `show_layout` does not see), so v2.5 says a container per area linked
+  across is the same tangle drawn worse; still drawn in run 2. Both set `size` on every card.

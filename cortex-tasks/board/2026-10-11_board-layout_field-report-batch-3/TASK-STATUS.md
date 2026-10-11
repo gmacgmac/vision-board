@@ -15,7 +15,7 @@ tracker: cortex-tasks/tracker.md#M2
 | 2 | BE_02 | Layout engine | Opus 5.5 | Done (1 gate red until BE_03, as BE_01) | Layered lanes, gutter routing with tracks, label places, align and widths inputs, `structureOf` |
 | 3 | BE_03 | Server and actions | Opus 5.5 | Done (all five gates green) | `show_layout` handler, `widths` folded, `state.widths`, act rule; api-layout and widths tests |
 | 4 | FE_01 | Page | Opus 5.5 | Done (all five gates green) | Labels and markers, Centre cards, Match card widths switch, widened-card height, bubble clear of footers, gallery |
-| 5 | T_01 | Skill | Opus 5.5 | Planned | |
+| 5 | T_01 | Skill | Opus 5.5 | Done (all five gates green) | Skill v2.5: `show_layout` once, lanes now, widths, short labels; scenario 17; two runs |
 | 6 | VERIFY_01 | By hand | Orchestrator | Planned | |
 
 ## Implementation Notes
@@ -364,4 +364,77 @@ existing pairs.
 **For T_01.** Nothing in the skill depends on the page; labels the agent writes now show on the line
 only when short enough for the stretch (about 4 characters between flow columns), else as a marker.
 ### T_01
+
+**Status**: done 2026-10-11. Skill v2.5 (`skills/vision-board/SKILL.md`), scenarios v2.5, NOTES.
+All five gates exit 0.
+
+**Changed in the skill** (Choosing a layout, Writing cards, Reading the person's answers).
+- **`show_layout`** (new subsection "Check a `flow` or `lanes` container once"): call it once after
+  the first draw of a `flow` or `lanes` container, never after every write, never for the other
+  modes. What it answers (`cards` with `column`, `row`, `lane`; in lanes `row` is the place in the
+  lane's stack in that column; `links`, `crossing` = links crossing at least one other, 0 the aim;
+  `empty` cells). What to do: reads well, leave it; many crossings (about a quarter of the links or
+  more), cut links that aren't flows (`unlink`) or move a card to its links' lane (rewrite with
+  `lane`); lanes spread thin (more empty cells than cards), regroup by phase in a new `flow` and
+  retire the old container in the same call, or resend the `region` with `mode: "flow"` when the
+  cards and links hold; one check, at most one redraw, no second call to confirm. Added to the
+  reads list.
+- **How lanes place cards** (BE_02): one shared column grid; a card one column after every card
+  linked to it, each lane packed left so no lane is pushed right by another's chain; stacks ordered
+  to cross least; lines in the gaps, never under a card; a link to a far lane still crosses the
+  lanes between. Unlinked cards: first column of a `flow`, a free cell of their lane in `lanes`.
+  The v2.2 lanes-vs-flow guidance stays, plus: a container per area with links between containers
+  is the same tangle drawn worse (plain elbows that can run under cards; `show_layout` doesn't
+  count them), and "several small containers" now reads "as long as few links run between them".
+- **Widths**: `match` / `own`, defaults (match for grid and column, own for the rest), leave it
+  out unless the content asks, the person's `widths` act wins (also added to the arranging acts).
+- **Link labels**: a word or two; shown near the source only where they fit, else a marker the
+  person hovers; longer text goes in a body.
+- Status line v2.5 with the history kept.
+
+**Scenarios** (v2.5): 14's reason for not using lanes restated for the new placement, plus one
+`show_layout` per `flow` after the first draw; new 17 (the field report's round 1: 5 areas, 16
+steps, 16 links, 8 handoffs; a phase flow or a lanes board, `show_layout` once per flow/lanes
+container, at most one redraw; fails on no call, a call per write, a call for a grid, long labels).
+
+**Calibration** (scratch, `structureOf` at one card size, the round 1 shape from
+`lanes-layered.test.ts`): as `lanes` 6 columns, 2 of 16 links crossing, 16 of 30 cells empty; as one
+`flow` 4 crossing, 20 empty; with only the 8 in-lane links, 0 crossing, 5 empty. So the skill's
+"about a quarter crossing" and "more empty cells than cards" put round 1 at the edge, not over it.
+
+**Runs** (`claude` 2.1.295, Sonnet 5.5 default, own chat, skill as `--append-system-prompt-file`, a
+test server on 4489 with `HOME` and `VB_PROJECT` in the scratchpad, `VB_KIRO_AGENT=0`,
+`--mcp-config` temp file, `--strict-mcp-config`, `--allowedTools mcp__vb__*`,
+`--no-session-persistence`; one turn each; scenario 17's content as the request).
+1. Skill as first written: `join`, `list_boards`, one `write_board` (board, 6 containers: Person
+   `column`, Gateway/Bots/Services/Storage `flow`, a `grid` of 2 questions; 18 cards; 19 links with
+   one-word labels: "then", "picks", "calls", "saves"); then `show_layout` once per flow container
+   (4 calls, none for the grid or column): all `crossing` 0, `empty` 0 to 1; no redraw. Gaps: it
+   drew a container per area with 8 links between containers (which `show_layout` never sees), and
+   wrongly told the person those links "may not show as arrows"; `size` on every card; closing
+   words were a long summary.
+2. After adding the container-per-area line: the same shape again (a container per area, 7 links
+   between containers, labels one word); `show_layout` once, for Bots only (4 links, 0 crossing,
+   2 empty), not for the 3 plain chains; no redraw; `size` on every card; long closing words.
+- So: `show_layout` is called once per container after the first write and never again, labels
+  stay short, no `widths` is set. Not fixed by two runs: with the request naming 5 areas, Sonnet
+  draws a container per area linked across containers rather than lanes or a phase flow. The
+  "as long as few links run between them" line was added after run 2 and is not yet run.
+- Servers stopped; nothing of mine left running (the 4466 watch server and a test runner seen in
+  `pgrep` predate this task).
+
+**Gates** (one after another): `npm run verify` 0 (0 warnings); `npm run gen -- --check` 0;
+`npm run check` 0 (svelte-check 0, tsc 0); `npm test` 0; `npm run test:pages` 0 (377 passed).
+
+**Protected files**: none needs a change.
+
+**For VERIFY_01 / the maintainer** (each easy to turn):
+1. The thresholds ("about a quarter of links crossing", "more empty cells than cards") are mine,
+   calibrated above; the round 1 lanes board sits right at the edge.
+2. A container per area with links between containers: the skill now steers away from it, but
+   two runs still drew it. If it persists, the next step is a scenario-level rule ("named areas
+   with handoffs: lanes or a phase flow, never a container per area") or `show_layout` reporting
+   links that leave the container.
+3. `size` on every card again (as in batch 2's run) and long closing words in own chat: not this
+   task's subject; noted.
 ### VERIFY_01

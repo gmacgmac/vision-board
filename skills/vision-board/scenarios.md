@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v2.3
+status: v2.5
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -18,6 +18,8 @@ writes no text until the turn's last one or two lines.
 v2.2 (skill v2.2, field report batch 1): 14 new, from the first real use's lanes board.
 v2.3 (skill v2.3, field report batch 2): 1, 11 and 14 updated (`column`, numbers from 1 per board,
 retire); 15 (restructure with retire) and 16 (one panel message with words, a card and answers) new.
+v2.5 (skill v2.5, field report batch 3): 14 updated (how lanes place cards now, `show_layout`); 17
+(the field report's round 1, checked once with `show_layout`) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -244,8 +246,8 @@ page's bot picker needs the server's bot list; the docs need the picker; the ser
 needs a decision from the person.
 
 **A good run**
-- Sees that most links would cross areas, so it does **not** use `lanes` (lanes share one column
-  grid by link depth, so cross-lane links draw long lines). It groups the steps by phase in one
+- Sees that most links would cross areas, so it does **not** use `lanes` (a link to another lane
+  crosses the lanes between, so lanes where most links cross read as a tangle). It groups the steps by phase in one
   `flow` (for example "Decide", "Build", "Ship"), or a `grid` per phase, with each card's area in
   its text ("Server: ..."), and writes what crosses as words in the body ("needs card 4"), using
   the numbers the board gave (`write_board`'s `n`; the board's cards start at 1).
@@ -254,6 +256,7 @@ needs a decision from the person.
   `decision` card, not a line in a step.
 - Titles name the step, never its number ("Add the bot list endpoint", never "Step 2: ...").
 - No `size` unless a card's content needs it.
+- After the first draw, one `show_layout` per `flow` container (scenario 17), none per `grid`.
 - Chat words: one line ("Done: Multi-bot chat, 9 steps in 3 phases, 2 to decide.").
 - Later, when the person comments that the plan should go page-first: scenario 15.
 - **Fails if** it draws `lanes` with most links crossing lanes, numbers steps in titles, names a
@@ -316,3 +319,27 @@ Board: checkout-review
 - **Fails if** it acts on the answer lines alone and ignores the words, guesses which cards were
   ticked without reading the lines, leaves 7 unanswered, re-fetches the round, treats card 4 as
   answered or retires anything, or lists the tasks in the chat.
+
+## 17. The field report's round 1: check the arrangement once (panel)
+
+**Situation.** From the field report's first round (2026-10-11; content made up here). On an empty
+board "Multi-bot chat", the person writes: "Map how a message travels when a second bot joins:
+person, gateway, bots, services, storage, and what hands off to what." The content is 16 steps
+in 5 areas (Person 2, Gateway 3, Bots 4, Services 3, Storage 4) with 16 real dependencies, 8 of
+them handoffs between areas; Storage's 4 steps are a chain of their own.
+
+**A good run**
+- Draws one round in one `write_board` call: either a phase `flow` (or a `grid` per phase) with
+  each card's area in its text, or one `lanes` container (the 5 areas as lanes) with links only for
+  real handoffs and steps, short labels ("then", "needs") or none.
+- Calls `show_layout` **once** for each `flow` or `lanes` container it drew, after that first
+  write, and not for any `grid`.
+- Reads the answer against the skill: few `crossing` (about a quarter of `links` or fewer) and no
+  more `empty` cells than cards in `lanes`: leaves it. Otherwise one redraw in the same turn (cut
+  links that aren't flows, move a card to its links' lane, or regroup by phase in a new `flow` and
+  retire the lanes container), and no second `show_layout`.
+- No `widths` on the region unless it says why; no step numbers in titles; no coordinates.
+- Chat words: one or two lines ("Done: Multi-bot chat, 16 steps in 5 lanes, 2 links cross.").
+- **Fails if** it never calls `show_layout`, calls it after every write or more than once per
+  container, calls it for a `grid`, redraws more than once, ignores a high `crossing`, writes long
+  link labels (a sentence on a line), or lists the cards in the chat.

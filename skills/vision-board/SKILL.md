@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Draw your output on the Vision Board when the person must answer it card by card (findings, questions, decisions, risks, actions) or when how things connect matters, then read their answers back and redraw. Use when the person says "put it on the board", when a reply would be a long numbered list, and always for content in the board's own chat panel.
-status: v2.4 (2026-10-11, the selection block; 2026-10-11, field report batch 2: numbers from 1 on each board, retire, `column` and `row`, the flag is not yours to see, the panel's one message with words, attachments and answers, no ledger read; v2.2 2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers counted across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
+status: v2.5 (2026-10-11, field report batch 3: `show_layout` once after the first draw of a `flow` or `lanes` container, how lanes place cards now, card widths, short link labels); v2.4 (2026-10-11, the selection block; 2026-10-11, field report batch 2: numbers from 1 on each board, retire, `column` and `row`, the flag is not yours to see, the panel's one message with words, attachments and answers, no ledger read; v2.2 2026-10-11, field report: how lanes place cards and when to use them, numbers are the reading order, restructuring, card sizes, numbers counted across the project; v2.1 2026-10-10, panel: quiet turns, the Send message, an empty folder, ✓/✗ words; v2 2026-10-10, every card in the conversation, the kind decides, grid by default; v1.1 the wrong-folder line; v1 2026-10-09; scenarios in scenarios.md, evidence in NOTES.md)
 ---
 
 # Vision Board
@@ -121,19 +121,55 @@ a chat reply.
   a step truly needs the one before it ("then", "blocks") or the path branches, use `flow` with
   links: `flow` places cards only by their links.
 - In `flow` and `lanes`, every card is a step linked into the sequence. A card with no links
-  lands in the first column, so cards that are not steps belong in a `grid` container beside it.
-- **How `lanes` places cards**: the lanes share one column grid, and a card's column is its link
-  depth across the whole container (the longest chain of links leading to it), not its place in
-  its own lane. A link from one lane to another pushes the target, and everything after
-  it, to the right, so cross-lane links draw long lines across the board.
+  lands in the first column of a `flow`, or in any free cell of its lane, so cards that are not
+  steps belong in a `grid` container beside it.
+- **How `lanes` places cards**: the lanes share one column grid. A card's column comes from its
+  links: it sits one column after every card linked to it, and each lane's cards sit as far left
+  as their own links allow, so one lane's long chain no longer pushes another lane right. Cards
+  in one lane and column stack, in the order that crosses least. Lines run in the gaps between
+  lanes and columns, never under a card, but a link to a far lane still crosses every lane
+  between, and each such link adds lines that can cross.
 - **When to use `lanes`**: a lane is one area or owner running its own sequence; its links stay
   inside the lane, and a link across lanes is a rare handoff. When most links would cross lanes,
   don't use lanes: group the steps by phase in one `flow` (or a `grid` per phase), give each card
   its area in the text, and write what crosses in the card's body ("needs card 5").
-- Several small containers, one per category, read better than one large one.
+  A container per area with links between containers is the same tangle drawn worse: a link
+  between containers is a plain elbow that can run under cards, and `show_layout` doesn't count it.
+- Several small containers, one per category, read better than one large one, as long as few
+  links run between them.
 - The person may switch a container's mode (a `mode` act). Keep their choice.
+- **Card widths**: a container's cards are `match` (every card in a column as wide as that
+  column's widest card) or `own` (each card its own width). The default is `match` for `grid` and
+  `column`, `own` for the rest. Leave `widths` out of the `region` item unless the content asks
+  for it (a `flow` of uneven cards that should line up: `match`). The person's choice (a `widths`
+  act) wins: never set it again on a container they chose for.
 - `center` takes a card number, which a card only has once written: draw the radial container
   and its cards, then send the `region` again with `center` set.
+
+### Check a `flow` or `lanes` container once
+
+You cannot see the board, so after the **first** draw of a `flow` or `lanes` container, call
+`show_layout` with its `board` and `region` once. Not after every write, and not for `grid`,
+`column`, `row` or `radial`. It answers, by board number:
+
+- `cards`: each card's `column` and `row` (and `lane` in `lanes`, where `row` is the card's place
+  in that lane's stack in that column).
+- `links` and `crossing`: how many links the container has, and how many cross at least one
+  other. 0 crossing is the aim.
+- `empty`: cells with no card (a column and row; in `lanes`, a lane and column).
+
+Then:
+
+- **It reads well** (few crossings, lanes mostly filled): leave it and end the round.
+- **Many crossings** (about a quarter of the links or more): cut links that aren't a real flow
+  (`unlink`); in `lanes`, move a card to the lane its links mostly stay in (rewrite it with
+  `n`, `base` and the new `lane`).
+- **Many empty cells in `lanes`** (more empty cells than cards: lanes spread thin, or a lane with
+  one or two cards): the lanes aren't their own sequences. Regroup the steps by phase in one
+  `flow` (a new container, the old one retired in the same call), with each card's area in its
+  text; when the cards and links still hold, send the `region` again with `mode: "flow"`
+  instead. In a `flow`, empty cells come from branches and matter less than crossings.
+- One check, at most one redraw, then leave it. Don't call it again to confirm the redraw.
 
 ## Writing cards
 
@@ -156,6 +192,9 @@ a chat reply.
   new key (`pricing-f3-v2`).
 - Name cards by key before they have numbers: `{ "type": "link", "from": { "key": "pricing-f1" },
   "to": { "key": "pricing-f2" }, "label": "blocks" }`.
+- **Link labels are a word or two** ("blocks", "then", "needs"). A label shows on the line near
+  its source only where it fits; a longer one becomes a small marker the person must hover to
+  read. Put anything longer in a card's body.
 - **Title** one line. **Body** short Markdown: paragraphs, bold, lists, `###` small labels, `>`
   callouts, short code blocks. `emphasis` sparingly.
 - **Card sizes** are three widths: `s` for a short card (a question, a line or two), `m` for a
@@ -258,14 +297,14 @@ container and every card in it now. The answer's `retired` lists the numbers it 
 - Notes reach you as soon as they are written, before Send. **Send** means "I am done, your
   turn". A note can be edited (answer its latest words) or removed (then nothing is owed).
 - Other acts: `reopen` (open again: a decided card, or one taken out of Later); `reject` (the
-  person turned down your proposal); `move`, `size`, `pin`, `mode` (the person arranged the
-  board: keep it that way).
+  person turned down your proposal); `move`, `size`, `pin`, `mode`, `widths` (the person
+  arranged the board: keep it that way).
 - A card decided by ✓ or ✗ is settled: never raise it again. A card decided by a comment is
   settled by those words: act on them.
 - **The flag** is the person's private mark on a card. No read of yours shows it and nothing is
   owed for it: there is nothing to do.
-- Your reads are `list_boards`, `get_board`, `show_node`, `show_container`, `list_open` and
-  `check_responses`. There is no ledger read for agents.
+- Your reads are `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`,
+  `list_open` and `check_responses`. There is no ledger read for agents.
 
 ## Answering
 
