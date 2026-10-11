@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v2.5
+status: v3
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -20,6 +20,13 @@ v2.3 (skill v2.3, field report batch 2): 1, 11 and 14 updated (`column`, numbers
 retire); 15 (restructure with retire) and 16 (one panel message with words, a card and answers) new.
 v2.5 (skill v2.5, field report batch 3): 14 updated (how lanes place cards now, `show_layout`); 17
 (the field report's round 1, checked once with `show_layout`) new.
+v3 (skill v3, the board is how we chat): 18 (a planning question answered through the board) and
+19 (distil on request) new; 1, 11, 12, 14 and 17 updated (the structure suggested first, `row` and
+`column` for chatting, no `size`, links inside containers). In every scenario that draws a new
+board or more than about 6 cards, a good run first suggests the structure in a line or two and ends
+the turn, unless the person already named it; "A good run" then describes the turn that draws. In
+every scenario no `size` is set, no card's title or text carries a number of its own, and the
+chat words are one or two lines with no numbered list.
 
 ## 1. A review with 12 findings (panel)
 
@@ -27,18 +34,19 @@ v2.5 (skill v2.5, field report batch 3): 14 updated (how lanes place cards now, 
 module and put what you find on the board."
 
 **A good run**
-- Reads the code (no approval needed), then draws in **one** `write_board` call: a container per
-  category (for example "Correctness", "Security", "Tests"), mode `grid`, 12 `finding` or `risk`
-  cards, every item keyed (`checkout-f1` ... `checkout-f12`), written in the order to be read.
+- Reads the code (no approval needed), then suggests the structure in a line and ends the turn
+  ("12 findings in 3 groups: a row per group, or one grid?"). When the person answers, draws in
+  **one** `write_board` call: a container per category (for example "Correctness", "Security",
+  "Tests") in the agreed mode (`row` per container, or `grid`), 12 `finding` or `risk` cards, every item keyed (`checkout-f1` ... `checkout-f12`), written in the order to be read.
   Anything it needs the person to decide (fix now or later, which option) is a `question` or
   `decision` card, not a line in a finding's body.
 - Short titles, bodies of a few lines with the file and symbol; no coordinates; no `board` item
   (the board exists and is not its own).
-- Links only where one finding causes another, by key; none to show order or relatedness.
+- No links: findings are chatting, not a flow.
 - Chat words: one line, such as "Done: 12 findings in 3 groups on Checkout review."
-- **Fails if** it lists the findings in the chat, writes one call per card, names `item` on a
-  node, uses `column`, `row` or `flow` for the findings, or calls `join`, passes a `secret`, or calls
-  `check_responses` with `wait`.
+- **Fails if** it draws before the person picks the structure, lists the findings in the chat,
+  writes one call per card, names `item` on a node, uses `flow` or links for the findings, sets
+  `size`, or calls `join`, passes a `secret`, or calls `check_responses` with `wait`.
 
 ## 2. A comment to answer (own chat)
 
@@ -65,7 +73,7 @@ payment provider's docs say about timeouts."
 - The message carries card 12 as an attachment; the agent `show_node`s 12 for its latest `ver`.
 - `append { n: 12, text, base }` with the new paragraph and its source; one new version, nothing
   else on the card changed.
-- Chat words: one line ("Added the timeout limits to 12.").
+- Chat words: one line ("Added the timeout limits to card 12.").
 - **Fails if** it sends a full `node` rewrite, a new card instead, or a `reply` (there is no
   note to answer).
 
@@ -174,18 +182,19 @@ attaches the note).
 
 **Situation.** On an empty board "Planning meeting", the person writes: "Draft the agenda for
 Monday's planning meeting: last sprint, the release date, hiring, and anything you need me to
-decide first."
+decide first. A row for the agenda is fine."
 
 **A good run**
-- One `write_board` call: an agenda container in `grid` with `topic` or `note` cards in the
-  order to be discussed, and a container for what it needs settled, with `question` or
-  `decision` cards (the release date as a decision with its options and a pick).
-- No links between agenda cards: the numbers give the order. A link only if one point truly
-  depends on another ("blocks").
+- The person named the shape, so it draws at once, in one `write_board` call: an agenda
+  container in `row` with `topic` or `note` cards in the order to be discussed, and a container
+  for what it needs settled (`row` or `column`), with `question` or `decision` cards (the release
+  date as a decision with its options and a pick).
+- No links: the numbers give the order.
 - Chat words: one line ("Done, 7 cards added on Planning meeting: 5 agenda points, 2 to
   settle.").
-- **Fails if** it uses `column`, `row` or `flow` for the agenda, links the cards with "then", asks its
-  questions inside a topic's body, or names `item` on a node.
+- **Fails if** it asks the structure again, uses `flow` for the agenda, links the cards with
+  "then", asks its questions inside a topic's body, numbers the agenda in titles, or names `item`
+  on a node.
 
 ## 12. A first board from an empty folder (panel)
 
@@ -195,15 +204,17 @@ move to the new office: what has to happen, and what you need me to decide." The
 person's page opens it."
 
 **A good run**
-- One `write_board` call that starts with a `board` item named for the subject, short ("Office
-  move", id `office-move`, never "Vision Board: ..." or the whole request), a one- or two-sentence
-  `summary`, then its containers (`grid`) and cards: the steps or areas as `action` or `topic`
+- First turn: no write; one or two lines suggesting the structure ("A row per area (building,
+  people, IT), with the decisions as question cards, or a flow of the move's phases?").
+- When the person answers, one `write_board` call that starts with a `board` item named for the
+  subject, short ("Office move", id `office-move`, never "Vision Board: ..." or the whole request), a one- or two-sentence
+  `summary`, then its containers (in the agreed shape) and cards: the steps or areas as `action` or `topic`
   cards, what it needs decided as `question` or `decision` cards. Every item keyed
   (`office-move-...`).
 - No `request_grant` (a board it creates is its own), no `join`, no `secret`, no `wait`.
 - No text before the write; chat words: one line ("Done: Office move, 9 cards, 3 to decide.").
-- **Fails if** it answers only in the chat with a long list, asks the person to make a board
-  first, writes the board in one call and the cards in another without reason, names the board
+- **Fails if** it draws the whole board before suggesting the structure, answers only in the
+  chat with a long list, asks the person to make a board first, writes the board in one call and the cards in another without reason, names the board
   after the folder or the whole sentence, or narrates its steps in the chat.
 
 ## 13. A Send with a ✗ on a yes/no question (panel)
@@ -232,7 +243,7 @@ These are the person's answers up to head 212. To read anything newer, call chec
 - Does not re-read the answers: no `check_responses` from 0 or with `wait`, no `list_open` just to
   find what the message already says. If it does read, `after` is 212.
 - No text before the last lines; chat words: one or two lines ("Guest checkout comes out of 1.4;
-  answered your note on 6.").
+  answered your note on card 6.").
 - **Fails if** it reads ✗ on 3 as "dropped, settled" with nothing done about the No, asks 3
   again, re-fetches the round, posts interim messages narrating its steps, or lists the cards'
   content in the chat.
@@ -246,6 +257,9 @@ page's bot picker needs the server's bot list; the docs need the picker; the ser
 needs a decision from the person.
 
 **A good run**
+- Suggests the structure in a line first ("A flow by phase, each step naming its part, or lanes
+  per part?") and draws when the person answers; the bullets below are for "a flow by phase" or
+  for lanes, as asked.
 - Sees that most links would cross areas, so it does **not** use `lanes` (a link to another lane
   crosses the lanes between, so lanes where most links cross read as a tangle). It groups the steps by phase in one
   `flow` (for example "Decide", "Build", "Ship"), or a `grid` per phase, with each card's area in
@@ -255,7 +269,7 @@ needs a decision from the person.
 - What it needs decided (which bot answers first, the routing rule) is a `question` or
   `decision` card, not a line in a step.
 - Titles name the step, never its number ("Add the bot list endpoint", never "Step 2: ...").
-- No `size` unless a card's content needs it.
+- No `size`.
 - After the first draw, one `show_layout` per `flow` container (scenario 17), none per `grid`.
 - Chat words: one line ("Done: Multi-bot chat, 9 steps in 3 phases, 2 to decide.").
 - Later, when the person comments that the plan should go page-first: scenario 15.
@@ -315,7 +329,7 @@ Board: checkout-review
   finding changes). Treats 2 and 5 as decided; never asks them again.
 - Card 4 is what the words point at, not a note: nothing is owed on it.
 - No `check_responses` or `list_open` to re-read the answers; if it reads, `after` is 240.
-- Chat words: one or two lines ("Added 2 tasks beside 4; answered your note on 7.").
+- Chat words: one or two lines ("Added 2 tasks beside card 4; answered your note on card 7.").
 - **Fails if** it acts on the answer lines alone and ignores the words, guesses which cards were
   ticked without reading the lines, leaves 7 unanswered, re-fetches the round, treats card 4 as
   answered or retires anything, or lists the tasks in the chat.
@@ -329,6 +343,8 @@ in 5 areas (Person 2, Gateway 3, Bots 4, Services 3, Storage 4) with 16 real dep
 them handoffs between areas; Storage's 4 steps are a chain of their own.
 
 **A good run**
+- Suggests the structure in a line first ("Lanes per area with the handoffs linked, or a flow by
+  phase?"), ends the turn, and draws when the person answers.
 - Draws one round in one `write_board` call: either a phase `flow` (or a `grid` per phase) with
   each card's area in its text, or one `lanes` container (the 5 areas as lanes) with links only for
   real handoffs and steps, short labels ("then", "needs") or none.
@@ -338,8 +354,59 @@ them handoffs between areas; Storage's 4 steps are a chain of their own.
   more `empty` cells than cards in `lanes`: leaves it. Otherwise one redraw in the same turn (cut
   links that aren't flows, move a card to its links' lane, or regroup by phase in a new `flow` and
   retire the lanes container), and no second `show_layout`.
-- No `widths` on the region unless it says why; no step numbers in titles; no coordinates.
+- **Links stay inside a container**: at most one or two links between containers on the board. A
+  container per area with the handoffs linked between containers is the wrong cut (it is lanes
+  drawn worse, and `show_layout` doesn't see those links).
+- No `widths` on the region unless it says why; no `size`; no step numbers in titles; no
+  coordinates.
 - Chat words: one or two lines ("Done: Multi-bot chat, 16 steps in 5 lanes, 2 links cross.").
-- **Fails if** it never calls `show_layout`, calls it after every write or more than once per
+- **Fails if** it draws before the person picks the structure, draws a container per area with
+  more than one or two links between containers, never calls `show_layout`, calls it after every write or more than once per
   container, calls it for a `grid`, redraws more than once, ignores a high `crossing`, writes long
   link labels (a sentence on a line), or lists the cards in the chat.
+
+## 18. A planning question answered through the board (panel)
+
+**Situation.** The person opens the chat panel in a folder with no boards and writes: "We're
+planning a two-day team offsite next spring. What do we need to work out?" The message ends "No
+board is open in this folder yet. ...". After the agent's first turn, the person answers its
+suggestion: "Rows by area are good."
+
+**A good run**
+- First turn: no write. One or two lines suggesting the structure, such as "About 12 points in 4
+  areas (venue, travel, agenda, budget): a row per area, or columns side by side?", and nothing
+  else: no numbered list of the points in the chat.
+- Second turn: one `write_board` call: a `board` item named for the subject ("Team offsite",
+  never the whole sentence), then a container per area in `row` mode (or `column`s if each area
+  has 3 or fewer cards), one point per card: what it can explain as `topic`, `note`, `finding` or
+  `risk`; what only the person can answer as `question` or `decision` cards (dates, budget
+  ceiling, who comes). Every item keyed (`team-offsite-...`).
+- No links (chatting, not a flow), no `size`, no `widths`, no coordinates, no numbers in titles or
+  bodies.
+- Chat words: one or two lines, with no list ("Done: Team offsite, 12 cards in 4 rows; 5 ask
+  you something.").
+- **Fails if** it draws in the first turn, writes the points as a numbered list in the chat, puts
+  several points in one card, asks a question inside a note's body, links the cards, uses `flow`,
+  sets `size`, or numbers a card's title.
+
+## 19. Distil a container on request (panel)
+
+**Situation.** Board "Team offsite" has a container "venue" (`row`) with cards 1 to 5: three
+findings about venues, a risk about the dates, and question 4 ("Book the lakeside venue?"), which
+the person answered ✓. Card 3 has a comment the agent has not answered yet. The person selects
+cards 1 to 5 and writes: "Distil these into one card." The message lists them under "The person
+selected these cards:".
+
+**A good run**
+- Answers card 3's comment first (`show_node` 3 for the note's `seq`, then `reply`), in the same
+  `write_board` call before any retire.
+- Writes one summary card in "venue" (a `note` or `finding`) saying what was found and decided
+  ("Lakeside venue booked; the date risk stands"), without numbers in its title or body other
+  than "card N" references.
+- Then one `retire { n }` per card it replaces (1 to 5, each with its own key), in the same call.
+  Question 4 is decided, so it folds in; an undecided question would stay unless the person said
+  to fold it in.
+- Chat words: one line ("Card 6 sums up the venue; cards 1 to 5 are retired.").
+- **Fails if** it retires before answering card 3, retires the whole container (which takes the
+  new summary with it), writes more than one summary card, re-asks question 4, distils any other
+  container, or later distils or retires cards on its own without being asked.

@@ -168,3 +168,51 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   and set no `widths`; all crossings 0, no redraw. Both drew a container per area with 7 or 8 links
   between containers (which `show_layout` does not see), so v2.5 says a container per area linked
   across is the same tangle drawn worse; still drawn in run 2. Both set `size` on every card.
+
+## Skill v3 (the board is how we chat)
+
+- 2026-10-11, maintainer (chat 574-597; task `cortex-tasks/board/2026-10-11_board-agent_skill-conversation-board.md`
+  rulings 1-7): the board is how we chat (one point per card, answered in any order); the person
+  guides the structure (suggest it in a line, wait); layouts fit the task and the screen (chatting:
+  a `row` per container, `column`s side by side or a wrapping `grid`, no links; `flow`, `lanes`,
+  architecture as asked); links stay inside a container (one or two between containers at most);
+  ask with question, decision and action cards; consolidation (distil, retire) only when the person
+  asks; board numbers only, no numbered lists in the chat; no `size`; one- or two-line chat.
+- 2026-10-11, agent: v3 rewrote SKILL.md around those (343 lines, 4,340 words in v2.5; 293 lines,
+  3,625 words in v3). Scenarios 18 (a planning question through the board) and 19 (distil on
+  request) new; 1, 11, 12, 14 and 17 updated.
+- 2026-10-11, agent: runs, `claude` 2.1.295 (Sonnet 5.5, its default), panel-style (a joined agent's
+  `VB_AGENT_SECRET` in a `--mcp-config` temp file, `--strict-mcp-config`, `--allowedTools mcp__vb__*`,
+  skill as `--append-system-prompt-file`, the panel's "No board is open in this folder yet." line on
+  each message), test servers on 4493 and 4494 with `HOME` and `VB_PROJECT` in the system temp
+  folder; two messages per run, the second sent only after the first turn's result.
+  - Scenario 18, first draft of v3: turn 1 suggested the structure and drew nothing, but in four
+    lines with bullets; turn 2 drew "Team offsite": 5 `row` containers of 3 cards, 15 one-point
+    cards (12 asking, a risk, 2 actions), no links, no `size`, no `widths`, no numbers in titles;
+    closing words two sentences naming cards 1 and 2. Keys began `off-`, not the board id.
+  - Scenario 17, first draft (17a): both messages were queued at once and ran as one turn, so it
+    says nothing about asking first. One `lanes` container, 16 links all inside it; `show_layout`
+    once (0 crossing, 56 empty for 16 cards), then no redraw: it explained the empty cells in a
+    five-bullet closing message instead.
+  - Scenario 17, after "plain lines, no bullets" and "redraw in the same turn" (17b): drew lanes in
+    turn 1 without asking (it read "Map ..." plus the panel's "create one with write_board" as the
+    go-ahead); `show_layout` once (60 empty), then one redraw as a new `flow` with the area in each
+    body and the lanes container retired (the skill's one allowed agent retire); a needed rule
+    ("both bots may claim it") sat in a risk's body, not a decision card; closing words three short
+    paragraphs. Fixed in the skill: "map", "plan" and a may-create message are not a shape, ask
+    anyway; a needed choice is a `decision` card, not a line in a risk.
+  - Final v3, scenario 18: turn 1 three sentences, no write ("a row of cards ... or a timeline of
+    planning phases? I'd suggest the row"). Turn 2: "Team offsite", 4 `row` containers (4, 4, 3, 4
+    cards), 15 one-point cards (12 asking, 1 risk, 2 actions), keys `team-offsite-...`, no links,
+    `size`, `widths` or numbers in titles; closing words two lines ("Cards 1 to 4 ... come first").
+  - Final v3, scenario 17: turn 1 offered lanes or a phase flow, no write. Turn 2 (the person: "go
+    with your recommendation"): one `lanes` container, 16 cards, 16 links, none between
+    containers; `show_layout` once (0 crossing, 60 empty), then in the same turn the `region` sent
+    again as `flow` plus an `append` of each card's area; no second check; no `size`, `widths` or
+    numbers in titles. Gaps: every card `topic` (steps would read better as `note` or `finding`);
+    closing words one five-sentence paragraph, still more than two lines.
+- 2026-10-11, agent: what still slips in every run so far (v2 to v3): the closing words run long in
+  the turn that draws (three to five sentences); the suggest-first line holds in the final skill.
+  The panel's no-board line ("If drawing would help, create one with write_board") pulled one run
+  into drawing first; the skill now overrides it, but the line itself could say "suggest the
+  structure first" (server wording in `apps/board/server/chat-prompt.ts` `NO_BOARD`, not changed).
