@@ -2,11 +2,13 @@
 // ledger's latest `seq`. The shapes are built by packages/actions; nothing is folded here. A read
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { boardView, latest, nodesOf } from '../../../packages/format/src/index.ts';
+import { boardView, latest, nodesOf, toLine } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, openContainers, openItems, responsesAfter, responsesPage,
+  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
+  responsesAfter, responsesPage,
 } from '../../../packages/actions/src/index.ts';
+import { cardOn } from './edge.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -43,7 +45,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
       ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),
       ...containerJson(st),
     },
-    versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(x.n), latest(x).ver])),
+    versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(numberOf(s, x.id)), latest(x).ver])),
     ...boardAccess(s, id),
   });
 };
@@ -52,11 +54,12 @@ const showNode: Handler = ({ res, params, ledger }) => {
   const s = ledger.state();
   const board = requireBoard(s, params.board);
   const n = Number(params.n);
-  const detail = nodeDetail(s, n);
-  if (!detail || detail.board !== board) {
+  const id = cardOn(s, board, n);
+  const detail = id === undefined ? undefined : nodeDetail(s, id);
+  if (id === undefined || !detail) {
     throw problem('not-found', `There is no node ${n} on board "${board}". Call get_board to see its nodes.`);
   }
-  sendJson(res, 200, { head: s.seq, ...detail, ...(params.linked === true && { linked: linkedDetails(s, n) }) });
+  sendJson(res, 200, { head: s.seq, ...detail, ...(params.linked === true && { linked: linkedDetails(s, id) }) });
 };
 
 const showContainer: Handler = ({ res, params, ledger }) => {
@@ -121,13 +124,14 @@ const checkResponses: Handler = async (ctx) => {
   sendJson(res, 200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq });
 };
 
-/** Ledger lines after `after`, oldest first, optionally one board's; JSON, or JSON Lines when
- * the caller asks for `application/jsonl` (api.md 44). */
+/** Ledger lines after `after`, oldest first, optionally one board's, as the file holds them (cards
+ * by identity, flags included): the page's only (api.md 130). JSON, or JSON Lines when the caller
+ * asks for `application/jsonl` (api.md 44). */
 const readLedger: Handler = ({ req, res, params, ledger }) => {
   const s = ledger.state();
   const board = params.board === undefined ? undefined : requireBoard(s, params.board);
   const after = Number(params.after);
-  const lines = ledger.events().filter((e) => e.seq > after && (board === undefined || eventBoard(s, e) === board));
+  const lines = ledger.events().filter((e) => e.seq > after && (board === undefined || eventBoard(s, e) === board)).map(toLine);
   const { list, more } = page(lines, params.limit);
   if (wantsJsonLines(req)) return sendJsonLines(res, list);
   sendJson(res, 200, { events: list, head: s.seq, ...(more && { more }) });

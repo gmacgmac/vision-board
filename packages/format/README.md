@@ -1,8 +1,12 @@
 # packages/format
 
 The format the agent and the board share: the project ledger (`.visionboard/ledger.jsonl`,
-format 3, readers also accept 2; D-017), one event per line for every node's identity, versions,
-the person's actions, the agent's replies, proposals, parking bundles, joins and grant requests. A
+format 12, readers accept 2 to 12; D-017, api.md 125-130), one event per line for every card's
+identity, versions, the person's actions, the agent's replies, proposals, parking bundles,
+retires, joins and grant requests. A card's identity is its ledger number: the file writes it `n`,
+code calls it `id` (`fromLine`, `toLine`); every request and answer names a card by its board
+number `n` instead, 1, 2, 3... per board in the order drawn (`boardNumber`, `cardId`; D-041
+proposed). A
 board version is a position in it (`seq`). Its one source is the JSON Schema in `schema/`
 (`common`, `events/<type>` with `core`, `sent` and `stored` forms, and `ledger-event`; api.md
 5-11), `schema/api/` (request and response bodies that are not events) and `schema/openapi.json` (every
@@ -10,7 +14,7 @@ operation, OpenAPI 3.2; `schema/vendor/` holds the official OAS schema the tests
 types and the hand validators here are tested against it; `ajv` runs only in the board
 server (`apps/board/server/schema.ts`), as does the CLI (`npm run validate -- <ledger.jsonl>`).
 
-The `View` (regions, layout modes, node kinds, item numbers, links, no coordinates) is the
+The `View` (regions, layout modes, node kinds, board numbers, links, no coordinates) is the
 projection the layout engine and the page read: one board folded from the ledger by `boardView`,
 never a file. The format-1 view files and transcript are archived in
 `prototypes/archive/view-format-v1/`.
@@ -20,9 +24,12 @@ never a file. The format-1 view files and transcript are archived in
 - **Public API** (`src/index.ts`): view types and constants (`View`, `ViewNode`, `Region`,
   `Link`, `MODES`, `KINDS`, `ID_PATTERN`, `FORBIDDEN_KEYS`), `validateView`; ledger types
   (`LedgerEvent` and one type per event, `NodeBody`, `ParkBundle`, `LedgerRegion`, `EVENT_TYPES`,
-  `LEDGER_FORMAT`, `LEDGER_FORMATS`, `ActionId`, `ACTION_IDS`, `NODE_SIZES`, `ACT_SIZES`),
+  `RetireEvent`, `LEDGER_FORMAT`, `LEDGER_FORMATS`, `ActionId`, `ACTION_IDS`, `PRIVATE_ACTIONS`,
+  `isPrivateAct`, `CARD_EVENTS`, `NODE_SIZES`, `ACT_SIZES`, `RENAMED_MODES`, `LIST_RENAMED`),
+  `fromLine` and `toLine` (a line as the file holds it, and the event code reads),
   `MAX_TEXT`, `LIMITS`, `codePoints`, `AGENT_ID_PATTERN`, `TIMESTAMP_PATTERN`, `eventProblems` (one
   event's shape), `LedgerIndex` with `emptyIndex`, `containerKey`, `contextProblems` and
-  `indexEvent` (is this the right next event), `readLedger` and `validateLedger` (a whole file); the drawn fold
-  (`foldDrawn`, `applyDrawn`, `nodesOf`, `latest`) and `boardView` (one board as a `View`); the route table `OPERATIONS` and `OperationId` (each operation's
+  `indexEvent` (is this the right next event), `boardNumber` and `cardId` (a card's board number and back),
+  `readLedger` and `validateLedger` (a whole file); the drawn fold
+  (`foldDrawn`, `applyDrawn`, `nodesOf` (on the board now), `everyNodeOf` (retired too), `latest`) and `boardView` (one board as a `View`); the route table `OPERATIONS` and `OperationId` (each operation's
   method, path, path parameters, `xAgent` and `auth`), generated from `schema/openapi.json` by `npm run gen`.

@@ -1,16 +1,32 @@
-// Contextual ledger rules: identity and order (D-017, D-018). The index is the smallest state
-// needed to judge the next event; the ledger module (step 2) folds the full board state.
+// Contextual ledger rules: identity and order (D-017, D-018, D-041 proposed). The index is the
+// smallest state needed to judge the next event, and it numbers each board's cards (api.md 125);
+// the ledger module (packages/actions) folds the full board state. Events here are as code reads
+// them (`fromLine`): a card is its `id`.
 import type { ActEvent, LedgerEvent } from './ledger.ts';
 import { actCard, CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
 import { eventProblems } from './ledger-shape.ts';
+import { fromLine } from './ledger-line.ts';
+import { retireContext } from './retire-rules.ts';
+import { accessKey, accessName, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
+
+export { accessKey, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
 
 export interface LedgerIndex {
   seq: number;
-  /** Highest node number ever assigned. New numbers are always above it, so none is reused. */
-  maxN: number;
+  /** Highest card identity ever assigned. New ones are always above it, so none is reused. */
+  maxId: number;
+  /** Board -> its containers (region ids) on the board now; a retired container leaves. */
   boards: Map<string, Set<string>>;
-  nodes: Map<number, { board: string; ver: number }>;
-  proposals: Map<number, { n: number; ver: number }>;
+  /** Card identity -> its board, latest version and board number (api.md 125). */
+  nodes: Map<number, { board: string; ver: number; n: number }>;
+  /** Board -> its cards' identities in the order first drawn: board number `n` is at `n - 1`.
+   * Retired cards stay in it, so no number is ever given twice (api.md 126). */
+  cards: Map<string, number[]>;
+  /** Card identity -> `seq` of the `retire` line that took it off its board. */
+  retired: Map<number, number>;
+  /** `containerKey` of every retired container: its id is never used again on that board. */
+  retiredRegions: Set<string>;
+  proposals: Map<number, { id: number; ver: number }>;
   /** Agent ids that have joined (D-027). */
   agents: Set<string>;
   /** Board or container (`accessKey`) -> the agent whose v3 line created it. v2 lines made none. */
@@ -31,45 +47,37 @@ export interface GrantRequest {
 }
 
 export const emptyIndex = (): LedgerIndex => ({
-  seq: 0, maxN: 0, boards: new Map(), nodes: new Map(), proposals: new Map(),
+  seq: 0, maxId: 0, boards: new Map(), nodes: new Map(), cards: new Map(), retired: new Map(), retiredRegions: new Set(), proposals: new Map(),
   agents: new Set(), creators: new Map(), holders: new Map(), requests: new Map(),
 });
 
-/** One key per container (a region, D-011). Ids cannot contain `/`, so the key is unambiguous. */
-export const containerKey = (board: string, region: string): string => `${board}/${region}`;
+/** The board number of card `id` (api.md 125), or undefined for an unknown card. */
+export const boardNumber = (ix: LedgerIndex, id: number): number | undefined => ix.nodes.get(id)?.n;
 
-/** The key `creators` and `holders` use: the board's id for the whole board (no `region`), else
- * the container's `containerKey`. Board ids hold no `/`, so the two never meet. */
-export const accessKey = (board: string, region?: string): string =>
-  region === undefined ? board : containerKey(board, region);
+/** The identity of card `n` on `board`, retired or not, or undefined when the board has no card `n`. */
+export const cardId = (ix: LedgerIndex, board: string, n: number): number | undefined =>
+  Number.isInteger(n) && n >= 1 ? ix.cards.get(board)?.[n - 1] : undefined;
 
-/** How a problem names a board or a container. */
-const accessName = (board: string, region?: string): string => region === undefined ? `board ${board}` : `${board}/${region}`;
+/** How a problem names a card: by default its identity, which the ledger file holds. The server
+ * passes one that gives the board number, for words an agent or the person reads (api.md 125). */
+export type CardName = (id: number) => string;
 
-/** Why `holder` cannot be revoked from the board, or the container in `region`, or undefined when
- * it can: a creator stays, and only a holder can be removed (api.md 16, 82). The ledger and the
- * person's act check both ask here. */
-export function revokeProblem(ix: LedgerIndex, board: string, region: string | undefined, holder: string): string | undefined {
-  const k = accessKey(board, region);
-  const what = accessName(board, region);
-  if (ix.creators.get(k) === holder)
-    return `holder: "${holder}" created ${what}, and a ${region === undefined ? 'board' : 'container'}'s creator cannot be removed`;
-  if (!ix.holders.get(k)?.has(holder)) return `holder: "${holder}" does not hold ${what}`;
-  return undefined;
-}
-
-/** Problems with `e` coming next after `ix`. Assumes `e` is well formed (eventProblems). */
-export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
+/** Problems with `e` coming next after `ix`. Assumes `e` is well formed (eventProblems). Words
+ * name a card with `name` (its identity, unless the caller gives board numbers); a field keeps the
+ * name the file gives it (`n`). */
+export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName = String): string[] {
   const p: string[] = [];
   if (e.seq !== ix.seq + 1) p.push(`seq: expected ${ix.seq + 1}`);
-  const node = (n: number | undefined, f = 'n') => {
-    const x = n === undefined ? undefined : ix.nodes.get(n);
-    if (n !== undefined && !x) p.push(`${f}: unknown node ${n}`);
+  // A card named by an event must exist and, but for an unlink, still be on its board.
+  const node = (id: number | undefined, f = 'n') => {
+    const x = id === undefined ? undefined : ix.nodes.get(id);
+    if (id !== undefined && !x) p.push(`${f}: unknown node ${id}`);
+    else if (id !== undefined && ix.retired.has(id) && e.type !== 'unlink') p.push(`${f}: card ${name(id)} is retired`);
     return x;
   };
-  const verAtMost = (n: number, ver: number | undefined) => {
-    const x = node(n);
-    if (x && ver !== undefined && ver > x.ver) p.push(`ver: node ${n} is at version ${x.ver}`);
+  const verAtMost = (id: number, ver: number | undefined) => {
+    const x = node(id);
+    if (x && ver !== undefined && ver > x.ver) p.push(`ver: node ${name(id)} is at version ${x.ver}`);
     return x;
   };
   switch (e.type) {
@@ -79,6 +87,7 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
       break;
     case 'region':
       if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
+      else if (ix.retiredRegions.has(containerKey(e.board, e.region.id))) p.push(`region.id: container "${e.region.id}" was retired; pick another id`);
       // The built-in Later is every board's own (api.md 67); older lines keep their meaning.
       if (e.v >= 6 && e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
         p.push(`region.id: "${LATER_REGION}" is the board's built-in Later container; pick another id`);
@@ -86,10 +95,12 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     case 'node': {
       const regions = ix.boards.get(e.board);
       if (!regions) p.push(`board: unknown "${e.board}"`);
+      else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(`node.region: container "${e.node.region}" was retired`);
       else if (!regions.has(e.node.region)) p.push(`node.region: unknown "${e.node.region}"`);
-      const prev = ix.nodes.get(e.n);
-      if (!prev && e.n <= ix.maxN) p.push(`n: ${e.n} was already used; new nodes get ${ix.maxN + 1} or above`);
-      if (prev && prev.board !== e.board) p.push(`n: node ${e.n} belongs to board "${prev.board}"`);
+      const prev = ix.nodes.get(e.id);
+      if (!prev && e.id <= ix.maxId) p.push(`n: ${e.id} was already used; new nodes get ${ix.maxId + 1} or above`);
+      if (prev && prev.board !== e.board) p.push(`n: node ${name(e.id)} belongs to board "${prev.board}"`);
+      if (prev && ix.retired.has(e.id)) p.push(`n: card ${name(e.id)} is retired; draw a new card instead`);
       const want = (prev?.ver ?? 0) + 1;
       if (e.ver !== want) p.push(`ver: expected ${want}`);
       break;
@@ -97,24 +108,25 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     case 'link': case 'unlink': node(e.from, 'from'); node(e.to, 'to'); break;
     case 'act':
       actContext(ix, e, p);
-      for (const n of e.nodes ?? []) node(n, 'nodes');
-      if (e.n === undefined) break;
-      verAtMost(e.n, e.ver);
+      for (const id of e.nodes ?? []) node(id, 'nodes');
+      if (e.id === undefined) break;
+      verAtMost(e.id, e.ver);
       if (e.proposal !== undefined) {
         const prop = ix.proposals.get(e.proposal);
-        const cur = ix.nodes.get(e.n!)?.ver;
-        if (!prop || prop.n !== e.n) p.push(`proposal: no proposal ${e.proposal} for node ${e.n}`);
+        const cur = ix.nodes.get(e.id)?.ver;
+        if (!prop || prop.id !== e.id) p.push(`proposal: no proposal ${e.proposal} for node ${name(e.id)}`);
         // An out-of-date proposal can't be accepted, but it can be turned down (api.md 93).
-        else if (prop.ver !== cur && e.action !== 'reject') p.push(`proposal: out of date, node ${e.n} changed since it was made`);
+        else if (prop.ver !== cur && e.action !== 'reject') p.push(`proposal: out of date, node ${name(e.id)} changed since it was made`);
       }
       break;
+    case 'retire': retireContext(ix, e, p, name); break;
     case 'seen':
-      if ('n' in e) verAtMost(e.n, e.ver);
+      if ('id' in e) verAtMost(e.id, e.ver);
       else if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
       else if (e.head > ix.seq) p.push(`head: the ledger is at line ${ix.seq}`);
       break;
-    case 'propose': verAtMost(e.n, e.ver); break;
-    case 'reply': case 'park': node(e.n); break;
+    case 'propose': verAtMost(e.id, e.ver); break;
+    case 'reply': case 'park': node(e.id); break;
     case 'join':
       if (e.agent !== undefined && ix.agents.has(e.agent)) p.push(`agent: "${e.agent}" has already joined`);
       break;
@@ -127,15 +139,6 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent): string[] {
     }
   }
   return p;
-}
-
-/** The `seq` of `agent`'s unanswered grant request for the container, or with no `region` for
- * the board, if any (api.md 26). */
-export function openRequestOf(ix: LedgerIndex, agent: string | undefined, board: string, region?: string): number | undefined {
-  for (const [seq, r] of ix.requests) {
-    if (!r.answer && r.agent === agent && r.board === board && r.region === region) return seq;
-  }
-  return undefined;
 }
 
 /** The container rules of an `act`: mode, move, grant, deny, revoke and send (api.md 16, 23, 66),
@@ -156,8 +159,9 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
     case 'mode': region(); break;
     case 'move': {
       const board = ix.nodes.get(actCard(e)!)?.board;
-      if (board !== undefined && e.region !== LATER_REGION && !ix.boards.get(board)?.has(e.region!))
-        p.push(`region: unknown "${e.region}" on board "${board}"`);
+      if (board === undefined || e.region === LATER_REGION || ix.boards.get(board)?.has(e.region!)) break;
+      p.push(ix.retiredRegions.has(containerKey(board, e.region!))
+        ? `region: container "${e.region}" was retired` : `region: unknown "${e.region}" on board "${board}"`);
       break;
     }
     case 'send': if (!ix.boards.has(e.board!)) p.push(`board: unknown "${e.board}"`); break;
@@ -184,11 +188,24 @@ export function indexEvent(ix: LedgerIndex, e: LedgerEvent): void {
       if (e.v !== 2 && e.agent !== undefined) create(ix, e.board, e.agent);
       break;
     case 'region': indexRegion(ix, e.board, e.region.id, e.v !== 2 ? e.agent : undefined); break;
-    case 'node':
-      ix.nodes.set(e.n, { board: e.board, ver: e.ver });
-      ix.maxN = Math.max(ix.maxN, e.n);
+    case 'node': {
+      const known = ix.nodes.get(e.id);
+      if (known) { known.ver = e.ver; break; }
+      const cards = ix.cards.get(e.board) ?? [];
+      ix.cards.set(e.board, cards);
+      cards.push(e.id);
+      ix.nodes.set(e.id, { board: e.board, ver: e.ver, n: cards.length });
+      ix.maxId = Math.max(ix.maxId, e.id);
       break;
-    case 'propose': ix.proposals.set(e.seq, { n: e.n, ver: e.ver }); break;
+    }
+    case 'retire':
+      for (const id of e.cards) ix.retired.set(id, e.seq);
+      if (e.region !== undefined) {
+        ix.retiredRegions.add(containerKey(e.board, e.region));
+        ix.boards.get(e.board)?.delete(e.region);
+      }
+      break;
+    case 'propose': ix.proposals.set(e.seq, { id: e.id, ver: e.ver }); break;
     case 'join': if (e.agent !== undefined) ix.agents.add(e.agent); break;
     case 'grant-request':
       ix.requests.set(e.seq, {
@@ -234,7 +251,8 @@ function indexAct(ix: LedgerIndex, e: ActEvent): void {
 
 export interface ReadLedger { events: LedgerEvent[]; problems: string[]; index: LedgerIndex }
 
-/** Parse and check a whole ledger. `events` holds the valid events in order; `problems` every
+/** Parse and check a whole ledger: each line's shape as the file holds it, then the event code
+ * reads (`fromLine`) in context. `events` holds the valid events in order; `problems` every
  * problem as "line N: ...". Lines with problems are skipped, so one bad event is reported without
  * hiding the rest (D-019). */
 export function readLedger(lines: string[]): ReadLedger {
@@ -246,14 +264,15 @@ export function readLedger(lines: string[]): ReadLedger {
     let e: unknown;
     try { e = JSON.parse(line); } catch { index.seq += 1; return void problems.push(`line ${i + 1}: not JSON`); }
     let p = eventProblems(e);
-    if (!p.length) p = contextProblems(index, e as LedgerEvent);
-    if (p.length) {
+    const event = p.length ? undefined : fromLine(e as Record<string, unknown>);
+    if (event) p = contextProblems(index, event);
+    if (p.length || !event) {
       problems.push(...p.map((x) => `line ${i + 1}: ${x}`));
       const seq = (e as { seq?: unknown }).seq;
       if (Number.isInteger(seq)) index.seq = Math.max(index.seq, seq as number); // one bad line, not a cascade
     } else {
-      indexEvent(index, e as LedgerEvent);
-      events.push(e as LedgerEvent);
+      indexEvent(index, event);
+      events.push(event);
     }
   });
   return { events, problems, index };

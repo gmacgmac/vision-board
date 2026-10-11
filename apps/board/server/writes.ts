@@ -1,15 +1,16 @@
 // The write operations. The caller is already known (callers.ts, from the operation's `security`):
 // the person for `act`, `mark_seen` and `put_board`, an agent for `request_grant` and `write_board`, nobody for
 // `join`, the one credential-free write. Each body fits the operation's request schema first
-// (pointers into the body, api.md 38), then the ledger module's own checks as it appends.
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { holders, openContainers, openItems } from '../../../packages/actions/src/index.ts';
+// (pointers into the body, api.md 38), its cards turn from board numbers into identities (edge.ts),
+// then the ledger module's own checks as it appends. Answers name cards by board number.
+import { eventOut, holders, openContainers, openItems } from '../../../packages/actions/src/index.ts';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { openRequestOf } from '../../../packages/format/src/index.ts';
 import { newSecret } from './agents.ts';
 import { BODY_LIMIT, KIB, readJson } from './body.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
+import { cardsIn } from './edge.ts';
 import { problem } from './problem.ts';
 import { requireBoard } from './reads.ts';
 import { sendJson } from './respond.ts';
@@ -43,33 +44,23 @@ function agentOf(caller: Ctx['caller']): string {
  * that can't be loaded leaves the Send as it was. */
 const act: Handler = async ({ req, res, params, ledger, chats }) => {
   const board = requireBoard(ledger.state(), params.board);
-  const e = await body('act', req);
+  const e = cardsIn(ledger.state(), board, await body('act', req));
   const stored = ledger.append(e, { by: 'person' }, { board });
-  sendJson(res, 201, stored);
+  sendJson(res, 201, eventOut(ledger.state(), stored));
   if (stored.type === 'act' && stored.action === 'send') {
     chats().round(board, stored.seq).catch((err) => console.error(`chat: the Send's answers were not handed over: ${err instanceof Error ? err.message : String(err)}`));
   }
 };
 
-/** The node must be on the board in the path. */
-function onBoard(s: LedgerState, board: string, n: unknown): void {
-  const node = s.nodes.get(Number(n));
-  if (node && node.board !== board) {
-    throw problem('invalid', 'The node is on another board.', {
-      errors: [{ pointer: '/n', detail: `node ${String(n)} is on board "${node.board}", not "${board}"` }],
-    });
-  }
-}
-
-/** The person has seen version `ver` of node `n` (D-018), or has looked at the board up to line
- * `head` (api.md 87); either way on the board in the path. */
+/** The person has seen version `ver` of card `n` on the board in the path (D-018), or has looked
+ * at the board up to line `head` (api.md 87). */
 const markSeen: Handler = async ({ req, res, params, ledger }) => {
   const board = requireBoard(ledger.state(), params.board);
   const e = await body('mark_seen', req);
   if (e.board !== undefined && e.board !== board)
     throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
-  onBoard(ledger.state(), board, e.n);
-  sendJson(res, 201, ledger.append({ ...e, type: 'seen' }, { by: 'person' }));
+  const stored = ledger.append({ ...cardsIn(ledger.state(), board, e), type: 'seen' }, { by: 'person' });
+  sendJson(res, 201, eventOut(ledger.state(), stored));
 };
 
 /** The person creates the board in the path, or renames it (api.md 90, D-034): a person `board`

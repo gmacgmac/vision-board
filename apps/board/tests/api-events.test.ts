@@ -90,7 +90,7 @@ test('watch_project in watch mode: build on every connect, a new id when index.h
     const b = await open(h.base, stops[1]!);
     await b.until(/event: build/);
     assert.deepEqual(b.events(), [{ event: 'build', data: { build: id } }]);
-    const e = h.ledger.append({ type: 'reply', n: h.seeded.q, text: 'Still streaming.' }, AGENT);
+    const e = h.ledger.append({ type: 'reply', n: h.seeded.qId, text: 'Still streaming.' }, AGENT);
     await a.until(/event: change/);
     const index = path.join(h.dist, 'index.html');
     fs.writeFileSync(index, '<!doctype html><title>Board, rebuilt</title>\n');

@@ -1,7 +1,8 @@
 // Checks a person's `act` event against the action registry and the folded ledger (rule 8,
 // api.md 16, 20). The server runs it before appending; the page before sending. One rule set,
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
-// sent to (the route's path); when given, everything the act names must be on it.
+// sent to (the route's path); when given, everything the act names must be on it. Cards are
+// identities (`id`, `nodes`); words name them by board number (api.md 125).
 import type { ActEvent } from '../../format/src/index.ts';
 import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
@@ -10,6 +11,7 @@ import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
 import type { Ask } from './notes.ts';
 import { cardsOf, isNote, liveNotes } from './notes.ts';
+import { cardName } from './numbers.ts';
 import { standing } from './proposals.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
 
@@ -42,12 +44,12 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
  * be saved for later (every kind, api.md 118). Any card moves between containers. */
 function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
   const field = e.nodes ? 'nodes' : 'n';
-  const cards = e.nodes ?? [e.n!];
+  const cards = e.nodes ?? [e.id!];
   const boards = new Set<string>();
-  for (const n of cards) {
-    const node = s.nodes.get(n);
+  for (const id of cards) {
+    const node = s.nodes.get(id);
     if (node) boards.add(node.board);
-    else p.push(`${field}: unknown node ${n}`);
+    else p.push(`${field}: unknown node ${id}`);
   }
   const [on] = boards;
   if (boards.size > 1) return void p.push(`nodes: a move names cards on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
@@ -58,10 +60,10 @@ function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p:
       p.push(`region: unknown "${String(e.region)}"; pick a container on board "${on}", or ${LATER_REGION}`);
     return;
   }
-  for (const n of cards) {
-    const v = latest(s.nodes.get(n)!);
+  for (const id of cards) {
+    const v = latest(s.nodes.get(id)!);
     if (!NODE_TYPES[v.kind].actions.includes('later'))
-      p.push(`region: Later takes only cards that can be saved for later; node ${n} is a ${v.kind}, which can't`);
+      p.push(`region: Later takes only cards that can be saved for later; node ${cardName(s)(id)} is a ${v.kind}, which can't`);
   }
 }
 
@@ -94,9 +96,9 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
     return p;
   }
   if (e.nodes) return groupProblems(e, s, board);
-  const node = e.n === undefined ? undefined : s.nodes.get(e.n);
-  if (!node) p.push(`n: unknown node ${String(e.n)}`);
-  else if (board !== undefined && node.board !== board) p.push(`n: node ${e.n} is on board "${node.board}", not "${board}"`);
+  const node = e.id === undefined ? undefined : s.nodes.get(e.id);
+  if (!node) p.push(`n: unknown node ${String(e.id)}`);
+  else if (board !== undefined && node.board !== board) p.push(`n: node ${cardName(s)(e.id!)} is on board "${node.board}", not "${board}"`);
   else if (ITEM_ACTIONS.includes(e.action)) {
     const kind = latest(node).kind;
     if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: a ${kind} doesn't offer this`);
@@ -113,12 +115,13 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
 function proposalProblems(e: ActEvent, s: LedgerState, p: string[]): void {
   if (e.proposal === undefined) return;
   const prop = s.proposals.get(e.proposal);
-  if (!prop || prop.n !== e.n) return void p.push(`proposal: ${e.proposal} is not a proposal on item ${e.n}`);
+  const n = cardName(s)(e.id!);
+  if (!prop || prop.id !== e.id) return void p.push(`proposal: ${e.proposal} is not a proposal on item ${n}`);
   const at = standing(s, prop);
   if (!at) p.push(`proposal: proposal ${e.proposal} was already decided`);
   else if (e.action === 'reject') return;
   else if (e.action !== prop.action) p.push(`proposal: proposal ${e.proposal} is to ${ACTIONS[prop.action].label.toLowerCase()}; accept it with ${prop.action}, or reject it`);
-  else if (at === 'stale') p.push(`proposal: ${e.n} changed after this was proposed; ask the agent to look again`);
+  else if (at === 'stale') p.push(`proposal: ${n} changed after this was proposed; ask the agent to look again`);
 }
 
 /** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named card's kind offers the
@@ -127,12 +130,12 @@ function proposalProblems(e: ActEvent, s: LedgerState, p: string[]): void {
 function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): string[] {
   const p: string[] = [];
   const boards = new Set<string>();
-  for (const n of e.nodes!) {
-    const node = s.nodes.get(n);
-    if (!node) { p.push(`nodes: unknown node ${n}`); continue; }
+  for (const id of e.nodes!) {
+    const node = s.nodes.get(id);
+    if (!node) { p.push(`nodes: unknown node ${id}`); continue; }
     boards.add(node.board);
     const v = latest(node);
-    if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${n} is a ${v.kind}, which doesn't offer ${e.action}`);
+    if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${cardName(s)(id)} is a ${v.kind}, which doesn't offer ${e.action}`);
   }
   const [only] = boards;
   if (boards.size > 1) p.push(`nodes: a note on a group names items on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
@@ -145,19 +148,20 @@ function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): 
  * live note before a Send (rulings 2-4, api.md 58-61). A note on a group is changed from any of
  * the cards it is on (3_FE_02 ruling 3). */
 function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): void {
+  const name = cardName(s);
   if ((e.action === 'comment' || e.action === 'context') && e.text?.trim()) {
-    const open = liveNotes(s.logs.get(e.n!) ?? { asks: [], decisions: [] })
+    const open = liveNotes(s.logs.get(e.id!) ?? { asks: [], decisions: [] })
       .find((x) => x.nodes === undefined && x.person === e.person && !sentAfter(s, board, x.seq));
-    if (open) p.push(`n: item ${e.n} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
+    if (open) p.push(`n: item ${name(e.id!)} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
     return;
   }
   if (e.action !== 'note-edit' && e.action !== 'note-remove') return;
   const a = s.asks.get(e.note!);
   if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
-  else if (a.region !== undefined) p.push(`note: note ${e.note} is on container "${a.region}", not node ${e.n}`);
-  else if (!cardsOf(a).includes(e.n!)) p.push(a.nodes
-    ? `note: note ${e.note} is on items ${a.nodes.join(', ')}, not node ${e.n}`
-    : `note: note ${e.note} is on node ${a.n}, not node ${e.n}`);
+  else if (a.region !== undefined) p.push(`note: note ${e.note} is on container "${a.region}", not node ${name(e.id!)}`);
+  else if (!cardsOf(a).includes(e.id!)) p.push(a.nodes
+    ? `note: note ${e.note} is on items ${a.nodes.map(name).join(', ')}, not node ${name(e.id!)}`
+    : `note: note ${e.note} is on node ${name(a.id)}, not node ${name(e.id!)}`);
   else changeProblems(a, e, s, board, p);
 }
 
@@ -201,7 +205,7 @@ function containerNoteRules(e: ActEvent, s: LedgerState, p: string[]): void {
   }
   const a = s.asks.get(e.note!);
   if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
-  else if (a.region === undefined) p.push(`note: note ${e.note} is on ${a.nodes ? `items ${a.nodes.join(', ')}` : `node ${a.n}`}, not container "${region}"`);
+  else if (a.region === undefined) p.push(`note: note ${e.note} is on ${a.nodes ? `items ${a.nodes.map(cardName(s)).join(', ')}` : `node ${cardName(s)(a.id)}`}, not container "${region}"`);
   else if (!log?.asks.includes(a)) p.push(`note: note ${e.note} is on container "${a.region}"${a.region === region ? ' of another board' : ''}, not "${region}"`);
   else changeProblems(a, e, s, board, p);
 }

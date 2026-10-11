@@ -4,6 +4,7 @@
 // `region` in place of a card, so `note-edit`, `note-remove` and Send work on it the card-note way.
 // A container place is the top-left of its frame in board coordinates; the latest pin wins.
 import type { ActEvent } from '../../format/src/index.ts';
+import { containerKey } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { ItemLog, ItemNote } from './notes.ts';
@@ -67,11 +68,13 @@ export const containerPin = (s: LedgerState, board: string, region: string): Pla
 };
 
 /** One board's container places (in the order last dropped) and notes, for `boardState`. A
- * container with no live note is left out. */
+ * container with no live note, and a retired one (api.md 127), is left out. */
 export function containerState(s: LedgerState, board: string): { regionPins: Map<string, Place>; regionNotes: Map<string, ItemNote[]> } {
-  const regionPins = new Map([...(s.regionPins.get(board) ?? [])].map(([r, p]) => [r, { ...p }]));
+  const here = (region: string) => !s.retiredRegions.has(containerKey(board, region));
+  const regionPins = new Map([...(s.regionPins.get(board) ?? [])].filter(([r]) => here(r)).map(([r, p]) => [r, { ...p }]));
   const regionNotes = new Map<string, ItemNote[]>();
   for (const region of s.regionLogs.get(board)?.keys() ?? []) {
+    if (!here(region)) continue;
     const notes = containerNotes(s, board, region);
     if (notes.length) regionNotes.set(region, notes);
   }

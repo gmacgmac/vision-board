@@ -4,48 +4,36 @@
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
-// and what its next Send carries (unsent.ts).
+// what its next Send carries (unsent.ts), what was retired (retire.ts) and the person's private
+// flags (card-flags.ts). Every map is keyed by a card's identity (`id`); the reads give board
+// numbers (numbers.ts, api.md 125). One board as the page reads it: board-state.ts.
 // Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
 // first).
 import type {
-  ActEvent, DrawnState, LedgerEvent, LedgerIndex, Mode, NodeSize, ParkBundle, ProposeEvent, View,
+  ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent,
 } from '../../format/src/index.ts';
-import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
-import type { ItemStatus } from './registry.ts';
-import { DECIDED } from './registry.ts';
+import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
 import type { Place } from './containers.ts';
-import { applyContainerAct, containerState } from './containers.ts';
+import { applyContainerAct } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
 import { askOf, askVer, cardsOf, foldNoteAct, itemOf, latestAsk } from './notes.ts';
-import { eventBoard, placeOf } from './references.ts';
+import { eventBoard } from './references.ts';
 import { closeProposals, endProposal } from './proposals.ts';
+import { foldRetire, keepRetiredRegion } from './retire.ts';
+import { foldFlag } from './card-flags.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
-/** The person's responses for one board, keyed by node id (`String(n)`), as the page reads it.
- * `moves`: the container the person put a card in, for each card not where the agent has it
- * (api.md 66-70); the page places cards from it, as from `pins`. */
-export interface BoardState {
-  items: Map<string, ItemState>;
-  pins: Map<string, { x: number; y: number }>;
-  modes: Map<string, Mode>;
-  /** The person's card size picks (D-030); a node with none follows the agent or the auto tier. */
-  sizes: Map<string, NodeSize>;
-  moves: Map<string, string>;
-  /** Region id -> where the person put that container, in the order last dropped (api.md 74). */
-  regionPins: Map<string, Place>;
-  /** Region id -> the person's notes on that whole container, oldest first (api.md 73). */
-  regionNotes: Map<string, ItemNote[]>;
-}
-
 export interface LedgerReply { seq: number; at: string; text: string; to?: number; agent?: string }
+/** An agent's proposal on card `id` (its identity; the reads give its board number as `n`). */
 export interface Proposal {
-  seq: number; at: string; n: number; ver: number; action: ProposeEvent['action'];
+  seq: number; at: string; id: number; ver: number; action: ProposeEvent['action'];
   reason: string; source?: string; agent?: string;
-  /** `seq` of the person's act that ended it, and how (api.md 93): `accepted` by the act naming it
-   * with its own action, `rejected`, or `closed` by an acknowledge or drop on its card. */
+  /** `seq` of the line that ended it, and how (api.md 93): `accepted` by the act naming it with its
+   * own action, `rejected`, or `closed` by an acknowledge or drop on its card or its card's retire
+   * line (api.md 127). */
   decidedBy?: number;
   outcome?: 'accepted' | 'rejected' | 'closed';
 }
@@ -73,9 +61,9 @@ export interface LedgerState extends DrawnState {
   items: Map<number, ItemState>;
   replies: Map<number, LedgerReply[]>;
   pins: Map<number, { x: number; y: number }>;
-  /** n -> the container of the person's latest `move` (api.md 66): it wins over the agent's. */
+  /** Card id -> the container of the person's latest `move` (api.md 66): it wins over the agent's. */
   moves: Map<number, string>;
-  /** n -> the person's size pick; `auto` deletes it (api.md 16). */
+  /** Card id -> the person's size pick; `auto` deletes it (api.md 16). */
   sizes: Map<number, NodeSize>;
   /** board -> region -> the person's layout choice. */
   modes: Map<string, Map<string, Mode>>;
@@ -85,13 +73,13 @@ export interface LedgerState extends DrawnState {
   unsent: Map<string, Set<number>>;
   /** agent -> retry key -> `seq` of the event that carried it, across the project (api.md 29). */
   keys: Map<string, Map<string, number>>;
-  /** n -> latest version the person has seen. */
+  /** Card id -> latest version the person has seen. */
   seen: Map<number, number>;
   /** propose `seq` -> proposal. */
   proposals: Map<number, Proposal>;
   parks: Map<number, ParkBundle>;
   marks: Map<number, Marks>;
-  /** n -> the item's asks and decisions, from which `items` is worked out (notes.ts). */
+  /** Card id -> the item's asks and decisions, from which `items` is worked out (notes.ts). */
   logs: Map<number, ItemLog>;
   /** `seq` of a `comment` or `context` act -> its ask, so `note-edit` and `note-remove` find it. */
   asks: Map<number, Ask>;
@@ -118,18 +106,24 @@ export interface LedgerState extends DrawnState {
   runs: Map<string, BoardRun[]>;
   /** board -> `seq` of its latest round's first drawing line, once a Send was answered (rounds.ts). */
   rounds: Map<string, number>;
-  /** n -> `seq` of the line that drew its first version: conditions `item.new`. */
+  /** Card id -> `seq` of the line that drew its first version: conditions `item.new`. */
   firstDrawn: Map<number, number>;
   /** board -> its first card line and the index in `runs` of the run it came in (rounds.ts). */
   firstCards: Map<string, { seq: number; run: number }>;
+  /** `containerKey` -> a retired container as it was, and its retire line (`show_container`, api.md 127). */
+  retiredRegions: Map<string, { region: LedgerRegion; seq: number }>;
+  /** Card id -> `seq` of the person's `flag` on it, while it stands (card-flags.ts, api.md 128).
+   * The page's only: no agent read looks here. */
+  flags: Map<number, number>;
 }
 
 /** The last line of one run of drawing lines by one agent on one board, with no other line on
  * that board between them (a board seen is none): one version of the board, "v<seq>". */
 export interface BoardRun { seq: number; at: string; agent?: string }
 
-/** The agent's drawing lines: what "the agent drew" means (conditions `board.drawn`, the page's toast). */
-export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board', 'region', 'node', 'link', 'unlink']);
+/** The agent's drawing lines: what "the agent drew" means (conditions `board.drawn`, the page's
+ * toast, a board version). A retire takes cards off the board, so it is one (api.md 127). */
+export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board', 'region', 'node', 'link', 'unlink', 'retire']);
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
@@ -138,6 +132,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
+  retiredRegions: new Map(), flags: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -148,16 +143,20 @@ export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
 }
 
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => { m.set(k, [...(m.get(k) ?? []), v]); };
-const marksOf = (s: LedgerState, n: number): Marks => {
-  const m = s.marks.get(n) ?? {};
-  s.marks.set(n, m);
+const marksOf = (s: LedgerState, id: number): Marks => {
+  const m = s.marks.get(id) ?? {};
+  s.marks.set(id, m);
   return m;
 };
 
-/** Apply one valid event to `s`: the drawn part and the index in format, the rest here. */
+/** Apply one valid event to `s`: the drawn part and the index in format, the rest here. The
+ * person's private flag folds into `flags` only: it moves no head, sees no card and is no answer
+ * (api.md 128). */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
+  if (e.type === 'retire') keepRetiredRegion(s, e);
   applyDrawn(s, e);
   indexEvent(s.index, e);
+  if (isPrivateAct(e)) return foldFlag(s, e as ActEvent);
   const board = eventBoard(s, e);
   const before = board === undefined ? undefined : s.heads.get(board);
   if (board !== undefined && !(e.type === 'seen' && 'board' in e)) s.heads.set(board, e.seq);
@@ -176,19 +175,20 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
     case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); if (board !== undefined) foldUnsent(s, board, e); break;
     case 'seen':
-      if ('n' in e) s.seen.set(e.n, Math.max(s.seen.get(e.n) ?? 0, e.ver));
+      if ('id' in e) s.seen.set(e.id, Math.max(s.seen.get(e.id) ?? 0, e.ver));
       else seeBoard(s, e.board, e.head);
       break;
+    case 'retire': foldRetire(s, e); break;
     case 'reply':
-      push(s.replies, e.n, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
+      push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
       break;
     case 'propose':
       s.proposals.set(e.seq, {
-        seq: e.seq, at: e.at, n: e.n, ver: e.ver, action: e.action, reason: e.reason,
+        seq: e.seq, at: e.at, id: e.id, ver: e.ver, action: e.action, reason: e.reason,
         ...(e.source && { source: e.source }), ...(e.agent && { agent: e.agent }),
       });
       break;
-    case 'park': s.parks.set(e.n, e.bundle); marksOf(s, e.n).park = e.seq; break;
+    case 'park': s.parks.set(e.id, e.bundle); marksOf(s, e.id).park = e.seq; break;
   }
 }
 
@@ -200,16 +200,16 @@ function applyAct(s: LedgerState, e: ActEvent): void {
       s.modes.set(e.board!, regions.set(e.region!, e.mode!));
       break;
     }
-    case 'pin': s.pins.set(e.n!, { x: e.x!, y: e.y! }); break;
-    case 'unpin': s.pins.delete(e.n!); break;
+    case 'pin': s.pins.set(e.id!, { x: e.x!, y: e.y! }); break;
+    case 'unpin': s.pins.delete(e.id!); break;
     // A pin is local to its container (rule 9), so a card that changes container leaves it behind.
     case 'move':
-      for (const n of e.nodes ?? [e.n!]) {
-        s.moves.set(n, e.region!);
-        s.pins.delete(n);
+      for (const id of e.nodes ?? [e.id!]) {
+        s.moves.set(id, e.region!);
+        s.pins.delete(id);
       }
       break;
-    case 'size': if (e.size === 'auto') s.sizes.delete(e.n!); else s.sizes.set(e.n!, e.size!); break;
+    case 'size': if (e.size === 'auto') s.sizes.delete(e.id!); else s.sizes.set(e.id!, e.size!); break;
     case 'reject': endProposal(s.proposals.get(e.proposal!), e.seq, 'rejected'); break;
     case 'send': s.lastSend.set(e.board!, e.seq); break;
     case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
@@ -223,21 +223,21 @@ function applyAct(s: LedgerState, e: ActEvent): void {
  * worked out again from their logs (notes.ts). */
 function applyItemAct(s: LedgerState, e: ActEvent): void {
   const ask = e.note === undefined ? undefined : s.asks.get(e.note);
-  const logOf = (n: number): ItemLog => {
-    const log = s.logs.get(n) ?? { asks: [], decisions: [] };
-    s.logs.set(n, log);
+  const logOf = (id: number): ItemLog => {
+    const log = s.logs.get(id) ?? { asks: [], decisions: [] };
+    s.logs.set(id, log);
     return log;
   };
-  let cards = ask ? cardsOf(ask) : [e.n!];
+  let cards = ask ? cardsOf(ask) : [e.id!];
   if (e.action === 'comment' || e.action === 'context') {
-    const made = askOf(e, (n) => s.nodes.get(n)?.versions.at(-1)?.ver ?? 0);
+    const made = askOf(e, (id) => s.nodes.get(id)?.versions.at(-1)?.ver ?? 0);
     cards = cardsOf(made);
-    for (const n of cards) logOf(n).asks.push(made);
+    for (const id of cards) logOf(id).asks.push(made);
     s.asks.set(e.seq, made);
   } else if (ask) foldNoteAct(ask, e);
-  else logOf(e.n!).decisions.push({ seq: e.seq, action: e.action });
-  for (const n of cards) restate(s, n, logOf(n));
-  if (e.action === 'later') marksOf(s, e.n!).later = e.seq;
+  else logOf(e.id!).decisions.push({ seq: e.seq, action: e.action });
+  for (const id of cards) restate(s, id, logOf(id));
+  if (e.action === 'later') marksOf(s, e.id!).later = e.seq;
   if (e.action === 'ack' || e.action === 'drop') closeProposals(s, e);
 }
 
@@ -245,15 +245,15 @@ function applyItemAct(s: LedgerState, e: ActEvent): void {
  * `seen` is raised, never lowered. A note on or a place for a whole container names no card. */
 function seeCards(s: LedgerState, e: ActEvent): void {
   if (e.action === 'send' || isContainerAct(e)) return;
-  for (const n of e.nodes ?? (e.n === undefined ? [] : [e.n])) s.seen.set(n, Math.max(s.seen.get(n) ?? 0, s.nodes.get(n)!.versions.at(-1)!.ver));
+  for (const id of e.nodes ?? (e.id === undefined ? [] : [e.id])) s.seen.set(id, Math.max(s.seen.get(id) ?? 0, s.nodes.get(id)!.versions.at(-1)!.ver));
 }
 
-/** Card `n`'s status, notes and owed ask, from its log. */
-function restate(s: LedgerState, n: number, log: ItemLog): void {
-  s.items.set(n, itemOf(log));
+/** Card `id`'s status, notes and owed ask, from its log. */
+function restate(s: LedgerState, id: number, log: ItemLog): void {
+  s.items.set(id, itemOf(log));
   const latest = latestAsk(log);
-  const m = marksOf(s, n);
-  if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: askVer(latest, n) };
+  const m = marksOf(s, id);
+  if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: askVer(latest, id) };
   else delete m.ask;
 }
 
@@ -263,38 +263,4 @@ export const sentAfter = (s: LedgerState, board: string, seq: number): boolean =
 /** An item's notes as the reads show them: `sent` on each one a Send came after. */
 export function sentNotes(s: LedgerState, board: string, notes: readonly ItemNote[]): ItemNote[] {
   return notes.map((x) => ({ ...x, ...(sentAfter(s, board, x.seq) && { sent: true as const }) }));
-}
-
-/** The person's responses on one board, keyed like `boardView` (`String(n)`). */
-export function boardState(s: LedgerState, board: string): BoardState {
-  const out: BoardState = {
-    items: new Map(), pins: new Map(), modes: new Map(s.modes.get(board)), sizes: new Map(), moves: new Map(),
-    ...containerState(s, board),
-  };
-  for (const { n } of nodesOf(s, board)) {
-    const item = s.items.get(n);
-    const pin = s.pins.get(n);
-    const size = s.sizes.get(n);
-    if (item) out.items.set(String(n), { status: item.status, notes: sentNotes(s, board, item.notes) });
-    if (pin) out.pins.set(String(n), pin);
-    if (size) out.sizes.set(String(n), size);
-    const place = placeOf(s, n);
-    if (place && place.region !== place.drawn) out.moves.set(String(n), place.region);
-  }
-  return out;
-}
-
-/** One item's status on a board; an item nobody has answered is open. */
-export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(id)?.status ?? 'open';
-
-/** How many of a board's cards that need an answer (api.md 118) are decided, later, still open. */
-export function counts(view: View, s: BoardState) {
-  const items = view.nodes.filter((n) => NODE_TYPES[n.kind].answer);
-  const st = items.map((n) => statusOf(s, n.id));
-  return {
-    total: items.length,
-    decided: st.filter((x) => DECIDED.has(x)).length,
-    later: st.filter((x) => x === 'later').length,
-    open: st.filter((x) => !DECIDED.has(x) && x !== 'later').length,
-  };
 }

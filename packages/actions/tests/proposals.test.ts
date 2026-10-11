@@ -7,7 +7,7 @@ import { validateAct } from '../src/index.ts';
 import { A, B, scene } from './ledger-v3.ts';
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 10, seq: 999, at: '2026-10-08T10:00:00Z', by: 'person', type: 'act', action: 'ack', n: 1, ver: 1, ...f });
+  ({ v: 10, seq: 999, at: '2026-10-08T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 1, ...f });
 
 /** The scene at v10 with a drop proposed on item 1 and an ack proposed on item 2. */
 function proposed() {
@@ -25,7 +25,7 @@ test('accept and reject: a proposal on the same card, accepted with its own acti
   assert.deepEqual(validateAct(act({ action: 'reject', proposal: drop, ver: undefined }), s, 'b'), []);
   assert.deepEqual(validateAct(act({ action: 'ack', proposal: drop }), s, 'b'),
     [`proposal: proposal ${drop} is to drop; accept it with drop, or reject it`]);
-  assert.deepEqual(validateAct(act({ action: 'drop', n: 2, proposal: drop }), s, 'b'), [`proposal: ${drop} is not a proposal on item 2`]);
+  assert.deepEqual(validateAct(act({ action: 'drop', id: 2, proposal: drop }), s, 'b'), [`proposal: ${drop} is not a proposal on item 2`]);
   assert.deepEqual(validateAct(act({ action: 'reject', proposal: 3, ver: undefined }), s, 'b'), ['proposal: 3 is not a proposal on item 1']);
 });
 
@@ -34,7 +34,7 @@ test('a decided proposal is refused; an out-of-date one can be rejected but not 
   l.act({ action: 'reject', n: 2, proposal: ack });
   l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
   const s = l.state();
-  assert.deepEqual(validateAct(act({ action: 'ack', n: 2, proposal: ack }), s, 'b'), [`proposal: proposal ${ack} was already decided`]);
+  assert.deepEqual(validateAct(act({ action: 'ack', id: 2, proposal: ack }), s, 'b'), [`proposal: proposal ${ack} was already decided`]);
   assert.deepEqual(validateAct(act({ action: 'drop', ver: 2, proposal: drop }), s, 'b'),
     ['proposal: 1 changed after this was proposed; ask the agent to look again']);
   assert.deepEqual(validateAct(act({ action: 'reject', proposal: drop, ver: undefined }), s, 'b'), []);

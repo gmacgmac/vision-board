@@ -13,6 +13,7 @@ import type { BoardData } from './io.ts';
 import { createLayoutCache } from './layout-cache.ts';
 import { markOffscreen } from './offscreen.ts';
 import { createRegionSet } from './render.ts';
+import type { RetiredCount } from './retired.ts';
 import { tierOf } from './size.ts';
 import type { Viewport } from './viewport.ts';
 import { createWires } from './wires.ts';
@@ -50,6 +51,10 @@ export interface DrawDeps {
   facts(n: ViewNode): CardConditions;
   /** The agent's replies to show under container notes (parking.ts, FE_03). */
   replies(): readonly CardReply[];
+  /** The cardFlag flag: every card with a number has the flag button (flag-flow.ts). */
+  flag?: boolean;
+  /** Each container's "N cards retired" marker (retiredMarker flag, retired.ts). */
+  retired?(): ReadonlyMap<string, RetiredCount>;
 }
 
 export interface Drawing {
@@ -76,7 +81,7 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing });
+  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true });
   const regions = createRegionSet(els.regions);
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined);
   const cache = createLayoutCache();
@@ -119,7 +124,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     work.containersLaidOut += run.laidOut.length;
     work.containers.push(...run.laidOut);
     layout = run.layout;
-    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies());
+    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies(), d.retired?.());
     if (cards.place(layout) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);

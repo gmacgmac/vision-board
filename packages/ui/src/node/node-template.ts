@@ -6,9 +6,10 @@
 import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS, actionWord } from '../../../actions/src/index.ts';
-import type { HandoverView, NotesView, ProposalsView, ReplyEntry, UpdatesView } from './node-core.ts';
-import { buttonLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
-import { ACTION_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
+import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
+import type { UpdatesView } from './node-updates.ts';
+import { buttonLabel, FLAG_KEY, flagLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
+import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 
@@ -53,11 +54,17 @@ function replyMarkup(r: ReplyEntry): string {
     + `<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true">${text}</div></div>`;
 }
 
+/** The flag button beside Later (cardFlag flag, field report batch 2 assumption A): the person's
+ * private mark, no review action, so `data-flag`, not `data-act`; `update()` sets aria-pressed. */
+const flagButton = (n: ViewNode): string =>
+  `<button type="button" class="vb-act vb-flag" data-flag aria-pressed="false" aria-label="${esc(flagLabel(n))}"`
+  + ` title="Flag · ${FLAG_KEY}">${svgIcon(FLAG_ICON, 20, 'vb-act-icon')}</button>`;
+
 /** Kind icon, divider, state word (with the tip "Awaiting context" over it while the handover is
- * owed, FE_03), then the quick actions. Items only: a non-item has no state. */
-function footer(n: ViewNode): string {
+ * owed, FE_03), then the quick actions and the flag. Items only: a non-item has no state. */
+function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   if (!isItem(n)) return '';
-  const buttons = offers(n).map((a) => button(a, n)).join('');
+  const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.flag ? flagButton(n) : '');
   const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
@@ -139,6 +146,8 @@ export function handoverMarkup(v: HandoverView): string {
 export interface NodeTemplateOptions {
   /** Draw the size control (D-030); the page passes it when the nodeSize flag is on. */
   sizeControl?: boolean;
+  /** Draw the flag button beside Later; the page passes it when the cardFlag flag is on. */
+  flag?: boolean;
 }
 
 const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
@@ -167,5 +176,5 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
   // An item's step section (FE_02), right under the text a change touched.
   const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n))}" role="region" aria-live="polite" hidden></div>` : '';
   return `${tabs(n)}${opts.sizeControl ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
-    + `${body}${tags}${steps}${note}</div>${footer(n)}${bottomTabs(n)}`;
+    + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n)}`;
 }

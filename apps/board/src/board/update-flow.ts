@@ -14,7 +14,7 @@ import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import type { CardConditions, CardStep } from '../../../../packages/ui/src/index.ts';
 import type { Selection } from './selection.ts';
 import type { SeenMark } from './updates.ts';
-import { seenMarks, seenOnSelect, unseenCount, unseenSteps } from './updates.ts';
+import { seenMarks, seenOnSelect, seenVer, unseenCount, unseenSteps } from './updates.ts';
 import { versionTime } from './versions.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */
@@ -54,7 +54,8 @@ export interface UpdateFlow {
   destroy(): void;
 }
 
-interface Stepper { steps: CardStep[]; at: number; timer?: number }
+/** An open stepper, on the board it opened on (its card is named by its number there). */
+interface Stepper { board: string; steps: CardStep[]; at: number; timer?: number }
 
 const NONE: CardConditions = {};
 
@@ -73,7 +74,7 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
 
   function send(marks: readonly SeenMark[]) {
     const s = current();
-    const due = marks.filter((m) => s && (s.seen.get(m.n) ?? 0) < m.ver && !sending.has(`${m.n}:${m.ver}`));
+    const due = marks.filter((m) => s && seenVer(s, d.board(), m.n) < m.ver && !sending.has(`${m.n}:${m.ver}`));
     if (!due.length) return;
     for (const m of due) sending.add(`${m.n}:${m.ver}`);
     void d.seen(due).finally(() => { for (const m of due) sending.delete(`${m.n}:${m.ver}`); });
@@ -112,9 +113,9 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
   function toggle(n: number) {
     if (open.has(n)) return fold(n);
     const s = live();
-    const steps = s ? unseenSteps(s, n, versionTime) : [];
+    const steps = s ? unseenSteps(s, d.board(), n, versionTime) : [];
     if (!steps.length) return;
-    const o: Stepper = { steps, at: 0 };
+    const o: Stepper = { board: d.board(), steps, at: 0 };
     open.set(n, o);
     show(n, o);
   }
@@ -149,11 +150,11 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
       const s = live();
       counts = new Map();
       for (const [n, o] of open) {
-        if (s?.nodes.get(n)?.board === d.board()) continue;
+        if (s && o.board === d.board()) continue;
         clearTimeout(o.timer);
         open.delete(n);
       }
-      if (s) for (const n of unseen()) counts.set(n, unseenCount(s, n));
+      if (s) for (const n of unseen()) counts.set(n, unseenCount(s, d.board(), n));
     },
     card(n) {
       if (n.n === undefined) return NONE;
@@ -165,7 +166,7 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
     },
     saw(ids) {
       const s = current();
-      if (s) send(seenMarks(s, seenOnSelect({ fresh: fresh(), unseen: unseen() }), ids.filter((id) => d.selection.has(id))));
+      if (s) send(seenMarks(s, d.board(), seenOnSelect({ fresh: fresh(), unseen: unseen() }), ids.filter((id) => d.selection.has(id))));
     },
     destroy() {
       d.stage.removeEventListener('click', onClick);

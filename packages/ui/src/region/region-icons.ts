@@ -1,5 +1,6 @@
-// Region pattern icons: the mode row's five layout icons and the cog, 24 x 24 stroke paths taken
-// from mockup 05's i-grid, i-flow, i-lanes, i-radial, i-list and i-cog symbols. Paths only;
+// Region pattern icons: the mode row's layout icons and the cog, 24 x 24 stroke paths taken from
+// mockup 05's i-grid, i-flow, i-lanes, i-radial and i-cog symbols; column and row (field report
+// batch 2 ruling 4) are a pair drawn in the same style: three cards stacked, three side by side. Paths only;
 // region-template.ts wraps them with the node pattern's `svgIcon`, and region.css draws them.
 // Typed on `Mode`, so a new mode fails to compile here until it has an icon.
 import type { Mode } from '../../../format/src/index.ts';
@@ -13,7 +14,9 @@ export const MODE_ICON: Record<Mode, string> = {
     + '<rect x="3" y="16" width="18" height="4" rx="1.5"/>',
   radial: '<circle cx="12" cy="12" r="3"/><circle cx="12" cy="4" r="1.6"/><circle cx="19.5" cy="9.5" r="1.6"/>'
     + '<circle cx="16.8" cy="18.5" r="1.6"/><circle cx="7.2" cy="18.5" r="1.6"/><circle cx="4.5" cy="9.5" r="1.6"/>',
-  list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  // Small cards, not lanes' full-width bands: one under another, and one beside another.
+  column: '<rect x="8" y="2.5" width="8" height="5.5" rx="1.5"/><rect x="8" y="9.25" width="8" height="5.5" rx="1.5"/><rect x="8" y="16" width="8" height="5.5" rx="1.5"/>',
+  row: '<rect x="2.5" y="8" width="5.5" height="8" rx="1.5"/><rect x="9.25" y="8" width="5.5" height="8" rx="1.5"/><rect x="16" y="8" width="5.5" height="8" rx="1.5"/>',
 };
 
 /** The container settings cog. */

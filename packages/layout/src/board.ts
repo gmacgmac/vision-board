@@ -7,7 +7,7 @@ import type { Link, Region, View, ViewNode } from '../../format/src/index.ts';
 import type { Box, BoardLayout, ModeFn, ModeOutput, Point, RegionBox, RegionPiece, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
 import type { Mode } from '../../format/src/index.ts';
-import { grid, list } from './modes/grid.ts';
+import { column, grid, row } from './modes/grid.ts';
 import { flow } from './modes/flow.ts';
 import { lanes } from './modes/lanes.ts';
 import { radial } from './modes/radial.ts';
@@ -17,7 +17,7 @@ import { placeContainers } from './place.ts';
 import { routeLinks } from './route.ts';
 import type { LayoutOptions } from './types.ts';
 
-export const MODE_FNS: Record<Mode, ModeFn> = { grid, list, flow, lanes, radial };
+export const MODE_FNS: Record<Mode, ModeFn> = { grid, column, row, flow, lanes, radial };
 
 const MIN_W = 280;
 const EMPTY_H = 56;

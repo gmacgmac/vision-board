@@ -10,11 +10,12 @@ import { seeded } from '../../apps/board/tests/random.ts';
 import type { Random } from '../../apps/board/tests/random.ts';
 
 const BOARD = 'mixed';
-/** The mixed board copies the roadmap: 17 nodes numbered after the big board's 1,000. */
-const FIRST = 1001;
+/** The mixed board copies the roadmap: 17 nodes, the ledger's 1001 to 1017 after the big board's
+ * 1,000, which the board numbers 1 to 17 (D-041 proposed, api.md 125): every act names its number. */
+const FIRST = 1;
 const ITEMS = Array.from({ length: 17 }, (_, i) => FIRST + i).filter((n) => n !== FIRST + 6);
 const REGIONS = ['review', 'prove', 'decide', 'build'];
-const MODES = ['grid', 'list', 'flow', 'lanes', 'radial'];
+const MODES = ['grid', 'column', 'row', 'flow', 'lanes', 'radial'];
 
 async function open(page: Page): Promise<void> {
   await page.goto(`${PERF_BASE}/?vbwork#${BOARD}`);

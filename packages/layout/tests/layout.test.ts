@@ -12,7 +12,7 @@ function load(name: string): View {
   return boardView(foldDrawn(readLedger(lines.trim().split('\n')).events), name);
 }
 const sizesFor = (v: View, w = 240, h = 96) => new Map<string, Size>(v.nodes.map((n) => [n.id, { w, h }]));
-const MODES: Mode[] = ['grid', 'list', 'flow', 'radial'];
+const MODES: Mode[] = ['grid', 'column', 'row', 'flow', 'radial'];
 
 function assertNoOverlap(v: View, nodes: Map<string, { x: number; y: number; w: number; h: number }>) {
   const ids = [...nodes.keys()];

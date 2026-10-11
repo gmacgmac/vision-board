@@ -89,6 +89,13 @@ body {
 .vb-chip[data-tone='decided'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
 .vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
 .vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
+/* "N flagged" (cardFlag flag): a chip that is a button, stepping through the flagged cards. Its words
+   are the chip's ink; the flag is decoration in the proposed --vb-state-flag (the risk orange until
+   tokens.css has it). */
+.vb-chip-btn { border: 0; font: inherit; font-size: var(--vb-text-sm); cursor: pointer; }
+.vb-chip-btn:hover { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
+.vb-chip-btn:active { transform: translateY(1px); }
+.vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag, var(--vb-kind-risk)); }
 
 /* Stage and world */
 /* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */

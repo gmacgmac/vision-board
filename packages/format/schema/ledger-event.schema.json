@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/11/ledger-event.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/12/ledger-event.schema.json",
   "title": "Ledger line",
   "description": "A stored ledger line, by its `type`. The discriminator gives a bad line one error, not one per branch.",
   "$comment": "Was: api.md 8",
@@ -8,17 +8,18 @@
   "required": ["type"],
   "discriminator": {"propertyName": "type"},
   "oneOf": [
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/board.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/region.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/node.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/link.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/unlink.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/act.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/seen.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/reply.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/propose.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/park.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/join.schema.json#/$defs/stored"},
-    {"$ref": "https://vision-board.invalid/schema/ledger/11/events/grant-request.schema.json#/$defs/stored"}
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/board.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/region.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/node.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/link.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/unlink.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/act.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/seen.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/reply.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/propose.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/park.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/join.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/grant-request.schema.json#/$defs/stored"},
+    {"$ref": "https://vision-board.invalid/schema/ledger/12/events/retire.schema.json#/$defs/stored"}
   ]
 }

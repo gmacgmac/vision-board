@@ -7,14 +7,15 @@
 // the board shows (versions.ts), every act is refused here, before it is sent: the one funnel
 // (navigation FE_01 ruling 5). A card seen (FE_02: selecting a changed card, a step of its
 // stepper) goes out here too, in order, so every line the person adds has one way out.
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
+import type { LedgerLine } from '../../../../packages/format/src/index.ts';
 import type { ActFields, BoardFields } from './io.ts';
 import { ApiError, markCardSeen, putBoard, sendAct } from './io.ts';
 
 export interface SenderDeps {
   board(): string;
-  /** Apply the stored line the server answered with. */
-  own(e: LedgerEvent): Promise<void>;
+  /** Apply the stored line the server answered with: its cards by number on `board`, the board it
+   *  was sent to (card-numbers.ts), whichever board is open by the time it lands. */
+  own(line: LedgerLine, board: string): Promise<void>;
   redraw(): void;
   /** Show a refusal (the error toast). */
   fail(err: unknown): void;
@@ -58,13 +59,14 @@ export function createSender(d: SenderDeps): Sender {
   }
 
   /** Send one call that answers a stored line, and apply it. */
-  async function send(call: () => Promise<LedgerEvent>): Promise<string | null> {
+  async function send(call: () => Promise<LedgerLine>): Promise<string | null> {
     if (d.readOnly()) {
       d.fail(new ApiError(READ_ONLY));
       return READ_ONLY;
     }
+    const board = d.board();
     try {
-      await tracked(call().then((e) => d.own(e)));
+      await tracked(call().then((line) => d.own(line, board)));
       return null;
     } catch (err) {
       d.fail(err);
@@ -101,7 +103,7 @@ export function createSender(d: SenderDeps): Sender {
   return {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
-    board: (id, fields) => send(() => putBoard(id, fields)),
+    board: (id, fields) => send(() => putBoard(id, fields)), // a board line names no card
     run: (list) => held(() => steps(list)),
     seen: (marks) => held(async () => {
       for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver))) !== null) return false;

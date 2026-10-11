@@ -84,6 +84,7 @@ export function defineVbRegion(): void {
       if (st.canPutBack) back.removeAttribute('aria-describedby');
       else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
       this.applyNote(st);
+      this.applyRetired(st);
       this.piece('.vb-region-empty').hidden = !st.showEmpty;
       const key = JSON.stringify(st.holders ?? []);
       if (key !== this.holdersKey) {
@@ -118,6 +119,20 @@ export function defineVbRegion(): void {
 
     titleLine(): HTMLElement {
       return this.piece('.vb-region-head');
+    }
+
+    /** "N cards retired" (retiredMarker flag): its words and name, and the version a press opens;
+     *  with no version to open it is aria-disabled. */
+    private applyRetired(st: RegionState): void {
+      const b = this.piece('.vb-region-retired');
+      const r = st.retired;
+      b.hidden = !r;
+      b.textContent = r?.text ?? '';
+      if (r) b.setAttribute('aria-label', r.label);
+      if (r) b.title = r.label;
+      if (r?.version === undefined) delete b.dataset.version;
+      else b.dataset.version = String(r.version);
+      b.setAttribute('aria-disabled', String(r?.version === undefined));
     }
 
     /** Comment's name and badge, the preview and the note block; a fixed frame (Later) has none

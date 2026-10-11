@@ -77,13 +77,13 @@ test('numbers: assigned by the server and never reused', () => {
   const { ledger } = seeded(2);
   assert.deepEqual([...ledger.state().nodes.keys()], [1, 2]);
   const third = ledger.append(node('Third'), AGENT);
-  assert.equal(third.type === 'node' && third.n, 3);
+  assert.equal(third.type === 'node' && third.id, 3);
   // A client cannot pick a fresh number, and a number in use is a new version, not a new node.
   assert.match(problemsOf(() => ledger.append(node('Mine', 9), AGENT)).join(), /unknown node 9/);
   ledger.append(node('Item 1 again', 1), AGENT);
   assert.equal(ledger.state().nodes.size, 3);
   const next = ledger.append(node('Fourth'), AGENT);
-  assert.equal(next.type === 'node' && next.n, 4);
+  assert.equal(next.type === 'node' && next.id, 4);
 });
 
 test('versions: a second write to n gets ver 2, whatever the body says', () => {
@@ -160,7 +160,7 @@ test('a corrupt line is reported while the rest loads, and the next seq is above
   assert.deepEqual([...ledger.state().nodes.keys()], [1, 2]);
   const e = ledger.append(node('Third'), AGENT);
   assert.equal(e.seq, 7);
-  assert.equal(e.type === 'node' && e.n, 3);
+  assert.equal(e.type === 'node' && e.id, 3);
   assert.deepEqual(openLedger(file, quiet).state(), ledger.state());
 });
 

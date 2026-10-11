@@ -10,6 +10,7 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { boardLines } from './board-lines.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 // The step's time and the gallery's screenshot read the same in every test machine's clock.
@@ -64,12 +65,9 @@ const steps = (page: Page, n: number) => card(page, n).locator('.vb-node-steps')
 const nav = (page: Page, n: number) => card(page, n).locator('.vb-node-stepnav');
 const next = (page: Page, n: number) => nav(page, n).getByRole('button', { name: 'Next' });
 
-/** The card seen lines on the board after line `after`, as [n, ver]. */
-async function seenAfter(page: Page, board: string, after: number): Promise<number[][]> {
-  const r = await page.request.get(`/api/ledger?board=${board}&after=${after}`);
-  return (await r.json() as { events: { type: string; n?: number; ver?: number }[] }).events
-    .filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver!]);
-}
+/** The card seen lines on the board after line `after`, as [n, ver], by board number (board-lines.ts). */
+const seenAfter = async (page: Page, board: string, after: number): Promise<number[][]> =>
+  (await boardLines(page, board, after)).filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver as number]);
 const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
 
 /** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */

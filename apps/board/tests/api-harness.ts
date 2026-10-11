@@ -8,7 +8,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { OperationId } from '../../../packages/format/src/index.ts';
+import type { NodeEvent, OperationId } from '../../../packages/format/src/index.ts';
+import { boardNumber } from '../../../packages/format/src/index.ts';
 import type { CallInput, CallOptions, Client } from '../../../packages/client/src/index.ts';
 import { ApiProblem, createClient } from '../../../packages/client/src/index.ts';
 import type { BoardServerOptions } from '../server/app.ts';
@@ -23,8 +24,13 @@ export const AGENT: Caller = { by: 'agent', agent: 'a-k3m9x2pq' };
 export const PERSON: Caller = { by: 'person' };
 const FIXTURE = path.join(ROOT, 'packages/format/fixtures/roadmap.ledger.jsonl');
 
-/** What the seed wrote, by name, so tests can name `seq`s and node numbers. */
-export interface Seeded { comment: number; reply: number; propose: number; later: number; request: number; q: number; d: number }
+/** What the seed wrote, by name, so tests can name `seq`s and cards: `q` and `d` by their number
+ * on board `pricing` (1 and 2), as every request names them; `qId` and `dId` by identity, as a
+ * ledger line does (api.md 125). The roadmap fixture holds the lower identities, so the two never
+ * agree and a slip from one to the other fails. */
+export interface Seeded {
+  comment: number; reply: number; propose: number; later: number; request: number; q: number; d: number; qId: number; dId: number;
+}
 
 /** A second, v3 board on top of the roadmap fixture (36 lines): a joined agent, a region, two
  * items, a link, a proposal, a comment and its reply, a "later", a seen mark, a size pick, a
@@ -36,19 +42,20 @@ function seedMore(ledger: Ledger): Seeded {
   add({ type: 'region', board: 'pricing', region: { id: 'options', title: 'Options', mode: 'grid', columns: 2 } });
   const node = (title: string, kind: string, n?: number) =>
     add({ type: 'node', board: 'pricing', ...(n && { n }), node: { region: 'options', kind, title } });
-  const q = node('Flat fee or per seat?', 'question') as { n: number };
-  const d = node('Choose the launch price', 'decision') as { n: number };
-  add({ type: 'link', from: q.n, to: d.n, label: 'blocks' });
-  const propose = add({ type: 'propose', n: q.n, ver: 1, action: 'ack', reason: 'Settled in chat: per seat.' }).seq;
-  const comment = add({ type: 'act', action: 'comment', n: q.n, ver: 1, text: 'Why per seat?' }, PERSON).seq;
-  const reply = add({ type: 'reply', n: q.n, text: 'Teams grow; a flat fee stops fitting.', to: comment }).seq;
-  const later = add({ type: 'act', action: 'later', n: d.n, ver: 1 }, PERSON).seq;
-  add({ type: 'seen', n: q.n, ver: 1 }, PERSON);
-  add({ type: 'act', action: 'size', n: q.n, size: 's' }, PERSON);
-  node('Flat fee or per seat? (with the numbers)', 'question', q.n);
+  const q = (node('Flat fee or per seat?', 'question') as NodeEvent).id;
+  const d = (node('Choose the launch price', 'decision') as NodeEvent).id;
+  add({ type: 'link', from: q, to: d, label: 'blocks' });
+  const propose = add({ type: 'propose', n: q, ver: 1, action: 'ack', reason: 'Settled in chat: per seat.' }).seq;
+  const comment = add({ type: 'act', action: 'comment', n: q, ver: 1, text: 'Why per seat?' }, PERSON).seq;
+  const reply = add({ type: 'reply', n: q, text: 'Teams grow; a flat fee stops fitting.', to: comment }).seq;
+  const later = add({ type: 'act', action: 'later', n: d, ver: 1 }, PERSON).seq;
+  add({ type: 'seen', n: q, ver: 1 }, PERSON);
+  add({ type: 'act', action: 'size', n: q, size: 's' }, PERSON);
+  node('Flat fee or per seat? (with the numbers)', 'question', q);
   add({ type: 'act', action: 'comment', n: 1, ver: 1, text: 'Rule 6 needs an example.' }, PERSON);
   const request = add({ type: 'grant-request', board: 'roadmap', region: 'review', reason: 'I need to update the review items.' }).seq;
-  return { comment, reply, propose, later, request, q: q.n, d: d.n };
+  const num = (id: number) => boardNumber(ledger.state().index, id)!;
+  return { comment, reply, propose, later, request, q: num(q), d: num(d), qId: q, dId: d };
 }
 
 export interface Harness {
@@ -82,7 +89,7 @@ export interface Harness {
 export interface Joined { agent: string; secret: string; client: Client }
 
 const PERSON_OPS: ReadonlySet<OperationId> = new Set([
-  'act', 'mark_seen', 'put_board', 'start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
+  'act', 'mark_seen', 'put_board', 'read_ledger', 'start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
   'get_project', 'list_folders', 'open_project',
 ]);
 

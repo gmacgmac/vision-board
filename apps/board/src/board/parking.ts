@@ -7,6 +7,7 @@
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import type { CardConditions, CardReply } from '../../../../packages/ui/src/index.ts';
+import { idOf } from './card-numbers.ts';
 
 export interface ParkingDeps {
   /** The handover flag: "Awaiting" and the handover tab. */
@@ -15,7 +16,9 @@ export interface ParkingDeps {
   replies: boolean;
   /** The state the board is drawn from: the held one, or a past version's (versions.ts). */
   state(): LedgerState | null;
-  /** The conditions table's items in Later whose handover is owed. */
+  /** The open board: a card drawn is named by its number on it (card-numbers.ts). */
+  board(): string;
+  /** The conditions table's items in Later whose handover is owed, by board number. */
   awaiting(): ReadonlySet<number>;
   /** A past version shows: the owed handover is today's fact, not that version's. */
   readOnly(): boolean;
@@ -34,7 +37,7 @@ const NONE: CardConditions = {};
 const bySeq = (a: CardReply, b: CardReply) => a.seq - b.seq;
 
 export function createParking(d: ParkingDeps): Parking {
-  /** Replies by the note they name, and by the card they are on. */
+  /** Replies by the note they name, and by the card they are on (its identity). */
   let answers = new Map<number, CardReply[]>();
   let own = new Map<number, CardReply[]>();
   let container: CardReply[] = [];
@@ -52,11 +55,11 @@ export function createParking(d: ParkingDeps): Parking {
       own = new Map();
       container = [];
       if (!s) return;
-      for (const [n, list] of s.replies) {
+      for (const [id, list] of s.replies) {
         for (const r of list) {
           const agent = r.agent === undefined ? undefined : s.agents.get(r.agent);
           const reply: CardReply = { seq: r.seq, text: r.text, ...(r.to !== undefined && { to: r.to }), ...(agent && { agent }) };
-          push(own, n, reply);
+          push(own, id, reply);
           if (r.to === undefined) continue;
           push(answers, r.to, reply);
           if (s.asks.get(r.to)?.region !== undefined) container.push(reply);
@@ -66,10 +69,11 @@ export function createParking(d: ParkingDeps): Parking {
     },
     card(n) {
       const s = d.state();
-      if (!s || n.n === undefined) return NONE;
+      const id = s && n.n !== undefined ? idOf(s, d.board(), n.n) : undefined;
+      if (!s || n.n === undefined || id === undefined) return NONE;
       const awaiting = d.handover && !d.readOnly() && d.awaiting().has(n.n);
-      const bundle = d.handover ? s.parks.get(n.n) : undefined;
-      const replies = d.replies ? repliesOn(s, n.n) : [];
+      const bundle = d.handover ? s.parks.get(id) : undefined;
+      const replies = d.replies ? repliesOn(s, id) : [];
       return {
         ...(awaiting && { awaiting }), ...(bundle && { handover: bundle }), ...(replies.length && { replies }),
       };
@@ -77,11 +81,11 @@ export function createParking(d: ParkingDeps): Parking {
     containers: () => container,
   };
 
-  /** The replies to card `n`'s notes (a note on a group is answered on any of its cards), then its own that
+  /** The replies to card `id`'s notes (a note on a group is answered on any of its cards), then its own that
    *  name no note, in the order they were written. A reply naming a note elsewhere shows there. */
-  function repliesOn(s: LedgerState, n: number): CardReply[] {
-    const out = (s.items.get(n)?.notes ?? []).flatMap((x) => answers.get(x.seq) ?? []);
-    for (const r of own.get(n) ?? []) if (r.to === undefined || !s.asks.has(r.to)) out.push(r);
+  function repliesOn(s: LedgerState, id: number): CardReply[] {
+    const out = (s.items.get(id)?.notes ?? []).flatMap((x) => answers.get(x.seq) ?? []);
+    for (const r of own.get(id) ?? []) if (r.to === undefined || !s.asks.has(r.to)) out.push(r);
     return out.sort(bySeq);
   }
 }

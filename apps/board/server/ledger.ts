@@ -1,18 +1,21 @@
 // The one I/O layer for the project ledger (rule 7, D-017): the only module that reads or appends
 // `<project>/.visionboard/ledger.jsonl`. Every line is checked on read and every event before it is
-// written. The server stamps `v`, `seq`, `at`, `by` and `agent`, and assigns node numbers and
-// versions, so a request body can never claim them. Each stamped line is checked against the
-// stored-line JSON Schema first (unknown fields are refused, never stored, api.md 7), then by the
-// hand rules and the context. Node is single-threaded and the append is synchronous, so writes
-// are applied one at a time (PLAN key change 2, api.md 33).
+// written. The server stamps `v`, `seq`, `at`, `by` and `agent`, and assigns card identities and
+// versions, so a request body can never claim them. `append` takes a line as the file holds it
+// (a card by its identity, `n`; board numbers are turned into identities first, edge.ts). Each
+// stamped line is checked against the stored-line JSON Schema first (unknown fields are refused,
+// never stored, api.md 7) and the hand rules; then the event code reads (`fromLine`) by the act
+// rules and the context, whose words name cards by board number (api.md 125). Node is
+// single-threaded and the append is synchronous, so writes are applied one at a time (PLAN key
+// change 2, api.md 33).
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '../../../packages/format/src/index.ts';
 import {
-  LEDGER_FORMAT, contextProblems, eventProblems, indexEvent, readLedger,
+  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger,
 } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { applyEvent, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
+import { applyEvent, cardName, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
 import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
@@ -27,12 +30,13 @@ export interface Ledger {
   readonly file: string;
   /** Problems found when the file was opened, as "line N: ...". */
   readonly problems: readonly string[];
-  /** Stamp, check and append one event. Throws an `invalid` problem with every error, writing
-   * nothing. `board`: the board the route names; an act must stay on it. */
+  /** Stamp, check and append one line (cards by identity, as the file holds them). Throws an
+   * `invalid` problem with every error, writing nothing. `board`: the board the route names; an act
+   * must stay on it. Returns the event as code reads it (`fromLine`). */
   append(input: unknown, caller: Caller, opts?: { board?: string }): LedgerEvent;
   /** The folded state, kept current on every append. */
   state(): LedgerState;
-  /** Every valid line, oldest first (`read_ledger`). */
+  /** Every valid line, oldest first, as code reads it; `toLine` gives the line (`read_ledger`). */
   events(): readonly LedgerEvent[];
   /** Called after each append. Returns an unsubscribe. */
   onAppend(fn: (e: LedgerEvent) => void): () => void;
@@ -59,7 +63,7 @@ function highestSeq(lines: string[]): number {
   return max;
 }
 
-/** The body with the server's stamp. A new node (no `n`) gets the next number; every node event
+/** The body with the server's stamp. A new node (no `n`) gets the next identity; every node event
  * gets the next version. */
 function stamp(input: unknown, caller: Caller, seq: number, ix: LedgerIndex): Rec {
   const body: Rec = isRec(input) ? { ...input } : {};
@@ -70,7 +74,7 @@ function stamp(input: unknown, caller: Caller, seq: number, ix: LedgerIndex): Re
   };
   if (body.type === 'node') {
     const known = typeof body.n === 'number' ? ix.nodes.get(body.n) : undefined;
-    if (body.n === undefined) e.n = ix.maxN + 1;
+    if (body.n === undefined) e.n = ix.maxId + 1;
     e.ver = (known?.ver ?? 0) + 1;
   }
   return e;
@@ -96,9 +100,9 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
   if (schema.length) return schema.some((p) => p.pointer === '/by') ? [wrongCaller(e)] : schema;
   const shape = eventProblems(e);
   if (shape.length) return hand(shape);
-  const event = e as unknown as LedgerEvent;
+  const event = fromLine(e);
   const rules = event.type === 'act' ? validateAct(event as ActEvent, s, board) : [];
-  return hand(rules.length ? rules : contextProblems(ix, event));
+  return hand(rules.length ? rules : contextProblems(ix, event, cardName(s)));
 }
 
 /** Open a ledger file (absent = empty). Bad lines are reported through `warn` and skipped, so one
@@ -131,9 +135,9 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       if (errors.length) {
         throw problem('invalid', 'The event does not fit the ledger. Fix the fields listed in errors and send it again.', { errors });
       }
-      const event = e as unknown as LedgerEvent;
+      const event = fromLine(e);
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.appendFileSync(file, `${torn ? '\n' : ''}${JSON.stringify(event)}\n`);
+      fs.appendFileSync(file, `${torn ? '\n' : ''}${JSON.stringify(e)}\n`);
       torn = false;
       events.push(event);
       indexEvent(ix, event);

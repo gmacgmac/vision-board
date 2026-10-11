@@ -53,3 +53,11 @@ test('Items: Acknowledge and Drop name the words they read on a question and an 
   assert.equal(label('drop'), 'Drop (No)');
   assert.equal(label('comment'), 'Comment');
 });
+
+// Field report batch 2, assumption A: Shift+F flags the focused card (F alone stays Fit).
+test('with the cardFlag flag, Items lists Shift+F for the flag; without it, nothing; F stays Fit', () => {
+  const flag = (on: boolean) => keyGroups({ flag: on }).find((g) => g.group === 'Items')!.rows.filter((r) => r.id === 'other:flag');
+  assert.deepEqual(flag(true).map((r) => r.keys), [['Shift+F']]);
+  assert.deepEqual(flag(false), []);
+  assert.deepEqual(rows().find((r) => r.id === 'command:fit')!.keys, ['F']);
+});

@@ -77,7 +77,7 @@ test('write_board: on a board granted to it, a new region is written; an item in
   await (await person()).call('act', { board: 'pricing', body: { type: 'act', action: 'grant', request: board.request } });
   const r = await ok('write_board', {
     board: 'pricing', secret,
-    items: [{ type: 'region', key: 'mcp-notes', region: { id: 'mcp-notes', title: 'MCP notes', mode: 'list' } }, QUESTION],
+    items: [{ type: 'region', key: 'mcp-notes', region: { id: 'mcp-notes', title: 'MCP notes', mode: 'column' } }, QUESTION],
   });
   assert.equal(r.results[0].ok, true);
   assert.deepEqual([r.results[1].ok, r.results[1].key], [false, 'mcp-q']);

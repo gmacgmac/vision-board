@@ -11,14 +11,16 @@ import type { LedgerState } from './fold.ts';
 import type { Container } from './references.ts';
 import { placeOf } from './references.ts';
 
-/** One write item as the server holds it after resolving it: keys turned into numbers, the board
- * taken from the path (api.md 34, 35). Full ledger events fit this shape too. */
+/** One write item as the server holds it after resolving it: keys and board numbers turned into
+ * card identities, the board taken from the path (api.md 34, 35, 125), a retire's cards filled in
+ * (api.md 126). Ledger lines fit this shape too. */
 export type WriteItem =
   | { type: 'board'; board: string }
   | { type: 'region'; board: string; region: { id: string } }
   | { type: 'node'; board: string; n: number; node: { region: string } }
   | { type: 'link' | 'unlink'; from: number; to: number }
-  | { type: 'reply' | 'propose' | 'park'; n: number };
+  | { type: 'reply' | 'propose' | 'park'; n: number }
+  | { type: 'retire'; board: string; cards: number[]; region?: string };
 export type WriteKind = WriteItem['type'];
 
 /** What to ask the person for with `request_grant`: a board, or a container on it. */
@@ -37,25 +39,25 @@ const board = (s: LedgerState, agent: string, b: string): Need | undefined =>
 const container = (s: LedgerState, agent: string, c: Container | undefined): Need | undefined =>
   c && s.index.boards.get(c.board)?.has(c.region) && !holds(s, agent, c.board, c.region) ? { ...c } : undefined;
 
-/** The container card `n` is in now (references.ts `placeOf`). The built-in Later has no holders,
+/** The container card `id` is in now (references.ts `placeOf`). The built-in Later has no holders,
  * so a card there is judged by the container its agent drew it in (api.md 70). */
-function placed(s: LedgerState, n: number): Container | undefined {
-  const p = placeOf(s, n);
+function placed(s: LedgerState, id: number): Container | undefined {
+  const p = placeOf(s, id);
   return p && { board: p.board, region: s.index.boards.get(p.board)?.has(p.region) ? p.region : p.drawn };
 }
 
-/** A write on card `n`: its container, then its board. */
-function onCard(s: LedgerState, agent: string, n: number): Verdict {
-  const c = placed(s, n);
+/** A write on card `id`: its container, then its board. */
+function onCard(s: LedgerState, agent: string, id: number): Verdict {
+  const c = placed(s, id);
   return container(s, agent, c) ?? (c && board(s, agent, c.board)) ?? 'ok';
 }
 
-/** An answer on card `n`: its author needs only the board, so it can still answer a card the
+/** An answer on card `id`: its author needs only the board, so it can still answer a card the
  * person moved (api.md 24); anyone else, the card's container too. */
-function answer(s: LedgerState, agent: string, n: number): Verdict {
-  const x = s.nodes.get(n);
+function answer(s: LedgerState, agent: string, id: number): Verdict {
+  const x = s.nodes.get(id);
   if (!x) return 'ok';
-  return latest(x).agent === agent ? board(s, agent, x.board) ?? 'ok' : onCard(s, agent, n);
+  return latest(x).agent === agent ? board(s, agent, x.board) ?? 'ok' : onCard(s, agent, id);
 }
 
 type Rule<K extends WriteKind> = (s: LedgerState, agent: string, item: WriteItem & { type: K }) => Verdict;
@@ -79,15 +81,20 @@ export const PERMISSIONS: { [K in WriteKind]: Rule<K> } = {
   reply: (s, agent, i) => answer(s, agent, i.n),
   propose: (s, agent, i) => answer(s, agent, i.n),
   park: (s, agent, i) => answer(s, agent, i.n),
+  // Like a node update (api.md 126): the container named, or each card's container now, then the board.
+  retire: (s, agent, i) =>
+    (i.region === undefined ? undefined : container(s, agent, { board: i.board, region: i.region }))
+    ?? i.cards.map((id) => container(s, agent, placed(s, id))).find((x) => x !== undefined)
+    ?? board(s, agent, i.board) ?? 'ok',
 };
 
 /** May `agent` write `item`? Its kind's row in `PERMISSIONS`. */
 export const canWrite = (s: LedgerState, agent: string, item: WriteItem): Verdict =>
   (PERMISSIONS[item.type] as Rule<WriteKind>)(s, agent, item);
 
-/** May `agent` answer on card `n`: the `reply` row (api.md 24, 41). It is also what an agent is told
+/** May `agent` answer on card `id`: the `reply` row (api.md 24, 41). It is also what an agent is told
  * it owes (conditions.ts), so one agent is never told to answer another's card. */
-export const mayAnswer = (s: LedgerState, agent: string, n: number): boolean => canWrite(s, agent, { type: 'reply', n }) === 'ok';
+export const mayAnswer = (s: LedgerState, agent: string, id: number): boolean => canWrite(s, agent, { type: 'reply', n: id }) === 'ok';
 
 /** May `agent` answer on a whole container (api.md 73, 75): it exists and the `region` row lets the
  * agent edit it, so the agent holds the container and its board (D-034). */

@@ -3,7 +3,8 @@
 // must be what `get_board` would have answered, for every board, and stay so as lines arrive.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
+import type { LedgerEvent, LedgerLine } from '../../../packages/format/src/index.ts';
+import { fromLine } from '../../../packages/format/src/index.ts';
 import { applyEvent, eventBoard, foldLedger } from '../../../packages/actions/src/index.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -14,11 +15,13 @@ let h: Harness;
 before(async () => { h = await startBoard(); });
 after(() => h.close());
 
+/** Every line `read_ledger` serves, as the file holds them (cards by identity), read as code reads
+ * them (`fromLine`, api.md 125, 130): what the page folds. */
 async function allLines(): Promise<LedgerEvent[]> {
   const out: LedgerEvent[] = [];
   for (;;) {
-    const r = await h.ok<{ events: LedgerEvent[]; more?: true }>('read_ledger', { after: out.at(-1)?.seq ?? 0, limit: 500 });
-    out.push(...r.events);
+    const r = await h.ok<{ events: LedgerLine[]; more?: true }>('read_ledger', { after: out.at(-1)?.seq ?? 0, limit: 500 });
+    out.push(...r.events.map(fromLine));
     if (!r.more) return out;
   }
 }

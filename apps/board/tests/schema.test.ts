@@ -1,4 +1,4 @@
-// Ledger v11 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118): the JSON Schema is the one source, and the hand validator
+// Ledger v12 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, KINDS, LIMITS, MODES, NODE_SIZES,
-  ITEM_REMOVED, TIMESTAMP_PATTERN, eventProblems, readLedger,
+  ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, eventProblems, readLedger,
 } from '../../../packages/format/src/index.ts';
 import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/11/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/12/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v11 lines for every event type and action ----
+// ---- 3. Valid v12 lines for every event type and action ----
 
-test('every event type has a valid v11 line, and every one passes both validators', () => {
+test('every event type has a valid v12 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v11 line, and every one passes both validator
   }
 });
 
-test('every action has a valid v11 act, and every one passes both validators', () => {
+test('every action has a valid v12 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -98,6 +98,14 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     // api.md 118: a line from v10 or older may still carry `item`; readers ignore it.
     patch(patch(VALID.node!, 'v', 10), 'node.item', true),
     patch(patch(patch(VALID.node!, 'v', 2), 'agent', 'kiro'), 'node.item', false),
+    // api.md 126: a whole container, with every card in it, or with none.
+    { ...VALID.retire, region: 'plan', cards: [3, 4] },
+    { ...VALID.retire, region: 'plan', cards: [] },
+    // api.md 129: a line from v11 or older may name `list`; it reads as `column`. `row` is new.
+    patch(patch(VALID.region!, 'v', 11), 'region', { id: 'l', title: 'L', mode: 'list' }),
+    { ...act('mode', { mode: 'list' }), v: 11 },
+    patch(VALID.region!, 'region', { id: 'r', title: 'R', mode: 'row' }),
+    act('mode', { mode: 'column' }),
   ];
   for (const e of lines) assert.deepEqual(verdict(e), { schema: true, hand: true }, JSON.stringify(e).slice(0, 80));
 });
@@ -110,6 +118,16 @@ test('a v11 node line or a sent node naming item gets one problem saying the kin
   const node = { region: 'plan', kind: 'question', title: 'T', item: true };
   assert.deepEqual(schemaProblems(`${eventId('node')}#/$defs/sent`, { type: 'node', node }), removed);
   assert.deepEqual(eventProblems(patch(V.node!, 'node.item', true)), [`node.item: ${ITEM_REMOVED}`]);
+});
+
+test('a v12 line or a sent item naming mode list gets one problem saying it is column now', () => {
+  const words = `\`mode\` is not allowed here. ${LIST_RENAMED}`;
+  assert.deepEqual(ledgerLineProblems(JSON.stringify(patch(V.region!, 'region.mode', 'list'))), [{ pointer: '/region/mode', detail: words }]);
+  assert.deepEqual(ledgerLineProblems(JSON.stringify(act('mode', { mode: 'list' }))), [{ pointer: '/mode', detail: words }]);
+  assert.deepEqual(schemaProblems(`${eventId('region')}#/$defs/sent`, { type: 'region', region: { id: 'r', title: 'R', mode: 'list' } }),
+    [{ pointer: '/region/mode', detail: words }]);
+  assert.deepEqual(eventProblems(patch(V.region!, 'region.mode', 'list')), [`region.mode: ${LIST_RENAMED}`]);
+  assert.equal(doc(COMMON).$defs.notList.description, LIST_RENAMED);
 });
 
 test('the schema words for a removed item are ITEM_REMOVED', () => {
@@ -192,6 +210,13 @@ test('sent forms: n as a number or a key, base and key on an item, never a stamp
   assert.deepEqual(sent('link', { from: { key: 'a' }, to: 2 }), []);
   assert.deepEqual(sent('reply', { n: 1, text: 'Ok.', key: 'r' }), []);
   assert.deepEqual(sent('board', { title: 'Pricing' }), []);
+  // api.md 126: a retire names one card (a number or a key) or one container, never both.
+  assert.deepEqual(sent('retire', { n: 3, key: 'x' }), []);
+  assert.deepEqual(sent('retire', { n: { key: 'q-1' } }), []);
+  assert.deepEqual(sent('retire', { region: 'plan' }), []);
+  assert.deepEqual(sent('retire', {}), [{ pointer: '/n', detail: '`n` is required' }]);
+  assert.deepEqual(sent('retire', { n: 3, region: 'plan' }), [{ pointer: '/n', detail: '`n` is not allowed here' }]);
+  assert.deepEqual(sent('retire', { cards: [3] }).map((p) => p.pointer), ['/n', '/cards']);
   assert.deepEqual(sent('node', { ver: 2, node }), [{ pointer: '/ver', detail: 'unknown field `ver`' }]);
   for (const f of ['v', 'seq', 'at', 'by', 'agent', 'person']) assert.equal(sent('node', { [f]: 1, node }).length, 1, f);
   // Items carry no board: the path names it (api.md 34).

@@ -4,10 +4,13 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, NODE_SIZES, NOTE_KINDS,
-  PERSON_EVENTS, PERSON_TOO,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, LIST_RENAMED, NODE_SIZES,
+  NOTE_KINDS, PERSON_EVENTS, PERSON_TOO, PRIVATE_ACTIONS,
 } from './ledger.ts';
-import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES } from './view.ts';
+import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES } from './view.ts';
+
+/** Every mode a stored line may name: today's, and the old names older lines carry (api.md 129). */
+const LINE_MODES = [...MODES, ...Object.keys(RENAMED_MODES)];
 
 /** An agent id, as `join` hands it out (api.md 10, D-027). */
 export const AGENT_ID_PATTERN = /^a-[a-z0-9]{8}$/;
@@ -78,6 +81,11 @@ function fieldProblems(o: Rec, shape: Shape, prefix: string, p: string[]): void 
 
 const nodeNumber = int('node number');
 const key = text(LIMITS.key);
+/** The cards a `retire` takes off its board (api.md 126): distinct node numbers, none or more. */
+const cardList: Check = (v, f, p) => {
+  list(nodeNumber, LIMITS.nodes)(v, f, p);
+  if (Array.isArray(v) && new Set(v).size !== v.length) p.push(`${f}: each card once`);
+};
 /** A group of cards (api.md 62, 66): two or more distinct node numbers. */
 const nodeNumbers: Check = (v, f, p) => {
   list(nodeNumber, LIMITS.nodes)(v, f, p);
@@ -89,7 +97,7 @@ const nodeNumbers: Check = (v, f, p) => {
 const REGION: Shape = {
   req: ['id', 'title', 'mode'],
   fields: {
-    id, title: text(LIMITS.regionTitle), mode: oneOf(MODES), lanes: list(text(LIMITS.lane), LIMITS.lanes),
+    id, title: text(LIMITS.regionTitle), mode: oneOf(LINE_MODES), lanes: list(text(LIMITS.lane), LIMITS.lanes),
     center: nodeNumber, columns: int(`whole number from 1 to ${LIMITS.columns}`, LIMITS.columns),
   },
 };
@@ -126,7 +134,7 @@ const SHAPES: Record<EventType, Shape> = {
     req: ['action'],
     fields: {
       action: oneOf(ACTION_IDS), n: nodeNumber, ver: int('the version acted on'), text: text(LIMITS.text),
-      proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(MODES),
+      proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(LINE_MODES),
       request: int('seq of a grant-request event'), holder: agentId, size: oneOf(ACT_SIZES),
       note: int('seq of the comment or context act that made the note'), kind: oneOf(NOTE_KINDS),
       nodes: nodeNumbers,
@@ -141,11 +149,12 @@ const SHAPES: Record<EventType, Shape> = {
   park: { req: ['n', 'bundle'], fields: { n: nodeNumber, bundle: obj(BUNDLE), key } },
   join: { req: ['label'], fields: { label: text(LIMITS.agentLabel) } },
   'grant-request': { req: ['board', 'reason'], fields: { board: id, region: id, reason: text(LIMITS.text), key } },
+  retire: { req: ['board', 'cards'], fields: { board: id, cards: cardList, region: id, key } },
 };
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag']);
 /** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
@@ -201,6 +210,22 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'note-edit') need('text', 'text: required');
   if (a === 'reject') need('proposal', 'proposal: the seq of the propose event being turned down');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
+  // The flag marks one card, whatever its version (api.md 128).
+  if (PRIVATE_ACTIONS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(`${f}: a ${a} names one card with n, and nothing else`);
+}
+
+/** A `retire` names its cards, and with `region` the container they were in (api.md 126); without a
+ * container it takes at least one card. */
+function retireRules(e: Rec, p: string[]): void {
+  if (e.region === undefined && Array.isArray(e.cards) && !e.cards.length) p.push('cards: at least 1 card, or a region');
+}
+
+/** From v12 a line names no renamed mode (api.md 129). */
+function modeRules(e: Rec, p: string[]): void {
+  if ((e.v as number) < 12) return;
+  const region = isRec(e.region) ? e.region.mode : undefined;
+  if (e.type === 'region' && typeof region === 'string' && region in RENAMED_MODES) p.push(`region.mode: ${LIST_RENAMED}`);
+  if (e.type === 'act' && typeof e.mode === 'string' && e.mode in RENAMED_MODES) p.push(`mode: ${LIST_RENAMED}`);
 }
 
 /** A `seen` names one node version (`n`, `ver`) or one board up to a line (`board`, `head`), never
@@ -243,6 +268,8 @@ export function eventProblems(input: unknown): string[] {
   if (t === 'join' && agent === undefined) p.push('agent: required; a join is stamped with the new agent id');
   if (t === 'act') actRules(e, p);
   if (t === 'seen') seenRules(e, p);
+  if (t === 'retire') retireRules(e, p);
+  modeRules(e, p);
   // From v11 the kind decides; `item` stays readable on older lines (api.md 118).
   if (t === 'node' && (e.v as number) >= 11 && isRec(e.node) && e.node.item !== undefined) p.push(`node.item: ${ITEM_REMOVED}`);
   return p;

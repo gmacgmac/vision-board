@@ -16,7 +16,7 @@ const titles = (events: LedgerEvent[]) =>
 test('readLedger returns every valid event and no problems', () => {
   assert.deepEqual(read.problems, []);
   assert.equal(read.events.length, lines.length);
-  assert.equal(read.index.maxN, 4);
+  assert.equal(read.index.maxId, 4);
 });
 
 test('fold: statuses and notes follow the item rules', () => {
@@ -39,7 +39,7 @@ test('fold: the parked bundle, the reply and the accepted proposal', () => {
   assert.equal(state.parks.get(4)!.recommendation, 'Add a per-account limit next sprint.');
   assert.deepEqual(state.replies.get(1)!.map((r) => r.to), [8]);
   const prop = state.proposals.get(13)!;
-  assert.deepEqual([prop.n, prop.action, prop.decidedBy, prop.agent], [3, 'drop', 15, 'kiro']);
+  assert.deepEqual([prop.id, prop.action, prop.decidedBy, prop.agent], [3, 'drop', 15, 'kiro']);
 });
 
 test('boardView is a valid view keyed by String(n); every node carries n (api.md 118)', () => {
@@ -57,15 +57,17 @@ test('boardState is keyed like boardView', () => {
   assert.equal(s.items.get('3')!.status, 'dropped');
 });
 
-test('ids do not change when nodes are reordered or one is removed (rule 10)', () => {
+// A board number is a card's place in its board's drawing order, which an append-only ledger never
+// changes (api.md 125): a redraw keeps it, and a retired card keeps its number, so no other moves
+// and none is given twice (api.md 126, assumption C).
+test('ids do not change when a card is redrawn or one is retired (rule 10)', () => {
   const all = titles(read.events);
-  const nodes = read.events.filter((e) => e.type === 'node');
-  const rest = read.events.filter((e) => e.type !== 'node');
-  const reordered = titles([...rest.slice(0, 2), ...nodes.reverse(), ...rest.slice(2)]);
-  assert.deepEqual(reordered, all);
-  const without2 = titles(read.events.filter((e) => !(e.type === 'node' && e.n === 2)));
+  const at = '2026-10-02T10:00:00Z';
+  const redraw: LedgerEvent = { v: 12, seq: 16, at, by: 'agent', agent: 'kiro', type: 'node', board: BOARD, id: 3, ver: 2, node: { region: 'findings', kind: 'decision', title: 'Redrawn' } };
+  assert.deepEqual(titles([...read.events, redraw]), { ...all, 3: 'Redrawn' });
+  const retire: LedgerEvent = { v: 12, seq: 16, at, by: 'agent', agent: 'kiro', type: 'retire', board: BOARD, cards: [2] };
   const { '2': _gone, ...others } = all;
-  assert.deepEqual(without2, others);
+  assert.deepEqual(titles([...read.events, retire]), others);
 });
 
 test('replyText reads boardView + boardState', () => {
@@ -76,16 +78,16 @@ test('replyText reads boardView + boardState', () => {
 });
 
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 2, seq: 16, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', n: 1, ver: 2, ...f });
+  ({ v: 2, seq: 16, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: 1, ver: 2, ...f });
 
 test('validateAct follows the registry', () => {
   assert.deepEqual(validateAct(act({}), state), []);
   assert.ok(validateAct(act({ by: 'agent' }), state).some((p) => p.includes('only the person')));
   assert.ok(validateAct(act({ by: 'agent', action: 'comment', text: 'hi' }), state).some((p) => p.includes('only the person')));
-  assert.ok(validateAct(act({ n: 2 }), state).some((p) => p.includes("a topic doesn't offer this")));
-  assert.ok(validateAct(act({ n: 99 }), state).some((p) => p.includes('unknown node')));
+  assert.ok(validateAct(act({ id: 2 }), state).some((p) => p.includes("a topic doesn't offer this")));
+  assert.ok(validateAct(act({ id: 99 }), state).some((p) => p.includes('unknown node')));
   assert.ok(validateAct(act({ action: 'comment', text: ' ' }), state).includes('text: required'));
-  assert.deepEqual(validateAct(act({ action: 'mode', board: BOARD, region: 'findings', mode: 'list' }), state), []);
-  assert.ok(validateAct(act({ action: 'mode', board: BOARD, region: 'nope', mode: 'list' }), state)
+  assert.deepEqual(validateAct(act({ action: 'mode', board: BOARD, region: 'findings', mode: 'column' }), state), []);
+  assert.ok(validateAct(act({ action: 'mode', board: BOARD, region: 'nope', mode: 'column' }), state)
     .some((p) => p.includes('region: unknown')));
 });

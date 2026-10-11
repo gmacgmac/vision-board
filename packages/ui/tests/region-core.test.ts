@@ -5,7 +5,7 @@ import { MODES } from '../../format/src/index.ts';
 import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
 import type { RegionNoteStage } from '../src/index.ts';
 import {
-  agentChoiceText, commentLabel, MODE_HINT, MODE_LABEL, NOTE_STAGE_TEXT, noteBadge, noteStage, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT,
+  agentChoiceText, commentLabel, MODE_HINT, retiredMarker, MODE_LABEL, NOTE_STAGE_TEXT, noteBadge, noteStage, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT,
   RESET_NONE_HINT, regionColour, regionHolders, regionNote, regionState,
 } from '../src/index.ts';
 
@@ -14,7 +14,7 @@ const node = (f: Partial<ViewNode>): ViewNode => ({ id: '1', region: 'r', kind: 
 const view = (nodes: ViewNode[]): View =>
   ({ format: 1, session: 's', title: 'B', version: 1, regions: [region], nodes, links: [] });
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 const deciding = (...entries: [string, ItemStatus][]): BoardState =>
   board({ items: new Map(entries.map(([id, status]) => [id, { status, notes: [] }])) });
 const drawn = (...ids: string[]): ReadonlySet<string> => new Set(ids);
@@ -31,7 +31,8 @@ test('MODE_HINT holds mockup 05\'s one-liner for every mode, in mode order', () 
     flow: 'Connected steps and where they branch',
     lanes: 'Several flows side by side, one per lane',
     radial: 'One subject, everything related around it',
-    list: 'Dense reading, one row each',
+    column: 'One card under another, in card order',
+    row: 'One card beside another, in card order',
   });
 });
 
@@ -165,4 +166,12 @@ test('holders: left out when none are given; creator first, and only the others 
     { agent: 'a-bbbb2222', label: 'Docs chat', removable: true },
   ]);
   assert.deepEqual(regionHolders([{ agent: 'a-bbbb2222', label: 'Docs chat' }]), [{ agent: 'a-bbbb2222', label: 'Docs chat', removable: true }]);
+});
+
+// Field report batch 2 ruling 1: a container cards were retired from says how many, and a press
+// opens the board version where they last appeared; with no version to open it only says how many.
+test('retiredMarker: "N cards retired", named with the version it opens', () => {
+  assert.deepEqual(retiredMarker(1, 40), { text: '1 card retired', label: '1 card retired from this container. Show v40, where it last appeared', version: 40 });
+  assert.deepEqual(retiredMarker(3, 12), { text: '3 cards retired', label: '3 cards retired from this container. Show v12, where they last appeared', version: 12 });
+  assert.deepEqual(retiredMarker(2), { text: '2 cards retired', label: '2 cards retired from this container' });
 });

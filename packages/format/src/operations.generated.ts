@@ -48,7 +48,7 @@ export const OPERATIONS = {
   },
   read_ledger: {
     operationId: 'read_ledger', method: 'GET', path: '/api/ledger',
-    pathParams: [], xAgent: true, auth: 'none',
+    pathParams: [], xAgent: false, auth: 'person',
   },
   join: {
     operationId: 'join', method: 'POST', path: '/api/agents',

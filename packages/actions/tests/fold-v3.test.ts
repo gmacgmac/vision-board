@@ -58,7 +58,7 @@ test('sizes: the person\'s pick per board; auto deletes it', () => {
   l.act({ action: 'size', n: 2, size: 'auto' });
   const s = l.state();
   assert.deepEqual([...boardState(s, 'b').sizes], [['1', 'l']]);
-  assert.deepEqual([...boardState(s, 'b2').sizes], [['4', 'm']]);
+  assert.deepEqual([...boardState(s, 'b2').sizes], [['1', 'm']], 'card 4 is board b2\'s card 1 (api.md 125)');
   assert.equal(s.items.has(1), false, 'a size is not an item response');
 });
 

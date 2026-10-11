@@ -11,20 +11,21 @@ import type { ItemStatus } from './registry.ts';
 import { ACTIONS } from './registry.ts';
 
 /** A note as every read shows it: its latest words and kind. `sent` once a Send came after it;
- * `nodes` when it is a note on a group of cards (api.md 62): every item it is on. `region` when it
- * is a note on a whole container (api.md 73), in place of a card. */
+ * `nodes` when it is a note on a group of cards (api.md 62): every item it is on (identities in the
+ * fold, board numbers once a read gives it: numbers.ts `noteOut`). `region` when it is a note on a
+ * whole container (api.md 73), in place of a card. */
 export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; nodes?: number[]; region?: string }
 
 /** One `comment` or `context` act on an item, as it stands after its edits. `pos` is the `seq`
  * where it counts for the item's status: its own, or the latest edit that set its kind (the
  * latest press of C or M). `changed` is the `seq` of its latest edit. A `context` with no words
  * is an ask but not a note: it cannot be edited or removed (Reopen undoes it). A note on a group
- * is ONE ask in the log of every card it names: `n` is its first card, `nodes` all of them, and
+ * is ONE ask in the log of every card it names: `id` is its first card, `nodes` all of them, and
  * `vers` the version each card was at when it was made (what a newer version answers, api.md 36).
- * A note on a whole container (api.md 73) is on no card: `region` names the container, `n` and
- * `ver` are 0, and `cardsOf` is empty. */
+ * Cards are identities. A note on a whole container (api.md 73) is on no card: `region` names the
+ * container, `id` and `ver` are 0, and `cardsOf` is empty. */
 export interface Ask {
-  seq: number; n: number; kind: NoteKind; ver: number; at: string; pos: number;
+  seq: number; id: number; kind: NoteKind; ver: number; at: string; pos: number;
   text?: string; person?: string; changed?: number; removed?: number;
   nodes?: number[]; vers?: Record<number, number>; region?: string;
 }
@@ -40,24 +41,24 @@ export interface ItemState { status: ItemStatus; notes: ItemNote[] }
 export const isNote = (a: Ask | undefined): a is Ask & { text: string } => a?.text !== undefined;
 
 /** The cards an ask is on: every card of a group note, none for a container note, else its one card. */
-export const cardsOf = (a: Ask): number[] => (a.region !== undefined ? [] : a.nodes ?? [a.n]);
+export const cardsOf = (a: Ask): number[] => (a.region !== undefined ? [] : a.nodes ?? [a.id]);
 
-/** The version card `n` was at when the ask was made. */
-export const askVer = (a: Ask, n: number): number => a.vers?.[n] ?? a.ver;
+/** The version card `id` was at when the ask was made. */
+export const askVer = (a: Ask, id: number): number => a.vers?.[id] ?? a.ver;
 
 /** The ask a `comment` or `context` act makes; `verOf` gives a card's latest version, used where
  * the act names none (a note on a group names no version: each card's is the one it was at). */
-export function askOf(e: ActEvent, verOf: (n: number) => number): Ask {
+export function askOf(e: ActEvent, verOf: (id: number) => number): Ask {
   if (isContainerAct(e)) {
     const { region, ...rest } = e;
-    return { ...askOf({ ...rest, n: 0, ver: 0 }, verOf), region: region! };
+    return { ...askOf({ ...rest, id: 0, ver: 0 }, verOf), region: region! };
   }
-  const cards = e.nodes ?? [e.n!];
+  const cards = e.nodes ?? [e.id!];
   const ver = e.ver ?? verOf(cards[0]!);
   return {
-    seq: e.seq, n: cards[0]!, kind: e.action as NoteKind, ver, at: e.at, pos: e.seq,
+    seq: e.seq, id: cards[0]!, kind: e.action as NoteKind, ver, at: e.at, pos: e.seq,
     ...(e.text?.trim() && { text: e.text.trim() }), ...(e.person !== undefined && { person: e.person }),
-    ...(e.nodes && { nodes: [...e.nodes], vers: Object.fromEntries(e.nodes.map((n) => [n, verOf(n)])) }),
+    ...(e.nodes && { nodes: [...e.nodes], vers: Object.fromEntries(e.nodes.map((id) => [id, verOf(id)])) }),
   };
 }
 

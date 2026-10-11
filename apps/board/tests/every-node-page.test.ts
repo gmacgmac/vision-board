@@ -11,8 +11,8 @@ const at = '2026-10-10T09:00:00Z';
 const agent = { by: 'agent', agent: 'a-pricing1' } as const;
 let seq = 0;
 const line = (f: object): LedgerEvent => ({ v: 11, seq: (seq += 1), at, ...f }) as LedgerEvent;
-const card = (n: number, kind: string) => line({ ...agent, type: 'node', board: 'b', n, ver: 1, node: { region: 'r', kind, title: `Card ${n}` } });
-const act = (n: number, action: string, text?: string) => line({ by: 'person', type: 'act', action, n, ver: 1, ...(text && { text }) });
+const card = (n: number, kind: string) => line({ ...agent, type: 'node', board: 'b', id: n, ver: 1, node: { region: 'r', kind, title: `Card ${n}` } });
+const act = (n: number, action: string, text?: string) => line({ by: 'person', type: 'act', action, id: n, ver: 1, ...(text && { text }) });
 
 /** Question 1 commented, question 2 acknowledged, finding 3 commented, topic 4 untouched. */
 function ledger() {
@@ -31,7 +31,7 @@ test('Hide decided: a decided card stays while its answer is owed, and hides onc
   const owed = pageConditions(s, 'b').owedCards;
   assert.deepEqual([...owed].sort(), [1, 3], 'a comment on any card is owed an answer');
   assert.deepEqual([...decidedIds(boardData(s, 'b'), owed)], ['2'], 'the commented question waits for its reply; a plain card is never decided');
-  applyEvent(s, line({ ...agent, type: 'reply', n: 1, text: 'Annual only, then.', to: comment }));
+  applyEvent(s, line({ ...agent, type: 'reply', id: 1, text: 'Annual only, then.', to: comment }));
   const after = pageConditions(s, 'b').owedCards;
   assert.deepEqual([...after], [3]);
   assert.deepEqual([...decidedIds(boardData(s, 'b'), after)].sort(), ['1', '2'], 'answered, it hides');

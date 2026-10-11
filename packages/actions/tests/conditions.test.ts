@@ -32,12 +32,12 @@ const replied = (s: LedgerState, seq: number, cards: number[]) =>
 
 /** pending.ts `owedOn`: the owed ask and the owed "later", each when owed. */
 function oldOwedOn(s: LedgerState, node: LedgerNode): { ask?: number; later?: number } | undefined {
-  const status = s.items.get(node.n)?.status ?? 'open';
-  const m = s.marks.get(node.n);
+  const status = s.items.get(node.id)?.status ?? 'open';
+  const m = s.marks.get(node.id);
   if (!m || CLOSED.has(status)) return undefined;
   const { ask } = m;
   const made = ask && s.asks.get(ask.seq);
-  const answered = ask && (latest(node).ver > ask.ver || replied(s, ask.seq, made ? cardsOf(made) : [node.n]));
+  const answered = ask && (latest(node).ver > ask.ver || replied(s, ask.seq, made ? cardsOf(made) : [node.id]));
   const parkOwed = status === 'later' && m.later !== undefined && (m.park ?? 0) < m.later;
   if ((!ask || answered) && !parkOwed) return undefined;
   return { ...(ask && !answered && { ask: ask.seq }), ...(parkOwed && { later: m.later }) };
@@ -47,9 +47,9 @@ function oldOwedOn(s: LedgerState, node: LedgerNode): { ask?: number; later?: nu
 function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
   const items: Condition[] = [];
   for (const node of nodesOf(s, board)) {
-    if (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.n }) !== 'ok') continue;
+    if (agent !== undefined && canWrite(s, agent, { type: 'reply', n: node.id }) !== 'ok') continue;
     const o = oldOwedOn(s, node);
-    if (o) items.push({ kind: 'item.owed', board, n: node.n, seq: (o.ask ?? o.later)! });
+    if (o) items.push({ kind: 'item.owed', board, id: node.id, seq: (o.ask ?? o.later)! });
   }
   const containers: Condition[] = [];
   for (const [region, log] of s.regionLogs.get(board) ?? []) {
@@ -57,12 +57,12 @@ function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
     const ask = latestAsk(log);
     if (ask && !replied(s, ask.seq, cardsOf(ask))) containers.push({ kind: 'container.owed', board, container: region, seq: ask.seq });
   }
-  return [...items.sort((a, b) => a.n! - b.n!), ...containers];
+  return [...items.sort((a, b) => a.id! - b.id!), ...containers];
 }
 
 /** pending.ts `unseenItems`. */
 const oldUnseen = (s: LedgerState, board: string): number[] => nodesOf(s, board)
-  .filter((x) => latest(x).ver > (s.seen.get(x.n) ?? 0)).map((x) => x.n).sort((a, b) => a - b);
+  .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0)).map((x) => x.id).sort((a, b) => a - b);
 
 /** reads.ts `boardAccess`'s open requests. */
 const oldOpenRequests = (s: LedgerState, board: string): number[] => grantRequests(s, board).filter((r) => !r.answer).map((r) => r.seq);
@@ -80,7 +80,7 @@ for (const file of FIXTURES) {
       for (const agent of [undefined, ...s.index.agents]) {
         assert.deepEqual(kinds(s, { board, agent }, 'item.owed', 'container.owed'), oldOwed(s, board, agent), `${board} ${agent}`);
       }
-      assert.deepEqual(of(s, { board }, 'item.unseen').map((c) => c.n), oldUnseen(s, board), board);
+      assert.deepEqual(of(s, { board }, 'item.unseen').map((c) => c.id), oldUnseen(s, board), board);
       assert.deepEqual(of(s, { board }, 'grant.requested').map((c) => c.seq), oldOpenRequests(s, board), board);
     }
   });
@@ -95,7 +95,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
   'item.owed': () => {
     const l = v8();
     const ask = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why?' });
-    assert.deepEqual(of(l.state(), { board: 'b' }, 'item.owed'), [{ kind: 'item.owed', board: 'b', n: 1, seq: ask }]);
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'item.owed'), [{ kind: 'item.owed', board: 'b', id: 1, seq: ask }]);
     assert.equal(of(l.state(), { board: 'b', agent: A }, 'item.owed').length, 1, 'A drew it');
     assert.deepEqual(of(l.state(), { board: 'b', agent: B }, 'item.owed'), [], 'B may not answer it');
     l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: ask });
@@ -116,7 +116,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
   },
   'item.new': () => { // the round rules in detail: rounds.test.ts
     const l = v8();
-    const fresh = () => of(l.state(), { board: 'b' }, 'item.new').map((c) => c.n);
+    const fresh = () => of(l.state(), { board: 'b' }, 'item.new').map((c) => c.id);
     l.seenBoard('b', l.seq);
     l.node(B, 5, 1, { region: 'q' });
     assert.deepEqual(fresh(), [5], 'only what was drawn after the first board seen; its board only');
@@ -125,19 +125,19 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
   },
   'item.unseen': () => {
     const l = v8();
-    const unseen = (board: string) => of(l.state(), { board }, 'item.unseen').map((c) => c.n);
+    const unseen = (board: string) => of(l.state(), { board }, 'item.unseen').map((c) => c.id);
     assert.deepEqual(unseen('b'), [1, 2, 3]);
     for (const n of [1, 2, 3]) l.seen(n, 1);
     assert.deepEqual(unseen('b'), [], 'the person\'s seen ends it');
     l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
-    assert.deepEqual(of(l.state(), { board: 'b' }, 'item.unseen'), [{ kind: 'item.unseen', board: 'b', n: 1 }], 'a newer version');
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'item.unseen'), [{ kind: 'item.unseen', board: 'b', id: 1 }], 'a newer version');
     assert.deepEqual(unseen('b2'), [4]);
   },
   'item.awaiting': () => {
     const l = v8();
     const awaiting = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'item.awaiting');
     const later = l.act({ action: 'later', n: 1, ver: 1 });
-    assert.deepEqual(awaiting(), [{ kind: 'item.awaiting', board: 'b', n: 1, seq: later }]);
+    assert.deepEqual(awaiting(), [{ kind: 'item.awaiting', board: 'b', id: 1, seq: later }]);
     assert.equal(awaiting({ board: 'b', agent: A }).length, 1, 'A drew it, and is told too');
     assert.deepEqual(awaiting({ board: 'b', agent: B }), [], 'B may not answer it');
     l.agent(A, { type: 'park', n: 1, bundle });
@@ -152,7 +152,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     l.v = 10;
     const open = (ctx: ConditionContext = { board: 'b' }) => of(l.state(), ctx, 'proposal.open');
     const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
-    assert.deepEqual(open(), [{ kind: 'proposal.open', board: 'b', n: 1, seq: drop }]);
+    assert.deepEqual(open(), [{ kind: 'proposal.open', board: 'b', id: 1, seq: drop }]);
     assert.deepEqual([open({ board: 'b2' }), open({ board: 'b', agent: A })], [[], []], 'its board only, and the person\'s row only');
     l.act({ action: 'reject', n: 1, proposal: drop });
     assert.deepEqual(open(), [], 'a reject ends it');
@@ -170,7 +170,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     const drop = l.agent(A, { type: 'propose', n: 1, ver: 1, action: 'drop', reason: 'The client declined.' });
     assert.deepEqual(stale(), []);
     l.node(A, 1, 2, { region: 'r', body: 'Changed.' });
-    assert.deepEqual(stale(), [{ kind: 'proposal.stale', board: 'b', n: 1, seq: drop }]);
+    assert.deepEqual(stale(), [{ kind: 'proposal.stale', board: 'b', id: 1, seq: drop }]);
     assert.deepEqual(of(l.state(), { board: 'b' }, 'proposal.open'), [], 'never both');
     l.act({ action: 'reject', n: 1, proposal: drop });
     assert.deepEqual(stale(), [], 'a reject ends it');

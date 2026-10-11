@@ -5,15 +5,16 @@ import type { ActEvent } from '../../format/src/index.ts';
 import { isContainerAct } from '../../format/src/index.ts';
 import { conditionsOf } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
+import { numberOf } from './numbers.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { scopeOf } from './references.ts';
 import { isAnswer } from './registry.ts';
 import type { ReplyScope } from './reply.ts';
 
-/** One item the agent owes an answer on. `ask`: the person's latest comment or "needs context"
- * that nothing answers yet. `later`: the `seq` of the "later" that has no park bundle after it.
- * A whole container's latest standing note (api.md 73) is owed with `region` set and `n` 0, as
- * its `Ask` is: it is on no card. */
+/** One item the agent owes an answer on, by its board number `n`. `ask`: the person's latest
+ * comment or "needs context" that nothing answers yet. `later`: the `seq` of the "later" that has no
+ * park bundle after it. A whole container's latest standing note (api.md 73) is owed with `region`
+ * set and `n` 0, as its `Ask` is: it is on no card. */
 export interface PendingItem {
   n: number;
   region?: string;
@@ -29,7 +30,7 @@ export const pendingItems = (s: LedgerState, board: string, agent?: string): Pen
   conditionsOf(s, { board, agent }).flatMap((c) => {
     if (c.kind !== 'item.owed' && c.kind !== 'container.owed') return [];
     const ask = s.asks.get(c.seq!);
-    return [{ n: c.n ?? 0, ...(c.container !== undefined && { region: c.container }), ...(ask ? { ask: { kind: ask.kind, seq: c.seq! } } : { later: c.seq! }) }];
+    return [{ n: c.id === undefined ? 0 : numberOf(s, c.id), ...(c.container !== undefined && { region: c.container }), ...(ask ? { ask: { kind: ask.kind, seq: c.seq! } } : { later: c.seq! }) }];
   });
 
 /** Does this act concern `agent`? Send always; answers to its own requests and its own
@@ -42,12 +43,14 @@ function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
     case 'grant': case 'deny': return s.index.requests.get(e.request!)?.agent === agent;
     case 'revoke': return e.holder === agent;
     case 'mode': return mayAnswerIn(s, agent, { board: e.board!, region: e.region! });
-    default: return scopeOf(s, e).cards.some((n) => mayAnswer(s, agent, n));
+    default: return scopeOf(s, e).cards.some((id) => mayAnswer(s, agent, id));
   }
 }
 
-/** The person's acts on `board` after `seq` `after`, oldest first (`check_responses`). With
- * `agent`, only those that concern it, including the answers to its grant requests. */
+/** The person's acts on `board` after `seq` `after`, oldest first (`check_responses`), as the fold
+ * holds them (cards by identity). With `agent`, only those that concern it, including the answers
+ * to its grant requests. The person's flags are never among them (fold.ts keeps them out of
+ * `acts`, api.md 128). */
 export function responsesAfter(s: LedgerState, board: string, after: number, agent?: string): ActEvent[] {
   const out: ActEvent[] = [];
   for (const e of s.acts) {
@@ -58,7 +61,7 @@ export function responsesAfter(s: LedgerState, board: string, after: number, age
   return out;
 }
 
-/** The cards and containers the person answered on `board` after `since`: an act on an item (✓,
+/** The cards (by board number, as `replyText` reads them) and containers the person answered on `board` after `since`: an act on an item (✓,
  * ✗, a note, Later, Reopen, a note changed or removed, a proposal turned down) or a note on a whole
  * container, as `check_responses` reports them (with `agent`, only what concerns it). The round
  * Send hands the chat panel's agent (reply.ts `replyText`, panel-send ruling 1). */
@@ -67,7 +70,7 @@ export function replyScope(s: LedgerState, board: string, since: number, agent?:
   const regions = new Set<string>();
   for (const e of responsesAfter(s, board, since, agent)) {
     if (!isAnswer(e.action)) continue;
-    for (const n of scopeOf(s, e).cards) cards.add(n);
+    for (const id of scopeOf(s, e).cards) cards.add(numberOf(s, id));
     if (isContainerAct(e)) regions.add(e.region!);
   }
   return { since, cards, regions };

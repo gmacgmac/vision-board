@@ -9,10 +9,11 @@
 // In watch mode (dev only) the stream also names the built page: the first id is kept, and a
 // different one reloads the page, whose view is already saved (FE_02 ruling 6). With the openFolder
 // flag the stream is ended by a folder switch; reopened, it reloads the page when the folder changed.
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
+import type { LedgerEvent, LedgerLine } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { applyEvent, foldLedger } from '../../../../packages/actions/src/index.ts';
 import { canApply } from './board-data.ts';
+import { answerEvent } from './card-numbers.ts';
 import { readLedger, watchProject } from './io.ts';
 import { work } from './work.ts';
 
@@ -24,8 +25,9 @@ export interface Live {
   /** Read the lines after the held head and apply them. Calls made while a read is in flight
    * share one more read after it, so nothing appended in between is missed. */
   sync(): Promise<void>;
-  /** An act the page sent: applied in place when it is the next line, else read with the rest. */
-  own(e: LedgerEvent): Promise<void>;
+  /** An act the page sent to `board`: its answer (cards by board number, card-numbers.ts) applied
+   * in place when it is the next line, else read with the rest. */
+  own(line: LedgerLine, board: string): Promise<void>;
   /** Follow the project's live stream; a stop function. `reopened`, when given, is asked first each
    * time the stream opens again; true means the page is going away (another folder, folder.ts). */
   watch(reopened?: () => Promise<boolean>): () => void;
@@ -101,8 +103,8 @@ export function createLive(onLines: OnLines): Live {
     get state() { return state; },
     load,
     sync,
-    async own(e) {
-      if (state && !reading && e.seq === state.seq + 1 && apply([e])) return;
+    async own(line, board) {
+      if (state && !reading && line.seq === state.seq + 1 && apply([answerEvent(state, board, line)])) return;
       await sync();
     },
     watch(reopened) {

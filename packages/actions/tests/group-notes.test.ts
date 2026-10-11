@@ -83,18 +83,18 @@ test('a card with its own note not yet sent may also be in a group note; a secon
   assert.deepEqual(validateAct(next(l, { action: 'comment', nodes: [1, 2], text: 'Ours' }), l.state(), 'b'), []);
   const group = l.act({ action: 'comment', nodes: [1, 2], text: 'Ours' });
   assert.deepEqual(notesOn(l, 1).map((x) => x.seq), [own, group]);
-  const p = validateAct(next(l, { action: 'comment', n: 2, ver: 1, text: 'Another' }), l.state(), 'b');
+  const p = validateAct(next(l, { action: 'comment', id: 2, ver: 1, text: 'Another' }), l.state(), 'b');
   assert.deepEqual(p, [], 'card 2 has no note of its own yet');
-  const p1 = validateAct(next(l, { action: 'comment', n: 1, ver: 1, text: 'Another' }), l.state(), 'b');
+  const p1 = validateAct(next(l, { action: 'comment', id: 1, ver: 1, text: 'Another' }), l.state(), 'b');
   assert.ok(p1.some((x) => x.includes(`note ${own}`)), p1.join('; '));
 });
 
 test('edit and remove from any of its pins; never from a card it does not name', () => {
   const { l, note } = withGroup();
-  assert.deepEqual(validateAct(next(l, { action: 'note-edit', n: 2, note, text: 'Edited from 2' }), l.state(), 'b'), []);
+  assert.deepEqual(validateAct(next(l, { action: 'note-edit', id: 2, note, text: 'Edited from 2' }), l.state(), 'b'), []);
   l.act({ action: 'note-edit', n: 2, note, text: 'Edited from 2' });
   assert.deepEqual([1, 2].map((n) => notesOn(l, n)[0]!.text), ['Edited from 2', 'Edited from 2']);
-  const p = validateAct(next(l, { action: 'note-edit', n: 3, note, text: 'x' }), l.state(), 'b');
+  const p = validateAct(next(l, { action: 'note-edit', id: 3, note, text: 'x' }), l.state(), 'b');
   assert.ok(p.some((x) => x.startsWith('note:') && x.includes('1, 2')), p.join('; '));
   l.act({ action: 'note-remove', n: 1, note });
   const s = l.state();
@@ -114,7 +114,7 @@ test('after Send the group note is history on every card', () => {
   const { l, note } = withGroup();
   l.act({ action: 'send', board: 'b' });
   assert.deepEqual([1, 2].map((n) => notesOn(l, n)[0]!.sent), [true, true]);
-  const p = validateAct(next(l, { action: 'note-edit', n: 2, note, text: 'Late' }), l.state(), 'b');
+  const p = validateAct(next(l, { action: 'note-edit', id: 2, note, text: 'Late' }), l.state(), 'b');
   assert.ok(p.some((x) => x.includes('sent')), p.join('; '));
 });
 
@@ -134,7 +134,7 @@ test('owed per card: a newer version of one card answers the note there only', (
 test('check_responses: the agent sees the note once, with all its numbers', () => {
   const { l, note } = withGroup();
   const got = responsesAfter(l.state(), 'b', 0).filter((e) => e.seq === note);
-  assert.deepEqual(got.map((e) => [e.action, e.nodes, e.n, e.text]), [['comment', [1, 2], undefined, 'Same price question on both']]);
+  assert.deepEqual(got.map((e) => [e.action, e.nodes, e.id, e.text]), [['comment', [1, 2], undefined, 'Same price question on both']]);
   assert.equal(responsesAfter(l.state(), 'b', 0, B).filter((e) => e.seq === note).length, 1, 'B holds q: it concerns B');
   const cursor = l.seq;
   l.act({ action: 'note-edit', n: 2, note, text: 'Edited' });

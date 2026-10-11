@@ -22,6 +22,11 @@ line to the state it holds, `board-data.ts` works the open board and what needs 
 from that state, and `draw.ts`
 updates, measures and lays out only what a change touched (`layout-cache.ts` per container,
 `wires.ts` per connector, `offscreen.ts` for cards well off screen), counting the work in `work.ts`.
+The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), so its state is by
+card identity, while everything it draws and sends names a card by its number on its board (api.md
+125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
+flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retired.ts`, retiredMarker
+flag) and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller.
 
 One server per ledger: `server.ts` takes `<VB_PROJECT>/.visionboard/lock` (`server/lock.ts`)
 before it opens the ledger, because a second writer would fork it. The file is JSON (`host`, `pid`,
@@ -42,7 +47,10 @@ the body. The page calls the server only through `packages/client`, wrapped by
 operation's `security`: the person by the `vb_person` cookie set with the page (fresh at each start),
 an agent by its Bearer secret. `server/agents.ts` is the only module that touches
 `.visionboard/agents.json` (one SHA-256 per agent, git-ignored), and `server/write-board.ts` runs a
-`write_board` batch item by item (keys, `base`, grants, then the ledger module). The chat routes
+`write_board` batch item by item (the cards it names, `server/write-refs.ts`; keys, `base`, grants,
+a retire's owed cards, then the ledger module). Requests name a card by its number on the board in
+the path; `server/edge.ts` is the one place a number coming in becomes the card's identity
+(api.md 125). The chat routes
 (`server/chat.ts`, api.md 98-107) run sessions through `packages/agent`: `server/chat-sessions.ts`
 starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
 module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the

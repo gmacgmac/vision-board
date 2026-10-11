@@ -8,6 +8,9 @@ import { commandForKey, regionCommandForKey } from './commands.ts';
 
 export interface KeyHandlers {
   act(id: string, action: ActionId): void;
+  /** Shift+F on a focused card: its flag on or off (cardFlag flag, flag-flow.ts); absent with the
+   *  flag off, when Shift+F stays Fit like F. */
+  flag?(id: string): void;
   nudge(id: string, dx: number, dy: number): void;
   /** Alt+arrows with focus on a container's grip (3_FE_04 ruling 8): the cards' step. */
   nudgeRegion(region: string, dx: number, dy: number): void;
@@ -70,6 +73,11 @@ export function bindKeys(h: KeyHandlers): () => void {
     if (key === 'k' || (id && (e.key === 'ArrowUp' || e.key === 'ArrowLeft'))) {
       e.preventDefault();
       return h.step(id, -1);
+    }
+    // Shift+F on a card is its flag (field report batch 2 assumption A): F alone is Fit.
+    if (id && h.flag && e.shiftKey && key === 'f') {
+      e.preventDefault();
+      return h.flag(id);
     }
     // A Shift combination a command claims (Shift+M, 3_FE_03 ruling 8) is that command's alone: it
     // never falls through to the plain key's action.

@@ -11,19 +11,20 @@ import { isItem, replyEntry } from '../node/node-core.ts';
 /** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
  * so a new mode fails to compile here. */
 export const MODE_LABEL: Record<Mode, string> = {
-  grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', list: 'List',
+  grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', column: 'Column', row: 'Row',
 };
 
 /**
- * What each layout is for, in one line (README pick 2, mockup 05 section 3): the popover's tiles
- * show it. The one place this text lives, so the agent skill can read the same words (tracker U4).
+ * What each layout is for, in one line (README pick 2, mockup 05 section 3; `column` and `row`,
+ * field report batch 2 ruling 4: `list` is `column` now): the popover's tiles show it. The one place this text lives, so the agent skill can read the same words (tracker U4).
  */
 export const MODE_HINT: Record<Mode, string> = {
   grid: 'A numbered set to work through in order',
   flow: 'Connected steps and where they branch',
   lanes: 'Several flows side by side, one per lane',
   radial: 'One subject, everything related around it',
-  list: 'Dense reading, one row each',
+  column: 'One card under another, in card order',
+  row: 'One card beside another, in card order',
 };
 
 /** The popover's foot: the layout the agent drew the container in (the view's mode, not the
@@ -152,6 +153,23 @@ export interface RegionState {
   /** The agents that hold the region, after the count; left out when none is given (the
    * agentAccess flag off, or a region nobody holds). */
   holders?: RegionHolder[];
+  /** "3 cards retired" after the count (retiredMarker flag): the cards the agent retired one at a
+   * time from the container; left out when none was. The page adds it (`retiredMarker`). */
+  retired?: RegionRetired;
+}
+
+/** The retired marker (field report batch 2 ruling 1): its words, its accessible name, and the
+ * board version where the cards last appeared, which a press opens; none when no version can show. */
+export interface RegionRetired { text: string; label: string; version?: number }
+
+/** The marker for `count` cards retired from the container, opening board version `version`. */
+export function retiredMarker(count: number, version?: number): RegionRetired {
+  const text = `${count} card${count === 1 ? '' : 's'} retired`;
+  return {
+    text,
+    label: version === undefined ? `${text} from this container` : `${text} from this container. Show v${version}, where ${count === 1 ? 'it' : 'they'} last appeared`,
+    ...(version !== undefined && { version }),
+  };
 }
 
 /** The holders as the frame shows them: every one by label, creator first, and only the others

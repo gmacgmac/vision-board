@@ -16,17 +16,17 @@
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
     },
     "board": {
-      "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id",
       "description": "The board the container is on."
     },
     "region": {
-      "$ref": "https://vision-board.invalid/schema/ledger/11/events/region.schema.json#/$defs/region",
+      "$ref": "https://vision-board.invalid/schema/ledger/12/events/region.schema.json#/$defs/region",
       "description": "The container itself: its id, title, mode and lanes."
     },
     "holders": {
       "type": "array",
       "items": {
-        "$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/agentId"
+        "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/agentId"
       },
       "description": "Empty for a region written by a v2 line",
       "$comment": "Was: api.md 23"
@@ -36,7 +36,7 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeDetail"
       },
-      "description": "Every node the container has held, each with all its versions and notes."
+      "description": "Every node the container has held, each with all its versions and notes; a retired card carries `retired`."
     },
     "notes": {
       "type": "array",
@@ -45,6 +45,11 @@
       },
       "description": "The person's notes on the whole container, oldest first; a removed note is left out.",
       "$comment": "Was: api.md 73, 75"
+    },
+    "retired": {
+      "$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/seq",
+      "description": "The ledger line that took the container off the board with its cards, for a retired container; left out while it is on the board.",
+      "$comment": "Was: api.md 126"
     },
     "pin": {
       "type": "object",

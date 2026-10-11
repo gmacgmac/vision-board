@@ -207,6 +207,11 @@ vb-node .vb-act[data-act='ack'][aria-pressed='true'] { color: var(--vb-state-ack
 vb-node .vb-act[data-act='drop'][aria-pressed='true'] { color: var(--vb-state-drop); border-color: var(--vb-state-drop); }
 vb-node .vb-act[data-act='context'][aria-pressed='true'] { color: var(--vb-state-context); border-color: var(--vb-state-context); }
 vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-later); border-color: var(--vb-state-later); }
+/* The flag (cardFlag flag): the person's private mark, its cloth filled while the card is flagged.
+   Its colour is the proposed --vb-state-flag (a decoration, Lc 30 tier); until tokens.css has it,
+   the risk kind's orange stands in. */
+vb-node .vb-flag[aria-pressed='true'] { color: var(--vb-state-flag, var(--vb-kind-risk)); border-color: currentColor; }
+vb-node .vb-flag[aria-pressed='true'] .vb-flag-cloth { fill: currentColor; }
 
 /* Zoomed out (N8): the stage carries data-zoom="far" below 0.75, where the buttons would draw
    under the 24px target size. They are hidden but keep their space, so no card changes size;

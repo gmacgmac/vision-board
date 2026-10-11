@@ -18,7 +18,7 @@ function load(name: string): View {
   return boardView(foldDrawn(readLedger(lines.trim().split('\n')).events), name);
 }
 
-const MODES: Mode[] = ['grid', 'list', 'flow', 'lanes', 'radial'];
+const MODES: Mode[] = ['grid', 'column', 'row', 'flow', 'lanes', 'radial'];
 
 interface World { view: View; sizes: Map<string, Size>; inputs: LayoutInputs }
 

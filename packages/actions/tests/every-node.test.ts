@@ -21,7 +21,7 @@ function cards() {
 
 const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendation: 'R' };
 const rows = (l: ReturnType<typeof cards>, kind: ConditionKind) =>
-  conditionsOf(l.state(), { board: 'b' }).filter((c) => c.kind === kind).map((c) => c.n);
+  conditionsOf(l.state(), { board: 'b' }).filter((c) => c.kind === kind).map((c) => c.id);
 
 test('decided: ✓, ✗ or a comment decides a card that needs an answer; nothing decides any other card', () => {
   assert.deepEqual([...DECIDED].sort(), ['acknowledged', 'commented', 'dropped']);
@@ -53,10 +53,11 @@ test('owed: a comment or more context on any card, until a reply or a newer vers
   const l = cards();
   const note = l.act({ action: 'comment', n: 5, ver: 1, text: 'Is this still true?' });
   const more = l.act({ action: 'context', n: 6, ver: 1 });
+  // Cards 5 and 6 (identities) are board b's 4th and 5th: card 4 is on board b2 (api.md 125).
   assert.deepEqual(pendingItems(l.state(), 'b'), [
-    { n: 5, ask: { kind: 'comment', seq: note } }, { n: 6, ask: { kind: 'context', seq: more } },
+    { n: 4, ask: { kind: 'comment', seq: note } }, { n: 5, ask: { kind: 'context', seq: more } },
   ]);
-  assert.deepEqual(pendingItems(l.state(), 'b', A).map((x) => x.n), [5, 6], 'A drew them');
+  assert.deepEqual(pendingItems(l.state(), 'b', A).map((x) => x.n), [4, 5], 'A drew them');
   l.agent(A, { type: 'reply', n: 5, text: 'Yes.', to: note });
   l.node(A, 6, 2, { region: 'r', kind: 'note', body: 'More.' });
   assert.deepEqual(pendingItems(l.state(), 'b'), []);
@@ -65,7 +66,7 @@ test('owed: a comment or more context on any card, until a reply or a newer vers
 test('owed: Later on any card owes a handover until its park (D-020)', () => {
   const l = cards();
   const later = l.act({ action: 'later', n: 5, ver: 1 });
-  assert.deepEqual(pendingItems(l.state(), 'b'), [{ n: 5, later }]);
+  assert.deepEqual(pendingItems(l.state(), 'b'), [{ n: 4, later }], 'identity 5 is board b\'s card 4');
   assert.deepEqual(rows(l, 'item.awaiting'), [5]);
   l.agent(A, { type: 'park', n: 5, bundle });
   assert.deepEqual([pendingItems(l.state(), 'b'), rows(l, 'item.awaiting')], [[], []]);
@@ -88,7 +89,7 @@ test('list_open: open cards that need an answer, plus any card owing an answer o
   l.act({ action: 'later', n: 6, ver: 1 });
   const open = () => openItems(l.state(), 'b').map((x) => [x.n, x.status, x.pending ?? null]);
   assert.deepEqual(open(), [
-    [1, 'commented', 'comment'], [2, 'open', null], [3, 'open', null], [5, 'commented', 'comment'], [6, 'later', 'later'],
+    [1, 'commented', 'comment'], [2, 'open', null], [3, 'open', null], [4, 'commented', 'comment'], [5, 'later', 'later'],
   ]);
   l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: asked });
   l.agent(A, { type: 'reply', n: 5, text: 'The audit.', to: noted });

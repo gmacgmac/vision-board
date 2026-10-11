@@ -1,15 +1,19 @@
 // The read views the API answers with (api.md Operations, 31-36): one node with its whole
 // history, one container, the open items, and the board list. Pure reads
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
-// Optional fields are left out when they do not apply (api.md 32).
+// Optional fields are left out when they do not apply (api.md 32). The fold keys cards by identity;
+// every card here is named by its board number (numbers.ts, api.md 125). No read shows a flag.
+
 import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
-import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
-import type { BoardRun, ItemNote, LedgerReply, LedgerState, Proposal } from './fold.ts';
+import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
+import type { BoardRun, ItemNote, LedgerReply, LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
 import { containerNotes, containerPin, noteJson } from './containers.ts';
 import { CONDITIONS, conditionsOf } from './conditions.ts';
 import { creatorOf, holders } from './grants.ts';
+import type { ProposalView } from './numbers.ts';
+import { linkOut, noteOut, numberOf, proposalOut } from './numbers.ts';
 import { mayAnswer } from './permissions.ts';
 import { placeOf } from './references.ts';
 import type { ItemStatus } from './registry.ts';
@@ -18,7 +22,7 @@ import { isDecided } from './registry.ts';
 /** One version of a node: what the agent said, when, and who. */
 export interface NodeVersionView { ver: number; at: string; agent?: string; node: NodeBody }
 
-/** Everything known about one node (`show_node`, `show_container`). */
+/** Everything known about one node (`show_node`, `show_container`); `n` is its board number. */
 export interface NodeDetail {
   n: number;
   board: string;
@@ -35,16 +39,19 @@ export interface NodeDetail {
   versions: NodeVersionView[];
   notes: ItemNote[];
   replies: LedgerReply[];
-  proposals: Proposal[];
+  proposals: ProposalView[];
   park?: ParkBundle;
   /** Links from or to this node. */
   links: { from: number; to: number; label?: string }[];
+  /** The `seq` of the line that retired it, for a card off the board (api.md 127). */
+  retired?: number;
 }
 
-/** One container: the region as stored, who holds it, every node it has held, the person's notes
- * on the whole container (oldest first, api.md 75) and, when placed, where (api.md 74). */
+/** One container: the region as stored (its centre by board number), who holds it, every node it
+ * has held, the person's notes on the whole container (oldest first, api.md 75), when placed, where
+ * (api.md 74), and for a retired container its retire line (api.md 127). */
 export interface ContainerDetail {
-  board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[]; notes: ItemNote[]; pin?: Place;
+  board: string; region: LedgerRegion; holders: string[]; nodes: NodeDetail[]; notes: ItemNote[]; retired?: number; pin?: Place;
 }
 
 /** An unanswered grant request as the board page shows it (`get_board`): which container, why,
@@ -75,56 +82,62 @@ export interface OpenItem {
 const versionView = ({ ver, at, agent, item: _item, ...node }: LedgerNode['versions'][number]): NodeVersionView =>
   ({ ver, at, ...(agent !== undefined && { agent }), node });
 
-/** Where node `n` is, and where the agent has it when the person moved it (api.md 68). */
-const whereIs = (s: LedgerState, n: number) => {
-  const p = placeOf(s, n)!;
+/** Where card `id` is, and where the agent has it when the person moved it (api.md 68). */
+const whereIs = (s: LedgerState, id: number) => {
+  const p = placeOf(s, id)!;
   return { region: p.region, ...(p.region !== p.drawn && { moved_from: p.drawn }) };
 };
 
-/** Everything known about node `n`, or undefined when there is no such node. */
-export function nodeDetail(s: LedgerState, n: number): NodeDetail | undefined {
-  const node = s.nodes.get(n);
+/** Everything known about card `id`, retired or not, or undefined when there is no such card. */
+export function nodeDetail(s: LedgerState, id: number): NodeDetail | undefined {
+  const node = s.nodes.get(id);
   if (!node) return undefined;
   const last = latest(node);
-  const size = s.sizes.get(n);
-  const seen = s.seen.get(n);
-  const park = s.parks.get(n);
+  const size = s.sizes.get(id);
+  const seen = s.seen.get(id);
+  const park = s.parks.get(id);
   return {
-    n, board: node.board, ...whereIs(s, n),
-    status: s.items.get(n)?.status ?? 'open',
+    n: numberOf(s, id), board: node.board, ...whereIs(s, id),
+    status: s.items.get(id)?.status ?? 'open',
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
     versions: node.versions.map(versionView),
-    notes: sentNotes(s, node.board, s.items.get(n)?.notes ?? []),
-    replies: [...(s.replies.get(n) ?? [])],
-    proposals: [...s.proposals.values()].filter((p) => p.n === n),
+    notes: sentNotes(s, node.board, s.items.get(id)?.notes ?? []).map((x) => noteOut(s, x)),
+    replies: [...(s.replies.get(id) ?? [])],
+    proposals: [...s.proposals.values()].filter((p) => p.id === id).map((p) => proposalOut(s, p)),
     ...(park && { park }),
-    links: [...s.links.values()].filter((l) => l.from === n || l.to === n).map((l) => ({ ...l })),
+    links: [...s.links.values()].filter((l) => l.from === id || l.to === id).map((l) => linkOut(s, l)),
+    ...(node.retired !== undefined && { retired: node.retired }),
   };
 }
 
-/** The nodes linked to `n`, one hop, each in full (`show_node` with `linked=true`). */
-export function linkedDetails(s: LedgerState, n: number): NodeDetail[] {
+/** The cards linked to `id`, one hop, each in full (`show_node` with `linked=true`). */
+export function linkedDetails(s: LedgerState, id: number): NodeDetail[] {
   const others = new Set<number>();
   for (const l of s.links.values()) {
-    if (l.from === n) others.add(l.to);
-    if (l.to === n) others.add(l.from);
+    if (l.from === id) others.add(l.to);
+    if (l.to === id) others.add(l.from);
   }
-  others.delete(n);
+  others.delete(id);
   return [...others].sort((a, b) => a - b).map((x) => nodeDetail(s, x)).filter((d): d is NodeDetail => d !== undefined);
 }
 
-/** One container on `board`, or undefined when the board has no such region. A node belongs if
- * any of its versions was in the region, or the person put it there (api.md 68). */
+/** One container on `board`, on the board or retired, or undefined when the board never had it. A
+ * card belongs if any of its versions was in the region, or the person put it there (api.md 68),
+ * or it left the board with the container; a retired card carries `retired` (api.md 127). */
 export function containerDetail(s: LedgerState, board: string, region: string): ContainerDetail | undefined {
-  const r = s.boards.get(board)?.regions.find((x) => x.id === region);
+  const gone = s.retiredRegions.get(containerKey(board, region));
+  const r = s.boards.get(board)?.regions.find((x) => x.id === region) ?? gone?.region;
   if (!r) return undefined;
-  const nodes = nodesOf(s, board).filter((x) => placeOf(s, x.n)?.region === region || x.versions.some((v) => v.region === region));
-  const pin = containerPin(s, board, region);
+  const nodes = everyNodeOf(s, board).filter((x) => placeOf(s, x.id)?.region === region || x.versions.some((v) => v.region === region)
+    || (gone !== undefined && x.retired === gone.seq));
+  const pin = gone ? undefined : containerPin(s, board, region);
+  const { center, ...rest } = r;
   return {
-    board, region: { ...r }, holders: holders(s, board, region),
-    nodes: nodes.map((x) => nodeDetail(s, x.n)!),
+    board, region: { ...rest, ...(center !== undefined && s.nodes.has(center) && { center: numberOf(s, center) }) }, holders: holders(s, board, region),
+    nodes: nodes.map((x) => nodeDetail(s, x.id)!),
     notes: containerNotes(s, board, region).map(noteJson),
+    ...(gone && { retired: gone.seq }),
     ...(pin && { pin }),
   };
 }
@@ -168,19 +181,19 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
   const pending = new Map<number, NonNullable<OpenItem['pending']>>();
   const unseen = new Set<number>();
   for (const c of conditionsOf(s, { board, agent })) {
-    if (c.kind === 'item.owed') pending.set(c.n!, s.asks.get(c.seq!)?.kind ?? 'later');
-    if (c.kind === 'item.unseen') unseen.add(c.n!);
+    if (c.kind === 'item.owed') pending.set(c.id!, s.asks.get(c.seq!)?.kind ?? 'later');
+    if (c.kind === 'item.unseen') unseen.add(c.id!);
   }
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
     const v = latest(node);
-    const status = s.items.get(node.n)?.status ?? 'open';
-    const why = pending.get(node.n);
+    const status = s.items.get(node.id)?.status ?? 'open';
+    const why = pending.get(node.id);
     const open = NODE_TYPES[v.kind].answer && !isDecided(v.kind, status);
-    if (!(open || why) || (agent !== undefined && !mayAnswer(s, agent, node.n))) continue;
+    if (!(open || why) || (agent !== undefined && !mayAnswer(s, agent, node.id))) continue;
     out.push({
-      board, n: node.n, ver: v.ver, ...whereIs(s, node.n), kind: v.kind, title: v.title, status,
-      ...(why && { pending: why }), ...(unseen.has(node.n) && { unseen: true as const }),
+      board, n: numberOf(s, node.id), ver: v.ver, ...whereIs(s, node.id), kind: v.kind, title: v.title, status,
+      ...(why && { pending: why }), ...(unseen.has(node.id) && { unseen: true as const }),
     });
   }
   return out.sort((a, b) => a.n - b.n);

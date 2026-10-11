@@ -4,7 +4,7 @@
 // cards; acts at one place in the order made. Paging cuts in ledger order, then sorts the page.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { inCardOrder, responsesAfter, responsesPage } from '../src/index.ts';
+import { eventOut, inCardOrder, responsesAfter, responsesPage } from '../src/index.ts';
 import { A, C, scene } from './ledger-v3.ts';
 
 /** Cards 1, 2 and 3 are questions: ✓ reads "yes" and ✗ "no" (api.md 121). */
@@ -63,5 +63,8 @@ test('paging: cut in ledger order, then sorted; the next page starts after the h
     after = Math.max(...page.responses.map((e) => e.seq));
   }
   assert.deepEqual(seen.sort((a, b) => a - b), Object.values(at).sort((a, b) => a - b), 'every act once');
-  assert.deepEqual(responsesPage(s, 'b', 0, 100), { responses: inCardOrder(s, responsesAfter(s, 'b', 0)).map(withMeans) }, 'no `more` when all fit');
+  // The page names cards by board number (api.md 125): card 5's line is board b's card 4.
+  assert.deepEqual(responsesPage(s, 'b', 0, 100), { responses: inCardOrder(s, responsesAfter(s, 'b', 0)).map((e) => eventOut(s, withMeans(e))) }, 'no `more` when all fit');
+  assert.deepEqual(responsesPage(s, 'b', 0, 100).responses.find((e) => e.seq === at.on5)?.n, 4);
+  assert.deepEqual(responsesPage(s, 'b', 0, 100).responses.find((e) => e.seq === at.group)?.nodes, [5, 3]);
 });

@@ -71,6 +71,10 @@ test('versions: runs of one agent\'s drawing lines, newest first; now is the boa
   assert.deepEqual(boardVersions(l.state(), 'b')!.past.map((r) => r.seq), [now, v3, v1]);
   assert.deepEqual(boardVersions(s, 'other'), { now: s.heads.get('other'), past: [] });
   assert.equal(boardVersions(s, 'none'), undefined);
+  // A retire takes cards off the board: a drawing line, so a version of its own (api.md 127).
+  l.v = 12;
+  const gone = draw(A, { type: 'retire', board: 'b', cards: [2] });
+  assert.deepEqual(boardVersions(l.state(), 'b'), { now: gone, past: [now, v3, v1].map((x) => ({ ...l.state().runs.get('b')!.find((r) => r.seq === x)! })) });
   // Coverage: every drawing type has a case above.
   for (const type of DRAWING_EVENTS) assert.ok(types.includes(type), `no case for drawing type "${type}"`);
 });

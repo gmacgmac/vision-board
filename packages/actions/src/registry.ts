@@ -67,6 +67,11 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // Ledger v10 (api.md 93): turn down an agent's proposal, named by its `seq`. Not a decision on
   // the item, so no status; accepting is the proposal's own action (`ack` or `drop`) with `proposal`.
   reject: { id: 'reject', label: 'Reject', ...person, onItem: true },
+  // Ledger v12 (api.md 128): the person's private mark on any card. Not an answer (`onItem` false,
+  // so Send never carries it) and no agent reads it. Its key (F in assumption A) is the page's to
+  // bind: F is Fit today.
+  flag: { id: 'flag', label: 'Flag', ...person, onItem: false },
+  unflag: { id: 'unflag', label: 'Remove flag', ...person, onItem: false },
 };
 
 /** The review buttons an item offers. */

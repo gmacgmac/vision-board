@@ -14,19 +14,19 @@ export type ReferenceKind = (typeof REFERENCE_KINDS)[number];
 /** One container: a region on a board (D-011). */
 export interface Container { board: string; region: string }
 
-/** The board, container and cards something touches; `cards` is empty when it is on no card. */
+/** The board, container and cards something touches; `cards` (identities) is empty when it is on no card. */
 export interface Scope { board?: string; container?: string; cards: number[] }
 
 /** Where a card is now (`region`) and where its agent last drew it (`drawn`). */
 export interface CardPlace extends Container { drawn: string }
 
-/** Card `n`'s place: the person's latest move when that container is on the card's board or is the
+/** Card `id`'s place: the person's latest move when that container is on the card's board or is the
  * built-in Later (api.md 66-68), else where the agent last drew it. */
-export function placeOf(s: LedgerState, n: number): CardPlace | undefined {
-  const x = s.nodes.get(n);
+export function placeOf(s: LedgerState, id: number): CardPlace | undefined {
+  const x = s.nodes.get(id);
   if (!x) return undefined;
   const drawn = latest(x).region;
-  const moved = s.moves.get(n);
+  const moved = s.moves.get(id);
   const there = moved !== undefined && (moved === LATER_REGION || (s.index.boards.get(x.board)?.has(moved) ?? false));
   return { board: x.board, region: there ? moved : drawn, drawn };
 }
@@ -36,9 +36,9 @@ function onAccess(s: LedgerState, e: { board?: string; region?: string | undefin
   return e.region === undefined ? REFERENCES.board.lookup(s, e.board!) : REFERENCES.container.lookup(s, { board: e.board!, region: e.region });
 }
 
-const onCard = (s: LedgerState, n: number): Scope => {
-  const p = placeOf(s, n);
-  return p ? { board: p.board, container: p.region, cards: [n] } : { cards: [n] };
+const onCard = (s: LedgerState, id: number): Scope => {
+  const p = placeOf(s, id);
+  return p ? { board: p.board, container: p.region, cards: [id] } : { cards: [id] };
 };
 
 /** A row: what a kind belongs to, in a line, and the lookup that answers it. */
@@ -62,7 +62,7 @@ export const REFERENCES = {
     lookup: (s: LedgerState, seq: number): Scope | undefined => {
       const a = s.asks.get(seq);
       if (!a) return undefined;
-      if (a.region === undefined) return { ...onCard(s, a.n), cards: cardsOf(a) };
+      if (a.region === undefined) return { ...onCard(s, a.id), cards: cardsOf(a) };
       const board = [...s.regionLogs].find(([, logs]) => logs.get(a.region!)?.asks.includes(a))?.[0];
       return { ...(board !== undefined && { board }), container: a.region, cards: [] };
     },
@@ -94,7 +94,7 @@ const onContainer = (s: LedgerState, e: { board?: string; region?: string }) => 
 function onCards(s: LedgerState, e: ActEvent): Scope {
   if (isContainerAct(e)) return onContainer(s, e);
   const noted = e.note === undefined ? undefined : R.note.lookup(s, e.note)?.cards;
-  const cards = e.nodes ?? noted ?? [e.n!];
+  const cards = e.nodes ?? noted ?? [e.id!];
   return { ...onCard(s, actCard(e)!), cards };
 }
 
@@ -102,7 +102,7 @@ function onCards(s: LedgerState, e: ActEvent): Scope {
 const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   ack: onCards, drop: onCards, later: onCards, reopen: onCards, size: onCards,
   comment: onCards, context: onCards, 'note-edit': onCards, 'note-remove': onCards, pin: onCards, unpin: onCards,
-  reject: onCards,
+  reject: onCards, flag: onCards, unflag: onCards,
   move: (s, e) => ({ ...onCards(s, e), container: e.region! }),
   mode: onContainer, revoke: onAccess,
   grant: (s, e) => R.request.lookup(s, e.request!) ?? none(),
@@ -117,13 +117,15 @@ const EVENT_SCOPES: { [T in LedgerEvent['type']]: Rule<T> } = {
   board: (s, e) => R.board.lookup(s, e.board),
   region: (s, e) => R.container.lookup(s, { board: e.board, region: e.region.id }),
   'grant-request': onAccess,
-  node: (_s, e) => ({ board: e.board, container: e.node.region, cards: [e.n] }),
+  node: (_s, e) => ({ board: e.board, container: e.node.region, cards: [e.id] }),
   link: (s, e) => R.link.lookup(s, e),
   unlink: (s, e) => R.link.lookup(s, e),
-  reply: (s, e) => onCard(s, e.n),
-  propose: (s, e) => onCard(s, e.n),
-  park: (s, e) => onCard(s, e.n),
-  seen: (s, e) => ('n' in e ? onCard(s, e.n) : R.board.lookup(s, e.board)),
+  reply: (s, e) => onCard(s, e.id),
+  propose: (s, e) => onCard(s, e.id),
+  park: (s, e) => onCard(s, e.id),
+  seen: (s, e) => ('id' in e ? onCard(s, e.id) : R.board.lookup(s, e.board)),
+  // A retire is on its board, or the container it names, and on every card it took (api.md 126).
+  retire: (s, e) => ({ ...(e.region === undefined ? R.board.lookup(s, e.board) : R.container.lookup(s, { board: e.board, region: e.region })), cards: [...e.cards] }),
   join: none,
   act: (s, e) => ACT_SCOPES[e.action](s, e),
 };

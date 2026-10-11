@@ -7,7 +7,13 @@ call the same actions, and each one is recorded in the project ledger as an `act
 - **Depends on**: `packages/format`.
 - **Used by**: `packages/ui`, `apps/board`.
 - **Public API** (`src/index.ts`): the registry (`ACTIONS`, `ITEM_ACTIONS`, `DECIDED`), the
-  ledger fold (`foldLedger`, `applyEvent`, `emptyState`, `boardState`, `statusOf`, `counts`), the
+  ledger fold (`foldLedger`, `applyEvent`, `emptyState`; every map keyed by a card's identity,
+  `id`), one board as the page reads it (`boardState`, `statusOf`, `counts`, in `board-state.ts`,
+  keyed like the View by board number), board numbers out (`numbers.ts`, api.md 125: `numberOf`,
+  `cardName`, `eventOut`, `noteOut`, `proposalOut`, `linkOut`; every read view and every word an
+  agent or the person reads names a card by its number on its board), retiring cards
+  (`retire.ts`, api.md 126-127: `retireCards`, `retireProblem`), the person's private flags
+  (`card-flags.ts`, api.md 128: `flagsOn`; no agent read looks at them), the
   references table (`references.ts`, D-033: `REFERENCES`, one row per kind in `REFERENCE_KINDS`
   saying what it belongs to; `scopeOf`, the board, container and cards any ledger line touches;
   `placeOf`, the container a card is in now; `eventBoard`, behind each board's head in

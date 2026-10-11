@@ -10,7 +10,7 @@ import { AWAITING, handoverMarkup, nodeState, nodeTemplate, notesMarkup, regionN
 
 const r: ViewNode = { id: '12', n: 12, region: 'r', kind: 'question', title: 'Does the trial need a card?' };
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 const later = (notes: ItemNote[] = []) => board({ items: new Map([['12', { status: 'later', notes }]]) });
 const note = (seq: number, text = 'Is this right?'): ItemNote => ({ seq, kind: 'comment', text, at: '2026-10-08T00:00:00Z', sent: true });
 const reply = (seq: number, text: string, f: Partial<CardReply> = {}): CardReply => ({ seq, text, ...f });

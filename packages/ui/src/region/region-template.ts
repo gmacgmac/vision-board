@@ -1,6 +1,6 @@
 // Region pattern, layer 2 (template): one pure function from a region to the markup of its
 // frame: the top line (title, decided count and holders on the left, in a gap cut from the frame's
-// border; on the right the mode row: five layout icons, a divider and the settings cog, README
+// border; on the right the mode row: six layout icons, a divider and the settings cog, README
 // pick 1 / mockup 05), the layout popover and the settings menu (both closed until the element
 // opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
 // State is applied in place by the element (`VbRegion.update`), so this runs once per view version;
@@ -111,6 +111,10 @@ export interface RegionFrameOptions { fixed?: boolean; empty?: string }
 /** The empty message of an ordinary frame: every card it has is decided and hidden. */
 export const EMPTY_DECIDED = 'Everything here is decided.';
 
+/** "3 cards retired" after the count (retiredMarker flag), hidden until `update` says how many and
+ * which version a press opens (`data-version`, the page's click wiring). */
+const RETIRED_MARKER = '<button type="button" class="vb-region-retired" hidden></button>';
+
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
   const title = esc(r.title);
@@ -121,7 +125,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
-    + `<span class="vb-region-count"></span><span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
+    + `<span class="vb-region-count"></span>${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r)}</div>`
     + `</header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }

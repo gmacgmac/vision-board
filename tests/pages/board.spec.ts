@@ -8,7 +8,7 @@ import { REGION_HEAD } from '../../packages/layout/src/index.ts';
 
 const NODES = 17;
 const REGIONS = ['review', 'prove', 'decide', 'build'];
-const MODES = ['Grid', 'Flow', 'Lanes', 'Radial', 'List'];
+const MODES = ['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row'];
 const THEMES: Theme[] = ['dark', 'light'];
 
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
@@ -275,7 +275,7 @@ test('hovering a layout icon shows the tiles, and leaving the row closes them', 
   const pop = review.getByRole('tooltip');
   await review.getByRole('radio', { name: 'Lanes', exact: true }).hover();
   await expect(pop).toBeVisible();
-  await expect(pop.locator('.vb-mtile')).toHaveCount(5);
+  await expect(pop.locator('.vb-mtile')).toHaveCount(6);
   await expect(pop.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'lanes');
   await expect(pop.locator('.vb-mtile[data-tile="lanes"] small')).toHaveText('Several flows side by side, one per lane');
   await expect(pop.locator('.vb-mtile[data-tile="lanes"] small')).toBeVisible();

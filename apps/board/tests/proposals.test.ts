@@ -79,6 +79,6 @@ test('Accept all: the newest on each card not out of date, in card order; the re
 test('a decision on the card ends its proposals: no row is left for it', () => {
   seq = 0;
   const s = ledger();
-  applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'person', type: 'act', action: 'ack', n: 3, ver: 1 });
+  applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'person', type: 'act', action: 'ack', id: 3, ver: 1 });
   assert.deepEqual(pageConditions(s, 'b').proposals.map((p) => p.n).sort(), [1, 2]);
 });

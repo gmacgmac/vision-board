@@ -27,11 +27,12 @@ function oldEventBoard(s: LedgerState, e: LedgerEvent): string | undefined {
   switch (e.type) {
     case 'board': case 'region': case 'node': case 'grant-request': return e.board;
     case 'link': case 'unlink': return nodeBoard(e.from);
-    case 'reply': case 'propose': case 'park': return nodeBoard(e.n);
-    case 'seen': return 'n' in e ? nodeBoard(e.n) : e.board; // the board form is v8 (BE_04)
+    case 'reply': case 'propose': case 'park': return nodeBoard(e.id);
+    case 'seen': return 'id' in e ? nodeBoard(e.id) : e.board; // the board form is v8 (BE_04)
+    case 'retire': return e.board; // v12 (api.md 126): newer than the definitions it replaced
     case 'join': return undefined;
     case 'act':
-      if (e.n !== undefined || e.nodes) return nodeBoard(e.n ?? e.nodes![0]);
+      if (e.id !== undefined || e.nodes) return nodeBoard(e.id ?? e.nodes![0]);
       if (e.action === 'grant' || e.action === 'deny') return s.index.requests.get(e.request!)?.board;
       return e.board;
   }
@@ -42,7 +43,7 @@ function oldCardsOfAct(s: LedgerState, e: ActEvent): number[] {
   if (e.nodes) return e.nodes;
   const ask = e.note === undefined ? undefined : s.asks.get(e.note);
   if (ask) return cardsOf(ask);
-  return e.n === undefined ? [] : [e.n];
+  return e.id === undefined ? [] : [e.id];
 }
 
 /** moves.ts `regionOf` and `movedFrom`. */
@@ -121,6 +122,10 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:move', l.act({ action: 'move', nodes: [1, 2], region: LATER_REGION }), on('b', LATER_REGION, [1, 2]));
   at('act:send', l.act({ action: 'send', board: 'b' }), { board: 'b', cards: [] });
   at('a card in Later', l.agent(A, { type: 'reply', n: 1, text: 'Parked.' }), on('b', LATER_REGION, [1]));
+  l.v = 12; // api.md 126, 128
+  at('act:flag', l.act({ action: 'flag', n: 3 }), on('b', 'q', [3]));
+  at('act:unflag', l.act({ action: 'unflag', n: 3 }), on('b', 'q', [3]));
+  at('retire', l.agent(B, { type: 'retire', board: 'b', cards: [3] }), { board: 'b', cards: [3] });
   return { l, want };
 }
 

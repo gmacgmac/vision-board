@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { LedgerEvent } from '../../format/src/index.ts';
-import { containerKey, latest, readLedger } from '../../format/src/index.ts';
+import { containerKey, latest, readLedger, toLine } from '../../format/src/index.ts';
 import type { Container, LedgerState, Verdict, WriteItem, WriteKind } from '../src/index.ts';
 import { applyEvent, canWrite, emptyState, holders, PERMISSIONS, placeOf, REFERENCES, scopeOf } from '../src/index.ts';
 import { A, B, C, Ledger, scene } from './ledger-v3.ts';
@@ -108,6 +108,17 @@ const ROW_CASES: Record<WriteKind, () => void> = {
   reply: () => answers('reply'),
   propose: () => answers('propose'),
   park: () => answers('park'),
+  // Like a node update (api.md 126): the container named, or the card's container now, then the board.
+  retire: () => {
+    const s = scene().state();
+    const retire = (cards: number[], region?: string): WriteItem => ({ type: 'retire', board: 'b', cards, ...(region !== undefined && { region }) });
+    assert.equal(canWrite(s, A, retire([1])), 'ok', 'A holds r, where card 1 is');
+    assert.deepEqual(canWrite(s, B, retire([1])), need('b', 'r'));
+    assert.equal(canWrite(s, B, retire([2], 'q')), 'ok');
+    assert.deepEqual(canWrite(s, A, retire([2], 'q')), need('b', 'q'));
+    assert.deepEqual(canWrite(s, C, retire([], 'q')), need('b', 'q'), 'an empty container still needs its grant');
+    assert.deepEqual(canWrite(boardRevoked(), B, retire([2], 'q')), need('b'));
+  },
 };
 
 for (const kind of Object.keys(ROW_CASES) as WriteKind[]) test(`row ${kind}`, ROW_CASES[kind]);
@@ -164,6 +175,7 @@ function oldCanWrite(s: LedgerState, agent: string, item: WriteItem): 'ok' | Con
       return want(now) ?? (moves ? want(target) : undefined) ?? 'ok';
     }
     case 'link': case 'unlink': return want(where(item.from)) ?? 'ok';
+    case 'retire': return 'ok'; // ledger v12, newer than the rule this table replaced
     default: {
       const x = s.nodes.get(item.n);
       if (!x || latest(x).agent === agent) return 'ok';
@@ -190,7 +202,7 @@ function replay(events: readonly LedgerEvent[]): { checked: number; refused: str
     if (e.by === 'agent' && e.agent !== undefined && e.v !== 2 && e.type in PERMISSIONS) {
       const board = scopeOf(s, e).board;
       const held = REFERENCES.agent.lookup(s, e.agent).some((c) => c.board === board);
-      const item = e as unknown as WriteItem;
+      const item = toLine(e) as unknown as WriteItem;
       if (held && oldCanWrite(s, e.agent, item) === 'ok') {
         checked++;
         const now: Verdict = canWrite(s, e.agent, item);

@@ -76,6 +76,8 @@ export function defineVbNode(): void {
       this.toggleAttribute('data-selected', st.selected);
       for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-act]'))
         b.setAttribute('aria-pressed', String(st.pressed[b.dataset.act as ActionId] ?? false));
+      this.toggleAttribute('data-flagged', st.flagged === true);
+      this.querySelector('button[data-flag]')?.setAttribute('aria-pressed', String(st.flagged === true));
       // A non-item has no footer, so no status word.
       const status = this.piece('status');
       if (status) status.textContent = st.statusWord;

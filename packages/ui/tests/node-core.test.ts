@@ -8,7 +8,7 @@ const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
 
 const board = (f: Partial<BoardState> = {}): BoardState =>
-  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), ...f });
+  ({ items: new Map(), pins: new Map(), modes: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 
 let seq = 10;
 const note = (text: string, kind: ItemNote['kind'] = 'comment', sent = false): ItemNote =>

@@ -2,15 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger } from '../../format/src/index.ts';
+import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger, toLine } from '../../format/src/index.ts';
 import { boardState, counts, foldLedger, ITEM_ACTIONS, statusOf, validateAct, MAX_TEXT } from '../src/index.ts';
 
 const BOARD = 'roadmap';
 const lines = fs.readFileSync(
   new URL(`../../format/fixtures/${BOARD}.ledger.jsonl`, import.meta.url), 'utf8').trim().split('\n');
 
+/** An act line as the file holds it: the card's identity in `n`. */
+type ActLine = Partial<Omit<ActEvent, 'id'>> & { n?: number };
+
 /** The fixture ledger plus `extra` person acts (seq and at stamped in order), checked, then folded. */
-function load(extra: Partial<ActEvent>[] = []) {
+function load(extra: ActLine[] = []) {
   const more = extra.map((f, i) => JSON.stringify(
     { v: 2, seq: lines.length + i + 1, at: `2026-10-02T10:00:0${i}Z`, by: 'person', type: 'act', ...f }));
   const read = readLedger([...lines, ...more]);
@@ -24,7 +27,7 @@ const view = boardView(state, BOARD);
 const item = view.nodes.find((x) => NODE_TYPES[x.kind].answer)!.n!;
 const plain = view.nodes.find((x) => !NODE_TYPES[x.kind].answer && x.kind !== 'finding')!.n!;
 const act = (f: Partial<ActEvent>): ActEvent =>
-  ({ v: 2, seq: lines.length + 1, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', n: item, ver: 1, ...f });
+  ({ v: 2, seq: lines.length + 1, at: '2026-10-02T10:00:00Z', by: 'person', type: 'act', action: 'ack', id: item, ver: 1, ...f });
 
 test('a valid person ack passes', () => assert.deepEqual(validateAct(act({}), state), []));
 
@@ -40,13 +43,13 @@ test('agents may not comment or ask for context either', () => {
 });
 
 test('a card refuses a review action its kind does not offer; an unknown node is refused', () => {
-  assert.ok(validateAct(act({ n: plain }), state).some((p) => p.includes("doesn't offer this")));
-  assert.ok(validateAct(act({ n: 999 }), state).some((p) => p.includes('unknown')));
+  assert.ok(validateAct(act({ id: plain }), state).some((p) => p.includes("doesn't offer this")));
+  assert.ok(validateAct(act({ id: 999 }), state).some((p) => p.includes('unknown')));
 });
 
 test('comment needs text; text is capped', () => {
   assert.ok(validateAct(act({ action: 'comment', text: '  ' }), state).includes('text: required'));
-  assert.ok(eventProblems(act({ action: 'comment', text: 'x'.repeat(MAX_TEXT + 1) })).length);
+  assert.ok(eventProblems(toLine(act({ action: 'comment', text: 'x'.repeat(MAX_TEXT + 1) }))).length);
 });
 
 test('unknown action is rejected', () =>
@@ -98,21 +101,21 @@ const finding = view.nodes.find((x) => x.kind === 'finding')!.n!;
 
 test('a finding offers no decision: ack and drop are refused, naming the kind', () => {
   for (const action of ['ack', 'drop'] as const)
-    assert.deepEqual(validateAct(act({ n: finding, action }), state), [`${action}: a finding doesn't offer this`]);
+    assert.deepEqual(validateAct(act({ id: finding, action }), state), [`${action}: a finding doesn't offer this`]);
 });
 
 test('a finding offers comment, context and later', () => {
   for (const action of ['comment', 'context', 'later'] as const)
-    assert.deepEqual(validateAct(act({ n: finding, action, text: 'why' }), state), [], action);
+    assert.deepEqual(validateAct(act({ id: finding, action, text: 'why' }), state), [], action);
 });
 
 test('a topic or note offers comment, context and later and never a decision, an old item mark or not', () => {
   const s = withNumberedPlain();
   for (const [n, kind] of [[100, 'topic'], [101, 'note']] as const) {
     for (const action of ['ack', 'drop'] as const)
-      assert.deepEqual(validateAct(act({ n, action }), s), [`${action}: a ${kind} doesn't offer this`], `${kind} ${action}`);
+      assert.deepEqual(validateAct(act({ id: n, action }), s), [`${action}: a ${kind} doesn't offer this`], `${kind} ${action}`);
     for (const action of ['comment', 'context', 'later'] as const)
-      assert.deepEqual(validateAct(act({ n, action, text: 'why' }), s), [], `${kind} ${action}`);
+      assert.deepEqual(validateAct(act({ id: n, action, text: 'why' }), s), [], `${kind} ${action}`);
   }
 });
 
@@ -120,7 +123,7 @@ test('reopen, pin and unpin are not restricted by type', () => {
   const s = withNumberedPlain();
   for (const n of [100, 101])
     for (const action of ['reopen', 'pin', 'unpin'] as const)
-      assert.deepEqual(validateAct(act({ n, action }), s), [], `${n} ${action}`);
+      assert.deepEqual(validateAct(act({ id: n, action }), s), [], `${n} ${action}`);
 });
 
 // Lives here, not in packages/format: format may not import actions (D-016).

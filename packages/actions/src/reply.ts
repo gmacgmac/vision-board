@@ -8,11 +8,12 @@
 import type { ActionId, View, ViewNode } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
 import { meaningOf } from './action-words.ts';
-import type { BoardState, ItemNote } from './fold.ts';
+import type { BoardState } from './board-state.ts';
+import type { ItemNote } from './fold.ts';
 import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
 
-/** The cards and containers a round covers, and the cursor its notes come after. */
+/** The cards (by board number) and containers a round covers, and the cursor its notes come after. */
 export interface ReplyScope { since: number; cards: ReadonlySet<number>; regions: ReadonlySet<string> }
 
 const STATUS_ACTION: Partial<Record<ItemStatus, ActionId>> = { acknowledged: 'ack', dropped: 'drop', later: 'later', context: 'context' };

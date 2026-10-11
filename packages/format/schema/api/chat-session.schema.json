@@ -8,10 +8,10 @@
   "required": ["session", "agent", "created"],
   "properties": {
     "session": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/sessionId", "description": "The session's id; the chat routes name it in their path."},
-    "board": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/id", "description": "The board the session belongs to. Left out while a session started in the folder has none: it moves to the first board its agent creates, and keeps it."},
+    "board": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/id", "description": "The board the session belongs to. Left out while a session started in the folder has none: it moves to the first board its agent creates, and keeps it."},
     "agent": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/agent"},
     "model": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/model"},
-    "created": {"$ref": "https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/timestamp", "description": "When the session started."}
+    "created": {"$ref": "https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/timestamp", "description": "When the session started."}
   },
   "unevaluatedProperties": false
 }

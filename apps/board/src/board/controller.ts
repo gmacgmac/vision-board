@@ -8,9 +8,11 @@
 // sizes), moves.ts (containers, Later, Move to), sender.ts (sending acts), versions.ts (the version
 // dropdown, the read-only past view), finder.ts (the container finder), board-edit.ts (New board,
 // Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards), parking.ts (handover, replies),
-// chat-bridge.ts (the chat panel's side of the board, chatPanel flag). Plain TypeScript (D-005).
+// chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the person's flag,
+// cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts
+// (the toolbar's numbers). Plain TypeScript (D-005).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
-import { counts, placedView, replyText } from '../../../../packages/actions/src/index.ts';
+import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
 import { createBoards } from './boards.ts';
 import { boardData, decidedIds, numberedView } from './board-data.ts';
@@ -21,7 +23,6 @@ import { createFocus } from './focus.ts';
 import { bindStage } from './wiring.ts';
 import { Viewport } from './viewport.ts';
 import { createPlaces } from './places.ts';
-import { boardHoldersOf, requestRows } from './access.ts';
 import { type AccessFlow, createAccessFlow } from './access-flow.ts';
 import { createNoteFlow } from './notes.ts';
 import { DISCARD_ASK } from './note-discard.ts';
@@ -37,7 +38,10 @@ import { createVersions } from './versions.ts';
 import { createProposalFlow, type ProposalFlow } from './proposal-flow.ts';
 import { createUpdateFlow } from './update-flow.ts';
 import { createParking } from './parking.ts';
-import { containerRows, zoomToContainer } from './finder.ts';
+import { zoomToContainer } from './finder.ts';
+import { createFlagFlow } from './flag-flow.ts';
+import { retiredCounts, type RetiredCount } from './retired.ts';
+import { showCounts } from './toolbar-counts.ts';
 import type { CommandId } from './commands.ts';
 import type { ChatBridge } from './chat-bridge.ts';
 import { exposeWork } from './work.ts';
@@ -63,6 +67,8 @@ export interface Board {
   send(): Promise<string | null>;
   /** New board or Rename board from the picker (board-edit.ts). */
   saveBoard: BoardEdit['save'];
+  /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
+  nextFlagged(): void;
   destroy(): void;
 }
 
@@ -75,7 +81,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // holders and Send (agentAccess, D-027); connectors behind frames and cards (wireLayers, D-032);
   // the agent's proposals on cards and the bar (proposals, FE_01); changed cards and seen (cardUpdates, FE_02); NEW (newCards).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode] = [on('nodeSize'), on('agentAccess'), on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring] = [on('nodeSize'), on('agentAccess'), on('wireLayers'),
+    on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -93,6 +100,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     later: false,
     /** The board as the agent drew it, before the person's moves (where Reopen sends a card). */
     drawn: null as View | null,
+    /** Each container's "N cards retired" marker (retiredMarker flag). */
+    retired: new Map() as ReadonlyMap<string, RetiredCount>,
   };
 
   const view = (): View => S.data!.view;
@@ -113,7 +122,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, layers, data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, retired: () => S.retired,
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n) }),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
@@ -148,6 +157,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     const drew = S.drew && !full;
     S.fresh = S.drew = false;
     const d = boardData(s, S.id);
+    if (!flagging) d.state.flags.clear(); // the person's flags show only with the flag on
+    S.retired = retiring ? retiredCounts(s, S.id, shell.versionView) : new Map();
     S.drawn = d.view;
     // Each card in the container the person put it in, Later last (3_FE_03 rulings 2 and 5).
     S.data = { ...d, view: numberedView(placedView(d.view, d.state, { later: S.later }), everyNode) }; // numbers on every card (everyNode)
@@ -164,21 +175,13 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     if (drew) toast(`The agent drew v${shell.version}`);
   }
 
-  function renderCounts() {
-    const st = S.data!.state;
-    const c = counts(view(), st);
-    shell.counts = { open: c.open, decided: c.decided, later: c.later };
-    shell.replyText = replyText(view(), st);
-    shell.containers = finder ? containerRows(view(), drawing.layout) : [];
-    shell.answered = view().nodes.filter((n) => n.n !== undefined && st.items.has(n.id)).length;
-    [shell.requests, shell.boardHolders] = access ? [requestRows(S.data!), boardHoldersOf(S.data!)] : [[], []];
-  }
+  const renderCounts = () => showCounts(S.data!, view(), drawing.layout, { finder, access }, flags.ids().length);
 
   // ---- actions -------------------------------------------------------------------------------
 
   /** Every act goes through here: the server validates it, its problems show in the error toast,
    * and the stored line comes back and is applied in place (sender.ts). */
-  const sender = createSender({ board: () => S.id, own: (e) => live.own(e), redraw: () => redraw(), fail, readOnly: () => !!versions.state });
+  const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail, readOnly: () => !!versions.state });
   const { attempt, record } = sender;
   const proposals = createProposalFlow({
     on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
@@ -187,7 +190,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
     readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chat?.source(n) });
   /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
-  const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state,
+  const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state, board: () => S.id,
     awaiting: () => attention.awaiting(), readOnly: () => !!versions.state });
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
@@ -215,27 +218,23 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   vp.onApply = () => { notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
+  /** The person's flag: the button, Shift+F and the toolbar's chip (flag-flow.ts). */
+  const flags = createFlagFlow({ on: flagging, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
+    drawn: (id) => !!drawing.layout?.nodes.has(id), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
   /** The chat panel's side of the board (chat-bridge.ts): chips from the notes and the selection, a change chip's zoom. */
   const unchat = chat?.board({ stage, data: () => S.data, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
     zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id), jump: (id) => boards.jump(id) });
 
   /** The review buttons and their keys on one card (item-acts.ts). */
-  const act = createItemActs({
-    node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => shell.hide, hidden: hiddenSet,
-    neighbour: (id, dir) => focus.neighbour(id, dir), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }),
-    toast: (t) => toast(t),
-  });
+  const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => shell.hide, hidden: hiddenSet,
+    neighbour: (id, dir) => focus.neighbour(id, dir), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
 
   /** Pins, Reset places, the layout mode and the size tier (places.ts). */
-  const places = createPlaces({
-    vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),
-    settle: () => drawing.settle(), run: (steps) => sender.run(steps),
-  });
+  const places = createPlaces({ vp, view, state: () => S.data!.state, layout: () => drawing.layout, target, record, redraw: () => redraw(),
+    settle: () => drawing.settle(), run: (steps) => sender.run(steps) });
   /** Moving a whole container by its grip or Alt+arrows (3_FE_04, container-drag.ts). */
-  const frames = createContainerDrag({
-    layout: () => drawing.layout, view, frame: (r) => drawing.frames.get(r), card: (id) => drawing.cards.get(id),
-    drawDrag: (l) => drawing.wiresFor(l, focus.id), settle: () => drawing.settle(), record, redraw: () => redraw(),
-  });
+  const frames = createContainerDrag({ layout: () => drawing.layout, view, frame: (r) => drawing.frames.get(r), card: (id) => drawing.cards.get(id),
+    drawDrag: (l) => drawing.wiresFor(l, focus.id), settle: () => drawing.settle(), record, redraw: () => redraw() });
 
   const toggleHide = () => { shell.hide = !shell.hide; if (S.data) redraw(); };
 
@@ -243,7 +242,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
 
   // While a past version shows, the handlers that act do nothing (versions.ts `guard`).
   const unbind = bindStage(stage, vp, versions.guard({
-    act: (id, a) => void act(id, a),
+    act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq) => void showVersion(seq),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq) => notes.show(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode),
@@ -283,10 +282,11 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
   });
 
+  async function showVersion(seq: number | null) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq); }
   return {
     boot: boards.boot,
     switchTo: boards.switchTo,
-    async showVersion(seq) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq); },
+    showVersion,
     command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
     toggleHide,
@@ -294,6 +294,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     saveBoard: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo }).save,
+    nextFlagged: () => flags.next(),
     destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, unchat ?? (() => {})].forEach((f) => f()),
   };
 }

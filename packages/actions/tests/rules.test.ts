@@ -14,7 +14,7 @@ const has = (problems: string[], words: string) => problems.some((p) => p.includ
 test('an agent may never write an act, of any kind', () => {
   const s = scene().state();
   for (const action of ACTION_IDS) {
-    const p = validateAct(act({ by: 'agent', agent: A, action, n: 1, ver: 1, text: 'hi' }), s);
+    const p = validateAct(act({ by: 'agent', agent: A, action, id: 1, ver: 1, text: 'hi' }), s);
     assert.equal(p.length, 1, action);
     assert.ok(has(p, 'only the person can do this') && has(p, 'propose or reply'), action);
   }
@@ -59,15 +59,15 @@ test('revoke: someone who does not hold the container, or on another board', () 
 test('size: a node on this board; auto clears and is valid too', () => {
   const s = scene().state();
   for (const size of ['s', 'm', 'l', 'auto'] as const)
-    assert.deepEqual(validateAct(act({ action: 'size', n: 1, size, board: undefined }), s, 'b'), [], size);
+    assert.deepEqual(validateAct(act({ action: 'size', id: 1, size, board: undefined }), s, 'b'), [], size);
   // Any node, numbered or not: the size control is on every card.
-  assert.deepEqual(validateAct(act({ action: 'size', n: 3, size: 's', board: undefined }), s), []);
+  assert.deepEqual(validateAct(act({ action: 'size', id: 3, size: 's', board: undefined }), s), []);
 });
 
 test('size: an unknown node, or a node on another board, is refused', () => {
   const s = scene().state();
-  assert.ok(has(validateAct(act({ action: 'size', n: 77, size: 's', board: undefined }), s, 'b'), 'unknown node 77'));
-  assert.ok(has(validateAct(act({ action: 'size', n: 4, size: 's', board: undefined }), s, 'b'), 'is on board "b2", not "b"'));
+  assert.ok(has(validateAct(act({ action: 'size', id: 77, size: 's', board: undefined }), s, 'b'), 'unknown node 77'));
+  assert.ok(has(validateAct(act({ action: 'size', id: 4, size: 's', board: undefined }), s, 'b'), 'is on board "b2", not "b"'));
 });
 
 test('send: the board must exist and be the one sent to', () => {
@@ -80,6 +80,6 @@ test('send: the board must exist and be the one sent to', () => {
 
 test('node acts sent to another board are refused', () => {
   const s = scene().state();
-  assert.ok(has(validateAct(act({ action: 'ack', n: 4, ver: 1, board: undefined }), s, 'b'), 'is on board "b2"'));
-  assert.deepEqual(validateAct(act({ action: 'ack', n: 4, ver: 1, board: undefined }), s, 'b2'), []);
+  assert.ok(has(validateAct(act({ action: 'ack', id: 4, ver: 1, board: undefined }), s, 'b'), 'is on board "b2"'));
+  assert.deepEqual(validateAct(act({ action: 'ack', id: 4, ver: 1, board: undefined }), s, 'b2'), []);
 });

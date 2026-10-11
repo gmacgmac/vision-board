@@ -5,8 +5,14 @@ import type { NodeSize } from './ledger.ts';
 
 export const FORMAT_VERSION = 1;
 
-export const MODES = ['grid', 'flow', 'lanes', 'radial', 'list'] as const;
+/** How a container lays out its cards. `column` stacks them top to bottom and `row` lays them left
+ * to right, both in card order with no links needed; `flow` follows the links (api.md 129). */
+export const MODES = ['grid', 'flow', 'lanes', 'radial', 'column', 'row'] as const;
 export type Mode = (typeof MODES)[number];
+
+/** Mode names older ledger lines may carry, and what they read as now: ledger v12 renamed `list`
+ * to `column` (api.md 129). A v12 line naming one is refused with `LIST_RENAMED` (ledger.ts). */
+export const RENAMED_MODES: Readonly<Record<string, Mode>> = { list: 'column' };
 
 /** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). */
 export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'] as const;
@@ -30,7 +36,8 @@ export interface ViewNode {
   kind: Kind;
   title: string;
   body?: string;
-  /** Stable node number, unique across the project. `boardView` sets it on every node (api.md 118). */
+  /** The card's number on its board: 1, 2, 3... in the order drawn, never reused (D-041 proposed,
+   * api.md 125). `boardView` sets it on every node, and the node's `id` is `String(n)`. */
   n?: number;
   /** lanes mode: which lane. */
   lane?: string;

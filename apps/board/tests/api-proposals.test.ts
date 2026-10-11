@@ -66,7 +66,7 @@ test('act: the person rejects a proposal; an out-of-date accept and a decided pr
   const [drop, ack] = p.results.map((x: any) => x.seq);
   const act = (b: object) => ({ board: 'notes', body: { type: 'act', ...b } });
   const rejected = await h.ok('act', act({ action: 'reject', n, proposal: drop }));
-  assert.deepEqual([rejected.v, rejected.action, rejected.proposal], [11, 'reject', drop]);
+  assert.deepEqual([rejected.v, rejected.action, rejected.proposal], [12, 'reject', drop]);
   let problem = await h.fails('act', act({ action: 'drop', n, ver: 2, proposal: drop }), 422, 'invalid');
   assert.deepEqual(problem.errors, [{ pointer: '/proposal', detail: `proposal: proposal ${drop} was already decided` }]);
   await write(A, [{ type: 'append', n, text: 'Third line.' }]);

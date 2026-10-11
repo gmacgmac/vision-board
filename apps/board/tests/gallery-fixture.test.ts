@@ -67,27 +67,28 @@ test('gallery ledger: the container samples have a sent container note, three no
 
 test('gallery ledger: the proposals samples have an open proposal, one out of date, two on one card and one at rest', () => {
   const s = foldLedger(events);
-  const found = conditionsOf(s, { board: 'proposals' }).filter((c) => c.kind.startsWith('proposal.')).map((c) => [c.n, c.kind]);
+  const found = conditionsOf(s, { board: 'proposals' }).filter((c) => c.kind.startsWith('proposal.')).map((c) => [c.id, c.kind]);
   assert.deepEqual(found.sort(), [[92, 'proposal.open'], [93, 'proposal.stale'], [94, 'proposal.open'], [94, 'proposal.open'], [95, 'proposal.open']]);
 });
 
 test('gallery ledger: the changed cards samples have two cards seen at version 1 and changed three times, one changed once', () => {
   const s = foldLedger(events);
   const unseen = [...pageConditions(s, 'updates').unseen];
-  assert.deepEqual(unseen.map((n) => [n, unseenCount(s, n)]), [[96, 3], [97, 3], [98, 1]]);
-  assert.deepEqual(unseenSteps(s, 97, () => '').map((x) => x.changes.map((c) => `${c.change} ${c.field}`)),
+  // Board numbers (D-041 proposed): the updates board's cards are its 1 to 4 (the ledger's 96, 97, 98, 103).
+  assert.deepEqual(unseen.map((n) => [n, unseenCount(s, 'updates', n)]), [[1, 3], [2, 3], [3, 1]]);
+  assert.deepEqual(unseenSteps(s, 'updates', 2, () => '').map((x) => x.changes.map((c) => `${c.change} ${c.field}`)),
     [['added body'], ['changed title'], ['changed body', 'added tags', 'removed size']]);
 });
 
 test('gallery ledger: the changed cards board has one NEW card, drawn after the person first opened it, and no other', () => {
   const s = foldLedger(events);
-  assert.deepEqual([...pageConditions(s, 'updates').fresh], [103]);
+  assert.deepEqual([...pageConditions(s, 'updates').fresh], [4], 'the ledger\'s 103, the board\'s 4');
   for (const board of ['gallery', 'notes', 'containers', 'container-notes', 'proposals', 'parking']) assert.deepEqual([...pageConditions(s, board).fresh], [], board);
 });
 
 test('gallery ledger: the parking samples have a card awaiting its handover, one parked, a reply under a note and one naming none', () => {
   const s = foldLedger(events);
-  const found = conditionsOf(s, { board: 'parking' }).filter((c) => c.kind === 'item.awaiting').map((c) => c.n);
+  const found = conditionsOf(s, { board: 'parking' }).filter((c) => c.kind === 'item.awaiting').map((c) => c.id);
   assert.deepEqual(found, [99]);
   assert.deepEqual([...s.parks.keys()], [100]);
   assert.deepEqual([101, 102].map((n) => s.replies.get(n)!.map((r) => r.to !== undefined)), [[true], [false]]);

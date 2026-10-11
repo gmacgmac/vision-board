@@ -6,7 +6,7 @@
 // and it is never stored as a region. Pure.
 import type { Region, View } from '../../format/src/index.ts';
 import { LATER_REGION } from '../../format/src/index.ts';
-import type { BoardState } from './fold.ts';
+import type { BoardState } from './board-state.ts';
 
 /** Every board's Later container: always last, laid out as a grid (ruling 5). */
 export const LATER: Readonly<Region> = Object.freeze({ id: LATER_REGION, title: 'Later', mode: 'grid' as const });

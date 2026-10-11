@@ -26,6 +26,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   putBack(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
+  /** A container's "N cards retired" marker (retiredMarker flag): show board version `seq` (versions.ts). */
+  showVersion(seq: number): void;
   /** Accept or Reject in a card's proposal box (the proposals flag, proposal-flow.ts). */
   answer(id: string, proposal: number, answer: 'accept' | 'reject'): void;
   /** A card nudged by keys to `box`: it becomes a pin. */
@@ -69,6 +71,10 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const t = e.target as HTMLElement;
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
     if (actBtn) return h.act(cardOf(actBtn), actBtn.dataset.act as ActionId);
+    const flagBtn = t.closest<HTMLButtonElement>('button[data-flag]');
+    if (flagBtn) return h.flag?.(cardOf(flagBtn));
+    const retired = t.closest<HTMLButtonElement>('button.vb-region-retired');
+    if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version)) : undefined;
     // An out-of-date Accept is aria-disabled: it says why, and does nothing.
     const answer = t.closest<HTMLButtonElement>('button[data-answer]');
     if (answer?.getAttribute('aria-disabled') === 'true') return;

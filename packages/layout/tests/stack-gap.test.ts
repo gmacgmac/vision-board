@@ -12,11 +12,28 @@ const sizes = new Map<string, Size>(nodes.map((n, i) => [n.id, { w: 280, h: 100 
 const run = (mode: Region['mode'], lanes?: string[]) =>
   MODE_FNS[mode]({ region: { id: 'r', title: 'R', mode, lanes }, nodes, links: [], sizes });
 
-test('list: each card starts GAP below the one above', () => {
-  const { pos } = run('list');
+test('column: each card starts GAP below the one above', () => {
+  const { pos } = run('column');
   for (const [a, b] of [['n1', 'n2'], ['n2', 'n3']] as const) {
     assert.equal(pos.get(b)!.y - (pos.get(a)!.y + pos.get(a)!.h), GAP);
   }
+});
+
+test('row: left to right in card order, GAP apart, tops aligned, no links needed (api.md 129)', () => {
+  // Given out of order: the card numbers decide.
+  const shuffled = [nodes[2]!, nodes[0]!, nodes[1]!].map((x) => ({ ...x, n: Number(x.id.slice(1)) }));
+  const { pos } = MODE_FNS.row({ region: { id: 'r', title: 'R', mode: 'row' }, nodes: shuffled, links: [], sizes });
+  for (const [a, b] of [['n1', 'n2'], ['n2', 'n3']] as const) {
+    assert.equal(pos.get(b)!.x - (pos.get(a)!.x + pos.get(a)!.w), GAP);
+    assert.equal(pos.get(b)!.y, pos.get(a)!.y);
+  }
+  assert.equal(pos.get('n1')!.x, 0);
+});
+
+test('column: top to bottom in card order, whatever order the cards come in', () => {
+  const shuffled = [nodes[1]!, nodes[2]!, nodes[0]!].map((x) => ({ ...x, n: Number(x.id.slice(1)) }));
+  const { pos } = MODE_FNS.column({ region: { id: 'r', title: 'R', mode: 'column' }, nodes: shuffled, links: [], sizes });
+  assert.deepEqual(['n1', 'n2', 'n3'].map((id) => pos.get(id)!.y).every((y, i, ys) => i === 0 || y > ys[i - 1]!), true);
 });
 
 test('lanes: cards stacked in one column of a lane are GAP apart', () => {

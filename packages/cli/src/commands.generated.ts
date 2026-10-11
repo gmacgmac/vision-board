@@ -37,7 +37,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "get-board", operationId: "get_board", takesBody: false,
     summary: "Read a board as it is now",
-    description: "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the node number.",
+    description: "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; cards you retired are not on the board.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
     ],
@@ -45,10 +45,10 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "show-node", operationId: "show_node", takesBody: false,
     summary: "Read one node with its history",
-    description: "Read one node with every version it has had, the person's notes, replies, proposals, the park bundle if there is one, its links, its container (`region`) and the person's size. Pass the board id and the node number `n`. Add `linked=true` to also get the nodes linked to it, one hop away. Use it before you answer a comment or redraw a node, so you build on the latest version.",
+    description: "Read one node with every version it has had, the person's notes, replies, proposals, the park bundle if there is one, its links, its container (`region`) and the person's size. Pass the board id and the card's number `n` on that board (each board numbers its cards from 1). A retired card still answers, with `retired`. Add `linked=true` to also get the nodes linked to it, one hop away. Use it before you answer a comment or redraw a node, so you build on the latest version.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
-      {"name":"n","in":"path","type":"integer","required":true,"description":"The node number."},
+      {"name":"n","in":"path","type":"integer","required":true,"description":"The card's number on this board (1, 2, 3... in the order drawn)."},
       {"name":"linked","in":"query","type":"boolean","required":false,"description":"True also returns the nodes linked to this one."},
     ],
   },
@@ -81,16 +81,6 @@ export const COMMANDS: readonly CommandInfo[] = [
     ],
   },
   {
-    name: "read-ledger", operationId: "read_ledger", takesBody: false,
-    summary: "Read raw ledger lines",
-    description: "Read raw ledger lines after a position, oldest first, from every writer. Pass `after` (a `seq`, 0 for the start), `limit` (default 100, at most 500) and optionally `board` to keep only one board's lines. It returns JSON `{ events, head, more? }`, or just the lines as `application/jsonl` when you ask for that; a jsonl reader pages by the last line's `seq` and stops on an empty page. Use `check_responses` instead when you only want the person's answers.",
-    inputs: [
-      {"name":"after","in":"query","type":"integer","required":false,"description":"A ledger `seq`: return what came after it. 0 (the default) means from the start. Pass the `head` you last saw."},
-      {"name":"limit","in":"query","type":"integer","required":false,"description":"How many to return at most (default 100, at most 500)."},
-      {"name":"board","in":"query","type":"string","required":false,"description":"Keep only this board's lines (lines that name only a node are matched through the node's board)."},
-    ],
-  },
-  {
     name: "join", operationId: "join", takesBody: true,
     summary: "Join as an agent",
     description: "Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as \"Pricing chat\". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. It answers `project`, the folder the board has open: check it is the folder you work in. If a write answers `not-authenticated`, join again and ask for your grants again; if a call answers `wrong-folder`, the board has another folder open: stop and tell the person, and do not join. This is the one write that needs no credentials.",
@@ -112,7 +102,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "write-board", operationId: "write_board", takesBody: true,
     summary: "Write to a board",
-    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park` or `append`. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can comment on, ask about or save any node. A node names no `item` (ledger v11). Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide a card: `propose` acknowledge or drop on a question, decision or action and the person decides; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
+    description: "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good (kept in its history, numbers never reused); a card still waiting for your answer can't be retired until you answer it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can comment on, ask about or save any node. A node names no `item` (ledger v11), and a region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right); `list` is now `column`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot decide a card: `propose` acknowledge or drop on a question, decision or action and the person decides; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
       {"name":"items","in":"body","type":"json","required":true,"description":"The items to write, run in order (1 to 200); each has a `type`."},

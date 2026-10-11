@@ -121,13 +121,13 @@ test('an act carrying an extra key is invalid (422) with a pointer, and nothing 
   assert.deepEqual(stamped.errors.map((e) => e.pointer), ['/by']);
   const noType = await h.fails('act', { board: 'roadmap', body: { action: 'ack', n: 1, ver: 1 } }, 422, 'invalid');
   assert.deepEqual(noType.errors.map((e) => e.pointer), ['/type']);
-  // Context rules come back with pointers too: a node on another board, a missing comment text.
-  const other = await h.fails('act', { board: 'roadmap', body: { type: 'act', action: 'ack', n: h.seeded.q, ver: 2 } }, 422, 'invalid');
+  // Context rules come back with pointers too: a card number the board has not given (api.md 125).
+  const other = await h.fails('act', { board: 'roadmap', body: { type: 'act', action: 'ack', n: 999, ver: 2 } }, 422, 'invalid');
   assert.equal(other.errors[0]!.pointer, '/n');
-  assert.match(other.errors[0]!.detail, /is on board "pricing", not "roadmap"/);
-  const mode = await h.fails('act', { board: 'roadmap', body: { type: 'act', action: 'mode', board: 'pricing', region: 'options', mode: 'list' } }, 422, 'invalid');
+  assert.equal(other.errors[0]!.detail, 'board roadmap has no card 999');
+  const mode = await h.fails('act', { board: 'roadmap', body: { type: 'act', action: 'mode', board: 'pricing', region: 'options', mode: 'column' } }, 422, 'invalid');
   assert.equal(mode.errors[0]!.pointer, '/board');
-  await h.fails('mark_seen', { board: 'roadmap', body: { n: h.seeded.q, ver: 1 } }, 422, 'invalid');
+  await h.fails('mark_seen', { board: 'roadmap', body: { n: 999, ver: 1 } }, 422, 'invalid');
   await h.fails('mark_seen', { board: 'roadmap', body: { n: 1, ver: 1, extra: true } }, 422, 'invalid');
   assert.equal(h.ledger.state().seq, before);
 });

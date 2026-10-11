@@ -10,6 +10,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { boardLines } from './board-lines.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
@@ -48,9 +49,9 @@ const add = async (request: APIRequestContext, d: Drawn, title: string) => (awai
 const events = async (page: Page, after = 0, board?: string) =>
   (await (await page.request.get(`/api/ledger?after=${after}${board ? `&board=${board}` : ''}`)).json() as { events: { type: string; board?: string; n?: number; ver?: number }[] }).events;
 const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
-/** The card seen lines after line `after`, as [n, ver]. */
-const seenAfter = async (page: Page, after: number, board?: string) =>
-  (await events(page, after, board)).filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver!]);
+/** The card seen lines on `board` after line `after`, as [n, ver], by board number (board-lines.ts). */
+const seenAfter = async (page: Page, after: number, board: string) =>
+  (await boardLines(page, board, after)).filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver as number]);
 
 /** Open the board and wait until it has drawn and the person's first board seen is on the ledger (NEW needs it). */
 async function open(page: Page, d: Drawn, query = ''): Promise<void> {

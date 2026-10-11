@@ -3,10 +3,11 @@
 // title), then the board id. The same chips go on the `message_in` event, labelled for the panel. A
 // session with no board (started in the folder, panel-send ruling 2) takes no chips, and its agent
 // is told no board is open and it may create one. Pure: it reads the folded ledger and refuses a
-// note or card that is not on the board.
+// note or card that is not on the board. Cards come and go by their board number (api.md 125).
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { eventBoard } from '../../../packages/actions/src/index.ts';
+import { eventBoard, numberOf } from '../../../packages/actions/src/index.ts';
 import { latest } from '../../../packages/format/src/index.ts';
+import { cardOn } from './edge.ts';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
 
@@ -20,13 +21,18 @@ const clip = (text: string, max: number) => {
   return flat.length <= max ? flat : `${flat.slice(0, max - 1)}…`;
 };
 
-/** A card's title on `board`, or undefined when there is no such card there. */
+/** Card `n`'s title on `board`, or undefined when the board has no card `n` on it now. */
 function titleOf(s: LedgerState, board: string, n: number): string | undefined {
-  const node = s.nodes.get(n);
-  return node?.board === board ? latest(node).title : undefined;
+  const id = cardOn(s, board, n);
+  const node = id === undefined ? undefined : s.nodes.get(id);
+  return node && node.retired === undefined ? latest(node).title : undefined;
 }
 
-const cardLine = (s: LedgerState, board: string, n: number) => `card ${n} "${titleOf(s, board, n) ?? '?'}"`;
+/** A note's card (its identity) as the prompt names it: board number and title. */
+const cardLine = (s: LedgerState, board: string, id: number) => {
+  const node = s.nodes.get(id);
+  return `card ${numberOf(s, id)} "${node ? latest(node).title : '?'}"`;
+};
 
 /** What a session on no board is told after the person's words. */
 export const NO_BOARD = 'No board is open in this folder yet. If drawing would help, create one with write_board; the person\'s page opens it.';
@@ -46,7 +52,7 @@ export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMe
     }
     const on = ask.region !== undefined
       ? `container "${ask.region}"`
-      : (ask.nodes ?? [ask.n]).map((n) => cardLine(s, board, n)).join(', ');
+      : (ask.nodes ?? [ask.id]).map((id) => cardLine(s, board, id)).join(', ');
     lines.push(`- Note ${seq} on ${on}: ${ask.text}`);
     chips.push({ kind: 'note', ref: seq, label: clip(ask.text, NOTE_LABEL) });
   });

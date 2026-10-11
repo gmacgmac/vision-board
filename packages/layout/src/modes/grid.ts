@@ -21,14 +21,31 @@ export const grid: ModeFn = ({ region, nodes, sizes }) => {
   return { pos };
 };
 
-/** A single column, in the agent's order, GAP apart so the next card's tabs clear the one above. */
-export const list: ModeFn = ({ nodes, sizes }) => {
+/** The cards in card order: by board number where both have one, else as given (api.md 129). */
+const inCardOrder = <T extends { n?: number | undefined }>(nodes: readonly T[]): T[] =>
+  [...nodes].sort((a, b) => (a.n !== undefined && b.n !== undefined ? a.n - b.n : 0));
+
+/** One column, top to bottom in card order, GAP apart so the next card's tabs clear the one above
+ * (api.md 129: `column`, the old `list`). */
+export const column: ModeFn = ({ nodes, sizes }) => {
   const pos = new Map<string, Box>();
   let y = 0;
-  for (const n of nodes) {
+  for (const n of inCardOrder(nodes)) {
     const s = sizes.get(n.id)!;
     pos.set(n.id, { x: 0, y, ...s });
     y += s.h + GAP;
+  }
+  return { pos };
+};
+
+/** One row, left to right in card order, GAP apart, tops aligned; no links needed (api.md 129). */
+export const row: ModeFn = ({ nodes, sizes }) => {
+  const pos = new Map<string, Box>();
+  let x = 0;
+  for (const n of inCardOrder(nodes)) {
+    const s = sizes.get(n.id)!;
+    pos.set(n.id, { x, y: 0, ...s });
+    x += s.w + GAP;
   }
   return { pos };
 };

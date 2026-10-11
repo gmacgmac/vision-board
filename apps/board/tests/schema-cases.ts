@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v11 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93 and 118.
+// Ledger lines for the schema tests (schema.test.ts): a valid v12 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118 and 125-130.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 11, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 11, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 12, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 12, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -30,6 +30,7 @@ export const VALID: Record<string, Rec> = {
   'grant-request': { ...AGENT, type: 'grant-request', board: 'b', region: 'plan', reason: 'I wrote these.', key: 'g-1' },
   seen: { ...PERSON, type: 'seen', n: 1, ver: 1 },
   act: { ...PERSON, type: 'act', action: 'ack', n: 1, ver: 1 },
+  retire: { ...AGENT, type: 'retire', board: 'b', cards: [3], key: 'x-1' },
 };
 export const ACTS: Record<string, Rec> = {
   ack: { n: 1, ver: 1 }, drop: { n: 1, ver: 1, proposal: 4 }, comment: { n: 1, ver: 1, text: 'Why?' },
@@ -38,7 +39,7 @@ export const ACTS: Record<string, Rec> = {
   deny: { request: 5, text: 'Not this one.' }, revoke: { holder: 'a-abcd1234', board: 'b', region: 'plan' },
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
-  move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 },
+  move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 }, flag: { n: 1 }, unflag: { n: 1 },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -88,7 +89,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v12', patch(V.board!, 'v', 12)],
+  ['unknown format v13', patch(V.board!, 'v', 13)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -200,5 +201,23 @@ export const BROKEN: [string, Rec][] = [
   // api.md 118: from v11 the kind decides; a node line naming `item` is refused, true or false.
   ['a v11 node naming item', patch(V.node!, 'node.item', true)],
   ['a v11 node with item false', patch(V.node!, 'node.item', false)],
+  // api.md 126: a retire names its board and its cards; without a container, at least one card.
+  ['retire without cards', patch(V.retire!, 'cards', DROP)],
+  ['retire without board', patch(V.retire!, 'board', DROP)],
+  ['retire of no card and no container', patch(V.retire!, 'cards', [])],
+  ['retire naming a card twice', patch(V.retire!, 'cards', [3, 3])],
+  ['retire naming card 0', patch(V.retire!, 'cards', [0])],
+  ['retire with a bad region id', { ...V.retire!, region: 'Plan A' }],
+  ['retire with n (a stored line names cards)', { ...V.retire!, n: 3 }],
+  ['retire written by a person', { ...V.retire!, by: 'person', agent: undefined }],
+  // api.md 128: the flag names one card, and nothing else.
+  ['flag without n', act('flag', { n: undefined })],
+  ['flag with a version', act('flag', { ver: 1 })],
+  ['flag of a container', act('flag', { n: undefined, ...CONTAINER })],
+  ['unflag of a group', act('unflag', { n: undefined, nodes: [1, 2] })],
+  // api.md 129: from v12 `list` is `column`.
+  ['a v12 region in list mode', patch(V.region!, 'region.mode', 'list')],
+  ['a v12 mode act to list', act('mode', { mode: 'list' })],
+  ['a region in an unknown mode', patch(V.region!, 'region.mode', 'stack')],
   ['a line that is not an object', [] as unknown as Rec],
 ];

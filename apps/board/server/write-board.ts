@@ -1,53 +1,37 @@
 // `write_board` (api.md 24-25, 29-37): one agent's batch of write items for the board in the
-// path, run in order, one result each. Per item: the write-item schema, then its `{ key }` node
-// references, then its own retry key (before grants), then `base`, then the board, a proposal's
-// card kind and the grant, then the ledger module's own checks as it appends. One failure never
-// stops the rest, except items naming a failed item's key, directly or through another failed item.
+// path, run in order, one result each. Per item: the write-item schema, then the cards it names
+// (board numbers and `{ key }`s, write-refs.ts), then its own retry key (before grants), then
+// `base`, then the board, a proposal's card kind, the grant and a retire's owed cards, then the
+// ledger module's own checks as it appends. One failure never stops the rest, except items naming a
+// failed item's key, directly or through another failed item. Results name cards by board number.
 import { createHash } from 'node:crypto';
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { LIMITS, codePoints, latest } from '../../../packages/format/src/index.ts';
-import type { LedgerState, WriteItem } from '../../../packages/actions/src/index.ts';
-import { canWrite, proposeProblem } from '../../../packages/actions/src/index.ts';
+import { LIMITS, codePoints, latest, toLine } from '../../../packages/format/src/index.ts';
+import type { LedgerState, RetireTarget, WriteItem } from '../../../packages/actions/src/index.ts';
+import { canWrite, numberOf, proposeProblem, retireProblem } from '../../../packages/actions/src/index.ts';
 import type { Ledger } from './ledger.ts';
-import type { PointerError, ProblemBody, ProblemCode, ProblemExtras } from './problem.ts';
-import { ProblemError, problem } from './problem.ts';
+import { ProblemError } from './problem.ts';
 import { schemaProblems } from './schema.ts';
+import type { ItemProblem } from './write-problem.ts';
+import { ItemFailed, fail, under } from './write-problem.ts';
+import type { Batch } from './write-refs.ts';
+import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
+
+export type { ItemProblem } from './write-problem.ts';
 
 export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/11/common.schema.json#/$defs/key';
+const KEY_ID = 'https://vision-board.invalid/schema/ledger/12/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** A failed item's problem: the problem document without `status` (api.md 38). */
-export type ItemProblem = Omit<ProblemBody, 'status'>;
-
+/** One item's result; every card in it by board number (api.md 125). */
 export type WriteResult =
-  | { index: number; key?: string; ok: true; seq: number; n?: number; ver?: number; title?: string; replayed?: true }
+  | { index: number; key?: string; ok: true; seq: number; n?: number; ver?: number; title?: string; retired?: number[]; replayed?: true }
   | { index: number; key?: string; ok: false; problem: ItemProblem };
 
-/** An item that cannot be written, with its problem. */
-class ItemFailed extends Error {
-  readonly problem: ItemProblem;
-  constructor(p: ItemProblem) {
-    super(p.detail);
-    this.problem = p;
-  }
-}
-
-function fail(code: ProblemCode, detail: string, extras: ProblemExtras = {}): never {
-  const { status: _status, ...body } = problem(code, detail, extras).body;
-  throw new ItemFailed(body);
-}
-
-/** Pointers into one item become pointers into the request body (`/items/2/node/title`). */
-const under = (i: number, errors: readonly PointerError[]): PointerError[] =>
-  errors.map((e) => ({ pointer: `/items/${i}${e.pointer}`, detail: e.detail }));
-
-/** Fields that hold a node number or `{ key }` (api.md 35). */
-const REFS = ['n', 'from', 'to'] as const;
 /** Item types that carry the path's board on the stored line. */
-const ON_BOARD = new Set(['board', 'region', 'node']);
+const ON_BOARD = new Set(['board', 'region', 'node', 'retire']);
 /** Stamped or server-held fields, left out when two items are compared (api.md 29). */
 const NOT_CONTENT = ['v', 'seq', 'at', 'by', 'agent', 'person', 'key', 'base', 'n', 'ver'];
 
@@ -60,11 +44,12 @@ function canonical(v: unknown): string {
 
 /** A hash of what an item says, without its stamp, key or server-assigned numbers. A node's own
  * `n` and `ver` are server-held, so they are compared apart (`sameNode`); `propose`'s `ver` is
- * content. */
+ * content. A container's retire is the container: which cards it took depends on when it ran. */
 function contentHash(e: Rec): string {
   const content: Rec = {};
   for (const [k, v] of Object.entries(e)) {
     if (NOT_CONTENT.includes(k) && !(k === 'ver' && e.type === 'propose') && !(k === 'n' && e.type !== 'node')) continue;
+    if (k === 'cards' && e.region !== undefined) continue;
     content[k] = v;
   }
   return createHash('sha256').update(canonical(content)).digest('hex');
@@ -74,74 +59,45 @@ function contentHash(e: Rec): string {
 const sameNode = (item: Rec, stored: Rec): boolean =>
   item.type !== 'node' || (item.n === undefined ? stored.ver === 1 : item.n === stored.n);
 
-/** One batch: the ledger, the writing agent, the path's board, and the keys of items that failed. */
-interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string> }
-
-/** The line this agent's retry key is stored on, across the project (api.md 29). */
-function storedFor(b: Batch, key: string): LedgerEvent | undefined {
-  const seq = b.ledger.state().keys.get(b.agent)?.get(key);
-  return seq === undefined ? undefined : b.ledger.events().find((e) => e.seq === seq);
-}
-
 /** The item's key, when it is a valid one (it is echoed in the result). */
 function keyOf(raw: unknown): string | undefined {
   const key = isRec(raw) ? raw.key : undefined;
   return typeof key === 'string' && schemaProblems(KEY_ID, key).length === 0 ? key : undefined;
 }
 
-/** `{ key }` references as node numbers: a node made earlier in this batch or by an earlier call
- * from this agent (api.md 35); a key whose item failed fails this item too (api.md 34). */
-function resolve(b: Batch, i: number, item: Rec): Rec {
-  const out: Rec = { ...item };
-  for (const f of REFS) {
-    const ref = item[f];
-    if (!isRec(ref)) continue;
-    const key = String(ref.key);
-    const pointer = `/items/${i}/${f}`;
-    if (b.failed.has(key)) {
-      fail('depends-on-failed', `This item names the key "${key}", and the item with that key failed. Fix that item, then send both again with the same keys.`,
-        { errors: [{ pointer, detail: `the item with key "${key}" failed` }] });
-    }
-    const e = storedFor(b, key);
-    if (e?.type !== 'node') {
-      fail('invalid', `No node you made has the key "${key}". Name the node by its number, or by the key of the node item that made it.`,
-        { errors: [{ pointer, detail: `no node you made has the key "${key}"` }] });
-    }
-    out[f] = e.n;
-  }
-  return out;
-}
-
-/** The ledger event an item becomes: `base` dropped, and the path's board on the lines that
- * carry one (api.md 34). */
+/** The ledger line an item becomes: `base` dropped, the path's board on the lines that carry one
+ * (api.md 34), and a retire's cards filled in (api.md 126). */
 function eventOf(b: Batch, item: Rec): Rec {
   const { base: _base, ...rest } = item;
-  return ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
+  const e = ON_BOARD.has(String(item.type)) ? { ...rest, board: b.board } : rest;
+  return e.type === 'retire' ? retireLine(b.ledger.state(), e) : e;
 }
 
 /** An `append` as the `node` line it is stored as (api.md 95): the version it adds to (the latest,
  * or on a retry the one before the line its key stored) with `text` after a blank line at the end
- * of the body, every other field as it was. */
+ * of the body, every other field as it was. `item.n` is the card's identity by now. */
 function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec {
-  const n = item.n as number;
-  const node = b.ledger.state().nodes.get(n);
-  if (!node) fail('invalid', `There is no node ${n}. Name a node by its number, or by the key of the node item that made it.`, { errors: [{ pointer: `/items/${i}/n`, detail: `unknown node ${n}` }] });
+  const s = b.ledger.state();
+  const id = item.n as number;
+  const node = s.nodes.get(id)!;
   const stored = key === undefined ? undefined : storedFor(b, key);
-  const from = stored?.type === 'node' && stored.n === n ? node.versions[stored.ver - 2] : undefined;
+  const from = stored?.type === 'node' && stored.id === id ? node.versions[stored.ver - 2] : undefined;
   // An old card's `item` mark stays behind: a v11 line names none (api.md 118).
   const { ver: _ver, at: _at, agent: _agent, item: _item, ...was } = from ?? latest(node);
   const body = was.body === undefined ? String(item.text) : `${was.body}\n\n${String(item.text)}`;
   if (codePoints(body) > LIMITS.body) {
-    fail('invalid', `With this text, node ${n}'s body would be ${codePoints(body)} characters, and the limit is ${LIMITS.body}. Send less, or rewrite the node with a node item.`,
+    fail('invalid', `With this text, node ${numberOf(s, id)}'s body would be ${codePoints(body)} characters, and the limit is ${LIMITS.body}. Send less, or rewrite the node with a node item.`,
       { errors: [{ pointer: `/items/${i}/text`, detail: `the body would be over ${LIMITS.body} characters` }] });
   }
-  return { type: 'node', board: b.board, n, node: { ...was, body }, ...(item.key !== undefined && { key: item.key }) };
+  return { type: 'node', board: b.board, n: id, node: { ...was, body }, ...(item.key !== undefined && { key: item.key }) };
 }
 
-function written(i: number, key: string | undefined, e: LedgerEvent, replayed = false): WriteResult {
+function written(s: LedgerState, i: number, key: string | undefined, e: LedgerEvent, replayed = false): WriteResult {
   return {
     index: i, ...(key !== undefined && { key }), ok: true, seq: e.seq,
-    ...(e.type === 'node' && { n: e.n, ver: e.ver, title: e.node.title }), ...(replayed && { replayed: true as const }),
+    ...(e.type === 'node' && { n: numberOf(s, e.id), ver: e.ver, title: e.node.title }),
+    ...(e.type === 'retire' && { retired: e.cards.map((id) => numberOf(s, id)) }),
+    ...(replayed && { replayed: true as const }),
   };
 }
 
@@ -150,12 +106,12 @@ function written(i: number, key: string | undefined, e: LedgerEvent, replayed = 
 function replay(b: Batch, i: number, key: string, e: Rec): WriteResult | undefined {
   const stored = storedFor(b, key);
   if (!stored) return undefined;
-  const line = stored as unknown as Rec;
+  const line = toLine(stored);
   if (contentHash(line) !== contentHash(e) || !sameNode(e, line)) {
     fail('conflict', `The key "${key}" was used before for different content. Use a new key for new content, or resend the same content to get the first result.`,
       { errors: [{ pointer: `/items/${i}/key`, detail: 'key reused for different content' }] });
   }
-  return written(i, key, stored, true);
+  return written(b.ledger.state(), i, key, stored, true);
 }
 
 /** A node update based on a version that is no longer the latest is a `conflict` carrying the
@@ -166,18 +122,21 @@ function checkBase(s: LedgerState, i: number, item: Rec, e: Rec): void {
   if (!node) return; // an unknown node is the ledger's to report
   const ver = latest(node).ver;
   if (ver === item.base) return;
-  fail('conflict', `Node ${e.n} is at version ${ver}, not ${item.base}: it changed since you read it. Read it again with show_node, then send your change with base ${ver}.`,
-    { ver, errors: [{ pointer: `/items/${i}/base`, detail: `node ${e.n} is at version ${ver}` }] });
+  const n = numberOf(s, e.n);
+  fail('conflict', `Node ${n} is at version ${ver}, not ${item.base}: it changed since you read it. Read it again with show_node, then send your change with base ${ver}.`,
+    { ver, errors: [{ pointer: `/items/${i}/base`, detail: `node ${n} is at version ${ver}` }] });
 }
 
-/** Every node an item names must be on the board in the path (api.md 24). */
+/** Every card an item names must be on the board in the path (api.md 24): a `{ key }` can name a
+ * card made on another board. */
 function checkBoard(b: Batch, s: LedgerState, i: number, e: Rec): void {
-  for (const f of REFS) {
-    const n = e[f];
-    const node = typeof n === 'number' ? s.nodes.get(n) : undefined;
+  for (const f of refsOf(e.type)) {
+    const id = e[f];
+    const node = typeof id === 'number' ? s.nodes.get(id) : undefined;
     if (!node || node.board === b.board) continue;
-    fail('invalid', `This call writes board "${b.board}", and node ${String(n)} is on board "${node.board}". Send the item to that board's write_board.`,
-      { errors: [{ pointer: `/items/${i}/${f}`, detail: `node ${String(n)} is on board "${node.board}", not "${b.board}"` }] });
+    const n = numberOf(s, id as number);
+    fail('invalid', `This call writes board "${b.board}", and node ${n} is on board "${node.board}". Send the item to that board's write_board.`,
+      { errors: [{ pointer: `/items/${i}/${f}`, detail: `node ${n} is on board "${node.board}", not "${b.board}"` }] });
   }
 }
 
@@ -206,15 +165,28 @@ function checkGrant(b: Batch, s: LedgerState, i: number, e: Rec): void {
     { board: need.board, ...(need.region !== undefined && { region: need.region }) });
 }
 
+/** A retire waits while a card it takes still owes the person something (api.md 126, assumption B). */
+function checkOwed(b: Batch, s: LedgerState, i: number, item: Rec, e: Rec): void {
+  if (e.type !== 'retire') return;
+  const t: RetireTarget = e.region === undefined ? { board: b.board, id: (e.cards as number[])[0]! } : { board: b.board, region: String(e.region) };
+  const why = retireProblem(s, t, e.cards as number[]);
+  if (why === undefined) return;
+  fail('invalid', `You can't retire this yet: ${why}. Then send the retire again with the same key.`,
+    { errors: [{ pointer: `/items/${i}/${item.region === undefined ? 'n' : 'region'}`, detail: why }] });
+}
+
 /** Append through the ledger module; its problems point into this item. A `/board` pointer
- * names the path's board, which the item does not carry, so it points at the item. */
-function append(b: Batch, i: number, key: string | undefined, e: Rec): WriteResult {
+ * names the path's board, which the item does not carry, so it points at the item; a retire's
+ * `/cards` pointer is about the card or container the item named. */
+function append(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec): WriteResult {
   try {
-    return written(i, key, b.ledger.append(e, { by: 'agent', agent: b.agent }, { board: b.board }));
+    const stored = b.ledger.append(e, { by: 'agent', agent: b.agent }, { board: b.board });
+    return written(b.ledger.state(), i, key, stored);
   } catch (err) {
     if (!(err instanceof ProblemError)) throw err;
     const { status: _status, errors, ...rest } = err.body;
-    const fixed = (errors ?? []).map((x) => (x.pointer === '/board' ? { ...x, pointer: '' } : x));
+    const named = item.region === undefined ? '/n' : '/region';
+    const fixed = (errors ?? []).map((x) => (x.pointer === '/board' ? { ...x, pointer: '' } : x.pointer.startsWith('/cards') ? { ...x, pointer: named } : x));
     throw new ItemFailed({ ...rest, ...(fixed.length > 0 && { errors: under(i, fixed) }) });
   }
 }
@@ -233,7 +205,8 @@ function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): W
   checkBoard(b, s, i, e);
   checkProposal(s, i, e);
   checkGrant(b, s, i, e);
-  return append(b, i, key, e);
+  checkOwed(b, s, i, item, e);
+  return append(b, i, key, item, e);
 }
 
 /** Write `items` for `agent` on `board`, in order, one result each (api.md 34). */

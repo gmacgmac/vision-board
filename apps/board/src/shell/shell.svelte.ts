@@ -62,6 +62,8 @@ export const shell = $state({
   summary: '',
   counts: { open: 0, decided: 0, later: 0 },
   answered: 0,
+  /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
+  flagged: 0,
   replyText: '',
   replyOpen: false,
   hide: false,

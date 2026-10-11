@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import type { LedgerEvent } from '../../format/src/index.ts';
-import { readLedger } from '../../format/src/index.ts';
+import { isPrivateAct, readLedger } from '../../format/src/index.ts';
 import type { LedgerState } from '../src/index.ts';
 import { applyEvent, boardList, emptyState, eventBoard, foldLedger } from '../src/index.ts';
 import { scene } from './ledger-v3.ts';
@@ -31,7 +31,8 @@ function walkedHeads(s: LedgerState, events: readonly LedgerEvent[]): Map<string
   for (const e of events) {
     const board = eventBoard(s, e);
     // The person's board seen is not a line of the board's own (api.md 87): it never moves the head.
-    if (board !== undefined && !(e.type === 'seen' && 'board' in e)) out.set(board, e.seq);
+    // Nor does the person's flag, which no agent may see (api.md 128; the gallery ledger has flags from v12).
+    if (board !== undefined && !(e.type === 'seen' && 'board' in e) && !isPrivateAct(e)) out.set(board, e.seq);
   }
   return out;
 }

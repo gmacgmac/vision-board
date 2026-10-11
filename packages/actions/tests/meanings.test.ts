@@ -14,7 +14,9 @@ test('one table: yes and no on a question, done for ✓ on an action, nothing el
   assert.deepEqual([otherWords('ack'), otherWords('drop'), otherWords('comment')], [['Yes', 'Done'], ['No'], []]);
 });
 
-/** Board `b` at v8 with an action (5) and a finding (6) beside the questions 1, 2 and 3. */
+/** Board `b` at v8 with an action (5) and a finding (6) beside the questions 1, 2 and 3. Card 4 is
+ * on board b2, so on board b the action is card 4 and the finding card 5 (api.md 125): the lines
+ * name identities, every answer board numbers. */
 function kinds() {
   const l = scene();
   l.v = 8;
@@ -33,7 +35,7 @@ test('check_responses: each ✓ or ✗ says what it means on its card\'s kind', 
   l.act({ action: 'comment', n: 6, ver: 1, text: 'Source?' });
   const page = responsesPage(l.state(), 'b', from, 100);
   assert.deepEqual(page.responses.map((e) => [e.n, e.action, e.means]), [
-    [1, 'drop', 'no'], [2, 'ack', 'yes'], [5, 'ack', 'done'], [5, 'drop', undefined], [6, 'comment', undefined],
+    [1, 'drop', 'no'], [2, 'ack', 'yes'], [4, 'ack', 'done'], [4, 'drop', undefined], [5, 'comment', undefined],
   ]);
   assert.ok(!('means' in page.responses[3]!), 'no field where the act means itself');
 });
@@ -46,7 +48,7 @@ test('the numbered reply: each card with its kind and its word', () => {
   l.act({ action: 'comment', nodes: [2, 6], text: 'Same root cause.' });
   const s = l.state();
   assert.deepEqual(replyText(boardView(s, 'b'), boardState(s, 'b')).split('\n').slice(1), [
-    '1 (question): no', '2, 6 (question, finding): comment: Same root cause.', '5 (action): done', '6 (finding): saved for later',
+    '1 (question): no', '2, 5 (question, finding): comment: Same root cause.', '4 (action): done', '5 (finding): saved for later',
     'Still open: 3',
   ]);
 });
@@ -64,9 +66,9 @@ test('a round: only what was answered after the cursor, with only the newer note
   l.act({ action: 'send', board: 'b' });
   const s = l.state();
   const scope = replyScope(s, 'b', since);
-  assert.deepEqual([[...scope.cards], [...scope.regions]], [[1, 6], ['r']], 'a size pick is no answer');
+  assert.deepEqual([[...scope.cards], [...scope.regions]], [[1, 5], ['r']], 'a size pick is no answer');
   assert.deepEqual(replyText(boardView(s, 'b'), boardState(s, 'b'), scope).split('\n').slice(1), [
-    '1 (question): no', '6 (finding): comment: New words.', 'On container "r" comment: All of r.', 'Still open: 3, 5',
+    '1 (question): no', '5 (finding): comment: New words.', 'On container "r" comment: All of r.', 'Still open: 3, 4',
   ]);
   assert.deepEqual(replyScope(s, 'b', s.seq).cards.size, 0, 'nothing after the latest line');
 });

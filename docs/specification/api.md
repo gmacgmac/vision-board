@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-11 (ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -236,10 +236,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
 | `list_open` | `GET /api/boards/{board}/open` | anyone | Items not yet decided, with `pending` (36) and `unseen` (a newer version than the person last saw) |
 | `check_responses` | `GET /api/boards/{board}/responses` | anyone | The person's actions after `after`, and answers to the caller's grant requests; `wait` (0-60 s) holds the call until the person presses Send or answers a request; a timed-out wait returns `{ responses: [], head }` |
-| `read_ledger` | `GET /api/ledger` | anyone | Every ledger line after `after`, from anyone, oldest first; `board` filters (through a node's board for lines that name only a node); JSON, or `application/jsonl` |
+| `read_ledger` | `GET /api/ledger` | person | Every ledger line after `after`, from anyone, oldest first, as the file holds it (cards by ledger number, flags included: 125, 128); `board` filters (through a node's board for lines that name only a node); JSON, or `application/jsonl` |
 | `join` | `POST /api/agents` | agent | Get an agent id and secret; grants nothing |
 | `request_grant` | `POST /api/grants` | agent | Ask the person for write access to a board, or to one container on it (85) |
-| `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`; per-item results |
+| `write_board` | `POST /api/boards/{board}/write` | agent | Items: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `append`, `retire` (126); per-item results |
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8); a `send` also hands the board's chat session the answers (121) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
@@ -905,3 +905,76 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `~/projects/a` — call join again." Its folder is open now, so joining here is right; the MCP
     instructions already say to join again on `not-authenticated`. Without a header the answer is
     `wrong-folder` as before (115), and a header naming another folder is refused first (114).
+
+## Ledger v12: board numbers, retire, the flag, column and row (field-report batch 2 BE_01, D-041 proposed)
+
+125. **Each board numbers its cards from 1** (ruling 2, D-041 proposed). `LEDGER_FORMAT` becomes 12
+    and every ledger `$id` moves to `.../schema/ledger/12/`; `openapi.json` `info.version` becomes
+    1.16.0. A card has two numbers, never mixed. Its **identity** is its ledger number, given once
+    per project and never reused (D-017): the file writes it `n`, on every line from v2 on, and code
+    calls it `id` (`fromLine` turns a line into the event code reads, `toLine` back; nothing else
+    renames). Its **board number** `n` is 1, 2, 3... in the order its board's cards were first drawn:
+    it is never stored, but worked out on read (`LedgerIndex.cards` and `LedgerBoard.cards`, a
+    board's identities in drawing order, card `n` at `n - 1`; `boardNumber`, `cardId`), so old
+    lines get theirs the same way (numbers written inside old notes won't match; accepted). Cards
+    never change board, so the pair is fixed for ever and every folded index stays keyed by
+    identity. **Every request and answer speaks board numbers**, on the board the operation names:
+    `n` in a path (`show_node`), every `n`, `from`, `to`, `nodes` and `region.center` in a body
+    (write items, `act`, `mark_seen`, `send_chat`'s `cards`), and every card in an answer (the
+    View's node ids, `n`, links and centre; `get_board`'s `state` and `versions` keys; `openItem`,
+    `pending`, notes' `nodes`, proposals, links, node detail, write results, `check_responses`'
+    acts). The server translates at its edge, in through `cardId(ix, board, n)` (a number the board
+    has not given fails `invalid` at its pointer: "board b has no card 9"), out through
+    `boardNumber`; problems an agent or the person reads name a card by its board number
+    (`contextProblems`' `name`). A `{ "key": … }` still names a card made earlier. Links join cards
+    on the write's board; an old line linking two boards is drawn on neither, as before. The schemas
+    say it once: ledger `nodeNumber` (both meanings, by where it is), API `cardNumber` and
+    `cardNumbers` (`api/common.schema.json`), which every API body and answer uses.
+126. **`retire`** (ruling 1, assumptions B and C), a new write item and agent event. Sent:
+    `{ type: 'retire', n }` (a number or a key) or `{ type: 'retire', region }`, never both, `key`
+    as on any item. Stored: `{ board, cards, region?, key? }`: `cards` = the identities it took
+    off, which the server fills in: the card named, or every card in the container now (the
+    person's moves count: a card moved in goes, one moved out or into Later stays). Checked like a
+    node update: the permissions table (83, the container the card is in now, or the one named),
+    the retry key (29, `replayed`). **Refused** (`invalid` at `/items/{i}/n` or `/items/{i}/region`)
+    while any card it would take still owes the person something: a comment or More context with no
+    `reply` or `append` after it, or a Later with no `park` (`item.owed`, the same helper): "card 4
+    has a comment you haven't answered: answer it with a reply or an append first". A container
+    also waits while its own latest note has no `reply` naming it (BE_02: nothing the person asked
+    for goes missing, assumption B). The ledger
+    refuses (context): a card on another board, or already retired; an unknown container, or
+    `later` (no container to retire); a retire with neither a container nor a card. The answer is
+    `{ ok, seq, retired }`, `retired` the board numbers it took (none for an empty container).
+127. **What retiring changes.** A retired card leaves the board: the View, `get_board`'s `state`
+    and `versions`, counts, `list_open`, `pending`, every condition and every list; its proposals
+    end (`closed`). It keeps its versions, notes, replies and number: the board's version history
+    shows it, and `show_node` still answers, with `retired` (the retire line's `seq`). A retired
+    container leaves the board with its cards; `show_container` still answers, with `retired`, and
+    lists the cards that left with it. No
+    number is given twice (C): the board's `cards` keeps retired identities. The ledger refuses
+    (context) every later line naming a retired card (a node version: "card 5 is retired; draw a
+    new card instead", a link, a reply, a proposal, a park, the person's act or seen; an `unlink`
+    still goes), a region line reusing a retired container's id ("pick another id"), and a node or
+    a move into a retired container. The page shows "N cards retired" on a container that is on the
+    board, for the cards retired one by one while in it (where they were at their retire line),
+    opening the board version just before (`seq - 1`) (FE_01). `retire` is an agent drawing line
+    (`DRAWING_EVENTS`): a version of the board.
+128. **The flag** (ruling 3, assumption A): person acts `flag { n }` and `unflag { n }`, one card,
+    any kind, no `ver` (it stays through a redraw), no group, no container; the act rules refuse it
+    on a retired card. **No agent ever reads one** (`PRIVATE_ACTIONS`, `isPrivateAct`):
+    `check_responses` (and its `wait`, which a flag never wakes), the Send message and `replyText`,
+    `show_node`, `show_container`, `get_board`, `list_open` and `pending` leave flags out; a flag is
+    not an answer for `board.unsent` (123), is not seeing the card (94), and moves no board head,
+    drawn head or agent head (`list_boards`' `seq` included). Only the person's page reads it, from
+    `read_ledger` (130), and folds it with the action layer.
+129. **Modes.** `MODES` is `grid`, `flow`, `lanes`, `radial`, `column`, `row`. `list` is renamed
+    `column` (cards top to bottom in card order); a line from v11 or older naming `list` stays
+    valid and reads as `column` (`fromLine`, `RENAMED_MODES`); a v12 line or a sent item naming it
+    is refused with one problem saying so (`LIST_RENAMED`; the common schema's `notList`, a test
+    keeps them equal), on a region and on a `mode` act alike. `row` lays a container's cards left to
+    right in card order with no links needed (`packages/layout`, BE_02); `flow` keeps its name and
+    means "follow the links".
+130. **`read_ledger` is the page's** (x-agent false, the person's cookie, no `VB-Project`):
+    its lines are as the file holds them, cards by identity and flags included, so no agent reads
+    it; the MCP tool and the `vb` command are gone. An agent reads `check_responses`, `get_board`,
+    `show_node`, `show_container` and `list_open`, which speak board numbers and show no flag.

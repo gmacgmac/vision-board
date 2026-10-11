@@ -7,7 +7,7 @@
 import type { LedgerEvent, View } from '../../../../packages/format/src/index.ts';
 import { boardView, LEDGER_FORMAT, latest, NODE_TYPES, nodesOf } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardAccess, boardState, conditionsOf, isDecided, statusOf } from '../../../../packages/actions/src/index.ts';
+import { boardAccess, boardState, conditionsOf, isDecided, numberOf, statusOf } from '../../../../packages/actions/src/index.ts';
 import type { BoardData } from './io.ts';
 
 /** One board as the page draws it, from the held state. */
@@ -16,7 +16,7 @@ export function boardData(s: LedgerState, board: string): BoardData {
     head: s.seq,
     view: boardView(s, board),
     state: boardState(s, board),
-    versions: Object.fromEntries(nodesOf(s, board).map((x) => [String(x.n), latest(x).ver])),
+    versions: Object.fromEntries(nodesOf(s, board).map((x) => [String(numberOf(s, x.id)), latest(x).ver])),
     access: boardAccess(s, board),
   };
 }
@@ -64,21 +64,24 @@ export interface PageConditions {
   unsent: boolean;
 }
 
+/** The card rows name a card by its identity (`c.id`, conditions.ts); the page by its board number,
+ * as the View does (api.md 125), so every card set here is in board numbers. */
 export function pageConditions(s: LedgerState, board: string): PageConditions {
+  const n = (c: { id?: number }) => numberOf(s, c.id!);
   const out: PageConditions = { marks: {}, owed: new Set(), requests: [], proposals: [], fresh: new Set(), unseen: new Set(), awaiting: new Set(), owedCards: new Set(), unsent: false };
   for (const c of conditionsOf(s, { board })) {
     if (c.kind === 'board.new' || c.kind === 'board.changed') out.marks[c.board] = c.kind === 'board.new' ? 'new' : 'changed';
     else if (c.kind === 'container.owed') out.owed.add(c.container!);
     else if (c.kind === 'grant.requested') out.requests.push(c.seq!);
     else if (c.kind === 'board.drawn') out.drawn = c.seq!;
-    else if (c.kind === 'item.new') out.fresh.add(c.n!);
-    else if (c.kind === 'item.unseen') out.unseen.add(c.n!);
-    else if (c.kind === 'item.awaiting') out.awaiting.add(c.n!);
-    else if (c.kind === 'item.owed') out.owedCards.add(c.n!);
+    else if (c.kind === 'item.new') out.fresh.add(n(c));
+    else if (c.kind === 'item.unseen') out.unseen.add(n(c));
+    else if (c.kind === 'item.awaiting') out.awaiting.add(n(c));
+    else if (c.kind === 'item.owed') out.owedCards.add(n(c));
     else if (c.kind === 'board.unsent') out.unsent = true;
-    else if (c.kind === 'proposal.open' || c.kind === 'proposal.stale') out.proposals.push({ n: c.n!, seq: c.seq!, stale: c.kind === 'proposal.stale' });
+    else if (c.kind === 'proposal.open' || c.kind === 'proposal.stale') out.proposals.push({ n: n(c), seq: c.seq!, stale: c.kind === 'proposal.stale' });
   }
-  for (const n of out.fresh) out.unseen.delete(n);
+  for (const x of out.fresh) out.unseen.delete(x);
   return out;
 }
 

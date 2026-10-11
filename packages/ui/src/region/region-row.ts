@@ -28,7 +28,7 @@ export interface ModeRow {
 export function bindModeRow(host: HTMLElement): ModeRow {
   const q = <T extends HTMLElement>(s: string) => host.querySelector<T>(s);
   const radios = () => [...host.querySelectorAll<HTMLButtonElement>(RADIO)];
-  /** The row's stops in order: the five layouts, Comment (3_FE_04), then the cog. */
+  /** The row's stops in order: the six layouts, Comment (3_FE_04), then the cog. */
   const stops = () => [...host.querySelectorAll<HTMLButtonElement>(`${RADIO}, ${COMMENT}, ${COG}`)];
   const tools = () => q<HTMLElement>('.vb-region-tools');
   const inTools = (n: EventTarget | null) => n instanceof Node && !!tools()?.contains(n);

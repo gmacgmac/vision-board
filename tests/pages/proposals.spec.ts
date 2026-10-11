@@ -10,6 +10,7 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { boardLines } from './board-lines.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 // The proposal's time and the gallery's screenshot read the same in every test machine's clock.
@@ -60,11 +61,9 @@ const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data
 const box = (page: Page, n: number) => card(page, n).getByRole('dialog');
 const bar = (page: Page) => page.locator('.vb-proposals');
 
-/** The board's acts after line `after`, through read_ledger. */
-async function actsAfter(page: Page, board: string, after: number) {
-  const r = await page.request.get(`/api/ledger?board=${board}&after=${after}`);
-  return (await r.json() as { events: Record<string, unknown>[] }).events.filter((e) => e.type === 'act');
-}
+/** The board's acts after line `after`, through read_ledger, cards by board number (board-lines.ts). */
+const actsAfter = async (page: Page, board: string, after: number) =>
+  (await boardLines(page, board, after)).filter((e) => e.type === 'act');
 const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
 
 /** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */

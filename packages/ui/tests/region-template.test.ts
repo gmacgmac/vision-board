@@ -30,7 +30,7 @@ test('the mode row: one radio icon per mode, in order, unchecked and out of the 
 test('the mode row ends in a divider, Comment and the cog, a menu button for the settings menu', () => {
   const html = regionTemplate(region);
   assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-region-comment"[^>]*>.*?<\/button><button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for Review" aria-haspopup="menu" aria-expanded="false" aria-controls="region-review-menu"><svg class="vb-mode-icon"[^>]*>.*?<\/svg><\/button><\/div>/);
-  assert.equal((html.match(/data-mode=/g) ?? []).length, 5, 'the cog is not a layout');
+  assert.equal((html.match(/data-mode=/g) ?? []).length, MODES.length, 'six layouts (column and row, no list); the cog is not a layout');
 });
 
 test('the popover is a tooltip with one tile per mode and its one-liner, then the agent\'s choice and the keys', () => {
@@ -106,9 +106,9 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
 
-test('the top line: title, count, holders and the title tip (the full title, hidden from assistive tech) in a label group, then the row, popover and menu in a tools group', () => {
+test('the top line: title, count, the retired marker (field report batch 2), holders and the title tip (the full title, hidden from assistive tech) in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><button type="button" class="vb-region-retired" hidden><\/button><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
   assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
@@ -129,4 +129,10 @@ test('holdersTemplate: the creator is plain text; any other holder is a labelled
 test('the title tip holds the escaped full title and is hidden from assistive tech (the heading keeps the text)', () => {
   const html = regionTemplate({ id: 'r', title: '<b>x</b>', mode: 'grid' });
   assert.ok(html.includes('<span class="vb-tip vb-title-tip" aria-hidden="true">&#60;b&#62;x&#60;/b&#62;</span>'));
+});
+
+test('the title line holds the retired marker after the count, hidden until update() fills it', () => {
+  const html = regionTemplate(region);
+  assert.match(html, /<span class="vb-region-count"><\/span><button type="button" class="vb-region-retired" hidden><\/button><span class="vb-region-holders">/);
+  assert.match(regionTemplate(region, { fixed: true }), /class="vb-region-retired" hidden/, 'Later too: a card can be retired from it');
 });

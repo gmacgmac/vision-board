@@ -3,6 +3,7 @@
 // the grant loop with resent keys, replays and key conflicts, `base`, key references,
 // depends-on-failed, scoped `pending`, a board revoke, and whole-call problems.
 import { test, after, before } from 'node:test';
+import { cardId } from '../../../packages/format/src/index.ts';
 import assert from 'node:assert/strict';
 import type { Client } from '../../../packages/client/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
@@ -52,8 +53,12 @@ test('a new board needs no grant; its writer holds it and its new regions; keys 
   assert.deepEqual([r.results[2].title, r.results[3].title, 'title' in r.results[0]], ['Q1', 'Q2', false]);
   assert.equal(r.head, h.ledger.state().seq);
   assert.deepEqual(r.pending, []);
+  // Board plan's cards 1 and 2 (api.md 125); the stored line holds their identities.
+  assert.deepEqual([n.q1, n.q2], [1, 2]);
   const stored = h.ledger.events().at(-1)!;
-  assert.deepEqual(stored.type === 'link' && [stored.from, stored.to, stored.agent, stored.key], [n.q1, n.q2, A.agent, 'l1']);
+  const id = (x: number) => cardId(h.ledger.state().index, 'plan', x);
+  assert.deepEqual(stored.type === 'link' && [stored.from, stored.to, stored.agent, stored.key], [id(n.q1!), id(n.q2!), A.agent, 'l1']);
+  assert.ok(id(n.q1!)! > n.q1!, 'the roadmap and pricing cards hold the lower identities');
   assert.deepEqual((await h.ok('show_container', { board: 'plan', region: 'a' })).holders, [A.agent]);
 });
 
@@ -105,13 +110,16 @@ test('point 24 over HTTP: what each item needs, allowed for the holder and refus
   assert.equal(holder.results[1].ver, 2);
 });
 
-test('both nodes of a link, and every node an item names, must be on the board in the path', async () => {
+test('every card an item names is a number on the board in the path; one it has not given is invalid', async () => {
+  const before = h.ledger.state().seq;
   const r = await write(A, 'plan', [
-    { type: 'link', from: n.q1, to: h.seeded.q }, { type: 'reply', n: h.seeded.q, text: 'Wrong board.' },
-    { ...node('a', 'Moved boards'), n: h.seeded.q },
+    { type: 'link', from: n.q1, to: 99 }, { type: 'reply', n: 99, text: 'No such card.' },
+    { ...node('a', 'No such card'), n: 99 },
   ]);
   assert.deepEqual(codes(r), ['invalid', 'invalid', 'invalid']);
   assert.deepEqual(r.results.map((x: any) => x.problem.errors[0].pointer), ['/items/0/to', '/items/1/n', '/items/2/n']);
+  assert.equal(r.results[1].problem.errors[0].detail, 'board plan has no card 99');
+  assert.equal(h.ledger.state().seq, before);
 });
 
 test('a region written by a v2 line has no holder, so any write to it needs a grant', async () => {

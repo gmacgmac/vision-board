@@ -1,12 +1,15 @@
-// The project ledger (D-017): every node's identity and history, one event per line in
-// `.visionboard/ledger.jsonl`. Append-only. A board version is a position in this file (its
+// The project ledger (D-017, D-041 proposed): every card's identity and history, one event per
+// line in `.visionboard/ledger.jsonl`. Append-only. A card's identity is its ledger number, given
+// once per project and never reused: `id` in code, written `n` in the file (ledger-line.ts turns
+// one into the other). Every request and answer names a card by its board number instead (`n`,
+// api.md 125), which the server works out at its edge. A board version is a position in this file (its
 // `seq`), never a separate file. Meaning only, never coordinates except a person's pin (rule 9).
 // The shape's one source is the JSON Schema in packages/format/schema/ (rule 6, api.md 5-11);
 // these types are hand-written and a test checks they agree with it (api.md 2).
 import type { Kind, Region } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 11;
+export const LEDGER_FORMAT = 12;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -15,16 +18,26 @@ export const LEDGER_FORMAT = 11;
  * left out (api.md 81-86), and a `seen` for a whole board, `board` + `head` (api.md 87); v9 lets
  * the person write a `board` line, creating or renaming a board (api.md 90); v10 adds `reject`,
  * the person turning down an agent's proposal (api.md 93); v11 takes `item` away from a node: the
- * kind decides (api.md 118). Older lines carrying it stay valid and every reader ignores it. */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const;
+ * kind decides (api.md 118). Older lines carrying it stay valid and every reader ignores it. v12
+ * adds `retire` and the person's `flag` and `unflag`, renames mode `list` to `column` (older lines
+ * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
-  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject',
+  'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
+
+/** The person's own marks (api.md 128): no agent ever reads them. Every agent read, the Send
+ * message and Send's "something new" test leave these acts out, and they move nothing an agent
+ * reads (no head, no seen, no condition). */
+export const PRIVATE_ACTIONS: ReadonlySet<ActionId> = new Set(['flag', 'unflag']);
+/** Whether an act is the person's private mark. */
+export const isPrivateAct = (e: { type: string; action?: string }): boolean =>
+  e.type === 'act' && PRIVATE_ACTIONS.has(e.action as ActionId);
 
 /** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
  * name it; no agent draws it, and from ledger v6 no region may take its id. */
@@ -41,19 +54,19 @@ export const CONTAINER_PLACES: ReadonlySet<ActionId> = new Set(['pin', 'unpin'])
 export const isContainerAct = (e: { action: ActionId; region?: string | undefined }): boolean =>
   e.region !== undefined && CONTAINER_ACTIONS.has(e.action);
 
-/** The card an act names first: its `n`, or the first of its group's `nodes`. Its board is the
+/** The card an act names first: its `id`, or the first of its group's `nodes`. Its board is the
  * act's board (packages/actions `scopeOf` builds on this). */
-export const actCard = (e: { n?: number | undefined; nodes?: number[] | undefined }): number | undefined => e.n ?? e.nodes?.[0];
+export const actCard = (e: { id?: number | undefined; nodes?: number[] | undefined }): number | undefined => e.id ?? e.nodes?.[0];
 
 export const EVENT_TYPES = [
   'board', 'region', 'node', 'link', 'unlink', 'act', 'seen', 'reply', 'propose', 'park',
-  'join', 'grant-request',
+  'join', 'grant-request', 'retire',
 ] as const;
 export type EventType = (typeof EVENT_TYPES)[number];
 
 /** Event types only an agent writes; the rest of the rules for people live in the action layer. */
 export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
-  'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request',
+  'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request', 'retire',
 ]);
 /** Agent event types a person may also write, from the format given: the person's `board` line
  * creates a board or renames one (`put_board`, api.md 90). */
@@ -91,6 +104,11 @@ interface Keyed { key?: string }
 export const ITEM_REMOVED = 'Removed in ledger v11: the kind decides whether a card asks for an answer. '
   + 'Draw a question, decision or action card to ask the person; every other kind takes a comment, more context or Later.';
 
+/** Why a v12 line (or a sent item) may not name mode `list` (api.md 129); the common schema's
+ * `noList` says the same and a test checks they agree. */
+export const LIST_RENAMED = 'Renamed in ledger v12: `list` is now `column` (cards top to bottom in card order); '
+  + '`row` lays them left to right, and `flow` follows the links.';
+
 /** What the agent says about a node. Its `kind` decides whether it asks for an answer
  * (`NODE_TYPES`, api.md 118). */
 export interface NodeBody {
@@ -116,16 +134,19 @@ export interface ParkBundle {
   sources?: string[];
 }
 
-/** A region as the ledger stores it: `center` is the centre node's number (api.md 18). The
- * View's `Region` names it by node id instead. */
+/** A region as the ledger stores it: `center` is the centre card's identity (api.md 18). The
+ * View's `Region` names it by node id, its board number as text, instead. */
 export type LedgerRegion = Omit<Region, 'center'> & { center?: number };
 
 export interface BoardEvent extends Base, Keyed { type: 'board'; board: string; title: string; summary?: string }
 export interface RegionEvent extends Base, Keyed { type: 'region'; board: string; region: LedgerRegion }
-/** A new version of node `n`. The server assigns `n` (per project, never reused) and `ver`. */
-export interface NodeEvent extends Base, Keyed { type: 'node'; board: string; n: number; ver: number; node: NodeBody }
+/** A new version of card `id`. The server assigns `id` (per project, never reused) and `ver`;
+ * the card's board number follows from the order its board's cards were first drawn (api.md 125). */
+export interface NodeEvent extends Base, Keyed { type: 'node'; board: string; id: number; ver: number; node: NodeBody }
+/** `from` and `to` are card identities. */
 export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: number; to: number; label?: string }
-/** A person's action from the action registry. `ver` = the node version they were looking at;
+/** A person's action from the action registry. `id` = the card it is about; `ver` = the node
+ * version they were looking at;
  * `proposal` = the `seq` of the proposal they are accepting (an `ack` or `drop`, the proposal's
  * own action) or turning down (`reject`, api.md 93); `request` = the `seq` of the
  * `grant-request` a `grant` or `deny` answers; `holder` = the agent a `revoke` removes (from the
@@ -136,22 +157,28 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * one container; `region` = that container for a `move` (api.md 66). With `board` + `region` in
  * place of `n` (and `ver`, `nodes`), a `comment`, `context`, `note-edit` or `note-remove` is about a
  * note on that whole container and a `pin` or `unpin` about its place, `x`/`y` then in board
- * coordinates (api.md 71). */
+ * coordinates (api.md 71). `nodes` are card identities. A `flag` or `unflag` names one card by `id`
+ * and nothing else (api.md 128). */
 export interface ActEvent extends Base {
-  type: 'act'; action: ActionId; n?: number; ver?: number; text?: string; proposal?: number;
+  type: 'act'; action: ActionId; id?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode'];
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
 }
-/** The person has seen version `ver` of node `n` (D-018), or, from v8, has looked at `board` up to
+/** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to
  * its line `head` (api.md 87). */
-export type SeenEvent = Base & { type: 'seen' } & ({ n: number; ver: number } | { board: string; head: number });
+export type SeenEvent = Base & { type: 'seen' } & ({ id: number; ver: number } | { board: string; head: number });
 /** The agent answers an item without redrawing it. `to` = the `seq` of the act it answers. */
-export interface ReplyEvent extends Base, Keyed { type: 'reply'; n: number; text: string; to?: number }
+export interface ReplyEvent extends Base, Keyed { type: 'reply'; id: number; text: string; to?: number }
 /** The agent proposes a decision; only the person can make it (D-018). */
 export interface ProposeEvent extends Base, Keyed {
-  type: 'propose'; n: number; ver: number; action: 'ack' | 'drop'; reason: string; source?: string;
+  type: 'propose'; id: number; ver: number; action: 'ack' | 'drop'; reason: string; source?: string;
 }
-export interface ParkEvent extends Base, Keyed { type: 'park'; n: number; bundle: ParkBundle }
+export interface ParkEvent extends Base, Keyed { type: 'park'; id: number; bundle: ParkBundle }
+/** The agent takes cards off `board` for good (api.md 126): one card, or with `region` a whole
+ * container and every card in it at this line. `cards` = their identities, which the server fills
+ * in, so a reader needs no other fold to know what left. Retired cards keep their versions, notes
+ * and number; they leave the board, its counts and every list. */
+export interface RetireEvent extends Base, Keyed { type: 'retire'; board: string; cards: number[]; region?: string }
 /** An agent joins the project (D-027). Its stamped `agent` is the new agent id. */
 export interface JoinEvent extends Base { type: 'join'; label: string }
 /** An agent asks the person for write access to one container, or with no `region` to the whole
@@ -162,4 +189,7 @@ export interface GrantRequestEvent extends Base, Keyed {
 
 export type LedgerEvent =
   | BoardEvent | RegionEvent | NodeEvent | LinkEvent | ActEvent
-  | SeenEvent | ReplyEvent | ProposeEvent | ParkEvent | JoinEvent | GrantRequestEvent;
+  | SeenEvent | ReplyEvent | ProposeEvent | ParkEvent | JoinEvent | GrantRequestEvent | RetireEvent;
+
+/** Event types whose line names one card in `n` (the file) and `id` (code): ledger-line.ts. */
+export const CARD_EVENTS: ReadonlySet<EventType> = new Set(['node', 'act', 'seen', 'reply', 'propose', 'park']);

@@ -59,8 +59,8 @@ test('show_node: every version, note, reply, proposal and link; linked=true adds
   assert.equal('park' in r, false);
   const withLinked = await h.ok('show_node', { board: 'pricing', n: q, linked: true });
   assert.deepEqual(withLinked.linked.map((x: any) => [x.n, x.status]), [[d, 'later']]);
-  // A node on another board is not on this one.
-  await h.fails('show_node', { board: 'roadmap', n: q }, 404, 'not-found');
+  // A number names a card on the board in the path: pricing's card 1 is not roadmap's (api.md 125).
+  assert.notEqual((await h.ok('show_node', { board: 'roadmap', n: q })).versions[0].node.title, r.versions[0].node.title);
   await h.fails('show_node', { board: 'pricing', n: 999 }, 404, 'not-found');
 });
 
@@ -160,8 +160,8 @@ test('act and mark_seen: one stored line each, 201', async () => {
   const e = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'ack', n: h.seeded.d, ver: 1 } });
   assert.deepEqual([e.type, e.by, e.action, e.seq], ['act', 'person', 'ack', head()]);
   assert.equal(h.last().status, 201);
-  const mode = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'mode', board: 'pricing', region: 'options', mode: 'list' } });
-  assert.equal(mode.mode, 'list');
+  const mode = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'mode', board: 'pricing', region: 'options', mode: 'column' } });
+  assert.equal(mode.mode, 'column');
   const seen = await h.ok('mark_seen', { board: 'pricing', body: { n: h.seeded.q, ver: 2 } });
   assert.deepEqual([seen.type, seen.n, seen.ver, seen.by], ['seen', h.seeded.q, 2, 'person']);
   const node = await h.ok('show_node', { board: 'pricing', n: h.seeded.q });
@@ -189,7 +189,7 @@ test('watch_board: server-sent change events with { seq }', async () => {
   const reader = res.body!.getReader();
   const text = async () => new TextDecoder().decode((await reader.read()).value);
   assert.match(await text(), /^retry: 2000/);
-  const e = h.ledger.append({ type: 'reply', n: h.seeded.q, text: 'Numbers added.' }, AGENT);
+  const e = h.ledger.append({ type: 'reply', n: h.seeded.qId, text: 'Numbers added.' }, AGENT);
   assert.equal(await text(), `event: change\ndata: {"seq":${e.seq}}\n\n`);
   stop.abort();
 });

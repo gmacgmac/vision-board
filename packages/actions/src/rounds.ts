@@ -15,7 +15,7 @@ export function addDrawing(s: LedgerState, board: string, e: LedgerEvent, before
   // Until the board has a card, everything drawn is its first drawing: no Send starts a round.
   const start = roundStart(s, board);
   if (start !== undefined && s.firstCards.has(board) && (s.lastSend.get(board) ?? 0) > start) s.rounds.set(board, e.seq);
-  if (e.type === 'node' && !s.firstDrawn.has(e.n)) s.firstDrawn.set(e.n, e.seq);
+  if (e.type === 'node' && !s.firstDrawn.has(e.id)) s.firstDrawn.set(e.id, e.seq);
 }
 
 /** A drawing line extends the board's last run when it follows that run's end on the board and

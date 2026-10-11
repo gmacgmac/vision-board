@@ -9,6 +9,7 @@ import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
 import type { Meaning } from './action-words.ts';
 import { meaningOf } from './action-words.ts';
 import type { LedgerState } from './fold.ts';
+import { eventOut } from './numbers.ts';
 import { responsesAfter } from './pending.ts';
 import { placeOf, scopeOf } from './references.ts';
 
@@ -17,7 +18,7 @@ function placeIn(s: LedgerState, e: ActEvent): number {
   const { board, container, cards } = scopeOf(s, e);
   if (cards.length) return Math.min(...cards);
   if (!(isContainerAct(e) || e.action === 'mode') || board === undefined) return Infinity;
-  const inside = nodesOf(s, board).filter((x) => placeOf(s, x.n)?.region === container).map((x) => x.n);
+  const inside = nodesOf(s, board).filter((x) => placeOf(s, x.id)?.region === container).map((x) => x.id);
   return inside.length ? Math.min(...inside) : -Infinity;
 }
 
@@ -40,15 +41,16 @@ export function inCardOrder(s: LedgerState, acts: readonly ActEvent[]): ActEvent
   return out;
 }
 
-/** An act as `check_responses` reports it: with `means`, the word ✓ or ✗ says on its card's kind. */
-export type ReportedAct = ActEvent & { means?: Meaning };
+/** An act as `check_responses` reports it, cards by board number (`n`, `nodes`, api.md 125): with
+ * `means`, the word ✓ or ✗ says on its card's kind. */
+export type ReportedAct = Omit<ActEvent, 'id'> & { n?: number; means?: Meaning };
 
 /** What an ✓ or ✗ means on its card's kind now (action-words.ts, panel-send ruling 4): "yes" or "no"
  * on a question, "done" for ✓ on an action; nothing elsewhere. */
 function reported(s: LedgerState, e: ActEvent): ReportedAct {
-  const node = (e.action === 'ack' || e.action === 'drop') && e.n !== undefined ? s.nodes.get(e.n) : undefined;
+  const node = (e.action === 'ack' || e.action === 'drop') && e.id !== undefined ? s.nodes.get(e.id) : undefined;
   const means = node && meaningOf(e.action, latest(node).kind);
-  return means ? { ...e, means } : e;
+  return eventOut(s, means ? { ...e, means } : e) as unknown as ReportedAct;
 }
 
 /** `check_responses` (api.md 31, 120, 121): at most `limit` of the person's acts on `board` after

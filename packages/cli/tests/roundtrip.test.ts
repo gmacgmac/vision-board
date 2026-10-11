@@ -65,14 +65,10 @@ test('show-node: a node and its history, with --text giving the same facts as li
   assert.ok(text.out.split('\n').includes(`n: ${first.n}`), text.out);
 });
 
-test('read-ledger: raw lines after a position, and --limit narrows them', async () => {
-  const all = JSON.parse((await vb('read-ledger', '--limit', '500')).out) as { events: { seq: number }[]; head: number };
-  const two = await vb('read-ledger', '--limit', '2');
-  const some = JSON.parse(two.out) as { events: { seq: number }[]; more?: true };
-  assert.equal(two.code, 0, two.err);
-  assert.equal(some.events.length, 2);
-  assert.equal(some.more, true);
-  assert.deepEqual(some.events.map((e) => e.seq), all.events.slice(0, 2).map((e) => e.seq));
+test('read-ledger is the page\'s, not an agent\'s: vb has no such command (api.md 130)', async () => {
+  const r = await vb('read-ledger', '--limit', '2');
+  assert.equal(r.code, 2);
+  assert.match(r.err, /There is no command "read-ledger"/);
 });
 
 test('a real problem answer: an unknown board exits 1 with the server\'s own words', async () => {

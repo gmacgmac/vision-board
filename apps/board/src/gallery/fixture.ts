@@ -12,6 +12,8 @@ import { versionTime } from '../board/versions.ts';
 import type { CardConditions, CardReply, CardUpdates } from '../../../../packages/ui/src/index.ts';
 import { createParking } from '../board/parking.ts';
 import { unseenCount, unseenSteps } from '../board/updates.ts';
+import type { RetiredCount } from '../board/retired.ts';
+import { retiredCounts } from '../board/retired.ts';
 import ledgerText from './gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */
@@ -45,6 +47,10 @@ export const UPDATES_BOARD = 'updates';
  *  awaiting its handover, one with it written, one with a reply under its note, one with a reply that
  *  names no note. */
 export const PARKING_BOARD = 'parking';
+/** The board the flag and retired samples use (field report batch 2, cardFlag and retiredMarker flags):
+ *  a container of three cards, two flagged by the person (one redrawn since), and a container two
+ *  cards were retired from, one at a time, after the person had answered on the board. */
+export const MARKS_BOARD = 'marks';
 
 export interface Fixture {
   view: View;
@@ -67,6 +73,8 @@ export interface Fixture {
   /** The parking board, with each card's awaiting, handover and replies as the page reads them (parking.ts), and the
    *  replies that answer container notes (the container notes board's "Answered" one). */
   parking: { view: View; state: BoardState; cards: Map<number, CardConditions>; containerReplies: readonly CardReply[] };
+  /** The marks board, with each container's "N cards retired" marker as the page works it out (retired.ts). */
+  marks: { view: View; state: BoardState; retired: ReadonlyMap<string, RetiredCount> };
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -82,7 +90,7 @@ export function loadFixture(): Fixture {
   if (problems.length) throw new Error(`gallery.ledger.jsonl: ${problems.join('; ')}`);
   const ledger = foldLedger(events);
   const parking = createParking({
-    handover: true, replies: true, state: () => ledger, awaiting: () => pageConditions(ledger, PARKING_BOARD).awaiting, readOnly: () => false,
+    handover: true, replies: true, state: () => ledger, board: () => PARKING_BOARD, awaiting: () => pageConditions(ledger, PARKING_BOARD).awaiting, readOnly: () => false,
   });
   parking.refresh();
   const parkingView = boardView(ledger, PARKING_BOARD);
@@ -99,10 +107,11 @@ export function loadFixture(): Fixture {
     updates: {
       view: boardView(ledger, UPDATES_BOARD), state: boardState(ledger, UPDATES_BOARD),
       cards: new Map([...pageConditions(ledger, UPDATES_BOARD).unseen].map((n) =>
-        [n, { count: unseenCount(ledger, n), steps: unseenSteps(ledger, n, versionTime) }])),
+        [n, { count: unseenCount(ledger, UPDATES_BOARD, n), steps: unseenSteps(ledger, UPDATES_BOARD, n, versionTime) }])),
       rows: proposalRows(ledger, pageConditions(ledger, UPDATES_BOARD).proposals, versionTime),
       fresh: pageConditions(ledger, UPDATES_BOARD).fresh,
     },
+    marks: { view: boardView(ledger, MARKS_BOARD), state: boardState(ledger, MARKS_BOARD), retired: retiredCounts(ledger, MARKS_BOARD) },
     parking: {
       view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),
       cards: new Map(parkingView.nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const]))),

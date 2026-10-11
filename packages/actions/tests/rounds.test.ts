@@ -21,8 +21,8 @@ function drawn(): Ledger {
 }
 
 const send = (l: Ledger) => l.act({ action: 'send', board: 'b' });
-const fresh = (s: LedgerState) => conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'item.new').map((c) => c.n);
-const holds = (s: LedgerState, kind: ConditionKind, n: number) => conditionsOf(s, { board: 'b' }).some((c) => c.kind === kind && c.n === n);
+const fresh = (s: LedgerState) => conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'item.new').map((c) => c.id);
+const holds = (s: LedgerState, kind: ConditionKind, n: number) => conditionsOf(s, { board: 'b' }).some((c) => c.kind === kind && c.id === n);
 
 /** `drawn()`, then the person opens the board: their first board seen, at its last line. */
 function opened(): Ledger {
@@ -132,7 +132,7 @@ test('item.new: a freshly opened board has none; a card drawn after the first bo
   assert.deepEqual(fresh(opened().state()), []);
   const l = added();
   const s = l.state();
-  assert.deepEqual(conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'item.new'), [{ kind: 'item.new', board: 'b', n: 3, seq: l.seq }]);
+  assert.deepEqual(conditionsOf(s, { board: 'b' }).filter((c) => c.kind === 'item.new'), [{ kind: 'item.new', board: 'b', id: 3, seq: l.seq }]);
   assert.ok(!conditionsOf(s, { board: 'b', agent: A }).some((c) => c.kind === 'item.new'), 'agents are never told');
   l.node(A, 3, 2, { region: 'r', body: 'Changed.' });
   assert.deepEqual(fresh(l.state()), [3], 'a newer version keeps it new');

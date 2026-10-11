@@ -88,9 +88,10 @@ test('node: the other states are drawn', async ({ page }) => {
 
 test('region: each mode, the count, the empty message and no count; Later and a drop target (3_FE_03)', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
-  // Ten frames, the three long titles (FE_03), then the eight container samples (3_FE_04) and the three container note states (step 4G).
-  await expect(frames).toHaveCount(24);
-  for (const mode of ['grid', 'flow', 'lanes', 'radial', 'list']) {
+  // Eleven frames (a row frame, field report batch 2 ruling 4), the three long titles (FE_03), then the eight container
+  // samples (3_FE_04) and the three container note states (step 4G).
+  await expect(frames).toHaveCount(25);
+  for (const mode of ['grid', 'flow', 'lanes', 'radial', 'column', 'row']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
     await expect(frame.locator('.vb-region-count')).toHaveText('1 of 2 decided');
@@ -121,10 +122,10 @@ test('region: the open samples: the popover wide and compact, and the settings m
   const frame = (id: string) => page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
   const wide = frame('frame-grid').getByRole('tooltip');
   await expect(wide).toBeVisible();
-  await expect(wide.locator('.vb-mtile')).toHaveCount(5);
+  await expect(wide.locator('.vb-mtile')).toHaveCount(6);
   await expect(wide.locator('.vb-mtile[data-current]')).toHaveAttribute('data-tile', 'grid');
   await expect(wide.locator('.vb-mtile[data-hover]')).toHaveAttribute('data-tile', 'flow');
-  await expect(wide.locator('.vb-mtile small')).toHaveCount(5);
+  await expect(wide.locator('.vb-mtile small')).toHaveCount(6);
   await expect(wide.locator('.vb-mtile small').first()).toBeVisible();
   await expect(wide.locator('.vb-mode-line')).toBeHidden();
   await expect(frame('frame-grid').getByRole('radio', { name: 'Flow' })).toHaveAttribute('aria-describedby', 'region-frame-grid-modes');
@@ -157,13 +158,13 @@ test('region: a narrow frame collapses the row to the checked icon, Comment and 
   for (const id of ids) {
     const frame = page.locator(`section[data-pattern="region"] vb-region[data-region="${id}"]`);
     const row = frame.locator('.vb-mode-row');
-    // Collapsed: the checked layout, Comment and the cog only (3), not 7.
+    // Collapsed: the checked layout, Comment and the cog only (3), not 8.
     expect(await visible(row), `${id}: collapsed count`).toBe(3);
     const cut = (sel: string) => frame.locator(sel).evaluate((e) => e.scrollWidth > e.clientWidth);
     expect(await cut('h2'), `${id}: title ellipsized at ${narrowest}px`).toBe(false);
-    // Hovering (or focusing) the row expands it to all five icons plus Comment and the cog, as an overlay.
+    // Hovering (or focusing) the row expands it to all six layout icons plus Comment and the cog, as an overlay.
     await row.hover();
-    expect(await visible(row), `${id}: expanded count`).toBe(7);
+    expect(await visible(row), `${id}: expanded count`).toBe(8);
     await page.mouse.move(0, 0);
     expect(await visible(row), `${id}: collapses again on leave`).toBe(3);
   }
@@ -273,13 +274,13 @@ for (const theme of THEMES) {
   });
 
   // With the agentAccess, wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies,
-  // selectionPill, chatPanel, toolbarMenu and openFolder flags off (on by default), so their sections are not in the
-  // full page (components.md § Feature flags); send-access.spec.ts, wires.spec.ts, versions.spec.ts, key-bubble.spec.ts,
-  // proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts, selection-pill.spec.ts, toolbar.spec.ts and
-  // open-folder.spec.ts have those sections' own screenshots.
+  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag and retiredMarker flags off (on by default), so their
+  // sections are not in the full page (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
+  // versions.spec.ts, key-bubble.spec.ts, proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts,
+  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts and flag-retire.spec.ts have those sections' own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker');
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });

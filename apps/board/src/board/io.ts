@@ -3,7 +3,8 @@
 // (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActEvent, ActionId, ActSize, LedgerEvent, Mode, NoteKind, View } from '../../../../packages/format/src/index.ts';
+import type { ActionId, ActSize, LedgerEvent, LedgerLine, Mode, NoteKind, View } from '../../../../packages/format/src/index.ts';
+import { fromLine } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 import type { ApprovalAnswer, ChatEvent } from '../../../../packages/chat/src/index.ts';
@@ -63,9 +64,13 @@ async function call<T>(run: () => Promise<T>): Promise<T> {
 /** The most lines one `read_ledger` call returns (api.md 31). */
 const PAGE = 500;
 
-/** One page of ledger lines after `after`, oldest first; `more` when there are more. */
-export const readLedger = (after: number) =>
-  call(() => client.call<{ events: LedgerEvent[]; head: number; more?: true }>('read_ledger', { after, limit: PAGE }));
+/** One page of ledger lines after `after`, oldest first, as code reads them (`fromLine`: a card is
+ * its identity, `id`, and an old `list` mode reads `column`; api.md 125, 129); `more` when there
+ * are more. The one place the page turns a line into an event (live.ts, versions.ts read here). */
+export async function readLedger(after: number): Promise<{ events: LedgerEvent[]; head: number; more?: true }> {
+  const page = await call(() => client.call<{ events: LedgerLine[]; head: number; more?: true }>('read_ledger', { after, limit: PAGE }));
+  return { ...page, events: page.events.map(fromLine) };
+}
 
 /** sessionStorage flag: the page has already reloaded once for a fresh person cookie. */
 const RELOADED = 'vb-person-reload';
@@ -93,9 +98,9 @@ const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'no
 const namesBoard = (f: ActFields) =>
   NAMES_BOARD.has(f.action) || (CONTAINER_ACTS.has(f.action) && f.region !== undefined && f.n === undefined);
 
-/** One person action. */
+/** One person action; the stored line, its cards by board number (live.ts `own` reads it back). */
 export const sendAct = (id: string, fields: ActFields) =>
-  call(() => asPerson(() => client.call<ActEvent>('act', {
+  call(() => asPerson(() => client.call<LedgerLine>('act', {
     board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
@@ -104,7 +109,7 @@ export interface BoardFields { title: string; summary?: string }
 
 /** Create board `id`, or rename it when it exists (api.md 90); the stored `board` line. */
 export const putBoard = (id: string, fields: BoardFields) =>
-  call(() => asPerson(() => client.call<LedgerEvent>('put_board', { board: id, body: fields })));
+  call(() => asPerson(() => client.call<LedgerLine>('put_board', { board: id, body: fields })));
 
 /** The client for a call made as the page goes away: its request outlives the page (keepalive). */
 const leavingClient = createClient({ fetch: (url, init) => globalThis.fetch(url, { ...init, keepalive: true }) });
@@ -117,9 +122,9 @@ export function markBoardSeen(board: string, head: number, leaving = false): Pro
   return call(() => asPerson(() => client.call('mark_seen', input)));
 }
 
-/** The person has seen version `ver` of card `n` (D-018): a card seen; the stored line. */
+/** The person has seen version `ver` of card `n` (its board number, D-018): a card seen; the stored line. */
 export const markCardSeen = (board: string, n: number, ver: number) =>
-  call(() => asPerson(() => client.call<LedgerEvent>('mark_seen', { board, body: { n, ver } })));
+  call(() => asPerson(() => client.call<LedgerLine>('mark_seen', { board, body: { n, ver } })));
 
 /** What the project's live stream reports (`watch_project`, api.md 78-80). */
 export interface ProjectEvents {

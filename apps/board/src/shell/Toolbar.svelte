@@ -9,6 +9,8 @@
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
      flag, Chat with the chatPanel flag (ChatSidebar), and with the toolbarMenu flag the "⋯" menu
      (ToolbarMenu) holding Theme, Hide decided and Reply.
+     With the cardFlag flag the counts end in "N flagged" (board/flag-flow.ts) while any card is flagged
+     and no past version shows: a button that focuses the next flagged card, wrapping.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
@@ -18,6 +20,7 @@
   import { shell } from './shell.svelte.ts';
   import { MediaQuery } from 'svelte/reactivity';
   import AppIcon from './AppIcon.svelte';
+  import FlaggedChip from './FlaggedChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
@@ -26,7 +29,7 @@
   import { flagOn } from '../../../../packages/format/src/index.ts';
   import { pageFlags } from '../flags.ts';
 
-  let { onboard, onversion, ongo, oncommand, onhide, onsend, onrevoke }: {
+  let { onboard, onversion, ongo, oncommand, onhide, onsend, onrevoke, onflagged }: {
     onboard: (id: string) => void;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
@@ -37,6 +40,8 @@
     onsend: () => Promise<string | null>;
     /** Remove an agent's access to the open board (BoardAgents). */
     onrevoke: (agent: string) => Promise<void>;
+    /** The "N flagged" chip: the next flagged card (cardFlag flag). */
+    onflagged: () => void;
   } = $props();
 
   const THEMES = ['system', 'light', 'dark'] as const;
@@ -125,6 +130,9 @@
       <span class="vb-chip" data-tone="open" title="Open items"><b>{shell.counts.open}</b> <span class="vb-chip-word">open</span></span>
       <span class="vb-chip" data-tone="decided" title="Decided items"><b>{shell.counts.decided}</b> <span class="vb-chip-word">decided</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
+      {#if shell.flagged && !shell.past}
+        <FlaggedChip id="flagged" count={shell.flagged} onclick={onflagged} />
+      {/if}
     {/if}
   </div>
   <ToolbarEnd {theme} ontheme={nextTheme} {oncommand} {onhide} {onsend} {onrevoke} chat={shell.chatPanel} menu={toolbarMenu}

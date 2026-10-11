@@ -114,20 +114,20 @@ test('reads show where an item is and where the agent has it: list_open and show
 test('validateAct: person only, cards on the board it was sent to, Later for any kind (api.md 118)', () => {
   const l = moves();
   const s = l.state();
-  assert.deepEqual(validateAct(next(l, { n: 1, region: 'q' }), s, 'b'), []);
+  assert.deepEqual(validateAct(next(l, { id: 1, region: 'q' }), s, 'b'), []);
   assert.deepEqual(validateAct(next(l, { nodes: [1, 3], region: LATER_REGION }), s, 'b'), []);
-  assert.deepEqual(validateAct(next(l, { n: 5, region: 'q' }), s, 'b'), [], 'a topic moves between containers');
-  assert.deepEqual(validateAct(next(l, { n: 5, region: LATER_REGION }), s, 'b'), [], 'a topic can be saved for later');
+  assert.deepEqual(validateAct(next(l, { id: 5, region: 'q' }), s, 'b'), [], 'a topic moves between containers');
+  assert.deepEqual(validateAct(next(l, { id: 5, region: LATER_REGION }), s, 'b'), [], 'a topic can be saved for later');
   assert.deepEqual(validateAct(next(l, { nodes: [1, 5], region: LATER_REGION }), s, 'b'), []);
   const refused = (f: Partial<ActEvent>, word: string, board = 'b') => {
     const p = validateAct(next(l, f), s, board);
     assert.ok(p.some((x) => x.includes(word)), `${JSON.stringify(f)}: ${p.join('; ')}`);
   };
-  refused({ n: 1, region: 'x' }, 'unknown "x"');
-  refused({ n: 1, region: 'nowhere' }, 'unknown "nowhere"');
+  refused({ id: 1, region: 'x' }, 'unknown "x"');
+  refused({ id: 1, region: 'nowhere' }, 'unknown "nowhere"');
   refused({ nodes: [1, 4], region: 'r' }, 'one board');
-  refused({ n: 4, region: 'x' }, 'not "b"');
-  const agent = { ...next(l, { n: 1, region: 'q' }), by: 'agent' as const, agent: A };
+  refused({ id: 4, region: 'x' }, 'not "b"');
+  const agent = { ...next(l, { id: 1, region: 'q' }), by: 'agent' as const, agent: A };
   assert.ok(validateAct(agent, s, 'b')[0]!.includes('only the person'));
 });
 
@@ -141,9 +141,10 @@ test('placedView: each card in its container, the built-in Later last, shown onl
   l.act({ action: 'move', n: 3, region: 'r' });
   const v = placedView(boardView(l.state(), 'b'), boardState(l.state(), 'b'));
   assert.deepEqual(v.regions.map((r) => r.id), ['r', 'q', LATER_REGION]);
-  assert.deepEqual(v.nodes.map((n) => [n.id, n.region]), [['1', LATER_REGION], ['2', 'r'], ['3', 'r'], ['5', 'r']]);
+  // Card 5's line is board b's 4th card: card 4 is on board b2 (api.md 125).
+  assert.deepEqual(v.nodes.map((n) => [n.id, n.region]), [['1', LATER_REGION], ['2', 'r'], ['3', 'r'], ['4', 'r']]);
   // Ids and numbers never change on a move (rule 10).
-  assert.deepEqual(v.nodes.map((n) => n.n), [1, 2, 3, 5]);
+  assert.deepEqual(v.nodes.map((n) => n.n), [1, 2, 3, 4]);
 });
 
 test('a board whose older lines drew its own region named later keeps one Later frame', () => {

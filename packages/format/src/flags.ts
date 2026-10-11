@@ -113,6 +113,16 @@ export const FLAGS = {
     default: true,
     description: 'Every card shows its number and the buttons its kind offers: a question, decision or action ✓, ✗, Comment, More context and Later (✓ and ✗ read "Yes" and "No" on a question, ✓ "Done" on an action); every other kind Comment, More context and Later. Comment on a selection takes any cards. Off, only cards that need an answer show a number and buttons (api.md 118-120).',
   },
+  cardFlag: {
+    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 3, assumption A); ?flags=-cardFlag turns it off.
+    default: true,
+    description: 'Every card with a number has a small flag button beside Later (Shift+F on a focused card): the person\'s private mark, kept in the ledger and never sent to an agent (api.md 128). A flagged card shows it on the button, keeps it through a redraw, and a "N flagged" chip in the toolbar steps through the flagged cards. Off while a past version shows. Off, no button, no key and no chip; flags stay in the ledger.',
+  },
+  retiredMarker: {
+    // On by default (maintainer, 2026-10-11, field report batch 2 ruling 1); ?flags=-retiredMarker turns it off.
+    default: true,
+    description: 'A container the agent retired cards from, one at a time, shows a small "N cards retired" marker in its title line; it opens the board version where they last appeared (read-only, with the versionView flag). Retired cards and containers are gone from the board either way. Off, no marker.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

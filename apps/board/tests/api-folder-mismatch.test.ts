@@ -96,12 +96,13 @@ test('a header naming another folder is refused on reads, join and writes; nothi
   for (const [id, input] of [
     ['list_boards', {}],
     ['get_board', { board: 'plans-b' }],
-    ['read_ledger', {}],
     ['join', { body: { label: 'Stray agent' } }],
   ] as const) {
     const refused = await h.fails(id, input, 409, 'wrong-folder', fromA);
     assert.equal(refused.detail, WRONG, id);
   }
+  // `read_ledger` is the page's (api.md 130): an agent is refused before its folder is looked at.
+  await h.fails('read_ledger', {}, 403, 'forbidden', fromA);
   const joinedB = await h.ok('join', { body: { label: 'Folder B agent' } }, { as: h.agent(undefined, b) });
   const refused = await h.fails('write_board', { board: 'plans-b', body: REGION }, 409, 'wrong-folder', h.agent(joinedB.secret, a));
   assert.equal(refused.detail, WRONG, 'the header is checked before the secret');

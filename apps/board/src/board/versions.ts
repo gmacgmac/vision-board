@@ -43,7 +43,7 @@ export interface Versions {
  * note, a size, a layout mode, a place, a move, access. The rest (selection, lasso, view commands,
  * Esc) stay. */
 const ACTING = [
-  'act', 'answer', 'showNote', 'setSize', 'setMode', 'resetRegion', 'regionComment', 'putBack', 'revoke', 'pin', 'pinRegion',
+  'act', 'flag', 'answer', 'showNote', 'setSize', 'setMode', 'resetRegion', 'regionComment', 'putBack', 'revoke', 'pin', 'pinRegion',
   'frameStart', 'frameMove', 'frameEnd', 'regionCommand', 'unpin', 'dragStart', 'dragOver', 'drop',
 ] as const satisfies readonly (keyof StageHandlers)[];
 

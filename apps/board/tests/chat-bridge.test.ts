@@ -24,7 +24,8 @@ const item = (board: string, n: number, title = `Card ${n}`) =>
   agent({ type: 'node', board, n, ver: 1, node: { region: 'r', kind: 'question', title, item: true } });
 
 /** Board b: cards 1-3. Notes: 8 on card 1 (sent by the Send at 9), 10 on card 2, 11 on cards 2 and 3,
- *  12 More context with no words on 3, 13 on the container. Board c: card 4. */
+ *  12 More context with no words on 3, 13 on the container. Board c: its card 1 (the ledger's 4: a
+ *  change chip names it by its board number, D-041). */
 function state() {
   seq = 0;
   const lines = [
@@ -62,7 +63,7 @@ const at = (n: number) => `2026-10-09T10:00:${String(n).padStart(2, '0')}Z`;
 const ev = (n: number, e: object) => ({ at: at(n), session: 's1', seq: n, ...e }) as ChatEvent;
 const change = (n: number, board: string, cards: number[]) => ev(n, { kind: 'tool_activity', call: `c${n}`, tool: 'write_board', state: 'done', board, cards, head: 40 + n });
 const chat: ChatState = applyEvents(EMPTY_CHAT, [
-  ev(1, { kind: 'message_in', text: 'Draw it' }), change(2, 'b', [1, 2]), change(3, 'c', [4]), change(4, 'b', [2]),
+  ev(1, { kind: 'message_in', text: 'Draw it' }), change(2, 'b', [1, 2]), change(3, 'c', [1]), change(4, 'b', [2]),
   ev(5, { kind: 'system', text: 'Done.', turn: 'done' }),
 ]);
 
@@ -70,7 +71,7 @@ test('the stepper\'s link: the write in the chat that last changed the card, on 
   assert.equal(lastChange(chat, 'b', 2)?.key, 'e4');
   assert.equal(lastChange(chat, 'b', 1)?.key, 'e2');
   assert.equal(lastChange(chat, 'b', 4), undefined);
-  assert.equal(lastChange(chat, 'c', 4)?.key, 'e3');
+  assert.equal(lastChange(chat, 'c', 1)?.key, 'e3');
   assert.deepEqual(cardIds(b, [2, 9, 1]), ['2', '1']);
 });
 
@@ -117,17 +118,18 @@ test('chat to board: a change chip selects its cards and zooms; on another board
   const t = bridged();
   t.raise(CHAT_CHANGE_EVENT, { board: 'b', cards: [1, 2], head: 42 });
   assert.deepEqual(t.selection.selected(), ['1', '2']);
-  t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [4], head: 43 });
-  t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [9] });
-  assert.deepEqual(t.log.filter((l) => !l.startsWith('chips')), ['zoom 1 2', 'open c', 'zoom 4', 'toast Those cards are no longer on the board.']);
-  assert.equal(t.bridge.source(4), SOURCE_LABEL);
-  assert.equal(t.bridge.source(1), undefined, 'card 1 is on board b; board c is open');
+  t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [1], head: 43 });
+  t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [4] });
+  assert.deepEqual(t.log.filter((l) => !l.startsWith('chips')), ['zoom 1 2', 'open c', 'zoom 1', 'toast Those cards are no longer on the board.'],
+    'board c has one card, its 1: the ledger\'s 4 is no number there');
+  assert.equal(t.bridge.source(1), SOURCE_LABEL);
+  assert.equal(t.bridge.source(2), undefined, 'card 2 changed on board b; board c is open');
   t.bridge.open('launch');
   assert.equal(t.log.at(-1), 'jump launch', 'a folder chat\'s first board opens once it is held (panel-send ruling 2)');
   t.offBoard();
   t.bridge.open('launch');
   assert.equal(t.log.at(-1), 'jump launch', 'no board side, nothing opens');
-  assert.equal(t.bridge.source(4), undefined, 'no board side, no link');
+  assert.equal(t.bridge.source(1), undefined, 'no board side, no link');
 });
 
 test('the stream: an event at or before the last held, first after a reopen, starts the feed over', () => {

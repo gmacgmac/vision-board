@@ -44,6 +44,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The long-title sample on a narrow frame; an open title tip gets room of its own as well. */
 .g-frames vb-region[data-region='title-wide'] { width: calc(var(--vb-card-w) * 2.4); }
 .g-frames vb-region[data-region='title-narrow'] { width: calc(var(--vb-card-w) * 1.4); }
+.g-frames vb-region[data-region='retired-here'] { width: calc(var(--vb-card-w) * 4); }
 .g-frames vb-region[data-title-tip-open] { margin-bottom: calc(var(--vb-space-6) * 2); }
 /* So does an open note preview (the "Hover" and "Focus" container samples). */
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }

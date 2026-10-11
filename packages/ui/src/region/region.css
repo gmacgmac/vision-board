@@ -45,6 +45,17 @@ vb-region .vb-region-count {
   font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
 }
 vb-region .vb-region-count:empty { display: none; }
+/* "3 cards retired" (retiredMarker flag): the count's muted words, a quiet button that opens the board
+   version where the cards last appeared; with none to open it is aria-disabled and does nothing. */
+vb-region .vb-region-retired {
+  /* Gives way first, before the count: its full words stay in its name and title. */
+  flex: 0 100000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; min-height: 24px; padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm);
+  background: none; font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap; cursor: pointer;
+  text-decoration: underline dotted; text-underline-offset: 3px;
+}
+vb-region .vb-region-retired:hover, vb-region .vb-region-retired:focus-visible { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-region-retired:active { transform: translateY(1px); }
+vb-region .vb-region-retired[aria-disabled='true'] { cursor: default; text-decoration: none; background: none; color: var(--vb-ink-subtle); transform: none; }
 
 /* Holders (agentAccess flag): after the count, in its muted style. A removable holder is a quiet
    button; on hover or keyboard focus it shows "Remove access" in a small bubble just below it,
@@ -86,7 +97,7 @@ vb-region[data-drop] .vb-region-head h2 { color: var(--vb-accent-text); }
 vb-region[data-fixed] .vb-mode-row { gap: 0; }
 
 
-/* The mode row (README pick 1, mockup 05 .mode-row / .mseg): five layout icons, a divider and the
+/* The mode row (README pick 1, mockup 05 .mode-row / .mseg): six layout icons, a divider and the
    settings cog in one box on the top line's right. The ring in the canvas colour is its gap in the
    border. The active icon takes the same neutral mix of --region that 05 takes of --gc. */
 vb-region .vb-mode-row {
@@ -96,7 +107,7 @@ vb-region .vb-mode-row {
 }
 /* Collapsed (under 440px of frame, where the full row would leave under ~200px for the label
    side): only the checked icon, Comment and the cog show. Hovering or focusing the row expands it to all
-   five icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
+   six layout icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
    it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
    never reflows the frame. */
 @container (max-width: 440px) {
@@ -140,13 +151,13 @@ vb-region[data-open] { z-index: 4; pointer-events: none; }
    popover of the top line (this, the settings menu, the note preview, the title tip) is z 4, above
    the collapsed row, which is z 3 while it is expanded. */
 vb-region .vb-mode-pop {
-  display: none; position: absolute; z-index: 4; top: calc(100% + 3px); right: 0; width: 600px;
+  display: none; position: absolute; z-index: 4; top: calc(100% + 3px); right: 0; width: 680px;
   gap: var(--vb-space-2); padding: 10px; border-radius: var(--vb-radius-lg); cursor: default;
   border: 1px solid var(--vb-line); background: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
 }
 vb-region .vb-mode-pop::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
 vb-region[data-open='modes'] .vb-mode-pop { display: grid; }
-vb-region .vb-mode-tiles { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+vb-region .vb-mode-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 vb-region .vb-mtile {
   display: grid; justify-items: center; align-content: start; gap: 6px; padding: 12px 6px 10px; text-align: center;
   border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
@@ -163,10 +174,11 @@ vb-region .vb-mode-foot {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--vb-space-1) var(--vb-space-3);
   padding: 0 var(--vb-space-1); font-size: var(--vb-text-xs); color: var(--vb-ink-subtle);
 }
-/* Under 600px of frame the five tiles drop to icon and name, and the highlighted layout's one-liner
-   shows once, on the line under them (2d ruling 3). */
+/* Under 600px of frame the six tiles drop to icon and name, in two rows of three, and the
+   highlighted layout's one-liner shows once, on the line under them (2d ruling 3). */
 @container (max-width: 600px) {
   vb-region .vb-mode-pop { width: max-content; max-width: calc(var(--vb-card-w-s) + var(--vb-space-6) * 2); }
+  vb-region .vb-mode-tiles { grid-template-columns: repeat(3, 1fr); }
   vb-region .vb-mtile { min-width: calc(var(--vb-space-6) + var(--vb-space-5)); padding: var(--vb-space-2) var(--vb-space-1); }
   vb-region .vb-mtile small { display: none; }
   vb-region .vb-mode-line { display: block; }

@@ -23,7 +23,7 @@ for (const name of ['login-layout', 'roadmap']) {
     const first = v.nodes[0]!;
     const pins = new Map([[first.id, { x: 30, y: 40 }]]);
     const hidden = new Set([v.nodes[1]!.id]);
-    const opts = { pins, hidden, modes: new Map([[v.regions[0]!.id, 'list' as const]]) };
+    const opts = { pins, hidden, modes: new Map([[v.regions[0]!.id, 'column' as const]]) };
     const pieces = v.regions.map((r) => {
       const nodes = v.nodes.filter((n) => n.region === r.id && !hidden.has(n.id));
       const ids = new Set(nodes.map((n) => n.id));

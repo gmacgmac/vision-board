@@ -42,7 +42,7 @@ function ledger() {
 
 const make = (s: ReturnType<typeof ledger>, f: { handover?: boolean; replies?: boolean; readOnly?: boolean } = {}) => {
   const p = createParking({
-    handover: f.handover ?? true, replies: f.replies ?? true, state: () => s,
+    handover: f.handover ?? true, replies: f.replies ?? true, state: () => s, board: () => 'b',
     awaiting: () => pageConditions(s, 'b').awaiting, readOnly: () => f.readOnly ?? false,
   });
   p.refresh();

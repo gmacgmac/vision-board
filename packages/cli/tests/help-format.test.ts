@@ -14,7 +14,7 @@ test('a command\'s help is written from the table: usage, each input with its ki
   const text = commandHelp(show);
   assert.match(text, /^vb show-node: Read one node with its history/);
   assert.match(text, /Usage: vb show-node --board <string> --n <integer> \[--linked\] \[--text\]/);
-  assert.match(text, /--n <integer>\s+required, path\. The node number\./);
+  assert.match(text, /--n <integer>\s+required, path\. The card's number on this board \(1, 2, 3\.\.\. in the order drawn\)\./);
   assert.match(text, /--linked\s+optional, query\./);
   assert.ok(!text.includes('--json-body <file|->]'), 'a GET takes no body');
   for (const c of COMMANDS) for (const i of c.inputs) assert.ok(commandHelp(c).includes(`--${i.name}`), `${c.name} --${i.name}`);
