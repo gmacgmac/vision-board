@@ -1,6 +1,6 @@
 ---
 category: board-app
-status: planned
+status: in-progress
 created: 2026-10-12
 tracker: cortex-tasks/tracker.md#N39
 ---
@@ -8,8 +8,7 @@ tracker: cortex-tasks/tracker.md#N39
 # Archive a board: gone for agents, hidden from the picker, restorable
 
 > **From**: maintainer, 2026-10-12 (chat 608-616: "a quicker version … archive it, and then it
-> shouldn't be available within the MCP or to a chat agent") · **Model**: Opus 5.5 · **Needs**: the
-> maintainer's go to build
+> shouldn't be available within the MCP or to a chat agent") · **Model**: Opus 5.5 · **Go**: given (2026-10-12, "Proceed")
 
 ## Problem
 
@@ -35,6 +34,22 @@ ledger is append-only and nothing may remove its lines (D-017, D-041).
    picker.") with Cancel and Archive.
 6. **Restore:** the board picker ends with "Archived (N)…" (only when N > 0), opening a short list of
    archived boards (name, last updated) each with Restore; restoring opens it.
+
+## Robustness (orchestrator's adversarial review, chat 620; part of the rulings)
+
+7. **One visibility check.** "Is this board visible to agents" is one function in the action layer
+   that every agent read and write goes through; no route checks on its own.
+8. **A test that walks the contract.** For an archived board, iterate every agent operation listed in
+   `packages/format/schema/openapi.json` (not a hand-written list) and assert each answers exactly as
+   for an unknown board (status, problem type, words), so a future operation is covered or fails.
+   Also: `list_boards`, `join`, `check_responses`/`list_open` across boards, the MCP tool list and
+   instructions, and the panel's prompt never name it.
+9. **The id stays taken, without saying so.** An agent writing a `board` item (or any item) with an
+   archived board's id is refused with a neutral "That board id isn't available; choose another id."
+   that reveals nothing about the archived board; never a write into it. Tested.
+10. **Which board the agent works on.** One skill line (`skills/vision-board/SKILL.md`): when the
+    person says "the board" and more than one board could be meant, ask which in one line; in the
+    chat panel the panel's own board always wins.
 
 ## Steps
 
