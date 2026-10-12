@@ -517,3 +517,32 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   rule for no gain); project numbers taught to the agent (the field report's complaint stands);
   writing `id` on new lines (the file would hold two names for one thing for ever).
 - **Task**: [[cortex-tasks/board/2026-10-11_board-format_field-report-batch-2/PLAN.md]]
+
+## D-042 Archived boards are hidden from agents as if they never existed
+- **Date**: 2026-10-12 · **Status**: Accepted · **From**: maintainer (chat 608-621, 635, 640A; tracker N39)
+- **Decision**: The person can archive a board and restore it (person acts in the ledger; agents can
+  do neither). An archived board is gone for agents: `list_boards` leaves it out, and every agent
+  operation naming it answers exactly as for a board that never existed. Its id stays taken (a write
+  reusing it is refused with words that reveal nothing). It is hidden from the person's picker and
+  never opened by default; "Archived (N)…" restores it. Nothing is removed from the ledger. One
+  visibility check in the action layer decides, and a test walks every agent operation in the
+  OpenAPI contract, so a new operation is covered or fails.
+- **Why**: Similarly named boards confused agents told to "update the board"; the person needs a way
+  to take a board out of play without breaking the append-only ledger (D-017, D-041).
+- **Alternative rejected**: Deleting from the ledger (breaks D-041 and loses history); renaming (both
+  boards stay visible to agents).
+- **Task**: [[cortex-tasks/board/2026-10-12_board-app_archive-board.md]]
+
+## D-043 A locked board is read-only for everyone until the person unlocks it
+- **Date**: 2026-10-12 · **Status**: Accepted · **From**: maintainer (chat 622-626, 640B; tracker N40)
+- **Decision**: The person can lock and unlock a board (person acts; agents can do neither). While
+  locked, the board stays visible and readable (`locked: true` on reads), and nothing changes it:
+  every agent write answers 423 `locked` ("This board is locked; ask the person to unlock it."), and
+  the person's own changes pause, except the private flag. Archiving implies lock; restoring returns
+  the lock state the board had. One write check in the action layer decides every line, and a test
+  walks every agent write operation in the OpenAPI contract.
+- **Why**: A settled board (a decided plan kept for reference) must not be changed by any agent,
+  including the one that created it; grants alone can't stop the creator.
+- **Alternative rejected**: Locking agents only (the person could leave a note the agent then owes
+  but can't answer); relying on grants (the creating agent keeps writing).
+- **Task**: [[cortex-tasks/board/2026-10-12_board-app_lock-board.md]]
