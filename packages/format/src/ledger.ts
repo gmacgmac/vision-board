@@ -9,7 +9,7 @@
 import type { Kind, Region, Widths } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 14;
+export const LEDGER_FORMAT = 15;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -22,26 +22,28 @@ export const LEDGER_FORMAT = 14;
  * adds `retire` and the person's `flag` and `unflag`, renames mode `list` to `column` (older lines
  * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). v13 adds a
  * container's card `widths`, on a region and as the person's `widths` act (api.md 132). v14 adds the
- * person's `archive` and `restore` of a whole board (api.md 135). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] as const;
+ * person's `archive` and `restore` of a whole board (api.md 135). v15 adds the person's `lock` and
+ * `unlock` of a whole board (api.md 138). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
   'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'widths',
-  'archive', 'restore',
+  'archive', 'restore', 'lock', 'unlock',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
 /** The person's marks on one card: the flag (api.md 128). */
 export const CARD_MARKS: ReadonlySet<ActionId> = new Set(['flag', 'unflag']);
 /** The person's marks on a whole board: archive hides it from every agent, restore brings it back
- * (api.md 135). Each names its `board` and nothing else. */
-export const BOARD_MARKS: ReadonlySet<ActionId> = new Set(['archive', 'restore']);
-/** The person's own marks (api.md 128, 135): no agent ever reads them. Every agent read, the Send
- * message and Send's "something new" test leave these acts out, and they move nothing an agent
- * reads (no head, no seen, no condition). */
+ * (api.md 135); lock makes it read-only for everyone, unlock ends that (api.md 138). Each names its
+ * `board` and nothing else. */
+export const BOARD_MARKS: ReadonlySet<ActionId> = new Set(['archive', 'restore', 'lock', 'unlock']);
+/** The person's own marks (api.md 128, 135, 138): no agent ever reads their lines. Every agent read,
+ * the Send message and Send's "something new" test leave these acts out, and they move nothing an
+ * agent reads (no head, no seen, no condition); a lock shows to agents only as a board's `locked`. */
 export const PRIVATE_ACTIONS: ReadonlySet<ActionId> = new Set([...CARD_MARKS, ...BOARD_MARKS]);
 /** Whether an act is the person's private mark. */
 export const isPrivateAct = (e: { type: string; action?: string }): boolean =>
@@ -167,7 +169,7 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * note on that whole container and a `pin` or `unpin` about its place, `x`/`y` then in board
  * coordinates (api.md 71). `nodes` are card identities. A `flag` or `unflag` names one card by `id`
  * and nothing else (api.md 128). A `widths` act sets a container's card widths (`board`, `region`,
- * `widths`), like `mode` (api.md 132). An `archive` or `restore` names its `board` and nothing else
+ * `widths`), like `mode` (api.md 132). An `archive`, `restore`, `lock` or `unlock` names its `board` and nothing else
  * (api.md 135). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; id?: number; ver?: number; text?: string; proposal?: number;

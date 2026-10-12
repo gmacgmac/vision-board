@@ -274,13 +274,13 @@ for (const theme of THEMES) {
   });
 
   // With the agentAccess, wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies,
-  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl and archiveBoard flags off (on by default), so their
+  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl, archiveBoard and lockBoard flags off (on by default), so their
   // sections are not in the full page (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
   // versions.spec.ts, key-bubble.spec.ts, proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts,
-  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts and picker-archive.spec.ts have those sections' own screenshots.
+  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts, picker-archive.spec.ts and lock-board.spec.ts have those sections' own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard');
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });

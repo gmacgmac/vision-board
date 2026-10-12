@@ -78,6 +78,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // Archiving takes the board away from the agents, so the page asks first; restoring does not.
   archive: { id: 'archive', label: 'Archive board', ...decision, onItem: false },
   restore: { id: 'restore', label: 'Restore', ...person, onItem: false },
+  // Ledger v15 (api.md 138): the person makes a whole board read-only for everyone, and ends it.
+  // Nothing is lost either way, so the page asks neither time.
+  lock: { id: 'lock', label: 'Lock board', ...person, onItem: false },
+  unlock: { id: 'unlock', label: 'Unlock board', ...person, onItem: false },
 };
 
 /** The review buttons an item offers. */

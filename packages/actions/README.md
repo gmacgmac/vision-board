@@ -15,7 +15,9 @@ call the same actions, and each one is recorded in the project ledger as an `act
   (`retire.ts`, api.md 126-127: `retireCards`, `retireProblem`), the person's private flags
   (`card-flags.ts`, api.md 128: `flagsOn`; no agent read looks at them), archived boards
   (`archive.ts`, api.md 135-137: `boardVisibility`, the one check of whether agents see a board,
-  `visibleToAgents`, `archivedProblem`, `UNAVAILABLE`, `archivedBoards`), the
+  `visibleToAgents`, `archivedProblem`, `UNAVAILABLE`, `archivedBoards`), locked boards (`lock.ts`,
+  api.md 138-140: `boardLocked`, which counts an archived board, `writeProblem`, the one "may this
+  line be written" check, `passesLock`, `lockedProblem`, `LOCKED`, `LOCKED_PERSON`), the
   references table (`references.ts`, D-033: `REFERENCES`, one row per kind in `REFERENCE_KINDS`
   saying what it belongs to; `scopeOf`, the board, container and cards any ledger line touches;
   `placeOf`, the container a card is in now; `eventBoard`, behind each board's head in

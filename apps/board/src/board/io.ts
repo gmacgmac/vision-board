@@ -4,7 +4,7 @@
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
 import type { ActionId, ActSize, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
-import { fromLine } from '../../../../packages/format/src/index.ts';
+import { BOARD_MARKS, fromLine } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 import type { ApprovalAnswer, ChatEvent } from '../../../../packages/chat/src/index.ts';
@@ -93,8 +93,9 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Acts the schema asks to name their board (api.md 16, 135): it is always the board they are sent to. */
-const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', 'archive', 'restore']);
+/** Acts the schema asks to name their board (api.md 16, 135, 138): it is always the board they are sent
+ * to. Every board mark does (archive, restore, lock, unlock). */
+const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', ...BOARD_MARKS]);
 /** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
 const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'note-edit', 'note-remove', 'pin', 'unpin']);
 const namesBoard = (f: ActFields) =>

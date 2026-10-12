@@ -19,6 +19,9 @@ import type { Selection } from './selection.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from './viewport.ts';
 
+/** The selection's commands that change the board, which a locked board shows disabled. */
+const ACTING_COMMANDS: readonly CommandId[] = SELECTION_COMMANDS.filter((id) => COMMANDS[id].acts);
+
 export interface SelectionFlowDeps {
   stage: HTMLElement;
   vp: Viewport;
@@ -38,6 +41,8 @@ export interface SelectionFlowDeps {
   resetPlaces(ids: readonly string[]): void;
   /** A past version shows (versions.ts): the commands that act are off. */
   readOnly(): boolean;
+  /** Why the board can't change now (a locked board, lock-flow.ts): the commands that act show, disabled. */
+  paused?(): string | null;
   /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
   pill: boolean;
 }
@@ -107,7 +112,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const sel = d.selection.selected();
     const world = area ?? worldBoxOf(d.layout(), sel);
     if (d.notes.open || !world) return void (bar.hidden = true);
-    const off = sel.some(d.pinned) ? [] : ['reset-places' as const];
+    const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() ? ACTING_COMMANDS : [])];
     const compact = pill ? { open: pill.open } : undefined;
     bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
       : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off), compact));
@@ -138,7 +143,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
 
   function command(id: CommandId, key?: string): boolean {
     const layout = d.layout();
-    if (COMMANDS[id].acts && d.readOnly()) return false;
+    if (COMMANDS[id].acts && (d.readOnly() || d.paused?.())) return false;
     switch (id) {
       case 'zoom-in': d.vp.zoomCentre(1.2); return true;
       case 'zoom-out': d.vp.zoomCentre(1 / 1.2); return true;

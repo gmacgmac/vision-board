@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓, ✗, a comment, more context, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -99,6 +99,9 @@ their descriptions hold the exact fields.
   resend the same items with the same keys.
 - **A call fails `wrong-folder`**: the board has another project folder open. Stop, tell the
   person in one line what it says, and do not `join` or write until they open your folder again.
+- **A write fails `locked`** (or the board reads `locked: true`): the person locked it, and nobody
+  changes it until they unlock it. Tell them in one line ("Pricing is locked; unlock it and I'll
+  carry on.") and stop: no retry, no other board, no grant request. Reading it is fine.
 - **Waiting for the answer**: in your own chat, `check_responses` with `wait` until a `grant` or
   `deny` for your request arrives. In the panel, say in one line what you asked for and end the
   turn. After a `deny`, don't ask for the same thing again unless the person tells you to.

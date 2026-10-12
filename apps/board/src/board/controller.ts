@@ -4,7 +4,7 @@
 // attention.ts (marks, badges, toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
 // access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes), selection.ts and
 // selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes, card widths, sizes), moves.ts (containers,
-// Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), finder.ts (the
+// Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), lock-flow.ts (a locked board), finder.ts (the
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
 // person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts (the
@@ -30,7 +30,8 @@ import { createSelection } from './selection.ts';
 import { createSelectionFlow } from './selection-flow.ts';
 import { createMoves } from './moves.ts';
 import { createContainerDrag } from './container-drag.ts';
-import { createSender } from './sender.ts';
+import { createSender, READ_ONLY } from './sender.ts';
+import { createLockFlow } from './lock-flow.ts';
 import { type BoardEdit, createBoardEdit } from './board-edit.ts';
 import { createVersions } from './versions.ts';
 import { createProposalFlow, type ProposalFlow } from './proposal-flow.ts';
@@ -64,7 +65,7 @@ export interface Board {
   proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
   /** Send to agent; null when recorded, else the problem's detail. */
   send(): Promise<string | null>;
-  /** New board, Rename board, Archive board and Restore (board-edit.ts). */
+  /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
   boardEdit: BoardEdit;
   /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
   nextFlagged(): void;
@@ -117,6 +118,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     world, on: (shell.versionView = on('versionView')), live: () => live.state, board: () => S.id, fail,
     redraw: () => { redraw(true); if (!versions.state) attention.batch([], true); },
   });
+  const lock = createLockFlow({ world, state: () => live.state, board: () => S.id, say: (why) => fail(new ApiError(why)) }); // a locked board (N40)
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
@@ -128,7 +130,6 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   selection.onChange((c) => { drawing.restate(c.changed); shell.selection = c.text; flow.dismissArea(); flow.place(); });
 
   // ---- messages and drawing ------------------------------------------------------------------
-
   function fail(err: unknown) {
     const e = err instanceof ApiError ? err : new ApiError(String(err));
     toast([e.message, ...e.problems].join(' · '), 'error');
@@ -141,7 +142,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
     boards.listed();
-    versions.listed();
+    versions.listed(); lock.apply();
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
@@ -177,10 +178,10 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const renderCounts = () => showCounts(S.data!, view(), drawing.layout, { finder, access }, flags.ids().length);
 
   // ---- actions -------------------------------------------------------------------------------
-
   /** Every act goes through here: the server validates it, its problems show in the error toast,
    * and the stored line comes back and is applied in place (sender.ts). */
-  const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail, readOnly: () => !!versions.state });
+  const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
+    refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
   const { attempt, record } = sender;
   const proposals = createProposalFlow({
     on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
@@ -196,7 +197,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id),
     ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
-    discard: () => askConfirm(...DISCARD_ASK),
+    discard: () => askConfirm(...DISCARD_ASK), paused: lock.paused,
   });
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
   const regionNotes = createRegionNotes({
@@ -212,7 +213,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
-    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state,
+    item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
   });
   vp.onApply = () => { notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
 
@@ -238,9 +239,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const toggleHide = () => { shell.hide = !shell.hide; if (S.data) redraw(); };
 
   // ---- wiring --------------------------------------------------------------------------------
-
-  // While a past version shows, the handlers that act do nothing (versions.ts `guard`).
-  const unbind = bindStage(stage, vp, versions.guard({
+  // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
+  const unbind = bindStage(stage, vp, versions.guard(lock.guard({
     act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq) => void showVersion(seq),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq) => notes.show(id, seq), setSize: places.setSize,
@@ -266,13 +266,12 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
       shell.replyOpen = false;
       flow.dismissArea(); selection.clear();
     },
-  }), () => { if (drawing.layout) vp.resized(); });
+  })), () => { if (drawing.layout) vp.resized(); });
 
   // ---- boards --------------------------------------------------------------------------------
-
   /** Boot, and switching boards (boards.ts). */
   const boards = createBoards({
-    live, vp, selection, id: () => S.id, setId: (id) => { const from = S.id; S.id = id; versions.reset(); attention.switched(from); }, redraw, layout: () => drawing.layout, fail,
+    live, vp, selection, id: () => S.id, setId: (id) => { const from = S.id; S.id = id; versions.reset(); lock.apply(); attention.switched(from); }, redraw, layout: () => drawing.layout, fail,
     keepView: flagOn('keepView', pageFlags()), archiving: on('archiveBoard'), // the view kept across a reload (FE_02 ruling 5); the Archived list (N39)
   });
 
@@ -293,7 +292,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     access: accessFlow,
     proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
-    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: askConfirm }),
+    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: askConfirm, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, unchat ?? (() => {})].forEach((f) => f()),
   };

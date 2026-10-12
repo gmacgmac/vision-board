@@ -15,7 +15,7 @@ import {
   LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger,
 } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { applyEvent, archivedProblem, cardName, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
+import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '../../../packages/actions/src/index.ts';
 import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
@@ -31,8 +31,8 @@ export interface Ledger {
   /** Problems found when the file was opened, as "line N: ...". */
   readonly problems: readonly string[];
   /** Stamp, check and append one line (cards by identity, as the file holds them). Throws an
-   * `invalid` problem with every error, writing nothing. `board`: the board the route names; an act
-   * must stay on it. Returns the event as code reads it (`fromLine`). */
+   * `invalid` problem with every error (`locked` on a locked board), writing nothing. `board`: the
+   * board the route names; an act must stay on it. Returns the event as code reads it (`fromLine`). */
   append(input: unknown, caller: Caller, opts?: { board?: string }): LedgerEvent;
   /** The folded state, kept current on every append. */
   state(): LedgerState;
@@ -89,9 +89,10 @@ const wrongCaller = (e: Rec): PointerError => ({
     : `only an agent writes a ${String(e.type)} event`,
 });
 
-/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then a
- * line on an archived board (an agent's is never written there, api.md 136), then an act's action
- * rules, so the person reads their plain words first (api.md 93), then the context. */
+/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then the
+ * one "may this line be written" check (`writeProblem`): a line on an archived board (an agent's is
+ * never written there, api.md 136), or on a locked one, which throws `locked` (423, api.md 139), then
+ * an act's action rules, so the person reads their plain words first (api.md 93), then the context. */
 function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
   if (!isRec(input)) return [{ pointer: '', detail: 'the event must be an object' }];
   const hand = (list: string[]) => list.map((t) => pointerError(t, e));
@@ -102,8 +103,9 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
   const shape = eventProblems(e);
   if (shape.length) return hand(shape);
   const event = fromLine(e);
-  const archived = archivedProblem(s, event);
-  if (archived) return hand([archived]);
+  const refused = writeProblem(s, event);
+  if (refused?.code === 'locked') throw problem('locked', refused.detail);
+  if (refused) return hand([refused.detail]);
   const rules = event.type === 'act' ? validateAct(event as ActEvent, s, board) : [];
   return hand(rules.length ? rules : contextProblems(ix, event, cardName(s)));
 }

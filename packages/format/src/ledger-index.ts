@@ -141,7 +141,7 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
   return p;
 }
 
-/** The container rules of an `act`: mode, widths, move, grant, deny, revoke, send, archive and restore (api.md 16, 23, 66, 132, 135),
+/** The container rules of an `act`: mode, widths, move, grant, deny, revoke, send and the board marks (api.md 16, 23, 66, 132, 135, 138),
  * and a note on or a place for a whole container (api.md 72). */
 function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
   const region = () => { if (!ix.boards.get(e.board!)?.has(e.region!)) p.push(`region: unknown "${e.region}"`); };
@@ -164,8 +164,8 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
         ? `region: container "${e.region}" was retired` : `region: unknown "${e.region}" on board "${board}"`);
       break;
     }
-    // Send, and the person archiving or restoring a board (api.md 135), name a board that exists.
-    case 'send': case 'archive': case 'restore': if (!ix.boards.has(e.board!)) p.push(`board: unknown "${e.board}"`); break;
+    // Send, and the person's marks on a whole board (api.md 135, 138), name a board that exists.
+    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock': if (!ix.boards.has(e.board!)) p.push(`board: unknown "${e.board}"`); break;
     case 'grant': case 'deny': {
       const r = ix.requests.get(e.request!);
       if (!r) p.push(`request: no grant request ${e.request}`);

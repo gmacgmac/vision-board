@@ -4,7 +4,8 @@
      on the first folder in it (else on Create); the recent list is a Shift+Tab away. Open or Create sends `open_project` and, once the server
      has switched, reloads the page onto the new folder without its board hash (board/folder.ts); a
      refusal stays in the dialog. Native <dialog>: Esc, Cancel or a click on the backdrop closes it
-     (not while Open is on its way), and focus goes back to "⋯". The view is FolderPicker.svelte. -->
+     (not while Open is on its way), and focus goes back to "⋯"; its close event, queued after it shut,
+     is taken only while it is still shut, as in ArchivedDialog.svelte. The view is FolderPicker.svelte. -->
 <script lang="ts">
   import { tick } from 'svelte';
   import { shell } from './shell.svelte.ts';
@@ -82,7 +83,7 @@
 
 <dialog id={UID} class="vb-dialog vb-folder-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy) e.preventDefault(); }}
-  onclose={() => { shell.folderDialog = false; }}>
+  onclose={() => { if (!dlg.open) shell.folderDialog = false; }}>
   <FolderPicker uid={UID} {listing} current={shell.folder?.path ?? null} {loading} {problem} {busy}
     onchoose={(p) => void choose(p)} onaccept={() => void accept()} oncancel={close} />
 </dialog>

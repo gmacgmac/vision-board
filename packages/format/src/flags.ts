@@ -143,6 +143,11 @@ export const FLAGS = {
     default: true,
     description: 'The "⋯" menu has Archive board…, which asks first, then hides the open board from every agent and from the picker and opens the next board (api.md 135-137); the board picker ends with Archived (N)…, a list of archived boards each with Restore, which brings the board back and opens it. Off, neither shows; an archived board stays hidden.',
   },
+  lockBoard: {
+    // On by default (maintainer, 2026-10-12, N40 rulings 1-7); ?flags=-lockBoard turns it off.
+    default: true,
+    description: 'The "⋯" menu has Lock board and, on a locked board, Unlock board (api.md 138-140): a locked board is read-only for everyone until the person unlocks it. Off, neither row shows; a board locked before stays locked (its controls paused, "Locked" beside its name), and the server refuses every change to it.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

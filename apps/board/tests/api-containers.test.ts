@@ -4,6 +4,7 @@
 // response is checked against the spec (api.md 54).
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 
@@ -16,7 +17,7 @@ const on = { board: 'roadmap', region: 'review' };
 
 test('a container note: show_container, get_board and check_responses carry its latest words', async () => {
   const stored = await h.ok('act', act({ action: 'comment', ...on, text: 'Is review its own stage?' }));
-  assert.deepEqual([stored.v, stored.action, stored.region, stored.n], [14, 'comment', 'review', undefined]);
+  assert.deepEqual([stored.v, stored.action, stored.region, stored.n], [LEDGER_FORMAT, 'comment', 'review', undefined]);
   await h.ok('act', act({ action: 'note-edit', ...on, note: stored.seq, text: 'Should review be its own stage?' }));
   const box = await h.ok('show_container', { board: 'roadmap', region: 'review' });
   assert.deepEqual(box.notes.map((x: any) => [x.seq, x.text, x.sent]), [[stored.seq, 'Should review be its own stage?', undefined]]);

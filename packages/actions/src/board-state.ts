@@ -1,10 +1,11 @@
 // One board as the page reads it beside `boardView` (packages/format): the person's responses,
-// pins, sizes, moves, modes, card widths, container places and notes, and the person's flags, keyed like the
+// pins, sizes, moves, modes, card widths, container places and notes, the person's flags and the lock, keyed like the
 // View, by node id = the card's board number as text (api.md 125). Cards retired from the board
 // are left out (api.md 127). `get_board` sends all of it but the flags (api.md 128). Pure.
 import type { Mode, NodeSize, View, Widths } from '../../format/src/index.ts';
 import { containerKey, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import { flagsOn } from './card-flags.ts';
+import { boardLocked } from './lock.ts';
 import type { Place } from './containers.ts';
 import { containerState } from './containers.ts';
 import type { LedgerState } from './fold.ts';
@@ -33,6 +34,9 @@ export interface BoardState {
   regionNotes: Map<string, ItemNote[]>;
   /** The cards the person flagged, by node id, in card order: the page's only (api.md 128). */
   flags: Set<string>;
+  /** The board is locked (api.md 138): read-only for everyone, so the page pauses every control that
+   * changes it (the flag excepted). Left out while it is not; `get_board` says it at its top. */
+  locked?: true;
 }
 
 /** The person's responses on one board, keyed like `boardView` (`String(n)`). */
@@ -41,6 +45,7 @@ export function boardState(s: LedgerState, board: string): BoardState {
   const out: BoardState = {
     items: new Map(), pins: new Map(), modes: here(s.modes.get(board)), widths: here(s.widths.get(board)), sizes: new Map(), moves: new Map(),
     ...containerState(s, board), flags: new Set(flagsOn(s, board).map((id) => String(numberOf(s, id)))),
+    ...(boardLocked(s, board) && { locked: true as const }),
   };
   for (const { id } of nodesOf(s, board)) {
     const key = String(numberOf(s, id));

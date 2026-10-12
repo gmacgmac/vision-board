@@ -13,3 +13,6 @@ element `<vb-node>` draws every card on the board and `<vb-region>` every contai
   `VbNodeElement`, the Markdown renderer (`renderMarkdown`, `MarkdownOptions`, `MARKDOWN_MAX`;
   D-023, `src/markdown/`), and `defineBoardElements()`, which the page calls once at start-up.
   Pattern CSS (`src/node/node.css`, `src/markdown/markdown.css`) is imported by the page.
+- **Shared state helpers**: `src/tip/` (the hover tip) and `src/paused/` (a locked board's controls
+  paused in place, aria-disabled, for the node and region elements; N40, `paused.css` imported by
+  the page).

@@ -3,8 +3,9 @@
 // on board "ghost" before it exists and again once the person has archived it, with no credentials
 // and with the secret of the agent that made it, and each answer must be the same (status, problem
 // type, title, words, pointers). An operation that names no board must never mention it. A new
-// agent operation needs its inputs below, or this test fails. Then: restore brings every answer
-// back as it was, and a check_responses waiting on the board when it is archived ends not found.
+// agent operation needs its inputs in contract-walk.ts, or this test fails. Then: restore brings
+// every answer back as it was, and a check_responses waiting on the board when it is archived ends
+// not found.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { OperationId } from '../../../packages/format/src/index.ts';
@@ -13,7 +14,7 @@ import { ApiProblem } from '../../../packages/client/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
-import { checkAnswer, deref, ops } from './openapi-ajv.ts';
+import { agentOps, answer as call } from './contract-walk.ts';
 
 const GHOST = 'ghost';
 const TITLE = 'Ghost board';
@@ -25,40 +26,9 @@ before(async () => {
 });
 after(() => h.close());
 
-/** A value for each path parameter an agent operation takes. */
-const PATH: Record<string, unknown> = { board: GHOST, n: 1, region: 'ideas' };
-/** A body for each agent operation that takes one. */
-const BODY: Partial<Record<OperationId, unknown>> = {
-  write_board: { items: [{ type: 'node', node: { region: 'ideas', kind: 'question', title: 'Which idea first?' }, key: 'walk-1' }] },
-  request_grant: { board: GHOST, reason: 'Drawing the ideas.' },
-  join: { label: 'Walk chat' },
-};
-
-/** Every agent operation, in openapi.json's order, with its input for board "ghost". */
-const AGENT_OPS = ops.filter((o) => o.op['x-agent'] === true).map(({ id, op }) => {
-  const input: CallInput = {};
-  for (const p of (op.parameters ?? []).map(deref)) {
-    if (p.in !== 'path') continue;
-    assert.ok(p.name in PATH, `${id}: give its path parameter "${p.name}" a value in PATH`);
-    input[p.name] = PATH[p.name];
-  }
-  if (op.requestBody) {
-    assert.ok(id in BODY, `${id}: give it a body in BODY`);
-    input.body = BODY[id as OperationId];
-  }
-  const namesBoard = 'board' in input || (input.body as Rec | undefined)?.board !== undefined;
-  const security: Rec[] = op.security ?? [];
-  const agentOnly = security.length > 0 && security.every((s) => Object.keys(s).includes('agentSecret'));
-  return { id: id as OperationId, input, namesBoard, agentOnly };
-});
-
-/** What an answer says: its status and body (a problem whole), held to the spec. */
-async function answer(id: OperationId, input: CallInput, as: Client): Promise<{ status: number; body: unknown }> {
-  try { await as.call(id, input); } catch (err) { if (!(err instanceof ApiProblem)) throw err; }
-  const a = h.last();
-  checkAnswer(id, a);
-  return { status: a.status, body: a.body };
-}
+/** Every agent operation, in openapi.json's order, with its input for board "ghost" (contract-walk.ts). */
+const AGENT_OPS = agentOps(GHOST);
+const answer = (id: OperationId, input: CallInput, as: Client) => call(h, id, input, as);
 
 /** Each agent operation's answers on "ghost": with no credentials (unless it needs a secret) and as A. */
 async function walk(): Promise<Map<string, { status: number; body: unknown }>> {

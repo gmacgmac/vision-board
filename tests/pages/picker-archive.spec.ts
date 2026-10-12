@@ -126,6 +126,27 @@ test('the picker\'s Archived list: Esc closes it; Restore brings the board back 
   await page.keyboard.press('Escape');
   await expect(archived(page)).toBeHidden();
   await expect(picker(page)).toBeFocused();
+  // The race a full run used to lose (N40 step 5): Esc shuts the dialog and queues its close event,
+  // and the entry is chosen again before that event fires. Played in one task, so the event always
+  // lands after the dialog has opened again: it must close nothing.
+  expect(await page.evaluate(async () => {
+    const dialog = document.querySelector<HTMLDialogElement>('#archived-dialog')!;
+    const select = document.querySelector<HTMLSelectElement>('#board')!;
+    dialog.close(); // as the shell had it shut: no-op
+    select.value = ':archived';
+    select.dispatchEvent(new Event('change', { bubbles: true })); // opens it
+    await new Promise((r) => setTimeout(r, 50));
+    if (!dialog.open) return 'not opened';
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true })); // Esc: the shell lets it shut
+    dialog.close(); // Esc's own close, its close event queued as a task
+    select.value = ':archived';
+    select.dispatchEvent(new Event('change', { bubbles: true })); // chosen again first
+    await new Promise((r) => setTimeout(r, 50)); // the queued close event has fired
+    return dialog.open ? 'open' : 'closed by the stale close event';
+  })).toBe('open');
+  await page.keyboard.press('Escape');
+  await expect(archived(page)).toBeHidden();
+  await picker(page).focus();
   await picker(page).selectOption(':archived');
   await expect(restore).toBeFocused();
   await page.keyboard.press('Enter');

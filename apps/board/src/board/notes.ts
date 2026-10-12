@@ -41,6 +41,8 @@ export interface NoteDeps {
   changed(): void;
   /** "Discard your changes?" (step 4G ruling 4); true to discard. */
   discard: AskDiscard;
+  /** Why the board can't change now (a locked board, lock-flow.ts): no bubble opens, the toast says why. */
+  paused?(): string | null;
 }
 
 export interface NoteFlow {
@@ -136,6 +138,8 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   function openNow(o: Open) {
+    const why = d.paused?.();
+    if (why) return d.toast(why);
     const view = o.region ? containerView(o) : cardView(o);
     if (!view) return;
     if (o.region) {

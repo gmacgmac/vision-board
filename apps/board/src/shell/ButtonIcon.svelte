@@ -4,9 +4,10 @@
      bot), Send to agent (a bot with a send arrow), Reply (a quote mark) and the "⋯" menu (more); with the openFolder flag,
      Open folder… (a folder); in the folder picker, a cloud storage place (a cloud); with the cardFlag flag,
      the "N flagged" chip (a flag, its cloth filled); with the alignSetting flag, Centre cards (three cards
-     of different heights centred on a line); with the archiveBoard flag, Archive board… (a box with its lid). -->
+     of different heights centred on a line); with the archiveBoard flag, Archive board… (a box with its lid); with
+     the lockBoard flag, Lock board and the toolbar's Locked (a padlock, shut) and Unlock board (a padlock, open). -->
 <script lang="ts">
-  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' } = $props();
+  let { name }: { name: 'hide' | 'theme' | 'reply' | 'chat' | 'agents' | 'send' | 'quote' | 'more' | 'folder' | 'cloud' | 'flag' | 'align' | 'archive' | 'lock' | 'unlock' } = $props();
 </script>
 <svg class="vb-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
@@ -35,6 +36,10 @@
     <path d="M2 12h20" /><rect x="4" y="8" width="4" height="8" rx="1" /><rect x="10" y="5" width="4" height="14" rx="1" /><rect x="16" y="9" width="4" height="6" rx="1" />
   {:else if name === 'archive'}
     <rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8 M10 12h4" />
+  {:else if name === 'lock'}
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3 M12 15v2" />
+  {:else if name === 'unlock'}
+    <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 7.75-1.4 M12 15v2" />
   {:else if name === 'cloud'}
     <path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9.5a4.25 4.25 0 0 1-.5 8.5z" />
   {:else}

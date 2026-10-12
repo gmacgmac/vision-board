@@ -5,13 +5,17 @@
 // move of 50 cards lays out its two containers once (3_FE_03 ruling 9). The person's board lines
 // (New board, Rename board: `put_board`, api.md 90) go out here too. While a past version of
 // the board shows (versions.ts), every act is refused here, before it is sent: the one funnel
-// (navigation FE_01 ruling 5). A card seen (FE_02: selecting a changed card, a step of its
-// stepper) goes out here too, in order, so every line the person adds has one way out, and so do
-// the person's archive and restore of a whole board (`actOn`, api.md 135), which may name a board
-// other than the open one.
-import type { LedgerLine } from '../../../../packages/format/src/index.ts';
+// (navigation FE_01 ruling 5), and on a locked board every line that would change it (lock-flow.ts,
+// N40 ruling 7): `refusal` is asked before each line goes. A card seen (FE_02: selecting a changed
+// card, a step of its stepper) goes out here too, in order, so every line the person adds has one
+// way out, and so do the person's marks on a whole board (`actOn`: archive, restore, lock, unlock,
+// api.md 135, 138), which may name a board other than the open one.
+import type { ActionId, LedgerLine } from '../../../../packages/format/src/index.ts';
 import type { ActFields, BoardFields } from './io.ts';
 import { ApiError, markCardSeen, putBoard, sendAct } from './io.ts';
+
+/** A line the page would send: an act, a seen, or the person's `board` line (`put_board`). */
+export interface Outgoing { type: 'act' | 'seen' | 'board'; action?: ActionId }
 
 export interface SenderDeps {
   board(): string;
@@ -21,8 +25,9 @@ export interface SenderDeps {
   redraw(): void;
   /** Show a refusal (the error toast). */
   fail(err: unknown): void;
-  /** A past version shows: the board is read-only. */
-  readOnly(): boolean;
+  /** Why `line` can't go to `board` now: a past version shows (`READ_ONLY`), or the board is
+   *  locked and the line would change it (lock-flow.ts); null when it may go. */
+  refusal(board: string, line: Outgoing): string | null;
 }
 
 /** Why an act is refused while a past version shows. */
@@ -62,11 +67,12 @@ export function createSender(d: SenderDeps): Sender {
     }
   }
 
-  /** Send one call that answers a stored line, and apply it. */
-  async function send(call: () => Promise<LedgerLine>, board = d.board()): Promise<string | null> {
-    if (d.readOnly()) {
-      d.fail(new ApiError(READ_ONLY));
-      return READ_ONLY;
+  /** Send one call that answers a stored line, `line` on `board`, and apply it. */
+  async function send(call: () => Promise<LedgerLine>, line: Outgoing, board = d.board()): Promise<string | null> {
+    const refused = d.refusal(board, line);
+    if (refused !== null) {
+      d.fail(new ApiError(refused));
+      return refused;
     }
     try {
       await tracked(call().then((line) => d.own(line, board)));
@@ -76,7 +82,7 @@ export function createSender(d: SenderDeps): Sender {
       return err instanceof ApiError ? err.message : String(err);
     }
   }
-  const act = (fields: ActFields) => send(() => sendAct(d.board(), fields));
+  const act = (fields: ActFields) => send(() => sendAct(d.board(), fields), { type: 'act', action: fields.action });
 
   async function attempt(fields: ActFields): Promise<string | null> {
     const problem = await act(fields);
@@ -106,11 +112,11 @@ export function createSender(d: SenderDeps): Sender {
   return {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
-    board: (id, fields) => send(() => putBoard(id, fields)), // a board line names no card
-    actOn: (id, fields) => send(() => sendAct(id, fields), id),
+    board: (id, fields) => send(() => putBoard(id, fields), { type: 'board' }, id), // a board line names no card
+    actOn: (id, fields) => send(() => sendAct(id, fields), { type: 'act', action: fields.action }, id),
     run: (list) => held(() => steps(list)),
     seen: (marks) => held(async () => {
-      for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver))) !== null) return false;
+      for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver), { type: 'seen' })) !== null) return false;
       return true;
     }),
     get held() { return hold > 0; },

@@ -222,6 +222,9 @@ export interface NodeState {
   /** The person flagged the card (`BoardState.flags`, field report batch 2 ruling 3): the flag
    *  button shows pressed and the name says ", flagged". */
   flagged?: true;
+  /** The board is locked (`BoardState.locked`, N40 ruling 4): the review buttons, the size control,
+   *  the note pin and a proposal's answers are paused (paused.ts); the flag is not. */
+  paused?: true;
 }
 
 /** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import), and
@@ -247,7 +250,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     statusWord: awaiting ? AWAITING.word : isItem(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
-    ...(flagged && { flagged: true as const }),
+    ...(flagged && { flagged: true as const }), ...(s.locked && { paused: true as const }),
     pressed,
     ...(tier ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };

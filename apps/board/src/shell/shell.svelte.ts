@@ -106,6 +106,9 @@ export const shell = $state({
   /** The chat has something to send with Send on the open board (cards or notes attached, or the
    * answers; board/chat-panel.ts `sendsInChat`): Send is enabled for it too (chat-board-context ruling 4). */
   chatAttached: false,
+  /** The open board is locked (N40, board/lock-flow.ts): read-only for everyone until the person unlocks
+   *  it. The toolbar says so beside the board's name and the "⋯" menu offers Unlock board. */
+  locked: false,
   /** The folder the server has open (openFolder flag, board/folder.ts); null until read, or with the flag off. */
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */

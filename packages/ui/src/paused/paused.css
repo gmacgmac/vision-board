@@ -1,0 +1,7 @@
+/* A control paused while its board is locked (N40 ruling 4, paused.ts): in place and focusable,
+   aria-disabled; its ink goes quiet (--vb-ink-subtle, the disabled ink of every menu row), it neither
+   lifts on hover nor moves when pressed, and the pointer says no. A pressed or checked control keeps
+   its colour: it still says the card's answer or the container's layout. */
+:is(vb-node, vb-region) [data-paused][aria-disabled='true'] { cursor: not-allowed; }
+:is(vb-node, vb-region) [data-paused][aria-disabled='true']:not([aria-pressed='true'], [aria-checked='true']) { color: var(--vb-ink-subtle); }
+:is(vb-node, vb-region) [data-paused][aria-disabled='true']:is(:hover, :active) { background: none; transform: none; scale: none; }

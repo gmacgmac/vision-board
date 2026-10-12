@@ -86,6 +86,7 @@
   onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
   onflagged={() => board?.nextFlagged()}
   onarchive={() => void board?.boardEdit.archive()}
+  onlock={() => void board?.boardEdit.lock()}
 />
 {#if shell.past}
   <VersionBanner run={shell.past} onback={() => void board?.showVersion(null)} />

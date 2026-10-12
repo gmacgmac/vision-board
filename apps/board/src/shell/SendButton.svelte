@@ -4,19 +4,22 @@
      error (the problem's detail is in the error toast and the button's title), waiting (`waiting`:
      sent while the chat's agent was mid-turn, the answers go when its turn ends; then "Sent"), and
      disabled (`unsent` false: nothing answered since the last Send, conditions `board.unsent`; quiet,
-     aria-disabled and still focusable, its title "Nothing new to send" the reason). With `icon`
-     (toolbarMenu flag) it carries a bot with a send arrow, which a narrow window shows in place of
-     the words (board.css); the spinner and the tick stand in for it while sending and sent. The
+     aria-disabled and still focusable, its title "Nothing new to send" the reason; `paused`, why it
+     can't send at all, such as a locked board's "Locked: unlock to change it", shows the same way).
+     With `icon` (toolbarMenu flag) it carries a bot with a send arrow, which a narrow window shows in
+     place of the words (board.css); the spinner and the tick stand in for it while sending and sent. The
      gallery passes `state` and `look` to draw a state without acting. -->
 <script lang="ts">
   import type { SendState } from './shell.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
 
-  let { onsend, state: forced, look, icon = false, waiting = false, unsent = true }: {
+  let { onsend, state: forced, look, icon = false, waiting = false, unsent = true, paused }: {
     /** Sends the act; resolves to null when it was recorded, else the problem's detail. */
     onsend?: () => Promise<string | null>;
     /** The person answered since the board's last Send (shell `unsent`); false, there is nothing to send. */
     unsent?: boolean;
+    /** Why nothing can be sent now (a locked board, N40 ruling 4); disabled, with this as its title. */
+    paused?: string | undefined;
     /** The answers wait for the chat's agent to finish its turn (shell `sendWaiting`). */
     waiting?: boolean;
     state?: SendState;
@@ -36,7 +39,7 @@
   let live = $state<SendState>('idle');
   let detail = $state('');
   let timer = 0;
-  const st: SendState = $derived(forced ?? (waiting && live !== 'sending' && live !== 'error' ? 'waiting' : live === 'idle' && !unsent ? 'disabled' : live));
+  const st: SendState = $derived(forced ?? (waiting && live !== 'sending' && live !== 'error' ? 'waiting' : live === 'idle' && (paused || !unsent) ? 'disabled' : live));
   let held = false;
   // The wait ended: the answers went, so "Sent" shows a moment.
   $effect(() => {
@@ -62,7 +65,7 @@
 
 <button type="button" class="vb-btn vb-btn-primary vb-send" class:vb-btn-iconic={icon} id={forced ? undefined : 'send'} data-state={st} data-look={look}
   aria-disabled={st === 'sending' || st === 'disabled' ? 'true' : undefined}
-  title={st === 'error' && detail ? detail : st === 'waiting' ? WAIT_TIP : st === 'disabled' ? NOTHING_TIP : 'Tell the agents you are done: they read your answers next'}
+  title={st === 'error' && detail ? detail : st === 'waiting' ? WAIT_TIP : st === 'disabled' ? (paused ?? NOTHING_TIP) : 'Tell the agents you are done: they read your answers next'}
   onclick={click}>
   {#if st === 'sending'}<span class="vb-spinner" aria-hidden="true"></span>{/if}
   {#if st === 'waiting'}<span class="vb-send-wait" aria-hidden="true"></span>{/if}

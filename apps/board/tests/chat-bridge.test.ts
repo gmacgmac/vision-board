@@ -70,6 +70,13 @@ test('the composer\'s one chip: "3 answers · 2 selected", either part alone, op
   assert.equal(boardContext(s, 'c', []), null, 'nothing answered on board c, nothing selected');
 });
 
+test('on a locked board the chip carries no answers, as the server sends none; the selection still goes (N40, api.md 140)', () => {
+  const locked = { ...s, locked: new Map([['b', 99]]) };
+  const two = [{ n: 3, title: 'Card 3' }];
+  assert.deepEqual(boardContext(locked, 'b', two, A), { label: '1 selected', text: `${SELECTED_HEAD}\n- Card 3: Card 3` });
+  assert.equal(boardContext(locked, 'b', [], A), null);
+});
+
 test('the selected cards in the order selected; those a message took are left out; a chip\'s label on one line', () => {
   assert.deepEqual(selectedCards(b, ['3', '1', 'nope']), [{ n: 3, title: 'Card 3' }, { n: 1, title: 'Ship   on\nFriday?' }]);
   assert.deepEqual(boardCards(b, ['2', '3'], new Set([3])), [{ n: 2, title: 'Card 2' }]);

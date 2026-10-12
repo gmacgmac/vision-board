@@ -42,6 +42,12 @@ test('no tool description and no instructions tell an agent about archived board
   for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.doesNotMatch(text, /archiv/i);
 });
 
+test('the instructions and the board reads tell an agent what `locked` means: stop and tell the person (N40 ruling 3)', () => {
+  for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.match(text, /`locked`[^.]*read-only[^.]*answers `locked`, so tell the person in one line and stop\./);
+  for (const name of ['list_boards', 'get_board']) assert.match(tools.find((t) => t.name === name)!.description, /`locked: true`/, name);
+  assert.match(tools.find((t) => t.name === 'request_grant')!.description, /locked board takes no request \(`locked`, 423\)/);
+});
+
 test('write_board, join and request_grant tell the agent about the `secret` argument', () => {
   for (const name of WRITES) assert.match(tools.find((t) => t.name === name)!.description, /`secret` argument/, name);
 });

@@ -130,6 +130,9 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   l.v = 14; // api.md 135
   at('act:archive', l.act({ action: 'archive', board: 'b2' }), { board: 'b2', cards: [] });
   at('act:restore', l.act({ action: 'restore', board: 'b2' }), { board: 'b2', cards: [] });
+  l.v = 15; // api.md 138
+  at('act:lock', l.act({ action: 'lock', board: 'b2' }), { board: 'b2', cards: [] });
+  at('act:unlock', l.act({ action: 'unlock', board: 'b2' }), { board: 'b2', cards: [] });
   return { l, want };
 }
 

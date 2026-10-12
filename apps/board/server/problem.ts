@@ -18,6 +18,9 @@ export const PROBLEMS = {
   invalid: { status: 422, title: 'Invalid' },
   'server-error': { status: 500, title: 'Server error' },
   'wrong-folder': { status: 409, title: 'Wrong folder' },
+  // 423 Locked (RFC 4918 11.3, in the IANA HTTP status registry): the board itself is locked, so
+  // a client can tell it from every 409 (a stale `base`, a busy chat, another folder) by status alone.
+  locked: { status: 423, title: 'Locked' },
 } as const;
 
 export type ProblemCode = keyof typeof PROBLEMS;

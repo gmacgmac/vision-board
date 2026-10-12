@@ -5,10 +5,14 @@
 // with an archived board's id in words that say nothing of it. A retry key stored on a line agents
 // don't see is free again (`agentSees`). The person's routes name any board (`personBoard`); the two
 // that set an agent to work on one, a chat's start and its messages, refuse an archived board
-// (`refuseArchived`). No other server module asks whether a board is archived.
+// (`refuseArchived`). No other server module asks whether a board is archived. Beside it, the lock
+// (N40 ruling 7, api.md 139): a write route refuses a locked board up front, before it answers
+// anything, with `locked` (`requireUnlocked`, through the action layer's `boardLocked`), and a chat
+// can't start on one (`refuseLocked`); the ledger module refuses any line that reaches it there
+// (`writeProblem`). No other server module asks whether a board is locked.
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { boardVisibility, eventBoard, UNAVAILABLE } from '../../../packages/actions/src/index.ts';
+import { boardLocked, boardVisibility, eventBoard, LOCKED, UNAVAILABLE } from '../../../packages/actions/src/index.ts';
 import type { ProblemCode } from './problem.ts';
 import { problem } from './problem.ts';
 
@@ -30,12 +34,13 @@ export function personBoard(s: LedgerState, board: unknown): string {
   return id;
 }
 
-/** A `write_board` batch on `board`: a board agents see takes it; with no `board` item (`made`, the
- * index of the first one, -1 for none) a board they don't see is `not-found`, in the words for one
- * that never was; one making a board with an archived board's id is `invalid`, `UNAVAILABLE`. */
+/** A `write_board` batch on `board`: a board agents see takes it, unless it is locked (`locked`);
+ * with no `board` item (`made`, the index of the first one, -1 for none) a board they don't see is
+ * `not-found`, in the words for one that never was; one making a board with an archived board's id
+ * is `invalid`, `UNAVAILABLE`. */
 export function writeTarget(s: LedgerState, board: string, made: number): void {
   const v = boardVisibility(s, board);
-  if (v === 'visible') return;
+  if (v === 'visible') return requireUnlocked(s, board);
   if (made < 0) {
     throw problem('not-found', `There is no board "${board}". Call list_boards to see the boards, or start the batch with a board item to make it.`);
   }
@@ -55,4 +60,20 @@ export function refuseArchived(s: LedgerState, board: string, code: ProblemCode,
   if (boardVisibility(s, board) === 'archived') {
     throw problem(code, `Board "${board}" is archived, so ${what}. Restore it from the board picker first.`);
   }
+}
+
+/** Whether `board` is locked now (archived counts, N40 ruling 5): `get_board`'s `locked`, and a chat
+ * message that therefore records no Send. The server's one way to ask. */
+export const isLocked = (s: LedgerState, board: string): boolean => boardLocked(s, board);
+
+/** An agent's write on `board`, which it may see: refused as a whole with `locked` (423) while the
+ * person has the board locked, before anything is written or answered (N40 ruling 3). */
+export function requireUnlocked(s: LedgerState, board: string): void {
+  if (isLocked(s, board)) throw problem('locked', LOCKED);
+}
+
+/** A chat's start on `board` (it would write the new agent's grant there): refused with `locked`
+ * while the board is locked, saying how to go on. A running session's messages still go. */
+export function refuseLocked(s: LedgerState, board: string): void {
+  if (isLocked(s, board)) throw problem('locked', `Board "${board}" is locked, so no chat can start on it. Unlock it from the "⋯" menu first.`);
 }

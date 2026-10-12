@@ -3,11 +3,13 @@
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
 // sent to (the route's path); when given, everything the act names must be on it. Cards are
 // identities (`id`, `nodes`); words name them by board number (api.md 125). On an archived board
-// only `restore` goes (archive.ts, api.md 135).
+// only `restore` goes (archive.ts, api.md 135); on a locked one, only the person's own marks
+// (lock.ts `writeProblem`, api.md 139).
 import type { ActEvent } from '../../format/src/index.ts';
 import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
-import { archivedProblem, archiveRules } from './archive.ts';
+import { archiveRules } from './archive.ts';
+import { lockRules, writeProblem } from './lock.ts';
 import { sentAfter } from './fold.ts';
 import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
@@ -38,6 +40,8 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   move: (e, s, board, p) => moveProblems(e, s, board, p),
   archive: (e, s, board, p) => { onBoard(e.board, board, p); archiveRules(e, s, p); },
   restore: (e, s, board, p) => { onBoard(e.board, board, p); archiveRules(e, s, p); },
+  lock: (e, s, board, p) => { onBoard(e.board, board, p); lockRules(e, s, p); },
+  unlock: (e, s, board, p) => { onBoard(e.board, board, p); lockRules(e, s, p); },
 };
 
 /** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
@@ -96,8 +100,8 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   if (!def) return [`action: unknown "${String(e.action)}"`];
   if (e.by !== 'person' || def.by !== 'person')
     return [`${e.action}: only the person can do this, on the board; send a propose or reply item instead`];
-  const archived = archivedProblem(s, e);
-  if (archived) return [archived];
+  const refused = writeProblem(s, e);
+  if (refused) return [refused.detail];
   if (isContainerAct(e)) return containerProblems(e, s, board);
   const p: string[] = [];
   const rule = RULES[e.action];

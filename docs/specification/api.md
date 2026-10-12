@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-12 (ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -222,6 +222,7 @@ packages/format/schema/openapi.json               every operation, input, output
 | `invalid` | 422 | Fails the schema or a context rule |
 | `server-error` | 500 | Anything unexpected; details go to the server log, not the answer |
 | `wrong-folder` | 409 | The board has another folder open: an agent call's `VB-Project` names another folder, or its secret is an agent's of a folder opened before (114, 115) |
+| `locked` | 423 | The person locked the board: every write on it is refused, whole, until they unlock it (139) |
 
 ## Operations
 
@@ -230,8 +231,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 | operationId | Method and path | Who | Does |
 |---|---|---|---|
-| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq }], head }`; `seq` is that board's own last line |
-| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty) |
+| `list_boards` | `GET /api/boards` | anyone | `{ boards: [{ board, title, seq, locked? }], head }`; `seq` is that board's own last line; `locked` on a locked board (139) |
+| `get_board` | `GET /api/boards/{board}` | anyone | The board now: view, every node's state and version, `head`; with agents, the open grant requests and each region's holders (both left out when empty); `locked` on a locked board (139) |
 | `show_node` | `GET /api/boards/{board}/nodes/{n}` | anyone | Every version of node `n`, its notes, replies, proposals, park bundle, links, container and size; `linked=true` adds linked nodes |
 | `show_container` | `GET /api/boards/{board}/regions/{region}` | anyone | One container's full history: the region, its holders, every node it has held with every version and note |
 | `show_layout` | `GET /api/boards/{board}/regions/{region}/layout` | anyone | How the board arranges one container, structure only: mode and widths in effect, each card's lane, column and row, how many links cross, how many cells are empty (133) |
@@ -1093,3 +1094,39 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     and never opens it by default; the fold's `dates` (each board's first and own last line) give the
     confirm's and the Archived list's days (`archivedBoards`; components.md § Archive a board).
 
+## Ledger v15: lock a board (N40, 2026-10-12)
+
+138. **Lock and unlock** (rulings 1-2, 5). `LEDGER_FORMAT` becomes 15 and every ledger `$id` moves to
+    `.../schema/ledger/15/`; `openapi.json` `info.version` becomes 1.20.0. Only adds: v2 to v14 lines
+    stay valid. Two person acts on a whole board, `lock { board }` and `unlock { board }`, through
+    `act`, like `archive` and `restore` (135): each names its `board` and nothing else, the board must
+    exist, `lock` one not locked and `unlock` one that is (`validateAct`, packages/actions `lock.ts`
+    `lockRules`). Registry: `lock` "Lock board", `unlock` "Unlock board", neither asks first, neither
+    is an answer. Both are the person's own marks (`BOARD_MARKS`, `PRIVATE_ACTIONS`): the fold keeps
+    only the locked set (`LedgerState.locked`); they move no head, no date, see no card, and no
+    agent read reports the line (`check_responses` included); agents learn of a lock only as
+    `locked`. **Archive implies lock** (ruling 5): `boardLocked` counts an archived board as locked,
+    and since nothing acts on an archived board but `restore` (a lock or unlock there is refused like
+    any act, 137), restoring returns the board to the lock it had.
+139. **Read-only for everyone** (rulings 1, 3, 7). One check in the action layer, beside the
+    visibility check: `writeProblem(s, e)` (lock.ts), archived first (`archivedProblem`, 136), then
+    locked (`lockedProblem`), which the ledger module asks of every line it appends, whoever writes
+    it: on a locked board only the person's own marks (flag, unflag, archive, restore, lock, unlock;
+    `passesLock`) and a seen go; every other line is refused with `locked`, **423** (RFC 4918's
+    Locked, in the IANA registry; not 409, which on agent operations means `wrong-folder` only (114),
+    so a client tells a lock from every other refusal by status alone). Words: to an agent "This
+    board is locked; ask the person to unlock it." (`LOCKED`), to the person "Locked: unlock to
+    change it" (`LOCKED_PERSON`). The routes refuse up front, before anything is answered or written
+    (`apps/board/server/visibility.ts`, the only server module that asks: `requireUnlocked`,
+    `refuseLocked`, `isLocked`): `write_board` refuses the whole batch, `request_grant` refuses
+    before it would say `held` or `replayed`; `act` and `put_board` are refused by the ledger module;
+    `start_chat` is refused (its grant can't be written). Reads answer as usual and say so:
+    `get_board` and each `list_boards` row carry `locked: true` while it stands (left out otherwise).
+    A test walks every agent operation in `openapi.json` that writes (any method but GET) and asserts
+    each answers 423 with those words and writes nothing, and every read answers 200
+    (`apps/board/tests/api-lock.test.ts`); another walks every act in the registry.
+140. **The chat panel** (ruling 7). A running session's messages still go: they are chat, not board
+    writes. On a locked board `send_chat` hands the agent the words and chips only: no round of
+    answers and no Send recorded, which wait for the unlock. The agent's own board writes are refused
+    with `locked`, and the skill (`skills/vision-board/SKILL.md` v3.3, Access) tells it to say so in
+    one line and stop. The page: components.md § Lock a board.

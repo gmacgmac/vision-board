@@ -41,8 +41,8 @@ export interface Versions {
 
 /** The stage handlers that lead to a person act: a review button or key, a proposal's answer, a
  * note, a size, a layout mode, a place, a move, access. The rest (selection, lasso, view commands,
- * Esc) stay. */
-const ACTING = [
+ * Esc) stay. A locked board pauses the same ones but the flag (lock-flow.ts). */
+export const ACTING = [
   'act', 'flag', 'answer', 'showNote', 'setSize', 'setMode', 'resetRegion', 'regionComment', 'putBack', 'revoke', 'pin', 'pinRegion',
   'frameStart', 'frameMove', 'frameEnd', 'regionCommand', 'unpin', 'dragStart', 'dragOver', 'drop',
 ] as const satisfies readonly (keyof StageHandlers)[];

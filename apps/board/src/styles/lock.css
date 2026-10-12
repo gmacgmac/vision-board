@@ -1,0 +1,10 @@
+/* A locked board (N40 ruling 4, board/lock-flow.ts). "Locked" after the board's name and version
+   (LockedChip.svelte): a quiet chip, the padlock and the word in --vb-ink-strong on the chip's own
+   ground, ringed in --vb-line-strong so it reads as a state, not a count; never shortened on a narrow
+   toolbar. On the board the world carries data-locked: the controls that change it are paused in
+   place by their elements (packages/ui paused.css); here a card's kind tab stops looking like a
+   handle, since nothing can be moved. Selection, zoom, pan and the flag stay. */
+.vb-chip-locked { color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong); }
+.vb-chip-locked .vb-btn-icon { display: block; width: 14px; height: 14px; }
+.vb-world[data-locked] vb-node .vb-node-kind { cursor: inherit; }
+.vb-world[data-locked] vb-node .vb-node-kind::before { display: none; }

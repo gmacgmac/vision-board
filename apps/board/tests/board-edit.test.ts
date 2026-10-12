@@ -2,11 +2,12 @@
 // by hyphens, within the id limit, unique among the boards, archived ones too; and the dialog's
 // answer goes to the sender as one `put_board`, then the new board opens; Rename renames the open
 // board. Archive board asks first, with the board's name and dates (N39 ruling 5), then archives the
-// open board; Restore restores a board and opens it (ruling 6).
+// open board; Restore restores a board and opens it (ruling 6). Lock board locks the open board, or
+// unlocks it when it is locked, with no confirm, and says so (N40 ruling 4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ID_PATTERN } from '../../../packages/format/src/index.ts';
-import { archiveAsk, boardIdFor, createBoardEdit, dayOf } from '../src/board/board-edit.ts';
+import { archiveAsk, boardIdFor, createBoardEdit, dayOf, LOCK_DONE } from '../src/board/board-edit.ts';
 import type { ActFields } from '../src/board/io.ts';
 import type { BoardFields } from '../src/board/io.ts';
 
@@ -88,4 +89,29 @@ test('archiveAsk: the confirm of ruling 5, its days in the viewer\'s words, the 
 
 test('a new board never takes an archived board\'s id: the boards it avoids are every board', () => {
   assert.equal(boardIdFor('Multi-bot', new Map([['multi-bot', {}]])), 'multi-bot-2');
+});
+
+/** A board edit on board `plan`, locked or not, answering `answer`. */
+function locking(locked: boolean, answer: string | null = null) {
+  const acts: [string, ActFields][] = [];
+  const said: string[] = [];
+  const asked: string[][] = [];
+  const edit = createBoardEdit({
+    sender: { board: async () => null, actOn: async (id, fields) => { acts.push([id, fields]); return answer; } },
+    state: () => ({ boards: new Map([['plan', { title: 'The plan' }]]), locked: new Map(locked ? [['plan', 9]] : []), archived: new Map() }) as never,
+    id: () => 'plan', switchTo: () => undefined, confirm: async (...ask) => { asked.push(ask); return true; }, toast: (t) => said.push(t),
+  });
+  return { edit, acts, said, asked };
+}
+
+test('lock: locks the open board, or unlocks it when it is locked; no confirm; the toast says so; a refusal says nothing', async () => {
+  const open = locking(false);
+  assert.equal(await open.edit.lock(), null);
+  assert.deepEqual([open.acts, open.said, open.asked], [[['plan', { action: 'lock' }]], [LOCK_DONE.lock], []]);
+  const shut = locking(true);
+  assert.equal(await shut.edit.lock(), null);
+  assert.deepEqual([shut.acts, shut.said], [[['plan', { action: 'unlock' }]], [LOCK_DONE.unlock]]);
+  const refused = locking(false, 'refused');
+  assert.equal(await refused.edit.lock(), 'refused');
+  assert.deepEqual(refused.said, []);
 });

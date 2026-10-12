@@ -15,7 +15,7 @@ import { problem } from './problem.ts';
 import { sendJson } from './respond.ts';
 import { bodyProblems } from './spec.ts';
 import { writeItems } from './write-board.ts';
-import { agentSees, personBoard, requireBoard, writeTarget } from './visibility.ts';
+import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from './visibility.ts';
 
 /** `join` takes 4 KiB; `write_board` 512 KiB and 200 items (api.md 28). */
 const JOIN_LIMIT = 4 * KIB;
@@ -85,13 +85,14 @@ const join: Handler = async ({ req, res, ledger, agents, project }) => {
 };
 
 /** Ask the person for one container, or with no `region` for the board (api.md 25-26, 81): a
- * holder is told so, an open request from this agent is returned again, a retry key sent before
+ * locked board refuses it (api.md 139); a holder is told so, an open request from this agent is returned again, a retry key sent before
  * returns its request; else a new one. */
 const requestGrant: Handler = async ({ req, res, ledger, caller }) => {
   const agent = agentOf(caller);
   const b = await body('request_grant', req);
   const s = ledger.state();
   const board = requireBoard(s, b.board);
+  requireUnlocked(s, board); // a locked board takes no request, nor answers one (N40 ruling 3)
   const region = b.region === undefined ? undefined : String(b.region);
   if (region !== undefined && !s.index.boards.get(board)?.has(region)) {
     throw problem('not-found', `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
@@ -116,8 +117,8 @@ const requestGrant: Handler = async ({ req, res, ledger, caller }) => {
 };
 
 /** One batch of write items (api.md 34, 37): a body that cannot be read at all, an unknown board
- * with no `board` item, or a batch making a board whose id isn't available (api.md 136), is one
- * problem; otherwise 200 with a result per item. */
+ * with no `board` item, a batch making a board whose id isn't available (api.md 136), or a batch
+ * on a locked board (api.md 139), is one problem; otherwise 200 with a result per item. */
 const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   const agent = agentOf(caller);
   const value = await readJson(req, WRITE_LIMIT);

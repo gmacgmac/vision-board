@@ -29,6 +29,7 @@ const REST = [
   'To draw on a board another agent made, call `request_grant` with just its `board` first. When an item fails with `needs-grant`, call `request_grant` once for what it names (the board, or the board and region) and wait for the answer.',
   'Then call `check_responses` with the `head` you last saw (and `wait` up to 60 seconds) to read what the person did, sorted by card number, and resend failed items with the same keys. Answer every comment and more context with a `reply` or an `append`, and every Later with a `park`.',
   '`join` and `list_boards` name the folder the board has open (`project`). If a call answers `wrong-folder`, the board has another folder open: stop, tell the person what it says, and do not call `join`.',
+  'A board marked `locked` (`list_boards`, `get_board`) is read-only until the person unlocks it: every write on it answers `locked`, so tell the person in one line and stop.',
 ];
 
 export const INSTRUCTIONS = [

@@ -4,6 +4,7 @@
 // `state.moves`, as it carries pins. Every response is checked against the spec (api.md 54).
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 
@@ -15,7 +16,7 @@ const act = (body: object) => ({ board: 'roadmap', body: { type: 'act', ...body 
 
 test('a move: show_node, list_open, show_container and get_board show where the card is and where the agent has it', async () => {
   const stored = await h.ok('act', act({ action: 'move', n: 4, region: 'review' }));
-  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [14, 'move', 4, 'review']);
+  assert.deepEqual([stored.v, stored.action, stored.n, stored.region], [LEDGER_FORMAT, 'move', 4, 'review']);
   const node = await h.ok('show_node', { board: 'roadmap', n: 4 });
   assert.deepEqual([node.region, node.moved_from], ['review', 'prove']);
   const open = await h.ok('list_open', { board: 'roadmap' });

@@ -5,7 +5,7 @@
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
-// flags (card-flags.ts), the boards the person archived (archive.ts) and each board's dates. Every map is keyed by a card's identity (`id`); the reads give board
+// flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts) and each board's dates. Every map is keyed by a card's identity (`id`); the reads give board
 // numbers (numbers.ts, api.md 125). One board as the page reads it: board-state.ts.
 // Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
 // first).
@@ -15,6 +15,7 @@ import type {
 import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
 import type { BoardDates } from './archive.ts';
 import { foldArchive } from './archive.ts';
+import { foldLock } from './lock.ts';
 import type { Place } from './containers.ts';
 import { applyContainerAct } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
@@ -122,6 +123,9 @@ export interface LedgerState extends DrawnState {
   /** board -> `seq` of the person's `archive` of it, while it stands (archive.ts, api.md 135). Read
    * through `boardVisibility` only. */
   archived: Map<string, number>;
+  /** board -> `seq` of the person's `lock` of it, while it stands (lock.ts, api.md 138). Read through
+   * `boardLocked`, which counts an archived board as locked too. */
+  locked: Map<string, number>;
   /** board -> when its first line and its own last line (`heads`) were written: the page's archive
    * confirm and Archived list (api.md 137). */
   dates: Map<string, BoardDates>;
@@ -142,7 +146,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), flags: new Map(), archived: new Map(), dates: new Map(),
+  retiredRegions: new Map(), flags: new Map(), archived: new Map(), locked: new Map(), dates: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -150,6 +154,12 @@ export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
   const s = emptyState();
   for (const e of events) applyEvent(s, e);
   return s;
+}
+
+/** One of the person's private marks: a flag, an archive or restore, a lock or unlock. */
+function foldMark(s: LedgerState, e: ActEvent): void {
+  if (!BOARD_MARKS.has(e.action)) return foldFlag(s, e);
+  return e.action === 'lock' || e.action === 'unlock' ? foldLock(s, e) : foldArchive(s, e);
 }
 
 const push = <K, V>(m: Map<K, V[]>, k: K, v: V) => { m.set(k, [...(m.get(k) ?? []), v]); };
@@ -160,13 +170,13 @@ const marksOf = (s: LedgerState, id: number): Marks => {
 };
 
 /** Apply one valid event to `s`: the drawn part and the index in format, the rest here. The
- * person's private marks fold into `flags` and `archived` only: they move no head, see no card and
- * are no answer (api.md 128, 135). */
+ * person's private marks fold into `flags`, `archived` and `locked` only: they move no head, see no
+ * card and are no answer (api.md 128, 135, 138). */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   if (e.type === 'retire') keepRetiredRegion(s, e);
   applyDrawn(s, e);
   indexEvent(s.index, e);
-  if (isPrivateAct(e)) return BOARD_MARKS.has((e as ActEvent).action) ? foldArchive(s, e as ActEvent) : foldFlag(s, e as ActEvent);
+  if (isPrivateAct(e)) return foldMark(s, e as ActEvent);
   const board = eventBoard(s, e);
   const before = board === undefined ? undefined : s.heads.get(board);
   if (board !== undefined && !(e.type === 'seen' && 'board' in e)) {

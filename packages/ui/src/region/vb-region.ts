@@ -15,6 +15,11 @@ import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
 import { holdersTemplate, regionIds, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
+import { pauseControls } from '../paused/paused.ts';
+
+/** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
+ * back, whose aria-disabled `update` sets itself. The cog still opens its menu. */
+const PAUSED = 'button[data-mode], .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke]';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -76,12 +81,13 @@ export function defineVbRegion(): void {
       this.applyWidths(st);
       this.row.sync();
       this.piece('.vb-region-count').textContent = st.countText;
+      const paused = st.paused === true;
       const reset = this.piece('[data-reset]');
-      reset.setAttribute('aria-disabled', String(!st.canReset));
+      reset.setAttribute('aria-disabled', String(!st.canReset || paused));
       if (st.canReset) reset.removeAttribute('aria-describedby');
       else reset.setAttribute('aria-describedby', regionIds(this.dataset.region!).hint);
       const back = this.piece('[data-put-back]');
-      back.setAttribute('aria-disabled', String(!st.canPutBack));
+      back.setAttribute('aria-disabled', String(!st.canPutBack || paused));
       if (st.canPutBack) back.removeAttribute('aria-describedby');
       else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
       this.applyNote(st);
@@ -92,6 +98,7 @@ export function defineVbRegion(): void {
         this.holdersKey = key;
         this.piece('.vb-region-holders').innerHTML = holdersTemplate(st.holders ?? []);
       }
+      pauseControls(this, PAUSED, paused);
     }
 
     showPanel(what: RegionOpen, opts?: { mode?: Mode; focus?: boolean }): void {

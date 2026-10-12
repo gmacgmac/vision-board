@@ -9,8 +9,8 @@
     "template": "region-template.ts (regionTemplate, holdersTemplate, regionIds: the only places the markup is built)",
     "icons": "region-icons.ts (MODE_ICON per mode, WIDTHS_ICON (match, own), COG_ICON, EYE_ICON; wrapped by the node pattern's svgIcon)",
     "element": "vb-region.ts (defineVbRegion, VbRegionElement; light DOM)",
-    "behaviour": "region-row.ts (bindModeRow: the row's Tab stop and arrow keys, the popover and the settings menu; browser only); region-note.ts (bindNoteParts: Comment's badge, the note preview and the note block, their events and the block's height; browser only); region-title.ts (bindTitleTip: the cut title's full-text tip, on the shared hover tip packages/ui/src/tip/hover-tip.ts bindHoverTip; browser only)",
-    "styles": "region.css (scoped by the tag; tokens only; the top padding states REGION_HEAD from packages/layout); region-note.css (the container note: Comment's badge, the preview, the note block); tip/tip.css (the shared hover tip's box)"
+    "behaviour": "region-row.ts (bindModeRow: the row's Tab stop and arrow keys, the popover and the settings menu; browser only); region-note.ts (bindNoteParts: Comment's badge, the note preview and the note block, their events and the block's height; browser only); region-title.ts (bindTitleTip: the cut title's full-text tip, on the shared hover tip packages/ui/src/tip/hover-tip.ts bindHoverTip; browser only); paused/paused.ts (pauseControls, shared with the node pattern; browser only)",
+    "styles": "region.css (scoped by the tag; tokens only; the top padding states REGION_HEAD from packages/layout); region-note.css (the container note: Comment's badge, the preview, the note block); tip/tip.css (the shared hover tip's box); paused/paused.css (a control paused while its board is locked, shared with the node pattern)"
   },
   "states": [
     "mode",
@@ -57,6 +57,7 @@
     "title-tip"
   ],
   "flaggedStates": {
+    "paused": "lockBoard (N40 ruling 4; the state shows whatever the flag, since the lock is the ledger's): on a locked board (`RegionState.paused`, from `BoardState.locked`) the layout icons, the widths switch, the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove access stay in place, aria-disabled and data-paused (paused/paused.ts, paused/paused.css: the quiet ink, no hover or press, the not-allowed pointer; the checked layout keeps its look); a press reaches the page, which says why. The cog still opens its menu, whose two rows show disabled; Show in container still works.",
     "held": "agentAccess flag: the region's holders after the count, the creator as plain text and every other holder as a Remove access button (D-027). Kept out of `states` so the gallery without the flag reads as before.",
     "note replies": "cardReplies flag (FE_03): the agent's replies that name the note, in vb-nblock-replies under its text in the note block, oldest first: each (vb-nblock-reply, data-reply = its seq) has who (vb-nblock-who, 'Agent reply · label') over the text (vb-nblock-reply-text, Markdown, cut at three lines until \"Show all\"); read-only; empty with none",
     "retired": "retiredMarker flag (field report batch 2 ruling 1): after the count, \"N cards retired\" (vb-region-retired, a quiet button) for the cards the agent retired one at a time from the container; data-version is the board version a press opens (the last one before the latest such retire), aria-disabled with none to open. Gives way first when the title line is short of room.",

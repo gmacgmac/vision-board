@@ -5,7 +5,9 @@
      restored the dialog closes and the board opens; a refusal stays in the dialog. Native <dialog>:
      Esc, Close or a click on the backdrop closes it (not while a Restore is on its way), and focus
      goes back to the picker. Esc closes it at once, not on the close event that follows, so the
-     picker's entry chosen again right after opens it again. -->
+     picker's entry chosen again right after opens it again; and that close event, queued as a task
+     after the dialog shut, is taken only while the dialog is still shut: arriving after the entry
+     has opened it again, it closes nothing (the flake in picker-archive.spec.ts, N40 step 5). -->
 <script lang="ts">
   import { tick } from 'svelte';
   import { shell } from './shell.svelte.ts';
@@ -47,6 +49,6 @@
 
 <dialog id={UID} class="vb-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy !== null) e.preventDefault(); else shell.archivedDialog = false; }}
-  onclose={() => { shell.archivedDialog = false; }}>
+  onclose={() => { if (!dlg.open) shell.archivedDialog = false; }}>
   <ArchivedList boards={shell.archived} uid={UID} {busy} {problem} onrestore={(b) => void restore(b)} onclose={close} />
 </dialog>

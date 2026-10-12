@@ -23,6 +23,7 @@ import type { ChatEvent, LiveSession } from './chat-session.ts';
 import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
+import { isLocked } from './visibility.ts';
 
 /** One adapter maker per CLI the server can run. */
 export type ChatAdapters = Partial<Record<ChatSession['agent'], () => AgentAdapter>>;
@@ -152,9 +153,11 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
 
   const current = (board: Place) => entries().findLast((e) => e.board === board);
 
-  /** The answers on `board` the session's agent has not been told, as the round. */
+  /** The answers on `board` the session's agent has not been told, as the round. None while the
+   * board is locked: it takes no Send, so they wait for the unlock (N40 ruling 7, api.md 139). */
   function unsaid(live: LiveSession, board: string, before: number): Round | undefined {
     const s = ledger.state();
+    if (isLocked(s, board)) return undefined;
     return roundOf(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
   }
 
@@ -168,8 +171,11 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       const round = unsaid(live, board, held.before);
       const built = promptFor(s, board, held.msg, round);
       if (!round && !wordsOf(held.msg) && !built.chips.length) return undefined;
-      told.set(id, s.seq);
-      if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
+      // On a locked board the words and chips go alone: no round (unsaid), and no Send to record.
+      if (!isLocked(s, board)) {
+        told.set(id, s.seq);
+        if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
+      }
       return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(built.chips.length > 0 && { chips: built.chips }) } };
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
   }
@@ -207,7 +213,12 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       const record: StoredSession = {
         session: started.id, ...(board !== undefined && { board }), agent, ...(model && { model }), created: new Date().toISOString(), agentId: identity.agentId,
       };
-      joinAndGrant(ledger, agents(), identity, chatLabel(agent, started.id), board);
+      try {
+        joinAndGrant(ledger, agents(), identity, chatLabel(agent, started.id), board);
+      } catch (err) {
+        started.close?.(); // the board was locked or archived while the CLI started: none is left running
+        throw err;
+      }
       const old = current(board);
       if (old) { sessions.get(old.session)?.close(); waiting.delete(old.session); }
       store().add(record);

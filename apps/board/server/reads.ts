@@ -17,7 +17,7 @@ import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
 import { sendJson, sendJsonLines, wantsJsonLines } from './respond.ts';
-import { personBoard, requireBoard } from './visibility.ts';
+import { isLocked, personBoard, requireBoard } from './visibility.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
 function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true } {
@@ -46,6 +46,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
     },
     versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(numberOf(s, x.id)), latest(x).ver])),
     ...boardAccess(s, id),
+    ...(isLocked(s, id) && { locked: true }), // read-only for everyone until the person unlocks it (api.md 139)
   });
 };
 

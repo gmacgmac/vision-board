@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { UNAVAILABLE } from '../../../packages/actions/src/index.ts';
+import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
@@ -44,7 +45,7 @@ const restore = (board = 'multi-bot') => act(board, { action: 'restore', board }
 
 test('archive and restore are the person\'s acts: stored by the person, refused to an agent', async () => {
   const line = await archive();
-  assert.deepEqual([h.last().status, line.v, line.by, line.action, line.board, 'n' in line], [201, 14, 'person', 'archive', 'multi-bot', false]);
+  assert.deepEqual([h.last().status, line.v, line.by, line.action, line.board, 'n' in line], [201, LEDGER_FORMAT, 'person', 'archive', 'multi-bot', false]);
   const refused = await h.fails('act', { board: 'multi-bot', body: { type: 'act', action: 'restore', board: 'multi-bot' } }, 403, 'forbidden', A.client);
   assert.match(refused.detail, /Only the person can do this/);
   assert.deepEqual((await restore()).action, 'restore');

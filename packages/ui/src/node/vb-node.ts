@@ -12,6 +12,12 @@ import { bindCardPopover } from './node-popover.ts';
 import { handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
 import { AWAITING, isItem } from './node-core.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
+import { pauseControls } from '../paused/paused.ts';
+
+/** The controls a locked board pauses on a card (N40 ruling 4): everything that changes it but the flag. */
+const PAUSED = 'button[data-act], .vb-size-trig, .vb-size-opt, .vb-note-pin, button[data-answer]';
+/** An out-of-date proposal's Accept is aria-disabled for its own reason, locked or not. */
+const staleAccept = (el: Element): boolean => el.matches('[data-answer="accept"]') && el.closest('.vb-prop[data-stale]') !== null;
 
 export const VB_NODE_TAG = 'vb-node';
 
@@ -92,6 +98,7 @@ export function defineVbNode(): void {
       this.updateSteps(st);
       const fresh = this.querySelector<HTMLElement>('[data-tab="new"]');
       if (fresh) fresh.hidden = st.fresh !== true;
+      pauseControls(this, PAUSED, st.paused === true, staleAccept);
     }
 
     /** The HANDOVER tab and its box (FE_03): rebuilt only when the handover changed, closed when none is left. */

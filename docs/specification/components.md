@@ -466,3 +466,47 @@ behind the `archiveBoard` flag (on by default; `?flags=-archiveBoard`).
    section's screenshots); `apps/board/tests/board-edit.test.ts`, `start-board.test.ts` and
    `chat-bridge.test.ts` for the pure parts. The gallery's archive section
    (`gallery/archive-section.ts`) draws the menu, the confirm and the list in each state.
+
+## Lock a board (N40)
+
+Task `cortex-tasks/board/2026-10-12_board-app_lock-board.md` (rulings 1-7; api.md 138-140), the menu
+rows behind the `lockBoard` flag (on by default; `?flags=-lockBoard`). The lock itself is the
+ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
+
+1. **Lock board / Unlock board** is a row in the "⋯" menu (`shell/ToolbarMenu.svelte`, given
+   `onlock`), before Archive board…, with a flat SVG padlock, shut or open (`ButtonIcon` `lock`,
+   `unlock`; 24 grid, 1.5 stroke, `currentColor`). It acts on the open board with no confirm (nothing
+   is lost either way) and is `aria-disabled`, explained in its tooltip, while no board is open or a
+   past version shows, like Archive board…. It sends one `lock` or `unlock` act through the one
+   sender (`board/board-edit.ts` `lock`) and the toast says what it did (`LOCK_DONE`).
+2. **"Locked"** follows the board's name and version in the toolbar while it is locked
+   (`shell/LockedChip.svelte`): a quiet chip ringed in `--vb-line-strong`, the padlock and the word,
+   never shortened on a narrow toolbar, its title "Locked: unlock to change it". A visually hidden
+   polite live region beside it, outside the toolbar's flow, announces a lock from another tab.
+   Styles: `styles/lock.css`.
+3. **Paused in place** (`board/lock-flow.ts`). After every batch and switch `apply` reads the lock
+   from the folded ledger through the action layer's `boardLocked` and sets `data-locked` on the world
+   and `shell.locked`. The elements pause their own controls from `BoardState.locked`
+   (`NodeState.paused`, `RegionState.paused`; `packages/ui/src/paused/paused.ts` `pauseControls`,
+   `paused.css`): the review buttons, the size control, the note pin, a proposal's Accept and Reject,
+   the layout icons, the widths switch, the grip, Comment, the note's Edit and Remove, Reset places,
+   Put container back and Remove access stay in place and in the tab order, `aria-disabled` and
+   `data-paused`, in the quiet ink with no hover or press; a pressed answer and the checked layout keep
+   their colour; the cog still opens. Send to agent is disabled with the reason as its title
+   (`SendButton` `paused`); the selection bar's Comment, Move to and Reset places are disabled.
+4. **A press says why and writes nothing.** The stage's handlers that act (versions.ts `ACTING` but
+   the flag, and the widths switch) toast "Locked: unlock to change it" and do nothing (`guard`; a
+   drag's later moves stay quiet); the note bubble doesn't open (`notes.ts` `paused`); and the sender
+   asks `refuse` before every line, with the action layer's `passesLock`, so a path the page doesn't
+   guard is refused there, and the server refuses it again (423 `locked`).
+5. **The flag stays usable** (ruling 4): the person's private mark changes nothing an agent reads,
+   so its button and Shift+F work on a locked board (`passesLock`).
+6. **The chat**: messages still go; the composer's chip carries no answers on a locked board
+   (`chat-bridge.ts` `boardContext`), as the server sends none (api.md 140).
+7. Tests: `tests/pages/lock-board.spec.ts` (the menu row by mouse and keyboard, "Locked", every
+   paused control aria-disabled, a press on a button, a key, a note, a layout and the selection bar
+   saying why and writing nothing but seen lines, the flag by click and Shift+F, a lock from another
+   tab, the flag off, axe light and dark, the gallery section's screenshots);
+   `packages/ui/tests/node-paused.test.ts`, `apps/board/tests/board-edit.test.ts` and
+   `chat-bridge.test.ts` for the pure parts. The gallery's lock section (`gallery/lock-section.ts`)
+   draws both menu rows, "Locked", a locked container and its cards, and Send paused.

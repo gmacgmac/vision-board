@@ -4,7 +4,7 @@
      Reply (ToolbarMenu); a narrow toolbar (`[data-narrow]`, Toolbar.svelte) shows Agents, Send and
      Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide decided,
      Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. With `onarchive` (the
-     archiveBoard flag) the menu has Archive board…. The gallery
+     archiveBoard flag) the menu has Archive board…, and with `onlock` (lockBoard flag) Lock board or Unlock board. The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
@@ -15,8 +15,9 @@
   import { commandTitle, HEADER_COMMANDS } from '../board/commands.ts';
   import type { CommandId } from '../board/commands.ts';
   import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
+  import { LOCKED_PERSON } from '../../../../packages/actions/src/index.ts';
 
-  let { theme, ontheme, oncommand, onhide, onsend, onrevoke, onarchive, holders, chat, menu, placement = 'board', menuOpen = false }: {
+  let { theme, ontheme, oncommand, onhide, onsend, onrevoke, onarchive, onlock, holders, chat, menu, placement = 'board', menuOpen = false }: {
     theme: string;
     ontheme: () => void;
     oncommand: (id: CommandId) => void;
@@ -25,6 +26,8 @@
     onrevoke: (agent: string) => Promise<void>;
     /** Archive board… in the "⋯" menu (archiveBoard flag); left out, no such row. */
     onarchive?: (() => void) | undefined;
+    /** Lock board or Unlock board in the "⋯" menu (lockBoard flag); left out, no such row. */
+    onlock?: (() => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
     chat: boolean;
@@ -57,12 +60,13 @@
   {/if}
   {#if holders}
     <BoardAgents {holders} {onrevoke} icon={menu} />
-    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} waiting={shell.sendWaiting} unsent={shell.unsent || shell.chatAttached} />
+    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} waiting={shell.sendWaiting} unsent={shell.unsent || shell.chatAttached}
+      paused={board && shell.locked ? LOCKED_PERSON : undefined} />
   {/if}
   {#if chat}
     <button type="button" class="vb-btn vb-btn-iconic" id={board ? 'chat-toggle' : undefined}
       title={menu ? 'Open or close the chat · T' : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
       aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
   {/if}
-  {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {onarchive} {placement} open={menuOpen} />{/if}
+  {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {onarchive} {onlock} {placement} open={menuOpen} />{/if}
 </div>

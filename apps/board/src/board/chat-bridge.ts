@@ -12,7 +12,7 @@
 // attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // The pure parts are unit-tested under Node.
 import type { LedgerState, SelectedCard } from '../../../../packages/actions/src/index.ts';
-import { boardBlocks, roundOf } from '../../../../packages/actions/src/index.ts';
+import { boardBlocks, boardLocked, roundOf } from '../../../../packages/actions/src/index.ts';
 import type {
   ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
 } from '../../../../packages/chat/src/index.ts';
@@ -49,9 +49,10 @@ const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? on
 /** The composer's one chip on `board`: "3 answers · 2 selected" (either part alone), opening to exactly
  *  what the next message carries from the board: `cards`, then the answers since the board's last
  *  Send as `agent` is told them (the session's agent: only what it may answer, as the server builds
- *  it; every answer with none). None when there is nothing. */
+ *  it; every answer with none); on a locked board no answers, which wait for the unlock as the server's
+ *  do (api.md 140). None when there is nothing. */
 export function boardContext(s: LedgerState, board: string, cards: readonly SelectedCard[], agent?: string): ComposerContext | null {
-  const round = roundOf(s, board, s.lastSend.get(board) ?? 0, agent);
+  const round = boardLocked(s, board) ? undefined : roundOf(s, board, s.lastSend.get(board) ?? 0, agent);
   const parts = [round && count(round.count, 'answer'), cards.length > 0 && `${cards.length} selected`].filter(Boolean);
   return parts.length ? { label: parts.join(' · '), text: boardBlocks(cards, round) } : null;
 }

@@ -1,12 +1,15 @@
-// New board, Rename board, Archive board and Restore from the picker and the "⋯" menu (navigation
-// BE_01, api.md 90, D-034; N39, api.md 135-137): New board and Rename board become one `put_board`,
-// Archive board and Restore one `archive` or `restore` act, each through the one sender (sender.ts,
-// so it is refused while a past version shows). A new board's id is made from its title: lowercase
+// New board, Rename board, Archive board, Restore, Lock board and Unlock board from the picker and
+// the "⋯" menu (navigation BE_01, api.md 90, D-034; N39, api.md 135-137; N40, api.md 138): New
+// board and Rename board become one `put_board`, Archive board, Restore, Lock board and Unlock board
+// one `archive`, `restore`, `lock` or `unlock` act, each through the one sender (sender.ts, so it is
+// refused while a past version shows). A new board's id is made from its title: lowercase
 // letters and digits joined by hyphens, unique among the boards, archived ones too, so it never
 // lands on an archived board. A board the person made has no agent creator, so every agent asks the
 // person for it before drawing on it. Archive asks first (ruling 5); the page then opens the next
-// board (boards.ts, which does so whoever archived it). Restore opens the board it brings back.
+// board (boards.ts, which does so whoever archived it). Restore opens the board it brings back. Lock
+// board asks nothing (nothing is lost either way) and says what it did.
 import type { BoardActionId, LedgerState } from '../../../../packages/actions/src/index.ts';
+import { boardLocked } from '../../../../packages/actions/src/index.ts';
 import type { BoardFields } from './io.ts';
 import type { Sender } from './sender.ts';
 
@@ -47,6 +50,8 @@ export interface BoardEditDeps {
   switchTo(id: string): void;
   /** Ask the person (the shell's confirm dialog); true when confirmed. */
   confirm(heading: string, body: string, confirm: string): Promise<boolean>;
+  /** Say what was done (the info toast). */
+  toast?(text: string): void;
 }
 
 export interface BoardEdit {
@@ -56,7 +61,12 @@ export interface BoardEdit {
   archive(): Promise<string | null>;
   /** Restore board `id` and open it; null when restored, else the problem. */
   restore(id: string): Promise<string | null>;
+  /** Lock the open board, or unlock it when it is locked; null when done, else the problem. */
+  lock(): Promise<string | null>;
 }
+
+/** What the toast says once the board is locked or unlocked. */
+export const LOCK_DONE = { lock: 'Board locked: nobody can change it until you unlock it', unlock: 'Board unlocked' } as const;
 
 export function createBoardEdit(d: BoardEditDeps): BoardEdit {
   return {
@@ -79,6 +89,15 @@ export function createBoardEdit(d: BoardEditDeps): BoardEdit {
     async restore(id) {
       const problem = await d.sender.actOn(id, { action: 'restore' });
       if (problem === null) d.switchTo(id);
+      return problem;
+    },
+    async lock() {
+      const id = d.id();
+      const s = d.state();
+      if (!s?.boards.has(id)) return 'No board is open to lock.';
+      const action = boardLocked(s, id) ? 'unlock' : 'lock';
+      const problem = await d.sender.actOn(id, { action });
+      if (problem === null) d.toast?.(LOCK_DONE[action]);
       return problem;
     },
   };

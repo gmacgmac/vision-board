@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v14 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132 and 135.
+// Ledger lines for the schema tests (schema.test.ts): a valid v15 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135 and 138.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 14, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 14, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 15, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 15, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -41,6 +41,7 @@ export const ACTS: Record<string, Rec> = {
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
   move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 }, flag: { n: 1 }, unflag: { n: 1 },
   widths: { board: 'b', region: 'plan', widths: 'match' }, archive: { board: 'b' }, restore: { board: 'b' },
+  lock: { board: 'b' }, unlock: { board: 'b' },
 };
 export const act = (action: string, extra: Rec = {}) => ({ ...PERSON, type: 'act', action, ...ACTS[action], ...extra });
 
@@ -90,7 +91,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v15', patch(V.board!, 'v', 15)],
+  ['unknown format v16', patch(V.board!, 'v', 16)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -233,5 +234,12 @@ export const BROKEN: [string, Rec][] = [
   ['an archive naming a version', act('archive', { ver: 1 })],
   ['an archive of a container', act('archive', { region: 'plan' })],
   ['a restore of a group', act('restore', { nodes: [1, 2] })],
+  // api.md 138: lock and unlock name a whole board, and nothing else.
+  ['a lock without board', act('lock', { board: undefined })],
+  ['an unlock without board', act('unlock', { board: undefined })],
+  ['a lock naming a card', act('lock', { n: 1 })],
+  ['an unlock naming a version', act('unlock', { ver: 1 })],
+  ['a lock of a container', act('lock', { region: 'plan' })],
+  ['an unlock of a group', act('unlock', { nodes: [1, 2] })],
   ['a line that is not an object', [] as unknown as Rec],
 ];

@@ -15,7 +15,7 @@ import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
 import { endWhenClosed } from './reads.ts';
 import { sendJson } from './respond.ts';
-import { personBoard, refuseArchived } from './visibility.ts';
+import { personBoard, refuseArchived, refuseLocked } from './visibility.ts';
 import { body } from './writes.ts';
 
 const NO_RUN = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
@@ -34,10 +34,12 @@ async function inUse({ params, chats }: Ctx) {
   return live;
 }
 
-/** A session on a board; never on an archived one, whose agent could not see it (api.md 136). */
+/** A session on a board; never on an archived one, whose agent could not see it (api.md 136), nor
+ * on a locked one, where its grant can't be written (api.md 139). */
 const startChat: Handler = async ({ req, res, params, ledger, chats }) => {
   const board = personBoard(ledger.state(), params.board);
   refuseArchived(ledger.state(), board, 'invalid', 'no chat can start on it');
+  refuseLocked(ledger.state(), board);
   const b = await body('start_chat', req);
   const session = await chats().start(board, b.agent as ChatSession['agent'], b.model as string | undefined);
   sendJson(res, 201, session);

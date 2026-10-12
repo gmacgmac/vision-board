@@ -164,6 +164,10 @@ export interface RegionState {
   /** "3 cards retired" after the count (retiredMarker flag): the cards the agent retired one at a
    * time from the container; left out when none was. The page adds it (`retiredMarker`). */
   retired?: RegionRetired;
+  /** The board is locked (`BoardState.locked`, N40 ruling 4): the layout icons, the widths switch,
+   *  the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove
+   *  access are paused (paused.ts); the cog still opens its menu. Left out while it is not. */
+  paused?: true;
 }
 
 /** The retired marker (field report batch 2 ruling 1): its words, its accessible name, and the
@@ -219,5 +223,6 @@ export function regionState(
     commentLabel: commentLabel(title, note?.badge ?? 'none'),
     showEmpty: !nodes.some((n) => placed.has(n.id)),
     ...(holders !== undefined && holders.length > 0 && { holders: regionHolders(holders) }),
+    ...(s.locked && { paused: true as const }),
   };
 }

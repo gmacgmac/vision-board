@@ -7,7 +7,6 @@
 // check through `archivedProblem`), and so do the board list and the conditions; nothing else looks
 // at the set. Pure.
 import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { BOARD_MARKS } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { eventBoard } from './references.ts';
 
@@ -35,11 +34,12 @@ export function foldArchive(s: LedgerState, e: ActEvent): void {
 }
 
 /** Why line `e` may not be written because its board is archived (rulings 2, 3, 9), or undefined.
- * An agent's line is refused with `UNAVAILABLE`; the person's (a rename, an act) until the board is
- * restored, but a seen, which a page leaving the board still sends. Archive and restore are judged
- * by `archiveRules`. The ledger module asks this of every line it appends. */
+ * An agent's line is refused with `UNAVAILABLE`; the person's (a rename, an act, a lock or unlock,
+ * so an archived board keeps the lock it had, N40 ruling 5) until the board is restored, but a seen,
+ * which a page leaving the board still sends. Archive and restore are judged by `archiveRules`. The
+ * ledger module asks this of every line it appends, through `writeProblem` (lock.ts). */
 export function archivedProblem(s: LedgerState, e: LedgerEvent): string | undefined {
-  if (e.type === 'act' && BOARD_MARKS.has(e.action)) return undefined;
+  if (e.type === 'act' && (e.action === 'archive' || e.action === 'restore')) return undefined;
   const board = eventBoard(s, e);
   if (board === undefined || boardVisibility(s, board) !== 'archived') return undefined;
   if (e.by === 'agent') return UNAVAILABLE;

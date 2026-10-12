@@ -16,6 +16,7 @@ import type { ProposalView } from './numbers.ts';
 import { linkOut, noteOut, numberOf, proposalOut } from './numbers.ts';
 import { mayAnswer } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
+import { boardLocked } from './lock.ts';
 import { placeOf } from './references.ts';
 import type { ItemStatus } from './registry.ts';
 import { isDecided } from './registry.ts';
@@ -215,13 +216,15 @@ export function openContainers(s: LedgerState, board: string, agent?: string): O
   });
 }
 
-/** One board in `list_boards`: its id, title and its own last line (fold.ts `heads`). */
-export interface BoardListItem { board: string; title: string; seq: number }
+/** One board in `list_boards`: its id, title and its own last line (fold.ts `heads`); `locked`
+ * while the person has it locked (api.md 139), left out otherwise. */
+export interface BoardListItem { board: string; title: string; seq: number; locked?: true }
 
 /** Every board agents see (an archived one is left out, api.md 136), in the order drawn, with its
- * title and its own last line (`list_boards`, and the page's picker). */
+ * title and its own last line (`list_boards`, and the page's picker), and whether it is locked. */
 export const boardList = (s: LedgerState): BoardListItem[] =>
-  [...s.boards.values()].filter((b) => visibleToAgents(s, b.id)).map((b) => ({ board: b.id, title: b.title, seq: s.heads.get(b.id)! }));
+  [...s.boards.values()].filter((b) => visibleToAgents(s, b.id))
+    .map((b) => ({ board: b.id, title: b.title, seq: s.heads.get(b.id)!, ...(boardLocked(s, b.id) && { locked: true as const }) }));
 
 /** A board's versions (navigation FE_01 ruling 2): `now`, its own last line (fold.ts `heads`, so
  * other boards and the person's board seen never move it), and the past ones, newest first: each

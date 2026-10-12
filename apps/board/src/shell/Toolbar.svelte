@@ -14,7 +14,9 @@
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows. With the archiveBoard
      flag it ends with "Archived (N)…" while any board is archived (N39 ruling 6), opening the Archived
-     list (ArchivedDialog), and the "⋯" menu has Archive board… (ruling 5, ToolbarMenu).
+     list (ArchivedDialog), and the "⋯" menu has Archive board… (ruling 5, ToolbarMenu). A locked board
+     shows "Locked" after its name and version (LockedChip, N40 ruling 4); with the lockBoard flag the
+     "⋯" menu has Lock board or Unlock board.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css. -->
@@ -23,6 +25,7 @@
   import { MediaQuery } from 'svelte/reactivity';
   import AppIcon from './AppIcon.svelte';
   import FlaggedChip from './FlaggedChip.svelte';
+  import LockedChip from './LockedChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
@@ -31,7 +34,7 @@
   import { flagOn } from '../../../../packages/format/src/index.ts';
   import { pageFlags } from '../flags.ts';
 
-  let { onboard, onversion, ongo, oncommand, onhide, onsend, onrevoke, onflagged, onarchive }: {
+  let { onboard, onversion, ongo, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {
     onboard: (id: string) => void;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
@@ -46,6 +49,8 @@
     onflagged: () => void;
     /** Archive board… in the "⋯" menu: ask, then archive the open board (archiveBoard flag). */
     onarchive: () => void;
+    /** Lock board or Unlock board in the "⋯" menu (lockBoard flag): the open board. */
+    onlock: () => void;
   } = $props();
 
   const THEMES = ['system', 'light', 'dark'] as const;
@@ -66,6 +71,7 @@
   const boardEdit = flagOn('boardEdit', pageFlags());
   const toolbarMenu = flagOn('toolbarMenu', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
+  const locking = flagOn('lockBoard', pageFlags());
   /** The picker entry that opens the Archived list: never a board id, which holds no ":". */
   const ARCHIVED = ':archived';
   /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
@@ -130,6 +136,7 @@
       {/each}
     </select>
   {/if}
+  <LockedChip id="locked" locked={shell.locked} />
   {#if shell.containers.length}
     <label class="vb-visually-hidden" for="containers">Containers</label>
     <select id="containers" class="vb-select vb-select-menu" value=""
@@ -151,6 +158,6 @@
       {/if}
     {/if}
   </div>
-  <ToolbarEnd {theme} ontheme={nextTheme} {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} chat={shell.chatPanel} menu={toolbarMenu}
+  <ToolbarEnd {theme} ontheme={nextTheme} {oncommand} {onhide} {onsend} {onrevoke} onarchive={archiving ? onarchive : undefined} onlock={locking ? onlock : undefined} chat={shell.chatPanel} menu={toolbarMenu}
     holders={shell.agentAccess && shell.version !== null && !shell.past ? shell.boardHolders : null} />
 </header>

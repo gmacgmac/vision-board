@@ -217,10 +217,10 @@ function actRules(e: Rec, p: string[]): void {
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
   // The flag marks one card, whatever its version (api.md 128).
   if (CARD_MARKS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(`${f}: a ${a} names one card with n, and nothing else`);
-  // Archive and restore mark a whole board (api.md 135).
+  // Archive, restore, lock and unlock mark a whole board (api.md 135, 138).
   if (BOARD_MARKS.has(a as ActionId)) {
     need('board', `${a}: board required`);
-    for (const f of ['n', 'ver', 'region', 'nodes']) if (has(f)) p.push(`${f}: ${a === 'archive' ? 'an' : 'a'} ${a} names its board, and nothing else`);
+    for (const f of ['n', 'ver', 'region', 'nodes']) if (has(f)) p.push(`${f}: ${/^[aeiou]/.test(a) ? 'an' : 'a'} ${a} names its board, and nothing else`);
   }
 }
 

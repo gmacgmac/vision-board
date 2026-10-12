@@ -31,13 +31,13 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "list-boards", operationId: "list_boards", takesBody: false,
     summary: "List the boards",
-    description: "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `project`, the folder the board has open (`~/projects/example`), `boards` (each with `board`, `title` and `seq`, the board's latest ledger line) and `head`, the ledger's latest line number. Reads need no credentials.",
+    description: "List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `project`, the folder the board has open (`~/projects/example`), `boards` (each with `board`, `title` and `seq`, the board's latest ledger line, and `locked: true` on a board the person has locked, which takes no write) and `head`, the ledger's latest line number. Reads need no credentials.",
     inputs: [],
   },
   {
     name: "get-board", operationId: "get_board", takesBody: false,
     summary: "Read a board as it is now",
-    description: "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty. Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; cards you retired are not on the board.",
+    description: "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty, and `locked: true` while the person has the board locked: read it as usual, but don't write on it (every write is refused with `locked`). Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; cards you retired are not on the board.",
     inputs: [
       {"name":"board","in":"path","type":"string","required":true,"description":"The board id, from list_boards."},
     ],
@@ -100,7 +100,7 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "request-grant", operationId: "request_grant", takesBody: true,
     summary: "Ask for write access to a board or a container",
-    description: "Ask the person for write access to a board, or to one container on it. Ask for the board first: before you write anything on a board you did not create, call this with just `board`. Then, for another agent's container, call it with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. If you already have an open request for it, that request is returned with `replayed: true`; if you already hold it you get `{ held: true }`.",
+    description: "Ask the person for write access to a board, or to one container on it. Ask for the board first: before you write anything on a board you did not create, call this with just `board`. Then, for another agent's container, call it with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). If you already have an open request for it, that request is returned with `replayed: true`; if you already hold it you get `{ held: true }`.",
     inputs: [
       {"name":"board","in":"body","type":"string","required":true,"description":"The board you need to write to, or that holds the container."},
       {"name":"region","in":"body","type":"string","required":false,"description":"The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it."},

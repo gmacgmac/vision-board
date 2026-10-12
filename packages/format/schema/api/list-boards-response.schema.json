@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-boards-response.schema.json",
   "title": "Board list",
-  "description": "`seq` is that board's own last ledger line; `head` is the ledger's.",
-  "$comment": "Was: api.md Operations",
+  "description": "`seq` is that board's own last ledger line; `head` is the ledger's; `locked` marks a board the person has locked.",
+  "$comment": "Was: api.md Operations, 139",
   "type": "object",
   "required": [
     "boards",
@@ -22,16 +22,21 @@
         ],
         "properties": {
           "board": {
-            "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id",
+            "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id",
             "description": "The board id, which the other operations take in their path."
           },
           "title": {
-            "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/title",
+            "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/title",
             "description": "The board's title."
           },
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq",
+            "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/seq",
             "description": "The board's own last ledger line (`seq`)."
+          },
+          "locked": {
+            "const": true,
+            "description": "Present, and true, while the person has the board locked: read it as usual, but every write on it is refused with `locked` until the person unlocks it.",
+            "$comment": "Was: api.md 139"
           }
         },
         "unevaluatedProperties": false
