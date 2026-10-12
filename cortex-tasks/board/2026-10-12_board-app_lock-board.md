@@ -1,6 +1,6 @@
 ---
 category: board-app
-status: planned
+status: in-progress
 created: 2026-10-12
 tracker: cortex-tasks/tracker.md#N40
 ---
@@ -47,6 +47,9 @@ tracker: cortex-tasks/tracker.md#N40
 3. [ ] Build: the single check; server; page; the icon; gallery entry; flag `lockBoard`, on by
    default. One skill line: on "locked", tell the person in one line and stop.
 4. [ ] Docs: api.md, components.md.
+5. [ ] Make `tests/pages/picker-archive.spec.ts` "the picker's Archived list: Esc closes it; Restore …"
+   (line 111) deterministic: in a full run the Archived dialog sometimes doesn't reopen after a second
+   picker selection (found by the orchestrator, archive task notes). Fix the cause, not the wait.
 
 ## Validation
 

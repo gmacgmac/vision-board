@@ -11,6 +11,7 @@ import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { cardsOf, latestAsk } from './notes.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
+import { visibleToAgents } from './archive.ts';
 import type { ReferenceKind } from './references.ts';
 import { standing } from './proposals.ts';
 import { inLatestRound } from './rounds.ts';
@@ -50,9 +51,12 @@ export interface ConditionRow {
   derive: (s: LedgerState, ctx: ConditionContext) => Condition[];
 }
 
-/** The boards a row looks at: the one asked about, else every board. */
+/** Every board agents see, so an archived one never carries a row or a picker mark (api.md 136). */
+const shown = (s: LedgerState): string[] => [...s.boards.keys()].filter((board) => visibleToAgents(s, board));
+
+/** The boards a row looks at: the one asked about, else every board agents see. */
 const boardsIn = (s: LedgerState, ctx: ConditionContext): string[] =>
-  ctx.board === undefined ? [...s.boards.keys()] : s.boards.has(ctx.board) ? [ctx.board] : [];
+  ctx.board === undefined ? shown(s) : s.boards.has(ctx.board) ? [ctx.board] : [];
 
 /** Every card on `board`, by number (every-node ruling 5, assumption A: the card rows are on
  * every card, api.md 120); for an agent, only those it may answer (api.md 41). */
@@ -115,7 +119,7 @@ export function boardNews(s: LedgerState, board: string): { kind: 'board.new' | 
 
 /** The boards other than the open one whose `boardNews` is `kind`. */
 const marked = (s: LedgerState, ctx: ConditionContext, kind: 'board.new' | 'board.changed'): Condition[] =>
-  [...s.boards.keys()].flatMap((board) => {
+  shown(s).flatMap((board) => {
     const news = board === ctx.board ? undefined : boardNews(s, board);
     return news?.kind === kind ? [{ kind, board, seq: news.seq }] : [];
   });

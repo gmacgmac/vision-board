@@ -2,10 +2,12 @@
 // api.md 16, 20). The server runs it before appending; the page before sending. One rule set,
 // both ends. Problems are plain English the caller can act on. `board` is the board the act was
 // sent to (the route's path); when given, everything the act names must be on it. Cards are
-// identities (`id`, `nodes`); words name them by board number (api.md 125).
+// identities (`id`, `nodes`); words name them by board number (api.md 125). On an archived board
+// only `restore` goes (archive.ts, api.md 135).
 import type { ActEvent } from '../../format/src/index.ts';
 import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
+import { archivedProblem, archiveRules } from './archive.ts';
 import { sentAfter } from './fold.ts';
 import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
@@ -34,6 +36,8 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
     if (problem) p.push(problem);
   },
   move: (e, s, board, p) => moveProblems(e, s, board, p),
+  archive: (e, s, board, p) => { onBoard(e.board, board, p); archiveRules(e, s, p); },
+  restore: (e, s, board, p) => { onBoard(e.board, board, p); archiveRules(e, s, p); },
 };
 
 /** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
@@ -92,6 +96,8 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   if (!def) return [`action: unknown "${String(e.action)}"`];
   if (e.by !== 'person' || def.by !== 'person')
     return [`${e.action}: only the person can do this, on the board; send a propose or reply item instead`];
+  const archived = archivedProblem(s, e);
+  if (archived) return [archived];
   if (isContainerAct(e)) return containerProblems(e, s, board);
   const p: string[] = [];
   const rule = RULES[e.action];

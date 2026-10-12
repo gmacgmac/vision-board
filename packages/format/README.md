@@ -25,7 +25,7 @@ never a file. The format-1 view files and transcript are archived in
   `Link`, `MODES`, `KINDS`, `ID_PATTERN`, `FORBIDDEN_KEYS`; card widths `WIDTHS`, `DEFAULT_WIDTHS`,
   `widthsOf`, api.md 132), `validateView`; ledger types
   (`LedgerEvent` and one type per event, `NodeBody`, `ParkBundle`, `LedgerRegion`, `EVENT_TYPES`,
-  `RetireEvent`, `LEDGER_FORMAT`, `LEDGER_FORMATS`, `ActionId`, `ACTION_IDS`, `PRIVATE_ACTIONS`,
+  `RetireEvent`, `LEDGER_FORMAT`, `LEDGER_FORMATS`, `ActionId`, `ACTION_IDS`, `PRIVATE_ACTIONS`, `CARD_MARKS`, `BOARD_MARKS`,
   `isPrivateAct`, `CARD_EVENTS`, `NODE_SIZES`, `ACT_SIZES`, `RENAMED_MODES`, `LIST_RENAMED`),
   `fromLine` and `toLine` (a line as the file holds it, and the event code reads),
   `MAX_TEXT`, `LIMITS`, `codePoints`, `AGENT_ID_PATTERN`, `TIMESTAMP_PATTERN`, `eventProblems` (one

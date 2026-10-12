@@ -13,31 +13,31 @@
   },
   "oneOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/board.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/board.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/region.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/region.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/node.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/node.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/link.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/link.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/unlink.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/unlink.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/reply.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/reply.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/propose.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/propose.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/park.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/park.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/13/events/retire.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/14/events/retire.schema.json#/$defs/sent"
     },
     {
       "title": "Append",
@@ -46,10 +46,10 @@
       "required": ["type", "n", "text"],
       "properties": {
         "type": {"const": "append"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeRef"},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
-        "base": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/key"}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/nodeRef"},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/key"}
       },
       "unevaluatedProperties": false
     }

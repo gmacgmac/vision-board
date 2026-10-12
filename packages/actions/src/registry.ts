@@ -21,7 +21,7 @@ interface Common {
   /** Who may take it. An agent never writes an `act` (rule 8). */
   by: 'person' | 'agent';
   /** A decision only a person's click makes (rule 8): acknowledge, drop, later, grant, deny,
-   * revoke. The page never takes it for the person. */
+   * revoke, archive. The page never takes it for the person. */
   needsConfirmation: boolean;
 }
 
@@ -74,6 +74,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   unflag: { id: 'unflag', label: 'Remove flag', ...person, onItem: false },
   // Ledger v13 (api.md 132): a container's card widths, Match or Own, from its toolbar like the mode.
   widths: { id: 'widths', label: 'Card widths', ...person, onItem: false },
+  // Ledger v14 (api.md 135): the person hides a whole board from every agent, and brings it back.
+  // Archiving takes the board away from the agents, so the page asks first; restoring does not.
+  archive: { id: 'archive', label: 'Archive board', ...decision, onItem: false },
+  restore: { id: 'restore', label: 'Restore', ...person, onItem: false },
 };
 
 /** The review buttons an item offers. */

@@ -1,8 +1,11 @@
-// New board and Rename board from the picker (navigation BE_01, api.md 90, D-034): the dialog's
-// answer becomes one `put_board` through the one sender (sender.ts, so it is refused while a past
-// version shows). A new board's id is made from its title: lowercase letters and digits joined by
-// hyphens, unique among the boards. A board the person made has no agent creator, so every agent
-// asks the person for it before drawing on it.
+// New board, Rename board, Archive board and Restore from the picker and the "⋯" menu (navigation
+// BE_01, api.md 90, D-034; N39, api.md 135-137): New board and Rename board become one `put_board`,
+// Archive board and Restore one `archive` or `restore` act, each through the one sender (sender.ts,
+// so it is refused while a past version shows). A new board's id is made from its title: lowercase
+// letters and digits joined by hyphens, unique among the boards, archived ones too, so it never
+// lands on an archived board. A board the person made has no agent creator, so every agent asks the
+// person for it before drawing on it. Archive asks first (ruling 5); the page then opens the next
+// board (boards.ts, which does so whoever archived it). Restore opens the board it brings back.
 import type { BoardActionId, LedgerState } from '../../../../packages/actions/src/index.ts';
 import type { BoardFields } from './io.ts';
 import type { Sender } from './sender.ts';
@@ -20,17 +23,39 @@ export function boardIdFor(title: string, taken: { has(id: string): boolean }): 
   return id;
 }
 
+/** A day as the archive confirm and the Archived list say it, in the viewer's own words: "11 Oct",
+ *  with the year when it is not this year's. */
+export function dayOf(at: string, now = new Date()): string {
+  const d = new Date(at);
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', ...(d.getFullYear() !== now.getFullYear() && { year: 'numeric' }) });
+}
+
+/** The archive confirm's words (ruling 5): heading, body, and the confirming button. */
+export function archiveAsk(title: string, dates: { created: string; updated: string }, now = new Date()): [string, string, string] {
+  return [
+    `Archive '${title}'?`,
+    `Created ${dayOf(dates.created, now)}, last updated ${dayOf(dates.updated, now)}. Agents won't see it; you can restore it from the board picker.`,
+    'Archive',
+  ];
+}
+
 export interface BoardEditDeps {
-  sender: Pick<Sender, 'board'>;
+  sender: Pick<Sender, 'board' | 'actOn'>;
   state(): LedgerState | null;
-  /** The open board: the one Rename board renames. */
+  /** The open board: the one Rename board renames and Archive board archives. */
   id(): string;
   switchTo(id: string): void;
+  /** Ask the person (the shell's confirm dialog); true when confirmed. */
+  confirm(heading: string, body: string, confirm: string): Promise<boolean>;
 }
 
 export interface BoardEdit {
   /** Create a board (then open it), or rename the open one; null when recorded, else the problem. */
   save(action: BoardActionId, fields: BoardFields): Promise<string | null>;
+  /** Ask, then archive the open board; null when archived or cancelled, else the problem. */
+  archive(): Promise<string | null>;
+  /** Restore board `id` and open it; null when restored, else the problem. */
+  restore(id: string): Promise<string | null>;
 }
 
 export function createBoardEdit(d: BoardEditDeps): BoardEdit {
@@ -40,6 +65,20 @@ export function createBoardEdit(d: BoardEditDeps): BoardEdit {
       if (!id) return 'No board is open to rename.';
       const problem = await d.sender.board(id, fields);
       if (problem === null && action === 'new-board') d.switchTo(id);
+      return problem;
+    },
+    async archive() {
+      const id = d.id();
+      const s = d.state();
+      const board = s?.boards.get(id);
+      const dates = s?.dates.get(id);
+      if (!board || !dates) return 'No board is open to archive.';
+      if (!(await d.confirm(...archiveAsk(board.title, dates)))) return null;
+      return d.sender.actOn(id, { action: 'archive' });
+    },
+    async restore(id) {
+      const problem = await d.sender.actOn(id, { action: 'restore' });
+      if (problem === null) d.switchTo(id);
       return problem;
     },
   };

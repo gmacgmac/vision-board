@@ -8,6 +8,7 @@ import { retireCards } from '../../../packages/actions/src/index.ts';
 import { cardOn, noCard } from './edge.ts';
 import type { Ledger } from './ledger.ts';
 import { fail } from './write-problem.ts';
+import { agentSees } from './visibility.ts';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -20,10 +21,13 @@ export interface Batch { ledger: Ledger; agent: string; board: string; failed: S
 export const refsOf = (type: unknown): readonly ('n' | 'from' | 'to')[] =>
   (type === 'link' || type === 'unlink' ? ['from', 'to'] : ['n']);
 
-/** The line this agent's retry key is stored on, across the project (api.md 29), as code reads it. */
+/** The line this agent's retry key is stored on, across the project (api.md 29), as code reads it.
+ * A key on a line agents don't see (an archived board, api.md 136) is free again: none is found. */
 export function storedFor(b: Batch, key: string): LedgerEvent | undefined {
-  const seq = b.ledger.state().keys.get(b.agent)?.get(key);
-  return seq === undefined ? undefined : b.ledger.events().find((e) => e.seq === seq);
+  const s = b.ledger.state();
+  const seq = s.keys.get(b.agent)?.get(key);
+  const e = seq === undefined ? undefined : b.ledger.events().find((x) => x.seq === seq);
+  return e && agentSees(s, e) ? e : undefined;
 }
 
 /** The identity `{ key }` names: a node made earlier in this batch or by an earlier call from this

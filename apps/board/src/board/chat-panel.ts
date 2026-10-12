@@ -6,8 +6,8 @@
 // (starting one is the person's click, so it grants the board, api.md 106), and one sent while a
 // session starts waits for it and goes there (FIX_01 ruling 1); Allow or Deny, Stop, New session
 // (confirmed) and the agent or model picked (a new session, confirmed, once one is in use). Why no
-// message can go is the host's (`ChatHost.blocked`): the page still loading, a past version, a refused
-// start. In a folder with no board (board '') it talks in the folder (`start_folder_chat`); the first
+// message can go is the host's (`ChatHost.blocked`, chat-rules.ts): the page still loading, a past
+// version, an archived board, a refused start. In a folder with no board (board '') it talks in the folder (`start_folder_chat`); the first
 // board its agent draws opens, and the panel stays on that session (panel-send ruling 2). On a board
 // every message carries the selected cards and the answers since the last Send (the composer's one
 // chip, from the bridge, composer-one-chip ruling 1), and may go with no words when something is
@@ -18,79 +18,31 @@
 // The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
 import type {
-  ChatAnswerDetail, ChatComposerElement, ChatEvent, ChatFeedElement, ChatHeaderElement, ChatHost, ChatOption,
-  ChatPickDetail, ChatSendDetail, ChatState, Chip,
+  ChatAnswerDetail, ChatComposerElement, ChatFeedElement, ChatHeaderElement, ChatHost, ChatPickDetail, ChatSendDetail,
 } from '../../../../packages/chat/src/index.ts';
 import {
-  applyEvent, CHAT_ANSWER_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_SEND_EVENT, CHAT_STOP_EVENT, composerView,
+  CHAT_ANSWER_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_SEND_EVENT, CHAT_STOP_EVENT, composerView,
   EMPTY_CHAT, headerView,
 } from '../../../../packages/chat/src/index.ts';
 import { renderMarkdown } from '../../../../packages/ui/src/index.ts';
 import type { ChatBridge } from './chat-bridge.ts';
-import type { ChatMessageBody, ChatSessionInfo } from './io.ts';
+import type { ChatSessionInfo } from './io.ts';
 import { answerApproval, ApiError, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './io.ts';
+import type { Agent, Pick } from './chat-rules.ts';
+import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, sendsInChat, shownPick } from './chat-rules.ts';
 
-type Agent = ChatSessionInfo['agent'];
-
-export const AGENTS: readonly ChatOption[] = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
-/** The models each agent offers, the first what picking the agent gives; '' is its default. Claude's by
- *  exact id, with the 1M context (panel-send ruling 5). Kiro's by Kiro's ids, never `auto` (N34 ruling 3). */
-export const MODELS: Record<Agent, readonly ChatOption[]> = {
-  claude: [{ id: '', label: 'Default' }, { id: 'claude-opus-5-5[1m]', label: 'Opus 5.5' }, { id: 'claude-sonnet-5-5[1m]', label: 'Sonnet 5.5' }],
-  kiro: [{ id: 'claude-opus-5.5', label: 'Opus 5.5' }, { id: 'claude-sonnet-5.5', label: 'Sonnet 5.5' }],
-};
-export const firstModel = (agent: Agent): string => MODELS[agent][0]?.id ?? ''; // what picking `agent` gives
-/** The model a session runs: the one recorded, else the agent's first (Kiro with none runs Opus 5.5). */
-export const shownModel = (agent: Agent, model?: string): string => model || firstModel(agent);
-/** What the header shows: the session in use, else the pick (none in use, or its start was refused). */
-export const shownPick = (s: ChatSessionInfo | null, refused: string | undefined, pick: Pick): Pick => (
-  s && refused === undefined ? { agent: s.agent, model: shownModel(s.agent, s.model) } : pick);
-export const LOADING = 'Loading…';
-export const PAST = 'A past version of the board is showing. Go back to now to send a message.';
 /** What the empty feed says on a board, and in a folder with no board. */
 const EMPTY = { board: 'No messages yet. Ask the agent about this board.', folder: 'No boards here yet. Ask the agent to draw one.' };
 const NEW_ASK = ['Start a new session?', 'The agent starts again with no memory of this conversation, and a turn still running stops.', 'New session'] as const;
-
-/** What the session runs, or will when it starts. */
-export interface Pick { agent: Agent; model: string }
-
-/** Why no message can go, in the order it matters: the page not knowing yet where it is (null; ''
- *  is a folder with no board), a past version, a refused start. */
-export const blockedReason = (board: string | null, past: boolean, refused?: string): string | undefined =>
-  board === null ? LOADING : past ? PAST : refused;
-
-/** The key of the person's last message ('' before any): Send waits while it stays the one the agent
- *  was answering, and the answers handed over are the next. */
-export const lastAsk = (s: ChatState): string => s.entries.findLast((e) => e.type === 'person')?.key ?? '';
-
-/** The board a folder session's agent just drew on, its first: the page opens it. */
-export const firstBoard = (s: ChatSessionInfo | null, e: ChatEvent): string | undefined =>
-  s && s.board === undefined && e.kind === 'tool_activity' && e.state === 'done' ? e.board : undefined;
-
 const listFor = (board?: string) => (board ? listChats(board) : listFolderChats());
 
-/** One streamed event applied; `first`, the first since the stream (re)opened. An event then at or
- *  before the last one held means the server started over (a restart numbers events from 1 again,
- *  api.md 105), so the feed starts over with it. */
-export const follow = (s: ChatState, e: ChatEvent, first: boolean): ChatState =>
-  applyEvent(first && e.seq <= s.seq ? EMPTY_CHAT : s, e);
-
-/** The message's body from the composer: the words (none when blank), the notes by `seq`, the cards by number. */
-export function messageBody(text: string, chips: readonly Chip[]): ChatMessageBody {
-  const of = (kind: Chip['kind']) => chips.filter((c) => c.kind === kind).map((c) => c.ref);
-  const [notes, cards] = [of('note'), of('card')];
-  return { ...(text.trim() && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }) };
-}
-
-/** Whether the board's Send is the chat's message with no words: the session is on the open board
- *  and something is attached (ruling 4). */
-export const sendsInChat = (s: ChatSessionInfo | null, board: string | null, attached: boolean): boolean =>
-  attached && !!board && s?.board === board;
 
 export interface ChatPanelDeps {
   bridge: ChatBridge;
   /** A board's title, for change chips. */
   boardName(id: string): string;
+  /** Whether board `id` is archived: its chat takes no message (N39 ruling 3). */
+  archived?(id: string): boolean;
   confirm(heading: string, body: string, confirm: string): Promise<boolean>;
   toast(text: string, tone?: 'info' | 'error'): void;
   /** Open the sidebar; resolves once it shows. */
@@ -138,7 +90,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
     if (waitShown !== (st.wait !== null)) d.waiting((waitShown = st.wait !== null));
     if (attachedShown !== inChat()) d.attached((attachedShown = inChat()));
-    const blocked = blockedReason(st.board, st.past, st.refused);
+    const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
     const { agent, model } = current();

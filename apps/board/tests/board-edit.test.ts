@@ -1,10 +1,13 @@
 // A new board's id from its title (navigation BE_01 ruling 3): lowercase letters and digits joined
-// by hyphens, within the id limit, unique among the boards; and the dialog's answer goes to the
-// sender as one `put_board`, then the new board opens; Rename renames the open board.
+// by hyphens, within the id limit, unique among the boards, archived ones too; and the dialog's
+// answer goes to the sender as one `put_board`, then the new board opens; Rename renames the open
+// board. Archive board asks first, with the board's name and dates (N39 ruling 5), then archives the
+// open board; Restore restores a board and opens it (ruling 6).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ID_PATTERN } from '../../../packages/format/src/index.ts';
-import { boardIdFor, createBoardEdit } from '../src/board/board-edit.ts';
+import { archiveAsk, boardIdFor, createBoardEdit, dayOf } from '../src/board/board-edit.ts';
+import type { ActFields } from '../src/board/io.ts';
 import type { BoardFields } from '../src/board/io.ts';
 
 const none = new Set<string>();
@@ -24,8 +27,9 @@ test('save: New board puts a fresh id and opens it; Rename puts the open board; 
   const opened: string[] = [];
   let answer: string | null = null;
   const edit = createBoardEdit({
-    sender: { board: async (id, fields) => { sent.push([id, fields]); return answer; } },
+    sender: { board: async (id, fields) => { sent.push([id, fields]); return answer; }, actOn: async () => null },
     state: () => ({ boards: new Map([['plan', {}]]) }) as never, id: () => 'plan', switchTo: (id) => opened.push(id),
+    confirm: async () => true,
   });
   assert.equal(await edit.save('new-board', { title: 'Plan' }), null);
   assert.equal(await edit.save('rename-board', { title: 'The plan', summary: 'Why.' }), null);
@@ -33,4 +37,55 @@ test('save: New board puts a fresh id and opens it; Rename puts the open board; 
   assert.equal(await edit.save('new-board', { title: 'Other' }), 'refused');
   assert.deepEqual(sent, [['plan-2', { title: 'Plan' }], ['plan', { title: 'The plan', summary: 'Why.' }], ['other', { title: 'Other' }]]);
   assert.deepEqual(opened, ['plan-2']);
+});
+
+/** A board edit on board `plan` ("The plan"), archived board `old`, answering `answer`, asking `ok`. */
+function archiving(ok: boolean, answer: string | null = null) {
+  const acts: [string, ActFields][] = [];
+  const opened: string[] = [];
+  const asked: string[][] = [];
+  const dates = { created: '2026-10-11T09:00:00Z', updated: '2026-10-11T18:00:00Z' };
+  const edit = createBoardEdit({
+    sender: { board: async () => null, actOn: async (id, fields) => { acts.push([id, fields]); return answer; } },
+    state: () => ({ boards: new Map([['plan', { title: 'The plan' }]]), dates: new Map([['plan', dates]]) }) as never,
+    id: () => 'plan', switchTo: (id) => opened.push(id),
+    confirm: async (...ask) => { asked.push(ask); return ok; },
+  });
+  return { edit, acts, opened, asked };
+}
+
+test('archive: asks with the board\'s name and dates, then archives the open board; Cancel sends nothing', async () => {
+  const yes = archiving(true);
+  assert.equal(await yes.edit.archive(), null);
+  assert.deepEqual(yes.asked, [archiveAsk('The plan', { created: '2026-10-11T09:00:00Z', updated: '2026-10-11T18:00:00Z' })]);
+  assert.deepEqual(yes.acts, [['plan', { action: 'archive' }]]);
+  const no = archiving(false);
+  assert.equal(await no.edit.archive(), null);
+  assert.deepEqual(no.acts, []);
+  assert.equal(await archiving(true, 'refused').edit.archive(), 'refused');
+});
+
+test('restore: restores the board named and opens it; a refusal opens nothing', async () => {
+  const ok = archiving(true);
+  assert.equal(await ok.edit.restore('old'), null);
+  assert.deepEqual([ok.acts, ok.opened], [[['old', { action: 'restore' }]], ['old']]);
+  const refused = archiving(true, 'refused');
+  assert.equal(await refused.edit.restore('old'), 'refused');
+  assert.deepEqual(refused.opened, []);
+});
+
+test('archiveAsk: the confirm of ruling 5, its days in the viewer\'s words, the year only when not this one', () => {
+  const now = new Date('2026-10-12T09:00:00Z');
+  const day = (at: string) => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  assert.deepEqual(archiveAsk('Multi-bot', { created: '2026-10-11T09:00:00Z', updated: '2026-10-11T18:00:00Z' }, now), [
+    "Archive 'Multi-bot'?",
+    `Created ${day('2026-10-11T09:00:00Z')}, last updated ${day('2026-10-11T18:00:00Z')}. Agents won't see it; you can restore it from the board picker.`,
+    'Archive',
+  ]);
+  assert.match(dayOf('2025-03-02T12:00:00Z', now), /2025/);
+  assert.doesNotMatch(dayOf('2026-03-02T12:00:00Z', now), /2026/);
+});
+
+test('a new board never takes an archived board\'s id: the boards it avoids are every board', () => {
+  assert.equal(boardIdFor('Multi-bot', new Map([['multi-bot', {}]])), 'multi-bot-2');
 });

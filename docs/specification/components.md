@@ -429,3 +429,40 @@ Task `cortex-tasks/board/2026-10-11_board-app_field-report-batch-1.md`.
    keep it centred on the edge beside them), `--vb-ink-subtle` on `--vb-surface-card` (a status
    word: Lc 76.2 light, 48.8 dark). Hovered or open, its edge takes `--vb-state-context` and its
    words `--vb-ink`. Still a button with a 24px target, still opens the stepper.
+
+## Archive a board (N39)
+
+Task `cortex-tasks/board/2026-10-12_board-app_archive-board.md` (rulings 4-6; api.md 135-137),
+behind the `archiveBoard` flag (on by default; `?flags=-archiveBoard`).
+
+1. **Archive board…** is a row in the "⋯" menu (`shell/ToolbarMenu.svelte`, given `onarchive`; with
+   the `toolbarMenu` flag off there is no menu and so no row), before Open folder…, with a box icon
+   (`ButtonIcon` `archive`). It acts on the open board and is `aria-disabled` (focusable, explained in
+   its tooltip) while no board is open or a past version shows; the disabled look is the Move to
+   list's, shared (`board.css`). It asks first through the shell's confirm dialog (`ConfirmDialog`,
+   reused): "Archive 'Multi-bot'?", "Created 11 Oct, last updated 11 Oct. Agents won't see it; you
+   can restore it from the board picker.", Cancel focused, then Archive (`board/board-edit.ts`
+   `archiveAsk`; days in the viewer's locale, the year only when not this one, from the fold's
+   `dates`). Archiving sends one `archive` act through the one sender (`sender.ts` `actOn`).
+2. **The next board opens** (`board/boards.ts` `listed`, `leave`): whoever archived the open board,
+   this page or another, the board after it in the picker opens, else the one before; with none left
+   the page reloads into its empty state (as it boots in a folder with no board), which says how
+   many boards are archived. The hash and the remembered last board never open an archived board:
+   the next board after it opens instead (`board/start-board.ts` `startBoard`, `nextBoard`).
+3. **Archived (N)…** ends the board picker while any board is archived (`shell/Toolbar.svelte`). It
+   opens `shell/ArchivedDialog.svelte`, a native modal dialog holding `shell/ArchivedList.svelte`:
+   each archived board, the latest archived first, with when it was last updated and Restore (its
+   accessible name "Restore <title>"). Focus starts on the first Restore; while one is on its way it
+   says "Restoring…" and the others wait (`aria-disabled`, so focus stays); a refusal stays under the
+   list; Esc, Close or the backdrop closes it and focus goes back to the picker. Restored, the board
+   opens. Styles: `styles/archived-dialog.css`.
+4. **The chat** on an archived board takes no message: the composer says why
+   (`board/chat-rules.ts` `blockedReason`, `ARCHIVED`; the panel's pure rules moved there from
+   `chat-panel.ts`), and the server refuses one anyway (api.md 137).
+5. A new board's id is never an archived board's (`boardIdFor` takes every board).
+6. Tests: `tests/pages/picker-archive.spec.ts` (the confirm, Cancel and Esc, archive by keyboard and
+   the next board, the Archived list and Restore by keyboard, a board archived in another tab, the
+   hash and the remembered board, the empty state, the flag off, axe light and dark, the gallery
+   section's screenshots); `apps/board/tests/board-edit.test.ts`, `start-board.test.ts` and
+   `chat-bridge.test.ts` for the pure parts. The gallery's archive section
+   (`gallery/archive-section.ts`) draws the menu, the confirm and the list in each state.

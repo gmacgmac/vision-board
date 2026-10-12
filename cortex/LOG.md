@@ -219,3 +219,5 @@
 [[2026-10-11 22:54]] [board-agent] Skill v3.1: "Done." after a board change; the panel's no-board line asks for the structure first (maintainer 601-602) → Notes: `skills/vision-board/SKILL.md` (The conversation), `apps/board/server/chat-prompt.ts` (NO_BOARD)
 [[2026-10-12 09:27]] [board-app] Planned N39: archive a board (gone for agents, hidden from the picker, restorable), awaiting go → Task: [[cortex-tasks/board/2026-10-12_board-app_archive-board.md]]
 [[2026-10-12 10:06]] [board-app] Planned N40: lock a board (read-only for everyone; archive implies lock), queued after N39 → Task: [[cortex-tasks/board/2026-10-12_board-app_lock-board.md]]
+[[2026-10-12 10:44]] [board-app] N39 archive a board: ledger v14 archive/restore acts, one visibility check (boardVisibility, server visibility.ts), contract-walking test, neutral id refusal, picker Archived list and menu row, skill v3.2; five gates green → Task: [[cortex-tasks/board/2026-10-12_board-app_archive-board.md]]
+[[2026-10-12 10:59]] [board-app] N39 archive a board checked by hand and committed; tracker N39 done; lock (N40) started → Task: [[cortex-tasks/board/2026-10-12_board-app_archive-board.md]]

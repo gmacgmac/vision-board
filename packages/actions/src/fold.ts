@@ -4,15 +4,17 @@
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
-// what its next Send carries (unsent.ts), what was retired (retire.ts) and the person's private
-// flags (card-flags.ts). Every map is keyed by a card's identity (`id`); the reads give board
+// what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
+// flags (card-flags.ts), the boards the person archived (archive.ts) and each board's dates. Every map is keyed by a card's identity (`id`); the reads give board
 // numbers (numbers.ts, api.md 125). One board as the page reads it: board-state.ts.
 // Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
 // first).
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
 } from '../../format/src/index.ts';
-import { applyDrawn, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
+import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
+import type { BoardDates } from './archive.ts';
+import { foldArchive } from './archive.ts';
 import type { Place } from './containers.ts';
 import { applyContainerAct } from './containers.ts';
 import type { Ask, ItemLog, ItemNote, ItemState } from './notes.ts';
@@ -117,6 +119,12 @@ export interface LedgerState extends DrawnState {
   /** Card id -> `seq` of the person's `flag` on it, while it stands (card-flags.ts, api.md 128).
    * The page's only: no agent read looks here. */
   flags: Map<number, number>;
+  /** board -> `seq` of the person's `archive` of it, while it stands (archive.ts, api.md 135). Read
+   * through `boardVisibility` only. */
+  archived: Map<string, number>;
+  /** board -> when its first line and its own last line (`heads`) were written: the page's archive
+   * confirm and Archived list (api.md 137). */
+  dates: Map<string, BoardDates>;
 }
 
 /** The last line of one run of drawing lines by one agent on one board, with no other line on
@@ -134,7 +142,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), flags: new Map(),
+  retiredRegions: new Map(), flags: new Map(), archived: new Map(), dates: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -152,16 +160,19 @@ const marksOf = (s: LedgerState, id: number): Marks => {
 };
 
 /** Apply one valid event to `s`: the drawn part and the index in format, the rest here. The
- * person's private flag folds into `flags` only: it moves no head, sees no card and is no answer
- * (api.md 128). */
+ * person's private marks fold into `flags` and `archived` only: they move no head, see no card and
+ * are no answer (api.md 128, 135). */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   if (e.type === 'retire') keepRetiredRegion(s, e);
   applyDrawn(s, e);
   indexEvent(s.index, e);
-  if (isPrivateAct(e)) return foldFlag(s, e as ActEvent);
+  if (isPrivateAct(e)) return BOARD_MARKS.has((e as ActEvent).action) ? foldArchive(s, e as ActEvent) : foldFlag(s, e as ActEvent);
   const board = eventBoard(s, e);
   const before = board === undefined ? undefined : s.heads.get(board);
-  if (board !== undefined && !(e.type === 'seen' && 'board' in e)) s.heads.set(board, e.seq);
+  if (board !== undefined && !(e.type === 'seen' && 'board' in e)) {
+    s.heads.set(board, e.seq);
+    s.dates.set(board, { created: s.dates.get(board)?.created ?? e.at, updated: e.at });
+  }
   // The person's `board` line (a rename, api.md 90) is no agent drawing: no toast, no version.
   if (board !== undefined && DRAWING_EVENTS.has(e.type) && e.by === 'agent') {
     s.drawnHeads.set(board, e.seq);

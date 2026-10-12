@@ -12,7 +12,7 @@
       "minItems": 1,
       "maxItems": 200,
       "uniqueItems": true,
-      "items": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq", "description": "A note's `seq`."},
+      "items": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq", "description": "A note's `seq`."},
       "description": "The person's notes sent with the message, by the `seq` that made each; left out when none."
     },
     "cards": {

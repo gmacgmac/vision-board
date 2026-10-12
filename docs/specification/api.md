@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-12 (ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1053,3 +1053,43 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     ones by default, set in the page's "⋯" menu and kept in that browser. It is never written to
     the ledger and no agent reads it, so the contract does not change; `show_layout` is the same
     whatever a viewer chose.
+
+## Ledger v14: archive a board (N39, 2026-10-12)
+
+135. **Archive and restore** (rulings 1-2). `LEDGER_FORMAT` becomes 14 and every ledger `$id` moves
+    to `.../schema/ledger/14/`; `openapi.json` `info.version` becomes 1.19.0. Only adds: v2 to v13
+    lines stay valid. Two person acts on a whole board, `archive { board }` and `restore { board }`,
+    through `act` (no new operation: it is the person's route already, refuses every agent with
+    `forbidden`, and records the line like `mode`); each names its `board` and nothing else (no `n`,
+    `ver`, `region` or `nodes`; schema and `eventProblems` alike), the board must exist (context),
+    `archive` one not archived and `restore` one that is (`validateAct`, packages/actions
+    `archive.ts`). Registry: `archive` "Archive board" needs confirmation, `restore` "Restore" does
+    not; neither is an answer. Both are the person's own marks (`PRIVATE_ACTIONS`, with the flag;
+    `BOARD_MARKS`): the fold keeps only the archived set (`LedgerState.archived`); they move no head,
+    no date, see no card, and no agent read reports them (`check_responses` included). Archiving
+    removes nothing: the ledger keeps every line (D-017); deleting is a later item (N14, N24).
+136. **Gone for agents, as if it never existed** (rulings 3, 7, 9). One check,
+    `boardVisibility(s, board)` (`visible`, `archived` or `unknown`; `visibleToAgents`), in the
+    action layer, behind every agent read and write: the server's `requireBoard`
+    (`apps/board/server/visibility.ts`, the only server module that asks) answers an archived board
+    exactly as an unknown one (`not-found`, the same words) for `get_board`, `show_node`,
+    `show_container`, `show_layout`, `list_open`, `check_responses` (also when it is archived while
+    the call waits), `request_grant`, `write_board` without a `board` item, and `watch_board`, which
+    takes no credentials. `list_boards`, the conditions (picker marks included) and `show_node`'s
+    linked cards leave it out; `join`'s answer, the MCP instructions and tool descriptions never
+    mention archiving. A `write_board` batch whose `board` item would make a board with an archived
+    board's id is refused as a whole, `invalid` with "That board id isn't available; choose another
+    id." (`UNAVAILABLE`, pointer at the `board` item), saying nothing of the board; nothing is
+    written. The ledger module also refuses any agent line on an archived board with those words
+    (`archivedProblem`, whatever route it came by). A retry key stored on a line agents don't see is
+    free again, and a `{ "key": … }` naming a card there names nothing. A test walks every `x-agent`
+    operation in `openapi.json` and asserts each answers as it did before the board existed
+    (`apps/board/tests/api-archive.test.ts`).
+137. **The person's side** (rulings 2, 4-6). While a board is archived the person's other acts on it,
+    a rename (`put_board`) and a new chat (`start_chat`) are refused (`invalid`, "board: "b" is
+    archived; restore it from the board picker first"), and its chat session can't take a message
+    (`send_chat`, `conflict`); a seen still goes, and `read_ledger`, `list_chats` and `mark_seen`
+    answer as before. Restore brings every answer back as it was. The page hides it from the picker
+    and never opens it by default; the fold's `dates` (each board's first and own last line) give the
+    confirm's and the Archived list's days (`archivedBoards`; components.md § Archive a board).
+

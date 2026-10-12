@@ -108,6 +108,8 @@ const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   grant: (s, e) => R.request.lookup(s, e.request!) ?? none(),
   deny: (s, e) => R.request.lookup(s, e.request!) ?? none(),
   send: (s, e) => R.board.lookup(s, e.board!),
+  archive: (s, e) => R.board.lookup(s, e.board!),
+  restore: (s, e) => R.board.lookup(s, e.board!),
 };
 
 type Rule<T extends LedgerEvent['type']> = (s: LedgerState, e: LedgerEvent & { type: T }) => Scope;

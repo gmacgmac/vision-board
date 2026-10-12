@@ -19,6 +19,7 @@ import '../../../../packages/chat/src/chat.css';
 import '../styles/chat-host.css';
 import '../styles/chat-sidebar.css';
 import '../styles/folder-dialog.css';
+import '../styles/archived-dialog.css';
 import './gallery.css';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
@@ -45,6 +46,7 @@ import { chatSection } from './chat-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
 import { flagSection } from './flag-section.ts';
+import { archiveSection } from './archive-section.ts';
 import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
@@ -142,6 +144,7 @@ function build(): void {
   if (flagOn('linkLabels', flags)) main.append(linkLabelSection(fx));
   if (flagOn('alignSetting', flags)) main.append(alignSection(fx));
   if (flagOn('widthsControl', flags)) main.append(widthsSection(fx));
+  if (flagOn('archiveBoard', flags)) main.append(archiveSection());
   main.append(appIconSection());
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

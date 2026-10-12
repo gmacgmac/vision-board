@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.18.0",
+    "version": "1.19.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -164,7 +164,7 @@
         "operationId": "put_board",
         "x-agent": false,
         "summary": "Create or rename a board, as the person",
-        "description": "Create a board, or rename one, as the person: `title` and an optional `summary` (left out, the summary is cleared). A new board id creates the board, with no agent creator, so every agent must ask for it with `request_grant` before writing on it; an existing id renames that board. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the stored ledger line.",
+        "description": "Create a board, or rename one, as the person: `title` and an optional `summary` (left out, the summary is cleared). A new board id creates the board, with no agent creator, so every agent must ask for it with `request_grant` before writing on it; an existing id renames that board; an archived board is refused (`invalid`) until it is restored. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -1222,7 +1222,7 @@
         "operationId": "act",
         "x-agent": false,
         "summary": "Record one action by the person",
-        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, or reject an agent's proposal. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
+        "description": "Record one action by the person: acknowledge, drop, comment, ask for context, edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, reject an agent's proposal, or archive or restore the whole board. An archived board is gone for agents, as if it never existed, and every other action on it is refused until it is restored. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -1557,7 +1557,7 @@
         "operationId": "start_chat",
         "x-agent": false,
         "summary": "Start a chat session on a board",
-        "description": "Start a new chat session on a board with a command-line agent (`claude` or `kiro`) and, optionally, a model. The new session replaces the board's current one and starts with no memory; starting it is the person's click, so it grants the board to the session's agent. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the session.",
+        "description": "Start a new chat session on a board with a command-line agent (`claude` or `kiro`) and, optionally, a model. The new session replaces the board's current one and starts with no memory; starting it is the person's click, so it grants the board to the session's agent. An archived board is refused (`invalid`) until it is restored. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the session.",
         "security": [
           {
             "personCookie": []
@@ -1745,7 +1745,7 @@
         "operationId": "send_chat",
         "x-agent": false,
         "summary": "Send the person's message to the agent",
-        "description": "Send the person's message to the session's agent as one message: the words (left out to send only what is attached), the notes (by `seq`) and cards (by number) attached as chips, and the person's answers on the board since its agent was last told; it is recorded as the board's Send when it goes. On a session with no board, nothing is attached or sent, and the agent is told no board is open and it may create one. The agent answers on the session's event stream. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `message_in` event, at once; while the agent is still answering, a message with anything attached or any new answers waits and goes when the turn ends (202 with the `system` line saying so), and words alone are a `conflict`. Nothing at all to send is `invalid` at `/text`.",
+        "description": "Send the person's message to the session's agent as one message: the words (left out to send only what is attached), the notes (by `seq`) and cards (by number) attached as chips, and the person's answers on the board since its agent was last told; it is recorded as the board's Send when it goes. On a session with no board, nothing is attached or sent, and the agent is told no board is open and it may create one. A session on an archived board is refused (`conflict`) until the board is restored. The agent answers on the session's event stream. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `message_in` event, at once; while the agent is still answering, a message with anything attached or any new answers waits and goes when the turn ends (202 with the `system` line saying so), and words alone are a `conflict`. Nothing at all to send is `invalid` at `/text`.",
         "security": [
           {
             "personCookie": []
@@ -2402,43 +2402,43 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/13/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/14/events/retire.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -2534,7 +2534,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -2552,7 +2552,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -2561,7 +2561,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id"
         }
       },
       "after": {

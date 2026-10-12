@@ -15,7 +15,7 @@ const notesOf = async (n: number) => (await h.ok('show_node', { board: 'roadmap'
 test('edit, then check_responses and show_node carry the latest text under the note\'s own seq', async () => {
   const [seeded] = await notesOf(1);
   const stored = await h.ok('act', act({ action: 'note-edit', n: 1, note: seeded.seq, text: 'Rule 6 needs two examples.' }));
-  assert.equal(stored.v, 13);
+  assert.equal(stored.v, 14);
   assert.deepEqual((await notesOf(1)).map((x: any) => [x.seq, x.text, x.sent ?? false]),
     [[seeded.seq, 'Rule 6 needs two examples.', false]]);
   const r = await h.ok('check_responses', { board: 'roadmap', after: 0 });
@@ -54,7 +54,7 @@ test('note-remove takes a note back: show_node and list_open no longer have it',
 test('a group note (3_FE_02): one act with nodes, shown on each card, seen once by the agent', async () => {
   const before = (await h.ok('check_responses', { board: 'roadmap', after: 0 })).head;
   const stored = await h.ok('act', act({ action: 'comment', nodes: [5, 6], text: 'Both need a source.' }));
-  assert.deepEqual([stored.v, stored.nodes, stored.n, stored.ver], [13, [5, 6], undefined, undefined]);
+  assert.deepEqual([stored.v, stored.nodes, stored.n, stored.ver], [14, [5, 6], undefined, undefined]);
   for (const n of [5, 6]) {
     assert.deepEqual((await notesOf(n)).map((x: any) => [x.seq, x.nodes, x.text]), [[stored.seq, [5, 6], 'Both need a source.']]);
   }

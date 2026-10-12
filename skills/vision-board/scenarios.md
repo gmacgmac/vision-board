@@ -27,6 +27,7 @@ board or more than about 6 cards, a good run first suggests the structure in a l
 the turn, unless the person already named it; "A good run" then describes the turn that draws. In
 every scenario no `size` is set, no card's title or text carries a number of its own, and the
 chat words are one or two lines with no numbered list.
+v3.2 (skill v3.2, archive a board, N39 ruling 10): 20 (which board "the board" means) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -409,3 +410,17 @@ selected these cards:".
 - **Fails if** it retires before answering card 3, retires the whole container (which takes the
   new summary with it), writes more than one summary card, re-asks question 4, distils any other
   container, or later distils or retires cards on its own without being asked.
+
+## 20. "Update the board" with two boards of similar names (own chat, then panel)
+
+**Situation.** `list_boards` shows "Multi-bot" (`multi-bot`) and "Multi-bot plan"
+(`multi-bot-plan`). In its own chat, the person writes: "Update the board with what we just agreed."
+Later, in the chat panel on `multi-bot-plan`, the person writes the same words.
+
+**A good run**
+- In its own chat: asks which in one line ("Multi-bot or Multi-bot plan?") and ends the turn with no
+  write; once told, draws there.
+- In the panel: writes on `multi-bot-plan`, the panel's own board (`Board: multi-bot-plan`), without
+  asking, and ends with "Done."
+- Never writes on both, and never guesses from the closer name.
+

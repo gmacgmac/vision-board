@@ -9,6 +9,8 @@ export type { ProposalView } from './numbers.ts';
 export { retireCards, retireProblem } from './retire.ts';
 export type { RetireTarget } from './retire.ts';
 export { flagsOn } from './card-flags.ts';
+export { archivedBoards, archivedProblem, boardVisibility, UNAVAILABLE, visibleToAgents } from './archive.ts';
+export type { ArchivedBoard, BoardDates, BoardVisibility } from './archive.ts';
 export { eventBoard, placeOf, REFERENCE_KINDS, REFERENCES, scopeOf } from './references.ts';
 export type { CardPlace, Container, ReferenceKind, Scope } from './references.ts';
 export { liveNotes } from './notes.ts';

@@ -93,8 +93,8 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Acts the schema asks to name their board (api.md 16): it is always the board they are sent to. */
-const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke']);
+/** Acts the schema asks to name their board (api.md 16, 135): it is always the board they are sent to. */
+const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', 'archive', 'restore']);
 /** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
 const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'note-edit', 'note-remove', 'pin', 'unpin']);
 const namesBoard = (f: ActFields) =>

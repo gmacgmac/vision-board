@@ -258,8 +258,8 @@ code { font-family: var(--vb-font-mono); }
 .vb-move-item:hover, .vb-move-item:focus-visible, .vb-menu-item:hover, .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }
 :is(.vb-move-item, .vb-menu-item):focus-visible { outline-offset: -2px; }
 :is(.vb-move-item, .vb-menu-item):active { transform: translateY(1px); }
-.vb-move-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
-.vb-move-item[aria-disabled='true']:hover { background: none; }
+:is(.vb-move-item, .vb-menu-item)[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
+:is(.vb-move-item, .vb-menu-item)[aria-disabled='true']:hover { background: none; }
 /* The "⋯" menu hangs under its button at the toolbar's right end, over the requests strip and the
    reply panel while open; each row is its icon, its words, then its tick and key. */
 .vb-toolbar:has(.vb-menu-btn[aria-expanded='true']) { z-index: 7; }

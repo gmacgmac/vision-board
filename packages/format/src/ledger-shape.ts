@@ -4,8 +4,8 @@
 // table of broken lines and they must give the same verdict, not the same words (api.md 9).
 import type { ActionId, EventType } from './ledger.ts';
 import {
-  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, LIST_RENAMED, NODE_SIZES,
-  NOTE_KINDS, PERSON_EVENTS, PERSON_TOO, PRIVATE_ACTIONS,
+  ACTION_IDS, ACT_SIZES, AGENT_EVENTS, BOARD_MARKS, CARD_MARKS, CONTAINER_ACTIONS, EVENT_TYPES, ITEM_REMOVED, LEDGER_FORMATS, LIST_RENAMED,
+  NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES, WIDTHS } from './view.ts';
 
@@ -216,7 +216,12 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'reject') need('proposal', 'proposal: the seq of the propose event being turned down');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
   // The flag marks one card, whatever its version (api.md 128).
-  if (PRIVATE_ACTIONS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(`${f}: a ${a} names one card with n, and nothing else`);
+  if (CARD_MARKS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(`${f}: a ${a} names one card with n, and nothing else`);
+  // Archive and restore mark a whole board (api.md 135).
+  if (BOARD_MARKS.has(a as ActionId)) {
+    need('board', `${a}: board required`);
+    for (const f of ['n', 'ver', 'region', 'nodes']) if (has(f)) p.push(`${f}: ${a === 'archive' ? 'an' : 'a'} ${a} names its board, and nothing else`);
+  }
 }
 
 /** A `retire` names its cards, and with `region` the container they were in (api.md 126); without a

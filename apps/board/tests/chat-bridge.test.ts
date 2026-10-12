@@ -16,7 +16,7 @@ import type { BoardData } from '../src/board/io.ts';
 import {
   boardCards, boardContext, cardChip, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL,
 } from '../src/board/chat-bridge.ts';
-import { blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/board/chat-panel.ts';
+import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/board/chat-rules.ts';
 import { createSelection } from '../src/board/selection.ts';
 
 const A = 'a-aaaa1111';
@@ -202,4 +202,8 @@ test('the message\'s body and why no message can go', () => {
   assert.equal(blockedReason('b', true, 'refused'), PAST);
   assert.equal(blockedReason('b', false, 'Kiro is not available.'), 'Kiro is not available.');
   assert.equal(blockedReason('b', false), undefined);
+  // N39 ruling 3: a chat on an archived board takes no message, and says why in the composer.
+  assert.equal(blockedReason('b', false, 'Kiro is not available.', true), ARCHIVED);
+  assert.equal(blockedReason('b', true, undefined, true), PAST);
+  assert.match(ARCHIVED, /archived.*Restore it from the board picker/);
 });

@@ -6,7 +6,9 @@
 // (New board, Rename board: `put_board`, api.md 90) go out here too. While a past version of
 // the board shows (versions.ts), every act is refused here, before it is sent: the one funnel
 // (navigation FE_01 ruling 5). A card seen (FE_02: selecting a changed card, a step of its
-// stepper) goes out here too, in order, so every line the person adds has one way out.
+// stepper) goes out here too, in order, so every line the person adds has one way out, and so do
+// the person's archive and restore of a whole board (`actOn`, api.md 135), which may name a board
+// other than the open one.
 import type { LedgerLine } from '../../../../packages/format/src/index.ts';
 import type { ActFields, BoardFields } from './io.ts';
 import { ApiError, markCardSeen, putBoard, sendAct } from './io.ts';
@@ -32,6 +34,8 @@ export interface Sender {
   record(fields: ActFields): Promise<boolean>;
   /** Create board `id`, or rename it; null when recorded, else the problem's detail. */
   board(id: string, fields: BoardFields): Promise<string | null>;
+  /** Send one act to board `id`, open or not (archive, restore); null when recorded, else the problem's detail. */
+  actOn(id: string, fields: ActFields): Promise<string | null>;
   /** Send `steps` in order, the acts of one step side by side, and draw once at the end. Stops
    *  after a step with a refusal; true when every act was recorded. */
   run(steps: readonly (readonly ActFields[])[]): Promise<boolean>;
@@ -59,12 +63,11 @@ export function createSender(d: SenderDeps): Sender {
   }
 
   /** Send one call that answers a stored line, and apply it. */
-  async function send(call: () => Promise<LedgerLine>): Promise<string | null> {
+  async function send(call: () => Promise<LedgerLine>, board = d.board()): Promise<string | null> {
     if (d.readOnly()) {
       d.fail(new ApiError(READ_ONLY));
       return READ_ONLY;
     }
-    const board = d.board();
     try {
       await tracked(call().then((line) => d.own(line, board)));
       return null;
@@ -104,6 +107,7 @@ export function createSender(d: SenderDeps): Sender {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
     board: (id, fields) => send(() => putBoard(id, fields)), // a board line names no card
+    actOn: (id, fields) => send(() => sendAct(id, fields), id),
     run: (list) => held(() => steps(list)),
     seen: (marks) => held(async () => {
       for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver))) !== null) return false;

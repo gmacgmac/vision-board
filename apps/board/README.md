@@ -57,7 +57,8 @@ an agent by its Bearer secret. `server/agents.ts` is the only module that touche
 `write_board` batch item by item (the cards it names, `server/write-refs.ts`; keys, `base`, grants,
 a retire's owed cards, then the ledger module). Requests name a card by its number on the board in
 the path; `server/edge.ts` is the one place a number coming in becomes the card's identity
-(api.md 125). The chat routes
+(api.md 125); `server/visibility.ts` is the only module that asks whether a board is archived: every
+agent operation names its board through it, so an archived board is not found (api.md 136). The chat routes
 (`server/chat.ts`, api.md 98-107) run sessions through `packages/agent`: `server/chat-sessions.ts`
 starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
 module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the

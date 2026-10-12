@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓, ✗, a comment, more context, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -81,6 +81,8 @@ their descriptions hold the exact fields.
 ## Starting a board
 
 - One board per subject. Call `list_boards` first and reuse the board for the same subject.
+- **Which board.** In the chat panel, "the board" is always the panel's own (`Board: <id>`).
+  Elsewhere, when "the board" could mean more than one board, ask which in one line before writing.
 - Write a `board` item: `title` names the subject only, short enough for the toolbar picker
   ("Pricing review", never "Vision Board: pricing review"); `summary` is one or two sentences.
   The id is lowercase letters, digits and hyphens (`pricing-review`).

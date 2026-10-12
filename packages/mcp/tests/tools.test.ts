@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { OPERATIONS } from '../../format/src/index.ts';
-import { TOOL_FILE, routeOf } from '../src/index.ts';
+import { INSTRUCTIONS, INSTRUCTIONS_JOINED, TOOL_FILE, routeOf } from '../src/index.ts';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const { tools } = TOOL_FILE;
@@ -35,6 +35,11 @@ test('descriptions: the first sentence ends with a full stop, the whole under 2,
     assert.ok(t.description.length < 2048, `${t.name}: ${t.description.length} characters`);
     assert.ok(t.title.length > 0, `${t.name} has a title`);
   }
+});
+
+test('no tool description and no instructions tell an agent about archived boards (N39 ruling 3)', () => {
+  for (const t of tools) assert.doesNotMatch(`${t.title} ${t.description}`, /archiv/i, t.name);
+  for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) assert.doesNotMatch(text, /archiv/i);
 });
 
 test('write_board, join and request_grant tell the agent about the `secret` argument', () => {

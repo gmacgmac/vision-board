@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json",
   "title": "Act event",
   "description": "One action from the action registry. `rules` says which fields each action needs; whether it is person-only lives in packages/actions.",
   "$comment": "Was: rule 8; api.md 9",
@@ -9,23 +9,23 @@
       "type": "object",
       "required": ["action"],
       "properties": {
-        "action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send", "note-edit", "note-remove", "move", "reject", "flag", "unflag", "widths"], "description": "Which action to take, from the action registry. `flag` and `unflag` are the person's private mark on a card, which no agent ever reads."},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeNumber", "description": "The card the action is about: its number on the board in a request or an answer, its ledger number on a stored line."},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context`, `deny` and `note-edit` (the note's new text)."},
-        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted, with its own action (`ack` or `drop`), or turned down, with `reject`."},
+        "action": {"enum": ["ack", "drop", "comment", "context", "later", "reopen", "pin", "unpin", "mode", "grant", "deny", "revoke", "size", "send", "note-edit", "note-remove", "move", "reject", "flag", "unflag", "widths", "archive", "restore"], "description": "Which action to take, from the action registry. `flag`, `unflag`, `archive` and `restore` are the person's own marks, which no agent ever reads."},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/nodeNumber", "description": "The card the action is about: its number on the board in a request or an answer, its ledger number on a stored line."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/version", "description": "The node version the person was looking at."},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/longText", "description": "The person's words, for `comment`, `context`, `deny` and `note-edit` (the note's new text)."},
+        "proposal": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq", "description": "The `seq` of the proposal being accepted, with its own action (`ack` or `drop`), or turned down, with `reject`."},
         "x": {"type": "number", "description": "Where to place the node across, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container."},
         "y": {"type": "number", "description": "Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container."},
-        "board": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `widths`, `revoke` and `send`, and for a note on or a place for a whole container (with `region`)."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode`, `widths` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/lineMode", "description": "The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row` (`list` on lines from ledger v11 and older only, read as `column`)."},
-        "widths": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/widths", "description": "The card widths to set, for `widths`: `match` or `own`.", "$comment": "Was: api.md 132"},
-        "request": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
-        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board."},
-        "size": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."},
-        "note": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq", "description": "The `seq` of the `comment` or `context` act that made the note, for `note-edit` and `note-remove`."},
-        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/noteKind", "description": "What the edited note now asks for, for `note-edit`: `comment` or `context`. Left out, the note keeps its kind."},
-        "nodes": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/nodeNumbers", "description": "A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container. Board numbers in a request or an answer, ledger numbers on a stored line."}
+        "board": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id", "description": "The board the action is about, for `mode`, `widths`, `revoke`, `send`, `archive` and `restore`, and for a note on or a place for a whole container (with `region`)."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/id", "description": "The container the action is about, for `mode`, `widths` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/lineMode", "description": "The layout mode to set, for `mode`: `grid`, `flow`, `lanes`, `radial`, `column` or `row` (`list` on lines from ledger v11 and older only, read as `column`)."},
+        "widths": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/widths", "description": "The card widths to set, for `widths`: `match` or `own`.", "$comment": "Was: api.md 132"},
+        "request": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq", "description": "The `seq` of the grant request being answered, for `grant` and `deny`."},
+        "holder": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/agentId", "description": "The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board."},
+        "size": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/actSize", "description": "The card size: `s`, `m`, `l`, or `auto` to clear it, for `size`."},
+        "note": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq", "description": "The `seq` of the `comment` or `context` act that made the note, for `note-edit` and `note-remove`."},
+        "kind": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/noteKind", "description": "What the edited note now asks for, for `note-edit`: `comment` or `context`. Left out, the note keeps its kind."},
+        "nodes": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/nodeNumbers", "description": "A group of cards, two or more, all on one board, in place of `n` (and `ver`): the items a note is on, for `comment` and `context`, or the cards a `move` puts in one container. Board numbers in a request or an answer, ledger numbers on a stored line."}
       }
     },
     "sent": {
@@ -33,9 +33,9 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/rules"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/noList"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/rules"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/noList"}
       ],
       "unevaluatedProperties": false
     },
@@ -44,13 +44,13 @@
       "required": ["type"],
       "properties": {"type": {"const": "act"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/stampAgent"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/rules"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/lineRules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/rules"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/lineRules"}
       ],
       "unevaluatedProperties": false
     },
@@ -58,18 +58,18 @@
       "description": "From ledger v12 a `mode` act never names `list`: it was renamed `column`.",
       "$comment": "Kept apart from `core` so a stored line from v11 or older, which may name `list`, still reads. Was: api.md 129",
       "type": "object",
-      "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/notList"}}
+      "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/notList"}}
     },
     "lineRules": {
       "description": "A stored line from v12 on names no `list` mode.",
       "$comment": "Kept apart from `rules`, which the sent form and check_responses share. Was: api.md 129",
       "type": "object",
       "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}}}},
-      "then": {"$ref": "https://vision-board.invalid/schema/ledger/13/events/act.schema.json#/$defs/noList"}
+      "then": {"$ref": "https://vision-board.invalid/schema/ledger/14/events/act.schema.json#/$defs/noList"}
     },
     "rules": {
       "description": "What each action needs.",
-      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 16, 58-62, 66, 71, 93, 128, 132",
+      "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 16, 58-62, 66, 71, 93, 128, 132, 135",
       "type": "object",
       "allOf": [
         {
@@ -164,6 +164,11 @@
           "$comment": "The flag marks one card, whatever its version (api.md 128).",
           "if": {"type": "object", "required": ["action"], "properties": {"action": {"enum": ["flag", "unflag"]}}},
           "then": {"type": "object", "required": ["n"], "properties": {"ver": false, "region": false}}
+        },
+        {
+          "$comment": "Archive and restore mark a whole board, named by `board` and nothing else (api.md 135).",
+          "if": {"type": "object", "required": ["action"], "properties": {"action": {"enum": ["archive", "restore"]}}},
+          "then": {"type": "object", "required": ["board"], "properties": {"n": false, "ver": false, "region": false, "nodes": false}}
         },
         {
           "if": {"type": "object", "required": ["action"], "properties": {"action": {"const": "pin"}}},

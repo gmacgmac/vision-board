@@ -20,6 +20,7 @@ import '../../../packages/chat/src/chat.css';
 import './styles/chat-host.css';
 import './styles/chat-sidebar.css';
 import './styles/folder-dialog.css';
+import './styles/archived-dialog.css';
 import { defineBoardElements } from '../../../packages/ui/src/index.ts';
 import { defineChatElements } from '../../../packages/chat/src/index.ts';
 import App from './shell/App.svelte';

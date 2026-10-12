@@ -13,8 +13,9 @@ import { promptFor, wordsOf } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
-import { endWhenClosed, requireBoard } from './reads.ts';
+import { endWhenClosed } from './reads.ts';
 import { sendJson } from './respond.ts';
+import { personBoard, refuseArchived } from './visibility.ts';
 import { body } from './writes.ts';
 
 const NO_RUN = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
@@ -33,15 +34,17 @@ async function inUse({ params, chats }: Ctx) {
   return live;
 }
 
+/** A session on a board; never on an archived one, whose agent could not see it (api.md 136). */
 const startChat: Handler = async ({ req, res, params, ledger, chats }) => {
-  const board = requireBoard(ledger.state(), params.board);
+  const board = personBoard(ledger.state(), params.board);
+  refuseArchived(ledger.state(), board, 'invalid', 'no chat can start on it');
   const b = await body('start_chat', req);
   const session = await chats().start(board, b.agent as ChatSession['agent'], b.model as string | undefined);
   sendJson(res, 201, session);
 };
 
 const listChats: Handler = ({ res, params, ledger, chats }) => {
-  const board = requireBoard(ledger.state(), params.board);
+  const board = personBoard(ledger.state(), params.board);
   sendJson(res, 200, { sessions: chats().list(board) });
 };
 
@@ -63,7 +66,8 @@ function busy(live: { approvals: { release(): void } }): never {
 
 const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: 'no words, nothing attached and no new answers on the board' }] });
 
-/** The person's message. On a board, one message with the chips and the board's answers since its
+/** The person's message; never to a session on an archived board (api.md 136). On a board, one
+ * message with the chips and the board's answers since its
  * agent was last told, recorded as the board's Send when it goes (chat-sessions.ts `tell`); with
  * something attached it waits while the agent works (202 with the wait's system line). In the
  * folder, the words alone. Words alone while the agent is still answering are refused. */
@@ -72,6 +76,7 @@ const sendChat: Handler = async (ctx) => {
   const live = await inUse(ctx);
   const msg = await body('send_chat', req) as ChatMessage;
   const { board } = live.record;
+  if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', 'its chat can\'t take messages');
   const built = promptFor(ledger.state(), board, msg);
   if (board === undefined) {
     if (live.busy) busy(live);

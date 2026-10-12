@@ -1,0 +1,23 @@
+/* The Archived list (archiveBoard flag, shell/ArchivedDialog.svelte, ArchivedList.svelte): the
+   board's dialog look (board.css .vb-dialog); one row per archived board, its name and when it was
+   last updated on the left, Restore on the right; the list scrolls inside a capped height. A Restore
+   that waits while another board is restored is aria-disabled, so it keeps focus. */
+.vb-archived-list {
+  max-height: min(48vh, 360px); overflow: auto; margin: 0; padding: var(--vb-space-1); list-style: none;
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
+}
+.vb-archived-list[aria-busy='true'] { cursor: progress; }
+.vb-archived-row {
+  display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name restore' 'when restore';
+  align-items: center; column-gap: var(--vb-space-3); padding: var(--vb-space-2);
+}
+.vb-archived-row + .vb-archived-row { border-top: 1px solid var(--vb-line); }
+.vb-archived-name {
+  grid-area: name; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong);
+}
+.vb-archived-when { grid-area: when; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
+.vb-archived-restore { grid-area: restore; }
+.vb-archived-restore[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; }
+.vb-archived-restore[aria-busy='true'] { opacity: 1; cursor: progress; }
+.vb-archived-empty { margin: var(--vb-space-2) 0; color: var(--vb-ink); }

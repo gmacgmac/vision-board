@@ -1,7 +1,7 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, confirm dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { AccessHolder, BoardActionId, BoardListItem, BoardRun } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, ArchivedBoard, BoardActionId, BoardListItem, BoardRun } from '../../../../packages/actions/src/index.ts';
 import type { BoardMark } from '../board/board-data.ts';
 import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
@@ -41,6 +41,10 @@ export interface BoardDialogRequest { action: BoardActionId; title: string; summ
 export const shell = $state({
   /** The picker's list, from the held state after every batch (boards.ts `listed`). */
   boards: [] as BoardListItem[],
+  /** The archived boards, the latest archived first (archiveBoard flag, N39): the picker's Archived list. */
+  archived: [] as ArchivedBoard[],
+  /** The Archived list is open (ArchivedDialog.svelte). */
+  archivedDialog: false,
   boardId: '',
   /** Boot found no board in the folder, and none has opened since (the chat then talks in the folder). */
   noBoards: false,

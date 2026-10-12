@@ -5,7 +5,7 @@
 // access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes), selection.ts and
 // selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes, card widths, sizes), moves.ts (containers,
 // Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), finder.ts (the
-// container finder), board-edit.ts (New board, Rename board), proposal-flow.ts (proposals), update-flow.ts (changed cards),
+// container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
 // person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts (the
 // toolbar's numbers). Plain TypeScript (D-005).
@@ -64,8 +64,8 @@ export interface Board {
   proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
   /** Send to agent; null when recorded, else the problem's detail. */
   send(): Promise<string | null>;
-  /** New board or Rename board from the picker (board-edit.ts). */
-  saveBoard: BoardEdit['save'];
+  /** New board, Rename board, Archive board and Restore (board-edit.ts). */
+  boardEdit: BoardEdit;
   /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
   nextFlagged(): void;
   destroy(): void;
@@ -273,7 +273,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** Boot, and switching boards (boards.ts). */
   const boards = createBoards({
     live, vp, selection, id: () => S.id, setId: (id) => { const from = S.id; S.id = id; versions.reset(); attention.switched(from); }, redraw, layout: () => drawing.layout, fail,
-    keepView: flagOn('keepView', pageFlags()), // the view kept across a reload (FE_02 ruling 5, rule 12)
+    keepView: flagOn('keepView', pageFlags()), archiving: on('archiveBoard'), // the view kept across a reload (FE_02 ruling 5); the Archived list (N39)
   });
 
   exposeWork({
@@ -293,7 +293,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     access: accessFlow,
     proposals,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
-    saveBoard: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo }).save,
+    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: askConfirm }),
     nextFlagged: () => flags.next(),
     destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, unchat ?? (() => {})].forEach((f) => f()),
   };

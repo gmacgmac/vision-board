@@ -3,7 +3,8 @@
      `holders` is given), Chat (chatPanel flag) and the "⋯" menu holding Theme, Hide decided and
      Reply (ToolbarMenu); a narrow toolbar (`[data-narrow]`, Toolbar.svelte) shows Agents, Send and
      Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide decided,
-     Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. The gallery
+     Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. With `onarchive` (the
+     archiveBoard flag) the menu has Archive board…. The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
@@ -15,13 +16,15 @@
   import type { CommandId } from '../board/commands.ts';
   import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
 
-  let { theme, ontheme, oncommand, onhide, onsend, onrevoke, holders, chat, menu, placement = 'board', menuOpen = false }: {
+  let { theme, ontheme, oncommand, onhide, onsend, onrevoke, onarchive, holders, chat, menu, placement = 'board', menuOpen = false }: {
     theme: string;
     ontheme: () => void;
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
     onrevoke: (agent: string) => Promise<void>;
+    /** Archive board… in the "⋯" menu (archiveBoard flag); left out, no such row. */
+    onarchive?: (() => void) | undefined;
     /** The board's holders, when Agents and Send to agent show; null hides both. */
     holders: AccessHolder[] | null;
     chat: boolean;
@@ -61,5 +64,5 @@
       title={menu ? 'Open or close the chat · T' : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
       aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
   {/if}
-  {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {placement} open={menuOpen} />{/if}
+  {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {onarchive} {placement} open={menuOpen} />{/if}
 </div>

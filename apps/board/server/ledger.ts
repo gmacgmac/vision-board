@@ -15,7 +15,7 @@ import {
   LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger,
 } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { applyEvent, cardName, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
+import { applyEvent, archivedProblem, cardName, foldLedger, validateAct } from '../../../packages/actions/src/index.ts';
 import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
@@ -89,8 +89,9 @@ const wrongCaller = (e: Rec): PointerError => ({
     : `only an agent writes a ${String(e.type)} event`,
 });
 
-/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then
- * an act's action rules, so the person reads their plain words first (api.md 93), then the context. */
+/** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then a
+ * line on an archived board (an agent's is never written there, api.md 136), then an act's action
+ * rules, so the person reads their plain words first (api.md 93), then the context. */
 function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
   if (!isRec(input)) return [{ pointer: '', detail: 'the event must be an object' }];
   const hand = (list: string[]) => list.map((t) => pointerError(t, e));
@@ -101,6 +102,8 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
   const shape = eventProblems(e);
   if (shape.length) return hand(shape);
   const event = fromLine(e);
+  const archived = archivedProblem(s, event);
+  if (archived) return hand([archived]);
   const rules = event.type === 'act' ? validateAct(event as ActEvent, s, board) : [];
   return hand(rules.length ? rules : contextProblems(ix, event, cardName(s)));
 }

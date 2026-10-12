@@ -62,14 +62,14 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": true,
           "description": "True: the item was written."
         },
         "seq": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/seq",
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/seq",
           "description": "The ledger line the item was written as."
         },
         "n": {
@@ -77,11 +77,11 @@
           "description": "The card's number on this board, for a `node` or `append` item"
         },
         "ver": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/version",
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/version",
           "description": "The new version, for a `node` item"
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/title",
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/title",
           "description": "The node's title as written, for a `node` item: check it names the node you meant",
           "$comment": "Was: api.md 34"
         },
@@ -115,7 +115,7 @@
           "description": "The position of the item in your request, from 0."
         },
         "key": {
-          "$ref": "https://vision-board.invalid/schema/ledger/13/common.schema.json#/$defs/key"
+          "$ref": "https://vision-board.invalid/schema/ledger/14/common.schema.json#/$defs/key"
         },
         "ok": {
           "const": false,

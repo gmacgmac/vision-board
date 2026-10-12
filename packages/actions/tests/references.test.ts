@@ -127,6 +127,9 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   at('act:flag', l.act({ action: 'flag', n: 3 }), on('b', 'q', [3]));
   at('act:unflag', l.act({ action: 'unflag', n: 3 }), on('b', 'q', [3]));
   at('retire', l.agent(B, { type: 'retire', board: 'b', cards: [3] }), { board: 'b', cards: [3] });
+  l.v = 14; // api.md 135
+  at('act:archive', l.act({ action: 'archive', board: 'b2' }), { board: 'b2', cards: [] });
+  at('act:restore', l.act({ action: 'restore', board: 'b2' }), { board: 'b2', cards: [] });
   return { l, want };
 }
 

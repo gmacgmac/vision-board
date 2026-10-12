@@ -2,6 +2,8 @@
 // the ledger's latest `seq`. The shapes are built by packages/actions (and `show_layout`'s by
 // packages/layout); nothing is folded here. A read
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
+// Every read naming a board an agent may call names it through `requireBoard` (visibility.ts), so an
+// archived board is not found (api.md 136); `read_ledger` is the person's and names any board.
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
@@ -15,13 +17,7 @@ import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { problem } from './problem.ts';
 import { sendJson, sendJsonLines, wantsJsonLines } from './respond.ts';
-
-/** The board named in the path, refused with `not-found` when the ledger has none. */
-export function requireBoard(s: LedgerState, board: unknown): string {
-  const id = String(board);
-  if (!s.boards.has(id)) throw problem('not-found', `There is no board "${id}". Call list_boards to see the boards.`);
-  return id;
-}
+import { personBoard, requireBoard } from './visibility.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
 function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true } {
@@ -151,6 +147,7 @@ const checkResponses: Handler = async (ctx) => {
     if (!(await hold(ctx, wait, wake))) return;
   }
   const s = ledger.state();
+  requireBoard(s, board); // archived while the call waited: as if it never was
   sendJson(res, 200, { ...responsesPage(s, board, after, Number(params.limit), agent), head: s.seq });
 };
 
@@ -159,7 +156,7 @@ const checkResponses: Handler = async (ctx) => {
  * asks for `application/jsonl` (api.md 44). */
 const readLedger: Handler = ({ req, res, params, ledger }) => {
   const s = ledger.state();
-  const board = params.board === undefined ? undefined : requireBoard(s, params.board);
+  const board = params.board === undefined ? undefined : personBoard(s, params.board);
   const after = Number(params.after);
   const lines = ledger.events().filter((e) => e.seq > after && (board === undefined || eventBoard(s, e) === board)).map(toLine);
   const { list, more } = page(lines, params.limit);

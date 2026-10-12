@@ -12,10 +12,10 @@ import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { cardsIn } from './edge.ts';
 import { problem } from './problem.ts';
-import { requireBoard } from './reads.ts';
 import { sendJson } from './respond.ts';
 import { bodyProblems } from './spec.ts';
 import { writeItems } from './write-board.ts';
+import { agentSees, personBoard, requireBoard, writeTarget } from './visibility.ts';
 
 /** `join` takes 4 KiB; `write_board` 512 KiB and 200 items (api.md 28). */
 const JOIN_LIMIT = 4 * KIB;
@@ -43,7 +43,7 @@ function agentOf(caller: Ctx['caller']): string {
  * hands the board's chat session the person's answers (api.md 121), after the answer: a session
  * that can't be loaded leaves the Send as it was. */
 const act: Handler = async ({ req, res, params, ledger, chats }) => {
-  const board = requireBoard(ledger.state(), params.board);
+  const board = personBoard(ledger.state(), params.board);
   const e = cardsIn(ledger.state(), board, await body('act', req));
   const stored = ledger.append(e, { by: 'person' }, { board });
   sendJson(res, 201, eventOut(ledger.state(), stored));
@@ -55,7 +55,7 @@ const act: Handler = async ({ req, res, params, ledger, chats }) => {
 /** The person has seen version `ver` of card `n` on the board in the path (D-018), or has looked
  * at the board up to line `head` (api.md 87). */
 const markSeen: Handler = async ({ req, res, params, ledger }) => {
-  const board = requireBoard(ledger.state(), params.board);
+  const board = personBoard(ledger.state(), params.board);
   const e = await body('mark_seen', req);
   if (e.board !== undefined && e.board !== board)
     throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
@@ -100,7 +100,10 @@ const requestGrant: Handler = async ({ req, res, ledger, caller }) => {
   if (holders(s, board, region).includes(agent)) return sendJson(res, 200, { ...what, held: true });
   const open = openRequestOf(s.index, agent, board, region);
   if (open !== undefined) return sendJson(res, 200, { request: open, ...what, replayed: true });
-  const keyed = typeof b.key === 'string' ? s.keys.get(agent)?.get(b.key) : undefined;
+  // A key used on a board agents don't see is free again (visibility.ts `agentSees`).
+  const used = typeof b.key === 'string' ? s.keys.get(agent)?.get(b.key) : undefined;
+  const line = used === undefined ? undefined : ledger.events().find((e) => e.seq === used);
+  const keyed = line && agentSees(s, line) ? used : undefined;
   if (keyed !== undefined) {
     const r = s.index.requests.get(keyed);
     if (r?.board !== board || r.region !== region || s.grantNotes.get(keyed)?.reason !== b.reason) {
@@ -112,8 +115,9 @@ const requestGrant: Handler = async ({ req, res, ledger, caller }) => {
   sendJson(res, 201, { request: e.seq, ...what });
 };
 
-/** One batch of write items (api.md 34, 37): a body that cannot be read at all, or an unknown
- * board with no `board` item, is one problem; otherwise 200 with a result per item. */
+/** One batch of write items (api.md 34, 37): a body that cannot be read at all, an unknown board
+ * with no `board` item, or a batch making a board whose id isn't available (api.md 136), is one
+ * problem; otherwise 200 with a result per item. */
 const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   const agent = agentOf(caller);
   const value = await readJson(req, WRITE_LIMIT);
@@ -126,10 +130,7 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   if (top.length) throw invalid(top);
   const list = items as unknown[];
   const board = String(params.board);
-  const hasBoardItem = list.some((x) => (x as { type?: unknown } | null)?.type === 'board');
-  if (!ledger.state().boards.has(board) && !hasBoardItem) {
-    throw problem('not-found', `There is no board "${board}". Call list_boards to see the boards, or start the batch with a board item to make it.`);
-  }
+  writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));
   const results = writeItems(ledger, agent, board, list);
   const s = ledger.state();
   const pending = s.boards.has(board) ? openItems(s, board, agent).filter((x) => x.pending !== undefined) : [];

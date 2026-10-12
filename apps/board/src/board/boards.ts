@@ -8,10 +8,15 @@
 // Each board's zoom and position are kept (kept-view.ts, keepView flag) and restored on open.
 // The board opened is kept too, so a page opened with no board in its hash reopens it (start-board.ts);
 // with the openFolder flag it is kept per folder (folder.ts), and the plain key is the fallback.
+// An archived board (N39 rulings 4-6) is in neither the picker nor what opens by default; when the
+// open board is archived, here or anywhere, the next board opens, or with none left the page reloads
+// into its empty state, as it boots in a folder with no board. The Archived list (archiveBoard flag)
+// is worked out with the picker's.
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import { boardList } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import { archivedBoards, boardList, boardVisibility } from '../../../../packages/actions/src/index.ts';
 import { createKeptView } from './kept-view.ts';
-import { LAST_BOARD_KEY, startBoard } from './start-board.ts';
+import { LAST_BOARD_KEY, nextBoard, startBoard } from './start-board.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn } from './folder.ts';
 import type { Live } from './live.ts';
 import type { Selection } from './selection.ts';
@@ -33,6 +38,8 @@ export interface BoardsDeps {
   fail(err: unknown): void;
   /** The keepView flag: a board opens where the person left it, else it fits. */
   keepView: boolean;
+  /** The archiveBoard flag: the picker's Archived list. */
+  archiving: boolean;
 }
 
 export interface Boards {
@@ -64,9 +71,12 @@ export function createBoards(d: BoardsDeps): Boards {
   /** Where the board last looked at is kept: per folder once the folder is known. */
   let lastKey = LAST_BOARD_KEY;
 
+  /** Whether the picker shows board `id`: it exists and is not archived. */
+  const shown = (s: LedgerState | null, id: string) => !!s && boardVisibility(s, id) === 'visible';
+
   /** Draw board `id` from the held state; no fetch, the state holds every board. */
   function open(id: string) {
-    if (!d.live.state?.boards.has(id)) {
+    if (!shown(d.live.state, id)) {
       shell.message = `There is no board "${id}".`;
       return;
     }
@@ -95,14 +105,28 @@ export function createBoards(d: BoardsDeps): Boards {
   function listed() {
     const s = d.live.state;
     if (!s || !booted) return;
+    const before = shell.boards.map((b) => b.board);
     const list = boardList(s);
     shell.boards = list;
-    if (pending && s.boards.has(pending)) return jump(pending);
-    if (!d.id() && list.length) switchTo(list[0]!.board);
+    if (d.archiving) shell.archived = archivedBoards(s);
+    if (pending && shown(s, pending)) return jump(pending);
+    const open = d.id();
+    if (open && !shown(s, open)) return leave(open, before, list.map((b) => b.board));
+    if (!open && list.length) switchTo(list[0]!.board);
+  }
+
+  /** The open board `gone` was archived: open the board after it in the picker as it was, else the one
+   *  before it; with none left, reload into the empty state, without the board in the hash. */
+  function leave(gone: string, before: readonly string[], boards: readonly string[]) {
+    const next = nextBoard(before.includes(gone) ? before : [...d.live.state!.boards.keys()], gone, boards);
+    if (next) return switchTo(next);
+    kept.flush();
+    history.replaceState(null, '', `${location.pathname}${location.search}`);
+    location.reload();
   }
 
   function jump(id: string) {
-    pending = d.live.state?.boards.has(id) ? null : id;
+    pending = shown(d.live.state, id) ? null : id;
     if (!pending && d.id() !== id) switchTo(id);
   }
 
@@ -111,19 +135,23 @@ export function createBoards(d: BoardsDeps): Boards {
       try {
         const [, folder] = await Promise.all([d.live.load(), openFolder ? loadFolder() : null]);
         lastKey = lastBoardKey(folder);
-        const list = boardList(d.live.state!);
+        const s = d.live.state!;
+        const list = boardList(s);
         booted = true;
         shell.boards = list;
+        if (d.archiving) shell.archived = archivedBoards(s);
         unwatch = d.live.watch(openFolder ? folderMoved : undefined);
         if (!list.length) {
           shell.noBoards = true;
-          shell.message = WAITING;
+          const archived = archivedBoards(s).length;
+          shell.message = archived ? `${WAITING}\n${archived} archived: restore one from the board picker.` : WAITING;
           return;
         }
         const hash = decodeURIComponent(location.hash.slice(1));
         const ids = list.map((b) => b.board);
-        const last = [keptValue(lastKey), keptValue(LAST_BOARD_KEY)].find((x) => x !== null && ids.includes(x)) ?? null;
-        switchTo(startBoard(ids, hash, last));
+        const order = [...s.boards.keys()];
+        const last = [keptValue(lastKey), keptValue(LAST_BOARD_KEY)].find((x) => x !== null && order.includes(x)) ?? null;
+        switchTo(startBoard(ids, hash, last, order));
       } catch (err) {
         d.fail(err);
         shell.message = 'Could not reach the board server. Start it with: npm run board';

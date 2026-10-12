@@ -138,6 +138,11 @@ export const FLAGS = {
     default: true,
     description: 'Each container\'s mode row has a Match card widths switch: on, every card in a column takes the width of its widest card; off, each card keeps its own width. It sends the person\'s `widths` act (api.md 132); the agent may set a container\'s widths when drawing. Off, no switch; the agent\'s or the layout\'s default widths still apply.',
   },
+  archiveBoard: {
+    // On by default (maintainer, 2026-10-12, N39 rulings 4-6); ?flags=-archiveBoard turns it off.
+    default: true,
+    description: 'The "⋯" menu has Archive board…, which asks first, then hides the open board from every agent and from the picker and opens the next board (api.md 135-137); the board picker ends with Archived (N)…, a list of archived boards each with Restore, which brings the board back and opens it. Off, neither shows; an archived board stays hidden.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
