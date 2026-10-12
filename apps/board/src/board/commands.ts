@@ -1,15 +1,22 @@
 // The board page's view commands (3_FE_02 ruling 5): zoom out, Fit and zoom in in the header; the
-// selection bar's Comment, Move to (3_FE_03 ruling 8), Remove card (N24), Zoom to selection and Clear; the area bar's
+// selection bar's Comment, Move to (3_FE_03 ruling 8), Remove (N24) and Zoom (short words; the tooltip and
+// accessible name say the rest); the area bar's
 // Zoom to this area. ONE table drives the header buttons, the bars and the keys, so nothing is
 // wired twice. They change only what the person sees (or open the note bubble or the move list),
 // so none is a ledger event (rule 8 covers the note, the move and the removal themselves, which are
 // written through the action layer).
 
-export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
+export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'zoom-area', 'container-note'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
 
 export interface CommandDef {
+  /** The button's visible word. */
   label: string;
+  /** What it does in full, when `label` is short: the tooltip, the accessible name and the key
+   *  list's row say this (selection-bar-shorter ruling 5). */
+  means?: string;
+  /** The key list's row, when `means` is too long for its column beside two keys (Remove). */
+  listed?: string;
   /** Keys that run it (`KeyboardEvent.key`, lower case, `shift+` in front for a Shift
    *  combination), the first one shown in hints. */
   keys: readonly string[];
@@ -31,12 +38,11 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   move: { label: 'Move to', keys: ['shift+m'], acts: true },
   // R with a selection; with none, R is the focused card's own reset (keys.ts).
   'reset-places': { label: 'Reset places', keys: ['r'], acts: true },
-  // The selected cards leave the board, after a confirm (N24, remove-flow.ts): "Remove card", or
-  // "Remove cards" with several selected (selection-flow.ts names it). Without the personRemove flag
-  // the bar has no such button and the keys do nothing.
-  remove: { label: 'Remove card', keys: ['delete', 'backspace'], acts: true },
-  'zoom-selection': { label: 'Zoom to selection', keys: ['z'] },
-  clear: { label: 'Clear', keys: [] },
+  // The selected cards leave the board, after a confirm (N24, remove-flow.ts): the bar says "Remove";
+  // its tooltip says the card or the cards (selectionButtons). Without the personRemove flag the bar
+  // has no such button and the keys do nothing.
+  remove: { label: 'Remove', means: 'Remove the selected cards', listed: 'Remove cards', keys: ['delete', 'backspace'], acts: true },
+  'zoom-selection': { label: 'Zoom', means: 'Zoom to the selection', keys: ['z'] },
   'zoom-area': { label: 'Zoom to this area', keys: [] },
   // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
   // container's note, a comment as N is for the selection. Those keys mean this only there.
@@ -45,7 +51,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
-export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'clear'];
+export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'zoom-selection'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
 /** The commands whose keys apply on a focused container's title line, before any other meaning. */
 export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
@@ -66,10 +72,10 @@ export const isCommand = (s: string | undefined): s is CommandId => COMMAND_IDS.
 export const keyText = (key: string) => key.split('+').filter(Boolean)
   .map((k) => (k === 'shift' ? 'Shift' : k.length > 1 ? k[0]!.toUpperCase() + k.slice(1) : k.toUpperCase())).join('+') || key;
 
-/** A button's tooltip: its label and its key ("Zoom in · +"). */
+/** A button's tooltip: what it does and its key ("Zoom in · +", "Zoom to the selection · Z"). */
 export function commandTitle(id: CommandId): string {
-  const key = COMMANDS[id].keys[0];
-  return key ? `${COMMANDS[id].label} · ${keyText(key)}` : COMMANDS[id].label;
+  const { means, label, keys } = COMMANDS[id];
+  return keys[0] ? `${means ?? label} · ${keyText(keys[0])}` : means ?? label;
 }
 
 /** A zoom button's tooltip: its label, its key and the level the board is at ("Zoom in · + · 75% now"). */
@@ -78,11 +84,11 @@ export const zoomTitle = (id: CommandId, percent: number): string => `${commandT
 /** The bar's buttons for a list of commands; with `readOnly`, none that acts; `off` are disabled. */
 export const barButtons = (ids: readonly CommandId[], readOnly = false, off: readonly CommandId[] = []) =>
   ids.filter((id) => !(readOnly && COMMANDS[id].acts)).map((id) => ({
-    id, label: COMMANDS[id].label, ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
+    id, label: COMMANDS[id].label, ...(COMMANDS[id].means && { title: commandTitle(id) }), ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
   }));
 
-/** The selection bar's buttons over `count` cards: Remove card reads "Remove cards" with several, and
+/** The selection bar's buttons over `count` cards: Remove's tooltip says "card" for one, and
  * is left out without the personRemove flag (`remove`); `readOnly` and `off` as for `barButtons`. */
 export const selectionButtons = (count: number, remove: boolean, readOnly = false, off: readonly CommandId[] = []) =>
   barButtons(SELECTION_COMMANDS.filter((id) => remove || id !== 'remove'), readOnly, off)
-    .map((b) => (b.id === 'remove' && count > 1 ? { ...b, label: 'Remove cards' } : b));
+    .map((b) => (b.id === 'remove' && count === 1 ? { ...b, title: b.title!.replace('cards', 'card') } : b));

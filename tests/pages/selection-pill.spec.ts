@@ -10,7 +10,7 @@ import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const TITLES = ['First idea', 'Second idea', 'Third idea'];
-const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Remove cards', 'Zoom to selection', 'Clear'];
+const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Remove', 'Zoom'];
 let boards = 0;
 
 /** A board of its own: three cards in one container, drawn by a new agent. */
@@ -180,6 +180,33 @@ for (const theme of THEMES) {
     expect(look).toEqual({ bg: await tokenColour(page, '--vb-accent-fill-hover'), ink: await tokenColour(page, '--vb-ink-on-fill') });
   });
 }
+
+// Short words on the bar, the whole meaning for everyone else: the tooltip and the accessible name say
+// what a button does and its key (selection-bar-shorter ruling 5). There is no Clear: a click on empty
+// board and Esc clear (above), and the key list names Z and Delete in full.
+test('the bar\'s short words keep their full names and keys in the tooltip and the accessible name; no Clear', async ({ page, request }) => {
+  await open(page, request);
+  await selectTwo(page);
+  await pill(page).click();
+  const full = { remove: 'Remove the selected cards · Delete', 'zoom-selection': 'Zoom to the selection · Z' };
+  for (const [command, name] of Object.entries(full)) {
+    const b = bar(page).locator(`button[data-command="${command}"]`);
+    await expect(b).toHaveAttribute('title', name);
+    await expect(bar(page).getByRole('button', { name, exact: true })).toHaveCount(1);
+    await expect(b).toHaveAttribute('aria-label', name);
+  }
+  await expect(bar(page).locator('button[data-command="clear"]')).toHaveCount(0);
+  await expect(bar(page).getByRole('button', { name: /clear/i })).toHaveCount(0);
+  // Esc closes the open bar, a second Esc clears the selection.
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  // One card: the singular.
+  await cards(page).nth(0).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
+  await pill(page).click();
+  await expect(bar(page).locator('button[data-command="remove"]')).toHaveAttribute('title', 'Remove the selected card · Delete');
+  await expect(bar(page).locator('button[data-command="remove"]')).toHaveText('Remove');
+});
 
 test('flag off (?flags=-selectionPill): today\'s bar, every button on selecting, no pill', async ({ page, request }) => {
   await open(page, request, '?flags=-selectionPill');

@@ -259,15 +259,15 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
 
 1. **One command table**, `apps/board/src/board/commands.ts` (`COMMANDS`, keyed by `CommandId`):
    zoom out, Fit and zoom in (the header), Comment, Move to (3_FE_03), Reset places (navigation FE_03; R, disabled while no selected card is
-   pinned), Zoom to selection and Clear (the selection bar), Zoom to this area (the area bar it draws when a lasso touches no card). Each entry holds
-   its label and keys; the header buttons, the bar's buttons and `keys.ts` all read from it, so a
+   pinned), Remove and Zoom (the selection bar; Clear is not a button, a click on empty board and Esc clear), Zoom to this area (the area bar it draws when a lasso touches no card). Each entry holds
+   its label (the visible word), when the label is short what it means in full (`means`: the tooltip, the accessible name and the key list read it, with the key), and keys; the header buttons, the bar's buttons and `keys.ts` all read from it, so a
    command is wired once (ruling 5).
 2. **The lasso and the bar**, `apps/board/src/board/selection-flow.ts` (`createSelectionFlow`):
    `pointer.ts`'s `lasso` gesture (Shift+drag on a background; Shift+Cmd/Ctrl adds) reports its
    screen box through `lassoMove`/`lassoEnd`; the cards it touches (`touches`, `packages/ui`'s
    `selection-bar` pattern) replace or add to the selection the same `selection.ts` module 3_FE_01
-   uses. Touching none opens the **area bar** instead, holding the lassoed world box until Clear,
-   a new lasso, or Zoom to this area dismisses it; the real selection bar shows "whenever the
+   uses. Touching none opens the **area bar** instead, holding the lassoed world box until a click
+   away, a new lasso, or Zoom to this area dismisses it; the real selection bar shows "whenever the
    selection is not empty and no bubble is open" (ruling 2), for one card same as several.
 3. **The bar's pattern**, `packages/ui/src/selection-bar/` (`<vb-selection-bar>`): `placeBar`
    centres it above the selection's screen box, below when there is no room above, kept inside the
@@ -290,7 +290,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    (api.md 62-65). Any of the group's pins reopens, edits or removes it on every card at once; a
    card may also hold its own single-card note (named by `n`) independently. With exactly one card
    selected, Comment is that card's own note (2e), unchanged.
-5. **View commands are never ledger events.** Zoom and Clear only move the viewport or the
+5. **View commands are never ledger events.** Zoom and clearing only move the viewport or the
    selection; Comment opens the note bubble, whose own write goes through the action layer as
    usual (rule 8).
 
@@ -521,8 +521,9 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 Task `cortex-tasks/board/2026-10-12_board-app_person-removes-cards.md` (rulings 1-5; api.md 141-142),
 behind the `personRemove` flag (on by default; `?flags=-personRemove`).
 
-1. **Remove card** is the selection bar's command `remove` (`board/commands.ts`), between Reset
-   places and Zoom to selection: "Remove card" over one card, "Remove cards" over several
+1. **Remove** is the selection bar's command `remove` (`board/commands.ts`), between Reset
+   places and Zoom: the button reads "Remove" and its tooltip and accessible name "Remove the selected
+   card · Delete" over one card, "Remove the selected cards · Delete" over several
    (`selectionButtons`); Delete or Backspace run it on the selection (the key bubble lists them). A
    card has no menu of its own: selecting it (a click, or Space on a focused card) gives it the bar.
 2. **Remove container** ends a container's settings menu (the cog; `RegionFrameOptions.remove`,

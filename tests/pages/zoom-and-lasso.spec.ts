@@ -114,7 +114,7 @@ test('a lasso that touches no card offers only "Zoom to this area", which zooms 
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(before.k);
 });
 
-test('the selection bar: N selected, Comment, Move to, Reset places, Remove cards, Zoom to selection, Clear; centred above the selection; follows a pan', async ({ page }) => {
+test('the selection bar: N selected, Comment, Move to, Reset places, Remove, Zoom; centred above the selection; follows a pan', async ({ page }) => {
   await openBoard(page);
   await expect(bar(page)).toBeHidden();
   await clickCard(page, 13);
@@ -124,7 +124,7 @@ test('the selection bar: N selected, Comment, Move to, Reset places, Remove card
   // The pill opens it (stage5-follow-ups FE_02); the pill stays its first item.
   expect(await barButtons(page)).toEqual(['2 selected']);
   await openSelectionBar(page);
-  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Remove cards', 'Zoom to selection', 'Clear']);
+  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Remove', 'Zoom']);
   const sel = await boxOf(page, [13, 14]);
   const b = (await bar(page).boundingBox())!;
   expect(b.y + b.height).toBeLessThanOrEqual(sel.y);
@@ -134,9 +134,14 @@ test('the selection bar: N selected, Comment, Move to, Reset places, Remove card
   const p = await emptyPoint(page);
   await drag(page, p, { x: p.x + 60, y: p.y + 40 });
   const moved = (await bar(page).boundingBox())!;
-  expect([Math.round(moved.x + moved.width / 2 - b.x - b.width / 2), Math.round(moved.y + moved.height - b.y - b.height)]).toEqual([60, 40]);
+  // The bar's width changes with its words (one pixel of rounding in its centre).
+  expect(Math.abs(moved.x + moved.width / 2 - b.x - b.width / 2 - 60)).toBeLessThanOrEqual(1);
+  expect(Math.round(moved.y + moved.height - b.y - b.height)).toBe(40);
   await openSelectionBar(page);
-  await bar(page).getByRole('button', { name: 'Clear' }).click();
+  // There is no Clear button: a click on empty board clears (Esc does too, below).
+  await expect(bar(page).getByRole('button', { name: /clear/i })).toHaveCount(0);
+  const away = await emptyPoint(page);
+  await page.mouse.click(away.x, away.y);
   expect(await selectedIds(page)).toEqual([]);
   await expect(bar(page)).toBeHidden();
 });
@@ -155,13 +160,13 @@ test('the bar goes below the selection when there is no room above it', async ({
   expect(b.y).toBeGreaterThanOrEqual(after.b);
 });
 
-test('Zoom to selection fits the selected cards; Z does the same', async ({ page }) => {
+test('Zoom (the bar\'s Zoom to the selection) fits the selected cards; Z does the same', async ({ page }) => {
   await openBoard(page);
   const fit = await view(page);
   await clickCard(page, 12);
   await clickCard(page, 17, ['Shift']);
   await openSelectionBar(page);
-  await bar(page).getByRole('button', { name: 'Zoom to selection' }).click();
+  await bar(page).getByRole('button', { name: 'Zoom to the selection · Z', exact: true }).click();
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
   const stage = (await page.locator('#stage').boundingBox())!;
   const sel = await boxOf(page, [12, 17]);

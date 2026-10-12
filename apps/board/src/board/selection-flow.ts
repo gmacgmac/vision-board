@@ -7,8 +7,8 @@
 // The bar sits over the selection whenever it is not empty and no note bubble is open, and follows
 // pan and zoom; it and the lasso are drawn on the stage, above the cards, and touch none of them.
 // With the selectionPill flag (stage5-follow-ups FE_02) the bar over a selection starts as a pill
-// that opens it (selection-pill.ts). With the personRemove flag (N24) it offers Remove card ("Remove
-// cards" with several), as Delete and Backspace do (remove-flow.ts).
+// that opens it (selection-pill.ts). With the personRemove flag (N24) it offers Remove, as Delete and Backspace do
+// (remove-flow.ts). The bar has no Clear: a click on empty board and Esc clear the selection.
 import type { BoardLayout, Box } from '../../../../packages/layout/src/index.ts';
 import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
 import type { CommandEventDetail, ToggleEventDetail } from '../../../../packages/ui/src/index.ts';
@@ -169,10 +169,6 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         return sel.length > 0;
       }
       case 'remove': return d.remove?.(d.selection.selected()) ?? false;
-      case 'clear':
-        if (!d.selection.selected().length) return false;
-        d.selection.clear();
-        return true;
       case 'zoom-selection': {
         // The selection's box with the margin Fit leaves round the board (viewport.ts `fit`).
         const b = worldBoxOf(layout, d.selection.selected());

@@ -2,7 +2,7 @@
   "name": "selection-bar",
   "title": "Selection bar and lasso",
   "tag": "vb-selection-bar",
-  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Zoom to selection and Clear. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2). With the selectionPill flag the bar is compact (24px buttons) and over a selection starts as a pill, \"3 selected\" and a chevron, that opens it (stage5-follow-ups FE_02).",
+  "description": "A glass toolbar over the person's selection: how many cards are selected, then Comment, Move to, Reset places, Remove and Zoom. Centred above the selection, below it when there is no room, drawn above the cards and moving nothing; it follows pan and zoom. A lasso that touches no card gets the area bar, which only offers Zoom to this area. The dashed lasso box (.vb-lasso) is styled here too (Architect .selbar and .lasso; 3_FE_02 rulings 1-2). With the selectionPill flag the bar is compact (24px buttons) and over a selection starts as a pill, \"3 selected\" and a chevron, that opens it (stage5-follow-ups FE_02).",
   "files": {
     "core": "selection-bar-core.ts (placeBar, pillGap, barView, boxBetween, touches, boxAround; no DOM)",
     "template": "selection-bar-template.ts (selectionBarTemplate: the only place the markup is built)",
@@ -14,7 +14,7 @@
   "parts": {
     "vb-sb-count": "'3 selected'; absent on the area bar and with the pill",
     "vb-sb-pill": "with the pill (selectionPill): a button, '3 selected' and a chevron (vb-sb-chevron), aria-expanded; first in the bar, the buttons after it show only while it is open",
-    "vb-sb-btn": "one button per command the page passes (data-command); vb-sb-primary for Comment; disabled when the command has nothing to act on (Reset places with no moved card selected)"
+    "vb-sb-btn": "one button per command the page passes (data-command), title and aria-label from its `title` when it has one; vb-sb-primary for Comment; disabled when the command has nothing to act on (Reset places with no moved card selected)"
   },
   "attributes": {
     "role": "toolbar (set by show)",
@@ -34,5 +34,5 @@
   ],
   "whenToUse": "Acting on several selected cards at once, or zooming to a lassoed area.",
   "whenNotToUse": "Actions on one card (its own footer buttons and keys), or anything that needs a typed answer (the note bubble).",
-  "accessibility": "role=toolbar with a name. The pill is a button with aria-expanded; Esc closes the open bar and puts focus back on the pill; the selection's keys work with the pill closed. Every command also has a key (N or C comment, Z zoom to selection, Esc clears), and the selection itself is announced by the board's polite live region. Real buttons with visible labels and a focus ring. The lasso box is decoration (pointer-events none); the keyboard route to a group is Space on each card."
+  "accessibility": "role=toolbar with a name. No Clear button: a click on empty board and Esc clear the selection. Remove and Zoom are short words whose title (the tooltip, and the accessible name) says the whole meaning and the key (\"Zoom to the selection · Z\"). The pill is a button with aria-expanded; Esc closes the open bar and puts focus back on the pill; the selection's keys work with the pill closed. Every command also has a key (N or C comment, Z zoom to the selection, Delete removes, Esc clears), and the selection itself is announced by the board's polite live region. Real buttons with visible labels and a focus ring. The lasso box is decoration (pointer-events none); the keyboard route to a group is Space on each card."
 }

@@ -40,6 +40,12 @@ test('template: the count then one button per command, escaped; the primary mark
   assert.doesNotMatch(selectionBarTemplate(barView(0, [{ id: 'zoom-area', label: 'Zoom to this area' }])), /vb-sb-count/);
 });
 
+test('template: a button with a title carries it as tooltip and accessible name; one without has neither', () => {
+  const html = selectionBarTemplate(barView(2, [{ id: 'zoom-selection', label: 'Zoom', title: 'Zoom to the selection · Z' }, { id: 'comment', label: 'Comment' }]));
+  assert.match(html, /data-command="zoom-selection" title="Zoom to the selection · Z" aria-label="Zoom to the selection · Z">Zoom<\/button>/);
+  assert.match(html, /data-command="comment">Comment<\/button>/);
+});
+
 test('boxes: between two corners, touching, and around several', () => {
   assert.deepEqual(boxBetween({ x: 50, y: 10 }, { x: 10, y: 40 }), { x: 10, y: 10, w: 40, h: 30 });
   const a = { x: 0, y: 0, w: 10, h: 10 };

@@ -1,5 +1,5 @@
 // The person removes cards and containers on the board page (personRemove flag, N24 rulings 1-5,
-// api.md 141): Remove card on the selection bar (one card, or "Remove cards" for several), Delete or
+// api.md 141): Remove on the selection bar (one card or several), Delete or
 // Backspace, and Remove container in a container's settings; each asks first in the confirm dialog,
 // naming what goes and warning of anything still owed an answer, then writes the person's `retire`
 // line. The cards leave, the container shows "N cards retired", numbers are never given again. A
@@ -73,7 +73,7 @@ test('Remove card on the selection bar: the confirm names the card; it leaves, t
   const before = await head(page);
   await card(page, 1).locator('.vb-node-title').click();
   await openSelectionBar(page);
-  await expect(removeButton(page)).toHaveText('Remove card');
+  await expect(removeButton(page)).toHaveText('Remove');
   await removeButton(page).click();
   await expect(dialog(page)).toBeVisible();
   await expect(dialog(page).locator('#confirm-title')).toHaveText('Remove card 1 \'Venue lead time\'?');
@@ -118,7 +118,8 @@ test('a selection: Delete asks "Remove 2 cards?", warns of the owed one, Cancel 
   await card(page, 2).locator('.vb-node-title').click();
   await card(page, 3).locator('.vb-node-title').click({ modifiers: ['Shift'] });
   await openSelectionBar(page);
-  await expect(removeButton(page)).toHaveText('Remove cards');
+  await expect(removeButton(page)).toHaveText('Remove');
+  await expect(removeButton(page)).toHaveAttribute('title', 'Remove the selected cards · Delete');
   await page.keyboard.press('Delete');
   await expect(dialog(page).locator('#confirm-title')).toHaveText('Remove 2 cards?');
   await expect(dialog(page).locator('#confirm-body')).toHaveText(

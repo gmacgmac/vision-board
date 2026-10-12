@@ -15,7 +15,7 @@ test('every command with a key is listed once, with its label and every one of i
     if (!COMMANDS[id].keys.length) assert.equal(found.length, 0, `${id} has no key`);
     else {
       assert.equal(found.length, 1, `${id} is listed once`);
-      assert.equal(found[0]!.label, COMMANDS[id].label);
+      assert.equal(found[0]!.label, COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label);
       assert.equal(found[0]!.keys.length, COMMANDS[id].keys.length);
     }
   }
@@ -60,4 +60,12 @@ test('with the cardFlag flag, Items lists Shift+F for the flag; without it, noth
   assert.deepEqual(flag(true).map((r) => r.keys), [['Shift+F']]);
   assert.deepEqual(flag(false), []);
   assert.deepEqual(rows().find((r) => r.id === 'command:fit')!.keys, ['F']);
+});
+
+// Selection-bar-shorter ruling 5: the bar says "Remove" and "Zoom", the key list still says it in full.
+test('the key list names Delete and Z in full, and the bar has no Clear command', () => {
+  const label = (id: string) => rows().find((r) => r.id === `command:${id}`)!;
+  assert.deepEqual([label('remove').label, label('remove').keys], ['Remove cards', ['Delete', 'Backspace']]);
+  assert.deepEqual([label('zoom-selection').label, label('zoom-selection').keys], ['Zoom to the selection', ['Z']]);
+  assert.ok(!(COMMAND_IDS as readonly string[]).includes('clear'));
 });

@@ -27,7 +27,7 @@ interface Sample {
 }
 
 const SAMPLES: Sample[] = [
-  { caption: 'Over two selected cards: Comment, Move to, Reset places (disabled: neither card has been moved), Zoom to selection, Clear',
+  { caption: 'Over two selected cards: Comment, Move to, Reset places (disabled: neither card has been moved), Remove, Zoom',
     titles: ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'],
     area: false, none: true, stage: { w: 680, h: 220 } },
   { caption: 'A lasso that touched no card: only Zoom to this area', titles: ['Topic: a heading for a group of cards'],
