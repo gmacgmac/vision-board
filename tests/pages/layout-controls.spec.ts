@@ -136,7 +136,9 @@ const widthsOn = async (page: Page) =>
   ((await (await page.request.get(`${PERF_BASE}/api/boards/mixed`)).json()) as { state: { widths?: Record<string, string> } }).state.widths ?? {};
 
 test('widths: each frame\'s switch shows the widths in force; a press or the keyboard sends the act, and the column follows', async ({ page }) => {
-  await openBoard(page, PERF_BASE, '?vbwork', MIXED);
+  // Controls kept at every zoom (N13): the whole board fits the window, and the frames' mode rows are
+  // not drawn zoomed out otherwise; this test is about the switch, not about hiding.
+  await openBoard(page, PERF_BASE, '?vbwork&flags=-hideControlsZoomedOut', MIXED);
   // Grid and column match by default; flow keeps its own.
   await expect(widthsSwitch(page, 'review')).toHaveAttribute('aria-checked', 'true');
   await expect(widthsSwitch(page, 'review')).toHaveAttribute('title', 'Card widths: Match');

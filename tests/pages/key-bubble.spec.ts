@@ -4,17 +4,12 @@
 // The list's content is tested against the command table and the registry in
 // apps/board/tests/key-help.test.ts; here the page shows it. Read-only, on the shared board.
 import type { Page } from '@playwright/test';
-import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const button = (page: Page) => page.getByRole('button', { name: 'Key commands' });
 const list = (page: Page) => page.locator('.vb-keys-tip');
-/** Axe on the board at its opening zoom: only the target size of the cards' own tiny controls is excused (N13, board.spec.ts); the bubble's button is checked at 24px in its own test. */
-async function expectCleanBoard(page: Page): Promise<void> {
-  const found = (await axeFindings(page)).filter((f) => f.id !== 'target-size' || f.targets.some((t) => t.includes('keys')));
-  expect(found, JSON.stringify(found)).toEqual([]);
-}
 
 async function openBoard(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}`);
@@ -90,10 +85,10 @@ for (const theme of THEMES) {
   test(`axe passes with the bubble shut and open (${theme}), and the open list matches its screenshot`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page, '?flags=-chatPanel');
-    await expectCleanBoard(page);
+    await expectNoAxeViolations(page);
     await button(page).focus();
     await expect(list(page)).toBeVisible();
-    await expectCleanBoard(page);
+    await expectNoAxeViolations(page);
     await expect(list(page)).toHaveScreenshot(`key-bubble-open-${theme}.png`);
   });
 }

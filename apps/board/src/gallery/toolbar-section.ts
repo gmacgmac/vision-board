@@ -10,7 +10,7 @@ import { pageFlags } from '../flags.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
-function sample(fx: Fixture, narrow: boolean, menuOpen = false): HTMLElement {
+function sample(fx: Fixture, narrow: boolean, zoom: number, menuOpen = false): HTMLElement {
   const host = el('div', 'g-toolbar');
   host.toggleAttribute('data-narrow', narrow);
   host.toggleAttribute('data-menu-open', menuOpen);
@@ -20,7 +20,7 @@ function sample(fx: Fixture, narrow: boolean, menuOpen = false): HTMLElement {
     props: {
       theme: 'system', ontheme: none, oncommand: none, onhide: none,
       onsend: () => Promise.resolve(null), onrevoke: () => Promise.resolve(),
-      holders: fx.boardAgents, chat: flagOn('chatPanel', pageFlags()), menu: true, placement: 'gallery', menuOpen,
+      holders: fx.boardAgents, chat: flagOn('chatPanel', pageFlags()), menu: true, zoom, placement: 'gallery', menuOpen,
     },
   });
   return host;
@@ -37,8 +37,8 @@ export function toolbarSection(fx: Fixture): HTMLElement {
   box.append(heading,
     el('p', 'g-desc', 'The end of the toolbar: zoom, Agents with its holder count, Send to agent, Chat, then "⋯", a menu holding Theme, Hide decided and Reply. Nothing in the toolbar is cut off from a 768px window up.'),
     meta,
-    group('Wide', 'A window wider than 1500px: the buttons show their words.', sample(fx, false)),
-    group('Narrow', 'A window of 1500px or less: Agents, Send to agent and Chat show their icon (Agents with its count); the words stay for screen readers and the tooltip says them.', sample(fx, true)),
-    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide decided is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, true)));
+    group('Wide', 'A window wider than 1500px: the buttons show their words.', sample(fx, false, 100)),
+    group('Narrow', 'A window of 1500px or less: Agents, Send to agent and Chat show their icon (Agents with its count); the words stay for screen readers and the tooltip says them.', sample(fx, true, 75)),
+    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide decided is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, 250, true)));
   return box;
 }

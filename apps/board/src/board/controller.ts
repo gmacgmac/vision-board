@@ -19,7 +19,7 @@ import { type BoardElements, createDrawing } from './draw.ts';
 import { createLive } from './live.ts';
 import { createFocus } from './focus.ts';
 import { bindStage } from './wiring.ts';
-import { Viewport } from './viewport.ts';
+import { Viewport, zoomPercent } from './viewport.ts';
 import { createPlaces } from './places.ts';
 import { type AccessFlow, createAccessFlow } from './access-flow.ts';
 import { createNoteFlow } from './notes.ts';
@@ -215,7 +215,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
   });
-  vp.onApply = () => { notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
+  vp.onApply = () => { shell.zoom = zoomPercent(vp.k); notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
+  shell.zoom = zoomPercent(vp.k);
 
   const accessFlow = createAccessFlow({ stage, data: () => S.data!, record });
   /** The person's flag: the button, Shift+F and the toolbar's chip (flag-flow.ts). */

@@ -70,6 +70,8 @@ export const shell = $state({
   answered: 0,
   /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
   flagged: 0,
+  /** The board's zoom as a whole percentage (board/viewport.ts `zoomPercent`): the toolbar's zoom group shows it. */
+  zoom: 100,
   replyText: '',
   replyOpen: false,
   hide: false,

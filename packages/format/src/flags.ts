@@ -15,9 +15,9 @@ export const FLAGS = {
     description: 'Cards take one of three widths (S, M, L) from their content, with a size control on each card (D-030, U7).',
   },
   hideControlsZoomedOut: {
-    // Off by default (maintainer, chat 717, tracker N13): every control stays visible at every zoom.
-    default: false,
-    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts), hide the cards\' buttons, the size control and the containers\' icon row, so none draws under the 24px target size (N8, N13).',
+    // On by default (maintainer, 2026-10-12, N13 ruling 2); ?flags=-hideControlsZoomedOut turns it off.
+    default: true,
+    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts; the toolbar shows the zoom as a percentage), hide the cards\' buttons, the size control and the containers\' icon row, so none draws under the 24px target size (N8, N13). Off, every control stays visible at every zoom.',
   },
   agentAccess: {
     default: true,

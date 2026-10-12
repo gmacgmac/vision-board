@@ -62,6 +62,13 @@ body {
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }
 .vb-zoom .vb-btn + .vb-btn { border-left: 1px solid var(--vb-line-strong); }
+/* The zoom level (N13, ZoomLevel.svelte): beside Fit, plain reading text at a fixed width so the group
+   does not shift as the digits change. */
+.vb-zoom .vb-zoom-level {
+  display: flex; align-items: center; justify-content: center; min-width: 5ch; padding: 0 var(--vb-space-2);
+  border-inline: 1px solid var(--vb-line-strong); background: var(--vb-surface-card);
+  color: var(--vb-ink); font-size: var(--vb-text-sm); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
 .vb-select, .vb-btn {
   font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);

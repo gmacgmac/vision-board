@@ -46,7 +46,7 @@
     "aria-busy": "on a proposal (vb-prop) while its answer is on its way (set by the page)",
     "data-tip-open": "on a note (vb-node-note), while its full-text tip is open beside the card, and the card is drawn above its neighbours: the pointer on the note or the tip, or focus on the note, while the note is cut (set by the note-tip behaviour; notePreview flag, which the page shows as data-note-preview on its world); Esc dismisses it, a click opens the bubble instead",
     "--card-surface, --card-surface-sunken, --note-surface": "wireLayers flag only (D-032): fills the page sets on the world (board.css, [data-wire-layers]) as --vb-card-fill of the card, topic and note surface over transparent, so a connector drawn behind a card shows through. node.css reads them with the solid token as fallback (--surface; a note's background), so with the flag off the colours are exactly as before",
-    "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (off, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work",
+    "data-zoom": "on the stage, not the node: 'far' below FAR_K, only with the hideControlsZoomedOut flag (on by default, tracker N13), hides the quick actions and the size control (keeping their space); the keyboard shortcuts still work",
     "data-awaiting": "present while the handover is owed (FE_03, set by update): the footer reads \"Awaiting\"",
     "data-status-tip-open": "on the card while the tip over \"Awaiting\" shows (hover over the state; set by the shared hover tip)",
     "data-stepping": "present while the stepper shows a step (FE_02, set by update): the footer shows the stepper only",

@@ -2,7 +2,7 @@
 // Runs after notes.spec.ts and same-picture.spec.ts on the same server, on the roadmap board. It
 // leaves the ledger as it found it: the one card it moves it puts back (R).
 import type { Locator, Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -86,7 +86,9 @@ test('click selects a card alone; Shift, Cmd and Ctrl-click add and remove; the 
   // A Shift-click selects no text (it would extend the text selection in a plain page).
   await clickCard(page, 6, ['Shift']);
   expect(await docSelection(page)).toBe('');
-  // The card's controls act on their own and leave the selection alone.
+  // The card's controls act on their own and leave the selection alone (the size control is not drawn
+  // zoomed out, N13; focusing the card brings it into view).
+  await zoomToControls(page);
   await card(page, 7).focus();
   await card(page, 7).locator('.vb-size-trig').click();
   expect(await selectedIds(page)).toEqual(['5', '6']);
@@ -123,6 +125,7 @@ test('a click on the background or a container clears the selection; Esc closes 
 
 test('Space toggles the focused card in the selection; the focus ring still shows (selection is not focus)', async ({ page }) => {
   await openBoard(page);
+  await zoomToControls(page); // the card's size control is not drawn zoomed out (N13)
   await card(page, 2).focus();
   await page.keyboard.press('Space');
   expect(await selectedIds(page)).toEqual(['2']);

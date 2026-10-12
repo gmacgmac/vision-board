@@ -3,7 +3,7 @@
 // back; Esc cancels; the bubble flips left at the board's right edge; after Send the note is
 // read-only. Runs after board.spec.ts on the same server, on cards that file leaves alone.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
@@ -71,6 +71,7 @@ test('a second press edits the note rather than adding one; M makes it ask for m
 
 test('the footer button opens it too; Esc cancels (typed words after Discard), writes nothing and gives focus back to the card', async ({ page }) => {
   await openBoard(page);
+  await zoomToControls(page); // the footer button is not drawn zoomed out (N13)
   await card(page, 5).focus();
   await card(page, 5).getByRole('button', { name: 'Comment item 5 (C)' }).click();
   await expect(page.getByRole('dialog', { name: 'Note on 5' })).toBeVisible();

@@ -68,6 +68,9 @@ export function commandTitle(id: CommandId): string {
   return key ? `${COMMANDS[id].label} · ${keyText(key)}` : COMMANDS[id].label;
 }
 
+/** A zoom button's tooltip: its label, its key and the level the board is at ("Zoom in · + · 75% now"). */
+export const zoomTitle = (id: CommandId, percent: number): string => `${commandTitle(id)} · ${percent}% now`;
+
 /** The bar's buttons for a list of commands; with `readOnly`, none that acts; `off` are disabled. */
 export const barButtons = (ids: readonly CommandId[], readOnly = false, off: readonly CommandId[] = []) =>
   ids.filter((id) => !(readOnly && COMMANDS[id].acts)).map((id) => ({

@@ -100,10 +100,10 @@ test('a board drawn later joins the picker as new, with a chip, and the open boa
   await expect(page.locator('#board')).toHaveValue('roadmap');
   await expect(page.locator('#title')).toHaveText(title!);
   await expect(option(page, 'roadmap')).not.toContainText('new');
-  // The chip passes axe in both themes; at the opening zoom only target-size is excused (N13).
+  // The chip passes axe in both themes, with nothing excused (the controls are not drawn zoomed out, N13).
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   }
   await page.locator('#board').selectOption('live-new');
   await expect(page.locator('#title')).toHaveText('Drawn later');
@@ -160,10 +160,10 @@ test('a board an agent changed is marked "changed", after a reload and in anothe
   await other.goto(`${new URL(page.url()).origin}/#roadmap`);
   await expect(option(other, 'live-changed')).toHaveText(/ · changed$/);
   await other.close();
-  // The chip passes axe in both themes; at the opening zoom only target-size is excused (N13).
+  // The chip passes axe in both themes, with nothing excused (the controls are not drawn zoomed out, N13).
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   }
   await page.locator('#board').selectOption('live-changed');
   await expect(page.locator('#title')).toHaveText('Changed elsewhere');

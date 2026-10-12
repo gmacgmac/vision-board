@@ -3,7 +3,7 @@
 // every card it moves it puts back in its own container, unpinned and open, so the files after it
 // find the board as it was.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -186,7 +186,8 @@ test('L saves a card for later in the Later container; Reopen returns it to the 
   await expect(card(page, 6)).toHaveAttribute('data-status', 'open');
   await expect.poll(() => inFrame(page, 6, 'prove')).toBe(true);
   await expect(later(page)).toHaveCount(0);
-  // The card's Later button does the same.
+  // The card's Later button does the same (not drawn zoomed out, N13).
+  await zoomToControls(page);
   await card(page, 6).getByRole('button', { name: /later/i }).click();
   await expect.poll(() => inFrame(page, 6, 'later')).toBe(true);
   await card(page, 6).getByRole('button', { name: /later/i }).click();

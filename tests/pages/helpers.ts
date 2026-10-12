@@ -95,3 +95,11 @@ export async function openSelectionBar(page: Page): Promise<void> {
   const pill = page.locator('vb-selection-bar .vb-sb-pill');
   if (await pill.count() && (await pill.getAttribute('aria-expanded')) === 'false') await pill.click();
 }
+
+/** Zoom in with the + key until the board is no longer zoomed out, so the cards' buttons, the size control
+ *  and the containers' icon rows are drawn (hideControlsZoomedOut flag, on by default, tracker N13). */
+export async function zoomToControls(page: Page): Promise<void> {
+  const stage = page.locator('#stage');
+  for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) === 'far'; i += 1) await page.keyboard.press('+');
+  await expect(stage).not.toHaveAttribute('data-zoom', 'far');
+}

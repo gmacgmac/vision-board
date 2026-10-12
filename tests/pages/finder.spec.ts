@@ -60,7 +60,7 @@ test('the dropdown lists the containers in board order with counts, Later last a
   await expect(finder(page)).toBeFocused();
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   }
 });
 
@@ -93,7 +93,7 @@ test('choosing a container puts its frame in view, centred, and focuses its titl
   await expect.poll(() => centred(page, 'later')).toBe(true);
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   }
 });
 

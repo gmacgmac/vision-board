@@ -2,7 +2,7 @@
 // 17 cards, every one numbered, 14 of them a question, decision or action that needs an answer). The tests run in this order on one server: read-only checks and
 // screenshots first, then the ones that answer items and change layouts, which change the ledger.
 import type { Locator, Page } from '@playwright/test';
-import { axeFindings, expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
+import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { REGION_HEAD } from '../../packages/layout/src/index.ts';
 
@@ -38,9 +38,9 @@ test('Tab moves from card to card, in item number order', async ({ page }) => {
   const onCard = () => page.evaluate(() => document.activeElement?.localName === 'vb-node');
   await card(page, 1).focus();
   for (const expected of ['2', '3', '4']) {
-    // Each card's own controls come first (the size glyph, its pill once the glyph has focus, and the
-    // five buttons, all shown at every zoom since N13); the next Tab that lands on a card lands on
-    // the next card.
+    // The board opens zoomed out (hideControlsZoomedOut, on by default, N13), so the cards' buttons are
+    // not drawn and the next Tab lands on the next card; with the buttons showing, each card's own
+    // controls come first. Either way the next Tab that lands on a card lands on the next card.
     let presses = 0;
     do {
       await page.keyboard.press('Tab');
@@ -51,30 +51,31 @@ test('Tab moves from card to card, in item number order', async ({ page }) => {
 });
 
 for (const theme of THEMES) {
-  // Tracker N13 (chat 717): with hideControlsZoomedOut off (the default) the stage is never "far",
-  // so the cards' buttons, the size control and the icon row stay visible at every zoom. At the
-  // opening fit-to-view zoom they draw under the 24px target size, which is the one rule excused
-  // there; at zoom 1 nothing is excused.
-  test(`axe passes at the opening zoom with only target-size excused (N13), and at zoom 1 with nothing (${theme})`, async ({ page }) => {
+  // Tracker N13: with hideControlsZoomedOut (on by default) the stage is "far" below FAR_K, where the
+  // cards' buttons, the size control and the icon rows are not drawn, so nothing small is left to
+  // excuse: axe excuses nothing at the opening zoom (zoomed out) nor at zoom 1.
+  test(`axe passes with nothing excused at the opening zoom and at zoom 1 (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
-    await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
-    await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
-    await expectNoAxeViolations(page, ['target-size']);
-    await zoomToFull(page);
-    await expectNoAxeViolations(page);
-  });
-
-  test(`with hideControlsZoomedOut on, the controls still hide below FAR_K and none draws under the target size (${theme})`, async ({ page }) => {
-    await setTheme(page, theme);
-    await openBoard(page, '?flags=hideControlsZoomedOut');
     await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-node .vb-act:visible')).toHaveCount(0);
     await expect(page.locator('vb-node .vb-size-trig:visible')).toHaveCount(0);
     await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
-    const small = (await axeFindings(page)).filter((f) => f.id === 'target-size').flatMap((f) => f.targets);
-    expect(small.filter((t) => /vb-act|vb-size|vb-mode/.test(t)), small.join('\n')).toEqual([]);
+    await expectNoAxeViolations(page);
+    await zoomToFull(page);
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+    await expectNoAxeViolations(page);
+  });
+
+  // The switch off (?flags=-hideControlsZoomedOut): every control stays visible at every zoom, and at
+  // the opening zoom they draw under the 24px target size, the one rule excused there.
+  test(`with -hideControlsZoomedOut the controls stay visible zoomed out; only target-size is excused (${theme})`, async ({ page }) => {
+    await setTheme(page, theme);
+    await openBoard(page, '?flags=-hideControlsZoomedOut');
+    await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
+    await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
+    await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
+    await expectNoAxeViolations(page, ['target-size']);
   });
 
   // With the agentAccess, versionView, containerFinder and chatPanel flags off (on by default), as every

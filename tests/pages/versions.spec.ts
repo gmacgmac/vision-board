@@ -123,7 +123,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await expect(version(page)).toHaveValue(String(first));
   for (const theme of THEMES) {
     await setTheme(page, theme);
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   }
   await idle(page);
   expect(sent.map((r) => r.url())).toEqual([]);

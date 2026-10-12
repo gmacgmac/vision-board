@@ -3,8 +3,14 @@ import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 
 const MIN_K = 0.2;
 const MAX_K = 2.5;
-/** The zoom below which the stage is "far" (data-zoom="far"), the one place it is set. */
+/** The zoom below which the stage is "far" (data-zoom="far"), the one place it is set, and so the level
+ *  below which the cards' controls hide (hideControlsZoomedOut flag, tracker N13). The toolbar shows the
+ *  zoom as a percentage (`zoomPercent`); read it there, then change this one number to move the level. */
 export const FAR_K = 0.75;
+
+/** A zoom as the whole percentage the toolbar shows (0.75 is 75). It rounds down, so the number is never
+ *  higher than the zoom: "75%" means the board is at 0.75 or more, which is where the controls show. */
+export const zoomPercent = (k: number): number => Math.floor(k * 100 + 1e-6);
 
 /** Where the view is: the pan (`x`, `y`, screen px) and the zoom (`k`). */
 export interface ViewSnapshot { x: number; y: number; k: number }
@@ -15,7 +21,7 @@ export class Viewport {
   k = 1;
   stage: HTMLElement;
   world: HTMLElement;
-  /** Whether the stage turns "far" below FAR_K: the hideControlsZoomedOut flag, off by default. */
+  /** Whether the stage turns "far" below FAR_K: the hideControlsZoomedOut flag (on by default). */
   hideFar: boolean;
   /** Called after every change of pan or zoom, so overlays can follow their card. */
   onApply: (() => void) | null = null;
@@ -30,9 +36,9 @@ export class Viewport {
 
   apply(): void {
     this.world.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.k})`;
-    // Below FAR_K the cards' buttons would draw under the 24px target size (N8). With the flag off
-    // (tracker N13) they stay visible at every zoom, so the stage is never "far".
-    if (this.hideFar && this.k < FAR_K) this.stage.dataset.zoom = 'far';
+    // Below FAR_K the cards' buttons would draw under the 24px target size (N8), so the stage is "far"
+    // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".
+    if (this.hideFar && zoomPercent(this.k) < zoomPercent(FAR_K)) this.stage.dataset.zoom = 'far';
     else delete this.stage.dataset.zoom;
     this.onApply?.();
   }

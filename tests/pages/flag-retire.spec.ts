@@ -169,7 +169,7 @@ for (const theme of THEMES) {
     await act(page, d, { action: 'flag', n: 2 });
     await open(page, d, 4);
     await expect(chip(page)).toBeVisible();
-    await expectNoAxeViolations(page, ['target-size']);
+    await expectNoAxeViolations(page);
   });
 }
 
@@ -191,7 +191,7 @@ test('a card retired: gone from the board, "1 card retired" on its container, op
   await expect(marker(page, 'p')).toHaveText('1 card retired');
   await expect(marker(page, 'p')).toHaveAccessibleName(/^1 card retired from this container\. Show v\d+, where it last appeared$/);
   await expect(marker(page, 'q')).toBeHidden();
-  await expectNoAxeViolations(page, ['target-size']);
+  await expectNoAxeViolations(page);
   // A press opens that version, read-only, where card 2 is still on the board.
   await marker(page, 'p').click();
   await expect(page.locator('.vb-banner')).toBeVisible();

@@ -229,3 +229,5 @@
 [[2026-10-12 13:22]] [project-docs] Dropped U3, U4, U7: built (node ledger, API pattern, card widths) and in daily use, reviewed by the maintainer in use (chat 647) → Notes: `cortex-tasks/tracker.md`
 [[2026-10-12 13:22]] [project-docs] U1 narrowed to board v3 items 7 (decision flow mode) and 8 (verification) → Notes: `cortex-tasks/tracker.md` (U1)
 [[2026-10-12 13:27]] [board-app] Planned N13 (zoom level shown, controls hidden below a level) and N24 (the person removes cards and containers), go given → Task: [[cortex-tasks/board/2026-10-12_board-app_zoom-level-hide-controls.md]]
+[[2026-10-12 14:07]] [board-app] Zoom level shown in the toolbar (percentage, tooltips, polite status); hideControlsZoomedOut on by default at FAR_K 0.75, axe excuses nothing at the opening zoom → Task: [[cortex-tasks/board/2026-10-12_board-app_zoom-level-hide-controls.md]]
+[[2026-10-12 14:15]] [board-app] N13: zoom level shown, controls hidden below 75% by default; tracker N13 narrowed to picking the level → Task: [[cortex-tasks/board/2026-10-12_board-app_zoom-level-hide-controls.md]]

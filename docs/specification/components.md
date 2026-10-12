@@ -216,9 +216,14 @@ record is `api.md` 58-61.
 3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
    `.vb-note-pin`, hanging off the top-right corner) and the "Your note" block (`notesMarkup`,
    latest first, `data-sent` notes grey).
-4. **Zoomed out.** The `hideControlsZoomedOut` flag (off) is the only thing that sets the stage's
-   `data-zoom="far"` below `FAR_K` (`viewport.ts`); with it off every control shows at every
-   zoom (tracker N13).
+4. **Zoomed out.** The `hideControlsZoomedOut` flag (on by default) is the only thing that sets the
+   stage's `data-zoom="far"` below `FAR_K` (`viewport.ts`, 0.75, one constant); the cards' buttons,
+   the size control and the containers' icon rows are then not drawn, so no control draws under the
+   24px target size and axe excuses nothing. Off (`?flags=-hideControlsZoomedOut`), every control
+   shows at every zoom. The toolbar's zoom group shows the level as a percentage beside Fit
+   (`ZoomLevel.svelte`, rounded down so "75%" means the controls show; `Viewport` decides "far" from
+   the same number), its buttons' tooltips say it ("Zoom in · + · 75% now"), and a polite status
+   announces it once the zoom settles (tracker N13).
 
 ## Selecting and moving (3_FE_01)
 
