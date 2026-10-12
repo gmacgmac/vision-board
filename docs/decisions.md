@@ -546,3 +546,17 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: Locking agents only (the person could leave a note the agent then owes
   but can't answer); relying on grants (the creating agent keeps writing).
 - **Task**: [[cortex-tasks/board/2026-10-12_board-app_lock-board.md]]
+
+## D-044 The person removes cards and containers with the same retire as an agent
+- **Date**: 2026-10-12 · **Status**: Accepted · **From**: maintainer (chat 652, 653, 668; tracker N24)
+- **Decision**: The person can remove a card, a selection of cards, or a container with its cards,
+  after a short confirm. It is recorded as the same ledger `retire` line an agent writes, with
+  `by: person`, through the one retire in the action layer. Removed cards leave the board and stay
+  in the ledger with their versions and notes; their numbers are never reused. The person is warned,
+  not refused, when a card is still owed an answer (agents keep their refusal); anything owed on it
+  is no longer owed. A locked or archived board refuses it (D-042, D-043).
+- **Why**: The person needs to clear cards the agent no longer will, without a second removal path
+  or breaking the append-only ledger (D-017, D-041).
+- **Alternative rejected**: A separate person-only delete (a second path that could drift from the
+  agent's retire); refusing owed cards (the person would depend on the agent to tidy up).
+- **Task**: [[cortex-tasks/board/2026-10-12_board-app_person-removes-cards.md]]
