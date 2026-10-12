@@ -224,3 +224,7 @@
 [[2026-10-12 11:56]] [board-app] Lock a board (N40): person acts lock/unlock (ledger v15, OpenAPI 1.20.0), read-only for everyone through one write check (writeProblem) and 423 `locked`; locked on reads; archive implies lock; paused controls in place, flag usable; contract-walking tests for every agent write and every act; skill v3.3; picker-archive flake fixed (stale dialog close event) → Task: [[cortex-tasks/board/2026-10-12_board-app_lock-board.md]]
 [[2026-10-12 12:04]] [board-app] N40 lock a board checked by hand and committed; tracker N40 done → Task: [[cortex-tasks/board/2026-10-12_board-app_lock-board.md]]
 [[2026-10-12 13:00]] [project-docs] D-042 (archived boards hidden from agents) and D-043 (lock: read-only for everyone) accepted (maintainer 635, 640) → Notes: `docs/decisions.md` (D-042, D-043)
+[[2026-10-12 13:22]] [project-docs] Dropped W3: ended by the chat panel (Stage 6) and Send handing over the answers → Notes: `cortex-tasks/tracker.md`
+[[2026-10-12 13:22]] [project-docs] Dropped N17: done; the skill was written from real use and is at v3.3 → Notes: `cortex-tasks/tracker.md`
+[[2026-10-12 13:22]] [project-docs] Dropped U3, U4, U7: built (node ledger, API pattern, card widths) and in daily use, reviewed by the maintainer in use (chat 647) → Notes: `cortex-tasks/tracker.md`
+[[2026-10-12 13:22]] [project-docs] U1 narrowed to board v3 items 7 (decision flow mode) and 8 (verification) → Notes: `cortex-tasks/tracker.md` (U1)
