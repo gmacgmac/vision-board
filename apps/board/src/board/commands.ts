@@ -1,11 +1,11 @@
 // The board page's view commands (3_FE_02 ruling 5): zoom out, Fit and zoom in in the header; the
-// selection bar's Comment, Move to (3_FE_03 ruling 8), Zoom to selection and Clear; the area bar's
+// selection bar's Comment, Move to (3_FE_03 ruling 8), Remove card (N24), Zoom to selection and Clear; the area bar's
 // Zoom to this area. ONE table drives the header buttons, the bars and the keys, so nothing is
 // wired twice. They change only what the person sees (or open the note bubble or the move list),
-// so none is a ledger event (rule 8 covers the note and the move themselves, which are written
-// through the action layer).
+// so none is a ledger event (rule 8 covers the note, the move and the removal themselves, which are
+// written through the action layer).
 
-export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
+export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'clear', 'zoom-area', 'container-note'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
 
 export interface CommandDef {
@@ -31,6 +31,10 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   move: { label: 'Move to', keys: ['shift+m'], acts: true },
   // R with a selection; with none, R is the focused card's own reset (keys.ts).
   'reset-places': { label: 'Reset places', keys: ['r'], acts: true },
+  // The selected cards leave the board, after a confirm (N24, remove-flow.ts): "Remove card", or
+  // "Remove cards" with several selected (selection-flow.ts names it). Without the personRemove flag
+  // the bar has no such button and the keys do nothing.
+  remove: { label: 'Remove card', keys: ['delete', 'backspace'], acts: true },
   'zoom-selection': { label: 'Zoom to selection', keys: ['z'] },
   clear: { label: 'Clear', keys: [] },
   'zoom-area': { label: 'Zoom to this area', keys: [] },
@@ -41,7 +45,7 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
 export const HEADER_COMMANDS: readonly CommandId[] = ['zoom-out', 'fit', 'zoom-in'];
-export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'zoom-selection', 'clear'];
+export const SELECTION_COMMANDS: readonly CommandId[] = ['comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'clear'];
 export const AREA_COMMANDS: readonly CommandId[] = ['zoom-area'];
 /** The commands whose keys apply on a focused container's title line, before any other meaning. */
 export const REGION_COMMANDS: readonly CommandId[] = ['container-note'];
@@ -59,8 +63,8 @@ export const regionCommandForKey = (key: string): CommandId | undefined => ON_RE
 export const isCommand = (s: string | undefined): s is CommandId => COMMAND_IDS.includes(s as CommandId);
 
 /** A key as a hint shows it: "Shift+M", "Z". */
-export const keyText = (key: string) => key.split('+').filter(Boolean).map((k) => (k === 'shift' ? 'Shift' : k.toUpperCase())).join('+')
-  || key;
+export const keyText = (key: string) => key.split('+').filter(Boolean)
+  .map((k) => (k === 'shift' ? 'Shift' : k.length > 1 ? k[0]!.toUpperCase() + k.slice(1) : k.toUpperCase())).join('+') || key;
 
 /** A button's tooltip: its label and its key ("Zoom in · +"). */
 export function commandTitle(id: CommandId): string {
@@ -76,3 +80,9 @@ export const barButtons = (ids: readonly CommandId[], readOnly = false, off: rea
   ids.filter((id) => !(readOnly && COMMANDS[id].acts)).map((id) => ({
     id, label: COMMANDS[id].label, ...(COMMANDS[id].primary && { primary: true }), ...(off.includes(id) && { disabled: true }),
   }));
+
+/** The selection bar's buttons over `count` cards: Remove card reads "Remove cards" with several, and
+ * is left out without the personRemove flag (`remove`); `readOnly` and `off` as for `barButtons`. */
+export const selectionButtons = (count: number, remove: boolean, readOnly = false, off: readonly CommandId[] = []) =>
+  barButtons(SELECTION_COMMANDS.filter((id) => remove || id !== 'remove'), readOnly, off)
+    .map((b) => (b.id === 'remove' && count > 1 ? { ...b, label: 'Remove cards' } : b));

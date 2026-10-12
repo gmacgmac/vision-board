@@ -79,6 +79,8 @@ export interface Fixture {
   parking: { view: View; state: BoardState; cards: Map<number, CardConditions>; containerReplies: readonly CardReply[] };
   /** The marks board, with each container's "N cards retired" marker as the page works it out (retired.ts). */
   marks: { view: View; state: BoardState; retired: ReadonlyMap<string, RetiredCount> };
+  /** The whole ledger folded, as the board holds it: the Remove samples' confirm words (remove-words.ts). */
+  ledger: LedgerState;
   /** The layout board, drawn through the board's own drawing (mini-board.ts). */
   layout: { view: View; state: BoardState };
 }
@@ -118,6 +120,7 @@ export function loadFixture(): Fixture {
       fresh: pageConditions(ledger, UPDATES_BOARD).fresh,
     },
     marks: { view: boardView(ledger, MARKS_BOARD), state: boardState(ledger, MARKS_BOARD), retired: retiredCounts(ledger, MARKS_BOARD) },
+    ledger,
     layout: { view: boardView(ledger, LAYOUT_BOARD), state: boardState(ledger, LAYOUT_BOARD) },
     parking: {
       view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),

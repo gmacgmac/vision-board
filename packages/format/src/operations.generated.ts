@@ -70,6 +70,10 @@ export const OPERATIONS = {
     operationId: 'act', method: 'POST', path: '/api/boards/{board}/act',
     pathParams: ['board'], xAgent: false, auth: 'person',
   },
+  retire_cards: {
+    operationId: 'retire_cards', method: 'POST', path: '/api/boards/{board}/retire',
+    pathParams: ['board'], xAgent: false, auth: 'person',
+  },
   mark_seen: {
     operationId: 'mark_seen', method: 'POST', path: '/api/boards/{board}/seen',
     pathParams: ['board'], xAgent: false, auth: 'person',

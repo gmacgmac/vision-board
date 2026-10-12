@@ -8,7 +8,7 @@
 import type { ViewNode } from '../../../../packages/format/src/index.ts';
 import type { VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
 import { BAR_GAP, barView, pillGap, placeBar } from '../../../../packages/ui/src/index.ts';
-import { AREA_COMMANDS, barButtons, SELECTION_COMMANDS } from '../board/commands.ts';
+import { AREA_COMMANDS, barButtons, selectionButtons } from '../board/commands.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
@@ -37,16 +37,16 @@ const SAMPLES: Sample[] = [
 const TWO = ['Topic: a heading for a group of cards', 'Note: the agent remarks, nothing to answer'];
 const PILL_SAMPLES: Sample[] = [
   { caption: 'Two cards selected: the pill, closed. A click or Enter opens the bar', titles: TWO,
-    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: false } },
+    area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: false } },
   { caption: 'The pill open: the compact bar, the pill first. A press outside, a pan or Esc closes it', titles: TWO,
-    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true } },
+    area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: true } },
   { caption: 'Hover: Comment (the primary) on its hover fill, Move to on the plain hover', titles: TWO,
-    area: false, none: true, stage: { w: 520, h: 200 }, pill: { open: true }, hover: ['comment', 'move'] },
+    area: false, none: true, stage: { w: 660, h: 200 }, pill: { open: true }, hover: ['comment', 'move'] },
   { caption: 'A lasso that touched no card: the compact area bar', titles: ['Topic: a heading for a group of cards'],
     area: true, stage: { w: 400, h: 180 }, pill: { open: true } },
 ];
 
-function sample(s: Sample, fx: Fixture): HTMLElement {
+function sample(s: Sample, fx: Fixture, remove: boolean): HTMLElement {
   const stage = el('div', 'g-bubble-stage vb-ground');
   stage.style.setProperty('width', `${s.stage.w}px`);
   stage.style.setProperty('height', `${s.stage.h}px`);
@@ -62,7 +62,7 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
   });
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
   const view = s.area ? barView(0, barButtons(AREA_COMMANDS), s.pill)
-    : barView(cards.length, barButtons(SELECTION_COMMANDS, false, s.none ? ['reset-places'] : []), s.pill);
+    : barView(cards.length, selectionButtons(cards.length, remove, false, s.none ? ['reset-places'] : []), s.pill);
   bar.show(view);
   for (const id of s.hover ?? []) bar.querySelector(`[data-command="${id}"]`)?.setAttribute('data-look', 'hover');
   stage.append(list, bar);
@@ -83,9 +83,10 @@ function sample(s: Sample, fx: Fixture): HTMLElement {
   return fig;
 }
 
-/** `pill`: the selectionPill flag, read by the gallery's entry point. */
-export function selectionBarSamples(body: HTMLElement, fx: Fixture, pill = false): void {
+/** `pill`: the selectionPill flag, `remove` the personRemove flag (Remove cards on the bar), read
+ * by the gallery's entry point. */
+export function selectionBarSamples(body: HTMLElement, fx: Fixture, pill = false, remove = false): void {
   const row = el('div', 'g-bubbles');
-  row.append(...(pill ? PILL_SAMPLES : SAMPLES).map((s) => sample(s, fx)));
+  row.append(...(pill ? PILL_SAMPLES : SAMPLES).map((s) => sample(s, fx, remove)));
   body.append(group('Every state', 'Centred above the selection, below it when there is no room; the lasso it follows is .vb-lasso. One command table drives the bar, the header buttons and the keys.', row));
 }

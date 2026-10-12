@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.20.0",
+    "version": "1.21.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -71,7 +71,7 @@
         "operationId": "get_board",
         "x-agent": true,
         "summary": "Read a board as it is now",
-        "description": "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty, and `locked: true` while the person has the board locked: read it as usual, but don't write on it (every write is refused with `locked`). Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; cards you retired are not on the board.",
+        "description": "Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty, and `locked: true` while the person has the board locked: read it as usual, but don't write on it (every write is refused with `locked`). Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; retired cards are not on the board, yours and those the person removed.",
         "security": [],
         "parameters": [
           {
@@ -1311,6 +1311,102 @@
         }
       }
     },
+    "/api/boards/{board}/retire": {
+      "post": {
+        "operationId": "retire_cards",
+        "x-agent": false,
+        "summary": "Remove cards or a container from a board, as the person",
+        "description": "Remove cards from the board, or a whole container with every card in it now, as the person: `cards`, their numbers on this board, or `region`, never both. It writes the same `retire` line an agent's retire item writes, by the person: the cards and the container leave the board and every agent read, keep their versions, notes and numbers (`show_node` and `show_container` answer with `retired`), and no number is given again. Unlike an agent, the person may remove a card still owed an answer; nothing on it is owed after. A card already retired, a number the board has not given, or the built-in Later is refused (`invalid`); an archived board is refused (`invalid`) until it is restored, and a locked one (`locked`) until it is unlocked. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the stored ledger line, its cards by number.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/retireRequest"
+              },
+              "examples": {
+                "cards": {
+                  "summary": "Cards",
+                  "dataValue": {
+                    "cards": [
+                      4,
+                      7
+                    ]
+                  }
+                },
+                "container": {
+                  "summary": "A container and its cards",
+                  "dataValue": {
+                    "region": "notes"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The stored line.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retire"
+                },
+                "example": {
+                  "v": 16,
+                  "seq": 61,
+                  "at": "2026-10-12T09:00:00Z",
+                  "by": "person",
+                  "type": "retire",
+                  "board": "pricing",
+                  "cards": [
+                    4,
+                    7
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "423": {
+            "$ref": "#/components/responses/locked"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
     "/api/boards/{board}/seen": {
       "post": {
         "operationId": "mark_seen",
@@ -2386,6 +2482,9 @@
       "boardRequest": {
         "$ref": "https://vision-board.invalid/schema/api/board-request.schema.json"
       },
+      "retireRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/retire-request.schema.json"
+      },
       "listBoardsResponse": {
         "$ref": "https://vision-board.invalid/schema/api/list-boards-response.schema.json"
       },
@@ -2417,43 +2516,43 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/15/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -2549,7 +2648,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -2567,7 +2666,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -2576,7 +2675,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
         }
       },
       "after": {

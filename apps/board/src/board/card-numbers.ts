@@ -15,12 +15,15 @@ export const idOf = (s: Held, board: string, n: number): number | undefined => c
 /** Card `id`'s number on its board, or undefined for an unknown card. */
 export const numOf = (s: Held, id: number): number | undefined => boardNumber(s.index, id);
 
-/** The stored line an act or a card seen answered with (board numbers on `board`, the board it was
- * sent to) as the event the fold reads: each card back to its identity. */
+/** The stored line an act, a card seen or a retire answered with (board numbers on `board`, the board
+ * it was sent to) as the event the fold reads: each card back to its identity. */
 export function answerEvent(s: Held, board: string, line: LedgerLine): LedgerEvent {
   const id = (n: unknown) => (typeof n === 'number' ? idOf(s, board, n) ?? n : n);
   const out: LedgerLine = { ...line };
   if (out.n !== undefined) out.n = id(out.n);
-  if (Array.isArray(out.nodes)) out.nodes = out.nodes.map(id);
+  for (const f of ['nodes', 'cards'] as const) {
+    const list = out[f];
+    if (Array.isArray(list)) out[f] = list.map(id);
+  }
   return fromLine(out);
 }

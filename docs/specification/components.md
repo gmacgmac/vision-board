@@ -515,3 +515,37 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    `packages/ui/tests/node-paused.test.ts`, `apps/board/tests/board-edit.test.ts` and
    `chat-bridge.test.ts` for the pure parts. The gallery's lock section (`gallery/lock-section.ts`)
    draws both menu rows, "Locked", a locked container and its cards, and Send paused.
+
+## Remove cards and containers (N24)
+
+Task `cortex-tasks/board/2026-10-12_board-app_person-removes-cards.md` (rulings 1-5; api.md 141-142),
+behind the `personRemove` flag (on by default; `?flags=-personRemove`).
+
+1. **Remove card** is the selection bar's command `remove` (`board/commands.ts`), between Reset
+   places and Zoom to selection: "Remove card" over one card, "Remove cards" over several
+   (`selectionButtons`); Delete or Backspace run it on the selection (the key bubble lists them). A
+   card has no menu of its own: selecting it (a click, or Space on a focused card) gives it the bar.
+2. **Remove container** ends a container's settings menu (the cog; `RegionFrameOptions.remove`,
+   `data-remove-region`), after Reset places and Put container back; never on Later. The menu's
+   Up and Down move between its rows, Home and End to the first and the last (`region-row.ts`).
+3. **The confirm** is the shell's `ConfirmDialog` (Cancel focused first), with the words of
+   `board/remove-words.ts`: "Remove card 4 'Venue lead time'?", "Remove 3 cards?" with the cards
+   listed (`ConfirmList`), "Remove container 'Notes' and its 3 cards?" with its cards listed; the body
+   says they leave the board and stay in its history, then warns of each card still owed an answer
+   ("Card 4 still has an unanswered comment.", more than three in one sentence) and of the
+   container's unanswered note (the action layer's `owedNotice`). Confirmed, `board/remove-flow.ts`
+   sends the person's `retire` line through the one sender (`sender.ts` `retire`, `retire_cards`); the
+   toast says what went ("Removed card 4"); the cards leave the selection, focus that was on them goes
+   back to the board, and the container shows "N cards retired" (retiredMarker flag).
+4. **Paused** like every control that changes the board: hidden while a past version shows (the bar
+   leaves out acting commands; the settings are hidden), and on a locked board the bar's button is
+   disabled and Remove container is paused in place (`data-paused`, `aria-disabled`); a press on it
+   says "Locked: unlock to change it" (`removeRegion` is in `ACTING`), and the sender refuses the line
+   anyway (`passesLock`).
+5. Tests: `tests/pages/person-remove.spec.ts` (one card by the bar, a selection by Delete with an
+   owed card and Cancel, a container by its menu, keyboard throughout, a past version, a locked board,
+   the flag off, axe light and dark with the confirm and the menu open, the gallery section's
+   screenshots); `apps/board/tests/remove-words.test.ts`, `retired.test.ts`,
+   `api-person-retire.test.ts`; `packages/actions/tests/retire.test.ts`. The gallery's section
+   (`gallery/remove-section.ts`) draws the settings menu open, the same on a locked board, and the
+   three confirms from the fixture ledger.

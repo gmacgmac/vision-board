@@ -148,6 +148,11 @@ export const FLAGS = {
     default: true,
     description: 'The "⋯" menu has Lock board and, on a locked board, Unlock board (api.md 138-140): a locked board is read-only for everyone until the person unlocks it. Off, neither row shows; a board locked before stays locked (its controls paused, "Locked" beside its name), and the server refuses every change to it.',
   },
+  personRemove: {
+    // On by default (maintainer, 2026-10-12, N24 rulings 1-5); ?flags=-personRemove turns it off.
+    default: true,
+    description: 'The person removes cards and containers: Remove card on the selection bar (Delete or Backspace) and Remove container in a container\'s settings, each after a confirm naming what goes and warning of anything still owed an answer (api.md 141). Removed cards leave the board and keep their history and numbers, like an agent\'s retire. Off, neither control shows and the keys do nothing.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

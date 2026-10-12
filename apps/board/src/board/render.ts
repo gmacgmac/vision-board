@@ -39,8 +39,9 @@ export interface RegionSet {
   clear(): void;
 }
 
-/** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag). */
-export function createRegionSet(host: HTMLElement, opts: { widths?: boolean } = {}): RegionSet {
+/** `widths`: every ordinary frame has the Match card widths switch (widthsControl flag); `remove`:
+ * Remove container in its settings (personRemove flag, N24). */
+export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; remove?: boolean } = {}): RegionSet {
   const els = new Map<string, VbRegionElement>();
   const drawn = new Map<string, string>();
   const shown = new Map<string, { box: string; state: string }>();
@@ -64,7 +65,7 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean } = 
           els.set(r.id, el);
         }
         if (drawn.get(r.id) !== key) {
-          el.render(r, r.id === LATER_REGION ? LATER_FRAME : { widths: opts.widths === true });
+          el.render(r, r.id === LATER_REGION ? LATER_FRAME : { widths: opts.widths === true, remove: opts.remove === true });
           drawn.set(r.id, key);
           shown.delete(r.id);
         }

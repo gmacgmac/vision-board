@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json",
   "title": "Region event",
   "description": "An agent adds a region (a container) or updates one by its id. The board comes from the path when sent.",
   "$comment": "Was: D-011; api.md 34",
@@ -9,7 +9,7 @@
       "type": "object",
       "required": ["region"],
       "properties": {
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/region", "description": "The container to add, or to update when its id already exists."}
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/region", "description": "The container to add, or to update when its id already exists."}
       }
     },
     "sent": {
@@ -17,13 +17,13 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "region"},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/key"}
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/core"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/noList"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/noList"}
       ],
       "unevaluatedProperties": false
     },
@@ -32,21 +32,21 @@
       "required": ["type"],
       "properties": {"type": {"const": "region"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stamp"},
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/core"
         },
-        {"$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/rules"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/rules"},
         {
           "type": "object",
           "required": ["board"],
           "properties": {
             "by": {"const": "agent", "description": "Who wrote the line; always `agent` for this event."},
-            "board": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/key"}
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
           }
         }
       ],
@@ -56,30 +56,30 @@
       "description": "From ledger v12 a container's mode is never `list`: it was renamed `column`.",
       "$comment": "Kept apart from `region` so a stored line from v11 or older, which may name `list`, still reads. Was: api.md 129",
       "type": "object",
-      "properties": {"region": {"type": "object", "description": "The container, whose mode is never `list`.", "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/notList"}}}}
+      "properties": {"region": {"type": "object", "description": "The container, whose mode is never `list`.", "properties": {"mode": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/notList"}}}}
     },
     "rules": {
       "description": "A stored line from v12 on names no `list` mode.",
       "$comment": "Kept apart from `core` so a failed rule never hides which fields are known (see common.schema.json `stampAgent`). Was: api.md 129",
       "type": "object",
       "if": {"type": "object", "required": ["v"], "properties": {"v": {"not": {"enum": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}}}},
-      "then": {"$ref": "https://vision-board.invalid/schema/ledger/15/events/region.schema.json#/$defs/noList"}
+      "then": {"$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/noList"}
     },
     "region": {
       "type": "object",
       "required": ["id", "title", "mode"],
       "properties": {
-        "id": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/id", "description": "The container's id: lowercase letters, digits and hyphens. Send an id that already exists to update that container."},
-        "title": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/regionTitle", "description": "The container's title, shown on the board."},
-        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/lineMode", "description": "How the container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order). `list`, on lines from ledger v11 and older only, reads as `column`."},
-        "lanes": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/lanes", "description": "Lane names, top to bottom. Required when the mode is `lanes`."},
+        "id": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id", "description": "The container's id: lowercase letters, digits and hyphens. Send an id that already exists to update that container."},
+        "title": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/regionTitle", "description": "The container's title, shown on the board."},
+        "mode": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/lineMode", "description": "How the container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order). `list`, on lines from ledger v11 and older only, reads as `column`."},
+        "lanes": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/lanes", "description": "Lane names, top to bottom. Required when the mode is `lanes`."},
         "center": {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/nodeNumber",
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeNumber",
           "description": "The centre card: its number on this board when sent, its ledger number on a stored line",
           "$comment": "Was: api.md 18"
         },
-        "columns": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/columns", "description": "How many columns a `grid` container uses, from 1 to 12."},
-        "widths": {"$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/widths", "description": "How wide the cards are: `match` (every card in a column as wide as its widest) or `own` (each card its own width). Left out, the mode decides: `match` for `grid` and `column`, `own` for the rest. The person's choice wins.", "$comment": "Was: api.md 132"}
+        "columns": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/columns", "description": "How many columns a `grid` container uses, from 1 to 12."},
+        "widths": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/widths", "description": "How wide the cards are: `match` (every card in a column as wide as its widest) or `own` (each card its own width). Left out, the mode decides: `match` for `grid` and `column`, `own` for the rest. The person's choice wins.", "$comment": "Was: api.md 132"}
       },
       "if": {"type": "object", "required": ["mode"], "properties": {"mode": {"const": "lanes"}}},
       "then": {

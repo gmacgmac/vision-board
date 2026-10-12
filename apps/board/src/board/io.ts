@@ -114,6 +114,15 @@ export interface BoardFields { title: string; summary?: string }
 export const putBoard = (id: string, fields: BoardFields) =>
   call(() => asPerson(() => client.call<LedgerLine>('put_board', { board: id, body: fields })));
 
+/** What the person removes from a board: `retire_cards`' body (N24, api.md 141), cards by number
+ * or a whole container. */
+export type RetireFields = { cards: number[] } | { region: string };
+
+/** Remove cards, or a container with its cards, from board `id`; the stored `retire` line, its cards
+ * by board number (live.ts `own` reads it back). */
+export const retireCards = (id: string, fields: RetireFields) =>
+  call(() => asPerson(() => client.call<LedgerLine>('retire_cards', { board: id, body: fields })));
+
 /** The client for a call made as the page goes away: its request outlives the page (keepalive). */
 const leavingClient = createClient({ fetch: (url, init) => globalThis.fetch(url, { ...init, keepalive: true }) });
 

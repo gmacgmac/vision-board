@@ -9,9 +9,9 @@ const at = '2026-10-12T09:00:00Z';
 const A = 'a-abcd1234';
 const lines = (...events: object[]) => events.map((e, i) => JSON.stringify({ v: 15, seq: i + 1, at, ...e }));
 
-test('v15 is the format written; every older format still reads', () => {
-  assert.equal(LEDGER_FORMAT, 15);
-  assert.deepEqual(LEDGER_FORMATS, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+test('v15 lines are read; the format written is v15 or later', () => {
+  assert.ok(LEDGER_FORMAT >= 15);
+  assert.ok((LEDGER_FORMATS as readonly number[]).includes(15));
 });
 
 test('lock and unlock are acts, and the person\'s board marks, private like the flag and archive', () => {

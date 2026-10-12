@@ -47,16 +47,16 @@
       },
       "allOf": [
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/stamp"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stamp"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/common.schema.json#/$defs/stampAgent"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stampAgent"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/events/act.schema.json#/$defs/core"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/core"
         },
         {
-          "$ref": "https://vision-board.invalid/schema/ledger/15/events/act.schema.json#/$defs/rules"
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/rules"
         }
       ],
       "unevaluatedProperties": false

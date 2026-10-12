@@ -18,8 +18,9 @@ import type { RegionFrameOptions } from './region-template.ts';
 import { pauseControls } from '../paused/paused.ts';
 
 /** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
- * back, whose aria-disabled `update` sets itself. The cog still opens its menu. */
-const PAUSED = 'button[data-mode], .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke]';
+ * back, whose aria-disabled `update` sets itself. The cog still opens its menu; Remove container
+ * (N24 ruling 4) pauses with the rest. */
+const PAUSED = 'button[data-mode], .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region]';
 
 export const VB_REGION_TAG = 'vb-region';
 

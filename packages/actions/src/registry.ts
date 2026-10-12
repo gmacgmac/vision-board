@@ -139,3 +139,23 @@ export const BOARD_ACTIONS: Record<BoardActionId, BoardActionDef> = {
   'new-board': { id: 'new-board', label: 'New board', ...person, inputs: boardInputs },
   'rename-board': { id: 'rename-board', label: 'Rename board', ...person, inputs: boardInputs },
 };
+
+/** What the person takes off a board (N24, api.md 141): the person's `retire` line through
+ * `retire_cards`, the same line an agent's retire item writes. Remove card on a selection of cards
+ * (the selection bar, Delete), Remove container in a container's settings. It takes cards away, so
+ * the page asks first. */
+export const RETIRE_ACTION_IDS = ['remove-cards', 'remove-container'] as const;
+export type RetireActionId = (typeof RETIRE_ACTION_IDS)[number];
+
+export interface RetireActionDef extends Common {
+  id: RetireActionId;
+  by: 'person';
+  needsConfirmation: true;
+  /** The inputs the person gives, by name: `retire_cards`' body. */
+  inputs: Readonly<Record<string, 'required' | 'optional'>>;
+}
+
+export const RETIRE_ACTIONS: Record<RetireActionId, RetireActionDef> = {
+  'remove-cards': { id: 'remove-cards', label: 'Remove card', ...decision, inputs: { cards: 'required' } },
+  'remove-container': { id: 'remove-container', label: 'Remove container', ...decision, inputs: { region: 'required' } },
+};

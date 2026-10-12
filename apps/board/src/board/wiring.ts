@@ -26,6 +26,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
    *  preview and block report their own presses (vb-region-note, region-notes.ts). */
   regionComment(region: string): void;
   putBack(region: string): void;
+  /** Remove container in a container's settings (personRemove flag, N24); absent without it. */
+  removeRegion?(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
   /** A container's "N cards retired" marker (retiredMarker flag): show board version `seq` (versions.ts). */
@@ -94,6 +96,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (reset) return h.resetRegion(reset.dataset.reset!);
     const back = t.closest<HTMLButtonElement>('button[data-put-back]');
     if (back) return h.putBack(back.dataset.putBack!);
+    const removeRegion = t.closest<HTMLButtonElement>('button[data-remove-region]');
+    if (removeRegion) return h.removeRegion?.(removeRegion.dataset.removeRegion!);
     const regionComment = t.closest<HTMLButtonElement>('button[data-region-comment]');
     if (regionComment) return h.regionComment(regionComment.dataset.regionComment!);
     const holder = t.closest<HTMLButtonElement>('button[data-revoke]');

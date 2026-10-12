@@ -22,7 +22,7 @@ export interface KeyRow {
 }
 
 const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
-  comment: 'Selection', move: 'Selection', 'reset-places': 'Selection', clear: 'Selection',
+  comment: 'Selection', move: 'Selection', 'reset-places': 'Selection', remove: 'Selection', clear: 'Selection',
   'container-note': 'Board',
   'zoom-out': 'View', fit: 'View', 'zoom-in': 'View', 'zoom-selection': 'View', 'zoom-area': 'View',
 };
@@ -47,11 +47,11 @@ const withWords = (a: ActionId, label: string): string => {
 };
 
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel
- * flag; `flag`: the cardFlag flag. */
-export function keyGroups({ chat = false, flag = false }: { chat?: boolean; flag?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
+ * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove card is not listed). */
+export function keyGroups({ chat = false, flag = false, remove = true }: { chat?: boolean; flag?: boolean; remove?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
     .map((a) => ({ id: `action:${a.id}`, label: withWords(a.id, a.label), keys: [a.key!.toUpperCase()] }));
-  const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length)
+  const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length && (remove || id !== 'remove'))
     .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].label, keys: COMMANDS[id].keys.map(keyText) }));
   return KEY_GROUPS.map((group) => ({
     group,

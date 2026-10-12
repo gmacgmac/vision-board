@@ -2,8 +2,10 @@
 // keys between the layouts and the cog, the layout popover (opens on hover or keyboard focus of an
 // icon, closes on leave, blur, Esc or a pick) and the cog's settings menu (Esc and an outside click
 // close it, focus goes back to the cog). Open state is `data-open` on the <vb-region> ("modes" or
-// "menu"), which region.css reads. Picks and Reset places are plain clicks that bubble to the
-// page's delegated listener (data-mode, data-reset); a disabled Reset places is stopped here.
+// "menu"), which region.css reads. Picks and the menu's items are plain clicks that bubble to the
+// page's delegated listener (data-mode, data-reset, data-put-back, data-remove-region); a disabled
+// item is stopped here, but one a locked board paused (`data-paused`) goes on, so the page says why.
+// Up and Down move between the menu's items, Home and End to the first and the last.
 // Nothing here touches HTMLElement at import, so the ui front door stays importable from Node.
 import type { Mode } from '../../../format/src/index.ts';
 import { MODE_HINT } from './region-core.ts';
@@ -124,7 +126,11 @@ export function bindModeRow(host: HTMLElement): ModeRow {
       closeMenu(false);
     } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
       e.preventDefault();
-      q<HTMLElement>(ITEM)?.focus({ preventScroll: true });
+      const list = [...host.querySelectorAll<HTMLElement>(ITEM)];
+      const i = list.indexOf(e.target as HTMLElement);
+      const last = list.length - 1;
+      const to = e.key === 'Home' ? 0 : e.key === 'End' ? last : e.key === 'ArrowDown' ? (i + 1) % list.length : i <= 0 ? last : i - 1;
+      list[to]?.focus({ preventScroll: true });
     }
   }
 
@@ -173,7 +179,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (t.closest(COG)) return host.dataset.open === 'menu' ? closeMenu(true) : openMenu();
     const item = t.closest<HTMLElement>(ITEM);
     if (!item) return;
-    if (item.getAttribute('aria-disabled') === 'true') {
+    if (item.getAttribute('aria-disabled') === 'true' && !item.hasAttribute('data-paused')) {
       e.preventDefault();
       e.stopPropagation();
       return;

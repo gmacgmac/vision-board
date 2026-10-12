@@ -9,7 +9,7 @@
 import type { Kind, Region, Widths } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 15;
+export const LEDGER_FORMAT = 16;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -23,8 +23,9 @@ export const LEDGER_FORMAT = 15;
  * read as `column`, a v12 line naming `list` is refused) and adds `row` (api.md 125-130). v13 adds a
  * container's card `widths`, on a region and as the person's `widths` act (api.md 132). v14 adds the
  * person's `archive` and `restore` of a whole board (api.md 135). v15 adds the person's `lock` and
- * `unlock` of a whole board (api.md 138). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
+ * `unlock` of a whole board (api.md 138). v16 lets the person write a `retire` line, removing cards or
+ * a container (api.md 141). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
@@ -79,8 +80,9 @@ export const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
   'board', 'region', 'node', 'link', 'unlink', 'reply', 'propose', 'park', 'join', 'grant-request', 'retire',
 ]);
 /** Agent event types a person may also write, from the format given: the person's `board` line
- * creates a board or renames one (`put_board`, api.md 90). */
-export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9 };
+ * creates a board or renames one (`put_board`, api.md 90); the person's `retire` line removes cards or
+ * a container (`retire_cards`, api.md 141). */
+export const PERSON_TOO: Partial<Record<EventType, LedgerFormat>> = { board: 9, retire: 16 };
 /** Event types only a person writes. */
 export const PERSON_EVENTS: ReadonlySet<EventType> = new Set(['seen']);
 
@@ -187,9 +189,10 @@ export interface ProposeEvent extends Base, Keyed {
 }
 export interface ParkEvent extends Base, Keyed { type: 'park'; id: number; bundle: ParkBundle }
 /** The agent takes cards off `board` for good (api.md 126): one card, or with `region` a whole
- * container and every card in it at this line. `cards` = their identities, which the server fills
- * in, so a reader needs no other fold to know what left. Retired cards keep their versions, notes
- * and number; they leave the board, its counts and every list. */
+ * container and every card in it at this line; from v16 the person too, one or more cards or a
+ * container (api.md 141). `cards` = their identities, which the server fills in, so a reader needs
+ * no other fold to know what left. Retired cards keep their versions, notes and number; they leave
+ * the board, its counts and every list. */
 export interface RetireEvent extends Base, Keyed { type: 'retire'; board: string; cards: number[]; region?: string }
 /** An agent joins the project (D-027). Its stamped `agent` is the new agent id. */
 export interface JoinEvent extends Base { type: 'join'; label: string }

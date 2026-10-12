@@ -15,7 +15,7 @@ export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema
 export const CHAT_SCHEMA_DIR = fileURLToPath(new URL('../../../packages/chat/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/15/ledger-event.schema.json`;
+export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/16/ledger-event.schema.json`;
 export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */

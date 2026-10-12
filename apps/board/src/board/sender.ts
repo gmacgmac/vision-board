@@ -9,13 +9,15 @@
 // N40 ruling 7): `refusal` is asked before each line goes. A card seen (FE_02: selecting a changed
 // card, a step of its stepper) goes out here too, in order, so every line the person adds has one
 // way out, and so do the person's marks on a whole board (`actOn`: archive, restore, lock, unlock,
-// api.md 135, 138), which may name a board other than the open one.
+// api.md 135, 138), which may name a board other than the open one, and the person's removal of
+// cards or a container (`retire`, `retire_cards`, N24).
 import type { ActionId, LedgerLine } from '../../../../packages/format/src/index.ts';
-import type { ActFields, BoardFields } from './io.ts';
-import { ApiError, markCardSeen, putBoard, sendAct } from './io.ts';
+import type { ActFields, BoardFields, RetireFields } from './io.ts';
+import { ApiError, markCardSeen, putBoard, retireCards, sendAct } from './io.ts';
 
-/** A line the page would send: an act, a seen, or the person's `board` line (`put_board`). */
-export interface Outgoing { type: 'act' | 'seen' | 'board'; action?: ActionId }
+/** A line the page would send: an act, a seen, the person's `board` line (`put_board`) or their
+ * `retire` line (`retire_cards`). */
+export interface Outgoing { type: 'act' | 'seen' | 'board' | 'retire'; action?: ActionId }
 
 export interface SenderDeps {
   board(): string;
@@ -39,6 +41,8 @@ export interface Sender {
   record(fields: ActFields): Promise<boolean>;
   /** Create board `id`, or rename it; null when recorded, else the problem's detail. */
   board(id: string, fields: BoardFields): Promise<string | null>;
+  /** Remove cards or a container from the open board and draw it; null when recorded, else the problem's detail. */
+  retire(fields: RetireFields): Promise<string | null>;
   /** Send one act to board `id`, open or not (archive, restore); null when recorded, else the problem's detail. */
   actOn(id: string, fields: ActFields): Promise<string | null>;
   /** Send `steps` in order, the acts of one step side by side, and draw once at the end. Stops
@@ -113,6 +117,11 @@ export function createSender(d: SenderDeps): Sender {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
     board: (id, fields) => send(() => putBoard(id, fields), { type: 'board' }, id), // a board line names no card
+    async retire(fields) {
+      const problem = await send(() => retireCards(d.board(), fields), { type: 'retire' });
+      if (problem === null) d.redraw();
+      return problem;
+    },
     actOn: (id, fields) => send(() => sendAct(id, fields), { type: 'act', action: fields.action }, id),
     run: (list) => held(() => steps(list)),
     seen: (marks) => held(async () => {

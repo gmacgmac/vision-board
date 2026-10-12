@@ -1,10 +1,10 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v15 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135 and 138.
+// Ledger lines for the schema tests (schema.test.ts): a valid v16 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135, 138 and 141.
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 15, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 15, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 16, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 16, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -91,7 +91,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v16', patch(V.board!, 'v', 16)],
+  ['unknown format v17', patch(V.board!, 'v', 17)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -211,7 +211,8 @@ export const BROKEN: [string, Rec][] = [
   ['retire naming card 0', patch(V.retire!, 'cards', [0])],
   ['retire with a bad region id', { ...V.retire!, region: 'Plan A' }],
   ['retire with n (a stored line names cards)', { ...V.retire!, n: 3 }],
-  ['retire written by a person', { ...V.retire!, by: 'person', agent: undefined }],
+  // api.md 141: the person writes a `retire` line from v16 only.
+  ['retire written by a person before v16', { ...V.retire!, v: 15, by: 'person', agent: undefined, key: undefined }],
   // api.md 128: the flag names one card, and nothing else.
   ['flag without n', act('flag', { n: undefined })],
   ['flag with a version', act('flag', { ver: 1 })],

@@ -1,12 +1,12 @@
-export { ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, BOARD_ACTION_IDS, BOARD_ACTIONS, CLOSED, DECIDED, isDecided, ITEM_ACTIONS } from './registry.ts';
-export type { ActionDef, AgentActionDef, AgentActionId, BoardActionDef, BoardActionId, ItemStatus } from './registry.ts';
+export { ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, BOARD_ACTION_IDS, BOARD_ACTIONS, CLOSED, DECIDED, isDecided, ITEM_ACTIONS, RETIRE_ACTION_IDS, RETIRE_ACTIONS } from './registry.ts';
+export type { ActionDef, AgentActionDef, AgentActionId, BoardActionDef, BoardActionId, ItemStatus, RetireActionDef, RetireActionId } from './registry.ts';
 export { MAX_TEXT } from '../../format/src/index.ts';
 export { applyEvent, DRAWING_EVENTS, emptyState, foldLedger, sentNotes, sentAfter } from './fold.ts';
 export { boardState, counts, statusOf } from './board-state.ts';
 export type { BoardState } from './board-state.ts';
 export { cardName, eventOut, linkOut, noteOut, numberOf, proposalOut } from './numbers.ts';
 export type { ProposalView } from './numbers.ts';
-export { retireCards, retireProblem } from './retire.ts';
+export { owedNotice, retireCards, retireProblem } from './retire.ts';
 export type { RetireTarget } from './retire.ts';
 export { flagsOn } from './card-flags.ts';
 export { archivedBoards, archivedProblem, boardVisibility, UNAVAILABLE, visibleToAgents } from './archive.ts';

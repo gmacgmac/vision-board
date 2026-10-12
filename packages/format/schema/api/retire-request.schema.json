@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/retire-request.schema.json",
+  "title": "Retire request",
+  "description": "`{ cards }` or `{ region }`, never both: the cards the person removes from the board, by number, or the container they remove with every card in it now.",
+  "$comment": "Was: api.md 141",
+  "type": "object",
+  "properties": {
+    "cards": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumber"},
+      "description": "The cards to remove, by number on this board, each once."
+    },
+    "region": {
+      "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id",
+      "description": "The container to remove, with every card in it now (the person's moves count), in place of `cards`."
+    }
+  },
+  "allOf": [
+    {
+      "description": "Cards or a container, never both.",
+      "if": {"type": "object", "required": ["region"]},
+      "then": {"type": "object", "properties": {"cards": false}},
+      "else": {"type": "object", "required": ["cards"]}
+    }
+  ],
+  "unevaluatedProperties": false
+}

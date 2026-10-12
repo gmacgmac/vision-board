@@ -123,3 +123,10 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-chat-board { display: flex; height: 520px; max-width: 980px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); overflow: hidden; }
 .g-chat-ground { flex: 1; padding: var(--vb-space-6); }
 .g-chat-side { display: flex; }
+
+/* Remove cards and containers (personRemove flag, N24): the frame's settings menu is drawn open, so
+   the frame leaves room below for it. */
+.g-remove-frames vb-region { margin-bottom: calc(var(--vb-space-6) * 2); }
+/* Key commands (keyBubble flag): the open list rises above its button, so the sample keeps room for
+   it under the group's words. */
+.g-keys:has(.vb-keys[data-keys-open]) { padding-top: calc(var(--vb-space-6) * 1.5); }

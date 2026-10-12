@@ -7,13 +7,14 @@
 // The bar sits over the selection whenever it is not empty and no note bubble is open, and follows
 // pan and zoom; it and the lasso are drawn on the stage, above the cards, and touch none of them.
 // With the selectionPill flag (stage5-follow-ups FE_02) the bar over a selection starts as a pill
-// that opens it (selection-pill.ts).
+// that opens it (selection-pill.ts). With the personRemove flag (N24) it offers Remove card ("Remove
+// cards" with several), as Delete and Backspace do (remove-flow.ts).
 import type { BoardLayout, Box } from '../../../../packages/layout/src/index.ts';
 import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
 import type { CommandEventDetail, ToggleEventDetail } from '../../../../packages/ui/src/index.ts';
 import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, touches } from '../../../../packages/ui/src/index.ts';
 import type { CommandId } from './commands.ts';
-import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS } from './commands.ts';
+import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from './commands.ts';
 import type { NoteFlow } from './notes.ts';
 import type { Selection } from './selection.ts';
 import { createPill } from './selection-pill.ts';
@@ -39,6 +40,9 @@ export interface SelectionFlowDeps {
   pinned(id: string): boolean;
   /** Reset places (navigation FE_03): put these cards back where layout places them. */
   resetPlaces(ids: readonly string[]): void;
+  /** Remove card (N24, remove-flow.ts): ask, then take these cards off the board; false when none.
+   *  Absent with the personRemove flag off: no button, and Delete does nothing. */
+  remove?(ids: readonly string[]): boolean;
   /** A past version shows (versions.ts): the commands that act are off. */
   readOnly(): boolean;
   /** Why the board can't change now (a locked board, lock-flow.ts): the commands that act show, disabled. */
@@ -115,7 +119,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const off = [...(sel.some(d.pinned) ? [] : ['reset-places' as const]), ...(d.paused?.() ? ACTING_COMMANDS : [])];
     const compact = pill ? { open: pill.open } : undefined;
     bar.show(area ? barView(0, barButtons(AREA_COMMANDS), compact)
-      : barView(sel.length, barButtons(SELECTION_COMMANDS, d.readOnly(), off), compact));
+      : barView(sel.length, selectionButtons(sel.length, !!d.remove, d.readOnly(), off), compact));
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     // Over cards it clears their tabs at any zoom (pillGap); the area bar has no tabs under it.
     const gap = area ? BAR_GAP : pillGap(d.vp.k);
@@ -164,6 +168,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         if (sel.length) d.resetPlaces(sel.filter(d.pinned));
         return sel.length > 0;
       }
+      case 'remove': return d.remove?.(d.selection.selected()) ?? false;
       case 'clear':
         if (!d.selection.selected().length) return false;
         d.selection.clear();

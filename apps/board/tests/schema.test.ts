@@ -1,4 +1,4 @@
-// Ledger v15 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130, 132, 135, 138): the JSON Schema is the one source, and the hand validator
+// Ledger v16 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130, 132, 135, 138, 141): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/15/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/16/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v15 lines for every event type and action ----
+// ---- 3. Valid v16 lines for every event type and action ----
 
-test('every event type has a valid v15 line, and every one passes both validators', () => {
+test('every event type has a valid v16 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v15 line, and every one passes both validator
   }
 });
 
-test('every action has a valid v15 act, and every one passes both validators', () => {
+test('every action has a valid v16 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -103,6 +103,9 @@ test('edge lines both accept: a v2 line with a free-form agent, 200 emoji, a gri
     // api.md 126: a whole container, with every card in it, or with none.
     { ...VALID.retire, region: 'plan', cards: [3, 4] },
     { ...VALID.retire, region: 'plan', cards: [] },
+    // api.md 141: from v16 the person writes a `retire` line: cards, or a container and its cards.
+    { ...PERSON, type: 'retire', board: 'b', cards: [3, 4] },
+    { ...PERSON, type: 'retire', board: 'b', region: 'plan', cards: [3] },
     // api.md 129: a line from v11 or older may name `list`; it reads as `column`. `row` is new.
     patch(patch(VALID.region!, 'v', 11), 'region', { id: 'l', title: 'L', mode: 'list' }),
     { ...act('mode', { mode: 'list' }), v: 11 },

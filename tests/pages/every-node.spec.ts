@@ -211,6 +211,10 @@ for (const theme of THEMES) {
     await page.keyboard.press('Enter');
     await expect(bubble(page)).toBeHidden();
     await expect(card(page, d.risk).locator('.vb-node-note-who')).toHaveText('Your note 1 · 2 cards');
+    // The open bar spans both cards and, since Remove cards (N24), covers the upper container's grip:
+    // back to its pill, so the check is of the notes, not of where the bar happens to fall.
+    await page.keyboard.press('Escape');
+    await expect(bar(page).locator('.vb-sb-pill')).toHaveAttribute('aria-expanded', 'false');
     await expectNoAxeViolations(page);
   });
 }

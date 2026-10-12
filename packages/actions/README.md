@@ -12,7 +12,8 @@ call the same actions, and each one is recorded in the project ledger as an `act
   keyed like the View by board number), board numbers out (`numbers.ts`, api.md 125: `numberOf`,
   `cardName`, `eventOut`, `noteOut`, `proposalOut`, `linkOut`; every read view and every word an
   agent or the person reads names a card by its number on its board), retiring cards
-  (`retire.ts`, api.md 126-127: `retireCards`, `retireProblem`), the person's private flags
+  (`retire.ts`, api.md 126-127, 141-142: `retireCards`, `retireProblem`, and `owedNotice`, the person's
+  warning before they remove cards; `unsent.ts` `dropRetired`), the person's private flags
   (`card-flags.ts`, api.md 128: `flagsOn`; no agent read looks at them), archived boards
   (`archive.ts`, api.md 135-137: `boardVisibility`, the one check of whether agents see a board,
   `visibleToAgents`, `archivedProblem`, `UNAVAILABLE`, `archivedBoards`), locked boards (`lock.ts`,

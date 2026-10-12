@@ -10,7 +10,7 @@ import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const TITLES = ['First idea', 'Second idea', 'Third idea'];
-const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Zoom to selection', 'Clear'];
+const BUTTONS = ['Comment', 'Move to', 'Reset places', 'Remove cards', 'Zoom to selection', 'Clear'];
 let boards = 0;
 
 /** A board of its own: three cards in one container, drawn by a new agent. */

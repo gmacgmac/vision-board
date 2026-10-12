@@ -17,8 +17,8 @@ export const noCard = (board: string, n: unknown): string => `board ${board} has
 export const cardOn = (s: LedgerState, board: string, n: unknown): number | undefined =>
   typeof n === 'number' ? cardId(s.index, board, n) : undefined;
 
-/** `body` with its card fields (`n`, and each of `nodes`) turned from board numbers on `board` into
- * identities, as the ledger line holds them; an `invalid` problem naming every unknown number. */
+/** `body` with its card fields (`n`, and each of `nodes` and of `cards`) turned from board numbers on
+ * `board` into identities, as the ledger line holds them; an `invalid` problem naming every unknown number. */
 export function cardsIn(s: LedgerState, board: string, body: Rec): Rec {
   const errors: PointerError[] = [];
   const id = (n: unknown, pointer: string) => {
@@ -28,7 +28,10 @@ export function cardsIn(s: LedgerState, board: string, body: Rec): Rec {
   };
   const out: Rec = { ...body };
   if (body.n !== undefined) out.n = id(body.n, '/n');
-  if (Array.isArray(body.nodes)) out.nodes = body.nodes.map((n, i) => id(n, `/nodes/${i}`));
+  for (const f of ['nodes', 'cards'] as const) {
+    const list = body[f];
+    if (Array.isArray(list)) out[f] = list.map((n, i) => id(n, `/${f}/${i}`));
+  }
   if (errors.length) throw problem('invalid', `The request names a card board "${board}" does not have. Name each card by its number on this board (get_board lists them).`, { errors });
   return out;
 }

@@ -7,8 +7,8 @@
 // Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), lock-flow.ts (a locked board), finder.ts (the
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
-// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag) and toolbar-counts.ts (the
-// toolbar's numbers). Plain TypeScript (D-005).
+// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's
+// Remove card and Remove container, personRemove flag) and toolbar-counts.ts (the toolbar's numbers). Plain TypeScript (D-005).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -39,6 +39,7 @@ import { createUpdateFlow } from './update-flow.ts';
 import { createParking } from './parking.ts';
 import { zoomToContainer } from './finder.ts';
 import { createFlagFlow } from './flag-flow.ts';
+import { createRemoveFlow } from './remove-flow.ts';
 import { retiredCounts, type RetiredCount } from './retired.ts';
 import { showCounts } from './toolbar-counts.ts';
 import type { CommandId } from './commands.ts';
@@ -81,8 +82,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
   // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl] = [on('nodeSize'), on('agentAccess'),
-    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing] = [on('nodeSize'), on('agentAccess'),
+    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -122,7 +123,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** The person's selection (3_FE_01): view state; a change updates only the cards it names. */
   const selection = createSelection();
   const drawing = createDrawing({
-    els, vp, sizing, access, layers, labels, widthsControl, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
+    els, vp, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, retired: () => S.retired,
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n) }),
   });
@@ -183,6 +184,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
     refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
   const { attempt, record } = sender;
+  const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
+    retire: (fields) => sender.retire(fields), confirm: askConfirm, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24)
   const proposals = createProposalFlow({
     on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast,
@@ -214,7 +217,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
-  });
+    ...(removal && { remove: removal.cards }) });
   vp.onApply = () => { shell.zoom = zoomPercent(vp.k); notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
   shell.zoom = zoomPercent(vp.k);
 
@@ -248,7 +251,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),
-    ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }),
+    ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }), ...(removal && { removeRegion: removal.container }),
     pin: (id, box) => void places.pin(id, box), pinRegion: (region, at) => void frames.pin(region, at),
     frameStart: frames.start, frameMove: frames.move, frameEnd: (d) => void frames.end(d),
     regionCommand: (_id, region) => notes.container(region, 'comment'), unpin: (id) => void places.unpin(id),
@@ -276,10 +279,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     keepView: flagOn('keepView', pageFlags()), archiving: on('archiveBoard'), // the view kept across a reload (FE_02 ruling 5); the Archived list (N39)
   });
 
-  exposeWork({
-    async rebuild() { await live.load(); redraw(true); },
-    async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
-  });
+  exposeWork({ async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); } });
 
   async function showVersion(seq: number | null) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq); }
   return {

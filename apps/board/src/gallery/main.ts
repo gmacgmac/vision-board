@@ -50,6 +50,7 @@ import { folderSection } from './folder-section.ts';
 import { flagSection } from './flag-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
+import { removeSection } from './remove-section.ts';
 import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
@@ -73,7 +74,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'note-bubble': noteBubbleSamples,
   region: regionSamples,
   // The compact bar and its pill behind their flag (stage5-follow-ups FE_02); off, today's bar.
-  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags())),
+  'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
 };
 
 const files = import.meta.glob<PatternInfo>('../../../../packages/ui/src/*/pattern.json', { eager: true, import: 'default' });
@@ -149,6 +150,7 @@ function build(): void {
   if (flagOn('widthsControl', flags)) main.append(widthsSection(fx));
   if (flagOn('archiveBoard', flags)) main.append(archiveSection());
   if (flagOn('lockBoard', flags)) main.append(lockSection(fx));
+  if (flagOn('personRemove', flags)) main.append(removeSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

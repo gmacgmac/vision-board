@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { boardView, readLedger } from '../../format/src/index.ts';
 import {
-  boardState, conditionsOf, containerDetail, counts, nodeDetail, openItems, pendingItems, retireCards, retireProblem,
+  boardState, conditionsOf, containerDetail, counts, nodeDetail, openItems, owedNotice, pendingItems, retireCards, retireProblem,
 } from '../src/index.ts';
 import { A, B, scene } from './ledger-v3.ts';
 
@@ -112,4 +112,56 @@ test('board numbers out: a group note and a proposal on board b name its cards b
   const d = nodeDetail(s, 6)!;
   assert.deepEqual([d.n, d.notes[0]!.nodes, d.proposals[0]!.n, d.links], [5, [2, 5], 5, [{ from: 4, to: 5 }]]);
   assert.equal(nodeDetail(s, 4)!.n, 1, 'card 4 is board b2\'s first');
+});
+
+// The person removes cards (N24, api.md 141): the same line, by the person, from v16.
+/** A person's v16 retire line of `cards` (identities), or of container `region` with them. */
+const personRetire = (l: Scene, cards: number[], region?: string) => {
+  l.v = 16;
+  return l.agent('', { type: 'retire', board: 'b', cards, ...(region && { region }), by: 'person', agent: undefined });
+};
+
+test('owedNotice: the person is warned, by board number, of each card still owed an answer and of the container\'s note', () => {
+  const l = cards();
+  assert.deepEqual(owedNotice(l.state(), { board: 'b', id: 5 }, [5]), [], 'nothing owed, no warning');
+  l.act({ action: 'comment', n: 5, ver: 1, text: 'Source?' });
+  l.act({ action: 'context', n: 6, ver: 1 });
+  l.act({ action: 'later', n: 1, ver: 1 });
+  l.act({ action: 'comment', board: 'b', region: 'r', text: 'Still needed?' });
+  assert.deepEqual(owedNotice(l.state(), { board: 'b', region: 'r' }, [1, 5, 6], 'Research'), [
+    'Card 1 is saved for later and its handover isn\'t written yet.',
+    'Card 4 still has an unanswered comment.',
+    'Card 5 still waits for the more context you asked for.',
+    'Container \'Research\' still has an unanswered comment.',
+  ]);
+  assert.deepEqual(owedNotice(l.state(), { board: 'b', id: 5 }, [5]), ['Card 4 still has an unanswered comment.'], 'one card: its own warning only');
+  l.act({ action: 'comment', n: 2, ver: 1, text: 'And this?' });
+  assert.deepEqual(owedNotice(l.state(), { board: 'b', id: 1 }, [1, 2, 5, 6]), ['Cards 1, 2, 4 and 1 more are still owed an answer.'], 'more than three: one sentence');
+});
+
+test('the person\'s retire: owed cards go, owe nothing after, and an answer on them waits for no Send', () => {
+  const l = cards();
+  l.act({ action: 'comment', n: 5, ver: 1, text: 'Source?' });
+  const kept = l.act({ action: 'ack', n: 1, ver: 1 });
+  const unsent = (s: ReturnType<Scene['state']>) => [...(s.unsent.get('b') ?? [])];
+  assert.equal(unsent(l.state()).length, 2);
+  const gone = personRetire(l, [5, 6]);
+  const s = l.state();
+  assert.deepEqual(boardView(s, 'b').nodes.map((x) => x.n), [1, 2, 3]);
+  assert.deepEqual(pendingItems(s, 'b'), [], 'nothing owed on a removed card');
+  assert.deepEqual(unsent(s), [kept], 'the comment on card 4 is no longer something to send; the ✓ on card 1 is');
+  assert.deepEqual([nodeDetail(s, 5)!.retired, nodeDetail(s, 6)!.retired], [gone, gone]);
+  assert.equal(s.drawnHeads.get('b') !== gone && s.agentHeads.get('b') !== gone, true, 'no agent drawing, no version');
+  assert.equal(s.heads.get('b'), gone, 'the board\'s own last line moves');
+});
+
+test('the person\'s retire of a container: a note on it waits for no Send; a line before v16 is refused', () => {
+  const l = cards();
+  l.act({ action: 'comment', board: 'b', region: 'q', text: 'Still needed?' });
+  personRetire(l, [2], 'q');
+  const s = l.state();
+  assert.deepEqual([...(s.unsent.get('b') ?? [])], []);
+  assert.equal(containerDetail(s, 'b', 'q')!.retired !== undefined, true);
+  const old = readLedger([...l.lines, JSON.stringify({ v: 15, seq: l.seq + 1, at: '2026-10-12T10:00:00Z', by: 'person', type: 'retire', board: 'b', cards: [5] })]);
+  assert.match(old.problems.join(), /retire: written by an agent/);
 });

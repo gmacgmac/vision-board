@@ -100,23 +100,27 @@ const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
 };
 
 /** The settings menu: "Reset places" (the cards' pins) and "Put container back" (the container's
- * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it. */
-const settingsMenu = (r: Pick<Region, 'id' | 'title'>): string => {
+ * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `remove`
+ * (personRemove flag, N24) then "Remove container", which the page confirms first. */
+const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean): string => {
   const ids = regionIds(r.id);
   const item = (data: string, label: string, hint: string, hintId: string) =>
     `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" ${data}="${esc(r.id)}" aria-label="${label}"`
     + ` aria-disabled="true" aria-describedby="${hintId}">${label}<span class="vb-menu-hint" id="${hintId}">${hint}</span></button>`;
   return `<div class="vb-region-menu" id="${ids.menu}" role="menu" aria-label="Settings for ${esc(r.title)}">`
     + item('data-reset', 'Reset places', RESET_NONE_HINT, ids.hint)
-    + item('data-put-back', 'Put container back', PUT_BACK_NONE_HINT, ids.back) + '</div>';
+    + item('data-put-back', 'Put container back', PUT_BACK_NONE_HINT, ids.back)
+    + (remove ? `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-remove-region="${esc(r.id)}">Remove container</button>` : '')
+    + '</div>';
 };
 
 /** How a frame is built. `fixed`: its layout is set by the board, so it has no layout icons and
  * no popover, only the cog (the built-in Later, 3_FE_03 ruling 5); it takes no note either, so no
  * Comment, note preview or note block, but keeps its grip (Later can be placed). `empty`: the
  * message it shows when the layout drew none of its cards, in place of `EMPTY_DECIDED`. `widths`:
- * the Match card widths switch (widthsControl flag); a fixed frame never has it. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean }
+ * the Match card widths switch (widthsControl flag); a fixed frame never has it. `remove`: Remove
+ * container in the settings menu (personRemove flag, N24); a fixed frame never has it. */
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean }
 
 /** The empty message of an ordinary frame: every card it has is decided and hidden. */
 export const EMPTY_DECIDED = 'Everything here is decided.';
@@ -136,7 +140,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
     + `<span class="vb-region-count"></span>${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
-    + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r)}</div>`
+    + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`
     + `</header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 

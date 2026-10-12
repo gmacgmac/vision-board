@@ -68,3 +68,13 @@ test('no version before the retire: the marker only counts; a container retired 
 test('without past versions (the versionView flag off), a marker opens none', () => {
   assert.deepEqual([...retiredCounts(ledger(), 'b', false)], [['p', { count: 2 }]]);
 });
+
+test('the person\'s removal of several cards in one line (N24, a v16 line) counts like an agent\'s, each on its container', () => {
+  const s = ledger(() => [
+    card('b', 7, 'p'), card('b', 8, 'q'), // 18, 19: run 3
+    line({ v: 16, by: 'person', type: 'retire', board: 'b', cards: [2, 7, 8] }), // 20
+  ]);
+  assert.deepEqual([...retiredCounts(s, 'b')], [['p', { count: 4, version: 19 }], ['q', { count: 1, version: 19 }]],
+    'p: 3, 5, then 2 and 7; q: 8; each opens the last version before the removal');
+  assert.deepEqual(s.runs.get('b')!.at(-1)!.seq, 19, 'the person\'s line is no version of its own');
+});

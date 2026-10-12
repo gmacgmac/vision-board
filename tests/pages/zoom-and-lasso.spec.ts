@@ -114,7 +114,7 @@ test('a lasso that touches no card offers only "Zoom to this area", which zooms 
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(before.k);
 });
 
-test('the selection bar: N selected, Comment, Move to, Reset places, Zoom to selection, Clear; centred above the selection; follows a pan', async ({ page }) => {
+test('the selection bar: N selected, Comment, Move to, Reset places, Remove cards, Zoom to selection, Clear; centred above the selection; follows a pan', async ({ page }) => {
   await openBoard(page);
   await expect(bar(page)).toBeHidden();
   await clickCard(page, 13);
@@ -124,7 +124,7 @@ test('the selection bar: N selected, Comment, Move to, Reset places, Zoom to sel
   // The pill opens it (stage5-follow-ups FE_02); the pill stays its first item.
   expect(await barButtons(page)).toEqual(['2 selected']);
   await openSelectionBar(page);
-  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Zoom to selection', 'Clear']);
+  expect(await barButtons(page)).toEqual(['2 selected', 'Comment', 'Move to', 'Reset places', 'Remove cards', 'Zoom to selection', 'Clear']);
   const sel = await boxOf(page, [13, 14]);
   const b = (await bar(page).boundingBox())!;
   expect(b.y + b.height).toBeLessThanOrEqual(sel.y);

@@ -1,9 +1,9 @@
 // The write operations. The caller is already known (callers.ts, from the operation's `security`):
-// the person for `act`, `mark_seen` and `put_board`, an agent for `request_grant` and `write_board`, nobody for
+// the person for `act`, `mark_seen`, `put_board` and `retire_cards`, an agent for `request_grant` and `write_board`, nobody for
 // `join`, the one credential-free write. Each body fits the operation's request schema first
 // (pointers into the body, api.md 38), its cards turn from board numbers into identities (edge.ts),
 // then the ledger module's own checks as it appends. Answers name cards by board number.
-import { eventOut, holders, openContainers, openItems } from '../../../packages/actions/src/index.ts';
+import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '../../../packages/actions/src/index.ts';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { openRequestOf } from '../../../packages/format/src/index.ts';
 import { newSecret } from './agents.ts';
@@ -70,6 +70,19 @@ const putBoard: Handler = async ({ req, res, params, ledger }) => {
   const b = await body('put_board', req);
   const created = !ledger.state().boards.has(board);
   sendJson(res, created ? 201 : 200, ledger.append({ ...b, type: 'board', board }, { by: 'person' }));
+};
+
+/** The person removes cards, or a container with every card in it now, from the board in the path
+ * (N24, api.md 141): the same `retire` line an agent's item writes, by the person, with no owed check
+ * (ruling 3). The ledger module refuses a retired card, an unknown or built-in container, an archived
+ * or a locked board. Answers the stored line, its cards by board number. */
+const retireCards: Handler = async ({ req, res, params, ledger }) => {
+  const board = personBoard(ledger.state(), params.board);
+  const b = cardsIn(ledger.state(), board, await body('retire_cards', req));
+  const region = b.region === undefined ? undefined : String(b.region);
+  const cards = region === undefined ? b.cards : cardsOf(ledger.state(), { board, region });
+  const stored = ledger.append({ type: 'retire', board, ...(region !== undefined && { region }), cards }, { by: 'person' }, { board });
+  sendJson(res, 201, eventOut(ledger.state(), stored));
 };
 
 /** A new agent: id and secret, shown once. The hash is stored before the `join` line is
@@ -140,5 +153,5 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
 };
 
 export const WRITES = {
-  act, mark_seen: markSeen, put_board: putBoard, join, request_grant: requestGrant, write_board: writeBoard,
+  act, mark_seen: markSeen, put_board: putBoard, retire_cards: retireCards, join, request_grant: requestGrant, write_board: writeBoard,
 } satisfies Record<string, Handler>;

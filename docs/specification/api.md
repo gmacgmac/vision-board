@@ -245,6 +245,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `act` | `POST /api/boards/{board}/act` | person | One action from the action registry (rule 8); a `send` also hands the board's chat session the answers (121) |
 | `mark_seen` | `POST /api/boards/{board}/seen` | person | `{ n, ver }`: the person has seen this version (D-018); or `{ board, head }`: the board up to that line (87) |
 | `put_board` | `PUT /api/boards/{board}` | person | `{ title, summary? }`: create the board when the id is new, rename it when it exists (90) |
+| `retire_cards` | `POST /api/boards/{board}/retire` | person | `{ cards }` or `{ region }`: the person removes cards, or a container and its cards, with the same `retire` line an agent writes (141) |
 | `watch_board` | `GET /api/boards/{board}/events` | page | Server-sent events: `change` with data `{ seq }` per append |
 | `watch_project` | `GET /api/events` | page | The same for the whole project, 200 on an empty one; in watch mode also `build` with data `{ build }` (78-80) |
 | `start_chat` | `POST /api/boards/{board}/chats` | person | `{ agent, model? }`: a new chat session on the board, replacing its current one (101) |
@@ -1130,3 +1131,37 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     answers and no Send recorded, which wait for the unlock. The agent's own board writes are refused
     with `locked`, and the skill (`skills/vision-board/SKILL.md` v3.3, Access) tells it to say so in
     one line and stop. The page: components.md § Lock a board.
+
+## Ledger v16: the person removes cards and containers (N24, 2026-10-12)
+
+141. **The person's retire** (rulings 1-2). `LEDGER_FORMAT` becomes 16 and every ledger `$id` moves
+    to `.../schema/ledger/16/`; `openapi.json` `info.version` becomes 1.21.0. Only adds: v2 to v15
+    lines stay valid. The person writes **the same `retire` line** an agent's item writes (126), not a
+    new act: the stored `retire` schema takes `by: person` from v16 only (`$defs/rules`; the hand twin
+    is `PERSON_TOO`, as for the person's `board` line, 90); the server writes no `agent` and no `key` on it. Why not an
+    act: ruling 2 wants one path, and the `retire` line already carries everything every reader needs
+    (`cards`, `region`), so the fold, the reads, the ledger's context rules, `show_node`'s and
+    `show_container`'s `retired` and the page's "N cards retired" marker read a person's line exactly
+    as an agent's, with no second fold to keep in step. Through a new person operation,
+    **`retire_cards`**, `POST /api/boards/{board}/retire` (`x-agent: false`, the person cookie, 20),
+    body `{ cards }` (board numbers on the path's board, one or more, each once) or `{ region }`, never
+    both (`api/retire-request.schema.json`); `cards` are turned into identities at the edge (`cardsIn`,
+    a number the board has not given: `invalid` at `/cards/{i}`); a container's `cards` are every card
+    whose place now is it (`retireCards`: the person's moves count). One line takes every card of a
+    selection. Answer 201: the stored line, its cards by board number (`eventOut`). The ledger's context
+    refuses as for an agent (126): a card already retired (`/cards`), an unknown container, `later`; an
+    agent calling it is `forbidden`. A registry entry for each (`RETIRE_ACTIONS`: `remove-cards`,
+    `remove-container`, `needsConfirmation`).
+142. **What differs from an agent's retire** (rulings 3-5). No owed check: the person may remove a
+    card still owed an answer, or a container whose note is unanswered (the page warns first,
+    `owedNotice`); agents keep their refusal (126). After it nothing on those cards is owed (they leave
+    every condition, `pending` and `list_open`), and an answer of the person's on them, or a note on
+    the container, waits for no Send (`unsent.ts` `dropRetired`, for an agent's retire too: the Send
+    message reads the board as it is). The person's line is no agent drawing (like their `board`
+    line, 92): it moves the board's own head but makes no version, no `board.drawn` and no
+    `board.changed`; the board's version history shows the cards in the versions before it. Agents
+    read the removal as a retire: the cards are gone from every read, `show_node` and `show_container`
+    answer with `retired`, and a later line naming them is refused (127). A locked board refuses it
+    (423 `locked`, the person's words) and an archived one (`invalid`, "restore it from the board picker
+    first"), through the one write check (`writeProblem`, 139). The page: components.md § Remove cards
+    and containers.
