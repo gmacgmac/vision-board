@@ -24,31 +24,30 @@ normally starts it for you. It needs Node 22.18 or newer, and a running board (`
 
 ## Adding it to a client
 
-Use absolute paths: a client does not start the server from this folder, and may not have your
-shell's `PATH` (with nvm, give the full path to `node`). The server name `vb` keeps tool names
-short (`mcp__vb__write_board` in Claude Code), well inside every client's limits.
+This section is the one place the MCP set-up is written down; other docs link here.
 
-Kiro (`.kiro/settings/mcp.json` in a project, or `~/.kiro/settings/mcp.json`), Cursor
-(`.cursor/mcp.json` or `~/.cursor/mcp.json`) and Claude Code (`.mcp.json` in a project) all take
-the same entry:
+Every MCP client takes the same entry. Use absolute paths (`which node` gives the first):
 
 ```json
 {
   "mcpServers": {
     "vb": {
       "command": "/absolute/path/to/node",
-      "args": ["/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts"],
-      "env": { "VB_SERVER": "http://127.0.0.1:4466" }
+      "args": ["/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts"]
     }
   }
 }
 ```
 
-Claude Code can also add it from the terminal:
+Where it goes:
 
-```sh
-claude mcp add vb --env VB_SERVER=http://127.0.0.1:4466 -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts
-```
+- Kiro: `~/.kiro/settings/mcp.json` (every project) or `.kiro/settings/mcp.json` (one project).
+- Claude Code: `.mcp.json` in a project, or from the terminal (add `-s user` for every project):
+  `claude mcp add vb -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`
+- Cursor: `~/.cursor/mcp.json` or `.cursor/mcp.json`.
+- Any other client: the same `command` and `args`.
+
+The board must be running (`npm run board`). Add `"env"` only to change a setting above.
 
 ## Identity (api.md 22)
 
@@ -58,6 +57,8 @@ the secret as the `secret` argument of `write_board`, `request_grant`, `list_ope
 `check_responses`. An unknown secret answers `not-authenticated`: join again, ask for the grants
 again, and the person approves again. A secret from a folder the board had open before answers
 `wrong-folder` instead: the agent stops and tells the person, and does not join (api.md 115).
+When the agent's own folder (`VB_PROJECT`) is the one now open, that secret answers
+`not-authenticated` with "call join again" (api.md 124).
 `join` and `list_boards` answer `project`, the folder the board has open.
 
 `VB_AGENT_SECRET` in the `env` above makes one identity for every chat that shares that MCP
