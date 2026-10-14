@@ -121,6 +121,10 @@
           "const": true,
           "description": "The person has pressed Send since writing it, so it is history and can no longer be edited or removed"
         },
+        "locked": {
+          "const": true,
+          "description": "The note is history and can no longer be edited or removed: the person has pressed Send since writing it (`sent`), or the agent has answered it (a reply naming it in `to`, or a newer version of one of its cards)"
+        },
         "nodes": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/cardNumbers",
           "description": "For a note on a group of cards: every item it is on. Left out for a note on one card."

@@ -198,8 +198,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
   const notes = createNoteFlow({
     stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
-    region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id),
-    ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
+    region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
+    replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
     discard: () => askConfirm(...DISCARD_ASK), paused: lock.paused,
   });
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
@@ -247,7 +247,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const unbind = bindStage(stage, vp, versions.guard(lock.guard({
     act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq) => void showVersion(seq),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
-    showNote: (id, seq) => notes.show(id, seq), setSize: places.setSize,
+    showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
     resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
     regionComment: (region) => notes.container(region),

@@ -36,6 +36,14 @@
   --vb-card-w-m: 360px;
   --vb-card-w-l: 464px;
   --vb-card-fill: 70%; /* How opaque a card is, so a connector behind it shows through (D-032). */
+  /* Popovers: the note bubble, the card popover, the container note preview and the note tip all
+     read these, so they scale together (popovers-larger-thread ruling 4). One text size for
+     everything in a popover, 15px (the maintainer's changes, chats 698 and 701: the text typed in
+     the comment box is the size of the text around it); labels and chips take --vb-text-md. */
+  --vb-pop-text: var(--vb-text-lg);
+  --vb-pop-w: 360px;
+  --vb-pop-max-h: 320px;
+  --vb-pop-pad: var(--vb-space-4);
   --vb-toolbar-h: 52px;
   --vb-focus-w: 2px;
   --vb-wire-w: 1.6px;

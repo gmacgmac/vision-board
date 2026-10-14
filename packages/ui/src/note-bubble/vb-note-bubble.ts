@@ -5,7 +5,7 @@
 // cancels. Browser only: the class is created inside defineVbNoteBubble().
 import type { Kind } from '../../../format/src/index.ts';
 import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
-import { cancelIntent, isDirty, NOTE_DISCARD_EVENT } from './note-bubble-core.ts';
+import { cancelIntent, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';
 
 export const VB_NOTE_BUBBLE_TAG = 'vb-note-bubble';
@@ -27,9 +27,9 @@ export interface VbNoteBubbleElement extends HTMLElement {
   /** The words typed so far. */
   readonly text: string;
   /** Whether the words typed differ from those it was shown with (`isDirty`); false for a sent
-   *  note. The page reads it before opening another bubble over this one (step 4G ruling 4). */
+   *  note or a reply. The page reads it before opening another bubble over this one (step 4G ruling 4). */
   readonly dirty: boolean;
-  /** Move focus into the text, caret at the end (or to the first button of a sent note). */
+  /** Move focus into the text, caret at the end (or to the first button of a sent note or a reply). */
   focusText(): void;
 }
 
@@ -100,7 +100,7 @@ export function defineVbNoteBubble(): void {
     }
 
     get dirty(): boolean {
-      return this.dataset.mode !== 'sent' && isDirty(this.opened, this.text);
+      return !readOnlyMode(this.dataset.mode as BubbleMode) && isDirty(this.opened, this.text);
     }
 
     focusText(): void {

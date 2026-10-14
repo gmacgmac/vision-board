@@ -189,3 +189,9 @@ test('regionState: the card widths in force, the person\'s first, then the agent
   assert.equal(WIDTHS_LABEL, 'Match card widths');
   assert.deepEqual([widthsTip('match'), widthsTip('own')], ['Card widths: Match', 'Card widths: Own']);
 });
+
+test('noteStage and regionNote: a container note the agent answered before a Send is history: answered, read-only (ruling 5)', () => {
+  assert.equal(noteStage({ locked: true }, true), 'answered');
+  const n = regionNote([{ seq: 4, kind: 'comment', text: 'Order?', at: '2026-10-14T10:00:00Z', locked: true }], true)!;
+  assert.deepEqual([n.stage, n.badge, n.stateText, n.editable, n.readOnlyText], ['answered', 'none', 'Answered', false, 'Read-only']);
+});

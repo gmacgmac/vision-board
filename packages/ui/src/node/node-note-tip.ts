@@ -3,7 +3,9 @@
 // rules are the shared hover tip (tip/hover-tip.ts); node.css draws the box while `data-tip-open`
 // is on the note. One tip per note. Behind the `notePreview` flag: the page marks its world with
 // `data-note-preview` when the flag is on. A click still opens the note bubble, and the tip gives
-// way. Browser only.
+// way. Replies (`.vb-node-reply`) are bound the same way: the hover tip stays for a quick look, and
+// a click, Enter or Space opens the exchange, the note and its replies, in the bubble
+// (popovers-larger-thread rulings 2 and 3; the page's click delegate, wiring.ts). Browser only.
 import type { HoverTip } from '../tip/hover-tip.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
 
@@ -17,7 +19,10 @@ export function bindNoteTip(note: HTMLElement): HoverTip {
   note.querySelector('.vb-note-tip')!.addEventListener('click', (e) => e.stopPropagation());
   note.addEventListener('click', () => tip.close());
   note.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.target === note) note.click();
+    if ((e.key !== 'Enter' && e.key !== ' ') || e.target !== note) return;
+    // Space would scroll the board and toggle the card's selection (keys.ts) otherwise.
+    e.preventDefault();
+    note.click();
   });
   return tip;
 }

@@ -4,82 +4,26 @@
 // under the note it answers, on a card and in a container's note block, live; the keyboard path; axe
 // light and dark; then the gallery's Parking and replies section.
 //
-// Each test draws its own board through the API, as an agent would: a joined agent writes the board
-// and its cards, the page opens, then the person acts and the agent answers, so every change arrives
-// live. Agent calls go through `request` (no person cookie); the person's through `page.request`.
-import type { APIRequestContext, Locator, Page } from '@playwright/test';
+// Each test draws its own board through the API, as an agent would (agent-board.ts).
+import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import type { Drawn } from './agent-board.ts';
+import { act, card, draw, open, reply, tabTo, write } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
-
-interface Agent { secret: string }
-interface Drawn { agent: Agent; board: string; n: number[] }
-
-let boards = 0;
-
-async function join(request: APIRequestContext): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label: 'Pricing chat' } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
-
-async function write(request: APIRequestContext, d: { agent: Agent; board: string }, items: object[]) {
-  const r = await request.post(`/api/boards/${d.board}/write`, { headers: { Authorization: `Bearer ${d.agent.secret}` }, data: { items } });
-  expect(r.status(), await r.text()).toBe(200);
-  const body = await r.json() as { results: { ok: boolean; n?: number }[] };
-  expect(body.results.every((x) => x.ok), JSON.stringify(body.results)).toBe(true);
-  return body.results;
-}
-
-/** A board of its own with `count` cards, drawn by a new agent. */
-async function draw(request: APIRequestContext, count = 1): Promise<Drawn> {
-  const d = { agent: await join(request), board: `parking-${Date.now()}-${(boards += 1)}` };
-  const results = await write(request, d, [
-    { type: 'board', title: 'Parking' },
-    { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
-    ...Array.from({ length: count }, (_, i) => ({ type: 'node', node: { region: 'p', kind: 'question', title: `Card ${i + 1}` } })),
-  ]);
-  return { ...d, n: results.slice(2).map((x) => x.n!) };
-}
 
 const BUNDLE = {
   situation: 'The trial **starts** without a card.', background: 'Support asked twice.\n\n- March\n- April',
   assessment: 'Low risk.', recommendation: 'Ship it.', sources: ['Support thread', 'Pricing sheet'],
 };
 const park = (request: APIRequestContext, d: Drawn, n: number) => write(request, d, [{ type: 'park', n, bundle: BUNDLE }]);
-const reply = (request: APIRequestContext, d: Drawn, n: number, text: string, to?: number) =>
-  write(request, d, [{ type: 'reply', n, text, ...(to !== undefined && { to }) }]);
-
-/** The person's act, with the cookie the page was given. */
-async function act(page: Page, d: Drawn, body: object): Promise<number> {
-  const r = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', ...body } });
-  expect(r.status(), await r.text()).toBe(201);
-  return (await r.json() as { seq: number }).seq;
-}
-
-async function open(page: Page, d: Drawn, query = ''): Promise<void> {
-  await page.goto(`/${query}#${d.board}`);
-  await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-}
-
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const status = (page: Page, n: number) => card(page, n).locator('.vb-node-status');
 const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="handover"]');
 const box = (page: Page, n: number) => card(page, n).locator('.vb-card-pop[data-pop="handover"]');
 const notes = (page: Page, n: number) => card(page, n).locator('.vb-node-notes');
 const replies = (page: Page, n: number) => card(page, n).locator('.vb-node-reply');
-
-/** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */
-async function tabTo(page: Page, target: Locator, max = 60): Promise<void> {
-  for (let i = 0; i < max; i += 1) {
-    if (await target.evaluate((e) => e === document.activeElement)) return;
-    await page.keyboard.press('Tab');
-  }
-  throw new Error(`Tab never reached ${String(target)}`);
-}
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.
@@ -143,10 +87,14 @@ test('a reply shows under the note it answers, live; one naming no note comes af
   await expect(replies(page, n)).toHaveCount(1);
   await expect(replies(page, n).locator('.vb-node-note-who')).toHaveText('Agent reply · Pricing chat');
   await expect(replies(page, n).locator('.vb-node-note-text strong')).toHaveText('three');
-  // Under its note: the reply follows the note, in the same block; it opens nothing.
+  // Under its note: the reply follows the note, in the same block; a click on it opens the exchange
+  // (popover-thread.spec.ts has the rest).
   const order = await notes(page, n).locator('.vb-node-note, .vb-node-reply').evaluateAll((els) => els.map((e) => e.className));
   expect(order).toEqual(['vb-node-note', 'vb-node-reply']);
   await replies(page, n).click();
+  // The reply answered the note (not yet sent), so it is history and opens read-only (ruling 5).
+  await expect(page.getByRole('dialog', { name: `Note 1 on ${n}, answered` })).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(page.locator('vb-note-bubble')).toBeHidden();
   await reply(request, d, n, 'Also: the sheet is updated.');
   await expect(replies(page, n)).toHaveCount(2);

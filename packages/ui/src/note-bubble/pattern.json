@@ -2,24 +2,25 @@
   "name": "note-bubble",
   "title": "Note bubble",
   "tag": "vb-note-bubble",
-  "description": "A non-modal bubble beside one card where the person writes, edits or removes the card's note, or reads a sent one. It points at its card with an arrow in the card's colour, draws above the board and moves nothing (README picks 5, 11-12; mockup 05 section 1).",
+  "description": "A non-modal bubble beside one card where the person writes, edits or removes the card's note, or reads a sent one with the agent's replies to it (the exchange), or a reply on its own. It points at its card, or the note or reply pressed, with an arrow in the card's colour, draws above the board and moves nothing (README picks 5, 11-12; mockup 05 section 1). Its sizes are the shared popover tokens (--vb-pop-*: one 15px text size for the text typed, the heads, the hint and the buttons, 360px wide; popovers-larger-thread rulings 1 and 4 and the maintainer's changes, chats 698 and 701).",
   "files": {
-    "core": "note-bubble-core.ts (placeBubble, titleAnchor, bubbleView, saveIntent, isDirty, cancelIntent, NOTE_DISCARD_EVENT, NoteDiscardDetail; no DOM)",
+    "core": "note-bubble-core.ts (placeBubble, titleAnchor, partAnchor, bubbleView, readOnlyMode, saveIntent, isDirty, cancelIntent, NOTE_DISCARD_EVENT, NoteDiscardDetail; no DOM)",
     "template": "note-bubble-template.ts (noteBubbleTemplate: the only place the markup is built)",
     "element": "vb-note-bubble.ts (defineVbNoteBubble, VbNoteBubbleElement; light DOM)",
-    "styles": "note-bubble.css (scoped by the tag; tokens only)"
+    "styles": "note-bubble.css (scoped by the tag; tokens only: the --vb-pop-* popover tokens for its sizes)"
   },
-  "states": ["new", "edit", "sent", "saving", "error", "right", "left", "below", "focus", "container", "dirty", "growing"],
+  "states": ["new", "edit", "sent", "reply", "exchange", "saving", "error", "right", "left", "below", "focus", "container", "dirty", "growing"],
   "parts": {
     "vb-nb-head": "the card's number chip (vb-nb-num) and the head line (vb-nb-title): 'Note on 42', 'Edit note on 42', or 'Note 2 on 42, sent'; on a whole container no chip and 'Note on container Review' (3_FE_04 ruling 3)",
-    "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; it grows with its words from 70px to 240px (never shorter than it is, so a manual resize stays), then scrolls; a sent note shows vb-nb-read (Markdown) instead",
+    "vb-nb-text": "the textarea, 'Note text', up to MAX_TEXT characters; it grows with its words from three lines to --vb-pop-max-h (never shorter than it is, so a manual resize stays), then scrolls; a sent note shows vb-nb-read (Markdown) instead",
+    "vb-nb-thread": "the read-only part, which scrolls as one past --vb-pop-max-h and is a tab stop (role group, labelled 'Note', 'Note and replies', 'Replies' or 'Reply'): the sent note (vb-nb-read, Markdown), then the agent's replies to it, oldest first (ol.vb-nb-replies > li.vb-nb-reply: who, vb-nb-who 'Agent reply · label', over the words, vb-nb-reply-text, Markdown), as the card shows them; after the textarea when a note not yet sent has replies; in reply mode, the one reply",
     "vb-nb-error": "role=alert, under the text: why the last save did not go through",
     "vb-nb-row": "Remove (edit only), the key hint (vb-nb-hint), Cancel or Close, and Add note or Save (vb-nb-primary)"
   },
   "attributes": {
     "role": "dialog (set by show); not modal: the board stays usable",
     "aria-label": "the head line (set by show)",
-    "data-mode": "new | edit | sent (set by show)",
+    "data-mode": "new | edit | sent | reply (set by show); reply: a reply that names no note of the card, on its own, Close only",
     "data-side": "right | left | below: where it opened beside the card (set by place)",
     "data-phase": "idle | saving | error (set by setPhase); aria-busy while saving",
     "--kind": "the card's kind colour, for the border and the arrow (set by show through the CSSOM); on a whole container, the container's line colour (show's `line`)",
@@ -37,7 +38,7 @@
     "vb-note (bubbles): detail { choice: 'save' | 'cancel' | 'remove', text }; Enter in the text is save, Esc anywhere is cancel. A cancel is sent only while the text is unchanged",
     "vb-note-discard (bubbles): detail { text }; Esc or Cancel with changed text (cancelIntent 'ask'), in place of the cancel. The bubble stays open: the page asks \"Discard your changes?\" through its confirm dialog, then closes it (OK) or puts focus back with focusText (Cancel)"
   ],
-  "whenToUse": "Writing, changing or reading the person's note on one card.",
+  "whenToUse": "Writing, changing or reading the person's note on one card, and reading the agent's replies to it.",
   "whenNotToUse": "Questions that block the whole page (use the confirm dialog), or anything not about one card.",
-  "accessibility": "role=dialog, labelled by its head line, not modal. Focus moves into the text when it opens and back to the card when it closes. Enter saves, Shift+Enter adds a line, Esc cancels (with changed text, the page asks first). Every button is a real button with a visible label and a focus ring."
+  "accessibility": "role=dialog, labelled by its head line, not modal. Focus moves into the text (Close when read-only) when it opens and back to the card when it closes, or to the note or reply it opened from. The read-only part is a labelled group and a tab stop, so the keyboard can scroll it. Enter saves, Shift+Enter adds a line, Esc cancels (with changed text, the page asks first). Every button is a real button with a visible label and a focus ring."
 }

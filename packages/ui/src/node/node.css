@@ -153,7 +153,8 @@ vb-node .vb-node-note { position: relative; --reach: calc(var(--vb-space-4) + 1p
 vb-node .vb-node-note:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-node:has(.vb-node-note[data-tip-open]) { z-index: 4; }
 vb-node .vb-note-tip {
-  top: 0; left: calc(100% + var(--reach)); width: var(--vb-card-w); max-height: 240px; overflow: auto;
+  top: 0; left: calc(100% + var(--reach)); width: var(--vb-pop-w); max-width: none; max-height: var(--vb-pop-max-h); overflow: auto;
+  padding: var(--vb-space-2) var(--vb-pop-pad); font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text); line-height: 1.45;
   font-weight: var(--vb-weight-regular); cursor: text; user-select: text;
 }
 vb-node .vb-note-tip::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--reach); height: auto; }

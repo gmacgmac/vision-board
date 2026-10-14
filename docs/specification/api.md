@@ -344,7 +344,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     replaces its words and, with `kind` (`comment` or `context`), what it asks for;
     `note-remove { n, note }` takes it back. `note` is the `seq` of the act that made it; neither
     names a version. The server refuses either (`invalid`, pointer `/note`) when the note was sent
-    (a `send` on its board after it), was removed, is on another node, or is another person's.
+    (a `send` on its board after it) or answered (143), was removed, is on another node, or is
+    another person's.
     A sent note is history and is never changed; removing one from history is not built (open with
     the maintainer, chat 740).
 61. **What every read shows** is a note's latest words and kind, under its own `seq`; a removed
@@ -432,8 +433,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     act's `seq`; a container holds at most one note not yet sent (a second is refused `invalid`,
     pointer `/region`, until a `send` on its board comes after the first); `note-edit` and
     `note-remove` name it by `note` with the same `board` + `region`, and are refused (pointer
-    `/note`) when it was sent, was removed, is on another container or another card, or is another
-    person's. A sent note is history. A container note changes no item's status. What the agent
+    `/note`) when it was sent or answered (143), was removed, is on another container or another
+    card, or is another person's. A sent note is history. A container note changes no item's status. What the agent
     owes (36) gains the latest standing ask on each container, and a `reply` whose `to` is the
     note's `seq` answers it. On the page its pin number continues the same sequence as the card
     notes of the current Send.
@@ -1165,3 +1166,16 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     (423 `locked`, the person's words) and an archived one (`invalid`, "restore it from the board picker
     first"), through the one write check (`writeProblem`, 139). The page: components.md § Remove cards
     and containers.
+
+## A note locks once it is answered (popovers-larger-thread ruling 5)
+
+143. **A note is history at whichever comes first:** a `send` on its board after it (`sent`), or the
+    agent answering it: a `reply` naming it in `to` (on any of its cards; for a container note, on
+    any node), or a newer version of one of its cards than when it was made, such as an `append`
+    (what answers an ask, 36). From then `note-edit` and `note-remove` are refused (`invalid`,
+    pointer `/note`): "note N was answered by the agent, and an answered note is history; write a
+    new note instead" (or the sent wording, 60). A locked note is no longer the card's or
+    container's note not yet sent (59, 73), so a new note may start. Every read marks it
+    `locked: true` (and `sent: true` only after a Send). One derived state, `lockOf`
+    (`packages/actions/src/note-lock.ts`), serves the server's check and every read, and the page
+    reads `locked` from the same reads to choose between editing a note and showing it. Only adds: `openapi.json` `info.version` becomes 1.22.0.

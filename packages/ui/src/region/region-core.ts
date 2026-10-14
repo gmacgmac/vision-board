@@ -90,9 +90,10 @@ export interface RegionNoteState {
 }
 
 /** The stage of a container's latest note. `owed`: the agent still owes an answer on it (the
- * container is in `pendingItems`); only a sent note can be answered. */
-export function noteStage(note: Pick<ItemNote, 'sent'>, owed: boolean): RegionNoteStage {
-  if (note.sent !== true) return 'unsent';
+ * container is in `pendingItems`). A note the agent answered before any Send is `answered` too: it
+ * is history (`locked`, popovers-larger-thread ruling 5). */
+export function noteStage(note: Pick<ItemNote, 'sent' | 'locked'>, owed: boolean): RegionNoteStage {
+  if (note.sent !== true) return note.locked === true ? 'answered' : 'unsent';
   return owed ? 'sent' : 'answered';
 }
 
@@ -107,7 +108,8 @@ export function regionNote(notes: readonly ItemNote[] | undefined, owed = true, 
   const stage = noteStage(note, owed);
   const answers = replies.filter((r) => r.to === note.seq).map(replyEntry);
   return {
-    seq: note.seq, stage, badge: noteBadge(stage), stateText: NOTE_STAGE_TEXT[stage], text: note.text ?? '',
+    seq: note.seq, stage, badge: noteBadge(stage), text: note.text ?? '',
+    stateText: note.sent !== true && stage === 'answered' ? 'Answered' : NOTE_STAGE_TEXT[stage],
     editable: stage === 'unsent',
     readOnlyText: stage === 'sent' ? 'Read-only until the agent answers' : stage === 'answered' ? 'Read-only' : '',
     ...(answers.length && { replies: answers }),
@@ -123,12 +125,14 @@ export function commentLabel(title: string, badge: RegionBadge): string {
 
 /** What the person asked of the container's note, from the preview or the note block. The
  * element only reports it; the page acts (edit opens the bubble, remove writes `note-remove`,
- * show and hide set `noteShown`). */
-export type RegionNoteAction = 'edit' | 'remove' | 'show' | 'hide';
+ * show and hide set `noteShown`; open, a click, Enter or Space on the block's note or a reply,
+ * opens the exchange beside what was pressed: popovers-larger-thread ruling 2). */
+export type RegionNoteAction = 'edit' | 'remove' | 'show' | 'hide' | 'open';
 
-/** `vb-region-note` (bubbles): one press in the preview or the note block. */
+/** `vb-region-note` (bubbles): one press in the preview or the note block. `reply`: on `open`, the
+ *  reply pressed (its `seq`); absent when it was the note. */
 export const REGION_NOTE_EVENT = 'vb-region-note';
-export interface RegionNoteEventDetail { region: string; action: RegionNoteAction; seq: number }
+export interface RegionNoteEventDetail { region: string; action: RegionNoteAction; seq: number; reply?: number }
 
 /** `vb-region-note-resize` (bubbles): the shown note block's height changed, in the frame's own
  * (unscaled) pixels, its gap to the cards included; 0 once hidden. The page feeds it to layout as

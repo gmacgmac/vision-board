@@ -38,7 +38,8 @@ export function containerBubbleSample(fx: Fixture): HTMLElement {
     const line = { x: l.left - s.left, y: l.top - s.top, w: l.width, h: l.height };
     const p = placeBubble(titleAnchor(line), { w: bubble.offsetWidth, h: bubble.offsetHeight }, STAGE);
     bubble.place(p);
-    stage.style.setProperty('height', `${Math.max(STAGE.h, p.y + bubble.offsetHeight + 24)}px`);
+    // Whole pixels, so the sections under it never sit at a fraction of a pixel.
+    stage.style.setProperty('height', `${Math.max(STAGE.h, Math.ceil(p.y + bubble.offsetHeight + 24))}px`);
   });
   const fig = el('figure', 'g-bubble');
   fig.append(stage, el('figcaption', 'g-note', 'On a whole container: beside its title line, in the frame\'s line colour, no number chip'));

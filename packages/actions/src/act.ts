@@ -10,7 +10,7 @@ import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, rev
 import type { LedgerState } from './fold.ts';
 import { archiveRules } from './archive.ts';
 import { lockRules, writeProblem } from './lock.ts';
-import { sentAfter } from './fold.ts';
+import { lockOf } from './note-lock.ts';
 import { containerLog } from './containers.ts';
 import { grantRequests } from './grants.ts';
 import type { Ask } from './notes.ts';
@@ -165,7 +165,7 @@ function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): voi
   const name = cardName(s);
   if ((e.action === 'comment' || e.action === 'context') && e.text?.trim()) {
     const open = liveNotes(s.logs.get(e.id!) ?? { asks: [], decisions: [] })
-      .find((x) => x.nodes === undefined && x.person === e.person && !sentAfter(s, board, x.seq));
+      .find((x) => x.nodes === undefined && x.person === e.person && !lockOf(s, board, x));
     if (open) p.push(`n: item ${name(e.id!)} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
     return;
   }
@@ -179,10 +179,13 @@ function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): voi
   else changeProblems(a, e, s, board, p);
 }
 
-/** A note may change only while it stands, before a Send, and only by the person who wrote it. */
+/** A note may change only while it stands, before a Send or the agent's answer (`lockOf`,
+ * popovers-larger-thread ruling 5), and only by the person who wrote it. */
 function changeProblems(a: Ask, e: ActEvent, s: LedgerState, board: string, p: string[]): void {
+  const lock = lockOf(s, board, a);
   if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
-  else if (sentAfter(s, board, a.seq)) p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
+  else if (lock === 'sent') p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
+  else if (lock === 'answered') p.push(`note: note ${e.note} was answered by the agent, and an answered note is history; write a new note instead`);
   else if (a.person !== e.person) p.push(`note: note ${e.note} is not yours`);
 }
 
@@ -213,7 +216,7 @@ function containerNoteRules(e: ActEvent, s: LedgerState, p: string[]): void {
   const log = containerLog(s, board, region);
   if (e.action === 'comment' || e.action === 'context') {
     if (!e.text?.trim()) return void p.push('text: required');
-    const open = liveNotes(log ?? { asks: [], decisions: [] }).find((x) => x.person === e.person && !sentAfter(s, board, x.seq));
+    const open = liveNotes(log ?? { asks: [], decisions: [] }).find((x) => x.person === e.person && !lockOf(s, board, x));
     if (open) p.push(`region: container "${region}" already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
     return;
   }

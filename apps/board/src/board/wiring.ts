@@ -16,7 +16,10 @@ import { bindSizeControl, isSizePick } from './size.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
-  showNote(id: string, seq: number): void;
+  /** The pin or a note in the card's block (`fromNote`): open it, with the agent's replies to it. */
+  showNote(id: string, seq: number, fromNote?: boolean): void;
+  /** An agent's reply on a card: the exchange it is part of (popovers-larger-thread ruling 2). */
+  showReply(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
   /** Match card widths in a container's mode row (widthsControl flag): the widths a press sets. */
@@ -83,8 +86,11 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const answer = t.closest<HTMLButtonElement>('button[data-answer]');
     if (answer?.getAttribute('aria-disabled') === 'true') return;
     if (answer) return h.answer(cardOf(answer), Number(answer.dataset.proposal), answer.dataset.answer === 'accept' ? 'accept' : 'reject');
+    // A reply on a card (a sibling of its note, so not inside it); a container's are the frame's own.
+    const reply = t.closest<HTMLElement>('.vb-node-reply[data-reply]');
+    if (reply && !t.closest('a') && !selectingIn(reply)) return h.showReply(cardOf(reply), Number(reply.dataset.reply));
     const note = t.closest<HTMLElement>('[data-note]');
-    if (note && !t.closest('a') && !selectingIn(note)) return h.showNote(cardOf(note), Number(note.dataset.note));
+    if (note && !t.closest('a') && !selectingIn(note)) return h.showNote(cardOf(note), Number(note.dataset.note), note.matches('.vb-node-note'));
     const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
     const pick = sizeBtn?.dataset.sizePick;
     if (sizeBtn && isSizePick(pick)) return h.setSize(cardOf(sizeBtn), pick);

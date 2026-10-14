@@ -67,13 +67,9 @@ const cardsOn = (s: LedgerState, board: string, ctx: ConditionContext): LedgerNo
 /** Whether card `node` is decided: only a card that needs an answer can be (registry.ts). */
 const decided = (s: LedgerState, node: LedgerNode): boolean => isDecided(latest(node).kind, s.items.get(node.id)?.status ?? 'open');
 
-/** Whether a `reply` names the ask `seq` in `to`: one on any card it is on (a note on a group,
- * api.md 64), or, for a note on a whole container, which is on no card, one on any node, since a
- * `seq` names one act (api.md 73). */
-export function replied(s: LedgerState, seq: number, cards: number[]): boolean {
-  const on = cards.length ? cards.map((id) => s.replies.get(id) ?? []) : [...s.replies.values()];
-  return on.some((rs) => rs.some((r) => r.to === seq));
-}
+// Whether a `reply` names an ask (note-lock.ts, where it also locks the note).
+import { replied } from './note-lock.ts';
+export { replied };
 
 /** What the agent owes on a card (api.md 36, 120): the `seq` of the person's latest comment or
  * "needs context" that no newer version or reply answers, else of a "later" with no park after it.

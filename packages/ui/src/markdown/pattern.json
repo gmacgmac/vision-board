@@ -8,7 +8,7 @@
     "blocks": "blocks.ts (parseBlocks: lines into paragraphs, lists, # labels, > quotes and fenced code)",
     "inline": "inline.ts (renderInline: bold, italic, strikethrough, inline code, links, autolinks, escapes, hard breaks; esc)",
     "render": "render.ts (renderMarkdown, the front function; MARKDOWN_MAX)",
-    "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css)"
+    "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css). Paragraphs, lists and quotes read --vb-md-text, which a popover sets to --vb-pop-text (popovers-larger-thread); else --vb-text-md"
   },
   "states": ["paragraph", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "inline marks", "link", "refused link", "plain text"],
   "subset": {

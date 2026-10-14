@@ -1,8 +1,11 @@
 /* Note bubble pattern styles (<vb-note-bubble>, packages/ui/src/note-bubble). Scoped by the tag,
-   light DOM; tokens only. Mockup 05 section 1 `.ovl` with `spec.css`: a 300px bubble whose 1px
+   light DOM; tokens only. Mockup 05 section 1 `.ovl` with `spec.css`: a bubble whose 1px
    border and arrow wear the card's colour (--kind, set by the element), faint at rest and full
    while you type (README pick 12). The page places it beside its card in stage pixels, above the
-   board, so it never covers the card, moves nothing and stays readable at any zoom (picks 5, 11). */
+   board, so it never covers the card, moves nothing and stays readable at any zoom (picks 5, 11).
+   Its sizes are the shared popover tokens (--vb-pop-*): one text size for everything in it, so the
+   words typed match the words around them, and every popover scales together (popovers-larger-
+   thread rulings 1 and 4, and the maintainer's changes, chats 698 and 701). */
 
 vb-note-bubble {
   --kind: var(--vb-ink-subtle);
@@ -11,9 +14,9 @@ vb-note-bubble {
   --edge: color-mix(in srgb, var(--kind) 24%, var(--vb-line));
   --arrow: 22px;
   position: absolute; z-index: 30; left: 0; top: 0;
-  display: grid; gap: var(--vb-space-2); width: 300px; padding: var(--vb-space-3);
-  border: 1px solid var(--edge); border-radius: 14px; background: var(--vb-surface-raised);
-  box-shadow: var(--vb-shadow-lift); color: var(--vb-ink); font-size: var(--vb-text-md);
+  display: grid; gap: var(--vb-space-2); width: var(--vb-pop-w); padding: var(--vb-pop-pad);
+  border: 1px solid var(--edge); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
+  box-shadow: var(--vb-shadow-lift); color: var(--vb-ink); font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text);
   cursor: default; user-select: text;
 }
 vb-note-bubble[hidden] { display: none; }
@@ -41,42 +44,66 @@ vb-note-bubble[data-side='below']::before {
 }
 
 vb-note-bubble .vb-nb-head {
-  display: flex; align-items: center; gap: var(--vb-space-2); font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
+  display: flex; align-items: center; gap: var(--vb-space-2); font-size: var(--vb-pop-text); color: var(--vb-ink-subtle);
 }
 vb-note-bubble .vb-nb-title { flex: 1; min-width: 0; color: var(--vb-ink); font-weight: var(--vb-weight-medium); }
 /* The card's number chip (05 `.nref`). */
 vb-note-bubble .vb-nb-num {
-  display: inline-grid; place-items: center; flex: none; min-width: 28px; height: 20px; padding: 0 6px;
+  display: inline-grid; place-items: center; flex: none; min-width: 32px; height: 22px; padding: 0 var(--vb-space-2);
   border: 1px solid color-mix(in srgb, var(--kind) 50%, var(--vb-line)); border-radius: var(--vb-radius-sm);
   background: var(--vb-surface-card); color: var(--vb-ink-strong);
-  font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font-mono); font-variant-numeric: tabular-nums;
+  font: var(--vb-weight-medium) var(--vb-text-md) var(--vb-font-mono); font-variant-numeric: tabular-nums;
 }
 
+/* Three lines tall at rest, in proportion to the text; it grows with its words up to the popover's
+   maximum height, then scrolls. */
 vb-note-bubble .vb-nb-text {
-  min-height: 70px; max-height: 240px; padding: var(--vb-space-2) 10px; resize: vertical;
-  border: 1px solid var(--vb-line-strong); border-radius: 10px; background: var(--vb-surface-card);
-  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-text-md); line-height: 1.45; outline: 0;
+  min-height: calc(var(--vb-pop-text) * 1.45 * 3 + var(--vb-space-2) * 2 + 2px); max-height: var(--vb-pop-max-h);
+  padding: var(--vb-space-2) var(--vb-space-3); resize: vertical;
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
+  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-pop-text); line-height: 1.45; outline: 0;
 }
 vb-note-bubble .vb-nb-text:focus { border-color: var(--vb-accent); }
 vb-note-bubble .vb-nb-text::placeholder { color: var(--vb-ink-subtle); }
-vb-note-bubble .vb-nb-read { display: grid; gap: var(--vb-space-2); max-height: 240px; overflow: auto; line-height: 1.45; }
-vb-note-bubble .vb-nb-error { margin: 0; color: var(--vb-state-drop); font-size: var(--vb-text-sm); }
+/* The read-only part (popovers-larger-thread ruling 2): the sent note, then the agent's replies to
+   it, oldest first, as the card shows them (node-parking.css `.vb-node-reply`): set in by a rule,
+   neutral. It scrolls as one past the popover's maximum height, and is a tab stop so the keyboard
+   can scroll it. */
+vb-note-bubble .vb-nb-thread {
+  display: grid; gap: var(--vb-space-3); max-height: var(--vb-pop-max-h); overflow: auto; line-height: 1.45;
+  border-radius: var(--vb-radius-sm);
+}
+vb-note-bubble .vb-nb-thread:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+vb-note-bubble .vb-nb-read { display: grid; gap: var(--vb-space-2); }
+vb-note-bubble .vb-nb-replies { display: grid; gap: var(--vb-space-2); margin: 0; padding: 0; list-style: none; }
+vb-note-bubble .vb-nb-reply {
+  display: grid; gap: var(--vb-space-1); margin-left: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-sunken); color: var(--vb-ink);
+}
+vb-note-bubble[data-mode='reply'] .vb-nb-reply { margin-left: 0; }
+vb-note-bubble .vb-nb-who {
+  font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink);
+}
+vb-note-bubble .vb-nb-reply-text { display: grid; gap: var(--vb-space-2); min-width: 0; color: var(--vb-ink-strong); overflow-wrap: anywhere; }
+vb-note-bubble .vb-nb-reply :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
+vb-note-bubble .vb-nb-error { margin: 0; color: var(--vb-state-drop); font-size: var(--vb-pop-text); }
 vb-note-bubble .vb-nb-error[hidden] { display: none; }
 
 /* Remove, the hint and Cancel / Save on one row; the hint wraps away first when Remove is there. */
-vb-note-bubble .vb-nb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
-vb-note-bubble .vb-nb-hint { flex: 1 1 0; min-width: 0; color: var(--vb-ink-subtle); font-size: var(--vb-text-xs); line-height: 1.8; }
+vb-note-bubble .vb-nb-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--vb-space-2); }
+vb-note-bubble .vb-nb-hint { flex: 1 1 0; min-width: 0; color: var(--vb-ink-subtle); font-size: var(--vb-pop-text); line-height: 1.5; }
 /* The hint always takes its own row above the buttons, in both modes, so it never wraps mid-phrase
    ("Esc / cancel" broke when Cancel and Add note left it too little room; maintainer, 771). */
 vb-note-bubble .vb-nb-hint { order: -1; flex-basis: 100%; white-space: nowrap; }
 vb-note-bubble kbd {
   padding: 1px 5px; border: 1px solid var(--vb-line-strong); border-radius: 4px;
-  color: var(--vb-ink); font: var(--vb-text-xs) var(--vb-font-mono);
+  color: var(--vb-ink); font: var(--vb-text-md) var(--vb-font-mono);
 }
 vb-note-bubble .vb-nb-btn {
-  display: inline-flex; align-items: center; height: 28px; padding: 0 var(--vb-space-3); cursor: pointer;
+  display: inline-flex; align-items: center; height: var(--vb-space-6); padding: 0 var(--vb-pop-pad); cursor: pointer;
   border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
-  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
+  color: var(--vb-ink-strong); font: inherit; font-size: var(--vb-pop-text); font-weight: var(--vb-weight-medium);
 }
 vb-note-bubble .vb-nb-btn:hover { background: var(--vb-surface-sunken); }
 vb-note-bubble .vb-nb-btn:active { transform: translateY(1px); }

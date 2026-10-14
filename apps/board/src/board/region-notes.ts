@@ -1,5 +1,6 @@
 // The container note on the page (3_FE_04 step 4G): the frame's `vb-region-note` presses (Edit
-// opens the bubble, Remove writes note-remove, Show in container / Hide set the frame's
+// opens the bubble, a press on the block's note or a reply opens it beside that, popovers-larger-
+// thread ruling 2; Remove writes note-remove, Show in container / Hide set the frame's
 // noteShown), which containers show their note block (page state only, like zoom: not in the
 // ledger, reset on reload, ruling 3), and each shown block's height as that container's head
 // inset for the layout (`vb-region-note-resize`), so showing one note lays out that one
@@ -13,8 +14,9 @@ export interface RegionNoteDeps {
   /** The open board: the page state is per board and starts empty on another one. */
   board(): string;
   title(region: string): string;
-  /** Edit (Open for a sent note): the container's note bubble. */
-  edit(region: string): void;
+  /** Edit (Open for a sent note): the container's note bubble; `part`, opened from the block's
+   *  note ('note') or a reply (its seq): beside that. */
+  edit(region: string, part?: 'note' | number): void;
   attempt(fields: ActFields): Promise<string | null>;
   /** A block's height changed, or a note was removed: lay the board out again. */
   relayout(): void;
@@ -51,9 +53,10 @@ export function createRegionNotes(d: RegionNoteDeps): RegionNotes {
 
   function onNote(e: Event) {
     sync();
-    const { region, action, seq } = (e as CustomEvent<RegionNoteEventDetail>).detail;
+    const { region, action, seq, reply } = (e as CustomEvent<RegionNoteEventDetail>).detail;
     const frame = (e.target as Element).closest<VbRegionElement>('vb-region');
     if (action === 'edit') return d.edit(region);
+    if (action === 'open') return d.edit(region, reply ?? 'note');
     if (action === 'remove') return void remove(region, seq);
     if (action === 'show') shown.add(region);
     else shown.delete(region);

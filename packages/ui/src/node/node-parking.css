@@ -15,18 +15,19 @@ vb-node .vb-card-pop[data-pop='handover'] { max-height: 440px; }
 vb-node .vb-hand { display: grid; gap: var(--vb-space-1); }
 vb-node .vb-hand + .vb-hand { padding-top: var(--vb-space-3); border-top: 1px solid var(--vb-line); }
 vb-node .vb-hand-head {
-  margin: 0; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
+  margin: 0; font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em;
   text-transform: uppercase; color: var(--vb-accent-text);
 }
-vb-node .vb-hand-text { display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink); }
-vb-node .vb-hand-sources { margin: 0; padding-left: var(--vb-space-4); font-size: var(--vb-text-sm); color: var(--vb-ink); }
+vb-node .vb-hand-text { display: grid; gap: var(--vb-space-2); min-width: 0; font-size: var(--vb-pop-text); line-height: 1.5; color: var(--vb-ink); }
+vb-node .vb-hand-sources { margin: 0; padding-left: var(--vb-space-4); font-size: var(--vb-pop-text); color: var(--vb-ink); }
 vb-node .vb-hand-text :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
 
 /* An agent's reply: under its note, set in from the left by a rule, neutral. It takes the note's
-   clamp (`.vb-node-note-text`) and full-text tip (`.vb-note-tip`); a click does nothing. */
+   clamp (`.vb-node-note-text`) and full-text tip (`.vb-note-tip`); a click, Enter or Space opens the
+   exchange in the note bubble: the note it answers, then every reply (popovers-larger-thread ruling 2). */
 vb-node .vb-node-reply {
   position: relative; --reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2));
-  display: grid; gap: var(--vb-space-1); margin-left: var(--vb-space-3); padding: 10px var(--vb-space-3); cursor: default;
+  display: grid; gap: var(--vb-space-1); margin-left: var(--vb-space-3); padding: 10px var(--vb-space-3); cursor: pointer;
   border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
   background: var(--vb-surface-sunken); font-size: var(--vb-text-md); color: var(--vb-ink);
 }

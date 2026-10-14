@@ -209,7 +209,8 @@ record is `api.md` 58-61.
 1. **The bubble** is its own pattern, `packages/ui/src/note-bubble/` (`<vb-note-bubble>`):
    `placeBubble` puts it on the card's right, else the left, else below, in stage pixels, so it
    draws above the board at any zoom and moves nothing; `bubbleView` says what it reads in each
-   mode (`new`, `edit`, `sent`); the element emits `vb-note` and never writes anything itself.
+   mode (`new`, `edit`, `sent`, and `reply` for a reply on its own, item 6); the element emits
+   `vb-note` and never writes anything itself.
 2. **The page** has one bubble, owned by `apps/board/src/board/notes.ts`: C, M, the footer
    buttons, the pin and a click on a note open it; it follows its card through
    `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
@@ -224,6 +225,36 @@ record is `api.md` 58-61.
    (`ZoomLevel.svelte`, rounded down so "75%" means the controls show; `Viewport` decides "far" from
    the same number), its buttons' tooltips say it ("Zoom in · + · 75% now"), and a polite status
    announces it once the zoom settles (tracker N13).
+5. **Popovers share their sizes** (popovers-larger-thread ruling 4,
+   `cortex-tasks/board/2026-10-14_board-ui_popovers-larger-thread.md`). Every popover reads the
+   `--vb-pop-*` tokens (`packages/tokens/src/tokens.css`): `--vb-pop-text` (every text in a
+   popover, 15px: the text typed in the comment box is the size of the text around it; the
+   maintainer's changes, chats 698 and 701), `--vb-pop-w` (360px),
+   `--vb-pop-max-h` (320px, past which the text box, the read-only part and the boxes scroll) and
+   `--vb-pop-pad`. The note bubble, the card popover (`.vb-card-pop`: proposal and handover), the
+   container note preview (`.vb-note-pop`) and the note and reply hover tip (`.vb-note-tip`) all
+   read them, so changing a token scales every popover together. Labels and chips in them are
+   `--vb-text-md`; buttons are 32px tall.
+6. **The exchange** (ruling 2). A click, Enter or Space on a note in a card's block or on an agent's
+   reply under it (`.vb-node-reply`, wired in `wiring.ts` `showReply`) opens the bubble with the
+   note, then every reply to it, oldest first, each as the card shows it ("Agent reply · label",
+   Markdown), in one read-only part that scrolls as a whole (`.vb-nb-thread`, a tab stop). It opens
+   beside the card with its arrow on what was pressed (`partAnchor`); Esc closes it and focus goes
+   back to that note or reply. A note not yet sent still opens to edit, its replies under the text
+   box; a reply that names no note of the card opens on its own (`reply` mode, Close only). The
+   container's note block works the same way: its note's text and each reply (`.vb-nblock-reply`)
+   are tab stops that report `open` (`vb-region-note`, with the reply's `seq`), and the bubble opens
+   beside the part pressed (`notes.ts` `showContainer`). What the bubble says is `note-views.ts`
+   (`cardView`, `containerView`, from the replies `parking.ts` reads, the `cardReplies` flag). The
+   hover tip stays for a quick look (`bindNoteTip`); the click is the way to read it and keep it
+   open.
+7. **A note locks once answered** (ruling 5, api.md 143). A note is history after a Send or the
+   agent's answer (a reply naming it, or a newer version of its card), whichever comes first. The
+   page reads `ItemNote.locked` (from `lockOf`, the server's own check): a locked note opens
+   read-only in the exchange, its head "Note 1 on 42, answered" when no Send came yet; on the card
+   it is grey and says "· Answered", and its pin shows it rather than editing it; C or M on the card
+   then starts a new note. A container note answered before a Send reads "Answered" and is
+   read-only in its block.
 
 ## Selecting and moving (3_FE_01)
 

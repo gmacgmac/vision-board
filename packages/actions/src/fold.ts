@@ -285,10 +285,5 @@ function restate(s: LedgerState, id: number, log: ItemLog): void {
   else delete m.ask;
 }
 
-/** Whether a Send on `board` came after the act `seq` (fold.ts `lastSend`): its note is history. */
-export const sentAfter = (s: LedgerState, board: string, seq: number): boolean => (s.lastSend.get(board) ?? 0) > seq;
-
-/** An item's notes as the reads show them: `sent` on each one a Send came after. */
-export function sentNotes(s: LedgerState, board: string, notes: readonly ItemNote[]): ItemNote[] {
-  return notes.map((x) => ({ ...x, ...(sentAfter(s, board, x.seq) && { sent: true as const }) }));
-}
+// When a note is history (a Send after it, or the agent's answer) lives in note-lock.ts.
+export { sentAfter, sentNotes } from './note-lock.ts';

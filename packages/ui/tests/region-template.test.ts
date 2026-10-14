@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MODES } from '../../format/src/index.ts';
-import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, regionIds, regionTemplate } from '../src/index.ts';
+import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate } from '../src/index.ts';
 
 const region = { id: 'review', title: 'Review', mode: 'flow' as const };
 
@@ -84,7 +84,7 @@ test('the preview: a non-modal labelled dialog after the layout popover, with th
 
 test('the note block: hidden under the title line and before the empty message, with state, Edit, Remove, the text and Show all (ruling 3)', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<\/header><section class="vb-region-note-block" role="group" aria-label="Note on container Review" hidden><div class="vb-nblock-top"><span class="vb-nblock-who">Your note<\/span><span class="vb-note-state"><\/span><span class="vb-nblock-acts"><button type="button" class="vb-note-btn" data-note-act="edit" aria-label="Edit note on container Review">Edit<\/button><button type="button" class="vb-note-btn" data-note-act="remove" aria-label="Remove note on container Review">Remove<\/button><span class="vb-nblock-ro"><\/span><\/span><\/div><p class="vb-nblock-text" id="region-review-note-text"><\/p><div class="vb-nblock-replies"><\/div><button type="button" class="vb-nblock-more" aria-expanded="false" aria-controls="region-review-note-text" hidden>Show all<\/button><\/section><p class="vb-region-empty" hidden>/);
+  assert.match(html, /<\/header><section class="vb-region-note-block" role="group" aria-label="Note on container Review" hidden><div class="vb-nblock-top"><span class="vb-nblock-who">Your note<\/span><span class="vb-note-state"><\/span><span class="vb-nblock-acts"><button type="button" class="vb-note-btn" data-note-act="edit" aria-label="Edit note on container Review">Edit<\/button><button type="button" class="vb-note-btn" data-note-act="remove" aria-label="Remove note on container Review">Remove<\/button><span class="vb-nblock-ro"><\/span><\/span><\/div><p class="vb-nblock-text" id="region-review-note-text" tabindex="0"><\/p><div class="vb-nblock-replies"><\/div><button type="button" class="vb-nblock-more" aria-expanded="false" aria-controls="region-review-note-text" hidden>Show all<\/button><\/section><p class="vb-region-empty" hidden>/);
   // The page's delegated click listener reads data-note (cards) and data-region-note: neither is here.
   assert.doesNotMatch(html, /data-note=|data-region-note=/);
 });
@@ -145,4 +145,10 @@ test('the mode row: Match card widths, a switch after the divider, only with the
   assert.match(html, /<span class="vb-mode-div" aria-hidden="true"><\/span><button type="button" class="vb-mseg vb-widths" role="switch" aria-checked="false" tabindex="-1" aria-label="Match card widths" data-region="review"><svg class="vb-mode-icon vb-widths-match"[^>]*>.*?<\/svg><svg class="vb-mode-icon vb-widths-own"[^>]*>.*?<\/svg><\/button><button type="button" class="vb-mseg vb-region-comment"/);
   assert.ok(!regionTemplate(region).includes('vb-widths'), 'no switch without the option');
   assert.ok(!regionTemplate(region, { widths: true, fixed: true }).includes('vb-widths'), 'no switch in a fixed frame');
+});
+
+test('a reply under the note block is a tab stop that opens the exchange, escaped, as Markdown (popovers-larger-thread ruling 2)', () => {
+  const html = nblockRepliesMarkup([{ seq: 7, who: 'Agent reply · <b>', text: 'Yes, **price** order.' }]);
+  assert.equal(html, '<div class="vb-nblock-reply" data-reply="7" tabindex="0"><span class="vb-nblock-who">Agent reply · &#60;b&#62;</span>'
+    + '<div class="vb-nblock-reply-text"><p class="vb-md-p">Yes, <strong>price</strong> order.</p></div></div>');
 });

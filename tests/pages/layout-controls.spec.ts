@@ -191,9 +191,17 @@ test('the note bubble beside card 4 leaves card 5\'s footer buttons clear', asyn
   await openBoard(page);
   await zoomToFull(page);
   await card(page, 4).focus();
+  // Card 4 starts the board's left column: at the popover size (360px, popovers-larger-thread) its
+  // right is card 5's buttons, its left the board's edge and below it card 11's buttons, so no place
+  // is clear. The board pans right first (focus stays on card 4), which leaves its left clear.
+  const before = (await card(page, 4).boundingBox())!.x;
+  await page.mouse.move(800, 700);
+  await page.mouse.wheel(-440, 0);
+  await expect.poll(async () => (await card(page, 4).boundingBox())!.x).toBeGreaterThan(before + 400);
   await page.keyboard.press('c');
   const bubble = page.getByRole('dialog', { name: 'Note on 4' });
   await expect(bubble).toBeVisible();
+  await expect(bubble).toHaveAttribute('data-side', 'left');
   const [b, f] = [await bubble.boundingBox(), await card(page, 5).locator('.vb-node-foot').boundingBox()];
   const meets = b!.x < f!.x + f!.width && f!.x < b!.x + b!.width && b!.y < f!.y + f!.height && f!.y < b!.y + b!.height;
   expect(meets).toBe(false);

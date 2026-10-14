@@ -1,8 +1,8 @@
 // Note polish (found-in-use FE_04), on the gallery's real <vb-node> and <vb-note-bubble>: a card note
 // cut at three lines shows its full text, as Markdown, in a box beside the card on hover and on
 // keyboard focus (notePreview flag, WCAG 1.4.13: hoverable, persistent, Esc dismisses), scrolling
-// past its maximum height; and the note editor grows with its words from 70px to 240px, then
-// scrolls. Read-only; no server state.
+// past its maximum height; and the note editor grows with its words from three lines to the popover
+// maximum height, then scrolls. Read-only; no server state.
 import type { Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -28,7 +28,11 @@ const onTop = (target: Locator) => target.evaluate((e) => {
 
 const LONG = 'A note longer than its preview';
 
-test('note preview: hover on a cut note shows the full text as Markdown, beside the card, and scrolls past 240px', async ({ page }) => {
+// The tip and the editor stop at the popover's maximum height, --vb-pop-max-h (popovers-larger-thread
+// ruling 4; 240px before it).
+const MAX_H = 320;
+
+test('note preview: hover on a cut note shows the full text as Markdown, beside the card, and scrolls past the popover maximum', async ({ page }) => {
   const c = card(page, LONG);
   const note = c.locator('.vb-node-note');
   const tip = note.locator('.vb-note-tip');
@@ -40,7 +44,7 @@ test('note preview: hover on a cut note shows the full text as Markdown, beside 
   await expect(tip.locator('li')).toHaveCount(12);
   const m = await tip.evaluate((e) => ({ h: e.clientHeight, scrolls: e.scrollHeight > e.clientHeight, left: e.getBoundingClientRect().left,
     cardRight: e.closest('vb-node')!.getBoundingClientRect().right }));
-  expect(m.h).toBeLessThanOrEqual(240);
+  expect(m.h).toBeLessThanOrEqual(MAX_H);
   expect(m.scrolls).toBe(true);
   expect(m.left).toBeGreaterThanOrEqual(m.cardRight);
   expect(await onTop(tip)).toBe(true);
@@ -91,23 +95,23 @@ for (const theme of THEMES) {
   });
 }
 
-test('editor: grows with what is typed from its minimum, stops at 240px and scrolls', async ({ page }) => {
+test('editor: grows with what is typed from its minimum, stops at the popover maximum and scrolls', async ({ page }) => {
   const text = page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="new"]').first().getByLabel('Note text');
   const h = () => text.evaluate((e) => e.getBoundingClientRect().height);
   const start = await h();
-  expect(start).toBeGreaterThanOrEqual(70);
+  expect(start).toBeGreaterThanOrEqual(15 * 1.45 * 3);
   await text.fill('One\nTwo\nThree');
   expect(await h()).toBe(start);
   await text.fill(Array.from({ length: 6 }, (_, i) => `Line ${i + 1}`).join('\n'));
   const grown = await h();
   expect(grown).toBeGreaterThan(start);
-  expect(grown).toBeLessThan(240);
-  await text.fill(Array.from({ length: 12 }, (_, i) => `Line ${i + 1}`).join('\n'));
-  expect(Math.round(await h())).toBe(240);
+  expect(grown).toBeLessThan(MAX_H);
+  await text.fill(Array.from({ length: 20 }, (_, i) => `Line ${i + 1}`).join('\n'));
+  expect(Math.round(await h())).toBe(MAX_H);
   expect(await text.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true);
 });
 
 test('editor: a note that opens with long text starts grown', async ({ page }) => {
   const long = page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="edit"]').getByLabel('Note text').filter({ hasText: 'Before we settle this' });
-  expect(Math.round(await long.evaluate((e) => e.getBoundingClientRect().height))).toBe(240);
+  expect(Math.round(await long.evaluate((e) => e.getBoundingClientRect().height))).toBe(MAX_H);
 });

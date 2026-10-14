@@ -3,6 +3,7 @@
 // 05 section 1 (`.ovl.note`), Architect `positionPop`: the right of the card, else the left, else
 // below; never over the card, and it moves nothing.
 import type { NoteKind } from '../../../format/src/index.ts';
+import type { ReplyEntry } from '../node/node-core.ts';
 
 export interface StageBox { x: number; y: number; w: number; h: number }
 export interface StageSize { w: number; h: number }
@@ -87,9 +88,23 @@ export function titleAnchor(line: StageBox): StageBox {
   return { x: line.x, y, w: line.w, h: line.y + line.h - y };
 }
 
-/** `new`: no note yet (C or M on a card without one). `edit`: the card's note not yet sent.
- * `sent`: a sent note, which is history and only shown. */
-export type BubbleMode = 'new' | 'edit' | 'sent';
+/**
+ * The box to place a bubble from when it opens from one part of a card, such as a note or a reply
+ * on it (popovers-larger-thread ruling 2): beside the card, with the arrow on the middle of `at`
+ * (that part's box). Below, when neither side fits, is still under the card.
+ */
+export function partAnchor(card: StageBox, at: StageBox): StageBox {
+  const y = at.y + at.h / 2 - BUBBLE_DROP - BUBBLE_ARROW_AT;
+  return { x: card.x, y, w: card.w, h: Math.max(card.y + card.h - y, at.y + at.h - y) };
+}
+
+/** `new`: no note yet (C or M on a card without one). `edit`: the card's note, not yet history.
+ * `sent`: a note that is history (sent, or answered by the agent: ruling 5), only shown. `reply`: an agent's reply that names no
+ * note of the card, shown on its own (popovers-larger-thread ruling 2). */
+export type BubbleMode = 'new' | 'edit' | 'sent' | 'reply';
+
+/** Whether a bubble only shows: a sent note and a reply on its own are never typed in. */
+export const readOnlyMode = (mode: BubbleMode): boolean => mode === 'sent' || mode === 'reply';
 /** `saving` while the act is on its way; `error` when the server refused it. */
 export type BubblePhase = 'idle' | 'saving' | 'error';
 
@@ -105,6 +120,12 @@ export interface BubbleInput {
   text?: string;
   numbers?: readonly number[];
   container?: string;
+  /** The agent's replies to the note, oldest first, as the card shows them (`replyEntry`); in
+   *  `reply` mode, the reply on its own. */
+  replies?: readonly ReplyEntry[];
+  /** In `sent` mode: the note is history because the agent answered it, not because of a Send
+   *  (popovers-larger-thread ruling 5), so its head says "answered". */
+  answered?: boolean;
 }
 
 /** Everything the bubble says; the element applies it. */
@@ -120,6 +141,10 @@ export interface BubbleView {
   cancel: string;
   remove: boolean;
   text: string;
+  /** The replies under the note, read-only (popovers-larger-thread ruling 2); empty for none. */
+  replies: readonly ReplyEntry[];
+  /** The name of the read-only part (the sent note and the replies), which scrolls as one. */
+  thread: string;
 }
 
 export const PLACEHOLDER: Record<NoteKind, string> = {
@@ -130,27 +155,39 @@ export const PLACEHOLDER: Record<NoteKind, string> = {
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
  * whole container; each mode words it its own way. */
 function headingOf(b: BubbleInput): string {
+  if (b.mode === 'reply') return `Reply on ${b.number}`;
+  const past = b.answered ? 'answered' : 'sent';
   if (b.container !== undefined) {
     const on = `on container ${b.container}`;
-    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${b.index ?? 1} ${on}, sent`;
+    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${b.index ?? 1} ${on}, ${past}`;
   }
   if (b.numbers) {
     const on = `on ${b.numbers.length} cards: ${b.numbers.join(', ')}`;
-    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${on}, sent`;
+    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${on}, ${past}`;
   }
   return b.mode === 'new' ? `Note on ${b.number}`
-    : b.mode === 'edit' ? `Edit note on ${b.number}` : `Note ${b.index ?? 1} on ${b.number}, sent`;
+    : b.mode === 'edit' ? `Edit note on ${b.number}` : `Note ${b.index ?? 1} on ${b.number}, ${past}`;
+}
+
+/** What the read-only part is called: the sent note, its replies, or both. */
+function threadOf(mode: BubbleMode, replies: number): string {
+  if (mode === 'reply') return 'Reply';
+  if (mode !== 'sent') return 'Replies';
+  return replies ? 'Note and replies' : 'Note';
 }
 
 export function bubbleView(b: BubbleInput): BubbleView {
   const heading = headingOf(b);
+  const shown = readOnlyMode(b.mode);
+  const replies = b.replies ?? [];
   return {
     mode: b.mode, heading, placeholder: PLACEHOLDER[b.kind],
-    hint: b.mode === 'sent' ? '' : `Enter ${b.mode === 'new' ? 'add' : 'save'} · Esc cancel`,
-    ...(b.mode !== 'sent' && { primary: b.mode === 'new' ? 'Add note' : 'Save' }),
-    cancel: b.mode === 'sent' ? 'Close' : 'Cancel',
+    hint: shown ? '' : `Enter ${b.mode === 'new' ? 'add' : 'save'} · Esc cancel`,
+    ...(!shown && { primary: b.mode === 'new' ? 'Add note' : 'Save' }),
+    cancel: shown ? 'Close' : 'Cancel',
     remove: b.mode === 'edit',
-    text: b.text ?? '',
+    text: b.mode === 'reply' ? '' : b.text ?? '',
+    replies, thread: threadOf(b.mode, replies.length),
   };
 }
 
@@ -158,7 +195,7 @@ export function bubbleView(b: BubbleInput): BubbleView {
  * a note, ruling 6, and a new comment needs words); `save` writes them. A new "more context" may
  * go without words, as the registry allows (`context` text optional). */
 export function saveIntent(mode: BubbleMode, kind: NoteKind, text: string): 'save' | 'skip' {
-  if (mode === 'sent') return 'skip';
+  if (readOnlyMode(mode)) return 'skip';
   if (text.trim()) return 'save';
   return mode === 'new' && kind === 'context' ? 'save' : 'skip';
 }
@@ -171,9 +208,9 @@ export function isDirty(opened: string, now: string): boolean {
 }
 
 /** What Esc or Cancel does: `close` (as before) or `ask` (the text changed: the page confirms
- * "Discard your changes?" first). A sent note is never typed in, so it always closes. */
+ * "Discard your changes?" first). A sent note or a reply is never typed in, so it always closes. */
 export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' {
-  return mode !== 'sent' && dirty ? 'ask' : 'close';
+  return !readOnlyMode(mode) && dirty ? 'ask' : 'close';
 }
 
 /** `vb-note-discard` (bubbles): Esc or Cancel with changed text. The bubble stays open; the page

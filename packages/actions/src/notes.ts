@@ -2,7 +2,7 @@
 // 58-61). A note is made by a `comment` or `context` act with words and is named, for ever, by
 // that act's `seq`. Until a Send after it, `note-edit` changes its words (and, with `kind`, what
 // it asks for) and `note-remove` takes it back; both are new acts, so the ledger stays
-// append-only (D-017). After a Send it is history. A note on a group of cards (3_FE_02, api.md
+// append-only (D-017). After a Send, or once the agent answers it, it is history (note-lock.ts). A note on a group of cards (3_FE_02, api.md
 // 62-65) is one ask shared by the log of every card it names. Pure: the fold calls `foldNoteAct`
 // and `itemOf`; the reads call `liveNotes` and `noteView`.
 import type { ActEvent, NoteKind } from '../../format/src/index.ts';
@@ -11,10 +11,11 @@ import type { ItemStatus } from './registry.ts';
 import { ACTIONS } from './registry.ts';
 
 /** A note as every read shows it: its latest words and kind. `sent` once a Send came after it;
+ * `locked` once it is history, after a Send or the agent's answer (note-lock.ts `lockOf`);
  * `nodes` when it is a note on a group of cards (api.md 62): every item it is on (identities in the
  * fold, board numbers once a read gives it: numbers.ts `noteOut`). `region` when it is a note on a
  * whole container (api.md 73), in place of a card. */
-export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; nodes?: number[]; region?: string }
+export interface ItemNote { seq: number; kind: NoteKind; text: string; at: string; sent?: true; locked?: true; nodes?: number[]; region?: string }
 
 /** One `comment` or `context` act on an item, as it stands after its edits. `pos` is the `seq`
  * where it counts for the item's status: its own, or the latest edit that set its kind (the

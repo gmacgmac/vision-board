@@ -1,9 +1,11 @@
 /* Markdown pattern styles (packages/ui/src/markdown, D-023): the CSS hooks renderMarkdown writes.
    Tokens only, no inline styles. The look is mockup 01b: paragraph = .p, label = .lbl, lists =
    .ul, quote = the .reply box without its "who" line. A quote takes its tint from --kind, which a
-   card sets; outside a card it falls back to the accent. Imported by the page beside node.css. */
+   card sets; outside a card it falls back to the accent. Imported by the page beside node.css.
+   Text size: --vb-md-text, which a popover sets to its own (--vb-pop-text, popovers-larger-thread),
+   else the card's --vb-text-md. */
 
-.vb-md-p { margin: 0; font-size: var(--vb-text-md); line-height: 1.5; color: var(--vb-ink); }
+.vb-md-p { margin: 0; font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.5; color: var(--vb-ink); }
 
 .vb-md-label {
   display: block; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); line-height: 1.4;
@@ -12,7 +14,7 @@
 
 .vb-md-list {
   display: grid; gap: var(--vb-space-1); margin: 0; padding-left: calc(var(--vb-space-4) + var(--vb-space-1));
-  font-size: var(--vb-text-md); line-height: 1.45; color: var(--vb-ink);
+  font-size: var(--vb-md-text, var(--vb-text-md)); line-height: 1.45; color: var(--vb-ink);
 }
 .vb-md-list .vb-md-list { margin-top: var(--vb-space-1); }
 .vb-md-list strong { color: var(--vb-ink-strong); font-weight: var(--vb-weight-medium); }
@@ -22,7 +24,7 @@
   display: grid; gap: var(--vb-space-1); margin: 0; padding: var(--vb-space-2) var(--vb-space-3);
   border-radius: var(--vb-radius-md);
   background: color-mix(in srgb, var(--kind, var(--vb-accent)) 9%, var(--vb-surface-sunken));
-  font-size: var(--vb-text-md); color: var(--vb-ink);
+  font-size: var(--vb-md-text, var(--vb-text-md)); color: var(--vb-ink);
 }
 
 .vb-md-icode, .vb-md-code { font-family: var(--vb-font-mono); background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }

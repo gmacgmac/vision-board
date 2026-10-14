@@ -13,6 +13,14 @@ import { nblockRepliesMarkup, regionIds } from './region-template.ts';
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
 const BLOCK = '.vb-region-note-block';
+/** The parts of the block that open the exchange: the note's text and each reply. */
+const PART = '.vb-nblock-text, .vb-nblock-reply';
+
+/** Text the person selected inside `el` by dragging. */
+const selecting = (el: Element) => {
+  const s = document.getSelection();
+  return !!s && !s.isCollapsed && !!s.anchorNode && el.contains(s.anchorNode);
+};
 
 export interface NoteParts {
   /** After `render`: re-find the parts (the markup was rebuilt) and observe the new block. */
@@ -62,9 +70,9 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     if (!inPreview(e.target)) step('outside');
   }
 
-  function emit(action: RegionNoteAction) {
+  function emit(action: RegionNoteAction, reply?: number) {
     if (!note) return;
-    const detail: RegionNoteEventDetail = { region: host.dataset.region ?? '', action, seq: note.seq };
+    const detail: RegionNoteEventDetail = { region: host.dataset.region ?? '', action, seq: note.seq, ...(reply !== undefined && { reply }) };
     host.dispatchEvent(new CustomEvent<RegionNoteEventDetail>(REGION_NOTE_EVENT, { bubbles: true, detail }));
   }
 
@@ -93,6 +101,11 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
   });
 
   host.addEventListener('keydown', (e) => {
+    // Enter or Space on the block's note or a reply opens the exchange, as a click does.
+    if ((e.key === 'Enter' || e.key === ' ') && e.target instanceof HTMLElement && e.target.matches(PART)) {
+      e.preventDefault();
+      return e.target.click();
+    }
     if (e.key !== 'Escape' || !host.hasAttribute('data-preview') || !inPreview(e.target)) return;
     e.preventDefault();
     e.stopPropagation();
@@ -116,6 +129,10 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     }
     const more = t.closest<HTMLButtonElement>('.vb-nblock-more');
     if (more) return toggleMore();
+    // The block's note or a reply (popovers-larger-thread ruling 2): the exchange, unless the press
+    // was on a link or ended a text selection (a note is text to copy too).
+    const part = t.closest<HTMLElement>(PART);
+    if (part && !t.closest('a') && !selecting(part)) return emit('open', part.dataset.reply === undefined ? undefined : Number(part.dataset.reply));
     const act = t.closest<HTMLButtonElement>('button[data-note-act]');
     if (!act) return;
     const action = act.dataset.noteAct as RegionNoteAction;

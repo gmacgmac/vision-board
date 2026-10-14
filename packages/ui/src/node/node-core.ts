@@ -76,9 +76,11 @@ export function notesView(n: ViewNode, notes: readonly ItemNote[], replies: read
   if (!notes.length && !orphans.length) return undefined;
   const entries = notes.map((x, i): NoteEntry => {
     const answers = replies.filter((r) => r.to === x.seq).map(replyEntry);
+    // History once sent or answered (`locked`, popovers-larger-thread ruling 5): grey and read-only.
+    const past = x.sent ? ' · Sent' : x.locked ? ' · Answered' : '';
     return {
-      seq: x.seq, index: i + 1, sent: x.sent === true, text: x.text,
-      who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? ` · ${x.nodes.length} cards` : ''}${x.sent ? ' · Sent' : ''}`,
+      seq: x.seq, index: i + 1, sent: x.locked === true || x.sent === true, text: x.text,
+      who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? ` · ${x.nodes.length} cards` : ''}${past}`,
       ...(answers.length && { replies: answers }),
     };
   }).reverse();
@@ -88,7 +90,8 @@ export function notesView(n: ViewNode, notes: readonly ItemNote[], replies: read
   // A note on a group of cards (3_FE_02) names every item it is on.
   const group = notes.find((x) => x.seq === top.seq)?.nodes;
   const on = group ? `items ${group.join(', ')}` : `item ${n.n}`;
-  const label = top.sent ? `Note ${top.index} on ${on}, sent. Show it` : `Note ${top.index} on ${on}. Edit it`;
+  const made = notes.find((x) => x.seq === top.seq);
+  const label = top.sent ? `Note ${top.index} on ${on}, ${made?.sent ? 'sent' : 'answered'}. Show it` : `Note ${top.index} on ${on}. Edit it`;
   return { ...out, pin: { seq: top.seq, index: top.index, sent: top.sent, label } };
 }
 

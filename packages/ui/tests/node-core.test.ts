@@ -128,3 +128,12 @@ test('nodeState: a note on a group of cards says how many, and its pin names the
   assert.deepEqual(v.entries.map((x) => x.who), ['Your note 1 · 3 cards']);
   assert.equal(v.pin!.label, 'Note 1 on items 1, 4, 9. Edit it');
 });
+
+// popovers-larger-thread ruling 5: a note the agent answered before any Send is history too.
+test('nodeState: a note answered before a Send is grey, marked Answered, and its pin shows it rather than editing it', () => {
+  const one = { ...note('Why per seat?'), locked: true as const };
+  assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
+    entries: [{ seq: one.seq, index: 1, who: 'Your note 1 · Answered', text: 'Why per seat?', sent: true }],
+    pin: { seq: one.seq, index: 1, sent: true, label: 'Note 1 on item 1, answered. Show it' },
+  });
+});

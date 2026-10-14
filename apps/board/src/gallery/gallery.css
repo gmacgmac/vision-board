@@ -27,8 +27,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Patterns are placed by the board page (position: absolute, transform). Here they flow. */
 .g-cards { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-3); }
 .g-cards vb-node, .g-frames vb-region { position: relative; }
-/* A card with its note preview open: room to its right for the box (a card's width and its reach) and below it for the box, which is taller than a short card. */
-.g-tips { gap: var(--vb-space-5) calc(var(--vb-card-w) + var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 3); }
+/* A card with its note preview open: room to its right for the box (the popover width and its reach) and below it for the box, which is taller than a short card. */
+.g-tips { gap: var(--vb-space-5) calc(var(--vb-pop-w) + var(--vb-space-6) * 2); padding-bottom: calc(var(--vb-space-6) * 3); }
 /* The frames sit on the board's dot-grid canvas (.vb-ground). The top line straddles each frame's
    border, so the group leaves room above; a frame draws no cards, so it has a set height. */
 .g-frames { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--vb-space-6) var(--vb-space-5); padding: var(--vb-space-5); border-radius: var(--vb-radius-lg); }
