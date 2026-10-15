@@ -8,7 +8,7 @@ import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import {
-  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
+  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, itemsOut, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
   placedView, responsesAfter, responsesPage,
 } from '../../../packages/actions/src/index.ts';
 import { structureOf } from '../../../packages/layout/src/index.ts';
@@ -38,7 +38,7 @@ const getBoard: Handler = ({ res, params, ledger }) => {
     head: s.seq,
     view: boardView(s, id),
     state: {
-      items: Object.fromEntries(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
+      items: itemsOut(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
       ...(st.widths.size > 0 && { widths: Object.fromEntries(st.widths) }),
       ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
       ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),

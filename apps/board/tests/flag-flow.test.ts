@@ -81,7 +81,7 @@ test('the flow: a press records the act; the chip focuses the next drawn flagged
   make(true, () => false).next();
   // From the focused card (2), then from the card it went to last (4, wrapping to 2); a hidden 4 is skipped.
   assert.deepEqual(log, ['toast 2 flag removed', 'toast 3 flagged', 'focus 4', 'focus 2', 'focus 2',
-    'toast The flagged cards are hidden: turn off Hide decided to see them.']);
+    'toast The flagged cards are hidden: turn off Hide answered to see them.']);
   const off = make(false);
   await off.toggle('2');
   off.next();

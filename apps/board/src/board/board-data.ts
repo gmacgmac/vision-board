@@ -21,10 +21,10 @@ export function boardData(s: LedgerState, board: string): BoardData {
   };
 }
 
-/** The board's decided cards, only ever ones that need an answer (api.md 120): what "Hide
- * decided" leaves out. One the agent still owes an answer (`owed`, by number: `item.owed`) stays
+/** The board's answered cards, only ever ones that need an answer (api.md 120): what "Hide
+ * answered" leaves out. One the agent still owes an answer (`owed`, by number: `item.owed`) stays
  * until it lands, so the person sees the reply to their comment (every-node FE_01). */
-export const decidedIds = (d: BoardData, owed: ReadonlySet<number> = new Set()): Set<string> =>
+export const answeredIds = (d: BoardData, owed: ReadonlySet<number> = new Set()): Set<string> =>
   new Set(d.view.nodes.filter((n) => isDecided(n.kind, statusOf(d.state, n.id)) && !owed.has(Number(n.id))).map((n) => n.id));
 
 /** The view as the everyNode flag draws it (rule 12): on, every card keeps its number, and so its
@@ -59,7 +59,7 @@ export interface PageConditions {
   fresh: Set<number>;
   unseen: Set<number>;
   awaiting: Set<number>;
-  /** The cards the agent owes an answer or a handover (`item.owed`): "Hide decided" keeps them. */
+  /** The cards the agent owes an answer or a handover (`item.owed`): "Hide answered" keeps them. */
   owedCards: Set<number>;
   unsent: boolean;
 }

@@ -43,7 +43,7 @@ export function regionSamples(body: HTMLElement, fx: Fixture): void {
     if (open) f.showPanel(open.what, { ...(open.what === 'modes' && { mode: open.mode }), focus: false });
   }
   body.append(group('Every mode, and the states around the count',
-    'The checked icon is the layout in force. Items are counted as decided when acknowledged or dropped. '
+    'The checked icon is the layout in force. Items are counted as answered when checked (✓) or crossed (✗). '
     + 'Grid mode shows the popover with Flow under the pointer; the narrow "Empty message showing" frame shows its compact form. '
     + 'The cog\'s menu is open on "Reset places showing" (a card was moved) and on "Nothing to decide, so no count" (nothing to reset).', frames));
   titleSamples(body, fx);

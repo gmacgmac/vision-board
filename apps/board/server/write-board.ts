@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { LIMITS, codePoints, latest, toLine } from '../../../packages/format/src/index.ts';
 import type { LedgerState, RetireTarget, WriteItem } from '../../../packages/actions/src/index.ts';
-import { canWrite, numberOf, proposeProblem, retireProblem } from '../../../packages/actions/src/index.ts';
+import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '../../../packages/actions/src/index.ts';
 import type { Ledger } from './ledger.ts';
 import { ProblemError } from './problem.ts';
 import { schemaProblems } from './schema.ts';
@@ -191,12 +191,27 @@ function append(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec)
   }
 }
 
+/** A `propose` names ✓ `check` and ✗ `cross` (D-045, api.md 147): the old `ack` and `drop` are
+ * refused by name, before the schema, so the reason says the new word. */
+function checkProposeWord(i: number, raw: unknown): void {
+  const word = isRec(raw) && raw.type === 'propose' && typeof raw.action === 'string' && Object.hasOwn(ACTION_OUT, raw.action)
+    ? ACTION_OUT[raw.action as keyof typeof ACTION_OUT] : undefined;
+  if (word === undefined) return;
+  const old = String((raw as Rec).action);
+  fail('invalid', `Propose ✓ as \`check\` and ✗ as \`cross\`: send action "${word}", not "${old}".`,
+    { errors: [{ pointer: `/items/${i}/action`, detail: `"${old}" is now "${word}"` }] });
+}
+
+/** The item as the ledger names it: a proposal's `check` or `cross` stored as `ack` or `drop`. */
+const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, action: actionIn(String(item.action)) } : item);
+
 function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): WriteResult {
+  checkProposeWord(i, raw);
   const errors = schemaProblems(WRITE_ITEM_ID, raw);
   if (errors.length) {
     fail('invalid', 'This item does not fit the write-item schema. Fix the fields listed in errors and send it again.', { errors: under(i, errors) });
   }
-  const item = raw as Rec;
+  const item = storedNames(raw as Rec);
   const e = item.type === 'append' ? appended(b, i, resolve(b, i, item), key) : eventOf(b, resolve(b, i, item));
   const replayed = key === undefined ? undefined : replay(b, i, key, e);
   if (replayed) return replayed;

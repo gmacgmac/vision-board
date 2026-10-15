@@ -94,7 +94,7 @@ test('an agent append makes "1 update" appear live; a version-1 card has none', 
   await expect(tab(page, a)).toHaveText('1 update');
   await expect(tab(page, a)).toHaveAttribute('aria-label', '1 update since you last looked. Show them');
   await expect(tab(page, a)).toHaveAttribute('aria-expanded', 'false');
-  await expect(card(page, a)).toHaveAttribute('aria-label', /, Open, 1 unseen update$/);
+  await expect(card(page, a)).toHaveAttribute('aria-label', /Risk: Card 1, 1 unseen update$/);
   await expect(tab(page, b)).toBeHidden();
   await retitle(request, d, a, 'Card 1, at 35+ seats');
   await expect(tab(page, a)).toHaveText('2 updates');
@@ -121,7 +121,7 @@ test('the tab steps through each unseen version in the card, marking each seen; 
   await expect(nav(page, n).locator('.vb-node-stepcount')).toHaveText('Update 1 of 2');
   await expect(card(page, n).locator('.vb-node-actions')).toBeHidden();
   await expect(next(page, n)).toBeFocused();
-  await expect(card(page, n)).toHaveAttribute('aria-label', /, Open, showing update 1 of 2$/);
+  await expect(card(page, n)).toHaveAttribute('aria-label', /Risk: Card 1, at 35\+ seats, showing update 1 of 2$/);
   expect(await height(), 'the card grows in place').toBeGreaterThan(folded);
   await expect.poll(() => seenAfter(page, d.board, before)).toEqual([[n, 2]]);
   await next(page, n).click();
@@ -142,7 +142,7 @@ test('the tab steps through each unseen version in the card, marking each seen; 
   await expect(card(page, n)).toBeFocused();
   await expect(steps(page, n)).toBeHidden();
   expect(await height(), 'it folds back').toBe(folded);
-  await expect(card(page, n)).toHaveAttribute('aria-label', /, Open$/);
+  await expect(card(page, n)).toHaveAttribute('aria-label', /Risk: Card 1, at 35\+ seats$/);
   expect(await seenAfter(page, d.board, before)).toEqual([[n, 2], [n, 3]]);
 });
 
@@ -286,7 +286,7 @@ test('flag off: no tab, and selecting sends nothing', async ({ page, request }) 
   await expect(tab(page, n)).toBeHidden();
   await card(page, n).locator('.vb-node-title').click();
   await expect(card(page, n)).toHaveAttribute('data-selected', '');
-  await expect(card(page, n)).toHaveAttribute('aria-label', /, Open, selected$/);
+  await expect(card(page, n)).toHaveAttribute('aria-label', /Risk: Card 1, selected$/);
   expect(await seenAfter(page, d.board, before)).toEqual([]);
 });
 

@@ -3,7 +3,7 @@
 // every card it moves it puts back in its own container, unpinned and open, so the files after it
 // find the board as it was.
 import type { Page } from '@playwright/test';
-import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, zoomToControls } from './helpers.ts';
+import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const NODES = 17;
@@ -187,9 +187,19 @@ test('L saves a card for later in the Later container; Reopen returns it to the 
   await expect.poll(() => inFrame(page, 6, 'prove')).toBe(true);
   await expect(later(page)).toHaveCount(0);
   // The card's Later button does the same (not drawn zoomed out, N13).
-  await zoomToControls(page);
+  // Zoomed to the card (selected, Z), so its button sits clear of the toolbar wherever the layout put it.
+  const zoomTo = async () => {
+    await card(page, 6).focus();
+    if ((await card(page, 6).getAttribute('data-selected')) === null) await page.keyboard.press('Space');
+    await page.keyboard.press('z');
+    await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  };
+  await zoomTo();
   await card(page, 6).getByRole('button', { name: /later/i }).click();
   await expect.poll(() => inFrame(page, 6, 'later')).toBe(true);
+  // A second press of the same button within 400 ms is a double click, ignored (D-045, item-acts.ts REPEAT_MS).
+  await page.waitForTimeout(450);
+  await zoomTo();
   await card(page, 6).getByRole('button', { name: /later/i }).click();
   await expect.poll(() => inFrame(page, 6, 'prove')).toBe(true);
   expect(await regionOf(page, 6)).toBe('prove');

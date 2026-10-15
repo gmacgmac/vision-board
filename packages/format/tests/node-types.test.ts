@@ -23,9 +23,9 @@ test('question, decision and action need an answer; every other kind does not', 
   assert.deepEqual(answer, ['question', 'decision', 'action']);
 });
 
-test('the two action lists: five on an answer card, three on any other', () => {
-  assert.deepEqual(ANSWER_ACTIONS, ['ack', 'drop', 'comment', 'context', 'later']);
-  assert.deepEqual(NOTE_ACTIONS, ['comment', 'context', 'later']);
+test('the two action lists: four on an answer card, two on any other; no More context (D-045)', () => {
+  assert.deepEqual(ANSWER_ACTIONS, ['ack', 'drop', 'comment', 'later']);
+  assert.deepEqual(NOTE_ACTIONS, ['comment', 'later']);
   for (const kind of KINDS)
     assert.equal(NODE_TYPES[kind].actions, NODE_TYPES[kind].answer ? ANSWER_ACTIONS : NOTE_ACTIONS, kind);
 });

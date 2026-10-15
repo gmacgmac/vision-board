@@ -13,7 +13,7 @@ import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../
 import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
 import { createBoards } from './boards.ts';
-import { boardData, decidedIds, numberedView } from './board-data.ts';
+import { answeredIds, boardData, numberedView } from './board-data.ts';
 import { createAttention } from './attention.ts';
 import { type BoardElements, createDrawing } from './draw.ts';
 import { createLive } from './live.ts';
@@ -110,7 +110,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** A node act names the node by number and the version the person was looking at. */
   const target = (id: string) => ({ n: Number(id), ver: S.data!.versions[id] });
 
-  const hiddenSet = (): Set<string> => (shell.hide && S.data ? decidedIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
+  const hiddenSet = (): Set<string> => (shell.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive(onLines);
   const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state });

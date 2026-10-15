@@ -6,6 +6,8 @@ import type { LedgerEvent, LedgerIndex } from '../../format/src/index.ts';
 import { boardNumber, toLine } from '../../format/src/index.ts';
 import type { LedgerState, Proposal } from './fold.ts';
 import type { ItemNote } from './notes.ts';
+import type { ReportedAction } from './registry.ts';
+import { actionOut } from './registry.ts';
 
 /** Card `id`'s number on its board. Every card the ledger holds has one; an unknown id is a slip
  * that comes out undefined (a JSON answer then leaves the field out, and its schema check fails). */
@@ -19,12 +21,13 @@ export const cardName = (s: { index: LedgerIndex }) => (id: number): string => S
 export const noteOut = (s: LedgerState, note: ItemNote): ItemNote =>
   note.nodes ? { ...note, nodes: note.nodes.map((id) => numberOf(s, id)) } : note;
 
-/** A proposal as the reads give it: its card by board number (`n`). */
-export type ProposalView = Omit<Proposal, 'id'> & { n: number };
+/** A proposal as the reads give it: its card by board number (`n`), its action as agents read it,
+ * `check` or `cross` (D-045). */
+export type ProposalView = Omit<Proposal, 'id' | 'action'> & { n: number; action: ReportedAction };
 
 export function proposalOut(s: LedgerState, p: Proposal): ProposalView {
   const { seq, at, id, ...rest } = p;
-  return { seq, at, n: numberOf(s, id), ...rest };
+  return { seq, at, n: numberOf(s, id), ...rest, action: actionOut(p.action) };
 }
 
 /** A link between two cards, by board number. */

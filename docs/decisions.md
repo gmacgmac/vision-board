@@ -560,3 +560,18 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Alternative rejected**: A separate person-only delete (a second path that could drift from the
   agent's retire); refusing owed cards (the person would depend on the agent to tidy up).
 - **Task**: [[cortex-tasks/board/2026-10-12_board-app_person-removes-cards.md]]
+
+## D-045 ✓ and ✗ are tools, and only they answer a card
+- **Date**: 2026-10-15 · **Status**: Accepted · **From**: maintainer (chat 18-53)
+- **Decision**: On a card that asks, ✓ and ✗ are the only answers, and the board gives them no
+  meaning: the card the agent wrote says what each one means. The board says "answered", never
+  "decided". A note never answers a card, and the More context button is removed: a note can ask.
+  The agent's answer to a note clears the card's earlier ✓ or ✗. Pressing a lit ✓ or ✗ again clears
+  it. An agent reads each card's current answer, not every click; the ledger keeps every click.
+  Supersedes the part of D-040 that let a comment decide and gave every card that asks a More
+  context button.
+- **Why**: notes that were questions closed decisions; ✗ read as "thrown away"; a ticked card stayed
+  ticked after the agent changed what it asked; a finding read
+  "Open" with nothing to do; an agent read a quick ✓ and clear as indecision.
+- **Rejected**: treating a note that ends in "?" as More context, a guess the person can't see.
+- **Task**: cortex-tasks/board/2026-10-15_board-actions_answer-model/PLAN.md

@@ -18,7 +18,7 @@ const THEMES: Theme[] = ['dark', 'light'];
 // every-node ruling 2: the kind decides. A card that asks takes ✓ and ✗; one that tells never does.
 const ASKS = ['question', 'decision', 'action'];
 const TELLS = ['finding', 'risk', 'topic', 'note'];
-const STATUSES = ['open', 'acknowledged', 'dropped', 'commented', 'context', 'later'];
+const STATUSES = ['open', 'acknowledged', 'dropped', 'commented', 'later'];
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/gallery.html');
@@ -43,20 +43,29 @@ test('node: every kind in every status it can reach, cards that ask apart from c
     for (const status of STATUSES) {
       const closed = status === 'acknowledged' || status === 'dropped';
       const where = ASKS.includes(kind) ? asks : tells;
-      await expect(where.locator(`vb-node[data-kind="${kind}"][data-status="${status}"]`), `${kind} / ${status}`).toHaveCount(closed && !ASKS.includes(kind) ? 0 : 1);
+      // Open twice: the open row, and the row the agent's answer to a note cleared (D-045).
+      await expect(where.locator(`vb-node[data-kind="${kind}"][data-status="${status}"]`), `${kind} / ${status}`)
+        .toHaveCount(closed && !ASKS.includes(kind) ? 0 : status === 'open' ? 2 : 1);
     }
+    const cleared = (ASKS.includes(kind) ? asks : tells).locator(`vb-node[data-kind="${kind}"][data-status="open"]:has([data-tab="updates"]:not([hidden]))`);
+    await expect(cleared, `${kind}: answered by the agent`).toHaveCount(1);
+    await expect(cleared.locator('[data-tab="updates"]')).toHaveText('1 update');
+    await expect(cleared.locator('.vb-node-reply')).toHaveCount(1);
   }
   await expect(asks.locator('vb-node')).toHaveCount(18);
   await expect(tells.locator('vb-node')).toHaveCount(16);
-  // Every card is numbered; ✓ and ✗ only on cards that ask, with the card's words in their tooltips.
+  // Every card is numbered; ✓ and ✗ only on cards that ask, Check and Cross on every kind (D-045).
   await expect(asks.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
   await expect(tells.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
   await expect(tells.locator('button[data-act="ack"], button[data-act="drop"]')).toHaveCount(0);
-  await expect(tells.locator('vb-node').first().locator('button[data-act]')).toHaveCount(3);
-  await expect(asks.locator('vb-node[data-kind="question"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Yes · a');
-  await expect(asks.locator('vb-node[data-kind="question"] button[data-act="drop"]').first()).toHaveAttribute('title', 'No · x');
-  await expect(asks.locator('vb-node[data-kind="action"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Done · a');
-  await expect(asks.locator('vb-node[data-kind="decision"] button[data-act="ack"]').first()).toHaveAttribute('title', 'Acknowledge · a');
+  await expect(tells.locator('vb-node').first().locator('button[data-act]')).toHaveCount(2);
+  for (const kind of ASKS) {
+    await expect(asks.locator(`vb-node[data-kind="${kind}"] button[data-act="ack"]`).first()).toHaveAttribute('title', 'Check · a');
+    await expect(asks.locator(`vb-node[data-kind="${kind}"] button[data-act="drop"]`).first()).toHaveAttribute('title', 'Cross · x');
+  }
+  // ✓ and ✗ show no word; a card that tells shows none in any state.
+  await expect(asks.locator('vb-node:is([data-status="acknowledged"], [data-status="dropped"]) .vb-node-status:not(:empty)')).toHaveCount(0);
+  await expect(tells.locator('.vb-node-status:not(:empty)')).toHaveCount(0);
 });
 
 test('node: the other states are drawn', async ({ page }) => {
@@ -71,17 +80,19 @@ test('node: the other states are drawn', async ({ page }) => {
   const notes = node.locator('.vb-node-notes');
   await expect(notes.filter({ has: page.locator('.vb-node-note-who:text-is("Your note 1")') }).filter({ hasText: 'Ship it' })).toBeVisible();
   await expect(notes.filter({ hasText: 'Second thought, which replaces the first' })).toBeVisible();
-  await expect(notes.locator('.vb-node-note-who:text-is("More context 1")').first()).toBeVisible();
+  // An old More context reads as a note (D-045).
+  await expect(notes.locator('.vb-node-note-who:text-is("More context 1")')).toHaveCount(0);
   // The notes board: a pin per noted card, sent notes grey and marked, the count over several.
   await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
   await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
-  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(1);
-  // A topic and a note are numbered and take a comment, more context and Later (every-node ruling 2).
+  // One sent; seven the agent answered (the matrices' "Answered by the agent" rows, D-045), history too.
+  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(8);
+  // A topic and a note are numbered and take a comment and Later (every-node ruling 2, D-045).
   const others = node.locator('[aria-label="Other node states"]');
   for (const kind of ['topic', 'note']) {
     const card = others.locator(`vb-node[data-kind="${kind}"]`);
     await expect(card).toHaveCount(1);
-    await expect(card.locator('button[data-act]')).toHaveCount(3);
+    await expect(card.locator('button[data-act]')).toHaveCount(2);
     await expect(card.locator('.vb-node-num')).toHaveCount(1);
   }
 });
@@ -94,7 +105,7 @@ test('region: each mode, the count, the empty message and no count; Later and a 
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'column', 'row']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);
-    await expect(frame.locator('.vb-region-count')).toHaveText('1 of 2 decided');
+    await expect(frame.locator('.vb-region-count')).toHaveText('1 of 2 answered');
     await expect(frame.locator('[role="radio"][aria-checked="true"]')).toHaveCount(1);
     await expect(frame.locator(`[role="radio"][data-mode="${mode}"]`)).toHaveAttribute('aria-checked', 'true');
     await expect(frame.locator('.vb-mode-row [tabindex="0"]')).toHaveCount(1);
@@ -112,7 +123,7 @@ test('region: each mode, the count, the empty message and no count; Later and a 
     await expect(f.locator('.vb-cog')).toHaveAttribute('tabindex', '0');
   }
   // Of its two cards, finding 2 needs no answer and counts nowhere; decision 3 does (every-node ruling 6).
-  await expect(page.locator('vb-region[data-region="later"] .vb-region-count')).toHaveText(/of 1 decided$/);
+  await expect(page.locator('vb-region[data-region="later"] .vb-region-count')).toHaveText(/of 1 answered$/);
   const drop = page.locator('vb-region[data-drop]');
   await expect(drop).toHaveCount(1);
   await expect(drop.locator('.vb-region-empty')).toHaveText('Drop a card here to save it for later.');

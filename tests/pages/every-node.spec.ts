@@ -1,10 +1,9 @@
-// Every node is part of the conversation (every-node FE_01, PLAN rulings 1-4 and 6; assumptions A-C),
-// behind the everyNode flag (rule 12, on by default): every card shows its number; the kind decides
-// its buttons (a question, decision or action all five, ✓ and ✗ reading "Yes", "No" or "Done" in
-// their tooltips; every other kind Comment, More context and Later); a plain card commented alone
-// shows "Commented" and counts nowhere; Comment on a lasso of mixed cards is one note on exactly
-// those cards; "Hide decided" keeps a decided card while the agent owes it an answer; keyboard; axe
-// light and dark; the flag off.
+// Every node is part of the conversation (every-node FE_01, PLAN rulings 1-4 and 6; assumptions A-C;
+// D-045), behind the everyNode flag (rule 12, on by default): every card shows its number; the kind
+// decides its buttons (a question, decision or action Check, Cross, Comment and Later; every other
+// kind Comment and Later); a plain card commented alone shows no status and counts nowhere; Comment on
+// a lasso of mixed cards is one note on exactly those cards and answers none; "Hide answered" keeps an
+// answered card while the agent owes it an answer; keyboard; axe light and dark; the flag off.
 //
 // Each test draws its own board through the API as a joined agent, so the shared roadmap board is
 // never touched. Agent calls go through `request` (no person cookie); reads through `page.request`.
@@ -81,38 +80,38 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?setup');
 });
 
-test('every card shows its number; the kind decides the buttons, and ✓ and ✗ say Yes, No or Done', async ({ page, request }) => {
+test('every card shows its number; the kind decides the buttons, and ✓ and ✗ are Check and Cross on every kind', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
   for (const n of [d.ask, d.plain, d.topic, d.act, d.risk]) await expect(card(page, n).locator('.vb-node-num')).toHaveText(String(n));
-  expect(await tips(page, d.ask)).toEqual([['ack', 'Yes · a'], ['drop', 'No · x'], ['comment', 'Comment · c'], ['context', 'More context · m'], ['later', 'Save for later · l']]);
-  expect(await tips(page, d.act)).toEqual([['ack', 'Done · a'], ['drop', 'Drop · x'], ['comment', 'Comment · c'], ['context', 'More context · m'], ['later', 'Save for later · l']]);
+  const asks = [['ack', 'Check · a'], ['drop', 'Cross · x'], ['comment', 'Comment · c'], ['later', 'Save for later · l']];
+  expect(await tips(page, d.ask)).toEqual(asks);
+  expect(await tips(page, d.act)).toEqual(asks);
   for (const n of [d.plain, d.topic, d.risk])
-    expect(await tips(page, n)).toEqual([['comment', 'Comment · c'], ['context', 'More context · m'], ['later', 'Save for later · l']]);
-  // The accessible name keeps the registry's word; the tooltip adds the card's own.
-  await expect(card(page, d.ask).getByRole('button', { name: `Acknowledge item ${d.ask} (A)` })).toHaveAttribute('title', 'Yes · a');
-  await expect(card(page, d.plain)).toHaveAttribute('aria-label', `Item ${d.plain}, Finding: The usage tier carries 3x the support load, Open`);
+    expect(await tips(page, n)).toEqual([['comment', 'Comment · c'], ['later', 'Save for later · l']]);
+  await expect(card(page, d.ask).getByRole('button', { name: `Check item ${d.ask} (A)` })).toHaveAttribute('title', 'Check · a');
+  await expect(card(page, d.plain)).toHaveAttribute('aria-label', `Item ${d.plain}, Finding: The usage tier carries 3x the support load`);
 });
 
-test('a plain card commented alone: its own note, "Commented" on it, and counted nowhere', async ({ page, request }) => {
+test('a plain card commented alone: its own note and pin, no status word, and counted nowhere', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
   const counts = page.locator('#counts');
   await expect(counts).toContainText('2 open');
-  await expect(counts).toContainText('0 decided');
+  await expect(counts).toContainText('0 answered');
   const p = page.locator('vb-region[data-region="p"] .vb-region-count');
-  await expect(p).toHaveText('0 of 1 decided');
+  await expect(p).toHaveText('0 of 1 answered');
   const before = await head(page, d);
   await commentByKey(page, d.plain, 'Which renewals asked?');
   await expect(card(page, d.plain)).toHaveAttribute('data-status', 'commented');
-  await expect(card(page, d.plain).locator('.vb-node-status')).toHaveText('Commented');
+  await expect(card(page, d.plain).locator('.vb-node-status')).toHaveText('');
   await expect(card(page, d.plain).locator('.vb-node-note-who')).toHaveText('Your note 1');
   await expect(card(page, d.plain).locator('.vb-note-pin')).toHaveText('1');
   await expect(card(page, d.plain).getByRole('button', { name: `Comment item ${d.plain} (C)` })).toBeVisible();
   // Assumption C: it shows, but counts nowhere; ruling 6: only cards that need an answer count.
   await expect(counts).toContainText('2 open');
-  await expect(counts).toContainText('0 decided');
-  await expect(p).toHaveText('0 of 1 decided');
+  await expect(counts).toContainText('0 answered');
+  await expect(p).toHaveText('0 of 1 answered');
   const acts = await responsesAfter(page, d, before);
   expect(acts.map((e) => [e.action, e.n, e.text])).toEqual([['comment', d.plain, 'Which renewals asked?']]);
   // A plain card offers no ✓ or ✗, so A and X do nothing on it.
@@ -150,33 +149,39 @@ test('three mixed cards lassoed and commented once: one note on exactly those ca
     await expect(card(page, n).locator('.vb-note-pin')).toHaveText('1');
   }
   for (const n of [d.act, d.risk]) await expect(card(page, n).locator('.vb-note-pin')).toBeHidden();
-  // The comment decides the question (ruling 3) and only it counts (ruling 6).
-  await expect(page.locator('#counts')).toContainText('1 decided');
+  // A note never answers a card (D-045): the question stays open, and nothing is answered.
+  await expect(page.locator('#counts')).toContainText('0 answered');
+  await expect(card(page, d.ask)).toHaveAttribute('data-status', 'commented');
   await expect(card(page, d.plain)).toHaveAttribute('data-status', 'commented');
 });
 
-test('Hide decided keeps a commented question while its answer is owed, and hides it once the agent replies', async ({ page, request }) => {
+test('Hide answered keeps a ✓ question while its note is owed; the agent\'s reply clears the ✓, so it stays', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
   const before = await head(page, d);
+  await card(page, d.ask).focus();
+  await page.keyboard.press('a');
+  await expect(card(page, d.ask)).toHaveAttribute('data-status', 'acknowledged');
   await commentByKey(page, d.ask, 'Only for annual plans?');
   await commentByKey(page, d.plain, 'Which renewals asked?');
   await card(page, d.act).focus();
   await page.keyboard.press('a');
   await expect(card(page, d.act)).toHaveAttribute('data-status', 'acknowledged');
   await page.keyboard.press('h');
-  // The acknowledged action hides; the commented question waits for its reply; a plain card never hides.
+  // The ✓ action hides; the ✓ question waits for the reply to its note; a plain card never hides.
   await expect(card(page, d.act)).toBeHidden();
   await expect(card(page, d.ask)).toBeVisible();
-  await expect(card(page, d.ask)).toHaveAttribute('data-status', 'commented');
+  await expect(card(page, d.ask)).toHaveAttribute('data-status', 'acknowledged');
   await expect(card(page, d.plain)).toBeVisible();
   const note = (await responsesAfter(page, d, before)).find((e) => e.action === 'comment' && e.n === d.ask)!;
   await write(request, d, [{ type: 'reply', n: d.ask, text: 'Annual only.', to: note.seq }]);
-  await expect(card(page, d.ask)).toBeHidden();
-  await expect(card(page, d.plain)).toBeVisible();
-  await page.keyboard.press('h');
+  // The reply clears the earlier ✓ (D-045): open again, so it stays in sight with the reply.
+  await expect(card(page, d.ask)).toHaveAttribute('data-status', 'open');
   await expect(card(page, d.ask)).toBeVisible();
   await expect(card(page, d.ask).locator('.vb-node-reply')).toContainText('Annual only.');
+  await expect(card(page, d.plain)).toBeVisible();
+  await page.keyboard.press('h');
+  await expect(card(page, d.act)).toBeVisible();
 });
 
 test('flag off: numbers and buttons only on cards that need an answer', async ({ page, request }) => {
@@ -184,7 +189,7 @@ test('flag off: numbers and buttons only on cards that need an answer', async ({
   await open(page, d, '?flags=-everyNode');
   for (const n of [d.ask, d.act]) {
     await expect(card(page, n).locator('.vb-node-num')).toHaveText(String(n));
-    await expect(card(page, n).locator('button[data-act]')).toHaveCount(5);
+    await expect(card(page, n).locator('button[data-act]')).toHaveCount(4);
   }
   for (const n of [d.plain, d.topic, d.risk]) {
     await expect(card(page, n).locator('.vb-node-num')).toHaveCount(0);

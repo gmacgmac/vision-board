@@ -44,7 +44,7 @@ async function draw(request: APIRequestContext): Promise<Drawn> {
 }
 
 const propose = (request: APIRequestContext, d: Drawn, n: number, reason: string) =>
-  write(request, d, [{ type: 'propose', n, ver: 1, action: 'drop', reason, source: 'Email pasted in chat' }]);
+  write(request, d, [{ type: 'propose', n, ver: 1, action: 'cross', reason, source: 'Email pasted in chat' }]);
 
 async function open(page: Page, d: Drawn): Promise<void> {
   await page.goto(`/#${d.board}`);

@@ -43,15 +43,15 @@
 {"v":2,"seq":43,"at":"2026-10-04T09:00:43Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":19,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
 {"v":2,"seq":44,"at":"2026-10-04T09:00:44Z","by":"person","type":"act","action":"comment","n":19,"ver":1,"text":"Looks right, but check the edge case."}
 {"v":2,"seq":45,"at":"2026-10-04T09:00:45Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":20,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
-{"v":2,"seq":46,"at":"2026-10-04T09:00:46Z","by":"person","type":"act","action":"context","n":20,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":46,"at":"2026-10-04T09:00:46Z","by":"person","type":"act","action":"ack","n":20,"ver":1}
 {"v":2,"seq":47,"at":"2026-10-04T09:00:47Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":21,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
 {"v":2,"seq":48,"at":"2026-10-04T09:00:48Z","by":"person","type":"act","action":"context","n":21,"ver":1,"text":"Explain this in plain terms."}
 {"v":2,"seq":49,"at":"2026-10-04T09:00:49Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":22,"ver":1,"node":{"region":"kinds","kind":"decision","title":"Choose the storage format","body":"JSON Lines or a database.","item":true}}
-{"v":2,"seq":50,"at":"2026-10-04T09:00:50Z","by":"person","type":"act","action":"context","n":22,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":50,"at":"2026-10-04T09:00:50Z","by":"person","type":"act","action":"ack","n":22,"ver":1}
 {"v":2,"seq":51,"at":"2026-10-04T09:00:51Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":23,"ver":1,"node":{"region":"kinds","kind":"risk","title":"The vendor may change pricing","body":"No contract term past June.","item":true}}
 {"v":2,"seq":52,"at":"2026-10-04T09:00:52Z","by":"person","type":"act","action":"context","n":23,"ver":1,"text":"Explain this in plain terms."}
 {"v":2,"seq":53,"at":"2026-10-04T09:00:53Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":24,"ver":1,"node":{"region":"kinds","kind":"action","title":"Write the migration","body":"One script, run once.","item":true}}
-{"v":2,"seq":54,"at":"2026-10-04T09:00:54Z","by":"person","type":"act","action":"context","n":24,"ver":1,"text":"Explain this in plain terms."}
+{"v":2,"seq":54,"at":"2026-10-04T09:00:54Z","by":"person","type":"act","action":"ack","n":24,"ver":1}
 {"v":2,"seq":55,"at":"2026-10-04T09:00:55Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":25,"ver":1,"node":{"region":"kinds","kind":"question","title":"Which option do we take?","body":"Two options, one afternoon to decide.","item":true}}
 {"v":2,"seq":56,"at":"2026-10-04T09:00:56Z","by":"person","type":"act","action":"later","n":25,"ver":1}
 {"v":2,"seq":57,"at":"2026-10-04T09:00:57Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":26,"ver":1,"node":{"region":"kinds","kind":"finding","title":"The build is slow on CI","body":"Cold caches add four minutes.","item":true}}
@@ -142,7 +142,7 @@
 {"v":4,"seq":142,"at":"2026-10-05T09:01:01Z","by":"agent","agent":"a-pricing1","type":"board","board":"notes","title":"Notes beside cards"}
 {"v":4,"seq":143,"at":"2026-10-05T09:01:02Z","by":"agent","agent":"a-pricing1","type":"region","board":"notes","region":{"id":"notes","title":"Notes","mode":"grid","columns":4}}
 {"v":4,"seq":144,"at":"2026-10-05T09:01:03Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":75,"ver":1,"node":{"region":"notes","kind":"question","title":"A note not yet sent","body":"Its pin and its block are pink. Click either, or press C, to change it.","item":true}}
-{"v":4,"seq":145,"at":"2026-10-05T09:01:04Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":76,"ver":1,"node":{"region":"notes","kind":"finding","title":"More context, not yet sent","body":"Pressed M: the note asks the agent for more context.","item":true}}
+{"v":4,"seq":145,"at":"2026-10-05T09:01:04Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":76,"ver":1,"node":{"region":"notes","kind":"finding","title":"An old More context, read as a note","body":"Written with the More context button, which is gone: it reads as a note like any other.","item":true}}
 {"v":4,"seq":146,"at":"2026-10-05T09:01:05Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":77,"ver":1,"node":{"region":"notes","kind":"risk","title":"Two sent notes and one not yet sent","body":"The latest note is first. Sent notes are grey and say Sent.","item":true}}
 {"v":4,"seq":147,"at":"2026-10-05T09:01:06Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":78,"ver":1,"node":{"region":"notes","kind":"action","title":"A sent note","body":"A sent note is history: its bubble only shows it.","item":true}}
 {"v":4,"seq":148,"at":"2026-10-05T09:01:07Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"Which teams are under 10 seats?"}
@@ -294,3 +294,13 @@
 {"v":13,"seq":294,"at":"2026-10-11T10:00:19Z","by":"agent","agent":"a-pricing1","type":"link","from":121,"to":123,"label":"when a note fits no theme"}
 {"v":13,"seq":295,"at":"2026-10-11T10:00:20Z","by":"agent","agent":"a-pricing1","type":"link","from":122,"to":124,"label":"next"}
 {"v":13,"seq":296,"at":"2026-10-11T10:00:21Z","by":"person","type":"act","action":"widths","board":"layout","region":"widths-own","widths":"own"}
+{"v":13,"seq":297,"at":"2026-10-11T10:01:01Z","by":"person","type":"act","action":"comment","n":20,"ver":1,"text":"Does this still hold for the annual plan?"}
+{"v":13,"seq":298,"at":"2026-10-11T10:01:02Z","by":"agent","agent":"a-pricing1","type":"reply","n":20,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":297}
+{"v":13,"seq":299,"at":"2026-10-11T10:01:03Z","by":"person","type":"act","action":"comment","n":22,"ver":1,"text":"Does this still hold for the annual plan?"}
+{"v":13,"seq":300,"at":"2026-10-11T10:01:04Z","by":"agent","agent":"a-pricing1","type":"reply","n":22,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":299}
+{"v":13,"seq":301,"at":"2026-10-11T10:01:05Z","by":"person","type":"act","action":"comment","n":24,"ver":1,"text":"Does this still hold for the annual plan?"}
+{"v":13,"seq":302,"at":"2026-10-11T10:01:06Z","by":"agent","agent":"a-pricing1","type":"reply","n":24,"text":"Yes, annual too: the same terms apply. Check it again if that still works for you.","to":301}
+{"v":13,"seq":303,"at":"2026-10-11T10:01:07Z","by":"agent","agent":"a-pricing1","type":"reply","n":13,"text":"In plain terms: the cards around this one together decide what ships in the release.","to":32}
+{"v":13,"seq":304,"at":"2026-10-11T10:01:08Z","by":"agent","agent":"a-pricing1","type":"reply","n":21,"text":"In plain terms: it slows each release by about a day until we fix it.","to":48}
+{"v":13,"seq":305,"at":"2026-10-11T10:01:09Z","by":"agent","agent":"a-pricing1","type":"reply","n":23,"text":"In plain terms: the vendor can raise its prices at any time, since nothing is signed yet.","to":52}
+{"v":13,"seq":306,"at":"2026-10-11T10:01:10Z","by":"agent","agent":"a-pricing1","type":"reply","n":107,"text":"In plain terms: the figures come from beta users, so treat them as early numbers.","to":249}

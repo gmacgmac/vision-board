@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/list-open-response.schema.json",
   "title": "Open cards",
-  "description": "The questions, decisions and actions not yet decided, and every card of any kind that waits for the agent's answer or handover. With a Bearer secret, only the containers the caller holds.",
+  "description": "The questions, decisions and actions with no ✓ or ✗ yet, and every card of any kind that waits for the agent's answer or handover. With a Bearer secret, only the containers the caller holds.",
   "$comment": "Was: api.md 41, 120",
   "type": "object",
   "required": [

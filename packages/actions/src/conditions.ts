@@ -9,7 +9,8 @@
 import type { LedgerNode } from '../../format/src/index.ts';
 import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
-import { cardsOf, latestAsk } from './notes.ts';
+import { cardsOf, closedAfter, latestAsk } from './notes.ts';
+import { unseenAnswer } from './clears.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
 import type { ReferenceKind } from './references.ts';
@@ -71,16 +72,18 @@ const decided = (s: LedgerState, node: LedgerNode): boolean => isDecided(latest(
 import { replied } from './note-lock.ts';
 export { replied };
 
-/** What the agent owes on a card (api.md 36, 120): the `seq` of the person's latest comment or
- * "needs context" that no newer version or reply answers, else of a "later" with no park after it.
- * A card closed with ✓ or ✗ owes nothing; a comment that decides a card is still owed (ruling 5). */
+/** What the agent owes on a card (api.md 36, 120): the `seq` of the person's latest note (an old
+ * "needs context" is one) that no newer version or reply answers, else of a "later" with no park
+ * after it. A note never answers a card, so it is owed on any card unless a ✓ or ✗ came after it
+ * (D-045); a card closed with ✓ or ✗ owes no handover. */
 export function owedOn(s: LedgerState, node: LedgerNode): number | undefined {
   const status = s.items.get(node.id)?.status ?? 'open';
   const m = s.marks.get(node.id);
-  if (!m || CLOSED.has(status)) return undefined;
+  if (!m) return undefined;
   const { ask } = m;
   const made = ask && s.asks.get(ask.seq);
-  if (ask && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.id])) return ask.seq;
+  const closed = made ? closedAfter(s.logs.get(node.id)!, status, made) : CLOSED.has(status);
+  if (ask && !closed && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.id])) return ask.seq;
   return awaitingPark(s, node.id);
 }
 
@@ -126,8 +129,8 @@ type Rows = Record<ConditionKind, ConditionRow>;
 export const CONDITIONS: Rows = {
   'item.owed': {
     about: 'card', audience: 'agent', shows: [], clearedBy: [],
-    trueWhen: 'A card of any kind not closed with ✓ or ✗ has a latest comment or "needs context" that no newer version or reply answers, or a "later" with no park after it (api.md 120).',
-    endsWhen: 'A reply naming the note, a newer version, a park after the "later", or the person closing the card with ✓ or ✗.',
+    trueWhen: 'A card of any kind has a latest note (an old "needs context" is one) with no ✓ or ✗ after it that no newer version or reply answers, or, not closed with ✓ or ✗, a "later" with no park after it (api.md 120, D-045: a note never answers a card).',
+    endsWhen: 'A reply naming the note, a newer version, a park after the "later", or the person\'s ✓ or ✗ on the card after the note.',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx).flatMap((x) => {
       const seq = owedOn(s, x);
       return seq === undefined ? [] : [{ kind: 'item.owed' as const, board, id: x.id, seq }];
@@ -157,10 +160,10 @@ export const CONDITIONS: Rows = {
   },
   'item.unseen': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: ['select', 'act'],
-    trueWhen: 'A card\'s latest version is newer than the one the person last saw (D-018). The page shows it as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
-    endsWhen: 'The person\'s `seen` for that version, or any act of theirs naming the card but a Send (api.md 94).',
+    trueWhen: 'A card\'s latest version is newer than the one the person last saw (D-018), or the agent\'s answer to its latest note cleared it after the person last looked at it (clears.ts `unseenAnswer`, D-045). The page shows a newer version as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
+    endsWhen: 'The person\'s `seen` for that version (any card `seen` after the agent\'s answer), or any act of theirs naming the card but a Send (api.md 94).',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx)
-      .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0)).map((x) => ({ kind: 'item.unseen' as const, board, id: x.id }))),
+      .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || unseenAnswer(s, x.id)).map((x) => ({ kind: 'item.unseen' as const, board, id: x.id }))),
   },
   'item.awaiting': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: [],
@@ -215,7 +218,7 @@ export const CONDITIONS: Rows = {
   },
   'board.unsent': {
     about: 'board', audience: 'person', shows: ['send'], clearedBy: [],
-    trueWhen: 'The open board has an answer of the person\'s since its last Send that the Send message carries (registry.ts `isAnswer`, unsent.ts): ✓, ✗, a note, More context, Later, Reopen, a proposal turned down, a note on a whole container. A move into or out of Later counts through its Later or Reopen; arranging the board alone (pin, size, mode, a move between containers) and a note removed before Send do not. Send to agent is enabled only then (field report batch 1, ruling 1).',
+    trueWhen: 'The open board has an answer of the person\'s since its last Send that the Send message carries (registry.ts `isAnswer`, unsent.ts): a card\'s ✓, ✗, Later or clear when it leaves the card otherwise than at the last Send (D-045), a note, a proposal turned down, a note on a whole container. A move into or out of Later counts through its Later or Reopen; arranging the board alone (pin, size, mode, a move between containers) and a note removed before Send do not. Send to agent is enabled only then (field report batch 1, ruling 1).',
     endsWhen: 'The person\'s Send on the board.',
     derive: (s, ctx) => {
       const seq = ctx.board === undefined ? undefined : unsentOn(s, ctx.board);

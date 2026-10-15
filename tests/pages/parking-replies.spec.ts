@@ -172,7 +172,8 @@ test('flags off: no Awaiting, no tab, no reply', async ({ page, request }) => {
   await expect(status(page, n)).toHaveText('Saved for later');
   await expect(tab(page, n)).toBeHidden();
   await expect(replies(page, n)).toHaveCount(0);
-  await expect(card(page, n)).toHaveAttribute('aria-label', /, Saved for later$/);
+  // Later came after the note, so the reply clears nothing; it is still an update the person has not seen (D-045).
+  await expect(card(page, n)).toHaveAttribute('aria-label', /, Saved for later, 1 unseen update$/);
 });
 
 for (const theme of THEMES) {
@@ -205,7 +206,7 @@ test('gallery: the Parking and replies section shows by default and not with bot
   await page.goto('/gallery.html');
   const s = section(page);
   await expect(s.locator('vb-node')).toHaveCount(5);
-  await expect(s.locator('.vb-node-status:visible')).toHaveText(['Awaiting', 'Awaiting', 'Saved for later', 'Commented', 'Commented']);
+  await expect(s.locator('.vb-node-status:visible')).toHaveText(['Awaiting', 'Awaiting', 'Open']);
   await expect(s.locator('.vb-node-btab[data-tab="handover"]:visible')).toHaveText('Handover');
   await expect(s.locator('.vb-card-pop[data-open] .vb-hand-head')).toHaveText(['Situation', 'Background', 'Assessment', 'Recommendation', 'Sources']);
   await expect(s.locator('.vb-node-reply')).toHaveCount(2);

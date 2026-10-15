@@ -20,7 +20,7 @@ test('readLedger returns every valid event and no problems', () => {
 });
 
 test('fold: statuses and notes follow the item rules', () => {
-  assert.equal(state.items.get(1)!.status, 'commented');
+  assert.equal(state.items.get(1)!.status, 'open', 'the agent answered its note: open again (D-045)');
   assert.deepEqual(state.items.get(1)!.notes.map((x) => [x.kind, x.text]), [['comment', 'Who asked for it?']]);
   assert.equal(state.items.get(3)!.status, 'dropped');
   assert.equal(state.items.get(4)!.status, 'later');
@@ -72,8 +72,8 @@ test('ids do not change when a card is redrawn or one is retired (rule 10)', () 
 
 test('replyText reads boardView + boardState', () => {
   assert.equal(replyText(boardView(state, BOARD), boardState(state, BOARD)), [
-    'Board "Login page review" (v15)', '1 (question): comment: Who asked for it?', '3 (decision): drop', '4 (risk): saved for later',
-    'Nothing left open.',
+    'Board "Login page review" (v15)', '1 (question): comment: Who asked for it?', '3 (decision): ✗', '4 (risk): saved for later',
+    'Still open: 1',
   ].join('\n'));
 });
 

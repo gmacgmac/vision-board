@@ -5,10 +5,10 @@
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
-// flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts) and each board's dates. Every map is keyed by a card's identity (`id`); the reads give board
-// numbers (numbers.ts, api.md 125). One board as the page reads it: board-state.ts.
-// Pure: same events, same state. Events are assumed valid (readLedger in packages/format checks them
-// first).
+// flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
+// board's dates, and the agent's clears (clears.ts). Every map is keyed by a card's identity (`id`);
+// the reads give board numbers (numbers.ts, api.md 125). One board as the page reads it:
+// board-state.ts. Pure: same events, same state; events are assumed valid (readLedger checks them).
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
 } from '../../format/src/index.ts';
@@ -26,6 +26,8 @@ import { foldRetire, keepRetiredRegion } from './retire.ts';
 import { foldFlag } from './card-flags.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
+import type { Clear } from './clears.ts';
+import { cutOf, foldClears } from './clears.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -74,12 +76,18 @@ export interface LedgerState extends DrawnState {
   widths: Map<string, Map<string, Widths>>;
   /** board -> `seq` of the person's latest Send. */
   lastSend: Map<string, number>;
-  /** board -> the lines since its last Send that the next Send carries (unsent.ts): `board.unsent`. */
+  /** board -> the lines since its last Send that the next Send carries, and card id -> its ✓, ✗, Later
+   * or clear among them, so a newer one replaces it without a scan (unsent.ts): `board.unsent`. */
   unsent: Map<string, Set<number>>;
+  unsentMarks: Map<string, Map<number, number>>;
   /** agent -> retry key -> `seq` of the event that carried it, across the project (api.md 29). */
   keys: Map<string, Map<string, number>>;
   /** Card id -> latest version the person has seen. */
   seen: Map<number, number>;
+  /** Card id -> `seq` of the person's latest card `seen` line or act naming it (api.md 94). */
+  looked: Map<number, number>;
+  /** Card id -> the latest clear the agent's answer made on it (clears.ts, D-045 ruling 7). */
+  clears: Map<number, Clear>;
   /** propose `seq` -> proposal. */
   proposals: Map<number, Proposal>;
   parks: Map<number, ParkBundle>;
@@ -141,8 +149,8 @@ export const DRAWING_EVENTS: ReadonlySet<LedgerEvent['type']> = new Set(['board'
 
 export const emptyState = (): LedgerState => ({
   ...emptyDrawn(), index: emptyIndex(), agents: new Map(), grantNotes: new Map(), items: new Map(),
-  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), widths: new Map(), lastSend: new Map(), unsent: new Map(),
-  keys: new Map(), seen: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
+  replies: new Map(), pins: new Map(), moves: new Map(), sizes: new Map(), modes: new Map(), widths: new Map(), lastSend: new Map(), unsent: new Map(), unsentMarks: new Map(),
+  keys: new Map(), seen: new Map(), looked: new Map(), clears: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
@@ -197,14 +205,13 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
     case 'join': if (e.agent !== undefined) s.agents.set(e.agent, e.label); break;
     case 'grant-request': s.grantNotes.set(e.seq, { reason: e.reason, at: e.at }); break;
     case 'act': s.acts.push(e); applyAct(s, e); seeCards(s, e); if (board !== undefined) foldUnsent(s, board, e); break;
-    case 'seen':
-      if ('id' in e) s.seen.set(e.id, Math.max(s.seen.get(e.id) ?? 0, e.ver));
-      else seeBoard(s, e.board, e.head);
-      break;
+    case 'seen': if ('id' in e) look(s, e.id, e.ver, e.seq); else seeBoard(s, e.board, e.head); break;
     case 'retire': foldRetire(s, e); break;
     case 'reply':
       push(s.replies, e.id, { seq: e.seq, at: e.at, text: e.text, ...(e.to !== undefined && { to: e.to }), ...(e.agent && { agent: e.agent }) });
+      for (const id of foldClears(s, e)) restate(s, id, s.logs.get(id)!);
       break;
+    case 'node': for (const id of foldClears(s, e)) restate(s, id, s.logs.get(id)!); break;
     case 'propose':
       s.proposals.set(e.seq, {
         seq: e.seq, at: e.at, id: e.id, ver: e.ver, action: e.action, reason: e.reason,
@@ -269,16 +276,19 @@ function applyItemAct(s: LedgerState, e: ActEvent): void {
   if (e.action === 'ack' || e.action === 'drop') closeProposals(s, e);
 }
 
-/** Any person act naming cards, but a Send, counts as seeing each one's latest version (api.md 94):
- * `seen` is raised, never lowered. A note on or a place for a whole container names no card. */
+/** Any person act naming cards, but a Send, counts as seeing each one's latest version (api.md 94).
+ * A note on or a place for a whole container names no card. */
 function seeCards(s: LedgerState, e: ActEvent): void {
   if (e.action === 'send' || isContainerAct(e)) return;
-  for (const id of e.nodes ?? (e.id === undefined ? [] : [e.id])) s.seen.set(id, Math.max(s.seen.get(id) ?? 0, s.nodes.get(id)!.versions.at(-1)!.ver));
+  for (const id of e.nodes ?? (e.id === undefined ? [] : [e.id])) look(s, id, s.nodes.get(id)!.versions.at(-1)!.ver, e.seq);
 }
 
-/** Card `id`'s status, notes and owed ask, from its log. */
+/** The person looked at card `id` at version `ver` on line `seq`: `seen` is raised, never lowered. */
+const look = (s: LedgerState, id: number, ver: number, seq: number): void => { s.seen.set(id, Math.max(s.seen.get(id) ?? 0, ver)); s.looked.set(id, seq); };
+
+/** Card `id`'s status, notes and owed ask, from its log and the agent's latest clear on it. */
 function restate(s: LedgerState, id: number, log: ItemLog): void {
-  s.items.set(id, itemOf(log));
+  s.items.set(id, itemOf(log, cutOf(s, id)));
   const latest = latestAsk(log);
   const m = marksOf(s, id);
   if (latest) m.ask = { kind: latest.kind, seq: latest.seq, ver: askVer(latest, id) };

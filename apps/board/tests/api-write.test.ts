@@ -91,7 +91,7 @@ test('point 24 over HTTP: what each item needs, allowed for the holder and refus
     { type: 'link', from: n.q1, to: n.b1 }, // a link: the from node's region
     { type: 'unlink', from: n.q1, to: n.q2 },
     { type: 'reply', n: n.q1, text: 'Hi' }, // reply, propose, park: the node's region
-    { type: 'propose', n: n.q1, ver: 1, action: 'ack', reason: 'Done.' },
+    { type: 'propose', n: n.q1, ver: 1, action: 'check', reason: 'Done.' },
     { type: 'park', n: n.q1, bundle: { situation: 's', background: 'b', assessment: 'a', recommendation: 'r' } },
   ]);
   assert.deepEqual(codes(refused), Array(8).fill('needs-grant'));
@@ -104,7 +104,7 @@ test('point 24 over HTTP: what each item needs, allowed for the holder and refus
   assert.deepEqual(codes(allowed), ['ok', 'ok']);
   const holder = await write(A, 'plan', [
     region('a', { title: 'Renamed' }), { ...node('a', 'Q1, sharper'), n: n.q1 }, { type: 'unlink', from: n.q1, to: n.q2 },
-    { type: 'reply', n: n.q1, text: 'Noted.' }, { type: 'propose', n: n.q1, ver: 2, action: 'ack', reason: 'Settled.' },
+    { type: 'reply', n: n.q1, text: 'Noted.' }, { type: 'propose', n: n.q1, ver: 2, action: 'check', reason: 'Settled.' },
   ]);
   assert.deepEqual(codes(holder), ['ok', 'ok', 'ok', 'ok', 'ok']);
   assert.equal(holder.results[1].ver, 2);

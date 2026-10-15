@@ -25,7 +25,8 @@ const FIXTURES = [
 ];
 
 // ---- The oracle: the checks this table replaced (pending.ts, reads.ts), moved to every card and
-// to ✓ or ✗ closing a card (every-node BE_02, api.md 120): a comment decides but stays owed. ----
+// to ✓ or ✗ closing a card (every-node BE_02, api.md 120), then to a note never answering a card
+// (D-045): a note is owed unless a ✓ or ✗ came after it. ----
 
 const replied = (s: LedgerState, seq: number, cards: number[]) =>
   (cards.length ? cards.map((n) => s.replies.get(n) ?? []) : [...s.replies.values()]).some((rs) => rs.some((r) => r.to === seq));
@@ -34,10 +35,12 @@ const replied = (s: LedgerState, seq: number, cards: number[]) =>
 function oldOwedOn(s: LedgerState, node: LedgerNode): { ask?: number; later?: number } | undefined {
   const status = s.items.get(node.id)?.status ?? 'open';
   const m = s.marks.get(node.id);
-  if (!m || CLOSED.has(status)) return undefined;
+  if (!m) return undefined;
   const { ask } = m;
   const made = ask && s.asks.get(ask.seq);
-  const answered = ask && (latest(node).ver > ask.ver || replied(s, ask.seq, made ? cardsOf(made) : [node.id]));
+  // D-045: a note never answers a card; only a ✓ or ✗ after it closes it.
+  const closedAfter = CLOSED.has(status) && (s.logs.get(node.id)?.decisions.at(-1)?.seq ?? 0) > (made ? made.pos : Infinity);
+  const answered = ask && (closedAfter || latest(node).ver > ask.ver || replied(s, ask.seq, made ? cardsOf(made) : [node.id]));
   const parkOwed = status === 'later' && m.later !== undefined && (m.park ?? 0) < m.later;
   if ((!ask || answered) && !parkOwed) return undefined;
   return { ...(ask && !answered && { ask: ask.seq }), ...(parkOwed && { later: m.later }) };
@@ -60,9 +63,10 @@ function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
   return [...items.sort((a, b) => a.id! - b.id!), ...containers];
 }
 
-/** pending.ts `unseenItems`. */
+/** pending.ts `unseenItems`, plus a card the agent's answer cleared since the person last looked (D-045). */
 const oldUnseen = (s: LedgerState, board: string): number[] => nodesOf(s, board)
-  .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0)).map((x) => x.id).sort((a, b) => a - b);
+  .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || (s.clears.get(x.id)?.seq ?? 0) > (s.looked.get(x.id) ?? 0))
+  .map((x) => x.id).sort((a, b) => a - b);
 
 /** reads.ts `boardAccess`'s open requests. */
 const oldOpenRequests = (s: LedgerState, board: string): number[] => grantRequests(s, board).filter((r) => !r.answer).map((r) => r.seq);

@@ -37,7 +37,7 @@ before(async () => {
     { type: 'region', region: { id: 'ideas', title: 'Ideas', mode: 'grid' }, key: 'vault-ideas' },
     { type: 'node', node: { region: 'ideas', kind: 'question', title: 'Keep it locked?' }, key: 'vault-1' },
     { type: 'node', node: { region: 'ideas', kind: 'decision', title: 'Ship on Friday?' }, key: 'vault-2' },
-    { type: 'propose', n: 2, ver: 1, action: 'ack', reason: 'Agreed in the meeting.', key: 'vault-p' },
+    { type: 'propose', n: 2, ver: 1, action: 'check', reason: 'Agreed in the meeting.', key: 'vault-p' },
   ];
   const wrote = await h.ok('write_board', { board: VAULT, body: { items } }, { as: A.client });
   at.proposal = wrote.results[4].seq;
@@ -128,7 +128,7 @@ test('locked, the chat\'s messages still go, without the board\'s answers and re
   await h.ok('send_chat', { session, body: { text: 'And now?' } });
   const next = await fake.run(runs + 2);
   assert.ok(next.prompt.includes(ROUND_HEAD), 'unlocked, the answers go with the next message');
-  assert.match(next.prompt, /^3 \(question\): yes$/m);
+  assert.match(next.prompt, /^3 \(question\): ✓$/m);
   assert.equal(sends(), before + 1, 'and the Send is recorded');
 });
 

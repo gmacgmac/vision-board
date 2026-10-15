@@ -50,7 +50,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
 
 /* Kind by status: one row per status, one column per kind. */
-.g-matrix { --g-label-w: calc(var(--vb-space-6) * 4); display: flex; flex-direction: column; gap: var(--vb-space-3); }
+/* Rows far enough apart that a bottom-edge tab ("1 update", D-045's cleared row) clears the next row's top tabs. */
+.g-matrix { --g-label-w: calc(var(--vb-space-6) * 4); display: flex; flex-direction: column; gap: var(--vb-space-6); }
 .g-row { display: flex; align-items: flex-start; gap: var(--vb-space-3); }
 .g-row-label { flex: none; width: var(--g-label-w); margin: var(--vb-space-2) 0 0; font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
 .g-matrix .g-cards { flex-wrap: nowrap; }

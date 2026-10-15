@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3
+status: v3.4
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -28,6 +28,9 @@ the turn, unless the person already named it; "A good run" then describes the tu
 every scenario no `size` is set, no card's title or text carries a number of its own, and the
 chat words are one or two lines with no numbered list.
 v3.2 (skill v3.2, archive a board, N39 ruling 10): 20 (which board "the board" means) new.
+v3.4 (skill v3.4, the answer model, D-045): 2, 10, 13, 15 and 16 updated (✓ and ✗ read `check` /
+`cross` and `2 (question): ✗`; a note never answers a card; More context is a note); 22 (a note
+that asks, on a decision) and 23 (a consolidation proposal) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -51,19 +54,20 @@ module and put what you find on the board."
 
 ## 2. A comment to answer (own chat)
 
-**Situation.** After round 1, the person writes a comment on card 7, a finding ("Is this only on
-the guest path?"), acknowledges questions 3 and 4, drops decision 9, and presses Send.
+**Situation.** After round 1, the person writes a note on card 7, a finding ("Is this only on
+the guest path?"), presses ✓ on questions 3 and 4 and ✗ on decision 9, and presses Send.
 
 **A good run**
 - `check_responses` with the `head` it kept and `wait`, until the Send arrives; the acts come in
   card order (3, 4, 7, 9) and it works through them in that order.
-- Treats 3, 4 and 9 as decided and never raises them again.
+- Reads 3 and 4 as `check` and 9 as `cross`, answered in the light of what each card asks, and
+  never raises them again.
 - `show_node` 7, checks the code, then `reply { n: 7, to: <the comment's seq>, text }` with a
   short answer. If the answer changes the finding, it also `append`s the fact to card 7 with
   `base`.
 - The write answer no longer lists 7 in `pending`; it tells the person in one line.
 - **Fails if** it answers only in chat, rewrites card 7 to add one sentence, treats the comment
-  on a finding as needing no answer, or redraws the decision the person dropped.
+  on a finding as needing no answer, or redraws the decision the person crossed.
 
 ## 3. A card to extend (panel)
 
@@ -85,7 +89,7 @@ pastes an email from the vendor confirming it does, and says "that settles 21".
 
 **A good run**
 - Does not decide 21. Appends the answer to card 21 (`append` with `base`), then
-  `propose { n: 21, ver: <the new ver>, action: "ack", reason, source: "vendor email, pasted in chat" }`.
+  `propose { n: 21, ver: <the new ver>, action: "check", reason, source: "vendor email, pasted in chat" }`.
 - Proposes on the version the append made, not the one it read, so the proposal can be accepted.
 - Tells the person the proposal is on the card for them to accept.
 - **Fails if** it proposes on the old version, claims 21 is closed, or proposes again after a
@@ -164,20 +168,22 @@ again; don't join here."
 
 **Situation.** On "Checkout review", card 2 is a finding ("The retry loop has no back-off"),
 card 5 a question ("Ship the retry fix in 1.4?") and card 8 a risk ("The payment provider
-rate-limits us under load"). The person lassoes 2, 5 and 8, writes one comment on the three
+rate-limits us under load"). The person lassoes 2, 5 and 8, writes one note on the three
 ("These are one problem: fix the back-off in 1.4.") and presses Send (in the panel, the message
-attaches the note).
+carries the note's line).
 
 **A good run**
 - Reads the one `comment` act, at card 2, with `nodes` [2, 5, 8]; sees one note, not three.
-- Takes 5 as answered yes by the comment (a comment decides a question): no new question about
-  1.4, no `propose` on 5, and 5 not raised again as open.
+- Does not take 5 as answered: a note never answers a card, so 5 stays open (D-045). It acts on
+  the words (the plan is one back-off fix in 1.4) and, in its reply, asks for the ✓ on 5 it still
+  needs. No new question card about 1.4, no `propose` on 5.
 - One `reply` on any of the three cards, `to` = the note's `seq`, naming 2, 5 and 8 and what it
   will do ("Agreed: one back-off fix in 1.4 covers 2 and 8."). If the plan belongs on a card for
   good, it also `append`s it there (for example to 2, with `base`).
-- `list_open` (or the write's `pending`) no longer shows 2, 5 or 8 as owed.
+- `list_open` (or the write's `pending`) no longer shows 2, 5 or 8 as owed; 5 is still open.
 - **Fails if** it replies three times, answers only in chat, ignores 2 and 8 because they are
-  not questions, proposes ✓ on any of them, asks 5 again, or makes a new card for the answer.
+  not questions, treats 5 as settled by the note, proposes ✓ on any of them, draws a new card for
+  the same ask, or makes a new card for the answer.
 
 ## 11. An agenda with things to settle (panel)
 
@@ -226,18 +232,18 @@ comments "Only on the card path" on 6, ✓ on 9, and presses Send. The agent get
 ```
 The person updated the board:
 Board "Checkout review" (v4)
-3 (question): no
+3 (question): ✗
 6 (finding): comment: Only on the card path
-9 (action): done
+9 (action): ✓
 Still open: 11
 These are the person's answers up to head 212. To read anything newer, call check_responses on board "checkout-review" with after 212.
 ```
 
 **A good run**
-- Reads 3 as the answer No: guest checkout does not stay in 1.4. It acts on it (for example
-  `append`s to the cards that assumed it stays, or drops that path from its plan) and never raises
-  3 again; it does not call 3 "dropped" or "dismissed".
-- Treats 9 as done.
+- Reads ✗ on 3 in the light of what 3 asks: guest checkout does not stay in 1.4. It acts on it
+  (for example `append`s to the cards that assumed it stays, or drops that path from its plan) and
+  never raises 3 again; it does not call 3 "dropped" or "dismissed".
+- Reads ✓ on 9 (an action) as done.
 - `show_node` 6 for its `ver` and the comment's `seq`, then `reply { n: 6, to, text }` (and an
   `append` if the finding changes).
 - Does not re-read the answers: no `check_responses` from 0 or with `wait`, no `list_open` just to
@@ -280,18 +286,18 @@ needs a decision from the person.
 ## 15. The direction changes: a new container, the old one retired (panel)
 
 **Situation.** Follows 14 (content made up). Board "Multi-bot chat" has one container "plan"
-(`flow`, cards 1 to 9): the person answered 2 (a decision) with ✓ and asked for More context on
-6, which the agent has not answered yet. The person writes: "Let's go page-first instead: redo
+(`flow`, cards 1 to 9): the person answered 2 (a decision) with ✓ and wrote a note on 6 ("Why
+this order?"), which the agent has not answered yet. The person writes: "Let's go page-first instead: redo
 the plan." Their message carries no answers (nothing new since the last Send).
 
 **A good run**
 - Sees a new direction, not an edit: it draws a new container ("plan-page-first") with new cards
   for the new order, carrying over what still holds (2's decision, in the words of the card that
   depends on it), and retires the old container with `retire { region: "plan" }`.
-- Answers 6's More context first (`show_node` 6, then `reply` or `append`), in the same
+- Answers 6's note first (`show_node` 6, then `reply` or `append`), in the same
   `write_board` call before the `retire`, or after a refused retire, then the retire again with
   the **same key**. It learns 6 is owed from `list_open` (or the write's `pending`) or from the
-  refused retire's words ("card 6 asks for more context you haven't given").
+  refused retire's words (it names card 6 and what is owed).
 - Names the new cards by the numbers the write's answer gives (10 onwards on this board; retired
   numbers are never given again); the answer's `retired` lists 1 to 9.
 - Chat words: one line ("Done: the plan is redrawn page-first; the old plan is retired.").
@@ -312,8 +318,8 @@ Attached from the board:
 
 The person updated the board:
 Board "Checkout review" (v6)
-2 (question): yes
-5 (question): yes
+2 (question): ✓
+5 (question): ✓
 7 (finding): comment: Also on the refund path
 Still open: 9
 These are the person's answers up to head 240. To read anything newer, call check_responses on board "checkout-review" with after 240.
@@ -326,7 +332,7 @@ Board: checkout-review
   2 and 5. Draws an `action` card for each in card 4's container (or a container beside it, if
   card 4's is not its own), keyed, with the tasks written from 2 and 5.
 - Still answers 7: `show_node` 7 for the comment's `seq`, then `reply` (and an `append` if the
-  finding changes). Treats 2 and 5 as decided; never asks them again.
+  finding changes). Treats 2 and 5 as answered; never asks them again.
 - Card 4 is what the words point at, not a note: nothing is owed on it.
 - No `check_responses` or `list_open` to re-read the answers; if it reads, `after` is 240.
 - Chat words: one or two lines ("Added 2 tasks beside card 4; answered your note on card 7.").
@@ -404,7 +410,7 @@ selected these cards:".
   ("Lakeside venue booked; the date risk stands"), without numbers in its title or body other
   than "card N" references.
 - Then one `retire { n }` per card it replaces (1 to 5, each with its own key), in the same call.
-  Question 4 is decided, so it folds in; an undecided question would stay unless the person said
+  Question 4 is answered, so it folds in; an unanswered question would stay unless the person said
   to fold it in.
 - Chat words: one line ("Card 6 sums up the venue; cards 1 to 5 are retired.").
 - **Fails if** it retires before answering card 3, retires the whole container (which takes the
@@ -436,3 +442,62 @@ from the "⋯" menu, then writes in the chat: "Add a card for the annual plan."
 - Once the person unlocks it and asks again, it writes the card and ends with "Done."
 - **Fails if** it retries the write, loops on `check_responses`, calls `request_grant`, writes on
   another board instead, or says more than a line about the lock.
+
+## 22. A note that asks, on a decision (panel)
+
+**Situation.** From the answer-model plan (cards 20, 23 and 68 on a real board; content made up
+here). Board "Checkout review" has a container "Retries and 1.4" (`row`): finding 1 ("The retry
+loop has no back-off"), decision 2 ("Ship the back-off fix in 1.4", "My pick: yes, behind a flag")
+and decision 3 ("Keep the guest checkout in 1.4", "My pick: keep it"). The person pressed ✓ on 2
+in an earlier round the agent has read. Now they write a note on 2 ("What does the flag default
+to?") and a note on 3 ("Why not move it to 1.5?"), press nothing else, and press Send. The agent
+gets:
+
+```
+The person updated the board:
+Board "Checkout review" (v11)
+2 (decision): ✓: What does the flag default to?
+3 (decision): comment: Why not move it to 1.5?
+Still open: 3
+These are the person's answers up to head 11. ...
+
+Board: checkout-review
+```
+
+**A good run**
+- Reads both notes as questions, not answers: 3 is still open (a note never answers a card), and
+  "Why not 1.5?" is not a ✗.
+- `show_node` 2 and 3 for the notes' `seq`, then one `write_board` call with a `reply` to each note
+  (or an `append` where the answer belongs on the card for good).
+- Its reply on 2 answers the question and asks for the mark again ("✓ again if that holds"): the
+  reply clears the earlier ✓, so 2 is open again and unmarked. Its reply on 3 explains the pick and
+  asks for ✓ or ✗.
+- After the write, `list_open` shows 2 and 3 open (status `open`, `unseen`), nothing `pending`.
+- No new card for either ask, no `propose`, no second ask on either card.
+- Chat words: "Done." (one short line more only if the person must do something the board can't
+  show).
+- **Fails if** it treats 3 as answered by the note (moves it to 1.5, or calls it decided), treats
+  2's ✓ as still standing after its reply, draws a new decision card for an ask already on a card,
+  proposes ✓ or ✗, answers only in the chat, or lists the answers in the chat.
+
+## 23. Propose consolidating a container (panel)
+
+**Situation.** Board "Team offsite" has a container "Venue" (`row`): findings 1 and 2, question 3
+("Book the lakeside lodge?", ✓ in an earlier round), risk 4 ("Spring dates fill early") and
+decision 5 ("Hold the second week of April"); and a container "Travel": question 6 (open) and note
+7. Nothing is owed on any card. The person presses ✓ on 5 and presses Send (`5 (decision): ✓`,
+"Still open: 6"). After the agent's turn, the person presses ✓ on its proposal and presses Send
+again.
+
+**A good run**
+- First turn: every card that asks in "Venue" is answered, so it may add one `decision` card to
+  "Venue" proposing to sum it up ("Sum up the venue cards in one card?"), saying which cards the
+  summary would replace. It retires nothing yet, and proposes nothing for "Travel" (6 is open).
+  Chat words: "Done."
+- Second turn (the proposal ✓): one `write_board` call with one summary card in "Venue" (the
+  problem, what was decided, where it landed: "Lakeside lodge, second week of April; book early"),
+  then one `retire { n }` per card it replaces (1 to 5) and the proposal itself, each with its own
+  key. "Travel" is untouched. Chat words: "Done."
+- **Fails if** it retires anything before the ✓, retires the whole container (which takes the
+  summary with it), writes more than one summary card or more than one proposal, proposes for a
+  container with a card still open or a note owed, or keeps proposing after a ✗.

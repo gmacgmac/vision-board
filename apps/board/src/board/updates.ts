@@ -6,7 +6,7 @@
 // state is by identity (card-numbers.ts). Plain data in, plain data out; update-flow.ts sends the lines.
 import { latest } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { clearsOnSelect, versionChanges } from '../../../../packages/actions/src/index.ts';
+import { clearsOnSelect, unseenAnswer, versionChanges } from '../../../../packages/actions/src/index.ts';
 import type { CardStep } from '../../../../packages/ui/src/index.ts';
 import { idOf } from './card-numbers.ts';
 
@@ -17,19 +17,41 @@ const unseenVersions = (s: LedgerState, board: string, n: number) => {
   return (s.nodes.get(id)?.versions ?? []).filter((v) => v.ver > from);
 };
 
-/** How many updates card `n`'s tab counts: 0 for none, or for a card still at version 1. */
-export const unseenCount = (s: LedgerState, board: string, n: number): number => unseenVersions(s, board, n).length;
+/** The agent's reply that cleared card `n` (D-045, answer-model ruling 7) while the person has not
+ *  looked at it since: an update with no version of its own. None when a newer version cleared it. */
+function answerOf(s: LedgerState, board: string, n: number) {
+  const id = idOf(s, board, n) ?? 0;
+  const seq = unseenAnswer(s, id) ? s.clears.get(id)?.seq : undefined;
+  // A reply to a note on a group of cards is filed under the card it names: look in every card's.
+  return seq === undefined ? undefined : [...s.replies.values()].flat().find((r) => r.seq === seq);
+}
+
+/** How many updates card `n`'s tab counts: 0 for none, or for a card still at version 1 that no
+ *  reply of the agent's cleared. */
+export const unseenCount = (s: LedgerState, board: string, n: number): number =>
+  unseenVersions(s, board, n).length + (answerOf(s, board, n) ? 1 : 0);
 
 /** The steps for card `n`'s stepper, oldest first: each unseen version, when and by whom, and what
- *  changed from the version before. `time` writes a line's time in the person's clock. */
+ *  changed from the version before; and the reply that cleared the card, as one step at its latest
+ *  version. `time` writes a line's time in the person's clock. */
 export function unseenSteps(s: LedgerState, board: string, n: number, time: (at: string) => string): CardStep[] {
-  const versions = s.nodes.get(idOf(s, board, n) ?? 0)?.versions ?? [];
-  return unseenVersions(s, board, n).map((v) => {
-    const agent = v.agent === undefined ? undefined : s.agents.get(v.agent);
-    const prev = versions[versions.indexOf(v) - 1];
-    return { ver: v.ver, when: time(v.at), ...(agent && { agent }), changes: versionChanges(prev, v) };
-  });
+  const node = s.nodes.get(idOf(s, board, n) ?? 0);
+  const versions = node?.versions ?? [];
+  const at = (x: { at: string }, agentId?: string) => {
+    const agent = agentId === undefined ? undefined : s.agents.get(agentId);
+    return { when: time(x.at), ...(agent && { agent }) };
+  };
+  const steps: (CardStep & { on: string })[] = unseenVersions(s, board, n)
+    .map((v) => ({ ver: v.ver, ...at(v, v.agent), changes: versionChanges(versions[versions.indexOf(v) - 1], v), on: v.at }));
+  const r = answerOf(s, board, n);
+  if (r && node) steps.push({ ver: latest(node).ver, ...at(r, r.agent), changes: [], reply: r.text, on: r.at });
+  return steps.sort((a, b) => a.on.localeCompare(b.on)).map(({ on: _, ...step }) => step);
 }
+
+/** Whether a card seen line for card `n` at `ver` would change anything: a version not yet seen, or
+ *  the agent's answer the person has not looked at (D-045). */
+export const seenDue = (s: LedgerState, board: string, n: number, ver: number): boolean =>
+  seenVer(s, board, n) < ver || unseenAnswer(s, idOf(s, board, n) ?? 0);
 
 /** The items a selection marks seen: for each card condition the page shows, those it holds for when
  *  the row's `clearedBy` names select (`clearsOnSelect`, never a list of kinds here). */

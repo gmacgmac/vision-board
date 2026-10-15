@@ -8,7 +8,7 @@
      table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
      flag, Chat with the chatPanel flag (ChatSidebar), and with the toolbarMenu flag the "⋯" menu
-     (ToolbarMenu) holding Theme, Hide decided and Reply.
+     (ToolbarMenu) holding Theme, Hide answered and Reply.
      With the cardFlag flag the counts end in "N flagged" (board/flag-flow.ts) while any card is flagged
      and no past version shows: a button that focuses the next flagged card, wrapping.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
@@ -151,7 +151,7 @@
     {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
     {#if shell.version !== null}
       <span class="vb-chip" data-tone="open" title="Open items"><b>{shell.counts.open}</b> <span class="vb-chip-word">open</span></span>
-      <span class="vb-chip" data-tone="decided" title="Decided items"><b>{shell.counts.decided}</b> <span class="vb-chip-word">decided</span></span>
+      <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
       {#if shell.flagged && !shell.past}
         <FlaggedChip id="flagged" count={shell.flagged} onclick={onflagged} />

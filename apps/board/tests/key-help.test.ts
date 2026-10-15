@@ -44,14 +44,15 @@ test('with the chatPanel flag, Board lists T for the chat sidebar; without it, n
   assert.deepEqual(chat(false), []);
 });
 
-// every-node ruling 3, assumption B: A and X mean one thing everywhere; the list says how they read
-// on a question (Yes, No) and on an action (Done).
-test('Items: Acknowledge and Drop name the words they read on a question and an action', () => {
+// D-045, answer-model rulings 1 and 5: A and X are Check and Cross, tools with no meaning of their
+// own; More context and its M are gone.
+test('Items: Check and Cross by name, no meaning; no More context and no M', () => {
   const items = keyGroups().find((g) => g.group === 'Items')!.rows;
   const label = (id: string) => items.find((r) => r.id === `action:${id}`)!.label;
-  assert.equal(label('ack'), 'Acknowledge (Yes, Done)');
-  assert.equal(label('drop'), 'Drop (No)');
+  assert.equal(label('ack'), 'Check');
+  assert.equal(label('drop'), 'Cross');
   assert.equal(label('comment'), 'Comment');
+  assert.equal(items.some((r) => r.id === 'action:context' || r.keys.includes('M')), false);
 });
 
 // Field report batch 2, assumption A: Shift+F flags the focused card (F alone stays Fit).

@@ -26,8 +26,8 @@ test('an open proposal: the PROPOSAL tab and the box, with who, what, from where
   assert.deepEqual(st.proposal, {
     tab: 'Proposal', stale: false, label: 'Proposal on item 47', box: 'Proposal on item 47',
     entries: [{
-      seq: 812, stale: false, head: 'Pricing chat proposes', what: 'Drop 47: the client declined',
-      from: 'Email pasted in chat · Oct 8, 13:48', accept: 'Accept: drop 47', reject: 'Reject: drop 47',
+      seq: 812, stale: false, head: 'Pricing chat proposes', what: 'Cross 47: the client declined',
+      from: 'Email pasted in chat · Oct 8, 13:48', accept: 'Accept: cross 47', reject: 'Reject: cross 47',
     }],
   });
   assert.equal(st.label, 'Item 47, Question: Will they take the discount?, Open, 1 proposal');
@@ -39,9 +39,9 @@ test('out of date: the tab and the name say so, the box says why, Accept is name
   const p = st.proposal!;
   assert.deepEqual([p.tab, p.stale, p.label], ['Out of date', true, 'Proposal on item 47, out of date']);
   assert.deepEqual(p.entries[0], {
-    seq: 812, stale: true, head: 'The agent proposed · out of date', what: 'Acknowledge 47: the client declined', from: 'Oct 8, 13:48',
+    seq: 812, stale: true, head: 'The agent proposed · out of date', what: 'Check 47: the client declined', from: 'Oct 8, 13:48',
     why: '47 changed after this was proposed. Ask the agent to look again.',
-    accept: 'Accept: acknowledge 47 (out of date)', reject: 'Reject: acknowledge 47',
+    accept: 'Accept: check 47 (out of date)', reject: 'Reject: check 47',
   });
   assert.equal(st.label.endsWith(', Open, 1 proposal, out of date'), true);
 });
@@ -68,10 +68,10 @@ test('template: an item has the hidden tab on the bottom edge and its box, which
 
 test('markup: Reject and Accept name the proposal; out of date, Accept is aria-disabled and described by the reason', () => {
   const open = proposalsMarkup(withProps(prop({ reason: 'a <b>bold</b> claim' })).proposal!);
-  assert.match(open, /data-proposal="812" data-answer="reject" aria-label="Reject: drop 47">Reject</);
-  assert.match(open, /data-proposal="812" data-answer="accept" aria-label="Accept: drop 47">Accept</);
+  assert.match(open, /data-proposal="812" data-answer="reject" aria-label="Reject: cross 47">Reject</);
+  assert.match(open, /data-proposal="812" data-answer="accept" aria-label="Accept: cross 47">Accept</);
   assert.equal(open.includes('<b>'), false, 'every text run is escaped');
   const stale = proposalsMarkup(withProps(prop({ stale: true })).proposal!);
   assert.match(stale, /<p class="vb-prop-why" id="vb-prop-why-812">47 changed after this was proposed\. Ask the agent to look again\.<\/p>/);
-  assert.match(stale, /data-answer="accept" aria-label="Accept: drop 47 \(out of date\)" aria-disabled="true" aria-describedby="vb-prop-why-812">/);
+  assert.match(stale, /data-answer="accept" aria-label="Accept: cross 47 \(out of date\)" aria-disabled="true" aria-describedby="vb-prop-why-812">/);
 });

@@ -1,5 +1,5 @@
 // Region pattern, layer 2 (template): one pure function from a region to the markup of its
-// frame: the top line (title, decided count and holders on the left, in a gap cut from the frame's
+// frame: the top line (title, answered count and holders on the left, in a gap cut from the frame's
 // border; on the right the mode row: six layout icons, a divider and the settings cog, README
 // pick 1 / mockup 05), the layout popover and the settings menu (both closed until the element
 // opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
@@ -123,8 +123,8 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean): string 
  * container in the settings menu (personRemove flag, N24); a fixed frame never has it. */
 export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean }
 
-/** The empty message of an ordinary frame: every card it has is decided and hidden. */
-export const EMPTY_DECIDED = 'Everything here is decided.';
+/** The empty message of an ordinary frame: every card it has is answered and hidden. */
+export const EMPTY_DECIDED = 'Everything here is answered.';
 
 /** "3 cards retired" after the count (retiredMarker flag), hidden until `update` says how many and
  * which version a press opens (`data-version`, the page's click wiring). */

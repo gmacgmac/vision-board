@@ -38,7 +38,7 @@ test('retireCards: the card named, or every card in the container now (the perso
   assert.deepEqual(retireCards(l.state(), { board: 'b', region: 'none' }), [], 'an unknown or empty container takes none');
 });
 
-test('retireProblem: a comment or More context with no answer, or a Later with no park, waits; words name the board number', () => {
+test('retireProblem: a note (an old More context too, D-045) with no answer, or a Later with no park, waits; words name the board number', () => {
   const l = cards();
   const s0 = l.state();
   assert.equal(retireProblem(s0, { board: 'b', id: 5 }, [5]), undefined, 'nothing owed');
@@ -48,7 +48,7 @@ test('retireProblem: a comment or More context with no answer, or a Later with n
   l.agent(A, { type: 'reply', n: 5, text: 'The audit.', to: asked });
   assert.equal(retireProblem(l.state(), { board: 'b', id: 5 }, [5]), undefined, 'a reply answers it');
   l.act({ action: 'context', n: 6, ver: 1 });
-  assert.match(retireProblem(l.state(), { board: 'b', region: 'r' }, [1, 5, 6])!, /^card 5 asks for more context/);
+  assert.match(retireProblem(l.state(), { board: 'b', region: 'r' }, [1, 5, 6])!, /^card 5 has a comment you haven't answered/, 'an old More context reads as a note');
   draw(l, 6, 2, { region: 'r', kind: 'question', body: 'More.' });
   assert.equal(retireProblem(l.state(), { board: 'b', id: 6 }, [6]), undefined, 'a newer version (an append) answers it');
   l.act({ action: 'later', n: 6, ver: 2 });
@@ -131,7 +131,7 @@ test('owedNotice: the person is warned, by board number, of each card still owed
   assert.deepEqual(owedNotice(l.state(), { board: 'b', region: 'r' }, [1, 5, 6], 'Research'), [
     'Card 1 is saved for later and its handover isn\'t written yet.',
     'Card 4 still has an unanswered comment.',
-    'Card 5 still waits for the more context you asked for.',
+    'Card 5 still has an unanswered comment.',
     'Container \'Research\' still has an unanswered comment.',
   ]);
   assert.deepEqual(owedNotice(l.state(), { board: 'b', id: 5 }, [5]), ['Card 4 still has an unanswered comment.'], 'one card: its own warning only');

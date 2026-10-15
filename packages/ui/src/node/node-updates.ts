@@ -5,8 +5,10 @@ import type { ViewNode } from '../../../format/src/index.ts';
 import type { Change, FieldChange } from '../../../actions/src/index.ts';
 
 /** One version a changed card steps through (FE_02): when and by whom, and what changed from the
- *  version before (`versionChanges`). `when` is in the person's clock; `agent` the writer's label. */
-export interface CardStep { ver: number; when: string; agent?: string; changes: readonly FieldChange[] }
+ *  version before (`versionChanges`). `when` is in the person's clock; `agent` the writer's label.
+ *  `reply`: the step is the agent's answer to the person's note, which cleared the card (D-045,
+ *  answer-model ruling 7) and changed no version; `ver` is then the card's latest. */
+export interface CardStep { ver: number; when: string; agent?: string; changes: readonly FieldChange[]; reply?: string }
 
 /** A changed card (`item.unseen`, past version 1): `count`, the versions the person has not seen;
  *  while the stepper is open, `steps`, the versions it steps through, oldest first, and `at`, the one
@@ -31,8 +33,10 @@ const short = (text: string, max: number): string => {
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
 
-/** What a step says the text gained (ruling 3): the new title, the added body, or "Body rewritten". */
-function stepLines(changes: readonly FieldChange[]): string[] {
+/** What a step says the text gained (ruling 3): the new title, the added body, or "Body rewritten";
+ *  for the agent's answer, its words. */
+function stepLines(changes: readonly FieldChange[], reply?: string): string[] {
+  if (reply !== undefined) return [short(reply, 160)];
   if (!changes.length) return ['Drawn again with no change'];
   return changes.flatMap((c) => {
     if (c.field === 'title' && c.text !== undefined) return [`Title: ${short(c.text, 100)}`];
@@ -54,8 +58,9 @@ export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefin
   return {
     tab, label: `${tab} since you last looked. Hide them`, open: true, done: false,
     step: {
-      label: `${count}, v${s.ver}`, head: `v${s.ver} · ${s.when} · ${s.agent ?? 'the agent'}`, count, first: at === 0, ...(u.source && { source: u.source }),
-      chips: s.changes.map((c) => ({ change: c.change, text: `${SIGN[c.change]} ${c.field}` })), lines: stepLines(s.changes),
+      label: `${count}, ${s.reply === undefined ? `v${s.ver}` : 'the agent\'s reply'}`, count, first: at === 0, ...(u.source && { source: u.source }),
+      head: `${s.reply === undefined ? `v${s.ver}` : 'Reply'} · ${s.when} · ${s.agent ?? 'the agent'}`,
+      chips: s.changes.map((c) => ({ change: c.change, text: `${SIGN[c.change]} ${c.field}` })), lines: stepLines(s.changes, s.reply),
     },
   };
 }

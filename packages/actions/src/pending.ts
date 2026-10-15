@@ -8,11 +8,13 @@ import type { LedgerState } from './fold.ts';
 import { numberOf } from './numbers.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { scopeOf } from './references.ts';
-import { isAnswer } from './registry.ts';
+import { cutOf } from './clears.ts';
+import { markOf } from './notes.ts';
+import { ACTIONS, isAnswer, MARK_ACTIONS } from './registry.ts';
 import type { ReplyScope } from './reply.ts';
 
 /** One item the agent owes an answer on, by its board number `n`. `ask`: the person's latest
- * comment or "needs context" that nothing answers yet. `later`: the `seq` of the "later" that has no
+ * note (`comment`, or an old `context`) that nothing answers yet. `later`: the `seq` of the "later" that has no
  * park bundle after it. A whole container's latest standing note (api.md 73) is owed with `region`
  * set and `n` 0, as its `Ask` is: it is on no card. */
 export interface PendingItem {
@@ -50,12 +52,13 @@ function concerns(s: LedgerState, e: ActEvent, agent: string): boolean {
 /** The person's acts on `board` after `seq` `after`, oldest first (`check_responses`), as the fold
  * holds them (cards by identity). With `agent`, only those that concern it, including the answers
  * to its grant requests. The person's flags are never among them (fold.ts keeps them out of
- * `acts`, api.md 128). */
+ * `acts`, api.md 128). Each card's ✓, ✗, Later and clear are folded to its latest (`latestMarks`). */
 export function responsesAfter(s: LedgerState, board: string, after: number, agent?: string): ActEvent[] {
   const out: ActEvent[] = [];
+  const marks = latestMarks(s, after);
   for (const e of s.acts) {
     if (scopeOf(s, e).board !== board || (agent !== undefined && !concerns(s, e, agent))) continue;
-    const shown = asReported(s, e, after);
+    const shown = MARK_ACTIONS.has(e.action) ? (marks.has(e.seq) ? e : undefined) : asReported(s, e, after);
     if (shown) out.push(shown);
   }
   return out;
@@ -74,6 +77,22 @@ export function replyScope(s: LedgerState, board: string, since: number, agent?:
     if (isContainerAct(e)) regions.add(e.region!);
   }
   return { since, cards, regions };
+}
+
+/** The ✓, ✗, Later and clear acts the agent reads after `after` (D-045 ruling 9): per card only its
+ * latest, and only when it leaves the card otherwise than the agent last knew it, at the cursor. A
+ * mark the agent's own answer cleared (clears.ts) counts neither way: ✓ then cleared, both after
+ * the cursor, shows nothing; a ✓ made again after the agent's answer shows. The ledger keeps every
+ * click (D-017). */
+export function latestMarks(s: LedgerState, after: number): Set<number> {
+  const out = new Set<number>();
+  for (const [id, log] of s.logs) {
+    const last = log.decisions.at(-1);
+    const cut = cutOf(s, id);
+    if (!last || last.seq <= after || last.seq <= cut) continue;
+    if (ACTIONS[last.action].status !== markOf(log, cut, after)) out.add(last.seq);
+  }
+  return out;
 }
 
 /** How an act reads to an agent whose cursor is `after` (api.md 61). A note is its `comment` or

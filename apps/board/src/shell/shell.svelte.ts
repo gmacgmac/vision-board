@@ -66,7 +66,7 @@ export const shell = $state({
   /** The container finder's rows, board order, Later last; none with the containerFinder flag off. */
   containers: [] as ContainerRow[],
   summary: '',
-  counts: { open: 0, decided: 0, later: 0 },
+  counts: { open: 0, answered: 0, later: 0 },
   answered: 0,
   /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
   flagged: 0,

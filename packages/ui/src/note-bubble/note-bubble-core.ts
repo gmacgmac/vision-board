@@ -147,10 +147,8 @@ export interface BubbleView {
   thread: string;
 }
 
-export const PLACEHOLDER: Record<NoteKind, string> = {
-  comment: 'Your note for the agent',
-  context: 'What is unclear? For example: explain it in plain terms',
-};
+/** An old More context is a note like any other (D-045), so it reads the same. */
+export const PLACEHOLDER: Record<NoteKind, string> = { comment: 'Your note for the agent', context: 'Your note for the agent' };
 
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
  * whole container; each mode words it its own way. */
@@ -192,12 +190,10 @@ export function bubbleView(b: BubbleInput): BubbleView {
 }
 
 /** What Save does with the words typed: `skip` closes without writing (empty text never removes
- * a note, ruling 6, and a new comment needs words); `save` writes them. A new "more context" may
- * go without words, as the registry allows (`context` text optional). */
-export function saveIntent(mode: BubbleMode, kind: NoteKind, text: string): 'save' | 'skip' {
-  if (readOnlyMode(mode)) return 'skip';
-  if (text.trim()) return 'save';
-  return mode === 'new' && kind === 'context' ? 'save' : 'skip';
+ * a note, ruling 6, and a new note needs words: the page writes no More context, D-045); `save`
+ * writes them. */
+export function saveIntent(mode: BubbleMode, _kind: NoteKind, text: string): 'save' | 'skip' {
+  return !readOnlyMode(mode) && text.trim() ? 'save' : 'skip';
 }
 
 /** Whether the words typed differ from the words the bubble opened with (3_FE_04 step 4G ruling

@@ -25,7 +25,7 @@ test('the round: what was answered after `since`, its count, the notes its lines
   const lines = round.text.split('\n');
   assert.equal(lines[0], ROUND_HEAD);
   assert.equal(lines.at(-1), `These are the person's answers up to head ${s.seq}. To read anything newer, call check_responses on board "b" with after ${s.seq}.`);
-  assert.ok(lines.includes('1 (question): yes'));
+  assert.ok(lines.includes('1 (question): ✓'));
   assert.deepEqual([round.count, [...round.notes]], [2, [note]]);
   assert.equal(roundOf(s, 'b', s.seq), undefined, 'nothing after the latest line');
   assert.deepEqual([roundOf(s, 'b', since, A)!.count, roundOf(s, 'b', since, A)!.notes.size], [1, 0], 'agent A may answer card 1 only (B holds q)');

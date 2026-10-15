@@ -60,7 +60,7 @@ export function proposalsSection(fx: Fixture): HTMLElement {
   const open = cardList('Cards with their proposal box open', ...nodes.slice(0, -1).map((n) => card(n, fx, true)));
   open.classList.add('g-tips', 'g-tips-stack');
   box.append(heading,
-    el('p', 'g-desc', 'An agent proposes to acknowledge or drop a card, say from an email the person pasted into the chat; only the person decides. The card gets a tab on its bottom edge and never changes size; the tab opens a box beside it.'),
+    el('p', 'g-desc', 'An agent proposes ✓ (Check) or ✗ (Cross) on a card, say from an email the person pasted into the chat; only the person decides. The card gets a tab on its bottom edge and never changes size; the tab opens a box beside it.'),
     meta,
     group('The tab', 'PROPOSAL on the bottom edge. Hover or keyboard focus shows the box; a click or Enter opens it and moves focus into it; Esc or a press outside closes it and focus goes back to the tab.', cardList('A card with a proposal', ...rest)),
     group('The box', 'Who proposes, what, from where and when, then Reject and Accept. Out of date (the card changed since): the tab says so, the box says why, and Accept can\'t be pressed; Reject still clears it. Several on one card: newest first.', open),

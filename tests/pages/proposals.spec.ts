@@ -46,7 +46,7 @@ async function draw(request: APIRequestContext, kinds: string[] = ['question']):
   return { ...d, n: results.slice(2).map((x) => x.n!) };
 }
 
-const propose = (request: APIRequestContext, d: Drawn, n: number, action: 'ack' | 'drop', reason: string, ver = 1) =>
+const propose = (request: APIRequestContext, d: Drawn, n: number, action: 'check' | 'cross', reason: string, ver = 1) =>
   write(request, d, [{ type: 'propose', n, ver, action, reason, source: 'Email pasted in chat' }]);
 
 /** Open the board and wait until it has drawn. */
@@ -87,7 +87,7 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
   await expect(tab(page, n)).toBeHidden();
   await expect(bar(page)).toHaveCount(0);
   const height = await card(page, n).evaluate((e) => (e as HTMLElement).offsetHeight);
-  await propose(request, d, n, 'drop', 'the client declined');
+  await propose(request, d, n, 'cross', 'the client declined');
   await expect(tab(page, n)).toBeVisible();
   await expect(tab(page, n)).toHaveText('Proposal');
   await expect(tab(page, n)).toHaveAttribute('aria-label', `Proposal on item ${n}`);
@@ -102,7 +102,7 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
   await expect(box(page, n)).toBeVisible();
   await expect(box(page, n)).toHaveAccessibleName(`Proposal on item ${n}`);
   await expect(box(page, n).locator('.vb-prop-head')).toHaveText('Pricing chat proposes');
-  await expect(box(page, n).locator('.vb-prop-what')).toHaveText(`Drop ${n}: the client declined`);
+  await expect(box(page, n).locator('.vb-prop-what')).toHaveText(`Cross ${n}: the client declined`);
   await expect(box(page, n).locator('.vb-prop-from')).toHaveText(/^Email pasted in chat · \d+ \w+, \d\d:\d\d$/);
   const c = await card(page, n).boundingBox();
   const b = await box(page, n).boundingBox();
@@ -114,16 +114,16 @@ test('a proposal arrives live: the PROPOSAL tab on its card, the bar counts it a
 test('Accept drops the card through the proposal; the tab and the bar go', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
-  await propose(request, d, n, 'drop', 'the client declined');
+  await propose(request, d, n, 'cross', 'the client declined');
   await open(page, d);
   const before = await head(page);
   await tab(page, n).click();
   await expect(box(page, n)).toBeVisible();
   await expect(tab(page, n)).toHaveAttribute('aria-expanded', 'true');
-  await expect(box(page, n).getByRole('button', { name: `Reject: drop ${n}` })).toBeFocused();
-  await box(page, n).getByRole('button', { name: `Accept: drop ${n}` }).click();
+  await expect(box(page, n).getByRole('button', { name: `Reject: cross ${n}` })).toBeFocused();
+  await box(page, n).getByRole('button', { name: `Accept: cross ${n}` }).click();
   await expect(card(page, n)).toHaveAttribute('data-status', 'dropped');
-  await expect(page.locator('#toast')).toHaveText(`Accepted: drop ${n}`);
+  await expect(page.locator('#toast')).toHaveText(`Accepted: cross ${n}`);
   await expect(tab(page, n)).toBeHidden();
   await expect(box(page, n)).toBeHidden();
   await expect(bar(page)).toHaveCount(0);
@@ -136,13 +136,13 @@ test('Accept drops the card through the proposal; the tab and the bar go', async
 test('Reject clears the proposal and leaves the card open', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
-  await propose(request, d, n, 'ack', 'settled in chat');
+  await propose(request, d, n, 'check', 'settled in chat');
   await open(page, d);
   const before = await head(page);
   await tab(page, n).click();
-  await box(page, n).getByRole('button', { name: `Reject: acknowledge ${n}` }).click();
+  await box(page, n).getByRole('button', { name: `Reject: check ${n}` }).click();
   await expect(tab(page, n)).toBeHidden();
-  await expect(page.locator('#toast')).toHaveText(`Rejected: acknowledge ${n}`);
+  await expect(page.locator('#toast')).toHaveText(`Rejected: check ${n}`);
   await expect(card(page, n)).toHaveAttribute('data-status', 'open');
   await expect(bar(page)).toHaveCount(0);
   expect((await actsAfter(page, d.board, before)).map((e) => e.action)).toEqual(['reject']);
@@ -151,7 +151,7 @@ test('Reject clears the proposal and leaves the card open', async ({ page, reque
 test('out of date: the tab and the box say so, Accept is aria-disabled and does nothing, Reject still works', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
-  await propose(request, d, n, 'drop', 'the client declined');
+  await propose(request, d, n, 'cross', 'the client declined');
   await open(page, d);
   await expect(tab(page, n)).toHaveText('Proposal');
   // The agent adds to the card: a new version, so the proposal made on version 1 is out of date.
@@ -163,14 +163,14 @@ test('out of date: the tab and the box say so, Accept is aria-disabled and does 
   await expect(bar(page).getByRole('button', { name: /^Accept all/ })).toHaveCount(0);
   const before = await head(page);
   await tab(page, n).click();
-  const accept = box(page, n).getByRole('button', { name: `Accept: drop ${n} (out of date)` });
+  const accept = box(page, n).getByRole('button', { name: `Accept: cross ${n} (out of date)` });
   await expect(accept).toHaveAttribute('aria-disabled', 'true');
   await expect(accept).toHaveAccessibleDescription(`${n} changed after this was proposed. Ask the agent to look again.`);
-  await expect(box(page, n).getByRole('button', { name: `Reject: drop ${n}` })).toBeFocused();
+  await expect(box(page, n).getByRole('button', { name: `Reject: cross ${n}` })).toBeFocused();
   await accept.click({ force: true });
   await expect(card(page, n)).toHaveAttribute('data-status', 'open');
   expect(await actsAfter(page, d.board, before), 'no act sent').toEqual([]);
-  await box(page, n).getByRole('button', { name: `Reject: drop ${n}` }).click();
+  await box(page, n).getByRole('button', { name: `Reject: cross ${n}` }).click();
   await expect(tab(page, n)).toBeHidden();
   expect((await actsAfter(page, d.board, before)).map((e) => e.action)).toEqual(['reject']);
 });
@@ -179,27 +179,27 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
   // A proposal stands only on a card that needs an answer (every-node, api.md 120): the third a decision, not a risk.
   const d = await draw(request, ['question', 'action', 'decision']);
   const [a, b, c] = d.n as [number, number, number];
-  await propose(request, d, a, 'drop', 'the client declined');
-  await propose(request, d, b, 'ack', 'the draft is done');
+  await propose(request, d, a, 'cross', 'the client declined');
+  await propose(request, d, b, 'check', 'the draft is done');
   await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
-  await propose(request, d, c, 'ack', 'the sheet confirms it');
-  await propose(request, d, c, 'drop', 'the new prices remove it');
+  await propose(request, d, c, 'check', 'the sheet confirms it');
+  await propose(request, d, c, 'cross', 'the new prices remove it');
   await open(page, d);
   await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('4 proposals');
   await expect(bar(page)).toContainText('· 1 out of date');
   // Two proposals on one card: the box lists both, newest first.
   await tab(page, c).click();
-  await expect(box(page, c).locator('.vb-prop-what')).toHaveText([`Drop ${c}: the new prices remove it`, `Acknowledge ${c}: the sheet confirms it`]);
+  await expect(box(page, c).locator('.vb-prop-what')).toHaveText([`Cross ${c}: the new prices remove it`, `Check ${c}: the sheet confirms it`]);
   await page.keyboard.press('Escape');
   await expect(tab(page, c)).toBeFocused();
   const before = await head(page);
   await bar(page).getByRole('button', { name: 'Accept all (2)' }).click();
   const dialog = page.getByRole('dialog', { name: 'Accept these 2 proposals?' });
-  await expect(dialog.locator('ol.vb-confirm-list li')).toHaveText([`${a}Item ${a}: Drop: the client declined`, `${c}Item ${c}: Drop: the new prices remove it`]);
+  await expect(dialog.locator('ol.vb-confirm-list li')).toHaveText([`${a}Item ${a}: Cross: the client declined`, `${c}Item ${c}: Cross: the new prices remove it`]);
   await expect(dialog.locator('.vb-confirm-skip-title')).toHaveText('Not included');
   await expect(dialog.locator('.vb-confirm-skip li')).toHaveText([
-    `${b}Item ${b}: Acknowledge: the draft is done (${b} changed after this was proposed)`,
-    `${c}Item ${c}: Acknowledge: the sheet confirms it (a newer proposal on ${c} is applied)`,
+    `${b}Item ${b}: Check: the draft is done (${b} changed after this was proposed)`,
+    `${c}Item ${c}: Check: the sheet confirms it (a newer proposal on ${c} is applied)`,
   ]);
   await dialog.getByRole('button', { name: 'Apply 2 proposals' }).click();
   await expect(page.locator('#toast')).toHaveText('Accepted 2 proposals');
@@ -214,7 +214,7 @@ test('Accept all lists what it applies and what it skips, then applies it in ord
 test('keyboard only: focus on the tab previews, Enter opens with focus in the box, Esc returns to the tab, Enter on Accept acts', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
-  await propose(request, d, n, 'ack', 'settled in chat');
+  await propose(request, d, n, 'check', 'settled in chat');
   await open(page, d);
   await page.locator('#stage').focus();
   await tabTo(page, tab(page, n));
@@ -224,14 +224,14 @@ test('keyboard only: focus on the tab previews, Enter opens with focus in the bo
   await expect(box(page, n)).toBeHidden();
   await expect(tab(page, n)).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(box(page, n).getByRole('button', { name: `Reject: acknowledge ${n}` })).toBeFocused();
+  await expect(box(page, n).getByRole('button', { name: `Reject: check ${n}` })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(tab(page, n)).toBeFocused();
   await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
-  const accept = box(page, n).getByRole('button', { name: `Accept: acknowledge ${n}` });
+  const accept = box(page, n).getByRole('button', { name: `Accept: check ${n}` });
   await expect(accept).toBeFocused();
-  // Card shortcuts don't fire in the box: X here is not Drop.
+  // Card shortcuts don't fire in the box: X here is not Cross.
   await page.keyboard.press('x');
   await expect(card(page, n)).toHaveAttribute('data-status', 'open');
   await page.keyboard.press('Enter');
@@ -242,19 +242,19 @@ test('keyboard only: focus on the tab previews, Enter opens with focus in the bo
 test('Review opens the first card\'s box with focus in it', async ({ page, request }) => {
   const d = await draw(request, ['question', 'question']);
   const [a, b] = d.n as [number, number];
-  await propose(request, d, b, 'drop', 'not needed');
-  await propose(request, d, a, 'drop', 'the client declined');
+  await propose(request, d, b, 'cross', 'not needed');
+  await propose(request, d, a, 'cross', 'the client declined');
   await open(page, d);
   await bar(page).getByRole('button', { name: 'Review' }).click();
   await expect(box(page, a)).toBeVisible();
-  await expect(box(page, a).getByRole('button', { name: `Reject: drop ${a}` })).toBeFocused();
+  await expect(box(page, a).getByRole('button', { name: `Reject: cross ${a}` })).toBeFocused();
   await expect(box(page, b)).toBeHidden();
 });
 
 test('flag off: no tab and no bar', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
-  await propose(request, d, n, 'drop', 'the client declined');
+  await propose(request, d, n, 'cross', 'the client declined');
   await open(page, d, '?flags=-proposals');
   await expect(tab(page, n)).toBeHidden();
   await expect(bar(page)).toHaveCount(0);
@@ -265,8 +265,8 @@ for (const theme of THEMES) {
   test(`axe passes with the bar and an open box, open and out of date (${theme})`, async ({ page, request }) => {
     const d = await draw(request, ['question', 'action']);
     const [a, b] = d.n as [number, number];
-    await propose(request, d, a, 'drop', 'the client declined');
-    await propose(request, d, b, 'ack', 'the draft is done');
+    await propose(request, d, a, 'cross', 'the client declined');
+    await propose(request, d, b, 'check', 'the draft is done');
     await write(request, d, [{ type: 'append', n: b, text: 'The credit amount is in.' }]);
     await setTheme(page, theme);
     await open(page, d);

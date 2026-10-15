@@ -2,7 +2,7 @@
 // and menu, 2026-10-09): with a long board title, the toolbar never scrolls or overflows and no
 // control is cut off from 768px, the smallest supported width, upward; the board picker keeps at
 // least 220px from 1024px up (its title truncates inside). With the toolbarMenu flag (on by default)
-// Theme, Hide decided and Reply sit in a "⋯" menu, and Agents, Send to agent and Chat shrink to
+// Theme, Hide answered and Reply sit in a "⋯" menu, and Agents, Send to agent and Chat shrink to
 // icons on a narrow window; every control is named, has a tooltip and passes axe. Off, the toolbar
 // is as it was. It runs on the empty project's server (EMPTY_BASE) after new-board.spec.ts, which it
 // does not disturb: it adds one board, opened by its id. Then the gallery's toolbar section.
@@ -128,7 +128,7 @@ test('a narrow window shows Agents, Send to agent and Chat as icons, a wide one 
   await expect(page.locator('.vb-agents > summary')).toHaveAccessibleName(/^Agents\s*\d+$/);
 });
 
-test('the "⋯" menu: Theme, Hide decided and Reply as rows with their keys; a click opens it, a choice, Esc or a click outside closes it', async ({ page, request }) => {
+test('the "⋯" menu: Theme, Hide answered and Reply as rows with their keys; a click opens it, a choice, Esc or a click outside closes it', async ({ page, request }) => {
   await open(page, request);
   await expect(page.locator('.vb-toolbar #hide, .vb-toolbar #theme, .vb-toolbar #reply-toggle')).toHaveCount(3);
   await expect(menu(page)).toBeHidden();
@@ -138,13 +138,13 @@ test('the "⋯" menu: Theme, Hide decided and Reply as rows with their keys; a c
   await expect(menu(page)).toBeVisible();
   await expect(menuButton(page)).toHaveAttribute('aria-expanded', 'true');
   const rows = menu(page).locator('[role^="menuitem"]');
-  // The alignSetting flag (on by default) adds Centre cards after Hide decided (layout-controls.spec.ts
+  // The alignSetting flag (on by default) adds Centre cards after Hide answered (layout-controls.spec.ts
   // tests it), the lockBoard flag Lock board (lock-board.spec.ts), the archiveBoard flag Archive board…
   // (picker-archive.spec.ts) and the openFolder flag Open folder… last (open-folder.spec.ts).
-  await expect(rows).toHaveText([/Theme: system/, /Hide decided.*H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /Open folder…/]);
+  await expect(rows).toHaveText([/Theme: system/, /Hide answered.*H/, /Centre cards/, /Reply/, /^Lock board$/, /Archive board…/, /Open folder…/]);
   await expect(rows.first()).toBeFocused();
-  // Hide decided: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
-  await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide decided/ })).toHaveAttribute('aria-checked', 'false');
+  // Hide answered: a checkbox row; choosing it closes the menu and gives focus back to "⋯".
+  await expect(menu(page).getByRole('menuitemcheckbox', { name: /Hide answered/ })).toHaveAttribute('aria-checked', 'false');
   // By id from here: getByRole does not find a row while the menu is closed.
   const hide = page.locator('#hide');
   await expect(hide).toHaveAttribute('aria-keyshortcuts', 'h');
@@ -176,7 +176,7 @@ test('the "⋯" menu: Theme, Hide decided and Reply as rows with their keys; a c
   await page.locator('#reply-close').click();
 });
 
-test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide decided, Esc closes it and Tab leaves it', async ({ page, request }) => {
+test('the "⋯" menu by keyboard: Enter opens it, arrows move, H chooses Hide answered, Esc closes it and Tab leaves it', async ({ page, request }) => {
   await open(page, request);
   await menuButton(page).focus();
   await page.keyboard.press('Enter');
@@ -215,7 +215,7 @@ for (const theme of THEMES) {
   });
 }
 
-test('with -toolbarMenu the toolbar is as it was: Hide decided, Theme and Reply are buttons, no "⋯"', async ({ page, request }) => {
+test('with -toolbarMenu the toolbar is as it was: Hide answered, Theme and Reply are buttons, no "⋯"', async ({ page, request }) => {
   await page.setViewportSize({ width: 1600, height: 800 });
   await open(page, request, '-toolbarMenu');
   await expect(menuButton(page)).toHaveCount(0);

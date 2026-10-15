@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 import { eventOut, inCardOrder, responsesAfter, responsesPage } from '../src/index.ts';
 import { A, C, scene } from './ledger-v3.ts';
 
-/** Cards 1, 2 and 3 are questions: ✓ reads "yes" and ✗ "no" (api.md 121). */
-const withMeans = <T extends { action: string }>(e: T) =>
-  (e.action === 'ack' ? { ...e, means: 'yes' } : e.action === 'drop' ? { ...e, means: 'no' } : e);
+/** ✓ reads `check` and ✗ `cross` to the agent on every kind (D-045). */
+const named = <T extends { action: string }>(e: T) =>
+  (e.action === 'ack' ? { ...e, action: 'check' } : e.action === 'drop' ? { ...e, action: 'cross' } : e);
 
 /** Board `b` at v8: cards 1, 5, 6 in `r`, 2 in `q`, 3 in `old`, and an empty container `none`. */
 function clicks() {
@@ -64,7 +64,7 @@ test('paging: cut in ledger order, then sorted; the next page starts after the h
   }
   assert.deepEqual(seen.sort((a, b) => a - b), Object.values(at).sort((a, b) => a - b), 'every act once');
   // The page names cards by board number (api.md 125): card 5's line is board b's card 4.
-  assert.deepEqual(responsesPage(s, 'b', 0, 100), { responses: inCardOrder(s, responsesAfter(s, 'b', 0)).map((e) => eventOut(s, withMeans(e))) }, 'no `more` when all fit');
+  assert.deepEqual(responsesPage(s, 'b', 0, 100), { responses: inCardOrder(s, responsesAfter(s, 'b', 0)).map((e) => named(eventOut(s, e) as { action: string })) }, 'no `more` when all fit');
   assert.deepEqual(responsesPage(s, 'b', 0, 100).responses.find((e) => e.seq === at.on5)?.n, 4);
   assert.deepEqual(responsesPage(s, 'b', 0, 100).responses.find((e) => e.seq === at.group)?.nodes, [5, 3]);
 });

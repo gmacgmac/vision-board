@@ -24,14 +24,16 @@ test('gallery ledger: every act is one its node type offers, by the person', () 
   });
 });
 
-// every-node ruling 2: every kind takes a comment, more context and Later; only a card that needs an
-// answer takes ✓ and ✗, so only those reach acknowledged and dropped. Exactly one card per cell.
+// every-node ruling 2 and D-045: every kind takes a note and Later; only a card that needs an answer
+// takes ✓ and ✗, so only those reach acknowledged and dropped. One row more: the agent's answer to a
+// note cleared the card (answer-model ruling 7; on a card that asks, its earlier ✓). Exactly one card per cell.
 test('gallery ledger: every kind appears once in every status it can reach, and in no other', () => {
   const s = foldLedger(events);
   const view = boardView(s, 'gallery');
   const state = boardState(s, 'gallery');
-  const cells = view.nodes.filter((n) => n.region === 'kinds').map((n) => `${n.kind}/${statusOf(state, n.id)}`);
-  const statuses = ['open', 'acknowledged', 'dropped', 'commented', 'context', 'later'];
+  const cellOf = (id: string) => (state.items.get(id)?.unseenAnswer ? 'cleared' : statusOf(state, id));
+  const cells = view.nodes.filter((n) => n.region === 'kinds').map((n) => `${n.kind}/${cellOf(n.id)}`);
+  const statuses = ['open', 'acknowledged', 'dropped', 'commented', 'cleared', 'later'];
   const closes: Record<string, string> = { acknowledged: 'ack', dropped: 'drop' };
   for (const kind of KINDS) {
     for (const status of statuses) {
@@ -40,6 +42,8 @@ test('gallery ledger: every kind appears once in every status it can reach, and 
     }
   }
   assert.equal(cells.length, 3 * 6 + 4 * 4);
+  for (const n of view.nodes.filter((x) => x.region === 'kinds' && cellOf(x.id) === 'cleared'))
+    assert.equal(statusOf(state, n.id), 'open', `${n.kind}: open again and unmarked`);
 });
 
 test('gallery ledger: a region frame exists for every layout mode', () => {

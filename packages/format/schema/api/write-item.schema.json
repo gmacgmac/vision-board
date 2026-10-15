@@ -2,8 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-item.schema.json",
   "title": "Write item",
-  "description": "One of the ten sent forms, by `type`: the nine ledger events' sent forms (`retire` takes a card or a whole container off the board), and `append`, which the server stores as a `node` line. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
-  "$comment": "Was: api.md 24, 34, 95, 126",
+  "description": "One of the ten sent forms, by `type`: eight ledger events' sent forms (`retire` takes a card or a whole container off the board), `propose`, which names ✓ `check` and ✗ `cross` and is stored as a `propose` line, and `append`, which the server stores as a `node` line. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+  "$comment": "Was: api.md 24, 34, 95, 126, 147",
   "type": "object",
   "required": [
     "type"
@@ -31,7 +31,21 @@
       "$ref": "https://vision-board.invalid/schema/ledger/16/events/reply.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/propose.schema.json#/$defs/sent"
+      "title": "Propose",
+      "description": "Propose the person's ✓ or ✗ on version `ver` of card `n`; only the person answers. The server stores it as a `propose` line, `check` as `ack` and `cross` as `drop`; the old `ack` and `drop` are refused.",
+      "$comment": "Was: D-018, api.md 147 (D-045)",
+      "type": "object",
+      "required": ["type", "n", "ver", "action", "reason"],
+      "properties": {
+        "type": {"const": "propose"},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeRef"},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/version", "description": "The node version you are proposing an answer on."},
+        "action": {"enum": ["check", "cross"], "description": "What you propose: ✓ (`check`) or ✗ (`cross`). Only the person answers."},
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/longText", "description": "Why you propose this."},
+        "source": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
+      },
+      "unevaluatedProperties": false
     },
     {
       "$ref": "https://vision-board.invalid/schema/ledger/16/events/park.schema.json#/$defs/sent"

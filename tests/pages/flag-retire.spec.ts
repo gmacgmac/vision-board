@@ -288,7 +288,7 @@ test('gallery: the retired section shows a container with "2 cards retired"', as
   const s = section(page, 'retiredMarker');
   await expect(s.locator('vb-region .vb-region-retired')).toHaveText('2 cards retired');
   await expect(s.locator('vb-region .vb-region-retired')).toHaveAttribute('aria-disabled', 'false');
-  await expect(s.locator('vb-region .vb-region-count')).toHaveText('1 of 2 decided');
+  await expect(s.locator('vb-region .vb-region-count')).toHaveText('1 of 2 answered');
 });
 
 for (const theme of THEMES) {

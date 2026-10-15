@@ -36,7 +36,7 @@ test('a Send on a board with no chat session changes nothing', async () => {
   assert.deepEqual(fake.given(), [], 'no agent ran');
 });
 
-test('with a session, Send hands it the answers in card order with their words, and the head', async () => {
+test('with a session, Send hands it the answers in card order, ✓ and ✗ as marks (D-045), and the head', async () => {
   const { q } = h.seeded;
   ({ session } = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } }));
   // The seed's container is another agent's: the session's agent hears only what it may answer
@@ -53,7 +53,7 @@ test('with a session, Send hands it the answers in card order with their words, 
   assert.match(lines[1]!, /^Board "Pricing options" \(v\d+\)$/);
   // The seed's comment on q and Later on d came before the Send in the first test: told then, so not again.
   assert.deepEqual(lines.slice(2), [
-    `${q} (question): yes`, 'Nothing left open.',
+    `${q} (question): ✓`, 'Nothing left open.',
     `These are the person's answers up to head ${sent.seq}. To read anything newer, call check_responses on board "pricing" with after ${sent.seq}.`,
     '', 'Board: pricing',
   ]);
@@ -61,7 +61,8 @@ test('with a session, Send hands it the answers in card order with their words, 
   for (const e of events) assert.deepEqual(schemaProblems(CHAT_EVENT_ID, e), [], JSON.stringify(e));
   assert.deepEqual([events[0]!.kind, events[0]!.text], ['message_in', run.prompt.replace('\n\nBoard: pricing', '')], 'the feed shows the answers as sent');
   const responses = await h.ok('check_responses', { board: 'pricing', after: 0 });
-  assert.equal(responses.responses.find((e: { action: string }) => e.action === 'ack').means, 'yes');
+  const check = responses.responses.find((e: { action: string }) => e.action === 'check');
+  assert.ok(check && !('means' in check), 'check_responses names ✓ `check`, with no meaning (D-045)');
 });
 
 test('while a turn runs the Send waits, once, and goes when the turn ends with every answer since', async () => {

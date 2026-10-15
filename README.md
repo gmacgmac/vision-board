@@ -1,7 +1,7 @@
 # Vision Board
 
 An interactive board an AI agent draws to mid-session, so you can review its output item by
-item (acknowledge, drop, comment, ask for more context, save for later) instead of answering a
+item (✓ or ✗ on a card that asks, a note on any card, save for later) instead of answering a
 wall of text. Why it exists: [docs/vision.md](docs/vision.md).
 
 Status: building. The walking skeleton runs (local server, five layout modes, per-item actions);

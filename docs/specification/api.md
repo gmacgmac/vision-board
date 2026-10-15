@@ -1179,3 +1179,61 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `locked: true` (and `sent: true` only after a Send). One derived state, `lockOf`
     (`packages/actions/src/note-lock.ts`), serves the server's check and every read, and the page
     reads `locked` from the same reads to choose between editing a note and showing it. Only adds: `openapi.json` `info.version` becomes 1.22.0.
+
+## The answer model (answer-model BE_01, D-045)
+
+144. **✓ and ✗ are tools, and only they answer a card.** `openapi.json` `info.version` becomes
+    1.23.0; the ledger format does not change, and nothing is migrated: the stored `ack`, `drop`,
+    `acknowledged` and `dropped` stay internal. Supersedes the parts of 118, 120, 121 and 123 that
+    let a comment decide a card, gave ✓ and ✗ a meaning, and offered More context.
+    **The action lists.** `ANSWER_ACTIONS` is ack, drop, comment, later; `NOTE_ACTIONS` is comment,
+    later (`node-types.ts`). `context` stays in the format and the registry, so old lines read and
+    validate and the server still takes one (`ITEM_ACTIONS` no longer lists it, so no kind check
+    refuses it), but no card offers it and no key presses it; an old `context` note reads as a note
+    everywhere (status `commented`, reply word `comment`). The registry names ✓ "Check" and ✗
+    "Cross", with reply words ✓ and ✗. **Answered.** `DECIDED` and `CLOSED` are one set,
+    `acknowledged` and `dropped`, and `isDecided` holds only on a card that asks. `counts` returns
+    `{ total, answered, later, open }` ("N open · N answered · N later"); a card that only informs
+    never counts. A note never answers a card: `commented` says a note waits and the card is open,
+    and the numbered reply's "Still open" lists every card that asks with no ✓, ✗ or Later, notes or
+    not. `item.owed`: a card's latest note is owed unless a ✓ or ✗ came after it (one before it
+    leaves the note owed), until a reply naming it or a newer version.
+145. **The agent's answer clears a card** (`packages/actions/src/clears.ts`). When an agent line
+    answers a card's latest note, a `reply` naming it in `to` (on every card of a group note whose
+    latest note it is) or a newer version of the card such as an `append`, the fold records a clear
+    (`LedgerState.clears`: the note's `pos`, the line's `seq`), and `itemOf` counts nothing at or
+    before that note: the card is open and unmarked (its ✓, ✗ or Later before the note, and the
+    note's own `commented`, no longer count). A reply to an older note clears nothing; a ✓ made after
+    the note, before or after the answer, counts as usual. Until the person looks at the card (a
+    card `seen` line, or any act naming it, after the agent's line: `LedgerState.looked`),
+    `unseenAnswer` holds: `boardState` sets `unseenAnswer: true` on the item (`get_board`'s
+    `itemState`) and `item.unseen` holds for the card, so the page shows the marker a new version
+    gets and `list_open` marks it `unseen`. Nothing is written for the person.
+146. **The agent reads each card's current answer, not every click.** `check_responses` names ✓
+    `check` and ✗ `cross` (`registry.ts` `ACTION_OUT`, applied at the edge in `responsesPage`; the
+    response schema's `mark` branch) and carries no `means` (gone with `action-words.ts`). Each
+    card's ✓, ✗, Later and clear (`MARK_ACTIONS`) after the cursor fold to its latest (`pending.ts`
+    `latestMarks`), reported only when it leaves the card otherwise than at the cursor, both read
+    with the agent's latest clear applied, so a mark the agent's own answer voided is never
+    reported: ✓ then cleared after the cursor reports nothing, ✓ then ✗ reports ✗, a clear of a ✓
+    read before the cursor reports the clear, and a ✓ made again after the agent's answer reports
+    the ✓. Notes still come one by one. The Send message (`replyScope`) follows `check_responses`,
+    and `board.unsent` (`unsent.ts` `foldUnsent`) folds the same way against the last Send, so ✓
+    then cleared before a Send leaves nothing to send. The ledger keeps every click (D-017). The
+    numbered reply and the Send message write the mark, "12 (decision): ✓"; the MCP instructions
+    (`packages/mcp/src/info.ts`) say ✓ reads `check` and ✗ `cross`, that a note never answers a card,
+    and no longer mention more context.
+147. **Check and cross in every agent read and write** (answer-model BE_02). `openapi.json`
+    `info.version` becomes 1.24.0. Every read an agent makes names a card's ✓ `checked` and its ✗
+    `crossed` (`registry.ts` `STATUS_OUT`, `statusOut`, beside `ACTION_OUT`): `get_board`'s
+    `state.items` (`reads.ts` `itemsOut`), `show_node` and `show_container` (`nodeDetail`),
+    `list_open` and `write_board`'s `pending` (`openItems`); the `itemStatus` enum is `open`,
+    `checked`, `crossed`, `commented`, `context`, `later`. A proposal in `show_node` names its action
+    `check` or `cross` (`numbers.ts` `proposalOut`, `actionOut`). The agent's `propose` sends
+    `check` or `cross` (the write-item schema's own `propose` branch); the server stores it as `ack`
+    or `drop` (`actionIn`, `ACTION_OUT` read the other way), so a retry with the same key replays.
+    A `propose` with `ack` or `drop` is refused `invalid` before the schema, pointer
+    `/items/N/action`: "Propose ✓ as `check` and ✗ as `cross`: send action "check", not "ack"."
+    The ledger, `read_ledger`, the person's `act` and what the page folds (`boardState`, `statusOf`)
+    keep `ack`, `drop`, `acknowledged` and `dropped`; a test holds the page's board equal to
+    `get_board` with the same `itemsOut` applied.

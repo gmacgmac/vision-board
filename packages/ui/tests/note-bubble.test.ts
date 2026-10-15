@@ -79,17 +79,17 @@ test('bubbleView: the head, buttons and hint for a new note, an edit and a sent 
     ['Note on 42', 'Add note', 'Cancel', false, 'Enter add · Esc cancel']);
   const edit = bubbleView({ mode: 'edit', kind: 'context', number: 42, index: 1, text: 'Why?' });
   assert.deepEqual([edit.heading, edit.primary, edit.remove, edit.text], ['Edit note on 42', 'Save', true, 'Why?']);
-  assert.match(edit.placeholder, /unclear/);
+  assert.equal(edit.placeholder, 'Your note for the agent', 'an old More context reads as a note (D-045)');
   const sent = bubbleView({ mode: 'sent', kind: 'comment', number: 42, index: 2, text: 'Done' });
   assert.deepEqual([sent.heading, sent.primary, sent.cancel, sent.remove, sent.hint],
     ['Note 2 on 42, sent', undefined, 'Close', false, '']);
 });
 
-test('saveIntent: empty text never removes; a new comment needs words; a new "more context" may go without', () => {
+test('saveIntent: empty text never removes; a new note needs words, whatever its kind (D-045)', () => {
   assert.equal(saveIntent('edit', 'comment', '  '), 'skip');
   assert.equal(saveIntent('edit', 'context', ''), 'skip');
   assert.equal(saveIntent('new', 'comment', ''), 'skip');
-  assert.equal(saveIntent('new', 'context', ''), 'save');
+  assert.equal(saveIntent('new', 'context', ''), 'skip');
   assert.equal(saveIntent('new', 'comment', 'Why?'), 'save');
   assert.equal(saveIntent('sent', 'comment', 'Why?'), 'skip');
 });

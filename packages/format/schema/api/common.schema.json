@@ -63,10 +63,12 @@
       "description": "A node as the View names it: the string form of its number"
     },
     "itemStatus": {
+      "$comment": "Was: api.md 118, 120, 144, 147 (D-045)",
+      "description": "Where a card stands with the person: `open`; `checked` (✓) or `crossed` (✗), the only answers; `commented`, a note waits for you and the card is still open (a note never answers a card); `later`. `context` is no longer given: a note made with the old More context reads as `commented`.",
       "enum": [
         "open",
-        "acknowledged",
-        "dropped",
+        "checked",
+        "crossed",
         "commented",
         "context",
         "later"
@@ -78,7 +80,7 @@
         "context",
         "later"
       ],
-      "description": "Why a card of any kind waits for the agent: a comment or a \"needs context\" with no answer yet, or moved to Later with no park bundle",
+      "description": "Why a card of any kind waits for the agent: a note with no answer yet (`comment`, or `context` for a note made with the old More context), or moved to Later with no park bundle",
       "$comment": "Was: api.md 36, 120"
     },
     "secret": {
@@ -107,7 +109,7 @@
             "comment",
             "context"
           ],
-          "description": "`comment` or `context` (a request for more context)."
+          "description": "`comment`, or `context` for a note made with the old More context; either is a note."
         },
         "text": {
           "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/longText",
@@ -148,6 +150,10 @@
           "items": {
             "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/note"
           }
+        },
+        "unseenAnswer": {
+          "const": true,
+          "description": "Your answer to the card's latest note cleared its earlier ✓, ✗ or Later, and the person has not looked at the card since; left out otherwise"
         }
       },
       "unevaluatedProperties": false
@@ -214,10 +220,10 @@
         },
         "action": {
           "enum": [
-            "ack",
-            "drop"
+            "check",
+            "cross"
           ],
-          "description": "`ack` (acknowledge) or `drop`."
+          "description": "✓ (`check`) or ✗ (`cross`)."
         },
         "reason": {
           "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/longText",
@@ -241,7 +247,7 @@
             "rejected",
             "closed"
           ],
-          "description": "How it ended, with `decidedBy`: `accepted` (the person took it), `rejected` (turned down), or `closed` (the person acknowledged or dropped the item another way)."
+          "description": "How it ended, with `decidedBy`: `accepted` (the person took it), `rejected` (turned down), or `closed` (the person's ✓ or ✗ on the card another way)."
         }
       },
       "dependentRequired": {
@@ -335,8 +341,8 @@
         },
         "status": {
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/itemStatus",
-          "description": "Where the card stands with the person; every card has one. Only a question, decision or action is decided (acknowledged, dropped or commented).",
-          "$comment": "Was: api.md 118, 120"
+          "description": "Where the card stands with the person; every card has one. Only a question, decision or action is answered, by ✓ (`checked`) or ✗ (`crossed`); a note never answers a card.",
+          "$comment": "Was: api.md 118, 120, 147"
         },
         "size": {
           "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeSize",
@@ -405,7 +411,7 @@
     },
     "openItem": {
       "type": "object",
-      "description": "An open card: a question, decision or action not yet decided, or a card of any kind that waits for the agent (`pending`). `pending` and `unseen` are left out when they do not apply",
+      "description": "An open card: a question, decision or action with no ✓ or ✗ yet, or a card of any kind that waits for the agent (`pending`). `pending` and `unseen` are left out when they do not apply",
       "$comment": "Was: api.md 32, 120",
       "required": [
         "board",
@@ -455,7 +461,7 @@
         },
         "unseen": {
           "const": true,
-          "description": "The item has a newer version than the person last saw"
+          "description": "The item has a newer version than the person last saw, or your answer to its latest note cleared it and the person has not looked at it since"
         }
       },
       "unevaluatedProperties": false
@@ -480,7 +486,7 @@
         },
         "pending": {
           "enum": ["comment", "context"],
-          "description": "What the note asks for: a comment, or more context."
+          "description": "`comment`, or `context` for a note made with the old More context; either is a note."
         },
         "note": {
           "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/seq",

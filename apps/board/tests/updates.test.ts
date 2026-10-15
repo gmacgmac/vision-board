@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readLedger } from '../../../packages/format/src/index.ts';
 import { foldLedger } from '../../../packages/actions/src/index.ts';
 import { pageConditions } from '../src/board/board-data.ts';
-import { seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/board/updates.ts';
+import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/board/updates.ts';
 
 const A = 'a-aaaa1111';
 let seq = 0;
@@ -107,4 +107,32 @@ test('two boards: counts, steps and seen marks name a card by its number on the 
   assert.deepEqual(unseenSteps(s, 'b', 2, () => 'now').map((x) => x.ver), [2]);
   assert.deepEqual(seenMarks(s, 'b', b.unseen, ['2', '1']), [{ n: 2, ver: 2 }, { n: 1, ver: 1 }]);
   assert.deepEqual([1, 2].map((n) => unseenCount(s, 'a', n)), [1, 0], 'board a\'s card 1 is its own, not board b\'s');
+});
+
+// D-045, answer-model ruling 7 (card 20's sequence): ✓, a note, the agent's reply. The reply clears
+// the ✓ and is one update of its own, though the card is still at version 1; the card seen line it
+// needs is due although that version was seen, and once sent the update is gone.
+test('the agent\'s reply that cleared a card: one update, its step, a seen line due at a seen version', () => {
+  seq = 0;
+  const lines = [
+    agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
+    agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
+    node(1, 1, 'One.'), line({ by: 'person', type: 'seen', n: 1, ver: 1 }),
+    line({ by: 'person', type: 'act', action: 'ack', n: 1, ver: 1 }),
+    line({ by: 'person', type: 'act', action: 'comment', n: 1, ver: 1, text: 'Does it cover renewals?' }),
+  ];
+  const note = seq;
+  lines.push(agent({ type: 'reply', n: 1, text: 'Yes, renewals too.', to: note }));
+  const { events, problems } = readLedger(lines);
+  assert.deepEqual(problems, []);
+  const s = foldLedger(events);
+  assert.deepEqual([...pageConditions(s, 'b').unseen], [1]);
+  assert.equal(unseenCount(s, 'b', 1), 1);
+  assert.deepEqual(unseenSteps(s, 'b', 1, (at) => at.slice(11, 16)),
+    [{ ver: 1, when: '13:08', agent: 'Pricing chat', changes: [], reply: 'Yes, renewals too.' }]);
+  assert.equal(seenDue(s, 'b', 1, 1), true, 'version 1 was seen, the answer was not');
+  assert.deepEqual(seenMarks(s, 'b', pageConditions(s, 'b').unseen, ['1']), [{ n: 1, ver: 1 }]);
+  const { events: more } = readLedger([...lines, line({ by: 'person', type: 'seen', n: 1, ver: 1 })]);
+  const after = foldLedger(more);
+  assert.deepEqual([unseenCount(after, 'b', 1), seenDue(after, 'b', 1, 1), [...pageConditions(after, 'b').unseen]], [0, false, []]);
 });

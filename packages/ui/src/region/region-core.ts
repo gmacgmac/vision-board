@@ -2,11 +2,11 @@
 // No DOM, so every rule here is unit-tested under plain Node; the element only applies the
 // result. Geometry (position, size) is the page's job and is not here.
 import type { Mode, Region, View, Widths } from '../../../format/src/index.ts';
-import { NODE_TYPES, widthsOf } from '../../../format/src/index.ts';
+import { widthsOf } from '../../../format/src/index.ts';
 import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
 import { isDecided, statusOf } from '../../../actions/src/index.ts';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
-import { isItem, replyEntry } from '../node/node-core.ts';
+import { asksAnswer, replyEntry } from '../node/node-core.ts';
 
 /** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
  * so a new mode fails to compile here. */
@@ -147,7 +147,7 @@ export interface RegionState {
   /** The card widths in force (`widthsOf`: the person's, else the agent's, else the mode's default):
    * the Match card widths switch is on for `match`. */
   widths: Widths;
-  /** "<decided> of <items> decided"; empty when the region has no items. */
+  /** "<answered> of <items> answered" (D-045); empty when the region has no items. */
   countText: string;
   /** Whether "Reset places" in the settings menu is enabled: at least one node of the region is
    * pinned. Otherwise it shows disabled, with `RESET_NONE_HINT`. */
@@ -160,7 +160,7 @@ export interface RegionState {
   note?: RegionNoteState;
   /** Comment's accessible name, which says the badge's state (`commentLabel`). */
   commentLabel: string;
-  /** Whether the "Everything here is decided." message shows: the layout drew none of its nodes. */
+  /** Whether the "Everything here is answered." message shows: the layout drew none of its nodes. */
   showEmpty: boolean;
   /** The agents that hold the region, after the count; left out when none is given (the
    * agentAccess flag off, or a region nobody holds). */
@@ -213,14 +213,14 @@ export function regionState(
 ): RegionState {
   const nodes = view.nodes.filter((n) => n.region === r.id);
   // Only cards that need an answer count (every-node ruling 6): a numbered plain card never does.
-  const items = nodes.filter((n) => isItem(n) && NODE_TYPES[n.kind].answer);
-  const decided = items.filter((n) => isDecided(n.kind, statusOf(s, n.id))).length;
+  const items = nodes.filter(asksAnswer);
+  const answered = items.filter((n) => isDecided(n.kind, statusOf(s, n.id))).length;
   const title = r.title ?? view.regions.find((g) => g.id === r.id)?.title ?? r.id;
   const note = regionNote(s.regionNotes.get(r.id), owed?.has(r.id) ?? true, replies);
   return {
     mode: r.mode,
     widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id)),
-    countText: items.length ? `${decided} of ${items.length} decided` : '',
+    countText: items.length ? `${answered} of ${items.length} answered` : '',
     canReset: nodes.some((n) => s.pins.has(n.id)),
     canPutBack: s.regionPins.has(r.id),
     ...(note && { note }),

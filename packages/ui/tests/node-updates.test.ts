@@ -25,7 +25,7 @@ test('no updates: no tab, the name as before', () => {
 test('collapsed: the tab counts the unseen versions and the name says so', () => {
   const st = withUpdates({ count: 3 });
   assert.deepEqual(st.updates, { tab: '3 updates', label: '3 updates since you last looked. Show them', open: false, done: false });
-  assert.equal(st.label, 'Item 44, Risk: The floor undercuts self-serve, Open, 3 unseen updates');
+  assert.equal(st.label, 'Item 44, Risk: The floor undercuts self-serve, 3 unseen updates');
   assert.equal(withUpdates({ count: 1 }, true).label.endsWith(', 1 unseen update, selected'), true);
 });
 
@@ -38,7 +38,7 @@ test('open: the step shown, its line, chips and what the text gained', () => {
       chips: [{ change: 'added', text: '+ body' }], lines: ['The credit amount is in.'],
     },
   });
-  assert.equal(v.label.endsWith(', Open, showing update 1 of 3'), true);
+  assert.equal(v.label.endsWith('self-serve, showing update 1 of 3'), true);
   const second = withUpdates({ count: 1, steps, at: 1 }).updates!;
   assert.equal(second.tab, '3 updates', 'the count stays what it was when the stepper opened');
   assert.deepEqual(second.step, {
@@ -52,7 +52,7 @@ test('open: the step shown, its line, chips and what the text gained', () => {
 test('after the last step: up to date, the tab goes', () => {
   const v = withUpdates({ count: 0, steps, at: 3 });
   assert.deepEqual(v.updates, { tab: '', label: 'Up to date', open: true, done: true });
-  assert.equal(v.label, 'Item 44, Risk: The floor undercuts self-serve, Open');
+  assert.equal(v.label, 'Item 44, Risk: The floor undercuts self-serve');
 });
 
 test('a long added text is cut short; a version with no change says so', () => {
@@ -60,6 +60,13 @@ test('a long added text is cut short; a version with no change says so', () => {
   assert.equal(long.updates!.step!.lines[0]!.length, 160);
   assert.equal(long.updates!.step!.lines[0]!.endsWith('…'), true);
   assert.deepEqual(withUpdates({ count: 1, steps: [{ ver: 2, when: 'now', changes: [] }], at: 0 }).updates!.step!.lines, ['Drawn again with no change']);
+});
+
+// D-045, answer-model ruling 7: the agent's reply that cleared the card is an update of its own.
+test('the agent\'s reply as a step: "Reply", when and who, its words; no chips', () => {
+  const v = withUpdates({ count: 1, steps: [{ ver: 1, when: 'now', agent: 'Pricing chat', changes: [], reply: 'Yes, renewals too.' }], at: 0 }).updates!;
+  assert.deepEqual([v.tab, v.step!.label, v.step!.head, v.step!.chips, v.step!.lines],
+    ['1 update', 'Update 1 of 1, the agent\'s reply', 'Reply · now · Pricing chat', [], ['Yes, renewals too.']]);
 });
 
 test('a non-item has no updates', () => {

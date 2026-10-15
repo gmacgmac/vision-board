@@ -24,7 +24,7 @@ test('accept and reject: a proposal on the same card, accepted with its own acti
   assert.deepEqual(validateAct(act({ action: 'drop', proposal: drop }), s, 'b'), []);
   assert.deepEqual(validateAct(act({ action: 'reject', proposal: drop, ver: undefined }), s, 'b'), []);
   assert.deepEqual(validateAct(act({ action: 'ack', proposal: drop }), s, 'b'),
-    [`proposal: proposal ${drop} is to drop; accept it with drop, or reject it`]);
+    [`proposal: proposal ${drop} is to cross; accept it with drop, or reject it`]);
   assert.deepEqual(validateAct(act({ action: 'drop', id: 2, proposal: drop }), s, 'b'), [`proposal: ${drop} is not a proposal on item 2`]);
   assert.deepEqual(validateAct(act({ action: 'reject', proposal: 3, ver: undefined }), s, 'b'), ['proposal: 3 is not a proposal on item 1']);
 });

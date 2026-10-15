@@ -64,7 +64,7 @@ test('board numbers in: act, mark_seen and a radial centre are stored by identit
   const stored = h.ledger.events().filter((e) => e.seq === ack.seq || e.seq === seen.seq);
   assert.deepEqual(stored.map((e) => ('id' in e ? e.id : undefined)), [dId, qId]);
   const r = await h.ok('check_responses', { board: 'pricing', after: ack.seq - 1 });
-  assert.deepEqual(r.responses.map((e: any) => [e.action, e.n]), [['ack', d]]);
+  assert.deepEqual(r.responses.map((e: any) => [e.action, e.n]), [['check', d]], 'a ✓ reads check (D-045)');
   // A radial centre names a card by its number on the board.
   const agent = await h.join('Radial chat');
   const items = [

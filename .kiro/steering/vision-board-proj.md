@@ -7,7 +7,7 @@ inclusion: always
 # Vision Board — Project Rules
 
 Vision Board is a board an AI agent draws to mid-session, so a person can review the agent's
-output item by item (acknowledge, drop, comment, ask for more context, save for later) and the
+output item by item (✓ or ✗, a note, save for later) and the
 agent can read that back and redraw. It works on any project, not only code. It is built to last,
 so every rule below favours things that stay true when frameworks, models and people change.
 
@@ -115,7 +115,7 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
    carries no hue in any palette. Measure with APCA-W3 0.0.98G-4g, light and dark. A pair under
    its bar is reported, never shipped quietly; a colour that fails is fixed in its token, not per
    screen. The maintainer may overrule a tier by eye, recorded as a decision (D-009). Node states
-   (open, acknowledged, dropped, commented, needs context, saved for later, decided, flagged) are
+   (open, checked, crossed, commented, saved for later, answered, flagged) are
    tokens too.
 4. **Every state gives visual feedback.** Controls: idle, hover, focus, pressed, loading,
    success, error, disabled. Data views: loading, empty, error, partial, stale. Review items:
@@ -131,11 +131,11 @@ Answer these in order. Stop at the first "no" and resolve it before writing code
 7. **One I/O layer.** Only one module reads or writes session files or calls the server. It
    validates every file it reads and every file it writes. The agent writes views through the
    same validator it can run from the command line.
-8. **One action layer, shared by people and agents.** Every action (acknowledge, drop, comment,
-   more context, save for later, confirm, approve, and anything later) is a typed action with
+8. **One action layer, shared by people and agents.** Every action (✓, ✗, a note, save for
+   later, confirm, approve, and anything later) is a typed action with
    inputs, a needs-human-confirmation flag and a transcript record. Buttons, keyboard shortcuts
    and outside agents all call the same actions. Agents never act on the person's behalf for a
-   decision: acknowledging, dropping and approving are human clicks. Every agent action is
+   decision: ✓, ✗ and approving are human clicks. Every agent action is
    recorded.
 9. **The agent describes, the engine places.** No coordinates in view files. Layout is a pure
    function from nodes, links, regions, modes and hints to positions. Same input, same picture.
@@ -199,7 +199,8 @@ Use these words consistently in code, docs and the UI.
   its fields and which **actions** it offers.
 - **Link**: a connection between nodes, possibly across regions.
 - **Note**: a person's comment pinned to one or more nodes.
-- **Decided**: an item whose response closes it; it moves out of the open set.
+- **Answered**: an item the person marked ✓ or ✗; it moves out of the open set. A note never
+  answers an item (D-045).
 
 ## Running the board and connecting an agent
 

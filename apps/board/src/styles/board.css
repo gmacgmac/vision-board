@@ -35,7 +35,7 @@ body {
 /* The zoom group (3_FE_02 ruling 5): three buttons with no gap between, like a segmented control. */
 .vb-btn-icon { display: none; width: 18px; height: 18px; flex-shrink: 0; }
 /* A narrow toolbar (a window of 1500px or less: Toolbar.svelte sets data-narrow; a gallery sample sets it
-   itself): the end group's text buttons (Hide decided, Theme, Reply; with the toolbarMenu flag Agents, Send to
+   itself): the end group's text buttons (Hide answered, Theme, Reply; with the toolbarMenu flag Agents, Send to
    agent and Chat) show their icon only, and the counts their numbers; the words stay for screen readers and
    the title tooltip says them too. Agents keeps its count beside the icon. */
 [data-narrow] .vb-toolbar-end .vb-btn-icon { display: block; }
@@ -93,7 +93,7 @@ body {
   font-size: var(--vb-text-sm); white-space: nowrap;
 }
 .vb-chip b { color: var(--vb-ink-strong); }
-.vb-chip[data-tone='decided'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
+.vb-chip[data-tone='answered'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
 .vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
 .vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
 /* "N flagged" (cardFlag flag): a chip that is a button, stepping through the flagged cards. Its words

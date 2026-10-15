@@ -217,3 +217,60 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   into drawing first; the skill now overrides it, but the line itself could say "suggest the
   structure first" (server wording in `apps/board/server/chat-prompt.ts` `NO_BOARD`, not changed).
 - 2026-10-11, maintainer (601-602): when the agent changed the board, its chat says only "Done." (one short line more only for something the board can't show); the panel's no-board line now asks the agent to suggest the structure first (skill v3.1).
+
+## Skill v3.4 (the answer model, D-045)
+
+- 2026-10-15, maintainer (answer-model PLAN rulings 10 and 11, D-045; ruling 10 softened the same
+  day: no rule to spell out what ✓ and ✗ mean on each card, "we would be able to infer"): ✓ and ✗
+  are the person's two marks, read from what the card asks; a note never answers a card; More
+  context is gone (a note can ask); the agent's answer to a note clears the card's earlier ✓, ✗
+  and Later, so it asks again; one ask per card; say where a card applies when the context needs
+  it; no length rule. Consolidating a container is proposed with one `decision` card once every
+  card that asks in it is answered, and done only after the person's ✓.
+- 2026-10-15, agent (T_01): v3.4 changes SKILL.md's description and intro (✓ or ✗, a note,
+  Later), the panel's answer lines (`2 (question): ✗`, `4 (decision): ✓: <note>`; "the ones I
+  ticked" are the lines reading ✓), Kinds (no meaning per kind; one ask per card; say where it
+  applies; "N open · N answered"), "What the person's answers mean" (was "What the person's buttons
+  mean": `check` / `cross`, no `means`; a note never answers and is owed unless ✓ or ✗ came after
+  it; your answer clears the card, so ask again; an old `context` is a note), "Changing a card" (a
+  new version clears too), "Retiring and distilling" (propose consolidating; only after the ✓),
+  "Reading the person's answers" (each card's latest mark, not every click; `reopen` is a clear;
+  `pending` `comment` / `context` / `later`) and "Answering" (a note that asks, or reads like an
+  answer, leaves the card open: reply, and ask for the mark). Scenarios 2, 10, 13, 15, 16 and 19
+  updated; 22 and 23 new.
+- 2026-10-15, agent: runs. `claude` 2.1.284's login had expired ("OAuth session expired and could
+  not be refreshed", also outside the sandbox), so the runs used `kiro-cli` 2.24.0 instead: a
+  workspace agent in the temp project (`.kiro/agents/vb-test.json`, the skill copied in as its
+  `prompt`, `vb` its only tools, `VB_AGENT_SECRET` of an agent joined over HTTP, model
+  `claude-sonnet-5.5` in the agent file; the CLI's `--model` answered "Method not found", so the
+  model actually used is not established), `chat --no-interactive --trust-tools=@vb`, `--resume`
+  for a second turn. Test servers on 4497 to 4499, `HOME` and `VB_PROJECT` in the system temp
+  folder, `VB_KIRO_AGENT=0`; boards drawn and the person's acts made over HTTP (person cookie,
+  Origin); each message built by the panel's own `promptFor` and `roundOf`. Servers stopped after.
+  - Scenario 22: passed. Two `show_node`, one `write_board` with a `reply` to each note, no new
+    card, no `propose`. Reply on 2 answered the flag question and ended "✓ again if on is right, ✗
+    if you want it off by default"; reply on 3 explained 1.4 and ended "✓ to keep it in 1.4, ✗ to
+    move it to 1.5". After: `list_open` 2 and 3 `open`, `unseen`, nothing `pending`; `get_board`
+    `unseenAnswer` on both. Chat: "Done." plus one line ("Replying to card 2 cleared your ✓, so it
+    needs your mark again."), which the board already shows.
+  - Scenario 23: passed. Turn 1: `get_board`, then one `decision` card in "Venue" ("Sum up the
+    venue cards in one card?", naming cards 1 to 5); no retire; nothing for "Travel"; "Done."
+    Turn 2 (✓ on it): one summary `finding` in "Venue" (problem, decided, what to watch), then
+    `retire` 1, 2, 3, 4, 5 and the proposal 8, each its own key; "Travel" untouched; "Done." It
+    made two `write_board` calls; only the second wrote lines (the first's answer was not captured).
+  - Scenario 10 (updated: the note no longer answers 5): passed. Three `show_node`, one `reply` on
+    5 to the group note naming 2, 5 and 8, ending "✓ on card 5 if shipping the back-off in 1.4 is
+    the plan, ✗ if not"; 5 left open, nothing owed. Chat: "Done." plus one line asking for the ✓.
+- 2026-10-15, agent: what still slips: an extra closing line after "Done." in two of three runs,
+  saying what the board already shows. Not run with Claude Code here (the login); VERIFY_01 runs
+  both agents through the panel.
+- 2026-10-15, agent, for the maintainer (ruling 10, "how much to say is settled in T_01"): v3.4
+  adds no rule to say on a card what ✓ and ✗ do. In every run the agent did so anyway in its
+  replies ("✓ to keep it in 1.4, ✗ to move it to 1.5"). If wanted, one optional line for Kinds:
+  "When ✓ and ✗ could read more than one way, say on the card what each does (✓ keep · ✗
+  rename)." Not added.
+- 2026-10-15, agent (answer-model BE_02): wording only, no rule change and no version bump. The
+  server now takes `propose` with `check` or `cross` and refuses `ack` and `drop` (api.md 147), so
+  SKILL.md § Propose, never decide says `action` `check` (✓) or `cross` (✗), and scenario 4's good
+  run proposes `action: "check"`. The reads (`get_board`, `show_node`, `list_open`) now say
+  `checked` and `crossed`; the skill named no status word for them.

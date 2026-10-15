@@ -25,12 +25,12 @@ export function retireCards(s: LedgerState, t: RetireTarget): number[] {
   return nodesOf(s, t.board).filter((x) => placeOf(s, x.id)?.region === t.region).map((x) => x.id);
 }
 
-/** What card `id` still owes the person (`item.owed`): an unanswered comment, More context, or a
- * Later with no handover; undefined when nothing. */
-function owedKind(s: LedgerState, id: number): 'comment' | 'context' | 'later' | undefined {
+/** What card `id` still owes the person (`item.owed`): an unanswered note (an old More context is
+ * one, D-045) or a Later with no handover; undefined when nothing. */
+function owedKind(s: LedgerState, id: number): 'comment' | 'later' | undefined {
   const node = s.nodes.get(id);
   const seq = node && owedOn(s, node);
-  return seq === undefined ? undefined : s.asks.get(seq)?.kind ?? 'later';
+  return seq === undefined ? undefined : s.asks.has(seq) ? 'comment' : 'later';
 }
 
 /** What card `id` still owes the person, as words to the agent with what to do, or undefined. */
@@ -38,7 +38,6 @@ function owedWords(s: LedgerState, id: number): string | undefined {
   const kind = owedKind(s, id);
   const card = `card ${numberOf(s, id)}`;
   if (kind === 'comment') return `${card} has a comment you haven't answered: answer it with a reply or an append first`;
-  if (kind === 'context') return `${card} asks for more context you haven't given: answer it with a reply or an append first`;
   return kind && `${card} is saved for later and its handover isn't written: write it with a park first`;
 }
 
@@ -61,7 +60,6 @@ export function retireProblem(s: LedgerState, t: RetireTarget, cards: readonly n
 
 const NOTICE = {
   comment: 'still has an unanswered comment',
-  context: 'still waits for the more context you asked for',
   later: 'is saved for later and its handover isn\'t written yet',
 } as const;
 
@@ -82,7 +80,8 @@ export function owedNotice(s: LedgerState, t: RetireTarget, cards: readonly numb
     ? [`Cards ${owed.slice(0, NAMED).map((x) => x.n).join(', ')} and ${owed.length - NAMED} more are still owed an answer.`]
     : owed.map((x) => `Card ${x.n} ${NOTICE[x.kind]}.`);
   const note = 'region' in t ? owedRegionNote(s, t) : undefined;
-  if (note) out.push(`Container '${title ?? (t as { region: string }).region}' ${NOTICE[note.kind]}.`);
+  // Any note reads as a note, an old More context too (D-045).
+  if (note) out.push(`Container '${title ?? (t as { region: string }).region}' ${NOTICE.comment}.`);
   return out;
 }
 

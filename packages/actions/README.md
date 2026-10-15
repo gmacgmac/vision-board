@@ -1,12 +1,13 @@
 # packages/actions
 
-Everything a person or agent can do on the board, as a typed action (acknowledge, drop, comment,
-more context, later, reopen, pin, mode, and more later). Buttons, keyboard shortcuts and agents
+Everything a person or agent can do on the board, as a typed action (✓ and ✗, a note, later,
+clear, pin, mode, and more later). Buttons, keyboard shortcuts and agents
 call the same actions, and each one is recorded in the project ledger as an `act` event (rule 8).
 
 - **Depends on**: `packages/format`.
 - **Used by**: `packages/ui`, `apps/board`.
-- **Public API** (`src/index.ts`): the registry (`ACTIONS`, `ITEM_ACTIONS`, `DECIDED`), the
+- **Public API** (`src/index.ts`): the registry (`ACTIONS`, `ITEM_ACTIONS`, `DECIDED` = `CLOSED`: only ✓
+  and ✗ answer a card, D-045; `ACTION_OUT`, ✓ as `check` and ✗ as `cross` at the API edge), the
   ledger fold (`foldLedger`, `applyEvent`, `emptyState`; every map keyed by a card's identity,
   `id`), one board as the page reads it (`boardState`, `statusOf`, `counts`, in `board-state.ts`,
   keyed like the View by board number), board numbers out (`numbers.ts`, api.md 125: `numberOf`,
@@ -39,8 +40,10 @@ call the same actions, and each one is recorded in the project ledger as an `act
   `openItems`, `openContainers`, `boardAccess`, `boardList`, in `reads.ts`), the numbered reply
   (`replyText`, in parts `replyLines`), what a chat message carries from the board (`board-message.ts`:
   `boardBlocks`, the selection headed "The person selected these cards:" then `roundOf`, the answers
-  since the agent was last told; one writer for the server's prompt and the composer's preview), and what ✓ and ✗ mean on each kind (`MEANINGS`, `meaningOf`, `actionWord`, in
-  `action-words.ts`), which the buttons, the key help, `check_responses` (`means`) and the reply read.
+  since the agent was last told; one writer for the server's prompt and the composer's preview), and
+  the agent's answer clearing a card (`clears.ts`: the fold's clears, and `unseenAnswer` until the
+  person looks, D-045). Each card's ✓, ✗, Later and clear reach the agent folded to its latest
+  (`pending.ts` `latestMarks`, and `unsent.ts` for Send).
 - **Awareness tables** (D-033): what belongs to what (`REFERENCES`), who may write what
   (`PERMISSIONS`) and what needs attention (`CONDITIONS`) are each one typed table, derived from
   the folded ledger; a new kind without a row is a type error, and every row has a test. A check

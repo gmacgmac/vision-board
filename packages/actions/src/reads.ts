@@ -3,6 +3,9 @@
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
 // Optional fields are left out when they do not apply (api.md 32). The fold keys cards by identity;
 // every card here is named by its board number (numbers.ts, api.md 125). No read shows a flag.
+// A status and a proposal's action are named as agents read them, ✓ `checked` / `check` and ✗
+// `crossed` / `cross` (registry.ts `statusOut`, `actionOut`, api.md 147); the page reads
+// `boardState`, which keeps the stored names.
 
 import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
@@ -18,8 +21,9 @@ import { mayAnswer } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
 import { boardLocked } from './lock.ts';
 import { placeOf } from './references.ts';
-import type { ItemStatus } from './registry.ts';
-import { isDecided } from './registry.ts';
+import type { ItemState } from './notes.ts';
+import type { ReportedStatus } from './registry.ts';
+import { isDecided, statusOut } from './registry.ts';
 
 /** One version of a node: what the agent said, when, and who. */
 export interface NodeVersionView { ver: number; at: string; agent?: string; node: NodeBody }
@@ -32,8 +36,8 @@ export interface NodeDetail {
   region: string;
   /** Where the agent has it, when the person put it somewhere else (3_FE_03 ruling 2). */
   moved_from?: string;
-  /** Where the card stands with the person; every card has one (api.md 120). */
-  status: ItemStatus;
+  /** Where the card stands with the person; every card has one (api.md 120, 147). */
+  status: ReportedStatus;
   /** The person's size pick; it wins over the agent's suggestion. */
   size?: NodeSize;
   /** The latest version the person has seen. */
@@ -75,7 +79,7 @@ export interface BoardAccess {
  * one that needs an answer and is not decided, or any card owing an answer or a handover. */
 export interface OpenItem {
   board: string; n: number; ver: number; region: string; moved_from?: string; kind: NodeBody['kind']; title: string;
-  status: ItemStatus;
+  status: ReportedStatus;
   pending?: 'comment' | 'context' | 'later';
   unseen?: true;
 }
@@ -100,7 +104,7 @@ export function nodeDetail(s: LedgerState, id: number): NodeDetail | undefined {
   const park = s.parks.get(id);
   return {
     n: numberOf(s, id), board: node.board, ...whereIs(s, id),
-    status: s.items.get(id)?.status ?? 'open',
+    status: statusOut(s.items.get(id)?.status ?? 'open'),
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
     versions: node.versions.map(versionView),
@@ -125,6 +129,10 @@ export function linkedDetails(s: LedgerState, id: number): NodeDetail[] {
   for (const x of others) if (!visibleToAgents(s, s.nodes.get(x)?.board ?? '')) others.delete(x);
   return [...others].sort((a, b) => a - b).map((x) => nodeDetail(s, x)).filter((d): d is NodeDetail => d !== undefined);
 }
+
+/** `get_board`'s `state.items` (api.md 147): `boardState`'s items with each status as agents read it. */
+export const itemsOut = (items: ReadonlyMap<string, ItemState>): Record<string, Omit<ItemState, 'status'> & { status: ReportedStatus }> =>
+  Object.fromEntries([...items].map(([id, item]) => [id, { ...item, status: statusOut(item.status) }]));
 
 /** One container on `board`, on the board or retired, or undefined when the board never had it. A
  * card belongs if any of its versions was in the region, or the person put it there (api.md 68),
@@ -196,7 +204,7 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
     const open = NODE_TYPES[v.kind].answer && !isDecided(v.kind, status);
     if (!(open || why) || (agent !== undefined && !mayAnswer(s, agent, node.id))) continue;
     out.push({
-      board, n: numberOf(s, node.id), ver: v.ver, ...whereIs(s, node.id), kind: v.kind, title: v.title, status,
+      board, n: numberOf(s, node.id), ver: v.ver, ...whereIs(s, node.id), kind: v.kind, title: v.title, status: statusOut(status),
       ...(why && { pending: why }), ...(unseen.has(node.id) && { unseen: true as const }),
     });
   }

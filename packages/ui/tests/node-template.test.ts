@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import { KINDS } from '../../format/src/index.ts';
-import { actionWord } from '../../actions/src/index.ts';
 import { esc, KIND_ICON, nodeTemplate, notesMarkup, offers } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
@@ -96,20 +95,11 @@ test('nodeTemplate escapes raw HTML in a Markdown body', () => {
   assert.ok(!html.includes('<b>'));
 });
 
-// every-node ruling 3, assumption B: ✓ and ✗ keep one meaning; their tooltips say it in the card's words.
-test('nodeTemplate: ✓ and ✗ read Yes and No on a question, ✓ Done on an action, the registry label elsewhere', () => {
+// D-045: ✓ and ✗ carry no meaning; their tooltips are the registry's labels on every kind.
+test('nodeTemplate: ✓ and ✗ read Check and Cross on every kind that asks; no More context', () => {
   const tips = (kind: ViewNode['kind']) => Object.fromEntries([...nodeTemplate(node({ kind, n: 3 }))
     .matchAll(/data-act="(\w+)"[^>]* title="([^"]*)"/g)].map((m) => [m[1]!, m[2]!]));
-  assert.deepEqual(tips('question'), { ack: 'Yes · a', drop: 'No · x', comment: 'Comment · c', context: 'More context · m', later: 'Save for later · l' });
-  assert.deepEqual(tips('action'), { ack: 'Done · a', drop: 'Drop · x', comment: 'Comment · c', context: 'More context · m', later: 'Save for later · l' });
-  assert.deepEqual(tips('decision').ack, 'Acknowledge · a');
-  assert.deepEqual(tips('finding'), { comment: 'Comment · c', context: 'More context · m', later: 'Save for later · l' });
-});
-
-test('actionWord: the word a review button says on a kind', () => {
-  assert.equal(actionWord('ack', 'question'), 'Yes');
-  assert.equal(actionWord('drop', 'question'), 'No');
-  assert.equal(actionWord('ack', 'action'), 'Done');
-  assert.equal(actionWord('drop', 'action'), 'Drop');
-  assert.equal(actionWord('comment', 'finding'), 'Comment');
+  const asks = { ack: 'Check · a', drop: 'Cross · x', comment: 'Comment · c', later: 'Save for later · l' };
+  assert.deepEqual([tips('question'), tips('action'), tips('decision')], [asks, asks, asks]);
+  assert.deepEqual(tips('finding'), { comment: 'Comment · c', later: 'Save for later · l' });
 });

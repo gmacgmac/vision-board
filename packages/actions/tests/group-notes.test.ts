@@ -103,11 +103,12 @@ test('edit and remove from any of its pins; never from a card it does not name',
   assert.deepEqual(pendingItems(s, 'b'), []);
 });
 
-test('an edit that sets the kind changes every card it names', () => {
+test('an edit that sets the kind changes every card it names; either kind is a note (D-045)', () => {
   const { l, note } = withGroup();
   l.act({ action: 'note-edit', n: 1, note, text: 'Explain the price', kind: 'context' });
   const s = l.state();
-  assert.deepEqual([1, 2].map((n) => boardState(s, 'b').items.get(String(n))!.status), ['context', 'context']);
+  assert.equal(s.asks.get(note)!.kind, 'context');
+  assert.deepEqual([1, 2].map((n) => boardState(s, 'b').items.get(String(n))!.status), ['commented', 'commented']);
 });
 
 test('after Send the group note is history on every card', () => {
@@ -149,8 +150,8 @@ test('the numbered reply names the group once, with its numbers', () => {
   const s = l.state();
   const reply = replyText(boardView(s, 'b'), boardState(s, 'b'));
   assert.match(reply, /^1, 2 \(question, question\): comment: Same question$/m);
-  assert.match(reply, /^3 \(question\): yes$/m);
+  assert.match(reply, /^3 \(question\): ✓$/m);
   assert.doesNotMatch(reply, /^1 \(question\): comment/m);
-  assert.doesNotMatch(reply, /Still open: .*\b[12]\b/);
+  assert.match(reply, /^Still open: 1, 2$/m, 'a note never answers a card (D-045)');
   assert.equal(reply.match(/Same question/g)!.length, 1);
 });

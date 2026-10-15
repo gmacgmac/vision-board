@@ -99,7 +99,7 @@ test('the note parts escape the title', () => {
 test('regionTemplate has a count and a hidden empty message', () => {
   const html = regionTemplate(region);
   assert.match(html, /<span class="vb-region-count"><\/span>/);
-  assert.match(html, /<p class="vb-region-empty" hidden>Everything here is decided\.<\/p>/);
+  assert.match(html, /<p class="vb-region-empty" hidden>Everything here is answered\.<\/p>/);
 });
 
 test('regionTemplate carries no inline style and no style element (the CSP refuses them)', () => {

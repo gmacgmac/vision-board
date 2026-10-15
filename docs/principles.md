@@ -117,8 +117,7 @@ A thing isn't designed until every state is:
 
 - **Controls**: idle, hover, focus, pressed, loading, success, error, disabled.
 - **Data views**: loading, empty, error, partial, stale.
-- **Items on the board**: open, acknowledged, dropped, commented, needs context, saved for later,
-  decided; plus new and changed since the last version.
+- **Items on the board**: open, checked (✓), crossed (✗), commented, saved for later, answered; plus new and changed since the last version.
 
 States are part of the pattern, so any screen that reuses the pattern gets them for free.
 
@@ -129,7 +128,7 @@ record it writes. A button, a keyboard shortcut and an outside agent all call th
 checks and records happen in one place. A call runs the same way whoever makes it:
 
 1. A caller (button, shortcut, agent, later a WebMCP tool) invokes the action.
-2. The action checks the caller may do it. Decisions (acknowledge, drop, approve) belong to the
+2. The action checks the caller may do it. Decisions (✓, ✗, approve) belong to the
    person; an agent can propose them, never make them.
 3. The action goes through the one I/O layer.
 4. A transcript record is written, including who acted.

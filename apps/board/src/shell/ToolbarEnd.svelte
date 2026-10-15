@@ -1,9 +1,9 @@
 <!-- The toolbar's end group: the zoom group (one command table, board/commands.ts; the zoom level
      shows beside Fit, ZoomLevel, and the buttons' tooltips say it too, N13), then the board-wide
      buttons. With the toolbarMenu flag (`menu`): Agents and Send to agent (agentAccess flag, when
-     `holders` is given), Chat (chatPanel flag) and the "⋯" menu holding Theme, Hide decided and
+     `holders` is given), Chat (chatPanel flag) and the "⋯" menu holding Theme, Hide answered and
      Reply (ToolbarMenu); a narrow toolbar (`[data-narrow]`, Toolbar.svelte) shows Agents, Send and
-     Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide decided,
+     Chat as icons, their words kept for screen readers and the title tooltip. Off: Hide answered,
      Theme and Reply as buttons, which a narrow toolbar shows as icons, as before. With `onarchive` (the
      archiveBoard flag) the menu has Archive board…, and with `onlock` (lockBoard flag) Lock board or Unlock board. The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. -->
@@ -54,8 +54,8 @@
     {/each}
   </div>
   {#if !menu}
-    <button type="button" class="vb-btn vb-btn-iconic" id="hide" aria-pressed={shell.hide} title="Hide decided items · H"
-      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">Hide decided</span></button>
+    <button type="button" class="vb-btn vb-btn-iconic" id="hide" aria-pressed={shell.hide} title="Hide answered items · H"
+      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">Hide answered</span></button>
     <button type="button" class="vb-btn vb-btn-iconic" id="theme" title="Theme: {theme}" onclick={ontheme}>
       <ButtonIcon name="theme" /><span class="vb-btn-text">Theme: {theme}</span>
     </button>

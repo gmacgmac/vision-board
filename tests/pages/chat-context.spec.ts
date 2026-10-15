@@ -79,7 +79,7 @@ test('a ✓ shows "1 answer" in the composer; it opens a preview of the answers 
   await expect(answers(page)).toHaveAttribute('aria-expanded', 'false');
   await answers(page).click();
   const [head, title, first] = (await preview(page).locator('pre').textContent())!.split('\n');
-  expect([head, first]).toEqual([ROUND_HEAD, '1 (question): yes']);
+  expect([head, first]).toEqual([ROUND_HEAD, '1 (question): ✓']);
   expect(title).toMatch(/^Board "Launch" \(v\d+\)$/);
   await expect(submit(page)).toBeEnabled();
   await expect(sendButton(page)).not.toHaveAttribute('aria-disabled', 'true');
@@ -99,11 +99,11 @@ test('the words, "The person selected these cards:" and the answers go as one me
   expect(words).toBe('Write the tasks for these');
   expect(attached).toBe(`${SELECTED_HEAD}\n- Card 3: Book the venue`);
   const [head, title, first] = round!.split('\n');
-  expect([head, first]).toEqual([ROUND_HEAD, '1 (question): yes']);
+  expect([head, first]).toEqual([ROUND_HEAD, '1 (question): ✓']);
   expect(title).toMatch(/^Board "Launch" \(v\d+\)$/);
   expect(board).toBe('Board: scratch');
   await expect(mine(page).last()).toContainText('Write the tasks for these');
-  await expect(mine(page).last()).toContainText('1 (question): yes');
+  await expect(mine(page).last()).toContainText('1 (question): ✓');
   await expect(mine(page).last().locator('.chat-chip')).toHaveText(['3Book the venue']);
   await expect(status(page)).toHaveText('Status: Ready');
   await expect(answers(page)).toHaveCount(0);
@@ -126,10 +126,10 @@ test('no words: the context alone goes; the toolbar\'s Send is the same message'
   await sendButton(page).click();
   await expect(sendButton(page)).toHaveAttribute('data-state', 'sent');
   const fromSend = await srv.fake.run(++runs);
-  const shape = (prompt: string) => prompt.replace(/\(v\d+\)/, '(vN)').replace(/head \d+/g, 'head N').replace(/after \d+/, 'after N').replace(/: (yes|no)$/m, ': WORD');
+  const shape = (prompt: string) => prompt.replace(/\(v\d+\)/, '(vN)').replace(/head \d+/g, 'head N').replace(/after \d+/, 'after N').replace(/: (✓|✗)$/m, ': WORD');
   expect(fromComposer.prompt.startsWith(`${ROUND_HEAD}\n`)).toBe(true);
-  expect(fromComposer.prompt).toContain('\n2 (question): yes\n');
-  expect(fromSend.prompt).toContain('\n2 (question): no\n');
+  expect(fromComposer.prompt).toContain('\n2 (question): ✓\n');
+  expect(fromSend.prompt).toContain('\n2 (question): ✗\n');
   expect(shape(fromSend.prompt)).toBe(shape(fromComposer.prompt));
   await expect(mine(page).last()).toContainText(ROUND_HEAD);
   await expect(answers(page)).toHaveCount(0);
@@ -152,7 +152,7 @@ test('a comment shows as one answers chip and no note chip; the note\'s words go
   const given = await srv.fake.run(++runs);
   expect(given.prompt.split(note).length - 1).toBe(1);
   expect(given.prompt).not.toContain('Attached from the board');
-  expect(given.prompt).toContain(`2 (question): no: ${note}`);
+  expect(given.prompt).toContain(`2 (question): ✗: ${note}`);
   await expect(status(page)).toHaveText('Status: Ready');
 });
 
@@ -195,8 +195,8 @@ test('while the agent works, a message with context waits and goes when the turn
     expect(given.args[5]).toBe(busy.args[5]);
     const [words, round] = parts(given.prompt);
     expect(words).toBe('Also these');
-    expect(round).toContain('\n1 (question): no\n');
-    expect(round).toContain('\n3 (action): done\n');
+    expect(round).toContain('\n1 (question): ✗\n');
+    expect(round).toContain('\n3 (action): ✓\n');
     await expect(mine(page).last()).toContainText('Also these');
     await expect(sendButton(page)).not.toHaveAttribute('data-state', 'waiting');
     await expect(status(page)).toHaveText('Status: Ready');
@@ -225,8 +225,9 @@ for (const theme of ['dark', 'light'] as Theme[]) {
   test(`keyboard: the chip opens its preview with Enter, Space closes it, Esc closes it without touching the board, focus staying; axe passes open (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await open(page, 'scratch');
-    // ✓ in one theme, ✗ in the other: pressing the same answer again would take it back.
-    const answer = card(page, 2).locator(`button[data-act="${theme === 'dark' ? 'ack' : 'drop'}"]`);
+    // ✓ in one theme, Later in the other: pressing the same answer again would clear it, and ✗ after ✓
+    // could put the card back where the last Send left it, which folds to nothing to send (D-045).
+    const answer = card(page, 2).locator(`button[data-act="${theme === 'dark' ? 'ack' : 'later'}"]`);
     await answer.click();
     await expect(answer).toHaveAttribute('aria-pressed', 'true');
     await card(page, 3).locator('.vb-node-title').click();
@@ -241,7 +242,7 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await expect(answers(page)).toHaveAttribute('aria-controls', (await preview(page).getAttribute('id'))!);
     const shown = (await preview(page).locator('pre').textContent())!.split('\n');
     expect(shown.slice(0, 3)).toEqual([SELECTED_HEAD, '- Card 3: Book the venue', '']);
-    expect(shown).toContainEqual(expect.stringMatching(/^2 \(question\): (yes|no)$/));
+    expect(shown).toContainEqual(expect.stringMatching(/^2 \(question\): (✓|saved for later)$/));
     await expectNoAxeViolations(page);
     await page.keyboard.press('Space');
     await expect(answers(page)).toHaveAttribute('aria-expanded', 'false');

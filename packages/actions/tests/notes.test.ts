@@ -44,15 +44,15 @@ test('edit before Send: the note keeps its seq and shows the latest text', () =>
   assert.equal(boardState(l.state(), 'b').items.get('1')!.status, 'commented');
 });
 
-test('an edit with a kind changes what the note asks for, and the status with it', () => {
+test('an edit with a kind changes what the note asks for; either kind is a note (D-045)', () => {
   const { l, note } = withNote();
   l.act({ action: 'note-edit', n: 1, note, text: 'Explain the seat price.', kind: 'context' });
   const s = l.state();
   assert.deepEqual(notesOn(l).map((x) => x.kind), ['context']);
-  assert.equal(boardState(s, 'b').items.get('1')!.status, 'context');
+  assert.equal(boardState(s, 'b').items.get('1')!.status, 'commented');
   assert.deepEqual(pendingItems(s, 'b'), [{ n: 1, ask: { kind: 'context', seq: note } }]);
   l.act({ action: 'note-edit', n: 1, note, text: 'Why per seat?', kind: 'comment' });
-  assert.equal(boardState(l.state(), 'b').items.get('1')!.status, 'commented', 'back to a comment');
+  assert.equal(boardState(l.state(), 'b').items.get('1')!.status, 'commented', 'still a note');
 });
 
 test('edits never create a second owed item; the owed ask is the note that was edited', () => {

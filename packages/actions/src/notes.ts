@@ -8,7 +8,7 @@
 import type { ActEvent, NoteKind } from '../../format/src/index.ts';
 import { isContainerAct } from '../../format/src/index.ts';
 import type { ItemStatus } from './registry.ts';
-import { ACTIONS } from './registry.ts';
+import { ACTIONS, CLOSED } from './registry.ts';
 
 /** A note as every read shows it: its latest words and kind. `sent` once a Send came after it;
  * `locked` once it is history, after a Send or the agent's answer (note-lock.ts `lockOf`);
@@ -37,7 +37,10 @@ export interface Decision { seq: number; action: ActEvent['action'] }
 /** What the fold keeps per item to work out its status and notes. */
 export interface ItemLog { asks: Ask[]; decisions: Decision[] }
 
-export interface ItemState { status: ItemStatus; notes: ItemNote[] }
+/** An item's status and notes. `unseenAnswer`: the agent answered the card's latest note, which
+ * cleared its earlier ✓, ✗ or Later, and the person has not looked at the card since (clears.ts,
+ * D-045 ruling 7); set by the reads (`boardState`), never folded. */
+export interface ItemState { status: ItemStatus; notes: ItemNote[]; unseenAnswer?: true }
 
 export const isNote = (a: Ask | undefined): a is Ask & { text: string } => a?.text !== undefined;
 
@@ -80,25 +83,39 @@ export function foldNoteAct(a: Ask, e: ActEvent): void {
 /** The asks still standing, in the order they count. */
 const standing = (log: ItemLog): Ask[] => log.asks.filter((a) => a.removed === undefined).sort((a, b) => a.pos - b.pos);
 
-/** The item's status: its decisions and standing asks replayed in order (last action wins; a
- * comment marks an open item commented, a context sets context). A removed note counts as never
- * made; an edit that set the kind counts as a fresh press at the edit. */
-export function itemOf(log: ItemLog): ItemState {
+/** The item's status: its decisions and standing asks replayed in order (last action wins). ✓, ✗,
+ * Later and clear set it outright; a note (`comment`, or an old `context`, D-045) marks an open item
+ * `commented` and never answers it. A removed note counts as never made; an edit that set the kind
+ * counts as a fresh press at the edit. `cut`: the `pos` of the latest note the agent's answer
+ * cleared (clears.ts, D-045 ruling 7): nothing at or before it counts, so the card is open and
+ * unmarked until the person acts again. */
+export function itemOf(log: ItemLog, cut = 0): ItemState {
   const steps: { pos: number; action: ActEvent['action'] }[] = [
     ...log.decisions.map((d) => ({ pos: d.seq, action: d.action })),
     ...standing(log).map((a) => ({ pos: a.pos, action: a.kind })),
-  ].sort((a, b) => a.pos - b.pos);
+  ].filter((x) => x.pos > cut).sort((a, b) => a.pos - b.pos);
   let status: ItemStatus = 'open';
   for (const { action } of steps) {
-    const def = ACTIONS[action];
-    if (def.status) status = def.status;
-    else if (action === 'comment' && status === 'open') status = 'commented';
+    if (action === 'comment' || action === 'context') status = status === 'open' ? 'commented' : status;
+    else status = ACTIONS[action].status ?? status;
   }
   return {
     status,
     notes: liveNotes(log).map(({ seq, kind, text, at, nodes }) => ({ seq, kind, text, at, ...(nodes && { nodes: [...nodes] }) })),
   };
 }
+
+/** The card's mark from its ✓, ✗, Later and clear alone, counting those after `cut` and up to
+ * `upTo`: what the agent reads it answered (pending.ts, unsent.ts; D-045 ruling 9). */
+export function markOf(log: ItemLog, cut: number, upTo = Infinity): ItemStatus {
+  const last = log.decisions.findLast((d) => d.seq > cut && d.seq <= upTo);
+  return last ? ACTIONS[last.action].status ?? 'open' : 'open';
+}
+
+/** Whether a ✓ or ✗ closed the card after ask `a` (D-045): then its note is answered by the person
+ * and nothing is owed on it; a ✓ or ✗ before the note leaves the note owed. */
+export const closedAfter = (log: ItemLog, status: ItemStatus, a: Ask): boolean =>
+  CLOSED.has(status) && (log.decisions.at(-1)?.seq ?? 0) > a.pos;
 
 /** The item's notes not removed, in the order they were made (the pin numbers). */
 export const liveNotes = (log: ItemLog): (Ask & { text: string })[] =>

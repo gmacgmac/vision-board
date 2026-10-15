@@ -34,7 +34,8 @@ test('hover shows the grouped list, it stays while the pointer is on it, and it 
   await button(page).hover();
   await expect(list(page)).toBeVisible();
   await expect(list(page).getByRole('heading')).toHaveText(['Items', 'Selection', 'Board', 'View']);
-  await expect(list(page).locator('[data-row="action:ack"]')).toContainText('Acknowledge');
+  await expect(list(page).locator('[data-row="action:ack"]')).toContainText('Check');
+  await expect(list(page).locator('[data-row="action:context"]')).toHaveCount(0);
   await expect(list(page).locator('[data-row="command:zoom-in"]')).toContainText('Zoom in');
   // Onto the list: it stays (WCAG 1.4.13).
   await list(page).locator('[data-row="command:fit"]').hover();

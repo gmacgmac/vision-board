@@ -38,7 +38,7 @@ export interface FlagDeps {
   record(fields: ActFields): Promise<boolean>;
   /** The card that has focus, if any (focus.ts). */
   focused(): string | null;
-  /** Whether card `id` is drawn now ("Hide decided" can hide a flagged card). */
+  /** Whether card `id` is drawn now ("Hide answered" can hide a flagged card). */
   drawn(id: string): boolean;
   /** Focus card `id`; focus.ts pans it into view. */
   focusCard(id: string): void;
@@ -74,7 +74,7 @@ export function createFlagFlow(d: FlagDeps): FlagFlow {
       const to = nextFlagged(shown, d.focused() ?? last);
       last = to ?? null;
       if (to) d.focusCard(to);
-      else if (ids().length) d.toast('The flagged cards are hidden: turn off Hide decided to see them.');
+      else if (ids().length) d.toast('The flagged cards are hidden: turn off Hide answered to see them.');
     },
   };
 }

@@ -2,20 +2,44 @@
 // from their acts (fold.ts `applyEvent`): the lines since the board's last Send that the Send
 // message is built from (pending.ts `replyScope` from that Send). A Send empties it; an answer
 // (registry.ts `isAnswer`) adds its line; a note removed before it was sent takes the note's line
-// out, and a change to a note is folded into the note, so neither counts on its own; an answer on
+// out, and a change to a note is folded into the note, so neither counts on its own; a card's ✓,
+// ✗, Later and clear are folded to its latest, which counts only when it leaves the card otherwise
+// than at the last Send (D-045 ruling 9: ✓ then cleared leaves nothing to send); an answer on
 // cards that have all left the board (a retire, the agent's or the person's) is no longer there to
 // send. Pure.
 import type { ActEvent, RetireEvent } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
-import { isAnswer } from './registry.ts';
+import { cutOf } from './clears.ts';
+import { markOf } from './notes.ts';
+import { isAnswer, MARK_ACTIONS } from './registry.ts';
 
-/** Fold one person act on `board`. */
+/** Fold one person act on `board`, after the fold applied it. */
 export function foldUnsent(s: LedgerState, board: string, e: ActEvent): void {
   const lines = s.unsent.get(board) ?? new Set<number>();
   s.unsent.set(board, lines);
-  if (e.action === 'send') lines.clear();
+  if (e.action === 'send') {
+    lines.clear();
+    s.unsentMarks.delete(board);
+  }
   else if (e.action === 'note-remove') lines.delete(e.note!);
+  else if (MARK_ACTIONS.has(e.action)) foldMark(s, board, lines, e);
   else if (e.action !== 'note-edit' && isAnswer(e.action)) lines.add(e.seq);
+}
+
+/** A ✓, ✗, Later or clear on a card: it replaces the card's earlier one since the Send (kept per card
+ * in `unsentMarks`, so no line is scanned), and counts only when the card's mark is now otherwise
+ * than at the Send (pending.ts `latestMarks`). */
+function foldMark(s: LedgerState, board: string, lines: Set<number>, e: ActEvent): void {
+  const marks = s.unsentMarks.get(board) ?? new Map<number, number>();
+  s.unsentMarks.set(board, marks);
+  const before = marks.get(e.id!);
+  if (before !== undefined) lines.delete(before);
+  marks.delete(e.id!);
+  const log = s.logs.get(e.id!)!;
+  const cut = cutOf(s, e.id!);
+  if (markOf(log, cut) === markOf(log, cut, s.lastSend.get(board) ?? 0)) return;
+  lines.add(e.seq);
+  marks.set(e.id!, e.seq);
 }
 
 /** The latest line the next Send on `board` carries; undefined when there is nothing new to send. */

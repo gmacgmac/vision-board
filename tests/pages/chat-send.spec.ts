@@ -103,10 +103,10 @@ test('Send to agent while it is idle hands it the answers as one message, in car
   await sendButton(page).click();
   await expect(sendButton(page)).toHaveAttribute('data-state', 'sent');
   const given = await srv.fake.run(++runs);
-  expectRound(given.prompt, '1 (question): yes');
+  expectRound(given.prompt, '1 (question): ✓');
   const round = mine(page).last();
   await expect(round).toContainText(ROUND_HEAD);
-  await expect(round).toContainText('1 (question): yes');
+  await expect(round).toContainText('1 (question): ✓');
   await expect(status(page)).toHaveText('Status: Ready');
 });
 
@@ -135,9 +135,9 @@ test('Send to agent while it works waits, then the answers go when the turn ends
     await expect(sendButton(page)).toHaveAttribute('title', 'Your answers go to the agent when it finishes this turn');
     await expect(log(page).locator('.chat-system').last()).toHaveText(QUEUED);
     const given = await stopAndHandOver(page);
-    expectRound(given.prompt, '2 (question): yes');
+    expectRound(given.prompt, '2 (question): ✓');
     await expect(sendButton(page)).not.toHaveAttribute('data-state', 'waiting');
-    await expect(mine(page).last()).toContainText('2 (question): yes');
+    await expect(mine(page).last()).toContainText('2 (question): ✓');
     await expect(status(page)).toHaveText('Status: Ready');
   } finally {
     srv.fake.mode('replay');

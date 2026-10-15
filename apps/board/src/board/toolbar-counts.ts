@@ -1,5 +1,5 @@
 // What the toolbar and its panels read from the board as drawn, set on the shell after each draw:
-// the open, decided and later counts, the Reply text, the container finder's rows (containerFinder
+// the open, answered and later counts, the Reply text, the container finder's rows (containerFinder
 // flag), how many cards the person answered, the grant requests and the board's holders (agentAccess
 // flag) and how many cards are flagged (cardFlag flag, the "N flagged" chip). Split out of
 // controller.ts (field report batch 2).
@@ -17,7 +17,7 @@ export interface ToolbarFlags { finder: boolean; access: boolean }
 export function showCounts(data: BoardData, view: View, layout: BoardLayout | null, flags: ToolbarFlags, flagged: number): void {
   const st = data.state;
   const c = counts(view, st);
-  shell.counts = { open: c.open, decided: c.decided, later: c.later };
+  shell.counts = { open: c.open, answered: c.answered, later: c.later };
   shell.replyText = replyText(view, st);
   shell.containers = flags.finder ? containerRows(view, layout) : [];
   shell.answered = view.nodes.filter((n) => n.n !== undefined && st.items.has(n.id)).length;

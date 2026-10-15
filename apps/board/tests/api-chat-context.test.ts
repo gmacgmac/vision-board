@@ -63,7 +63,7 @@ test('one message: the words, "The person selected these cards:", then the answe
   assert.equal(round[0], ROUND_HEAD);
   assert.match(round[1]!, /^Board "Pricing options" \(v\d+\)$/);
   // The seed's own comment on q and Later on d had no Send yet: this message is the first to tell them.
-  assert.equal(round.findIndex((l) => l.startsWith(`${q} (question): yes`)), 2, 'card order, q first');
+  assert.equal(round.findIndex((l) => l.startsWith(`${q} (question): ✓`)), 2, 'card order, q first');
   assert.match(round.find((l) => l.startsWith(`${d} `))!, /^\d+ \(decision\): .*After the launch\.$/);
   assert.equal(round.at(-1), headLine(head));
   assert.equal(parts.at(-1), 'Board: pricing');
@@ -139,7 +139,7 @@ test('while the agent works: words alone are refused; with something attached it
     const parts = given.prompt.split('\n\n');
     assert.deepEqual(parts.slice(0, 2), ['And this one.', `${SELECTED_HEAD}\n- Card ${d}: Choose the launch price`]);
     assert.match(given.prompt, new RegExp(`^${q} \\(question\\): .*Per seat, then\\.$`, 'm'));
-    assert.match(given.prompt, new RegExp(`^${d} \\(decision\\): drop`, 'm'), 'built when it went: the drop after the first wait is in');
+    assert.match(given.prompt, new RegExp(`^${d} \\(decision\\): ✗`, 'm'), 'built when it went: the ✗ after the first wait is in');
     const events = await readChat(h.base, h.cookie, session, turns(runs));
     assert.equal(events.filter((e) => e.text === QUEUED_WORDS).length, 1);
     assert.equal(sends(), before + 1, 'recorded once, when it went');

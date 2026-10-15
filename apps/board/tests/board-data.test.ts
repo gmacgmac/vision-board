@@ -5,7 +5,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerEvent, LedgerLine } from '../../../packages/format/src/index.ts';
 import { fromLine } from '../../../packages/format/src/index.ts';
-import { applyEvent, eventBoard, foldLedger } from '../../../packages/actions/src/index.ts';
+import { applyEvent, eventBoard, foldLedger, itemsOut } from '../../../packages/actions/src/index.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { boardData, canApply, pageConditions } from '../src/board/board-data.ts';
@@ -26,12 +26,13 @@ async function allLines(): Promise<LedgerEvent[]> {
   }
 }
 
-/** `BoardData` in the JSON shape `get_board` answers with. */
+/** `BoardData` in the JSON shape `get_board` answers with: the page keeps the stored statuses, and
+ * `get_board` names them at the edge (`itemsOut`, api.md 147). */
 const asJson = (d: BoardData) => ({
   head: d.head,
   view: d.view,
   state: {
-    items: Object.fromEntries(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
+    items: itemsOut(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
     ...(d.state.sizes.size > 0 && { sizes: Object.fromEntries(d.state.sizes) }),
     ...(d.state.moves.size > 0 && { moves: Object.fromEntries(d.state.moves) }),
     ...(d.state.regionNotes.size > 0 && {

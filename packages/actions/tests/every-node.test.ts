@@ -1,6 +1,6 @@
 // Every node is part of the conversation (every-node BE_02, PLAN rulings 2-6, api.md 120): the kind
-// decides which cards can be decided (✓, ✗ or a comment on a question, decision or action); a
-// comment or more context on any card is owed an answer, a Later on any card a handover; NEW,
+// decides which cards can be answered (✓ or ✗ on a question, decision or action; a note never
+// answers, D-045); a note on any card is owed an answer, a Later on any card a handover; NEW,
 // updates and awaiting are on every card; counts and `list_open` are over the cards that need an
 // answer plus anything owed; `show_node` gives every card's status.
 import { test } from 'node:test';
@@ -23,25 +23,25 @@ const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendatio
 const rows = (l: ReturnType<typeof cards>, kind: ConditionKind) =>
   conditionsOf(l.state(), { board: 'b' }).filter((c) => c.kind === kind).map((c) => c.id);
 
-test('decided: ✓, ✗ or a comment decides a card that needs an answer; nothing decides any other card', () => {
-  assert.deepEqual([...DECIDED].sort(), ['acknowledged', 'commented', 'dropped']);
-  assert.equal(isDecided('question', 'commented'), true);
+test('answered: ✓ or ✗ answers a card that needs an answer; nothing answers any other card (D-045)', () => {
+  assert.deepEqual([...DECIDED].sort(), ['acknowledged', 'dropped']);
+  assert.equal(isDecided('question', 'commented'), false, 'a note never answers a card');
   assert.equal(isDecided('decision', 'acknowledged'), true);
-  assert.equal(isDecided('action', 'context'), false, 'more context keeps it open');
+  assert.equal(isDecided('action', 'context'), false);
   assert.equal(isDecided('finding', 'commented'), false);
   assert.equal(isDecided('risk', 'acknowledged'), false, 'an old board\'s ✓ on a risk decides nothing (ruling 8)');
 });
 
-test('counts: a comment on a question decides it; one on a finding counts nowhere', () => {
+test('counts: a comment on a question leaves it open; one on a finding counts nowhere (D-045)', () => {
   const l = cards();
   l.act({ action: 'comment', n: 1, ver: 1, text: 'Yes, go.' });
   l.act({ action: 'comment', n: 5, ver: 1, text: 'Noted.' });
   l.act({ action: 'later', n: 6, ver: 1 });
   const s = l.state();
-  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 3, decided: 1, later: 0, open: 2 });
+  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 3, answered: 0, later: 0, open: 3 });
 });
 
-test('owed: a comment on a question decides it and is still owed a reply (ruling 5); ✓ ends it', () => {
+test('owed: a comment on a question is owed a reply (ruling 5); a ✓ after it ends it', () => {
   const l = cards();
   const ask = l.act({ action: 'comment', n: 1, ver: 1, text: 'Why this one?' });
   assert.deepEqual(pendingItems(l.state(), 'b'), [{ n: 1, ask: { kind: 'comment', seq: ask } }]);
@@ -94,14 +94,15 @@ test('list_open: open cards that need an answer, plus any card owing an answer o
   l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: asked });
   l.agent(A, { type: 'reply', n: 5, text: 'The audit.', to: noted });
   l.agent(A, { type: 'park', n: 6, bundle });
-  assert.deepEqual(open(), [[2, 'open', null], [3, 'open', null]], 'answered: a decided question and plain cards leave the list');
+  assert.deepEqual(open(), [[1, 'open', null], [2, 'open', null], [3, 'open', null]],
+    'answered notes: the question is open again (a note never answers it, D-045), plain cards leave the list');
 });
 
 test('show_node: every card has a status', () => {
   const l = cards();
   l.act({ action: 'context', n: 5, ver: 1 });
   const s = l.state();
-  assert.equal(nodeDetail(s, 5)?.status, 'context');
+  assert.equal(nodeDetail(s, 5)?.status, 'commented', 'an old More context reads as a note (D-045)');
   assert.equal(nodeDetail(s, 6)?.status, 'open');
   assert.equal(nodeDetail(s, 1)?.status, 'open');
 });

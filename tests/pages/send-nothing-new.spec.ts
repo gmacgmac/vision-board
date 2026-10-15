@@ -134,7 +134,7 @@ test('keyboard: Send stays in the tab order while disabled, Enter does nothing; 
   const card = page.locator(`vb-node[data-id="${d.n}"]`);
   await card.focus();
   await page.keyboard.press('a');
-  await expect(card).toHaveAttribute('aria-label', /Acknowledged/);
+  await expect(card).toHaveAttribute('aria-label', /, checked$/);
   await expect(send(page)).toHaveAttribute('data-state', 'idle');
   await tabTo(page, send(page));
   await page.keyboard.press('Enter');

@@ -97,7 +97,7 @@ async function asPerson<T>(run: () => Promise<T>): Promise<T> {
  * to. Every board mark does (archive, restore, lock, unlock). */
 const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', ...BOARD_MARKS]);
 /** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
-const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'context', 'note-edit', 'note-remove', 'pin', 'unpin']);
+const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'note-edit', 'note-remove', 'pin', 'unpin']);
 const namesBoard = (f: ActFields) =>
   NAMES_BOARD.has(f.action) || (CONTAINER_ACTS.has(f.action) && f.region !== undefined && f.n === undefined);
 

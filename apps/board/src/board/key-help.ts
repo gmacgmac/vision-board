@@ -2,11 +2,10 @@
 // table (commands.ts `COMMANDS`) and the action registry (`ACTIONS`), so a command or action with a
 // key cannot be left out. Every group takes the commands `GROUP_OF` assigns it (a Record over every
 // command id, so adding a command without a group fails the type check) and Items takes every
-// registry action that has a key, naming the words it reads on some kinds (packages/actions action-words.ts). `OTHER`
+// registry action that has a key, by its registry label. `OTHER`
 // holds only the inputs neither table owns: moving between cards, Space, Alt+arrows, H, and the
 // pointer gestures.
-import type { ActionId } from '../../../../packages/format/src/index.ts';
-import { ACTIONS, otherWords } from '../../../../packages/actions/src/index.ts';
+import { ACTIONS } from '../../../../packages/actions/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
 
@@ -31,7 +30,7 @@ const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
 const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
   Items: [['Next / previous card', ['J', 'K']], ['Move the card', ['Alt+arrows']], ['Reset the card\'s place', ['R']]],
   Selection: [['Select the card', ['Space']], ['Select more', ['Shift+click']], ['Lasso', ['Shift+drag']]],
-  Board: [['Hide decided', ['H']], ['Move a container', ['Alt+arrows']], ['Pan', ['Drag the background']]],
+  Board: [['Hide answered', ['H']], ['Move a container', ['Alt+arrows']], ['Pan', ['Drag the background']]],
   View: [['Zoom', ['Ctrl+scroll']], ['This list', ['?']]],
 };
 
@@ -40,17 +39,11 @@ const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the c
 /** The flag's key (cardFlag flag, flag-flow.ts): in Items, with the flag on. */
 const FLAG_ROW: readonly [label: string, keys: string[]] = ['Flag or unflag the card', ['Shift+F']];
 
-/** An action's label with the words it reads on some kinds: "Acknowledge (Yes, Done)" (every-node ruling 3). */
-const withWords = (a: ActionId, label: string): string => {
-  const words = otherWords(a);
-  return words.length ? `${label} (${words.join(', ')})` : label;
-};
-
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel
  * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove is not listed). */
 export function keyGroups({ chat = false, flag = false, remove = true }: { chat?: boolean; flag?: boolean; remove?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
-    .map((a) => ({ id: `action:${a.id}`, label: withWords(a.id, a.label), keys: [a.key!.toUpperCase()] }));
+    .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
   const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length && (remove || id !== 'remove'))
     .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label, keys: COMMANDS[id].keys.map(keyText) }));
   return KEY_GROUPS.map((group) => ({

@@ -3,7 +3,7 @@
   "$id": "https://vision-board.invalid/schema/api/check-responses-response.schema.json",
   "title": "The person's responses",
   "description": "The person's actions after `after` (stored `act` lines, which include `grant` and `deny` answers to the caller's requests), each batch up to a Send sorted by card number. `more` is true when `limit` cut the list, which it cuts in ledger order: read the rest with `after` set to the highest `seq` in `responses`. A wait that timed out answers `{ responses: [], head }`.",
-  "$comment": "Was: api.md 31, 43, 120, 121",
+  "$comment": "Was: api.md 31, 43, 120, 121, 144",
   "type": "object",
   "required": [
     "responses",
@@ -15,7 +15,7 @@
       "items": {
         "$ref": "https://vision-board.invalid/schema/api/check-responses-response.schema.json#/$defs/reported"
       },
-      "description": "The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made. A ✓ or ✗ on a question or an action carries `means`, the word it says there (`yes`, `no`, `done`)."
+      "description": "The person's actions after `after`. Each batch, up to and ending with its Send, is sorted by card number: a note on a group at its lowest card, a note on or the layout of a whole container at the lowest card in it (first when it holds none), grant answers after the cards; acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's two marks, which mean what the card you wrote asks. Each card's ✓, ✗, Later and clear (`reopen`) come folded to its latest, and only when it leaves the card otherwise than it was at `after`; notes come one by one."
     },
     "head": {
       "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/head"
@@ -27,8 +27,59 @@
   "unevaluatedProperties": false,
   "$defs": {
     "reported": {
+      "description": "One stored `act` line as the agent reads it: ✓ and ✗ as `mark`, every other act as stored (`act`).",
+      "anyOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/api/check-responses-response.schema.json#/$defs/mark"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/api/check-responses-response.schema.json#/$defs/act"
+        }
+      ]
+    },
+    "mark": {
       "type": "object",
-      "description": "One stored `act` line as the agent reads it, plus `means` on a ✓ or ✗ whose card's kind gives it a word.",
+      "description": "The person's ✓ (`check`) or ✗ (`cross`) on a card: a stored `ack` or `drop` line named at the edge. They carry no meaning of their own; the card says what each one means. With `proposal`, it accepts that proposal.",
+      "required": [
+        "type",
+        "action",
+        "n",
+        "ver"
+      ],
+      "properties": {
+        "type": {
+          "const": "act"
+        },
+        "action": {
+          "enum": [
+            "check",
+            "cross"
+          ],
+          "description": "`check` for ✓, `cross` for ✗."
+        },
+        "n": {
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/core/properties/n"
+        },
+        "ver": {
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/core/properties/ver"
+        },
+        "proposal": {
+          "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/core/properties/proposal"
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stamp"
+        },
+        {
+          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stampAgent"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "act": {
+      "type": "object",
+      "description": "Any other stored `act` line, as stored.",
       "required": [
         "type"
       ],
@@ -36,13 +87,33 @@
         "type": {
           "const": "act"
         },
-        "means": {
+        "action": {
+          "description": "Which action the person took: every one but ✓ and ✗, which come as `mark`.",
           "enum": [
-            "yes",
-            "no",
-            "done"
-          ],
-          "description": "What the ✓ or ✗ means on its card's kind: `yes` (✓) or `no` (✗) on a question, `done` (✓) on an action. Left out wherever the act means itself, such as ✗ on an action or ✓ on a finding. Not stored in the ledger."
+            "comment",
+            "context",
+            "later",
+            "reopen",
+            "pin",
+            "unpin",
+            "mode",
+            "grant",
+            "deny",
+            "revoke",
+            "size",
+            "send",
+            "note-edit",
+            "note-remove",
+            "move",
+            "reject",
+            "flag",
+            "unflag",
+            "widths",
+            "archive",
+            "restore",
+            "lock",
+            "unlock"
+          ]
         }
       },
       "allOf": [

@@ -13,13 +13,13 @@ const board = (): BoardState =>
 test('no new fact: no NEW, the name as before', () => {
   assert.equal(nodeState(r, board()).fresh, undefined);
   assert.equal(nodeState(r, board(), undefined, false, { new: false }).fresh, undefined);
-  assert.equal(nodeState(r, board()).label, 'Item 44, Risk: The floor undercuts self-serve, Open');
+  assert.equal(nodeState(r, board()).label, 'Item 44, Risk: The floor undercuts self-serve');
 });
 
 test('a new card: the name ends ", new"', () => {
   const st = nodeState(r, board(), undefined, false, { new: true });
   assert.equal(st.fresh, true);
-  assert.equal(st.label, 'Item 44, Risk: The floor undercuts self-serve, Open, new');
+  assert.equal(st.label, 'Item 44, Risk: The floor undercuts self-serve, new');
 });
 
 test('new comes after the other words in the name', () => {

@@ -17,7 +17,7 @@ export function titleSamples(body: HTMLElement, fx: Fixture): void {
     const f = document.createElement('vb-region') as VbRegionElement;
     f.render(region);
     f.update(regionState(region, fx.view, fx.state, new Set()));
-    // The sample holds no cards, and its title is the subject: no "Everything here is decided."
+    // The sample holds no cards, and its title is the subject: no "Everything here is answered."
     f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
     f.toggleAttribute('data-title-tip-open', OPEN.has(region.id));
     frames.append(f);

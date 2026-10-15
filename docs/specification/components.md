@@ -393,9 +393,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    only (`shell/ButtonIcon.svelte`) and the counts, with the "boards updated" chip, show their
    numbers only; the words stay for screen readers and the title tooltip says them.
 5. **Toolbar icons and the "⋯" menu** (`toolbarMenu` flag, on by default; task
-   `cortex-tasks/board/2026-10-09_board-app_toolbar-icons-menu.md`). Theme, Hide decided and Reply
-   move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`): rows with their icon and
-   key, Hide decided a `menuitemcheckbox`; a click or Enter opens it and focuses the first row; Up,
+   `cortex-tasks/board/2026-10-09_board-app_toolbar-icons-menu.md`). Theme, Hide answered (Hide
+   decided before D-045) and Reply move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`):
+   rows with their icon and key, Hide answered a `menuitemcheckbox`; a click or Enter opens it and focuses the first row; Up,
    Down, Home, End, Esc (focus back on "⋯") and Tab are the Move to list's keys, one helper for both
    (`board/menu-keys.ts`); a press outside or a choice closes it; H works on the board and in the
    menu. Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
@@ -428,27 +428,57 @@ Task set `cortex-tasks/board/2026-10-10_board-actions_every-node/` (rulings 1-4,
 behind the `everyNode` flag (on by default; `?flags=-everyNode`).
 
 1. **Numbers and buttons from the kind.** Every card shows its number; `offers` reads
-   `NODE_TYPES[kind].actions`, so a question, decision or action draws ✓, ✗, Comment, More context
-   and Later, and every other kind Comment, More context and Later. Off, `numberedView`
+   `NODE_TYPES[kind].actions`, so a question, decision or action draws ✓, ✗, Comment and Later, and
+   every other kind Comment and Later (More context is gone, D-045). Off, `numberedView`
    (`apps/board/src/board/board-data.ts`) drops the number from cards that need no answer, so they
    draw with no number, buttons or tabs and take no note.
-2. **One meaning, the card's words.** `packages/actions/src/action-words.ts` (`MEANINGS`,
-   `actionWord`) is the one table of what a button means on a kind: ✓ and ✗ say "Yes" and "No" on a
-   question, ✓ "Done" on an action, in their tooltips; the accessible name keeps the registry's word.
-   The key help lists "Acknowledge (Yes, Done)" and "Drop (No)" from the same table, and the agent
-   reads the same words (`means` in `check_responses`, the numbered reply; api.md 121).
+2. **No meaning on ✓ and ✗** (superseded by D-045; was one meaning per kind, `action-words.ts`,
+   now deleted). See "The answer model" below.
 3. **Comment on any group.** The selection's Comment takes every selected card, any kinds: one note
    on exactly those cards (`selection-flow.ts` `comment`); one card alone is its own note.
 4. **Counts and states.** The toolbar and container counts count only cards that need an answer
-   (`counts`, `regionState`); a plain card's comment, more context or Later shows its usual state
-   token on the card and counts nowhere. No new colour.
-5. **Hide decided** keeps a decided card while the agent owes it an answer (`item.owed`, read into
-   `pageConditions` `owedCards`), so the reply lands where the person can see it; it hides once
-   nothing is owed (`decidedIds`).
+   (`counts`, `regionState`); a plain card's note or Later lights its button and counts nowhere,
+   and since D-045 shows no status word. No new colour.
+5. **Hide answered** (Hide decided before D-045) keeps an answered card while the agent owes it an
+   answer (`item.owed`, read into `pageConditions` `owedCards`), so the reply lands where the person
+   can see it; it hides once nothing is owed (`answeredIds`).
 6. Tests: `tests/pages/every-node.spec.ts` (numbers, tooltips, a plain card commented by key, a
    lasso of mixed cards commented once, counts, hide while owed, the flag off, axe light and dark);
    the gallery's node section shows the cards that ask and the cards that tell in every status each
    can reach.
+
+## The answer model (answer-model FE_01, D-045)
+
+Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-5, 7, 8; api.md 144-146).
+
+1. **✓ and ✗ are tools.** The buttons are named Check and Cross (registry labels, `buttonLabel`:
+   "Check item 12 (A)", tooltip "Check · a"); the board never says what they mean, the card does.
+   Lit, the mark shows in its state colour and no word follows it in the footer (`STATUS_LABEL` has
+   none for `acknowledged` or `dropped`, and the divider hides with no word, `node.css`); the
+   accessible name says "checked" or "crossed" (`STATUS_NAME`). ✗ no longer fades the card or strikes
+   its title through.
+2. **"Answered", never "decided".** The toolbar reads "N open · N answered · N later" (`shell.counts`,
+   `toolbar-counts.ts`), a container "N of M answered" (`regionState`), an emptied frame "Everything here
+   is answered.", and the H toggle "Hide answered" (`answeredIds`).
+3. **Only cards that ask show a status** (`asksAnswer` in `node-core.ts` reads
+   `NODE_TYPES[kind].answer`): a finding, risk, topic or note has no status word and none in its
+   name, whatever its state; its lit Later and its note pin still show.
+4. **One way to write back.** No card, container or selection offers More context, and M is no key.
+   An old `context` note reads as "Your note" everywhere (`KIND_WORD`, the bubble's placeholder).
+5. **The agent's answer clears the card** (`ItemState.unseenAnswer`, from the action layer): the card
+   is open and unmarked, and the reply is one update of its own on the "N updates" tab, the marker a
+   new version gets (`updates.ts` `unseenCount`, `unseenSteps`: a step "Reply · when · who" with its
+   words, at the card's latest version). Selecting the card or stepping past the reply sends the card
+   seen line that ends it (`seenDue`: due although that version was seen). An answer by a new version
+   is that version's step.
+6. **A lit button clears.** Pressing a lit ✓, ✗ or Later records `reopen` and the toast says
+   "12 cleared"; ✗ while ✓ is lit switches straight to ✗; a second press of the same button on the
+   same card within 400 ms (`REPEAT_MS`) is ignored (`item-acts.ts`).
+7. Tests: `packages/ui/tests/node-core.test.ts`, `apps/board/tests/item-acts.test.ts`,
+   `updates.test.ts`, `every-node-page.test.ts`; `tests/pages/answer-model.spec.ts` (names, no M,
+   ✗ at full opacity, clear and switch, the double click, the header, a card the agent's answer
+   cleared, keyboard, axe light and dark). The gallery's node matrices have rows for ✓ Checked,
+   ✗ Crossed and "Answered by the agent".
 
 ## Field report, batch 1 (2026-10-11)
 

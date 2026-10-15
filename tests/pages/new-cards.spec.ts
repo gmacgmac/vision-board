@@ -75,12 +75,12 @@ test('a fresh board shows no NEW; a card the agent adds later shows NEW live, as
   await open(page, d);
   await expect(tag(page, a)).toBeHidden();
   await expect(tag(page, b)).toBeHidden();
-  await expect(card(page, a)).toHaveAttribute('aria-label', /, Open$/);
+  await expect(card(page, a)).toHaveAttribute('aria-label', /Risk: Card \d+$/);
   const c = await add(request, d, 'Card 3');
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(tag(page, c)).toBeVisible();
   await expect(tag(page, c)).toHaveText('NEW');
-  await expect(card(page, c)).toHaveAttribute('aria-label', /, Open, new$/);
+  await expect(card(page, c)).toHaveAttribute('aria-label', /Risk: Card \d+, new$/);
   await expect(tag(page, a)).toBeHidden();
   // Not a button: it is not in the tab order and holds nothing to press.
   expect(await tag(page, c).evaluate((e) => e.tagName)).toBe('SPAN');
@@ -97,7 +97,7 @@ test('selecting a NEW card sends its seen line and takes the tab away; a second 
   await expect(card(page, c)).toHaveAttribute('data-selected', '');
   await expect(tag(page, c)).toBeHidden();
   await expect.poll(() => seenAfter(page, before, d.board)).toEqual([[c, 1]]);
-  await expect(card(page, c)).toHaveAttribute('aria-label', /, Open, selected$/);
+  await expect(card(page, c)).toHaveAttribute('aria-label', /Risk: Card \d+, selected$/);
   await card(page, c).locator('.vb-node-title').click();
   await page.evaluate(() => (window as unknown as { __vbWork?: { idle(): Promise<void> } }).__vbWork?.idle());
   expect(await seenAfter(page, before, d.board)).toEqual([[c, 1]]);
@@ -117,7 +117,7 @@ test('after a Send and a new drawing, the older NEW goes and only the newer card
   const newer = await add(request, d, 'Card 3');
   await expect(tag(page, newer)).toBeVisible();
   await expect(tag(page, older)).toBeHidden();
-  await expect(card(page, older)).toHaveAttribute('aria-label', /, Open$/);
+  await expect(card(page, older)).toHaveAttribute('aria-label', /Risk: Card \d+$/);
 });
 
 test('flag off: no NEW tab and the name does not say new', async ({ page, request }) => {
@@ -126,7 +126,7 @@ test('flag off: no NEW tab and the name does not say new', async ({ page, reques
   const c = await add(request, d, 'Card 2');
   await expect(page.locator('vb-node')).toHaveCount(2);
   await expect(tag(page, c)).toBeHidden();
-  await expect(card(page, c)).toHaveAttribute('aria-label', /, Open$/);
+  await expect(card(page, c)).toHaveAttribute('aria-label', /Risk: Card \d+$/);
 });
 
 test('a past version shows no NEW tab', async ({ page, request }) => {

@@ -35,10 +35,10 @@ export function toolbarSection(fx: Fixture): HTMLElement {
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'ToolbarEnd · ToolbarMenu'), ' · feature flag toolbarMenu, on by default · off with ?flags=-toolbarMenu');
   box.append(heading,
-    el('p', 'g-desc', 'The end of the toolbar: zoom, Agents with its holder count, Send to agent, Chat, then "⋯", a menu holding Theme, Hide decided and Reply. Nothing in the toolbar is cut off from a 768px window up.'),
+    el('p', 'g-desc', 'The end of the toolbar: zoom, Agents with its holder count, Send to agent, Chat, then "⋯", a menu holding Theme, Hide answered and Reply. Nothing in the toolbar is cut off from a 768px window up.'),
     meta,
     group('Wide', 'A window wider than 1500px: the buttons show their words.', sample(fx, false, 100)),
     group('Narrow', 'A window of 1500px or less: Agents, Send to agent and Chat show their icon (Agents with its count); the words stay for screen readers and the tooltip says them.', sample(fx, true, 75)),
-    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide decided is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, 250, true)));
+    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide answered is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, 250, true)));
   return box;
 }

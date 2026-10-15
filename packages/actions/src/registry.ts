@@ -4,16 +4,38 @@
 import type { ActionId, Kind } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
 
+/** Where a card stands with the person. `commented`: a note waits for the agent, and the card is
+ * still open. `context` is no longer reached: an old More context reads as a note (D-045). */
 export type ItemStatus = 'open' | 'acknowledged' | 'dropped' | 'commented' | 'context' | 'later';
-/** The statuses that decide a card that needs an answer (every-node ruling 3, api.md 120): ✓, ✗
- * or a comment. More context keeps it open. A card of any other kind is never decided. */
-export const DECIDED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped', 'commented']);
-/** The statuses that close a card outright, ✓ or ✗ (on an old board, any kind, ruling 8): nothing is
- * owed on it and its proposals end. A comment decides but stays owed an answer (ruling 5). */
+/** The statuses that answer a card that needs an answer, and close it, ✓ or ✗ (D-045): nothing is
+ * owed on the answer and its proposals end. A note never answers a card, so a card with a note is
+ * still open and its note still owed. On an old board ✓ or ✗ closes a card of any kind too
+ * (every-node ruling 8), but only a card that needs an answer counts as answered (`isDecided`). */
 export const CLOSED: ReadonlySet<ItemStatus> = new Set(['acknowledged', 'dropped']);
+/** The same set as `CLOSED` (D-045): what "answered" counts. */
+export const DECIDED: ReadonlySet<ItemStatus> = CLOSED;
 
-/** Whether a card of `kind` in `status` is decided: only a card that needs an answer can be. */
+/** Whether a card of `kind` in `status` is answered: only a card that needs an answer can be. */
 export const isDecided = (kind: Kind, status: ItemStatus): boolean => NODE_TYPES[kind].answer && DECIDED.has(status);
+
+/** How `check_responses` names an act to the agent (D-045, the API edge, like the format's
+ * `toLine`): ✓ is `check` and ✗ is `cross`, tools with no meaning of their own; the card the agent
+ * wrote says what they mean. Every other action keeps its id. The ledger keeps `ack` and `drop`. */
+export const ACTION_OUT = { ack: 'check', drop: 'cross' } as const satisfies Partial<Record<ActionId, string>>;
+/** An action as the agent reads it. */
+export type ReportedAction = Exclude<ActionId, keyof typeof ACTION_OUT> | (typeof ACTION_OUT)[keyof typeof ACTION_OUT];
+export const actionOut = (a: ActionId): ReportedAction => (a in ACTION_OUT ? ACTION_OUT[a as keyof typeof ACTION_OUT] : a as ReportedAction);
+/** `ACTION_OUT` read the other way, for what an agent sends (`propose`'s `check` or `cross`). */
+const ACTION_IN = Object.fromEntries(Object.entries(ACTION_OUT).map(([id, word]) => [word, id])) as Record<string, ActionId>;
+/** The stored id for an action word an agent sent; any other word is returned as it came. */
+export const actionIn = (word: string): string => (Object.hasOwn(ACTION_IN, word) ? ACTION_IN[word]! : word);
+
+/** How every agent read names a card's status (D-045, the API edge, beside `ACTION_OUT`): ✓ is
+ * `checked` and ✗ `crossed`. The page and the ledger keep `acknowledged` and `dropped`. */
+export const STATUS_OUT = { acknowledged: 'checked', dropped: 'crossed' } as const satisfies Partial<Record<ItemStatus, string>>;
+/** A status as the agent reads it. */
+export type ReportedStatus = Exclude<ItemStatus, keyof typeof STATUS_OUT> | (typeof STATUS_OUT)[keyof typeof STATUS_OUT];
+export const statusOut = (s: ItemStatus): ReportedStatus => (s in STATUS_OUT ? STATUS_OUT[s as keyof typeof STATUS_OUT] : s as ReportedStatus);
 
 /** What every registry entry says, for people and agents alike. */
 interface Common {
@@ -42,10 +64,13 @@ const person = { by: 'person', needsConfirmation: false } as const;
 const decision = { by: 'person', needsConfirmation: true } as const;
 
 export const ACTIONS: Record<ActionId, ActionDef> = {
-  ack: { id: 'ack', label: 'Acknowledge', key: 'a', ...decision, onItem: true, status: 'acknowledged', reply: 'ok' },
-  drop: { id: 'drop', label: 'Drop', key: 'x', ...decision, onItem: true, status: 'dropped', reply: 'drop' },
+  // ✓ and ✗ are named for what they are, Check and Cross, never for a meaning (D-045).
+  ack: { id: 'ack', label: 'Check', key: 'a', ...decision, onItem: true, status: 'acknowledged', reply: '✓' },
+  drop: { id: 'drop', label: 'Cross', key: 'x', ...decision, onItem: true, status: 'dropped', reply: '✗' },
   comment: { id: 'comment', label: 'Comment', key: 'c', ...person, onItem: true, text: 'required', reply: 'comment' },
-  context: { id: 'context', label: 'More context', key: 'm', ...person, onItem: true, text: 'optional', status: 'context', reply: 'more context' },
+  // Kept so old lines read and the server still takes one (D-045): no card offers it, no key presses
+  // it, and it reads as a note everywhere (notes.ts `itemOf`).
+  context: { id: 'context', label: 'More context', ...person, onItem: true, text: 'optional', reply: 'comment' },
   later: { id: 'later', label: 'Save for later', key: 'l', ...decision, onItem: true, status: 'later', reply: 'saved for later' },
   reopen: { id: 'reopen', label: 'Reopen', key: 'o', ...person, onItem: true, status: 'open' },
   pin: { id: 'pin', label: 'Move', ...person, onItem: false },
@@ -84,10 +109,14 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   unlock: { id: 'unlock', label: 'Unlock board', ...person, onItem: false },
 };
 
-/** The review buttons an item offers. */
-export const ITEM_ACTIONS: readonly ActionId[] = ['ack', 'drop', 'comment', 'context', 'later'];
+/** The review buttons an item offers: an act among them must be one its kind offers (act.ts). */
+export const ITEM_ACTIONS: readonly ActionId[] = ['ack', 'drop', 'comment', 'later'];
 
-/** Whether a person act is an answer: an act on an item (✓, ✗, a note, More context, Later, Reopen,
+/** The acts that set a card's mark outright: ✓, ✗, Later and clear (`reopen`). The agent reads
+ * each card's latest one, not every click (pending.ts, D-045). */
+export const MARK_ACTIONS: ReadonlySet<ActionId> = new Set(['ack', 'drop', 'later', 'reopen']);
+
+/** Whether a person act is an answer: an act on an item (✓, ✗, a note, Later, Reopen,
  * a note changed or removed, a proposal turned down) or a note on a whole container. What the Send
  * message carries (pending.ts `replyScope`) and what Send waits for (conditions `board.unsent`). */
 export const isAnswer = (action: ActionId): boolean => ACTIONS[action].onItem;

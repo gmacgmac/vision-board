@@ -35,7 +35,7 @@ const SAMPLES: Sample[] = [
     bubble: { mode: 'new', kind: 'comment' }, stage: { w: 760, h: 300, x: 24, y: 24 } },
   { caption: 'Editing, flipped left at the board\'s right edge', title: 'A note not yet sent',
     bubble: { mode: 'edit' }, stage: { w: 760, h: 300, x: 420, y: 24 } },
-  { caption: 'Below, when neither side fits', title: 'More context, not yet sent',
+  { caption: 'Below, when neither side fits', title: 'An old More context, read as a note',
     bubble: { mode: 'edit' }, stage: { w: 400, h: 300, x: 24, y: 24 } },
   { caption: 'Saving', title: 'Two sent notes and one not yet sent', phase: 'saving',
     bubble: { mode: 'edit' }, stage: { w: 760, h: 300, x: 24, y: 24 } },

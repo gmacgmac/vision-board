@@ -62,8 +62,8 @@ test('append: a stale base, no grant, an unknown node and a body over the limit 
 });
 
 test('act: the person rejects a proposal; an out-of-date accept and a decided proposal are refused in plain words', async () => {
-  const p = await write(A, [{ type: 'propose', n, ver: 2, action: 'drop', reason: 'The client declined.' },
-    { type: 'propose', n, ver: 2, action: 'ack', reason: 'Or keep it.' }]);
+  const p = await write(A, [{ type: 'propose', n, ver: 2, action: 'cross', reason: 'The client declined.' },
+    { type: 'propose', n, ver: 2, action: 'check', reason: 'Or keep it.' }]);
   const [drop, ack] = p.results.map((x: any) => x.seq);
   const act = (b: object) => ({ board: 'notes', body: { type: 'act', ...b } });
   const rejected = await h.ok('act', act({ action: 'reject', n, proposal: drop }));
@@ -80,7 +80,7 @@ test('act: the person rejects a proposal; an out-of-date accept and a decided pr
 
 test('propose: only on a card that needs an answer; on any other kind it fails in plain words (api.md 120)', async () => {
   const before = h.ledger.state().seq;
-  const r = await write(A, [{ type: 'propose', n: bare, ver: 2, action: 'ack', reason: 'Done.', key: 'p-note' }]);
+  const r = await write(A, [{ type: 'propose', n: bare, ver: 2, action: 'check', reason: 'Done.', key: 'p-note' }]);
   assert.deepEqual(codes(r), ['invalid']);
   assert.deepEqual(r.results[0].problem.errors, [{ pointer: '/items/0/n', detail: `node ${bare} is a note, which asks for no answer` }]);
   assert.match(r.results[0].problem.detail, /question, decision or action/);

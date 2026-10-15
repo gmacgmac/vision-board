@@ -1,6 +1,7 @@
 // One board as the page reads it beside `boardView` (packages/format): the person's responses,
 // pins, sizes, moves, modes, card widths, container places and notes, the person's flags and the lock, keyed like the
-// View, by node id = the card's board number as text (api.md 125). Cards retired from the board
+// View, by node id = the card's board number as text (api.md 125); a card the agent's answer cleared
+// and the person has not looked at since carries `unseenAnswer` (clears.ts, D-045). Cards retired from the board
 // are left out (api.md 127). `get_board` sends all of it but the flags (api.md 128). Pure.
 import type { Mode, NodeSize, View, Widths } from '../../format/src/index.ts';
 import { containerKey, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
@@ -15,6 +16,7 @@ import { noteOut, numberOf } from './numbers.ts';
 import { placeOf } from './references.ts';
 import type { ItemStatus } from './registry.ts';
 import { DECIDED } from './registry.ts';
+import { unseenAnswer } from './clears.ts';
 
 /** The person's responses for one board, keyed by node id (`String(n)`, the board number), as the
  * page reads it. `moves`: the container the person put a card in, for each card not where the agent
@@ -52,7 +54,7 @@ export function boardState(s: LedgerState, board: string): BoardState {
     const item = s.items.get(id);
     const pin = s.pins.get(id);
     const size = s.sizes.get(id);
-    if (item) out.items.set(key, { status: item.status, notes: sentNotes(s, board, item.notes).map((x) => noteOut(s, x)) });
+    if (item) out.items.set(key, { status: item.status, notes: sentNotes(s, board, item.notes).map((x) => noteOut(s, x)), ...(unseenAnswer(s, id) && { unseenAnswer: true as const }) });
     if (pin) out.pins.set(key, pin);
     if (size) out.sizes.set(key, size);
     const place = placeOf(s, id);
@@ -64,13 +66,15 @@ export function boardState(s: LedgerState, board: string): BoardState {
 /** One item's status on a board; an item nobody has answered is open. */
 export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(id)?.status ?? 'open';
 
-/** How many of a board's cards that need an answer (api.md 118) are decided, later, still open. */
+/** How many of a board's cards that need an answer (api.md 118) are answered (✓ or ✗), later, still
+ * open: "N open · N answered · N later" (D-045). A card that only informs never counts, and a note
+ * leaves a card open. */
 export function counts(view: View, s: BoardState) {
   const items = view.nodes.filter((n) => NODE_TYPES[n.kind].answer);
   const st = items.map((n) => statusOf(s, n.id));
   return {
     total: items.length,
-    decided: st.filter((x) => DECIDED.has(x)).length,
+    answered: st.filter((x) => DECIDED.has(x)).length,
     later: st.filter((x) => x === 'later').length,
     open: st.filter((x) => !DECIDED.has(x) && x !== 'later').length,
   };

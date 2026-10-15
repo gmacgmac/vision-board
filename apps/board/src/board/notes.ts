@@ -1,4 +1,4 @@
-// Notes beside cards on the board page (2e_FE_01): C, M, the note pin and a click on a note open
+// Notes beside cards on the board page (2e_FE_01): C, the note pin and a click on a note open
 // the note bubble beside the card instead of a modal. A card holds at most one note not yet sent:
 // a press on a card that has one edits it (the press sets its kind), never adds a second. Comment
 // on a selection of two or more opens one note on the group beside the selection's box, and any of
@@ -48,7 +48,7 @@ export interface NoteDeps extends ViewDeps {
 }
 
 export interface NoteFlow {
-  /** C or M on a card: edit its note not yet sent, or start a new one of that kind. */
+  /** C on a card: edit its note not yet sent, or start a new one. */
   press(id: string, kind: NoteKind): void;
   /** Comment on two or more selected cards (3_FE_02 ruling 3): one note on the group, beside the
    *  selection's box; the group's own note not yet sent, if it has one, opens to edit. */
@@ -76,7 +76,7 @@ export interface NoteFlow {
 }
 
 /** The card's own note not yet history (`locked`: sent or answered, ruling 5), if any. A note on a group of
- * cards is not the card's own (3_FE_02 ruling 3), so C or M on the card starts its own note. */
+ * cards is not the card's own (3_FE_02 ruling 3), so C on the card starts its own note. */
 export const unsentNote = (s: BoardState, id: string): ItemNote | undefined =>
   s.items.get(id)?.notes.find((x) => !x.locked && !x.nodes);
 
@@ -266,7 +266,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     return { action: 'note-edit', ...on, note: o.note!.seq, text: words, ...(o.kind !== o.note!.kind && { kind: o.kind }) };
   }
 
-  const DONE: Record<string, string> = { comment: 'added', context: 'added', 'note-edit': 'saved', 'note-remove': 'removed' };
+  const DONE: Record<string, string> = { comment: 'added', 'note-edit': 'saved', 'note-remove': 'removed' };
 
   async function onChoice(e: Event) {
     const o = open;

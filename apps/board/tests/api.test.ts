@@ -48,7 +48,8 @@ test('get_board: open grant requests with the agent\'s label, and each region\'s
 test('show_node: every version, note, reply, proposal and link; linked=true adds the linked nodes', async () => {
   const { q, d, comment, propose } = h.seeded;
   const r = await h.ok('show_node', { board: 'pricing', n: q });
-  assert.deepEqual([r.n, r.board, r.region, r.status, r.size, r.seen], [q, 'pricing', 'options', 'commented', 's', 1]);
+  // The agent answered q's comment, so q is open again (D-045: a note never answers a card).
+  assert.deepEqual([r.n, r.board, r.region, r.status, r.size, r.seen], [q, 'pricing', 'options', 'open', 's', 1]);
   assert.deepEqual(r.versions.map((v: any) => [v.ver, v.agent, v.node.title]), [
     [1, 'a-k3m9x2pq', 'Flat fee or per seat?'], [2, 'a-k3m9x2pq', 'Flat fee or per seat? (with the numbers)']]);
   assert.deepEqual(r.notes.map((x: any) => x.text), ['Why per seat?']);
@@ -76,13 +77,14 @@ test('show_container: the region as stored, its holders and every node it has he
 });
 
 test('list_open: open cards and cards owed an answer, with pending and unseen only when they apply', async () => {
-  const { d } = h.seeded;
+  const { q, d } = h.seeded;
   const pricing = await h.ok('list_open', { board: 'pricing' });
   assert.equal(pricing.head, head());
-  // q's comment decided it and has a reply, so it is not open (api.md 120); d waits for a park
-  // bundle, and saving it for later counted as seeing it (api.md 94).
+  // q's comment has a reply, so nothing is owed on it, and q is open: a note never answers a card
+  // (D-045); its version 2 is unseen. d waits for a park bundle, and saving it for later counted as
+  // seeing it (api.md 94).
   assert.deepEqual(pricing.items.map((x: any) => [x.n, x.ver, x.status, x.pending, x.unseen]), [
-    [d, 1, 'later', 'later', undefined]]);
+    [q, 2, 'open', undefined, true], [d, 1, 'later', 'later', undefined]]);
   const roadmap = await h.ok('list_open', { board: 'roadmap' });
   assert.deepEqual(roadmap.items.find((x: any) => x.n === 1).pending, 'comment');
   assert.equal(roadmap.items.some((x: any) => x.n === 7), false, 'a topic nobody asked about is not open');
@@ -167,7 +169,8 @@ test('act and mark_seen: one stored line each, 201', async () => {
   const node = await h.ok('show_node', { board: 'pricing', n: h.seeded.q });
   assert.equal(node.seen, 2);
   const open = await h.ok('list_open', { board: 'pricing' });
-  assert.deepEqual(open.items, [], 'd acknowledged; q decided by its answered comment');
+  assert.deepEqual(open.items.map((x: any) => [x.n, x.status, x.unseen]), [[h.seeded.q, 'open', undefined]],
+    'd acknowledged; q still asks (its comment was answered, D-045), and its version 2 is seen now');
 });
 
 test('mark_seen for a board (api.md 87): stored with board and head, it moves no head; another board, a mixed body or a line not yet written is refused', async () => {

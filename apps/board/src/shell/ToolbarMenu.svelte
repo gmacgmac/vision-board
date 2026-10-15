@@ -1,4 +1,4 @@
-<!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): Theme, Hide decided,
+<!-- The toolbar's "⋯" menu (toolbarMenu flag, toolbar icons and menu ruling 2): Theme, Hide answered,
      with the alignSetting flag Centre cards (the viewer's alignment, field report batch 3 ruling 4: a
      checkbox row, off by default, kept in this browser by align.ts) and Reply, each a row with its icon and its key, with the
      archiveBoard flag (`onarchive` given) Archive board…, which asks, then archives the open board (N39
@@ -8,7 +8,7 @@
      the folder picker (FolderDialog.svelte); its tooltip names the open folder. A click or Enter on "⋯" opens it and focuses the
      first row; the keys are the Move to list's (board/menu-keys.ts): Up, Down, Home, End, Esc
      (focus back on "⋯"), Tab; a press outside or a choice closes it. H in the menu chooses Hide
-     decided, as H does on the board (keys.ts). Its look is the Move to list's (board.css). The
+     answered, as H does on the board (keys.ts). Its look is the Move to list's (board.css). The
      gallery passes `open`, `placement` 'gallery', which drops the board's ids, and `locked` to draw either row. -->
 <script lang="ts">
   import { tick } from 'svelte';
@@ -90,7 +90,7 @@
 
 <div class="vb-menu" bind:this={root}>
   <button type="button" class="vb-btn vb-menu-btn" id={board ? 'toolbar-menu' : undefined} bind:this={button}
-    title="More: Theme, Hide decided{aligning ? ', Centre cards' : ''}, Reply{onlock ? `, ${isLocked ? 'Unlock' : 'Lock'} board` : ''}{onarchive ? ', Archive board' : ''}{openFolder ? ', Open folder' : ''}" aria-label="More" aria-haspopup="menu" aria-expanded={shown}
+    title="More: Theme, Hide answered{aligning ? ', Centre cards' : ''}, Reply{onlock ? `, ${isLocked ? 'Unlock' : 'Lock'} board` : ''}{onarchive ? ', Archive board' : ''}{openFolder ? ', Open folder' : ''}" aria-label="More" aria-haspopup="menu" aria-expanded={shown}
     aria-controls="vb-menu-{uid}" onclick={() => (open ? close() : void show())}><ButtonIcon name="more" /></button>
   <div class="vb-menu-list" id="vb-menu-{uid}" role="menu" aria-label="More" tabindex="-1" hidden={!shown}
     bind:this={list} onkeydown={onkey}>
@@ -100,7 +100,7 @@
     </button>
     <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={board ? 'hide' : undefined}
       aria-checked={shell.hide} aria-keyshortcuts="h" onclick={() => choose(onhide)}>
-      <ButtonIcon name="hide" /><span class="vb-menu-label">Hide decided</span>
+      <ButtonIcon name="hide" /><span class="vb-menu-label">Hide answered</span>
       <span class="vb-menu-check" aria-hidden="true">✓</span><kbd aria-hidden="true">H</kbd>
     </button>
     {#if aligning}

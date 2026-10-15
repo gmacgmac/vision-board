@@ -130,7 +130,7 @@ test('composer: one chip for what goes from the board, opening a preview of exac
   await expect(chip).toHaveAttribute('aria-controls', (await preview.getAttribute('id'))!);
   const text = await preview.locator('pre').textContent();
   expect(text!.split('\n\n')[0]).toBe('The person selected these cards:\n- Card 7: Book the venue');
-  expect(text!.split('\n\n')[1]!.split('\n').slice(0, 3)).toEqual(['The person updated the board:', 'Board "Launch" (v4)', '2 (question): yes']);
+  expect(text!.split('\n\n')[1]!.split('\n').slice(0, 3)).toEqual(['The person updated the board:', 'Board "Launch" (v4)', '2 (question): ✓']);
   await page.keyboard.press('Space');
   await expect(chip).toHaveAttribute('aria-expanded', 'false');
   await page.keyboard.press('Enter');

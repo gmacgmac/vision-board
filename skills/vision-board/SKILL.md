@@ -1,14 +1,14 @@
 ---
 name: vision-board
-description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓, ✗, a comment, more context, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
+status: v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
 
 The board is how you and the person chat. Each point you would number in a chat reply is its own
 card. The board numbers the cards (1, 2, 3... on each board), and the person answers any card, in
-any order: ✓ or ✗ on a card that asks, a comment, More context or Later on any card. They press
+any order: ✓ or ✗ on a card that asks, a note or Later on any card. They press
 **Send** when done; you read their answers, answer, and redraw. The `vb` tools are the only way in;
 their descriptions hold the exact fields.
 
@@ -32,8 +32,8 @@ their descriptions hold the exact fields.
   person must do something the board can't show ("Done. Allow the file write to finish."). Never
   bullets, headings, numbered lists or a summary of the cards; an assumption or caveat worth
   keeping is a card. A short answer with nothing drawn can stay a chat line.
-- **Consolidation is the person's call.** Never distil, merge or retire cards on your own
-  (Retiring and distilling).
+- **Consolidation is the person's call.** Distil, merge or retire cards only when the person asks,
+  or after their ✓ on your proposal to consolidate a container (Retiring and distilling).
 
 ## Where you are running
 
@@ -58,17 +58,18 @@ their descriptions hold the exact fields.
 - **One message carries everything**, in blocks separated by a blank line, empty ones left out:
   1. Their words.
   2. `The person selected these cards:` then `- Card <n>: <title>` per card. "These", "this one"
-     in their words mean these cards: treat it like a comment on that group.
+     in their words mean these cards: treat it like a note on that group.
   3. (Rare, an older page) `Attached from the board:` with `- Note <seq> on card <n> ...` lines.
   4. The Send message: "The person updated the board:", the board's title, one line per answered
-     card in card order (`2 (question): no`, `5, 7 (finding, risk): comment: <their words>`,
-     `6 (finding): saved for later`, `On container "<title>" comment: ...`), then "Still open:
-     ..." or "Nothing left open.", and a line giving the `head` it covers.
+     card in card order (`2 (question): ✗`, `4 (decision): ✓: <their note>`, `5, 7 (finding,
+     risk): comment: <their words>`, `6 (finding): saved for later`, `On container "<title>"
+     comment: ...`), then "Still open: ..." or "Nothing left open.", and a line giving the `head`
+     it covers.
   5. `Board: <id>`.
 - **The words are the request; the answers are its context.** "For the ones I ticked, write the
-  tasks" means the cards whose line gives ✓'s word (`yes`, `done`, `ok`). Still answer every
-  comment, More context and Later in the lines, in card order. A message with no words is the
-  person pressing Send: act on the lines, in that order.
+  tasks" means the cards whose line reads ✓. Still answer every note and Later in the lines, in
+  card order. A message with no words is the person pressing Send: act on the lines, in that
+  order.
 - **Don't fetch it again**: no `check_responses` or `list_open` to re-read what the message lists.
   `show_node` gives a card's latest `ver` and a note's `seq` before you `reply`, `append` or `park`.
   To catch anything newer later, `check_responses` with `after` set to the message's head.
@@ -183,9 +184,9 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
 
 | Kind | Asks? | Use it for |
 |---|---|---|
-| `question` | Yes: ✓ is "yes", ✗ is "no" | Something only the person can answer |
+| `question` | Yes | Something only the person can answer |
 | `decision` | Yes | A choice to make or confirm (the options and your pick) |
-| `action` | Yes: ✓ is "done" | Something to do, that the person agrees to or marks done |
+| `action` | Yes | Something to do, that the person agrees to or marks done |
 | `finding` | No | What you found, with its evidence |
 | `risk` | No | What could go wrong, and how likely or bad |
 | `topic` | No | A heading or theme for a group |
@@ -194,22 +195,31 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
 - When you need a yes, a no or a choice, draw a card that asks: never bury it in another card's
   body ("needs a rule for who answers" is a `decision` card, not a line in a risk). Ask only what
   you need decided to go on.
-- A card that asks counts in "N of M decided" until answered. A card that tells is never counted,
-  but the person can still comment on it, ask about it or save it for later, and then you owe an
-  answer.
+- **One ask per card.** Never two questions or two choices on one card: ✓ or ✗ answers it
+  whole, so draw a card for each.
+- **Say where it applies** (the page, screen or file) when the card's context doesn't make it
+  plain.
+- A card that asks is open until ✓ or ✗ answers it ("N open · N answered" on the board). A card
+  that tells is never counted, but the person can still write a note on it or save it for later,
+  and then you owe an answer.
 
-## What the person's buttons mean
+## What the person's answers mean
 
-- **✓** (`ack`, on a card that asks): yes, OK, done. **✗** (`drop`): no, not wanted. Either
-  decides the card. `check_responses` says which in `means` (`yes`, `no`, `done`), and answer
-  lines read `2 (question): no`. ✗ on a question is the answer No, not a dismissal: act on it
+- **✓ and ✗** (on a card that asks) are the person's two marks. The board gives them no meaning:
+  read them in the light of what your card asks. `check_responses` reads them as `action` `check` and
+  `cross`, and answer lines read `2 (question): ✗`. ✗ is an answer, not a dismissal: act on it
   (drop that path, take the other option) and say so in one line.
-- **Comment** (`comment`): the person's words. On a card that asks, it decides the card: read the
-  words as the answer. On any other card, it is their reply. You owe a `reply` or an `append`.
-- **More context** (`context`): they are asking you back; the card stays open. You owe a `reply`
-  or an `append` with the explanation.
+- **A note** (`comment`): the person's words, on any card. **A note never answers a card**: on a
+  card that asks, it stays open until ✓ or ✗, even when the words sound like an answer. A note is
+  often a question: answer it with a `reply` or an `append`, and leave the card open. You owe that
+  answer unless the person pressed ✓ or ✗ on the card after the note. An old board's More context
+  (`context`) is a note.
+- **Your answer clears the card.** A `reply` to a card's latest note, or a new version of it
+  (`append` or a rewrite), wipes the ✓, ✗ or Later the person made before that note: the card is
+  open again, unmarked, and shows as updated. So when you still need a ✓ or ✗, ask for it again in
+  your answer ("✓ if that settles it"). A ✓ or ✗ made after the note still counts.
 - **Later** (`later`): saved for later, on any card. You owe a `park` handover.
-- A comment or More context can be on one card, a group of cards (`nodes`) or a whole container.
+- A note can be on one card, a group of cards (`nodes`) or a whole container.
 
 ## Changing a card
 
@@ -219,7 +229,8 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
 - **To rewrite a card**, send a `node` item with `n`, `base` and its full content. `base` is the
   `ver` you read; on `conflict`, read it again and redo the change on the new version.
 - Change a card in place only while it is still the same subject. The person sees the new version
-  until they look at it (`unseen` in `list_open`).
+  until they look at it (`unseen` in `list_open`). A new version answers the card's latest note,
+  so it clears the card too (What the person's answers mean).
 
 ## Retiring and distilling
 
@@ -228,27 +239,35 @@ every card in it. The answer's `retired` lists the numbers taken. A retired card
 (never given to another card) and its history (`show_node` answers it with `retired`; the board's
 past versions still show it).
 
-- **Only when the person asks.** Never retire, merge or distil on your own. If cards look out of
-  date or worth merging, say so in a line and let the person decide. (The one exception: a
-  container you drew this same turn that `show_layout` says to regroup.)
+- **Only when the person asks, or after their ✓ on your proposal.** Never retire, merge or distil
+  on your own. If cards look out of date or worth merging, say so in a line and let the person
+  decide. (The one exception: a container you drew this same turn that `show_layout` says to
+  regroup.)
+- **Propose consolidating a container** once every card that asks in it is answered (✓ or ✗) and
+  nothing there is owed: you may add one `decision` card to that container ("Sum up the venue
+  cards in one card?") saying which cards the summary would replace. Retire nothing yet. On its ✓,
+  in one call: one summary card in that container (the problem, what was decided, where it
+  landed), then one `retire { n }` per card it replaces, the proposal included. On ✗, leave the
+  container as it is and don't propose it again unless something changes. One proposal per
+  container at a time.
 - **A new direction** ("redo the plan page-first"): draw a new container with new cards, then
   retire the old container, in the same `write_board` call. Never rewrite the old cards one by one
   into the new plan.
-- **Distil on request**: the person selects a container's cards (or comments on the container)
+- **Distil on request**: the person selects a container's cards (or writes a note on the container)
   and asks to distil or sum them up. Write one summary card in that container saying what was
   found, decided and still open, then one `retire { n }` per card it replaces, in the same call.
-  Keep a card that still asks and is undecided unless the person said to fold it in.
+  Keep a card that still asks and is unanswered unless the person said to fold it in.
 - **Answer first.** A retire is refused while a card it takes still owes the person something (a
-  comment or More context with no `reply` or `append`, a Later with no `park`), or while a note on
+  note with no `reply` or `append`, a Later with no `park`), or while a note on
   the container has no reply. Answer it earlier in the same call; after a refusal, answer, then
   send the retire again with the same key.
 - Retire only on containers you hold (your own, or granted).
 
 ## Reading the person's answers
 
-- `list_open` is your to-do list: every card that asks and isn't decided, and every card waiting
-  for you, with `pending` saying what you owe (`comment`, `context`, `later`), plus `containers`
-  for notes on a whole container.
+- `list_open` is your to-do list: every card that asks and has no ✓ or ✗, and every card waiting
+  for you, with `pending` saying what you owe (`comment` for a note, `context` for an old board's
+  note, `later`), plus `containers` for notes on a whole container.
 - `check_responses` gives what the person did after the `head` you pass; keep the `head` it
   returns. In your own chat, pass `wait` (up to 60 seconds) to hold until they press Send. On
   `more: true`, read again at once with `after` set to the highest `seq` in `responses`.
@@ -257,35 +276,40 @@ past versions still show it).
   at its lowest card. Answer in that order.
 - Notes reach you before Send; **Send** means "your turn". A note can be edited (answer its latest
   words) or removed (nothing is owed).
-- Other acts: `reopen` (a decided card, or one out of Later, is open again); `reject` (the person
-  turned down your proposal); `move`, `size`, `pin`, `mode`, `widths` (the person arranged the
-  board: keep it).
-- A card decided by ✓ or ✗ is settled: never raise it again. One decided by a comment is settled
-  by those words: act on them.
+- **Each card's latest mark, not every click**: ✓, ✗, Later and clearing come to you as where
+  the card stands after your `head` (✓ then ✗ reads `cross`; ✓ then cleared reads nothing).
+  Notes come one by one.
+- Other acts: `reopen` (the person cleared their ✓ or ✗, or took a card out of Later: it is open
+  again); `reject` (the person turned down your proposal); `move`, `size`, `pin`, `mode`,
+  `widths` (the person arranged the board: keep it).
+- A card answered by ✓ or ✗ is settled: never raise it again, unless a note on it asks something
+  (then answer, and ask again).
 - **The flag** is the person's private mark on a card. No read of yours shows it; nothing is owed.
 - Your reads are `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`,
   `list_open` and `check_responses`. There is no ledger read for agents.
 
 ## Answering
 
-Every comment and More context is owed a `reply` or an `append`; every Later a `park`. Nothing the
-person said goes unanswered, whatever the card's kind. Put the answer on the board, not only in
-the chat.
+Every note is owed a `reply` or an `append`; every Later a `park`. Nothing the person said goes
+unanswered, whatever the card's kind. Put the answer on the board, not only in the chat.
 
 - `reply { n, to, text }` answers one note; `to` is the note's `seq`. Keep it short.
 - **A note on a group of cards**: one `reply` on any of its cards, `to` = the note, answers it on
   all of them; never one per card. An `append` answers it only on the card it changes.
 - A note on a whole container: `reply` on any card in that container, `to` = the note.
-- More context: reply with the explanation, or `append` it when it belongs on the card for good.
-- A comment asking for a change: make it (`append` or a new version), then reply in one line.
-- A comment answering a question: act on it, and reply in one line with what you will do. If their
-  words leave something open, ask it as a new question card.
+- A note asking a question: reply with the answer, or `append` it when it belongs on the card for
+  good. The card stays open: if it asks and you still need the person's mark, end your reply by
+  asking for it ("✓ if the flag plan holds"), since your answer cleared any ✓ or ✗ from before.
+  Don't draw a new card for the same ask.
+- A note asking for a change: make it (`append` or a new version), then reply in one line.
+- A note that reads like an answer ("yes, but only on the card path") is not one: act on what it
+  says, reply in one line, and ask for the ✓ or ✗ the card still needs.
 
 ## Propose, never decide
 
 - Only the person presses ✓ or ✗. When evidence settles a card that asks (the code now does it,
-  an email confirms it), `propose { n, ver, action, reason, source }` with `action` `ack` or
-  `drop`, `ver` its latest version and `source` where the evidence is. A proposal on any other
+  an email confirms it), `propose { n, ver, action, reason, source }` with `action` `check` (✓) or
+  `cross` (✗), `ver` its latest version and `source` where the evidence is. A proposal on any other
   kind fails `invalid`.
 - A proposal on an older version can't be accepted: after you change the card, propose again on
   its new version. `show_node` shows how each proposal ended; after a rejection, propose again

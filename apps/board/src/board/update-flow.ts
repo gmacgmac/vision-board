@@ -1,5 +1,6 @@
 // Changed cards on the page (cardUpdates flag, FE_02 rulings 1-3, mockup 03 Part B option B): the
-// "N updates" tab on each card the conditions table finds unseen (`item.unseen`, past version 1),
+// "N updates" tab on each card the conditions table finds unseen (`item.unseen`: past version 1, or
+// cleared by the agent's reply to its note, D-045, which is one update of its own),
 // the stepper the tab opens in the card, and the card seen lines. Selecting a card (a click, Space, a
 // lasso: the selection module) marks its latest version seen; each step shown marks its version
 // seen. Hover and tabbing past send nothing, and nothing is sent while a past version shows. Every
@@ -14,7 +15,7 @@ import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import type { CardConditions, CardStep } from '../../../../packages/ui/src/index.ts';
 import type { Selection } from './selection.ts';
 import type { SeenMark } from './updates.ts';
-import { seenMarks, seenOnSelect, seenVer, unseenCount, unseenSteps } from './updates.ts';
+import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from './updates.ts';
 import { versionTime } from './versions.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */
@@ -74,7 +75,7 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
 
   function send(marks: readonly SeenMark[]) {
     const s = current();
-    const due = marks.filter((m) => s && seenVer(s, d.board(), m.n) < m.ver && !sending.has(`${m.n}:${m.ver}`));
+    const due = marks.filter((m) => s && seenDue(s, d.board(), m.n, m.ver) && !sending.has(`${m.n}:${m.ver}`));
     if (!due.length) return;
     for (const m of due) sending.add(`${m.n}:${m.ver}`);
     void d.seen(due).finally(() => { for (const m of due) sending.delete(`${m.n}:${m.ver}`); });

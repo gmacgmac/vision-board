@@ -29,7 +29,7 @@ test('the board loads with every region and card', async ({ page }) => {
   await expect(page.locator('vb-node:visible')).toHaveCount(NODES);
   // Only cards that need an answer count (every-node ruling 6): the finding, topic and risk don't.
   await expect(page.locator('#counts')).toContainText('14 open');
-  await expect(page.locator('#counts')).toContainText('0 decided');
+  await expect(page.locator('#counts')).toContainText('0 answered');
 });
 
 test('Tab moves from card to card, in item number order', async ({ page }) => {
@@ -128,12 +128,12 @@ async function clickOn(page: Page, n: number, name: string): Promise<void> {
   await card(page, n).getByRole('button', { name }).click();
 }
 
-test('ok, drop and comment work and survive a reload', async ({ page }) => {
+test('✓, ✗ and a comment work and survive a reload', async ({ page }) => {
   await openBoard(page);
   await zoomToButtons(page);
-  await clickOn(page, 1, 'Acknowledge item 1 (A)');
+  await clickOn(page, 1, 'Check item 1 (A)');
   await expect(card(page, 1)).toHaveAttribute('data-status', 'acknowledged');
-  await clickOn(page, 2, 'Drop item 2 (X)');
+  await clickOn(page, 2, 'Cross item 2 (X)');
   await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
   await clickOn(page, 3, 'Comment item 3 (C)');
   const dialog = page.getByRole('dialog', { name: 'Note on 3' });
@@ -143,13 +143,13 @@ test('ok, drop and comment work and survive a reload', async ({ page }) => {
 
   const expectAnswers = async () => {
     await expect(card(page, 1)).toHaveAttribute('data-status', 'acknowledged');
-    await expect(card(page, 1).getByRole('button', { name: /^Acknowledge item 1/ })).toHaveAttribute('aria-pressed', 'true');
+    await expect(card(page, 1).getByRole('button', { name: /^Check item 1/ })).toHaveAttribute('aria-pressed', 'true');
     await expect(card(page, 2)).toHaveAttribute('data-status', 'dropped');
     await expect(card(page, 3)).toHaveAttribute('data-status', 'commented');
     await expect(card(page, 3).locator('.vb-node-note-who')).toHaveText('Your note 1');
     await expect(card(page, 3).locator('.vb-node-note-text')).toHaveText('Check the wording.');
-    // A comment decides a card that needs an answer, as ✓ and ✗ do (every-node ruling 3): 3 is an action.
-    await expect(page.locator('#counts')).toContainText('3 decided');
+    // Only ✓ and ✗ answer a card (D-045): the comment leaves action 3 open.
+    await expect(page.locator('#counts')).toContainText('2 answered');
     // Reply sits in the toolbar's "⋯" menu (toolbarMenu flag).
     await page.locator('#toolbar-menu').click();
     await expect(page.getByRole('menuitem', { name: 'Reply (3)' })).toBeVisible();

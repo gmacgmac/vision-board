@@ -56,7 +56,7 @@ test('a container: its title and how many cards go (moves count), its unanswered
   ]);
   const w = containerWords(s, 'b', 'notes', 'Notes');
   assert.equal(w.heading, 'Remove container \'Notes\' and its 4 cards?');
-  assert.equal(w.body, 'It leaves the board with its cards and stays in the board\'s history. Card 1 still waits for the more context you asked for. Container \'Notes\' still has an unanswered comment.');
+  assert.equal(w.body, 'It leaves the board with its cards and stays in the board\'s history. Card 1 still has an unanswered comment. Container \'Notes\' still has an unanswered comment.');
   assert.deepEqual(w.list!.items.map((x) => x.ref), ['1', '2', '3', '4']);
   assert.deepEqual([w.confirm, w.done], ['Remove container', 'Removed container \'Notes\'']);
   const one = containerWords(state(), 'b', 'plan', 'Plan');

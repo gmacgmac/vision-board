@@ -48,6 +48,17 @@ test('the instructions and the board reads tell an agent what `locked` means: st
   assert.match(tools.find((t) => t.name === 'request_grant')!.description, /locked board takes no request \(`locked`, 423\)/);
 });
 
+test('the instructions teach the answer model (D-045): ✓ and ✗ read check and cross, a note never answers, no More context', () => {
+  for (const text of [INSTRUCTIONS, INSTRUCTIONS_JOINED]) {
+    assert.match(text, /✓ reads `check`, ✗ reads `cross`/);
+    assert.match(text, /A note never answers a card/);
+    assert.doesNotMatch(text, /more context|yes or no/i);
+  }
+  const check = tools.find((t) => t.name === 'check_responses')!.description;
+  assert.match(check, /✓ reads `check` and ✗ reads `cross`/);
+  assert.doesNotMatch(check, /`means/);
+});
+
 test('write_board, join and request_grant tell the agent about the `secret` argument', () => {
   for (const name of WRITES) assert.match(tools.find((t) => t.name === name)!.description, /`secret` argument/, name);
 });

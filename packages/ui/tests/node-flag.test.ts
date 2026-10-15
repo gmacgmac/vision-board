@@ -14,7 +14,7 @@ const board = (flags: string[] = []): BoardState =>
 test('the flag button sits last in the card\'s toolbar, after Later, only with the option on', () => {
   const html = nodeTemplate(node({}), { flag: true });
   const buttons = [...html.matchAll(/<button type="button" class="vb-act[^"]*" (data-act="(\w+)"|data-flag)/g)].map((m) => m[2] ?? 'flag');
-  assert.deepEqual(buttons, ['ack', 'drop', 'comment', 'context', 'later', 'flag']);
+  assert.deepEqual(buttons, ['ack', 'drop', 'comment', 'later', 'flag']);
   assert.ok(html.includes(`aria-label="Flag item 3 (${FLAG_KEY})"`));
   assert.ok(html.includes('aria-pressed="false"'));
   assert.ok(html.includes(`title="Flag · ${FLAG_KEY}"`));

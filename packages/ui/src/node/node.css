@@ -60,12 +60,9 @@ vb-node[data-kind='note'] {
   background: var(--note-surface, transparent); box-shadow: none; border-style: dashed;
 }
 
-/* The state word's colour; open is muted. Dropped also fades and strikes the title through. */
-vb-node[data-status='acknowledged'] { --state: var(--vb-state-ack); }
-vb-node[data-status='dropped'] { --state: var(--vb-state-drop); opacity: 0.55; }
-vb-node[data-status='dropped'] .vb-node-title { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+/* The state word's colour; open is muted. ✓ and ✗ show no word, only their lit mark (D-045): ✗ no
+   longer fades the card or strikes its title through, so it reads like ✓. */
 vb-node[data-status='commented'] { --state: var(--vb-state-comment); }
-vb-node[data-status='context'] { --state: var(--vb-state-context); }
 vb-node[data-status='later'] { --state: var(--vb-state-later); }
 
 /* Tabs on the top border, each in a gap cut from the line: number left, kind centred, the
@@ -187,11 +184,13 @@ vb-node .vb-node-foot {
   border-top: 1px solid color-mix(in srgb, var(--kind) 18%, var(--vb-line));
   font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium); color: var(--state);
 }
-/* Tighter than 01b's spacing so the longest word fits beside five buttons on a 248px card. */
+/* Tighter than 01b's spacing so the longest word fits beside the buttons on a 248px card. */
 vb-node .vb-node-state { flex: 1; min-width: 0; display: inline-flex; align-items: center; gap: var(--vb-space-1); }
 vb-node .vb-node-status { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 vb-node .vb-node-kico { flex: none; width: 14px; height: 14px; color: var(--kind); }
 vb-node .vb-node-sep { flex: none; width: 1px; height: 12px; background: var(--vb-line-strong); }
+/* No word to set off (✓, ✗, or a card that only informs: D-045), so no divider either. */
+vb-node .vb-node-sep:has(+ .vb-node-status:empty) { display: none; }
 vb-node .vb-node-kico, vb-node .vb-act-icon {
   fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
@@ -206,7 +205,6 @@ vb-node .vb-act:hover { background: var(--vb-surface-sunken); color: var(--vb-in
 vb-node .vb-act:active { transform: translateY(1px); }
 vb-node .vb-act[data-act='ack'][aria-pressed='true'] { color: var(--vb-state-ack); border-color: var(--vb-state-ack); }
 vb-node .vb-act[data-act='drop'][aria-pressed='true'] { color: var(--vb-state-drop); border-color: var(--vb-state-drop); }
-vb-node .vb-act[data-act='context'][aria-pressed='true'] { color: var(--vb-state-context); border-color: var(--vb-state-context); }
 vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-later); border-color: var(--vb-state-later); }
 /* The flag (cardFlag flag): the person's private mark, its cloth filled while the card is flagged.
    Its colour is --vb-state-flag, its own, not a kind's (a decoration, Lc 30 tier: APCA Lc 74.5

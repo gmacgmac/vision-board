@@ -48,7 +48,7 @@ export interface Attention {
   fresh(): ReadonlySet<number>;
   /** The items on the open board in Later whose handover is still owed (parking.ts). */
   awaiting(): ReadonlySet<number>;
-  /** The cards on the open board owed an answer or a handover (`item.owed`): "Hide decided" keeps them. */
+  /** The cards on the open board owed an answer or a handover (`item.owed`): "Hide answered" keeps them. */
   owedCards(): ReadonlySet<number>;
   destroy(): void;
 }

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import type { BoardState, ItemNote, ItemStatus } from '../../actions/src/index.ts';
-import { nodeLabel, nodeState, offers, STATUS_LABEL } from '../src/index.ts';
+import { buttonLabel, nodeLabel, nodeState, offers, STATUS_LABEL, STATUS_NAME } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -17,19 +17,29 @@ const note = (text: string, kind: ItemNote['kind'] = 'comment', sent = false): I
 const withItem = (status: ItemStatus, notes: ItemNote[] = []): BoardState =>
   board({ items: new Map([['1', { status, notes }]]) });
 
-// The kind decides (api.md 118): a card that needs no answer offers a note and Later, never a decision.
-test('a numbered finding offers comment, context and later', () =>
-  assert.deepEqual(offers(node({ kind: 'finding', n: 5 })), ['comment', 'context', 'later']));
+// The kind decides (api.md 118): a card that needs no answer offers a note and Later, never ✓ or ✗.
+// More context is gone (D-045): a note can ask.
+test('a numbered finding offers comment and later', () =>
+  assert.deepEqual(offers(node({ kind: 'finding', n: 5 })), ['comment', 'later']));
 
-test('a numbered question offers all five review actions', () =>
-  assert.deepEqual(offers(node({ kind: 'question', n: 2 })), ['ack', 'drop', 'comment', 'context', 'later']));
+test('a numbered question offers ✓, ✗, a note and Later', () =>
+  assert.deepEqual(offers(node({ kind: 'question', n: 2 })), ['ack', 'drop', 'comment', 'later']));
+
+// D-045, answer-model ruling 1: ✓ and ✗ are tools named Check and Cross, never a meaning.
+test('a decision\'s ✓ and ✗ are named Check and Cross, with their keys', () => {
+  const d = node({ kind: 'decision', n: 12 });
+  assert.deepEqual(offers(d).map((a) => buttonLabel(a, d)),
+    ['Check item 12 (A)', 'Cross item 12 (X)', 'Comment item 12 (C)', 'Save for later item 12 (L)']);
+});
 
 test('an unnumbered topic offers nothing', () =>
   assert.deepEqual(offers(node({ kind: 'topic' })), []));
 
-test('nodeLabel names the number, kind, title and status', () => {
-  assert.equal(nodeLabel(node({ kind: 'finding', n: 5, title: 'Use it' }), 'later'),
-    'Item 5, Finding: Use it, Saved for later');
+test('nodeLabel names the number, kind, title and, on a card that asks, its status', () => {
+  assert.equal(nodeLabel(node({ kind: 'question', n: 5, title: 'Use it?' }), 'later'),
+    'Item 5, Question: Use it?, Saved for later');
+  assert.equal(nodeLabel(node({ kind: 'decision', n: 6, title: 'Ship' }), 'acknowledged'), 'Item 6, Decision: Ship, checked');
+  assert.equal(nodeLabel(node({ kind: 'action', n: 7, title: 'Pay' }), 'dropped'), 'Item 7, Action: Pay, crossed');
   assert.equal(nodeLabel(node({ kind: 'topic', title: 'Stack' }), 'open'), 'Topic: Stack');
 });
 
@@ -37,7 +47,7 @@ test('nodeLabel names the number, kind, title and status', () => {
 
 const STATUSES = Object.keys(STATUS_LABEL) as ItemStatus[];
 const PRESSED_BY: Partial<Record<ItemStatus, string[]>> = {
-  acknowledged: ['ack'], dropped: ['drop'], context: ['context'], later: ['later'],
+  acknowledged: ['ack'], dropped: ['drop'], later: ['later'],
 };
 
 test('nodeState: every status sets status, label, status word and pressed', () => {
@@ -45,7 +55,7 @@ test('nodeState: every status sets status, label, status word and pressed', () =
   for (const status of STATUSES) {
     const st = nodeState(q, withItem(status));
     assert.equal(st.status, status);
-    assert.equal(st.label, `Item 7, Question: Ship it?, ${STATUS_LABEL[status]}`);
+    assert.equal(st.label, `Item 7, Question: Ship it?, ${STATUS_NAME[status]}`);
     assert.equal(st.statusWord, STATUS_LABEL[status]);
     const pressedNow = Object.entries(st.pressed).filter(([, v]) => v).map(([a]) => a);
     assert.deepEqual(pressedNow, PRESSED_BY[status] ?? [], status);
@@ -58,13 +68,34 @@ test('nodeState: an item with no response is open, unpressed and has no note', (
   assert.equal(st.statusWord, 'Open');
   assert.equal(st.notes, undefined);
   assert.equal(st.pinned, false);
-  assert.deepEqual(Object.keys(st.pressed), ['ack', 'drop', 'comment', 'context', 'later']);
+  assert.deepEqual(Object.keys(st.pressed), ['ack', 'drop', 'comment', 'later']);
   assert.ok(Object.values(st.pressed).every((v) => v === false));
 });
 
 test('nodeState: pressed covers only the actions the type offers', () =>
   assert.deepEqual(Object.keys(nodeState(node({ kind: 'finding', n: 2 }), board()).pressed),
-    ['comment', 'context', 'later']));
+    ['comment', 'later']));
+
+// D-045, answer-model rulings 1 and 3: the lit mark is the state; no word follows it in the footer.
+test('nodeState: ✓ and ✗ light their button and show no status word; the name says checked or crossed', () => {
+  const d = node({ kind: 'decision', n: 9, title: 'Keep the free tier' });
+  const ticked = nodeState(d, withItem('acknowledged'));
+  assert.deepEqual([ticked.statusWord, ticked.label, ticked.pressed.ack, ticked.pressed.drop], ['', 'Item 9, Decision: Keep the free tier, checked', true, false]);
+  const crossed = nodeState(d, withItem('dropped'));
+  assert.deepEqual([crossed.statusWord, crossed.label, crossed.pressed.ack, crossed.pressed.drop], ['', 'Item 9, Decision: Keep the free tier, crossed', false, true]);
+});
+
+// D-045, answer-model ruling 4: a card that only informs shows no status and carries none in its name.
+test('nodeState: a finding, risk, topic or note has no status word and no status in its name, in every status', () => {
+  for (const kind of ['finding', 'risk', 'topic', 'note'] as const) {
+    for (const status of ['open', 'commented', 'later'] as const) {
+      const st = nodeState(node({ kind, n: 3, title: 'Cold caches' }), withItem(status));
+      assert.equal(st.statusWord, '', `${kind} ${status}`);
+      assert.match(st.label, /^Item 3, [A-Za-z]+: Cold caches$/, `${kind} ${status}`);
+    }
+  }
+  assert.equal(nodeState(node({ kind: 'finding', n: 3 }), withItem('later')).pressed.later, true, 'Later still shows lit');
+});
 
 test('nodeState: a non-item has no status word, no pressed buttons and a plain label', () => {
   const st = nodeState(node({ kind: 'topic', title: 'Stack' }), board());
@@ -95,8 +126,8 @@ test('nodeState: not selected unless the page says so; selected adds ", selected
 });
 
 test('nodeLabel: selected comes last, after the status', () =>
-  assert.equal(nodeLabel(node({ kind: 'finding', n: 5, title: 'Use it' }), 'later', true),
-    'Item 5, Finding: Use it, Saved for later, selected'));
+  assert.equal(nodeLabel(node({ kind: 'question', n: 5, title: 'Use it?' }), 'later', true),
+    'Item 5, Question: Use it?, Saved for later, selected'));
 
 // 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block, latest first.
 test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edits it', () => {
@@ -112,14 +143,14 @@ test('nodeState: three notes, two sent: the count, the latest first, sent ones m
     [note('one', 'comment', true), note('two', 'context', true), note('three')])).notes!;
   assert.equal(v.count, '3 notes');
   assert.deepEqual(v.entries.map((x) => [x.index, x.who, x.text, x.sent]), [
-    [3, 'Your note 3', 'three', false], [2, 'More context 2 · Sent', 'two', true], [1, 'Your note 1 · Sent', 'one', true]]);
+    [3, 'Your note 3', 'three', false], [2, 'Your note 2 · Sent', 'two', true], [1, 'Your note 1 · Sent', 'one', true]], 'an old More context reads as a note');
   assert.deepEqual([v.pin!.index, v.pin!.sent], [3, false]);
 });
 
 test('nodeState: when every note is sent, the pin shows the latest and only reads it', () => {
-  const v = nodeState(node({ n: 7 }), withItem('context', [note('plain terms', 'context', true)])).notes!;
+  const v = nodeState(node({ n: 7 }), withItem('commented', [note('plain terms', 'context', true)])).notes!;
   assert.deepEqual(v.pin, { seq: v.entries[0]!.seq, index: 1, sent: true, label: 'Note 1 on item 7, sent. Show it' });
-  assert.equal(v.entries[0]!.who, 'More context 1 · Sent');
+  assert.equal(v.entries[0]!.who, 'Your note 1 · Sent');
 });
 
 test('nodeState: a note on a group of cards says how many, and its pin names them', () => {

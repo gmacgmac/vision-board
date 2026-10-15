@@ -59,7 +59,7 @@ test('acts: accept is the proposal\'s own action at the card\'s version; reject 
   const row = proposalRows(s, pageConditions(s, 'b').proposals, time).at(-1)!;
   assert.deepEqual(proposalAct(row, 'accept', 1), { action: 'drop', n: 1, ver: 1, proposal: row.seq });
   assert.deepEqual(proposalAct(row, 'reject'), { action: 'reject', n: 1, proposal: row.seq });
-  assert.deepEqual([answerDone(row, 'accept'), answerDone(row, 'reject')], ['Accepted: drop 1', 'Rejected: drop 1']);
+  assert.deepEqual([answerDone(row, 'accept'), answerDone(row, 'reject')], ['Accepted: cross 1', 'Rejected: cross 1']);
 });
 
 test('Accept all: the newest on each card not out of date, in card order; the rest listed with why', () => {
@@ -69,10 +69,10 @@ test('Accept all: the newest on each card not out of date, in card order; the re
   assert.deepEqual(plan.apply.map((r) => [r.n, r.action]), [[1, 'drop'], [3, 'drop']]);
   const w = acceptAllWords(plan);
   assert.deepEqual([w.heading, w.confirm, w.done], ['Accept these 2 proposals?', 'Apply 2 proposals', 'Accepted 2 proposals']);
-  assert.deepEqual(w.items, [{ ref: '1', text: 'Drop: the client declined' }, { ref: '3', text: 'Drop: the new prices remove it' }]);
+  assert.deepEqual(w.items, [{ ref: '1', text: 'Cross: the client declined' }, { ref: '3', text: 'Cross: the new prices remove it' }]);
   assert.deepEqual(w.skipped, [
-    { ref: '2', text: 'Acknowledge: the draft is done (2 changed after this was proposed)' },
-    { ref: '3', text: 'Acknowledge: the sheet confirms it (a newer proposal on 3 is applied)' },
+    { ref: '2', text: 'Check: the draft is done (2 changed after this was proposed)' },
+    { ref: '3', text: 'Check: the sheet confirms it (a newer proposal on 3 is applied)' },
   ]);
 });
 

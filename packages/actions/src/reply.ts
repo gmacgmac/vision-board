@@ -1,28 +1,27 @@
 // The person's responses as the numbered reply they would have typed, each card with its kind and
-// the word its answer means there (panel-send ruling 4): "2 (question): no", "4 (finding): comment:
-// ...", "5, 7 (finding, risk): comment: ...". Paste it into chat, or let the agent read the ledger
+// its answer as the mark it is (D-045: ✓ and ✗ carry no meaning; the card says what they mean):
+// "2 (question): ✗", "4 (finding): comment: ...", "5, 7 (finding, risk): comment: ...". Paste it into chat, or let the agent read the ledger
 // directly. With a `ReplyScope` (what the person answered after `since`, pending.ts `replyScope`)
 // only those cards and containers, with only the notes made after `since`: the message Send hands
 // the chat panel's agent (panel-send ruling 1). "Still open" is always the whole board's. Reads one
 // board as `boardView` (packages/format) + `boardState` (fold.ts) give it.
-import type { ActionId, View, ViewNode } from '../../format/src/index.ts';
+import type { ActionId, View } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
-import { meaningOf } from './action-words.ts';
 import type { BoardState } from './board-state.ts';
 import type { ItemNote } from './fold.ts';
-import { ACTIONS } from './registry.ts';
+import { ACTIONS, DECIDED } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
 
 /** The cards (by board number) and containers a round covers, and the cursor its notes come after. */
 export interface ReplyScope { since: number; cards: ReadonlySet<number>; regions: ReadonlySet<string> }
 
-const STATUS_ACTION: Partial<Record<ItemStatus, ActionId>> = { acknowledged: 'ack', dropped: 'drop', later: 'later', context: 'context' };
+const STATUS_ACTION: Partial<Record<ItemStatus, ActionId>> = { acknowledged: 'ack', dropped: 'drop', later: 'later' };
 
-/** How a status reads on a card: its kind's word for ✓ or ✗ ("yes"), else the registry's reply word. */
-function statusWord(n: ViewNode, status: ItemStatus): string | undefined {
+/** How a status reads on a card: the registry's reply word, ✓, ✗ or "saved for later". */
+const statusWord = (status: ItemStatus): string | undefined => {
   const a = STATUS_ACTION[status];
-  return a && (meaningOf(a, n.kind) ?? ACTIONS[a].reply);
-}
+  return a && ACTIONS[a].reply;
+};
 
 const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;
 
@@ -39,7 +38,8 @@ export const joinReply = (r: ReplyLines): string => [r.head, ...r.lines, r.tail]
 
 /** `replyText` in its parts, so the chat's composer can show the answer lines alone (the one writer). */
 export function replyLines(view: View, s: BoardState, scope?: ReplyScope): ReplyLines {
-  // Every card may carry a response; only one that needs an answer is still open without one (api.md 118).
+  // Every card may carry a response; only one that needs an answer is still open without ✓, ✗ or
+  // Later, whatever notes it has (api.md 118, D-045: a note never answers a card).
   const items = view.nodes.filter((n) => n.n !== undefined).sort((a, b) => a.n! - b.n!);
   const kindOf = new Map(items.map((n) => [n.n!, n.kind]));
   const lines: { at: number; text: string }[] = [];
@@ -50,10 +50,9 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
     const st = s.items.get(n.id);
     const notes = st?.notes ?? [];
     const own = notes.filter((x) => !x.nodes);
-    const grouped = own.length < notes.length;
-    // A "more context" that only a group note asks for reads on the group's line, not here.
-    const word = st && !(grouped && !own.length && st.status === 'context') ? statusWord(n, st.status) : undefined;
-    if (!word && !own.length && !grouped && NODE_TYPES[n.kind].answer) open.push(n.n!);
+    const status = st?.status ?? 'open';
+    const word = statusWord(status);
+    if (NODE_TYPES[n.kind].answer && !DECIDED.has(status) && status !== 'later') open.push(n.n!);
     if (scope && !scope.cards.has(n.n!)) continue;
     for (const x of notes) if (x.nodes && fresh(scope)(x)) groups.set(x.seq, x);
     const fresher = own.filter(fresh(scope));

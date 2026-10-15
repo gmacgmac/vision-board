@@ -83,6 +83,18 @@ export interface Fixture {
   ledger: LedgerState;
   /** The layout board, drawn through the board's own drawing (mini-board.ts). */
   layout: { view: View; state: BoardState };
+  /** The main board's cards the agent's answer to a note cleared (D-045, answer-model ruling 7), by
+   *  board number: their "1 update" tab and the reply under the note, as the page reads them. */
+  cleared: Map<number, CardConditions>;
+}
+
+/** Card conditions for `board`'s cards the agent's reply cleared, as update-flow.ts and parking.ts give them. */
+function clearedCards(ledger: LedgerState, board: string): Map<number, CardConditions> {
+  const parking = createParking({ handover: false, replies: true, state: () => ledger, board: () => board, awaiting: () => new Set(), readOnly: () => false });
+  parking.refresh();
+  const state = boardState(ledger, board);
+  return new Map(boardView(ledger, board).nodes.flatMap((n) => (n.n === undefined || !state.items.get(n.id)?.unseenAnswer ? []
+    : [[n.n, { updates: { count: unseenCount(ledger, board, n.n) }, replies: parking.card(n).replies ?? [] }] as const])));
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -122,6 +134,7 @@ export function loadFixture(): Fixture {
     marks: { view: boardView(ledger, MARKS_BOARD), state: boardState(ledger, MARKS_BOARD), retired: retiredCounts(ledger, MARKS_BOARD) },
     ledger,
     layout: { view: boardView(ledger, LAYOUT_BOARD), state: boardState(ledger, LAYOUT_BOARD) },
+    cleared: clearedCards(ledger, BOARD),
     parking: {
       view: parkingView, state: boardState(ledger, PARKING_BOARD), containerReplies: parking.containers(),
       cards: new Map(parkingView.nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const]))),

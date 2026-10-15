@@ -5,13 +5,13 @@
 // to a grant request or a revoke, which is on no card, after the cards. A Send ends its batch. Acts at one
 // place stay in the order made. The ledger keeps the order of the clicks. Pure.
 import type { ActEvent } from '../../format/src/index.ts';
-import { isContainerAct, latest, nodesOf } from '../../format/src/index.ts';
-import type { Meaning } from './action-words.ts';
-import { meaningOf } from './action-words.ts';
+import { isContainerAct, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { eventOut } from './numbers.ts';
 import { responsesAfter } from './pending.ts';
 import { placeOf, scopeOf } from './references.ts';
+import type { ReportedAction } from './registry.ts';
+import { actionOut } from './registry.ts';
 
 /** Where act `e` goes in its batch: a card number, -Infinity for first, Infinity for last. */
 function placeIn(s: LedgerState, e: ActEvent): number {
@@ -41,20 +41,17 @@ export function inCardOrder(s: LedgerState, acts: readonly ActEvent[]): ActEvent
   return out;
 }
 
-/** An act as `check_responses` reports it, cards by board number (`n`, `nodes`, api.md 125): with
- * `means`, the word ✓ or ✗ says on its card's kind. */
-export type ReportedAct = Omit<ActEvent, 'id'> & { n?: number; means?: Meaning };
+/** An act as `check_responses` reports it, cards by board number (`n`, `nodes`, api.md 125), ✓ as
+ * `check` and ✗ as `cross` (D-045). */
+export type ReportedAct = Omit<ActEvent, 'id' | 'action'> & { n?: number; action: ReportedAction };
 
-/** What an ✓ or ✗ means on its card's kind now (action-words.ts, panel-send ruling 4): "yes" or "no"
- * on a question, "done" for ✓ on an action; nothing elsewhere. */
-function reported(s: LedgerState, e: ActEvent): ReportedAct {
-  const node = (e.action === 'ack' || e.action === 'drop') && e.id !== undefined ? s.nodes.get(e.id) : undefined;
-  const means = node && meaningOf(e.action, latest(node).kind);
-  return eventOut(s, means ? { ...e, means } : e) as unknown as ReportedAct;
-}
+/** Act `e` as the agent reads it: the line, with board numbers and the action named at the edge. */
+const reported = (s: LedgerState, e: ActEvent): ReportedAct =>
+  ({ ...eventOut(s, e), action: actionOut(e.action) }) as unknown as ReportedAct;
 
-/** `check_responses` (api.md 31, 120, 121): at most `limit` of the person's acts on `board` after
- * `after`, cut in ledger order, then put in card order, each ✓ or ✗ with what it `means`. `more` when the cut left some out: the next
+/** `check_responses` (api.md 31, 120, D-045): at most `limit` of the person's acts on `board` after
+ * `after`, cut in ledger order, then put in card order, ✓ and ✗ named `check` and `cross`, each
+ * card's marks folded to its latest (pending.ts `latestMarks`). `more` when the cut left some out: the next
  * page is after the highest `seq` in `responses` (`head` is the ledger's latest line, past them). */
 export function responsesPage(s: LedgerState, board: string, after: number, limit: number, agent?: string): { responses: ReportedAct[]; more?: true } {
   const all = responsesAfter(s, board, after, agent);

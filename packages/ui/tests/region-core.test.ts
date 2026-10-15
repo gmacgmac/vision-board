@@ -47,31 +47,32 @@ test('regionState carries the mode it is given', () => {
     assert.equal(regionState({ id: 'r', mode }, view([node({})]), board(), drawn('1')).mode, mode);
 });
 
-test('the count reads decided over items, counting acknowledged and dropped only', () => {
+test('the count reads answered over items, counting ✓ and ✗ only (D-045)', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2 }), node({ id: '3', n: 3 }), node({ id: '4', n: 4 })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'dropped'], ['3', 'later']);
-  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countText, '2 of 4 decided');
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countText, '2 of 4 answered');
 });
 
 test('the count ignores nodes that are not items, and is empty when there are no items', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: 't', kind: 'topic' })]);
-  assert.equal(regionState(region, v, board(), drawn('1', 't')).countText, '0 of 1 decided');
+  assert.equal(regionState(region, v, board(), drawn('1', 't')).countText, '0 of 1 answered');
   assert.equal(regionState(region, view([node({ id: 't', kind: 'topic' })]), board(), drawn('t')).countText, '');
 });
 
-// every-node ruling 6: "N of M decided" counts only cards that need an answer; a numbered plain
+// every-node ruling 6: "N of M answered" counts only cards that need an answer; a numbered plain
 // card, commented or not, counts nowhere (assumption C).
 test('the count counts only cards that need an answer, numbered or not', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, kind: 'finding' }), node({ id: '3', n: 3, kind: 'topic' })]);
-  const s = deciding(['1', 'commented'], ['2', 'commented']);
-  assert.equal(regionState(region, v, s, drawn('1', '2', '3')).countText, '1 of 1 decided');
+  const s = deciding(['1', 'acknowledged'], ['2', 'commented']);
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3')).countText, '1 of 1 answered');
+  assert.equal(regionState(region, v, deciding(['1', 'commented']), drawn('1', '2', '3')).countText, '0 of 1 answered', 'a note never answers');
   assert.equal(regionState(region, view([node({ id: '3', n: 3, kind: 'topic' })]), board(), drawn('3')).countText, '');
 });
 
 test('the count only looks at the nodes of this region', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, region: 'other' })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'acknowledged']);
-  assert.equal(regionState(region, v, s, drawn('1', '2')).countText, '1 of 1 decided');
+  assert.equal(regionState(region, v, s, drawn('1', '2')).countText, '1 of 1 answered');
 });
 
 test('Reset places is enabled when any node of the region is pinned, and not for another region', () => {

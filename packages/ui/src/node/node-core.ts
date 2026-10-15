@@ -7,12 +7,20 @@ import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { updatesView, updateWords } from './node-updates.ts';
 import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
 
+/** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
+ *  is the state and the board gives it no meaning. An old More context reads as a note. */
 export const STATUS_LABEL: Record<ItemStatus, string> = {
-  open: 'Open', acknowledged: 'Acknowledged', dropped: 'Dropped', commented: 'Commented',
-  context: 'Needs context', later: 'Saved for later',
+  open: 'Open', acknowledged: '', dropped: '', commented: 'Commented', context: 'Commented', later: 'Saved for later',
 };
 
+/** What a card's accessible name says for its status: the footer's word, or the lit mark by name. */
+export const STATUS_NAME: Record<ItemStatus, string> = { ...STATUS_LABEL, acknowledged: 'checked', dropped: 'crossed' };
+
 export const isItem = (n: ViewNode): boolean => n.n !== undefined;
+
+/** Whether the card asks for an answer (D-045, answer-model ruling 4): only such a card shows a
+ *  status, in its footer and its name. A card that only informs shows none and never counts. */
+export const asksAnswer = (n: ViewNode): boolean => isItem(n) && NODE_TYPES[n.kind].answer;
 
 /** Review buttons shown on an item; non-items offer none. */
 export const offers = (n: ViewNode): ActionId[] => (isItem(n) ? [...NODE_TYPES[n.kind].actions] : []);
@@ -26,7 +34,7 @@ export const isPressed = (action: ActionId, status: ItemStatus): boolean =>
  *  `extra` comes before it: what the card's tabs say, such as ", 1 proposal" (FE_01). */
 export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false, extra = ''): string {
   const num = isItem(n) ? `Item ${n.n}, ` : '';
-  const st = isItem(n) ? `, ${STATUS_LABEL[status]}` : '';
+  const st = asksAnswer(n) ? `, ${STATUS_NAME[status]}` : '';
   return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? ', selected' : ''}`;
 }
 
@@ -65,7 +73,8 @@ export interface NotesView {
  * note it answers, if it names one), the label of the agent that wrote it and its words. */
 export interface CardReply { seq: number; to?: number; agent?: string; text: string }
 
-const KIND_WORD: Record<ItemNote['kind'], string> = { comment: 'Your note', context: 'More context' };
+/** An old More context reads as a note everywhere (D-045). */
+const KIND_WORD: Record<ItemNote['kind'], string> = { comment: 'Your note', context: 'Your note' };
 
 export const replyEntry = (r: CardReply): ReplyEntry => ({ seq: r.seq, who: `Agent reply${r.agent ? ` · ${r.agent}` : ''}`, text: r.text });
 
@@ -202,9 +211,10 @@ export interface NodeState {
   pinned: boolean;
   /** In the person's selection (3_FE_01): view state the page passes in, never a ledger fact. */
   selected: boolean;
-  /** The node's accessible name: number, kind, title, (for items) status, and "selected". */
+  /** The node's accessible name: number, kind, title, (for cards that ask) status, and "selected". */
   label: string;
-  /** The status word in the footer, "Open" included; empty for non-items. */
+  /** The status word in the footer, "Open" included; empty for ✓ and ✗ (the lit mark shows it) and
+   *  on a card that only informs (D-045). */
   statusWord: string;
   /** The person's notes: the pin and the "Your note" block; absent with no notes. */
   notes?: NotesView;
@@ -250,7 +260,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     selected,
     label: nodeLabel(n, status, selected,
       `${awaiting ? ', awaiting context' : ''}${handover ? ', handover ready' : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${fresh ? ', new' : ''}${flagged ? ', flagged' : ''}`),
-    statusWord: awaiting ? AWAITING.word : isItem(n) ? STATUS_LABEL[status] : '',
+    statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
     ...(flagged && { flagged: true as const }), ...(s.locked && { paused: true as const }),

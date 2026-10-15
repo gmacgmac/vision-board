@@ -54,9 +54,11 @@ test('C opens the bubble beside the card with focus in the text; Enter adds the 
   await expect(card(page, 4)).toHaveAttribute('data-status', 'commented');
 });
 
-test('a second press edits the note rather than adding one; M makes it ask for more context', async ({ page }) => {
+test('a second press edits the note rather than adding one; M opens nothing (D-045)', async ({ page }) => {
   await openBoard(page);
   await press(page, 4, 'm');
+  await expect(bubble(page)).toBeHidden();
+  await press(page, 4, 'c');
   await expect(page.getByRole('dialog', { name: 'Edit note on 4' })).toBeVisible();
   await expect(text(page)).toHaveValue('First line\nsecond line');
   await expect(bubble(page).getByRole('button', { name: 'Remove' })).toBeVisible();
@@ -64,9 +66,9 @@ test('a second press edits the note rather than adding one; M makes it ask for m
   await bubble(page).getByRole('button', { name: 'Save' }).click();
   await expect(bubble(page)).toBeHidden();
   await expect(card(page, 4).locator('.vb-node-note')).toHaveCount(1);
-  await expect(card(page, 4).locator('.vb-node-note-who')).toHaveText('More context 1');
+  await expect(card(page, 4).locator('.vb-node-note-who')).toHaveText('Your note 1');
   await expect(card(page, 4).locator('.vb-node-note-text')).toHaveText('Explain the paper prototype in plain terms.');
-  await expect(card(page, 4)).toHaveAttribute('data-status', 'context');
+  await expect(card(page, 4)).toHaveAttribute('data-status', 'commented');
 });
 
 test('the footer button opens it too; Esc cancels (typed words after Discard), writes nothing and gives focus back to the card', async ({ page }) => {
