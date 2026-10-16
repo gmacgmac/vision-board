@@ -3,7 +3,7 @@
 // page exposes its work counters (`window.__vbWork`, apps/board/src/board/work.ts). The counting
 // tests count the work a change costs, not only its time: put back a whole-board rebuild and
 // they fail.
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
 import { BIG } from './perf-ledger.ts';
 import { PERF_BASE } from './perf-server.ts';
@@ -22,6 +22,13 @@ const counts = (page: Page): Promise<Counts> => page.evaluate(async () => {
   return structuredClone(hook.work);
 });
 const reset = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { reset(): void } }).__vbWork.reset());
+
+/** Bring card `el` into view as the keyboard does: focus moved after a key press pans an off-screen
+ *  card in (review-polish ruling 11); a focus after a click, or with no input yet, moves nothing. */
+async function bringIn(page: Page, el: Locator): Promise<void> {
+  await page.keyboard.press('Shift');
+  await el.focus();
+}
 
 async function open(page: Page, board = BIG.board): Promise<void> {
   await page.goto(`${PERF_BASE}/?vbwork#${board}`);
@@ -138,6 +145,31 @@ test('one act on the 1,000-card board is shown in under 50 ms, updating one card
   expect(sorted[2]!).toBeLessThan(50);
 });
 
+// Review polish ruling 2 (FE_02): a container's top line keeps its on-screen size by a counter-transform
+// read from one value the viewport writes on the world (--vb-zoom), so a zoom step updates no card and
+// no frame and lays nothing out; the style and layout it costs stay inside the one-change budget.
+test('a zoom step on the 1,000-card board is under 50 ms and updates no card or frame', async ({ page }) => {
+  await open(page);
+  await counts(page);
+  await reset(page);
+  const times = await page.evaluate(() => {
+    const head = document.querySelector('vb-region .vb-region-head')!;
+    const step = (key: string) => {
+      const t = performance.now();
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      head.getBoundingClientRect(); // the style and layout the next frame needs
+      return performance.now() - t;
+    };
+    return ['-', '-', '-', '-', '+', '+', '+', '+', '+', '+', '-'].map(step);
+  });
+  const c = await counts(page);
+  expect([c.cardsUpdated, c.containersLaidOut, c.framesUpdated, c.fullFetches]).toEqual([0, 0, 0, 0]);
+  const sorted = [...times].sort((x, y) => x - y);
+  const median = sorted[Math.floor(sorted.length / 2)]!;
+  console.log(`[FE_02] zoom step: ${times.map((t) => t.toFixed(1)).join(', ')} ms (median ${median.toFixed(1)})`);
+  expect(median).toBeLessThan(50);
+});
+
 test('cards off screen are cheap, keep their name and order, and draw again when brought into view', async ({ page }) => {
   await open(page);
   await counts(page);
@@ -152,7 +184,7 @@ test('cards off screen are cheap, keep their name and order, and draw again when
   const far = off.last();
   await expect(far).toHaveAttribute('aria-label', /\w+: \S/);
   const id = await far.getAttribute('data-id');
-  await far.focus();
+  await bringIn(page, far);
   await expect(page.locator(`vb-node[data-id="${id}"]`)).not.toHaveAttribute('data-offscreen');
 });
 
@@ -162,12 +194,12 @@ test('selecting 50 cards updates exactly those 50 and lays out none; clearing up
   await open(page);
   await counts(page);
   await reset(page);
-  // The 50 cards of one container, each focused first (focus pans it into view, which costs no
-  // card work), then clicked on its title: the first alone, the rest with Shift.
+  // The 50 cards of one container, each brought in first (a key's focus pans it into view, which
+  // costs no card work), then clicked on its title: the first alone, the rest with Shift.
   const ns = numbersOf(4);
   for (const [i, n] of ns.entries()) {
     const el = page.locator(`vb-node[data-id="${n}"]`);
-    await el.focus();
+    await bringIn(page, el);
     await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
   }
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(50);
@@ -195,7 +227,7 @@ test('a lasso over the 50 cards of one container updates those 50 and lays out n
   const corners = [numbersOf(region)[0]!, numbersOf(region).at(-1)!];
   for (const [i, n] of corners.entries()) {
     const el = page.locator(`vb-node[data-id="${n}"]`);
-    await el.focus();
+    await bringIn(page, el);
     await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
   }
   await page.keyboard.press('z');
@@ -227,7 +259,7 @@ test('a lasso over the 50 cards of one container updates those 50 and lays out n
   const near = [numbersOf(region)[0]!, numbersOf(region)[1]!];
   for (const [i, n] of near.entries()) {
     const el = page.locator(`vb-node[data-id="${n}"]`);
-    await el.focus();
+    await bringIn(page, el);
     await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
   }
   await page.keyboard.press('z');
@@ -251,7 +283,7 @@ test('dragging 50 selected cards into another container updates those 50 and lay
   // As the lasso test: zoom to two corner cards so the grid container is large on the stage.
   for (const [i, n] of [numbersOf(region)[0]!, numbersOf(region).at(-1)!].entries()) {
     const el = page.locator(`vb-node[data-id="${n}"]`);
-    await el.focus();
+    await bringIn(page, el);
     await el.locator('.vb-node-title').click({ modifiers: i === 0 ? [] : ['Shift'] });
   }
   await page.keyboard.press('z');
@@ -321,7 +353,7 @@ test('a container drag frame costs nothing; the drop repacks only; a container n
   await counts(page);
   // Zoom to r01's first card so its frame's grip is on the stage at a usable size.
   const first = page.locator(`vb-node[data-id="${numbersOf(1)[0]}"]`);
-  await first.focus();
+  await bringIn(page, first);
   await first.locator('.vb-node-title').click();
   await page.keyboard.press('z');
   await page.keyboard.press('Escape');

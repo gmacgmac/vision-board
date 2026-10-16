@@ -42,6 +42,10 @@ body {
 [data-narrow] :is(.vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip-word) {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
+/* "With agent" shares "board updated"'s pink, so on a narrow toolbar it keeps the agent's mark, the
+   Agents bot, beside its number (review polish FIX_01): decoration in the chip's own ink, Lc 64.0 light,
+   49.1 dark (with-agent task), over the 30 tier. */
+[data-narrow] .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
 [data-narrow] .vb-toolbar-end .vb-btn-iconic { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
 /* A window under 1200px with every toolbar control showing (Chat, Send to agent): the gaps and side padding
    tighten so the toolbar stays whole; the board picker keeps its 220px. */
@@ -93,6 +97,7 @@ body {
   font-size: var(--vb-text-sm); white-space: nowrap;
 }
 .vb-chip b { color: var(--vb-ink-strong); }
+.vb-chip[data-tone='agent'] { background: var(--vb-state-comment-soft); color: var(--vb-state-comment); }
 .vb-chip[data-tone='answered'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
 .vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
 .vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
@@ -116,7 +121,11 @@ body {
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }
-.vb-stage.panning { cursor: grabbing; }
+/* Cmd (Ctrl elsewhere) held over the board (review polish round 2 ruling 6, pointer.ts panKey): a drag
+   then pans from anywhere, so everything on the board shows a hand but a text field, which keeps its
+   caret; during any pan, a closed hand. Over every part's own cursor, so marked important. */
+.vb-stage[data-pan-key], .vb-stage[data-pan-key] :where(:not(input, textarea, select, [contenteditable], [contenteditable] *)) { cursor: grab !important; }
+.vb-stage.panning, .vb-stage.panning * { cursor: grabbing !important; }
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }
 .vb-world.no-anim * { transition: none !important; }
@@ -174,7 +183,7 @@ body {
 
 /* A past version (navigation FE_01, versionView flag): the banner under the header, and the board
    read-only. The world carries data-readonly; every control that acts is hidden (the card's review
-   buttons, size control and note pin, a container's grip, tools and note buttons, a holder's
+   buttons but a lit ✓ or ✗, size control and note pin, a container's grip, tools and note buttons, a holder's
    Remove access), and the kind tab no longer looks like a handle. The page's handlers and sender.ts
    refuse the rest; selection, zoom and pan stay. */
 .vb-banner {
@@ -185,7 +194,12 @@ body {
 .vb-banner[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
 .vb-banner-text b { font-weight: var(--vb-weight-bold); }
-.vb-world[data-readonly] :is(.vb-node-actions, .vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove) { visibility: hidden; }
+.vb-world[data-readonly] :is(.vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove) { visibility: hidden; }
+/* A card's mark stays (review polish FIX_01): an answered card shows its ✓ or ✗ lit, as now, so it never
+   looks open; every other button of the row is hidden, and the row is inert, a mark that takes no press,
+   no focus and no hover (its name already says "checked" or "crossed"). Zoomed out the row hides whole. */
+.vb-world[data-readonly] vb-node .vb-node-actions { interactivity: inert; pointer-events: none; }
+.vb-world[data-readonly] vb-node .vb-act:not(:is([data-act='ack'], [data-act='drop'])[aria-pressed='true']) { visibility: hidden; }
 .vb-world[data-readonly] :is(.vb-size, .vb-note-pin) { display: none; }
 .vb-world[data-readonly] .vb-holder { pointer-events: none; }
 .vb-world[data-readonly] vb-node .vb-node-kind { cursor: inherit; }

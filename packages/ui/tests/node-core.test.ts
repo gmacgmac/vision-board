@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ViewNode } from '../../format/src/index.ts';
 import type { BoardState, ItemNote, ItemStatus } from '../../actions/src/index.ts';
-import { buttonLabel, nodeLabel, nodeState, offers, STATUS_LABEL, STATUS_NAME } from '../src/index.ts';
+import type { CardReply } from '../src/index.ts';
+import { buttonLabel, conversation, isNoteEntry, nodeLabel, nodeState, notesView, offers, STATUS_LABEL, STATUS_NAME } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>
   ({ id: '1', region: 'r', kind: 'question', title: 'T', ...f });
@@ -41,6 +42,12 @@ test('nodeLabel names the number, kind, title and, on a card that asks, its stat
   assert.equal(nodeLabel(node({ kind: 'decision', n: 6, title: 'Ship' }), 'acknowledged'), 'Item 6, Decision: Ship, checked');
   assert.equal(nodeLabel(node({ kind: 'action', n: 7, title: 'Pay' }), 'dropped'), 'Item 7, Action: Pay, crossed');
   assert.equal(nodeLabel(node({ kind: 'topic', title: 'Stack' }), 'open'), 'Topic: Stack');
+});
+
+test('a card whose note the agent owes reads "With agent" in its footer and its name (D-046)', () => {
+  const st = nodeState(node({ kind: 'decision', n: 8, title: 'Ship' }), withItem('commented'));
+  assert.deepEqual([st.statusWord, st.label], ['With agent', 'Item 8, Decision: Ship, With agent']);
+  assert.equal(STATUS_LABEL.context, 'With agent', 'an old More context reads as a note');
 });
 
 // ---- nodeState: the rules update() applies ---------------------------------------------------
@@ -129,7 +136,8 @@ test('nodeLabel: selected comes last, after the status', () =>
   assert.equal(nodeLabel(node({ kind: 'question', n: 5, title: 'Use it?' }), 'later', true),
     'Item 5, Question: Use it?, Saved for later, selected'));
 
-// 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block, latest first.
+// 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block; review-polish
+// ruling 8: oldest first, like a chat.
 test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edits it', () => {
   const one = note('Looks right');
   assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
@@ -138,13 +146,49 @@ test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edit
   });
 });
 
-test('nodeState: three notes, two sent: the count, the latest first, sent ones marked Sent', () => {
-  const v = nodeState(node({ n: 4 }), withItem('commented',
-    [note('one', 'comment', true), note('two', 'context', true), note('three')])).notes!;
+test('nodeState: three notes, two sent: the count, the oldest first, sent ones marked Sent, the pin on the latest', () => {
+  const notes = [note('one', 'comment', true), note('two', 'context', true), note('three')];
+  const v = nodeState(node({ n: 4 }), withItem('commented', notes)).notes!;
   assert.equal(v.count, '3 notes');
-  assert.deepEqual(v.entries.map((x) => [x.index, x.who, x.text, x.sent]), [
-    [3, 'Your note 3', 'three', false], [2, 'Your note 2 · Sent', 'two', true], [1, 'Your note 1 · Sent', 'one', true]], 'an old More context reads as a note');
-  assert.deepEqual([v.pin!.index, v.pin!.sent], [3, false]);
+  assert.deepEqual(v.entries.map((x) => isNoteEntry(x) && [x.index, x.who, x.text, x.sent]), [
+    [1, 'Your note 1 · Sent', 'one', true], [2, 'Your note 2 · Sent', 'two', true], [3, 'Your note 3', 'three', false]], 'an old More context reads as a note');
+  assert.deepEqual(v.pin, { seq: notes[2]!.seq, index: 3, sent: false, label: 'Note 3 on item 4. Edit it' });
+});
+
+// review-polish ruling 8 and decision 8: one conversation, oldest first, top to bottom: note 1, its
+// replies, note 2...; a reply naming no note of the card takes its place by time among the notes.
+test('notesView: each note then its replies oldest first; orphan replies by seq among the notes; a new note last', () => {
+  const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
+  const replies: CardReply[] = [
+    { seq: 33, to: 20, text: 'later answer to first' }, { seq: 40, text: 'orphan, after both notes' },
+    { seq: 31, to: 20, text: 'answer to first' }, { seq: 15, text: 'orphan, before first' },
+    { seq: 25, to: 99, text: 'orphan, to a gone note, between the notes' }, { seq: 32, to: 30, text: 'answer to second' },
+  ];
+  const v = notesView(node({ n: 2 }), [a, b], replies)!;
+  const flat = v.entries.flatMap((x) => isNoteEntry(x) ? [x.text, ...(x.replies ?? []).map((r) => r.text)] : [`(${x.text})`]);
+  assert.deepEqual(flat, [
+    '(orphan, before first)', 'first', 'answer to first', 'later answer to first',
+    '(orphan, to a gone note, between the notes)', 'second', 'answer to second', '(orphan, after both notes)',
+  ]);
+  assert.deepEqual(v.entries.filter((x) => !isNoteEntry(x)), [
+    { seq: 15, who: 'Agent reply', text: 'orphan, before first', orphan: true },
+    { seq: 25, who: 'Agent reply', text: 'orphan, to a gone note, between the notes', orphan: true },
+    { seq: 40, who: 'Agent reply', text: 'orphan, after both notes', orphan: true },
+  ]);
+  assert.deepEqual([v.pin!.seq, v.pin!.index, v.count], [30, 2, '2 notes'], 'the pin is the latest note; the count is unchanged');
+  // A new note goes at the bottom, and the pin moves to it.
+  const w = notesView(node({ n: 2 }), [a, b, { ...note('third'), seq: 50 }], replies)!;
+  assert.equal(w.entries.at(-1)!.text, 'third');
+  assert.deepEqual([w.pin!.seq, w.pin!.index, w.count], [50, 3, '3 notes']);
+});
+
+// Review polish ruling 6: the conversation window lists the same entries; a container's notes have no
+// card, so the entries are their own function, which notesView reads.
+test('conversation: the entries notesView lists, for notes with no card (a container)', () => {
+  const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
+  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'answer' }, { seq: 25, text: 'orphan' }];
+  assert.deepEqual(conversation([a, b], replies), notesView(node({ n: 2 }), [a, b], replies)!.entries);
+  assert.deepEqual(conversation([], []), []);
 });
 
 test('nodeState: when every note is sent, the pin shows the latest and only reads it', () => {

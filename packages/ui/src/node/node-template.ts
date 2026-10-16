@@ -8,7 +8,7 @@ import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
 import type { UpdatesView } from './node-updates.ts';
-import { buttonLabel, FLAG_KEY, flagLabel, isItem, offers, SIZE_LETTER } from './node-core.ts';
+import { buttonLabel, FLAG_KEY, flagLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
@@ -32,18 +32,21 @@ function tabs(n: ViewNode): string {
 }
 
 /** The "Your note" block's contents (2e_FE_01 ruling 7): "N notes" when there are several, then
- * each note, latest first, as Markdown (D-023) clamped to three lines. Each carries `data-note`,
- * its seq, so a click opens it, and is a tab stop (Enter opens it, `VbNode`). Each also holds the
- * note in full as a hover tip (found-in-use FE_04, `bindNoteTip`): hidden for screen readers,
- * which read the note itself, and shown only when the note is cut and the notePreview flag is on. */
+ * the card's conversation in `notesView`'s order, oldest first (review-polish ruling 8): each note
+ * with its replies under it, an orphan reply in its place. Each note is Markdown (D-023) clamped to
+ * three lines, carries `data-note`, its seq, so a click opens it, and is a tab stop (Enter opens it,
+ * `VbNode`). Each also holds the note in full as a hover tip (found-in-use FE_04, `bindNoteTip`):
+ * hidden for screen readers, which read the note itself, and shown only when the note is cut and the
+ * notePreview flag is on. */
 export function notesMarkup(v: NotesView): string {
   const count = v.count ? `<span class="vb-node-notes-count">${esc(v.count)}</span>` : '';
   return count + v.entries.map((x) => {
+    if (!isNoteEntry(x)) return replyMarkup(x);
     const text = renderMarkdown(x.text);
     return `<div class="vb-node-note" data-note="${x.seq}"${x.sent ? ' data-sent' : ''} tabindex="0">`
       + `<span class="vb-node-note-who">${esc(x.who)}</span><div class="vb-node-note-text">${text}</div>`
       + `<div class="vb-tip vb-note-tip" aria-hidden="true">${text}</div></div>${(x.replies ?? []).map(replyMarkup).join('')}`;
-  }).join('') + (v.orphans ?? []).map(replyMarkup).join('');
+  }).join('');
 }
 
 /** An agent's reply under the note it answers (FE_03 ruling 3): the note's shape and clamp, read-only,

@@ -48,7 +48,7 @@ export const PUT_BACK_NONE_HINT = 'Not moved';
  * `region.css` mixes the frame line, the title and the count from it. Every region takes the
  * neutral default for now; a region colour later is this one function (and one property).
  */
-export const REGION_COLOUR_DEFAULT = 'var(--vb-line-strong)';
+export const REGION_COLOUR_DEFAULT = 'var(--vb-line-contrast)';
 export function regionColour(_r: Pick<Region, 'id'>): string {
   return REGION_COLOUR_DEFAULT;
 }
@@ -147,8 +147,11 @@ export interface RegionState {
   /** The card widths in force (`widthsOf`: the person's, else the agent's, else the mode's default):
    * the Match card widths switch is on for `match`. */
   widths: Widths;
-  /** "<answered> of <items> answered" (D-045); empty when the region has no items. */
+  /** "<answered>/<items>" on the line (review polish round 2 ruling 1); empty when the region has no
+   *  items. */
   countText: string;
+  /** "<answered> of <items> answered" (D-045): the count's tooltip and what screen readers read. */
+  countLabel: string;
   /** Whether "Reset places" in the settings menu is enabled: at least one node of the region is
    * pinned. Otherwise it shows disabled, with `RESET_NONE_HINT`. */
   canReset: boolean;
@@ -174,17 +177,23 @@ export interface RegionState {
   paused?: true;
 }
 
-/** The retired marker (field report batch 2 ruling 1): its words, its accessible name, and the
- * board version where the cards last appeared, which a press opens; none when no version can show. */
-export interface RegionRetired { text: string; label: string; version?: number }
+/** The retired marker (field report batch 2 ruling 1): how many, its words ("3 retired"; the number
+ * alone with an icon when the line has no room, round 2 ruling 1), its accessible name and tooltip in
+ * full words, and the board version where the cards last appeared, which a press opens; none when no
+ * version can show. `until`: the line the past view's answers run to, just before it (review polish
+ * ruling 10). */
+export interface RegionRetired { count: number; text: string; label: string; version?: number; until?: number }
 
-/** The marker for `count` cards retired from the container, opening board version `version`. */
-export function retiredMarker(count: number, version?: number): RegionRetired {
-  const text = `${count} card${count === 1 ? '' : 's'} retired`;
+/** The marker for `count` cards retired from the container, opening board version `version` with
+ * the person's answers as at line `until`. */
+export function retiredMarker(count: number, version?: number, until?: number): RegionRetired {
+  const words = `${count} card${count === 1 ? '' : 's'} retired`;
   return {
-    text,
-    label: version === undefined ? `${text} from this container` : `${text} from this container. Show v${version}, where ${count === 1 ? 'it' : 'they'} last appeared`,
+    count,
+    text: `${count} retired`,
+    label: version === undefined ? `${words} from this container` : `${words} from this container. Show v${version}, where ${count === 1 ? 'it' : 'they'} last appeared`,
     ...(version !== undefined && { version }),
+    ...(version !== undefined && until !== undefined && { until }),
   };
 }
 
@@ -220,7 +229,8 @@ export function regionState(
   return {
     mode: r.mode,
     widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id)),
-    countText: items.length ? `${answered} of ${items.length} answered` : '',
+    countText: items.length ? `${answered}/${items.length}` : '',
+    countLabel: items.length ? `${answered} of ${items.length} answered` : '',
     canReset: nodes.some((n) => s.pins.has(n.id)),
     canPutBack: s.regionPins.has(r.id),
     ...(note && { note }),

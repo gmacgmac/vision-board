@@ -1,5 +1,5 @@
-// A person's notes on an item, and the item's status worked out from them (2e_FE_01, api.md
-// 58-61). A note is made by a `comment` or `context` act with words and is named, for ever, by
+// A person's notes on an item, and the item's marks (its status in the fold; a note sets none, D-046)
+// (2e_FE_01, api.md 58-61). A note is made by a `comment` or `context` act with words and is named, for ever, by
 // that act's `seq`. Until a Send after it, `note-edit` changes its words (and, with `kind`, what
 // it asks for) and `note-remove` takes it back; both are new acts, so the ledger stays
 // append-only (D-017). After a Send, or once the agent answers it, it is history (note-lock.ts). A note on a group of cards (3_FE_02, api.md
@@ -39,7 +39,8 @@ export interface ItemLog { asks: Ask[]; decisions: Decision[] }
 
 /** An item's status and notes. `unseenAnswer`: the agent answered the card's latest note, which
  * cleared its earlier ✓, ✗ or Later, and the person has not looked at the card since (clears.ts,
- * D-045 ruling 7); set by the reads (`boardState`), never folded. */
+ * D-045 ruling 7); set by the reads (`boardState`), never folded. In the fold `status` is the marks
+ * alone; every read gives `cardStatus` (conditions.ts), `commented` while a note is owed (D-046). */
 export interface ItemState { status: ItemStatus; notes: ItemNote[]; unseenAnswer?: true }
 
 export const isNote = (a: Ask | undefined): a is Ask & { text: string } => a?.text !== undefined;
@@ -83,24 +84,14 @@ export function foldNoteAct(a: Ask, e: ActEvent): void {
 /** The asks still standing, in the order they count. */
 const standing = (log: ItemLog): Ask[] => log.asks.filter((a) => a.removed === undefined).sort((a, b) => a.pos - b.pos);
 
-/** The item's status: its decisions and standing asks replayed in order (last action wins). ✓, ✗,
- * Later and clear set it outright; a note (`comment`, or an old `context`, D-045) marks an open item
- * `commented` and never answers it. A removed note counts as never made; an edit that set the kind
- * counts as a fresh press at the edit. `cut`: the `pos` of the latest note the agent's answer
- * cleared (clears.ts, D-045 ruling 7): nothing at or before it counts, so the card is open and
- * unmarked until the person acts again. */
+/** The item's status as the fold holds it: its marks alone, ✓, ✗, Later and clear, the latest one
+ * winning (`markOf`). A note never answers a card and sets no status here: while it is owed, the
+ * card is with the agent, which the reads work out (conditions.ts `cardStatus`, D-046). `cut`: the
+ * `pos` of the latest note the agent's answer cleared (clears.ts, D-045 ruling 7): nothing at or
+ * before it counts, so the card is open and unmarked until the person acts again. */
 export function itemOf(log: ItemLog, cut = 0): ItemState {
-  const steps: { pos: number; action: ActEvent['action'] }[] = [
-    ...log.decisions.map((d) => ({ pos: d.seq, action: d.action })),
-    ...standing(log).map((a) => ({ pos: a.pos, action: a.kind })),
-  ].filter((x) => x.pos > cut).sort((a, b) => a.pos - b.pos);
-  let status: ItemStatus = 'open';
-  for (const { action } of steps) {
-    if (action === 'comment' || action === 'context') status = status === 'open' ? 'commented' : status;
-    else status = ACTIONS[action].status ?? status;
-  }
   return {
-    status,
+    status: markOf(log, cut),
     notes: liveNotes(log).map(({ seq, kind, text, at, nodes }) => ({ seq, kind, text, at, ...(nodes && { nodes: [...nodes] }) })),
   };
 }

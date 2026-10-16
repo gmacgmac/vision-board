@@ -1,12 +1,12 @@
 // The board page's view commands (3_FE_02 ruling 5): zoom out, Fit and zoom in in the header; the
 // selection bar's Comment, Move to (3_FE_03 ruling 8), Remove (N24) and Zoom (short words; the tooltip and
 // accessible name say the rest); the area bar's
-// Zoom to this area. ONE table drives the header buttons, the bars and the keys, so nothing is
+// Zoom to this area; and a digit, which opens the Go to card box (go-to-card.ts). ONE table drives the header buttons, the bars and the keys, so nothing is
 // wired twice. They change only what the person sees (or open the note bubble or the move list),
 // so none is a ledger event (rule 8 covers the note, the move and the removal themselves, which are
 // written through the action layer).
 
-export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'zoom-area', 'container-note'] as const;
+export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'zoom-area', 'container-note', 'go-to-card'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
 
 export interface CommandDef {
@@ -20,6 +20,8 @@ export interface CommandDef {
   /** Keys that run it (`KeyboardEvent.key`, lower case, `shift+` in front for a Shift
    *  combination), the first one shown in hints. */
   keys: readonly string[];
+  /** The keys as the key list shows them, when they are too many to list one by one (0–9). */
+  shown?: readonly string[];
   /** Drawn as the bar's primary button. */
   primary?: boolean;
   /** The header button's text, when it is a symbol rather than the label. */
@@ -47,6 +49,9 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
   // container's note, a comment as N is for the selection. Those keys mean this only there.
   'container-note': { label: 'Comment on container', keys: ['c', 'n'], acts: true },
+  // Any digit, with focus anywhere on the board but a text field (go-to-card.ts): the box opens
+  // holding it. Without the goToCard flag the keys do nothing.
+  'go-to-card': { label: 'Go to card', means: 'Go to a card by its number', keys: [...'0123456789'], shown: ['0–9'] },
 };
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */

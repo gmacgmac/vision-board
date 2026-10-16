@@ -55,7 +55,7 @@ export function parkingSection(fx: Fixture): HTMLElement {
       cardList('Cards awaiting their handover', card(awaiting, fx), card(awaiting, fx, 'tip'))),
     group('Handover', 'A HANDOVER tab on the bottom edge, shown here with its box open. Hover or keyboard focus shows the box; a click or Enter opens it. Situation, Background, Assessment and Recommendation as headed sections, then the sources; the box scrolls when it is long.',
       open),
-    group('Replies', 'The agent\'s reply under the note it answers, as the note is: Markdown, cut at three lines, its full text on hover or focus. Read-only. A reply that names no note comes after the notes.',
+    group('Replies', 'The agent\'s reply under the note it answers, as the note is: Markdown, cut at three lines, its full text on hover or focus. Read-only. A reply that names no note takes its place by time among the notes.',
       cardList('Cards with replies', card(answered, fx), card(orphan, fx))),
     group('Reply to a container note', 'Under the note in the container\'s note block, cut at three lines until "Show all".', answeredFrame(fx)));
   return box;

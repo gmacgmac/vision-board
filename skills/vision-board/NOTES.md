@@ -274,3 +274,131 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   SKILL.md § Propose, never decide says `action` `check` (✓) or `cross` (✗), and scenario 4's good
   run proposes `action: "check"`. The reads (`get_board`, `show_node`, `list_open`) now say
   `checked` and `crossed`; the skill named no status word for them.
+
+## Skill v3.5 (✓ and ✗ answer what the card asks)
+
+- 2026-10-15, maintainer (chat 102, rulings A to C; settled chat 130, 136): (A) a card that asks
+  is answerable with ✓ or ✗; (B) when the answer needs words (a name, a pick among several), the
+  card says "Answer in a note"; (C) when ✗ could mean more than one thing, ask in a reply rather
+  than guess. From the answer model's VERIFY_01 problem 2: both agents drew "Who writes the release
+  post?" with ✓ and ✗, read ✗ as "no release post" and wrote it into a summary as decided.
+- 2026-10-16, agent: v3.5 changes § Kinds (ask so either mark reads one way, "✓ keep · ✗
+  rename" when it could read two; an answer in words ends "Answer in a note", then reply with what
+  you understood and ask for ✓; never ✓ or ✗ on a name), § What the person's answers mean (a ✗
+  that could mean more than one thing: ask which in a `reply` with no `to`, act on neither, never
+  write a guess anywhere as decided; the answer comes as a note), § Retiring and distilling (no
+  proposal while a ✗'s meaning is asked; a summary states what ✓ and ✗ settled; such a card stays)
+  and § Reading the person's answers (a settled card is raised again only to ask what its ✗
+  meant). Scenarios 24 and 25 new; 13 updated (its "✓ on 9 (an action) as done" gave ✓ a meaning
+  by kind, which A leaves to the card); 22 unchanged (its good run already asks with ✓ and ✗).
+- 2026-10-16, agent: the mechanics, on a scratch board (port 4495). B: the note puts the card
+  "With agent" (header "0 open · 1 with agent"); the agent's `reply` to it brings it back "Open",
+  "1 update"; the person's ✓ answers it. C: a `reply` with no `to` on a ✗'d card clears nothing
+  (the ✗ stays lit, the card counts answered, nothing `pending`); it shows on the card face as an
+  "Agent reply" block, with no "1 update" tab and no count change. The person's note in answer
+  comes in the Send as `2 (question): ✗: <words>`. An `append` instead would show "1 update" and
+  also leave the ✗ standing.
+- 2026-10-16, agent: runs, VERIFY_01's harness (its § Set-up) from the system temp folder. Servers
+  on 4493 (Claude Code) and 4494 (Kiro), `HOME` and `VB_PROJECT` in the temp folder,
+  `VB_KIRO_AGENT=0`, stopped after; each scenario's board drawn over HTTP by a newly joined agent
+  the turn then runs as; the person's acts on the page (Playwright chromium); each message built by
+  `promptFor` / `roundOf` before Send. **Claude Code** 2.1.301, `claude -p` with the panel's flags,
+  **ran Opus 5.5** (`modelUsage` `claude-opus-5-5`, every turn). **Kiro** `kiro-cli` 2.24.0 as the
+  workspace agent `vb-test` (the skill as prompt, `@vb` only), **ran Opus 5.5** (the session file
+  records `claude-opus-5.5`). No page console error or failed request.
+  - Scenario 24: **pass, both.** Turn 1: one `question` in "Launch" ending "Answer in a note"
+    (Claude "Answer in a note with their name."; Kiro "Name the person who drafts the 2.0
+    announcement. Answer in a note."); "Done." Turn 2: `show_node`, one `reply` to the note:
+    "Robin from the docs team writes the 2.0 release post. ✓ if that's right." (both, word for
+    word); card 4 `open`, `unseen`, nothing `pending`; no other card.
+  - Scenario 25: **pass, both.** One call: a `reply` on 4 with no `to` asking which ✗ meant
+    (Claude "…no release post for 2.0, or a post but not one we name an author for yet. Which is
+    it?"; Kiro "…no release post this time, or not settled yet…"), a summary finding listing the three
+    ✓ and the release post as still open, card 4 kept, 1, 2, 3 and 5 retired.
+    Neither wrote "no release post" as decided. Turn 2 (not in the scenario; the person's note "I
+    meant no post: a changelog entry is enough."): Claude replied and asked "✗ again to settle it";
+    Kiro replied, rewrote the summary "Release post: none (✗)" and retired 4, though its own reply
+    had cleared the ✗ (see the last item).
+  - Scenario 13: **pass, both.** ✗ on 3 read as guest checkout out of 1.4 (no ask: the ✗ reads one
+    way); card 6 rewritten to "Retries hit only the card path" with a reply to the note; ✓ on 9 read
+    as go ahead (Claude replied it needs the checkout code's folder). Harness: Claude ran two
+    read-only `Bash` calls (`ls`, `grep`), let through by the person's own settings, as in VERIFY_01.
+  - Scenario 22: **pass, both.** A `reply` to each note; 2 ended "✓ if shipping it in 1.4 with the
+    flag off is right" (Kiro "✓ again if…"), 3 ended "✓ keep it in 1.4 · ✗ move it to 1.5" (both);
+    2 and 3 `open`, `unseen`; no new card, no `propose`. Kiro now says its reply cleared the ✓
+    (VERIFY_01 problem 1 not seen again).
+- 2026-10-16, agent: what still slips: chat words past "Done." (Claude 3 of 6 turns, one turn with
+  no "Done." at all; Kiro 5 of 6, up to four sentences restating its readings).
+- 2026-10-16, agent, for the maintainer: (a) C's reply has no update marker, so a person using
+  Hide answered, or scanning for "1 update", can miss it; a page change (count an orphan reply on
+  an answered card as an update) would be its own task. (b) After the person explains a ✗ in a
+  note, the agent's reply clears the ✗; Claude asked for it again, Kiro folded the answer into the
+  summary as "none (✗)" and retired the card. Whether the skill should always ask for the mark
+  again there ("if you still need one" today) is open.
+
+## Skill v3.6 (every card that asks says what ✓ and ✗ mean)
+
+- 2026-10-16, maintainer (chat 192, go "just proceed"): (1) a card that asks says on the card what
+  ✓ and ✗ each mean ("✓ keep · ✗ rename it now"); only a plain yes/no question may leave it out.
+  This replaces v3.5's rule A ("say what each does when either could read two ways") and the answer
+  model plan's ruling 10. (2) The Send message's new line "Waiting for your reply: …" (D-046, review
+  polish round 2 ruling 3): answer each card on it; "Still open" is only what needs the person.
+  (3) Any agent reply now shows "1 update" (round 2 ruling 4), so a reply asking what a ✗ meant is
+  no longer easy to miss.
+- 2026-10-16, agent: v3.6 changes § Kinds (rule A rewritten: every `decision` and `action` says
+  what ✓ and ✗ mean, a plain yes/no question may leave it out, a reply asking for a mark again
+  says the same unless it is a plain yes), § Where you are running (the Send message's two tail
+  lines; a new bullet: "Waiting for your reply" is yours, a note after a mark is owed too though
+  its card isn't on the line, "Still open" owes nothing). Rule B ("Answer in a note") kept: a card
+  asking for words offers no ✓ or ✗ as the answer. Ruling 3: the skill had no workaround to drop
+  (v3.5 already asked in a `reply`; the v3.5 note (a) is now met by the page).
+- 2026-10-16, agent: scenarios v3.6: a header rule (an agent's card that asks says what ✓ and ✗
+  mean unless it is a plain yes/no question); 11 (its decisions say it), 13, 22, 24 and 25 (their
+  cards say it; 22 and 24 now show "Waiting for your reply"; 25's card 4 stays an older card
+  without it) updated; 26 new (a round with "Waiting for your reply: 3, 4", 4's note from an
+  earlier round, "Still open: 5", and words asking for a new card). 23 unchanged (its proposal is
+  a plain yes/no question; its decision 5 is answered before the scenario starts).
+- 2026-10-16, agent: runs, v3.5's harness (VERIFY_01 § Set-up) from `$TMPDIR/vb-skill36/`: servers
+  on 4483 (Claude Code) and 4484 (Kiro), `HOME` and `VB_PROJECT` in the temp folder,
+  `VB_KIRO_AGENT=0`, stopped after; each board drawn over HTTP by a newly joined agent the turn runs
+  as; the person's acts on the page (Playwright chromium; no console error or failed request);
+  each message built by `promptFor` / `roundOf`. **Claude Code** 2.1.301, `claude -p` with the
+  panel's flags: **ran Opus 5.5** (`modelUsage` `claude-opus-5-5`, every turn). **Kiro** `kiro-cli`
+  2.24.0, workspace agent `vb-test` (skill as prompt, `@vb` only): **ran Opus 5.5** (every session
+  records `claude-opus-5.5`).
+  - First run (skill without the "a note after a mark is owed too" sentence): Claude passed 11, 22,
+    24, 25, 26 and failed one line of 13 (✓ on 9 got no word, twice: a rerun on a fresh board did
+    the same). Kiro passed 11, 13, 24, 25, 26 and failed 22 twice: its reply on 2 did not ask for
+    the ✓ again ("Off by default…", chat "card 2 keeps your ✓"; the first time it also drew a new
+    decision card for the flag default). Card 2's line is `2 (decision): ✓: <note>` and 2 is not on
+    "Waiting for your reply", so the new line read as "only 3 is owed": the sentence was added, and
+    every scenario run again on fresh boards.
+  - Final run (v3.6 as released), all **pass, both**:
+    - 11: decisions end with their meanings (Claude "✓ keep 60 minutes · ✗ cut to 30 minutes";
+      Kiro "✓ keep this order · ✗ reorder (say how in a note)"); name questions end "Answer in a
+      note"; a plain yes/no question without them ("Is the release date up for change on Monday?").
+    - 13: ✗ on 3 read as guest checkout out of 1.4; card 6 corrected and its note replied to; ✓ on
+      9 read as the card says (Claude replied "Noted: the back-off test goes into 1.4."; Kiro said it
+      in the chat).
+    - 22: a reply to each note, each asking for the mark with its meanings ("✓ ship it in 1.4 behind
+      a flag, off by default · ✗ leave it for 1.5", "✓ keep it in 1.4 · ✗ move it to 1.5"); 2 and 3
+      open with "1 update"; no new card (Kiro's chat: "My reply on card 2 cleared your earlier ✓").
+    - 24: turn 1 one question ending "Answer in a note"; turn 2 (message with "Still open: 2, 3",
+      "Waiting for your reply: 4") one reply "Robin from the docs team writes the 2.0 release
+      post. ✓ if that's right." (both); 2 and 3 left alone; 4 open with "1 update".
+    - 25: a reply on 4 asking which ✗ meant, a summary with the release post still open, 4 kept, 1,
+      2, 3 and 5 retired. The reply on the crossed card now shows "1 update" on the page (round 2
+      ruling 4 seen live; v3.5's note (a) is met).
+    - 26: replies on 3 and 4 (4's note from the earlier round, found with `show_node`), each
+      asking with its meanings; Kiro rewrote 4 to add the section; nothing on 5; the new card a
+      plain yes/no question ("Rename the Settings page to Preferences in 2.0?"); nothing `pending`.
+      26's good run first said "a `reply` to each"; after Kiro's first run (an `append` alone on 4)
+      it was aligned to the skill's "a `reply` (or an `append`)".
+- 2026-10-16, agent: what still slips: chat words past "Done." (Claude 1 of 7 final turns; Kiro 5
+  of 7, one with no "Done."). Kiro read `check_responses` once in 25 with `after` set to the
+  message's head, which the skill allows.
+- 2026-10-16, agent, for the maintainer: (a) neither agent drew a `decision` for scenario 26's
+  "asking whether we rename …": both chose a plain yes/no question, which ruling 1 lets go without
+  meanings, so 26 checks the line and the replies more than ruling 1; 11 is where both drew
+  decisions with meanings. (b) Rule B kept as it was: a card asking for words says "Answer in a
+  note" rather than what ✓ and ✗ mean; if ruling 1 should also cover those cards, it is one line.

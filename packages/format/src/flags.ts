@@ -17,7 +17,7 @@ export const FLAGS = {
   hideControlsZoomedOut: {
     // On by default (maintainer, 2026-10-12, N13 ruling 2); ?flags=-hideControlsZoomedOut turns it off.
     default: true,
-    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts; the toolbar shows the zoom as a percentage), hide the cards\' buttons, the size control and the containers\' icon row, so none draws under the 24px target size (N8, N13). Off, every control stays visible at every zoom.',
+    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts; the toolbar shows the zoom as a percentage), hide the cards\' buttons, the size control and the containers\' icon row, so none draws too small to press (N8; 55% since review polish round 2, N13 closed). Off, every control stays visible at every zoom.',
   },
   agentAccess: {
     default: true,
@@ -152,6 +152,16 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-12, N24 rulings 1-5); ?flags=-personRemove turns it off.
     default: true,
     description: 'The person removes cards and containers: Remove card on the selection bar (Delete or Backspace) and Remove container in a container\'s settings, each after a confirm naming what goes and warning of anything still owed an answer (api.md 141). Removed cards leave the board and keep their history and numbers, like an agent\'s retire. Off, neither control shows and the keys do nothing.',
+  },
+  goToCard: {
+    // On by default (maintainer, 2026-10-15, go-to-card task rulings 1-5); ?flags=-goToCard turns it off.
+    default: true,
+    description: 'A digit typed on the board, outside a text field, opens a small "Go to card" box at the board\'s bottom right holding it: Enter selects and focuses that card (the board pans only when it is off screen, the zoom stays), Backspace edits, Esc closes. A number with no card says so and the box stays; a retired card says it was removed and offers the version where it last appeared. Off, digits do nothing.',
+  },
+  goAfterPause: {
+    // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
+    default: false,
+    description: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/go-to-card.ts). Off, only Enter goes.',
   },
 } as const satisfies Record<string, FlagDef>;
 

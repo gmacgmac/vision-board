@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.24.0",
+    "version": "1.26.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -119,7 +119,7 @@
                   "state": {
                     "items": {
                       "1": {
-                        "status": "commented",
+                        "status": "with-agent",
                         "notes": [
                           {
                             "seq": 50,
@@ -291,7 +291,7 @@
                   "n": 1,
                   "board": "roadmap",
                   "region": "review",
-                  "status": "commented",
+                  "status": "with-agent",
                   "seen": 2,
                   "versions": [
                     {
@@ -432,7 +432,7 @@
                       "n": 1,
                       "board": "roadmap",
                       "region": "review",
-                      "status": "commented",
+                      "status": "with-agent",
                       "seen": 2,
                       "versions": [
                         {
@@ -631,7 +631,7 @@
                       "region": "review",
                       "kind": "question",
                       "title": "Review the rules and principles",
-                      "status": "commented",
+                      "status": "with-agent",
                       "pending": "comment",
                       "unseen": true
                     }
@@ -1181,7 +1181,7 @@
                       "region": "review",
                       "kind": "question",
                       "title": "Review the rules and principles",
-                      "status": "commented",
+                      "status": "with-agent",
                       "pending": "comment",
                       "unseen": true
                     }

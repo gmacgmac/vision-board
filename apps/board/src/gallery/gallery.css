@@ -45,6 +45,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-frames vb-region[data-region='title-wide'] { width: calc(var(--vb-card-w) * 2.4); }
 .g-frames vb-region[data-region='title-narrow'] { width: calc(var(--vb-card-w) * 1.4); }
 .g-frames vb-region[data-region='retired-here'] { width: calc(var(--vb-card-w) * 4); }
+/* The narrowest frame a container takes: one S card and the frame's padding (336px, layout MIN_W). */
+.g-frames vb-region[data-region='retired-narrow'] { width: calc(var(--vb-card-w-s) * 1.2); }
 .g-frames vb-region[data-title-tip-open] { margin-bottom: calc(var(--vb-space-6) * 2); }
 /* So does an open note preview (the "Hover" and "Focus" container samples). */
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
@@ -86,6 +88,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
    (board.css) but flows in the page. The connector layer sits at z-index -1, so the stage makes
    its own stacking context to keep it above the stage's own canvas. */
 .g-wire-stage.vb-world { position: relative; isolation: isolate; width: calc(var(--vb-card-w) * 3); height: calc(var(--vb-space-6) * 11); border-radius: var(--vb-radius-lg); }
+/* Answered cards in a past version (version-section.ts): the board's read-only world, flowing in the page. */
+.g-past.vb-world { position: relative; }
 /* A mini board (mini-board.ts, field report batch 3): the board's own world on the canvas, sized by
    the page to the drawn board; its own stacking context, so the connectors behind the frames stay
    above the canvas and a floating label stays inside the sample. */
@@ -131,3 +135,4 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* Key commands (keyBubble flag): the open list rises above its button, so the sample keeps room for
    it under the group's words. */
 .g-keys:has(.vb-keys[data-keys-open]) { padding-top: calc(var(--vb-space-6) * 1.5); }
+.g-go { display: flex; }

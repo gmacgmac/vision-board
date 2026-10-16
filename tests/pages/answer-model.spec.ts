@@ -65,7 +65,7 @@ test('✓ and ✗ are Check and Cross: lit in their colour, no word, the name sa
   await expect(page.locator('#counts')).toContainText('0 open');
   await expect(page.locator('#counts')).toContainText('2 answered');
   await expect(page.locator('#counts')).not.toContainText('decided');
-  await expect(page.locator('vb-region[data-region="p"] .vb-region-count')).toHaveText('2 of 2 answered');
+  await expect(page.locator('vb-region[data-region="p"] .vb-region-count')).toHaveAttribute('title', '2 of 2 answered');
 });
 
 test('a card that only informs shows no status, in its footer or its name; nothing offers More context or M', async ({ page, request }) => {
@@ -168,6 +168,61 @@ test('the agent\'s answer to a note clears an earlier ✓: open, unmarked, "1 up
   await expect(card(page, d.decision).locator('[data-tab="updates"]')).toBeHidden();
 });
 
+// D-046: open means the person is needed; a note puts the card with the agent until it answers.
+test('a note puts a card with the agent: "With agent" in its footer and the header; the agent\'s answer brings it back', async ({ page, request }) => {
+  const d = await draw(request);
+  await open(page, d);
+  const counts = page.locator('#counts');
+  const c = card(page, d.decision);
+  await expect(counts).toContainText('2 open');
+  await expect(counts).not.toContainText('with agent');
+  const note = await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'What does it cost us?' });
+  await expect(c).toHaveAttribute('data-status', 'commented');
+  await expect(c.locator('.vb-node-status')).toHaveText('With agent');
+  await expect(c).toHaveAttribute('aria-label', `Item ${d.decision}, Decision: Keep the free tier, With agent`);
+  await expect(counts).toHaveText(/1 open\s+1 with agent\s+0 answered\s+0 later/);
+  await expect(page.locator('vb-region[data-region="p"] .vb-region-count')).toHaveAttribute('title', '0 of 2 answered');
+  // A note on a card that informs changes no count.
+  await act(page, d, { action: 'comment', n: d.finding, ver: 1, text: 'Which tier?' });
+  await expect(card(page, d.finding).locator('.vb-note-pin')).toHaveText('1');
+  await expect(counts).toHaveText(/1 open\s+1 with agent\s+0 answered\s+0 later/);
+  await reply(request, d, d.decision, 'About a day of support a week.', note);
+  await expect(c).toHaveAttribute('data-status', 'open');
+  await expect(c.locator('.vb-node-status')).toHaveText('Open');
+  await expect(counts).toContainText('2 open');
+  await expect(counts).not.toContainText('with agent');
+});
+
+// VERIFY_01 item 11: on a toolbar of 1500px or less the chips show their numbers only, and "board
+// updated" and "with agent" share a pink, so they were twins. Each chip stays told apart at that width
+// too: no two chips share a fill unless a mark or words set them apart, light and dark. The ink is left
+// out: the two pinks' inks (#d4138a and #c81784 in light) differ by too little to tell apart by eye.
+test('on a narrow toolbar (1470px) every count chip still looks different from every other', async ({ page, request }) => {
+  await page.setViewportSize({ width: 1470, height: 956 });
+  await draw(request); // a board the person has not opened: "board updated"
+  const d = await draw(request);
+  await open(page, d);
+  await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'Who pays for it?' });
+  await expect(page.locator('.vb-toolbar')).toHaveAttribute('data-narrow');
+  await expect(page.locator('#boards-updated')).toBeVisible();
+  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toBeVisible();
+  for (const theme of THEMES) {
+    await setTheme(page, theme);
+    const looks = await page.locator('#counts .vb-chip').evaluateAll((els) => els.map((e) => {
+      const cs = getComputedStyle(e);
+      const marks = [...e.querySelectorAll('svg')].filter((s) => s.checkVisibility({ visibilityProperty: true })).length;
+      const words = [...e.querySelectorAll<HTMLElement>('.vb-chip-word')].some((w) => w.getBoundingClientRect().width > 1);
+      return `${cs.backgroundColor} marks ${marks} words ${words}`;
+    }));
+    expect(looks.length, theme).toBeGreaterThanOrEqual(5);
+    expect(new Set(looks).size, `${theme}: ${looks.join(' | ')}`).toBe(looks.length);
+    await expectNoAxeViolations(page);
+  }
+  // The words stay for screen readers and the tooltip.
+  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toHaveAttribute('title', 'Items with the agent');
+  await expect(page.locator('#counts .vb-chip[data-tone="agent"]')).toContainText('1 with agent');
+});
+
 test('selecting a card the agent\'s answer cleared marks it seen, and the tab goes', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
@@ -181,6 +236,41 @@ test('selecting a card the agent\'s answer cleared marks it seen, and the tab go
   await expect(c).toHaveAttribute('data-selected', '');
   await expect(c.locator('[data-tab="updates"]')).toBeHidden();
   await expect(c).toHaveAttribute('data-status', 'open');
+});
+
+// Review polish round 2 ruling 4: any reply of the agent's on a card shows "1 update" until the person
+// has seen it, whether or not it answers a note or clears anything; seeing the card ends it.
+test('any reply of the agent\'s shows "1 update" until the card is seen: with no note, or to an older note', async ({ page, request }) => {
+  const d = await draw(request);
+  await open(page, d);
+  const finding = card(page, d.finding);
+  const decision = card(page, d.decision);
+  // The finding is seen (a selection ends NEW), then let go.
+  await finding.locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
+  await expect(finding).toHaveAttribute('data-selected', '');
+  await page.keyboard.press('Escape');
+  await expect(finding).not.toHaveAttribute('data-selected', '');
+  await act(page, d, { action: 'ack', n: d.decision, ver: 1 });
+  const first = await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'Does this cover renewals?' });
+  await act(page, d, { action: 'send', board: d.board });
+  await act(page, d, { action: 'comment', n: d.decision, ver: 1, text: 'And the education plan?' });
+  await reply(request, d, d.finding, 'Source: the support dashboard, last quarter.');
+  await reply(request, d, d.decision, 'Renewals too.', first);
+  await expect(finding.locator('.vb-node-reply')).toContainText('Source: the support dashboard');
+  await expect(finding.locator('[data-tab="updates"]')).toHaveText('1 update');
+  // A reply to the older note clears nothing: ✓ stands, and the card still shows the update.
+  await expect(decision.locator('.vb-node-reply')).toContainText('Renewals too.');
+  await expect(decision).toHaveAttribute('data-status', 'acknowledged');
+  await expect(decision.locator('[data-tab="updates"]')).toHaveText('1 update');
+  await expect(decision).toHaveAttribute('aria-label', /, 1 unseen update$/);
+  // Seeing the card (a selection) ends it.
+  await finding.focus();
+  await page.keyboard.press('Space');
+  await expect(finding.locator('[data-tab="updates"]')).toBeHidden();
+  await decision.focus();
+  await page.keyboard.press('Space');
+  await expect(decision.locator('[data-tab="updates"]')).toBeHidden();
+  await expect(decision).toHaveAttribute('data-status', 'acknowledged');
 });
 
 for (const theme of THEMES) {

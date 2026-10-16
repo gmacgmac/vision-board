@@ -62,21 +62,23 @@ test('nodeTemplate draws the note block and, on items only, the note pin, both h
   assert.doesNotMatch(nodeTemplate(node({ kind: 'topic' })), /vb-note-pin/);
 });
 
-test('notesMarkup: the count, then each note latest first with its seq, sent ones marked, Markdown escaped', () => {
+test('notesMarkup: the count, then the entries in the order given (oldest first), each note with its seq and replies, sent ones marked, an orphan reply in its place, Markdown escaped', () => {
   const html = notesMarkup({
     count: '2 notes',
     entries: [
+      { seq: 4, index: 1, who: 'Your note 1 · Sent', text: 'First', sent: true, replies: [{ seq: 5, who: 'Agent reply', text: 'To first' }] },
+      { seq: 6, who: 'Agent reply', text: 'On no note', orphan: true },
       { seq: 9, index: 2, who: 'Your note 2', text: 'Check **the date** <b>', sent: false },
-      { seq: 4, index: 1, who: 'Your note 1 · Sent', text: 'First', sent: true },
     ],
     pin: { seq: 9, index: 2, sent: false, label: 'Note 2 on item 1. Edit it' },
   });
-  assert.match(html, /^<span class="vb-node-notes-count">2 notes<\/span><div class="vb-node-note" data-note="9" tabindex="0"><span class="vb-node-note-who">Your note 2<\/span>/);
+  assert.match(html, /^<span class="vb-node-notes-count">2 notes<\/span><div class="vb-node-note" data-note="4" data-sent tabindex="0"><span class="vb-node-note-who">Your note 1 · Sent<\/span>/);
   assert.match(html, /<strong>the date<\/strong> &#60;b&#62;/);
-  assert.match(html, /<div class="vb-node-note" data-note="4" data-sent tabindex="0"><span class="vb-node-note-who">Your note 1 · Sent<\/span>/);
+  assert.match(html, /<div class="vb-node-note" data-note="9" tabindex="0"><span class="vb-node-note-who">Your note 2<\/span>/);
   // The full note again as a tip, hidden from screen readers (they read the note itself).
   assert.ok(html.includes('<div class="vb-tip vb-note-tip" aria-hidden="true"><p class="vb-md-p">First</p></div></div>'));
-  assert.ok(html.indexOf('data-note="9"') < html.indexOf('data-note="4"'));
+  const at = (s: string) => html.indexOf(s);
+  assert.ok(at('data-note="4"') < at('data-reply="5"') && at('data-reply="5"') < at('data-reply="6"') && at('data-reply="6"') < at('data-note="9"'));
 });
 
 test('KIND_ICON has a drawing for every kind', () => {

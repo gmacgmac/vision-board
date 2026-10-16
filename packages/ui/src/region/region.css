@@ -2,12 +2,20 @@
    only. The element is only the frame (D-013 layering): cards and wires draw in their own layers.
    The page sets transform, width and height. The look is board v3's open frame (D-024, mockup
    05's fieldset): no fill, a thin line, and a top line whose title and buttons sit in gaps cut
-   from the border. The frame's colour is --region, set by the element (regionColour). */
+   from the border. The frame's colour is --region, set by the element (regionColour), read whole. */
+
+/* The zoom the board is drawn at: the viewport writes it once on the world (viewport.ts apply), a
+   runtime value, not a token. Registered as a number so a glide can animate it with the world's
+   transform; 1 outside a board (the gallery's loose frames). Not inherited, so a zoom step restyles
+   no card: only the path down to each frame's top line takes it (the world's regions layer, the
+   frame, the line). Inherited everywhere, a step cost about 25 ms more on a 1,000-card board. */
+@property --vb-zoom { syntax: '<number>'; inherits: false; initial-value: 1; }
+.vb-regions, vb-region, vb-region > .vb-region-head { --vb-zoom: inherit; }
 
 vb-region {
   --region-line-w: 1.5px;
   display: block; position: absolute; left: 0; top: 0; container-type: inline-size; border-radius: var(--vb-radius-lg);
-  border: var(--region-line-w) solid color-mix(in srgb, var(--region) 70%, var(--vb-line));
+  border: var(--region-line-w) solid var(--region);
   /* The top line's room: REGION_HEAD in packages/layout/src/types.ts (38). Keep the two equal. */
   padding-top: 38px;
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
@@ -15,13 +23,21 @@ vb-region {
 
 /* The top line straddles the border. Only its two groups take the pointer, so the line between
    them stays part of the frame. The label's canvas-coloured background is the gap in the border;
-   the mode row draws its own gap as a canvas-coloured ring (mockup 05 .mode-row). */
+   the mode row draws its own gap as a canvas-coloured ring (mockup 05 .mode-row).
+   It keeps one on-screen size at every zoom (review polish ruling 2, decision 6), so a title reads
+   zoomed all the way out and the controls never grow past 100%: a counter-scale of the world's zoom,
+   a transform, so a zoom step lays nothing out but this line's width, which follows the frame's
+   on-screen width (the inset each side, as before). The line is the query container of its rows'
+   narrow forms below, so they follow the room on screen. */
 vb-region .vb-region-head {
-  position: absolute; left: var(--vb-space-4); right: var(--vb-space-4);
-  top: calc(var(--region-line-w) / -2); transform: translateY(-50%);
+  position: absolute; left: var(--vb-space-4); width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
+  top: calc(var(--region-line-w) / -2); transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom))) translateY(-50%);
+  container-type: inline-size;
   display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
   pointer-events: none; cursor: default;
 }
+/* A glide (Fit, Z) animates the world's transform; the line's zoom follows it, so it never jumps. */
+.gliding vb-region .vb-region-head { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
 /* The label is part of the frame's background: a drag on it pans the board (3_FE_01 ruling 6). */
 vb-region .vb-region-label { cursor: grab; }
 .panning vb-region .vb-region-label { cursor: grabbing; }
@@ -31,27 +47,40 @@ vb-region .vb-region-label {
 }
 vb-region .vb-region-tools { position: relative; flex: none; }
 vb-region .vb-region-label { position: relative; }
-/* The title wraps to two lines, then ends in "…" (found-in-use FE_03 ruling 2); the full text stays
-   in the DOM for screen readers and shows in the tip below when it is cut. */
+/* A narrow line (review polish ruling 9, tracker N41, decision 7): the retired marker and the
+   controls never shrink; the holders give way first, then the title, down to about three letters
+   and "…" (or its own width when shorter), then the count, which keeps its words while there is room
+   for them (only the narrowest frames have none, FE_02). The title is one line ending in "…", never
+   broken mid-word; the full text stays in the DOM for screen readers (it names the container) and
+   shows in the tip below when it is cut. The order is in the shrink factors (each weighed by the
+   part's width): each holder 1e12, title 1e6, count 1, so far apart that the next part's share is
+   under a 64th of a pixel (any share would cut its words by a hair and show "…"); they stay at 1
+   or more, as a sum under 1 would leave the overflow unshared. */
 vb-region .vb-region-head h2 {
-  margin: 0; min-width: 0; overflow: hidden; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  margin: 0; flex: 0 1000000 auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
   font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
 vb-region .vb-region-count {
-  /* Gives way long before the title does: the title shrinks only once the count is gone. */
-  min-width: 0; flex-shrink: 1000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
 }
-vb-region .vb-region-count:empty { display: none; }
-/* "3 cards retired" (retiredMarker flag): the count's muted words, a quiet button that opens the board
-   version where the cards last appeared; with none to open it is aria-disabled and does nothing. */
+/* "1/1" to the eye (round 2 ruling 1); its words, "1 of 1 answered", for screen readers only. */
+vb-region .vb-region-count-words {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+/* "3 retired" (retiredMarker flag; round 2 ruling 1, "3 cards retired" in its name and tooltip): the
+   count's muted words, a quiet button that opens the board version where the cards last appeared;
+   with none to open it is aria-disabled and does nothing. Its icon shows only in the narrow form. */
 vb-region .vb-region-retired {
-  /* Gives way first, before the count: its full words stay in its name and title. */
-  flex: 0 100000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; min-height: 24px; padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm);
+  flex: none; min-height: 24px; padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm);
   background: none; font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap; cursor: pointer;
   text-decoration: underline dotted; text-underline-offset: 3px;
+}
+vb-region .vb-retired-icon {
+  display: none; flex: none; width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 vb-region .vb-region-retired:hover, vb-region .vb-region-retired:focus-visible { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
 vb-region .vb-region-retired:active { transform: translateY(1px); }
@@ -59,15 +88,19 @@ vb-region .vb-region-retired[aria-disabled='true'] { cursor: default; text-decor
 
 /* Holders (agentAccess flag): after the count, in its muted style. A removable holder is a quiet
    button; on hover or keyboard focus it shows "Remove access" in a small bubble just below it,
-   over the frame's empty top room, so the top line never reflows. */
-vb-region .vb-region-holders { display: flex; align-items: center; gap: var(--vb-space-1); min-width: 0; flex-shrink: 2; }
-vb-region .vb-region-holders:empty { display: none; }
+   over the frame's empty top room, so the top line never reflows. Giving way first in a narrow
+   line (FE_02), each holder keeps a 24px target ("· P…"), so it can still be hovered and pressed. */
+/* The slot draws no box: each holder is one of the label's parts, so it can give way down to its
+   target. Holders sit closer to each other than the label's parts do, as before. */
+vb-region .vb-region-holders { display: contents; }
+vb-region .vb-holder + .vb-holder { margin-inline-start: calc(var(--vb-space-1) - var(--vb-space-2)); }
+@container (max-width: 408px) { vb-region .vb-holder + .vb-holder { margin-inline-start: 0; } }
 vb-region .vb-holder {
-  position: relative; display: inline-flex; align-items: center; gap: var(--vb-space-1); min-width: 0; white-space: nowrap;
+  position: relative; display: inline-flex; flex: 0 1e12 auto; align-items: center; gap: var(--vb-space-1); min-width: var(--vb-space-5); white-space: nowrap;
   font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
   background: none; border: 0; border-radius: var(--vb-radius-sm); padding: 2px var(--vb-space-1);
 }
-vb-region .vb-holder-name { overflow: hidden; text-overflow: ellipsis; }
+vb-region .vb-holder-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 vb-region button.vb-holder { cursor: pointer; min-height: 24px; }
 vb-region button.vb-holder:hover, vb-region button.vb-holder:focus-visible, vb-region button.vb-holder[data-look='hover'] {
   color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
@@ -105,29 +138,7 @@ vb-region .vb-mode-row {
   border: 1px solid color-mix(in srgb, var(--region) 55%, var(--vb-line));
   background: var(--vb-surface-card); box-shadow: 0 0 0 6px var(--vb-surface-canvas);
 }
-/* Collapsed (under 440px of frame, where the full row would leave under ~200px for the label
-   side): only the checked icon, Comment and the cog show (Match card widths waits for the row to
-   expand too). Hovering or focusing the row expands it to all
-   six layout icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
-   it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
-   never reflows the frame. */
-@container (max-width: 440px) {
-  /* The expanded row leaves the flow, so the tools box would collapse to nothing and the popovers
-     anchored under it would start at the line's centre, under the row. Keep the row's own height
-     (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
-  vb-region .vb-region-tools { min-height: 32px; }
-  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
-  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-widths {
-    width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
-  }
-  vb-region .vb-mode-row:hover, vb-region .vb-mode-row:focus-within {
-    position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
-    box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
-  }
-  /* Expanded, each icon takes the 24px target and no more, so the row stays a target's room clear of
-     the grip even in the narrowest frame (one S card). */
-  vb-region .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
-}
+/* The row's narrow forms, and the retired marker's, live in region-narrow.css (loaded next). */
 vb-region .vb-mseg {
   display: grid; place-items: center; width: 28px; height: 24px; padding: 0; cursor: pointer;
   border: 0; border-radius: 7px; background: none; color: var(--vb-ink-subtle);
@@ -182,9 +193,9 @@ vb-region .vb-mode-foot {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--vb-space-1) var(--vb-space-3);
   padding: 0 var(--vb-space-1); font-size: var(--vb-text-xs); color: var(--vb-ink-subtle);
 }
-/* Under 600px of frame the six tiles drop to icon and name, in two rows of three, and the
+/* Under 568px of top line (a 600px frame at 100%) the six tiles drop to icon and name, in two rows of three, and the
    highlighted layout's one-liner shows once, on the line under them (2d ruling 3). */
-@container (max-width: 600px) {
+@container (max-width: 568px) {
   vb-region .vb-mode-pop { width: max-content; max-width: calc(var(--vb-card-w-s) + var(--vb-space-6) * 2); }
   vb-region .vb-mode-tiles { grid-template-columns: repeat(3, 1fr); }
   vb-region .vb-mtile { min-width: calc(var(--vb-space-6) + var(--vb-space-5)); padding: var(--vb-space-2) var(--vb-space-1); }
@@ -213,9 +224,11 @@ vb-region .vb-menu-item[aria-disabled='true']:hover { background: none; }
 vb-region .vb-menu-hint { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); color: var(--vb-ink-subtle); }
 vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
 
-/* Zoomed out (N8): below FAR_K the stage carries data-zoom="far", where the 28 x 24 icons would draw
-   under the 24px target size. The row hides like the cards' buttons, its popover and menu with it. */
-[data-zoom='far'] vb-region .vb-region-tools { visibility: hidden; }
+/* Zoomed out (N8): below FAR_K the stage carries data-zoom="far". The line keeps its size now
+   (decision 6), but the controls still hide like the cards' buttons: the row with its popover and
+   menu, the grip, the retired marker and the holders. They leave the line, so the title takes their
+   room (FE_02). */
+[data-zoom='far'] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none; }
 
 /* The grip (3_FE_04 ruling 5): the only handle that moves the container, at the start of the
    title line. Always there for the keyboard and screen readers; its dots (a glyph, sized by the
@@ -234,9 +247,8 @@ vb-region .vb-region-grip[data-look]::before, vb-region[data-dragging] .vb-regio
 vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'] { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
 vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
-vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 90%, var(--vb-line)); }
+vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
 
-[data-zoom='far'] vb-region .vb-region-grip { visibility: hidden; }
 
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the

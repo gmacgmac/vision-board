@@ -35,18 +35,18 @@ test('only ✓ and ✗ answer: DECIDED and CLOSED are one set', () => {
   assert.equal(isDecided('finding', 'acknowledged'), false);
 });
 
-test('a note on a decision leaves it open and owed; ✓ or ✗ answers it', () => {
+test('a note on a decision leaves it unanswered and owed, with the agent (D-046); ✓ or ✗ answers it', () => {
   const l = board();
   const note = l.act({ action: 'comment', n: 5, ver: 1, text: 'What does this cost?' });
   let s = l.state();
   assert.equal(status(s, 4), 'commented');
   assert.deepEqual(pendingItems(s, 'b'), [{ n: 4, ask: { kind: 'comment', seq: note } }]);
-  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 0, later: 0, open: 4 });
+  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 0, later: 0, open: 3, withAgent: 1 });
   l.act({ action: 'ack', n: 5, ver: 1 });
   l.act({ action: 'drop', n: 1, ver: 1 });
   s = l.state();
   assert.deepEqual(pendingItems(s, 'b'), [], 'a ✓ after the note closes the card');
-  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 2, later: 0, open: 2 });
+  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 2, later: 0, open: 2, withAgent: 0 });
 });
 
 test('counts: a finding never counts, whatever the person did on it (ruling 4)', () => {
@@ -55,7 +55,7 @@ test('counts: a finding never counts, whatever the person did on it (ruling 4)',
   l.act({ action: 'comment', n: 6, ver: 1, text: 'Noted.' });
   l.act({ action: 'later', n: 2, ver: 1 });
   const s = l.state();
-  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 0, later: 1, open: 3 });
+  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 4, answered: 0, later: 1, open: 3, withAgent: 0 });
 });
 
 test('check_responses: ✓ reads `check`, ✗ reads `cross`, with no `means`', () => {
@@ -77,7 +77,8 @@ test('the numbered reply writes ✓ and ✗; an old More context reads as a note
   l.act({ action: 'context', n: 2, ver: 1, text: 'Explain it.' });
   const s = l.state();
   assert.deepEqual(replyText(boardView(s, 'b'), boardState(s, 'b')).split('\n').slice(1), [
-    '1 (question): ✗', '2 (question): comment: Explain it.', '4 (decision): ✓', '5 (finding): saved for later', 'Still open: 2, 3',
+    '1 (question): ✗', '2 (question): comment: Explain it.', '4 (decision): ✓', '5 (finding): saved for later', 'Still open: 3',
+    'Waiting for your reply: 2',
   ]);
 });
 

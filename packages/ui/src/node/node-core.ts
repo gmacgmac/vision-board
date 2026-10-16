@@ -8,9 +8,10 @@ import { updatesView, updateWords } from './node-updates.ts';
 import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
 
 /** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
- *  is the state and the board gives it no meaning. An old More context reads as a note. */
+ *  is the state and the board gives it no meaning. A card whose note waits for the agent's answer is
+ *  "With agent" (D-046); an old More context reads as a note. */
 export const STATUS_LABEL: Record<ItemStatus, string> = {
-  open: 'Open', acknowledged: '', dropped: '', commented: 'Commented', context: 'Commented', later: 'Saved for later',
+  open: 'Open', acknowledged: '', dropped: '', commented: 'With agent', context: 'With agent', later: 'Saved for later',
 };
 
 /** What a card's accessible name says for its status: the footer's word, or the lit mark by name. */
@@ -58,14 +59,24 @@ export interface ReplyEntry { seq: number; who: string; text: string }
  * order they were made. */
 export interface NoteEntry { seq: number; index: number; who: string; text: string; sent: boolean; replies?: ReplyEntry[] }
 
+/** A reply that names no note of the card: it takes its place by time (`seq`) among the notes
+ * (review-polish decision 8), read-only like any reply. */
+export interface OrphanEntry extends ReplyEntry { orphan: true }
+
+/** One entry of a card's conversation: a note with its replies under it, or an orphan reply. */
+export type NotesEntry = NoteEntry | OrphanEntry;
+
+export const isNoteEntry = (e: NotesEntry): e is NoteEntry => !('orphan' in e);
+
 /** The card's notes: the numbered pin on its top-right corner (the latest note, the one a press
- * of C or M or a click opens) and the block in its body, latest first, with "N notes" over it
- * when there are several. `orphans`: replies that name no note of the card, after the notes; with
- * only those, the block shows and there is no pin. A note with no reply carries no `replies`. */
+ * of C or M or a click opens) and the block in its body, with "N notes" over it when there are
+ * several. `entries` is the card's whole conversation in chat order, oldest first, top to bottom
+ * (review-polish ruling 8): each note then its replies oldest first, an orphan reply by its `seq`
+ * among the notes, so a new note is last. Every reader lists it as it is and never sorts again.
+ * With only orphans the block shows and there is no pin. A note with no reply carries no `replies`. */
 export interface NotesView {
   count?: string;
-  entries: NoteEntry[];
-  orphans?: ReplyEntry[];
+  entries: NotesEntry[];
   pin?: { seq: number; index: number; sent: boolean; label: string };
 }
 
@@ -78,30 +89,43 @@ const KIND_WORD: Record<ItemNote['kind'], string> = { comment: 'Your note', cont
 
 export const replyEntry = (r: CardReply): ReplyEntry => ({ seq: r.seq, who: `Agent reply${r.agent ? ` · ${r.agent}` : ''}`, text: r.text });
 
-/** The block and pin for an item's notes and the replies to them; undefined with neither. */
-export function notesView(n: ViewNode, notes: readonly ItemNote[], replies: readonly CardReply[] = []): NotesView | undefined {
+/** A list of notes and the agent's replies as one conversation, oldest first, top to bottom
+ * (review-polish ruling 8 and decision 8): each note then its replies by `seq`, a reply naming none
+ * of the notes (an orphan) by its `seq` among them. The card's block and pin read it through
+ * `notesView`; the conversation window reads it for a card or a whole container (ruling 6). */
+export function conversation(notes: readonly ItemNote[], replies: readonly CardReply[]): NotesEntry[] {
   const mine = new Set(notes.map((x) => x.seq));
-  const orphans = replies.filter((r) => r.to === undefined || !mine.has(r.to)).map(replyEntry);
-  if (!notes.length && !orphans.length) return undefined;
-  const entries = notes.map((x, i): NoteEntry => {
-    const answers = replies.filter((r) => r.to === x.seq).map(replyEntry);
+  const byTime = [...replies].sort((a, b) => a.seq - b.seq);
+  const orphans = byTime.filter((r) => r.to === undefined || !mine.has(r.to)).map((r): OrphanEntry => ({ ...replyEntry(r), orphan: true }));
+  const entries: NotesEntry[] = [];
+  let o = 0;
+  notes.forEach((x, i) => {
+    for (; o < orphans.length && orphans[o]!.seq < x.seq; o += 1) entries.push(orphans[o]!);
+    const answers = byTime.filter((r) => r.to === x.seq).map(replyEntry);
     // History once sent or answered (`locked`, popovers-larger-thread ruling 5): grey and read-only.
     const past = x.sent ? ' · Sent' : x.locked ? ' · Answered' : '';
-    return {
+    entries.push({
       seq: x.seq, index: i + 1, sent: x.locked === true || x.sent === true, text: x.text,
       who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? ` · ${x.nodes.length} cards` : ''}${past}`,
       ...(answers.length && { replies: answers }),
-    };
-  }).reverse();
-  const top = entries[0];
-  const out: NotesView = { ...(notes.length > 1 && { count: `${notes.length} notes` }), entries, ...(orphans.length && { orphans }) };
-  if (!top) return out;
-  // A note on a group of cards (3_FE_02) names every item it is on.
-  const group = notes.find((x) => x.seq === top.seq)?.nodes;
-  const on = group ? `items ${group.join(', ')}` : `item ${n.n}`;
-  const made = notes.find((x) => x.seq === top.seq);
-  const label = top.sent ? `Note ${top.index} on ${on}, ${made?.sent ? 'sent' : 'answered'}. Show it` : `Note ${top.index} on ${on}. Edit it`;
-  return { ...out, pin: { seq: top.seq, index: top.index, sent: top.sent, label } };
+    });
+  });
+  entries.push(...orphans.slice(o));
+  return entries;
+}
+
+/** The block and pin for an item's notes and the replies to them; undefined with neither. */
+export function notesView(n: ViewNode, notes: readonly ItemNote[], replies: readonly CardReply[] = []): NotesView | undefined {
+  const entries = conversation(notes, replies);
+  if (!entries.length) return undefined;
+  const out: NotesView = { ...(notes.length > 1 && { count: `${notes.length} notes` }), entries };
+  const made = notes.at(-1);
+  if (!made) return out;
+  // The pin is the latest note (ruling 8); a note on a group of cards (3_FE_02) names every item it is on.
+  const sent = made.locked === true || made.sent === true;
+  const on = made.nodes ? `items ${made.nodes.join(', ')}` : `item ${n.n}`;
+  const label = sent ? `Note ${notes.length} on ${on}, ${made.sent ? 'sent' : 'answered'}. Show it` : `Note ${notes.length} on ${on}. Edit it`;
+  return { ...out, pin: { seq: made.seq, index: notes.length, sent, label } };
 }
 
 /** The size control's state (D-030): the card's tier, whether the person picked it, the trigger's

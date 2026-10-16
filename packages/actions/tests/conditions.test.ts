@@ -63,9 +63,11 @@ function oldOwed(s: LedgerState, board: string, agent?: string): Condition[] {
   return [...items.sort((a, b) => a.id! - b.id!), ...containers];
 }
 
-/** pending.ts `unseenItems`, plus a card the agent's answer cleared since the person last looked (D-045). */
+/** pending.ts `unseenItems`, plus a card the agent's answer cleared since the person last looked (D-045),
+ *  plus a card the agent replied on since then, clearing or not (review polish round 2 ruling 4). */
 const oldUnseen = (s: LedgerState, board: string): number[] => nodesOf(s, board)
-  .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || (s.clears.get(x.id)?.seq ?? 0) > (s.looked.get(x.id) ?? 0))
+  .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || (s.clears.get(x.id)?.seq ?? 0) > (s.looked.get(x.id) ?? 0)
+    || (s.replies.get(x.id)?.at(-1)?.seq ?? 0) > (s.looked.get(x.id) ?? 0))
   .map((x) => x.id).sort((a, b) => a - b);
 
 /** reads.ts `boardAccess`'s open requests. */

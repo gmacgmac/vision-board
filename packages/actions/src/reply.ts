@@ -3,13 +3,15 @@
 // "2 (question): ✗", "4 (finding): comment: ...", "5, 7 (finding, risk): comment: ...". Paste it into chat, or let the agent read the ledger
 // directly. With a `ReplyScope` (what the person answered after `since`, pending.ts `replyScope`)
 // only those cards and containers, with only the notes made after `since`: the message Send hands
-// the chat panel's agent (panel-send ruling 1). "Still open" is always the whole board's. Reads one
-// board as `boardView` (packages/format) + `boardState` (fold.ts) give it.
+// the chat panel's agent (panel-send ruling 1). "Still open" is always the whole board's: the cards that
+// need the person, then, on their own line, the cards waiting for the agent's answer (D-046, review
+// polish round 2 ruling 3). Reads one board as `boardView` (packages/format) + `boardState` (fold.ts)
+// give it.
 import type { ActionId, View } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
 import type { BoardState } from './board-state.ts';
 import type { ItemNote } from './fold.ts';
-import { ACTIONS, DECIDED } from './registry.ts';
+import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
 
 /** The cards (by board number) and containers a round covers, and the cursor its notes come after. */
@@ -23,9 +25,13 @@ const statusWord = (status: ItemStatus): string | undefined => {
   return a && ACTIONS[a].reply;
 };
 
+/** With the agent (D-046): `commented`, and `context` on an old board (the footer reads both "With agent"). */
+const WITH_AGENT: ReadonlySet<ItemStatus> = new Set(['commented', 'context']);
+
 const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;
 
-/** The reply in its three parts: the board's line, the answer lines, and the "Still open" line; and
+/** The reply in its three parts: the board's line, the answer lines, and the tail ("Still open: …",
+ * then "Waiting for your reply: …", each only when it lists a card; else "Nothing left open."); and
  * the `seq` of every note its lines carry, so the chat does not send a note a second time. */
 export interface ReplyLines { head: string; lines: string[]; tail: string; notes: number[] }
 
@@ -38,12 +44,14 @@ export const joinReply = (r: ReplyLines): string => [r.head, ...r.lines, r.tail]
 
 /** `replyText` in its parts, so the chat's composer can show the answer lines alone (the one writer). */
 export function replyLines(view: View, s: BoardState, scope?: ReplyScope): ReplyLines {
-  // Every card may carry a response; only one that needs an answer is still open without ✓, ✗ or
-  // Later, whatever notes it has (api.md 118, D-045: a note never answers a card).
+  // Every card may carry a response; one that needs an answer with no ✓, ✗ or Later is still open
+  // (api.md 118, D-045: a note never answers a card), or waits for the agent while the person's
+  // latest note on it is owed an answer (`commented`, D-046).
   const items = view.nodes.filter((n) => n.n !== undefined).sort((a, b) => a.n! - b.n!);
   const kindOf = new Map(items.map((n) => [n.n!, n.kind]));
   const lines: { at: number; text: string }[] = [];
   const open: number[] = [];
+  const waiting: number[] = [];
   const groups = new Map<number, ItemNote>();
   const notesRead: number[] = [];
   for (const n of items) {
@@ -52,7 +60,8 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
     const own = notes.filter((x) => !x.nodes);
     const status = st?.status ?? 'open';
     const word = statusWord(status);
-    if (NODE_TYPES[n.kind].answer && !DECIDED.has(status) && status !== 'later') open.push(n.n!);
+    if (NODE_TYPES[n.kind].answer && status === 'open') open.push(n.n!);
+    if (NODE_TYPES[n.kind].answer && WITH_AGENT.has(status)) waiting.push(n.n!);
     if (scope && !scope.cards.has(n.n!)) continue;
     for (const x of notes) if (x.nodes && fresh(scope)(x)) groups.set(x.seq, x);
     const fresher = own.filter(fresh(scope));
@@ -75,6 +84,7 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
     notesRead.push(...notes.map((x) => x.seq));
     lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
   }
-  const tail = open.length ? `Still open: ${open.join(', ')}` : 'Nothing left open.';
+  const tail = [...(open.length ? [`Still open: ${open.join(', ')}`] : []), ...(waiting.length ? [`Waiting for your reply: ${waiting.join(', ')}`] : [])]
+    .join('\n') || 'Nothing left open.';
   return { head: `Board "${view.title}" (v${view.version})`, lines: lines.map((l) => l.text), tail, notes: notesRead };
 }

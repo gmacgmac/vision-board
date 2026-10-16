@@ -1,5 +1,6 @@
 <!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals notice (proposals
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
+     the Go to card box while a digit typed on the board has it open (goToCard flag),
      the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag),
      the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
      board controller (D-005), mounted here. -->
@@ -15,6 +16,7 @@
   import ProposalsBar from './ProposalsBar.svelte';
   import VersionBanner from './VersionBanner.svelte';
   import KeyHelp from './KeyHelp.svelte';
+  import GoToCard from './GoToCard.svelte';
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
   import ArchivedDialog from './ArchivedDialog.svelte';
@@ -116,6 +118,10 @@
 <ReplyPanel />
 
 {#if keyBubble}<KeyHelp />{/if}
+{#if shell.go}
+  <GoToCard box={shell.go} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
+    onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} />
+{/if}
 {#if bridge}<ChatSidebar onhost={hostChat} />{/if}
 
 <div id="toast" class="vb-toast" role="alert" hidden={!shell.toast} data-tone={shell.toast?.tone}>

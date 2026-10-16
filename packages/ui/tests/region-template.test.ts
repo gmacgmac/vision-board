@@ -98,7 +98,7 @@ test('the note parts escape the title', () => {
 
 test('regionTemplate has a count and a hidden empty message', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<span class="vb-region-count"><\/span>/);
+  assert.match(html, /<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span>/);
   assert.match(html, /<p class="vb-region-empty" hidden>Everything here is answered\.<\/p>/);
 });
 
@@ -108,7 +108,7 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
 
 test('the top line: title, count, the retired marker (field report batch 2), holders and the title tip (the full title, hidden from assistive tech) in a label group, then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count"><\/span><button type="button" class="vb-region-retired" hidden><\/button><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
   assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
 });
 
@@ -131,9 +131,18 @@ test('the title tip holds the escaped full title and is hidden from assistive te
   assert.ok(html.includes('<span class="vb-tip vb-title-tip" aria-hidden="true">&#60;b&#62;x&#60;/b&#62;</span>'));
 });
 
+// Review polish ruling 9 (N41): a narrow frame cuts its title to one line with "…" in CSS only; the
+// markup keeps the whole title in the heading (the accessible name) and in the tip (on hover).
+test('a long title is never cut in the markup: the heading and the tip hold it whole', () => {
+  const long = 'Annual plan pricing, packaging, discount rules and regional overrides';
+  const html = regionTemplate({ id: 'r', title: long, mode: 'grid' });
+  assert.ok(html.includes(`<h2 id="region-r">${long}</h2>`));
+  assert.ok(html.includes(`<span class="vb-tip vb-title-tip" aria-hidden="true">${long}</span>`));
+});
+
 test('the title line holds the retired marker after the count, hidden until update() fills it', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<span class="vb-region-count"><\/span><button type="button" class="vb-region-retired" hidden><\/button><span class="vb-region-holders">/);
+  assert.match(html, /<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders">/);
   assert.match(regionTemplate(region, { fixed: true }), /class="vb-region-retired" hidden/, 'Later too: a card can be retired from it');
 });
 

@@ -6,7 +6,7 @@
 // state is by identity (card-numbers.ts). Plain data in, plain data out; update-flow.ts sends the lines.
 import { latest } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { clearsOnSelect, unseenAnswer, versionChanges } from '../../../../packages/actions/src/index.ts';
+import { clearsOnSelect, unseenAnswer, unseenReply, versionChanges } from '../../../../packages/actions/src/index.ts';
 import type { CardStep } from '../../../../packages/ui/src/index.ts';
 import { idOf } from './card-numbers.ts';
 
@@ -17,14 +17,10 @@ const unseenVersions = (s: LedgerState, board: string, n: number) => {
   return (s.nodes.get(id)?.versions ?? []).filter((v) => v.ver > from);
 };
 
-/** The agent's reply that cleared card `n` (D-045, answer-model ruling 7) while the person has not
- *  looked at it since: an update with no version of its own. None when a newer version cleared it. */
-function answerOf(s: LedgerState, board: string, n: number) {
-  const id = idOf(s, board, n) ?? 0;
-  const seq = unseenAnswer(s, id) ? s.clears.get(id)?.seq : undefined;
-  // A reply to a note on a group of cards is filed under the card it names: look in every card's.
-  return seq === undefined ? undefined : [...s.replies.values()].flat().find((r) => r.seq === seq);
-}
+/** The agent's latest reply on card `n` the person has not looked at since: an update with no version
+ *  of its own. Any reply counts, clearing or not (review polish round 2 ruling 4); the one that
+ *  cleared it (D-045, answer-model ruling 7) when that is the latest (`unseenReply`). */
+const answerOf = (s: LedgerState, board: string, n: number) => unseenReply(s, idOf(s, board, n) ?? 0);
 
 /** How many updates card `n`'s tab counts: 0 for none, or for a card still at version 1 that no
  *  reply of the agent's cleared. */
@@ -49,9 +45,9 @@ export function unseenSteps(s: LedgerState, board: string, n: number, time: (at:
 }
 
 /** Whether a card seen line for card `n` at `ver` would change anything: a version not yet seen, or
- *  the agent's answer the person has not looked at (D-045). */
+ *  the agent's answer or reply the person has not looked at (D-045, round 2 ruling 4). */
 export const seenDue = (s: LedgerState, board: string, n: number, ver: number): boolean =>
-  seenVer(s, board, n) < ver || unseenAnswer(s, idOf(s, board, n) ?? 0);
+  seenVer(s, board, n) < ver || unseenAnswer(s, idOf(s, board, n) ?? 0) || answerOf(s, board, n) !== undefined;
 
 /** The items a selection marks seen: for each card condition the page shows, those it holds for when
  *  the row's `clearedBy` names select (`clearsOnSelect`, never a list of kinds here). */

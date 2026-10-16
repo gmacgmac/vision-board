@@ -10,8 +10,9 @@ import type { Theme } from './helpers.ts';
 
 const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
-/** FAR_K (apps/board/src/board/viewport.ts) as a percentage. */
-const FAR_PERCENT = 75;
+/** FAR_K (apps/board/src/board/viewport.ts) as a percentage: 55 since review polish round 2 ruling 2
+ *  (tracker N13 closed), so the controls show from 55%. */
+const FAR_PERCENT = 55;
 
 const level = (page: Page) => page.locator('.vb-zoom .vb-zoom-level');
 const status = (page: Page) => page.locator('.vb-zoom [role="status"]');
@@ -169,3 +170,53 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 }
+
+// Review polish ruling 2 (FE_02, decision 6): a container's whole top line keeps one on-screen size at
+// every zoom, so titles read zoomed all the way out; its width follows the frame's on-screen width, so
+// a title never draws past the frame. Below FAR_K the controls hide as before.
+interface TitleLine { id: string; textPx: number; h2Height: number; h2Width: number; h2Right: number; frameRight: number; headRight: number }
+
+/** Every container's title on screen: its text size (font size times the on-screen scale), height and right edges. */
+const titleLines = (page: Page): Promise<TitleLine[]> => page.locator('vb-region').evaluateAll((frames) => frames.map((f) => {
+  const h2 = f.querySelector<HTMLElement>('.vb-region-head h2')!;
+  const head = f.querySelector<HTMLElement>('.vb-region-head')!;
+  const [r, fr, hr] = [h2.getBoundingClientRect(), f.getBoundingClientRect(), head.getBoundingClientRect()];
+  const scale = hr.width / head.offsetWidth;
+  return {
+    id: (f as HTMLElement).dataset.region!, textPx: parseFloat(getComputedStyle(h2).fontSize) * scale,
+    h2Height: r.height, h2Width: r.width, h2Right: r.right, frameRight: fr.right, headRight: hr.right,
+  };
+}));
+
+test('a container title keeps one on-screen size at 20%, about 100% and 250%, and never draws past its frame', async ({ page }) => {
+  await openBoard(page);
+  const at: Record<string, TitleLine[]> = {};
+  for (let i = 0; i < 30 && (await percent(page)) > 20; i += 1) await page.keyboard.press('-');
+  expect(await expectInSync(page)).toBe(20);
+  at['20'] = await titleLines(page);
+  for (let i = 0; i < 30 && (await percent(page)) < 100; i += 1) await page.keyboard.press('+');
+  at[String(await expectInSync(page))] = await titleLines(page);
+  for (let i = 0; i < 30 && (await percent(page)) < 250; i += 1) await page.keyboard.press('+');
+  expect(await expectInSync(page)).toBe(250);
+  at['250'] = await titleLines(page);
+  const first = Object.values(at)[0]!;
+  for (const [zoom, lines] of Object.entries(at)) {
+    for (const [i, l] of lines.entries()) {
+      expect(l.textPx, `${l.id} at ${zoom}%: 12px text on screen`).toBeCloseTo(12, 1);
+      expect(l.h2Height, `${l.id} at ${zoom}%: the same height`).toBeCloseTo(first[i]!.h2Height, 0);
+      expect(l.h2Width, `${l.id} at ${zoom}%: some of the title shows`).toBeGreaterThan(20);
+      expect(l.h2Right, `${l.id} at ${zoom}%: inside its frame`).toBeLessThanOrEqual(l.frameRight + 0.5);
+      expect(l.headRight, `${l.id} at ${zoom}%: the whole line inside its frame`).toBeLessThanOrEqual(l.frameRight + 0.5);
+    }
+  }
+});
+
+test('zoomed out, the controls, grip and retired marker leave the line, so the title takes their room', async ({ page }) => {
+  await openBoard(page);
+  for (let i = 0; i < 20 && (await percent(page)) >= FAR_PERCENT; i += 1) await page.keyboard.press('-');
+  await expect(page.locator('#stage')).toHaveAttribute('data-zoom', 'far');
+  const gone = await page.locator('vb-region').evaluateAll((frames) => frames.flatMap((f) =>
+    [...f.querySelectorAll<HTMLElement>('.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-holder')]
+      .filter((e) => e.getBoundingClientRect().width > 0).map((e) => e.className)));
+  expect(gone).toEqual([]);
+});

@@ -3,9 +3,10 @@
 // of the folded ledger; the shapes are the response schemas in packages/format/schema/api/.
 // Optional fields are left out when they do not apply (api.md 32). The fold keys cards by identity;
 // every card here is named by its board number (numbers.ts, api.md 125). No read shows a flag.
-// A status and a proposal's action are named as agents read them, ✓ `checked` / `check` and ✗
-// `crossed` / `cross` (registry.ts `statusOut`, `actionOut`, api.md 147); the page reads
-// `boardState`, which keeps the stored names.
+// A status and a proposal's action are named as agents read them, ✓ `checked` / `check`, ✗
+// `crossed` / `cross` and a card with the agent `with-agent` (registry.ts `statusOut`, `actionOut`,
+// api.md 147, 148); the page reads `boardState`, which keeps the stored names. Every status is
+// `cardStatus` (conditions.ts, D-046).
 
 import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
 import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
@@ -13,7 +14,7 @@ import type { BoardRun, ItemNote, LedgerReply, LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';
 import { containerNotes, containerPin, noteJson } from './containers.ts';
-import { CONDITIONS, conditionsOf } from './conditions.ts';
+import { cardStatus, CONDITIONS, conditionsOf } from './conditions.ts';
 import { creatorOf, holders } from './grants.ts';
 import type { ProposalView } from './numbers.ts';
 import { linkOut, noteOut, numberOf, proposalOut } from './numbers.ts';
@@ -104,7 +105,7 @@ export function nodeDetail(s: LedgerState, id: number): NodeDetail | undefined {
   const park = s.parks.get(id);
   return {
     n: numberOf(s, id), board: node.board, ...whereIs(s, id),
-    status: statusOut(s.items.get(id)?.status ?? 'open'),
+    status: statusOut(cardStatus(s, node)),
     ...(size !== undefined && { size }),
     ...(seen !== undefined && { seen }),
     versions: node.versions.map(versionView),
@@ -199,7 +200,7 @@ export function openItems(s: LedgerState, board: string, agent?: string): OpenIt
   const out: OpenItem[] = [];
   for (const node of nodesOf(s, board)) {
     const v = latest(node);
-    const status = s.items.get(node.id)?.status ?? 'open';
+    const status = cardStatus(s, node);
     const why = pending.get(node.id);
     const open = NODE_TYPES[v.kind].answer && !isDecided(v.kind, status);
     if (!(open || why) || (agent !== undefined && !mayAnswer(s, agent, node.id))) continue;

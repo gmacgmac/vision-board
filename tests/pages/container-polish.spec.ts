@@ -1,8 +1,11 @@
-// Container polish (found-in-use FE_03), on the gallery's real <vb-region> frames: a title wraps
-// to two lines and its full text shows in a tip on hover of the title or keyboard focus in the
-// label group (titleTip flag, WCAG 1.4.13: hoverable, persistent, Esc dismisses), and a
-// container's popovers draw above its own mode row in a narrow frame. Read-only; no server state.
-import type { Locator, Page } from '@playwright/test';
+// Container polish (found-in-use FE_03), on the gallery's real <vb-region> frames: a title takes
+// one line and ends in "…" (review polish ruling 9), and its full text shows in a tip on hover of
+// the title or keyboard focus in the label group (titleTip flag, WCAG 1.4.13: hoverable,
+// persistent, Esc dismisses); a narrow container keeps its marker and controls whole; and a
+// container's popovers draw above its own mode row in a narrow frame. Read-only, but for one board of
+// its own that an agent draws on the live board, to zoom a narrow frame with its marker (FIX_01).
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
+import { draw, write } from './agent-board.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
@@ -37,19 +40,123 @@ async function closed(page: Page, id: string): Promise<Locator> {
   return f;
 }
 
-test('title: wraps to two lines and ends in an ellipsis, the full text stays in the heading', async ({ page }) => {
+test('title: one line ending in an ellipsis, never broken mid-word; the full text stays in the heading', async ({ page }) => {
+  const one = await frame(page, 'title-short').locator('h2').evaluate((e) => e.clientHeight);
   for (const id of ['title-wide', 'title-narrow']) {
     const h2 = frame(page, id).locator('h2');
     await expect(h2).toHaveText(FULL);
     const m = await h2.evaluate((e) => {
       const s = getComputedStyle(e);
-      const one = e.closest('section')!.querySelector<HTMLElement>('vb-region[data-region="title-short"] h2')!.clientHeight;
-      return { clamp: s.webkitLineClamp, cut: e.scrollHeight > e.clientHeight, lines: Math.round(e.clientHeight / one) };
+      return { overflow: s.textOverflow, wrap: s.whiteSpace, cut: e.scrollWidth > e.clientWidth, height: e.clientHeight };
     });
-    expect(m, id).toEqual({ clamp: '2', cut: true, lines: 2 });
+    expect(m, id).toEqual({ overflow: 'ellipsis', wrap: 'nowrap', cut: true, height: one });
   }
   const short = frame(page, 'title-short').locator('h2');
-  expect(await short.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(false);
+  expect(await short.evaluate((e) => e.scrollWidth > e.clientWidth)).toBe(false);
+});
+
+// Review polish ruling 9 (tracker N41, decision 7): in a one-card-wide container the retired marker and
+// the controls never shrink and the title takes what is left on one line, ending in "…"; the holders
+// give way first, then the title down to a few letters, then the count. With round 2 ruling 1's short
+// words ("6 retired", "1/1") the count stays whole beside the marker in the narrowest frame at 100%.
+// The full title stays the heading, so it names the container, and shows in the tip on hover.
+test('a narrow container: the marker and the controls stay whole, the title is one line ending in "…"', async ({ page }) => {
+  const f = page.locator('section[data-feature="retiredMarker"] vb-region[data-region="retired-narrow"]');
+  // Round 2 ruling 1: the short words on the line, the full words in the name and the tooltip.
+  const marker = f.locator('.vb-region-retired');
+  await expect(marker).toHaveText('6 retired');
+  await expect(marker).toHaveAccessibleName(/^6 cards retired from this container\. Show v\d+/);
+  await expect(marker).toHaveAttribute('title', /^6 cards retired from this container\. Show v\d+/);
+  const count = f.locator('.vb-region-count');
+  await expect(count).toHaveAttribute('title', '1 of 1 answered');
+  await expect(count.locator('[aria-hidden="true"]')).toHaveText('1/1');
+  await expect(count.locator('.vb-region-count-words')).toHaveText('1 of 1 answered');
+  await expect(f).toHaveAccessibleName(FULL);
+  const m = await f.evaluate((e) => {
+    const box = (s: string) => e.querySelector<HTMLElement>(s)!.getBoundingClientRect();
+    const whole = (el: HTMLElement) => el.scrollWidth <= el.clientWidth;
+    const h2 = e.querySelector<HTMLElement>('.vb-region-head h2')!;
+    const shown = [...e.querySelectorAll<HTMLElement>('.vb-region-tools .vb-mseg')].filter((b) => b.getBoundingClientRect().width > 0);
+    return {
+      marker: whole(e.querySelector<HTMLElement>('.vb-region-retired')!),
+      count: whole(e.querySelector<HTMLElement>('.vb-region-count')!),
+      controls: shown.length > 0 && shown.every((b) => whole(b) && b.getBoundingClientRect().width >= 24),
+      title: { overflow: getComputedStyle(h2).textOverflow, cut: h2.scrollWidth > h2.clientWidth, letters: h2.clientWidth >= 36 },
+      apart: box('.vb-region-retired').right <= box('.vb-region-tools').left,
+      inside: box('.vb-region-tools').right <= e.getBoundingClientRect().right,
+    };
+  });
+  expect(m).toEqual({ marker: true, count: true, controls: true, title: { overflow: 'ellipsis', cut: true, letters: true }, apart: true, inside: true });
+  await f.locator('h2').hover();
+  await expect(f.locator('.vb-title-tip')).toBeVisible();
+  await expect(f.locator('.vb-title-tip')).toHaveText(FULL);
+});
+
+// The same on the board, zoomed (VERIFY_01 items 8 and 9, FIX_01, round 2 rulings 1 and 2): the top line
+// keeps its on-screen size, so a one-card frame's line widens and narrows with the zoom. At every zoom
+// where the controls show (from FAR_K, 55%, to 250%) nothing on the label side is covered by the
+// controls: the marker is whole ("3 retired", or its icon and "3" when the line has no room for the
+// words) and ends before the controls start, and the title keeps its few letters. A frame with no
+// marker the same. Measured with the pointer away, so the row is not expanded over the label, which it
+// may be while hovered.
+interface HeadAt { whole: boolean; uncovered: string[]; title: number; icon: boolean; shown: string }
+type HeadsAt = Record<string, { n: HeadAt; u: HeadAt }>;
+
+/** A board of its own with two one-card columns under long titles: `n` with "3 retired", `u` with no
+ *  marker; each line at every zoom in `ks`, set by Ctrl + wheel at n's title (pointer.ts zooms by
+ *  exp(-deltaY * 0.0015), so one turn lands on k). */
+async function headsAt(page: Page, request: APIRequestContext, ks: number[]): Promise<HeadsAt> {
+  const d = await draw(request, 0, 'narrow-marker');
+  const cards = await write(request, d, [
+    { type: 'region', region: { id: 'n', title: 'Release checklist for the spring launch and the press day after it', mode: 'column' } },
+    { type: 'region', region: { id: 'u', title: 'Pricing questions for the annual plans', mode: 'column' } },
+    ...[1, 2, 3, 4].map((i) => ({ type: 'node', node: { region: 'n', kind: 'question', title: `Step ${i}?` } })),
+    { type: 'node', node: { region: 'u', kind: 'question', title: 'Grandfather annual plans?' } },
+  ]);
+  await write(request, d, cards.slice(3, 6).map((c) => ({ type: 'retire', n: c.n })));
+  await page.goto(`/#${d.board}`);
+  await expect(page.locator('vb-node')).toHaveCount(2);
+  const f = page.locator('vb-region[data-region="n"]');
+  await expect(f.locator('.vb-region-retired')).toHaveText('3 retired');
+  const zoom = () => page.locator('#world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
+  const seen: HeadsAt = {};
+  for (const k of ks) {
+    const head = (await f.locator('h2').boundingBox())!;
+    await page.mouse.move(head.x + 4, head.y + head.height / 2);
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -Math.log(k / await zoom()) / 0.0015);
+    await page.keyboard.up('Control');
+    await expect.poll(zoom).toBeCloseTo(k, 2);
+    await page.mouse.move(2, 990);
+    const line = (id: string) => page.locator(`vb-region[data-region="${id}"]`).evaluate((e): HeadAt => {
+      const marker = e.querySelector<HTMLElement>('.vb-region-retired')!;
+      const tools = e.querySelector<HTMLElement>('.vb-region-tools')!.getBoundingClientRect();
+      const parts = [...e.querySelectorAll<HTMLElement>('.vb-region-label > :not(.vb-tip), .vb-holder')].filter((p) => p.getBoundingClientRect().width > 0);
+      const icon = marker.querySelector('svg');
+      return {
+        whole: marker.hidden === true || marker.scrollWidth <= marker.clientWidth,
+        uncovered: parts.filter((p) => p.getBoundingClientRect().right > tools.left + 0.5).map((p) => p.className || p.localName),
+        title: Math.round(e.querySelector<HTMLElement>('.vb-region-head h2')!.getBoundingClientRect().width),
+        icon: icon !== null && icon.getBoundingClientRect().width > 0,
+        shown: marker.hidden === true ? '' : marker.innerText.trim(),
+      };
+    });
+    seen[`${Math.round(k * 100)}%`] = { n: await line('n'), u: await line('u') };
+  }
+  return seen;
+}
+/** Every zoom where a part of a line is covered, the marker cut, or the title under its few letters. */
+const crowded = (seen: HeadsAt) => Object.entries(seen).flatMap(([k, h]) => Object.entries(h)
+  .filter(([, m]) => !m.whole || m.uncovered.length > 0 || m.title < 36).map(([id, m]) => `${id} at ${k}: ${JSON.stringify(m)}`));
+
+test('narrow containers on the board: nothing on the label side is covered, from 55% to 250%', async ({ page, request }) => {
+  // FAR_K, the old FIX_01 band (76% to 90%), VERIFY_01's zooms (its sweep's steps and the overlap
+  // shots), then the top.
+  const seen = await headsAt(page, request, [0.55, 0.6, 0.66, 0.7, 0.76, 0.8, 0.86, 0.9, 1, 1.04, 1.25, 1.49, 1.5, 1.78, 1.8, 2.14, 2.5]);
+  expect(crowded(seen)).toEqual([]);
+  // Ruling 1: the words where they fit; the icon and the number alone where they do not.
+  expect([seen['60%']!.n.shown, seen['60%']!.n.icon]).toEqual(['3', true]);
+  expect([seen['150%']!.n.shown, seen['150%']!.n.icon]).toEqual(['3 retired', false]);
 });
 
 test('title tip: opens on hover of a cut title, stays while the pointer is on it, closes on leave', async ({ page }) => {

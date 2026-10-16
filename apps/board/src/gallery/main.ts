@@ -4,6 +4,7 @@
 import '../styles/board.css';
 import '../styles/access.css';
 import '../styles/key-help.css';
+import '../styles/go-to-card.css';
 import '../styles/proposals.css';
 import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/node/node-popover.css';
@@ -11,6 +12,7 @@ import '../../../../packages/ui/src/node/node-steps.css';
 import '../../../../packages/ui/src/node/node-parking.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
+import '../../../../packages/ui/src/region/region-narrow.css';
 import '../../../../packages/ui/src/region/region-note.css';
 import '../../../../packages/ui/src/tip/tip.css';
 import '../../../../packages/ui/src/paused/paused.css';
@@ -40,6 +42,7 @@ import { accessSection } from './access-section.ts';
 import { wireSection } from './wire-section.ts';
 import { versionSection } from './version-section.ts';
 import { keyHelpSection } from './key-help-section.ts';
+import { goToCardSection } from './go-to-card-section.ts';
 import { appIconSection } from './app-icon-section.ts';
 import { parkingSection } from './parking-section.ts';
 import { proposalsSection } from './proposals-section.ts';
@@ -151,6 +154,7 @@ function build(): void {
   if (flagOn('archiveBoard', flags)) main.append(archiveSection());
   if (flagOn('lockBoard', flags)) main.append(lockSection(fx));
   if (flagOn('personRemove', flags)) main.append(removeSection(fx));
+  if (flagOn('goToCard', flags)) main.append(goToCardSection());
   main.append(appIconSection());
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

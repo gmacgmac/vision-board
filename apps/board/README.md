@@ -27,7 +27,8 @@ card identity, while everything it draws and sends names a card by its number on
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
 flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retired.ts`, retiredMarker
 flag), the person's Remove card and Remove container (`remove-flow.ts`, `remove-words.ts`,
-personRemove flag) and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
+personRemove flag), the Go to card box (`go-to-card.ts`, `src/shell/GoToCard.svelte`, goToCard flag)
+and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
 3: `wires.ts` draws a link's label on its line where the layout found it room (`link-labels.ts`)
 and a marker that floats the label on hover and focus where it did not (`link-marks.ts`, linkLabels
 flag); `cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the

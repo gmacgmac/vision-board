@@ -100,7 +100,7 @@ test('a plain card commented alone: its own note and pin, no status word, and co
   await expect(counts).toContainText('2 open');
   await expect(counts).toContainText('0 answered');
   const p = page.locator('vb-region[data-region="p"] .vb-region-count');
-  await expect(p).toHaveText('0 of 1 answered');
+  await expect(p).toHaveAttribute('title', '0 of 1 answered');
   const before = await head(page, d);
   await commentByKey(page, d.plain, 'Which renewals asked?');
   await expect(card(page, d.plain)).toHaveAttribute('data-status', 'commented');
@@ -111,7 +111,7 @@ test('a plain card commented alone: its own note and pin, no status word, and co
   // Assumption C: it shows, but counts nowhere; ruling 6: only cards that need an answer count.
   await expect(counts).toContainText('2 open');
   await expect(counts).toContainText('0 answered');
-  await expect(p).toHaveText('0 of 1 answered');
+  await expect(p).toHaveAttribute('title', '0 of 1 answered');
   const acts = await responsesAfter(page, d, before);
   expect(acts.map((e) => [e.action, e.n, e.text])).toEqual([['comment', d.plain, 'Which renewals asked?']]);
   // A plain card offers no ✓ or ✗, so A and X do nothing on it.

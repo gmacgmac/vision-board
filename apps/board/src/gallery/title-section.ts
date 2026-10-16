@@ -1,12 +1,14 @@
-// Gallery samples for a container's title (found-in-use FE_03): a title that wraps to two lines
-// and ends in "…", on a wide frame and on a narrow one, each with the full-text tip open the way
-// hover or keyboard focus on the title opens it (`data-title-tip-open`, the attribute the hover
-// tip sets), and a short title that fits one line and has no tip. Real <vb-region> frames from the
-// fixture ledger's `title-*` regions, updated with `regionState` as the board does.
+// Gallery samples for a container's title (found-in-use FE_03, review polish rulings 2 and 9): a long
+// title on one line ending in "…", on a wide frame and on a narrow one, each with the full-text tip
+// open the way hover or keyboard focus on the title opens it (`data-title-tip-open`, the attribute
+// the hover tip sets), and a short title that fits and has no tip. Real <vb-region> frames from the
+// fixture ledger's `title-*` regions, updated with `regionState` as the board does. Then a container
+// drawn by the board's own drawing at 40%: its top line keeps its size while the cards shrink.
 import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { regionState } from '../../../../packages/ui/src/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
+import { miniBoard } from './mini-board.ts';
 
 /** The frames that draw the tip open. */
 const OPEN = new Set(['title-wide', 'title-narrow']);
@@ -23,8 +25,12 @@ export function titleSamples(body: HTMLElement, fx: Fixture): void {
     frames.append(f);
   }
   body.append(group('Long titles',
-    'A title wraps to two lines, then ends in "…"; the head keeps its height. When it is cut, its full text shows in a tip '
-    + 'below the title on hover of the title and on keyboard focus in the label group (the grip is focusable); Esc dismisses it, '
-    + 'and it stays while the pointer is on it (titleTip flag). The first two frames show it open, on a wide and on a narrow '
-    + 'frame; the third has a short title that fits one line, so it has no tip.', frames));
+    'A title takes one line and ends in "…", never broken mid-word; the head keeps its height. When it is cut, its full text '
+    + 'shows in a tip below the title on hover of the title and on keyboard focus in the label group (the grip is focusable); '
+    + 'Esc dismisses it, and it stays while the pointer is on it (titleTip flag). The first two frames show it open, on a wide '
+    + 'and on a narrow frame; the third has a short title that fits, so it has no tip.', frames),
+  group('Zoomed out',
+    'At 40% the cards shrink but the top line keeps its size on screen, so the title still reads; below 55% the controls, '
+    + 'the grip and the retired marker leave the line and the title takes their room.',
+    miniBoard(fx.layout, 'align', { label: 'A row of cards at 40%', suffix: '-far', zoom: 0.4 })));
 }

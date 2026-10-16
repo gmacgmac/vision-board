@@ -19,6 +19,7 @@ import type { NoteFlow } from './notes.ts';
 import type { Selection } from './selection.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from './viewport.ts';
+import { SELECTION_FIT } from './viewport.ts';
 
 /** The selection's commands that change the board, which a locked board shows disabled. */
 const ACTING_COMMANDS: readonly CommandId[] = SELECTION_COMMANDS.filter((id) => COMMANDS[id].acts);
@@ -49,6 +50,9 @@ export interface SelectionFlowDeps {
   paused?(): string | null;
   /** The selectionPill flag: the compact bar, a pill over a selection until it is opened. */
   pill: boolean;
+  /** A digit typed on the board: the Go to card box opens holding it (go-to-card.ts); absent with
+   *  the goToCard flag off, when digits do nothing. */
+  goTo?(key: string): boolean;
 }
 
 export interface SelectionFlow {
@@ -170,9 +174,9 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
       }
       case 'remove': return d.remove?.(d.selection.selected()) ?? false;
       case 'zoom-selection': {
-        // The selection's box with the margin Fit leaves round the board (viewport.ts `fit`).
+        // The selection fills 75% of the stage, above 110% when small (review-polish ruling 12).
         const b = worldBoxOf(layout, d.selection.selected());
-        if (b) d.vp.fit(b);
+        if (b) d.vp.fit(b, true, SELECTION_FIT);
         return b !== undefined;
       }
       case 'zoom-area': {
@@ -185,6 +189,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
       }
       // A container's note needs the container (keys.ts finds it from focus).
       case 'container-note': return false;
+      case 'go-to-card': return key !== undefined && (d.goTo?.(key) ?? false);
     }
   }
 

@@ -76,6 +76,9 @@
   /* Lines (faint by design; not a contrast tier) */
   --vb-line: light-dark(#e1e1e5, #2a2a2e);
   --vb-line-strong: light-dark(#cbcbd1, #3a3a40);
+  /* The next step up this scale, by the same size as line to line-strong (review polish FE_01,
+     chosen by eye): the container frame and every hover box's border. */
+  --vb-line-contrast: light-dark(#b5b5bd, #4a4a52);
   --vb-wire: light-dark(#8a8a95, #7c7c89);
   --vb-wire-hot: var(--vb-accent);
 
@@ -93,6 +96,12 @@
 
   /* Item states (project rule 3: node states are tokens) */
   --vb-state-open: var(--vb-line-strong);
+  /* A selected card: its kind colour mixed this far toward the strong ink, about two-thirds of a
+     step, then its chroma (OKLCH) scaled by --vb-select-chroma for a little more saturation (review
+     polish round 2 ruling 5, by eye; FE_01's full step was 50% with no chroma change). Deeper in
+     light, lighter in dark; grey kinds take it too. */
+  --vb-select-lift: 35%;
+  --vb-select-chroma: 1.25;
   --vb-state-ack: light-dark(#278f52, #4cc47f);
   --vb-state-drop: light-dark(#cc3b3b, #f07474);
   --vb-state-drop-fill: light-dark(#cc3b3b, #f59a9a);

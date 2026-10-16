@@ -6,6 +6,7 @@ import type { BoardMark } from '../board/board-data.ts';
 import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
 import type { ProposalRow } from '../board/proposals.ts';
+import type { GoBox } from '../board/go-to-card.ts';
 import type { Align } from '../../../../packages/layout/src/index.ts';
 import { keptAlign } from './align.ts';
 
@@ -66,7 +67,8 @@ export const shell = $state({
   /** The container finder's rows, board order, Later last; none with the containerFinder flag off. */
   containers: [] as ContainerRow[],
   summary: '',
-  counts: { open: 0, answered: 0, later: 0 },
+  /** "N open · N with agent · N answered · N later" (D-046); the with agent chip shows only above 0. */
+  counts: { open: 0, withAgent: 0, answered: 0, later: 0 },
   answered: 0,
   /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
   flagged: 0,
@@ -115,6 +117,8 @@ export const shell = $state({
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */
   folderDialog: false,
+  /** The Go to card box (goToCard flag, board/go-to-card.ts), open while set (GoToCard.svelte). */
+  go: null as GoBox | null,
 });
 
 let toastTimer = 0;

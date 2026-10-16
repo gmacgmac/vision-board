@@ -81,7 +81,7 @@ export function defineVbRegion(): void {
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.toggleAttribute('data-current', t.dataset.tile === st.mode);
       this.applyWidths(st);
       this.row.sync();
-      this.piece('.vb-region-count').textContent = st.countText;
+      this.applyCount(st);
       const paused = st.paused === true;
       const reset = this.piece('[data-reset]');
       reset.setAttribute('aria-disabled', String(!st.canReset || paused));
@@ -139,17 +139,29 @@ export function defineVbRegion(): void {
       b.dataset.widths = st.widths === 'match' ? 'own' : 'match';
     }
 
-    /** "N cards retired" (retiredMarker flag): its words and name, and the version a press opens;
-     *  with no version to open it is aria-disabled. */
+    /** The answered count: "1/1" to the eye, its words to screen readers and in the tooltip. */
+    private applyCount(st: RegionState): void {
+      const c = this.piece('.vb-region-count');
+      c.hidden = st.countText === '';
+      c.title = st.countLabel;
+      this.piece('.vb-region-count-n').textContent = st.countText;
+      this.piece('.vb-region-count-words').textContent = st.countLabel;
+    }
+
+    /** "N retired" (retiredMarker flag): its number (the word and the icon are in the template), its
+     *  name, and the version a press opens with the line its answers run to (`data-until`); with no
+     *  version to open it is aria-disabled. */
     private applyRetired(st: RegionState): void {
       const b = this.piece('.vb-region-retired');
       const r = st.retired;
       b.hidden = !r;
-      b.textContent = r?.text ?? '';
+      this.piece('.vb-retired-n').textContent = r ? String(r.count) : '';
       if (r) b.setAttribute('aria-label', r.label);
       if (r) b.title = r.label;
       if (r?.version === undefined) delete b.dataset.version;
       else b.dataset.version = String(r.version);
+      if (r?.until === undefined) delete b.dataset.until;
+      else b.dataset.until = String(r.until);
       b.setAttribute('aria-disabled', String(r?.version === undefined));
     }
 

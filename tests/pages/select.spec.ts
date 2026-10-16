@@ -1,9 +1,12 @@
 // Selecting cards, moving them by the kind tab and panning on backgrounds (3_FE_01, rulings 1-9).
 // Runs after notes.spec.ts and same-picture.spec.ts on the same server, on the roadmap board. It
-// leaves the ledger as it found it: the one card it moves it puts back (R).
-import type { Locator, Page } from '@playwright/test';
+// leaves the ledger as it found it: the one card it moves it puts back (R). Cmd or Ctrl + drag
+// (review-polish ruling 13) draws a board of its own (agent-board.ts).
+import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import type { Drawn } from './agent-board.ts';
+import { act, open, reply, write } from './agent-board.ts';
 
 const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
@@ -234,6 +237,169 @@ test('a middle-button drag pans anywhere, a card included', async ({ page }) => 
   expect(await worldAt(page)).toEqual({ x: before.x + 80, y: before.y + 50 });
   await expect(card(page, 2)).not.toHaveAttribute('data-pinned', '');
   expect(await docSelection(page)).toBe('');
+});
+
+// Cmd or Ctrl + drag pans from anywhere (review-polish ruling 13, PLAN decision 5): over text, a
+// card's kind tab, a note, a reply, a button, an open hover tip, the open note bubble and a card's
+// popover; nothing is text-selected and no click follows. Held still, the press keeps its meaning.
+
+let pans = 0;
+const LONG = 'Ask finance first, then support, then the two account managers who own the annual plans, '
+  + 'and write down what each of them says about the quarterly accounts before the call on Thursday.';
+const HANDOVER = { situation: 'Waiting on finance.', background: 'Asked twice.', assessment: 'Low risk.', recommendation: 'Wait.', sources: ['Pricing sheet'] };
+
+/** A board of its own: card 1 with a link, a long sent note and a reply; card 2 saved for later
+ *  with its handover, so its HANDOVER tab opens a popover. */
+async function drawPan(page: Page, request: APIRequestContext): Promise<Drawn> {
+  const r = await request.post('/api/agents', { data: { label: 'Pricing chat' } });
+  expect(r.status(), await r.text()).toBe(201);
+  const d = { agent: await r.json() as { secret: string }, board: `pan-${Date.now()}-${(pans += 1)}` };
+  const results = await write(request, d, [
+    { type: 'board', title: 'Pan' },
+    { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid', columns: 2 } },
+    { type: 'node', node: { region: 'p', kind: 'question', title: 'Grandfather annual plans?', body: 'See [the sheet](https://example.com/sheet).' } },
+    { type: 'node', node: { region: 'p', kind: 'question', title: 'Who owns the migration?' } },
+  ]);
+  const drawn = { ...d, n: results.slice(2).map((x) => x.n!) };
+  const [one, two] = drawn.n as [number, number];
+  await page.goto('/?setup');
+  const note = await act(page, drawn, { action: 'comment', n: one, ver: 1, text: LONG });
+  await act(page, drawn, { action: 'send', board: drawn.board });
+  await reply(request, drawn, one, 'Finance says yes.', note);
+  await act(page, drawn, { action: 'later', n: two, ver: 1 });
+  await write(request, drawn, [{ type: 'park', n: two, bundle: HANDOVER }]);
+  await open(page, drawn);
+  return drawn;
+}
+
+/** A drag with Cmd (or Ctrl) held from `from`: it pans by exactly the drag, selects no text. */
+async function modDrag(page: Page, from: { x: number; y: number }, key: 'Meta' | 'Control' = 'Meta'): Promise<void> {
+  const before = await worldAt(page);
+  await page.keyboard.down(key);
+  await drag(page, from, 70, 40);
+  await page.keyboard.up(key);
+  expect(await worldAt(page)).toEqual({ x: before.x + 70, y: before.y + 40 });
+  expect(await docSelection(page)).toBe('');
+}
+
+test('Cmd or Ctrl + drag pans from anywhere: text, the kind tab, a note, a reply, a button; no text, no click', async ({ page, request }) => {
+  const d = await drawPan(page, request);
+  const [one] = d.n as [number];
+  const c = card(page, one);
+  const bubble = page.locator('vb-note-bubble');
+  await modDrag(page, await at(c.locator('.vb-node-title'), 0.3));
+  await modDrag(page, await at(c.locator('.vb-node-title'), 0.6), 'Control');
+  await modDrag(page, await at(c.locator('.vb-node-body'), 0.2));
+  await modDrag(page, await at(c.locator('.vb-node-kind')));
+  await modDrag(page, await at(c.locator('.vb-node-note'), 0.3));
+  await modDrag(page, await at(c.locator('.vb-node-reply'), 0.3));
+  await modDrag(page, await at(c.locator('button[data-act="ack"]')));
+  // No click followed any of them: nothing selected, no bubble, ✓ not pressed, the card not moved.
+  expect(await selectedIds(page)).toEqual([]);
+  await expect(bubble).toBeHidden();
+  await expect(c).toHaveAttribute('data-status', 'open');
+  await expect(c).not.toHaveAttribute('data-pinned', '');
+});
+
+test('Cmd + drag pans from an open hover tip, the open note bubble and a card\'s popover, which stay open', async ({ page, request }) => {
+  const d = await drawPan(page, request);
+  const [one, two] = d.n as [number, number];
+  const c = card(page, one);
+  // The long note's hover tip: hovered open, then the drag starts on the tip itself.
+  await c.locator('.vb-node-note').hover();
+  const tip = c.locator('.vb-node-note .vb-note-tip');
+  await expect(tip).toBeVisible();
+  await page.mouse.move(...Object.values(await at(tip, 0.5, 0.3)) as [number, number]);
+  await modDrag(page, await at(tip, 0.5, 0.3));
+  // The note bubble, opened by a click on the note.
+  await c.locator('.vb-node-note').click();
+  const bubble = page.locator('vb-note-bubble');
+  await expect(bubble).toBeVisible();
+  await modDrag(page, await at(bubble, 0.3, 0.1));
+  await expect(bubble).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(bubble).toBeHidden();
+  // The handover popover beside card 2 (off the note first: its tip would cover the tab).
+  await page.mouse.move(1, 1);
+  await card(page, two).focus();
+  await expect(tip).toBeHidden();
+  await card(page, two).locator('.vb-node-btab[data-tab="handover"]').click();
+  const pop = card(page, two).locator('.vb-card-pop[data-pop="handover"]');
+  await expect(pop).toBeVisible();
+  await modDrag(page, await at(pop, 0.5, 0.3));
+  await expect(pop).toBeVisible();
+  await page.keyboard.press('Escape');
+});
+
+test('Cmd held still keeps its meaning: a click adds the card, opens a link in a new tab, presses a button; a field keeps its press', async ({ page, request }) => {
+  const d = await drawPan(page, request);
+  const [one, two] = d.n as [number, number];
+  await clickCard(page, two);
+  await clickCard(page, one, ['Meta']);
+  expect(await selectedIds(page)).toEqual([String(one), String(two)].sort((a, b) => Number(a) - Number(b)));
+  // The link's own click reaches it, its default (a new tab) untouched by the board; the test
+  // browser opens no tab of its own for it, so the click is read where it ends, on the window.
+  const link = card(page, one).locator('.vb-node-body a');
+  await page.evaluate(() => window.addEventListener('click', (e) => {
+    (window as unknown as { linkClick: unknown }).linkClick = { a: (e.target as Element).localName, meta: e.metaKey, kept: !e.defaultPrevented };
+    e.preventDefault();
+  }, { once: true }));
+  await link.click({ modifiers: ['Meta'] });
+  expect(await page.evaluate(() => (window as unknown as { linkClick: unknown }).linkClick)).toEqual({ a: 'a', meta: true, kept: true });
+  await card(page, one).locator('button[data-act="ack"]').click({ modifiers: ['Meta'] });
+  await expect(card(page, one)).toHaveAttribute('data-status', 'acknowledged');
+  // A note being written: Cmd + drag in its text field is the field's, not a pan.
+  await card(page, two).focus();
+  await page.keyboard.press('c');
+  const field = page.locator('vb-note-bubble').getByLabel('Note text');
+  await expect(field).toBeFocused();
+  const before = await worldAt(page);
+  await page.keyboard.down('Meta');
+  await drag(page, await at(field, 0.2), 60, 0);
+  await page.keyboard.up('Meta');
+  expect(await worldAt(page)).toEqual(before);
+  await page.keyboard.press('Escape');
+});
+
+// Review polish round 2 ruling 6: holding Cmd (Ctrl elsewhere) with the pointer over the board shows a
+// hand, since a drag then pans from anywhere; during the pan, a closed hand. A text field keeps its
+// cursor, and letting go gives every part its own cursor back. A still Cmd click keeps its meaning
+// (the test above).
+test('Cmd or Ctrl held over the board shows a hand, a closed hand while it pans; a text field keeps its cursor', async ({ page, request }) => {
+  const d = await drawPan(page, request);
+  const [one, two] = d.n as [number, number];
+  const c = card(page, one);
+  const cursorAt = (p: { x: number; y: number }) => page.evaluate(({ x, y }) => getComputedStyle(document.elementFromPoint(x, y)!).cursor, p);
+  const points = [await at(c.locator('.vb-node-title'), 0.3), await at(c.locator('button[data-act="ack"]')), await at(c.locator('.vb-node-note'), 0.3), await backgroundPoint(page)];
+  const own = await Promise.all(points.map(cursorAt));
+  expect(own.slice(0, 3).every((x) => x !== 'grab'), own.join()).toBe(true);
+  await page.mouse.move(points[0]!.x, points[0]!.y);
+  for (const key of ['Meta', 'Control'] as const) {
+    await page.keyboard.down(key);
+    expect(await Promise.all(points.map(cursorAt)), key).toEqual(points.map(() => 'grab'));
+    await page.keyboard.up(key);
+    expect(await Promise.all(points.map(cursorAt)), `${key} let go`).toEqual(own);
+  }
+  // A Cmd + drag pan: a closed hand wherever the pointer is, then the hand again while Cmd stays held.
+  await page.keyboard.down('Meta');
+  await page.mouse.down();
+  const to = { x: points[0]!.x + 60, y: points[0]!.y + 30 };
+  await page.mouse.move(to.x, to.y, { steps: 6 });
+  expect(await cursorAt(to)).toBe('grabbing');
+  await page.mouse.up();
+  expect(await cursorAt(to)).toBe('grab');
+  await page.keyboard.up('Meta');
+  // The note being written: its text field keeps its own cursor with Cmd held.
+  await card(page, two).focus();
+  await page.keyboard.press('c');
+  const field = page.locator('vb-note-bubble').getByLabel('Note text');
+  await expect(field).toBeFocused();
+  const inField = await at(field, 0.3);
+  const fieldOwn = await cursorAt(inField);
+  await page.keyboard.down('Meta');
+  expect(await cursorAt(inField)).toBe(fieldOwn);
+  await page.keyboard.up('Meta');
+  await page.keyboard.press('Escape');
 });
 
 test('the selection survives a redraw', async ({ page }) => {

@@ -16,7 +16,7 @@ test('every command with a key is listed once, with its label and every one of i
     else {
       assert.equal(found.length, 1, `${id} is listed once`);
       assert.equal(found[0]!.label, COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label);
-      assert.equal(found[0]!.keys.length, COMMANDS[id].keys.length);
+      assert.equal(found[0]!.keys.length, (COMMANDS[id].shown ?? COMMANDS[id].keys).length);
     }
   }
 });
@@ -69,4 +69,21 @@ test('the key list names Delete and Z in full, and the bar has no Clear command'
   assert.deepEqual([label('remove').label, label('remove').keys], ['Remove cards', ['Delete', 'Backspace']]);
   assert.deepEqual([label('zoom-selection').label, label('zoom-selection').keys], ['Zoom to the selection', ['Z']]);
   assert.ok(!(COMMAND_IDS as readonly string[]).includes('clear'));
+});
+
+// Review polish ruling 13 (FE_05's Cmd or Ctrl + drag): Board lists the pan from anywhere beside the
+// drag on the background.
+test('Board lists Cmd or Ctrl + drag to pan from anywhere, after the drag on the background', () => {
+  const board = keyGroups().find((g) => g.group === 'Board')!.rows;
+  const at = (label: string) => board.findIndex((r) => r.label === label);
+  assert.deepEqual(board[at('Pan from anywhere')]?.keys, ['Cmd+drag', 'Ctrl+drag']);
+  assert.equal(at('Pan from anywhere'), at('Pan') + 1);
+});
+
+// Go to a card by its number (2026-10-15_board-app_go-to-card-number ruling 5): Board lists it once,
+// its ten keys shown as one "0–9"; with the goToCard flag off, not at all.
+test('Board lists Go to a card by its number as 0–9; without the goToCard flag, nothing', () => {
+  const go = (on: boolean) => keyGroups({ go: on }).flatMap((g) => g.rows.map((r) => [g.group, r] as const)).filter(([, r]) => r.id === 'command:go-to-card');
+  assert.deepEqual(go(true).map(([g, r]) => [g, r.label, r.keys]), [['Board', 'Go to a card by its number', ['0–9']]]);
+  assert.deepEqual(go(false), []);
 });

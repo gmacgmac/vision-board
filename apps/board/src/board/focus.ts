@@ -1,9 +1,14 @@
 // Navigation and focus on the board: the cards in reading order that are drawn, the next one in
-// either direction, and the focused card, which lights up its connectors and is panned into view,
-// with its popover's box when one opens (proposals FE_01). Split out of controller.ts (N12_FE_01); keys.ts and the controller call it.
+// either direction, and the focused card, which lights up its connectors. Focus never moves the
+// board (review-polish ruling 11): only another card the keyboard reached (Tab, J) is panned into
+// view, by `revealPan`'s rule, and a popover's box when a key opened it (proposals FE_01, PLAN
+// decision 2); a click, focus coming back to the card it left, or the window getting focus back
+// pans nothing. Split out of controller.ts
+// (N12_FE_01); keys.ts and the controller call it.
 import type { View } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import { POPOVER_OPEN } from '../../../../packages/ui/src/index.ts';
+import { lastInput } from './pointer-focus.ts';
 import { readingOrder } from './render.ts';
 import type { Viewport } from './viewport.ts';
 
@@ -24,6 +29,8 @@ export interface Focus {
 
 export function createFocus(d: FocusDeps): Focus {
   let focus: string | null = null;
+  /** The card that last had focus: focus coming back to it (a note or popover closed) is not a move. */
+  let left: string | null = null;
 
   function visibleOrder(): string[] {
     const layout = d.layout();
@@ -32,25 +39,29 @@ export function createFocus(d: FocusDeps): Focus {
 
   function set(id: string | null) {
     if (focus === id) return;
+    const back = id !== null && id === left;
     focus = id;
+    if (id) left = id;
     d.changed();
     const b = id ? d.layout()?.nodes.get(id) : undefined;
-    if (b) d.vp.reveal(b);
+    if (b && !back && lastInput() === 'key') d.vp.reveal(b);
   }
 
   d.cards.addEventListener('focusin', (e) => {
     set((e.target as HTMLElement).closest<HTMLElement>('vb-node')?.dataset.id ?? null);
   });
-  // A card's popover opened by a click or Enter (Review too): the box beside the card is brought
-  // into view with it. Its offset is in the card's own units, as the layout's boxes are.
+  // A card's popover opened by Enter (Review too): the box beside the card is brought into view
+  // with it; opened by a click it is not. Its offset is in the card's own units, as the layout's are.
   d.cards.addEventListener(POPOVER_OPEN, (e) => {
+    if (lastInput() !== 'key') return;
     const box = (e as CustomEvent<HTMLElement>).detail;
     const b = d.layout()?.nodes.get((e.target as HTMLElement).dataset.id ?? '');
     if (b) d.vp.reveal({ ...b, w: Math.max(b.w, box.offsetLeft + box.offsetWidth), h: Math.max(b.h, box.offsetTop + box.offsetHeight) });
   });
+  // Focus leaving the cards clears it; the window losing focus does not, so its return is no new focus.
   d.cards.addEventListener('focusout', (e) => {
     const to = (e as FocusEvent).relatedTarget as HTMLElement | null;
-    if (!to?.closest('vb-node')) set(null);
+    if (!to?.closest('vb-node') && document.hasFocus()) set(null);
   });
 
   return {

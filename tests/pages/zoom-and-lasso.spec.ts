@@ -179,6 +179,41 @@ test('Zoom (the bar\'s Zoom to the selection) fits the selected cards; Z does th
   await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
 });
 
+/** After Z on `ids`: they sit centred on the stage and fill 75% of its width or height, whichever
+ *  binds, unless the top zoom (250%) stopped them short (review-polish ruling 12). */
+async function expectZoomedTo(page: Page, ids: number[]): Promise<number> {
+  const [s, b, k] = [(await page.locator('#stage').boundingBox())!, await boxOf(page, ids), (await view(page)).k];
+  const fill = Math.max((b.r - b.x) / s.width, (b.b - b.y) / s.height);
+  if (k < 2.5 - 1e-3) expect(fill).toBeCloseTo(0.75, 2);
+  else expect(fill).toBeLessThan(0.75);
+  expect(Math.abs((b.x + b.r) / 2 - (s.x + s.width / 2))).toBeLessThan(2);
+  expect(Math.abs((b.y + b.b) / 2 - (s.y + s.height / 2))).toBeLessThan(2);
+  return k;
+}
+
+test('Z fits one card or several to about 75% of the stage, centred, above 110% when small; Fit is unchanged', async ({ page }) => {
+  await openBoard(page);
+  const fit = await view(page);
+  // One card: small, so it zooms past 110%, to the top zoom.
+  await clickCard(page, 12);
+  await page.keyboard.press('z');
+  await expect.poll(async () => (await view(page)).k).toBeGreaterThan(1.1);
+  expect(await expectZoomedTo(page, [12])).toBeCloseTo(2.5, 3);
+  // Several: a container's three cards fill 75% of the binding side.
+  await page.keyboard.press('f');
+  await expect.poll(async () => (await view(page)).k).toBeCloseTo(fit.k, 3);
+  await lassoContainer(page, 'review');
+  const sel = (await selectedIds(page)).map(Number);
+  expect(sel.length).toBeGreaterThan(1);
+  await page.keyboard.press('z');
+  await expect.poll(async () => (await view(page)).k).toBeGreaterThan(fit.k);
+  expect(await expectZoomedTo(page, sel)).toBeLessThan(2.5);
+  // Fit is as it was: the whole board, never above 110%.
+  await page.keyboard.press('f');
+  await expect.poll(async () => (await view(page)).k).toBeCloseTo(fit.k, 3);
+  expect(fit.k).toBeLessThanOrEqual(1.1);
+});
+
 test('the header zoom buttons: zoom out, Fit and zoom in, as one group', async ({ page }) => {
   await openBoard(page);
   const fit = await view(page);

@@ -22,7 +22,7 @@ const SELECTED = new Set(['Selected']);
 type Row = ItemStatus | 'cleared';
 /** The row's label: the footer's word, or for ✓ and ✗, which show none, the mark and its name. */
 const ROW_LABEL: Partial<Record<Row, string>> = {
-  open: 'Open', acknowledged: '✓ Checked', dropped: '✗ Crossed', commented: 'Commented', cleared: 'Answered by the agent', later: 'Saved for later',
+  open: 'Open', acknowledged: '✓ Checked', dropped: '✗ Crossed', commented: 'With agent', cleared: 'Answered by the agent', later: 'Saved for later',
 };
 const ROWS = Object.keys(ROW_LABEL) as Row[];
 /** The kinds that need an answer, and the rest (every-node ruling 2): one matrix each. */
@@ -33,10 +33,10 @@ const TELL_ROWS = ROWS.filter((s) => s !== 'acknowledged' && s !== 'dropped');
 
 /** A real <vb-node>, rendered and updated as the board does. The Markdown and note bubble sections
  * draw their cards with it too; `state` is the notes board's for the note samples. */
-export function card(n: ViewNode, fx: Fixture, state = fx.state, c: CardConditions = {}): VbNodeElement {
+export function card(n: ViewNode, fx: Fixture, state = fx.state, c: CardConditions = {}, selected = SELECTED.has(n.title)): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n);
-  node.update(nodeState(n, state, undefined, SELECTED.has(n.title), c));
+  node.update(nodeState(n, state, undefined, selected, c));
   const live = LIVE_CLASS[n.title];
   if (live) node.classList.add(live);
   return node;
@@ -63,6 +63,16 @@ function matrix(fx: Fixture, kinds: readonly Kind[], rows: readonly Row[]): HTML
   return grid;
 }
 
+/** The open card of each kind, selected (review polish FE_01): the lifted look is one rule, so every
+ * kind, the grey ones too, shows it side by side. */
+function selectedKinds(fx: Fixture): HTMLElement {
+  const open = fx.view.nodes.filter((n) => n.region === REGION_KINDS && !fx.cleared.has(n.n!) && statusOf(fx.state, n.id) === 'open');
+  const cards = KINDS.flatMap((kind) => open.filter((n) => n.kind === kind).slice(0, 1)).map((n) => card(n, fx, fx.state, {}, true));
+  const list = cardList('Selected, one card of each kind', ...cards);
+  list.toggleAttribute('data-selected-kinds', true);
+  return list;
+}
+
 /** Two cards with a cut note, each with its full-text tip open the way hover or keyboard focus opens
  * it (`data-tip-open`, the attribute the hover tip sets on the note): a note of a few lines past
  * the clamp, and one longer than the tip's maximum height, which scrolls (found-in-use FE_04). */
@@ -82,13 +92,15 @@ function notePreviews(fx: Fixture): HTMLElement {
 export function nodeSamples(body: HTMLElement, fx: Fixture): void {
   const others = fx.view.nodes.filter((n) => n.region === REGION_OTHER).map((n) => card(n, fx));
   body.append(
-    group('Cards that ask, in every status', 'A question, decision or action needs an answer, and only ✓ (Check) or ✗ (Cross) gives one: the card says what each means, the board never does. A lit ✓ or ✗ in its state colour is the whole state, with no word after it; ✗ neither fades the card nor strikes it through. A note never answers: the card stays open, "Commented". The agent\'s answer to the note clears an earlier ✓, ✗ or Later: open again, with its "1 update" tab until you look. Columns are kinds, rows the state.',
+    group('Cards that ask, in every status', 'A question, decision or action needs an answer, and only ✓ (Check) or ✗ (Cross) gives one: the card says what each means, the board never does. A lit ✓ or ✗ in its state colour is the whole state, with no word after it; ✗ neither fades the card nor strikes it through. A note never answers: it puts the card with the agent, "With agent", neither open nor answered. The agent\'s answer to the note brings it back to open and clears an earlier ✓, ✗ or Later, with its "1 update" tab until you look. Columns are kinds, rows the state.',
       matrix(fx, ASKS, ROWS)),
     group('Cards that tell, in every status', 'Every other kind is numbered and takes a comment or Later, never ✓ or ✗, shows no status word, and counts in no "answered" total.',
       matrix(fx, TELLS, TELL_ROWS)),
     group('Other states', 'Pinned, emphasis, tags, a note, an edited note, a long note asking for more context, a topic and a note, long text, the lifted look while dragging, and selected (its name ends ", selected"). Focus is checked on the board page.',
       cardList('Other node states', ...others)),
-    group('Notes on a card', 'A numbered pin on the top-right corner (the latest note) and the "Your note" block, latest first: a note not yet sent is pink; sent notes are grey and say Sent. A click on the pin or a note opens it in the note bubble.',
+    group('Selected, every kind', 'The person\'s pick, about two-thirds of a step toward the strong ink (--vb-select-lift) and a little more saturated (--vb-select-chroma): deeper in light, lighter in dark, the same for the grey note and the purple topic.',
+      selectedKinds(fx)),
+    group('Notes on a card', 'A numbered pin on the top-right corner (the latest note) and the "Your note" block, oldest first like a chat, a new note at the bottom: a note not yet sent is pink; sent notes are grey and say Sent. A click on the pin or a note opens it in the note bubble.',
       cardList('Note states', ...fx.notes.view.nodes.map((n) => card(n, fx, fx.notes.state)))),
     group('Note preview', 'A note cut at three lines shows its full text, as Markdown, in a box beside the card on hover and on keyboard focus '
       + '(the note is a tab stop; Enter opens it in the note bubble); Esc dismisses it, and it stays while the pointer is on it. '

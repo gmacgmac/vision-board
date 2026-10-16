@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -63,13 +63,19 @@ their descriptions hold the exact fields.
   4. The Send message: "The person updated the board:", the board's title, one line per answered
      card in card order (`2 (question): ✗`, `4 (decision): ✓: <their note>`, `5, 7 (finding,
      risk): comment: <their words>`, `6 (finding): saved for later`, `On container "<title>"
-     comment: ...`), then "Still open: ..." or "Nothing left open.", and a line giving the `head`
-     it covers.
+     comment: ...`), then "Still open: ..." (the cards that need the person's ✓ or ✗) and
+     "Waiting for your reply: ..." (the cards with you), each only when it lists a card, else
+     "Nothing left open.", and a line giving the `head` it covers.
   5. `Board: <id>`.
 - **The words are the request; the answers are its context.** "For the ones I ticked, write the
   tasks" means the cards whose line reads ✓. Still answer every note and Later in the lines, in
   card order. A message with no words is the person pressing Send: act on the lines, in that
   order.
+- **"Waiting for your reply" is yours.** Answer each card on it with a `reply` (or an `append`),
+  even one whose note came in an earlier round (`show_node` gives the note's `seq`). A note
+  after a mark (`2 (decision): ✓: <words>`) is owed too, though that card isn't on the line, and
+  your answer clears the mark: ask for it again. "Still open" is only what needs the person's ✓
+  or ✗: you owe nothing there.
 - **Don't fetch it again**: no `check_responses` or `list_open` to re-read what the message lists.
   `show_node` gives a card's latest `ver` and a note's `seq` before you `reply`, `append` or `park`.
   To catch anything newer later, `check_responses` with `after` set to the message's head.
@@ -197,6 +203,13 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
   you need decided to go on.
 - **One ask per card.** Never two questions or two choices on one card: ✓ or ✗ answers it
   whole, so draw a card for each.
+- **Say on the card what ✓ and ✗ each mean**, so the person can pick: end its text with a line
+  such as "✓ keep · ✗ rename it now". Every `decision` and `action` card says it; only a plain
+  yes/no question ("Keep the guest checkout in 1.4?") may leave it out. When you ask for a mark
+  again in a reply, say the same unless it is a plain yes ("✓ if that's right").
+- **When the answer is words** (a name, a pick among several), the card ends "Answer in a note".
+  Their note puts the card with you: reply with what you understood and ask for ✓ ("Sam writes it.
+  ✓ if that's right"). Their ✓ settles it, never the note. Never ask ✓ or ✗ on a name.
 - **Say where it applies** (the page, screen or file) when the card's context doesn't make it
   plain.
 - A card that asks is open until ✓ or ✗ answers it ("N open · N answered" on the board). A card
@@ -209,14 +222,19 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
   read them in the light of what your card asks. `check_responses` reads them as `action` `check` and
   `cross`, and answer lines read `2 (question): ✗`. ✗ is an answer, not a dismissal: act on it
   (drop that path, take the other option) and say so in one line.
-- **A note** (`comment`): the person's words, on any card. **A note never answers a card**: on a
-  card that asks, it stays open until ✓ or ✗, even when the words sound like an answer. A note is
-  often a question: answer it with a `reply` or an `append`, and leave the card open. You owe that
-  answer unless the person pressed ✓ or ✗ on the card after the note. An old board's More context
-  (`context`) is a note.
+- **When ✗ could mean more than one thing** ("no post at all" or "not that kind of post"), don't
+  guess: ask which in a `reply` on that card (no `to`) and act on neither yet. Never write a guess
+  into another card or a summary as decided. Their answer comes as a note on the card
+  (`2 (question): ✗: <words>`); answer it, and ask for the mark again if you still need one.
+- **A note** (`comment`): the person's words, on any card. **A note never answers a card**, even
+  when the words sound like an answer. On a card that asks, it puts the card **with you**: status
+  `with-agent` in your reads, "With agent" on the board, neither open nor answered. A note is often
+  a question: answer it with a `reply` or an `append`, and your answer brings the card back to the
+  person, open. You owe that answer unless the person pressed ✓ or ✗ on the card after the note. An
+  old board's More context (`context`) is a note.
 - **Your answer clears the card.** A `reply` to a card's latest note, or a new version of it
   (`append` or a rewrite), wipes the ✓, ✗ or Later the person made before that note: the card is
-  open again, unmarked, and shows as updated. So when you still need a ✓ or ✗, ask for it again in
+  open again, with the person, unmarked, and shows as updated. So when you still need a ✓ or ✗, ask for it again in
   your answer ("✓ if that settles it"). A ✓ or ✗ made after the note still counts.
 - **Later** (`later`): saved for later, on any card. You owe a `park` handover.
 - A note can be on one card, a group of cards (`nodes`) or a whole container.
@@ -244,10 +262,11 @@ past versions still show it).
   decide. (The one exception: a container you drew this same turn that `show_layout` says to
   regroup.)
 - **Propose consolidating a container** once every card that asks in it is answered (✓ or ✗) and
-  nothing there is owed: you may add one `decision` card to that container ("Sum up the venue
-  cards in one card?") saying which cards the summary would replace. Retire nothing yet. On its ✓,
-  in one call: one summary card in that container (the problem, what was decided, where it
-  landed), then one `retire { n }` per card it replaces, the proposal included. On ✗, leave the
+  nothing there is owed or asked back (a ✗ whose meaning you asked about is still open): you may
+  add one `decision` card to that container ("Sum up the venue cards in one card?") saying which
+  cards the summary would replace. Retire nothing yet. On its ✓, in one call: one summary card in
+  that container (the problem, what ✓ and ✗ settled, where it landed), then one `retire { n }` per
+  card it replaces, the proposal included. On ✗, leave the
   container as it is and don't propose it again unless something changes. One proposal per
   container at a time.
 - **A new direction** ("redo the plan page-first"): draw a new container with new cards, then
@@ -255,7 +274,9 @@ past versions still show it).
   into the new plan.
 - **Distil on request**: the person selects a container's cards (or writes a note on the container)
   and asks to distil or sum them up. Write one summary card in that container saying what was
-  found, decided and still open, then one `retire { n }` per card it replaces, in the same call.
+  found, what ✓ and ✗ settled, and what is still open (a ✗ whose meaning you asked about and that
+  is not yet answered is open there: keep that card), then one `retire { n }` per card it replaces,
+  in the same call.
   Keep a card that still asks and is unanswered unless the person said to fold it in.
 - **Answer first.** A retire is refused while a card it takes still owes the person something (a
   note with no `reply` or `append`, a Later with no `park`), or while a note on
@@ -283,7 +304,7 @@ past versions still show it).
   again); `reject` (the person turned down your proposal); `move`, `size`, `pin`, `mode`,
   `widths` (the person arranged the board: keep it).
 - A card answered by ✓ or ✗ is settled: never raise it again, unless a note on it asks something
-  (then answer, and ask again).
+  (then answer, and ask again) or its ✗ could mean more than one thing (ask which).
 - **The flag** is the person's private mark on a card. No read of yours shows it; nothing is owed.
 - Your reads are `list_boards`, `get_board`, `show_node`, `show_container`, `show_layout`,
   `list_open` and `check_responses`. There is no ledger read for agents.
@@ -298,8 +319,9 @@ unanswered, whatever the card's kind. Put the answer on the board, not only in t
   all of them; never one per card. An `append` answers it only on the card it changes.
 - A note on a whole container: `reply` on any card in that container, `to` = the note.
 - A note asking a question: reply with the answer, or `append` it when it belongs on the card for
-  good. The card stays open: if it asks and you still need the person's mark, end your reply by
-  asking for it ("✓ if the flag plan holds"), since your answer cleared any ✓ or ✗ from before.
+  good. Your answer brings the card back to the person, open: if it asks and you still need their
+  mark, end your reply by asking for it ("✓ if the flag plan holds"), since your answer cleared any
+  ✓ or ✗ from before.
   Don't draw a new card for the same ask.
 - A note asking for a change: make it (`append` or a new version), then reply in one line.
 - A note that reads like an answer ("yes, but only on the card path") is not one: act on what it

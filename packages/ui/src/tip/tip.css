@@ -6,7 +6,7 @@
 .vb-tip {
   display: none; position: absolute; z-index: 4; width: max-content; max-width: min(var(--vb-card-w), 80vw);
   padding: var(--vb-space-1) var(--vb-space-3); border-radius: var(--vb-radius-md); cursor: default;
-  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+  border: 1px solid var(--vb-line-contrast); background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
   font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); line-height: 1.4; color: var(--vb-ink-strong);
   overflow-wrap: anywhere; text-align: left; text-transform: none; letter-spacing: normal;
 }

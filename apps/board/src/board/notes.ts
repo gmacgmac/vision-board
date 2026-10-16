@@ -1,37 +1,33 @@
 // Notes beside cards on the board page (2e_FE_01): C, the note pin and a click on a note open
 // the note bubble beside the card instead of a modal. A card holds at most one note not yet sent:
 // a press on a card that has one edits it (the press sets its kind), never adds a second. Comment
-// on a selection of two or more opens one note on the group beside the selection's box, and any of
-// its pins opens it again (3_FE_02 ruling 3). Comment on a container's title line opens one note on
-// the whole container beside that line, by the same rules: one not yet sent, edit, Remove,
-// read-only after Send (3_FE_04 rulings 2 and 3). A click, Enter or Space on a note or an agent's
-// reply opens the exchange, the note then every reply to it, beside what was pressed (popovers-
-// larger-thread ruling 2; what it says: note-views.ts). Every write goes through the controller's
-// `attempt`, so through the action layer and the I/O module (rule 8); this module only opens, places
-// and closes the bubble. Changed words are never lost silently: closing or replacing a bubble with
-// changed text asks first (note-discard.ts).
+// on a selection of two or more opens one note on the group (3_FE_02 ruling 3); Comment on a
+// container's title line one on the whole container, by the same rules (3_FE_04 rulings 2 and 3).
+// A click, Enter or Space on a note or an agent's reply opens the conversation, every note and reply
+// on the card (or container) oldest first, beside what was pressed and scrolled to it (review polish
+// ruling 6; what it says: note-views.ts); it closes with its ×, Esc or a click outside (ruling 7,
+// note-outside.ts); Edit on the person's note still editable opens today's edit mode (decision 8).
+// Every write goes through the controller's `attempt` (rule 8); this module only opens, places and
+// closes the bubble. Changed words are never lost silently (note-discard.ts).
 import type { NoteKind } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { BoardState, ItemNote } from '../../../../packages/actions/src/index.ts';
-import type { StageBox, VbNoteBubbleElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { boxAround, partAnchor, placeBubble, readOnlyMode, saveIntent, titleAnchor } from '../../../../packages/ui/src/index.ts';
+import type { VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
+import { placeBubble, readOnlyMode, saveIntent } from '../../../../packages/ui/src/index.ts';
 import type { NoteEventDetail } from '../../../../packages/ui/src/index.ts';
 import type { ActFields } from './io.ts';
 import type { AskDiscard } from './note-discard.ts';
 import { bindDiscard, mayLeave } from './note-discard.ts';
-import type { Viewport } from './viewport.ts';
 import { footersNear } from './bubble-clear.ts';
+import { bindOutside } from './note-outside.ts';
+import type { AnchorDeps } from './note-anchor.ts';
+import { anchorBox } from './note-anchor.ts';
 import type { Open, ViewDeps } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
 
-/** `region` and `frame`: a container on the board (3_FE_04): the bubble sits beside its title line. */
-export interface NoteDeps extends ViewDeps {
+/** `frame`: a container on the board (3_FE_04): the bubble sits beside its title line (note-anchor.ts). */
+export interface NoteDeps extends ViewDeps, AnchorDeps {
   stage: HTMLElement;
-  vp: Viewport;
   state(): BoardState;
-  layout(): BoardLayout | null;
-  card(id: string): HTMLElement | undefined;
-  frame(id: string): VbRegionElement | undefined;
   /** The version the person was looking at, for a new note's act. */
   ver(id: string): number | undefined;
   /** Send one act; null when it was recorded, else what went wrong. */
@@ -53,17 +49,17 @@ export interface NoteFlow {
   /** Comment on two or more selected cards (3_FE_02 ruling 3): one note on the group, beside the
    *  selection's box; the group's own note not yet sent, if it has one, opens to edit. */
   group(ids: readonly string[]): void;
-  /** The pin, or a note in the "Your note" block (`fromNote`: beside it): open that note
-   *  (read-only once sent) with the agent's replies to it. */
+  /** The pin: open that note (read-only once sent) with the agent's replies to it. A note in the
+   *  "Your note" block (`fromNote`): the card's conversation, beside it and scrolled to it. */
   show(id: string, seq: number, fromNote?: boolean): void;
-  /** An agent's reply on the card: the exchange of the note it answers, beside the reply; a reply
-   *  naming no note of the card on its own. */
+  /** An agent's reply on the card: the card's conversation, beside the reply and scrolled to it. */
   reply(id: string, seq: number): void;
   /** Comment on a container's title line (3_FE_04): edit its note not yet sent, or start one
    *  (`kind` sets what it asks for; default: the note's own, else a comment). */
   container(region: string, kind?: NoteKind): void;
   /** Edit (or Open) in the container's note preview or block: its latest note, read-only once sent,
-   *  with its replies; `part` ('note', or a reply's seq): opened from the block, beside that. */
+   *  with its replies; `part` ('note', or a reply's seq): the block's note or a reply, the
+   *  container's conversation beside that and scrolled to it. */
   showContainer(region: string, part?: 'note' | number): void;
   /** Follow the card after a pan, a zoom or a relayout (ruling 6: the controller calls it on
    * every one); close if the card is gone. */
@@ -125,6 +121,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (open) mark(open, false);
     open = o;
     bubble.show(view.v, view.on);
+    if (o.mode === 'thread') bubble.reveal(o.part);
     mark(o, true);
     place();
     bubble.focusText();
@@ -147,26 +144,39 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     openWith(note ? { ...base, mode: 'edit', kind: note.kind, note } : { ...base, mode: 'new', kind: 'comment' });
   }
 
-  /** The same exchange open again from another part: it moves beside that part and keeps its words. */
-  const again = (at: string | undefined) => { open!.at = at; place(); bubble.focusText(); };
+  /** Open again from another part: it moves beside that part and keeps its words; the conversation
+   *  scrolls to `part`, and focus goes back there on close. */
+  const again = (at: string | undefined, part?: number) => {
+    const o = open!;
+    o.at = at;
+    const now = document.activeElement;
+    if (at && now instanceof HTMLElement && now.matches(at)) o.back = now;
+    if (part !== undefined) {
+      o.part = part;
+      bubble.reveal(part);
+    }
+    place();
+    bubble.focusText();
+  };
 
-  function show(id: string, seq: number, fromNote = false, at = fromNote ? `.vb-node-note[data-note="${seq}"]` : undefined) {
+  /** The card's conversation at the note or reply `part` (`at` selects it on the card). */
+  function talk(id: string, part: number, at: string) {
+    if (open?.id === id && !open.region && open.mode === 'thread') return again(at, part);
+    openWith({ id, anchor: [id], mode: 'thread', kind: 'comment', part, at });
+  }
+
+  function show(id: string, seq: number, fromNote = false) {
     const note = d.state().items.get(id)?.notes.find((x) => x.seq === seq);
     if (!note) return;
-    if (open?.id === id && !open.region && open.note?.seq === seq) return again(at);
+    if (fromNote) return talk(id, seq, `.vb-node-note[data-note="${seq}"]`);
+    if (open?.id === id && !open.region && open.mode !== 'thread' && open.note?.seq === seq) return again(undefined);
     // From any pin of a note on a group, beside that card (3_FE_02 ruling 3).
     const groupOf = note.nodes && { group: note.nodes.map(String) };
-    openWith({ id, anchor: [id], mode: note.locked ? 'sent' : 'edit', kind: note.kind, note, at, ...groupOf });
+    openWith({ id, anchor: [id], mode: note.locked ? 'sent' : 'edit', kind: note.kind, note, ...groupOf });
   }
 
   function reply(id: string, seq: number) {
-    const r = d.replies(id).find((x) => x.seq === seq);
-    if (!r) return;
-    const at = `.vb-node-reply[data-reply="${seq}"]`;
-    const note = r.to === undefined ? undefined : d.state().items.get(id)?.notes.find((x) => x.seq === r.to);
-    if (note) return show(id, note.seq, false, at);
-    if (open?.id === id && open.reply === seq) return again(at);
-    openWith({ id, anchor: [id], mode: 'reply', kind: 'comment', reply: seq, at });
+    if (d.replies(id).some((x) => x.seq === seq)) talk(id, seq, `.vb-node-reply[data-reply="${seq}"]`);
   }
 
   function container(region: string, kind?: NoteKind) {
@@ -183,40 +193,14 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   function showContainer(region: string, part?: 'note' | number) {
     const note = d.state().regionNotes.get(region)?.at(-1);
     if (!note) return;
-    const at = part === undefined ? undefined : part === 'note' ? '.vb-nblock-text' : `.vb-nblock-reply[data-reply="${part}"]`;
-    if (open?.region === region && open.note?.seq === note.seq) return again(at);
-    openWith({ id: region, anchor: [], region, mode: note.locked ? 'sent' : 'edit', kind: note.kind, note, at });
-  }
-
-  /** The part `o.at` of `el` (a note or a reply it opened from), when it is drawn: its box. */
-  const partOf = (o: Open, el?: HTMLElement) => {
-    const r = o.at ? el?.querySelector(o.at)?.getBoundingClientRect() : undefined;
-    return r?.height ? r : undefined;
-  };
-
-  /** The stage box the bubble is placed from: the title line of a container, or the cards, and
-   *  beside the part it opened from (a note or a reply), its arrow on that part. Both come from
-   *  the layout (where the frame or cards are going), not from a box mid-transition. */
-  function anchorBox(o: Open): StageBox | undefined {
-    const layout = d.layout();
-    const { k, x, y } = d.vp;
-    if (o.region) {
-      const r = layout?.regions.find((g) => g.id === o.region);
-      const el = d.frame(o.region);
-      if (!r || !el?.isConnected) return undefined;
-      // The line's (or the part's) offset inside its frame (both share the world's transform),
-      // added to where the layout puts the frame.
-      const [f, l] = [el.getBoundingClientRect(), el.titleLine().getBoundingClientRect()];
-      const p = partOf(o, el) ?? l;
-      return titleAnchor({ x: r.box.x * k + x + (l.left - f.left), y: r.box.y * k + y + (p.top - f.top), w: l.width, h: p.height });
+    if (part !== undefined) {
+      // The block shows the latest note: its text opens the conversation there.
+      const [at, seq] = part === 'note' ? ['.vb-nblock-text', note.seq] : [`.vb-nblock-reply[data-reply="${part}"]`, part];
+      if (open?.region === region && open.mode === 'thread') return again(at, seq);
+      return openWith({ id: region, anchor: [], region, mode: 'thread', kind: 'comment', part: seq, at });
     }
-    const boxes = o.anchor.map((id) => layout?.nodes.get(id)).filter((b) => b !== undefined);
-    if (!boxes.length) return undefined;
-    const b = boxAround(boxes)!;
-    const box = { x: b.x * k + x, y: b.y * k + y, w: b.w * k, h: b.h * k };
-    const el = d.card(o.anchor[0]!);
-    const p = partOf(o, el);
-    return p && el ? partAnchor(box, { x: box.x, y: box.y + (p.top - el.getBoundingClientRect().top), w: box.w, h: p.height }) : box;
+    if (open?.region === region && open.mode !== 'thread' && open.note?.seq === note.seq) return again(undefined);
+    openWith({ id: region, anchor: [], region, mode: note.locked ? 'sent' : 'edit', kind: note.kind, note });
   }
 
   /** Whether the note the bubble is on still exists (Remove in the note block, or another tab). */
@@ -230,7 +214,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (!open) return;
     // A removed note takes its bubble with it, changed words or not: there is nothing to save to.
     if (noteGone(open)) return close(false);
-    const at = anchorBox(open);
+    const at = anchorBox(d, open);
     if (!at) return close(false);
     const size = { w: bubble.offsetWidth, h: bubble.offsetHeight };
     // Clear of the neighbouring cards' footer buttons where it can be (bubble-clear.ts).
@@ -268,10 +252,22 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   const DONE: Record<string, string> = { comment: 'added', 'note-edit': 'saved', 'note-remove': 'removed' };
 
+  /** Edit on a note in the conversation (decision 8): the window turns into today's edit mode for
+   *  it, beside it; focus still goes back where the conversation opened from. */
+  function edit(o: Open, seq: number | undefined) {
+    const notes = o.region ? d.state().regionNotes.get(o.region) : d.state().items.get(o.id)?.notes;
+    const note = notes?.find((x) => x.seq === seq && !x.locked);
+    if (!note) return;
+    const base = o.region ? { id: o.region, anchor: [], region: o.region, at: o.at }
+      : { id: o.id, anchor: [o.id], at: `.vb-node-note[data-note="${note.seq}"]`, ...(note.nodes && { group: note.nodes.map(String) }) };
+    openNow({ ...base, mode: 'edit', kind: note.kind, note, ...(o.back && { back: o.back }) });
+  }
+
   async function onChoice(e: Event) {
     const o = open;
     if (!o) return;
-    const { choice, text } = (e as CustomEvent<NoteEventDetail>).detail;
+    const { choice, text, note } = (e as CustomEvent<NoteEventDetail>).detail;
+    if (choice === 'edit') return edit(o, note);
     const fields = choice === 'cancel' ? null : actFor(o, choice, text);
     if (!fields) return close();
     bubble.setPhase('saving');
@@ -287,9 +283,12 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   bubble.addEventListener('vb-note', (e) => void onChoice(e));
   // Esc or Cancel with changed words: the bubble stays open and asks; OK closes it.
   bindDiscard(bubble, d.discard, () => close(), () => open);
+  // A click outside the read-only bubble closes it (ruling 7); one being written keeps it (decision 9).
+  const unbindOutside = bindOutside(bubble, d.stage, () => !!open && readOnlyMode(open.mode), (focus) => close(focus));
 
   return {
-    press, group, show: (id, seq, fromNote) => show(id, seq, fromNote), reply, container, showContainer, place, destroy: () => bubble.remove(),
+    press, group, show: (id, seq, fromNote) => show(id, seq, fromNote), reply, container, showContainer, place,
+    destroy: () => { unbindOutside(); bubble.remove(); },
     close: () => {
       if (!bubble.dirty) return close();
       const o = open;

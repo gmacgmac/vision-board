@@ -1,6 +1,6 @@
 // The container note on the page (3_FE_04 step 4G): the frame's `vb-region-note` presses (Edit
-// opens the bubble, a press on the block's note or a reply opens it beside that, popovers-larger-
-// thread ruling 2; Remove writes note-remove, Show in container / Hide set the frame's
+// opens the bubble, a press on the block's note or a reply opens the container's conversation beside
+// that, review polish ruling 6; Remove writes note-remove, Show in container / Hide set the frame's
 // noteShown), which containers show their note block (page state only, like zoom: not in the
 // ledger, reset on reload, ruling 3), and each shown block's height as that container's head
 // inset for the layout (`vb-region-note-resize`), so showing one note lays out that one
@@ -15,7 +15,7 @@ export interface RegionNoteDeps {
   board(): string;
   title(region: string): string;
   /** Edit (Open for a sent note): the container's note bubble; `part`, opened from the block's
-   *  note ('note') or a reply (its seq): beside that. */
+   *  note ('note') or a reply (its seq): the container's conversation, beside and scrolled to that. */
   edit(region: string, part?: 'note' | number): void;
   attempt(fields: ActFields): Promise<string | null>;
   /** A block's height changed, or a note was removed: lay the board out again. */

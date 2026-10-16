@@ -13,7 +13,7 @@ import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';
 import type { RegionHolder } from './region-core.ts';
 import type { ReplyEntry } from '../node/node-core.ts';
 import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT, WIDTHS_LABEL } from './region-core.ts';
-import { COG_ICON, EYE_ICON, MODE_ICON, WIDTHS_ICON } from './region-icons.ts';
+import { COG_ICON, EYE_ICON, MODE_ICON, RETIRED_ICON, WIDTHS_ICON } from './region-icons.ts';
 
 /** The ids the element ties together with aria-describedby / aria-controls. */
 export const regionIds = (id: string) => ({
@@ -126,9 +126,17 @@ export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = 'Everything here is answered.';
 
-/** "3 cards retired" after the count (retiredMarker flag), hidden until `update` says how many and
- * which version a press opens (`data-version`, the page's click wiring). */
-const RETIRED_MARKER = '<button type="button" class="vb-region-retired" hidden></button>';
+/** "3 retired" after the count (retiredMarker flag), hidden until `update` says how many and which
+ * version a press opens (`data-version`, the page's click wiring). Its icon shows, and its word goes,
+ * when the line has no room for the words (round 2 ruling 1, region-narrow.css); the full words are
+ * its name and tooltip. */
+const RETIRED_MARKER = `<button type="button" class="vb-region-retired" hidden>${svgIcon(RETIRED_ICON, 24, 'vb-retired-icon')}`
+  + '<span class="vb-retired-n"></span><span class="vb-retired-word"> retired</span></button>';
+
+/** The answered count (D-045): "1/1" on the line (round 2 ruling 1), and "1 of 1 answered" as its
+ * tooltip and for screen readers (a visually hidden copy; the short form is hidden from them). */
+const COUNT = '<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"></span>'
+  + '<span class="vb-region-count-words"></span></span>';
 
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
@@ -140,7 +148,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
   return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
-    + `<span class="vb-region-count"></span>${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
+    + `${COUNT}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`
     + `</header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }

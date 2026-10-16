@@ -7,6 +7,7 @@ import {
   BUBBLE_EDGE, BUBBLE_GAP, bubbleView, cancelIntent, isDirty, NOTE_DISCARD_EVENT, noteBubbleTemplate, partAnchor, placeBubble, readOnlyMode,
   replyEntry, saveIntent, titleAnchor,
 } from '../src/index.ts';
+import type { NotesEntry } from '../src/index.ts';
 
 const stage = { w: 1600, h: 1000 };
 const bubble = { w: 300, h: 180 };
@@ -109,7 +110,9 @@ test('noteBubbleTemplate: a sent note is shown as Markdown with Close, never in 
   const html = noteBubbleTemplate(bubbleView({ mode: 'sent', kind: 'comment', number: 7, index: 1, text: 'Check **this**' }), 7);
   assert.doesNotMatch(html, /<textarea|data-note-do="save"|data-note-do="remove"/);
   assert.match(html, /<div class="vb-nb-read"><p class="vb-md-p">Check <strong>this<\/strong><\/p><\/div>/);
-  assert.match(html, /data-note-do="cancel">Close<\/button>/);
+  // Review polish ruling 7: read-only, an × in the top corner closes it; no bottom row.
+  assert.match(html, /<span class="vb-nb-title">Note 1 on 7, sent<\/span><button type="button" class="vb-nb-x" data-note-do="cancel" aria-label="Close"><svg /);
+  assert.doesNotMatch(html, /vb-nb-row|>Close<\/button>/);
 });
 
 test('bubbleView and template for a note on a group of cards (3_FE_02 ruling 3): its head names them, no number chip', () => {
@@ -178,27 +181,12 @@ test('bubbleView: a sent note carries its replies in order and names its read-on
   assert.deepEqual(bubbleView({ mode: 'sent', kind: 'comment', number: 7, text: 'Why?' }).replies, []);
 });
 
-test('bubbleView: a reply that names no note opens on its own, read-only, Close only', () => {
-  const v = bubbleView({ mode: 'reply', kind: 'comment', number: 7, replies: [replies[1]!] });
-  assert.deepEqual([v.heading, v.cancel, v.primary, v.remove, v.hint, v.text, v.thread], ['Reply on 7', 'Close', undefined, false, '', '', 'Reply']);
-  assert.equal(readOnlyMode('reply'), true);
-  assert.equal(readOnlyMode('sent'), true);
-  assert.equal(readOnlyMode('edit'), false);
-  assert.equal(saveIntent('reply', 'comment', 'x'), 'skip');
-  assert.equal(cancelIntent('reply', true), 'close');
-});
-
 test('noteBubbleTemplate: the exchange shows the note, then each reply in order, as Markdown in one scrolling tab stop', () => {
   const html = noteBubbleTemplate(bubbleView({ mode: 'sent', kind: 'comment', number: 7, index: 1, text: 'Why?', replies }), 7);
   assert.match(html, /<div class="vb-nb-thread" role="group" aria-label="Note and replies" tabindex="0"><div class="vb-nb-read"><p class="vb-md-p">Why\?<\/p><\/div><ol class="vb-nb-replies">/);
   assert.match(html, /<li class="vb-nb-reply"><span class="vb-nb-who">Agent reply · Pricing chat<\/span><div class="vb-nb-reply-text"><p class="vb-md-p">Yes: <strong>three<\/strong> accounts.<\/p><\/div><\/li>/);
   assert.ok(html.indexOf('three') < html.indexOf('sheet is updated'), 'oldest first');
   assert.doesNotMatch(html, /<textarea|data-note-do="save"|style=/);
-  const alone = noteBubbleTemplate(bubbleView({ mode: 'reply', kind: 'comment', number: 7, replies: [replies[1]!] }), 7);
-  assert.match(alone, /<span class="vb-nb-title">Reply on 7<\/span>/);
-  assert.match(alone, /aria-label="Reply" tabindex="0"><ol class="vb-nb-replies"><li class="vb-nb-reply">/);
-  assert.doesNotMatch(alone, /vb-nb-read|<textarea/);
-  assert.match(alone, /data-note-do="cancel">Close<\/button>/);
   // A note still being edited keeps its text box; any replies follow it, read-only.
   const edit = noteBubbleTemplate(bubbleView({ mode: 'edit', kind: 'comment', number: 7, text: 'x', replies: [replies[0]!] }), 7);
   assert.match(edit, /<\/textarea><div class="vb-nb-thread" role="group" aria-label="Replies" tabindex="0"><ol class="vb-nb-replies">/);
@@ -219,4 +207,48 @@ test('partAnchor: placed from it, the bubble opens beside the card with its arro
 test('bubbleView: a note the agent answered before a Send reads "answered", not "sent" (ruling 5)', () => {
   assert.equal(bubbleView({ mode: 'sent', kind: 'comment', number: 7, index: 1, text: 'x', answered: true }).heading, 'Note 1 on 7, answered');
   assert.equal(bubbleView({ mode: 'sent', kind: 'comment', container: 'Review', index: 2, text: 'x', answered: true }).heading, 'Note 2 on container Review, answered');
+});
+
+// ---- The conversation (review polish rulings 6 and 7, decisions 8 and 9): a click, Enter or Space on
+// a note or a reply opens the card's whole conversation, every note and reply in `notesView` order,
+// read-only, with an × in the top corner and no bottom row; the person's note still editable has Edit.
+
+const entries: NotesEntry[] = [
+  { seq: 20, index: 1, who: 'Your note 1 · Sent', text: 'Why **now**?', sent: true, replies: [replies[0]!] },
+  { seq: 62, who: 'Agent reply', text: 'A reply to no note.', orphan: true },
+  { seq: 70, index: 2, who: 'Your note 2 · Answered', text: 'And the sheet?', sent: true, replies: [{ seq: 71, who: 'Agent reply', text: 'Updated.' }] },
+  { seq: 80, index: 3, who: 'Your note 3', text: 'One more.', sent: false },
+];
+
+test('bubbleView: the conversation is read-only, names the card or container, and lists the entries as given', () => {
+  const v = bubbleView({ mode: 'thread', kind: 'comment', number: 7, entries });
+  assert.deepEqual([v.heading, v.thread, v.cancel, v.primary, v.remove, v.hint, v.text], ['Conversation on 7', 'Notes and replies', 'Close', undefined, false, '', '']);
+  assert.deepEqual(v.entries.map((e) => e.seq), [20, 62, 70, 80], 'never sorted again');
+  assert.equal(bubbleView({ mode: 'thread', kind: 'comment', container: 'Review', entries }).heading, 'Conversation on container Review');
+  assert.deepEqual(bubbleView({ mode: 'edit', kind: 'comment', number: 7, text: 'x' }).entries, []);
+  assert.equal(readOnlyMode('thread'), true);
+  assert.equal(saveIntent('thread', 'comment', 'x'), 'skip');
+  assert.equal(cancelIntent('thread', true), 'close');
+});
+
+test('noteBubbleTemplate: the conversation, oldest first, each entry with who and its words, in one scrolling group', () => {
+  const html = noteBubbleTemplate(bubbleView({ mode: 'thread', kind: 'comment', number: 7, entries }), 7);
+  assert.match(html, /<span class="vb-nb-title">Conversation on 7<\/span><button type="button" class="vb-nb-x" data-note-do="cancel" aria-label="Close"><svg [^>]*aria-hidden="true"/);
+  assert.match(html, /<div class="vb-nb-thread" role="group" aria-label="Notes and replies" tabindex="0"><ol class="vb-nb-convo">/);
+  const seqs = [...html.matchAll(/data-seq="(\d+)" tabindex="-1"/g)].map((m) => Number(m[1]));
+  assert.deepEqual(seqs, [20, 60, 62, 70, 71, 80], 'note 1, its reply, the orphan by time, note 2, its reply, note 3');
+  assert.match(html, /<li class="vb-nb-note" data-seq="20" tabindex="-1"><div class="vb-nb-note-top"><span class="vb-nb-who">Your note 1 · Sent<\/span><\/div><div class="vb-nb-note-text"><p class="vb-md-p">Why <strong>now<\/strong>\?<\/p><\/div><\/li>/);
+  assert.match(html, /<li class="vb-nb-reply" data-seq="60" tabindex="-1"><span class="vb-nb-who">Agent reply · Pricing chat<\/span>/);
+  assert.match(html, /<li class="vb-nb-reply vb-nb-orphan" data-seq="62" tabindex="-1">/);
+  // Only the note still editable carries Edit, named by its number.
+  assert.deepEqual([...html.matchAll(/data-note-do="edit"/g)].length, 1);
+  assert.match(html, /<span class="vb-nb-who">Your note 3<\/span><button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="80" aria-label="Edit note 3">Edit<\/button>/);
+  // Read-only: no text box, no Save or Remove, no bottom row, no inline style.
+  assert.doesNotMatch(html, /<textarea|data-note-do="(save|remove)"|vb-nb-row|style=/);
+});
+
+test('noteBubbleTemplate: editing keeps its bottom row with Cancel and Save, and no × (decision 9)', () => {
+  const html = noteBubbleTemplate(bubbleView({ mode: 'edit', kind: 'comment', number: 7, text: 'x' }), 7);
+  assert.match(html, /<div class="vb-nb-row">.*data-note-do="cancel">Cancel<\/button>.*data-note-do="save"/);
+  assert.doesNotMatch(html, /vb-nb-x/);
 });

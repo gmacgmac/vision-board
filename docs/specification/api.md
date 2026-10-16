@@ -1196,7 +1196,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `{ total, answered, later, open }` ("N open · N answered · N later"); a card that only informs
     never counts. A note never answers a card: `commented` says a note waits and the card is open,
     and the numbered reply's "Still open" lists every card that asks with no ✓, ✗ or Later, notes or
-    not. `item.owed`: a card's latest note is owed unless a ✓ or ✗ came after it (one before it
+    not (since 149, only those that need the person; the cards with the agent have their own line). `item.owed`: a card's latest note is owed unless a ✓ or ✗ came after it (one before it
     leaves the note owed), until a reply naming it or a newer version.
 145. **The agent's answer clears a card** (`packages/actions/src/clears.ts`). When an agent line
     answers a card's latest note, a `reply` naming it in `to` (on every card of a group note whose
@@ -1237,3 +1237,32 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     The ledger, `read_ledger`, the person's `act` and what the page folds (`boardState`, `statusOf`)
     keep `ack`, `drop`, `acknowledged` and `dropped`; a test holds the page's board equal to
     `get_board` with the same `itemsOut` applied.
+148. **A note puts a card with the agent** (with-agent-state task, D-046). `openapi.json`
+    `info.version` becomes 1.25.0; the ledger does not change. A card that asks is open (it needs
+    the person), with the agent (the person's latest note on it is owed an answer), answered (✓ or
+    ✗) or later. One rule, the note half of `item.owed`: `conditions.ts` `owedNote` (`owedOn` is it,
+    else the owed park), and `cardStatus` gives every read a card's status: its ✓, ✗ or Later, else
+    `commented` while `owedNote` holds, else `open`. The fold's status (`notes.ts` `itemOf`) now holds
+    the marks alone (`markOf`), so a note sets no status there. `boardState` (the page), `nodeDetail`
+    and `openItems` read `cardStatus`; ✓, ✗ and Later win over an owed note (a ✓ then a note stays
+    answered until the agent's answer clears it, 145), and a ✓ cleared after a note leaves the note
+    owed, so the card is with the agent again. `counts` returns `{ total, open, withAgent, answered,
+    later }`: the header reads "N open · N with agent · N answered · N later", the with agent chip
+    only above 0; the container's "N of M answered" and Hide answered are unchanged. The card's
+    footer and name say "With agent". Every agent read says `with-agent` (`registry.ts`
+    `STATUS_OUT`, beside `checked` and `crossed`): the `itemStatus` enum is `open`, `checked`,
+    `crossed`, `with-agent`, `context`, `later`. The page, `read_ledger` and the stored names keep
+    `commented`.
+149. **"Still open" is the person's; any reply is an update** (review polish round 2 rulings 3 and 4).
+    `openapi.json` `info.version` becomes 1.26.0; the ledger does not change. The numbered reply and
+    the Send message (`reply.ts` `replyLines`, so `replyText`, `boardBlocks` and `roundOf` too) end in
+    "Still open: …", listing only the cards that need the person (status `open`), then on a line of
+    its own "Waiting for your reply: …", the cards with the agent (`commented`, D-046; an old
+    `context` too); each line only when it lists a card, and "Nothing left open." only when both are
+    empty. A card that only informs is in neither. The agent's reply on a card is an update the person
+    has not seen whether or not it answers a note or clears anything: `clears.ts` `unseenReply` (the
+    card's latest reply, or the reply to a group's note that cleared it, after the person last looked)
+    joins `item.unseen`, so the page shows "1 update" with the reply as its step until the card is
+    seen (a selection, stepping past it, or any act naming it) and `list_open`'s `unseen` holds
+    meanwhile (its description says so). `unseenAnswer` (`get_board`'s `itemState`) still means a
+    clear only (145).

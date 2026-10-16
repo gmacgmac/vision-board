@@ -92,8 +92,10 @@ test('a reply shows under the note it answers, live; one naming no note comes af
   const order = await notes(page, n).locator('.vb-node-note, .vb-node-reply').evaluateAll((els) => els.map((e) => e.className));
   expect(order).toEqual(['vb-node-note', 'vb-node-reply']);
   await replies(page, n).click();
-  // The reply answered the note (not yet sent), so it is history and opens read-only (ruling 5).
-  await expect(page.getByRole('dialog', { name: `Note 1 on ${n}, answered` })).toBeVisible();
+  // The reply answered the note (not yet sent), so it is history: the conversation shows it read-only
+  // (ruling 5; review polish ruling 6).
+  await expect(page.getByRole('dialog', { name: `Conversation on ${n}` })).toBeVisible();
+  await expect(page.locator('vb-note-bubble .vb-nb-note .vb-nb-who')).toHaveText('Your note 1 · Answered');
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-note-bubble')).toBeHidden();
   await reply(request, d, n, 'Also: the sheet is updated.');

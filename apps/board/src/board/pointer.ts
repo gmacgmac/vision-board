@@ -4,10 +4,14 @@
 // container, its own, or nowhere), and a drag on its content selects text and never pans. On the
 // board's or a container's background (its top line outside its controls included): a drag pans
 // and a click clears the selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The
-// middle button pans anywhere. A drag on a container's grip moves the container (3_FE_04 ruling 5,
-// container-drag.ts). While a pan, a move or a lasso runs, nothing on the page gets
-// text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live in keys.ts
-// (project rule 5).
+// middle button pans anywhere, and so does a Cmd or Ctrl + drag (review-polish ruling 13): over
+// text, a card, a control, a hover box or a popover; held still, that press keeps its own meaning
+// (a Cmd click adds or removes a card, opens a link in a new tab, presses a button). While that key
+// is held over the board the pointer is a hand, a closed one during the pan (review polish round 2
+// ruling 6; text fields keep their cursor, board.css). A drag on a container's grip moves the
+// container (3_FE_04 ruling 5, container-drag.ts). While a pan, a move or a lasso runs, nothing on
+// the page gets text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live
+// in keys.ts (project rule 5).
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 import type { Viewport } from './viewport.ts';
 
@@ -49,14 +53,21 @@ const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 const HANDLE = '.vb-node-kind';
 /** The one place a container is moved from (3_FE_04 ruling 5): the grip on its title line. */
 const GRIP = '.vb-region-grip';
-const DRAG_THRESHOLD = 4;
+/** Where a Cmd or Ctrl press keeps the field's own press (a caret, a selection): never a pan. */
+const OWN_PRESS = 'input, textarea, select, [contenteditable]';
+export const DRAG_THRESHOLD = 4;
+/** The key a drag pans with from anywhere (review-polish ruling 13): Cmd, or Ctrl on other systems, as
+ *  Ctrl/Cmd + scroll zooms. The one place it is named (Option may replace it later, round 2 ruling 6). */
+export const panKey = (e: { metaKey: boolean; ctrlKey: boolean }): boolean => e.metaKey || e.ctrlKey;
 
 interface Start { sx: number; sy: number; moved: boolean }
 /** One card a move carries: its element and its box when the drag began. */
 interface Carried { id: string; el: HTMLElement; box0: Box }
 type Gesture =
   | Start & { kind: 'move'; id: string; el: HTMLElement; cards: Carried[]; boxes: Map<string, Box>; add: boolean }
-  | Start & { kind: 'pan'; x0: number; y0: number; middle: boolean }
+  /** `still`: a Cmd or Ctrl press, which pans only once it moves; held still it ends as the
+   *  gesture the press alone would have started (null: none, the control's own click). */
+  | Start & { kind: 'pan'; x0: number; y0: number; middle: boolean; still?: Gesture | null }
   /** On a card's content: the browser selects text on a drag; a click picks the card. */
   | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
   /** Shift on a background: the lasso; `add` when Cmd or Ctrl is held too. */
@@ -68,6 +79,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   let g: Gesture | null = null;
   /** The mousedown after this pointerdown must not do its default (focus, text selection). */
   let stopMouse = false;
+  /** A Cmd or Ctrl drag panned: the click its release makes reaches nothing. */
+  let swallow = false;
 
   const start = (e: PointerEvent): Start => ({ sx: e.clientX, sy: e.clientY, moved: false });
   /** The cards a drag on `id` carries, each with its element and box; `id` first. */
@@ -91,17 +104,10 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     capture(e);
   }
 
-  stage.addEventListener('pointerdown', (e) => {
-    g = null;
-    stopMouse = false;
-    const t = e.target as HTMLElement;
-    if (e.button === 1) {
-      if (t.closest(OWN_MIDDLE)) return;
-      stopMouse = true; // no autoscroll, no paste
-      return pan(e);
-    }
+  /** The gesture a left press starts, Cmd and Ctrl aside (a Cmd or Ctrl press wraps it). */
+  function begin(e: PointerEvent, t: HTMLElement): void {
     // The grip is a button (it takes focus for Alt+arrows), so it is looked for before the other
-    // controls; a press on it starts a container move, never a pan.
+    // controls; a press on it starts a container move, never a pan (unless Cmd or Ctrl drags it).
     const gripEl = e.button === 0 && !e.shiftKey ? t.closest<HTMLElement>(GRIP) : null;
     const region = gripEl?.closest<HTMLElement>('vb-region')?.dataset.region;
     if (gripEl && region) {
@@ -132,6 +138,25 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       return capture(e);
     }
     pan(e);
+  }
+
+  stage.addEventListener('pointerdown', (e) => {
+    g = null;
+    stopMouse = false;
+    swallow = false;
+    const t = e.target as HTMLElement;
+    if (e.button === 1) {
+      if (t.closest(OWN_MIDDLE)) return;
+      stopMouse = true; // no autoscroll, no paste
+      return pan(e);
+    }
+    begin(e, t);
+    const own = g as Gesture | null; // what `begin` started
+    // Cmd or Ctrl (Shift too is the additive lasso): a pan once it moves, from anywhere but a field.
+    // No focus and no text selection on the press; a still click still reaches its target.
+    if (e.button !== 0 || !panKey(e) || e.shiftKey || own?.kind === 'pan' || t.closest(OWN_PRESS)) return;
+    g = { kind: 'pan', ...start(e), x0: vp.x, y0: vp.y, middle: false, still: own };
+    stopMouse = true;
   });
   stage.addEventListener('mousedown', (e) => {
     if (stopMouse) e.preventDefault();
@@ -142,11 +167,19 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (g && g.kind !== 'press') e.preventDefault();
   });
 
+  bindPanKey(stage);
   stage.addEventListener('pointermove', (e) => {
     if (!g) return;
     if (!g.moved && Math.hypot(e.clientX - g.sx, e.clientY - g.sy) < DRAG_THRESHOLD) return;
     const first = !g.moved;
     g.moved = true;
+    if (g.kind === 'pan' && first && g.still !== undefined) {
+      // The Cmd or Ctrl press became a pan: it holds the pointer now, and no click follows it.
+      capture(e);
+      stage.classList.add('panning');
+      document.getSelection()?.removeAllRanges();
+      swallow = true;
+    }
     if (g.kind === 'pan') {
       vp.x = g.x0 + e.clientX - g.sx;
       vp.y = g.y0 + e.clientY - g.sy;
@@ -174,6 +207,12 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     stage.classList.remove('panning');
     const d = g;
     g = null;
+    // A Cmd or Ctrl press held still ends as the gesture it wrapped.
+    finish(d?.kind === 'pan' && d.still !== undefined && !d.moved ? d.still : d, e);
+    // The click a drag's release makes comes straight after it, or not at all.
+    if (swallow) setTimeout(() => { swallow = false; });
+  };
+  function finish(d: Gesture | null, e: PointerEvent) {
     if (!d) return;
     const click = !d.moved && e.type === 'pointerup';
     if (d.kind === 'move') {
@@ -193,9 +232,16 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       if (e.type === 'pointerup') h.lassoEnd({ x: d.sx, y: d.sy }, { x: e.clientX, y: e.clientY }, d.add);
       else h.lassoCancel();
     } else if (click && !(d.kind === 'pan' && d.middle)) h.clear();
-  };
+  }
   stage.addEventListener('pointerup', end);
   stage.addEventListener('pointercancel', end);
+  // Ahead of every other listener (the stage's controls, a link's default): a pan's click is no click.
+  window.addEventListener('click', (e) => {
+    if (!swallow) return;
+    swallow = false;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }, true);
 
   stage.addEventListener('wheel', (e) => {
     // Scrolling inside the note bubble or a hover tip scrolls its text, not the board.
@@ -204,4 +250,14 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (e.ctrlKey || e.metaKey) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
     else vp.panBy(-e.deltaX, -e.deltaY);
   }, { passive: false });
+}
+
+/** The hand that says a drag will pan (round 2 ruling 6): `data-pan-key` on the stage while the pan
+ *  key is held, read by board.css; kept true to every key press and release and to the pointer
+ *  coming over the board, and dropped when the window loses focus (the key's release goes elsewhere). */
+function bindPanKey(stage: HTMLElement): void {
+  const held = (on: boolean) => { if (stage.hasAttribute('data-pan-key') !== on) stage.toggleAttribute('data-pan-key', on); };
+  for (const type of ['keydown', 'keyup'] as const) window.addEventListener(type, (e) => held(panKey(e)), true);
+  stage.addEventListener('pointerover', (e) => held(panKey(e)));
+  window.addEventListener('blur', () => held(false));
 }

@@ -1,0 +1,61 @@
+/* Region pattern styles, a container's top line in its narrow forms (<vb-region>, after region.css;
+   split out of it in review polish round 2). The line keeps its on-screen size at every zoom
+   (region.css), so it is the query container: these forms follow the room on screen. From wide to
+   narrow: the full mode row; the collapsed row (408px, or 568px with a retired marker); the marker's
+   icon and number in place of "3 retired" (under 290px); the row down to the cog (under 226px, or
+   261px with a marker). Each step keeps the label side uncovered at every zoom where the controls
+   show (FAR_K, 55%, to 250%; round 2 rulings 1 and 2). Tokens only. */
+
+/* Collapsed (under 408px of top line on screen, a 440px frame at 100%, where the full row would
+   leave under ~200px for the label side): only the checked icon, Comment and the cog show (Match card widths waits for the row to
+   expand too). Hovering or focusing the row expands it to all
+   six layout icons as an overlay drawn over the label side (same canvas-coloured ring), moving nothing;
+   it collapses again on leave, blur or Esc. The row keeps its box size collapsed, so expanding
+   never reflows the frame.
+   A frame with a retired marker collapses the row under 568px of line (a 600px frame at 100%), since
+   the marker never shrinks: the full row beside the marker, a few letters of title and the grip
+   needs about 480px, and it covered the marker by 14px at about 150% in a one-card frame (review
+   polish FIX_01). --region-marked says the marker shows; the line reads it in its own query. */
+vb-region:has(> .vb-region-head .vb-region-retired:not([hidden])) { --region-marked: 1; }
+@container (max-width: 408px) or ((max-width: 568px) and style(--region-marked: 1)) {
+  /* Tighter between the label's parts, so a narrow frame's count keeps its words a little longer. */
+  vb-region .vb-region-label { gap: var(--vb-space-1); }
+  /* The expanded row leaves the flow, so the tools box would collapse to nothing and the popovers
+     anchored under it would start at the line's centre, under the row. Keep the row's own height
+     (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
+  vb-region .vb-region-tools { min-height: 32px; }
+  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
+  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-widths {
+    width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+  vb-region .vb-mode-row:hover, vb-region .vb-mode-row:focus-within {
+    position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
+    box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
+  }
+  /* Expanded, each icon takes the 24px target and no more, so the row stays a target's room clear of
+     the grip even in the narrowest frame (one S card). */
+  vb-region .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
+}
+/* The retired marker's narrow form (round 2 ruling 1): when the line has no room for "3 retired"
+   beside the grip, a few letters of title, "1/1" and the collapsed row (under 290px, a one-card frame
+   below about 96%), it shrinks to a small icon and its number rather than being covered; its name and
+   tooltip keep the full words. */
+@container (max-width: 289px) {
+  vb-region .vb-region-retired { display: inline-flex; align-items: center; gap: 2px; }
+  vb-region .vb-retired-icon { display: block; }
+  vb-region .vb-retired-word { display: none; }
+}
+/* The narrowest line (under 226px, or 261px with a marker: a one-card frame below about 81% or 90%,
+   down to FAR_K): even the collapsed row would cover the title, so it keeps only the cog, and Comment
+   while its badge shows (an unsent or a waiting note). The others stay in the row, at no width and
+   still focusable, so the row expands over the label side on hover or focus as in the collapsed form;
+   the row's gaps go with them. The holders leave the line whole, as when zoomed out (no "· P…" stub
+   left: VERIFY_01 item 8). */
+@container (max-width: 225px) or ((max-width: 260px) and style(--region-marked: 1)) {
+  vb-region .vb-mode-row:not(:hover, :focus-within) { gap: 0; }
+  vb-region .vb-region-holders { display: none; }
+  vb-region .vb-mode-row:not(:hover, :focus-within) :is(.vb-mseg[role='radio'], .vb-mode-div),
+  vb-region:not([data-badge='unsent'], [data-badge='sent']) .vb-mode-row:not(:hover, :focus-within) .vb-region-comment {
+    width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+}

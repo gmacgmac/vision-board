@@ -4,8 +4,9 @@
 import type { ActionId, Kind } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
 
-/** Where a card stands with the person. `commented`: a note waits for the agent, and the card is
- * still open. `context` is no longer reached: an old More context reads as a note (D-045). */
+/** Where a card stands with the person. `commented`: with the agent, its latest note owed an answer,
+ * neither open nor answered (conditions.ts `cardStatus`, D-046; the page says "With agent", agents
+ * read `with-agent`). `context` is no longer reached: an old More context reads as a note (D-045). */
 export type ItemStatus = 'open' | 'acknowledged' | 'dropped' | 'commented' | 'context' | 'later';
 /** The statuses that answer a card that needs an answer, and close it, ✓ or ✗ (D-045): nothing is
  * owed on the answer and its proposals end. A note never answers a card, so a card with a note is
@@ -31,8 +32,9 @@ const ACTION_IN = Object.fromEntries(Object.entries(ACTION_OUT).map(([id, word])
 export const actionIn = (word: string): string => (Object.hasOwn(ACTION_IN, word) ? ACTION_IN[word]! : word);
 
 /** How every agent read names a card's status (D-045, the API edge, beside `ACTION_OUT`): ✓ is
- * `checked` and ✗ `crossed`. The page and the ledger keep `acknowledged` and `dropped`. */
-export const STATUS_OUT = { acknowledged: 'checked', dropped: 'crossed' } as const satisfies Partial<Record<ItemStatus, string>>;
+ * `checked`, ✗ `crossed`, and a card whose note waits for the agent `with-agent` (D-046). The page
+ * and the ledger keep `acknowledged`, `dropped` and `commented`. */
+export const STATUS_OUT = { acknowledged: 'checked', dropped: 'crossed', commented: 'with-agent' } as const satisfies Partial<Record<ItemStatus, string>>;
 /** A status as the agent reads it. */
 export type ReportedStatus = Exclude<ItemStatus, keyof typeof STATUS_OUT> | (typeof STATUS_OUT)[keyof typeof STATUS_OUT];
 export const statusOut = (s: ItemStatus): ReportedStatus => (s in STATUS_OUT ? STATUS_OUT[s as keyof typeof STATUS_OUT] : s as ReportedStatus);

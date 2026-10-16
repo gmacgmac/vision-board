@@ -2,12 +2,13 @@
 // an agent's line answers a card's latest note, a `reply` naming it in `to` or a newer version of
 // the card such as an `append` (what answers an ask, api.md 36, the same test as `item.owed`), every
 // ✓, ✗ and Later made before that note stops counting: the card is open and unmarked
-// (notes.ts `itemOf` with the clear's `pos`), and it shows as updated until the person looks at it
+// (notes.ts `itemOf` with the clear's `pos`; the note is no longer owed, so not with the agent, D-046), and it shows as updated until the person looks at it
 // (`unseenAnswer`, read by `boardState` and the `item.unseen` row). Worked out in the fold from the
 // agent's line; nothing is written for the person. A reply to an older note, not the card's latest,
-// clears nothing. Pure.
+// clears nothing. Any reply of the agent's on a card, clearing or not, is still an update the person
+// has not seen until they look (`unseenReply`, review polish round 2 ruling 4). Pure.
 import type { LedgerEvent } from '../../format/src/index.ts';
-import type { LedgerState } from './fold.ts';
+import type { LedgerReply, LedgerState } from './fold.ts';
 import type { Ask } from './notes.ts';
 import { askVer, cardsOf, latestAsk } from './notes.ts';
 
@@ -45,4 +46,16 @@ export function foldClears(s: LedgerState, e: LedgerEvent): number[] {
 export function unseenAnswer(s: LedgerState, id: number): boolean {
   const c = s.clears.get(id);
   return c !== undefined && c.seq > (s.looked.get(id) ?? 0);
+}
+
+/** The agent's latest reply on card `id` the person has not looked at since (review polish round 2
+ * ruling 4): any reply on the card, whether or not it answers a note or clears anything, or the reply
+ * to a note on a group of cards that cleared it (filed under the card it names). Undefined when they
+ * have looked at the card since, or when only a newer version cleared it (that is a version to see). */
+export function unseenReply(s: LedgerState, id: number): LedgerReply | undefined {
+  const since = s.looked.get(id) ?? 0;
+  const own = s.replies.get(id)?.at(-1);
+  const clear = s.clears.get(id)?.seq ?? 0;
+  const cleared = clear > since && clear > (own?.seq ?? 0) ? [...s.replies.values()].flat().find((r) => r.seq === clear) : undefined;
+  return cleared ?? (own && own.seq > since ? own : undefined);
 }

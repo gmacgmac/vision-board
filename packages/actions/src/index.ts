@@ -38,6 +38,6 @@ export { joinReply, replyLines, replyText } from './reply.ts';
 export type { ReplyLines, ReplyScope } from './reply.ts';
 export { boardBlocks, ROUND_HEAD, roundOf, SELECTED_HEAD, selectionText } from './board-message.ts';
 export type { Round, SelectedCard } from './board-message.ts';
-export { unseenAnswer } from './clears.ts';
+export { unseenAnswer, unseenReply } from './clears.ts';
 export { versionChanges } from './changes.ts';
 export type { Change, ChangeField, FieldChange } from './changes.ts';

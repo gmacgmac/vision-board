@@ -178,7 +178,7 @@ for (const theme of THEMES) {
 const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const marker = (page: Page, region: string) => frame(page, region).locator('.vb-region-retired');
 
-test('a card retired: gone from the board, "1 card retired" on its container, opening the version where it last appeared', async ({ page, request }) => {
+test('a card retired: gone from the board, "1 retired" on its container, opening the version where it last appeared', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'ack', n: 1, ver: 1 }); // the agent's next write is a new version of the board
   await open(page, d, 4);
@@ -188,8 +188,9 @@ test('a card retired: gone from the board, "1 card retired" on its container, op
   await expect(card(page, 2)).toHaveCount(0);
   await expect(card(page, 3).locator('.vb-node-num')).toHaveText('3', { useInnerText: true });
   await expect(marker(page, 'p')).toBeVisible();
-  await expect(marker(page, 'p')).toHaveText('1 card retired');
+  await expect(marker(page, 'p')).toHaveText('1 retired');
   await expect(marker(page, 'p')).toHaveAccessibleName(/^1 card retired from this container\. Show v\d+, where it last appeared$/);
+  await expect(marker(page, 'p')).toHaveAttribute('data-until', /^\d+$/); // the retire line its answers run to
   await expect(marker(page, 'q')).toBeHidden();
   await expectNoAxeViolations(page);
   // A press opens that version, read-only, where card 2 is still on the board.
@@ -197,6 +198,7 @@ test('a card retired: gone from the board, "1 card retired" on its container, op
   await expect(page.locator('.vb-banner')).toBeVisible();
   await expect(page.locator('vb-node')).toHaveCount(4);
   await expect(card(page, 2).locator('.vb-node-title')).toHaveText('Question 2?');
+  await expect(card(page, 1)).toHaveAttribute('data-status', 'acknowledged'); // the ✓ after that version, before the retire (ruling 10)
   await expect(marker(page, 'p')).toBeHidden();
   await page.keyboard.press('Escape');
   await expect(page.locator('.vb-banner')).toHaveCount(0);
@@ -283,12 +285,15 @@ test('gallery: the flag section shows a card at rest, flagged, and flagged befor
   await expect(page.goto('/gallery.html?flags=-cardFlag').then(() => section(page, 'cardFlag').count())).resolves.toBe(0);
 });
 
-test('gallery: the retired section shows a container with "2 cards retired"', async ({ page }) => {
+test('gallery: the retired section shows a container with "2 retired"', async ({ page }) => {
   await page.goto('/gallery.html');
   const s = section(page, 'retiredMarker');
-  await expect(s.locator('vb-region .vb-region-retired')).toHaveText('2 cards retired');
-  await expect(s.locator('vb-region .vb-region-retired')).toHaveAttribute('aria-disabled', 'false');
-  await expect(s.locator('vb-region .vb-region-count')).toHaveText('1 of 2 answered');
+  const f = s.locator('vb-region[data-region="retired-here"]');
+  await expect(f.locator('.vb-region-retired')).toHaveText('2 retired');
+  await expect(f.locator('.vb-region-retired')).toHaveAttribute('aria-disabled', 'false');
+  await expect(f.locator('.vb-region-count')).toHaveAttribute('title', '1 of 2 answered');
+  // Beside it, the narrowest frame (review polish ruling 9): one card left of seven.
+  await expect(s.locator('vb-region[data-region="retired-narrow"] .vb-region-retired')).toHaveText('6 retired');
 });
 
 for (const theme of THEMES) {

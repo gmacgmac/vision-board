@@ -66,7 +66,7 @@ const removeRow = (f: Locator) => f.getByRole('menuitem', { name: 'Remove contai
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
 test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
 
-test('Remove card on the selection bar: the confirm names the card; it leaves, the container says "1 card retired"', async ({ page, request }) => {
+test('Remove card on the selection bar: the confirm names the card; it leaves, the container says "1 retired"', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'ack', n: 3, ver: 1 }); // a past version shows card 1 after it goes
   await open(page, d, 4);
@@ -89,7 +89,7 @@ test('Remove card on the selection bar: the confirm names the card; it leaves, t
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(toast(page)).toHaveText('Removed card 1');
   await expect(bar(page)).toBeHidden();
-  await expect(frame(page, 'p').locator('.vb-region-retired')).toHaveText('1 card retired');
+  await expect(frame(page, 'p').locator('.vb-region-retired')).toHaveText('1 retired');
   const lines = (await linesAfter(page, before)).filter((e) => e.type === 'retire');
   expect(lines.map((e) => [e.by, e.board, (e.cards as number[]).length, e.region])).toEqual([['person', d.board, 1, undefined]]);
   expect((lines[0]!.cards as number[])[0]).toBeGreaterThan(1); // the identity, not the board number

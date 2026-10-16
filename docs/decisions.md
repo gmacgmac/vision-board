@@ -575,3 +575,13 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   "Open" with nothing to do; an agent read a quick ✓ and clear as indecision.
 - **Rejected**: treating a note that ends in "?" as More context, a guess the person can't see.
 - **Task**: cortex-tasks/board/2026-10-15_board-actions_answer-model/PLAN.md
+
+## D-046 A note puts a card with the agent; open means the person is needed
+- **Date**: 2026-10-15 · **Status**: Accepted · **From**: maintainer (chat 130, 136)
+- **Decision**: A card that asks is open (needs the person), with the agent (the person's latest note
+  is owed an answer), answered (✓ or ✗) or later. A note moves it to the agent; the agent's answer
+  moves it back to open. Only ✓ or ✗ answers it (D-045 unchanged).
+- **Why**: a card the person had reacted to still counted as open, so "open" stopped meaning "needs
+  you".
+- **Rejected**: letting a note answer the card, which brought back questions closing cards (D-045).
+- **Task**: cortex-tasks/board/2026-10-15_board-actions_with-agent-state.md

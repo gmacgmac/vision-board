@@ -6,12 +6,15 @@
 // layer, and the controller draws that state with the same drawing code. While it shows, the world
 // carries data-readonly (board.css hides what acts), the stage's acting handlers do nothing
 // (`guard`), sender.ts refuses every act and attention.ts sends no board seen; selection, zoom, pan
-// and the finder still work. The live state keeps following the ledger underneath; new lines never
+// and the finder still work. A container's "N cards retired" marker opens its version with the
+// person's answers as they stood just before the retire (review polish ruling 10, N42): the ledger
+// is read on to that line and folded without the board's later drawing (retired.ts `pastLines`). The live state keeps following the ledger underneath; new lines never
 // redraw the past view, but the dropdown's "now" moves. Esc or "Back to now" ends it.
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { BoardRun, LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardVersions, foldLedger } from '../../../../packages/actions/src/index.ts';
 import { readLedger } from './io.ts';
+import { pastLines } from './retired.ts';
 import type { StageHandlers } from './wiring.ts';
 import { shell } from '../shell/shell.svelte.ts';
 
@@ -31,8 +34,9 @@ export interface Versions {
   readonly state: LedgerState | null;
   /** List the open board's versions again from the live state (after a batch or a switch). */
   listed(): void;
-  /** Show the open board at version `seq`, or now with null. */
-  show(seq: number | null): Promise<void>;
+  /** Show the open board at version `seq`, or now with null; with `until` (a retired marker), its
+   *  drawing as at `seq` and the person's acts up to just before line `until`. */
+  show(seq: number | null, until?: number): Promise<void>;
   /** Back to now without drawing (another board opens): the caller draws. */
   reset(): void;
   /** The stage's handlers, those that act doing nothing while a past version shows. */
@@ -85,7 +89,7 @@ export function createVersions(d: VersionsDeps): Versions {
   return {
     get state() { return state; },
     listed,
-    async show(seq) {
+    async show(seq, until) {
       const mine = ++asked;
       const run = shell.versions.find((r) => r.seq === seq);
       if (!run) {
@@ -94,9 +98,10 @@ export function createVersions(d: VersionsDeps): Versions {
       }
       shell.loadingVersion = true;
       try {
-        const lines = await linesTo(run.seq);
+        const cut = until !== undefined && until > run.seq;
+        const lines = await linesTo(cut ? until - 1 : run.seq);
         if (mine !== asked) return;
-        set({ run, state: foldLedger(lines) });
+        set({ run, state: foldLedger(cut ? pastLines(lines, d.board(), run.seq, until) : lines) });
         d.redraw();
       } catch (err) {
         d.fail(err);

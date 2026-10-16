@@ -104,15 +104,19 @@ async function zoomToFull(page: Page): Promise<void> {
   expect(await scale()).toBeGreaterThanOrEqual(1);
 }
 
-/** Pan with the wheel (scroll pans the board) until `target` sits in the middle of the stage. */
+/** Pan with the wheel (scroll pans the board) until `target` sits in the middle of the stage. A pick
+ *  can move the frames below a moment later, as the layout settles (at 56%, where the controls show
+ *  since round 2 ruling 2, the next frame moved after it was measured), so measure again and pan
+ *  what is left until it stays in the middle. */
 async function panTo(page: Page, target: Locator): Promise<void> {
-  const b = (await target.boundingBox())!;
   const mid = { x: 800, y: 520 };
   await page.mouse.move(mid.x, mid.y);
-  await page.mouse.wheel(b.x + b.width / 2 - mid.x, b.y + b.height / 2 - mid.y);
   await expect.poll(async () => {
-    const now = (await target.boundingBox())!;
-    return Math.abs(now.y + now.height / 2 - mid.y) < 4;
+    const b = (await target.boundingBox())!;
+    const off = { x: b.x + b.width / 2 - mid.x, y: b.y + b.height / 2 - mid.y };
+    if (Math.abs(off.y) < 4) return true;
+    await page.mouse.wheel(off.x, off.y);
+    return false;
   }).toBe(true);
 }
 
@@ -198,6 +202,9 @@ function problemsOf(p: Awaited<ReturnType<typeof placement>>): string[] {
 }
 
 test('each layout mode draws every region', async ({ page }) => {
+  // 28 picks, each settled and checked: about 30s at 56% (the zoom where the controls show since round
+  // 2 ruling 2), over the default timeout.
+  test.setTimeout(60_000);
   await openBoard(page);
   await zoomToButtons(page);
   const view = await (await page.request.get('/api/boards/roadmap')).json() as { view: { nodes: { id: string; region: string }[]; regions: { id: string; mode: string }[] } };

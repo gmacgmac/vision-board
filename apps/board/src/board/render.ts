@@ -82,7 +82,7 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         if (!el) continue;
         const box = JSON.stringify(r.box);
         const gone = retired?.get(r.id);
-        const st = { ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(gone && { retired: retiredMarker(gone.count, gone.version) }) };
+        const st = { ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }) };
         const state = JSON.stringify(st);
         const was = shown.get(r.id);
         if (was?.box !== box) {

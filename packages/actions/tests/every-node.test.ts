@@ -32,13 +32,13 @@ test('answered: ✓ or ✗ answers a card that needs an answer; nothing answers 
   assert.equal(isDecided('risk', 'acknowledged'), false, 'an old board\'s ✓ on a risk decides nothing (ruling 8)');
 });
 
-test('counts: a comment on a question leaves it open; one on a finding counts nowhere (D-045)', () => {
+test('counts: a comment on a question puts it with the agent, not answered; one on a finding counts nowhere (D-045, D-046)', () => {
   const l = cards();
   l.act({ action: 'comment', n: 1, ver: 1, text: 'Yes, go.' });
   l.act({ action: 'comment', n: 5, ver: 1, text: 'Noted.' });
   l.act({ action: 'later', n: 6, ver: 1 });
   const s = l.state();
-  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 3, answered: 0, later: 0, open: 3 });
+  assert.deepEqual(counts(boardView(s, 'b'), boardState(s, 'b')), { total: 3, answered: 0, later: 0, open: 2, withAgent: 1 });
 });
 
 test('owed: a comment on a question is owed a reply (ruling 5); a ✓ after it ends it', () => {
@@ -89,7 +89,7 @@ test('list_open: open cards that need an answer, plus any card owing an answer o
   l.act({ action: 'later', n: 6, ver: 1 });
   const open = () => openItems(l.state(), 'b').map((x) => [x.n, x.status, x.pending ?? null]);
   assert.deepEqual(open(), [
-    [1, 'commented', 'comment'], [2, 'open', null], [3, 'open', null], [4, 'commented', 'comment'], [5, 'later', 'later'],
+    [1, 'with-agent', 'comment'], [2, 'open', null], [3, 'open', null], [4, 'with-agent', 'comment'], [5, 'later', 'later'],
   ]);
   l.agent(A, { type: 'reply', n: 1, text: 'Because.', to: asked });
   l.agent(A, { type: 'reply', n: 5, text: 'The audit.', to: noted });
@@ -102,7 +102,7 @@ test('show_node: every card has a status', () => {
   const l = cards();
   l.act({ action: 'context', n: 5, ver: 1 });
   const s = l.state();
-  assert.equal(nodeDetail(s, 5)?.status, 'commented', 'an old More context reads as a note (D-045)');
+  assert.equal(nodeDetail(s, 5)?.status, 'with-agent', 'an old More context reads as a note (D-045), with the agent (D-046)');
   assert.equal(nodeDetail(s, 6)?.status, 'open');
   assert.equal(nodeDetail(s, 1)?.status, 'open');
 });

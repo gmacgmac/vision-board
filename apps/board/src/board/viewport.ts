@@ -4,16 +4,49 @@ import type { Box, Point } from '../../../../packages/layout/src/index.ts';
 const MIN_K = 0.2;
 const MAX_K = 2.5;
 /** The zoom below which the stage is "far" (data-zoom="far"), the one place it is set, and so the level
- *  below which the cards' controls hide (hideControlsZoomedOut flag, tracker N13). The toolbar shows the
- *  zoom as a percentage (`zoomPercent`); read it there, then change this one number to move the level. */
-export const FAR_K = 0.75;
+ *  below which the cards' and the containers' controls hide (hideControlsZoomedOut flag). The toolbar
+ *  shows the zoom as a percentage (`zoomPercent`). 55%, the maintainer's pick after trying it (review
+ *  polish round 2 ruling 2, tracker N13 closed; it was 75%). */
+export const FAR_K = 0.55;
 
-/** A zoom as the whole percentage the toolbar shows (0.75 is 75). It rounds down, so the number is never
- *  higher than the zoom: "75%" means the board is at 0.75 or more, which is where the controls show. */
+/** A zoom as the whole percentage the toolbar shows (0.55 is 55). It rounds down, so the number is never
+ *  higher than the zoom: "55%" means the board is at 0.55 or more, which is where the controls show. */
 export const zoomPercent = (k: number): number => Math.floor(k * 100 + 1e-6);
 
 /** Where the view is: the pan (`x`, `y`, screen px) and the zoom (`k`). */
 export interface ViewSnapshot { x: number; y: number; k: number }
+
+/** How a fit sizes its box: the share of the stage's width or height it fills, whichever binds, and
+ *  the zoom it never goes past. Without options a fit leaves 32px a side and stops at 110%. */
+export interface FitOptions { fill: number; cap: number }
+/** Z, zoom to the selection (review-polish ruling 12): 75% of the stage, up to the top zoom. */
+export const SELECTION_FIT: FitOptions = { fill: 0.75, cap: MAX_K };
+
+/** The margin a reveal leaves between a card and the stage's edge, in screen pixels. */
+const REVEAL_MARGIN = 48;
+
+/** One axis of a reveal: the shift that brings [p, p + len) in, or for a card longer than the
+ *  stage on this axis, its start to the margin only when none of it shows on this axis. */
+function revealAxis(p: number, len: number, size: number, big: boolean): number {
+  const m = REVEAL_MARGIN;
+  if (big) return p + len > 0 && p < size ? 0 : m - p;
+  if (p < m) return m - p;
+  return p + len > size - m ? size - m - p - len : 0;
+}
+
+/** Where the keyboard reaching a card pans the board (review-polish ruling 11, decision 1), in
+ *  screen pixels: a card that fits comes fully into view whenever any of it is outside the stage;
+ *  a card bigger than the stage pans only when none of it shows, and then only to bring its
+ *  top-left corner in, never to fit it. Focus.ts runs it for a key's focus and a key's popover;
+ *  any later "bring this card into view" reuses it through `Viewport.reveal`. */
+export function revealPan(b: Box, v: ViewSnapshot, stage: { width: number; height: number }): { dx: number; dy: number } {
+  const s = { x: b.x * v.k + v.x, y: b.y * v.k + v.y, w: b.w * v.k, h: b.h * v.k };
+  const bigX = s.w > stage.width - 2 * REVEAL_MARGIN;
+  const bigY = s.h > stage.height - 2 * REVEAL_MARGIN;
+  const shows = s.x + s.w > 0 && s.x < stage.width && s.y + s.h > 0 && s.y < stage.height;
+  if ((bigX || bigY) && shows) return { dx: 0, dy: 0 };
+  return { dx: revealAxis(s.x, s.w, stage.width, bigX), dy: revealAxis(s.y, s.h, stage.height, bigY) };
+}
 
 export class Viewport {
   x = 0;
@@ -26,7 +59,9 @@ export class Viewport {
   /** Called after every change of pan or zoom, so overlays can follow their card. */
   onApply: (() => void) | null = null;
   /** A fit asked for while the stage had no room (a hidden pane or tab), done once it has room. */
-  private waiting: Box | null = null;
+  private waiting: { b: Box; o?: FitOptions } | null = null;
+  /** The zoom last written as `--vb-zoom`, so a pan writes nothing. */
+  private zoomWritten = Number.NaN;
 
   constructor(stage: HTMLElement, world: HTMLElement, hideFar = false) {
     this.stage = stage;
@@ -36,6 +71,12 @@ export class Viewport {
 
   apply(): void {
     this.world.style.transform = `translate(${this.x}px, ${this.y}px) scale(${this.k})`;
+    // A container's top line keeps one on-screen size (review-polish ruling 2): region.css counter-scales
+    // it from this one value on the world, written only when the zoom changed; never per container.
+    if (this.k !== this.zoomWritten) {
+      this.zoomWritten = this.k;
+      this.world.style.setProperty('--vb-zoom', String(this.k));
+    }
     // Below FAR_K the cards' buttons would draw under the 24px target size (N8), so the stage is "far"
     // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".
     if (this.hideFar && zoomPercent(this.k) < zoomPercent(FAR_K)) this.stage.dataset.zoom = 'far';
@@ -91,35 +132,27 @@ export class Viewport {
 
   /** The stage changed size: do a fit that was waiting for room, else just redraw. */
   resized(): void {
-    if (this.waiting && this.sized) this.fit(this.waiting, false);
+    if (this.waiting && this.sized) this.fit(this.waiting.b, false, this.waiting.o);
     else this.apply();
   }
 
-  fit(b: Box, animate = true): void {
+  /** Centre a box: Fit, zoom-area and a container's zoom as they are (32px a side, at most 110%),
+   *  or by `o` (Z passes SELECTION_FIT). */
+  fit(b: Box, animate = true, o?: FitOptions): void {
     const r = this.stage.getBoundingClientRect();
     if (!b.w || !b.h) return;
-    this.waiting = this.sized ? null : b;
+    this.waiting = this.sized ? null : { b, o };
     if (this.waiting) return;
-    this.k = Math.min(1.1, Math.max(MIN_K, Math.min((r.width - 64) / b.w, (r.height - 64) / b.h)));
+    const k = o ? Math.min(r.width * o.fill / b.w, r.height * o.fill / b.h) : Math.min((r.width - 64) / b.w, (r.height - 64) / b.h);
+    this.k = Math.min(o?.cap ?? 1.1, Math.max(MIN_K, k));
     this.x = (r.width - b.w * this.k) / 2 - b.x * this.k;
     this.y = (r.height - b.h * this.k) / 2 - b.y * this.k;
     this.glide(animate);
   }
 
-  /** Pan just enough to bring a box fully into view. */
+  /** Pan to bring a box into view by `revealPan`'s rule. */
   reveal(b: Box): void {
-    const r = this.stage.getBoundingClientRect();
-    const m = 48;
-    const sx = b.x * this.k + this.x;
-    const sy = b.y * this.k + this.y;
-    const sw = b.w * this.k;
-    const sh = b.h * this.k;
-    let dx = 0;
-    let dy = 0;
-    if (sx < m) dx = m - sx;
-    else if (sx + sw > r.width - m) dx = r.width - m - sx - sw;
-    if (sy < m) dy = m - sy;
-    else if (sy + sh > r.height - m) dy = r.height - m - sy - sh;
+    const { dx, dy } = revealPan(b, this.snapshot(), this.stage.getBoundingClientRect());
     if (!dx && !dy) return;
     this.x += dx;
     this.y += dy;

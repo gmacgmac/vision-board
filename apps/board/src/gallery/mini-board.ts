@@ -7,7 +7,7 @@ import type { View } from '../../../../packages/format/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import type { Align } from '../../../../packages/layout/src/index.ts';
 import { createDrawing, type Drawing } from '../board/draw.ts';
-import { Viewport } from '../board/viewport.ts';
+import { FAR_K, Viewport } from '../board/viewport.ts';
 import { el } from './dom.ts';
 
 export interface MiniOptions {
@@ -21,6 +21,8 @@ export interface MiniOptions {
   /** A second drawing of a container takes this after its region and node ids, so no id is on the
    *  page twice; the person's state, keyed by the first ids, does not follow it. */
   suffix?: string;
+  /** The zoom it is drawn at (1 when left out); below FAR_K the stage is far, as the board's is. */
+  zoom?: number;
   /** Called once drawn, for a sample that shows a hover or focus look. */
   then?: (host: HTMLElement, drawing: Drawing) => void;
 }
@@ -60,7 +62,8 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
   const [wires, wiresTop] = [svg('vb-wires'), svg('vb-wires vb-wires-top')];
   world.append(regions, wires, cards, wiresTop, marks);
   stage.append(world);
-  const vp = new Viewport(stage, world);
+  const k = o.zoom ?? 1;
+  const vp = new Viewport(stage, world, k < FAR_K);
   const drawing = createDrawing({
     els: { stage, world, regions, cards, wires, wiresTop, marks }, vp, sizing: true, access: false, layers: true,
     labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
@@ -71,10 +74,10 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
   pending.push(() => {
     drawing.draw(true);
     const b = drawing.layout!.bounds;
-    Object.assign(vp, { x: PAD - b.x, y: PAD - b.y, k: 1 });
+    Object.assign(vp, { x: PAD - b.x * k, y: PAD - b.y * k, k });
     vp.apply();
-    stage.style.height = `${Math.ceil(b.h + 2 * PAD)}px`;
-    stage.style.width = `${Math.ceil(b.w + 2 * PAD)}px`;
+    stage.style.height = `${Math.ceil(b.h * k + 2 * PAD)}px`;
+    stage.style.width = `${Math.ceil(b.w * k + 2 * PAD)}px`;
     drawing.viewMoved(); // measured against the stage's size now, no card is off screen
     o.then?.(stage, drawing);
   });

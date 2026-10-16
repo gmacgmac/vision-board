@@ -143,7 +143,7 @@
 {"v":4,"seq":143,"at":"2026-10-05T09:01:02Z","by":"agent","agent":"a-pricing1","type":"region","board":"notes","region":{"id":"notes","title":"Notes","mode":"grid","columns":4}}
 {"v":4,"seq":144,"at":"2026-10-05T09:01:03Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":75,"ver":1,"node":{"region":"notes","kind":"question","title":"A note not yet sent","body":"Its pin and its block are pink. Click either, or press C, to change it.","item":true}}
 {"v":4,"seq":145,"at":"2026-10-05T09:01:04Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":76,"ver":1,"node":{"region":"notes","kind":"finding","title":"An old More context, read as a note","body":"Written with the More context button, which is gone: it reads as a note like any other.","item":true}}
-{"v":4,"seq":146,"at":"2026-10-05T09:01:05Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":77,"ver":1,"node":{"region":"notes","kind":"risk","title":"Two sent notes and one not yet sent","body":"The latest note is first. Sent notes are grey and say Sent.","item":true}}
+{"v":4,"seq":146,"at":"2026-10-05T09:01:05Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":77,"ver":1,"node":{"region":"notes","kind":"risk","title":"Two sent notes and one not yet sent","body":"The oldest note is first, like a chat; the pin opens the latest. Sent notes are grey and say Sent.","item":true}}
 {"v":4,"seq":147,"at":"2026-10-05T09:01:06Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":78,"ver":1,"node":{"region":"notes","kind":"action","title":"A sent note","body":"A sent note is history: its bubble only shows it.","item":true}}
 {"v":4,"seq":148,"at":"2026-10-05T09:01:07Z","by":"person","type":"act","action":"comment","n":77,"ver":1,"text":"Which teams are under 10 seats?"}
 {"v":4,"seq":149,"at":"2026-10-05T09:01:08Z","by":"person","type":"act","action":"send","board":"notes"}
@@ -304,3 +304,22 @@
 {"v":13,"seq":304,"at":"2026-10-11T10:01:08Z","by":"agent","agent":"a-pricing1","type":"reply","n":21,"text":"In plain terms: it slows each release by about a day until we fix it.","to":48}
 {"v":13,"seq":305,"at":"2026-10-11T10:01:09Z","by":"agent","agent":"a-pricing1","type":"reply","n":23,"text":"In plain terms: the vendor can raise its prices at any time, since nothing is signed yet.","to":52}
 {"v":13,"seq":306,"at":"2026-10-11T10:01:10Z","by":"agent","agent":"a-pricing1","type":"reply","n":107,"text":"In plain terms: the figures come from beta users, so treat them as early numbers.","to":249}
+{"v":13,"seq":307,"at":"2026-10-11T10:02:07Z","by":"agent","agent":"a-pricing1","type":"region","board":"marks","region":{"id":"retired-narrow","title":"Annual plan pricing, packaging, discount rules and regional overrides for review","mode":"column"}}
+{"v":13,"seq":308,"at":"2026-10-11T10:02:08Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":134,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Keep the annual discount at 20%?"}}
+{"v":13,"seq":309,"at":"2026-10-11T10:02:09Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":135,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Drop the starter plan?"}}
+{"v":13,"seq":310,"at":"2026-10-11T10:02:10Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":136,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Rename Pro to Team?"}}
+{"v":13,"seq":311,"at":"2026-10-11T10:02:11Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":137,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Add a monthly add-on?"}}
+{"v":13,"seq":312,"at":"2026-10-11T10:02:12Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":138,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Raise the seat minimum?"}}
+{"v":13,"seq":313,"at":"2026-10-11T10:02:13Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":139,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Bundle support hours?"}}
+{"v":13,"seq":314,"at":"2026-10-11T10:02:14Z","by":"agent","agent":"a-pricing1","type":"node","board":"marks","n":140,"ver":1,"node":{"region":"retired-narrow","kind":"question","title":"Show prices with tax?"}}
+{"v":13,"seq":315,"at":"2026-10-11T10:02:15Z","by":"person","type":"act","action":"ack","n":134,"ver":1}
+{"v":13,"seq":316,"at":"2026-10-11T10:02:16Z","by":"agent","agent":"a-pricing1","type":"retire","board":"marks","cards":[135,136,137,138,139,140],"key":"retire-narrow"}
+{"v":13,"seq":317,"at":"2026-10-11T10:02:17Z","by":"agent","agent":"a-pricing1","type":"node","board":"parking","n":141,"ver":1,"node":{"region":"park","kind":"decision","title":"Who signs off the price change?"}}
+{"v":13,"seq":318,"at":"2026-10-11T10:02:18Z","by":"person","type":"act","action":"comment","n":141,"ver":1,"text":"Can finance sign this off this week?"}
+{"v":13,"seq":319,"at":"2026-10-11T10:02:19Z","by":"person","type":"act","action":"send","board":"parking"}
+{"v":13,"seq":320,"at":"2026-10-11T10:02:20Z","by":"agent","agent":"a-pricing1","type":"reply","n":141,"text":"Yes: finance can sign it off on **Thursday**.","to":318}
+{"v":13,"seq":321,"at":"2026-10-11T10:02:21Z","by":"agent","agent":"a-pricing1","type":"reply","n":141,"text":"The pricing sheet now has the new prices."}
+{"v":13,"seq":322,"at":"2026-10-11T10:02:22Z","by":"person","type":"act","action":"comment","n":141,"ver":1,"text":"Who tells the sales team?"}
+{"v":13,"seq":323,"at":"2026-10-11T10:02:23Z","by":"person","type":"act","action":"send","board":"parking"}
+{"v":13,"seq":324,"at":"2026-10-11T10:02:24Z","by":"agent","agent":"a-pricing1","type":"reply","n":141,"text":"Their lead tells them on Friday.","to":322}
+{"v":13,"seq":325,"at":"2026-10-11T10:02:25Z","by":"person","type":"act","action":"comment","n":141,"ver":1,"text":"Add the date to the sheet, please."}

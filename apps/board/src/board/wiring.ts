@@ -16,9 +16,10 @@ import { bindSizeControl, isSizePick } from './size.ts';
 import type { Viewport } from './viewport.ts';
 
 export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'> {
-  /** The pin or a note in the card's block (`fromNote`): open it, with the agent's replies to it. */
+  /** The pin: open its note, with the agent's replies to it. A note in the card's block
+   *  (`fromNote`): the card's conversation, at that note (review polish ruling 6). */
   showNote(id: string, seq: number, fromNote?: boolean): void;
-  /** An agent's reply on a card: the exchange it is part of (popovers-larger-thread ruling 2). */
+  /** An agent's reply on a card: the card's conversation, at that reply (review polish ruling 6). */
   showReply(id: string, seq: number): void;
   setSize(id: string, size: ActSize): void;
   setMode(region: string, mode: Mode): void;
@@ -33,8 +34,9 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   removeRegion?(region: string): void;
   /** Remove access (agentAccess flag); absent without it. */
   revoke?(region: string, holder: string): void;
-  /** A container's "N cards retired" marker (retiredMarker flag): show board version `seq` (versions.ts). */
-  showVersion(seq: number): void;
+  /** A container's "N cards retired" marker (retiredMarker flag): show board version `seq`, with the
+   *  person's answers as at line `until` when given (versions.ts, review polish ruling 10). */
+  showVersion(seq: number, until?: number): void;
   /** Accept or Reject in a card's proposal box (the proposals flag, proposal-flow.ts). */
   answer(id: string, proposal: number, answer: 'accept' | 'reject'): void;
   /** A card nudged by keys to `box`: it becomes a pin. */
@@ -81,7 +83,8 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const flagBtn = t.closest<HTMLButtonElement>('button[data-flag]');
     if (flagBtn) return h.flag?.(cardOf(flagBtn));
     const retired = t.closest<HTMLButtonElement>('button.vb-region-retired');
-    if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version)) : undefined;
+    const until = retired?.dataset.until;
+    if (retired) return retired.dataset.version ? h.showVersion(Number(retired.dataset.version), until ? Number(until) : undefined) : undefined;
     // An out-of-date Accept is aria-disabled: it says why, and does nothing.
     const answer = t.closest<HTMLButtonElement>('button[data-answer]');
     if (answer?.getAttribute('aria-disabled') === 'true') return;

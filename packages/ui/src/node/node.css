@@ -34,14 +34,17 @@ vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outlin
    moves no focus makes the browser match :focus-visible (Z, Esc, Space); focus the keyboard moved
    never carries it, so the ring always shows for the keyboard (pointer-focus ring, 2026-10-09). */
 vb-node[data-pointer-focus]:focus-visible { outline: none; }
-/* Selected (3_FE_01 ruling 2, mockup 05 `.card.is-sel`): 1.5px in total in the card's own colour,
-   a half-pixel ring over the 1px border and the top hairline at full strength, with a soft glow.
+/* Selected (3_FE_01 ruling 2, mockup 05 `.card.is-sel`): 1.5px in total in the card's own colour
+   lifted toward the strong ink (--vb-select-lift) and a little more saturated (--vb-select-chroma,
+   review polish round 2 ruling 5), a half-pixel ring over the 1px border and the top hairline at
+   full strength, with a soft glow.
    It is not focus: the focus ring above still draws for the keyboard. */
 vb-node[data-selected] {
-  border-color: var(--kind);
-  box-shadow: 0 0 0 0.5px var(--kind), 0 0 18px -6px color-mix(in srgb, var(--kind) 65%, transparent), var(--vb-shadow-card);
+  --select: oklch(from color-mix(in srgb, var(--vb-ink-strong) var(--vb-select-lift), var(--kind)) l calc(c * var(--vb-select-chroma)) h);
+  border-color: var(--select);
+  box-shadow: 0 0 0 0.5px var(--select), 0 0 18px -6px color-mix(in srgb, var(--select) 65%, transparent), var(--vb-shadow-card);
 }
-vb-node[data-selected]::before { background: var(--kind); }
+vb-node[data-selected]::before { background: var(--select); }
 vb-node[data-selected]:not([data-emphasis])::before { height: 1.5px; }
 vb-node.dragging { transition: none; box-shadow: var(--vb-shadow-lift); z-index: 3; }
 vb-node.dragging, vb-node.dragging .vb-node-kind { cursor: grabbing; }
@@ -212,9 +215,10 @@ vb-node .vb-act[data-act='later'][aria-pressed='true'] { color: var(--vb-state-l
 vb-node .vb-flag[aria-pressed='true'] { color: var(--vb-state-flag); border-color: currentColor; }
 vb-node .vb-flag[aria-pressed='true'] .vb-flag-cloth { fill: currentColor; }
 
-/* Zoomed out (N8): the stage carries data-zoom="far" below 0.75, where the buttons would draw
-   under the 24px target size. They are hidden but keep their space, so no card changes size;
-   the keyboard shortcuts still act on the focused card. */
+/* Zoomed out (N8): the stage carries data-zoom="far" below FAR_K (viewport.ts, 0.55 since review
+   polish round 2 ruling 2, the maintainer's pick after trying it; it was 0.75), where the buttons
+   would draw too small to press. They are hidden but keep their space, so no card changes size; the keyboard shortcuts still act on the
+   focused card. */
 [data-zoom='far'] vb-node .vb-node-actions { visibility: hidden; }
 
 /* The size control (D-030, option A, mockup 07): a faint glyph in the top-right border gap. It

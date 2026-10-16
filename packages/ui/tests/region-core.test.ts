@@ -50,12 +50,21 @@ test('regionState carries the mode it is given', () => {
 test('the count reads answered over items, counting ✓ and ✗ only (D-045)', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2 }), node({ id: '3', n: 3 }), node({ id: '4', n: 4 })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'dropped'], ['3', 'later']);
-  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countText, '2 of 4 answered');
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3', '4')).countLabel, '2 of 4 answered');
+});
+
+// Review polish round 2 ruling 1: the line shows "2/4"; the words stay its name and its tooltip.
+test('the count shows "2/4"; "2 of 4 answered" is its name and tooltip', () => {
+  const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2 }), node({ id: '3', n: 3 }), node({ id: '4', n: 4 })]);
+  const st = regionState(region, v, deciding(['1', 'acknowledged'], ['2', 'dropped']), drawn('1', '2', '3', '4'));
+  assert.deepEqual([st.countText, st.countLabel], ['2/4', '2 of 4 answered']);
+  const none = regionState(region, view([node({ id: 't', kind: 'topic' })]), board(), drawn('t'));
+  assert.deepEqual([none.countText, none.countLabel], ['', '']);
 });
 
 test('the count ignores nodes that are not items, and is empty when there are no items', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: 't', kind: 'topic' })]);
-  assert.equal(regionState(region, v, board(), drawn('1', 't')).countText, '0 of 1 answered');
+  assert.equal(regionState(region, v, board(), drawn('1', 't')).countLabel, '0 of 1 answered');
   assert.equal(regionState(region, view([node({ id: 't', kind: 'topic' })]), board(), drawn('t')).countText, '');
 });
 
@@ -64,15 +73,15 @@ test('the count ignores nodes that are not items, and is empty when there are no
 test('the count counts only cards that need an answer, numbered or not', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, kind: 'finding' }), node({ id: '3', n: 3, kind: 'topic' })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'commented']);
-  assert.equal(regionState(region, v, s, drawn('1', '2', '3')).countText, '1 of 1 answered');
-  assert.equal(regionState(region, v, deciding(['1', 'commented']), drawn('1', '2', '3')).countText, '0 of 1 answered', 'a note never answers');
+  assert.equal(regionState(region, v, s, drawn('1', '2', '3')).countLabel, '1 of 1 answered');
+  assert.equal(regionState(region, v, deciding(['1', 'commented']), drawn('1', '2', '3')).countLabel, '0 of 1 answered', 'a note never answers');
   assert.equal(regionState(region, view([node({ id: '3', n: 3, kind: 'topic' })]), board(), drawn('3')).countText, '');
 });
 
 test('the count only looks at the nodes of this region', () => {
   const v = view([node({ id: '1', n: 1 }), node({ id: '2', n: 2, region: 'other' })]);
   const s = deciding(['1', 'acknowledged'], ['2', 'acknowledged']);
-  assert.equal(regionState(region, v, s, drawn('1', '2')).countText, '1 of 1 answered');
+  assert.equal(regionState(region, v, s, drawn('1', '2')).countLabel, '1 of 1 answered');
 });
 
 test('Reset places is enabled when any node of the region is pinned, and not for another region', () => {
@@ -93,7 +102,7 @@ test('the empty message shows only when the layout drew none of the region\'s no
 
 test('a region with no nodes shows the empty message and no count', () => {
   const st = regionState(region, view([]), board(), drawn());
-  assert.deepEqual(st, { mode: 'grid', widths: 'match', countText: '', canReset: false, canPutBack: false, commentLabel: 'Comment on container R', showEmpty: true });
+  assert.deepEqual(st, { mode: 'grid', widths: 'match', countText: '', countLabel: '', canReset: false, canPutBack: false, commentLabel: 'Comment on container R', showEmpty: true });
 });
 
 test('Put container back is enabled only while the container itself has a place (3_FE_04 ruling 7)', () => {
@@ -150,7 +159,7 @@ test('noteStage, noteBadge and commentLabel: the badge from the note\'s state', 
 
 test('every region takes the neutral frame colour for now, a token and never a literal colour', () => {
   assert.equal(regionColour(region), REGION_COLOUR_DEFAULT);
-  assert.equal(regionColour({ id: 'other' }), 'var(--vb-line-strong)');
+  assert.equal(regionColour({ id: 'other' }), 'var(--vb-line-contrast)');
   assert.doesNotMatch(REGION_COLOUR_DEFAULT, /#|rgb|hsl/);
 });
 
@@ -171,10 +180,15 @@ test('holders: left out when none are given; creator first, and only the others 
 
 // Field report batch 2 ruling 1: a container cards were retired from says how many, and a press
 // opens the board version where they last appeared; with no version to open it only says how many.
-test('retiredMarker: "N cards retired", named with the version it opens', () => {
-  assert.deepEqual(retiredMarker(1, 40), { text: '1 card retired', label: '1 card retired from this container. Show v40, where it last appeared', version: 40 });
-  assert.deepEqual(retiredMarker(3, 12), { text: '3 cards retired', label: '3 cards retired from this container. Show v12, where they last appeared', version: 12 });
-  assert.deepEqual(retiredMarker(2), { text: '2 cards retired', label: '2 cards retired from this container' });
+// Round 2 ruling 1: it shows "3 retired" (the number alone with an icon when the line has no room);
+// the full words stay in its name and tooltip.
+test('retiredMarker: "N retired", named in full words with the version it opens', () => {
+  assert.deepEqual(retiredMarker(1, 40), { count: 1, text: '1 retired', label: '1 card retired from this container. Show v40, where it last appeared', version: 40 });
+  assert.deepEqual(retiredMarker(3, 12), { count: 3, text: '3 retired', label: '3 cards retired from this container. Show v12, where they last appeared', version: 12 });
+  assert.deepEqual(retiredMarker(2), { count: 2, text: '2 retired', label: '2 cards retired from this container' });
+  // Review polish ruling 10: the line the past view's answers run to rides with the version, never alone.
+  assert.deepEqual(retiredMarker(3, 12, 15), { ...retiredMarker(3, 12), until: 15 });
+  assert.deepEqual(retiredMarker(2, undefined, 15), retiredMarker(2));
 });
 
 // Field report batch 3 ruling 5: the widths in force are the person's, else the agent's, else the

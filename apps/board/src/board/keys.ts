@@ -1,6 +1,6 @@
 // Keyboard: every pointer action has a key (project rule 5). Shortcuts come from the action
 // registry and the page's command table (commands.ts), so a new action or command with a key
-// works here without changes.
+// works here without changes. A digit is one such command: it opens the Go to card box (go-to-card.ts).
 import type { ActionId } from '../../../../packages/format/src/index.ts';
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
 import type { CommandId } from './commands.ts';

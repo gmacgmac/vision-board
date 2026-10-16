@@ -1,0 +1,26 @@
+/* The Go to card box (shell/GoToCard.svelte, goToCard flag): a small raised box at the board's
+   bottom right, clear of the chat sidebar (--vb-chat-w); the gallery puts it in the page flow.
+   States: typing, not found (what it found, on the problem's red edge), retired (the same, with
+   the version to open). The field's hover and focus are the shared input look. Tokens only. */
+.vb-go {
+  display: grid; gap: var(--vb-space-1); width: 15rem; padding: var(--vb-space-3);
+  border-radius: var(--vb-radius-md); background: var(--vb-surface-raised); color: var(--vb-ink);
+  border: 1px solid var(--vb-line-strong); box-shadow: var(--vb-shadow-lift); font: var(--vb-text-md) var(--vb-font);
+}
+.vb-go[data-placement='board'] { position: fixed; right: calc(var(--vb-chat-w, 0px) + var(--vb-space-4)); bottom: var(--vb-space-3); z-index: 5; }
+.vb-go[data-placement='gallery'] { position: relative; }
+.vb-go-label { font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
+.vb-go-field {
+  width: 100%; padding: var(--vb-space-1) var(--vb-space-2); border-radius: var(--vb-radius-sm);
+  font: var(--vb-weight-medium) var(--vb-text-xl) var(--vb-font-mono); font-variant-numeric: tabular-nums;
+  color: var(--vb-ink-strong); background: var(--vb-surface-card); border: 1px solid var(--vb-line-strong);
+}
+.vb-go-field:hover { border-color: var(--vb-accent); }
+.vb-go-field:focus-visible { outline-offset: 1px; }
+.vb-go-hint { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
+.vb-go-said { margin: 0; }
+.vb-go-said:not(:empty) {
+  padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong); border-radius: var(--vb-radius-sm);
+  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft);
+}
+.vb-go-past { justify-self: start; }

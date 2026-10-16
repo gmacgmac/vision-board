@@ -204,7 +204,7 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   await expect(agents.getByRole('button', { name: "Remove Docs chat's access to this board" })).toBeVisible();
   await expect(s.locator('vb-region')).toHaveCount(2);
   for (const f of await s.locator('vb-region').all()) {
-    await expect(f.locator('.vb-region-count')).toHaveText('0 of 1 answered');
+    await expect(f.locator('.vb-region-count')).toHaveAttribute('title', '0 of 1 answered');
     await expect(f.locator('.vb-holder')).toHaveCount(2);
     await expect(f.locator('span.vb-holder', { hasText: 'Pricing chat' })).toBeVisible();
     await expect(f.getByRole('button', { name: 'Docs chat: remove access' })).toBeVisible();

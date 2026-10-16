@@ -3,8 +3,10 @@
 // open board's own versions, "now" first (its own head, so other boards and the person's board
 // seen never move it), then each run of the agent's drawing, newest first. Choosing a past one
 // draws the board as it was, read-only: no act buttons, an act is never sent, no board seen; a
-// banner says so, and Back to now or Esc ends it. Then the gallery's banner sample. Agents write
-// through the API with a Bearer secret, as in live-boards.spec.ts, on the shared test server.
+// banner says so, and Back to now or Esc ends it. A container's retired marker opens its version
+// with the answers as they stood just before the retire (review polish ruling 10). Then the
+// gallery's banner sample. Agents write through the API with a Bearer secret, as in
+// live-boards.spec.ts, on the shared test server.
 import type { APIRequestContext, Page, Request } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -141,6 +143,112 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await page.keyboard.press('Escape');
   await expect(banner(page)).toHaveCount(0);
   await expect(page.locator('vb-node')).toHaveCount(3);
+});
+
+// ---- The retired marker's past view (review polish ruling 10, N42) ----
+
+const answers = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) => [e.querySelector('.vb-node-title')?.textContent, e.getAttribute('data-status')]));
+const count = (page: Page) => page.locator(`vb-region[data-region="${REGION}"] .vb-region-count`);
+const ALL = [['Question 1?', 'acknowledged'], ['Question 2?', 'dropped'], ['Question 3?', 'acknowledged'], ['Question 4?', 'dropped']];
+/** Each card's review buttons that show, by act: in a past view only a lit ✓ or ✗ (FIX_01). */
+const marks = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) =>
+  [...e.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true })).map((b) => b.dataset.act ?? 'flag')));
+/** Every mark that shows takes no pointer and no focus: a mark, not a button to press. */
+const markIsInert = (page: Page) => page.locator('#world').evaluate((w) => {
+  const shown = [...w.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true }));
+  return shown.length > 0 && shown.every((b) => { b.focus(); return getComputedStyle(b).pointerEvents === 'none' && document.activeElement !== b; });
+});
+
+test('the retired marker opens its version with the answers as they stood just before the retire, read-only; the dropdown\'s is as at it', async ({ page, request }) => {
+  const a = await join(request, 'Retire chat');
+  const first = await write(request, a, 'ver-retired', [
+    { type: 'board', title: 'Retired answers' },
+    { type: 'region', region: { id: REGION, title: 'Ideas', mode: 'grid' } },
+    ...[1, 2, 3, 4].map((n) => card(`Question ${n}?`)),
+  ]);
+  await open(page, '/?vbwork#ver-retired');
+  for (const [n, action] of [[1, 'ack'], [2, 'drop'], [3, 'ack'], [4, 'drop']] as const) {
+    const r = await page.request.post('/api/boards/ver-retired/act', { data: { type: 'act', action, n, ver: 1 } });
+    expect(r.status(), await r.text()).toBe(201);
+  }
+  // One batch: a summary, then two retires.
+  await write(request, a, 'ver-retired', [
+    { type: 'node', node: { region: REGION, kind: 'finding', title: 'Summary' } },
+    { type: 'retire', n: 1 }, { type: 'retire', n: 2 },
+  ]);
+  await idle(page);
+  await expect(page.locator('vb-node')).toHaveCount(3);
+  const marker = page.locator(`vb-region[data-region="${REGION}"] .vb-region-retired`);
+  await expect(marker).toHaveText('2 retired');
+
+  const sent = personWrites(page);
+  await marker.click();
+  await expect(banner(page).getByRole('status')).toHaveText(new RegExp(`^Viewing v${first} from .+ · read-only$`));
+  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  for (const theme of THEMES) {
+    await setTheme(page, theme);
+    await expect.poll(() => answers(page), theme).toEqual(ALL); // v1's cards, not the summary
+    await expect(count(page)).toHaveAttribute('title', '4 of 4 answered');
+    await expectNoAxeViolations(page);
+  }
+  // Each card shows its mark (FIX_01): the ✓ or ✗ lit, a mark that takes no focus and no press.
+  await expect.poll(() => marks(page)).toEqual(ALL.map(([, status]) => [status === 'acknowledged' ? 'ack' : 'drop']));
+  await expect.poll(() => markIsInert(page)).toBe(true);
+  const lit = page.locator('#world .vb-act:visible').first();
+  const box = (await lit.boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  // Still read-only: a key sends nothing either.
+  await page.locator('vb-node').first().focus();
+  for (const key of ['a', 'x']) await page.keyboard.press(key);
+  await idle(page);
+  expect(sent.map((r) => r.url())).toEqual([]);
+  await expect.poll(() => answers(page)).toEqual(ALL);
+
+  // The same version from the dropdown: as at that version, before any answer.
+  await banner(page).getByRole('button', { name: 'Back to now' }).click();
+  await version(page).selectOption(String(first));
+  await expect(banner(page)).toBeVisible();
+  await expect.poll(() => answers(page)).toEqual(ALL.map(([title]) => [title, 'open']));
+  await expect(count(page)).toHaveAttribute('title', '0 of 4 answered');
+  await expect.poll(() => marks(page)).toEqual([[], [], [], []]);
+});
+
+test('a past version from the dropdown shows each answered card\'s ✓ or ✗ lit, a mark that takes no press', async ({ page, request }) => {
+  const a = await join(request, 'Marks chat');
+  await write(request, a, 'ver-marks', [
+    { type: 'board', title: 'Past marks' },
+    { type: 'region', region: { id: REGION, title: 'Ideas', mode: 'grid' } },
+    card('Question 1?'), card('Question 2?'),
+  ]);
+  await open(page, '/?vbwork#ver-marks');
+  for (const [n, action] of [[1, 'ack'], [2, 'drop']] as const) {
+    const r = await page.request.post('/api/boards/ver-marks/act', { data: { type: 'act', action, n, ver: 1 } });
+    expect(r.status(), await r.text()).toBe(201);
+  }
+  const answered = await write(request, a, 'ver-marks', [card('Question 3?')]);
+  // A person's line on the board ends the agent's run, so the next drawing is a version of its own.
+  const noted = await page.request.post('/api/boards/ver-marks/act', { data: { type: 'act', action: 'comment', n: 3, ver: 1, text: 'Later today.' } });
+  expect(noted.status(), await noted.text()).toBe(201);
+  await write(request, a, 'ver-marks', [card('Question 4?')]);
+  await idle(page);
+  const sent = personWrites(page);
+  await version(page).selectOption(String(answered));
+  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  await expect(page.locator('vb-node')).toHaveCount(3);
+  for (const theme of THEMES) {
+    await setTheme(page, theme);
+    await expect.poll(() => marks(page), theme).toEqual([['ack'], ['drop'], []]);
+    await expect.poll(() => markIsInert(page), theme).toBe(true);
+    await expectNoAxeViolations(page);
+  }
+  await page.locator('#world .vb-act:visible').first().click({ force: true });
+  await idle(page);
+  expect(sent.map((r) => r.url())).toEqual([]);
+  await expect(page.locator('vb-node').first()).toHaveAttribute('data-status', 'acknowledged');
+  // Back to now, the row is the person's buttons again: every one shows and can be pressed.
+  await banner(page).getByRole('button', { name: 'Back to now' }).click();
+  await expect(page.locator('vb-node')).toHaveCount(4);
+  await expect.poll(async () => (await marks(page)).every((m) => m.length > 1)).toBe(true);
 });
 
 // ---- The gallery's banner sample ----

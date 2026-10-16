@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.4
+status: v3.6
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -31,6 +31,15 @@ v3.2 (skill v3.2, archive a board, N39 ruling 10): 20 (which board "the board" m
 v3.4 (skill v3.4, the answer model, D-045): 2, 10, 13, 15 and 16 updated (✓ and ✗ read `check` /
 `cross` and `2 (question): ✗`; a note never answers a card; More context is a note); 22 (a note
 that asks, on a decision) and 23 (a consolidation proposal) new.
+v3.5 (skill v3.5, ✓ and ✗ answer what the card asks): 24 (a question whose answer is a name) and
+25 (✗ on an ask that could mean more than one thing) new; 13 updated (✓ on an action read from
+what the card asks, not as "done"); 22 checked, unchanged.
+v3.6 (skill v3.6, every card that asks says what ✓ and ✗ mean; "Waiting for your reply"): in every
+scenario a card that asks, drawn by the agent, says on the card what ✓ and ✗ each mean, unless it
+is a plain yes/no question (a card asking for words ends "Answer in a note" instead). 11 updated
+(its decisions say what each mark means); 13, 22, 24 and 25 updated (their cards say what ✓ and ✗
+mean; 22 and 24 carry the "Waiting for your reply" line; 25's card 4 is an older card that does
+not); 26 (a round with a "Waiting for your reply" line, one card from an earlier round) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -174,7 +183,7 @@ carries the note's line).
 
 **A good run**
 - Reads the one `comment` act, at card 2, with `nodes` [2, 5, 8]; sees one note, not three.
-- Does not take 5 as answered: a note never answers a card, so 5 stays open (D-045). It acts on
+- Does not take 5 as answered: a note never answers a card, so 5 is with the agent, unanswered (D-045, D-046). It acts on
   the words (the plan is one back-off fix in 1.4) and, in its reply, asks for the ✓ on 5 it still
   needs. No new question card about 1.4, no `propose` on 5.
 - One `reply` on any of the three cards, `to` = the note's `seq`, naming 2, 5 and 8 and what it
@@ -195,13 +204,14 @@ decide first. A row for the agenda is fine."
 - The person named the shape, so it draws at once, in one `write_board` call: an agenda
   container in `row` with `topic` or `note` cards in the order to be discussed, and a container
   for what it needs settled (`row` or `column`), with `question` or `decision` cards (the release
-  date as a decision with its options and a pick).
+  date as a decision with its options and a pick). Each `decision` ends with what ✓ and ✗ mean
+  ("✓ decide on Monday · ✗ discuss only"); a question asking for a name ends "Answer in a note".
 - No links: the numbers give the order.
 - Chat words: one line ("Done, 7 cards added on Planning meeting: 5 agenda points, 2 to
   settle.").
 - **Fails if** it asks the structure again, uses `flow` for the agenda, links the cards with
-  "then", asks its questions inside a topic's body, numbers the agenda in titles, or names `item`
-  on a node.
+  "then", asks its questions inside a topic's body, numbers the agenda in titles, names `item`
+  on a node, or draws a `decision` that doesn't say what ✓ and ✗ mean.
 
 ## 12. A first board from an empty folder (panel)
 
@@ -226,7 +236,8 @@ move to the new office: what has to happen, and what you need me to decide." The
 ## 13. A Send with a ✗ on a yes/no question (panel)
 
 **Situation.** On "Checkout review", card 3 is a question ("Keep the guest checkout in 1.4?"),
-card 6 a finding and card 9 an action ("Add the back-off test"). The person presses ✗ on 3,
+card 6 a finding and card 9 an action ("Add the back-off test", ending "✓ add it in 1.4 · ✗ leave
+it out"). The person presses ✗ on 3,
 comments "Only on the card path" on 6, ✓ on 9, and presses Send. The agent gets:
 
 ```
@@ -243,7 +254,8 @@ These are the person's answers up to head 212. To read anything newer, call chec
 - Reads ✗ on 3 in the light of what 3 asks: guest checkout does not stay in 1.4. It acts on it
   (for example `append`s to the cards that assumed it stays, or drops that path from its plan) and
   never raises 3 again; it does not call 3 "dropped" or "dismissed".
-- Reads ✓ on 9 (an action) as done.
+- Reads ✓ on 9 as the card says (add it in 1.4), and does it or says in a reply what it needs to
+  (v3.5: the card, not the kind, says what ✓ does; v3.6: the card says it in words).
 - `show_node` 6 for its `ver` and the comment's `seq`, then `reply { n: 6, to, text }` (and an
   `append` if the finding changes).
 - Does not re-read the answers: no `check_responses` from 0 or with `wait`, no `list_open` just to
@@ -448,7 +460,8 @@ from the "⋯" menu, then writes in the chat: "Add a card for the annual plan."
 **Situation.** From the answer-model plan (cards 20, 23 and 68 on a real board; content made up
 here). Board "Checkout review" has a container "Retries and 1.4" (`row`): finding 1 ("The retry
 loop has no back-off"), decision 2 ("Ship the back-off fix in 1.4", "My pick: yes, behind a flag")
-and decision 3 ("Keep the guest checkout in 1.4", "My pick: keep it"). The person pressed ✓ on 2
+and decision 3 ("Keep the guest checkout in 1.4", "My pick: keep it"); 2 ends "✓ ship it in 1.4
+behind a flag · ✗ leave it for 1.5" and 3 "✓ keep it in 1.4 · ✗ move it to 1.5". The person pressed ✓ on 2
 in an earlier round the agent has read. Now they write a note on 2 ("What does the flag default
 to?") and a note on 3 ("Why not move it to 1.5?"), press nothing else, and press Send. The agent
 gets:
@@ -458,7 +471,7 @@ The person updated the board:
 Board "Checkout review" (v11)
 2 (decision): ✓: What does the flag default to?
 3 (decision): comment: Why not move it to 1.5?
-Still open: 3
+Waiting for your reply: 3
 These are the person's answers up to head 11. ...
 
 Board: checkout-review
@@ -471,7 +484,8 @@ Board: checkout-review
   (or an `append` where the answer belongs on the card for good).
 - Its reply on 2 answers the question and asks for the mark again ("✓ again if that holds"): the
   reply clears the earlier ✓, so 2 is open again and unmarked. Its reply on 3 explains the pick and
-  asks for ✓ or ✗.
+  asks for ✓ or ✗, saying what each means ("✓ keep it in 1.4 · ✗ move it to 1.5"). 2 is not on
+  "Waiting for your reply" (its ✓ came before the note), but its note is owed all the same.
 - After the write, `list_open` shows 2 and 3 open (status `open`, `unseen`), nothing `pending`.
 - No new card for either ask, no `propose`, no second ask on either card.
 - Chat words: "Done." (one short line more only if the person must do something the board can't
@@ -501,3 +515,82 @@ again.
 - **Fails if** it retires anything before the ✓, retires the whole container (which takes the
   summary with it), writes more than one summary card or more than one proposal, proposes for a
   container with a card still open or a note owed, or keeps proposing after a ✗.
+
+## 24. A question whose answer is a name (panel)
+
+**Situation.** Board "Release prep" has a container "Launch" (`row`): finding 1 ("The 2.0 build
+passes on every platform") and decisions 2 ("Ship 2.0 on Monday", "✓ ship on Monday · ✗ hold it a
+week") and 3 ("Turn the new search on by default", "✓ on by default · ✗ off until 2.1"). Turn 1:
+the person writes "Add a card to Launch asking who writes the 2.0 release post." Turn 2: on the new
+card they write the note "Robin from the docs team." and press Send (`4 (question): comment: Robin
+from the docs team.`, "Still open: 2, 3", "Waiting for your reply: 4").
+
+**A good run**
+- Turn 1: one `question` card in "Launch" whose text ends "Answer in a note" (the answer is a
+  name, so ✓ and ✗ are not offered as the answer). No structure question first (one card). Chat
+  words: "Done."
+- Turn 2: reads the note as the answer in words, not as settling the card. `show_node` for the
+  note's `seq`, then a `reply` to it restating what it understood and asking for ✓ ("Robin from the
+  docs team writes the 2.0 post. ✓ if that's right"). After the write the card is open (`open`,
+  `unseen`), nothing `pending`. It leaves 2 and 3 alone ("Still open" needs the person, not it).
+  No new card, no `propose`. Chat words: "Done."
+- **Fails if** turn 1 asks for ✓ or ✗ on the name ("✓ if you'll write it"), or turn 2 treats the
+  note as settling the card: writes the author into another card or a summary as decided, or
+  replies without asking for ✓.
+
+## 25. ✗ on an ask that could mean more than one thing (panel)
+
+**Situation.** From the answer model's VERIFY_01 (content made up). Board "Release prep" has a
+container "Launch" (`row`): finding 1, decision 2 ("Ship 2.0 on Monday"), decision 3 ("Turn the new
+search on by default"), question 4 ("Who writes the release post?", "Name the author in a note.")
+and action 5 ("Update the migration guide"). 2, 3 and 5 say what ✓ and ✗ mean (as in 24; 5 "✓
+update it before 2.0 · ✗ skip it for 2.0"); 4 was drawn by an older skill and gives ✗ no meaning. The person presses ✓ on
+2, 3 and 5 and ✗ on 4, writes "Sum up the Launch row in one card." and presses Send (`2
+(decision): ✓`, `3 (decision): ✓`, `4 (question): ✗`, `5 (action): ✓`, "Nothing left open.").
+
+**A good run**
+- Reads ✗ on 4 as unclear (no post for 2.0? not the person? not decided yet?) and asks which in a
+  `reply` on 4, before acting on it. The reply shows the person "1 update" on 4, so no other
+  nudge is needed (no `append`, no new card for the same ask).
+- If it sums up the row now: one summary card in "Launch" saying what ✓ settled (Monday, search on,
+  the guide) and that who writes the post is still open; card 4 stays on the board; the other cards
+  it replaces are retired in the same call. Holding the summary until 4 is answered is also a pass.
+- Chat words: "Done." (one short line more only if the person must do something the board can't
+  show).
+- **Fails if** it writes "no release post" (or any other reading of the ✗) anywhere as decided: a
+  card, a summary, a reply stated as fact or the chat; or retires 4 before the ✗ is understood.
+
+## 26. A round with "Waiting for your reply" (panel)
+
+**Situation.** Board "Release prep" has a container "Launch" (`row`): finding 1, decisions 2 and 3
+(as in 24), action 4 ("Update the migration guide", "✓ update it before 2.0 · ✗ skip it for 2.0")
+and question 5 ("Announce 2.0 on the blog?"). In an earlier round the person wrote a note on 4
+("Does the guide need a section on the renamed config keys?") and pressed Send, and that turn
+never answered it. Now they press ✓ on 2, write a note on 3 ("Does on by default include the
+mobile app?") and send. The agent gets:
+
+```
+Also add a card asking whether we rename the Settings page to Preferences in 2.0.
+
+The person updated the board:
+Board "Release prep" (v66)
+2 (decision): ✓
+3 (decision): comment: Does on by default include the mobile app?
+Still open: 5
+Waiting for your reply: 3, 4
+These are the person's answers up to head 66. ...
+
+Board: release-prep
+```
+
+**A good run**
+- Answers both cards on "Waiting for your reply": `show_node` 3 and 4 for the notes' `seq`, then a
+  `reply` (or an `append`) on each; a reply asking for the mark says what ✓ and ✗ mean ("✓ on by
+  default everywhere · ✗ off until 2.1").
+- Leaves 5 alone: "Still open" needs the person's ✓ or ✗, and nothing is owed there.
+- Draws one new card in "Launch" for the words: a plain yes/no `question` ("Rename the Settings
+  page to Preferences in 2.0?"), or a `decision` that says what ✓ and ✗ mean.
+- All in one `write_board` call; after it, nothing `pending`. Chat words: "Done."
+- **Fails if** it leaves 4 unanswered (its note is not in this round's lines), asks the person
+  about 3 or 4 instead of answering, replies on or asks again about 5, or draws a `decision` or
+  `action` card that doesn't say what ✓ and ✗ mean.

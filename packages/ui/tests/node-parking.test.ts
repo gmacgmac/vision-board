@@ -1,6 +1,7 @@
 // Parking and replies on a card (proposals-seen-parking FE_03): "Awaiting" in place of the status
 // word, the handover tab and its box, an agent's reply under the note it answers, a reply naming no
-// note after the notes, a container note's replies, and the markup.
+// note in its place by time among the notes (review-polish decision 8), a container note's replies,
+// and the markup.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ParkBundle, ViewNode } from '../../format/src/index.ts';
@@ -58,31 +59,31 @@ test('handoverMarkup: Markdown in each section, the sources as a list, every tex
   assert.ok(!html.includes('<b>'));
 });
 
-test('replies: each sits under the note it answers, in the order given, the latest note first', () => {
+test('replies: each sits under the note it answers, in time order, the oldest note first (review-polish ruling 8)', () => {
   const v = nodeState(r, later([note(20, 'one'), note(30, 'two')]), undefined, false, {
-    replies: [reply(40, 'First answer', { to: 20 }), reply(41, 'Second answer', { to: 20, agent: 'Pricing chat' }), reply(50, 'On two', { to: 30 })],
+    replies: [reply(41, 'Second answer', { to: 20, agent: 'Pricing chat' }), reply(40, 'First answer', { to: 20 }), reply(50, 'On two', { to: 30 })],
   }).notes!;
-  assert.deepEqual(v.entries.map((x) => [x.seq, x.replies?.map((y) => [y.seq, y.who, y.text])]), [
-    [30, [[50, 'Agent reply', 'On two']]],
+  assert.deepEqual(v.entries.map((x) => [x.seq, 'replies' in x ? x.replies?.map((y) => [y.seq, y.who, y.text]) : undefined]), [
     [20, [[40, 'Agent reply', 'First answer'], [41, 'Agent reply · Pricing chat', 'Second answer']]],
+    [30, [[50, 'Agent reply', 'On two']]],
   ]);
-  assert.equal(v.orphans, undefined);
   assert.equal(v.pin!.seq, 30);
 });
 
-test('replies: a note with none carries none; a reply naming no note comes after the notes', () => {
-  const v = nodeState(r, later([note(20)]), undefined, false, { replies: [reply(60, 'Also: the sheet is updated', { agent: 'Pricing chat' }), reply(61, 'To a gone note', { to: 99 })] }).notes!;
-  assert.equal(v.entries[0]!.replies, undefined);
-  assert.deepEqual(v.orphans!.map((x) => x.seq), [60, 61]);
+test('replies: a note with none carries none; a reply naming no note takes its place by time among the notes', () => {
+  const v = nodeState(r, later([note(20)]), undefined, false, { replies: [reply(61, 'To a gone note', { to: 99 }), reply(10, 'Before the note'), reply(60, 'Also: the sheet is updated', { agent: 'Pricing chat' })] }).notes!;
+  assert.deepEqual(v.entries.map((x) => [x.seq, 'orphan' in x]), [[10, true], [20, false], [60, true], [61, true]]);
+  assert.ok(!('replies' in v.entries[1]!), 'the note with no reply carries no replies');
   const html = notesMarkup(v);
+  assert.ok(html.indexOf('data-reply="10"') < html.indexOf('data-note="20"'));
   assert.ok(html.indexOf('data-note="20"') < html.indexOf('data-reply="60"'));
 });
 
 test('replies: with no notes at all the block still shows them, and there is no pin', () => {
   const v = nodeState(r, board(), undefined, false, { replies: [reply(70, 'Heads up')] }).notes!;
-  assert.deepEqual(v.entries, []);
+  assert.deepEqual(v.entries, [{ seq: 70, who: 'Agent reply', text: 'Heads up', orphan: true }]);
   assert.equal(v.pin, undefined);
-  assert.equal(v.orphans!.length, 1);
+  assert.equal(v.count, undefined);
   assert.equal(nodeState(r, board()).notes, undefined, 'none without notes or replies');
 });
 

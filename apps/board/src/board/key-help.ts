@@ -22,7 +22,7 @@ export interface KeyRow {
 
 const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
   comment: 'Selection', move: 'Selection', 'reset-places': 'Selection', remove: 'Selection',
-  'container-note': 'Board',
+  'container-note': 'Board', 'go-to-card': 'Board',
   'zoom-out': 'View', fit: 'View', 'zoom-in': 'View', 'zoom-selection': 'View', 'zoom-area': 'View',
 };
 
@@ -30,7 +30,7 @@ const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
 const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
   Items: [['Next / previous card', ['J', 'K']], ['Move the card', ['Alt+arrows']], ['Reset the card\'s place', ['R']]],
   Selection: [['Select the card', ['Space']], ['Select more', ['Shift+click']], ['Lasso', ['Shift+drag']]],
-  Board: [['Hide answered', ['H']], ['Move a container', ['Alt+arrows']], ['Pan', ['Drag the background']]],
+  Board: [['Hide answered', ['H']], ['Move a container', ['Alt+arrows']], ['Pan', ['Drag the background']], ['Pan from anywhere', ['Cmd+drag', 'Ctrl+drag']]],
   View: [['Zoom', ['Ctrl+scroll']], ['This list', ['?']]],
 };
 
@@ -40,12 +40,14 @@ const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the c
 const FLAG_ROW: readonly [label: string, keys: string[]] = ['Flag or unflag the card', ['Shift+F']];
 
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel
- * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove is not listed). */
-export function keyGroups({ chat = false, flag = false, remove = true }: { chat?: boolean; flag?: boolean; remove?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
+ * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove is not listed);
+ * `go`: the goToCard flag (off, Go to a card is not listed). */
+export function keyGroups({ chat = false, flag = false, remove = true, go = true }: { chat?: boolean; flag?: boolean; remove?: boolean; go?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
     .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
-  const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length && (remove || id !== 'remove'))
-    .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label, keys: COMMANDS[id].keys.map(keyText) }));
+  const off = [...(remove ? [] : ['remove']), ...(go ? [] : ['go-to-card'])];
+  const commands = (group: KeyGroup): KeyRow[] => COMMAND_IDS.filter((id) => GROUP_OF[id] === group && COMMANDS[id].keys.length && !off.includes(id))
+    .map((id) => ({ id: `command:${id}`, label: COMMANDS[id].listed ?? COMMANDS[id].means ?? COMMANDS[id].label, keys: [...(COMMANDS[id].shown ?? COMMANDS[id].keys.map(keyText))] }));
   return KEY_GROUPS.map((group) => ({
     group,
     rows: [...(group === 'Items' ? items : commands(group)),

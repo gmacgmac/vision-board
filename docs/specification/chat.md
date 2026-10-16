@@ -43,8 +43,9 @@ apps/board/src      the sidebar, and the bridge between the chat and the board
    one message to the agent: their words, then "The person selected these cards:" with the cards
    selected (right after the words, so "these" means the selection: a message about selected cards
    works like a group comment), then "The person updated the board:", the numbered reply of what was
-   answered since the agent was last told (each card's kind and word, "2 (question): no") and the
-   `head` it covers, then the board's id. With no words, the selection and the answers go alone;
+   answered since the agent was last told (each card's kind and word, "2 (question): no"), ending in
+   "Still open: …" (the board's cards that need the person) and "Waiting for your reply: …" (those
+   with the agent, api.md 149), and the `head` it covers, then the board's id. With no words, the selection and the answers go alone;
    that is what the board's Send is when the board has a session. A message with something attached
    waits while a turn runs and goes when it ends, built then; a second one meanwhile joins it. It
    counts as the board's Send when it goes (api.md 121, 131; `apps/board/server/chat-prompt.ts`

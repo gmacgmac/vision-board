@@ -7,8 +7,8 @@
 // Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), lock-flow.ts (a locked board), finder.ts (the
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
-// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's
-// Remove card and Remove container, personRemove flag) and toolbar-counts.ts (the toolbar's numbers). Plain TypeScript (D-005).
+// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
+// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag) and toolbar-counts.ts (the toolbar's numbers).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -41,6 +41,7 @@ import { zoomToContainer } from './finder.ts';
 import { createFlagFlow } from './flag-flow.ts';
 import { createRemoveFlow } from './remove-flow.ts';
 import { retiredCounts, type RetiredCount } from './retired.ts';
+import { createGoTo, GO_PAUSE, type GoTo, goTarget } from './go-to-card.ts';
 import { showCounts } from './toolbar-counts.ts';
 import type { CommandId } from './commands.ts';
 import type { ChatBridge } from './chat-bridge.ts';
@@ -53,8 +54,8 @@ export type { BoardElements } from './draw.ts';
 export interface Board {
   boot(): Promise<void>;
   switchTo(id: string): void;
-  /** Show a past version of the open board, read-only, or now with null (versions.ts). */
-  showVersion(seq: number | null): Promise<void>;
+  /** Show a past version of the open board, read-only, or now with null; `until`: a retired marker's (versions.ts). */
+  showVersion(seq: number | null, until?: number): Promise<void>;
   /** A view command from the header (zoom out, Fit, zoom in; commands.ts), or the finder's zoom to a container. */
   command(id: CommandId): void;
   goToContainer(id: string): boolean;
@@ -70,6 +71,7 @@ export interface Board {
   boardEdit: BoardEdit;
   /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
   nextFlagged(): void;
+  go: GoTo; // the Go to card box's typing, Enter, Esc and offer (goToCard flag, go-to-card.ts)
   destroy(): void;
 }
 
@@ -82,8 +84,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
   // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing] = [on('nodeSize'), on('agentAccess'),
-    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing, going] = [on('nodeSize'), on('agentAccess'),
+    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -142,15 +144,13 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     S.drew ||= attention.batch(lines, full);
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
-    boards.listed();
-    versions.listed(); lock.apply();
+    boards.listed(); versions.listed(); lock.apply();
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
    *  is on its way (sender.ts) the draw waits for its end. */
   function redraw(fresh = false) {
-    cancelAnimationFrame(S.frame);
-    S.frame = 0;
+    cancelAnimationFrame(S.frame); S.frame = 0;
     S.fresh ||= fresh;
     const s = versions.state ?? live.state;
     if (!s || !s.boards.has(S.id) || sender.held) return;
@@ -205,19 +205,21 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
   const regionNotes = createRegionNotes({
     stage, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id, edit: notes.showContainer,
-    attempt, relayout: () => redraw(), toast,
-  });
+    attempt, relayout: () => redraw(), toast });
   /** Moving cards between containers, Later and the Move to list (3_FE_03, moves.ts). */
   const moves = createMoves({
     stage, vp, selection, layout: () => drawing.layout, view, drawn: () => S.drawn!, state: () => S.data!.state,
     frame: (region) => drawing.frames.get(region), target, run: (steps) => sender.run(steps),
     showLater: (on) => { S.later = on; }, redraw: () => redraw(), toast: (t) => toast(t),
   });
+  /** Go to a card by its number (go-to-card.ts): select and focus it, a pan only by `revealPan`'s rule (`vp.reveal`), the zoom kept. */
+  const go = createGoTo({ show: (b) => { shell.go = b; }, past: showVersion, ...(on('goAfterPause') && { pause: GO_PAUSE }), find: (n) => goTarget(versions.state ?? live.state, S.id, n, (id) => !!drawing.layout?.nodes.has(id), shell.versionView),
+    arrive: (id) => { selection.select([id], 'only'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); } });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)
     item: (id) => nodeOf(id)?.n, commentOn: (id) => void act(id, 'comment'), openMove: moves.openMenu, pinned: (id) => !!S.data?.state.pins.has(id), resetPlaces: (ids) => void places.resetCards(ids), readOnly: () => !!versions.state, paused: lock.paused,
-    ...(removal && { remove: removal.cards }) });
+    ...(removal && { remove: removal.cards }), ...(going && { goTo: go.open }) });
   vp.onApply = () => { shell.zoom = zoomPercent(vp.k); notes.place(); flow.place(); drawing.viewMoved(); boards.moved(); };
   shell.zoom = zoomPercent(vp.k);
 
@@ -245,7 +247,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // ---- wiring --------------------------------------------------------------------------------
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
   const unbind = bindStage(stage, vp, versions.guard(lock.guard({
-    act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq) => void showVersion(seq),
+    act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq, until) => void showVersion(seq, until),
     answer: (id, seq, a) => void proposals.answer(id, seq, a),
     showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
     setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
@@ -281,17 +283,15 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
 
   exposeWork({ async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); } });
 
-  async function showVersion(seq: number | null) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq); }
+  async function showVersion(seq: number | null, until?: number) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq, until); }
   return {
-    boot: boards.boot,
-    switchTo: boards.switchTo,
-    showVersion,
+    boot: boards.boot, switchTo: boards.switchTo, showVersion,
     command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
     toggleHide,
     relayout: () => { if (S.data) redraw(); },
     access: accessFlow,
-    proposals,
+    proposals, go,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: askConfirm, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),

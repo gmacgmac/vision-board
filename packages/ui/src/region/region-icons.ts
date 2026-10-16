@@ -35,3 +35,7 @@ export const COG_ICON = '<circle cx="12" cy="12" r="3"/>'
 /** An eye, 20 x 20 like the action icons: the note preview's "Show in container" / "Hide"
  * (3_FE_04 step 4G ruling 2). Same stroke style; the mockups draw none. */
 export const EYE_ICON = '<path d="M2.5 10s2.8-5 7.5-5 7.5 5 7.5 5-2.8 5-7.5 5-7.5-5-7.5-5z"/><circle cx="10" cy="10" r="2.2"/>';
+
+/** The retired marker's narrow form (review polish round 2 ruling 1): a clock turning back, for "the
+ *  version where they last appeared", beside the number when the line has no room for the words. */
+export const RETIRED_ICON = '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/><path d="M12 8v4l2.5 2"/>';

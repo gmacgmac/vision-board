@@ -1,9 +1,9 @@
 // Larger popovers and the exchange (popovers-larger-thread, rulings 1-4): the comment box is one
 // step bigger and every popover reads the shared popover tokens; a click, Enter or Space on a note
-// or an agent's reply opens one window with the note, then every reply to it in order, beside what
-// was pressed; a reply that names no note opens on its own; a note not yet sent still opens to
-// edit; a container's note and its replies do the same; the hover tip stays; Esc closes and focus
-// goes back; axe light and dark. Each test draws its own board through the API (agent-board.ts).
+// or an agent's reply opens one window with the conversation beside what was pressed (review polish
+// ruling 6 replaced the one-note exchange; conversation.spec.ts has the rest); a note not yet sent
+// opens to edit from its Edit; a container's note and its replies do the same; the hover tip stays;
+// Esc closes and focus goes back; axe light and dark. Each test draws its own board through the API.
 import type { Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
@@ -65,22 +65,23 @@ test('the comment box is bigger and one size: 15px for the text typed, heads, hi
   await expect(b).toBeHidden();
 });
 
-test('a click on a reply opens the exchange: the note, then every reply in order, beside the reply; Esc closes, focus goes back', async ({ page, request }) => {
+test('a click on a reply opens the conversation: the note, then every reply in order, beside the reply; Esc closes, focus goes back', async ({ page, request }) => {
   const { d, n } = await exchange(page, request, ['Yes: **three** accounts.', 'Also: the sheet is updated.']);
   await open(page, d);
   await expect(replies(page, n)).toHaveCount(2);
   await replies(page, n).last().click();
-  await expect(page.getByRole('dialog', { name: `Note 1 on ${n}, sent` })).toBeVisible();
-  await expect(bubble(page).locator('.vb-nb-read')).toHaveText('Do any accounts still pay quarterly?');
+  await expect(page.getByRole('dialog', { name: `Conversation on ${n}` })).toBeVisible();
+  await expect(bubble(page).locator('.vb-nb-note-text')).toHaveText('Do any accounts still pay quarterly?');
   await expect(shown(page).locator('.vb-nb-who')).toHaveText(['Agent reply · Pricing chat', 'Agent reply · Pricing chat']);
   await expect(shown(page).locator('.vb-nb-reply-text')).toHaveText(['Yes: three accounts.', 'Also: the sheet is updated.']);
   await expect(shown(page).first().locator('strong')).toHaveText('three');
-  // One size in the box: the note, the replies and the buttons (the maintainer's change, chat 701).
-  for (const l of [bubble(page).locator('.vb-nb-read .vb-md-p'), shown(page).first().locator('.vb-md-p'), bubble(page).locator('.vb-nb-btn')]) {
+  // One size in the box: the note and the replies (the maintainer's change, chat 701).
+  for (const l of [bubble(page).locator('.vb-nb-note-text .vb-md-p'), shown(page).first().locator('.vb-md-p')]) {
     expect(await css(l, 'font-size')).toBe(TEXT);
   }
   await expect(bubble(page).locator('textarea')).toHaveCount(0);
-  await expect(bubble(page).getByRole('button')).toHaveText(['Close']);
+  await expect(bubble(page).getByRole('button')).toHaveCount(1);
+  await expect(bubble(page).getByRole('button', { name: 'Close' })).toBeVisible();
   await pointsAt(page, replies(page, n).last());
   await page.keyboard.press('Escape');
   await expect(bubble(page)).toBeHidden();
@@ -105,7 +106,7 @@ test('keyboard: Enter and Space on a reply open the exchange; the hover tip stil
   await page.locator('#stage').focus();
   await tabTo(page, r);
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('dialog', { name: `Note 1 on ${n}, sent` })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: `Conversation on ${n}` })).toBeVisible();
   await expect(shown(page)).toContainText('Line 12 of the answer.');
   await page.keyboard.press('Escape');
   await expect(bubble(page)).toBeHidden();
@@ -118,27 +119,56 @@ test('keyboard: Enter and Space on a reply open the exchange; the hover tip stil
   await expect(r).toBeFocused();
 });
 
-test('a reply that names no note opens on its own, read-only', async ({ page, request }) => {
+test('a reply that names no note opens the card\'s conversation, read-only, with no note in it', async ({ page, request }) => {
   const d = await draw(request, 1, 'thread');
   const [n] = d.n as [number];
   await reply(request, d, n, 'The enterprise floor.');
   await open(page, d);
   await replies(page, n).click();
-  await expect(page.getByRole('dialog', { name: `Reply on ${n}` })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: `Conversation on ${n}` })).toBeVisible();
   await expect(shown(page)).toHaveCount(1);
   await expect(shown(page)).toContainText('The enterprise floor.');
-  await expect(bubble(page).locator('textarea, .vb-nb-read')).toHaveCount(0);
-  await expect(bubble(page).getByRole('button')).toHaveText(['Close']);
+  await expect(bubble(page).locator('textarea, .vb-nb-note')).toHaveCount(0);
+  await expect(bubble(page).getByRole('button')).toHaveCount(1);
   await page.keyboard.press('Escape');
   await expect(replies(page, n)).toBeFocused();
 });
 
-test('the writer\'s note not yet answered still opens to edit, and saves', async ({ page, request }) => {
+// review-polish ruling 8 and decision 8: the card's notes and replies read oldest first, top to bottom,
+// like a chat: note 1, its replies, note 2; a reply naming no note sits by time among the notes; a
+// new note goes at the bottom; the pin still opens the latest note.
+test('a card\'s notes and replies read oldest first, like a chat; an orphan reply sits by time; the pin opens the latest', async ({ page, request }) => {
+  const d = await draw(request, 1, 'thread');
+  const [n] = d.n as [number];
+  const first = await act(page, d, { action: 'comment', n, ver: 1, text: 'Note one.' });
+  await act(page, d, { action: 'send', board: d.board });
+  await reply(request, d, n, 'Reply one to note one.', first);
+  await reply(request, d, n, 'A reply to no note.');
+  await act(page, d, { action: 'comment', n, ver: 1, text: 'Note two.' });
+  await reply(request, d, n, 'Reply two to note one.', first);
+  await open(page, d);
+  const rows = card(page, n).locator('.vb-node-note, .vb-node-reply').locator('.vb-node-note-text');
+  await expect(rows).toHaveText(['Note one.', 'Reply one to note one.', 'Reply two to note one.', 'A reply to no note.', 'Note two.']);
+  await expect(card(page, n).locator('.vb-note-pin')).toHaveText('2');
+  await card(page, n).locator('.vb-note-pin').click();
+  await expect(page.getByRole('dialog', { name: `Edit note on ${n}` })).toBeVisible();
+  await expect(bubble(page).getByLabel('Note text')).toHaveValue('Note two.');
+  await page.keyboard.press('Escape');
+  await expect(bubble(page)).toBeHidden();
+  // A new note goes at the bottom, and the pin moves to it.
+  await act(page, d, { action: 'send', board: d.board });
+  await act(page, d, { action: 'comment', n, ver: 1, text: 'Note three.' });
+  await expect(rows.last()).toHaveText('Note three.');
+  await expect(card(page, n).locator('.vb-note-pin')).toHaveText('3');
+});
+
+test('the writer\'s note not yet answered still opens to edit from Edit in the conversation, and saves', async ({ page, request }) => {
   const d = await draw(request, 1, 'thread');
   const [n] = d.n as [number];
   await act(page, d, { action: 'comment', n, ver: 1, text: 'Why?' });
   await open(page, d);
   await card(page, n).locator('.vb-node-note').click();
+  await bubble(page).getByRole('button', { name: 'Edit note 1' }).click();
   await expect(page.getByRole('dialog', { name: `Edit note on ${n}` })).toBeVisible();
   const text = bubble(page).getByLabel('Note text');
   await expect(text).toBeFocused();
@@ -149,7 +179,8 @@ test('the writer\'s note not yet answered still opens to edit, and saves', async
 });
 
 // Ruling 5 (found live): the agent's reply to a note not yet sent locks it. A click or the keyboard
-// on the reply opens the note read-only with the reply under it: no text box, no Edit, no Remove.
+// on the reply opens the conversation, the note read-only with the reply under it: no text box, no
+// Edit, no Remove.
 for (const theme of THEMES) {
   test(`a note the agent answered before a Send opens read-only from its reply, by click and keyboard; C starts a new note; axe (${theme})`, async ({ page, request }) => {
     const d = await draw(request, 1, 'thread');
@@ -160,18 +191,19 @@ for (const theme of THEMES) {
     await open(page, d);
     await expect(card(page, n).locator('.vb-node-note .vb-node-note-who')).toHaveText('Your note 1 · Answered');
     await replies(page, n).click();
-    const dialog = page.getByRole('dialog', { name: `Note 1 on ${n}, answered` });
+    const dialog = page.getByRole('dialog', { name: `Conversation on ${n}` });
     await expect(dialog).toBeVisible();
-    await expect(bubble(page).locator('.vb-nb-read')).toHaveText('Why?');
+    await expect(bubble(page).locator('.vb-nb-note .vb-nb-who')).toHaveText('Your note 1 · Answered');
+    await expect(bubble(page).locator('.vb-nb-note-text')).toHaveText('Why?');
     await expect(shown(page)).toContainText('Because.');
     await expect(bubble(page).locator('textarea')).toHaveCount(0);
-    await expect(bubble(page).getByRole('button')).toHaveText(['Close']);
+    await expect(bubble(page).getByRole('button')).toHaveCount(1);
     await expectNoAxeViolations(page);
     await page.keyboard.press('Escape');
     await expect(replies(page, n)).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(dialog).toBeVisible();
-    await expect(bubble(page).getByRole('button', { name: /Remove|Save/ })).toHaveCount(0);
+    await expect(bubble(page).getByRole('button', { name: /Remove|Save|Edit/ })).toHaveCount(0);
     await page.keyboard.press('Escape');
     // The answered note is no longer the card's note to edit: C starts a new one.
     await card(page, n).focus();
@@ -181,7 +213,7 @@ for (const theme of THEMES) {
   });
 }
 
-test('container: a click on a reply in the note block, or Enter on its note, opens the exchange beside it', async ({ page, request }) => {
+test('container: a click on a reply in the note block, or Enter on its note, opens the conversation beside it', async ({ page, request }) => {
   const d = await draw(request, 1, 'thread');
   const note = await act(page, d, { action: 'comment', board: d.board, region: 'p', text: 'Is the order right?' });
   await act(page, d, { action: 'send', board: d.board });
@@ -196,9 +228,9 @@ test('container: a click on a reply in the note block, or Enter on its note, ope
   const block = frame.locator('.vb-region-note-block');
   await expect(block.locator('.vb-nblock-reply')).toHaveCount(1);
   await block.locator('.vb-nblock-reply').click();
-  await expect(page.getByRole('dialog', { name: 'Note 1 on container Pricing thread, sent' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Conversation on container Pricing thread' })).toBeVisible();
   await expect(bubble(page)).toHaveAttribute('data-on', 'container');
-  await expect(bubble(page).locator('.vb-nb-read')).toHaveText('Is the order right?');
+  await expect(bubble(page).locator('.vb-nb-note-text')).toHaveText('Is the order right?');
   await expect(shown(page)).toHaveCount(1);
   await expect(shown(page).locator('strong')).toHaveText('price');
   await pointsAt(page, block.locator('.vb-nblock-reply'));
@@ -232,9 +264,17 @@ test('gallery: every popover reads the shared tokens: the bubble, the card popov
     expect(await css(b, 'width')).toBe('360px');
     expect(await css(b, 'font-size')).toBe(TEXT);
   }
-  // The exchange samples: a sent note with its reply, and a reply on its own.
-  await expect(page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="sent"] .vb-nb-reply')).toHaveCount(1);
-  await expect(page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="reply"] .vb-nb-reply')).toHaveCount(1);
+  // The conversation samples (review polish ruling 6): a card's, opened at the latest and at note 1,
+  // with Edit on its note not yet sent, and a container's; each with the × and no bottom row.
+  const talks = page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="thread"]');
+  await expect(talks).toHaveCount(3);
+  await expect(talks.nth(0).locator('.vb-nb-note')).toHaveCount(3);
+  await expect(talks.nth(0).locator('.vb-nb-reply')).toHaveCount(3);
+  await expect(talks.nth(0).locator('.vb-nb-orphan')).toHaveCount(1);
+  await expect(talks.nth(0).getByRole('button', { name: 'Edit note 3' })).toHaveCount(1);
+  await expect(talks.locator('.vb-nb-x')).toHaveCount(3);
+  await expect(talks.locator('.vb-nb-row')).toHaveCount(0);
+  await expect(talks.nth(2)).toHaveAttribute('data-on', 'container');
   const pop = page.locator('section[data-feature="parking"] .vb-card-pop[data-open]');
   expect(await css(pop, 'width')).toBe('360px');
   expect(await css(pop.locator('.vb-hand-text .vb-md-p').first(), 'font-size')).toBe(TEXT);

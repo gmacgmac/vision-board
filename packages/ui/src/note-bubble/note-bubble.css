@@ -47,6 +47,17 @@ vb-note-bubble .vb-nb-head {
   display: flex; align-items: center; gap: var(--vb-space-2); font-size: var(--vb-pop-text); color: var(--vb-ink-subtle);
 }
 vb-note-bubble .vb-nb-title { flex: 1; min-width: 0; color: var(--vb-ink); font-weight: var(--vb-weight-medium); }
+/* The × in the top corner of a read-only bubble (review polish ruling 7): a 24px target named Close,
+   pulled into the corner past the padding's last few pixels. */
+vb-note-bubble .vb-nb-x {
+  display: inline-grid; place-items: center; flex: none; width: var(--vb-space-5); height: var(--vb-space-5);
+  margin: calc(-1 * var(--vb-space-1)) calc(-1 * var(--vb-space-2)) auto 0; padding: 0; cursor: pointer;
+  border: 0; border-radius: var(--vb-radius-sm); background: transparent; color: var(--vb-ink-subtle);
+}
+vb-note-bubble .vb-nb-x:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+vb-note-bubble .vb-nb-x:active { transform: translateY(1px); }
+vb-note-bubble .vb-nb-x:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-note-bubble .vb-nb-x-icon { width: var(--vb-space-4); height: var(--vb-space-4); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 /* The card's number chip (05 `.nref`). */
 vb-note-bubble .vb-nb-num {
   display: inline-grid; place-items: center; flex: none; min-width: 32px; height: 22px; padding: 0 var(--vb-space-2);
@@ -81,7 +92,22 @@ vb-note-bubble .vb-nb-reply {
   border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
   background: var(--vb-surface-sunken); color: var(--vb-ink);
 }
-vb-note-bubble[data-mode='reply'] .vb-nb-reply { margin-left: 0; }
+/* The conversation (review polish ruling 6): every note and reply on the card or container, oldest
+   first, in one list. A note sits on the card's own surface with its who line (and Edit while it can
+   still be edited); its replies follow it, set in as above; a reply naming no note is not set in. */
+vb-note-bubble .vb-nb-convo { display: grid; gap: var(--vb-space-2); margin: 0; padding: 0; list-style: none; }
+vb-note-bubble .vb-nb-note {
+  display: grid; gap: var(--vb-space-1); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card); color: var(--vb-ink);
+}
+vb-note-bubble .vb-nb-note-top { display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-2); min-height: var(--vb-space-5); }
+vb-note-bubble .vb-nb-note-text { display: grid; gap: var(--vb-space-2); min-width: 0; color: var(--vb-ink-strong); overflow-wrap: anywhere; }
+vb-note-bubble .vb-nb-orphan { margin-left: 0; }
+vb-note-bubble .vb-nb-edit { flex: none; height: var(--vb-space-5); padding: 0 var(--vb-space-3); font-size: var(--vb-text-md); }
+vb-note-bubble .vb-nb-convo > :focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+/* Read-only, nothing sits under the list (ruling 7): the room of the bottom row (a button and its gap)
+   goes to the list. */
+vb-note-bubble:is([data-mode='sent'], [data-mode='thread']) .vb-nb-thread { max-height: calc(var(--vb-pop-max-h) + var(--vb-space-6) + var(--vb-space-2)); }
 vb-note-bubble .vb-nb-who {
   font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-ink);
 }

@@ -10,12 +10,13 @@ import type { LedgerNode } from '../../format/src/index.ts';
 import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { cardsOf, closedAfter, latestAsk } from './notes.ts';
-import { unseenAnswer } from './clears.ts';
+import { unseenAnswer, unseenReply } from './clears.ts';
 import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
 import type { ReferenceKind } from './references.ts';
 import { standing } from './proposals.ts';
 import { inLatestRound } from './rounds.ts';
+import type { ItemStatus } from './registry.ts';
 import { CLOSED, isDecided } from './registry.ts';
 import { unsentOn } from './unsent.ts';
 
@@ -72,19 +73,29 @@ const decided = (s: LedgerState, node: LedgerNode): boolean => isDecided(latest(
 import { replied } from './note-lock.ts';
 export { replied };
 
-/** What the agent owes on a card (api.md 36, 120): the `seq` of the person's latest note (an old
- * "needs context" is one) that no newer version or reply answers, else of a "later" with no park
- * after it. A note never answers a card, so it is owed on any card unless a ✓ or ✗ came after it
- * (D-045); a card closed with ✓ or ✗ owes no handover. */
-export function owedOn(s: LedgerState, node: LedgerNode): number | undefined {
+/** What the agent owes on a card (api.md 36, 120): its owed note (`owedNote`), else a "later" with
+ * no park after it. A card closed with ✓ or ✗ owes no handover. */
+export const owedOn = (s: LedgerState, node: LedgerNode): number | undefined => owedNote(s, node) ?? awaitingPark(s, node.id);
+
+/** The `seq` of the person's latest note on a card (an old "needs context" is one) that no newer
+ * version or reply answers. A note never answers a card, so it is owed on any card unless a ✓ or ✗
+ * came after it (D-045). While it is owed, the card is with the agent (`cardStatus`, D-046). */
+export function owedNote(s: LedgerState, node: LedgerNode): number | undefined {
+  const ask = s.marks.get(node.id)?.ask;
+  if (!ask) return undefined;
   const status = s.items.get(node.id)?.status ?? 'open';
-  const m = s.marks.get(node.id);
-  if (!m) return undefined;
-  const { ask } = m;
-  const made = ask && s.asks.get(ask.seq);
+  const made = s.asks.get(ask.seq);
   const closed = made ? closedAfter(s.logs.get(node.id)!, status, made) : CLOSED.has(status);
-  if (ask && !closed && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.id])) return ask.seq;
-  return awaitingPark(s, node.id);
+  return !closed && latest(node).ver <= ask.ver && !replied(s, ask.seq, made ? cardsOf(made) : [node.id]) ? ask.seq : undefined;
+}
+
+/** Where card `node` stands with the person (D-046), the one status every read gives: its ✓, ✗ or
+ * Later; else `commented`, with the agent, while its latest note is owed (`owedNote`); else open.
+ * The fold's status holds the marks alone (notes.ts `itemOf`). */
+export function cardStatus(s: LedgerState, node: LedgerNode): ItemStatus {
+  const marked = s.items.get(node.id)?.status ?? 'open';
+  if (marked !== 'open') return marked;
+  return owedNote(s, node) === undefined ? 'open' : 'commented';
 }
 
 /** The `seq` of an item's "later" that no park follows yet: its handover is still owed (D-020). */
@@ -160,10 +171,10 @@ export const CONDITIONS: Rows = {
   },
   'item.unseen': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: ['select', 'act'],
-    trueWhen: 'A card\'s latest version is newer than the one the person last saw (D-018), or the agent\'s answer to its latest note cleared it after the person last looked at it (clears.ts `unseenAnswer`, D-045). The page shows a newer version as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
-    endsWhen: 'The person\'s `seen` for that version (any card `seen` after the agent\'s answer), or any act of theirs naming the card but a Send (api.md 94).',
+    trueWhen: 'A card\'s latest version is newer than the one the person last saw (D-018), or the agent\'s answer to its latest note cleared it after the person last looked at it (clears.ts `unseenAnswer`, D-045), or the agent replied on it after the person last looked at it, whether or not the reply answers a note or clears anything (clears.ts `unseenReply`, review polish round 2 ruling 4). The page shows a newer version as the card\'s "N updates" tab only past version 1, reading `ver > max(seen, 1)`, and never on a card `item.new` holds for (NEW only): a new card carries no updates tab.',
+    endsWhen: 'The person\'s `seen` for that version (any card `seen` after the agent\'s answer or reply), or any act of theirs naming the card but a Send (api.md 94).',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx)
-      .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || unseenAnswer(s, x.id)).map((x) => ({ kind: 'item.unseen' as const, board, id: x.id }))),
+      .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || unseenAnswer(s, x.id) || unseenReply(s, x.id) !== undefined).map((x) => ({ kind: 'item.unseen' as const, board, id: x.id }))),
   },
   'item.awaiting': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: [],

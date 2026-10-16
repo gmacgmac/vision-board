@@ -82,7 +82,7 @@ test('counts split answered, later and open, over the cards that need an answer'
   const items = view.nodes.filter((x) => NODE_TYPES[x.kind].answer).map((x) => x.n!);
   const s = load([{ action: 'ack', n: items[0], ver: 1 }, { action: 'later', n: items[1], ver: 1 }]);
   const c = counts(boardView(s, BOARD), boardState(s, BOARD));
-  assert.deepEqual(c, { total: items.length, answered: 1, later: 1, open: items.length - 2 });
+  assert.deepEqual(c, { total: items.length, answered: 1, later: 1, open: items.length - 2, withAgent: 0 });
 });
 
 // Node types decide which review actions a card offers (D-015, components.md); the kind decides

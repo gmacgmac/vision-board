@@ -136,3 +136,36 @@ test('the agent\'s reply that cleared a card: one update, its step, a seen line 
   const after = foldLedger(more);
   assert.deepEqual([unseenCount(after, 'b', 1), seenDue(after, 'b', 1, 1), [...pageConditions(after, 'b').unseen]], [0, false, []]);
 });
+
+// Review polish round 2 ruling 4: any reply of the agent's on a card shows "1 update" until the person
+// has seen it, whether or not it answers a note or clears anything; looking at the card ends it.
+test('any reply of the agent\'s is one update until seen: with no note, or to an older note that clears nothing', () => {
+  seq = 0;
+  const lines = [
+    agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
+    agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
+    node(1, 1, 'One.'), node(2, 1, 'Two.'),
+    line({ by: 'person', type: 'seen', n: 1, ver: 1 }), line({ by: 'person', type: 'seen', n: 2, ver: 1 }),
+    line({ by: 'person', type: 'act', action: 'comment', n: 2, ver: 1, text: 'Which plans?' }),
+  ];
+  const first = seq;
+  lines.push(
+    line({ by: 'person', type: 'act', action: 'ack', n: 2, ver: 1 }),
+    line({ by: 'person', type: 'act', action: 'comment', n: 2, ver: 1, text: 'And renewals?' }),
+    agent({ type: 'reply', n: 1, text: 'The sheet moved to the shared drive.' }),
+    agent({ type: 'reply', n: 2, text: 'The 2024 ones.', to: first }),
+  );
+  const { events, problems } = readLedger(lines);
+  assert.deepEqual(problems, []);
+  const s = foldLedger(events);
+  assert.equal(s.items.get(2)?.status, 'acknowledged', 'a reply to an older note clears nothing');
+  assert.deepEqual([...pageConditions(s, 'b').unseen].sort(), [1, 2]);
+  assert.deepEqual([unseenCount(s, 'b', 1), unseenCount(s, 'b', 2)], [1, 1]);
+  assert.deepEqual(unseenSteps(s, 'b', 1, (at) => at.slice(11, 16)),
+    [{ ver: 1, when: '13:11', agent: 'Pricing chat', changes: [], reply: 'The sheet moved to the shared drive.' }]);
+  assert.equal(unseenSteps(s, 'b', 2, () => 'now')[0]?.reply, 'The 2024 ones.');
+  assert.deepEqual([seenDue(s, 'b', 1, 1), seenDue(s, 'b', 2, 1)], [true, true]);
+  const { events: more } = readLedger([...lines, line({ by: 'person', type: 'seen', n: 1, ver: 1 }), line({ by: 'person', type: 'seen', n: 2, ver: 1 })]);
+  const after = foldLedger(more);
+  assert.deepEqual([unseenCount(after, 'b', 1), unseenCount(after, 'b', 2), seenDue(after, 'b', 1, 1), [...pageConditions(after, 'b').unseen]], [0, 0, false, []]);
+});

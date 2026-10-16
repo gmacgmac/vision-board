@@ -152,6 +152,8 @@ test('the numbered reply names the group once, with its numbers', () => {
   assert.match(reply, /^1, 2 \(question, question\): comment: Same question$/m);
   assert.match(reply, /^3 \(question\): ✓$/m);
   assert.doesNotMatch(reply, /^1 \(question\): comment/m);
-  assert.match(reply, /^Still open: 1, 2$/m, 'a note never answers a card (D-045)');
+  // A note never answers a card (D-045): both wait for the agent's answer (D-046, round 2 ruling 3).
+  assert.match(reply, /\nWaiting for your reply: 1, 2$/, 'a note never answers a card (D-045)');
+  assert.doesNotMatch(reply, /Still open/);
   assert.equal(reply.match(/Same question/g)!.length, 1);
 });

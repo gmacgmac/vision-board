@@ -209,22 +209,29 @@ record is `api.md` 58-61.
 1. **The bubble** is its own pattern, `packages/ui/src/note-bubble/` (`<vb-note-bubble>`):
    `placeBubble` puts it on the card's right, else the left, else below, in stage pixels, so it
    draws above the board at any zoom and moves nothing; `bubbleView` says what it reads in each
-   mode (`new`, `edit`, `sent`, and `reply` for a reply on its own, item 6); the element emits
+   mode (`new`, `edit`, `sent`, and `thread` for the conversation, item 6); the element emits
    `vb-note` and never writes anything itself.
 2. **The page** has one bubble, owned by `apps/board/src/board/notes.ts`: C, M, the footer
    buttons, the pin and a click on a note open it; it follows its card through
    `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
 3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
    `.vb-note-pin`, hanging off the top-right corner) and the "Your note" block (`notesMarkup`,
-   latest first, `data-sent` notes grey).
+   `data-sent` notes grey). The block reads like a chat, oldest first, top to bottom (review polish
+   ruling 8, `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_03_card-notes.md`): note 1,
+   its replies oldest first, note 2..., so a new note goes at the bottom; a reply that names no note
+   of the card takes its place by time (`seq`) among the notes (decision 8). `notesView` puts them
+   in that order once (`NotesView.entries`: a `NoteEntry` with its `replies`, or an `OrphanEntry`;
+   `isNoteEntry` tells them apart) and every reader lists it as it is, never sorting again. The pin
+   still opens the latest note.
 4. **Zoomed out.** The `hideControlsZoomedOut` flag (on by default) is the only thing that sets the
-   stage's `data-zoom="far"` below `FAR_K` (`viewport.ts`, 0.75, one constant); the cards' buttons,
-   the size control and the containers' icon rows are then not drawn, so no control draws under the
-   24px target size and axe excuses nothing. Off (`?flags=-hideControlsZoomedOut`), every control
-   shows at every zoom. The toolbar's zoom group shows the level as a percentage beside Fit
-   (`ZoomLevel.svelte`, rounded down so "75%" means the controls show; `Viewport` decides "far" from
-   the same number), its buttons' tooltips say it ("Zoom in · + · 75% now"), and a polite status
-   announces it once the zoom settles (tracker N13).
+   stage's `data-zoom="far"` below `FAR_K` (`viewport.ts`, one constant: 0.55 since review polish
+   round 2 ruling 2, the maintainer's pick after trying it, which closed tracker N13; it was 0.75);
+   the cards' buttons, the size control and the containers' icon rows, grips, retired markers and
+   holders are then not drawn, so none draws too small to press. Off (`?flags=-hideControlsZoomedOut`),
+   every control shows at every zoom. The toolbar's zoom group shows the level as a percentage beside
+   Fit (`ZoomLevel.svelte`, rounded down so "55%" means the controls show; `Viewport` decides "far"
+   from the same number), its buttons' tooltips say it ("Zoom in · + · 55% now"), and a polite status
+   announces it once the zoom settles.
 5. **Popovers share their sizes** (popovers-larger-thread ruling 4,
    `cortex-tasks/board/2026-10-14_board-ui_popovers-larger-thread.md`). Every popover reads the
    `--vb-pop-*` tokens (`packages/tokens/src/tokens.css`): `--vb-pop-text` (every text in a
@@ -235,23 +242,33 @@ record is `api.md` 58-61.
    container note preview (`.vb-note-pop`) and the note and reply hover tip (`.vb-note-tip`) all
    read them, so changing a token scales every popover together. Labels and chips in them are
    `--vb-text-md`; buttons are 32px tall.
-6. **The exchange** (ruling 2). A click, Enter or Space on a note in a card's block or on an agent's
-   reply under it (`.vb-node-reply`, wired in `wiring.ts` `showReply`) opens the bubble with the
-   note, then every reply to it, oldest first, each as the card shows it ("Agent reply · label",
-   Markdown), in one read-only part that scrolls as a whole (`.vb-nb-thread`, a tab stop). It opens
-   beside the card with its arrow on what was pressed (`partAnchor`); Esc closes it and focus goes
-   back to that note or reply. A note not yet sent still opens to edit, its replies under the text
-   box; a reply that names no note of the card opens on its own (`reply` mode, Close only). The
-   container's note block works the same way: its note's text and each reply (`.vb-nblock-reply`)
-   are tab stops that report `open` (`vb-region-note`, with the reply's `seq`), and the bubble opens
-   beside the part pressed (`notes.ts` `showContainer`). What the bubble says is `note-views.ts`
-   (`cardView`, `containerView`, from the replies `parking.ts` reads, the `cardReplies` flag). The
-   hover tip stays for a quick look (`bindNoteTip`); the click is the way to read it and keep it
-   open.
+6. **The conversation** (review polish rulings 6 and 7, decisions 8 and 9,
+   `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_04_conversation-window.md`; it replaced
+   popovers-larger-thread ruling 2's one-note exchange). A click, Enter or Space on a note in a card's
+   block or on an agent's reply (`.vb-node-reply`, wired in `wiring.ts` `showReply`) opens the bubble
+   in `thread` mode: every note and reply on the card, oldest first, in `conversation`'s order (the
+   function `notesView` reads, so the window lists exactly what the card shows: a reply naming no note
+   sits by time among the notes), each with who wrote it ("Your note 2 · Sent", "Agent reply · label")
+   over its words as Markdown, in one read-only list that scrolls as a whole (`.vb-nb-thread`, a
+   labelled group and a tab stop). It opens beside the card with its arrow on what was pressed
+   (`partAnchor`), scrolled to the bottom (the latest) or, when an older note or reply was pressed, to
+   that one, which takes focus (`vb-note-bubble` `reveal`). Read-only (`thread`, and `sent`, which the
+   pin still opens on a note that is history) the bubble has no bottom row: an × in its top corner
+   (24px, named "Close") closes it, as do Esc and a click outside (`note-outside.ts`: a drag outside
+   pans and keeps it; a press on another note or reply moves it there), and focus goes back to the
+   note or reply pressed; the board never moves (focus.ts). The person's note that can still be edited
+   carries Edit, which turns the window into today's edit mode for it (Cancel and Save, the discard
+   question when words changed). The pin and C still open the latest note. A container's note block
+   works the same way: its note's text and each reply (`.vb-nblock-reply`) report `open`
+   (`vb-region-note`), and the container's conversation opens beside the part pressed (`notes.ts`
+   `showContainer`), listing every note on the container and the replies to them. What the bubble
+   says is `note-views.ts` (`cardView`, `containerView`, from the replies `parking.ts` reads, the
+   `cardReplies` flag). Hovering a note or a reply still shows only that one (`bindNoteTip`).
 7. **A note locks once answered** (ruling 5, api.md 143). A note is history after a Send or the
    agent's answer (a reply naming it, or a newer version of its card), whichever comes first. The
-   page reads `ItemNote.locked` (from `lockOf`, the server's own check): a locked note opens
-   read-only in the exchange, its head "Note 1 on 42, answered" when no Send came yet; on the card
+   page reads `ItemNote.locked` (from `lockOf`, the server's own check): a locked note is read-only
+   in the conversation ("· Answered" when no Send came yet, no Edit), and its pin opens it read-only,
+   its head "Note 1 on 42, answered"; on the card
    it is grey and says "· Answered", and its pin shows it rather than editing it; C or M on the card
    then starts a new note. A container note answered before a Send reads "Answered" and is
    read-only in its block.
@@ -273,6 +290,18 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    only the kind tab (`.vb-node-kind`) moves a card; a drag on a card's content selects text; a
    drag on a background (the board, a frame, a frame's title line outside its tools) pans and a
    click there clears; Shift+drag on a background is the lasso's; the middle button pans anywhere.
+   **Cmd or Ctrl + drag pans from anywhere** (review polish ruling 13): over a card's text, its kind
+   tab, a note, a reply, a button, an open hover tip, the note bubble or a card's popover. The press
+   becomes a pan only once it moves past the drag threshold (`DRAG_THRESHOLD`, 4px), then holds the
+   pointer, selects no text and swallows the click its release makes; held still it keeps its own
+   meaning (a Cmd click adds or removes the card, opens a link in a new tab, presses a button).
+   Shift+Cmd/Ctrl+drag on a background stays the additive lasso; a text field (`input`, `textarea`,
+   `select`, `contenteditable`) keeps its own press. **While Cmd or Ctrl is held** with the pointer
+   over the board, everything on it shows a hand (`grab`), and during any pan a closed hand
+   (`grabbing`; review polish round 2 ruling 6): `pointer.ts` sets `data-pan-key` on the stage on
+   every key press and release and as the pointer comes over the board, and drops it when the window
+   loses focus; `board.css` draws it over every part's own cursor but a text field's. The key is named
+   once, `pointer.ts` `panKey`.
    The stage is `user-select: none` and a card's content `user-select: text`.
 4. **Keys** (`keys.ts`): Space on a focused card toggles it; Esc closes the note bubble first,
    else clears the selection.
@@ -281,8 +310,53 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    key that moves no focus (Z, Esc, Space, the other commands) makes the browser match
    `:focus-visible`. Focus moved by the keyboard (Tab, Shift+Tab, arrows, J/K, a command that
    focuses another card) never carries it, so a card the keyboard focused keeps its ring (WCAG
-   2.4.7). The selected look is the clicked card's only mark
+   2.4.7). **Focus never moves the board** (review polish ruling 11): the same reading, exported as
+   `lastInput()` (`'pointer'`, `'key'`, or null when no input came since the window last lost focus),
+   tells `focus.ts` whether a focus may pan. Only a key's may, and then by `viewport.ts` `revealPan`
+   (`Viewport.reveal`): a card that fits comes fully into view when any of it is outside the stage; a
+   card bigger than the stage pans only when none of it shows, and then only to bring its top-left
+   corner in (48px margin), never to fit it. A click on a card or any control in it, a card's
+   popover opened by a click, and the window getting focus back (a focusout to nowhere while the page
+   has no focus keeps the focused card) pan nothing; a popover opened by Enter is still brought into
+   view. The selected look is the clicked card's only mark; its colour is the card's kind colour lifted
+   about two-thirds of a step toward the strong ink (`--vb-select-lift`, 35%, in srgb) with its OKLCH
+   chroma scaled by `--vb-select-chroma` (1.25) for a little more saturation (review polish round 2
+   ruling 5, by eye; FE_01's full step was 50%): deeper in light, lighter in dark, the same for every
+   kind, read by the border, the half-pixel ring, the top hairline and the glow
    (`cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md`).
+
+**Frames and hover boxes (review polish FE_01).** A container's frame and every hover box's border
+(`.vb-tip`) read one token, `--vb-line-contrast`, the Lines scale's next step above `--vb-line-strong`
+(`regionColour` returns it as `REGION_COLOUR_DEFAULT`; the frame reads `--region` whole). The container
+keeps no fill. Chosen by eye, not by the APCA tier (D-009): the measured scores are in
+`cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_01_colours.md`.
+
+**A container's top line (review polish FE_02, rulings 2 and 9).** The whole line (grip, title,
+count, retired marker, holders and the tools with their popovers) keeps one on-screen size at every
+zoom, so a title reads zoomed all the way out and the controls never grow past 100%. `Viewport.apply`
+writes the zoom once on the world as `--vb-zoom` (only when it changed); `region.css` registers it
+(`@property`, a number, not inherited, so a zoom step restyles no card: only the regions layer, each
+frame and its line take it) and counter-scales the line with a `transform`, its width tied to the
+frame's on-screen width, so a zoom step lays out nothing but the lines. A glide (Fit, Z) animates the
+value with the world. The line shows short words (review polish round 2 ruling 1): the count "1/1"
+(its words, "1 of 1 answered", are its tooltip and a visually hidden copy for screen readers; the
+short form is hidden from them) and the marker "6 retired" (its name and tooltip keep "6 cards
+retired from this container. Show v…"). The line is the query container of its narrow forms
+(`region-narrow.css`, on screen): the collapsed mode row under 408px of line (a 440px frame at 100%),
+or under 568px with a retired marker, so the full row never comes back onto it (FIX_01); the marker's
+icon and number in place of its words under 290px; and under 226px (261px with a marker) the row down
+to the cog, and Comment while its badge shows, with the holders leaving the line whole. The others
+stay in the row at no width and still focusable, so it expands over the label side on hover or focus
+as before. So nothing on the label side is covered at any zoom where the controls show (`FAR_K`, 55%,
+to 250%; `container-polish.spec.ts`). Measured on a one-card frame with a marker (336px): at 55% the
+title keeps its few letters and the count gives way; from 60% "1/1" shows whole; from about 96% the
+marker's words come back. Below `FAR_K` the tools, the grip, the retired marker and the
+holders leave the line (`display: none`), so the title takes their room. In a narrow line the tools
+never shrink beyond these forms; the holders give way first, then the title, one line ending in "…"
+(never broken mid-word) down to about three letters, then the count. The heading keeps the full title
+(the container's accessible name) and the title tip shows it on hover and focus. At 20% the line's
+lower edge reaches about 1px into the first row's top edge (the line's room is `REGION_HEAD` board
+units).
 
 ## The lasso, the selection bar and view commands (3_FE_02)
 
@@ -322,8 +396,11 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    card may also hold its own single-card note (named by `n`) independently. With exactly one card
    selected, Comment is that card's own note (2e), unchanged.
 5. **View commands are never ledger events.** Zoom and clearing only move the viewport or the
-   selection; Comment opens the note bubble, whose own write goes through the action layer as
-   usual (rule 8).
+   selection. **Z** (Zoom to the selection, and the chat's "zoom to these cards", which runs it)
+   fits one card or several to 75% of the stage's width or height, whichever binds, centred, up to the
+   top zoom (250%): `Viewport.fit(box, animate, SELECTION_FIT)` (review polish ruling 12). Fit,
+   Zoom to this area and a container's zoom keep `fit`'s default, 32px a side and at most 110%.
+   Comment opens the note bubble, whose own write goes through the action layer as usual (rule 8).
 
 6. **The key commands bubble** (navigation FE_04, `keyBubble` flag, on by default): a round "?" at the
    bottom left (`shell/KeyHelp.svelte`, `styles/key-help.css`) replaces the old key bar. Hover or focus
@@ -331,7 +408,9 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    it, Esc closes it, and `?` opens it. The list is generated by `board/key-help.ts` `keyGroups()`
    from `COMMANDS` and the registry `ACTIONS` (Items, Selection, Board, View); only inputs neither
    table owns (J/K, Space, Alt+arrows, H, pointer gestures) are listed by hand there, and a unit
-   test fails when a command or action with a key is missing. Off, the board shows no key help.
+   test fails when a command or action with a key is missing. A command with too many keys to list
+   one by one gives the list its own `shown` (Go to card's ten digits read "0–9"). Off, the board
+   shows no key help.
 
 ## Moving cards between containers, and Later (3_FE_03)
 
@@ -376,9 +455,21 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    or another agent ends it. Choosing a past version reads the ledger up to its line, folds it with
    the shared action layer and draws that state with the same drawing code, read-only: no act is
    sent (`sender.ts` `READ_ONLY`), no board seen is recorded (`attention.ts`), the stage's acting
-   handlers do nothing (`versions.ts` `guard`), and `#world[data-readonly]` hides what acts.
+   handlers do nothing (`versions.ts` `guard`), and `#world[data-readonly]` hides what acts. A card
+   answered by then keeps its ✓ or ✗ lit, as now, so it never looks open: the act row is inert (no
+   press, focus or hover) and shows only that mark (`board.css`; review polish FIX_01).
    `shell/VersionBanner.svelte` shows the banner with Back to now (Esc does the same). Code:
    `apps/board/src/board/versions.ts`, `shell/Toolbar.svelte`, `shell/VersionBanner.svelte`.
+   **From a container's "N retired" marker** (retiredMarker flag; review polish ruling 10,
+   tracker N42) the same past view opens the version where the cards last appeared (the latest run
+   before the latest of those retires) with the person's answers as they stood just before the
+   first `retire` line on the board after that version: the marker carries that line as
+   `data-until` (`retired.ts` `retiredCounts`), the ledger is read on to just before it, and
+   `retired.ts` `pastLines` leaves out the board's drawing lines after the version, so the cards
+   are exactly that version's (not a summary drawn with the retire) while every act, note, move and
+   agent reply (a reply that cleared a ✓ shows the card open, D-045) up to the retire counts. It is
+   read-only in the same way, and the banner is the same. A version chosen from the dropdown still
+   shows the answers as at that version.
 2. **The container finder** (`containerFinder` flag). The toolbar's `#containers` dropdown lists the
    board's containers in board order with their card counts, Later always last and disabled
    ("0 items") while empty. Choosing one zooms to its frame (`Board.goToContainer`, `vp.fit`) and
@@ -391,7 +482,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    1024px window up (its title truncates inside). At 1500px and below the toolbar carries
    `data-narrow` (`shell/Toolbar.svelte`, a `MediaQuery`): the end group's text buttons show an icon
    only (`shell/ButtonIcon.svelte`) and the counts, with the "boards updated" chip, show their
-   numbers only; the words stay for screen readers and the title tooltip says them.
+   numbers only; the words stay for screen readers and the title tooltip says them. "With agent"
+   shares "boards updated"'s pink, so there it keeps the agent's mark (the Agents bot) beside its
+   number (review polish FIX_01).
 5. **Toolbar icons and the "⋯" menu** (`toolbarMenu` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_toolbar-icons-menu.md`). Theme, Hide answered (Hide
    decided before D-045) and Reply move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`):
@@ -458,7 +551,8 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    accessible name says "checked" or "crossed" (`STATUS_NAME`). ✗ no longer fades the card or strikes
    its title through.
 2. **"Answered", never "decided".** The toolbar reads "N open · N answered · N later" (`shell.counts`,
-   `toolbar-counts.ts`), a container "N of M answered" (`regionState`), an emptied frame "Everything here
+   `toolbar-counts.ts`), a container "N/M" with "N of M answered" as its tooltip and name (`regionState`
+   `countText`, `countLabel`; round 2 ruling 1), an emptied frame "Everything here
    is answered.", and the H toggle "Hide answered" (`answeredIds`).
 3. **Only cards that ask show a status** (`asksAnswer` in `node-core.ts` reads
    `NODE_TYPES[kind].answer`): a finding, risk, topic or note has no status word and none in its
@@ -470,7 +564,9 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    new version gets (`updates.ts` `unseenCount`, `unseenSteps`: a step "Reply · when · who" with its
    words, at the card's latest version). Selecting the card or stepping past the reply sends the card
    seen line that ends it (`seenDue`: due although that version was seen). An answer by a new version
-   is that version's step.
+   is that version's step. **Any reply of the agent's is such an update** (review polish round 2
+   ruling 4, `clears.ts` `unseenReply`, api.md 149), whether or not it answers a note or clears
+   anything: a reply to an older note leaves the card's ✓ as it was and still shows "1 update".
 6. **A lit button clears.** Pressing a lit ✓, ✗ or Later records `reopen` and the toast says
    "12 cleared"; ✗ while ✓ is lit switches straight to ✗; a second press of the same button on the
    same card within 400 ms (`REPEAT_MS`) is ignored (`item-acts.ts`).
@@ -479,6 +575,12 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    ✗ at full opacity, clear and switch, the double click, the header, a card the agent's answer
    cleared, keyboard, axe light and dark). The gallery's node matrices have rows for ✓ Checked,
    ✗ Crossed and "Answered by the agent".
+8. **With agent** (with-agent-state task, D-046, api.md 148). A note puts a card that asks with the
+   agent until its answer: the footer and name say "With agent" (`STATUS_LABEL.commented`), and the
+   toolbar reads "N open · N with agent · N answered · N later", the with agent chip
+   (`data-tone='agent'`, `--vb-state-comment` on `--vb-state-comment-soft`: APCA Lc 64.0 light,
+   49.1 dark) only above 0 (`counts().withAgent`, `shell.counts.withAgent`). The gallery's
+   matrices name the row "With agent". Tests: `node-core.test.ts`, `answer-model.spec.ts`.
 
 ## Field report, batch 1 (2026-10-11)
 
@@ -598,7 +700,7 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
    container's unanswered note (the action layer's `owedNotice`). Confirmed, `board/remove-flow.ts`
    sends the person's `retire` line through the one sender (`sender.ts` `retire`, `retire_cards`); the
    toast says what went ("Removed card 4"); the cards leave the selection, focus that was on them goes
-   back to the board, and the container shows "N cards retired" (retiredMarker flag).
+   back to the board, and the container shows "N retired" (retiredMarker flag).
 4. **Paused** like every control that changes the board: hidden while a past version shows (the bar
    leaves out acting commands; the settings are hidden), and on a locked board the bar's button is
    disabled and Remove container is paused in place (`data-paused`, `aria-disabled`); a press on it
@@ -611,3 +713,40 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
    `api-person-retire.test.ts`; `packages/actions/tests/retire.test.ts`. The gallery's section
    (`gallery/remove-section.ts`) draws the settings menu open, the same on a locked board, and the
    three confirms from the fixture ledger.
+
+## Go to a card by its number (go-to-card task)
+
+Task `cortex-tasks/board/2026-10-15_board-app_go-to-card-number.md`, behind the `goToCard` flag (on
+by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out).
+
+1. **A digit opens the box.** With focus anywhere on the page but a text field, dialog or card
+   popover (`keys.ts`), a digit is the `go-to-card` command (`commands.ts`, keys 0-9, listed under
+   Board as "Go to a card by its number", `0–9`); `selection-flow.ts` hands it to `go-to-card.ts`
+   `createGoTo`, which opens the "Go to card" box (`shell/GoToCard.svelte`, `styles/go-to-card.css`)
+   at the board's bottom right, holding that digit, with focus in it. It works with or without a
+   card selected or focused, and in a past version. In a note's text field a digit is text.
+2. **The box** is a labelled text field ("Go to card", `inputmode="numeric"`, digits only, at most
+   `GO_DIGITS`), a hint (Enter go · Esc close) and a polite status line that says what a go found.
+   Enter goes; Backspace edits; Esc closes, as does focus leaving the box (not the window losing
+   it), and focus goes back where it was. Nothing goes by itself: with the `goAfterPause` flag (off
+   by default) a pause of `GO_PAUSE` (1 second) after the last digit goes too. States: typing, not
+   found, retired; the field has the shared hover and focus looks.
+3. **Arriving.** `goTarget` reads the number through `card-numbers.ts` `idOf` on the state the board
+   is drawn from. A card drawn with that number is selected (`selection.select`, as a click is) and
+   focused (`focus.ts`); the board pans only by `viewport.ts` `revealPan`'s rule (`Viewport.reveal`,
+   review polish FE_05: a card that fits comes fully in when any of it is outside, a bigger one only
+   when none of it shows), and the zoom stays. Z then zooms to it.
+4. **Not there.** A number the board never gave: "No card 99", the box stays open. A retired card:
+   "Card 7 was removed" with a "Show v42" button (named "Show v42, where it last appeared") that
+   opens the version where it last appeared, read-only, with the answers as they stood just before
+   the retire, as the container's retired marker does (`retired.ts` `lastShown`, shared with
+   `retiredCounts`), then goes to the card there. Without the versionView flag it only says so. A
+   card on the board but not drawn (hidden with the answered cards, H): "Card 4 is hidden with the
+   answered cards (H shows them)".
+5. Tests: `apps/board/tests/go-to-card.test.ts` (digits, Enter on a card, an unknown number, a
+   retired card, a hidden one; Esc; Backspace; the timed go), `key-help.test.ts`;
+   `tests/pages/go-to-card.spec.ts` (1 2 Enter on an off-screen card: selected, focused, panned in,
+   zoom unchanged; no pan on screen; No card 99, Backspace, Esc, a click outside; a note's text field;
+   a retired card's offer by keyboard; the pause flag; the flag off; the key list; axe light and
+   dark; the gallery section's screenshots). The gallery's section (`gallery/go-to-card-section.ts`)
+   draws the three states from the same state code.

@@ -15,7 +15,7 @@
 
   const uid = $props.id();
   const OPEN = 'data-keys-open';
-  const groups = keyGroups({ chat: flagOn('chatPanel', pageFlags()), flag: flagOn('cardFlag', pageFlags()), remove: flagOn('personRemove', pageFlags()) });
+  const groups = keyGroups({ chat: flagOn('chatPanel', pageFlags()), flag: flagOn('cardFlag', pageFlags()), remove: flagOn('personRemove', pageFlags()), go: flagOn('goToCard', pageFlags()) });
   let host: HTMLElement;
   let button: HTMLButtonElement;
 

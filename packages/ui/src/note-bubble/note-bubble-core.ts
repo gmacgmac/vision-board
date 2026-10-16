@@ -3,7 +3,7 @@
 // 05 section 1 (`.ovl.note`), Architect `positionPop`: the right of the card, else the left, else
 // below; never over the card, and it moves nothing.
 import type { NoteKind } from '../../../format/src/index.ts';
-import type { ReplyEntry } from '../node/node-core.ts';
+import type { NotesEntry, ReplyEntry } from '../node/node-core.ts';
 
 export interface StageBox { x: number; y: number; w: number; h: number }
 export interface StageSize { w: number; h: number }
@@ -99,12 +99,14 @@ export function partAnchor(card: StageBox, at: StageBox): StageBox {
 }
 
 /** `new`: no note yet (C or M on a card without one). `edit`: the card's note, not yet history.
- * `sent`: a note that is history (sent, or answered by the agent: ruling 5), only shown. `reply`: an agent's reply that names no
- * note of the card, shown on its own (popovers-larger-thread ruling 2). */
-export type BubbleMode = 'new' | 'edit' | 'sent' | 'reply';
+ * `sent`: a note that is history (sent, or answered by the agent: ruling 5), only shown, with its
+ * replies (the pin on it). `thread`: the conversation, every note and reply on the card or the
+ * container, oldest first (review polish ruling 6: a click, Enter or Space on a note or a reply). */
+export type BubbleMode = 'new' | 'edit' | 'sent' | 'thread';
 
-/** Whether a bubble only shows: a sent note and a reply on its own are never typed in. */
-export const readOnlyMode = (mode: BubbleMode): boolean => mode === 'sent' || mode === 'reply';
+/** Whether a bubble only shows: a sent note and the conversation are never typed in. They close with
+ *  an × in the top corner, Esc or a click outside, and have no bottom row (review polish ruling 7). */
+export const readOnlyMode = (mode: BubbleMode): boolean => mode === 'sent' || mode === 'thread';
 /** `saving` while the act is on its way; `error` when the server refused it. */
 export type BubblePhase = 'idle' | 'saving' | 'error';
 
@@ -120,9 +122,10 @@ export interface BubbleInput {
   text?: string;
   numbers?: readonly number[];
   container?: string;
-  /** The agent's replies to the note, oldest first, as the card shows them (`replyEntry`); in
-   *  `reply` mode, the reply on its own. */
+  /** The agent's replies to the note, oldest first, as the card shows them (`replyEntry`). */
   replies?: readonly ReplyEntry[];
+  /** In `thread` mode: the whole conversation as `conversation` (`notesView`) lists it, never sorted again. */
+  entries?: readonly NotesEntry[];
   /** In `sent` mode: the note is history because the agent answered it, not because of a Send
    *  (popovers-larger-thread ruling 5), so its head says "answered". */
   answered?: boolean;
@@ -134,26 +137,29 @@ export interface BubbleView {
   /** The dialog's name, which is also its visible head: "Note on 42", "Edit note on 42". */
   heading: string;
   placeholder: string;
-  /** The keyboard hint beside the buttons; empty for a sent note. */
+  /** The keyboard hint beside the buttons; empty when read-only. */
   hint: string;
-  /** The primary button: "Add note" or "Save"; absent for a sent note, which has Close only. */
+  /** The primary button: "Add note" or "Save"; absent when read-only, which has the × only. */
   primary?: string;
+  /** Cancel, or "Close": the name of the × when read-only. */
   cancel: string;
   remove: boolean;
   text: string;
   /** The replies under the note, read-only (popovers-larger-thread ruling 2); empty for none. */
   replies: readonly ReplyEntry[];
-  /** The name of the read-only part (the sent note and the replies), which scrolls as one. */
+  /** The name of the read-only part (the sent note and the replies, or the conversation), which scrolls as one. */
   thread: string;
+  /** In `thread` mode, the conversation, oldest first; empty otherwise. */
+  entries: readonly NotesEntry[];
 }
 
 /** An old More context is a note like any other (D-045), so it reads the same. */
 export const PLACEHOLDER: Record<NoteKind, string> = { comment: 'Your note for the agent', context: 'Your note for the agent' };
 
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
- * whole container; each mode words it its own way. */
+ * whole container; each mode words it its own way. The conversation is the card's or container's. */
 function headingOf(b: BubbleInput): string {
-  if (b.mode === 'reply') return `Reply on ${b.number}`;
+  if (b.mode === 'thread') return `Conversation on ${b.container === undefined ? b.number : `container ${b.container}`}`;
   const past = b.answered ? 'answered' : 'sent';
   if (b.container !== undefined) {
     const on = `on container ${b.container}`;
@@ -167,9 +173,9 @@ function headingOf(b: BubbleInput): string {
     : b.mode === 'edit' ? `Edit note on ${b.number}` : `Note ${b.index ?? 1} on ${b.number}, ${past}`;
 }
 
-/** What the read-only part is called: the sent note, its replies, or both. */
+/** What the read-only part is called: the conversation, the sent note, its replies, or both. */
 function threadOf(mode: BubbleMode, replies: number): string {
-  if (mode === 'reply') return 'Reply';
+  if (mode === 'thread') return 'Notes and replies';
   if (mode !== 'sent') return 'Replies';
   return replies ? 'Note and replies' : 'Note';
 }
@@ -184,8 +190,9 @@ export function bubbleView(b: BubbleInput): BubbleView {
     ...(!shown && { primary: b.mode === 'new' ? 'Add note' : 'Save' }),
     cancel: shown ? 'Close' : 'Cancel',
     remove: b.mode === 'edit',
-    text: b.mode === 'reply' ? '' : b.text ?? '',
+    text: b.mode === 'thread' ? '' : b.text ?? '',
     replies, thread: threadOf(b.mode, replies.length),
+    entries: b.mode === 'thread' ? b.entries ?? [] : [],
   };
 }
 
@@ -204,7 +211,7 @@ export function isDirty(opened: string, now: string): boolean {
 }
 
 /** What Esc or Cancel does: `close` (as before) or `ask` (the text changed: the page confirms
- * "Discard your changes?" first). A sent note or a reply is never typed in, so it always closes. */
+ * "Discard your changes?" first). A sent note or the conversation is never typed in, so it always closes. */
 export function cancelIntent(mode: BubbleMode, dirty: boolean): 'close' | 'ask' {
   return !readOnlyMode(mode) && dirty ? 'ask' : 'close';
 }

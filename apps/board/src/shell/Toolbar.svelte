@@ -19,11 +19,14 @@
      "⋯" menu has Lock board or Unlock board.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
-     counts show their numbers only (title and screen readers keep the words), all in board.css. -->
+     counts show their numbers only (title and screen readers keep the words), all in board.css; "with
+     agent" keeps the agent's mark (the Agents bot) beside its number there, so it never reads as
+     "board updated", which shares its pink (review polish FIX_01). -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
   import { MediaQuery } from 'svelte/reactivity';
   import AppIcon from './AppIcon.svelte';
+  import ButtonIcon from './ButtonIcon.svelte';
   import FlaggedChip from './FlaggedChip.svelte';
   import LockedChip from './LockedChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
@@ -151,6 +154,7 @@
     {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
     {#if shell.version !== null}
       <span class="vb-chip" data-tone="open" title="Open items"><b>{shell.counts.open}</b> <span class="vb-chip-word">open</span></span>
+      {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Items with the agent"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">with agent</span></span>{/if}
       <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
       {#if shell.flagged && !shell.past}
