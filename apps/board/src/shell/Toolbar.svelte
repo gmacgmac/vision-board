@@ -154,7 +154,7 @@
     {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
     {#if shell.version !== null}
       <span class="vb-chip" data-tone="open" title="Open items"><b>{shell.counts.open}</b> <span class="vb-chip-word">open</span></span>
-      {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Items with the agent"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">with agent</span></span>{/if}
+      {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Replied items"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">replied</span></span>{/if}
       <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
       {#if shell.flagged && !shell.past}

@@ -67,7 +67,8 @@ export const shell = $state({
   /** The container finder's rows, board order, Later last; none with the containerFinder flag off. */
   containers: [] as ContainerRow[],
   summary: '',
-  /** "N open · N with agent · N answered · N later" (D-046); the with agent chip shows only above 0. */
+  /** "N open · N replied · N answered · N later" (D-046, replied-word ruling 1): `withAgent` is the
+   *  "replied" chip, shown only above 0. */
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 },
   answered: 0,
   /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */

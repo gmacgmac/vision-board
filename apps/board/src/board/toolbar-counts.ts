@@ -1,5 +1,5 @@
 // What the toolbar and its panels read from the board as drawn, set on the shell after each draw:
-// the open, with agent, answered and later counts (D-046), the Reply text, the container finder's rows (containerFinder
+// the open, replied (with the agent), answered and later counts (D-046), the Reply text, the container finder's rows (containerFinder
 // flag), how many cards the person answered, the grant requests and the board's holders (agentAccess
 // flag) and how many cards are flagged (cardFlag flag, the "N flagged" chip). Split out of
 // controller.ts (field report batch 2).

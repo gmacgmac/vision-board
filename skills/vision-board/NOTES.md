@@ -402,3 +402,34 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   meanings, so 26 checks the line and the replies more than ruling 1; 11 is where both drew
   decisions with meanings. (b) Rule B kept as it was: a card asking for words says "Answer in a
   note" rather than what ✓ and ✗ mean; if ruling 1 should also cover those cards, it is one line.
+
+## Skill v3.7 (ask, never guess, for ✓ as well as ✗)
+
+- 2026-10-16, maintainer (chat 209-215, go "proceed"): (1) the person sees "Replied" where the
+  agent reads `with-agent` (the card's footer and name, the header's "N replied"); agents keep
+  `with-agent`, the Send message keeps "Waiting for your reply". (2) Open means "your move": no ✓,
+  no ✗, no note, no Later. (3) When a ✓ or ✗ does not make sense on that card, the agent replies
+  asking for context instead of acting on a guess, ✓ as well as ✗. No rule that "Answer in a note"
+  cards spell out ✓ and ✗ (v3.6 note (b) closed). v3.6's "a note after a mark is owed; the reply
+  clears the mark, so ask again" is confirmed (v3.6 note (c)).
+- 2026-10-16, agent: v3.7 changes § What the person's answers mean (v3.5's "When ✗ could mean more
+  than one thing" is now "When a ✓ or ✗ doesn't make sense on that card", with a ✓ on a card that
+  asks for a name as its first example; "act on nothing yet"), the three places that named only ✗
+  (§ Retiring and distilling twice, § Reading the person's answers), and "Replied" on the board in
+  the note bullet. scenarios v3.7: 27 new (a ✓ on a card that asks for a name); 25 run again (its
+  rule now covers ✓ too), unchanged.
+- 2026-10-16, agent: runs, v3.6's harness copied to `$TMPDIR/vb-skill37/` (servers on 4485 and
+  4486, `HOME` and `VB_PROJECT` in the temp folder, `VB_KIRO_AGENT=0`, stopped after; each board
+  drawn over HTTP by a newly joined agent; the person's acts on the page; each message built by
+  `promptFor` / `roundOf`). **Claude Code** 2.1.301, `claude -p` with the panel's flags: **ran Opus
+  5.5** (`modelUsage` `claude-opus-5-5`). **Kiro** `kiro-cli` 2.24.0, workspace agent `vb-test`
+  (skill as prompt, `@vb` only): **ran Opus 5.5** (sessions record `claude-opus-5.5`). All **pass,
+  both**, first run:
+  - 27: a `reply` on 4 with no `to` (Claude "A ✓ doesn't name anyone. Who should write the release
+    post? Answer in a note."; Kiro "The ✓ doesn't name anyone. Who writes the release post? Answer
+    in a note."); nothing written as decided; 2 read as the card says; 3 left alone; no new card;
+    4 shows "1 update" on the page; nothing `pending`.
+  - 25: a reply on 4 asking what the ✗ meant; a summary card with the release post still open; 4
+    kept; 1, 2, 3 and 5 retired in the same call.
+- 2026-10-16, agent: what still slips: chat words past "Done." (Claude 1 of 2 turns, Kiro 2 of 2,
+  one of them with no "Done.": it restated the round in three sentences).

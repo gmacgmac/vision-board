@@ -9,9 +9,10 @@ import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
 
 /** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
  *  is the state and the board gives it no meaning. A card whose note waits for the agent's answer is
- *  "With agent" (D-046); an old More context reads as a note. */
+ *  "Replied" (D-046; the person's word, replied-word ruling 1: agents read `with-agent`); an old More
+ *  context reads as a note. */
 export const STATUS_LABEL: Record<ItemStatus, string> = {
-  open: 'Open', acknowledged: '', dropped: '', commented: 'With agent', context: 'With agent', later: 'Saved for later',
+  open: 'Open', acknowledged: '', dropped: '', commented: 'Replied', context: 'Replied', later: 'Saved for later',
 };
 
 /** What a card's accessible name says for its status: the footer's word, or the lit mark by name. */

@@ -25,7 +25,7 @@ const statusWord = (status: ItemStatus): string | undefined => {
   return a && ACTIONS[a].reply;
 };
 
-/** With the agent (D-046): `commented`, and `context` on an old board (the footer reads both "With agent"). */
+/** With the agent (D-046): `commented`, and `context` on an old board (the footer reads both "Replied"). */
 const WITH_AGENT: ReadonlySet<ItemStatus> = new Set(['commented', 'context']);
 
 const fresh = (scope: ReplyScope | undefined) => (x: ItemNote) => !scope || x.seq > scope.since;

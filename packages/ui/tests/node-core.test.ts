@@ -44,10 +44,10 @@ test('nodeLabel names the number, kind, title and, on a card that asks, its stat
   assert.equal(nodeLabel(node({ kind: 'topic', title: 'Stack' }), 'open'), 'Topic: Stack');
 });
 
-test('a card whose note the agent owes reads "With agent" in its footer and its name (D-046)', () => {
+test('a card whose note the agent owes reads "Replied" in its footer and its name (D-046, replied-word ruling 1)', () => {
   const st = nodeState(node({ kind: 'decision', n: 8, title: 'Ship' }), withItem('commented'));
-  assert.deepEqual([st.statusWord, st.label], ['With agent', 'Item 8, Decision: Ship, With agent']);
-  assert.equal(STATUS_LABEL.context, 'With agent', 'an old More context reads as a note');
+  assert.deepEqual([st.statusWord, st.label], ['Replied', 'Item 8, Decision: Ship, Replied']);
+  assert.equal(STATUS_LABEL.context, 'Replied', 'an old More context reads as a note');
 });
 
 // ---- nodeState: the rules update() applies ---------------------------------------------------

@@ -5,7 +5,7 @@ import type { ActionId, Kind } from '../../format/src/index.ts';
 import { NODE_TYPES } from '../../format/src/index.ts';
 
 /** Where a card stands with the person. `commented`: with the agent, its latest note owed an answer,
- * neither open nor answered (conditions.ts `cardStatus`, D-046; the page says "With agent", agents
+ * neither open nor answered (conditions.ts `cardStatus`, D-046; the page says "Replied", agents
  * read `with-agent`). `context` is no longer reached: an old More context reads as a note (D-045). */
 export type ItemStatus = 'open' | 'acknowledged' | 'dropped' | 'commented' | 'context' | 'later';
 /** The statuses that answer a card that needs an answer, and close it, ✓ or ✗ (D-045): nothing is

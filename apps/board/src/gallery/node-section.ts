@@ -22,7 +22,7 @@ const SELECTED = new Set(['Selected']);
 type Row = ItemStatus | 'cleared';
 /** The row's label: the footer's word, or for ✓ and ✗, which show none, the mark and its name. */
 const ROW_LABEL: Partial<Record<Row, string>> = {
-  open: 'Open', acknowledged: '✓ Checked', dropped: '✗ Crossed', commented: 'With agent', cleared: 'Answered by the agent', later: 'Saved for later',
+  open: 'Open', acknowledged: '✓ Checked', dropped: '✗ Crossed', commented: 'Replied', cleared: 'Answered by the agent', later: 'Saved for later',
 };
 const ROWS = Object.keys(ROW_LABEL) as Row[];
 /** The kinds that need an answer, and the rest (every-node ruling 2): one matrix each. */
@@ -92,7 +92,7 @@ function notePreviews(fx: Fixture): HTMLElement {
 export function nodeSamples(body: HTMLElement, fx: Fixture): void {
   const others = fx.view.nodes.filter((n) => n.region === REGION_OTHER).map((n) => card(n, fx));
   body.append(
-    group('Cards that ask, in every status', 'A question, decision or action needs an answer, and only ✓ (Check) or ✗ (Cross) gives one: the card says what each means, the board never does. A lit ✓ or ✗ in its state colour is the whole state, with no word after it; ✗ neither fades the card nor strikes it through. A note never answers: it puts the card with the agent, "With agent", neither open nor answered. The agent\'s answer to the note brings it back to open and clears an earlier ✓, ✗ or Later, with its "1 update" tab until you look. Columns are kinds, rows the state.',
+    group('Cards that ask, in every status', 'A question, decision or action needs an answer, and only ✓ (Check) or ✗ (Cross) gives one: the card says what each means, the board never does. A lit ✓ or ✗ in its state colour is the whole state, with no word after it; ✗ neither fades the card nor strikes it through. A note never answers: it puts the card with the agent, "Replied", neither open nor answered. The agent\'s answer to the note brings it back to open and clears an earlier ✓, ✗ or Later, with its "1 update" tab until you look. Columns are kinds, rows the state.',
       matrix(fx, ASKS, ROWS)),
     group('Cards that tell, in every status', 'Every other kind is numbered and takes a comment or Later, never ✓ or ✗, shows no status word, and counts in no "answered" total.',
       matrix(fx, TELLS, TELL_ROWS)),

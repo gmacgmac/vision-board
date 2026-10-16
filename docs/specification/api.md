@@ -1252,7 +1252,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     footer and name say "With agent". Every agent read says `with-agent` (`registry.ts`
     `STATUS_OUT`, beside `checked` and `crossed`): the `itemStatus` enum is `open`, `checked`,
     `crossed`, `with-agent`, `context`, `later`. The page, `read_ledger` and the stored names keep
-    `commented`.
+    `commented`. The person's word on the page is now "Replied" ("N replied" in the header; replied-word
+    task, components.md § The answer model item 8); agents still read `with-agent`.
 149. **"Still open" is the person's; any reply is an update** (review polish round 2 rulings 3 and 4).
     `openapi.json` `info.version` becomes 1.26.0; the ledger does not change. The numbered reply and
     the Send message (`reply.ts` `replyLines`, so `replyText`, `boardBlocks` and `roundOf` too) end in

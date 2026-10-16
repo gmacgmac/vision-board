@@ -482,9 +482,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    1024px window up (its title truncates inside). At 1500px and below the toolbar carries
    `data-narrow` (`shell/Toolbar.svelte`, a `MediaQuery`): the end group's text buttons show an icon
    only (`shell/ButtonIcon.svelte`) and the counts, with the "boards updated" chip, show their
-   numbers only; the words stay for screen readers and the title tooltip says them. "With agent"
-   shares "boards updated"'s pink, so there it keeps the agent's mark (the Agents bot) beside its
-   number (review polish FIX_01).
+   numbers only; the words stay for screen readers and the title tooltip says them. "Replied" (with
+   the agent, D-046) shares "boards updated"'s pink, so there it keeps the agent's mark (the Agents
+   bot) beside its number (review polish FIX_01).
 5. **Toolbar icons and the "⋯" menu** (`toolbarMenu` flag, on by default; task
    `cortex-tasks/board/2026-10-09_board-app_toolbar-icons-menu.md`). Theme, Hide answered (Hide
    decided before D-045) and Reply move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`):
@@ -575,12 +575,17 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    ✗ at full opacity, clear and switch, the double click, the header, a card the agent's answer
    cleared, keyboard, axe light and dark). The gallery's node matrices have rows for ✓ Checked,
    ✗ Crossed and "Answered by the agent".
-8. **With agent** (with-agent-state task, D-046, api.md 148). A note puts a card that asks with the
-   agent until its answer: the footer and name say "With agent" (`STATUS_LABEL.commented`), and the
-   toolbar reads "N open · N with agent · N answered · N later", the with agent chip
-   (`data-tone='agent'`, `--vb-state-comment` on `--vb-state-comment-soft`: APCA Lc 64.0 light,
-   49.1 dark) only above 0 (`counts().withAgent`, `shell.counts.withAgent`). The gallery's
-   matrices name the row "With agent". Tests: `node-core.test.ts`, `answer-model.spec.ts`.
+8. **Replied: with the agent** (with-agent-state task, D-046, api.md 148; the word from
+   `cortex-tasks/board/2026-10-16_board-ui_replied-word-and-unclear-marks.md`). A note puts a card that
+   asks with the agent until its answer, and the person reads "Replied": in the footer and name
+   (`STATUS_LABEL.commented`), and in the toolbar, "N open · N replied · N answered · N later", the
+   replied chip (title "Replied items", `data-tone='agent'`, `--vb-state-comment` on
+   `--vb-state-comment-soft`: APCA Lc 64.0 light, 49.1 dark) only above 0 (`counts().withAgent`, `shell.counts.withAgent`). The gallery's
+   matrices name the row "Replied". Agents keep reading `with-agent` (it tells them they owe a
+   reply), and the Send message keeps "Waiting for your reply". Tests: `node-core.test.ts`,
+   `answer-model.spec.ts` (footer, name, the header chip at 1600px and at a 1470px toolbar).
+9. **Open means "your move".** Open = no ✓, no ✗, no note, no Later; the agent's answer to a note
+   makes the card open again (`cardStatus`, D-046).
 
 ## Field report, batch 1 (2026-10-11)
 

@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.6
+status: v3.7
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -40,6 +40,8 @@ is a plain yes/no question (a card asking for words ends "Answer in a note" inst
 (its decisions say what each mark means); 13, 22, 24 and 25 updated (their cards say what ✓ and ✗
 mean; 22 and 24 carry the "Waiting for your reply" line; 25's card 4 is an older card that does
 not); 26 (a round with a "Waiting for your reply" line, one card from an earlier round) new.
+v3.7 (skill v3.7, ask, never guess, for ✓ as well as ✗): 27 (a ✓ that does not fit the card) new;
+25 run again (the rule it checks now covers ✓ too), unchanged.
 
 ## 1. A review with 12 findings (panel)
 
@@ -594,3 +596,22 @@ Board: release-prep
 - **Fails if** it leaves 4 unanswered (its note is not in this round's lines), asks the person
   about 3 or 4 instead of answering, replies on or asks again about 5, or draws a `decision` or
   `action` card that doesn't say what ✓ and ✗ mean.
+
+## 27. A ✓ that does not fit the card (panel)
+
+**Situation.** Board "Release prep" has a container "Launch" (`row`): finding 1, decisions 2 and 3
+(as in 24) and question 4 ("Who writes the release post?", "Answer in a note."), drawn by the
+current skill. The person presses ✓ on 2 and ✓ on 4, writes nothing, and presses Send (`2
+(decision): ✓`, `4 (question): ✓`, "Still open: 3").
+
+**A good run**
+- Reads ✓ on 2 as the card says (ship on Monday); nothing more is owed there.
+- Reads ✓ on 4 as not making sense on that card (it asks for a name, and a ✓ names no one): asks
+  what the person meant in a `reply` on 4 (no `to`), for example "A ✓ doesn't name anyone: who
+  writes the post? Answer in a note.", and acts on nothing for 4 yet. The reply shows "1 update".
+- Leaves 3 alone ("Still open" needs the person). No new card for the same ask, no `propose`.
+  Chat words: "Done." (one short line more only if the person must do something the board can't
+  show).
+- **Fails if** it reads the ✓ on 4 as an answer of any kind ("you'll write it", "the docs team
+  writes it", "a post is wanted") and writes that anywhere as decided: a card, a summary, a reply
+  stated as fact or the chat; or rewrites or retires 4; or leaves the ✓ on 4 without a reply.

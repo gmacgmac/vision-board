@@ -30,7 +30,7 @@
   "attributes": {
     "data-id": "the node id; the page finds a node with closest('vb-node')",
     "data-kind": "one of KINDS; see NODE_TYPES in packages/format/src/node-types.ts. Colour comes from --kind, which render() sets to var(--vb-kind-<kind>)",
-    "data-status": "open | acknowledged | dropped | commented | later (set by update; an old context note reads as commented). commented is with the agent: the person's latest note waits for its answer, footer 'With agent' (D-046). acknowledged and dropped colour only the lit button: no word, no fade, no strike-through (D-045)",
+    "data-status": "open | acknowledged | dropped | commented | later (set by update; an old context note reads as commented). commented is with the agent: the person's latest note waits for its answer, footer 'Replied' (D-046; agents read with-agent). acknowledged and dropped colour only the lit button: no word, no fade, no strike-through (D-045)",
     "data-pinned": "present when the person moved it (set by update)",
     "data-selected": "present while the person has it selected (3_FE_01; view state the page passes to nodeState, set by update): mockup 05's look, 1.5px in the card's own colour lifted about two-thirds of a step toward the strong ink (--vb-select-lift, 35%) and a little more saturated (--vb-select-chroma, 1.25: OKLCH chroma scaled; review polish round 2 ruling 5), every kind alike, with a soft glow",
     "data-emphasis": "present when the agent marked the node as emphasised (set by render)",
@@ -38,7 +38,7 @@
     "data-size-picked": "nodeSize flag only: present when the person picked the size (set by update)",
     "role": "listitem (set by render)",
     "tabindex": "0 (set by render)",
-    "aria-label": "number, kind, title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'With agent', 'Saved for later'), then ', selected' while selected",
+    "aria-label": "number, kind, title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
     "data-noted": "present when the item has a note (set by update)",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
     "data-pointer-focus": "present while the card has focus that a pointer press gave it (set by the page, apps/board/src/board/pointer-focus.ts): no focus ring draws when a key that moves no focus (Z, Esc, Space) makes the browser match :focus-visible; focus the keyboard moves never carries it",

@@ -42,7 +42,7 @@ body {
 [data-narrow] :is(.vb-toolbar-end .vb-btn-text, .vb-counts .vb-chip-word) {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-/* "With agent" shares "board updated"'s pink, so on a narrow toolbar it keeps the agent's mark, the
+/* "Replied" (with the agent, D-046) shares "board updated"'s pink, so on a narrow toolbar it keeps the agent's mark, the
    Agents bot, beside its number (review polish FIX_01): decoration in the chip's own ink, Lc 64.0 light,
    49.1 dark (with-agent task), over the 30 tier. */
 [data-narrow] .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }

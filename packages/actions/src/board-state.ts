@@ -71,7 +71,8 @@ export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(i
 
 /** How many of a board's cards that need an answer (api.md 118) are open (they need the person), with
  * the agent (a note of the person's waits for its answer, `commented`), answered (✓ or ✗) and later:
- * "N open · N with agent · N answered · N later" (D-045, D-046). A card that only informs never counts. */
+ * "N open · N replied · N answered · N later" on the page (D-045, D-046, replied-word ruling 1). A card
+ * that only informs never counts. */
 export function counts(view: View, s: BoardState) {
   const items = view.nodes.filter((n) => NODE_TYPES[n.kind].answer);
   const st = items.map((n) => statusOf(s, n.id));
