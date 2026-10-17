@@ -1,5 +1,5 @@
 ---
-task_name: App Cards - Agent-Built Apps Inside a Card
+task_name: App Cards and Card Images - Agent-Built Apps and Images Inside a Card
 created: 2026-10-17
 completed:
 status: planned
@@ -52,8 +52,10 @@ tracker:
 | 3 | FE_01 | 2 | strong | [Frame pattern: vb-app-frame and the message protocol](./FE_01_app-frame.md) | Pending | |
 | 4 | T_01 | 2 | standard | [Example app: calculator panel and plugin](./T_01_example-calculator.md) | Pending | |
 | 5 | FE_02 | 3 | strong | [Page wiring, gallery, end-to-end and safety page tests](./FE_02_page-wiring.md) | Pending | |
-| 6 | T_02 | 4 | strong | [Skill v3.8: building apps; scenarios with both agents](./T_02_skill-apps.md) | Pending | |
-| 7 | VERIFY_01 | 5 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
+| 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Pending | Added 2026-10-18 |
+| 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Pending | Added 2026-10-18 |
+| 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Pending | |
+| 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -74,6 +76,8 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 | `packages/ui/src/app-frame/` `vb-app-frame`, `app-frame-core.ts` (`createAppBridge`, protocol types) | FE_01 | FE_02 |
 | `skills/vision-board/examples/apps/calculator/` | T_01 | FE_02 (fixture copy), T_02, VERIFY_01 |
 | `apps/board/tests/fixtures/apps/` (good and misbehaving test apps) | BE_02 | FE_02 |
+| `packages/format/src/images.ts` `IMAGE_LIMITS`, `imagePathProblem` (the one image path check); route `/board-images/` | BE_03 | FE_03, T_02 |
+| `packages/ui/src/image-view/` (`fitImage`, the zoomed view) | FE_03 | T_02, VERIFY_01 |
 
 ---
 
@@ -91,7 +95,8 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 | 8 Example | | |
 | 9 Skill | | |
 | 10 By hand | | |
-| 11 Committed | | |
+| 11 Images | | |
+| 12 Committed | | |
 
 ## Decisions taken during the run
 
@@ -118,6 +123,14 @@ _Status:_ Pending
 _Notes:_
 
 ### FE_02: Page wiring
+_Status:_ Pending
+_Notes:_
+
+### BE_03: Image route
+_Status:_ Pending
+_Notes:_
+
+### FE_03: Images on the page
 _Status:_ Pending
 _Notes:_
 

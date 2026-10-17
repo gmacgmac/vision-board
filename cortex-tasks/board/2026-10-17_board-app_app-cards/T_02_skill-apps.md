@@ -1,4 +1,4 @@
-# T_02_skill-apps: Skill v3.8: building apps; scenarios with both agents
+# T_02_skill-apps: Skill v3.8: apps and images; scenarios with both agents
 
 > **Parent**: [TASK-STATUS.md](./TASK-STATUS.md) · **Plan**: [PLAN.md](./PLAN.md)
 
@@ -6,12 +6,12 @@
 
 ## Objective
 
-Teach agents to build and show apps (rule 17), and prove with Claude Code and Kiro that an agent can
+Teach agents to show images in cards and to build and show apps (rule 17), and prove with Claude Code and Kiro that an agent can
 build a new one from the skill alone.
 
 ## Context
 
-PLAN.md ruling 17 and § Goal state line 9. Everything else has landed: read all earlier notes,
+PLAN.md rulings 17, 19-23 and § Goal state line 9. Everything else has landed: read all earlier notes,
 `docs/specification/apps.md` and the example `skills/vision-board/examples/apps/calculator/`. Harness
 for agent runs: the v3.5-v3.7 runs (`cortex-tasks/board/2026-10-15_board-agent_skill-check-cross-rules.md`
 and `2026-10-16_board-ui_replied-word-and-unclear-marks.md` notes): scratch board servers on spare
@@ -22,7 +22,11 @@ writing in the scratch project only (an app is files).
 
 ## Inputs
 
-- **Files to modify**: `skills/vision-board/SKILL.md` (v3.8; a chapter "Apps on the board": when an
+- **Files to modify**: `skills/vision-board/SKILL.md` (v3.8; a short part "Images in cards": put the
+  file under `.visionboard/images/` (subfolders welcome), write `![alt](path)` with real alt text, keep
+  png/jpeg/webp/gif under 8 MB, overwrite the file to update it (the person sees it when they select
+  the card), never an internet URL; when an image beats words (a screenshot of the page being
+  discussed, a diagram). Then a chapter "Apps on the board": when an
   app is the right answer (the person asks for something to use, not to read); the folder and files;
   the manifest; the panel protocol in short, pointing at `apps.md` for the rest; tools and `ctx.env`;
   sizes (`APP_SIZE`) and choosing one that fits the controls; the person must Allow tools, and a code
@@ -43,7 +47,10 @@ writing in the scratch project only (an app is files).
    a panel that follows the protocol, a tool that converts, an `app` card drawn; after the person
    allows it (the harness presses Allow), converting 10 km in the panel shows 6.21 mi (the harness
    drives the panel). No `eval`, no network, no secrets in code.
-3. **Fix a broken app**: the manifest has an error; the person says "the app card says invalid".
+3. **Show a screenshot**: a test image is in the scratch project's `.visionboard/images/ui/`; the person
+   asks "show me the settings screen you mean on the card". Pass: the card's body holds
+   `![<real alt>](ui/<file>.png)`, nothing else changed, no internet URL.
+4. **Fix a broken app**: the manifest has an error; the person says "the app card says invalid".
    Pass: the agent reads `list_apps`, fixes the manifest, and the card turns valid.
 
 ## Steps
@@ -57,7 +64,7 @@ writing in the scratch project only (an app is files).
 ## Validation
 
 - [ ] Each scenario passes with both agents, or each remaining failure is recorded with its example
-  (PLAN.md § Goal state line 9 needs scenario 2 to pass in at least one run).
+  (PLAN.md § Goal state line 9 needs scenarios 2 and 3 to pass in at least one run each).
 
 ## Constraints
 

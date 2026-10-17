@@ -196,11 +196,50 @@ card, the safety rules and the server, and the agent owning the app's code.
     `VB_PROJECT` = this repo, only if no live server holds this repo's `.visionboard/lock` (never
     port 4466); otherwise TASK-STATUS.md says how to draw it in one line. Tests copy the example into a temp project; there is one
     source of the example's code (the skill folder).
-17. **The skill teaches it** (rule 17): skill v3.8 explains when to build an app, the folder, the
+17. **The skill teaches it** (rule 17): skill v3.8 explains images in cards (ruling 19-23: the
+    folder, subfolders, alt text, sizes, overwrite to update) and when to build an app, the folder, the
     manifest, the panel protocol, the tools module, sizes, approval, `list_apps`, and drawing the
     `app` card; points at the example. Scenarios with Claude Code and Kiro prove an agent can build a
     new small app from the skill alone.
 18. **D-047** is appended (BE_01) with the text in § D-047 below, status Accepted (maintainer's go).
+
+**Images in cards** (added 2026-10-18; maintainer: "yes, it should be folded in")
+
+19. **Markdown images.** Any card's body (and notes, replies, parking text: everywhere our Markdown
+    renders) may hold `![alt text](path)`. `path` is relative to the project's `.visionboard/images/`
+    folder and may use **subfolders** (`diagrams/flow/v2.png`). The renderer writes one fixed `<img>`
+    shape (class, `src` under the board's image route, `alt`, `loading="lazy"`, `decoding="async"`,
+    width/height when known) and nothing else; `alt` is required (no alt → the image shows as its path
+    in plain text). Anything that is not a plain relative path (a scheme, `//`, `..`, a leading `/` or
+    `.`, a backslash, `%2e`) renders as plain text "image not shown: <path>". **No image from the
+    internet** (rule 18). D-023 stays for everything else (no raw HTML); D-048 amends it for images.
+20. **Where images live and how they are served.** `.visionboard/images/**`, any depth up to 8 folders;
+    each path segment is letters, digits, `-`, `_`, `.` (no leading dot, no `..`), file types png,
+    jpg/jpeg, webp, gif (by extension **and** by the file's magic bytes; svg is refused), at most 8 MB
+    a file. The board serves them at `GET /board-images/<path>` (outside `/api`, like app panels) with
+    the right `Content-Type`, `X-Content-Type-Options: nosniff`, `Cache-Control: no-cache` and an
+    `ETag` (size + mtime, or a hash), answering 304 to a matching `If-None-Match`; every resolved
+    path must stay inside the images folder (as `resolveStatic`). The limits are one table,
+    `IMAGE_LIMITS` in `packages/format/src/images.ts`. The page's CSP already allows `img-src 'self'`.
+21. **Updates show without polling.** The agent may overwrite an image. When the person **selects** a
+    card that holds images, or **opens** an image in the zoomed view, the page asks the server for a
+    newer version (a conditional request with the image's `ETag`) and swaps the new one in without a
+    flicker (load it, then swap). No timers, no polling; the check goes through the page's one I/O
+    layer.
+22. **The zoomed view.** A click (or Enter/Space on the focused image, which is a button in the card's
+    tab order) opens the image over the board, scaled so its **longer side is 70% of the screen in that
+    direction** (a tall image uses 70% of the height, a wide one 70% of the width; small images are
+    scaled up to that too), and never past the screen in the other direction. It **animates** from the
+    image's place on the card to its zoomed place and back on close (a transform from the card's box,
+    about 220 ms, eased, tokens for timing); with `prefers-reduced-motion` it appears without motion.
+    Esc, a click outside the image, or an × close it; focus returns to the image on the card; the view
+    is a modal dialog (labelled by the alt text, focus kept inside); the board does not pan or zoom.
+23. **Cards with images** keep D-030 widths; an image fits the card's width (never wider), keeps its
+    aspect ratio, and the card's measured height includes it once it has loaded (layout re-measures
+    that card only, rule 15). A missing image shows a small "image not found: <path>" box in its place;
+    a refused type or size the same with the reason. Images in a card at far zoom or off screen are not
+    loaded (`loading="lazy"` plus `offscreen.ts`).
+24. **D-048** is appended (BE_03) with the text in § D-048 below, status Accepted (maintainer's go).
 
 Notes on the rulings: the board posts to a panel with `frame.contentWindow.postMessage(msg, '*')`
 (an opaque origin cannot be named as a target; the message carries no secret and goes to the window
@@ -227,6 +266,25 @@ theme change).
 - **Rejected**: raw HTML in a card (D-023 stays: Markdown never renders HTML); a second proxy frame
   on another port (an opaque-origin sandbox gives the same isolation on one server); the board
   starting servers the agent wrote (the board hosts plugin modules instead).
+- **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md
+```
+
+### D-048 (append verbatim to `docs/decisions.md`; BE_03)
+
+```
+## D-048 Images in cards, from the project's images folder only
+- **Date**: 2026-10-18 · **Status**: Accepted · **From**: maintainer (chat 239-243; go without
+  further review)
+- **Decision**: Our Markdown renders `![alt](path)` as one fixed image shape when `path` is a plain
+  relative path under the project's `.visionboard/images/` (subfolders allowed); the board serves
+  those files (png, jpeg, webp, gif; checked by type and content; size-capped) with an ETag, and the
+  page checks for a newer version when a card is selected or an image is opened. A click opens the
+  image animated to 70% of the screen on its longer side. Anything else stays text. This amends D-023
+  for images only; raw HTML is still never rendered.
+- **Why**: agents could not show a screenshot or a diagram on the card, so "which page is this?"
+  questions went to the chat.
+- **Rejected**: images from the internet (rule 18), data URIs in the body (unbounded size in the
+  ledger), svg (it can carry script).
 - **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md
 ```
 
@@ -270,13 +328,23 @@ The set is done only when **all** of these hold, each checked by running or read
 8. **Example**: `skills/vision-board/examples/apps/calculator/` works as in line 3; this repo's own
    board holds a copy in `.visionboard/apps/calculator/` and one app card drawn through the API (or,
    when a live server held the lock, the one-line instruction in TASK-STATUS.md, per ruling 16).
-9. **Skill**: v3.8 released; the app scenario(s) in `scenarios.md` pass with Claude Code and with Kiro
+9. **Skill**: v3.8 released (apps and images); the app and image scenario(s) in `scenarios.md` pass with Claude Code and with Kiro
    (each run recorded with the model that ran); an agent built a *new* app (not the calculator) from
    the skill alone in at least one run.
 10. **By hand**: VERIFY_01 completed on a scratch board with screenshots looked at; every finding
     inside the rulings fixed (FIX_NN) and re-verified; findings outside the rulings recorded as
     proposed tracker rows in TASK-STATUS.md.
-11. **Committed**: every change committed on `feat/app-cards` (orchestrator commits after each wave and
+11. **Images**: a page test (`tests/pages/card-images.spec.ts`) on a temp project shows an agent's
+    card with `![Flow](diagrams/flow.png)` (a subfolder) at the card's width, opens it with a click
+    and with the keyboard to 70% of the screen on its longer side for a tall and for a wide image
+    (asserted from the box sizes), closes with Esc and with a click outside (focus back on the image),
+    shows a replaced image after the card is selected again (the file is overwritten in the test; a
+    conditional request is asserted, and no request repeats on a timer), honours reduced motion, and
+    passes axe light and dark. Safety tests: path tricks (`..`, `%2e%2e`, leading `/`, backslash,
+    hidden segments, depth over 8), an internet URL, `javascript:`/`data:` sources, svg, a png
+    extension on a non-image file, a file over 8 MB → each refused (text in the card; 404/415 from the
+    route); `markdown-adversarial.ts` allows `<img>` only in the fixed shape. D-048 appended.
+12. **Committed**: every change committed on `feat/app-cards` (orchestrator commits after each wave and
     at the end; sub-agents never commit); `git status` clean apart from files the run never touched;
     one LOG line per task plus the set's line.
 
@@ -285,7 +353,8 @@ The set is done only when **all** of these hold, each checked by running or read
 ## Proposed Solution
 
 Contract first, then the server host and the frame pattern side by side, then the page wiring with
-the example, then the skill, then a check by hand and a fix loop until § Goal state holds.
+the example beside the image route, then images on the page, then the skill, then a check by hand and
+a fix loop until § Goal state holds.
 
 ### Key Changes (task → what, and the existing pattern each reuses)
 
@@ -325,7 +394,14 @@ the example, then the skill, then a check by hand and a fix loop until § Goal s
 6. **T_02 Skill v3.8** (`skills/vision-board/`): the app chapter, scenarios (one: draw the calculator
    card from the example; one: build a new small app, e.g. a unit converter, with a tool), runs with
    Claude Code and Kiro on scratch boards.
-7. **VERIFY_01 By hand**, then **FIX_NN** tasks the orchestrator adds for findings inside the rulings,
+7. **BE_03 Image route and contract** (wave 3, beside FE_02): `IMAGE_LIMITS`, the `/board-images/`
+   route with path and content checks, ETag/304, D-048, api.md and `apps.md`-style spec section
+   `docs/specification/images.md`.
+8. **FE_03 Images on the page** (wave 4): the Markdown image shape in `packages/ui/src/markdown/`
+   (`inline.ts` already parses `![`; today it falls back to text), the zoom view as a pattern
+   (`packages/ui/src/image-view/`), the update check on select and open through `io.ts`, card
+   re-measure on load, gallery samples, the page tests of § Goal state line 12.
+9. **VERIFY_01 By hand**, then **FIX_NN** tasks the orchestrator adds for findings inside the rulings,
    until § Goal state holds.
 
 ---
@@ -366,7 +442,9 @@ the example, then the skill, then a check by hand and a fix loop until § Goal s
 - BE_02, FE_01 and T_01 in parallel (wave 2): disjoint files; each reads only BE_01's outputs.
   T_01 follows `apps.md`; it does not need BE_02's code (its own unit tests run the tools directly).
 - FE_02 after wave 2: it wires FE_01's element to BE_02's routes and uses T_01's example.
-- T_02 after FE_02 (its scenarios need a working board). VERIFY_01 last.
+- BE_03 beside FE_02 in wave 3 (server route and format only; FE_02 is page only). FE_03 after both
+  (wave 4): it needs BE_03's route and must not edit FE_02's files at the same time.
+- T_02 after FE_03 (its scenarios need a working board, apps and images). VERIFY_01 last.
 - No new npm packages. Node's built-ins only (`child_process`, `crypto`, `fs`, `path`). ajv is
   already in use.
 
@@ -378,7 +456,6 @@ the example, then the skill, then a check by hand and a fix loop until § Goal s
   MCP servers' `ui://` panels: later adapters on the same message shape.
 - Agents calling app tools through the board; the board starting arbitrary servers.
 - The person resizing an app card by hand; free-form layout of the panel.
-- Images on cards (still after everything else).
 - The Uplynk plugin itself.
 
 ---

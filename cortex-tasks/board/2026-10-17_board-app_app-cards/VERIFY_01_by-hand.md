@@ -23,12 +23,16 @@ dark. Look at every screenshot you take.
    Stop app, change `tools.mjs` and see "code changed · Allow", break the manifest and see "invalid",
    fix it, zoom out past `FAR_K` and back, scroll a card off screen and back, open a past version,
    switch the theme with the panel open, select and Z to the card, go to it by number, add a note to
-   the card and see it like any card's note.
+   the card and see it like any card's note. **Images**: a card with three images (one in a subfolder,
+   one tall, one wide), open each by click and by keyboard and check the 70% fit and the animation in
+   and out (and with reduced motion), overwrite one file and select the card to see it update, delete
+   one and see "image not found", try an internet URL and an svg in a card's Markdown.
 2. [ ] **Try to break it** (beyond the automated tests): a panel that posts 1,000 messages a second; a
    tool that returns a huge string; a tool that hangs while the person keeps pressing `=`; two app
    cards for the same app; a deleted app folder while its card is on screen (the card says "not
    found"; restoring the folder heals it); `open_project` to another folder while an app runs (its
-   process stops). The board must stay responsive and never show a blank or broken card.
+   process stops); a card with 30 large images on a big board (lazy loading, no jank when panning).
+   The board must stay responsive and never show a blank or broken card.
 3. [ ] **Goal check**: for each line of PLAN.md § Goal state, write the evidence into TASK-STATUS.md §
    Goal check (line 2: run the gates yourself, one after another, and paste the counts).
 4. [ ] Findings: each one inside the rulings becomes a finding for a FIX task (name the ruling, the
