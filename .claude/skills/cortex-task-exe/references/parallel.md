@@ -28,7 +28,7 @@ imports the existing artifact instead of writing its own.
 ### If the Wave column is missing or incomplete
 
 The task set predates wave assignment or was authored incompletely. Do not infer waves from
-task files — read discipline forbids opening them. Instead:
+task files. Instead:
 
 - PLAN.md's Dependencies section may state the ordering. Use it if so.
 - Otherwise run **fully sequential** and tell the user the set has no wave data, so it should be
@@ -39,13 +39,9 @@ Sequential. Safety over speed.
 
 ---
 
-## Pre-Loop Pledge
+## Read Discipline Checkpoint
 
-Before dispatching the first wave, emit this exact line:
-
-```
-Pre-flight reads complete: TASK-STATUS.md ✓ PLAN.md ✓. Wave plan: [N] waves. Entering dispatch — no further reads of task files, TASK-STATUS.md, PLAN.md, or source files until all waves return. Trusting sub-agent return blocks.
-```
+Before the first wave, tell the user the wave plan (N waves, tasks per wave). Pre-flight reads end here; from now on, read a file only to check work where it's justified.
 
 ---
 
@@ -69,11 +65,13 @@ Read the task file for your steps. Read PLAN.md and previous task notes for cont
 
 PARALLEL SAFETY: Other tasks are running simultaneously. Only modify files listed in YOUR task — do not touch files owned by other tasks.
 
-SHARED CODE: Check TASK-STATUS.md's Shared Foundations table before creating any helper, type, or component. If it is listed, an earlier wave already built it — import it. If you need something shared that is NOT listed and does not exist, do not invent it: report DEVIATION, because a parallel sibling may be building the same thing.
+SHARED CODE: Check TASK-STATUS.md's Shared Foundations table before creating any helper, type, or component. If it is listed, an earlier wave already built it — import it. If the repo already has it, reuse it — never copy it. If you need something shared that is NOT listed and does not exist, do not invent it: report DEVIATION, because a parallel sibling may be building the same thing.
 
 Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, never `cd path &&`. Any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
 
-Update your task file and TASK-STATUS.md when done, then follow your task file's On Completion — including your own single LOG entry. Append exactly one line ending in a newline; other sub-agents are appending to the same file right now. Do not write to AUDITED.md.
+Update your task file and TASK-STATUS.md when done, then follow your task file's On Completion — including your own single LOG entry. Append exactly one line ending in a newline; other sub-agents are appending to the same file right now.
+
+Run your own tests, plus the tests of every shared pattern or file you change (search the test folders for its name). The orchestrator runs the full gates.
 
 No git commits.
 
@@ -99,6 +97,7 @@ After each wave: `[check] Wave [N] complete ([task_ids]). [M] waves remaining.`
 
 ## On All Waves Complete
 
+0. Run the project's full gates (build, tests, lint). On a failure, don't mark the set complete; report it.
 1. Frontmatter Lifecycle (SKILL.md): flip `status: completed`, `completed: YYYY-MM-DD`.
 2. Append the **set** entry to `LOG.md` — one line, terminated with `\n`. `[CATEGORY]` from `PROFILE.md` §2:
    `[[YYYY-MM-DD HH:MM]] [CATEGORY] Completed set: {task_name} → Task: [[path/to/TASK-STATUS.md]]`
@@ -114,7 +113,7 @@ Reads of TASK-STATUS.md and PLAN.md are budgeted:
 - **Once at the end** — to confirm final state before logging.
 - **Never between waves, never inside a wave** — trust sub-agent return blocks.
 
-Reads of individual task files by the orchestrator are forbidden. Each sub-agent owns its task file. Between waves, the orchestrator's only inputs are the structured return blocks from the prior wave's sub-agents.
+Each sub-agent owns its task file. Between waves, the orchestrator's only inputs are the structured return blocks from the prior wave's sub-agents.
 
 ---
 

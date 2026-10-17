@@ -5,23 +5,12 @@ completed:           # Set when done
 status: pending      # pending | in-progress | completed | deferred
 categories: []       # From cortex/PROFILE.md §2 (Categories)
 type: implementation # implementation | research | analysis | migration | review
+model: standard      # standard | strong — mapped to a model by project steering
+skills: []           # cortex-architecture (dev work) | cortex-docs (doc work) | cortex-research — load before starting
 tracker:             # optional: path#ID[,ID]
 ---
 
 # Task: [Task Title]
-
----
-
-## Pre-Task Requirements
-
-_**Only include this section if task creates files in documentation folders**_
-
-> Before writing any documentation files:
-> 1. Resolve per `cortex/router.md § Resolution` (handlers linked in `cortex/REGISTRY.md`)
-> 2. Confirm destination via `cortex/REGISTRY.md` doc surface + PROFILE conventions
-> 3. Run the `/cortex-organize` skill for formatting
->
-> **DO NOT hardcode file paths** — let PROFILE + the skill determine destination and template.
 
 ---
 
@@ -31,32 +20,13 @@ _**Only include this section if task creates files in documentation folders**_
 
 ---
 
-## Task Overview
+## Steps
 
-[High-level steps numbered. Keep it brief - details go in Execution Steps.]
+[Numbered steps. Add per-step file paths or detail only where the approach isn't obvious.]
 
-1. [First major step]
-2. [Second major step]
-3. [Third major step]
-
----
-
-## Execution Steps
-
-### Step 1: [Step Name]
-
-- **Action**: [What to do]
-- **Files**: `path/to/file.extension`
-- **Details**: [Specifics if needed]
-
-### Step 2: [Step Name]
-
-- **Action**: [What to do]
-- **Files**: `path/to/file.extension`
-
-### Step 3: [Step Name]
-
-- **Action**: [What to do]
+1. [First step]
+2. [Second step]
+3. [Third step]
 
 ---
 
@@ -96,13 +66,11 @@ _**Only include this section if task creates files in documentation folders**_
 
 ---
 
-## Agent Notes
+## Implementation Notes
 
 _To be completed by agent after task execution._
 
-### Execution Log
-- [ ] Started: YYYY-MM-DD HH:MM
-- [ ] Completed: YYYY-MM-DD HH:MM
+**Completed**: YYYY-MM-DD HH:MM
 
 ### Changes Made
 - 
@@ -110,9 +78,8 @@ _To be completed by agent after task execution._
 ### Issues & Resolutions
 - 
 
-### Statistics (if applicable)
-- Files processed: X
-- Errors: 0
+### Deviations from Plan
+- None / [Describe if any, and why approved]
 
 ---
 

@@ -50,6 +50,13 @@ Brief description of the purpose and context of this document.
   2. [Step two]
   3. [Step three]
 
+  ── Mechanism (how something works — see cortex-docs) ─
+  ### [Mechanism name]
+  **Property** — what is true.
+  **Where** — `path/to/file.ext` (`symbolName`). Never a line number.
+  **Proven by** — `path/to/file.test.ext` (`test name`).
+  **Not covered** — gaps no test holds.
+
   ── Implementation / Example ───────────────────────────
   ## Implementation
   Key details or a worked example. Include a fenced code block here if relevant.

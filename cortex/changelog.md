@@ -16,6 +16,55 @@
 
 ---
 
+## v4.0.0 — 2026-10-15
+**Breaking: `cortex-organize` renamed `cortex-docs`; new `cortex-architecture` skill. Docs are held true by tests, not re-read later.**
+
+### Synced
+- `cortex-docs` (was `cortex-organize`): filing flow kept; adds "Keep it true" — every claim about code cites a symbol and a test, never a line number; no current state in durable docs; numbers derived from code constants; audit-first UPDATE (cite, test, or delete each claim). New `references/doc-truth.md`: mechanism shape (Property / Where / Proven by / Not covered), index + three-way tripwire tests, symbol-existence test, VERIFY doc audit, no-test-suite fallback.
+- `cortex-architecture` (new): before-you-build checklist and rules for reuse, one job per file, one source per contract, one layer per concern, and registries. References: `contracts.md` (schema → code → OpenAPI → MCP, tested end to end), `registries.md` (references and conditions, root cause by walking edges).
+- `cortex-write-task`: Skill Routing table; planner loads `cortex-architecture` for dev work and names skills in each task; VERIFY runs the doc audit when code a doc describes changes.
+- `task-template.md` (`Skills` input), `single-task-template.md` (`skills:` frontmatter), `generic-document.md` (Mechanism block).
+- `cortex-change-protocol.md`, `CORTEX-SYSTEM.md`, `cortex-archive`, `cortex/readme.md`: references updated to `cortex-docs`.
+
+### Migrations
+- If `.kiro/skills/cortex-organize/`, `.agent/skills/cortex-organize/` or `.claude/skills/cortex-organize/` still exists after `copier update`, delete it — it is replaced by `cortex-docs`.
+- In project-authored steering, skills or task files that are still open, replace references to `cortex-organize` with `cortex-docs`. Leave completed task files unchanged — they are history.
+
+---
+
+## v3.3.3 — 2026-10-15
+**Trimmed for stronger models; stale references and contradictions removed.**
+
+### Synced
+- `cortex-rules.md` rule 12: describes the file-include directive in words, so PROFILE is no longer inlined twice.
+- `single-task-template.md`: Task Overview + Execution Steps merged into Steps; Agent Notes renamed Implementation Notes; Statistics and execution-log checkboxes dropped.
+- `task-template.md`, `single-task-template.md`: Pre-Task Requirements block removed; `cortex-write-task` now adds a doc-placement Constraints line instead.
+- `task-status-template.md`: table status `COMPLETED` → `Completed`.
+- `sequential.md`, `parallel.md`: Pre-Loop Pledge replaced by a one-line read-discipline checkpoint; redundant AUDITED reminder dropped from dispatch prompts; "No external dependencies" scoped to "unless the task file calls for them". Long File Strategy and `cwd` reminders kept.
+- `cortex-write-task`: FE/BE split generalised to surface boundaries.
+- `cortex-organize`: stale PROFILE §3/§5 references point to `REGISTRY.md` `docs`; archive-before-update removed; tasks deferred to `cortex-write-task`; duplicate check uses `cortex-search`.
+- `cortex-archive`: `versioned` reason removed — archiving always moves; no pre-edit snapshots.
+- `cortex-search`: Layer 1 scopes to `include` + `flag` minus `exclude`; shell commands replaced with tool-agnostic steps; Scaling table removed.
+
+### Migrations
+- None.
+
+---
+
+## v3.3.2 — 2026-10-12
+**Model class per task, reuse-never-copy, and scoped testing for sub-agents.**
+
+### Synced
+- `cortex-write-task`, `task-status-template.md`, `single-task-template.md`: planner sets a `Model` class (`standard` | `strong`) per task, never a model name.
+- `cortex-task-exe/SKILL.md`: every dispatch names a model from the task's class; project steering maps classes to models, else ask the user. Single mode tests shared patterns it changes, and runs full gates when not a sub-agent.
+- `sequential.md`, `parallel.md`: dispatch prompts add reuse-never-copy and "run your own tests plus those of every shared pattern or file you change" (replaces the TypeScript-only getDiagnostics line); orchestrator runs the full gates before marking a set complete.
+- `cortex-task-exe` read discipline loosened: the orchestrator may read task and source files to check sub-agent work when it judges it worthwhile (was forbidden mid-loop).
+
+### Migrations
+- None.
+
+---
+
 ## v3.3.1 — 2026-10-01
 **Flagged tier wording gaps closed in the Gardener.**
 

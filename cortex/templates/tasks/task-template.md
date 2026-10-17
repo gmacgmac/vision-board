@@ -14,19 +14,6 @@
 
 ---
 
-## Pre-Task Requirements
-
-_**Only include this section if task creates files in documentation folders**_
-
-> Before writing any documentation files:
-> 1. Resolve per `cortex/router.md § Resolution` (handlers linked in `cortex/REGISTRY.md`)
-> 2. Confirm destination via `cortex/REGISTRY.md` doc surface + PROFILE conventions
-> 3. Run the `/cortex-organize` skill for formatting
->
-> **DO NOT hardcode file paths** — let PROFILE + the skill determine destination and template.
-
----
-
 ## Objective
 
 [One sentence: what does this task accomplish?]
@@ -49,6 +36,7 @@ _**Only include this section if task creates files in documentation folders**_
 - **Files to reference**: `path/to/reference.extension`
 - **Patterns to follow**: [Link or description]
 - **Shared artifacts to reuse**: `path/to/shared.ext` (`symbolName`) — built by [TASK_ID]. Import it; do not re-create it. See TASK-STATUS.md Shared Foundations.
+- **Skills**: `cortex-architecture` (dev work) · `cortex-docs` (doc work, or code a doc describes) — load before starting. Delete if none apply.
 
 ---
 

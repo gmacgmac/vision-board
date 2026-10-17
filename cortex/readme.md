@@ -66,14 +66,15 @@ kernel content, never user-edited, so it is inlined like the rules rather than l
 
 ## Skills (on-demand)
 
-Ten skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.md`. Only the
+Eleven skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.md`. Only the
 `name` + `description` are always available; the body loads when the skill activates.
 
 | Skill | Role |
 |-------|------|
 | `cortex-route` | Explicit routing: classify an item, resolve the handler per `router.md § Resolution` |
 | `cortex-garden` | The Gardener: coalesce LOG entries into threads, verify changes, fix doc-drift inside the tracked surface, report it in flagged files (read-only outside both) |
-| `cortex-organize` | Information processing: sort, classify, and file inbound material |
+| `cortex-docs` | Write and file docs in the doc surface, and keep them true: every claim about code held by a symbol and a named test |
+| `cortex-architecture` | How code is organized: reuse, one job per file, one source per contract (schema → code → OpenAPI → MCP), registries for dependencies and conditions |
 | `cortex-archive` | Retire or supersede content into `.archive/` |
 | `cortex-search` | Layered search across the doc surface and project |
 | `cortex-write-task` | Create task files (single or multi-file) from templates |

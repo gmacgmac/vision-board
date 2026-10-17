@@ -29,15 +29,9 @@ In BOTH cases, spawn a task-execution sub-agent for EACH task. One sub-agent per
 
 ---
 
-## Pre-Loop Pledge
+## Read Discipline Checkpoint
 
-Before dispatching the first sub-agent, emit this exact line:
-
-```
-Pre-flight reads complete: TASK-STATUS.md ✓ PLAN.md ✓. Entering dispatch loop — no further reads of task files, TASK-STATUS.md, PLAN.md, or source files until all tasks return. Trusting sub-agent return blocks.
-```
-
-This is not cosmetic. It is the moment you commit to read discipline. If you find yourself about to read a file mid-loop, the pledge is the signal to stop and ask: "is this read justified, or am I duplicating sub-agent work?"
+Pre-flight reads end here. From now on, before reading any file, ask: "is this read justified, or am I duplicating sub-agent work?"
 
 ---
 
@@ -68,12 +62,13 @@ Rules:
 - Read notes from completed tasks before starting
 - No git commits
 - Don't over-engineer — be concise
+- Reuse existing patterns: search the repo first, import or follow what exists, never copy it
 - If you need to deviate from the plan, report back to the orchestrator
 - Update the task file's Implementation Notes when done
 - Update TASK-STATUS.md when done
-- Follow the task file's On Completion, including your own single LOG entry (one line, ends with a newline). Do not write to AUDITED.md
-- Run getDiagnostics to verify no TypeScript errors
-- No external dependencies
+- Follow the task file's On Completion, including your own single LOG entry (one line, ends with a newline)
+- Run your own tests, plus the tests of every shared pattern or file you change (search the test folders for its name). The orchestrator runs the full gates.
+- No new external dependencies unless the task file calls for them
 - Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, never `cd path &&`. Any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
 
 Return Contract — your final message MUST end with this block, exactly:
@@ -88,7 +83,6 @@ NOTES: <one line for the orchestrator; "none" if nothing>
 
 ### 3. Wait & Verify
 - Trust the sub-agent's return block. Parse STATUS, FILES, VERIFICATION, NOTES.
-- DO NOT re-read the task file or TASK-STATUS.md to double-check.
 - If `STATUS: COMPLETED` — brief status update, proceed to next task.
 - If `STATUS: BLOCKED` or `DEVIATION` — STOP, inform user with the sub-agent's NOTES.
 - If the return block is missing or malformed — treat as failure, ask the sub-agent to re-report.
@@ -105,9 +99,9 @@ Reads of TASK-STATUS.md and PLAN.md are budgeted:
 - **Once at the end** — to confirm final state before logging.
 - **Never inside the loop** — trust sub-agent return blocks.
 
-Reads of individual task files by the orchestrator are forbidden. Each sub-agent owns its task file.
+Each sub-agent owns its task file.
 
-Between dispatch cycles, the orchestrator's only inputs are the structured return blocks from prior sub-agents. Do not re-read TASK-STATUS.md to "see what they wrote."
+Between dispatch cycles, the orchestrator's only inputs are the structured return blocks from prior sub-agents.
 
 ---
 
@@ -116,6 +110,8 @@ Between dispatch cycles, the orchestrator's only inputs are the structured retur
 Logging is **two-level, each entry written exactly once**: every sub-agent appends its own task
 entry via its task file's On Completion; the orchestrator adds one set entry. Never write a
 sub-agent's entry for it, and never write to `AUDITED.md` — that is `cortex-garden`'s ledger alone.
+
+Before anything below: run the project's full gates (build, tests, lint). On a failure, don't mark the set complete; report it.
 
 ### Batch Mode
 1. Frontmatter Lifecycle (SKILL.md): flip `status: completed`, `completed: YYYY-MM-DD`.

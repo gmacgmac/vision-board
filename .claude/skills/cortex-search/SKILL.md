@@ -1,11 +1,11 @@
 ---
 name: cortex-search
-description: "Find existing docs or code with the layered search (filename \u2192 content \u2192 frontmatter). Use before creating anything to avoid duplicates, or whenever asked to locate a file, doc, or definition."
+description: "Find existing docs or code with the layered search (doc surface \u2192 filename \u2192 content \u2192 frontmatter \u2192 tests). Use before creating anything to avoid duplicates, or whenever asked to locate a file, doc, or definition."
 ---
 
 # Search
 
-Layered search algorithm for finding documentation and code. Try layers top-to-bottom; stop when you have sufficient results.
+Layered search algorithm for finding documentation and code. Try layers top-to-bottom; stop when you have sufficient results. Use your environment's dedicated file and content search tools; shell `grep`/`find` only when none exist.
 
 ## Layers
 
@@ -23,10 +23,9 @@ Layered search algorithm for finding documentation and code. Try layers top-to-b
 
 Scoped lookup — confine the search to the declared doc surface.
 
-1. Read `REGISTRY.md` `docs` (the doc surface) — the folders/paths that hold authoritative docs.
-2. List doc files within those folders.
+1. Read `REGISTRY.md` `docs` — `include` + `flag` are the doc surface; drop anything matching `exclude`.
+2. List doc files within those paths.
 3. Read the file(s) most relevant to the search topic.
-4. Use comprehension to assess relevance.
 
 **Fall through when**: doc-surface folders hold nothing relevant, query spans multiple domains, or need implementation details not in docs.
 
@@ -43,8 +42,8 @@ Filename and path matching — find docs by where they live and what they're nam
 
 Full-text search inside files for specific patterns.
 
-1. For docs (scoped to the doc surface): `grep -rli "{search_term}" --include="*.md" {surface_folders}`
-2. For code: `grep -rn "{search_term}" {source_path}/ --include="*.{ext}"`
+1. For docs: search file contents within the doc surface.
+2. For code: search the project's source paths, filtered by file type.
 3. Read matching files for context.
 
 ## Layer 4: FRONTMATTER_SEARCH (auto-detected)
@@ -61,8 +60,8 @@ Metadata-driven search — scan document frontmatter for structured categorizati
 
 Check if tests exist for a feature or component.
 
-1. Find test files: `find {test_directory}/ -name "*.test.*" -o -name "*.spec.*"`
-2. Search for references: `grep -r "{search_term}" {test_directory}/`
+1. Find test files by the project's naming convention (e.g. `*.test.*`, `*.spec.*`, `test_*.py`).
+2. Search those files for the feature's symbol or name.
 
 Use before claiming test coverage exists, when verifying a change has test backing, or investigating a bug.
 
@@ -71,15 +70,5 @@ Use before claiming test coverage exists, when verifying a change has test backi
 ## Scope rules
 
 - Doc paths come from `REGISTRY.md` docs (the declared doc surface).
-- Source/test paths are project-specific (discovered at install).
-- `cortex-tasks/` provides historical task context.
-
-## Scaling
-
-| Project Stage | Doc Count | Behaviour |
-|---------------|-----------|-----------|
-| Small | 1–10 | Layers 1–3 sufficient |
-| Medium | 10–40 | Content search for specifics |
-| Large | 40+ | Frontmatter auto-engages once docs carry it |
-
-No migration required. The system adapts as docs grow.
+- Source/test paths are project-specific (category paths in `REGISTRY.md`).
+- `cortex-tasks/` provides historical task context — readable, though `exclude`d from drift checks.

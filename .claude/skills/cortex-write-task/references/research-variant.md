@@ -16,6 +16,6 @@ When the task `type` is `research`, apply these format changes:
 7. Success Criteria (checkboxes, mapped to ROs)
 8. Deliverables: task file updated with findings + `{filename-stem}_result.md`
 9. References
-10. Agent Notes (empty: Execution Log, Changes Made, Issues, Research Findings)
+10. Implementation Notes (empty: Completed, Changes Made, Issues, Research Findings)
 
 **Key rule**: Research produces findings, not implementations. If it should also output a ready-to-execute task file, state that in Deliverables explicitly.

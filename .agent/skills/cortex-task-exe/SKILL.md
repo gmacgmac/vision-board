@@ -35,7 +35,7 @@ You are the executor. Read the task file, do the work, report back.
 3. Execute the steps. If issues arise, work through them — collaborate with the user if needed.
 4. Do NOT deviate from the plan silently. If deviation is needed, stop and discuss.
 5. Document findings in the task file's Implementation Notes.
-6. Verify your changes — focus on testing the logic (run tests, diagnostics, or whatever validation the task specifies); ensure your testing environment is ready before you start.
+6. Verify your changes — focus on testing the logic (run tests, diagnostics, or whatever validation the task specifies), plus the tests of every shared pattern or file you change; ensure your testing environment is ready before you start. Not a sub-agent → also run the project's full gates.
 7. Record any security concerns you surface in the task's Implementation Notes (or TASK-STATUS.md in a set).
 8. Update your row in TASK-STATUS.md's table, then re-apply the Lifecycle above (it may now be the last task).
 9. Follow the task file's **On Completion** — append your own LOG entry for this task. One line, terminated with a newline, append-only; never `str_replace`. If you flipped the set to `completed` in step 8, also append the set entry.
@@ -44,7 +44,6 @@ You are the executor. Read the task file, do the work, report back.
 **Constraints**:
 - No git commits.
 - Be concise — don't over-engineer.
-- No PII in examples.
 - **Never write to `cortex/AUDITED.md`** in any mode. That is `cortex-garden`'s ledger — it records what has been *verified*. Task execution's record is the LOG entry.
 - Long File Strategy and `cwd` usage are MANDATORY per workspace rules (survival-critical — see steering). Do not skip these even under time pressure.
 
@@ -65,13 +64,13 @@ NOTES: <one line for the orchestrator; "none" if nothing>
 
 You are the orchestrator. You NEVER do task work directly — you dispatch sub-agents.
 
-For the full sequential protocol (pre-loop pledge, dispatch loop, read discipline, return-block parsing), read `references/sequential.md`.
+For the full sequential protocol (read-discipline checkpoint, dispatch loop, read discipline, return-block parsing), read `references/sequential.md`.
 
 **Key non-negotiables**:
 - Logging is two-level: each sub-agent logs its own task, the orchestrator logs the set. Each entry written exactly once.
 - One sub-agent per task, in order. Wait for each to complete before dispatching the next.
 - Pass TASK-STATUS.md and PLAN.md as contextFiles. Do NOT paste task file content into the prompt.
-- Trust the sub-agent's return block. Do NOT re-read files to double-check.
+- Trust the sub-agent's return block; check its work yourself only where you judge it worthwhile.
 - If any sub-agent reports BLOCKED or DEVIATION, stop and inform user.
 
 ---
@@ -104,4 +103,4 @@ It is not a dumb text processor. Do not duplicate file contents, rules, or conte
 
 If the platform supports background/async sub-agent execution, dispatch that way so the orchestrator stays available to the user.
 
-If the platform lets you choose a model/effort tier per sub-agent, you MUST set it explicitly on every dispatch — never rely on the default. Size it to the task: a lightweight tier for mechanical work (doc edits, renames, single-file changes), a stronger tier for complex work (cross-file refactors, debugging, design decisions). Use the orchestrator's own tier only when the task genuinely needs it.
+**Model**: name one on every dispatch, never the default. Use the task's `Model` class (`standard` for defined-shape work, `strong` for pattern-setting, design, or debugging); the project's steering maps classes to models — if it doesn't, ask the user.

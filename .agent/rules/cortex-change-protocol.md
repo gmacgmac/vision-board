@@ -12,7 +12,7 @@ One change lifecycle: gates **before** you edit, a record **after** you edit.
 |------|---------------|
 | `cortex/PROFILE.md` · `cortex/REGISTRY.md` | Edit → bump `last_updated` → confirm `cortex/readme.md` still describes them accurately |
 | Any other `cortex/*`, or `cortex-*`-prefixed files under `.kiro/` (managed — copier-owned) | **Don't.** Overwritten/conflict-marked on next update. Wrong or missing something? Report upstream, don't patch. (Template-repo context only: edit → bump `Version`.) |
-| A doc-surface path | `/cortex-organize` — resolve per `router.md § Resolution`, apply its template and naming (kebab-case, 3–4 words) |
+| A doc-surface path | `/cortex-docs` — resolve per `router.md § Resolution`, apply its template and naming (kebab-case, 3–4 words), and audit the claims the change made untrue |
 | Anything else under `.kiro/` | Edit freely. Never edit `.agent/` or `.claude/` cortex-* files — kernel mirrors. |
 
 **No pre-edit archiving.** Git is the history for everything here. `/cortex-archive` is for

@@ -1,7 +1,7 @@
 ---
 task_name: [Task Name - Title Case]
 created: YYYY-MM-DD
-completed:           # Set when ALL tasks reach COMPLETED
+completed:           # Set when ALL tasks reach Completed
 status: planned      # planned | in-progress | completed | deferred
 categories: []       # From cortex/PROFILE.md §2 (Categories)
 tracker:             # optional: path#ID[,ID]
@@ -32,13 +32,13 @@ tracker:             # optional: path#ID[,ID]
 
 ## Task List
 
-| # | ID | Wave | Task | Status | Notes |
-|---|-----|------|------|--------|-------|
-| 1 | PREP_01 | 1 | [Preparation](./PREP_01_task-name.md) | Pending | |
-| 2 | IMPL_01 | 2 | [Implementation](./IMPL_01_task-name.md) | Pending | |
-| 3 | VERIFY_01 | 3 | [Final verification](./VERIFY_01_testing.md) | Pending | |
+| # | ID | Wave | Model | Task | Status | Notes |
+|---|-----|------|-------|------|--------|-------|
+| 1 | PREP_01 | 1 | strong | [Preparation](./PREP_01_task-name.md) | Pending | |
+| 2 | IMPL_01 | 2 | standard | [Implementation](./IMPL_01_task-name.md) | Pending | |
+| 3 | VERIFY_01 | 3 | standard | [Final verification](./VERIFY_01_testing.md) | Pending | |
 
-**Status Values**: `Pending` | `In Progress` | `COMPLETED` | `Blocked` | `Deferred`
+**Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
 **Wave**: execution order, assigned by the planner. Same number = safe to run in parallel.
 Waves run in ascending order; a wave completes before the next starts. All-distinct numbers
