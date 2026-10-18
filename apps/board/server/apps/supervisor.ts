@@ -32,9 +32,12 @@ export interface Supervisor {
   close(): void;
 }
 
+/** One problem as a sentence of its own, "<file>: <detail>.", so it never runs into the next. */
+const sentence = ({ file, detail }: AppProblem): string => `${file}: ${detail}${/[.!?]$/.test(detail) ? '' : '.'}`;
+
 /** The problem for an app whose files need fixing. */
 export const appInvalid = (id: string, problems: readonly AppProblem[] = []): ProblemError =>
-  problem('app-invalid', `The app "${id}" has problems in its files: ${problems.slice(0, 3).map((p) => `${p.file}${p.pointer ? ` ${p.pointer}` : ''}: ${p.detail}`).join(' ')} Fix them and try again.`);
+  problem('app-invalid', `The app "${id}" has problems in its files: ${problems.slice(0, 3).map(sentence).join(' ')} Fix them and try again.`);
 
 /** A process and its tools, once loaded (rejects with the problem when they don't). */
 interface Proc { child?: Child; tools: Promise<Map<string, CheckedTool>> }

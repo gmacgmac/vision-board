@@ -1,6 +1,7 @@
 // The samples show the server's own words (app-cards FIX_06, findings 31 and 32; rules 6 and 11): the
 // gallery's invalid app cards (src/gallery/gallery.apps.json) and the OpenAPI examples of an invalid
-// app are what list_apps and call_app_tool answer for the same files, through the real server. The
+// app are what list_apps and call_app_tool answer for the same files, through the real server; so is
+// the list_apps example's calculator before Allow, which names no tools (FIX_07, finding 34). The
 // example calculator, broken two ways: its app.json, and a tools.mjs that imports a file (seen once
 // the person allowed it and pressed =; a schema problem and a load problem never come in one answer).
 // A hash is of the files written here, so only its shape is compared.
@@ -24,6 +25,8 @@ after(async () => { await h.close(); });
 
 /** App `id`'s folder in the project. */
 const folder = (id: string): string => path.join(h.project, '.visionboard', 'apps', id);
+/** The example calculator as the skill ships it. */
+const CALCULATOR = path.join(ROOT, 'skills/vision-board/examples/apps/calculator');
 
 /** list_apps' answer for `id`, its hash checked to be one, then set to the sample's. */
 async function listed(id: string, sample: AppInfo): Promise<AppInfo> {
@@ -32,9 +35,17 @@ async function listed(id: string, sample: AppInfo): Promise<AppInfo> {
   return { ...got, hash: sample.hash };
 }
 
+// First, while nothing is allowed: the next test allows the calculator.
+test('the list_apps example\'s calculator is the answer for the calculator as the skill ships it, and no example names tools on an app the person has not allowed (finding 34)', async () => {
+  for (const a of LISTED) assert.ok(a.allowed || !a.tools.length, `${a.id}: tools are named only once the person allowed the app and it ran`);
+  fs.cpSync(CALCULATOR, folder('calculator'), { recursive: true });
+  const sample = LISTED.find((a) => a.id === 'calculator')!;
+  assert.deepEqual(await listed('calculator', sample), sample);
+});
+
 test('the gallery\'s invalid app cards are list_apps\' answers for a broken app.json and for a tools.mjs that imports a file (finding 31); the app-invalid example is the call\'s (finding 32)', async () => {
   const dir = folder('calculator');
-  fs.cpSync(path.join(ROOT, 'skills/vision-board/examples/apps/calculator'), dir, { recursive: true });
+  fs.cpSync(CALCULATOR, dir, { recursive: true });
   const manifest = fs.readFileSync(path.join(dir, 'app.json'), 'utf8');
   const tools = fs.readFileSync(path.join(dir, 'tools.mjs'), 'utf8');
   fs.writeFileSync(path.join(dir, 'app.json'), JSON.stringify({ ...JSON.parse(manifest), size: { w: 1200, h: 440 }, colour: 'teal' }));

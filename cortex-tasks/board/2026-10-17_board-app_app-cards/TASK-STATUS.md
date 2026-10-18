@@ -63,7 +63,7 @@ tracker:
 | 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Completed | `retryDone` "<name> not found" when the folder went (+1 B gzip, 149.87 KB, 130 B left); `manifestOf` "not valid JSON near line N" (server only); 534 pages: see notes |
 | 15 | FIX_05 | 12 | strong | [Name each file once; read app.json with a byte-order mark (findings 29, 30)](./FIX_05_file-lines.md) | Completed | Per-file lines name the file once (`manifest.ts`, `child.ts`, `runner.mjs` `Unfit`); one leading mark stripped, hash over the bytes as they are; server only (149.87 KB, 130 B left); 534 pages: see notes |
 | 16 | FIX_06 | 13 | strong | [The gallery and the API examples show the server's real words (findings 31, 32)](./FIX_06_samples.md) | Completed | Two real invalid answers in `gallery.apps.json` (app.json; tools.mjs once allowed), held by `app-samples.test.ts` against the server, as the OpenAPI examples; board page unchanged (149.87 KB); 534 pages: see notes |
-| 17 | FIX_07 | 14 | strong | [Problems end cleanly; examples match the server (findings 33-35)](./FIX_07_last-words.md) | Pending | |
+| 17 | FIX_07 | 14 | strong | [Problems end cleanly; examples match the server (findings 33-35)](./FIX_07_last-words.md) | Completed | `appInvalid` ends each problem with a full stop (`sentence`); `list_apps` example calculator `tools: []`, held by the server; "must be a file name ending in .html, directly in the app's folder" (`schema.ts` `PATTERNS`); server only (149.87 KB); 534 pages: see notes |
 | 18 | VERIFY_03 | 15 | strong | [Re-check findings 25, 27-35, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -624,8 +624,23 @@ Gates, one after another after the last change: check 0; npm test 1487 + 7 pass;
 build 0; test:pages 534 passed. Board page 153,470 B gzip (149.87 of 150 KB, 130 B left).
 
 ### FIX_07: Last words
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 33, 34 and 35 fixed; server and `openapi.json` only. Read FIX_07_last-words.md § Implementation Notes.
+- **33**: `server/apps/supervisor.ts` `appInvalid` writes each problem as "<file>: <detail>." (`sentence`: a full stop
+  only when the detail has none), so no line runs into the next. Proof: `api-apps.test.ts` "finding 33: a call to an
+  app with problems gives each as its own sentence, …"; "finding 29: …" shows no second stop.
+- **34**: the `list_apps` example's `needs-approval` calculator has `tools: []`. Proof: `app-samples.test.ts` "the
+  list_apps example's calculator is the answer for the calculator as the skill ships it, and no example names tools
+  on an app the person has not allowed (finding 34)".
+- **35**: `server/schema.ts` `PATTERNS`: "panel must be a file name ending in .html, directly in the app's folder"
+  (tools, .mjs the same; "directly" added after ux-copy: a subfolder is the likeliest slip). Proof: `app-folder.test.ts`
+  "4h: …", `api-apps.test.ts` "list_apps: every folder …"; the `list_apps` example follows (`app-samples.test.ts`).
+- `npm run gen`: only `api-reference.md`; no version change. No page code, doc claim or screenshot changed.
+- **For VERIFY_03**, seen, not fixed: one problem still reads "has problems … Fix them"; `manifest.schema.json`
+  `panelFile`/`toolsFile` descriptions keep "in the app's folder ending in `.html`"; `list_apps`'s description says
+  "the `tools` by name" without "once allowed and run"; a hidden name's words don't name the leading dot.
+Gates, one after another after the last change: check 0; npm test 1489 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 534 passed. Board page 153,470 B gzip (149.87 of 150 KB, 130 B left).
 
 ### VERIFY_03: Re-check size
 _Status:_ Pending

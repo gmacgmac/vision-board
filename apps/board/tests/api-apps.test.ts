@@ -21,6 +21,8 @@ let A: Joined;
 const dirs: Record<string, string> = {};
 /** The runner's words for an import of anything but a built-in (finding 29: they name no file). */
 const IMPORT_ONLY = (what: string) => `Import only Node's built-in modules, such as node:fs, not "${what}". Put that code in this file, so the version the person allows covers all of it.`;
+/** The words for a panel field that is not a file name in the app's folder (finding 35). */
+const PANEL_NAME = 'panel must be a file name ending in .html, directly in the app\'s folder';
 const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports', 'bad-tool'];
 
 before(async () => {
@@ -52,7 +54,7 @@ test('list_apps: every folder and every app a card names, each in its state; age
   const bad = all.get('invalid-manifest')!;
   assert.equal(bad.state, 'invalid');
   assert.deepEqual(bad.problems!.map((p) => [p.file, p.pointer, p.detail]).sort(), [
-    ['app.json', undefined, "panel is not a plain file name in the app's folder ending in .html"], ['app.json', undefined, 'unknown field colour'],
+    ['app.json', undefined, PANEL_NAME], ['app.json', undefined, 'unknown field colour'],
   ], 'finding 4: the field as a person writes it, no code marks, no pointer');
   assert.deepEqual(await h.ok('list_apps', {}, { as: A.client }), await h.ok('list_apps', {}, { as: h.person }));
 });
@@ -273,4 +275,9 @@ test('4h: an app id with upper case, a slash or dots never reaches a path', asyn
   await h.fails('call_app_tool', { app: 'nope', body: { tool: 'add' } }, 404, 'app-not-found');
   await h.fails('call_app_tool', { app: 'ghost', body: { tool: 'add' } }, 404, 'app-not-found');
   await h.fails('call_app_tool', { app: 'invalid-manifest', body: { tool: 'add' } }, 422, 'app-invalid');
+});
+
+test('finding 33: a call to an app with problems gives each as its own sentence, so one with no full stop never runs into the next', async () => {
+  const called = await refused(h, 'invalid-manifest', 'add', 422, 'app-invalid');
+  assert.equal(called.detail, `The app "invalid-manifest" has problems in its files: app.json: ${PANEL_NAME}. app.json: unknown field colour. Fix them and try again.`);
 });

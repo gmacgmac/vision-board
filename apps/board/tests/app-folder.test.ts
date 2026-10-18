@@ -48,7 +48,8 @@ test('4h: manifest file names with a folder, `..`, a hidden name or an absolute 
     app('names', { [field]: name });
     const listed = readApp(project, 'names')!;
     assert.equal(listed.problems.length, 1, `${field}: ${name}`);
-    assert.match(problems('names')[0]!, new RegExp(`^app\\.json  ${field} is not a plain file name`), 'the field as a person writes it');
+    assert.equal(problems('names')[0], `app.json  ${field} must be a file name ending in .${field === 'panel' ? 'html' : 'mjs'}, directly in the app's folder`,
+      'the field as a person writes it; the folder never reads as ending in .html (finding 35)');
     assert.equal(listed.panel, undefined, 'no file is resolved from a manifest with problems');
     assert.equal(listed.tools, undefined);
   }

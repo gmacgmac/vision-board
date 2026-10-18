@@ -277,3 +277,4 @@
 [[2026-10-18 10:42]] [board-app] FIX_04: two wording slips on app cards → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_04_two-words.md]]
 [[2026-10-18 11:16]] [board-app] FIX_05: name each file once; read app.json with a byte-order mark → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_05_file-lines.md]]
 [[2026-10-18 11:54]] [board-app] FIX_06: gallery and API examples show the server's real words → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_06_samples.md]]
+[[2026-10-18 12:24]] [board-app] FIX_07: problems end cleanly; examples match the server → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_07_last-words.md]]
