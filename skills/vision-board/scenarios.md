@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.7
+status: v3.8
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -42,6 +42,8 @@ mean; 22 and 24 carry the "Waiting for your reply" line; 25's card 4 is an older
 not); 26 (a round with a "Waiting for your reply" line, one card from an earlier round) new.
 v3.7 (skill v3.7, ask, never guess, for ✓ as well as ✗): 27 (a ✓ that does not fit the card) new;
 25 run again (the rule it checks now covers ✓ too), unchanged.
+v3.8 (skill v3.8, images in cards and apps on the board): 28 (show the calculator), 29 (build a new
+app), 30 (show a screenshot) and 31 (fix a broken app) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -615,3 +617,70 @@ current skill. The person presses ✓ on 2 and ✓ on 4, writes nothing, and pre
 - **Fails if** it reads the ✓ on 4 as an answer of any kind ("you'll write it", "the docs team
   writes it", "a post is wanted") and writes that anywhere as decided: a card, a summary, a reply
   stated as fact or the chat; or rewrites or retires 4; or leaves the ✓ on 4 without a reply.
+
+## 28. Show the calculator (panel)
+
+**Situation.** The project's `.visionboard/apps/calculator/` holds a copy of the example
+(`skills/vision-board/examples/apps/calculator/`). Board "Workbench" has a container "Tools"
+(`row`) with note 1 ("Budget sums", "The Q3 figures to check."). The person writes: "Put the
+calculator on the board."
+
+**A good run**
+- Calls `list_apps` (the calculator reads `needs-approval`), then one `write_board`: one `app` card
+  for `calculator` with `app: { id: "calculator" }` and, if it sets them, a `w` from 280 to 960 and
+  an `h` from 120 to 800; no `size`. No structure question (one card).
+- Writes no file: the app is already there.
+- Chat words: "Done." and one line telling the person to press Allow on the card.
+- **Fails if** it writes or changes a file, draws more than that one card, sets a size outside
+  those limits or a `size`, or doesn't say to press Allow.
+
+## 29. Build a new app (panel)
+
+**Situation.** Board "Workbench" as in 28; the project has no apps. The person writes: "Make me a
+unit converter for kilometres and miles, with the maths done by your tool."
+
+**A good run**
+- Writes a new folder in `.visionboard/apps/`: an `app.json` that `list_apps` reads as valid
+  (`needs-approval`), a `panel.html` that follows the panel messages (`ui/initialize`, then
+  `ui/notifications/initialized`, `tools/call`, the host's variables, Esc), and a `tools.mjs`
+  whose tool converts (1 km is 0.621371 mi).
+- Calls `list_apps` before drawing, then draws one `app` card sized to its controls. Chat words:
+  "Done." and the line to press Allow.
+- After the person allows it (the harness presses Allow), converting 10 km in the panel shows
+  6.21 mi, worked out by the tool (the page sends `call_app_tool`).
+- Labels on its fields, keyboard use, plain error words. No `eval` or `Function`, no network call,
+  no key or secret in the code.
+- **Fails if** `list_apps` reads it `invalid`, the panel never shows or never calls the tool, the
+  panel does the maths itself, or 10 km doesn't show 6.21 mi.
+
+## 30. Show a screenshot (panel)
+
+**Situation.** Board "Settings review" has a container "Findings" (`row`): finding 1 ("Save sits
+below the fold on Settings", "At 1366 × 768 the Save button is off screen on the settings screen.")
+and finding 2 ("Login forgets the last tab"). The project's `.visionboard/images/ui/` holds
+`settings.png` (a screenshot of that settings screen) and `login.png`. The person selects card 1
+and writes: "Show me the settings screen you mean on the card."
+
+**A good run**
+- Finds the picture in `.visionboard/images/ui/` and adds it to card 1 (`append`, or a new
+  version): `![<what it shows>](ui/settings.png)`, with alt text that says what the picture shows.
+- Nothing else changes: no other card, no file written, no internet address.
+- Chat words: "Done."
+- **Fails if** the path is not `ui/settings.png` (a leading `/`, `.visionboard/images/…`, an
+  internet address), the alt text is empty or only "image" or "screenshot", or another card or a
+  file changes.
+
+## 31. Fix a broken app (panel)
+
+**Situation.** The project's `.visionboard/apps/calculator/` holds the example with one mistake in
+`app.json`: `"size": { "w": 1200, "h": 440 }` (wider than 960). Board "Workbench" has a container
+"Tools" with app card 1 for `calculator`, which says "This app has problems". The person writes:
+"The app card says invalid."
+
+**A good run**
+- Calls `list_apps`, reads its problem (`app.json`, `/size/w`) and fixes only that (a `w` from 280
+  to 960).
+- Calls `list_apps` again: `needs-approval`. Asks the person to press Check again (and then Allow).
+- Changes no other file; draws no new card. Chat words: "Done." and that one line.
+- **Fails if** it changes the panel or the tools, draws a new card, or the app still reads
+  `invalid`; and, after the person presses Check again, the card doesn't offer Allow.

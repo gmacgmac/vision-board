@@ -1,7 +1,7 @@
 ---
 name: vision-board
-description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel.
-status: v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel. It also shows pictures, and small apps you build, inside a card.
+status: v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -184,6 +184,16 @@ cross another; 0 is the aim); `empty` cells. It doesn't count links between cont
 - Each item is answered on its own. Fix the failed ones and resend only those, with the same
   keys. `pending` in the answer lists what you still owe the person.
 
+### Images in cards
+
+Show a picture when it beats words: a screenshot of the page you mean, a diagram.
+- Keep it in the project's `.visionboard/images/` (subfolders welcome, up to 8 deep; names of
+  letters, digits, `-`, `_` and `.`; png, jpeg, webp or gif, at most 8 MB) and write
+  `![What it shows](ui/settings.png)` in the body, the path starting inside that folder. Alt text
+  is required and says what the picture shows (without it the card shows the path).
+- Never an internet address, `data:`, `..` or a leading `/`: the card says "Image not shown".
+- To change it, overwrite the file under the same name: the person sees it on select or open.
+
 ## Kinds: the kind decides
 
 A card's `kind` alone decides whether it asks for an answer (a node naming `item` is refused).
@@ -197,6 +207,7 @@ A card's `kind` alone decides whether it asks for an answer (a node naming `item
 | `risk` | No | What could go wrong, and how likely or bad |
 | `topic` | No | A heading or theme for a group |
 | `note` | No | Background, a definition, a source |
+| `app` | No | An app you built, for the person to use in the card (Apps on the board) |
 
 - When you need a yes, a no or a choice, draw a card that asks: never bury it in another card's
   body ("needs a rule for who answers" is a `decision` card, not a line in a risk). Ask only what
@@ -345,3 +356,52 @@ unanswered, whatever the card's kind. Put the answer on the board, not only in t
   this conversation: name the files, links and card numbers it depends on.
 - If they take it out of Later and save it again, a fresh handover is owed: a new `park` with what
   is known now, under a new key, never a copy of the old one.
+
+## Apps on the board
+
+Build an app when the person wants something to use, not to read: it runs in an `app` card.
+
+- **Files**, in `.visionboard/apps/<id>/` (`<id>` like a board id), each under 1 MB: `app.json`
+  (`{ "id": "unit-converter", "title": "Unit converter", "version": "1.0.0", "size": { "w": 360,
+  "h": 240 } }`, `id` the folder's name; optional: `env`, the `.env` keys its tools read, and
+  `csp`; an unknown field is refused), `panel.html` and, when it has work to do, `tools.mjs`.
+- **The panel**: one page, script and style inline. It reaches nothing outside itself (no fetch,
+  no outside fonts or scripts; images as `data:`), storage throws, `alert` does nothing, and a
+  `<form>` never submits: use buttons and handle Enter. It speaks JSON-RPC 2.0 with
+  `parent.postMessage({ jsonrpc: '2.0', ... }, '*')`; answers are `message` events from `parent`
+  with the same `id`.
+  - `ui/initialize`, `params: { protocolVersion: '2026-01-26', appCapabilities: {} }`: set each of
+    `result.hostContext.styles.variables` on `document.documentElement.style` and `color-scheme`
+    to its `theme`; then send `ui/notifications/initialized` (no `id`).
+  - `tools/call`, `params: { name, arguments }`: `result.structuredContent` is what the tool
+    returned; with `result.isError`, `result.content[0].text` is its message. An `error` answer is
+    the board refusing: on `error.data.problem` `needs-approval` say "Press Allow on the card",
+    else show `error.message`.
+  - `ui/notifications/host-context-changed` brings a new `theme` and `styles` in `params`: apply
+    them. On Esc send `ui/notifications/escape`: focus goes back to the card.
+- **The tools**: `export default { tools: [{ name, description, inputSchema, outputSchema, async
+  run(input, ctx) { return { ... }; } }] }`, names in lower case with `_`; the board checks input
+  and output against both JSON Schemas (`type: "object"`). `throw new Error('Type a number')` to
+  refuse: the panel gets your words. One file, importing only Node's built-ins; its own process
+  reads only its folder, writes no files, starts no processes, has 10 seconds a call, and forgets
+  what it holds after 5 idle minutes. `ctx.env` has the `env` keys: never a key in the code; ask
+  the person to put it in the project's `.env`.
+- **Good to use**: colours and fonts only from the host's variables, each with a fallback
+  (`--color-background-primary`, `--color-text-primary`, `--color-text-secondary`,
+  `--color-border-secondary`, `--color-text-danger`, `--color-ring-primary`, `--font-sans`,
+  `--border-radius-md`; the main button `--color-text-inverse` on `--color-background-inverse`),
+  so it matches light and dark; a visible label on every field, real buttons, Enter for the main
+  action, a visible focus ring, results and errors in plain words in an `aria-live` region. Size:
+  `w` 280 to 960, `h` 120 to 800 px (360 × 320 unset), the smallest that fits every control. The
+  model: the calculator, `skills/vision-board/examples/apps/calculator/` in the Vision Board repo
+  (contract: its `docs/specification/apps.md`), or a copy in the project's `.visionboard/apps/`.
+- **Show it**: `list_apps`, and fix every `problems` entry until it reads `needs-approval` or
+  `ready`; the board loads `tools.mjs` only after Allow (`tools` is `[]` until a tool runs), so
+  check it well. Draw a `node` of kind `app` with `app: { id, w, h }` and no `size`: it takes a
+  note and Later, never ✓ or ✗.
+- **Allow**: tools run only after the person presses **Allow** on the card; a change to `app.json`
+  or `tools.mjs` asks again (`panel.html` doesn't). You can't allow it and never call its tools:
+  say only "Done. Press Allow on card 4 to use it."
+- **Problems later** ("the app card has problems"): read `list_apps`, fix what it names, read it
+  again, and say only "Done. Press **Check again** on card 1, then Allow." `broken` (it crashed too
+  often): fix the code; the person presses **Restart**.

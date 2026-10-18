@@ -55,15 +55,15 @@ writing in the scratch project only (an app is files).
 
 ## Steps
 
-1. [ ] Write v3.8 and the scenarios.
-2. [ ] Run each scenario with Claude Code and with Kiro (record which model actually ran, as before).
+1. [x] Write v3.8 and the scenarios.
+2. [x] Run each scenario with Claude Code and with Kiro (record which model actually ran, as before).
    A failure: improve the skill text (not the scenario's pass line), re-run that scenario with both.
    At most three rounds; then record what still fails.
-3. [ ] Gates: `npm run verify`, `npm run check`, `npm test` exit 0.
+3. [x] Gates: `npm run verify`, `npm run check`, `npm test` exit 0.
 
 ## Validation
 
-- [ ] Each scenario passes with both agents, or each remaining failure is recorded with its example
+- [x] Each scenario passes with both agents, or each remaining failure is recorded with its example
   (PLAN.md § Goal state line 9 needs scenarios 2 and 3 to pass in at least one run each).
 
 ## Constraints
@@ -73,7 +73,56 @@ writing in the scratch project only (an app is files).
 
 ## Implementation Notes
 
-**Status**: Pending
+**Status**: Completed (2026-10-18)
+
+1. **Skill v3.8** (`skills/vision-board/SKILL.md`, 406 lines; 347 in v3.7): § Writing cards › Images in
+   cards; an `app` row in § Kinds; § Apps on the board (when; files and manifest; what a panel can't do:
+   no fetch, storage throws, `alert` does nothing, a `<form>` never submits; the panel messages; the
+   tools module and `ctx.env`; good to use: host variables with fallbacks, labels, keyboard, plain error
+   words in an `aria-live` region; size inside `APP_SIZE`; `list_apps` before drawing; the `app` card;
+   Allow and code changes; Check again and Restart; keys in `.env`; the calculator as the model).
+   Claims checked against the symbols listed in NOTES.md § Skill v3.8; the sandbox limits seen in
+   Chromium first. Status line and description updated.
+2. **Deviation (inside ruling 17): no skill-local `apps.md`.** SKILL.md stays about 400 lines with the
+   chapter inside it. A panel agent gets the skill's text only (`--append-system-prompt-file`, Kiro's
+   `prompt`), never its folder's path, so a file beside it would be out of reach and scenario 29 could
+   not pass from the skill alone. The chapter points at `docs/specification/apps.md` and the calculator
+   for the full contract; nothing large is copied from apps.md.
+3. **Scenarios** (`scenarios.md` v3.8): 28 show the calculator, 29 build a new app, 30 show a
+   screenshot, 31 fix a broken app (the four above, with pass and fail lines).
+4. **Runs** (harness in `$TMPDIR/vb-skill38/`, details in NOTES.md § Skill v3.8): one scratch server per
+   run on 4487-4492, `HOME` and `VB_PROJECT` in the temp folder, `VB_KIRO_AGENT=0`; messages from
+   `promptFor`; the person's acts on the page (Playwright: Allow, Check again, the panel). File writing
+   in the scratch project only (Claude `acceptEdits`, Bash removed; Kiro `fs_write` `allowedPaths`).
+   **Claude Code** 2.1.301 ran **Opus 5.5** (`modelUsage` `claude-opus-5-5`, every turn); **Kiro**
+   2.24.0 ran **Opus 5.5** (sessions record `claude-opus-5.5`).
+
+   | Scenario | Round 1 Claude | Round 1 Kiro | Round 2 Claude | Round 2 Kiro |
+   |---|---|---|---|---|
+   | 28 Show the calculator | pass | pass | pass (no "Done.") | pass |
+   | 29 Build a new app | pass | pass | pass | pass |
+   | 30 Show a screenshot | pass | pass | not re-run (unchanged) | not re-run (unchanged) |
+   | 31 Fix a broken app | fail: words | fail: words | pass | pass |
+
+   - 29: each built `km-miles` (manifest valid, `needs-approval` before drawing, tool `convert_distance`);
+     before Allow the panel said "Press Allow on the card to use the converter."; after the harness
+     pressed Allow, 10 km showed "6.213712 miles" (round 1) and "6.2137 miles" (round 2) from the tool
+     (`call_app_tool` 200); no `eval`, network, key or `<form>`. **New app from the skill alone: scenario
+     29, all four runs** (no agent read the calculator or a doc).
+   - 30: `append` on card 1, `![<what the picture shows>](ui/settings.png)`; no file; the page shows it.
+   - 31 round 1: the fix was right (only `/size/w`), but the closing words ran to three or four
+     sentences without "Done." and said "Press Check" (the button is Check again). Skill fixed: the exact
+     closing line, **Check again** in bold. Round 2: on the person's open page, Check again showed
+     "Calculator updated" and Allow.
+5. **Still fails**: only the closing words (no "Done.", a reworded one or an extra sentence in 3 of 7
+   Claude turns and 4 of 7 Kiro turns), as in every skill version before.
+6. **Proposed tracker rows** (outside the rulings): (a) the panel could name the skill's folder (Claude's
+   prompt, Kiro's agent `resources`) so a panel agent can read the calculator and a longer guide; (b) an
+   open page shows an app's old state after the agent fixes its files until Check again (`app-state.ts`
+   never re-reads on a file change); a re-read when the card is selected would drop that step.
+7. **Gates** after the last change: `npm run verify` ok (0 warnings); `npm run check` 0 errors;
+   `npm test` 1474 + 7 pass. Every server, agent and browser started here stopped (no listener on
+   4487-4492, no `claude -p`, `kiro-cli chat` or page process left).
 
 ## On Completion
 

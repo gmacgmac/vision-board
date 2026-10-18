@@ -433,3 +433,81 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
     kept; 1, 2, 3 and 5 retired in the same call.
 - 2026-10-16, agent: what still slips: chat words past "Done." (Claude 1 of 2 turns, Kiro 2 of 2,
   one of them with no "Done.": it restated the round in three sentences).
+
+## Skill v3.8 (images in cards, apps on the board)
+
+- 2026-10-18, maintainer (app-cards PLAN rulings 17 and 19-23, D-047, D-048; go in full; standing
+  instruction for the run: plain words, the fewest that carry the message; teach agents to build
+  apps that are good to use, with the calculator as the model; keep SKILL.md in shape and move the
+  app details to a skill-local `apps.md` if it would pass about 400 lines).
+- 2026-10-18, agent (T_02): v3.8 adds § Writing cards › Images in cards (the images folder,
+  subfolders up to 8 deep, names, png/jpeg/webp/gif up to 8 MB, alt text required, never an
+  internet address, `data:`, `..` or a leading `/`, overwrite to update, seen on select or open),
+  an `app` row in § Kinds, and § Apps on the board (when; the files and manifest; what a panel
+  can't do; the panel messages; the tools module; good to use; size; `list_apps` before drawing;
+  the `app` card; Allow and code changes; problems and Check again; keys in `.env`). SKILL.md is
+  406 lines (347 in v3.7).
+- 2026-10-18, agent: no skill-local `apps.md`. The panel gives an agent the skill's text only
+  (`--append-system-prompt-file` for Claude Code, the agent file's `prompt` for Kiro), never the
+  path to its folder, so a file beside SKILL.md is out of a panel agent's reach, and so is the
+  calculator unless the project holds a copy. The chapter therefore carries everything needed to
+  build an app and points at `docs/specification/apps.md` and the calculator for the rest.
+- 2026-10-18, agent: claims checked against the code: `packages/format/src/apps.ts` (`APP_SIZE`,
+  `APP_LIMITS` `callMs`, `idleMs`, `fileBytes`, `APP_PROTOCOL_VERSION`, `PANEL_METHODS`,
+  `HOST_NOTIFICATIONS`, `APP_STYLE_VARIABLES`), `manifest.schema.json` (unknown fields refused),
+  `app-shape.ts` (an app card takes no `size`), `packages/ui/src/node/node-app.ts` `COPY` (the
+  buttons Check again and Restart), `apps/board/src/board/app-state.ts` (when the page reads
+  `list_apps` again), `packages/format/src/images.ts` (`IMAGE_LIMITS`, `imagePathProblem`) and
+  `packages/ui/src/markdown/image.ts` (a refused path shows "Image not shown"). What a sandboxed
+  panel can't do was seen in Chromium in a `sandbox="allow-scripts"` frame: a form's submit is
+  blocked before its `submit` event fires (Enter in a field only clicks the default button),
+  `localStorage` throws `SecurityError`, and `alert()` is ignored.
+- 2026-10-18, agent: runs, the v3.7 harness adapted, from `$TMPDIR/vb-skill38/`: one scratch board
+  server per run (ports 4487 to 4492, never 4466), `HOME` and `VB_PROJECT` in the temp folder,
+  `VB_KIRO_AGENT=0`, stopped after; each board drawn over HTTP by a newly joined agent the turn then
+  runs as; each message built by `promptFor` (scenario 30 with card 1 selected); the person's acts
+  on the page (Playwright chromium: Allow and its confirm, Check again, typing in the panel). An app
+  is files, so both agents could also write files, in the scratch project only: **Claude Code**
+  2.1.301, `claude -p` with the panel's flags but `--permission-mode acceptEdits` (edits inside the
+  project only, standing in for the person's Allow) and Bash removed: **ran Opus 5.5** (`modelUsage`
+  `claude-opus-5-5`, every turn). **Kiro** `kiro-cli` 2.24.0, workspace agent `vb-test` (the skill
+  as prompt; `@vb`, `fs_read`, and `fs_write` allowed only under the project, a write outside it
+  refused, checked first): **ran Opus 5.5** (every session records `claude-opus-5.5`).
+  - Round 1 (the first draft): **28 pass, both**: `list_apps`, then one `app` card for
+    `calculator` at 360 × 440, no file written; "Done. Press Allow on card 2 …" (Kiro added "The
+    calculator is card 2 in Tools."). **29 pass, both**: a new `km-miles` app (Claude "Kilometres
+    and miles" 360 × 220, Kiro "Kilometres ⇄ miles" 360 × 230), tool `convert_distance`
+    `{ value, from }`, `list_apps` read `needs-approval` before the card was drawn. Before Allow the
+    panel said "Press Allow on the card to use the converter."; after the harness pressed Allow, 10
+    km showed "10 kilometres = 6.213712 miles" from the tool (`call_app_tool` 200) and "abc" "Type
+    a number."; labelled fields, Enter converts, Esc sent, host variables with fallbacks; no
+    `eval`, network, key or `<form>`. **30 pass, both**: each looked at the picture, then one
+    `append` on card 1, `![Acme Notes Settings at 1366 × 768: eight fields from Display name to
+    Theme fill the screen, and Save is not visible](ui/settings.png)` (Kiro's alike); no file; "Done.";
+    the page shows it at the card's width, light and dark. **31 fail, both, on the words**: each
+    fixed only `/size/w` (Claude 360, Kiro 320) and read `list_apps` again (`needs-approval`), but
+    ended with three or four sentences and no "Done." (Claude also wrote a line mid-turn), and both
+    said "Press Check on card 1": the button is Check again. The skill then gave the closing line
+    whole, with **Check again** in bold, and "say only" on the Allow line.
+  - Round 2 (v3.8 as released; 30's part unchanged, not run again): **31 pass, both**: one fix
+    (Claude `w` 640, Kiro 360); the person's page, open through the turn, pressed Check again:
+    "Calculator updated", the card offers Allow; chat "Fixed it. Press **Check again** on card 1,
+    then Allow." (Kiro "I fixed the calculator app. …"). **28 pass, both** (Claude's line had no
+    "Done."). **29 pass, both**: new `km-miles` apps again (Claude with a "Kilometres to miles"
+    choice), 10 km showed "6.2137 miles" from the tool after Allow; Claude "Done. Press Allow on card
+    2 to use it."; Kiro added a sentence.
+  - **A new app from the skill alone**: scenario 29, all four runs. Neither agent read the
+    calculator or any doc (Claude's only read was a Glob of `.visionboard/apps/**`, empty; Kiro
+    listed `.visionboard/`).
+- 2026-10-18, agent: what still slips: the closing words (no "Done.", a reworded one or an extra
+  sentence in 3 of 7 Claude turns and 4 of 7 Kiro turns). Nothing else in any pass line fails.
+- 2026-10-18, agent, for the maintainer: (a) a panel agent can't open anything beside the skill
+  (no path to its folder), so the calculator is only a model when the project holds a copy; the
+  panel's prompt, or Kiro's agent file `resources`, could name the skill's folder (a change to
+  `chat-access.ts` and `packages/agent`, its own task). (b) After an agent fixes an app's files, a
+  page that is already open shows the old state until the person presses Check again
+  (`app-state.ts` reads `list_apps` on load, on an app line, after Allow or Stop app, on Check again
+  or Restart, and after a refused call; never on a file change); a re-read when the card is
+  selected would drop that step (a page change, its own task). (c) Both agents built nearly the
+  same converter (same model, Opus 5.5). (d) In round 2 Claude fixed the calculator to `w` 640,
+  valid but wider than its 360 design: "the smallest that fits" was not applied to an existing app.

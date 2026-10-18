@@ -54,7 +54,7 @@ tracker:
 | 5 | FE_02 | 3 | strong | [Page wiring, gallery, end-to-end and safety page tests](./FE_02_page-wiring.md) | Completed | Wired (`app-cards.ts`, `app-state.ts`); page tests prove lines 3, 4a, 4b, 4j, 6; this repo's board drew "App cards"; `APP_PANEL_PATH`; frame focus ring fixed: see notes |
 | 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Completed | `IMAGE_LIMITS`, `IMAGE_WORDS`, `imagePathProblem` in format; `/board-images/` in `server/images.ts`; images.md, api.md 154-155, D-048; depth = 8 folders: see notes |
 | 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Completed | `![alt](path)` image or box (`image.ts`), flag `cardImages` via `setMarkdownImages`, `image-view/` pattern, `card-images.ts` (near-only loads, HEAD version + `?v=`, select/open check, swap, re-measure); page weight 149.7 KB: see notes |
-| 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Pending | |
+| 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Completed | v3.8 (SKILL.md 406 lines, no skill-local apps.md: see notes); scenarios 28-31 pass with Claude Code and Kiro (Opus 5.5); new app built from the skill alone in 29, all four runs |
 | 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -86,7 +86,7 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 | Line | Met? | Evidence (command and result, test name, file) |
 |---|---|---|
 | 1 Tasks | | |
-| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed. Wave 4: check 0; test 1474+7 pass; verify 0 warnings (page 149.7/150 KB); gen --check 0; build 0; test:pages 528 passed |
+| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed. Wave 4: check 0; test 1474+7 pass; verify 0 warnings (page 149.7/150 KB); gen --check 0; build 0; test:pages 528 passed. Wave 5: check 0; test 1474+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 528 passed |
 | 3 End to end | | |
 | 4 Safety (a-j) | | |
 | 5 Contract | | |
@@ -292,8 +292,23 @@ Gates: check 0; npm test 1474 + 7 pass; verify 0 warnings; gen --check current; 
 pairs viewed; `gallery.spec.ts/markdown-{light,dark}` re-baselined after viewing: card 61's internet image is now the box).
 
 ### T_02: Skill v3.8
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ SKILL.md v3.8: § Writing cards › Images in cards, an `app` row in § Kinds, § Apps on the board
+(files and manifest, what a panel can't do, the panel messages, tools and `ctx.env`, good to use with the
+host variables, size, `list_apps` first, the `app` card, Allow, Check again, keys in `.env`, the calculator
+as the model). Scenarios 28-31 in `scenarios.md`; runs in NOTES.md § Skill v3.8. Read T_02_skill-apps.md
+§ Implementation Notes. For VERIFY_01 and the orchestrator:
+- **Goal state line 9, by run** (Claude Code 2.1.301 and Kiro 2.24.0, both ran Opus 5.5): 28 pass ×4
+  (rounds 1 and 2); 29 pass ×4: a new `km-miles` app built from the skill alone in every run (no agent read
+  the calculator or a doc), 10 km → "6.21… miles" from its tool after the harness pressed Allow; 30 pass
+  ×2 (`![…](ui/settings.png)` appended to card 1); 31 failed ×2 in round 1 on the closing words only, then
+  pass ×2 in round 2 (Check again on the open page → Allow).
+- **Deviation (inside ruling 17)**: no skill-local `apps.md`; the chapter lives in SKILL.md (406 lines,
+  about 400), because a panel agent gets the skill's text with no path to its folder.
+- **Still slips**: the closing words (no "Done." or an extra sentence), as in every version before.
+- **Proposed tracker rows**: (a) the panel could name the skill's folder so panel agents can read the
+  calculator; (b) an open page shows an app's old state after a file fix until Check again.
+Gates: verify 0 warnings; check 0; npm test 1474 + 7 pass. All harness processes stopped.
 
 ### VERIFY_01: By hand
 _Status:_ Pending
