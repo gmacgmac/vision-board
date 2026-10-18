@@ -279,3 +279,4 @@
 [[2026-10-18 11:54]] [board-app] FIX_06: gallery and API examples show the server's real words → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_06_samples.md]]
 [[2026-10-18 12:24]] [board-app] FIX_07: problems end cleanly; examples match the server → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_07_last-words.md]]
 [[2026-10-18 13:02]] [board-app] VERIFY_03: gates green at b26dd43 (1489+7 tests, 534 pages); findings 25 and 27-35 fixed by hand, light and dark, both sizes; 1-7 still hold; new finding 36 (file-name words a leading dot or a space meets); tracker rows 37-40 → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/VERIFY_03_size.md]]
+[[2026-10-18 13:22]] [board-app] FIX_08: say the whole file-name rule → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_08_file-name-rule.md]]

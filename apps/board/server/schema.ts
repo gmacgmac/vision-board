@@ -104,8 +104,8 @@ const PATTERNS: Record<string, string> = {
   '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$': 'is not a UTC timestamp like 2026-10-05T09:00:00Z',
   // The app contract's patterns (schema/app/manifest.schema.json, common.schema.json `appHash`).
   '^[0-9a-f]{64}$': 'is not an app\'s hash: 64 lowercase hex characters, as list_apps gives it',
-  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.html$': 'must be a file name ending in .html, directly in the app\'s folder',
-  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.mjs$': 'must be a file name ending in .mjs, directly in the app\'s folder',
+  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.html$': 'must be a file name ending in .html, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or hyphen, no two dots in a row',
+  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.mjs$': 'must be a file name ending in .mjs, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 99, not starting with a dot or hyphen, no two dots in a row',
   '^[A-Z_][A-Z0-9_]{0,63}$': 'is not a .env key: upper-case letters, digits and _',
   '^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+(:[0-9]{1,5})?$': 'is not an https origin with an exact host, like https://api.example.com (no wildcard, no path)',
   '^[a-z][a-z0-9_]{0,39}$': 'is not a tool name: lower-case letters, digits and _, starting with a letter, up to 40',

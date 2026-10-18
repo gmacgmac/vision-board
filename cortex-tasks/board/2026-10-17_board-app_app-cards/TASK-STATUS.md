@@ -65,6 +65,8 @@ tracker:
 | 16 | FIX_06 | 13 | strong | [The gallery and the API examples show the server's real words (findings 31, 32)](./FIX_06_samples.md) | Completed | Two real invalid answers in `gallery.apps.json` (app.json; tools.mjs once allowed), held by `app-samples.test.ts` against the server, as the OpenAPI examples; board page unchanged (149.87 KB); 534 pages: see notes |
 | 17 | FIX_07 | 14 | strong | [Problems end cleanly; examples match the server (findings 33-35)](./FIX_07_last-words.md) | Completed | `appInvalid` ends each problem with a full stop (`sentence`); `list_apps` example calculator `tools: []`, held by the server; "must be a file name ending in .html, directly in the app's folder" (`schema.ts` `PATTERNS`); server only (149.87 KB); 534 pages: see notes |
 | 18 | VERIFY_03 | 15 | strong | [Re-check findings 25, 27-35, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Completed | Gates all green at `b26dd43` (1489 + 7 tests, 534 pages); findings 25, 27-35 fixed by hand, light and dark, both sizes; 1-7 still hold; new finding 36 (file-name words that a leading dot or a space meets); tracker rows 37-40 (FIX_07's slips 1-3, an example's words): see notes |
+| 19 | FIX_08 | 16 | strong | [Say the whole file-name rule (finding 36)](./FIX_08_file-name-rule.md) | Completed | `schema.ts` `PATTERNS`: "…, directly in the app's folder: letters, digits, dots, hyphens and _, up to 100 (99 for .mjs), not starting with a dot or hyphen, no two dots in a row"; rows 38 and 40 fixed; server, schema and `openapi.json` only (149.87 KB); 534 pages: see notes |
+| 20 | VERIFY_04 | 17 | strong | [Re-check finding 36, Goal lines 2 and 10](./VERIFY_04_file-name.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -155,6 +157,9 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
     decision 2), "ending in .html" reading as the folder (finding 35). Out: the half-cut last line in a
     scrolling problems box stays, because a cut line is the usual sign there is more to scroll and the box
     scrolls by keyboard too. Decision 10 is amended: FIX_07 is the last fix; VERIFY_03 weighs anything after.
+12. **VERIFY_03 left finding 36 open; it gets FIX_08 and VERIFY_04.** Tracker rows 38 and 40 (a schema
+    description and an example that say the same thing in other words) ride along in FIX_08 because they
+    touch the same lines at no cost; rows 37 and 39 stay tracker rows as VERIFY_03 judged.
 
 ## Proposed tracker rows
 
@@ -182,9 +187,9 @@ VERIFY_01's own. Numbered after VERIFY_01's findings 1-7 so one number means one
 | 24 | VERIFY_01 | With its folder gone the app card falls back to 360×320 (no manifest to read), so it changes size when the folder goes; the page could keep the last size it knew. | Card 3 Notice: 300×140 panel → 360×320 after a reload (`24-gone-reloaded.png`). VERIFY_02: now seen live (FIX_02 shows "not found" without a reload), and also for an invalid manifest and on load: raised inside as finding 25 (§ VERIFY_02) |
 | 26 | VERIFY_02 | The body-limit problem says "Split the items across several calls." for every operation, a join too, which has no items (`apps/board/server/body.ts`, the `too-large` detail). Word the advice per operation, or drop it where it doesn't apply. | `POST /api/agents` with a 5 KB label: "The body is over the 4 KB limit. Split the items across several calls." |
 | 37 | FIX_07 slip 1, VERIFY_03 | `call_app_tool`'s `app-invalid` detail says "has problems … Fix them" for one problem, and lists the first three of more with no "and N more" (`apps/board/server/apps/supervisor.ts` `appInvalid`). Outside: only the call's `detail` says it; the panel shows `PROBLEM_WORDS` ("This app has problems to fix."), the card lists every problem, and agents don't call tools. (The card's own "This app has problems. Ask the agent to fix them." reads the same for one; ux-copy kept it in VERIFY_01 and VERIFY_02.) | Lab with one problem: '… has problems in its files: app.json: unknown field colour. Fix them and try again.'; with four, the fourth not named |
-| 38 | FIX_07 slip 2, VERIFY_03 | `manifest.schema.json` `$defs/panelFile` and `toolsFile` descriptions keep "A plain file name in the app's folder ending in `.html`", unlike the server's words since FIX_07. Outside: the clause after the colon ("no folder, no `..`, not hidden") rules out the folder reading. Align it when finding 36 changes the server's words. | Read only |
+| 38 | FIX_07 slip 2, VERIFY_03 | **Fixed in FIX_08** (the descriptions now say the server's words; `app-folder.test.ts` "tracker row 38: …"). `manifest.schema.json` `$defs/panelFile` and `toolsFile` descriptions keep "A plain file name in the app's folder ending in `.html`", unlike the server's words since FIX_07. Outside: the clause after the colon ("no folder, no `..`, not hidden") rules out the folder reading. Align it when finding 36 changes the server's words. | Read only |
 | 39 | FIX_07 slip 3, VERIFY_03 | `list_apps`' operation description (the MCP tool's and `vb list-apps`' text) says "the `tools` by name" without "once allowed and run". Outside: the MCP tool's output schema carries the `tools` field's description ("once the person allowed this version and its tools first ran …; empty until then") and SKILL.md § Apps says "`tools` is `[]` until a tool runs". | Read only |
-| 40 | VERIFY_03 | The OpenAPI `appForbidden` example (needs-approval) reads "The person has not allowed this version of the app "calculator". Press Allow on its card first."; the server says "The person has not allowed the app "calculator" yet. Press Allow on its card first." (`server/apps/host.ts` `call`). Same meaning, so no one is misled; FIX_06's `app-samples.test.ts` holds only the `appInvalid` and `list_apps` examples. Hold every app problem example to the server's words (rule 6). | A call to the calculator before Allow: 403 with the server's words |
+| 40 | VERIFY_03 | **Fixed in FIX_08** (the example is the server's words, held by `app-samples.test.ts` "the needs-approval example is the call's answer …"; the other app examples match by reading, not held: FIX_08's notes). The OpenAPI `appForbidden` example (needs-approval) reads "The person has not allowed this version of the app "calculator". Press Allow on its card first."; the server says "The person has not allowed the app "calculator" yet. Press Allow on its card first." (`server/apps/host.ts` `call`). Same meaning, so no one is misled; FIX_06's `app-samples.test.ts` holds only the `appInvalid` and `list_apps` examples. Hold every app problem example to the server's words (rule 6). | A call to the calculator before Allow: 403 with the server's words |
 
 T_02's row (b) (an open page shows an app's old state after a file change until Check again) is not here: VERIFY_01
 counts it inside ruling 7 as finding 2.
@@ -671,6 +676,31 @@ manifest 320×180, as card 14 with no `w`/`h` and a note under it), the repo's P
   patterns). Files: `apps/board/server/schema.ts` `PATTERNS`; `app-folder.test.ts` "4h: …", `api-apps.test.ts`
   `PANEL_NAME`; `openapi.json` `list_apps` example + `npm run gen`; optionally row 38. No page code.
 - **Row 40** (outside): the `appForbidden` example's words differ from the server's (same meaning).
+
+### FIX_08: File-name rule
+_Status:_ Completed (2026-10-18)
+_Notes:_ Finding 36 fixed; tracker rows 38 and 40 fixed with it. No board-page code. Read FIX_08_file-name-rule.md §
+Implementation Notes.
+- **36**: `server/schema.ts` `PATTERNS` says the whole `panelFile`/`toolsFile` rule: "panel must be a file name ending
+  in .html, directly in the app's folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or
+  hyphen, no two dots in a row" (tools: .mjs, up to 99). ux-copy settled the words (the id's order; ends on a word).
+  Proof: `app-folder.test.ts` "4h: …" and "finding 36: the file-name words say the whole rule: …" (edge names pass;
+  a leading dot or hyphen, a space, two dots, one character too many, a subfolder, another ending get the words);
+  `api-apps.test.ts` "list_apps: every folder …", "finding 33: …". Expected words once: `tests/app-support.ts`
+  `FILE_NAME_WORDS`.
+- **Row 38**: `manifest.schema.json` descriptions say the same ("A file name ending in `.html`, …"); held by
+  `app-folder.test.ts` "tracker row 38: …". **Row 40**: `appForbidden` example = `host.ts` `call`'s words; held by
+  `app-samples.test.ts` "the needs-approval example is the call's answer …". `list_apps` example `release-notes`
+  follows; `npm run gen` changed only `api-reference.md`; no version change.
+- **For VERIFY_04**, seen, not fixed: "letters" means a to z only (`pänel.html` is refused, as for ids); the other app
+  problem examples match the server by reading but no test holds them; apps.md § The folder's "(no `/`, no `..`, not
+  hidden)" is true but shorter than the rule.
+Gates, one after another after the last change: check 0; npm test 1492 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 534 passed. Board page 153,470 B gzip (149.87 of 150 KB, 130 B left).
+
+### VERIFY_04: Re-check file name
+_Status:_ Pending
+_Notes:_
 
 ---
 

@@ -14,15 +14,15 @@ import path from 'node:path';
 import { APP_SIZE } from '../../../packages/format/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { AGENT, startBoard } from './api-harness.ts';
-import { addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';
+import { FILE_NAME_WORDS, addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';
 
 let h: Harness;
 let A: Joined;
 const dirs: Record<string, string> = {};
 /** The runner's words for an import of anything but a built-in (finding 29: they name no file). */
 const IMPORT_ONLY = (what: string) => `Import only Node's built-in modules, such as node:fs, not "${what}". Put that code in this file, so the version the person allows covers all of it.`;
-/** The words for a panel field that is not a file name in the app's folder (finding 35). */
-const PANEL_NAME = 'panel must be a file name ending in .html, directly in the app\'s folder';
+/** The words for a panel field that is not a file name in the app's folder (findings 35, 36). */
+const PANEL_NAME = FILE_NAME_WORDS.panel;
 const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports', 'bad-tool'];
 
 before(async () => {

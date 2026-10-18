@@ -2319,7 +2319,7 @@ Example:
       "problems": [
         {
           "file": "app.json",
-          "detail": "panel must be a file name ending in .html, directly in the app's folder"
+          "detail": "panel must be a file name ending in .html, directly in the app's folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or hyphen, no two dots in a row"
         }
       ]
     }

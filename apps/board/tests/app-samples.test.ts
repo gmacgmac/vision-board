@@ -1,7 +1,8 @@
 // The samples show the server's own words (app-cards FIX_06, findings 31 and 32; rules 6 and 11): the
 // gallery's invalid app cards (src/gallery/gallery.apps.json) and the OpenAPI examples of an invalid
 // app are what list_apps and call_app_tool answer for the same files, through the real server; so is
-// the list_apps example's calculator before Allow, which names no tools (FIX_07, finding 34). The
+// the list_apps example's calculator before Allow, which names no tools (FIX_07, finding 34), and the
+// needs-approval example, the call's answer for it then (FIX_08, tracker row 40). The
 // example calculator, broken two ways: its app.json, and a tools.mjs that imports a file (seen once
 // the person allowed it and pressed =; a schema problem and a load problem never come in one answer).
 // A hash is of the files written here, so only its shape is compared.
@@ -18,6 +19,7 @@ import { doc, read, ROOT } from './openapi-ajv.ts';
 const GALLERY = JSON.parse(read('apps/board/src/gallery/gallery.apps.json')) as Record<'files' | 'tools', AppInfo>;
 const LISTED = doc.paths['/api/apps'].get.responses['200'].content['application/json'].example.apps as AppInfo[];
 const INVALID = doc.components.responses.appInvalid.content['application/problem+json'].example as { detail: string };
+const FORBIDDEN = doc.components.responses.appForbidden.content['application/problem+json'].example as { detail: string };
 
 let h: Harness;
 before(async () => { h = await startBoard(); });
@@ -35,12 +37,17 @@ async function listed(id: string, sample: AppInfo): Promise<AppInfo> {
   return { ...got, hash: sample.hash };
 }
 
-// First, while nothing is allowed: the next test allows the calculator.
+// First, while nothing is allowed: the third test allows the calculator.
 test('the list_apps example\'s calculator is the answer for the calculator as the skill ships it, and no example names tools on an app the person has not allowed (finding 34)', async () => {
   for (const a of LISTED) assert.ok(a.allowed || !a.tools.length, `${a.id}: tools are named only once the person allowed the app and it ran`);
   fs.cpSync(CALCULATOR, folder('calculator'), { recursive: true });
   const sample = LISTED.find((a) => a.id === 'calculator')!;
   assert.deepEqual(await listed('calculator', sample), sample);
+});
+
+test('the needs-approval example is the call\'s answer for the calculator before the person allowed it (tracker row 40)', async () => {
+  const called = await refused(h, 'calculator', 'evaluate', 403, 'needs-approval', { expression: '12*3' });
+  assert.equal(called.detail, FORBIDDEN.detail);
 });
 
 test('the gallery\'s invalid app cards are list_apps\' answers for a broken app.json and for a tools.mjs that imports a file (finding 31); the app-invalid example is the call\'s (finding 32)', async () => {

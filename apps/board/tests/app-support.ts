@@ -13,6 +13,12 @@ import { PERSON } from './api-harness.ts';
 
 export const FIXTURES = fileURLToPath(new URL('./fixtures/apps/', import.meta.url));
 
+/** The words for a manifest file name the board can't use, the whole rule (findings 35, 36). */
+export const FILE_NAME_WORDS = {
+  panel: 'panel must be a file name ending in .html, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or hyphen, no two dots in a row',
+  tools: 'tools must be a file name ending in .mjs, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 99, not starting with a dot or hyphen, no two dots in a row',
+} as const;
+
 /** Copy test app `id` into the project's apps folder; returns its folder there. */
 export function addApp(project: string, id: string): string {
   const to = path.join(project, '.visionboard', 'apps', id);

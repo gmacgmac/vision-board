@@ -2483,7 +2483,7 @@
                       "problems": [
                         {
                           "file": "app.json",
-                          "detail": "panel must be a file name ending in .html, directly in the app's folder"
+                          "detail": "panel must be a file name ending in .html, directly in the app's folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or hyphen, no two dots in a row"
                         }
                       ]
                     }
@@ -3266,7 +3266,7 @@
               "type": "https://vision-board.invalid/problems/needs-approval",
               "title": "Needs approval",
               "status": 403,
-              "detail": "The person has not allowed this version of the app \"calculator\". Press Allow on its card first."
+              "detail": "The person has not allowed the app \"calculator\" yet. Press Allow on its card first."
             }
           }
         }

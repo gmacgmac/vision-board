@@ -11,6 +11,7 @@ import path from 'node:path';
 import { APP_LIMITS } from '../../../packages/format/src/index.ts';
 import { appHash, appState, parseEnv, readApp, readEnv } from '../server/apps.ts';
 import { foreignSchemas } from '../server/schema.ts';
+import { FILE_NAME_WORDS } from './app-support.ts';
 
 const project = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-apps-')));
 const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-outside-')));
@@ -48,10 +49,33 @@ test('4h: manifest file names with a folder, `..`, a hidden name or an absolute 
     app('names', { [field]: name });
     const listed = readApp(project, 'names')!;
     assert.equal(listed.problems.length, 1, `${field}: ${name}`);
-    assert.equal(problems('names')[0], `app.json  ${field} must be a file name ending in .${field === 'panel' ? 'html' : 'mjs'}, directly in the app's folder`,
+    assert.equal(problems('names')[0], `app.json  ${FILE_NAME_WORDS[field]}`,
       'the field as a person writes it; the folder never reads as ending in .html (finding 35)');
     assert.equal(listed.panel, undefined, 'no file is resolved from a manifest with problems');
     assert.equal(listed.tools, undefined);
+  }
+});
+
+test('finding 36: the file-name words say the whole rule: a name at each edge passes, and one that breaks any part gets them', () => {
+  for (const [field, end] of [['panel', '.html'], ['tools', '.mjs']] as const) {
+    const longest = `${'a'.repeat(95)}${end}`; // 100 in all for .html, 99 for .mjs: the words' "up to"
+    const code = field === 'panel' ? '<p>hi</p>' : 'export default { tools: [] };';
+    for (const name of [longest, `_v2.final-copy${end}`, `9${end}`]) {
+      app('edges', { [field]: name }, { 'panel.html': '<p>hi</p>', [name]: code });
+      assert.deepEqual(problems('edges'), [], `${field}: ${name}`);
+    }
+    for (const name of [`a${longest}`, `.${field}${end}`, `-${field}${end}`, `my ${field}${end}`, `${field}.${end}`, `pages/${field}${end}`, `${field}.txt`]) {
+      app('edges', { [field]: name });
+      assert.deepEqual(problems('edges'), [`app.json  ${FILE_NAME_WORDS[field]}`], `${field}: ${name}`);
+    }
+  }
+});
+
+test('tracker row 38: the manifest schema says the file-name rule in the words the board sends', () => {
+  const schema = new URL('../../../packages/format/schema/app/manifest.schema.json', import.meta.url);
+  const defs = JSON.parse(fs.readFileSync(schema, 'utf8')).$defs as Record<string, { description: string }>;
+  for (const [field, def] of [['panel', 'panelFile'], ['tools', 'toolsFile']] as const) {
+    assert.equal(defs[def]!.description.replaceAll('`', ''), `A ${FILE_NAME_WORDS[field].replace(`${field} must be a `, '')}.`);
   }
 });
 
