@@ -2,12 +2,15 @@
 // Only `<project>/.visionboard/apps/<id>/` is ever read, and only when `id` fits the id pattern. The
 // manifest is checked against its schema (server/schema.ts, compiled once); its file names are plain
 // names, so they stay in the folder; every file's real path must too (a link out is refused), and
-// none may be over `APP_LIMITS.fileBytes`. What is wrong is a problem for the agent to fix.
+// none may be over `APP_LIMITS.fileBytes`. What is wrong is a problem for the agent to fix, in plain
+// words: a field as a person writes it (`fieldWords`), no code marks, no JSON Pointer.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppManifest, AppProblem } from '../../../../packages/format/src/index.ts';
 import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR } from '../../../../packages/format/src/index.ts';
 import { DATA_DIR } from '../ledger.ts';
+import { sizeWords } from '../problem.ts';
+import type { SchemaProblem } from '../schema.ts';
 import { SCHEMA_BASE, schemaProblems } from '../schema.ts';
 
 export const MANIFEST_ID = `${SCHEMA_BASE}schema/app/manifest.schema.json`;
@@ -33,7 +36,15 @@ export const appsDir = (project: string): string => path.join(project, DATA_DIR,
 
 const inside = (root: string, file: string) => file.startsWith(root + path.sep);
 const real = (p: string): string | undefined => { try { return fs.realpathSync(p); } catch { return undefined; } };
-const KIB = 1024;
+
+/** A schema problem of an app's files in plain words: the field as a person writes it (`size.w`,
+ * `env[0]`; the whole value is "it") in place of the code-marked name, and no other code mark. The
+ * other operations keep their pointer errors (server/schema.ts); only app problems read this. */
+export function fieldWords({ pointer, detail }: SchemaProblem): string {
+  const field = pointer.split('/').slice(1).map((k) => k.replace(/~1/g, '/').replace(/~0/g, '~'))
+    .reduce((at, k) => (at && /^\d+$/.test(k) ? `${at}[${k}]` : at ? `${at}.${k}` : k), '');
+  return detail.replace(/`[^`]*`/, () => field || 'it').replaceAll('`', '');
+}
 
 /** The ids of the app folders in the project: every folder whose name is an id, sorted. */
 export function appIds(project: string): string[] {
@@ -51,7 +62,7 @@ function locate(dir: string, name: string, problems: AppProblem[]): string | nul
   if (!inside(dir, file)) return refuse(`${name} links to a file outside the app's folder. Put the file itself in the folder.`);
   const stat = fs.statSync(file);
   if (!stat.isFile()) return refuse(`${name} is not a file.`);
-  if (stat.size > APP_LIMITS.fileBytes) return refuse(`${name} is over the ${APP_LIMITS.fileBytes / KIB} KiB limit. Make it smaller.`);
+  if (stat.size > APP_LIMITS.fileBytes) return refuse(`${name} is over the ${sizeWords(APP_LIMITS.fileBytes)} limit. Make it smaller.`);
   return file;
 }
 
@@ -63,11 +74,11 @@ function manifestOf(bytes: Buffer, id: string, problems: AppProblem[]): AppManif
     problems.push({ file, detail: `app.json is not valid JSON: ${err instanceof Error ? err.message : String(err)}.` });
     return undefined;
   }
-  for (const p of schemaProblems(MANIFEST_ID, value)) problems.push({ file, ...(p.pointer && { pointer: p.pointer }), detail: p.detail });
+  for (const p of schemaProblems(MANIFEST_ID, value)) problems.push({ file, detail: fieldWords(p) });
   if (problems.length) return undefined;
   const manifest = value as AppManifest;
   if (manifest.id === id) return manifest;
-  problems.push({ file, pointer: '/id', detail: `\`id\` is "${manifest.id}", but the folder is "${id}": make them the same.` });
+  problems.push({ file, detail: `id is "${manifest.id}", but the folder is "${id}": make them the same.` });
   return undefined;
 }
 
@@ -92,10 +103,10 @@ export function readApp(project: string, id: string): AppFolder | undefined {
   if (!manifest) return folder;
   const panelName = manifest.panel ?? APP_FILES.panel;
   const panel = locate(dir, panelName, problems);
-  if (panel === null) problems.push({ file: panelName, detail: `There is no ${panelName} in the app's folder: write the panel there${manifest.panel ? ', or fix `panel` in app.json' : ''}.` });
+  if (panel === null) problems.push({ file: panelName, detail: `There is no ${panelName} in the app's folder: write the panel there${manifest.panel ? ', or fix the panel field in app.json' : ''}.` });
   const toolsName = manifest.tools ?? APP_FILES.tools;
   const tools = locate(dir, toolsName, problems);
-  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: `There is no ${toolsName} in the app's folder: write it there, or fix \`tools\` in app.json.` });
+  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: `There is no ${toolsName} in the app's folder: write it there, or fix the tools field in app.json.` });
   if (problems.length || !panel) return folder;
   folder.manifest = manifest;
   folder.panel = panel;

@@ -28,7 +28,7 @@ const STATES: [string, AppCardInput][] = [
   ['Invalid', {
     info: {
       ...CALCULATOR, state: 'invalid', allowed: false, problems: [
-        { file: 'app.json', pointer: '/size/w', detail: 'must be <= 960' },
+        { file: 'app.json', detail: 'size.w must be at most 960' },
         { file: 'tools.mjs', detail: 'imports ./parser.mjs: a tools module imports only node: built-ins' },
       ],
     },

@@ -48,7 +48,7 @@ test('4h: manifest file names with a folder, `..`, a hidden name or an absolute 
     app('names', { [field]: name });
     const listed = readApp(project, 'names')!;
     assert.equal(listed.problems.length, 1, `${field}: ${name}`);
-    assert.equal(listed.problems[0]!.pointer, `/${field}`);
+    assert.match(problems('names')[0]!, new RegExp(`^app\\.json  ${field} is not a plain file name`), 'the field as a person writes it');
     assert.equal(listed.panel, undefined, 'no file is resolved from a manifest with problems');
     assert.equal(listed.tools, undefined);
   }
@@ -76,14 +76,35 @@ test('what the agent must fix: no manifest, bad JSON, another id, a missing file
   fs.writeFileSync(path.join(dir, 'app.json'), '{ "id": "json", ');
   assert.match(problems('json').join(), /not valid JSON/);
   app('other-id', { id: 'calc' });
-  assert.match(problems('other-id').join(), /^app\.json \/id .*"calc".*"other-id"/);
+  assert.equal(problems('other-id').join(), 'app.json  id is "calc", but the folder is "other-id": make them the same.');
   app('no-panel', {}, {});
   assert.match(problems('no-panel').join(), /^panel\.html  There is no panel\.html/);
   app('no-tools', { tools: 'engine.mjs' });
   assert.match(problems('no-tools').join(), /^engine\.mjs  There is no engine\.mjs/);
   assert.equal(readApp(project, 'no-panel')!.tools, undefined, 'no tools named and no tools.mjs: a panel-only app');
   app('huge', {}, { 'panel.html': 'x'.repeat(APP_LIMITS.fileBytes + 1) });
-  assert.match(problems('huge').join(), /^panel\.html  .*over the 1024 KiB limit/);
+  assert.equal(problems('huge').join(), 'panel.html  panel.html is over the 1 MB limit. Make it smaller.');
+});
+
+test('finding 4: a manifest\'s problems name each field as a person writes it, with no code marks and no pointer', () => {
+  app('worded', { title: undefined, size: { w: 1200, h: 100 }, env: ['lower'], colour: 'red' });
+  assert.deepEqual(problems('worded').sort(), [
+    'app.json  env[0] is not a .env key: upper-case letters, digits and _', 'app.json  size.h must be at least 120',
+    'app.json  size.w must be at most 960', 'app.json  title is required', 'app.json  unknown field colour',
+  ]);
+  fs.writeFileSync(path.join(app('whole'), 'app.json'), '[]');
+  assert.deepEqual(problems('whole'), ['app.json  it must be an object']);
+  app('unnamed', { panel: 'board.html', tools: 'engine.mjs' }, {});
+  assert.deepEqual(problems('unnamed'), [
+    "board.html  There is no board.html in the app's folder: write the panel there, or fix the panel field in app.json.",
+    "engine.mjs  There is no engine.mjs in the app's folder: write it there, or fix the tools field in app.json.",
+  ]);
+  for (const id of ['worded', 'whole', 'unnamed', 'names', 'other-id', 'huge']) {
+    for (const p of readApp(project, id)!.problems) {
+      assert.equal(p.pointer, undefined, `${id}: ${p.detail}`);
+      assert.doesNotMatch(p.detail, /`/, id);
+    }
+  }
 });
 
 test('the hash: SHA-256 of app.json then the tools file, as the person allows it', () => {

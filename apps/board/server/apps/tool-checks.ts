@@ -4,14 +4,13 @@
 // and the answer against `outputSchema` after. An answer becomes MCP's tool result: an object is
 // `structuredContent` and its JSON the text; text is the text; a thrown error is `isError`.
 import type { AppProblem, AppToolInfo, AppToolResult } from '../../../../packages/format/src/index.ts';
-import { problem } from '../problem.ts';
+import { problem, sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';
 import { foreignSchemas, schemaProblems } from '../schema.ts';
 import type { Answer } from './child.ts';
-import { MANIFEST_ID } from './manifest.ts';
+import { fieldWords, MANIFEST_ID } from './manifest.ts';
 
 const TOOL_ID = `${MANIFEST_ID}#/$defs/tool`;
-const KIB = 1024;
 
 /** One tool, checked: its shape, and the checks of its arguments and its answer. */
 export interface CheckedTool { info: AppToolInfo; input: (v: unknown) => SchemaProblem[]; output?: (v: unknown) => SchemaProblem[] }
@@ -27,7 +26,7 @@ export function checkTools(infos: unknown[], file: string): Map<string, CheckedT
   infos.forEach((info, i) => {
     const label = isRec(info) && typeof info.name === 'string' ? `"${info.name}"` : `number ${i + 1}`;
     const shape = schemaProblems(TOOL_ID, info);
-    if (shape.length) return void problems.push({ file, detail: `Tool ${label}: ${said(shape)}.` });
+    if (shape.length) return void problems.push({ file, detail: `Tool ${label}: ${shape.map(fieldWords).join('; ')}.` });
     const tool = info as AppToolInfo;
     try {
       tools.set(tool.name, { info: tool, input: compile(tool.inputSchema), ...(tool.outputSchema && { output: compile(tool.outputSchema) }) });
@@ -51,7 +50,7 @@ export function checkInput(app: string, tool: CheckedTool, input: unknown): void
 /** A tool's answer as MCP's tool result; a problem when the answer is refused. */
 export function resultOf(app: string, tool: CheckedTool, answer: Exclude<Answer, { ended: unknown }>, outputBytes: number): AppToolResult {
   const name = `The tool "${tool.info.name}" of the app "${app}"`;
-  const tooLarge = () => problem('too-large', `${name} answered more than ${outputBytes / KIB} KiB. Answer less.`);
+  const tooLarge = () => problem('too-large', `${name} answered more than ${sizeWords(outputBytes)}. Answer less.`);
   if ('error' in answer) return { content: [{ type: 'text', text: answer.error }], isError: true };
   if ('refused' in answer) {
     if (answer.refused === 'too-large') throw tooLarge();

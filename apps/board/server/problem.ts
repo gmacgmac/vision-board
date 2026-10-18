@@ -77,6 +77,10 @@ export class ProblemError extends Error {
   }
 }
 
+const KB = 1024;
+/** A size limit in a problem's words: `64 KB`, `256 KB`, `1 MB` (1024 bytes to a KB, as the limits are set). */
+export const sizeWords = (bytes: number): string => (bytes % (KB * KB) ? `${bytes / KB} KB` : `${bytes / KB / KB} MB`);
+
 /** Build a problem to throw: `throw problem('not-found', 'There is no board "x". …')`. */
 export const problem = (code: ProblemCode, detail: string, extras?: ProblemExtras): ProblemError =>
   new ProblemError(code, detail, extras);

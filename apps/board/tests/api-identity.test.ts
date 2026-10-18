@@ -61,10 +61,11 @@ test('join: 201 with { agent, secret } once; only the hash is stored, git-ignore
   assert.equal(JSON.parse(fs.readFileSync(agentsFile(), 'utf8')).agents.length, 3);
 });
 
-test('join: a key is not a join field; over 4 KiB is too-large; a request with the person cookie is refused', async () => {
+test('join: a key is not a join field; over 4 KB is too-large; a request with the person cookie is refused', async () => {
   const p = await h.fails('join', { body: { label: 'X', key: 'k' } }, 422, 'invalid');
   assert.deepEqual(p.errors.map((e) => e.pointer), ['/key']);
-  await h.fails('join', { body: { label: 'x'.repeat(5000) } }, 413, 'too-large');
+  const big = await h.fails('join', { body: { label: 'x'.repeat(5000) } }, 413, 'too-large');
+  assert.equal(big.detail, 'The body is over the 4 KB limit. Split the items across several calls.');
   const cookie = await h.fails('join', { body: { label: 'X' } }, 403, 'forbidden', h.person);
   assert.doesNotMatch(cookie.detail, /cookie/i);
 });

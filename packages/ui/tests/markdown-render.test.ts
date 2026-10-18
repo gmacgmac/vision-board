@@ -62,7 +62,7 @@ test('everything outside the subset renders as escaped plain text', () => {
   plain('<div>\nhtml block\n</div>');
   // An image from the internet is never shown (D-048 ruling 19, rule 18): the box says so (markdown-images.test.ts).
   assert.equal(md('![alt](https://e.com/a.png)'), '<p class="vb-md-p"><span class="vb-md-noimg">Image not shown: '
-    + '<code>https://e.com/a.png</code> (must be inside the images folder)</span></p>');
+    + '<code>https://e.com/a.png</code> (no images from the internet)</span></p>');
   assert.equal(md('&copy; &amp;'), '<p class="vb-md-p">&#38;copy; &#38;amp;</p>');
 });
 

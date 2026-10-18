@@ -65,7 +65,7 @@ test.describe('missing and refused', () => {
         'Image not shown: fake.png (not a real png)',
         'Image not shown: big.png (over 8 MB)',
         'Image not shown: ../notes.png (must be inside the images folder)',
-        'Image not shown: https://example.com/logo.png (must be inside the images folder)',
+        'Image not shown: https://example.com/logo.png (no images from the internet)',
       ]);
       await expect(card(page, n!).locator('.vb-node-body')).toContainText('diagrams/flow.png');
       await expect(card(page, n!).locator('img')).toHaveCount(0);
@@ -135,7 +135,7 @@ for (const theme of THEMES) {
     await expect(gallery(page).locator('vb-node[data-id="img-loading"] img')).not.toHaveAttribute('src');
     await expect(gallery(page).locator('.vb-md-noimg')).toHaveText([
       'Image not found: gallery/gone.png', 'Image not shown: gallery/scan.png (over 8 MB)', 'Image not shown: gallery/chart.png (not a real png)',
-      'Image not shown: ../notes.png (must be inside the images folder)', 'Image not shown: https://example.com/logo.png (must be inside the images folder)',
+      'Image not shown: ../notes.png (must be inside the images folder)', 'Image not shown: https://example.com/logo.png (no images from the internet)',
     ]);
     await expectNoAxeViolations(page);
     await expect(gallery(page)).toHaveScreenshot(`gallery-images-${theme}.png`);

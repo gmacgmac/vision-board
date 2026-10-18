@@ -73,7 +73,8 @@ When an image is not shown, the words are short and plain. They are `IMAGE_WORDS
 | Reason | When |
 |---|---|
 | `no file name` | The path is empty or ends in `/`. |
-| `must be inside the images folder` | A scheme, a leading `/` or `\`, a `..` name, or a link out of the folder. |
+| `must be inside the images folder` | Another scheme (`data:`, `file:`, `javascript:`), a leading `/` or `\`, a `..` name, or a link out of the folder. |
+| `no images from the internet` | An internet address: `http:`, `https:` or `//` at the start. |
 | `use / between folders` | A `\` anywhere else. |
 | `names can't start with a dot` | A name that starts with `.`: hidden names, `.` and `...`. |
 | `empty folder name` | Two slashes in a row. |

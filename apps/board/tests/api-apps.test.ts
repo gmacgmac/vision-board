@@ -17,7 +17,7 @@ import { addApp, allow, apps, gone, raw, refused, run, touch } from './app-suppo
 let h: Harness;
 let A: Joined;
 const dirs: Record<string, string> = {};
-const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports'];
+const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports', 'bad-tool'];
 
 before(async () => {
   process.env.VB_TEST_BOARD_ONLY = 'the board\'s own environment';
@@ -47,7 +47,9 @@ test('list_apps: every folder and every app a card names, each in its state; age
   assert.deepEqual([panel.state, panel.tools, panel.size], ['ready', [], { w: 360, h: 320 }], 'a panel-only app needs no approval');
   const bad = all.get('invalid-manifest')!;
   assert.equal(bad.state, 'invalid');
-  assert.deepEqual(bad.problems!.map((p) => [p.file, p.pointer]).sort(), [['app.json', '/colour'], ['app.json', '/panel']]);
+  assert.deepEqual(bad.problems!.map((p) => [p.file, p.pointer, p.detail]).sort(), [
+    ['app.json', undefined, "panel is not a plain file name in the app's folder ending in .html"], ['app.json', undefined, 'unknown field colour'],
+  ], 'finding 4: the field as a person writes it, no code marks, no pointer');
   assert.deepEqual(await h.ok('list_apps', {}, { as: A.client }), await h.ok('list_apps', {}, { as: h.person }));
 });
 
@@ -113,7 +115,7 @@ test('4i: arguments that don\'t fit inputSchema, an unknown tool, an answer over
   await refused(h, 'panel-only', 'anything', 422, 'invalid');
   await allow(h, 'big-output');
   const big = await refused(h, 'big-output', 'big', 413, 'too-large');
-  assert.match(big.detail, /256 KiB/);
+  assert.equal(big.detail, 'The tool "big" of the app "big-output" answered more than 256 KB. Answer less.', 'finding 7: KB, not KiB');
   assert.deepEqual((await run(h, 'big-output', 'small')).structuredContent, { text: 'x' }, 'the app still answers');
 });
 
@@ -176,6 +178,16 @@ test('one file: a tools module that imports another file is invalid; an import i
   const late = await run(h, 'fs-write', 'sneak');
   assert.equal(late.isError, true);
   assert.match(late.content[0]!.text, /only Node's built-in modules/);
+});
+
+test('finding 4: a tools module whose tools don\'t fit is invalid, its problems in plain words', async () => {
+  await allow(h, 'bad-tool');
+  await refused(h, 'bad-tool', 'one', 422, 'app-invalid');
+  const listed = (await apps(h)).get('bad-tool')!;
+  assert.equal(listed.state, 'invalid');
+  assert.deepEqual(listed.problems, [
+    { file: 'tools.mjs', detail: 'Tool "one": description is required.' }, { file: 'tools.mjs', detail: 'Tool "two": inputSchema must be an object.' },
+  ]);
 });
 
 test('a tools module that never finishes loading is invalid until its code changes', async () => {

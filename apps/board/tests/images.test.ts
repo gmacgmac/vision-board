@@ -22,11 +22,17 @@ test('imagePathProblem: plain relative paths to the four types are fine, subfold
   }
 });
 
-test('imagePathProblem: anything that leaves the images folder is refused (.., /, //, a scheme, javascript:, data:)', () => {
-  for (const p of ['../a.png', 'a/../b.png', 'a/b/../../../c.png', '/etc/a.png', '//host/a.png', '/', 'http://x.example/a.png',
-    'https://x.example/a.png', 'HTTPS://x.example/a.png', 'javascript:alert(1)', 'data:image/png;base64,iVBOR', 'file:///etc/a.png',
-    'C:/a.png', 'ftp:a.png', 'blob:null/x', '\\a.png', '\\\\host\\share\\a.png']) {
+test('imagePathProblem: anything that leaves the images folder is refused (.., /, a scheme, javascript:, data:)', () => {
+  for (const p of ['../a.png', 'a/../b.png', 'a/b/../../../c.png', '/etc/a.png', '/', 'javascript:alert(1)', 'data:image/png;base64,iVBOR',
+    'file:///etc/a.png', 'C:/a.png', 'ftp:a.png', 'blob:null/x', 'httpx://x.example/a.png', '\\a.png', '\\\\host\\share\\a.png']) {
     assert.equal(imagePathProblem(p), W.outside, p);
+  }
+});
+
+test('imagePathProblem: an internet address says so, not a folder rule (http:, https:, //)', () => {
+  for (const p of ['//host/a.png', 'http://x.example/a.png', 'https://x.example/a.png', 'HTTPS://x.example/a.png', 'Http:x.example/a.png',
+    'https://127.0.0.1:4466/board-images/a.png']) {
+    assert.equal(imagePathProblem(p), W.web, p);
   }
 });
 
@@ -71,6 +77,7 @@ test('imagePathProblem: the reasons are plain words, short, and say what is allo
   assert.equal(W.type, 'only png, jpeg, webp or gif');
   assert.equal(W.tooBig, 'over 8 MB');
   assert.equal(W.outside, 'must be inside the images folder');
+  assert.equal(W.web, 'no images from the internet');
 });
 
 test('imageTypeByName: the extension names the type, in any case; jpg is jpeg', () => {

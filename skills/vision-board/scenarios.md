@@ -678,8 +678,8 @@ and writes: "Show me the settings screen you mean on the card."
 "The app card says invalid."
 
 **A good run**
-- Calls `list_apps`, reads its problem (`app.json`, `/size/w`) and fixes only that (a `w` from 280
-  to 960).
+- Calls `list_apps`, reads its problem (`app.json`: "size.w must be at most 960") and fixes only that
+  (a `w` from 280 to 960).
 - Calls `list_apps` again: `needs-approval`. Asks the person to press Check again (and then Allow).
 - Changes no other file; draws no new card. Chat words: "Done." and that one line.
 - **Fails if** it changes the panel or the tools, draws a new card, or the app still reads

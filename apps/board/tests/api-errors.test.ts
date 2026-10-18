@@ -104,9 +104,9 @@ test('a body that is not application/json is unsupported-media-type (415); chars
   }
 });
 
-test('a body over 64 KiB is too-large (413); text that is not JSON is bad-request (400)', async () => {
+test('a body over 64 KB is too-large (413), in KB not KiB (finding 7); text that is not JSON is bad-request (400)', async () => {
   const big = await raw('/api/boards/roadmap/act', json({ type: 'act', action: 'comment', n: 1, ver: 1, text: 'x'.repeat(70 * 1024) }));
-  assert.deepEqual([big.status, (big.body as any).detail], [413, 'The body is over the 64 KiB limit. Split the items across several calls.']);
+  assert.deepEqual([big.status, (big.body as any).detail], [413, 'The body is over the 64 KB limit. Split the items across several calls.']);
   checkAnswer('act', big);
   const bad = await raw('/api/boards/roadmap/act', json('{"type":'));
   assert.equal(bad.status, 400);

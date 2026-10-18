@@ -173,7 +173,7 @@ const TRICKS: [string, number, string?][] = [
   ['..%2fsecret.png', 404, W.outside], ['..%2f..%2fsecret.png', 404, W.outside], ['%2e%2e%2fsecret.png', 404, W.outside],
   ['%2E%2E%2F%2E%2E%2Fsecret.png', 404, W.outside], ['a%2f..%2f..%2fsecret.png', 404, W.outside], ['..%5csecret.png', 404, W.slash],
   ['..%5C..%5Csecret.png', 404, W.slash], ['%252e%252e%252fsecret.png', 404, W.chars], ['%2fsecret.png', 404, W.outside],
-  ['%2fetc%2fhosts.png', 404, W.outside], ['/etc/hosts.png', 404, W.outside], ['http:%2f%2fexample.com%2fa.png', 404, W.outside],
+  ['%2fetc%2fhosts.png', 404, W.outside], ['/etc/hosts.png', 404, W.outside], ['http:%2f%2fexample.com%2fa.png', 404, W.web],
   ['javascript:alert(1)', 404, W.outside], ['data:image%2fpng;base64,AAAA', 404, W.outside], ['file:%2f%2f%2fetc%2fhosts.png', 404, W.outside],
   ['.hidden/a.png', 404, W.dot], ['d/.b.png', 404, W.dot], ['%2ehidden/a.png', 404, W.dot], ['.%2fa.png', 404, W.dot],
   ['a%00.png', 404, W.chars], ['a%20b.png', 404, W.chars], ['%zz.png', 404, W.chars], ['%E0%A4%A.png', 404, W.chars], ['a//b.png', 404, W.blank],

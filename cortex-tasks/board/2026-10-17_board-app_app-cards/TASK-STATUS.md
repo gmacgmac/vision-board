@@ -56,6 +56,9 @@ tracker:
 | 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Completed | `![alt](path)` image or box (`image.ts`), flag `cardImages` via `setMarkdownImages`, `image-view/` pattern, `card-images.ts` (near-only loads, HEAD version + `?v=`, select/open check, swap, re-measure); page weight 149.7 KB: see notes |
 | 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Completed | v3.8 (SKILL.md 406 lines, no skill-local apps.md: see notes); scenarios 28-31 pass with Claude Code and Kiro (Opus 5.5); new app built from the skill alone in 29, all four runs |
 | 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Completed | Gates all green (528 pages); 7 findings inside the rulings (1-7, see § VERIFY_01) for FIX tasks; 17 proposed tracker rows (8-24) in § Proposed tracker rows |
+| 10 | FIX_01 | 7 | strong | [Plain words in app and image problems (VERIFY_01 findings 4, 5, 7)](./FIX_01_plain-words.md) | Completed | `fieldWords` (manifest + tool shape, no pointer), `IMAGE_WORDS.web` for http(s)/`//` only, `sizeWords` (KB/MB); +39 B gzip (149.72 KB); 8 screenshots viewed: see notes |
+| 11 | FIX_02 | 8 | strong | [App cards follow their files and never jump (VERIFY_01 findings 1, 2, 3, 6)](./FIX_02_app-card-state.md) | Pending | |
+| 12 | VERIFY_02 | 9 | strong | [Re-check findings 1-7 and Goal lines 3-4](./VERIFY_02_findings.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -121,6 +124,12 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
    behaviour ships behind one. Closest to both: FE_03 adds page flag `cardImages` in `flags.ts`, **on** by
    default; off, `![alt](path)` renders as plain text as before. The route needs no flag (it serves only
    files the project put in its images folder).
+6. **Fix loop after VERIFY_01: two FIX tasks run one after the other, not side by side.** FIX_01 (findings
+   4, 5, 7: words on the server and in `packages/format`) and FIX_02 (findings 1, 2, 3, 6: app-card page
+   behaviour) both touch page-test files and screenshots, so they run in waves 7 and 8, then VERIFY_02 in
+   wave 9. Finding 4 is worded on the server (agents read it too), not stripped on the page. Finding 6 is
+   fixed in the layout (no jump), not by changing the claim. Finding 7 (KiB) is done, not skipped. Tracker
+   row 22 (the panel isn't told about Allow) stays a tracker row: it needs a new protocol message.
 
 ## Proposed tracker rows
 
@@ -429,6 +438,37 @@ panel errors ("The tool took too long.", "The app is busy. Try again."), "Image 
 skill's apps and images chapters are precise for agents and raised nothing.
 Tracker rows 8-24: § Proposed tracker rows. Not this run's: headless Chromium shells from `~/.kiro/crew/`
 are running on this machine.
+
+### FIX_01: Plain words
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 4, 5 and 7 fixed on the server and in `packages/format`. Read FIX_01_plain-words.md § Implementation Notes.
+- **4**: `apps/board/server/apps/manifest.ts` `fieldWords` (the one mapping): "app.json: size.w must be at most 960",
+  "unknown field colour", "env[0] is not a .env key…", no backticks and no `pointer`; tool-shape problems
+  (`checkTools`) use it too. `schema.ts` and `problemLine` unchanged. Proof: `app-folder.test.ts` "finding 4: a manifest's
+  problems name each field as a person writes it, with no code marks and no pointer"; `api-apps.test.ts` "finding 4: a tools
+  module whose tools don't fit is invalid, its problems in plain words" (test app `fixtures/apps/bad-tool/`) and "list_apps: every
+  folder …".
+- **5**: `IMAGE_WORDS.web` "no images from the internet" for `http:`, `https:` or `//` only (deviation: `data:`, `file:`,
+  `javascript:`, `C:/` are not the internet and keep "must be inside the images folder"); images.md row. Proof: `images.test.ts`
+  "imagePathProblem: an internet address says so, not a folder rule (http:, https:, //)"; `card-image-states.spec.ts` "missing and
+  refused › … (light|dark)".
+- **7**: `apps/board/server/problem.ts` `sizeWords`: 64/4/512 KB (`body.ts`), 256 KB (`tool-checks.ts`), 1 MB (`manifest.ts`); OpenAPI
+  example. Proof: `api-apps.test.ts` "4i: …", `api-errors.test.ts` "a body over 64 KB is too-large (413), in KB not KiB (finding 7); …",
+  `api-identity.test.ts` "join: … over 4 KB …", `app-folder.test.ts` "what the agent must fix: …".
+- **For FIX_02**: page weight 153,310 B gzip (149.72 of 150 KB, 290 B left). The list_apps problem schema and `AppProblem` keep
+  an optional `pointer` the server no longer sends: dropping it from `problemLine` would give FIX_02 a few page bytes (a contract
+  tidy, not done here). 8 screenshots re-baselined after viewing light and dark (card-image-refused, gallery-images, gallery markdown,
+  gallery full page). scenarios.md § 31 quotes the new problem words.
+Gates, one after another after the last change: check 0; npm test 1477 + 7 pass; verify 0 warnings; gen --check current; build 0;
+test:pages 528 passed.
+
+### FIX_02: App card state
+_Status:_ Pending
+_Notes:_
+
+### VERIFY_02: Re-check
+_Status:_ Pending
+_Notes:_
 
 ---
 

@@ -53,6 +53,7 @@ export const IMAGE_HEAD_BYTES = Math.max(...NAMES.flatMap((n) => IMAGE_LIMITS.ty
 export const IMAGE_WORDS = {
   empty: 'no file name',
   outside: 'must be inside the images folder',
+  web: 'no images from the internet',
   slash: 'use / between folders',
   dot: "names can't start with a dot",
   blank: 'empty folder name',
@@ -83,6 +84,8 @@ export function imageTypeOf(head: Uint8Array): ImageName | undefined {
 }
 
 const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
+/** An internet address: `http:`, `https:` or `//` at the start (other schemes are not the internet). */
+const WEB = /^(https?:|\/\/)/i;
 
 /** Why `path` can't be an image under the images folder, in the words of `IMAGE_WORDS`; nothing when
  * it can. `path` is as a card's Markdown writes it, not decoded: a `%` is refused like any other
@@ -91,6 +94,7 @@ const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
  * This is the one path check: the board's route and the Markdown renderer both call it. */
 export function imagePathProblem(path: string): string | undefined {
   if (path === '') return IMAGE_WORDS.empty;
+  if (WEB.test(path)) return IMAGE_WORDS.web;
   if (SCHEME.test(path) || path.startsWith('/') || path.startsWith('\\')) return IMAGE_WORDS.outside;
   if (path.includes('\\')) return IMAGE_WORDS.slash;
   const names = path.split('/');

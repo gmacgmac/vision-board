@@ -1,7 +1,7 @@
 // Request bodies (api.md 28, 37): the media type is parsed exactly, the size is capped before
 // and while reading, and the text must be JSON. Each failure is one problem; nothing is written.
 import type { IncomingMessage } from 'node:http';
-import { problem } from './problem.ts';
+import { problem, sizeWords } from './problem.ts';
 
 export const KIB = 1024;
 /** The default body limit; `join` and `write_board` set their own (api.md 28). */
@@ -17,7 +17,7 @@ export function isJsonMediaType(header: string | undefined): boolean {
 }
 
 const tooLarge = (limit: number) =>
-  problem('too-large', `The body is over the ${limit / KIB} KiB limit. Split the items across several calls.`);
+  problem('too-large', `The body is over the ${sizeWords(limit)} limit. Split the items across several calls.`);
 
 /** The body as parsed JSON. Refuses a wrong media type (415), a body over `limit` (413) and text
  * that is not JSON (400). */

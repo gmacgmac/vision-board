@@ -3083,7 +3083,7 @@
               "type": "https://vision-board.invalid/problems/too-large",
               "title": "Too large",
               "status": 413,
-              "detail": "The body is over the 64 KiB limit. Split the items across several calls."
+              "detail": "The body is over the 64 KB limit. Split the items across several calls."
             }
           }
         }
