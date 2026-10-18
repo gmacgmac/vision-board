@@ -4,7 +4,8 @@
 // names, so they stay in the folder; every file's real path must too (a link out is refused), and
 // none may be over `APP_LIMITS.fileBytes`. What is wrong is a problem for the agent to fix, in plain
 // words: a field as a person writes it (`fieldWords`), no code marks, no JSON Pointer, and for JSON
-// that doesn't parse, only the line near the slip (never the parser's sentence).
+// that doesn't parse, only the line near the slip (never the parser's sentence). A problem's `file`
+// names the file, and the card puts it first, so its words never name it again.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppManifest, AppProblem, AppSize } from '../../../../packages/format/src/index.ts';
@@ -64,10 +65,10 @@ function locate(dir: string, name: string, problems: AppProblem[]): string | nul
   const file = real(path.join(dir, name));
   if (file === undefined) return null;
   const refuse = (detail: string) => void problems.push({ file: name, detail });
-  if (!inside(dir, file)) return refuse(`${name} links to a file outside the app's folder. Put the file itself in the folder.`);
+  if (!inside(dir, file)) return refuse('links outside the app\'s folder. Make it a real file.');
   const stat = fs.statSync(file);
-  if (!stat.isFile()) return refuse(`${name} is not a file.`);
-  if (stat.size > APP_LIMITS.fileBytes) return refuse(`${name} is over the ${sizeWords(APP_LIMITS.fileBytes)} limit. Make it smaller.`);
+  if (!stat.isFile()) return refuse('not a file.');
+  if (stat.size > APP_LIMITS.fileBytes) return refuse(`over the ${sizeWords(APP_LIMITS.fileBytes)} limit. Make it smaller.`);
   return file;
 }
 
@@ -76,6 +77,10 @@ const SIZE_AT = /^(\/size(\/|$)|$)/;
 /** The line where the JSON parser noticed a slip, read from the end of its message only (some of its
  * messages quote the file before that). Its message itself never reaches the problem. */
 const PARSED_AT = / \(line (\d+) column \d+\)$/;
+/** A byte-order mark some editors put first: not part of the JSON, but the hash keeps it (ruling 7). */
+const MARK = /^\uFEFF/;
+/** A file the folder should hold but doesn't. */
+const NOT_THERE = 'not in the app\'s folder. Write it there';
 
 /** The manifest, when it is JSON, fits its schema and names this folder; `folder.size` once its
  * `size` field is good, whatever else is wrong. */
@@ -83,7 +88,7 @@ function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
   const { id, problems } = folder;
   const file = APP_FILES.manifest;
   let value: unknown;
-  try { value = JSON.parse(bytes.toString('utf8')); } catch (err) {
+  try { value = JSON.parse(bytes.toString('utf8').replace(MARK, '')); } catch (err) {
     const line = PARSED_AT.exec((err as SyntaxError).message)?.[1];
     problems.push({ file, detail: `not valid JSON${line ? ` near line ${line}` : ''}` });
     return undefined;
@@ -108,21 +113,21 @@ export function readApp(project: string, id: string): AppFolder | undefined {
   const problems: AppProblem[] = [];
   const folder: AppFolder = { id, dir, problems };
   if (!inside(root, dir)) {
-    problems.push({ file: `${id}/`, detail: 'The folder links to somewhere outside .visionboard/apps/. Put the app\'s files in the folder itself.' });
+    problems.push({ file: `${id}/`, detail: 'links outside .visionboard/apps/. Make it a real folder.' });
     return folder;
   }
   const manifestFile = locate(dir, APP_FILES.manifest, problems);
-  if (manifestFile === null) problems.push({ file: APP_FILES.manifest, detail: 'The folder has no app.json: write the app\'s manifest there.' });
+  if (manifestFile === null) problems.push({ file: APP_FILES.manifest, detail: `${NOT_THERE}.` });
   if (!manifestFile) return folder;
   folder.manifestBytes = fs.readFileSync(manifestFile);
   const manifest = manifestOf(folder, folder.manifestBytes);
   if (!manifest) return folder;
   const panelName = manifest.panel ?? APP_FILES.panel;
   const panel = locate(dir, panelName, problems);
-  if (panel === null) problems.push({ file: panelName, detail: `There is no ${panelName} in the app's folder: write the panel there${manifest.panel ? ', or fix the panel field in app.json' : ''}.` });
+  if (panel === null) problems.push({ file: panelName, detail: `${NOT_THERE}${manifest.panel ? ', or fix the panel field in app.json' : ''}.` });
   const toolsName = manifest.tools ?? APP_FILES.tools;
   const tools = locate(dir, toolsName, problems);
-  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: `There is no ${toolsName} in the app's folder: write it there, or fix the tools field in app.json.` });
+  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: `${NOT_THERE}, or fix the tools field in app.json.` });
   if (problems.length || !panel) return folder;
   folder.manifest = manifest;
   folder.panel = panel;

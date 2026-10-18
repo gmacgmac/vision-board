@@ -19,6 +19,8 @@ import { addApp, allow, apps, gone, raw, refused, run, touch } from './app-suppo
 let h: Harness;
 let A: Joined;
 const dirs: Record<string, string> = {};
+/** The runner's words for an import of anything but a built-in (finding 29: they name no file). */
+const IMPORT_ONLY = (what: string) => `Import only Node's built-in modules, such as node:fs, not "${what}". Put that code in this file, so the version the person allows covers all of it.`;
 const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports', 'bad-tool'];
 
 before(async () => {
@@ -205,11 +207,40 @@ test('one file: a tools module that imports another file is invalid; an import i
   assert.match(refusedImport.detail, /only Node's built-in modules/);
   const listed = (await apps(h)).get('imports')!;
   assert.equal(listed.state, 'invalid');
-  assert.equal(listed.problems![0]!.file, 'tools.mjs');
-  assert.match(listed.problems![0]!.detail, /"\.\/helper\.mjs"/);
+  assert.deepEqual(listed.problems, [{ file: 'tools.mjs', detail: IMPORT_ONLY('./helper.mjs') }], 'finding 29: the file named once');
   const late = await run(h, 'fs-write', 'sneak');
   assert.equal(late.isError, true);
-  assert.match(late.content[0]!.text, /only Node's built-in modules/);
+  assert.equal(late.content[0]!.text, IMPORT_ONLY('./helper.mjs'), 'the same words, alone, as the tool\'s error');
+});
+
+test('finding 29: a tools module that doesn\'t load or doesn\'t fit says why without naming its file again', async () => {
+  const go = 'run: () => 1';
+  const made: Record<string, [code: string, detail: string]> = {
+    'unfit-export': ['export default {};', 'must export default { tools: [...] }.'],
+    'unfit-object': ['export default { tools: [1] };', 'Tool number 1 is not an object.'],
+    'unfit-run': ['export default { tools: [{ name: "a" }] };', 'Tool "a" has no run function.'],
+    'unfit-twice': [`export default { tools: [{ name: "a", ${go} }, { name: "a", ${go} }] };`, 'has two tools named "a".'],
+    'unfit-syntax': ['export default {', 'could not load: Unexpected end of input'],
+  };
+  const dirOf = (id: string) => path.join(h.project, '.visionboard', 'apps', id);
+  for (const [id, [code]] of Object.entries(made)) {
+    fs.mkdirSync(dirOf(id));
+    fs.writeFileSync(path.join(dirOf(id), 'app.json'), JSON.stringify({ id, title: 'T', version: '1' }));
+    fs.writeFileSync(path.join(dirOf(id), 'panel.html'), '<p>hi</p>');
+    fs.writeFileSync(path.join(dirOf(id), 'tools.mjs'), code);
+  }
+  try {
+    const said: string[] = [];
+    for (const id of Object.keys(made)) {
+      await allow(h, id);
+      said.push((await refused(h, id, 'a', 422, 'app-invalid')).detail);
+    }
+    assert.equal(said[0], 'The app "unfit-export" has problems in its files: tools.mjs: must export default { tools: [...] }. Fix them and try again.');
+    const all = await apps(h);
+    assert.deepEqual(Object.keys(made).map((id) => all.get(id)!.problems), Object.values(made).map(([, detail]) => [{ file: 'tools.mjs', detail }]));
+  } finally {
+    for (const id of Object.keys(made)) fs.rmSync(dirOf(id), { recursive: true, force: true });
+  }
 });
 
 test('finding 4: a tools module whose tools don\'t fit is invalid, its problems in plain words', async () => {
@@ -226,7 +257,9 @@ test('a tools module that never finishes loading is invalid until its code chang
   await allow(h, 'slow-load');
   const slow = await refused(h, 'slow-load', 'anything', 422, 'app-invalid');
   assert.match(slow.detail, /did not finish loading/);
-  assert.equal((await apps(h)).get('slow-load')!.state, 'invalid');
+  const listed = (await apps(h)).get('slow-load')!;
+  assert.equal(listed.state, 'invalid');
+  assert.deepEqual(listed.problems, [{ file: 'tools.mjs', detail: 'did not finish loading within 1.5 s. Make its top-level code quicker.' }], 'finding 29: the file named once');
 });
 
 test('4h: an app id with upper case, a slash or dots never reaches a path', async () => {

@@ -73,9 +73,9 @@ export function startChild(o: ChildOptions): Child {
   const open = new Map<number, (a: Answer) => void>();
   let settle!: (l: Loaded) => void;
   const loaded = new Promise<Loaded>((resolve) => { settle = resolve; });
-  const name = o.file.split(/[\\/]/).pop();
+  // The problem names the tools file, so these words don't.
   const loadTimer = setTimeout(() => {
-    settle({ invalid: `${name} did not finish loading within ${o.callMs / 1000} s. Make its top-level code quicker.` });
+    settle({ invalid: `did not finish loading within ${o.callMs / 1000} s. Make its top-level code quicker.` });
     stop('timeout');
   }, o.callMs);
 

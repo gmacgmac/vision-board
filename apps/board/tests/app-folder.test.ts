@@ -71,19 +71,19 @@ test('a file or the folder itself linking outside is refused', () => {
 
 test('what the agent must fix: no manifest, bad JSON, another id, a missing file, a file too large', () => {
   fs.mkdirSync(path.join(APPS, 'empty'), { recursive: true });
-  assert.match(problems('empty').join(), /no app\.json/);
+  assert.match(problems('empty').join(), /^app\.json  not in the app's folder/);
   const dir = app('json');
   fs.writeFileSync(path.join(dir, 'app.json'), '{ "id": "json", ');
   assert.match(problems('json').join(), /not valid JSON/);
   app('other-id', { id: 'calc' });
   assert.equal(problems('other-id').join(), 'app.json  id is "calc", but the folder is "other-id": make them the same.');
   app('no-panel', {}, {});
-  assert.match(problems('no-panel').join(), /^panel\.html  There is no panel\.html/);
+  assert.match(problems('no-panel').join(), /^panel\.html  not in the app's folder/);
   app('no-tools', { tools: 'engine.mjs' });
-  assert.match(problems('no-tools').join(), /^engine\.mjs  There is no engine\.mjs/);
+  assert.match(problems('no-tools').join(), /^engine\.mjs  not in the app's folder/);
   assert.equal(readApp(project, 'no-panel')!.tools, undefined, 'no tools named and no tools.mjs: a panel-only app');
   app('huge', {}, { 'panel.html': 'x'.repeat(APP_LIMITS.fileBytes + 1) });
-  assert.equal(problems('huge').join(), 'panel.html  panel.html is over the 1 MB limit. Make it smaller.');
+  assert.match(problems('huge').join(), /^panel\.html  over the 1 MB limit/);
 });
 
 test('finding 4: a manifest\'s problems name each field as a person writes it, with no code marks and no pointer', () => {
@@ -96,8 +96,8 @@ test('finding 4: a manifest\'s problems name each field as a person writes it, w
   assert.deepEqual(problems('whole'), ['app.json  it must be an object']);
   app('unnamed', { panel: 'board.html', tools: 'engine.mjs' }, {});
   assert.deepEqual(problems('unnamed'), [
-    "board.html  There is no board.html in the app's folder: write the panel there, or fix the panel field in app.json.",
-    "engine.mjs  There is no engine.mjs in the app's folder: write it there, or fix the tools field in app.json.",
+    "board.html  not in the app's folder. Write it there, or fix the panel field in app.json.",
+    "engine.mjs  not in the app's folder. Write it there, or fix the tools field in app.json.",
   ]);
   for (const id of ['worded', 'whole', 'unnamed', 'names', 'other-id', 'huge']) {
     for (const p of readApp(project, id)!.problems) {
@@ -113,8 +113,51 @@ test('finding 28: an app.json that is not JSON says so once, near its line, with
   assert.deepEqual(read('{ "id": "half", "size": { "w": 3'), ['app.json  not valid JSON near line 1']);
   assert.deepEqual(read('{\n  "id": "half"\n  "title": "T"\n}'), ['app.json  not valid JSON near line 3']);
   assert.deepEqual(read(''), ['app.json  not valid JSON'], 'no line: none is given');
-  // Some of the parser's messages quote the file: nothing of it reaches the problem, not even a line.
-  assert.deepEqual(read('﻿{ "title": "(line 9 column 2)" }'), ['app.json  not valid JSON']);
+  // Some of the parser's messages quote the file (a stray first character): nothing of it reaches
+  // the problem, not even a line.
+  assert.deepEqual(read('x{ "title": "(line 9 column 2)" }'), ['app.json  not valid JSON']);
+});
+
+test('finding 29: each file\'s problem names the file once, as the card puts it first', () => {
+  const lines = (id: string) => readApp(project, id)!.problems.map((p) => `${p.file}: ${p.detail}`).sort();
+  app('f29-huge', {}, { 'panel.html': 'x'.repeat(APP_LIMITS.fileBytes + 1) });
+  fs.mkdirSync(path.join(APPS, 'f29-bare'));
+  app('f29-no-panel', {}, {});
+  app('f29-unnamed', { panel: 'board.html', tools: 'engine.mjs' }, {});
+  const linked = app('f29-linked', {}, {});
+  for (const name of ['panel.html', 'tools.mjs']) {
+    fs.writeFileSync(path.join(outside, `f29-${name}`), '');
+    fs.symlinkSync(path.join(outside, `f29-${name}`), path.join(linked, name));
+  }
+  fs.mkdirSync(path.join(outside, 'f29-away'));
+  fs.writeFileSync(path.join(outside, 'f29-away', 'app.json'), JSON.stringify({ id: 'f29-away', title: 'T', version: '1' }));
+  fs.symlinkSync(path.join(outside, 'f29-away'), path.join(APPS, 'f29-away'));
+  fs.mkdirSync(path.join(app('f29-a-folder', {}, {}), 'panel.html'));
+  assert.deepEqual(['huge', 'bare', 'no-panel', 'unnamed', 'linked', 'away', 'a-folder'].map((id) => lines(`f29-${id}`)), [
+    ['panel.html: over the 1 MB limit. Make it smaller.'],
+    ["app.json: not in the app's folder. Write it there."],
+    ["panel.html: not in the app's folder. Write it there."],
+    ["board.html: not in the app's folder. Write it there, or fix the panel field in app.json.",
+      "engine.mjs: not in the app's folder. Write it there, or fix the tools field in app.json."],
+    ["panel.html: links outside the app's folder. Make it a real file.", "tools.mjs: links outside the app's folder. Make it a real file."],
+    ['f29-away/: links outside .visionboard/apps/. Make it a real folder.'],
+    ['panel.html: not a file.'],
+  ]);
+});
+
+test('finding 30: an app.json saved with a byte-order mark reads as it is; the hash is over its bytes, mark and all', () => {
+  const dir = app('marked', {}, { 'panel.html': '<p>hi</p>', 'tools.mjs': 'export default { tools: [] };' });
+  const file = path.join(dir, 'app.json');
+  const mark = () => fs.writeFileSync(file, `﻿${fs.readFileSync(file, 'utf8')}`);
+  mark();
+  const f = readApp(project, 'marked')!;
+  assert.deepEqual([f.problems, f.manifest?.title], [[], 'T']);
+  const bytes = fs.readFileSync(file);
+  assert.deepEqual([...bytes.subarray(0, 3)], [0xef, 0xbb, 0xbf], 'the board never writes in the folder');
+  const want = createHash('sha256').update(bytes).update(fs.readFileSync(path.join(dir, 'tools.mjs'))).digest('hex');
+  assert.deepEqual([appState(project, 'marked', want).info.hash, appState(project, 'marked', want).info.state], [want, 'ready']);
+  mark();
+  assert.deepEqual(problems('marked'), ['app.json  not valid JSON'], 'one leading mark, no more');
 });
 
 test('the hash: SHA-256 of app.json then the tools file, as the person allows it', () => {

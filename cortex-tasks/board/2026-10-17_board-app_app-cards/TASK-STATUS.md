@@ -61,8 +61,9 @@ tracker:
 | 12 | VERIFY_02 | 9 | strong | [Re-check findings 1-7 and Goal lines 3-4](./VERIFY_02_findings.md) | Completed | Gates all green at `6ebb96a` (532 pages); findings 1-7 fixed by hand, light and dark, both sizes; new finding 25 (an app card with no `w`/`h` changes size on load, invalid, missing; components.md's claim); tracker row 26: see notes |
 | 13 | FIX_03 | 10 | strong | [An app card keeps its size when its app breaks or goes (VERIFY_02 finding 25)](./FIX_03_app-card-size.md) | Completed | (b) list_apps sends a broken app.json's good size (`AppFolder.size`); (c) the page keeps the last size (+12 B gzip, 149.87 KB); (a) claims narrowed; CSS polish tried, not kept (critique); 533 pages: see notes |
 | 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Completed | `retryDone` "<name> not found" when the folder went (+1 B gzip, 149.87 KB, 130 B left); `manifestOf` "not valid JSON near line N" (server only); 534 pages: see notes |
-| 15 | FIX_05 | 12 | strong | [Name each file once; read app.json with a byte-order mark (findings 29, 30)](./FIX_05_file-lines.md) | Pending | |
-| 16 | VERIFY_03 | 13 | strong | [Re-check findings 25, 27-30, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
+| 15 | FIX_05 | 12 | strong | [Name each file once; read app.json with a byte-order mark (findings 29, 30)](./FIX_05_file-lines.md) | Completed | Per-file lines name the file once (`manifest.ts`, `child.ts`, `runner.mjs` `Unfit`); one leading mark stripped, hash over the bytes as they are; server only (149.87 KB, 130 B left); 534 pages: see notes |
+| 16 | FIX_06 | 13 | strong | [The gallery and the API examples show the server's real words (findings 31, 32)](./FIX_06_samples.md) | Pending | |
+| 17 | VERIFY_03 | 14 | strong | [Re-check findings 25, 27-32, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -144,6 +145,10 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
 9. **FIX_04 saw two more; they get FIX_05 before VERIFY_03.** The per-file lines name the file twice
    ("panel.html: panel.html is over …", finding 29: the fewest-words instruction), and an app.json with a
    byte-order mark reads as broken (finding 30: ruling 10, the board stays usable). Both server only.
+10. **FIX_05 saw two leftovers; they get FIX_06, the last fix before VERIFY_03.** The gallery's invalid
+    sample shows words the server never sends (finding 31: rule 11) and the OpenAPI examples keep code marks
+    and a pointer (finding 32: rule 6 and plain words). From here, a slip a FIX task sees in passing goes to
+    VERIFY_03 to weigh, so the loop ends on a verify.
 
 ## Proposed tracker rows
 
@@ -574,6 +579,27 @@ Gates, one after another after the last change: check 0; npm test 1481 + 7 pass;
 build 0; test:pages 534 passed.
 
 ### FIX_05: File lines
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 29 and 30 fixed, server only. Read FIX_05_file-lines.md § Implementation Notes.
+- **29**: each per-file line names its file once (the card and `appInvalid` put "<file>: " first): `manifest.ts`
+  `locate` ("over the 1 MB limit. Make it smaller.", "links outside the app's folder. Make it a real file.", "not a
+  file."), `readApp` ("not in the app's folder. Write it there" for app.json, the panel, the tools file; the folder
+  link "links outside .visionboard/apps/. Make it a real folder."); `child.ts` ("did not finish loading within N s.
+  …"); `runner.mjs` sends its own words (`Unfit`) as they are ("must export default { tools: [...] }.", "Tool "a" has
+  no run function.", "has two tools named "a".", "Import only Node's built-in modules, such as node:fs, not "x". Put
+  that code in this file, …"), anything else "could not load: …". Proof: `app-folder.test.ts` "finding 29: each
+  file's problem names the file once, …"; `api-apps.test.ts` "finding 29: a tools module that doesn't load or doesn't
+  fit says why without naming its file again", "one file: …", "a tools module that never finishes loading …".
+- **30**: `manifestOf` strips one leading mark before parsing; the hash stays over the file's bytes (ruling 7). Proof:
+  `app-folder.test.ts` "finding 30: an app.json saved with a byte-order mark reads as it is; the hash is over its
+  bytes, mark and all". FIX_04's finding-28 case moved from a mark to a stray first character.
+- **For VERIFY_03**: no page code, doc or screenshot changed. Seen, not fixed: the gallery's invalid sample shows
+  tools words the server never sends; the OpenAPI `app-invalid` and `list_apps` examples keep code marks (and a
+  pointer) from before FIX_01.
+Gates, one after another after the last change: check 0; npm test 1484 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 534 passed.
+
+### FIX_06: Samples
 _Status:_ Pending
 _Notes:_
 

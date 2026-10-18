@@ -12,15 +12,18 @@ import { pathToFileURL } from 'node:url';
 
 const [file = '', envNames = '[]', outputBytes = '0'] = process.argv.slice(2);
 const toolsUrl = pathToFileURL(file).href;
-const name = file.split(/[\\/]/).pop();
 const cap = Number(outputBytes);
 const declared = JSON.parse(envNames).filter((k) => Object.hasOwn(process.env, k));
 const env = Object.freeze(Object.fromEntries(declared.map((k) => [k, process.env[k]])));
 
+/** What doesn't fit, in the runner's own words. The board's problem names the tools file, so these
+ * words don't; a tool's error at call time is the same words alone. */
+class Unfit extends Error {}
+
 registerHooks({
   resolve(specifier, context, next) {
     if (isBuiltin(specifier) || (context.parentURL === import.meta.url && specifier === toolsUrl)) return next(specifier, context);
-    throw new Error(`The tools module may import only Node's built-in modules, such as node:fs. It imports "${specifier}": put that code in ${name} itself, so the version the person allows covers all of it.`);
+    throw new Unfit(`Import only Node's built-in modules, such as node:fs, not "${specifier}". Put that code in this file, so the version the person allows covers all of it.`);
   },
 });
 
@@ -36,13 +39,13 @@ const send = (message) => new Promise((resolve) => {
 /** The module's tools by name, after checking its shape; throws in plain words when it doesn't fit. */
 function toolsOf(mod) {
   const list = mod?.default?.tools;
-  if (!Array.isArray(list)) throw new Error(`${name} must export default { tools: [...] }.`);
+  if (!Array.isArray(list)) throw new Unfit('must export default { tools: [...] }.');
   const tools = new Map();
   list.forEach((tool, i) => {
     const label = typeof tool?.name === 'string' ? `"${tool.name}"` : `number ${i + 1}`;
-    if (typeof tool !== 'object' || tool === null) throw new Error(`Tool ${label} in ${name} is not an object.`);
-    if (typeof tool.run !== 'function') throw new Error(`Tool ${label} in ${name} has no run function.`);
-    if (tools.has(tool.name)) throw new Error(`${name} has two tools named ${label}.`);
+    if (typeof tool !== 'object' || tool === null) throw new Unfit(`Tool ${label} is not an object.`);
+    if (typeof tool.run !== 'function') throw new Unfit(`Tool ${label} has no run function.`);
+    if (tools.has(tool.name)) throw new Unfit(`has two tools named ${label}.`);
     tools.set(tool.name, tool);
   });
   return tools;
@@ -57,7 +60,7 @@ try {
   tools = toolsOf(await import(toolsUrl));
   infos = [...tools.values()].map(infoOf);
 } catch (err) {
-  await send({ type: 'invalid', detail: `${name} could not load: ${words(err)}` });
+  await send({ type: 'invalid', detail: err instanceof Unfit ? words(err) : `could not load: ${words(err)}` });
   process.exit(0);
 }
 
