@@ -10,6 +10,12 @@ import { nodeState } from '../../../../packages/ui/src/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
+import invalidText from './gallery.apps.json?raw';
+
+/** What list_apps says of the calculator with problems, word for word (app-samples.test.ts gets the
+ * same answers from the server): its app.json broken, and once allowed, a tools.mjs that imports a
+ * file. One answer never has both: the files are checked before anything runs. */
+const INVALID = JSON.parse(invalidText) as Record<'files' | 'tools', AppInfo>;
 
 /** What list_apps says of the example calculator, allowed at this version. */
 const CALCULATOR: AppInfo = {
@@ -26,14 +32,8 @@ const STATES: [string, AppCardInput][] = [
   ['Ready, allowed, with Stop app', { info: CALCULATOR }],
   ['Ready, nothing to allow', { info: { ...CALCULATOR, tools: [], allowed: false } }],
   ['Missing', { info: { id: 'calculator', state: 'missing', tools: [], allowed: false } }],
-  ['Invalid', {
-    info: {
-      ...CALCULATOR, state: 'invalid', allowed: false, problems: [
-        { file: 'app.json', detail: 'size.w must be at most 960' },
-        { file: 'tools.mjs', detail: 'imports ./parser.mjs: a tools module imports only node: built-ins' },
-      ],
-    },
-  }],
+  ['Invalid, in app.json', { info: INVALID.files }],
+  ['Invalid, in tools.mjs', { info: INVALID.tools }],
   ['Broken', { info: { ...CALCULATOR, state: 'broken' } }],
   ['Past version', { info: CALCULATOR, past: true }],
 ];

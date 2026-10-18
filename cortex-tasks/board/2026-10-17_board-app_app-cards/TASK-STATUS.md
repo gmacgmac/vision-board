@@ -62,8 +62,9 @@ tracker:
 | 13 | FIX_03 | 10 | strong | [An app card keeps its size when its app breaks or goes (VERIFY_02 finding 25)](./FIX_03_app-card-size.md) | Completed | (b) list_apps sends a broken app.json's good size (`AppFolder.size`); (c) the page keeps the last size (+12 B gzip, 149.87 KB); (a) claims narrowed; CSS polish tried, not kept (critique); 533 pages: see notes |
 | 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Completed | `retryDone` "<name> not found" when the folder went (+1 B gzip, 149.87 KB, 130 B left); `manifestOf` "not valid JSON near line N" (server only); 534 pages: see notes |
 | 15 | FIX_05 | 12 | strong | [Name each file once; read app.json with a byte-order mark (findings 29, 30)](./FIX_05_file-lines.md) | Completed | Per-file lines name the file once (`manifest.ts`, `child.ts`, `runner.mjs` `Unfit`); one leading mark stripped, hash over the bytes as they are; server only (149.87 KB, 130 B left); 534 pages: see notes |
-| 16 | FIX_06 | 13 | strong | [The gallery and the API examples show the server's real words (findings 31, 32)](./FIX_06_samples.md) | Pending | |
-| 17 | VERIFY_03 | 14 | strong | [Re-check findings 25, 27-32, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
+| 16 | FIX_06 | 13 | strong | [The gallery and the API examples show the server's real words (findings 31, 32)](./FIX_06_samples.md) | Completed | Two real invalid answers in `gallery.apps.json` (app.json; tools.mjs once allowed), held by `app-samples.test.ts` against the server, as the OpenAPI examples; board page unchanged (149.87 KB); 534 pages: see notes |
+| 17 | FIX_07 | 14 | strong | [Problems end cleanly; examples match the server (findings 33-35)](./FIX_07_last-words.md) | Pending | |
+| 18 | VERIFY_03 | 15 | strong | [Re-check findings 25, 27-35, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -149,6 +150,11 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
     sample shows words the server never sends (finding 31: rule 11) and the OpenAPI examples keep code marks
     and a pointer (finding 32: rule 6 and plain words). From here, a slip a FIX task sees in passing goes to
     VERIFY_03 to weigh, so the loop ends on a verify.
+11. **FIX_06 saw four; three get FIX_07, one stays.** In: problems that run together without a full stop
+    (finding 33, plain words), a `list_apps` example naming tools before Allow (finding 34, rule 6 against
+    decision 2), "ending in .html" reading as the folder (finding 35). Out: the half-cut last line in a
+    scrolling problems box stays, because a cut line is the usual sign there is more to scroll and the box
+    scrolls by keyboard too. Decision 10 is amended: FIX_07 is the last fix; VERIFY_03 weighs anything after.
 
 ## Proposed tracker rows
 
@@ -600,6 +606,24 @@ Gates, one after another after the last change: check 0; npm test 1484 + 7 pass;
 build 0; test:pages 534 passed.
 
 ### FIX_06: Samples
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 31 and 32 fixed; no server or board-page code. Read FIX_06_samples.md § Implementation Notes.
+- **31**: the gallery's invalid sample is two real list_apps answers in `apps/board/src/gallery/gallery.apps.json`
+  (read by `app-frame-section.ts` `INVALID`): the calculator's broken app.json ("size.w must be at most 960", "unknown
+  field colour"), and its tools.mjs importing ./parser.mjs once allowed (FIX_05's import line). Two cards, because a
+  schema problem and a load problem never come in one answer (deviation, rule 11). The server's words have no one
+  source the tests read, so the file is the one copy and the test gets the same answers from the real server.
+- **32**: OpenAPI `list_apps` `release-notes` (no pointer, no code marks; the `size` and `hash` the server sends) and
+  `appInvalid` (the call's words for the import case); `npm run gen` changed only `api-reference.md`; no version change.
+- **Proof**: `app-samples.test.ts` (2 tests), `openapi.test.ts` "the app examples are in plain words, …", and
+  `app-gallery.spec.ts` "app frame: …", each seen failing first. `gallery-{light,dark}` re-baselined after viewing.
+- **For VERIFY_03**, seen, not fixed: `appInvalid` joins problems with a space only (a detail with no period runs into
+  the next); the `list_apps` example's `needs-approval` calculator names tools the server sends only after a run; the
+  import line half cut at the scroll box's edge in a 300×220 panel; "…in the app's folder ending in .html" reads two ways.
+Gates, one after another after the last change: check 0; npm test 1487 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 534 passed. Board page 153,470 B gzip (149.87 of 150 KB, 130 B left).
+
+### FIX_07: Last words
 _Status:_ Pending
 _Notes:_
 

@@ -2312,13 +2312,17 @@ Example:
     {
       "id": "release-notes",
       "state": "invalid",
+      "size": {
+        "w": 360,
+        "h": 320
+      },
       "tools": [],
+      "hash": "878a06c1b5f0a3fddc93a1f5936f8488c16da13b3e4c96cc5eacd371db82c08d",
       "allowed": false,
       "problems": [
         {
           "file": "app.json",
-          "pointer": "/panel",
-          "detail": "`panel` is not a plain file name in the app's folder ending in .html"
+          "detail": "panel is not a plain file name in the app's folder ending in .html"
         }
       ]
     }

@@ -1,4 +1,4 @@
-# VERIFY_03_size: Re-check findings 25, 27-32, Goal lines 2-4, 7 and 10
+# VERIFY_03_size: Re-check findings 25, 27-35, Goal lines 2-4, 7 and 10
 
 > **Parent**: [TASK-STATUS.md](./TASK-STATUS.md) · **Plan**: [PLAN.md](./PLAN.md)
 
@@ -6,12 +6,12 @@
 
 ## Objective
 
-A copy of VERIFY_02 limited to findings 25 and 27-32 and PLAN.md § Goal state lines 2-4, 7 and 10: check by hand that
-FIX_03 to FIX_06 fixed them, that findings 1-7 still hold, and that the end to end and the safety still hold.
+A copy of VERIFY_02 limited to findings 25 and 27-35 and PLAN.md § Goal state lines 2-4, 7 and 10: check by hand that
+FIX_03 to FIX_07 fixed them, that findings 1-7 still hold, and that the end to end and the safety still hold.
 
 ## Context
 
-Read VERIFY_02's notes (finding 25's steps and screenshots) and the FIX_03 to FIX_06 notes. Same harness as VERIFY_02
+Read VERIFY_02's notes (finding 25's steps and screenshots) and the FIX_03 to FIX_07 notes. Same harness as VERIFY_02
 (`$TMPDIR/vb-v2/scripts/` if still there): a scratch board on a spare port with `HOME` and `VB_PROJECT` in
 the system temp folder, `VB_KIRO_AGENT=0`, the repo's Playwright chromium, 1600×1000 and 1470×956, light and
 dark. Look at every screenshot you take.
@@ -21,9 +21,10 @@ dark. Look at every screenshot you take.
 1. [ ] **Finding 25**: repeat VERIFY_02's steps (manifest broken, folder gone, page load) on a card with no
    `w`/`h`; it passes when the card keeps its box, or when what still moves is exactly what the narrowed
    claims say. Read the three claims against the code.
-2. [ ] **Findings 27-32** (FIX_04 to FIX_06): Check again on an invalid app whose folder then goes; a
+2. [ ] **Findings 27-35** (FIX_04 to FIX_07): Check again on an invalid app whose folder then goes; a
    half-written app.json; a file over its limit (named once); an app.json with a byte-order mark; the gallery's
-   invalid sample against what the server sends; the OpenAPI app examples. Run `design:ux-copy` over the words.
+   invalid sample against what the server sends; the OpenAPI app examples; a call to an invalid app
+   with two problems (they end cleanly); the panel/tools file-name line. Run `design:ux-copy` over the words.
 3. [ ] **Findings 1-7**: a quick pass that each still holds (one screenshot each).
 4. [ ] **Goal lines 3-4**: the named tests pass in your page run; by hand, Allow → `12*3=` → 36 → History.
 5. [ ] **Gates** (Goal line 2): run the six yourself, one after another, and paste the counts.
@@ -33,7 +34,7 @@ dark. Look at every screenshot you take.
 
 ## Validation
 
-- [ ] Findings 25 and 27-32 marked fixed with evidence, or still open with a reason.
+- [ ] Findings 25 and 27-35 marked fixed with evidence, or still open with a reason.
 
 ## Constraints
 

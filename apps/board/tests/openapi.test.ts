@@ -273,6 +273,17 @@ test('the app operations (D-047 rulings 6, 12): list_apps for an agent or the pe
     assert.equal(named[status], code, status);
 });
 
+test('the app examples are in plain words, as the server sends them: no code mark and no pointer in a problem (finding 32)', () => {
+  const op = (id: string) => ops.find((o) => o.id === id)!.op;
+  const listed = (op('list_apps').responses['200'].content['application/json'].example.apps as Rec[]).flatMap((a) => a.problems ?? []);
+  assert.ok(listed.length > 0, 'the list_apps example has an app with problems');
+  for (const p of listed) assert.deepEqual([p.pointer, p.detail.includes('`')], [undefined, false], p.detail);
+  for (const r of Object.values<Rec>(op('call_app_tool').responses)) {
+    const detail = deref(r).content?.['application/problem+json']?.example.detail;
+    if (detail) assert.ok(!detail.includes('`'), detail);
+  }
+});
+
 test('the server\'s problem table (server/problem.ts PROBLEMS) has every code of api.md 40, each with its status', () => {
   const section = apiMd.split(/^## Errors$/m)[1]!.split(/^## /m)[0]!;
   const rows = [...section.matchAll(/^\| `([a-z-]+)` \| (\d{3}) \|/gm)].map((m) => [m[1]!, Number(m[2])]);

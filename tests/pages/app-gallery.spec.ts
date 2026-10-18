@@ -27,8 +27,11 @@ test('app frame: the frame before it loads, an app card in every state of ruling
   const section = page.locator('section[data-pattern="app-frame"]');
   await expect(section.locator('vb-app-frame[data-state="loading"]')).toHaveCount(1);
   const states = await section.getByRole('list', { name: 'App card states' }).locator('.vb-app').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.appState));
-  expect(states).toEqual(['checking', 'needs-approval', 'changed', 'ready', 'ready', 'missing', 'invalid', 'broken', 'past']);
+  expect(states).toEqual(['checking', 'needs-approval', 'changed', 'ready', 'ready', 'missing', 'invalid', 'invalid', 'broken', 'past']);
   expect(new Set(states)).toEqual(new Set(APP_CARD_STATES));
+  // The server's words (gallery.apps.json, held by app-samples.test.ts): app.json's, then tools.mjs's once allowed (finding 31).
+  const problems = section.getByRole('list', { name: 'App card states' }).locator('.vb-app[data-app-state="invalid"] li');
+  await expect(problems).toHaveText(['app.json: size.w must be at most 960', 'app.json: unknown field colour', /^tools\.mjs: Import only Node's built-in modules/]);
   await expect(section.getByRole('list', { name: 'App cards off' }).locator('.vb-node-body')).toHaveText('App cards are off.');
   // The node section's app cards draw their app's placeholder, not a "Loading…" that never ends.
   const kinds = page.locator('section[data-pattern="node"] vb-node[data-kind="app"] .vb-app');

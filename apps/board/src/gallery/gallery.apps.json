@@ -1,0 +1,18 @@
+{
+  "files": {
+    "id": "calculator", "state": "invalid", "tools": [], "allowed": false,
+    "hash": "94a00c7fccab9930d4a6a06e796174b15543d6be16b574d8a1760e628a389fa1",
+    "problems": [
+      { "file": "app.json", "detail": "size.w must be at most 960" },
+      { "file": "app.json", "detail": "unknown field colour" }
+    ]
+  },
+  "tools": {
+    "id": "calculator", "state": "invalid", "tools": [], "allowed": true,
+    "title": "Calculator", "version": "1.0.0", "size": { "w": 360, "h": 440 },
+    "hash": "fb3339db7f7d68cd725aae5a777ed3dae8f651c0ef2f26a3fe5496fd64067fdc",
+    "problems": [
+      { "file": "tools.mjs", "detail": "Import only Node's built-in modules, such as node:fs, not \"./parser.mjs\". Put that code in this file, so the version the person allows covers all of it." }
+    ]
+  }
+}
