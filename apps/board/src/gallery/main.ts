@@ -35,6 +35,7 @@ import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { appFrameSamples } from './app-frame-section.ts';
+import { appSection } from './app-section.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
@@ -159,6 +160,7 @@ function build(): void {
   if (flagOn('lockBoard', flags)) main.append(lockSection(fx));
   if (flagOn('personRemove', flags)) main.append(removeSection(fx));
   if (flagOn('goToCard', flags)) main.append(goToCardSection());
+  if (flagOn('appCards', flags)) main.append(appSection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

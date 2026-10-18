@@ -808,8 +808,8 @@ section is how the board draws one. Two patterns share the work.
    light placeholder with the app's icon and title. The page calls `wire({ callTool, look?,
    onEscape? })` once, then `load()` while the card is on screen and near enough to use and
    `unload()` when it leaves (ruling 14). `load()` makes the `<iframe>`: `sandbox="allow-scripts"`
-   and nothing else, `src` `PANEL_PATH` + the id, `title` the app's name, no referrer. The frame
-   stays hidden (so it neither shows nor takes focus) until the panel says it is ready, or
+   and nothing else, `src` `APP_PANEL_PATH` + the id (packages/format: the server's route reads
+   the same string), `title` the app's name, no referrer. The frame stays hidden (so it neither shows nor takes focus) until the panel says it is ready, or
    `SHOW_AFTER_MS` after it loaded. Left out, `look` is `readLook` (the board's tokens resolved
    through a probe, light-dark() included, and the theme from the card surface) and Esc focuses
    the card. `lookChanged()` tells a ready panel the theme changed. `unload()`, also on disconnect,
@@ -829,18 +829,48 @@ section is how the board draws one. Two patterns share the work.
    restarted) gets no answer meant for the one before.
 7. **Accessibility** (rule 5, ruling 15). The frame's title names the app. Tab goes from the card
    into the panel and on out of it in the page's order; while focus is in the panel the frame
-   draws the focus ring, since keys then go to the app and not to the board's shortcuts. The board
-   cannot see keys inside the panel, so Esc back to the card needs the panel to send
+   draws the focus ring, since keys then go to the app and not to the board's shortcuts (the
+   element marks it `data-focus-in` from the window's blur and focus: Chromium never matches
+   `:focus-within` on a frame of another origin). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
    `ui/notifications/escape`. The card's name says its app state (", not allowed yet"); the
    placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
    loading.
-8. **The page's part** (app-cards FE_02): it imports `node-app.css` and `app-frame.css` with the
-   other pattern styles, passes `CardConditions.app`, wires and loads the frames, and acts on
-   `data-app-act`.
+8. **The page's part** (app-cards FE_02, `apps/board/src/board/`): `main.ts` imports `node-app.css`
+   and `app-frame.css` with the other pattern styles; the controller makes `app-cards.ts`
+   `createAppCards` behind the appCards flag (off: the card set renders `{ appCards: false }` and
+   nothing below runs).
+   - **State**: `app-state.ts` `createAppStates` holds the one copy of list_apps' answer (io.ts
+     `listApps`). It reads it when a ledger that names an app is loaded, when a line draws an app
+     card or allows or stops an app, after Allow and Stop app, on Check again and Restart, and when
+     a tool call is refused with a problem that says the state moved (`needs-approval`,
+     `app-invalid`, `app-not-found`, `app-failed`, `app-timeout`: so an edited `tools.mjs` shows
+     "Code changed" at the panel's next call). Reads made meanwhile share one more read. A new
+     answer redraws the board, which updates and measures only the cards whose state changed.
+   - **Conditions**: `card(n)` gives an app card `{ app: {} }` until list_apps answers,
+     `{ app: { info } }` after, and `{ app: { past: true } }` on a past version.
+   - **Frames** (ruling 14): after every draw and every pan or zoom (`draw.ts` `placed`), each app
+     card's `<vb-app-frame>` is wired once (`callTool` → io.ts `callAppTool`, which rejects with the
+     problem's code and words; `onEscape` focuses the card without scrolling) and loaded only while
+     its state shows a panel, its card is on the visible stage (`offscreen.ts` `viewBounds` with no
+     margin) and the zoom is not `isFar` (`viewport.ts`, under `FAR_K`); it is unloaded once the card
+     is more than a screen away, hidden, zoomed out past `FAR_K`, or in a state without a panel.
+   - **Theme**: `watchTheme` (the root's `data-theme` from the toolbar, and the system's scheme)
+     calls `lookChanged()` on every frame, so a ready panel gets `host-context-changed`.
+   - **Buttons** (`data-app-act`, one delegated click on the stage): Allow and Stop app ask first,
+     as `ACTIONS[...].needsConfirmation` says (`app-words.ts` `appAsk`), go through the one sender
+     (`app-allow { app, hash }` with list_apps' hash; `app-revoke { app }`), read list_apps again,
+     put focus on the card and say what was done in the toast (`appDone`). Check again and Restart
+     read list_apps again and say what they found (`retryDone`); focus moves to the card when the
+     new state took the button away.
+   - **Keys**: the key list's Items has "Leave an app" (Esc) with the flag on (`key-help.ts`).
+   - The gallery's `app-section.ts` (appCards flag) runs the example's panel live in a card, wired
+     the same way, from the served project's `.visionboard/apps/calculator/`.
 9. **Kept true by**: `packages/ui/tests/app-frame-core.test.ts` and `app-frame-limits.test.ts`
    (every protocol rule, with fake windows: `app-frame-harness.ts`), `packages/ui/tests/node-app.test.ts`
    (every state's view, words and markup), `node-template.test.ts` (the footer), and the gallery
    (`apps/board/src/gallery/app-frame-section.ts`: the frame unloaded and loading, an app card in
-   every state, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. Not covered
-   by these: the element in a browser (the frame, its messages, focus), which the app-cards page
-   tests cover.
+   every state, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. The element
+   and the page's part in a browser: `tests/pages/app-cards.spec.ts` (end to end, the keyboard, a
+   code change, Stop app, the flag off), `app-states.spec.ts` (every state, on and off screen, far
+   zoom, a past version), `app-safety.spec.ts` (opaque origin, CSP, other windows' messages) and
+   `app-gallery.spec.ts`; the words: `apps/board/tests/app-words.test.ts`, `key-help.test.ts`.

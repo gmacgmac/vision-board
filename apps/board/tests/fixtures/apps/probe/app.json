@@ -1,0 +1,1 @@
+{ "id": "probe", "title": "Probe", "version": "1.0.0", "size": { "w": 320, "h": 160 }, "csp": { "connectDomains": ["https://declared.example.com"] } }

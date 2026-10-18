@@ -89,7 +89,13 @@ the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list
 (`supervisor.ts`, `child.ts`, `runner.mjs`), started on the first call and stopped when idle, when
 its code changes or is stopped, and when the folder closes. `VB_FLAGS=-appCards` turns app cards
 off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_LIMITS`. Test apps:
-`tests/fixtures/apps/`.
+`tests/fixtures/apps/` (`probe` is the page tests' panel). On the page, `src/board/app-cards.ts`
+wires each app card's frame (loaded only on screen and zoomed in enough, ruling 14; tool calls
+through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
+the one sender; `src/board/app-state.ts` holds the one copy of `list_apps`' answer;
+`src/board/app-words.ts` says what the person reads around them (components.md § App card). This
+repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
+(`tests/repo-example-app.test.ts` keeps it equal to the skill's).
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the

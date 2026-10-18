@@ -603,3 +603,18 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   on another port (an opaque-origin sandbox gives the same isolation on one server); the board
   starting servers the agent wrote (the board hosts plugin modules instead).
 - **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md
+
+## D-048 Images in cards, from the project's images folder only
+- **Date**: 2026-10-18 · **Status**: Accepted · **From**: maintainer (chat 239-243; go without
+  further review)
+- **Decision**: Our Markdown renders `![alt](path)` as one fixed image shape when `path` is a plain
+  relative path under the project's `.visionboard/images/` (subfolders allowed); the board serves
+  those files (png, jpeg, webp, gif; checked by type and content; size-capped) with an ETag, and the
+  page checks for a newer version when a card is selected or an image is opened. A click opens the
+  image animated to 70% of the screen on its longer side. Anything else stays text. This amends D-023
+  for images only; raw HTML is still never rendered.
+- **Why**: agents could not show a screenshot or a diagram on the card, so "which page is this?"
+  questions went to the chat.
+- **Rejected**: images from the internet (rule 18), data URIs in the body (unbounded size in the
+  ledger), svg (it can carry script).
+- **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md

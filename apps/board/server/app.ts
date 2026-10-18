@@ -1,7 +1,7 @@
-// The board server as a request listener: the guard, then /api through the dispatcher, an app's
-// panel at /app-panels/<id> with its own CSP (apps.ts, D-047), and the built page from dist/ for
-// everything else. Every error is a problem (api.md 38); anything
-// unexpected logs its stack to stderr and answers `server-error`. The person cookie is minted
+// The board server as a request listener: the guard, then /api through the dispatcher, the project's
+// images at /board-images/<path> (images.ts, D-048), an app's panel at /app-panels/<id> with its own
+// CSP (apps.ts, D-047), and the built page from dist/ for everything else. Every error is a problem
+// (api.md 38); anything unexpected logs its stack to stderr and answers `server-error`. The person cookie is minted
 // here, once per start, and set with the page (api.md 20); it stays valid when the open folder
 // changes. The open folder, with its ledger, lock, agents and chats, is project.ts's (api.md 111):
 // its chats are opened on first use, and its CLIs stopped and its lock let go when the server
@@ -12,6 +12,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import type { FlagOverrides } from '../../../packages/format/src/index.ts';
+import { IMAGE_ROUTE } from '../../../packages/format/src/index.ts';
 import type { AppLimits } from './apps.ts';
 import { PANEL_PATH, servePanel } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
@@ -22,6 +23,7 @@ import type { ServerEnv } from './dispatch.ts';
 import { dispatch } from './dispatch.ts';
 import { guard } from './guard.ts';
 import { HANDLERS } from './handlers.ts';
+import { serveImage } from './images.ts';
 import type { Ledger } from './ledger.ts';
 import type { Lock } from './lock.ts';
 import { ProblemError, problem, sendProblem, serverError } from './problem.ts';
@@ -75,6 +77,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       guard(req, port());
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
+      if (url.pathname.startsWith(IMAGE_ROUTE)) return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), project.current().dir);
       if (req.method !== 'GET') throw problem('method-not-allowed', 'The page answers GET only.', { headers: { Allow: 'GET' } });
       const panel = PANEL_PATH.exec(url.pathname);
       if (panel) return servePanel(res, panel[1]!, project.current().apps());

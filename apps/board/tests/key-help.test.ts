@@ -63,6 +63,13 @@ test('with the cardFlag flag, Items lists Shift+F for the flag; without it, noth
   assert.deepEqual(rows().find((r) => r.id === 'command:fit')!.keys, ['F']);
 });
 
+// App cards (D-047 ruling 15): Esc inside an app's panel puts focus back on its card.
+test('with the appCards flag, Items lists Esc to leave an app; without it, nothing', () => {
+  const app = (on: boolean) => keyGroups({ app: on }).find((g) => g.group === 'Items')!.rows.filter((r) => r.id === 'other:app');
+  assert.deepEqual(app(true).map((r) => [r.label, r.keys]), [['Leave an app', ['Esc']]]);
+  assert.deepEqual(app(false), []);
+});
+
 // Selection-bar-shorter ruling 5: the bar says "Remove" and "Zoom", the key list still says it in full.
 test('the key list names Delete and Z in full, and the bar has no Clear command', () => {
   const label = (id: string) => rows().find((r) => r.id === `command:${id}`)!;

@@ -7,13 +7,14 @@
 import fs from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import type { AppCsp } from '../../../../packages/format/src/index.ts';
-import { APP_ID } from '../../../../packages/format/src/index.ts';
+import { APP_ID, APP_PANEL_PATH } from '../../../../packages/format/src/index.ts';
 import { problem } from '../problem.ts';
 import type { AppHost } from './host.ts';
 import { APPS_OFF } from './host.ts';
 
-/** The panel's path, outside /api. */
-export const PANEL_PATH = /^\/app-panels\/([^/]*)$/;
+/** The panel's path, outside /api: `APP_PANEL_PATH` (the one route string, which the page's frame
+ * reads too) and the id, not decoded. */
+export const PANEL_PATH = new RegExp(`^${APP_PANEL_PATH}([^/]*)$`);
 
 /** Ruling 4's policy, for a manifest with no `csp`. */
 export const PANEL_CSP = panelCsp(undefined);

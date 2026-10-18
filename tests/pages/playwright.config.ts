@@ -9,11 +9,13 @@
 // own copy) from a fresh copy of the roadmap fixture ledger in a temp folder. The server seeds the
 // project from VB_SEED only when the folder has no ledger yet, so removing the folder first is what
 // makes every run start from the same board. The folder is removed again when the server stops.
+// The example calculator app is copied into it, for the gallery's live app panel.
 // A second server (PERF_PORT, one above) serves the performance fixture (perf-ledger.ts: a
 // 1,000-card board and a mixed one) the same way, for perf.spec.ts, so the budgets never share a
 // ledger with the other tests. It serves the page the first server built: Playwright starts the
 // servers one after the other, in this order. A third (EMPTY_PORT, two above) serves an empty
 // project, no seed, for live-boards.spec.ts: the page waits there for the first board drawn.
+// Specs start their own servers above those (chat-server.ts, folder-server.ts, app-server.ts).
 // Screenshots are kept in tests/pages/__screenshots__/; update them on purpose with:
 // npm run test:pages -- --update-snapshots
 import os from 'node:os';
@@ -32,7 +34,10 @@ const serve = (start: string) => [
   'trap "rm -rf $VB_PROJECT; exit 0" TERM INT EXIT',
   start,
 ].join('; ');
-const SERVE = serve('npm run build && node apps/board/server.ts');
+// The gallery's live app panel (app-cards FE_02, gallery/app-section.ts) needs the example app in the
+// served project: copied in from the skill folder, its one source.
+const APPS = '"$VB_PROJECT/.visionboard/apps"';
+const SERVE = serve(`npm run build && mkdir -p ${APPS} && cp -R skills/vision-board/examples/apps/calculator ${APPS}/ && node apps/board/server.ts`);
 const SERVE_PERF = serve('node tests/pages/perf-ledger.ts "$VB_SEED" && node apps/board/server.ts');
 const SERVE_EMPTY = serve('node apps/board/server.ts');
 // The servers never write Kiro's agent file into the real home (server.ts, VB_KIRO_AGENT).

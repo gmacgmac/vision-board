@@ -29,5 +29,6 @@ vb-app-frame .vb-af-frame {
 }
 vb-app-frame[data-state='ready'] .vb-af-frame { visibility: visible; }
 vb-app-frame[data-state='ready'] .vb-af-ph { visibility: hidden; }
-/* Focus in the panel: the ring says keys now go to the app, not to the board's shortcuts. */
-vb-app-frame:focus-within { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
+/* Focus in the panel: the ring says keys now go to the app, not to the board's shortcuts.
+   data-focus-in is the element's own mark: a frame of another origin never matches :focus-within. */
+vb-app-frame:is(:focus-within, [data-focus-in]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }

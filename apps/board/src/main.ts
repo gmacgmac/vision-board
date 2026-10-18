@@ -11,6 +11,8 @@ import '../../../packages/ui/src/node/node.css';
 import '../../../packages/ui/src/node/node-popover.css';
 import '../../../packages/ui/src/node/node-steps.css';
 import '../../../packages/ui/src/node/node-parking.css';
+import '../../../packages/ui/src/node/node-app.css';
+import '../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../packages/ui/src/markdown/markdown.css';
 import '../../../packages/ui/src/region/region.css';
 import '../../../packages/ui/src/region/region-narrow.css';

@@ -3,7 +3,7 @@
 // (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActionId, ActSize, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
+import type { ActionId, ActSize, AppInfo, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
 import { BOARD_MARKS, fromLine } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
@@ -38,6 +38,9 @@ export interface ActFields {
   nodes?: number[];
   /** An agent's proposal answered (api.md 93): accepted with its own action, or `reject`. */
   proposal?: number;
+  /** `app-allow` and `app-revoke` (api.md 150): the app, and the version of its code allowed. */
+  app?: string;
+  hash?: string;
 }
 
 export class ApiError extends Error {
@@ -252,3 +255,23 @@ export const listFolders = (path?: string) =>
 /** Open `path` in place of the open folder; `create` makes its Vision Board. */
 export const openProject = (path: string, create = false) =>
   person(() => client.call<FolderInfo>('open_project', { body: { path, ...(create && { create }) } }));
+
+// ---- app cards (D-047, api.md 152-153) -----------------------------------------------------------
+
+/** Every app in the open folder and every app a card names, each in its state now (`list_apps`). */
+export const listApps = () => person(() => client.call<{ apps: AppInfo[] }>('list_apps'));
+
+/** How `callAppTool` refuses: the API problem's code and its words (the frame's `AppCallError`). */
+export interface AppCallRefusal { problem: string; detail?: string }
+
+/** Run tool `tool` of app `app` for its panel (`call_app_tool`); a refusal rejects with the
+ * problem's code, which the frame turns into the panel's JSON-RPC error. */
+export async function callAppTool(app: string, tool: string, args: Record<string, unknown>): Promise<AppToolResult> {
+  try {
+    return await asPerson(() => client.call<AppToolResult>('call_app_tool', { app, body: { tool, arguments: args } }));
+  } catch (err) {
+    const refusal: AppCallRefusal = err instanceof ApiProblem ? { problem: err.code, detail: err.detail }
+      : { problem: 'app-failed', detail: 'The board server is not reachable. Is it running?' };
+    throw refusal;
+  }
+}

@@ -8,7 +8,8 @@
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
 // person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
-// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag) and toolbar-counts.ts (the toolbar's numbers).
+// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), toolbar-counts.ts (the toolbar's numbers)
+// and app-cards.ts (app cards: their state from list_apps, their frames, Allow and Stop app; appCards flag).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { placedView } from '../../../../packages/actions/src/index.ts';
 import { ApiError, type BoardData } from './io.ts';
@@ -43,6 +44,7 @@ import { createRemoveFlow } from './remove-flow.ts';
 import { retiredCounts, type RetiredCount } from './retired.ts';
 import { createGoTo, GO_PAUSE, type GoTo, goTarget } from './go-to-card.ts';
 import { showCounts } from './toolbar-counts.ts';
+import { createAppCards } from './app-cards.ts';
 import type { CommandId } from './commands.ts';
 import type { ChatBridge } from './chat-bridge.ts';
 import { exposeWork } from './work.ts';
@@ -84,8 +86,8 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   // connectors behind frames and cards (wireLayers, D-032); the agent's proposals (proposals, FE_01); changed cards and seen (cardUpdates,
   // FE_02); NEW (newCards); link labels, the viewer's alignment and the widths switch (linkLabels, alignSetting, widthsControl, batch 3).
   const on = (f: Parameters<typeof flagOn>[0]) => flagOn(f, pageFlags());
-  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing, going] = [on('nodeSize'), on('agentAccess'),
-    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard')];
+  const [sizing, access, layers, finder, proposing, updating, newCards, everyNode, flagging, retiring, labels, aligning, widthsControl, removing, going, apping] = [on('nodeSize'), on('agentAccess'),
+    on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
   for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
@@ -127,7 +129,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const drawing = createDrawing({
     els, vp, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
     insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, retired: () => S.retired,
-    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n) }),
+    facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n) }), appCards: apping, placed: () => apps.place(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
   selection.onChange((c) => { drawing.restate(c.changed); shell.selection = c.text; flow.dismissArea(); flow.place(); });
@@ -144,7 +146,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     S.drew ||= attention.batch(lines, full);
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
-    boards.listed(); versions.listed(); lock.apply();
+    boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state);
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
@@ -184,6 +186,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
     refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
   const { attempt, record } = sender;
+  const apps = createAppCards({ on: apping, stage, vp, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: askConfirm, toast, fail, redraw: () => redraw() }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
     retire: (fields) => sender.retire(fields), confirm: askConfirm, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24)
   const proposals = createProposalFlow({
@@ -285,16 +288,13 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
 
   async function showVersion(seq: number | null, until?: number) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq, until); }
   return {
-    boot: boards.boot, switchTo: boards.switchTo, showVersion,
-    command: (id) => void flow.command(id),
+    boot: boards.boot, switchTo: boards.switchTo, showVersion, command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
-    toggleHide,
-    relayout: () => { if (S.data) redraw(); },
-    access: accessFlow,
-    proposals, go,
+    toggleHide, relayout: () => { if (S.data) redraw(); },
+    access: accessFlow, proposals, go,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
     boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: askConfirm, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
-    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, unchat ?? (() => {})].forEach((f) => f()),
+    destroy: () => [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, unchat ?? (() => {})].forEach((f) => f()),
   };
 }

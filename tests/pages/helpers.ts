@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test as base } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Frame, Page } from '@playwright/test';
 
 export { expect };
 
@@ -30,10 +30,14 @@ const SKIPPED_RULES = ['color-contrast'];
  * The page under test fails its test on: a console error or warning, an uncaught page error, a
  * request that failed, or a response of 400 or above. One case is not a failure: the browser
  * aborts the board's server-sent-events stream when the page reloads or closes, which is how
- * that stream ends.
+ * that stream ends. A test that causes a refusal on purpose (an app's panel blocked by its CSP, a
+ * tool call before Allow) names each problem it expects with `test.use({ expected: { problems: [...] } })`
+ * (an object: Playwright reads an array there as a fixture's value and options); every other
+ * problem still fails it.
  */
-export const test = base.extend({
-  page: async ({ page }, use) => {
+export const test = base.extend<{ expected: { problems: RegExp[] } }>({
+  expected: [{ problems: [] }, { option: true }],
+  page: async ({ page, expected }, use) => {
     const problems: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.type() === 'warning') problems.push(`console ${msg.type()}: ${msg.text()}`);
@@ -48,7 +52,8 @@ export const test = base.extend({
       if (res.status() >= 400) problems.push(`response ${res.status()}: ${res.request().method()} ${res.url()}`);
     });
     await use(page);
-    expect(problems, problems.join('\n')).toEqual([]);
+    const unexpected = problems.filter((p) => !expected.problems.some((e) => e.test(p)));
+    expect(unexpected, unexpected.join('\n')).toEqual([]);
   },
 });
 
@@ -63,13 +68,16 @@ export interface AxeFinding {
   targets: string[];
 }
 
-export async function axeFindings(page: Page): Promise<AxeFinding[]> {
+/** axe on a page, or on one frame of it. Frames are left to their own run (`iframes: false`): an app's
+ * panel has an opaque origin, which axe's messages to frames can't name (a console warning each),
+ * so a test checks the panel by passing its Frame here. */
+export async function axeFindings(page: Page | Frame): Promise<AxeFinding[]> {
   if (!(await page.evaluate(() => 'axe' in window))) await page.evaluate(AXE_SOURCE);
   return page.evaluate(async ({ tags, skipped }) => {
     const axe = (window as unknown as { axe: { run(ctx: Document, o: object): Promise<{ violations: {
       id: string; help: string; nodes: { target: unknown[] }[] }[] }> } }).axe;
     const rules = Object.fromEntries(skipped.map((id) => [id, { enabled: false }]));
-    const results = await axe.run(document, { runOnly: { type: 'tag', values: tags }, rules });
+    const results = await axe.run(document, { runOnly: { type: 'tag', values: tags }, rules, iframes: false });
     return results.violations
       .filter((v) => !skipped.includes(v.id))
       .map((v) => ({ id: v.id, help: v.help, targets: v.nodes.map((n) => n.target.join(' ')) }));
@@ -84,7 +92,7 @@ const describe = (found: AxeFinding[]) =>
  * recorded as a failing test elsewhere (test.fail), so the suite stays green while a new rule
  * still fails it.
  */
-export async function expectNoAxeViolations(page: Page, known: string[] = []): Promise<void> {
+export async function expectNoAxeViolations(page: Page | Frame, known: string[] = []): Promise<void> {
   const found = (await axeFindings(page)).filter((v) => !known.includes(v.id));
   expect(found, describe(found)).toEqual([]);
 }

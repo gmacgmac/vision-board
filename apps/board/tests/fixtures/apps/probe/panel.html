@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Probe</title>
+<!-- A test-only panel (app-cards FE_02, tests/pages/app-safety.spec.ts): it does the handshake and
+     nothing else, so the page tests can run their probes inside a real panel's document. -->
+<style>body { margin: 0; padding: 12px; font: 14px system-ui, sans-serif; background: var(--color-background-primary, Canvas); color: var(--color-text-primary, CanvasText); }</style>
+<p id="say">Probe panel, waiting for the board.</p>
+<script>
+  addEventListener('message', ({ source, data }) => {
+    if (source !== parent || data?.id !== 'probe-init' || !data.result) return;
+    document.documentElement.style.colorScheme = data.result.hostContext.theme;
+    for (const [name, value] of Object.entries(data.result.hostContext.styles.variables)) document.documentElement.style.setProperty(name, value);
+    document.getElementById('say').textContent = 'Probe panel, ready.';
+    parent.postMessage({ jsonrpc: '2.0', method: 'ui/notifications/initialized' }, '*');
+  });
+  parent.postMessage({ jsonrpc: '2.0', id: 'probe-init', method: 'ui/initialize', params: { protocolVersion: '2026-01-26' } }, '*');
+</script>
+</html>

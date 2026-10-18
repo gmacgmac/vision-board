@@ -4,7 +4,7 @@
 // command id, so adding a command without a group fails the type check) and Items takes every
 // registry action that has a key, by its registry label. `OTHER`
 // holds only the inputs neither table owns: moving between cards, Space, Alt+arrows, H, and the
-// pointer gestures.
+// pointer gestures; the flag's, the chat's and an app's key join them behind their flags.
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
@@ -38,11 +38,14 @@ const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
 const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the chat', ['T']];
 /** The flag's key (cardFlag flag, flag-flow.ts): in Items, with the flag on. */
 const FLAG_ROW: readonly [label: string, keys: string[]] = ['Flag or unflag the card', ['Shift+F']];
+/** Esc inside an app's panel (appCards flag, app-cards.ts): the panel sends it, the board puts focus
+ * back on its card (D-047 ruling 15). In Items, with the flag on. */
+const APP_ROW: readonly [label: string, keys: string[]] = ['Leave an app', ['Esc']];
 
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel
  * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove is not listed);
- * `go`: the goToCard flag (off, Go to a card is not listed). */
-export function keyGroups({ chat = false, flag = false, remove = true, go = true }: { chat?: boolean; flag?: boolean; remove?: boolean; go?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
+ * `go`: the goToCard flag (off, Go to a card is not listed); `app`: the appCards flag. */
+export function keyGroups({ chat = false, flag = false, remove = true, go = true, app = false }: { chat?: boolean; flag?: boolean; remove?: boolean; go?: boolean; app?: boolean } = {}): { group: KeyGroup; rows: KeyRow[] }[] {
   const items: KeyRow[] = Object.values(ACTIONS).filter((a) => a.key && a.onItem)
     .map((a) => ({ id: `action:${a.id}`, label: a.label, keys: [a.key!.toUpperCase()] }));
   const off = [...(remove ? [] : ['remove']), ...(go ? [] : ['go-to-card'])];
@@ -53,6 +56,7 @@ export function keyGroups({ chat = false, flag = false, remove = true, go = true
     rows: [...(group === 'Items' ? items : commands(group)),
       ...OTHER[group].map(([label, keys], i) => ({ id: `other:${group}.${i}`, label, keys })),
       ...(flag && group === 'Items' ? [{ id: 'other:flag', label: FLAG_ROW[0], keys: FLAG_ROW[1] }] : []),
+      ...(app && group === 'Items' ? [{ id: 'other:app', label: APP_ROW[0], keys: APP_ROW[1] }] : []),
       ...(chat && group === 'Board' ? [{ id: 'other:chat', label: CHAT_ROW[0], keys: CHAT_ROW[1] }] : [])],
   })).filter((g) => g.rows.length);
 }

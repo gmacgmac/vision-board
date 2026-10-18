@@ -1,11 +1,12 @@
 // One draw of the board, in proportion to what changed (N12_FE_01, performance.md approaches 1-5):
 // cards update and measure only where their state changed (cards.ts), containers lay out again only
 // where their inputs changed (layout-cache.ts), then the containers are packed, frames and cards
-// placed where they moved, connectors redrawn where their route changed (wires.ts), and cards well
-// off screen made cheap (offscreen.ts). Reads of sizes happen before writes of places. A card the
-// layout draws at a width its height was not measured at (Match card widths, field report batch 3)
-// is measured again at that width and its container laid out once more. A fresh draw (opening a
-// board, a rebuild) throws everything away and draws from scratch.
+// placed where they moved, connectors redrawn where their route changed (wires.ts), cards well off
+// screen made cheap (offscreen.ts) and app cards' frames loaded or removed (`placed`). Reads of
+// sizes happen before writes of places. A card the layout draws at a width its height was not
+// measured at (Match card widths, field report batch 3) is measured again at that width and its
+// container laid out once more. A fresh draw (opening a board, a rebuild) throws everything away
+// and draws from scratch.
 import type { NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { Align, BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
 import { widthsOf } from '../../../../packages/format/src/index.ts';
@@ -68,6 +69,10 @@ export interface DrawDeps {
   flag?: boolean;
   /** Each container's "N cards retired" marker (retiredMarker flag, retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
+  /** The appCards flag: off, an app card draws as a plain card saying so (ruling 13). */
+  appCards?: boolean;
+  /** Cards were placed or the view moved: app cards load or remove their frames (app-cards.ts). */
+  placed?(): void;
 }
 
 export interface Drawing {
@@ -94,7 +99,7 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true });
+  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, appCards: d.appCards !== false });
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true });
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined);
   const cache = createLayoutCache();
@@ -149,6 +154,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     if (cards.place(layout, sizes) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);
+    d.placed?.();
   }
 
   return {
@@ -158,7 +164,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     draw,
     refocus() { if (layout) wires.draw(layout, d.focus()); },
     restate: (ids) => cards.restate(ids),
-    viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); },
+    viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); d.placed?.(); },
     wiresFor: (l, focus) => wires.draw(l, focus),
     settle: settleWires,
   };

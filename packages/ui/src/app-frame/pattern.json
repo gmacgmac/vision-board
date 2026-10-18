@@ -5,7 +5,7 @@
   "description": "An app's panel inside its card (D-047): a sandboxed frame with an opaque origin (sandbox=\"allow-scripts\" only) on the board's panel route, at the panel's size, which talks to the board only by the panel protocol: JSON-RPC 2.0 over postMessage in MCP Apps' shape (docs/specification/apps.md § The panel protocol). The page makes the frame only while its card is on screen and near enough to use (load / unload); until then it is a light placeholder with the app's title.",
   "files": {
     "core": "app-frame-core.ts (createAppBridge: the handshake, tools/call forwarding, escape, host-context-changed, JSON-RPC checks and errors, the message and call caps; panelSize, hostContext, hostStyles, parsePanelMessage, PROBLEM_WORDS, FRAME_CALLS; no DOM)",
-    "element": "vb-app-frame.ts (defineVbAppFrame, VbAppFrameElement, AppFrameWiring, readLook, PANEL_PATH; light DOM)",
+    "element": "vb-app-frame.ts (defineVbAppFrame, VbAppFrameElement, AppFrameWiring, readLook; light DOM; the route is packages/format APP_PANEL_PATH)",
     "styles": "app-frame.css (scoped by the tag; tokens only; the size from --app-w and --app-h)"
   },
   "states": ["idle", "loading", "ready", "focus"],
@@ -18,6 +18,7 @@
     "data-label": "the app's name: the placeholder's title and the frame's title",
     "data-w, data-h": "the panel's size in px, held to APP_SIZE (panelSize); set as --app-w and --app-h through the CSSOM; a change tells a ready panel (host-context-changed)",
     "data-state": "idle | loading | ready (set by the element)",
+    "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring",
     "aria-busy": "true while loading (set by the element)"
   },
   "methods": {
@@ -28,7 +29,8 @@
   },
   "events": [
     "message on window: passed to the bridge, as the frame's only when event.source is this frame's window and event.origin is \"null\"; every other window's message is ignored",
-    "ui/notifications/escape from the panel -> onEscape (focus back to the card)"
+    "ui/notifications/escape from the panel -> onEscape (focus back to the card)",
+    "blur and focus on window while loaded: data-focus-in follows whether the frame is the page's active element"
   ],
   "whenToUse": "Inside an app card (kind app), which the node template draws it into.",
   "whenNotToUse": "Any other embedded content: Markdown never renders HTML (D-023), and nothing else on the board may run in a frame.",

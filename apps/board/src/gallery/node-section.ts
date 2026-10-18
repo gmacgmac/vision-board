@@ -31,12 +31,17 @@ const TELLS = KINDS.filter((k) => !NODE_TYPES[k].answer);
 /** A card that needs no answer offers no ✓ or ✗, so it never reaches acknowledged or dropped. */
 const TELL_ROWS = ROWS.filter((s) => s !== 'acknowledged' && s !== 'dropped');
 
+/** What an app card shows when a sample gives no app state: its app ready, as list_apps would say
+ * (the gallery has no app host), so the slot draws the frame's placeholder, as the board does when
+ * zoomed out, not a "Loading…" that never ends (app-cards FE_02). */
+const APP_READY: CardConditions['app'] = { info: { id: 'calculator', state: 'ready', tools: [], allowed: false } };
+
 /** A real <vb-node>, rendered and updated as the board does. The Markdown and note bubble sections
  * draw their cards with it too; `state` is the notes board's for the note samples. */
 export function card(n: ViewNode, fx: Fixture, state = fx.state, c: CardConditions = {}, selected = SELECTED.has(n.title)): VbNodeElement {
   const node = document.createElement('vb-node') as VbNodeElement;
   node.render(n);
-  node.update(nodeState(n, state, undefined, selected, c));
+  node.update(nodeState(n, state, undefined, selected, n.kind === 'app' && !c.app ? { ...c, app: APP_READY } : c));
   const live = LIVE_CLASS[n.title];
   if (live) node.classList.add(live);
   return node;

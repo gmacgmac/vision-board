@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1330,3 +1330,25 @@ limits and states) is [apps.md](./apps.md); this section is what the ledger and 
     over its limit (apps.md § Limits). The board page calls it through its one I/O layer when a panel
     sends `tools/call`. The handlers are the app host's (`apps/board/server/apps.ts`
     `APP_HANDLERS`; apps.md § Kept true by names its tests).
+
+## Images in cards (app-cards BE_03, D-048)
+
+The contract for the images themselves (the folder, the path rules, types and limits, the route's
+headers and answers) is [images.md](./images.md); this section is what the API says about the route.
+
+154. **The image route is not an operation.** `GET /board-images/<path>`, and `HEAD`, serves a
+    picture to the `<img>` a card's Markdown draws (`IMAGE_ROUTE`; `serveImage`, called from
+    `createBoardServer` before the page's own files, after `/api`). It sits outside `/api`, like an
+    app's panel: the answer is a picture, not JSON, and an `<img>` sends no header of its own, so
+    there is nothing for a security requirement to describe. It is therefore not in `openapi.json`,
+    `OPERATIONS`, the MCP tools or the `vb` commands, and the route table has no row for it. Agents
+    do not call it: they save files in `.visionboard/images/` (images.md § The folder) and write
+    `![alt](path)`. The Host check applies; no cookie is needed or set.
+155. **Its refusals are problems** with the codes of the Errors table (40): `not-found` (a refused
+    path, a missing file, a link out of the folder), `unsupported-media-type` (an extension that is not
+    png, jpeg, webp or gif, or bytes that are not the type the extension says), `too-large` (over the
+    size limit), `method-not-allowed` (`Allow: GET, HEAD`) and `forbidden` (the Host). Their `detail` is
+    one of the short plain phrases in images.md § Reasons, which the page shows as they are, not the
+    sentence that point 40 asks of an agent's problems. The route answers `ETag` and `Cache-Control:
+    no-cache`, and 304 to a matching `If-None-Match`, so the page can ask again cheaply when a card
+    is selected or an image opened (images.md § Updates).

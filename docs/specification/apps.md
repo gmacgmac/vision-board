@@ -75,9 +75,10 @@ The board shows it in a frame inside the card:
   `allow-popups` or `allow-forms`. The panel has an opaque origin: it can't read the board's page,
   cookies or storage, and can't call `/api`.
 - `src` is the board's panel route, `/app-panels/<id>`, outside `/api`; `title` names the app.
-- The frame is made only while its card is on screen and the board is zoomed in enough to use it;
-  it is removed when the card leaves the screen, and the panel starts again when it comes back. Keep
-  nothing in the panel that a restart would lose: keep state in a tool.
+- The frame is made only while its card is on screen and the board is zoomed in enough to use it
+  (the toolbar shows 55% or more); it is removed when the card is more than a screen away or the
+  board zooms out past that, and the panel starts again when it comes back. Keep nothing in the
+  panel that a restart would lose: keep state in a tool.
 
 ### Panel CSP
 
@@ -346,5 +347,17 @@ Esc back to the card, theme changes and the approval state.
   (`app-host.test.ts`); the panel route's headers, its CSP and its 404s, `frame-src 'self'` and the
   flag (`app-panel.test.ts`); the folder, file names and links, the hash, the state function's
   order and the `.env` reader (`app-folder.test.ts`).
-- Not covered here: the frame and the example are built and tested by their own tasks (app-cards
-  FE_01, FE_02, T_01); each updates this page if what it builds differs.
+- The example app: its parser and both tools, its manifest and tool schemas against the real
+  schema, and its folder holding only an app's own files
+  (`skills/vision-board/examples/apps/calculator.test.mjs`); this repo's own copy in
+  `.visionboard/apps/calculator/` equals it byte for byte (`apps/board/tests/repo-example-app.test.ts`).
+- The panel protocol in the frame, with fake windows: `packages/ui/tests/app-frame-core.test.ts`
+  and `app-frame-limits.test.ts`.
+- The board page, in a real browser, on a temp project holding a copy of the example
+  (`tests/pages/app-server.ts`): an agent draws the calculator, Allow, `12*3=` worked out by its
+  `evaluate` tool and listed by `history`, Tab into the panel and out, Esc back to the card, a code
+  change asking again, Stop app, and app cards off on the server and the page
+  (`tests/pages/app-cards.spec.ts`); every card state, the frame made only on screen and at or above
+  FAR_K, and a past version (`app-states.spec.ts`); the panel's opaque origin, its CSP and messages
+  from other windows ignored (`app-safety.spec.ts`); the gallery's samples and its live panel
+  (`app-gallery.spec.ts`).

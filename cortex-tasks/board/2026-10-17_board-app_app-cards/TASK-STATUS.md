@@ -51,8 +51,8 @@ tracker:
 | 2 | BE_02 | 2 | strong | [App host: manifest, process supervisor, routes, panel CSP](./BE_02_app-host.md) | Completed | Host in `server/apps/`; `tools` known only after Allow and a first run; `VB_FLAGS`; `APP_LIMITS` + `restartMs`, `fileBytes`: see notes |
 | 3 | FE_01 | 2 | strong | [Frame pattern: vb-app-frame and the message protocol](./FE_01_app-frame.md) | Completed | vb-app-frame + createAppBridge, app card states (node-app.ts), gallery entry (deviation); 44 gallery screenshots re-baselined after viewing (sub-pixel shift): see notes |
 | 4 | T_01 | 2 | standard | [Example app: calculator panel and plugin](./T_01_example-calculator.md) | Completed | Calculator in `skills/vision-board/examples/apps/calculator/` (3 files); tests beside it, root `test` glob + `skills/**/*.test.mjs` |
-| 5 | FE_02 | 3 | strong | [Page wiring, gallery, end-to-end and safety page tests](./FE_02_page-wiring.md) | Pending | |
-| 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Pending | Added 2026-10-18 |
+| 5 | FE_02 | 3 | strong | [Page wiring, gallery, end-to-end and safety page tests](./FE_02_page-wiring.md) | Completed | Wired (`app-cards.ts`, `app-state.ts`); page tests prove lines 3, 4a, 4b, 4j, 6; this repo's board drew "App cards"; `APP_PANEL_PATH`; frame focus ring fixed: see notes |
+| 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Completed | `IMAGE_LIMITS`, `IMAGE_WORDS`, `imagePathProblem` in format; `/board-images/` in `server/images.ts`; images.md, api.md 154-155, D-048; depth = 8 folders: see notes |
 | 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Pending | Added 2026-10-18 |
 | 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Pending | |
 | 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
@@ -86,7 +86,7 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 | Line | Met? | Evidence (command and result, test name, file) |
 |---|---|---|
 | 1 Tasks | | |
-| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed |
+| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed |
 | 3 End to end | | |
 | 4 Safety (a-j) | | |
 | 5 Contract | | |
@@ -116,6 +116,10 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
    board; (b) the one-file rule stops imports but not a tool reading a file in its folder and running it
    with `node:vm`; (c) if the board is killed with SIGKILL while a tool loops, that app process is left
    running.
+5. **Wave 3, BE_03: images get a flag.** The rulings give images no flag; steering rule 12 says new
+   behaviour ships behind one. Closest to both: FE_03 adds page flag `cardImages` in `flags.ts`, **on** by
+   default; off, `![alt](path)` renders as plain text as before. The route needs no flag (it serves only
+   files the project put in its images folder).
 
 ---
 
@@ -203,12 +207,54 @@ parser is inside it and exported as `calculate`; imports nothing). Tests: `skill
   and "Unexpected ')' at 4".
 
 ### FE_02: Page wiring
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ Page: `apps/board/src/board/app-cards.ts` (frames loaded only on the visible stage at or above
+FAR_K and removed a screen away or zoomed out, wired to `io.ts` `callAppTool` and Esc → card; theme
+→ `lookChanged`; Allow / Stop app confirmed and sent through the sender; Check again / Restart),
+`app-state.ts` (the one copy of list_apps: on load, app lines, after acts, on retry, and after a
+refused call that says the state moved, so an edited `tools.mjs` shows "Code changed"),
+`app-words.ts`, `io.ts` `listApps`/`callAppTool`. One route constant: `packages/format/src/apps.ts`
+`APP_PANEL_PATH` (server `panel.ts` and `vb-app-frame.ts`). Gallery: `app-section.ts` (live
+calculator, appCards flag); the node matrices' app cards no longer say "Loading…" forever. Read
+FE_02_page-wiring.md § Implementation Notes. For the next waves:
+- **Proof by name**: line 3 `app-cards.spec.ts` "end to end (light|dark) › end to end: an agent draws
+  the calculator, the person allows it, 12*3 comes back as 36 from its tool (light|dark)"; 4a, 4b, 4j
+  `app-safety.spec.ts` "the panel is isolated › 4a: …", "… › 4b: …", "4j: a message to the board from
+  any window but the card's own frame is ignored"; line 6 `app-states.spec.ts` (every state, loading,
+  far zoom, off screen, past version, light and dark, axe), `app-cards.spec.ts` (code change, Stop app,
+  flag off, keyboard), `app-gallery.spec.ts`.
+- **This repo's board**: lock was free; `.visionboard/apps/calculator/` copied byte for byte (a unit
+  test keeps it equal); agent "app-cards build" drew a board of its own, "App cards" (`app-cards`),
+  container "Apps": the calculator (360×440) and a note "Try the calculator" (ledger seq 192-197).
+- **FE_01's element fixed** (accessibility review): Chromium never matches `:focus-within` on a
+  cross-origin frame, so `vb-app-frame` sets `data-focus-in` from the window's blur and focus.
+- **Page-test helpers**: `test.use({ expected: { problems: [...] } })` names refusals a test causes on
+  purpose; axe runs with `iframes: false` (a panel is checked by passing its Frame). Servers:
+  `tests/pages/app-server.ts` (ports 4473, 4474). Test-only app `apps/board/tests/fixtures/apps/probe/`.
+- **FE_03 / T_02**: `docs/specification/components.md` § App card 8 says how the page wires apps;
+  key list row "Leave an app · Esc". Known limits (page on, server off; Match widths; panel-to-panel
+  focus by pointer) are proposed tracker rows in the task file.
+Gates: check 0; test 1451 + 7 pass; verify 0 warnings; gen --check current; build 0; test:pages 505
+passed (6 screenshots re-baselined after viewing each diff light and dark: gallery full page ×2, key
+bubble ×4). Old `@playwright/cli` daemons from 1-8 October are running on this machine (not this run's).
 
 ### BE_03: Image route
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ Format: `packages/format/src/images.ts` (`IMAGE_LIMITS`, `IMAGES_DIR`, `IMAGE_ROUTE`, `IMAGE_WORDS`, `imageNotReal`,
+`imagePathProblem` = the one path check, pure string logic, `imageTypeByName`, `imageTypeOf`). Route: `apps/board/server/images.ts`
+`serveImage`, wired in `app.ts` after `/api` (HEAD too): decode once, `imagePathProblem`, real path inside the real images folder
+(`folders.ts` `isUnder`), one open file for size, first bytes and body; ETag, `no-cache`, 304; 404 / 415 / 413 / 405. Docs:
+`images.md`, api.md 154-155, D-048, format README. Read BE_03_image-route.md § Implementation Notes. For FE_03:
+- Call `imagePathProblem(path)` first in the renderer; show "image not shown: <path>" with the reason from `IMAGE_WORDS`. The
+  route is `IMAGE_ROUTE + path`; a problem's `detail` (`over 8 MB`, `not a real png`, `not found`) is the reason for the box.
+- `IMAGE_LIMITS.depth` is 8 **folders** above the file (ruling 20): 8 folders and a file pass, 9 folders fail.
+- Real 1x1 test images: `apps/board/tests/images-support.ts` `IMAGES`. `apps/board/README.md` should list `server/images.ts`.
+- No flag for images (the plan gives none; steering rule 12 would ask for one): orchestrator's call.
+Safety tests (Goal state line 11): `images.test.ts` "imagePathProblem: …" (4 refusal tests), "imageTypeOf: …"; `images-route.test.ts`
+"path tricks are refused and never read the decoys…", "subfolders work down to the depth limit…", "svg is refused (415)…", "other
+extensions are refused (415)…", "a file over the size limit is refused (413)…", "a link out of the images folder is refused…",
+"the images folder may itself be a link…", "the Host check applies to images…". Gates: check 0; npm test 1447 + 7 pass;
+verify 0 warnings (after `npm run map`); gen --check current (build and pages not run, per the orchestrator).
 
 ### FE_03: Images on the page
 _Status:_ Pending

@@ -13,6 +13,10 @@ export const FAR_K = 0.55;
  *  higher than the zoom: "55%" means the board is at 0.55 or more, which is where the controls show. */
 export const zoomPercent = (k: number): number => Math.floor(k * 100 + 1e-6);
 
+/** Whether zoom `k` is below FAR_K, as the toolbar's percentage reads it: the stage is "far" there,
+ *  and app cards show their placeholder, not their panel (app-cards ruling 14). */
+export const isFar = (k: number): boolean => zoomPercent(k) < zoomPercent(FAR_K);
+
 /** Where the view is: the pan (`x`, `y`, screen px) and the zoom (`k`). */
 export interface ViewSnapshot { x: number; y: number; k: number }
 
@@ -79,7 +83,7 @@ export class Viewport {
     }
     // Below FAR_K the cards' buttons would draw under the 24px target size (N8), so the stage is "far"
     // and they hide (tracker N13). With the flag off they stay visible at every zoom: never "far".
-    if (this.hideFar && zoomPercent(this.k) < zoomPercent(FAR_K)) this.stage.dataset.zoom = 'far';
+    if (this.hideFar && isFar(this.k)) this.stage.dataset.zoom = 'far';
     else delete this.stage.dataset.zoom;
     this.onApply?.();
   }

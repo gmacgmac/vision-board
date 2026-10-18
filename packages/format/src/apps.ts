@@ -18,6 +18,10 @@ export const APP_TOOL_NAME = /^[a-z][a-z0-9_]{0,39}$/;
 /** Where apps live in a project, under `.visionboard/`. */
 export const APPS_DIR = 'apps';
 
+/** The board server's panel route, outside /api: an app's panel is served at this path plus its id
+ * (apps.md § The panel). The server's route and the page's frame both read it. */
+export const APP_PANEL_PATH = '/app-panels/';
+
 /** The files in an app's folder: the manifest's name is fixed; the panel's and the tools' are the
  * defaults the manifest's `panel` and `tools` may change. */
 export const APP_FILES = { manifest: 'app.json', panel: 'panel.html', tools: 'tools.mjs' } as const;

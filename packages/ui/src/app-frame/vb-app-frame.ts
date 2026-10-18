@@ -6,15 +6,12 @@
 // attributes: data-app (the app's id), data-label (its name: the frame's title), data-w and data-h
 // (the panel's size, held to APP_SIZE). Browser only: the class is created inside defineVbAppFrame().
 import type { AppSize, AppToolResult } from '../../../format/src/index.ts';
-import { APP_ID } from '../../../format/src/index.ts';
+import { APP_ID, APP_PANEL_PATH } from '../../../format/src/index.ts';
 import type { AppBridge, AppLook } from './app-frame-core.ts';
 import { createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
 
 export const VB_APP_FRAME_TAG = 'vb-app-frame';
-
-/** The board's panel route (apps.md § The panel), outside /api: `/app-panels/<id>`. */
-export const PANEL_PATH = '/app-panels/';
 
 /** How long a loaded panel may take to say it is ready before it shows anyway, in ms: a panel that
  * never finishes the handshake is still seen. */
@@ -94,6 +91,12 @@ export function defineVbAppFrame(): void {
       const win = this.frame?.contentWindow;
       this.bridge?.receive(e.data, win != null && e.source === win && e.origin === 'null');
     };
+    /** Focus went into the panel, or came back out (`data-focus-in`, for the ring). Chromium never
+     * matches :focus-within on the frame's box while focus is in a frame of another origin, so the
+     * window's blur (focus went into a frame: the frame is the page's active element) and focus say. */
+    private readonly onFocusMove = (): void => {
+      this.toggleAttribute('data-focus-in', this.frame !== undefined && document.activeElement === this.frame);
+    };
 
     get loaded(): boolean { return this.frame !== undefined; }
 
@@ -142,7 +145,7 @@ export function defineVbAppFrame(): void {
       // The board's address (and its query) stays out of the panel's document.referrer.
       frame.referrerPolicy = 'no-referrer';
       frame.title = this.label;
-      frame.src = `${PANEL_PATH}${encodeURIComponent(app)}`;
+      frame.src = `${APP_PANEL_PATH}${encodeURIComponent(app)}`;
       this.bridge = createAppBridge({
         send: (m) => frame.contentWindow?.postMessage(m, '*'),
         callTool: (name, args) => (this.wiring ? this.wiring.callTool(name, args) : Promise.reject({ problem: 'not-found' })),
@@ -152,6 +155,8 @@ export function defineVbAppFrame(): void {
       });
       // Listen before the frame exists, so its first message is heard.
       window.addEventListener('message', this.onMessage);
+      window.addEventListener('blur', this.onFocusMove);
+      window.addEventListener('focus', this.onFocusMove);
       frame.addEventListener('load', () => {
         clearTimeout(this.timer);
         this.timer = setTimeout(() => this.show(), SHOW_AFTER_MS);
@@ -164,6 +169,9 @@ export function defineVbAppFrame(): void {
 
     unload(): void {
       window.removeEventListener('message', this.onMessage);
+      window.removeEventListener('blur', this.onFocusMove);
+      window.removeEventListener('focus', this.onFocusMove);
+      this.removeAttribute('data-focus-in');
       clearTimeout(this.timer);
       this.bridge?.close();
       this.bridge = undefined;
