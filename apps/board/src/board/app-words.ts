@@ -18,8 +18,8 @@ export function appAsk(action: ActionId, name: string, changed: boolean): [strin
 /** The toast once Allow or Stop app is recorded. */
 export const appDone = (action: ActionId, name: string): string => `${name} ${action === 'app-revoke' ? 'stopped' : 'allowed'}`;
 
-/** What Check again (invalid) or Restart (broken) found: the state before, and after. */
+/** What Check again (missing, invalid) or Restart (broken) found: the state before, and after. */
 export function retryDone(name: string, before: AppState | undefined, after: AppState | undefined): string {
-  if (after !== before) return `${name} updated`;
-  return after === 'broken' ? `${name} is still stopped.` : `${name} still has problems.`;
+  if (after !== before) return `${name} ${before === 'missing' ? 'found' : 'updated'}`;
+  return `${name} ${after === 'broken' ? 'is still stopped.' : after === 'missing' ? 'still not found.' : 'still has problems.'}`;
 }

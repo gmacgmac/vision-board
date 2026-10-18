@@ -74,7 +74,7 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
-    + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>${opts.appCards !== false && n.kind === 'app' ? APP_STOP : ''}${actions}${STEP_NAV}</footer>`;
+    + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>${actions}${STEP_NAV}</footer>`;
 }
 
 /** The stepper (FE_02 ruling 3), which takes the footer's place while a changed card is open:
@@ -175,8 +175,8 @@ function sizeControl(n: ViewNode): string {
     + '</div></div>';
 }
 
-/** An app card's Stop app (D-047 ruling 7), in the footer before the toolbar; `update()` shows it
- * while the app has tools the person allowed, and names it. The page acts on `data-app-act`. */
+/** An app card's Stop app (D-047 ruling 7), in the row over the panel where Allow was; `update()`
+ * shows it while the app has tools the person allowed, and names it. The page acts on `data-app-act`. */
 const APP_STOP = '<button type="button" class="vb-pop-btn vb-app-stop" data-app-act="app-revoke" hidden>Stop app</button>';
 
 /** What an app card shows in place of its panel (node-app.ts `appView`): the app's icon, or the
@@ -194,17 +194,18 @@ export function appStateMarkup(v: AppCardView): string {
     + problems + retry;
 }
 
-/** An app card's panel slot, in place of the Markdown body (ruling 3): the line asking for Allow
- * (hidden until a state needs it; it describes Allow, so a screen reader hears why), then the box at the panel's size holding the frame
- * (`<vb-app-frame>`, which the page loads) and the state view, drawn here for `checking` until
- * `update()` applies the card's state. */
+/** An app card's panel slot, in place of the Markdown body (ruling 3): the row over the panel (its
+ * line, which describes Allow so a screen reader hears why, then Allow or Stop app; it shows while
+ * the panel does and keeps its room in every state, so no state change moves the card), then the
+ * frame at the panel's size (`<vb-app-frame>`, which the page loads) and the state view over both,
+ * drawn here for `checking` until `update()` applies the card's state. */
 function appSlot(n: ViewNode): string {
   const ref = n.app ?? { id: '' };
   const { w, h } = panelSize(ref);
   const ask = esc(`vb-app-ask-${n.id}`);
-  return `<div class="vb-app-ask" hidden><p class="vb-app-ask-text" id="${ask}"></p>`
-    + `<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" aria-describedby="${ask}">Allow</button></div>`
-    + '<div class="vb-app" data-app-state="checking" aria-busy="true">'
+  return '<div class="vb-app" data-app-state="checking" aria-busy="true">'
+    + `<div class="vb-app-ask"><p class="vb-app-ask-text" id="${ask}"></p>`
+    + `<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" aria-describedby="${ask}">Allow</button>${APP_STOP}</div>`
     + `<vb-app-frame data-app="${esc(ref.id)}" data-label="${esc(n.title)}" data-w="${w}" data-h="${h}"></vb-app-frame>`
     + `<div class="vb-app-state">${appStateMarkup(appView(n))}</div></div>`;
 }

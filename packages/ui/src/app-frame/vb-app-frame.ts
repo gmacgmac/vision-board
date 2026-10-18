@@ -26,6 +26,9 @@ export interface AppFrameWiring {
   look?(): AppLook;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
+  /** The frame loaded: the panel, or the route's refusal once the app went (the page reads the
+   * app's state again, so the card follows its folder). */
+  onLoad?(): void;
 }
 
 export interface VbAppFrameElement extends HTMLElement {
@@ -160,6 +163,7 @@ export function defineVbAppFrame(): void {
       frame.addEventListener('load', () => {
         clearTimeout(this.timer);
         this.timer = setTimeout(() => this.show(), SHOW_AFTER_MS);
+        this.wiring?.onLoad?.();
       });
       this.frame = frame;
       this.dataset.state = 'loading';

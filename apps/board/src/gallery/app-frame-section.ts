@@ -23,7 +23,8 @@ const STATES: [string, AppCardInput][] = [
   ['Loading', {}],
   ['Needs approval', { info: { ...CALCULATOR, allowed: false, state: 'needs-approval' } }],
   ['Code changed', { info: { ...CALCULATOR, allowed: false, state: 'needs-approval', changed: true } }],
-  ['Ready, Stop app in the footer', { info: CALCULATOR }],
+  ['Ready, allowed, with Stop app', { info: CALCULATOR }],
+  ['Ready, nothing to allow', { info: { ...CALCULATOR, tools: [], allowed: false } }],
   ['Missing', { info: { id: 'calculator', state: 'missing', tools: [], allowed: false } }],
   ['Invalid', {
     info: {
@@ -76,7 +77,7 @@ export function appFrameSamples(body: HTMLElement, fx: Fixture): void {
   frames.append(frame('Hello', APP_SIZE.w.min, APP_SIZE.h.min), frame('Calculator', APP_SIZE.w.default, APP_SIZE.h.default), frame('Calculator', 300, 220, true));
   body.append(
     group('The frame, before it loads', 'A light placeholder with the app\'s title, at the least panel size and the default one, then while the panel starts ("Loading…"). The page makes the frame only while its card is on screen and near enough to use.', frames),
-    group('An app card in every state', `In order: ${STATES.map(([label]) => label.toLowerCase()).join('; ')}. The slot keeps the panel's size in every state, so the card never moves. Here no panel runs, so the states that show it show the placeholder.`,
+    group('An app card in every state', `In order: ${STATES.map(([label]) => label.toLowerCase()).join('; ')}. The slot keeps the panel's size and the row over it in every state, so the card never moves. Here no panel runs, so the states that show it show the placeholder.`,
       // One card per state, each with an id of its own, so the ids a card's markup holds stay unique on the page.
       cardList('App card states', ...STATES.map(([, app], i) => card({ ...n, id: `${n.id}-${i}` }, fx, fx.state, { app })))),
     group('App cards off', 'With the appCards flag off, an app card is a plain card that says so.', cardList('App cards off', offCard(n, fx))),

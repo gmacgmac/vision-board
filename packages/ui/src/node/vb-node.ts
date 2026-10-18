@@ -217,13 +217,16 @@ export function defineVbNode(): void {
       }
     }
 
-    /** An app card (D-047): the panel's size on the card (its width) and the frame, the line asking
-     *  for Allow, the state view (rebuilt only when it changed) and Stop app. A state with no panel
-     *  unloads the frame. */
+    /** An app card (D-047): the panel's size on the card (its width) and the frame, the state view
+     *  (rebuilt only when it changed), and the row over the panel: its line, then Allow or Stop app
+     *  (node-app.css shows it with the panel and keeps its room). A state with no panel unloads the frame.
+     *  A change that takes the focused button away (or rebuilds the view) leaves focus on the card. */
     private updateApp(st: NodeState): void {
       const v = st.app;
       const slot = this.querySelector<HTMLElement>('.vb-app');
       if (!v || !slot) return;
+      const had = document.activeElement;
+      const inSlot = slot.contains(had);
       this.panel(v.size);
       slot.dataset.appState = v.state;
       if (v.state === 'checking') slot.setAttribute('aria-busy', 'true');
@@ -237,15 +240,15 @@ export function defineVbNode(): void {
       // Markup from appStateMarkup, which escapes every text run.
       if (this.appSrc !== src) slot.querySelector<HTMLElement>('.vb-app-state')!.innerHTML = appStateMarkup(v);
       this.appSrc = src;
-      const ask = this.querySelector<HTMLElement>('.vb-app-ask')!;
-      ask.hidden = !v.ask;
-      ask.querySelector('p')!.textContent = v.ask ?? '';
-      ask.querySelector('button')!.setAttribute('aria-label', v.names.allow);
-      const stop = this.querySelector<HTMLButtonElement>('.vb-app-stop');
-      if (stop) {
-        stop.hidden = !v.stop;
-        stop.setAttribute('aria-label', v.names.stop);
-      }
+      const ask = slot.querySelector<HTMLElement>('.vb-app-ask')!;
+      ask.toggleAttribute('data-ask', !!v.ask);
+      ask.querySelector('p')!.textContent = v.ask ?? v.text ?? '';
+      const [allow, stop] = ask.querySelectorAll('button');
+      allow!.hidden = !v.ask;
+      allow!.setAttribute('aria-label', v.names.allow);
+      stop!.hidden = !v.stop;
+      stop!.setAttribute('aria-label', v.names.stop);
+      if (inSlot && !had!.checkVisibility({ visibilityProperty: true })) this.focus({ preventScroll: true });
     }
 
     /** The panel's size as --app-w and --app-h on the card (CSSOM: the CSP refuses style

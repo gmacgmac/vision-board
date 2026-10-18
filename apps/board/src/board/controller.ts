@@ -186,7 +186,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const sender = createSender({ board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
     refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
   const { attempt, record } = sender;
-  const apps = createAppCards({ on: apping, stage, vp, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: askConfirm, toast, fail, redraw: () => redraw() }); // app-cards.ts
+  const apps = createAppCards({ on: apping, stage, vp, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: askConfirm, toast, fail, redraw: () => redraw() }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
     retire: (fields) => sender.retire(fields), confirm: askConfirm, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24)
   const proposals = createProposalFlow({

@@ -770,46 +770,53 @@ What an app is, its folder, the panel protocol and the limits are [apps.md](./ap
 section is how the board draws one. Two patterns share the work.
 
 1. **The node pattern draws the card.** For kind `app`, `node-template.ts` `nodeTemplate` draws,
-   under the title, the line asking for Allow and the panel slot (`appSlot`) in place of the
-   Markdown body; the footer gets Stop app before the toolbar. An app card takes no size control
-   (whatever `sizeControl` says) and no status word (it tells, D-045). With the appCards flag off
+   under the title, the panel slot (`appSlot`) in place of the Markdown body: the row over the
+   panel (its line, then Allow or Stop app), the frame and the state view. An app card takes no
+   size control (whatever `sizeControl` says) and no status word (it tells, D-045). With the appCards flag off
    the page passes `{ appCards: false }` and the card is a plain one saying `APPS_OFF` (ruling 13).
 2. **Its size.** `app-frame-core.ts` `panelSize` is the panel's size: the agent's `app.w`/`app.h`,
    else the manifest's `size`, else the default, held to `APP_SIZE`. `vb-node.ts` sets it as
    `--app-w` and `--app-h` through the CSSOM (`render`, then `updateApp` once list_apps names a
    manifest size); `node.css` makes the card that wide plus its padding and border, whatever its
-   emphasis. The slot keeps that size in every state, so a state change, or the frame coming and
-   going, never moves the card.
+   emphasis. The slot is the row over the panel and the panel's size in every state (`node-app.css`:
+   a state without a panel hides both and keeps their room, and draws its view over them), so a
+   state change, or the frame coming and going, never moves the card: one height for every state
+   (`tests/pages/app-states.spec.ts` "every state the app host gives…", "loading: …"), and Allow, a
+   code change and Stop app keep it (`app-follow.spec.ts` "Allow, a code change and Stop app leave
+   the card's height as it was…").
 3. **Its states.** `node-app.ts` `appView` turns what the page knows into one of
    `APP_CARD_STATES`: the page passes `CardConditions.app`, `{}` until list_apps has answered
    (`checking`), then `{ info }` with the app as list_apps gives it (the app host's one state
-   function, ruling 11), and `{ past: true }` on a past version. `nodeState` returns it as
-   `NodeState.app`, and its `words` end the card's name.
+   function, ruling 11), and `{ info, past: true }` on a past version (the size stays the app's).
+   `nodeState` returns it as `NodeState.app`, and its `words` end the card's name.
 
    | State | Shows |
    |---|---|
    | `checking` | "Loading…" in place of the panel |
    | `needs-approval` | the panel; over it "Allow this app to run?" and Allow |
    | `changed` | the panel; over it "Code changed. Allow it again?" and Allow |
-   | `ready` | the panel; Stop app in the footer once the person allowed this version |
-   | `missing` | "App <id> not found" in place of the panel |
+   | `ready` | the panel; over it "Allowed to run" and Stop app once the person allowed this version, else "Nothing to allow" |
+   | `missing` | "App <id> not found" and Check again in place of the panel |
    | `invalid` | "This app has problems", the problems (a list that scrolls, a tab stop) and Check again |
    | `broken` | "This app stopped" and Restart |
    | `past` | the app's title and "Apps don't run in past versions." |
 
-   The words are `node-app.ts` `COPY`; `node-template.ts` `appStateMarkup` draws the view.
+   The words are `node-app.ts` `COPY` (and `appView`'s "Allowed to run"); `node-template.ts`
+   `appStateMarkup` draws the view.
    `vb-node.ts` `updateApp` applies it in place (the view rebuilt only when it changed) and unloads
    the frame in any state without a panel.
 4. **Its buttons** carry `data-app-act` for the page's delegated listener: `app-allow` and
    `app-revoke` (the action layer's acts: the person only, confirmed by the page) and `retry`
    (Check again, Restart: the page reads list_apps again). Each is named with the app ("Allow app:
    Calculator"); Allow is described by the line asking for it, so a screen reader hears why. They
-   hide at far zoom as the quick actions do.
+   hide at far zoom as the quick actions do. A state change that takes the focused button away
+   leaves focus on the card (`vb-node.ts` `updateApp`; `app-follow.spec.ts` "a state change that
+   takes the focused button away leaves focus on the card").
 5. **The app-frame pattern draws the panel** (`packages/ui/src/app-frame/`): `<vb-app-frame>`
    (`vb-app-frame.ts`), the DOM-free protocol (`app-frame-core.ts`), `app-frame.css` and its
    `pattern.json`. Its inputs are `data-app`, `data-label`, `data-w` and `data-h`; unloaded it is a
    light placeholder with the app's icon and title. The page calls `wire({ callTool, look?,
-   onEscape? })` once, then `load()` while the card is on screen and near enough to use and
+   onEscape?, onLoad? })` once (`onLoad` on each load of the frame's document), then `load()` while the card is on screen and near enough to use and
    `unload()` when it leaves (ruling 14). `load()` makes the `<iframe>`: `sandbox="allow-scripts"`
    and nothing else, `src` `APP_PANEL_PATH` + the id (packages/format: the server's route reads
    the same string), `title` the app's name, no referrer. The frame stays hidden (so it neither shows nor takes focus) until the panel says it is ready, or
@@ -844,13 +851,18 @@ section is how the board draws one. Two patterns share the work.
    nothing below runs).
    - **State**: `app-state.ts` `createAppStates` holds the one copy of list_apps' answer (io.ts
      `listApps`). It reads it when a ledger that names an app is loaded, when a line draws an app
-     card or allows or stops an app, after Allow and Stop app, on Check again and Restart, and when
+     card or allows or stops an app, after Allow and Stop app, on Check again and Restart, when
      a tool call is refused with a problem that says the state moved (`needs-approval`,
-     `app-invalid`, `app-not-found`, `app-failed`, `app-timeout`: so an edited `tools.mjs` shows
-     "Code changed" at the panel's next call). Reads made meanwhile share one more read. A new
-     answer redraws the board, which updates and measures only the cards whose state changed.
+     `app-invalid`, `app-not-found`, `app-failed`, `app-timeout`), when a selection change selects
+     an app card (one read for all of them), and when an app card's frame loads (the frame's
+     `onLoad`: its panel, or the panel route's 404 once the folder went). No timer: an edited
+     `tools.mjs` shows "Code changed" once the card is selected, before any call, and a deleted
+     folder shows "not found" once its frame loads again (`app-follow.spec.ts`). Reads made
+     meanwhile share one more read. A new answer redraws the board, which updates and measures only
+     the cards whose state changed.
    - **Conditions**: `card(n)` gives an app card `{ app: {} }` until list_apps answers,
-     `{ app: { info } }` after, and `{ app: { past: true } }` on a past version.
+     `{ app: { info } }` after, and `{ app: { info, past: true } }` on a past version, so it keeps
+     the manifest's size (`app-states.spec.ts` "a past version: …").
    - **Frames** (ruling 14): after every draw and every pan or zoom (`draw.ts` `placed`), each app
      card's `<vb-app-frame>` is wired once (`callTool` → io.ts `callAppTool`, which rejects with the
      problem's code and words; `onEscape` focuses the card without scrolling) and loaded only while

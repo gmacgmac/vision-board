@@ -38,6 +38,8 @@ test.afterAll(async () => { await s.close(); });
 
 const card = (page: Page, i: number) => page.locator(`vb-node[data-id="${n[i]}"]`);
 const slot = (page: Page, i: number) => card(page, i).locator('.vb-app');
+/** Every card's height as laid out: one height, whatever each card's state (finding 6). */
+const heights = (page: Page) => page.locator('vb-node').evaluateAll((els) => [...new Set(els.map((e) => (e as HTMLElement).offsetHeight))]);
 
 async function open(page: Page, query = ''): Promise<void> {
   await page.goto(`${s.base}/${query}#${board}`);
@@ -59,9 +61,13 @@ for (const theme of THEMES) {
     await expectStates(page);
     await expect(card(page, 0).locator('.vb-app-ask-text')).toHaveText('Allow this app to run?');
     await expect(card(page, 1).locator('.vb-app-ask-text')).toHaveText('Code changed. Allow it again?');
-    await expect(card(page, 2).locator('.vb-app-ask')).toBeHidden();
+    await expect(card(page, 2).locator('.vb-app-ask-text')).toHaveText('Allowed to run');
+    await expect(card(page, 2).getByRole('button', { name: 'Allow app: Probe' })).toBeHidden();
     await expect(card(page, 2).getByRole('button', { name: 'Stop app: Probe' })).toBeVisible();
     await expect(slot(page, 3).locator('.vb-app-head')).toHaveText('App nope not found');
+    await expect(card(page, 3).getByRole('button', { name: 'Check again: Nope' })).toBeVisible();
+    // The row over the panel keeps its room in every state, so every card is one height (finding 6).
+    expect(await heights(page)).toHaveLength(1);
     await expect(slot(page, 4).locator('.vb-app-head')).toHaveText('This app has problems');
     await expect(slot(page, 4).locator('.vb-app-problems li').first()).toContainText('app.json');
     await expect(slot(page, 5).locator('.vb-app-head')).toHaveText('This app stopped');
@@ -84,8 +90,12 @@ for (const theme of THEMES) {
     await expect(page.locator('vb-app-frame iframe')).toHaveCount(0);
     await expect(card(page, 0)).toHaveAttribute('aria-label', /, loading$/);
     await expectNoAxeViolations(page);
+    const loading = await heights(page);
     release();
     await expectStates(page);
+    // Loading took the row's room too: no card moved when list_apps answered (finding 6).
+    expect(loading).toHaveLength(1);
+    expect(await heights(page)).toEqual(loading);
   });
 
   test(`zoomed out past FAR_K, no panel runs: the placeholder with the app's title; zoomed back in, the panels start again (${theme})`, async ({ page }) => {
@@ -138,15 +148,18 @@ for (const theme of THEMES) {
     expect(panels.map((u) => new URL(u).pathname).sort()).toEqual(['/app-panels/calculator', '/app-panels/good', '/app-panels/probe']);
   });
 
-  test(`a past version: app cards are placeholders, read-only, with no panel (${theme})`, async ({ page }) => {
+  test(`a past version: app cards are placeholders, read-only, with no panel, at the size the manifest gives (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    // Two versions: the agent's next drawing starts a new one once the person has answered.
-    const past = await s.draw([app('calculator', 'Calculator'), { kind: 'question', title: 'Is the calculator right?' }]);
+    // Two versions: the agent's next drawing starts a new one once the person has answered. The card
+    // gives no size, so the panel's is the manifest's (360×440), now and in the past version (finding 3).
+    const past = await s.draw([{ kind: 'app', title: 'Calculator', app: { id: 'calculator' } }, { kind: 'question', title: 'Is the calculator right?' }]);
     await s.act(past.board, { action: 'ack', n: past.n[1], ver: 1 });
     await s.write(past.board, [{ type: 'node', node: { region: 'tools', kind: 'note', title: 'A later card' } }]);
     await page.goto(`${s.base}/#${past.board}`);
     const calc = page.locator(`vb-node[data-id="${past.n[0]}"]`);
     await expect(calc.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
+    const box = () => calc.evaluate((c: HTMLElement) => [c.offsetWidth, c.offsetHeight]);
+    const now = await box();
     const version = page.locator('#version');
     await expect(version.locator('option')).toHaveCount(2);
     await version.selectOption({ index: 1 });
@@ -155,6 +168,9 @@ for (const theme of THEMES) {
     await expect(calc.locator('.vb-app-text')).toHaveText('Apps don\'t run in past versions.');
     await expect(calc.locator('vb-app-frame iframe, .vb-app-ask:visible')).toHaveCount(0);
     await expect(calc).toHaveAttribute('aria-label', /, not running in a past version$/);
+    await expect(calc.locator('vb-app-frame')).toHaveAttribute('data-w', '360');
+    await expect(calc.locator('vb-app-frame')).toHaveAttribute('data-h', '440');
+    expect(await box()).toEqual(now);
     await expectNoAxeViolations(page);
     await page.keyboard.press('Escape');
     await expect(calc.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');

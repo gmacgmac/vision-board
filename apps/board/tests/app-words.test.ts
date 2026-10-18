@@ -19,3 +19,8 @@ test('the toast after Allow and Stop app, and after Check again or Restart', () 
   assert.equal(retryDone('Calculator', 'broken', 'broken'), 'Calculator is still stopped.');
   assert.equal(retryDone('Calculator', 'broken', 'needs-approval'), 'Calculator updated');
 });
+
+test('Check again on an app not found: found once its folder is back, else still not found (finding 1)', () => {
+  assert.equal(retryDone('Notice', 'missing', 'ready'), 'Notice found');
+  assert.equal(retryDone('Notice', 'missing', 'missing'), 'Notice still not found.');
+});

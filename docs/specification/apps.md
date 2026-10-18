@@ -97,7 +97,10 @@ wildcard, no path. The board page itself allows frames from its own server only 
 
 The route (`apps/board/server/apps/panel.ts` `servePanel`, `panelCsp`) sends the panel file as
 `text/html` with `Cache-Control: no-store` and no cookie. It answers 404 for an id that isn't one
-(it is never decoded), an app that is `missing` or `invalid`, and when app cards are off. The
+(it is never decoded), an app that is `missing` or `invalid`, and when app cards are off; the 404
+carries the panel's policy too (the one above, with no manifest's domains), so a card's frame that
+asks after the folder went loads the refusal instead of a blank the board page's own
+`frame-ancestors 'none'` would make, and the board page reads `list_apps` again when it loads. The
 `sandbox` directive keeps the panel on an opaque origin even when it is opened on its own.
 
 ## The panel protocol
@@ -262,7 +265,7 @@ every state; none is ever a blank or an error.
 
 | State | When | The card shows |
 |---|---|---|
-| `missing` | A card names the app, and no folder has it. | "App <id> not found". Adding the folder back brings it back. |
+| `missing` | A card names the app, and no folder has it. | "App <id> not found", and **Check again**. Adding the folder back brings it back. |
 | `invalid` | The manifest or the files have problems, or the tools module didn't load (`problems`). | The problems, for the agent to fix. |
 | `needs-approval` | It has tools the person has not allowed at this version. | The panel, and **Allow**; with `changed`, "The app's code changed" too. |
 | `ready` | Its panel shows and its tools run. | The panel. |
@@ -357,7 +360,10 @@ Esc back to the card, theme changes and the approval state.
   (`tests/pages/app-server.ts`): an agent draws the calculator, Allow, `12*3=` worked out by its
   `evaluate` tool and listed by `history`, Tab into the panel and out, Esc back to the card, a code
   change asking again, Stop app, and app cards off on the server and the page
-  (`tests/pages/app-cards.spec.ts`); every card state, the frame made only on screen and at or above
-  FAR_K, and a past version (`app-states.spec.ts`); the panel's opaque origin, its CSP and messages
+  (`tests/pages/app-cards.spec.ts`); every card state at one height, the frame made only on screen
+  and at or above FAR_K, and a past version at the manifest's size (`app-states.spec.ts`); a deleted
+  folder seen once the frame loads again and brought back by Check again, a code change seen on
+  select before any call and with no timer, and Allow, a code change and Stop app keeping the card's
+  height (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages
   from other windows ignored (`app-safety.spec.ts`); the gallery's samples and its live panel
   (`app-gallery.spec.ts`).

@@ -24,18 +24,19 @@ test('checking: until list_apps answers, "Loading…" in place of the panel, no 
   assert.equal(v.stop, false);
 });
 
-test('missing: "App <id> not found" (ruling 10), no frame', () => {
+test('missing: "App <id> not found" (ruling 10), no frame, and Check again, so a folder put back brings it back (finding 1)', () => {
   const v = appView(card(), { info: info({ state: 'missing', title: undefined, tools: [], allowed: false }) });
   assert.deepEqual([v.state, v.head, v.frame, v.words], ['missing', 'App calculator not found', false, ', app not found']);
   assert.equal(v.name, 'Price calculator', 'no manifest, so the card\'s title');
+  assert.deepEqual([v.retry, v.names.retry], ['Check again', 'Check again: Price calculator']);
 });
 
-test('invalid: the problems for the agent to fix, and Check again', () => {
+test('invalid: the problems for the agent to fix (file and words; the server words the field, so no pointer), and Check again', () => {
   const v = appView(card(), {
     info: info({ state: 'invalid', allowed: false, problems: [{ file: 'app.json', pointer: '/size/w', detail: 'must be <= 960' }, { file: 'tools.mjs', detail: 'does not load' }] }),
   });
   assert.equal(v.state, 'invalid');
-  assert.deepEqual(v.problems, ['app.json /size/w: must be <= 960', 'tools.mjs: does not load']);
+  assert.deepEqual(v.problems, ['app.json: must be <= 960', 'tools.mjs: does not load']);
   assert.deepEqual([v.retry, v.names.retry, v.frame], ['Check again', 'Check again: Calculator', false]);
 });
 
@@ -53,12 +54,13 @@ test('code changed: the panel shows, and the card says the code changed and asks
   assert.match(v.words, /code changed/);
 });
 
-test('ready: the panel only; Stop app once the person allowed it (tools named or not yet), never on a panel-only app', () => {
+test('ready: the panel; over it "Allowed to run" and Stop app once the person allowed it (tools named or not yet), "Nothing to allow" on a panel-only app (finding 6)', () => {
   const v = appView(card(), { info: info() });
-  assert.deepEqual([v.state, v.frame, v.ask, v.words, v.stop], ['ready', true, undefined, '', true]);
+  assert.deepEqual([v.state, v.frame, v.ask, v.words, v.stop, v.text], ['ready', true, undefined, '', true, 'Allowed to run']);
   assert.equal(v.names.stop, 'Stop app: Calculator');
   assert.equal(appView(card(), { info: info({ tools: [] }) }).stop, true, 'allowed, before the first call names the tools');
-  assert.equal(appView(card(), { info: info({ tools: [], allowed: false }) }).stop, false);
+  const panelOnly = appView(card(), { info: info({ tools: [], allowed: false }) });
+  assert.deepEqual([panelOnly.stop, panelOnly.text], [false, 'Nothing to allow']);
 });
 
 test('broken: it stopped, and Restart', () => {
@@ -101,11 +103,12 @@ test('nodeState: an app card carries its view, adds its words to the name, shows
 test('nodeTemplate: an app card draws its slot in place of the Markdown body, with the frame at the panel\'s size', () => {
   const html = nodeTemplate(card({ body: 'Work out a **price**.' }));
   assert.doesNotMatch(html, /vb-node-body|<strong>/);
-  assert.match(html, /<h3 class="vb-node-title">Price calculator<\/h3><div class="vb-app-ask" hidden><p class="vb-app-ask-text" id="vb-app-ask-7"><\/p>/);
-  assert.match(html, /<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" aria-describedby="vb-app-ask-7">Allow<\/button><\/div>/);
-  assert.match(html, /<div class="vb-app" data-app-state="checking" aria-busy="true"><vb-app-frame data-app="calculator" data-label="Price calculator" data-w="360" data-h="440"><\/vb-app-frame>/);
+  // The row over the panel holds Allow and Stop app in every state (finding 6: its room is kept, so no state moves the card).
+  assert.match(html, /<h3 class="vb-node-title">Price calculator<\/h3><div class="vb-app" data-app-state="checking" aria-busy="true"><div class="vb-app-ask"><p class="vb-app-ask-text" id="vb-app-ask-7"><\/p>/);
+  assert.match(html, /<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" aria-describedby="vb-app-ask-7">Allow<\/button>/);
+  assert.match(html, /<button type="button" class="vb-pop-btn vb-app-stop" data-app-act="app-revoke" hidden>Stop app<\/button><\/div><vb-app-frame data-app="calculator" data-label="Price calculator" data-w="360" data-h="440"><\/vb-app-frame>/);
   assert.ok(html.includes(`<div class="vb-app-state">${appStateMarkup(appView(card()))}</div>`), 'drawn as checking until update()');
-  assert.match(html, /data-app-act="app-revoke" hidden>Stop app<\/button><div class="vb-node-actions"/);
+  assert.doesNotMatch(html.slice(html.indexOf('<footer')), /Stop app/, 'not in the footer');
   assert.doesNotMatch(html, /style=|<style/);
 });
 
@@ -126,7 +129,7 @@ test('appStateMarkup: nothing while the panel shows; otherwise icon, words, prob
   for (const state of ['needs-approval', 'ready'] as const) assert.equal(appStateMarkup(appView(card(), { info: info({ state }) })), '');
   const missing = appStateMarkup(appView(card({ app: { id: 'calculator' } }), { info: info({ state: 'missing' }) }));
   assert.ok(missing.includes(KIND_ICON.app));
-  assert.match(missing, /<p class="vb-app-head">App calculator not found<\/p><p class="vb-app-text">Ask the agent to add it\.<\/p>$/);
+  assert.match(missing, /<p class="vb-app-head">App calculator not found<\/p><p class="vb-app-text">Ask the agent to add it\.<\/p><button type="button" class="vb-pop-btn" data-app-act="retry" aria-label="Check again: Calculator">Check again<\/button>$/);
   const invalid = appStateMarkup(appView(card(), { info: info({ state: 'invalid', title: '<i>', problems: [{ file: 'app.json', detail: 'bad <script>' }] }) }));
   assert.ok(invalid.includes(KIND_ICON.risk), 'the warning icon');
   assert.match(invalid, /<ul class="vb-app-problems" tabindex="0" aria-label="Problems"><li>app\.json: bad &#60;script&#62;<\/li><\/ul>/);

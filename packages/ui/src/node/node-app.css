@@ -1,12 +1,12 @@
 /* App cards in the node pattern (D-047; node-app.ts `appView`, node-template.ts `appSlot`). Tokens
-   only. The slot is the panel's size (--app-w, --app-h, set by the element) in every state, so a
-   state change never moves the card; the card is that wide plus its padding (node.css). The frame
-   shows in needs-approval, changed and ready; every other state draws its view in its place, on
-   the frame's own placeholder look. */
+   only. The slot is the row over the panel, then the frame at the panel's size (--app-w, --app-h,
+   set by the element), in every state: hidden, each keeps its room, so a state change never moves
+   the card (app-cards FIX_02); the card is the panel's width plus its padding (node.css). The frame
+   and the row show in needs-approval, changed and ready; every other state draws its view over
+   both, on the frame's own placeholder look. */
 
-vb-node .vb-app { position: relative; width: var(--app-w); height: var(--app-h); }
-vb-node .vb-app > vb-app-frame { position: absolute; inset: 0; }
-vb-node .vb-app:not([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > vb-app-frame { display: none; }
+vb-node .vb-app { position: relative; display: grid; gap: var(--vb-space-2); width: var(--app-w); }
+vb-node .vb-app:not([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > :is(.vb-app-ask, vb-app-frame) { visibility: hidden; }
 vb-node .vb-app:is([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > .vb-app-state { display: none; }
 vb-node .vb-app-state {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center;
@@ -33,19 +33,17 @@ vb-node .vb-app-problems {
 vb-node .vb-app-problems:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-node .vb-app-state .vb-pop-btn { flex: none; margin-top: var(--vb-space-1); }
 
-/* The line asking for Allow (needs-approval, changed), over the panel at its width: the board's
-   call to act, in the accent's soft tone, with Allow as the main button. */
-vb-node .vb-app-ask:not([hidden]) {
-  display: flex; align-items: center; gap: var(--vb-space-2); width: var(--app-w);
-  padding: var(--vb-space-1) var(--vb-space-1) var(--vb-space-1) var(--vb-space-3);
-  border: 1px solid var(--vb-accent-line); border-radius: var(--vb-radius-md); background: var(--vb-accent-soft);
+/* The row over the panel, at its width and one height in every state: a plain line, edge to edge
+   with the panel, with Stop app (ready, allowed) or nothing to allow (ready, no tools), so it never
+   reads as a field; asking for Allow (needs-approval, changed) it is the board's call to act, a box
+   in the accent's soft tone with Allow as the main button. */
+vb-node .vb-app-ask {
+  display: flex; align-items: center; gap: var(--vb-space-2); height: calc(var(--vb-space-6) + var(--vb-space-1));
+  border: 1px solid transparent; border-radius: var(--vb-radius-md);
 }
-vb-node .vb-app-ask-text {
-  flex: 1; min-width: 0; margin: 0; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); line-height: 1.35; color: var(--vb-ink-strong);
-}
+vb-node .vb-app-ask[data-ask] { padding: 0 var(--vb-space-1) 0 var(--vb-space-3); border-color: var(--vb-accent-line); background: var(--vb-accent-soft); }
+vb-node .vb-app-ask-text { flex: 1; min-width: 0; margin: 0; font-size: var(--vb-text-md); line-height: 1.35; color: var(--vb-ink); }
+vb-node .vb-app-ask[data-ask] .vb-app-ask-text { font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
 vb-node .vb-app-ask .vb-pop-btn { flex: none; }
-/* Stop app, in the footer before the toolbar while the app has tools the person allowed. */
-vb-node .vb-app-stop { flex: none; height: 24px; padding: 0 var(--vb-space-2); margin-right: var(--vb-space-1); color: var(--vb-ink); }
-vb-node .vb-app-stop:hover { color: var(--vb-ink-strong); }
 /* Zoomed out (N8): the buttons hide as the quick actions do, keeping their space. */
-[data-zoom='far'] vb-node :is(.vb-app-ask .vb-pop-btn, .vb-app-stop, .vb-app-state .vb-pop-btn) { visibility: hidden; }
+[data-zoom='far'] vb-node :is(.vb-app-ask, .vb-app-state) .vb-pop-btn { visibility: hidden; }

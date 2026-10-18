@@ -53,9 +53,18 @@ test('the manifest\'s domains widen connect-src, img-src, font-src and style-src
   assert.doesNotMatch(csp, /evil|\*/, 'no undeclared domain, no wildcard');
 });
 
-test('404 for a missing or invalid app, an id trick, and with app cards off', async () => {
-  for (const p of ['/app-panels/nope', '/app-panels/invalid-manifest', '/app-panels/Good', '/app-panels/good/', '/app-panels/..%2fgood',
-    '/app-panels/%2e%2e%2fledger.jsonl', '/app-panels/good%2f..', '/app-panels/', '/app-panels/good/panel.html']) {
+test('404 for a missing or invalid app, an id trick, and with app cards off; the route\'s 404 carries the panel\'s own policy, so a card\'s frame shows it (finding 1)', async () => {
+  // The route's own paths: no panel, and ruling 4's policy with no manifest's domains, so the frame
+  // that asked loads the refusal (frame-ancestors 'self') instead of a blank the page's policy would make.
+  for (const p of ['/app-panels/nope', '/app-panels/invalid-manifest', '/app-panels/Good', '/app-panels/..%2fgood',
+    '/app-panels/%2e%2e%2fledger.jsonl', '/app-panels/good%2f..', '/app-panels/']) {
+    const r = await raw(h.base, p);
+    assert.equal(r.status, 404, p);
+    assert.doesNotMatch(r.body, /A test panel/, `${p}: no panel`);
+    assert.equal(r.headers['content-security-policy'], EXACT, p);
+  }
+  // Not the route's paths: the page's 404, with the page's policy.
+  for (const p of ['/app-panels/good/', '/app-panels/good/panel.html']) {
     const r = await raw(h.base, p);
     assert.equal(r.status, 404, p);
     assert.doesNotMatch(String(r.headers['content-security-policy']), /sandbox/, `${p}: no panel`);
@@ -63,6 +72,7 @@ test('404 for a missing or invalid app, an id trick, and with app cards off', as
   const flagged = await raw(off.base, '/app-panels/good');
   assert.equal(flagged.status, 404);
   assert.match(flagged.body, /App cards are off/);
+  assert.equal(flagged.headers['content-security-policy'], EXACT);
 });
 
 test('with app cards off, call_app_tool answers not-found', async () => {

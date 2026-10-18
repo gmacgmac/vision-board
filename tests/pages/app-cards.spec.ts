@@ -47,7 +47,7 @@ async function allow(page: Page, card: Locator, heading = 'Allow Calculator to r
   const dialog = page.getByRole('dialog', { name: heading });
   await expect(dialog).toContainText('can\'t change your files');
   await dialog.getByRole('button', { name: 'Allow', exact: true }).click();
-  await expect(card.locator('.vb-app-ask')).toBeHidden();
+  await expect(card.getByRole('button', { name: 'Allow app: Calculator' })).toBeHidden();
   await expect(card).toBeFocused();
 }
 

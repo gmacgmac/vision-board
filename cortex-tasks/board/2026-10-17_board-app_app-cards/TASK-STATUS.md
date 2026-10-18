@@ -57,7 +57,7 @@ tracker:
 | 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Completed | v3.8 (SKILL.md 406 lines, no skill-local apps.md: see notes); scenarios 28-31 pass with Claude Code and Kiro (Opus 5.5); new app built from the skill alone in 29, all four runs |
 | 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Completed | Gates all green (528 pages); 7 findings inside the rulings (1-7, see § VERIFY_01) for FIX tasks; 17 proposed tracker rows (8-24) in § Proposed tracker rows |
 | 10 | FIX_01 | 7 | strong | [Plain words in app and image problems (VERIFY_01 findings 4, 5, 7)](./FIX_01_plain-words.md) | Completed | `fieldWords` (manifest + tool shape, no pointer), `IMAGE_WORDS.web` for http(s)/`//` only, `sizeWords` (KB/MB); +39 B gzip (149.72 KB); 8 screenshots viewed: see notes |
-| 11 | FIX_02 | 8 | strong | [App cards follow their files and never jump (VERIFY_01 findings 1, 2, 3, 6)](./FIX_02_app-card-state.md) | Pending | |
+| 11 | FIX_02 | 8 | strong | [App cards follow their files and never jump (VERIFY_01 findings 1, 2, 3, 6)](./FIX_02_app-card-state.md) | Completed | list_apps read on select and frame load; panel 404 with `PANEL_CSP`; missing: Check again; past keeps size; the row kept in every state (Stop app in it); +147 B gzip (149.86 KB); 532 pages: see notes |
 | 12 | VERIFY_02 | 9 | strong | [Re-check findings 1-7 and Goal lines 3-4](./VERIFY_02_findings.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -463,8 +463,26 @@ Gates, one after another after the last change: check 0; npm test 1477 + 7 pass;
 test:pages 528 passed.
 
 ### FIX_02: App card state
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 1, 2, 3 and 6 fixed on the page and the panel route. Read FIX_02_app-card-state.md § Implementation Notes.
+- **1**: the panel route's 404s carry `PANEL_CSP` (`panel.ts` `FRAMED`); `vb-app-frame` `onLoad` → `app-cards.ts` reads
+  list_apps again, so a gone folder says "App <id> not found" once its frame loads; `missing` has Check again ("<name>
+  found" / "still not found."). Proof: `app-follow.spec.ts` "a deleted app folder › says "not found" … (finding 1)",
+  `app-panel.test.ts` "404 for … (finding 1)".
+- **2**: a selection change that selects an app card reads list_apps once (`AppCardsDeps.selection`; no timer). Proof:
+  `app-follow.spec.ts` "a changed tools.mjs asks again as soon as the card is selected, … (finding 2)".
+- **3**: `input()` gives `{ info, past: true }`. Proof: `app-states.spec.ts` "a past version: … at the size the manifest
+  gives (light|dark)".
+- **6**: the row over the panel is in the slot in every state (Allow, or "Allowed to run" + Stop app, or "Nothing to
+  allow"; hidden by `visibility` with no panel); focus stays on the card when a state hides the focused button. Proof:
+  `app-follow.spec.ts` "Allow, a code change and Stop app leave the card's height as it was, … (finding 6)",
+  `app-states.spec.ts` "every state …" and "loading: …" (one height).
+- **For VERIFY_02**: new words "Allowed to run", "Nothing to allow", "<name> found", "<name> still not found."; Stop app is
+  now over the panel, not in the footer; the panel route's 404 is the panel's policy (BE_02's no-sandbox assertion
+  changed). Page weight 153,457 B gzip (149.86 of 150 KB, 143 B left). `gallery-{light,dark}` re-baselined after viewing.
+  Tracker row 24 (gone folder → default size) unchanged.
+Gates, one after another after the last change: check 0; npm test 1478 + 7 pass; verify 0 warnings; gen --check current; build 0;
+test:pages 532 passed.
 
 ### VERIFY_02: Re-check
 _Status:_ Pending

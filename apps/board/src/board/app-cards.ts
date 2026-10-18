@@ -1,7 +1,9 @@
 // App cards on the board (D-047 rulings 7, 10, 13-15; app-cards FE_02). The node pattern draws an
 // app card's states and the app-frame pattern its panel (packages/ui); this wires them to the page:
 // - what each app card shows, from the one copy of list_apps' answer (app-state.ts), or the past
-//   version's placeholder (`card`, the card's conditions);
+//   version's placeholder at the size the app gives (`card`, the card's conditions);
+// - that copy read again when an app card is selected or its frame loads (its panel, or the route's
+//   refusal once the folder went), so a card follows its folder without a timer (app-cards FIX_02);
 // - each card's frame, wired once to `call_app_tool` through the page's one I/O layer (io.ts) and
 //   to Esc (back to its card), loaded only while its card is on the visible stage and the zoom is
 //   at or above FAR_K, and removed once the card is more than a screen away or the board zooms out
@@ -22,6 +24,7 @@ import { appAsk, appDone, retryDone } from './app-words.ts';
 import type { ActFields, AppCallRefusal } from './io.ts';
 import { callAppTool } from './io.ts';
 import { outside, viewBounds } from './offscreen.ts';
+import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
 import { isFar } from './viewport.ts';
 
@@ -30,6 +33,8 @@ export interface AppCardsDeps {
   on: boolean;
   stage: HTMLElement;
   vp: Viewport;
+  /** The person's selection: an app card selected reads list_apps again. */
+  selection: Pick<Selection, 'has' | 'onChange'>;
   cards(): ReadonlyMap<string, VbNodeElement>;
   layout(): BoardLayout | null;
   /** A past version of the board shows: its app cards are placeholders (ruling 10). */
@@ -77,10 +82,11 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   const shown = new Map<string, ViewNode>();
   const wired = new WeakSet<VbAppFrameElement>();
 
+  /** The app as list_apps last gave it (none until it answered); a past version keeps its size. */
   const input = (n: ViewNode): AppCardInput => {
-    if (d.past()) return { past: true };
-    const info = states.known ? states.info(n.app?.id ?? '') : undefined;
-    return info ? { info } : {};
+    const info = states.info(n.app?.id ?? '');
+    const known = info ? { info } : {};
+    return d.past() ? { ...known, past: true } : known;
   };
 
   /** A tool call from a card's panel; a refusal that says the state moved reads it again. */
@@ -99,6 +105,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     frame.wire({
       callTool: (name, args) => call(frame.dataset.app ?? '', name, args),
       onEscape: () => card.focus({ preventScroll: true }),
+      onLoad: () => void states.refresh(),
     });
   }
 
@@ -162,7 +169,11 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     if (b && card && n) void press(card, n, b);
   };
   if (d.on) d.stage.addEventListener('click', onClick);
-  const unwatch = d.on ? watchTheme(() => { for (const f of frames()) f.lookChanged(); }) : () => {};
+  const stops = d.on ? [
+    watchTheme(() => { for (const f of frames()) f.lookChanged(); }),
+    // One read for every app card a change selected.
+    d.selection.onChange((c) => { if (c.changed.some((id) => shown.has(id) && d.selection.has(id))) void states.refresh(); }),
+  ] : [];
 
   return {
     card(n) {
@@ -174,7 +185,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     place,
     destroy() {
       d.stage.removeEventListener('click', onClick);
-      unwatch();
+      for (const stop of stops) stop();
     },
   };
 }

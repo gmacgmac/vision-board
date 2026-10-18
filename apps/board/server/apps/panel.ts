@@ -3,7 +3,9 @@
 // origin even when it is opened on its own, so it can't read the board's page, cookies or storage
 // or call /api; it reaches nothing beyond itself unless the manifest's `csp` names an https origin
 // (schema-checked: exact hosts, no wildcards). Only a valid id reaches the state function; a
-// missing or invalid app, or app cards off, is 404.
+// missing or invalid app, or app cards off, is 404, with ruling 4's policy too: a card's frame that
+// asks after its folder went loads the refusal (frame-ancestors 'self'), not a blank the page's own
+// policy (frame-ancestors 'none') would make, and its load tells the page to read list_apps again.
 import fs from 'node:fs';
 import type { ServerResponse } from 'node:http';
 import type { AppCsp } from '../../../../packages/format/src/index.ts';
@@ -32,13 +34,16 @@ export function panelCsp(csp: AppCsp | undefined): string {
   ].join('; ');
 }
 
+/** The route's refusals carry the panel's own policy, with no manifest's domains. */
+const FRAMED = { headers: { 'Content-Security-Policy': PANEL_CSP } };
+
 /** Answer the panel of app `raw` (the path's text, not decoded: an id needs no decoding). */
 export function servePanel(res: ServerResponse, raw: string, host: AppHost): void {
-  if (!host.on) throw problem('not-found', APPS_OFF);
+  if (!host.on) throw problem('not-found', APPS_OFF, FRAMED);
   const status = APP_ID.test(raw) ? host.status(raw) : undefined;
   const folder = status?.folder;
   if (!status || status.info.state === 'missing' || status.info.state === 'invalid' || !folder?.panel || !folder.manifest) {
-    throw problem('not-found', 'There is no app panel here to show. list_apps lists the apps, and what to fix in each.');
+    throw problem('not-found', 'There is no app panel here to show. list_apps lists the apps, and what to fix in each.', FRAMED);
   }
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': panelCsp(folder.manifest.csp), 'Cache-Control': 'no-store' });
   res.end(fs.readFileSync(folder.panel));
