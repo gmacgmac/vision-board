@@ -1,6 +1,7 @@
 // Entry point: the page styles and the pattern styles (the chat's too, chatPanel flag), the board's
 // and the chat's elements, then the Svelte shell, which mounts the board canvas. Elements are
-// defined before anything creates one.
+// defined before anything creates one, and Markdown is told whether to draw images (cardImages flag)
+// before anything renders.
 import { mount } from 'svelte';
 import './styles/board.css';
 import './styles/access.css';
@@ -14,6 +15,7 @@ import '../../../packages/ui/src/node/node-parking.css';
 import '../../../packages/ui/src/node/node-app.css';
 import '../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../packages/ui/src/markdown/markdown.css';
+import '../../../packages/ui/src/image-view/image-view.css';
 import '../../../packages/ui/src/region/region.css';
 import '../../../packages/ui/src/region/region-narrow.css';
 import '../../../packages/ui/src/region/region-note.css';
@@ -27,10 +29,13 @@ import './styles/chat-sidebar.css';
 import './styles/folder-dialog.css';
 import './styles/archived-dialog.css';
 import './styles/lock.css';
-import { defineBoardElements } from '../../../packages/ui/src/index.ts';
+import { flagOn } from '../../../packages/format/src/index.ts';
+import { defineBoardElements, setMarkdownImages } from '../../../packages/ui/src/index.ts';
 import { defineChatElements } from '../../../packages/chat/src/index.ts';
+import { pageFlags } from './flags.ts';
 import App from './shell/App.svelte';
 
+setMarkdownImages(flagOn('cardImages', pageFlags()));
 defineBoardElements();
 defineChatElements();
 mount(App, { target: document.body });

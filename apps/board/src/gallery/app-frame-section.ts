@@ -60,8 +60,9 @@ function offCard(n: ViewNode, fx: Fixture): VbNodeElement {
 
 /** The section sits first (patterns sort by name), so a height of a fraction of a pixel would move
  * every section under it off the pixel grid and change all their screenshots. Once it is in the page
- * (before the first paint), its height is rounded up to a whole pixel. */
-function wholePixels(body: HTMLElement): void {
+ * (before the first paint), its height is rounded up to a whole pixel. The images section (it sorts
+ * second) does the same, again whenever an image changes a card's height in it. */
+export function wholePixels(body: HTMLElement): void {
   requestAnimationFrame(() => {
     const section = body.closest<HTMLElement>('section');
     if (section) section.style.minHeight = `${Math.ceil(section.getBoundingClientRect().height)}px`;

@@ -287,13 +287,13 @@ for (const theme of THEMES) {
   });
 
   // With the agentAccess, wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies,
-  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl, archiveBoard, lockBoard, personRemove, goToCard and appCards flags off (on by default), so their
+  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl, archiveBoard, lockBoard, personRemove, goToCard, appCards and cardImages flags off (on by default), so their
   // sections are not in the full page (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
   // versions.spec.ts, key-bubble.spec.ts, proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts,
-  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts, picker-archive.spec.ts, lock-board.spec.ts, person-remove.spec.ts, go-to-card.spec.ts and app-gallery.spec.ts have those sections' own screenshots.
+  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts, picker-archive.spec.ts, lock-board.spec.ts, person-remove.spec.ts, go-to-card.spec.ts, app-gallery.spec.ts and card-image-states.spec.ts have those sections' own screenshots.
   test(`screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard,-personRemove,-goToCard,-appCards');
+    await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard,-personRemove,-goToCard,-appCards,-cardImages');
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
     await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
   });

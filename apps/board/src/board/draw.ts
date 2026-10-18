@@ -6,20 +6,24 @@
 // sizes happen before writes of places. A card the layout draws at a width its height was not
 // measured at (Match card widths, field report batch 3) is measured again at that width and its
 // container laid out once more. A fresh draw (opening a board, a rebuild) throws everything away
-// and draws from scratch.
+// and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
+// after again when a card is selected, and a card whose image changed its height is measured and laid
+// out again alone (`resized`).
 import type { NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { Align, BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
 import { widthsOf } from '../../../../packages/format/src/index.ts';
 import type { CardConditions, CardReply, VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
 import { holdersOf } from './access.ts';
+import { createCardImages } from './card-images.ts';
 import { createCardSet } from './cards.ts';
 import type { BoardData } from './io.ts';
 import { createLayoutCache } from './layout-cache.ts';
-import { markOffscreen } from './offscreen.ts';
+import { markOffscreen, outside, viewBounds } from './offscreen.ts';
 import { createRegionSet } from './render.ts';
 import type { RetiredCount } from './retired.ts';
 import { tierOf } from './size.ts';
 import type { Viewport } from './viewport.ts';
+import { isFar } from './viewport.ts';
 import { createWires } from './wires.ts';
 import { work } from './work.ts';
 
@@ -106,6 +110,11 @@ export function createDrawing(d: DrawDeps): Drawing {
   const sizes = new Map<string, Size>();
   let layout: BoardLayout | null = null;
   let settle = 0;
+  // A card's images load while it is within a screen of the visible stage and the zoom is not far (ruling 23).
+  const images = createCardImages({
+    host: els.cards, grown: (ids) => resized(ids),
+    near: (el) => { const b = layout?.nodes.get(el.dataset.id!); return !!b && !isFar(d.vp.k) && !outside(b, viewBounds(d.vp, els.stage)); },
+  });
 
   /** New card elements would glide in from the origin: skip transitions for this draw. */
   function noAnim() {
@@ -133,8 +142,24 @@ export function createDrawing(d: DrawDeps): Drawing {
     const sync = cards.sync(data.view, data.state, data.versions, d.selected, tier, d.facts);
     if (fresh || sync.created) noAnim();
     regions.sync(data.view);
+    images.drawn(sync.dirty.map((id) => cards.els.get(id)!));
     cards.measure(sync.dirty, sizes);
     for (const id of sizes.keys()) if (!cards.els.has(id)) sizes.delete(id);
+    lay(data, fresh);
+  }
+
+  /** Cards `ids` changed height by themselves (an image loaded): measure them, and when one did
+   * change, lay out and place again (only their containers lay out again, layout-cache.ts). */
+  function resized(ids: string[]) {
+    const drawn = ids.filter((id) => layout?.nodes.has(id) && cards.els.has(id));
+    const before = drawn.map((id) => sizes.get(id)?.h);
+    cards.measure(drawn, sizes);
+    if (drawn.some((id, i) => sizes.get(id)?.h !== before[i])) lay(d.data(), false);
+    else markOffscreen(cards.els, layout, sizes, d.vp, els.stage); // measuring took the mark off
+  }
+
+  /** The containers, packed, the frames and cards placed, the connectors routed, from `sizes`. */
+  function lay(data: BoardData, fresh: boolean) {
     const { pins, modes, regionPins, widths } = data.state;
     const inputs = {
       pins, modes, hidden: d.hidden(), regionPins, headInsets: d.insets(), align: d.align?.() ?? 'start',
@@ -154,6 +179,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     if (cards.place(layout, sizes) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);
+    images.place();
     d.placed?.();
   }
 
@@ -163,8 +189,11 @@ export function createDrawing(d: DrawDeps): Drawing {
     frames: regions.els,
     draw,
     refocus() { if (layout) wires.draw(layout, d.focus()); },
-    restate: (ids) => cards.restate(ids),
-    viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); d.placed?.(); },
+    restate(ids) {
+      cards.restate(ids);
+      images.selected(ids.filter((id) => d.selected(id)).map((id) => cards.els.get(id)!).filter(Boolean));
+    },
+    viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); images.place(); d.placed?.(); },
     wiresFor: (l, focus) => wires.draw(l, focus),
     settle: settleWires,
   };

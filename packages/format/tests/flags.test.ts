@@ -73,3 +73,8 @@ test('appCards is on by default (app-cards ruling 13), and -appCards turns it of
   assert.equal(flagOn('appCards'), true);
   assert.equal(flagOn('appCards', parseFlags('-appCards').overrides), false);
 });
+
+test('cardImages is on by default (app-cards orchestrator decision 5, D-048), and -cardImages turns it off', () => {
+  assert.equal(flagOn('cardImages'), true);
+  assert.equal(flagOn('cardImages', parseFlags('-cardImages').overrides), false);
+});

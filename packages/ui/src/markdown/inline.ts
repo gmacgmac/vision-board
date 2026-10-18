@@ -1,8 +1,9 @@
 // Markdown, inline layer (D-023): bold, italic, strikethrough, inline code, links, autolinks, escapes
 // and hard breaks, by CommonMark's inline algorithm (delimiter and bracket stacks over linked runs).
-// Every text run is escaped before markup is added; raw HTML, images, entities and reference links
-// stay escaped text. Scans are loops or sticky patterns without nested repetition, so adversarial
-// input stays linear (markdown-safety test).
+// Every text run is escaped before markup is added; raw HTML, entities and reference links stay text,
+// an image is the caller's (`image`). Scans are loops or sticky patterns without nested repetition, so
+// adversarial input stays linear (markdown-safety test).
+import type { ImageWriter } from './image.ts';
 
 /** Escapes the five HTML-significant characters. The one escaper for every text run in packages/ui. */
 export const esc = (s: string): string => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -19,7 +20,7 @@ interface Bracket { run: Run; image: boolean; start: number; delim: Delim | null
 /** `ticks`: backtick runs by length (start positions, ascending), with a read pointer per length. */
 interface State {
   src: string; pos: number; head: Run | null; tail: Run | null; delims: Delim | null; brackets: Bracket | null;
-  ticks: Map<number, number[]> | null; tickAt: Map<number, number>;
+  ticks: Map<number, number[]> | null; tickAt: Map<number, number>; image: ImageWriter | undefined;
 }
 
 const ASCII_PUNCT = /[!-/:-@[-`{-~]/;
@@ -226,8 +227,8 @@ function closeBracket(st: State): void {
     return;
   }
   processEmphasis(st, b.delim);
-  // An image is outside the subset: its source shows as text.
-  const html = b.image ? esc(st.src.slice(b.start, target.end)) : link(target.url, target.title, flatten(b.run.next, null));
+  // An image is the caller's (D-048); without a writer (the cardImages flag off) its source shows as text.
+  const html = b.image ? st.image?.(target.url, flatten(b.run.next, null)) ?? esc(st.src.slice(b.start, target.end)) : link(target.url, target.title, flatten(b.run.next, null));
   Object.assign(b.run, { s: html, html: true, next: null });
   st.tail = b.run;
   st.brackets = b.prev;
@@ -290,9 +291,9 @@ function step(st: State): void {
   }
 }
 
-/** Inline Markdown to HTML. `src` is a block's text, trimmed; the result is safe to set as innerHTML. */
-export function renderInline(src: string): string {
-  const st: State = { src, pos: 0, head: null, tail: null, delims: null, brackets: null, ticks: null, tickAt: new Map() };
+/** Inline Markdown to HTML. `src` is a block's text, trimmed; `image` writes an image. The result is safe to set as innerHTML. */
+export function renderInline(src: string, image?: ImageWriter): string {
+  const st: State = { src, pos: 0, head: null, tail: null, delims: null, brackets: null, ticks: null, tickAt: new Map(), image };
   while (st.pos < src.length) step(st);
   processEmphasis(st, null);
   return flatten(st.head, null);

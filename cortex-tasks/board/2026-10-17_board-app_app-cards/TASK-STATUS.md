@@ -53,7 +53,7 @@ tracker:
 | 4 | T_01 | 2 | standard | [Example app: calculator panel and plugin](./T_01_example-calculator.md) | Completed | Calculator in `skills/vision-board/examples/apps/calculator/` (3 files); tests beside it, root `test` glob + `skills/**/*.test.mjs` |
 | 5 | FE_02 | 3 | strong | [Page wiring, gallery, end-to-end and safety page tests](./FE_02_page-wiring.md) | Completed | Wired (`app-cards.ts`, `app-state.ts`); page tests prove lines 3, 4a, 4b, 4j, 6; this repo's board drew "App cards"; `APP_PANEL_PATH`; frame focus ring fixed: see notes |
 | 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Completed | `IMAGE_LIMITS`, `IMAGE_WORDS`, `imagePathProblem` in format; `/board-images/` in `server/images.ts`; images.md, api.md 154-155, D-048; depth = 8 folders: see notes |
-| 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Pending | Added 2026-10-18 |
+| 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Completed | `![alt](path)` image or box (`image.ts`), flag `cardImages` via `setMarkdownImages`, `image-view/` pattern, `card-images.ts` (near-only loads, HEAD version + `?v=`, select/open check, swap, re-measure); page weight 149.7 KB: see notes |
 | 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Pending | |
 | 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
 
@@ -86,7 +86,7 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 | Line | Met? | Evidence (command and result, test name, file) |
 |---|---|---|
 | 1 Tasks | | |
-| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed |
+| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed. Wave 4: check 0; test 1474+7 pass; verify 0 warnings (page 149.7/150 KB); gen --check 0; build 0; test:pages 528 passed |
 | 3 End to end | | |
 | 4 Safety (a-j) | | |
 | 5 Contract | | |
@@ -257,8 +257,39 @@ extensions are refused (415)…", "a file over the size limit is refused (413)�
 verify 0 warnings (after `npm run map`); gen --check current (build and pages not run, per the orchestrator).
 
 ### FE_03: Images on the page
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18)
+_Notes:_ Markdown writes `![alt](path)` as one fixed `<img>` after `imagePathProblem` (`packages/ui/src/markdown/image.ts`
+`imageMarkup`; a refused path is `imageNote`'s box "Image not shown: <path> (<reason>)" in `IMAGE_WORDS`' words; no alt
+text is the path); flag `cardImages` (on) reaches every surface once through `setMarkdownImages` (page and gallery
+`main.ts`). Pattern `packages/ui/src/image-view/` (`fitImage`, `flipFrom`, `motionMs`, `<vb-image-view>` a native modal
+dialog, `imageButton`, `showProblem`). Page: `card-images.ts` (made by `draw.ts`): images load only near and not far,
+at the version a HEAD names (`io.ts` `imageVersion`, `?v=<ETag>`); select and open ask again with `If-None-Match`, a
+newer one is decoded out of sight then swapped; a card re-measures alone (`draw.ts` `resized`). Read FE_03_card-images.md
+§ Implementation Notes. For the next waves:
+- **Proof by name** (Goal state line 11): `card-images.spec.ts` › "an agent's card shows ![Flow](diagrams/flow.png) from a
+  subfolder at the card's width, and its card is measured with it (light|dark)", "a click opens a wide image to 70% of the
+  screen's width, never past its height, at 1600×1000|1470×956", "the keyboard opens a tall image to 70% of the screen's
+  height, at 1600×1000|1470×956", "Esc, a click outside the image and the × each close it with focus back on the image; …",
+  "a replaced image shows after its card is selected again: a conditional request with its ETag, the new picture swapped
+  in, and no request on a timer", "opening an image asks for a newer version too, …", "with motion › the view grows from
+  the card's image box …, for about 220 ms, …", "reduced motion: the view appears and goes without motion", "the open view
+  passes axe and matches its screenshot (light|dark)"; `card-image-states.spec.ts` › "missing and refused › a missing file,
+  a fake png, one over 8 MB, a path out of the folder and an internet address each say why in their place; …
+  (light|dark)", flag off, far zoom, off screen, a file that goes, the close-event race, the gallery; unit
+  `markdown-images.test.ts`, `markdown-safety.test.ts` ("an image cannot break out of its shape…"),
+  `markdown-adversarial.ts` `IMG_SHAPE`, "CommonMark: Images", `image-view-core.test.ts`.
+- **T_02**: the skill can say: alt text is required (else the path shows); a path is relative to `.visionboard/images/`,
+  subfolders up to 8; png, jpeg, webp, gif; overwrite the file to update it (the person sees it on select or open); a
+  picture shows at the card's width at most and 420 px tall at most (the view shows it whole).
+- **Page weight 149.7 of 150 KB gzip**: about 0.3 KB left; more page code needs a trim or a budget decision.
+- **Deviations** (inside the rulings; full list in the task file): the flag via `setMarkdownImages`; width/height set by
+  the page, not the renderer; the button made by the page through the pattern; in-card max-width 100% and a 420 px height
+  cap; `src` held back at far zoom (lazy alone loads there); a HEAD check plus `?v=`; motion = `--vb-motion` × 0.6 (no
+  220 ms token; tokens.css is protected); pattern.json `flag` for gallery sections; `pngOf` added to `images-support.ts`.
+- **Known limits** (proposed tracker rows): images outside cards (bubble, container notes, chat) load as the browser
+  does and a missing one there shows the browser's broken-image mark; only a card body's image opens the view.
+Gates: check 0; npm test 1474 + 7 pass; verify 0 warnings; gen --check current; build 0; test:pages 528 passed (4 new screenshot
+pairs viewed; `gallery.spec.ts/markdown-{light,dark}` re-baselined after viewing: card 61's internet image is now the box).
 
 ### T_02: Skill v3.8
 _Status:_ Pending

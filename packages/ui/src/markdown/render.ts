@@ -1,22 +1,36 @@
 // Markdown, the front function (D-023): the one renderer every Markdown surface calls (card
 // bodies and notes now; replies, the chat and parking bundles later). Source to safe HTML with
 // the pattern's CSS hooks (markdown.css); no inline styles, no DOM, so it runs under node --test.
-// blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped.
+// blocks.ts splits the lines into blocks; inline.ts renders each block's text, escaped; image.ts
+// writes `![alt](path)` (D-048), unless images are off (the page's cardImages flag, `setMarkdownImages`).
 import { parseBlocks } from './blocks.ts';
 import type { Block } from './blocks.ts';
+import type { ImageWriter } from './image.ts';
+import { imageMarkup } from './image.ts';
 import { esc, renderInline } from './inline.ts';
 
 export interface MarkdownOptions {
   /** aria-level of a `#` label (1 to 6). Default 4: the card title is an h3. */
   headingLevel?: number;
+  /** Draw `![alt](path)` as its image (D-048); false keeps its source text. Default: the page's
+   * choice (`setMarkdownImages`), on until it says otherwise. */
+  images?: boolean;
+}
+
+let pageImages = true;
+
+/** The page's cardImages flag (components.md § Feature flags), set once where the page starts, so
+ * every surface that renders Markdown agrees on images without each one being told. */
+export function setMarkdownImages(on: boolean): void {
+  pageImages = on;
 }
 
 /** Longer input is cut here with an ellipsis (2c_FE_01, Safety). */
 export const MARKDOWN_MAX = 20_000;
 
-interface Ctx { level: number; lists: number; tight: boolean }
+interface Ctx { level: number; lists: number; tight: boolean; image: ImageWriter | undefined }
 
-const inlineOf = (b: Block): string => renderInline(b.lines.join('\n').trim());
+const inlineOf = (b: Block, ctx: Ctx): string => renderInline(b.lines.join('\n').trim(), ctx.image);
 
 const kids = (b: Block, ctx: Ctx): string => b.kids.map((k) => blockHtml(k, ctx)).join('');
 
@@ -32,7 +46,7 @@ function flatList(b: Block, ctx: Ctx): string {
   const rest = { ...ctx, tight: false };
   return b.kids.map((li) => {
     const [first, ...others] = li.kids;
-    const lead = first?.t === 'para' ? `${esc(li.marker!)} ${inlineOf(first)}` : esc(li.marker!);
+    const lead = first?.t === 'para' ? `${esc(li.marker!)} ${inlineOf(first, ctx)}` : esc(li.marker!);
     const tail = (first?.t === 'para' ? others : li.kids).map((k) => blockHtml(k, rest)).join('');
     return `<p class="vb-md-p">${lead}</p>${tail}`;
   }).join('');
@@ -40,8 +54,8 @@ function flatList(b: Block, ctx: Ctx): string {
 
 function blockHtml(b: Block, ctx: Ctx): string {
   switch (b.t) {
-    case 'para': return ctx.tight ? inlineOf(b) : `<p class="vb-md-p">${inlineOf(b)}</p>`;
-    case 'head': return `<span class="vb-md-label" role="heading" aria-level="${ctx.level}">${inlineOf(b)}</span>`;
+    case 'para': return ctx.tight ? inlineOf(b, ctx) : `<p class="vb-md-p">${inlineOf(b, ctx)}</p>`;
+    case 'head': return `<span class="vb-md-label" role="heading" aria-level="${ctx.level}">${inlineOf(b, ctx)}</span>`;
     case 'quote': return `<blockquote class="vb-md-quote">${kids(b, { ...ctx, tight: false })}</blockquote>`;
     case 'code': return `<pre class="vb-md-code" tabindex="0"><code>${esc(b.lines.join(''))}</code></pre>`;
     case 'list': return ctx.lists >= 2 ? flatList(b, ctx) : list(b, ctx);
@@ -58,5 +72,6 @@ export function renderMarkdown(src: string, opts: MarkdownOptions = {}): string 
   }
   const h = opts.headingLevel;
   const level = h !== undefined && Number.isInteger(h) && h >= 1 && h <= 6 ? h : 4;
-  return kids(parseBlocks(text), { level, lists: 0, tight: false });
+  const image = (opts.images ?? pageImages) ? imageMarkup : undefined;
+  return kids(parseBlocks(text), { level, lists: 0, tight: false, image });
 }

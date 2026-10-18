@@ -125,8 +125,10 @@ Every refusal is a problem document (api.md 38-40) whose `detail` is one of the 
 
 The agent updates a picture by overwriting the file. The `ETag` comes from the file's size and
 modified time, so a changed file has a new one: a request with the old `ETag` gets the new picture
-(200), and one with the current `ETag` gets 304 and no body. The page asks this way when a card that
-holds images is selected and when an image is opened, and not on a timer.
+(200), and one with the current `ETag` gets 304 and no body. The page asks this way, with a HEAD, when a
+card that holds images is selected and when an image is opened, and not on a timer; it loads each
+picture at the version the route named (`?v=`, which the route ignores), so it always knows the version
+it shows (components.md § Images in cards).
 
 ## The zoomed view
 
@@ -147,6 +149,11 @@ nothing on this page depends on it.
   limit; `HEAD`; 304 and the ETag after an overwrite; svg and fakes: 415; the size limit: 413; 404s;
   path tricks; links out and links in; a linked images folder; the Host check; other methods; the
   folder that is open now).
-- Not covered here: the Markdown renderer's `<img>`, the zoomed view and the check on select and open
-  are built and tested by app-cards FE_03, which updates this page and components.md if what it builds
-  differs.
+- The Markdown renderer's `<img>`, and a refused path as text that is never asked for:
+  `packages/ui/tests/markdown-images.test.ts`, `markdown-safety.test.ts` ("an image cannot break out of
+  its shape…") and `markdown-adversarial.ts` `IMG_SHAPE`.
+- The page's side, through a real board on a temp project: `tests/pages/card-images.spec.ts` ("a replaced
+  image shows after its card is selected again: a conditional request with its ETag, …, and no request on
+  a timer", "opening an image asks for a newer version too, …") and `tests/pages/card-image-states.spec.ts`
+  (a missing file, a fake png and one over 8 MB say the route's words in the card; a path out of the folder
+  and an internet address are never asked for). The zoomed view: components.md § Image view.

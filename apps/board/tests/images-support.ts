@@ -1,10 +1,12 @@
 // Test support for the image route (app-cards BE_03, D-048): four tiny real images (each decodes),
-// writing a file into a temp project's `.visionboard/images/`, and a raw request that returns the
-// body as bytes and sends the path exactly as written (fetch would resolve `..` and `%2e%2e`).
-// Only a temp project is ever written.
+// a real PNG of any size (`pngOf`: the zoomed view's tall and wide images, app-cards FE_03), writing a
+// file into a temp project's `.visionboard/images/`, and a raw request that returns the body as bytes
+// and sends the path exactly as written (fetch would resolve `..` and `%2e%2e`). Only a temp project is
+// ever written.
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 const b64 = (s: string) => Buffer.from(s, 'base64');
 
@@ -15,6 +17,28 @@ export const IMAGES = {
   webp: b64('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='),
   jpeg: b64('/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAAaADAAQAAAABAAAAAQAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAAQABAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICAwICAwUDAwMFBgUFBQUGCAYGBgYGCAoICAgICAgKCgoKCgoKCgwMDAwMDA4ODg4ODw8PDw8PDw8PD//bAEMBAgICBAQEBwQEBxALCQsQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEP/dAAQAAf/aAAwDAQACEQMRAD8A+mKKKK/Kz/QA/9k='),
 } as const;
+
+export type Rgb = readonly [number, number, number];
+
+/** A real PNG, `w` by `h` pixels (8-bit RGB), each pixel `paint(x, y)`. */
+export function pngOf(w: number, h: number, paint: (x: number, y: number) => Rgb = () => [190, 196, 206]): Buffer {
+  const line = w * 3 + 1; // each row starts with its filter byte, 0
+  const raw = Buffer.alloc(line * h);
+  for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) raw.set(paint(x, y), y * line + 1 + x * 3);
+  const chunk = (type: string, data: Buffer) => {
+    const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+    const out = Buffer.alloc(body.length + 8);
+    out.writeUInt32BE(data.length, 0);
+    body.copy(out, 4);
+    out.writeUInt32BE(zlib.crc32(body), body.length + 4);
+    return out;
+  };
+  const head = Buffer.alloc(13);
+  head.writeUInt32BE(w, 0);
+  head.writeUInt32BE(h, 4);
+  head.set([8, 2], 8); // 8 bits a channel, RGB
+  return Buffer.concat([IMAGES.png.subarray(0, 8), chunk('IHDR', head), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
 
 /** An svg picture: the board refuses it, whatever its name. */
 export const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>alert(1)</script></svg>');

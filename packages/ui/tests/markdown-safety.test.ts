@@ -1,6 +1,7 @@
 // Safety of the Markdown renderer (D-023, 2c_FE_01): raw HTML is always escaped, only http:,
-// https: and mailto: links survive, attributes cannot be broken out of, input is capped at 20,000
-// characters, and adversarial input renders safe (its time: markdown.timing.ts).
+// https: and mailto: links survive, an image only from the board's image route (D-048), attributes
+// cannot be broken out of, input is capped at 20,000 characters, and adversarial input renders safe
+// (its time: markdown.timing.ts).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown } from '../src/index.ts';
@@ -51,6 +52,17 @@ test('only http:, https: and mailto: links survive; anything else is its text', 
   }
   assert.match(renderMarkdown('<https://e.com>'), LINK);
   assert.match(renderMarkdown('<a@e.com>'), /href="mailto:a@e.com"/);
+});
+
+test('an image cannot break out of its shape, and loads from nowhere but the board\'s image route (D-048)', () => {
+  for (const src of ['![x" onerror="alert(1)](a.png)', '![x](a.png" onerror="alert(1))', '![x](a.png onerror=alert(1))',
+    '![x](<a.png" onerror="x>)', '![x](javascript:alert(1))', '![x](JAVASCRIPT:alert(1)//a.png)', '![x](data:image/png;base64,AAAA)',
+    '![x](//evil.com/a.png)', '![x](https://evil.com/a.png)', '![x](/board-images/a.png)', '![x](a.svg)', '![x](%2e%2e/a.png)',
+    '![<img src=x onerror=alert(1)>](a.png)', '![x](a.png)<img src=x>', '![![y](b.png)](a.png)', '[![x](a.png)](javascript:alert(1))']) {
+    const html = renderMarkdown(src);
+    assertSafe(html);
+    assert.doesNotMatch(html, /"\s*on\w+=|src="(?!\/board-images\/)/, html);
+  }
 });
 
 test('input over 20,000 characters is cut there with an ellipsis', () => {

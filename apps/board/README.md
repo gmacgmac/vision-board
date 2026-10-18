@@ -97,6 +97,16 @@ the one sender; `src/board/app-state.ts` holds the one copy of `list_apps`' answ
 repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
 (`tests/repo-example-app.test.ts` keeps it equal to the skill's).
 
+Images in cards (D-048, `docs/specification/images.md`): `server/images.ts` `serveImage` answers
+`GET /board-images/<path>` (and `HEAD`) from `.visionboard/images/` only, after `imagePathProblem`
+(packages/format, the one path check the Markdown renderer makes too), with an ETag and 304. On the
+page, `src/board/card-images.ts` (made by `draw.ts`) loads a card's images once it is near and the
+zoom is not far (ruling 23), asks the route which version each is through `io.ts` `imageVersion`,
+asks again when a card is selected or an image is opened (no timer), swaps a newer one in, shows the
+box saying why for a refused file, has a card measured again when its image changed its height, and
+opens the zoomed view (`<vb-image-view>`, components.md § Images in cards and § Image view). The
+`cardImages` flag reaches the renderer once, through `setMarkdownImages` in `src/main.ts`.
+
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the
 patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from the patterns'

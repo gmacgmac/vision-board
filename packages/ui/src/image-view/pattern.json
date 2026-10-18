@@ -1,0 +1,34 @@
+{
+  "name": "image-view",
+  "title": "Images in cards",
+  "entry": "<vb-image-view> · imageButton(img) · showProblem(img, path, reason)",
+  "selector": ".vb-img",
+  "flag": "cardImages",
+  "description": "An image a card's Markdown names (`![alt](path)`, D-048) is drawn at the card's width, with its own aspect ratio; in the card's body it is a button in the card's tab order, and a click, Enter or Space opens it over the board: a modal dialog named by its alt text, the image with its longer side at 70% of the screen in that direction (small images scaled up too, never past the screen the other way), over a backdrop, with an × in the top corner. It grows from its place on the card and shrinks back to it on close, for 60% of the board's motion token (about 220 ms), eased; under reduced motion it appears and goes without motion. A file that is missing, or refused, gives its place to a small box saying why.",
+  "files": {
+    "core": "image-view-core.ts (fitImage, centred, flipFrom, msOf, motionMs, ZOOM_SHARE, MOTION_SHARE, IMAGE_VIEW_WORDS; no DOM)",
+    "template": "image-view-template.ts (imageViewTemplate: the dialog's markup)",
+    "element": "vb-image-view.ts (defineVbImageView, VbImageViewElement; light DOM, a native modal <dialog>)",
+    "card": "card-image.ts (imageButton: a card's image as its button; showProblem: the box in an image's place, the renderer's imageNote)",
+    "styles": "image-view.css (the button and the view; tokens only). The image itself and the box are the Markdown pattern's (markdown.css: .vb-md-img, .vb-md-noimg)"
+  },
+  "states": ["loading", "loaded", "missing", "refused", "hover", "focus", "pressed", "opening", "open", "closing", "swapped", "reduced motion"],
+  "parts": {
+    "vb-img": "button (type button, aria-haspopup dialog) around a card body's .vb-md-img; its name is the image's alt text; not made inside a link, a note or a hover box",
+    "vb-md-img": "the renderer's img: a sunken box at the card's width while it loads (16 by 10, or the width and height the page knows), then the picture at its own aspect ratio",
+    "vb-md-noimg": "the box in an image's place: \"Image not found: <path>\", or \"Image not shown: <path> (<reason>)\" in IMAGE_WORDS' words",
+    "vb-iv": "the dialog (modal, aria-label = the alt text), the whole screen, no frame",
+    "vb-iv-scrim": "the backdrop, --vb-scrim; a click on it closes",
+    "vb-iv-img": "the image at fitImage's size in the middle of the screen (left, top, width and height through the CSSOM); its transform runs from the card's box and back",
+    "vb-iv-x": "the × in the screen's top corner, named Close, tip \"Close · Esc\"; it has focus while the view is open"
+  },
+  "methods": {
+    "open(img, still?)": "open a loaded image on a card over the board, from its place there; still: without motion",
+    "swap(src)": "a newer version of the open image, already loaded: show it, fitted again",
+    "close()": "shrink back to the card and close; focus goes back to the image's button (or its card)",
+    "shown (getter)": "the image on its card that is open, else null"
+  },
+  "whenToUse": "Any picture an agent puts on a card: a screenshot, a diagram, a mock-up. The page wires loading, the update check and the view (apps/board/src/board/card-images.ts).",
+  "whenNotToUse": "Pictures from the internet or outside the project's images folder (never shown), and icons or decoration of the board itself.",
+  "accessibility": "The image's button is named by its alt text (an image needs one) and says it opens a dialog. The view is a modal dialog named by the alt text; focus moves to the × and stays there (Tab keeps it), Esc, a click outside the image and the × close it, and focus goes back to the image's button. Keys and the wheel stay in the dialog, so the board neither pans nor zooms. Under reduced motion nothing moves. The box saying why is plain text."
+}

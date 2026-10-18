@@ -104,9 +104,10 @@ the default.
 ## Markdown (D-023)
 
 Card bodies and notes are Markdown, and every surface that shows written text renders it through
-the one function `renderMarkdown(src, { headingLevel })` from the `packages/ui` front door. It is a
+the one function `renderMarkdown(src, { headingLevel, images })` from the `packages/ui` front door. It is a
 pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into blocks),
-`inline.ts` (marks, links, escapes), `render.ts` (the front function), `markdown.css` (the
+`inline.ts` (marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards),
+`render.ts` (the front function), `markdown.css` (the
 `vb-md-*` classes, imported by the page beside `node.css`) and `pattern.json` (the subset, the
 classes and the safety rules). A template sets its output with `innerHTML`, which is safe because
 the renderer escapes every text run; one-line fields (titles, tags) stay plain text through `esc`.
@@ -176,6 +177,8 @@ ships behind one. The pattern was defined by the first such task (U7, node size)
 - **Where it is checked**: once, where the behaviour enters (the board controller, the gallery's
   entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
   packages never read the address or storage. Pure packages (`layout`) take the result as input.
+  `cardImages` is set once at each entry point with `setMarkdownImages` (`apps/board/src/main.ts`,
+  the gallery's `main.ts`), because every surface that renders Markdown draws images (§ Images in cards).
 - **Flag off means unchanged**: every existing page-test screenshot must still match with the
   flag off. A gallery section for flagged behaviour shows only with the flag on, with its own
   screenshots.
@@ -874,3 +877,92 @@ section is how the board draws one. Two patterns share the work.
    code change, Stop app, the flag off), `app-states.spec.ts` (every state, on and off screen, far
    zoom, a past version), `app-safety.spec.ts` (opaque origin, CSP, other windows' messages) and
    `app-gallery.spec.ts`; the words: `apps/board/tests/app-words.test.ts`, `key-help.test.ts`.
+
+## Images in cards (D-048, app-cards FE_03)
+
+The files, the path rules and the route are [images.md](./images.md); this section is how the page
+draws an image. Three patterns share the work, behind the `cardImages` flag.
+
+1. **The Markdown pattern writes the image** (`packages/ui/src/markdown/image.ts` `imageMarkup`). For
+   `![alt](path)` it calls `imagePathProblem` (packages/format, the one path check): a path it passes,
+   with alt text, is one fixed `<img class="vb-md-img" src="/board-images/<path>" alt="…" loading="lazy"
+   decoding="async">`; a path it refuses is the box saying why (`imageNote`: "Image not shown: <path>
+   (<reason>)", the reason in `IMAGE_WORDS`' words), so nothing outside the images folder, and nothing
+   from the internet, is ever asked for; no alt text is the path as plain text. The alt text is the
+   description's words, marks dropped. With images off it is its source text, as before.
+2. **Images on or off.** `renderMarkdown`'s `images` option, else the page's choice: `setMarkdownImages`
+   (render.ts), called once by `apps/board/src/main.ts` and the gallery's `main.ts` with the `cardImages`
+   flag, so every surface that renders Markdown agrees (card bodies, notes and replies, the note bubble,
+   parking text, the chat).
+3. **Its look** (`markdown.css`): never wider than what holds it, its own aspect ratio, at most 1.5 card
+   widths tall (`--vb-card-w-s`; the zoomed view shows it whole), centred. Until its size is known it is
+   a sunken box at the full width, 16 by 10, with nothing drawn in it (a transparent picture stands in
+   for the missing one, so no alt text and no broken-image mark).
+4. **The page's part** (`apps/board/src/board/card-images.ts` `createCardImages`, made by `draw.ts`):
+   - *Holding back*: a card's images (body, notes, replies, its boxes) lose their `src` when the card is
+     drawn and keep their path in `data-path`; one in the card's body (not in a link) becomes the
+     button that opens it (`imageButton`). After every draw, pan and zoom, in the next frame (once a
+     board just opened has its view), an image loads only if its card is within a screen of the visible
+     stage (`offscreen.ts` `viewBounds`, `outside`) and the zoom is not `isFar` (ruling 23).
+   - *Version*: before it loads, the route is asked which version the file is (`io.ts` `imageVersion`,
+     a HEAD; the route is not an API operation, so this is the page's one request for it by code), and
+     the picture loads at that version (`?v=<ETag>`), so the page knows what it shows. A refused file
+     (404, 413, 415) gives its place to the box with the route's own words (`showProblem`, the GET's
+     problem `detail`); "not found" reads "Image not found: <path>". A picture that will not draw after
+     the route served it says the route's reason, else "not a real <type>".
+   - *Updates, no polling* (ruling 21): selecting a card (`draw.ts` `restate` with the cards just
+     selected) and opening an image ask again with the shown version's ETag (`If-None-Match`): 304
+     changes nothing; a newer version is loaded out of sight (`decode()`), then swapped into every image
+     of that path and the open view at once, so nothing flickers. Nothing asks on a timer.
+   - *Measuring*: a picture that loads or swaps sets its `width` and `height` (kept per address, so the
+     card drawn again keeps its height at once) and its card is measured again alone, in the next frame
+     with any others (`draw.ts` `resized`: only when a height changed are the containers laid out and
+     placed again, layout-cache.ts keeping the rest).
+5. **The image-view pattern** draws the button, the box in an image's place and the zoomed view
+   (§ Image view).
+
+## Image view (D-048 ruling 22)
+
+`packages/ui/src/image-view/`: `image-view-core.ts` (no DOM), `image-view-template.ts`, `vb-image-view.ts`
+(the element), `card-image.ts` (an image on a card), `image-view.css` and `pattern.json` (flag `cardImages`:
+the gallery shows its section only with the flag on).
+
+1. **An image on a card** is `imageButton(img)`: a `<button class="vb-img" aria-haspopup="dialog">` around
+   the image, named by its alt text, in the card's tab order; hover, pressed and focus are drawn on the
+   picture (which may be narrower than the card). A click (the pointer gives it no gesture: it is a
+   control), Enter or Space opens the view. `showProblem(img, path, reason)` puts the box in its place.
+2. **The view** is `<vb-image-view>` (the page appends one to the body), a native modal `<dialog>`
+   named by the image's alt text: a backdrop (`--vb-scrim`, the board behind softly blurred), the image,
+   and the × in the screen's top corner (named Close, tip "Close · Esc", 40px).
+3. **Its size** is `fitImage(natural, screen)`: a wide image's width is `ZOOM_SHARE` (70%) of the screen's
+   width, a tall image's height 70% of the screen's height, a square's side 70% of the shorter side;
+   small images are scaled up to that; the other side is held to the screen. `centred` puts it in the
+   middle; it is fitted again when the window or the picture changes.
+4. **Its motion** (`flipFrom`): the image is held over its place on the card until the larger picture
+   can be drawn (`decode()`), then moves to its zoomed box, and back on close, for `motionMs` of the
+   board's motion token (`MOTION_SHARE` 0.6 of `--vb-motion`, 360ms: about 220 ms), eased by `--vb-ease`;
+   the backdrop fades with it. Reduced motion sets the token to 0ms (tokens.css), so nothing moves.
+   Closing during the opening runs back from where it is.
+5. **Keys and focus**: focus goes to the × and stays there (Tab keeps it); Esc (the dialog's cancel), a
+   click outside the picture and the × close it; focus goes back to the image's button, or to its card
+   if the button has gone (the file went: the page closes the view and puts the box in its place). The
+   board neither pans nor zooms meanwhile: the dialog is modal (the board is inert), its keys are
+   outside the board's shortcuts (`keys.ts` ignores a dialog), and its wheel is stopped.
+6. **The page** opens it (`open(img)`), and hands it a newer version (`swap(src)`); it fetches nothing.
+   The gallery's `image-view-section.ts` shows an image in a card in every state (the missing and
+   refused ones from the route's own words, so it makes no failing request) and opens the view with
+   motion and without it (`open(img, true)`).
+7. **Kept true by**: `packages/ui/tests/markdown-images.test.ts` (the shape, subfolders and the depth
+   limit, the alt text, no alt text, every refused path with its reason, the box, links, every block,
+   images off and `setMarkdownImages`), `markdown-safety.test.ts` ("an image cannot break out of its
+   shape…"), `markdown-adversarial.ts` `IMG_SHAPE` (no `<img>` but the fixed shape),
+   `markdown-commonmark.test.ts` ("CommonMark: Images"), `image-view-core.test.ts` (`fitImage` at
+   1600×1000 and 1470×956, small, square, held to the screen; `flipFrom`; `motionMs`),
+   `packages/format/tests/flags.test.ts` (cardImages on by default). In a browser:
+   `tests/pages/card-images.spec.ts` (at the card's width and measured with it; 70% by click and by
+   keyboard for a wide and a tall image at both screens; Esc, a click outside and the ×, focus back, Tab
+   kept, no pan or zoom; a replaced image after select, the conditional request, nothing on a timer;
+   opening asks too; motion from the card's box about 220 ms; reduced motion; axe and screenshots light
+   and dark) and `card-image-states.spec.ts` (missing, a fake png, over 8 MB, out of the folder, the
+   internet, no alt text; the flag off; far zoom and off screen; a file that goes while opening; the
+   gallery, light and dark).

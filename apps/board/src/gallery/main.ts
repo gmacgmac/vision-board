@@ -13,6 +13,7 @@ import '../../../../packages/ui/src/node/node-parking.css';
 import '../../../../packages/ui/src/node/node-app.css';
 import '../../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
+import '../../../../packages/ui/src/image-view/image-view.css';
 import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/region/region-narrow.css';
 import '../../../../packages/ui/src/region/region-note.css';
@@ -27,8 +28,9 @@ import '../styles/folder-dialog.css';
 import '../styles/archived-dialog.css';
 import '../styles/lock.css';
 import './gallery.css';
+import type { FlagName } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
-import { defineBoardElements } from '../../../../packages/ui/src/index.ts';
+import { defineBoardElements, setMarkdownImages } from '../../../../packages/ui/src/index.ts';
 import { defineChatElements } from '../../../../packages/chat/src/index.ts';
 import { pageFlags } from '../flags.ts';
 import { el } from './dom.ts';
@@ -36,6 +38,7 @@ import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { appFrameSamples } from './app-frame-section.ts';
 import { appSection } from './app-section.ts';
+import { imageViewSamples } from './image-view-section.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
@@ -72,11 +75,14 @@ interface PatternInfo {
   states: string[];
   whenToUse: string;
   whenNotToUse: string;
+  /** The flag a pattern's behaviour ships behind: its section shows only with the flag on. */
+  flag?: FlagName;
 }
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'app-frame': appFrameSamples,
+  'image-view': imageViewSamples,
   markdown: markdownSamples,
   node: nodeSamples,
   'note-bubble': noteBubbleSamples,
@@ -86,7 +92,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
 };
 
 const files = import.meta.glob<PatternInfo>('../../../../packages/ui/src/*/pattern.json', { eager: true, import: 'default' });
-const patterns = Object.values(files).sort((a, b) => a.name.localeCompare(b.name));
+const patterns = Object.values(files).filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
 
 function section(p: PatternInfo, fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
@@ -166,6 +172,7 @@ function build(): void {
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
 
+setMarkdownImages(flagOn('cardImages', pageFlags())); // images in Markdown (D-048), as the board's main.ts
 defineBoardElements();
 defineChatElements();
 build();

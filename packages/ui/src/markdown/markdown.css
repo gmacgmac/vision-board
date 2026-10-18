@@ -49,3 +49,22 @@
 }
 .vb-md-link:hover { text-decoration-thickness: 2px; }
 .vb-md-link:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; border-radius: 2px; }
+
+/* An image (D-048 ruling 23): never wider than what holds it, its own aspect ratio, and no taller than a
+   tall card should be (the zoomed view shows it whole). Until the page knows its size it is a sunken box
+   at the full width (16 by 10), with nothing drawn in it: no alt text, no broken-image mark. On a card it
+   is the zoomed view's button (image-view.css). */
+.vb-md-img {
+  display: block; width: auto; height: auto; max-width: 100%; max-height: calc(var(--vb-card-w-s) * 1.5); margin-inline: auto;
+  border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); color: transparent;
+}
+.vb-md-img:not([width]) { width: 100%; aspect-ratio: auto 16 / 10; }
+.vb-md-img:not([src]) { content: url('data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'); aspect-ratio: 16 / 10; }
+/* In an image's place, the box saying why it is not shown: "Image not shown: <path> (reason)", or
+   "Image not found: <path>" (ruling 19 and 23). */
+.vb-md-noimg {
+  display: inline-block; max-width: 100%; padding: var(--vb-space-1) var(--vb-space-2);
+  border: 1px dashed var(--vb-line-contrast); border-radius: var(--vb-radius-sm); background: var(--vb-surface-sunken);
+  font-size: var(--vb-text-sm); line-height: 1.45; color: var(--vb-ink); overflow-wrap: anywhere;
+}
+.vb-md-noimg code { font-family: var(--vb-font-mono); font-size: 0.95em; color: var(--vb-ink-strong); }

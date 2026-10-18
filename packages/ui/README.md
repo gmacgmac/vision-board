@@ -17,6 +17,11 @@ element `<vb-node>` draws every card on the board and `<vb-region>` every contai
   and speaks the panel protocol (`createAppBridge`, DOM-free); `src/node/node-app.ts` (`appView`)
   is an app card's state view. The page imports `src/node/node-app.css` and
   `src/app-frame/app-frame.css` with the other pattern styles (components.md § App card).
+- **Images in cards** (D-048): the Markdown renderer writes an image's one shape, or the box saying
+  why it is not shown (`src/markdown/image.ts`; `setMarkdownImages` is the page's cardImages flag);
+  `src/image-view/` is an image on a card as its button (`imageButton`, `showProblem`) and the zoomed
+  view (`<vb-image-view>`, `fitImage`). The page imports `src/image-view/image-view.css` (components.md
+  § Images in cards, § Image view).
 - **Shared state helpers**: `src/tip/` (the hover tip) and `src/paused/` (a locked board's controls
   paused in place, aria-disabled, for the node and region elements; N40, `paused.css` imported by
   the page).

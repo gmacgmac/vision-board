@@ -4,7 +4,7 @@
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
 import type { ActionId, ActSize, AppInfo, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
-import { BOARD_MARKS, fromLine } from '../../../../packages/format/src/index.ts';
+import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
 import type { ApprovalAnswer, ChatEvent } from '../../../../packages/chat/src/index.ts';
@@ -274,4 +274,20 @@ export async function callAppTool(app: string, tool: string, args: Record<string
       : { problem: 'app-failed', detail: 'The board server is not reachable. Is it running?' };
     throw refusal;
   }
+}
+
+// ---- images in cards (D-048, images.md § Updates) ---------------------------------------------------
+
+/** What the image route says of `path` now: `same` when `etag` is still its version (304), else its
+ * version's ETag, or why it is not shown (the problem's words, `IMAGE_WORDS`). A HEAD, so no picture
+ * comes back. The route is not an API operation, so this is the page's one request for it by code; the
+ * browser loads the picture itself (`<img src>`). Throws when the board can't be reached. */
+export async function imageVersion(path: string, etag?: string): Promise<{ same?: true; etag?: string; problem?: string }> {
+  const url = IMAGE_ROUTE + path;
+  const head = await fetch(url, { method: 'HEAD', cache: 'no-store', ...(etag && { headers: { 'If-None-Match': etag } }) });
+  await head.arrayBuffer(); // empty; read so the request ends as finished, not aborted
+  if (head.status === 304) return { same: true };
+  if (head.ok) return { etag: head.headers.get('ETag') ?? '' };
+  const got = await fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<{ detail?: unknown }>).catch(() => ({ detail: undefined }));
+  return { problem: typeof got.detail === 'string' ? got.detail : IMAGE_WORDS.missing };
 }

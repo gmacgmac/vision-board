@@ -6,6 +6,7 @@ import { defineVbRegion } from './region/vb-region.ts';
 import { defineVbNoteBubble } from './note-bubble/vb-note-bubble.ts';
 import { defineVbSelectionBar } from './selection-bar/vb-selection-bar.ts';
 import { defineVbAppFrame } from './app-frame/vb-app-frame.ts';
+import { defineVbImageView } from './image-view/vb-image-view.ts';
 
 export function defineBoardElements(): void {
   defineVbNode();
@@ -13,4 +14,5 @@ export function defineBoardElements(): void {
   defineVbNoteBubble();
   defineVbSelectionBar();
   defineVbAppFrame();
+  defineVbImageView();
 }

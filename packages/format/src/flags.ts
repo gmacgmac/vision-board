@@ -163,6 +163,11 @@ export const FLAGS = {
     default: true,
     description: 'An app card (kind `app`, D-047) shows the app the agent built in a sandboxed panel inside the card, sized by the agent; its tools run on the board\'s server only after the person presses Allow for that version of the code (docs/specification/apps.md). Off, an app card draws as a plain card saying "App cards are off", and the panel route and call_app_tool answer not-found.',
   },
+  cardImages: {
+    // On by default (app-cards orchestrator decision 5, D-048 rulings 19-23); ?flags=-cardImages turns it off.
+    default: true,
+    description: 'Markdown draws `![alt](path)` as the image in the project\'s `.visionboard/images/` (D-048), which opens over the board at 70% of the screen. Off, it stays its text.',
+  },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,

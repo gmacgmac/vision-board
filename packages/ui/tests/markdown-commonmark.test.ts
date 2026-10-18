@@ -1,14 +1,15 @@
 // CommonMark's own examples for every construct the renderer supports (D-023). Each example in
 // the covered sections is rendered and compared with the spec's HTML, after mapping our output
-// back to plain CommonMark tags (classes, the label and the quote shapes) and applying our link
-// rule to the spec's side, so the comparison is fair. Examples we deliberately differ on are in
+// back to plain CommonMark tags (classes, the label, the quote and the image shapes) and applying our
+// link and image rules to the spec's side, so the comparison is fair. Examples we deliberately differ on are in
 // EXCLUDED, each with a reason; any other failure fails the test, and so does an excluded example
 // that passes, so the table is the exact list of differences.
 // Fixture: tests/fixtures/commonmark-0.31.2.json (CC BY-SA 4.0, see tests/fixtures/README.md).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { renderMarkdown } from '../src/index.ts';
+import { imagePathProblem } from '../../format/src/index.ts';
+import { imageNote, renderMarkdown } from '../src/index.ts';
 
 interface Example { markdown: string; html: string; example: number; section: string }
 
@@ -18,7 +19,6 @@ const INDENTED = 'indented code is not in the subset: its lines are paragraph te
 const RAW_HTML = 'raw HTML is always escaped (D-023)';
 const HTML_BLOCK = 'HTML blocks are not in the subset: escaped paragraph text';
 const REFS = 'reference links and definitions are not in the subset: plain text';
-const IMAGES = 'images are not in the subset: their source shows as text';
 const HR = 'thematic breaks are not in the subset: paragraph text';
 const SETEXT = 'setext headings are not in the subset: paragraph text';
 const DEEP = 'lists nested deeper than one level are plain text';
@@ -41,7 +41,8 @@ const EXCLUDED: Record<number, string> = {
   550: REFS, 553: REFS, 554: REFS, 555: REFS, 556: REFS, 557: REFS, 558: REFS,
   559: REFS, 560: REFS, 561: REFS, 562: REFS, 563: REFS, 564: REFS, 565: REFS,
   566: REFS, 567: REFS, 568: REFS, 569: REFS, 570: REFS, 571: REFS,
-  517: IMAGES, 520: IMAGES,
+  573: REFS, 576: REFS, 577: REFS, 582: REFS, 583: REFS, 584: REFS, 585: REFS, 586: REFS, 587: REFS,
+  588: REFS, 589: REFS, 591: REFS, 592: REFS, 593: REFS,
   77: HR, 234: HR, 246: HR,
   141: SETEXT, 300: SETEXT,
   294: DEEP, 299: DEEP, 307: DEEP,
@@ -53,7 +54,7 @@ const SPEC = JSON.parse(readFileSync(new URL('./fixtures/commonmark-0.31.2.json'
 const SECTIONS = [
   'Paragraphs', 'Emphasis and strong emphasis', 'Code spans', 'Links', 'Autolinks', 'List items',
   'Lists', 'Block quotes', 'Fenced code blocks', 'Backslash escapes', 'Hard line breaks',
-  'ATX headings', 'Raw HTML',
+  'ATX headings', 'Raw HTML', 'Images',
 ];
 
 /** Our shapes back to plain CommonMark tags. */
@@ -64,12 +65,24 @@ const ours = (html: string): string => html
   .replace(/<blockquote class="vb-md-quote">/g, '<blockquote>')
   .replace(/<pre class="vb-md-code" tabindex="0">/g, '<pre>')
   .replace(/<code class="vb-md-icode">/g, '<code>')
-  .replace(/<a class="vb-md-link" href="([^"]*)"( title="[^"]*")? rel="noopener noreferrer" target="_blank">/g, '<a href="$1"$2>');
+  .replace(/<a class="vb-md-link" href="([^"]*)"( title="[^"]*")? rel="noopener noreferrer" target="_blank">/g, '<a href="$1"$2>')
+  .replace(/<img class="vb-md-img" src="\/board-images\/([^"]*)" alt="([^"]*)" loading="lazy" decoding="async">/g, '<img src="$1" alt="$2" />');
 
 const ALLOWED = /^(?:https?|mailto):/i;
 
-/** The spec's side: heading levels are one label, info strings are dropped, and a link our rule refuses is its text. */
+/** An image as our rule draws it (D-048): a path the one check refuses is the box saying why, one with
+ * no alt text its path, else the image without its title. */
+function image(m: string, src: string, alt: string): string {
+  const path = src.replace(/&amp;/g, '&');
+  const why = imagePathProblem(path);
+  if (why) return imageNote(path, why);
+  return alt.trim() ? `<img src="${src}" alt="${alt}" />` : path;
+}
+
+/** The spec's side: heading levels are one label, info strings are dropped, a link our rule refuses is
+ * its text, and an image is as our rule draws it. */
 const theirs = (html: string): string => html
+  .replace(/<img src="([^"]*)" alt="([^"]*)"(?: title="[^"]*")? \/>/g, image)
   .replace(/<h([1-6])>([\s\S]*?)<\/h\1>/g, '<h>$2</h>')
   .replace(/<code class="language-[^"]*">/g, '<code>')
   .replace(/<a href="([^"]*)"(?: title="[^"]*")?>([\s\S]*?)<\/a>/g, (m, href: string, text: string) =>
