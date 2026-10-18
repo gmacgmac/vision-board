@@ -107,6 +107,16 @@ test('finding 4: a manifest\'s problems name each field as a person writes it, w
   }
 });
 
+test('finding 28: an app.json that is not JSON says so once, near its line, without the parser\'s words', () => {
+  const dir = app('half');
+  const read = (text: string) => { fs.writeFileSync(path.join(dir, 'app.json'), text); return problems('half'); };
+  assert.deepEqual(read('{ "id": "half", "size": { "w": 3'), ['app.json  not valid JSON near line 1']);
+  assert.deepEqual(read('{\n  "id": "half"\n  "title": "T"\n}'), ['app.json  not valid JSON near line 3']);
+  assert.deepEqual(read(''), ['app.json  not valid JSON'], 'no line: none is given');
+  // Some of the parser's messages quote the file: nothing of it reaches the problem, not even a line.
+  assert.deepEqual(read('﻿{ "title": "(line 9 column 2)" }'), ['app.json  not valid JSON']);
+});
+
 test('the hash: SHA-256 of app.json then the tools file, as the person allows it', () => {
   const dir = app('hashed', {}, { 'panel.html': '<p>hi</p>', 'tools.mjs': 'export default { tools: [] };' });
   const want = createHash('sha256').update(fs.readFileSync(path.join(dir, 'app.json'))).update(fs.readFileSync(path.join(dir, 'tools.mjs'))).digest('hex');

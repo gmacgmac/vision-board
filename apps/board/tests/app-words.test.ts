@@ -24,3 +24,9 @@ test('Check again on an app not found: found once its folder is back, else still
   assert.equal(retryDone('Notice', 'missing', 'ready'), 'Notice found');
   assert.equal(retryDone('Notice', 'missing', 'missing'), 'Notice still not found.');
 });
+
+test('Check again on an app whose folder went since it had problems says not found, as its card does (finding 27)', () => {
+  assert.equal(retryDone('Notice', 'invalid', 'missing'), 'Notice not found');
+  assert.equal(retryDone('Notice', 'broken', 'missing'), 'Notice not found');
+  assert.equal(retryDone('Notice', 'invalid', 'ready'), 'Notice updated');
+});

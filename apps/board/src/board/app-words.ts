@@ -18,8 +18,9 @@ export function appAsk(action: ActionId, name: string, changed: boolean): [strin
 /** The toast once Allow or Stop app is recorded. */
 export const appDone = (action: ActionId, name: string): string => `${name} ${action === 'app-revoke' ? 'stopped' : 'allowed'}`;
 
-/** What Check again (missing, invalid) or Restart (broken) found: the state before, and after. */
+/** What Check again (missing, invalid) or Restart (broken) found: the state before, and after. A
+ * folder gone since is "not found", as its card says (app-cards FIX_04). */
 export function retryDone(name: string, before: AppState | undefined, after: AppState | undefined): string {
-  if (after !== before) return `${name} ${before === 'missing' ? 'found' : 'updated'}`;
+  if (after !== before) return `${name} ${before === 'missing' ? 'found' : after === 'missing' ? 'not found' : 'updated'}`;
   return `${name} ${after === 'broken' ? 'is still stopped.' : after === 'missing' ? 'still not found.' : 'still has problems.'}`;
 }

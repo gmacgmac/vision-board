@@ -274,3 +274,4 @@
 [[2026-10-18 09:03]] [board-app] FIX_02: app cards follow their files and never jump → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_02_app-card-state.md]]
 [[2026-10-18 09:44]] [board-app] VERIFY_02: findings 1-7 fixed by hand (light and dark, 1600 and 1470), gates green at 6ebb96a (532 pages); new finding 25 (an app card with no w/h changes size on load, invalid, missing; components.md claim), tracker row 26 → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/VERIFY_02_findings.md]]
 [[2026-10-18 10:11]] [board-app] FIX_03: app card keeps its size when its app breaks or goes → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_03_app-card-size.md]]
+[[2026-10-18 10:42]] [board-app] FIX_04: two wording slips on app cards → Task: [[cortex-tasks/board/2026-10-17_board-app_app-cards/FIX_04_two-words.md]]

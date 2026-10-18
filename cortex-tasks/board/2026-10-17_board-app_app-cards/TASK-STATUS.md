@@ -60,8 +60,9 @@ tracker:
 | 11 | FIX_02 | 8 | strong | [App cards follow their files and never jump (VERIFY_01 findings 1, 2, 3, 6)](./FIX_02_app-card-state.md) | Completed | list_apps read on select and frame load; panel 404 with `PANEL_CSP`; missing: Check again; past keeps size; the row kept in every state (Stop app in it); +147 B gzip (149.86 KB); 532 pages: see notes |
 | 12 | VERIFY_02 | 9 | strong | [Re-check findings 1-7 and Goal lines 3-4](./VERIFY_02_findings.md) | Completed | Gates all green at `6ebb96a` (532 pages); findings 1-7 fixed by hand, light and dark, both sizes; new finding 25 (an app card with no `w`/`h` changes size on load, invalid, missing; components.md's claim); tracker row 26: see notes |
 | 13 | FIX_03 | 10 | strong | [An app card keeps its size when its app breaks or goes (VERIFY_02 finding 25)](./FIX_03_app-card-size.md) | Completed | (b) list_apps sends a broken app.json's good size (`AppFolder.size`); (c) the page keeps the last size (+12 B gzip, 149.87 KB); (a) claims narrowed; CSS polish tried, not kept (critique); 533 pages: see notes |
-| 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Pending | |
-| 15 | VERIFY_03 | 12 | strong | [Re-check findings 25, 27, 28, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
+| 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Completed | `retryDone` "<name> not found" when the folder went (+1 B gzip, 149.87 KB, 130 B left); `manifestOf` "not valid JSON near line N" (server only); 534 pages: see notes |
+| 15 | FIX_05 | 12 | strong | [Name each file once; read app.json with a byte-order mark (findings 29, 30)](./FIX_05_file-lines.md) | Pending | |
+| 16 | VERIFY_03 | 13 | strong | [Re-check findings 25, 27-30, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -140,6 +141,9 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
 8. **FIX_03 saw two wording slips; they get FIX_04 before VERIFY_03, not a later loop.** Both are inside the
    plain-words instruction (ruling 10's states): a "<name> updated" toast when the folder has gone (finding
    27) and a JSON parser's sentence with the file named twice (finding 28). Numbered after VERIFY_02's 25-26.
+9. **FIX_04 saw two more; they get FIX_05 before VERIFY_03.** The per-file lines name the file twice
+   ("panel.html: panel.html is over …", finding 29: the fewest-words instruction), and an app.json with a
+   byte-order mark reads as broken (finding 30: ruling 10, the board stays usable). Both server only.
 
 ## Proposed tracker rows
 
@@ -552,6 +556,24 @@ Gates, one after another after the last change: check 0; npm test 1479 + 7 pass;
 build 0; test:pages 533 passed.
 
 ### FIX_04: Two wording slips
+_Status:_ Completed (2026-10-18)
+_Notes:_ Findings 27 and 28 fixed. Read FIX_04_two-words.md § Implementation Notes.
+- **27**: `app-words.ts` `retryDone`: a change into `missing` toasts "<name> not found" (no period, like "found" and
+  "updated"), as the card says. +1 B gzip: 153,470 B (149.87 of 150 KB, 130 B left). Proof: `app-words.test.ts` "Check
+  again on an app whose folder went since it had problems says not found, as its card does (finding 27)".
+- **28**: `server/apps/manifest.ts` `manifestOf`: "app.json: not valid JSON near line N" (the file once, no parser
+  sentence), "app.json: not valid JSON" with no line; the line read only from the end of the parser's message
+  (`PARSED_AT`), never from the file's text it may quote. No page code. No other file in this path is read as JSON.
+  Proof: `app-folder.test.ts` "finding 28: an app.json that is not JSON says so once, near its line, without the
+  parser's words".
+- Both on the page: `app-follow.spec.ts` "a half-written app.json says so near its line, and Check again once its folder
+  went says not found (findings 27, 28)". No doc quotes either wording; ux-copy kept both as written.
+- **For VERIFY_03**: seen, not fixed: an app.json with a byte-order mark reads "not valid JSON" with no line; the per-file
+  lines still name the file twice ("panel.html: panel.html is over the 1 MB limit…", kept by FIX_01).
+Gates, one after another after the last change: check 0; npm test 1481 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 534 passed.
+
+### FIX_05: File lines
 _Status:_ Pending
 _Notes:_
 

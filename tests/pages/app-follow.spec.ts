@@ -5,8 +5,9 @@
 // panel back once the folder is back; a changed tools.mjs asks again as soon as the card is selected,
 // before the panel calls anything. The row over the panel keeps its room in every state, so Allow,
 // Stop app and a code change leave the card's height as it was; a card with no size of its own keeps
-// its box when its app.json breaks or its folder goes (FIX_03, finding 25). On a temp project of its
-// own (app-server.ts) with the example calculator and the panel-only test app.
+// its box when its app.json breaks or its folder goes (FIX_03, finding 25). A half-written app.json and
+// Check again after its folder went say what happened in plain words (FIX_04, findings 27 and 28). On a
+// temp project of its own (app-server.ts) with the example calculator and the panel-only test app.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Locator, Page } from '@playwright/test';
@@ -206,6 +207,27 @@ test('a card with no size of its own keeps its box when its app.json breaks and 
     await checkAgain('Notice found');
     await seen('ready');
     await expect(frame).toHaveAttribute('data-state', 'ready');
+  } finally {
+    if (fs.existsSync(`${folder}-away`)) fs.renameSync(`${folder}-away`, folder);
+    fs.writeFileSync(manifest, first);
+  }
+});
+
+test('a half-written app.json says so near its line, and Check again once its folder went says not found (findings 27, 28)', async ({ page }) => {
+  const folder = s.dir('panel-only');
+  const manifest = path.join(folder, 'app.json');
+  const first = fs.readFileSync(manifest, 'utf8');
+  fs.writeFileSync(manifest, '{\n  "id": "panel-only"\n  "title": "Notice"\n}');
+  try {
+    const { board, n: [n] } = await s.draw([{ kind: 'app', title: 'Notice', app: { id: 'panel-only' } }]);
+    await open(page, board, 1);
+    const card = cardOf(page, n!);
+    await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', 'invalid');
+    await expect(card.locator('.vb-app-problems li')).toHaveText(['app.json: not valid JSON near line 3']);
+    fs.renameSync(folder, `${folder}-away`);
+    await card.getByRole('button', { name: 'Check again: Notice' }).click();
+    await expect(page.locator('#toast')).toHaveText('Notice not found');
+    await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', 'missing');
   } finally {
     if (fs.existsSync(`${folder}-away`)) fs.renameSync(`${folder}-away`, folder);
     fs.writeFileSync(manifest, first);

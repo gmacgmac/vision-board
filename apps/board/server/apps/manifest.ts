@@ -3,7 +3,8 @@
 // manifest is checked against its schema (server/schema.ts, compiled once); its file names are plain
 // names, so they stay in the folder; every file's real path must too (a link out is refused), and
 // none may be over `APP_LIMITS.fileBytes`. What is wrong is a problem for the agent to fix, in plain
-// words: a field as a person writes it (`fieldWords`), no code marks, no JSON Pointer.
+// words: a field as a person writes it (`fieldWords`), no code marks, no JSON Pointer, and for JSON
+// that doesn't parse, only the line near the slip (never the parser's sentence).
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppManifest, AppProblem, AppSize } from '../../../../packages/format/src/index.ts';
@@ -72,6 +73,9 @@ function locate(dir: string, name: string, problems: AppProblem[]): string | nul
 
 /** A schema problem with the whole manifest (not an object) or with its `size`. */
 const SIZE_AT = /^(\/size(\/|$)|$)/;
+/** The line where the JSON parser noticed a slip, read from the end of its message only (some of its
+ * messages quote the file before that). Its message itself never reaches the problem. */
+const PARSED_AT = / \(line (\d+) column \d+\)$/;
 
 /** The manifest, when it is JSON, fits its schema and names this folder; `folder.size` once its
  * `size` field is good, whatever else is wrong. */
@@ -80,7 +84,8 @@ function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
   const file = APP_FILES.manifest;
   let value: unknown;
   try { value = JSON.parse(bytes.toString('utf8')); } catch (err) {
-    problems.push({ file, detail: `app.json is not valid JSON: ${err instanceof Error ? err.message : String(err)}.` });
+    const line = PARSED_AT.exec((err as SyntaxError).message)?.[1];
+    problems.push({ file, detail: `not valid JSON${line ? ` near line ${line}` : ''}` });
     return undefined;
   }
   const found = schemaProblems(MANIFEST_ID, value);
