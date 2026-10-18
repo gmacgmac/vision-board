@@ -196,7 +196,7 @@ export function appStateMarkup(v: AppCardView): string {
 
 /** An app card's panel slot, in place of the Markdown body (ruling 3): the row over the panel (its
  * line, which describes Allow so a screen reader hears why, then Allow or Stop app; it shows while
- * the panel does and keeps its room in every state, so no state change moves the card), then the
+ * the panel does and keeps its room in every state, so the row never moves the card), then the
  * frame at the panel's size (`<vb-app-frame>`, which the page loads) and the state view over both,
  * drawn here for `checking` until `update()` applies the card's state. */
 function appSlot(n: ViewNode): string {

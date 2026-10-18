@@ -59,6 +59,9 @@ tracker:
 | 10 | FIX_01 | 7 | strong | [Plain words in app and image problems (VERIFY_01 findings 4, 5, 7)](./FIX_01_plain-words.md) | Completed | `fieldWords` (manifest + tool shape, no pointer), `IMAGE_WORDS.web` for http(s)/`//` only, `sizeWords` (KB/MB); +39 B gzip (149.72 KB); 8 screenshots viewed: see notes |
 | 11 | FIX_02 | 8 | strong | [App cards follow their files and never jump (VERIFY_01 findings 1, 2, 3, 6)](./FIX_02_app-card-state.md) | Completed | list_apps read on select and frame load; panel 404 with `PANEL_CSP`; missing: Check again; past keeps size; the row kept in every state (Stop app in it); +147 B gzip (149.86 KB); 532 pages: see notes |
 | 12 | VERIFY_02 | 9 | strong | [Re-check findings 1-7 and Goal lines 3-4](./VERIFY_02_findings.md) | Completed | Gates all green at `6ebb96a` (532 pages); findings 1-7 fixed by hand, light and dark, both sizes; new finding 25 (an app card with no `w`/`h` changes size on load, invalid, missing; components.md's claim); tracker row 26: see notes |
+| 13 | FIX_03 | 10 | strong | [An app card keeps its size when its app breaks or goes (VERIFY_02 finding 25)](./FIX_03_app-card-size.md) | Completed | (b) list_apps sends a broken app.json's good size (`AppFolder.size`); (c) the page keeps the last size (+12 B gzip, 149.87 KB); (a) claims narrowed; CSS polish tried, not kept (critique); 533 pages: see notes |
+| 14 | FIX_04 | 11 | strong | [Two wording slips FIX_03 saw (findings 27, 28)](./FIX_04_two-words.md) | Pending | |
+| 15 | VERIFY_03 | 12 | strong | [Re-check findings 25, 27, 28, Goal lines 2-4, 7 and 10](./VERIFY_03_size.md) | Pending | |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -130,6 +133,13 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
    wave 9. Finding 4 is worded on the server (agents read it too), not stripped on the page. Finding 6 is
    fixed in the layout (no jump), not by changing the claim. Finding 7 (KiB) is done, not skipped. Tracker
    row 22 (the panel isn't told about Allow) stays a tracker row: it needs a new protocol message.
+7. **Fix loop after VERIFY_02: finding 25 gets FIX_03 and VERIFY_03.** Closest to ruling 3 and the
+   no-jump UX: the server sends a broken manifest's valid `size`, the page keeps the last size for a
+   missing app if the 143 bytes left allow, and the claims are narrowed for what still moves (a card with
+   no `w`/`h` before the first `list_apps` answer). The budget is not raised.
+8. **FIX_03 saw two wording slips; they get FIX_04 before VERIFY_03, not a later loop.** Both are inside the
+   plain-words instruction (ruling 10's states): a "<name> updated" toast when the folder has gone (finding
+   27) and a JSON parser's sentence with the file named twice (finding 28). Numbered after VERIFY_02's 25-26.
 
 ## Proposed tracker rows
 
@@ -519,6 +529,35 @@ VERIFY_02_findings.md § Implementation Notes.
   (c) `app-state.ts` keeps the last size while missing (page code, a few dozen bytes of 143).
 - **Copy and design**: ux-copy kept all four new words; design-critique: the quiet row reads as a status
   line, not a field, light and dark (`sheet-row.png`). Tracker row 26 added.
+
+### FIX_03: App card size
+_Status:_ Completed (2026-10-18)
+_Notes:_ Finding 25 fixed for a broken app.json and a gone folder. Read FIX_03_app-card-size.md § Implementation Notes.
+- **(b)**: `server/apps/manifest.ts` `AppFolder.size` (the manifest's `size`, else the default) whenever no schema problem
+  sits at the top or under `size`; `state.ts` `appState` sends it in every state with a folder. No page code. Proof:
+  `api-apps.test.ts` "finding 25: list_apps gives the size of an app.json with other problems while its size is good, so a
+  card with no size keeps it".
+- **(c)**: `app-state.ts` `readOnce` keeps the last size list_apps gave when an answer has none (deviation inside decision
+  7: any sizeless answer, so a half-written app.json too, not only `missing`). +12 B gzip: 153,469 B (149.87 of 150 KB,
+  131 B left). Proof: `app-follow.spec.ts` "a card with no size of its own keeps its box when its app.json breaks and when
+  its folder goes, so nothing under it moves (finding 25)" (failed before (b), and with (b) alone: 354×324 → 394×464).
+- **(a)**: components.md § App card 2 and 8, `node-app.ts` and `node-app.css` headers, `node-template.ts` `appSlot`,
+  `node/pattern.json`; apps.md § Panel size and § Kept true by. What still moves: a card with no `w`/`h` until the
+  first list_apps answer (or, gone since the page opened, until a size is first known). Skill unchanged (right as is).
+- **CSS polish**: tried (−8 B), not kept: design-critique found the indented quiet line off the title/panel edge on every
+  allowed card worse than the shift on Allow. No screenshot changed.
+- **For VERIFY_03**: seen, not fixed: Check again on an invalid app whose folder went toasts "<name> updated"; a
+  half-written app.json reads "app.json: app.json is not valid JSON: …" (file named twice, the parser's words).
+Gates, one after another after the last change: check 0; npm test 1479 + 7 pass; verify 0 warnings; gen --check current;
+build 0; test:pages 533 passed.
+
+### FIX_04: Two wording slips
+_Status:_ Pending
+_Notes:_
+
+### VERIFY_03: Re-check size
+_Status:_ Pending
+_Notes:_
 
 ---
 

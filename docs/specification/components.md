@@ -783,7 +783,12 @@ section is how the board draws one. Two patterns share the work.
    state change, or the frame coming and going, never moves the card: one height for every state
    (`tests/pages/app-states.spec.ts` "every state the app host gives…", "loading: …"), and Allow, a
    code change and Stop app keep it (`app-follow.spec.ts` "Allow, a code change and Stop app leave
-   the card's height as it was…").
+   the card's height as it was…"). Only a new size moves it. A card with no `w`/`h` of its own is
+   the default size until list_apps first gives the manifest's, then takes it. After that it
+   keeps its size while app.json has problems or the folder is gone: list_apps still sends a good
+   `size` from a broken app.json (`server/apps/manifest.ts` `AppFolder.size`), and the page keeps the
+   last size when none comes (`app-state.ts`). Proven by `api-apps.test.ts` "finding 25: …" and
+   `app-follow.spec.ts` "a card with no size of its own keeps its box…".
 3. **Its states.** `node-app.ts` `appView` turns what the page knows into one of
    `APP_CARD_STATES`: the page passes `CardConditions.app`, `{}` until list_apps has answered
    (`checking`), then `{ info }` with the app as list_apps gives it (the app host's one state
@@ -850,7 +855,7 @@ section is how the board draws one. Two patterns share the work.
    `createAppCards` behind the appCards flag (off: the card set renders `{ appCards: false }` and
    nothing below runs).
    - **State**: `app-state.ts` `createAppStates` holds the one copy of list_apps' answer (io.ts
-     `listApps`). It reads it when a ledger that names an app is loaded, when a line draws an app
+     `listApps`), keeping an app's last size while an answer gives none (§ 2). It reads it when a ledger that names an app is loaded, when a line draws an app
      card or allows or stops an app, after Allow and Stop app, on Check again and Restart, when
      a tool call is refused with a problem that says the state moved (`needs-approval`,
      `app-invalid`, `app-not-found`, `app-failed`, `app-timeout`), when a selection change selects

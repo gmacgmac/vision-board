@@ -56,7 +56,8 @@ name is not an id is not an app: `list_apps` leaves it out. No file may be over 
 ## Panel size
 
 The agent sets the panel's size on the card, in px: `app: { id, w, h }` on the `node` item. Left
-out, the size is the manifest's `size`, else the default (`appSize`). The card is as wide as the
+out, the size is the manifest's `size`, else the default (`appSize`); `list_apps` sends it while
+`size` itself is good, even when app.json has other problems. The card is as wide as the
 panel plus its own padding; the person's S, M and L sizes don't apply to an app card, and an app
 card takes no `size` word. Limits (`APP_SIZE`; the schema holds the same numbers):
 
@@ -344,8 +345,8 @@ Esc back to the card, theme changes and the approval state.
 - The app host (`apps/board/server/apps.ts` and `apps/`), through the real server on a temp
   project with the test apps in `apps/board/tests/fixtures/apps/`: approval by hash and again after
   a change, the time limit, crashes and `broken`, what the process may not do, `env`, the one-file
-  rule, the output cap and both schemas, and every state of `list_apps`
-  (`apps/board/tests/api-apps.test.ts`); the line of calls and `app-busy`, the idle stop, Stop app,
+  rule, the output cap and both schemas, every state of `list_apps`, and the size it sends from a
+  broken app.json (`apps/board/tests/api-apps.test.ts`); the line of calls and `app-busy`, the idle stop, Stop app,
   the memory limit, a folder switch and the server closing, each checked by the process's pid
   (`app-host.test.ts`); the panel route's headers, its CSP and its 404s, `frame-src 'self'` and the
   flag (`app-panel.test.ts`); the folder, file names and links, the hash, the state function's
@@ -364,6 +365,7 @@ Esc back to the card, theme changes and the approval state.
   and at or above FAR_K, and a past version at the manifest's size (`app-states.spec.ts`); a deleted
   folder seen once the frame loads again and brought back by Check again, a code change seen on
   select before any call and with no timer, and Allow, a code change and Stop app keeping the card's
-  height (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages
+  height, and a card with no size of its own keeping its box when app.json breaks or the folder
+  goes (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages
   from other windows ignored (`app-safety.spec.ts`); the gallery's samples and its live panel
   (`app-gallery.spec.ts`).

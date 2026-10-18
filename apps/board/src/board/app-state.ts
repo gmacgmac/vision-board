@@ -5,14 +5,16 @@
 // Restart, when a tool call is refused in a way that says the app's state moved (its code changed,
 // it broke), and when an app card is selected or its frame loads (app-cards.ts), so a card follows
 // its folder with no timer. Reads made while one is on its way share one more read after it, so
-// nothing asked in between is missed (as live.ts `sync`). With the appCards flag off nothing is read.
+// nothing asked in between is missed (as live.ts `sync`). An answer that gives an app no size (its
+// folder went, its app.json can't be read) keeps the last size given, so a card with no size of its
+// own keeps its box (app-cards FIX_03). With the appCards flag off nothing is read.
 import type { AppInfo, LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { namedApps } from '../../../../packages/actions/src/index.ts';
 import { listApps } from './io.ts';
 
 export interface AppStates {
-  /** What list_apps last said of app `id` (undefined until it named it). */
+  /** What list_apps last said of app `id` (undefined until it named it), with the last size it gave. */
   info(id: string): AppInfo | undefined;
   /** Read list_apps again; resolves once the answer (or the one after it) is in. */
   refresh(): Promise<void>;
@@ -44,7 +46,7 @@ export function createAppStates(d: AppStateDeps): AppStates {
     const text = JSON.stringify(list);
     if (text === last) return;
     last = text;
-    apps = new Map(list.map((a) => [a.id, a]));
+    apps = new Map(list.map((a) => [a.id, { size: apps.get(a.id)?.size, ...a }]));
     d.changed();
   }
 

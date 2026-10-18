@@ -6,8 +6,8 @@
 // words: a field as a person writes it (`fieldWords`), no code marks, no JSON Pointer.
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppManifest, AppProblem } from '../../../../packages/format/src/index.ts';
-import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR } from '../../../../packages/format/src/index.ts';
+import type { AppManifest, AppProblem, AppSize } from '../../../../packages/format/src/index.ts';
+import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR, appSize } from '../../../../packages/format/src/index.ts';
 import { DATA_DIR } from '../ledger.ts';
 import { sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';
@@ -26,6 +26,10 @@ export interface AppFolder {
   dir: string;
   manifest?: AppManifest;
   manifestBytes?: Buffer;
+  /** The panel size for a card that gives none: the manifest's `size`, else the default. There
+   * whenever that field is good, even when something else is wrong, so such a card keeps its size
+   * while the agent fixes the rest (app-cards FIX_03). */
+  size?: AppSize;
   panel?: string;
   tools?: AppFile;
   problems: AppProblem[];
@@ -66,15 +70,22 @@ function locate(dir: string, name: string, problems: AppProblem[]): string | nul
   return file;
 }
 
-/** The manifest, when it is JSON, fits its schema and names this folder. */
-function manifestOf(bytes: Buffer, id: string, problems: AppProblem[]): AppManifest | undefined {
+/** A schema problem with the whole manifest (not an object) or with its `size`. */
+const SIZE_AT = /^(\/size(\/|$)|$)/;
+
+/** The manifest, when it is JSON, fits its schema and names this folder; `folder.size` once its
+ * `size` field is good, whatever else is wrong. */
+function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
+  const { id, problems } = folder;
   const file = APP_FILES.manifest;
   let value: unknown;
   try { value = JSON.parse(bytes.toString('utf8')); } catch (err) {
     problems.push({ file, detail: `app.json is not valid JSON: ${err instanceof Error ? err.message : String(err)}.` });
     return undefined;
   }
-  for (const p of schemaProblems(MANIFEST_ID, value)) problems.push({ file, detail: fieldWords(p) });
+  const found = schemaProblems(MANIFEST_ID, value);
+  for (const p of found) problems.push({ file, detail: fieldWords(p) });
+  if (!found.some((p) => SIZE_AT.test(p.pointer))) folder.size = appSize({ id }, (value as AppManifest).size);
   if (problems.length) return undefined;
   const manifest = value as AppManifest;
   if (manifest.id === id) return manifest;
@@ -99,7 +110,7 @@ export function readApp(project: string, id: string): AppFolder | undefined {
   if (manifestFile === null) problems.push({ file: APP_FILES.manifest, detail: 'The folder has no app.json: write the app\'s manifest there.' });
   if (!manifestFile) return folder;
   folder.manifestBytes = fs.readFileSync(manifestFile);
-  const manifest = manifestOf(folder.manifestBytes, id, problems);
+  const manifest = manifestOf(folder, folder.manifestBytes);
   if (!manifest) return folder;
   const panelName = manifest.panel ?? APP_FILES.panel;
   const panel = locate(dir, panelName, problems);

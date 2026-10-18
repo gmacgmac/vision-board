@@ -4,8 +4,9 @@
 // on a timer: a deleted folder says "not found" without a page reload and Check again brings the
 // panel back once the folder is back; a changed tools.mjs asks again as soon as the card is selected,
 // before the panel calls anything. The row over the panel keeps its room in every state, so Allow,
-// Stop app and a code change leave the card's height as it was. On a temp project of its own
-// (app-server.ts) with the example calculator and the panel-only test app.
+// Stop app and a code change leave the card's height as it was; a card with no size of its own keeps
+// its box when its app.json breaks or its folder goes (FIX_03, finding 25). On a temp project of its
+// own (app-server.ts) with the example calculator and the panel-only test app.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Locator, Page } from '@playwright/test';
@@ -154,4 +155,59 @@ test('a state change that takes the focused button away leaves focus on the card
   await expect(card.locator('.vb-app-ask-text')).toHaveText('Code changed. Allow it again?');
   await expect(stop).toBeHidden();
   await expect(card).toBeFocused();
+});
+
+test('a card with no size of its own keeps its box when its app.json breaks and when its folder goes, so nothing under it moves (finding 25)', async ({ page }) => {
+  const folder = s.dir('panel-only');
+  const manifest = path.join(folder, 'app.json');
+  const first = fs.readFileSync(manifest, 'utf8');
+  const sized = JSON.stringify({ ...JSON.parse(first), size: { w: 320, h: 180 } });
+  fs.writeFileSync(manifest, sized);
+  try {
+    const { board, n: [n] } = await s.draw([{ kind: 'app', title: 'Notice', app: { id: 'panel-only' } }]);
+    await open(page, board, 1);
+    const card = cardOf(page, n!);
+    const frame = card.locator('vb-app-frame');
+    await expect(frame).toHaveAttribute('data-state', 'ready');
+    await expect(frame).toHaveAttribute('data-w', '320');
+    const boxOf = () => card.evaluate((c: HTMLElement) => [c.offsetWidth, c.offsetHeight]);
+    const box = await boxOf();
+    /** Read list_apps again as the person does: select the card (Esc first), or press Check again. */
+    const select = async () => {
+      await page.keyboard.press('Escape');
+      await expect(card).not.toHaveAttribute('data-selected', '');
+      await card.locator('.vb-node-title').click();
+    };
+    const checkAgain = async (toast: string) => {
+      await card.getByRole('button', { name: 'Check again: Notice' }).click();
+      await expect(page.locator('#toast')).toHaveText(toast);
+    };
+    const seen = async (state: string) => {
+      await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', state);
+      expect(await boxOf(), state).toEqual(box);
+    };
+    // A field it doesn't know: list_apps still gives the manifest's size.
+    fs.writeFileSync(manifest, JSON.stringify({ ...JSON.parse(sized), colour: 'red' }));
+    await select();
+    await seen('invalid');
+    // app.json half written: list_apps gives no size, and the card keeps the last it gave.
+    fs.writeFileSync(manifest, '{ "id": "panel-only", "size": { "w": 3');
+    await checkAgain('Notice still has problems.');
+    await seen('invalid');
+    fs.writeFileSync(manifest, sized);
+    await checkAgain('Notice updated');
+    await seen('ready');
+    await expect(frame).toHaveAttribute('data-state', 'ready');
+    // The folder gone: the same.
+    fs.renameSync(folder, `${folder}-away`);
+    await select();
+    await seen('missing');
+    fs.renameSync(`${folder}-away`, folder);
+    await checkAgain('Notice found');
+    await seen('ready');
+    await expect(frame).toHaveAttribute('data-state', 'ready');
+  } finally {
+    if (fs.existsSync(`${folder}-away`)) fs.renameSync(`${folder}-away`, folder);
+    fs.writeFileSync(manifest, first);
+  }
 });

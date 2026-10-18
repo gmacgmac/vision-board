@@ -1,15 +1,17 @@
 // The app host through the real server, on a temp project (app-cards BE_02; D-047 rulings 6-9, 11,
-// 12; PLAN.md § Goal state 4c-4i): list_apps gives every state; a tool runs only once the person
-// allowed this version of the code, and asks again after a change; a tool that loops is stopped and
-// the next call works; a crash restarts, and three in the window break the app until its code
-// changes; the process can't write, start processes or workers, or read outside its folder, and
-// may import nothing but Node's built-ins; its env holds only the declared keys; answers over the
-// cap, and arguments or answers that don't fit the tool's schemas, are refused. Test apps:
-// tests/fixtures/apps/. Limits are shortened for time; their real values are APP_LIMITS.
+// 12; PLAN.md § Goal state 4c-4i): list_apps gives every state, and a broken app.json's good size
+// (FIX_03); a tool runs only once the person allowed this version of the code, and asks again after a
+// change; a tool that loops is stopped and the next call works; a crash restarts, and three in the
+// window break the app until its code changes; the process can't write, start processes or workers,
+// or read outside its folder, and may import nothing but Node's built-ins; its env holds only the
+// declared keys; answers over the cap, and arguments or answers that don't fit the tool's schemas,
+// are refused. Test apps: tests/fixtures/apps/. Limits are shortened for time; their real values are
+// APP_LIMITS.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { APP_SIZE } from '../../../packages/format/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { AGENT, startBoard } from './api-harness.ts';
 import { addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';
@@ -58,6 +60,36 @@ test('list_apps: an agent working in another folder is refused, like every agent
   try {
     await h.fails('list_apps', {}, 409, 'wrong-folder', h.agent(A.secret, other));
   } finally { fs.rmSync(other, { recursive: true, force: true }); }
+});
+
+test('finding 25: list_apps gives the size of an app.json with other problems while its size is good, so a card with no size keeps it', async () => {
+  const write = (id: string, json: unknown): string => {
+    const dir = path.join(h.project, '.visionboard', 'apps', id);
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, 'app.json'), typeof json === 'string' ? json : JSON.stringify({ id, title: 'T', version: '1', ...json as object }));
+    fs.writeFileSync(path.join(dir, 'panel.html'), '<p>hi</p>');
+    return dir;
+  };
+  const size = { w: 300, h: 200 };
+  const made = {
+    typo: write('sized-typo', { size, colour: 'red' }),
+    'other-id': write('sized-other-id', { size, id: 'not-this-folder' }),
+    'no-size': write('unsized-typo', { colour: 'red' }),
+    'size-too-big': write('size-too-big', { size: { w: 2000, h: 200 } }),
+    'size-extra': write('size-extra', { size: { ...size, d: 1 } }),
+    'not-json': write('not-json', '{ "id": "not-json", "size": { "w": 300'),
+    'not-an-object': write('not-an-object', '[]'),
+  };
+  try {
+    const all = await apps(h);
+    const seen = Object.entries(made).map(([what, dir]) => [what, all.get(path.basename(dir))?.state, all.get(path.basename(dir))?.size]);
+    assert.deepEqual(seen, [
+      ['typo', 'invalid', size], ['other-id', 'invalid', size], ['no-size', 'invalid', { w: APP_SIZE.w.default, h: APP_SIZE.h.default }],
+      ['size-too-big', 'invalid', undefined], ['size-extra', 'invalid', undefined], ['not-json', 'invalid', undefined], ['not-an-object', 'invalid', undefined],
+    ], 'the manifest\'s size, else the default, unless the size itself is wrong or app.json can\'t be read');
+  } finally {
+    for (const dir of Object.values(made)) fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('4c: no tool runs before Allow; after a change to tools.mjs or app.json it asks again', async () => {

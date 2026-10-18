@@ -2,7 +2,9 @@
 // the app as list_apps gives it (the app host's one state function, ruling 11) and what the page
 // knows of the card. No DOM: node-core.ts adds its words to the card's name, node-template.ts draws
 // it, vb-node.ts applies it in place. Every state keeps the panel's size and the room of the row over
-// it, so neither a state change nor the frame coming and going (ruling 14) moves the card.
+// it, so neither a state change nor the frame coming and going (ruling 14) moves the card. Only a new
+// size does: a card with no `w`/`h` is the default until list_apps first gives the manifest's size
+// (components.md § App card 2).
 import type { AppInfo, AppProblem, AppSize, ViewNode } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';

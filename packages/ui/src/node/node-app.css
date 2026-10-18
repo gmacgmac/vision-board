@@ -1,7 +1,8 @@
 /* App cards in the node pattern (D-047; node-app.ts `appView`, node-template.ts `appSlot`). Tokens
    only. The slot is the row over the panel, then the frame at the panel's size (--app-w, --app-h,
    set by the element), in every state: hidden, each keeps its room, so a state change never moves
-   the card (app-cards FIX_02); the card is the panel's width plus its padding (node.css). The frame
+   the card (app-cards FIX_02); only a new size does (a card with no w/h: list_apps' first answer,
+   components.md § App card 2). The card is the panel's width plus its padding (node.css). The frame
    and the row show in needs-approval, changed and ready; every other state draws its view over
    both, on the frame's own placeholder look. */
 
