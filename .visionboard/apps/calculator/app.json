@@ -1,0 +1,8 @@
+{
+  "id": "calculator",
+  "title": "Calculator",
+  "version": "1.0.0",
+  "panel": "panel.html",
+  "tools": "tools.mjs",
+  "size": { "w": 360, "h": 440 }
+}

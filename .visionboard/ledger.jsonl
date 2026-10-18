@@ -189,3 +189,9 @@
 {"v":11,"seq":189,"at":"2026-10-10T21:02:59.103Z","by":"person","type":"act","action":"reopen","n":31,"ver":1}
 {"v":11,"seq":190,"at":"2026-10-10T21:03:15.233Z","by":"person","type":"act","action":"comment","n":31,"ver":1,"text":"what is the gap N189 named?"}
 {"v":11,"seq":191,"at":"2026-10-10T21:04:17.782Z","by":"person","type":"act","action":"send","board":"nclite-harnesses"}
+{"v":17,"seq":192,"at":"2026-10-18T02:36:46.347Z","by":"agent","agent":"a-zkmir1l0","type":"join","label":"app-cards build"}
+{"v":17,"seq":193,"at":"2026-10-18T02:36:46.427Z","by":"agent","agent":"a-zkmir1l0","type":"board","key":"app-cards-board","title":"App cards","summary":"An app the agent built, running in a card.","board":"app-cards"}
+{"v":17,"seq":194,"at":"2026-10-18T02:36:46.428Z","by":"agent","agent":"a-zkmir1l0","type":"region","key":"apps-region","region":{"id":"apps","title":"Apps","mode":"grid"},"board":"app-cards"}
+{"v":17,"seq":195,"at":"2026-10-18T02:36:46.428Z","by":"agent","agent":"a-zkmir1l0","type":"node","key":"calculator-card","node":{"region":"apps","kind":"app","title":"Calculator","app":{"id":"calculator","w":360,"h":440}},"board":"app-cards","n":54,"ver":1}
+{"v":17,"seq":196,"at":"2026-10-18T02:36:46.429Z","by":"agent","agent":"a-zkmir1l0","type":"node","key":"calculator-note","node":{"region":"apps","kind":"note","title":"Try the calculator","body":"An app the agent built, running in its card. Press **Allow**, then type a sum and press **=**. **Stop app** turns it off.\n\nIts code: `.visionboard/apps/calculator/`"},"board":"app-cards","n":55,"ver":1}
+{"v":17,"seq":197,"at":"2026-10-18T02:36:52.417Z","by":"person","board":"app-cards","head":196,"type":"seen"}
