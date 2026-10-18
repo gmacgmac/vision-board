@@ -1313,7 +1313,8 @@ limits and states) is [apps.md](./apps.md); this section is what the ledger and 
     person's cookie (stale: `forbidden`, so the page reloads, 20); neither: 401 `not-authenticated`.
     It answers `{ apps }` (`api/list-apps-response.schema.json`, `AppInfo`): every app folder, and every
     app a card on a board names that has no folder (`missing`), each with `id`, `state`
-    (`APP_STATES`), the manifest's `title`, `version` and `size`, its `tools` by name, `hash`,
+    (`APP_STATES`), the manifest's `title`, `version` and `size`, its `tools` by name (known once the
+    person allowed this version and its tools first ran: nothing runs before), `hash`,
     `allowed`, `changed` (an earlier version was allowed) and `problems` (`{ file, pointer?, detail }`).
     The state is worked out fresh by one function in the app host; the page and agents read it,
     never a copy of their own. It becomes the MCP tool `list_apps` and `vb list-apps` by generation.
@@ -1327,6 +1328,5 @@ limits and states) is [apps.md](./apps.md); this section is what the ledger and 
     the tool's `inputSchema`), `needs-approval`, `app-not-found` (or `not-found` with the `appCards`
     flag off), `app-invalid`, `app-failed`, `app-busy`, `app-timeout`, and `too-large` for an answer
     over its limit (apps.md § Limits). The board page calls it through its one I/O layer when a panel
-    sends `tools/call`. The handlers are the app host's (app-cards BE_02); until it lands,
-    `apps/board/server/handlers.ts` answers `list_apps` with no apps and `call_app_tool` with
-    `not-found`.
+    sends `tools/call`. The handlers are the app host's (`apps/board/server/apps.ts`
+    `APP_HANDLERS`; apps.md § Kept true by names its tests).

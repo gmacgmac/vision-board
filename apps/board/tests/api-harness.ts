@@ -104,8 +104,12 @@ async function parsed(res: Response, media: string): Promise<unknown> {
 
 /** `watch`: as `VB_WATCH=1`, the server watches `dist` and sends `build` on `watch_project`.
  * `chat`: the CLIs a chat runs (a fake one in tests) and the approval time limit. `home`: the
- * person's home folder for the folder routes (a temp folder; never the real one in a test). */
-export async function startBoard({ watch = false, chat, home }: { watch?: boolean; chat?: BoardServerOptions['chat']; home?: string } = {}): Promise<Harness> {
+ * person's home folder for the folder routes (a temp folder; never the real one in a test).
+ * `flags`: the server's flags (as `VB_FLAGS`); `appLimits`: shorter app limits, so a test of a
+ * time limit doesn't wait the real one. */
+export async function startBoard({ watch = false, chat, home, flags, appLimits }: {
+  watch?: boolean; chat?: BoardServerOptions['chat']; home?: string; flags?: BoardServerOptions['flags']; appLimits?: BoardServerOptions['appLimits'];
+} = {}): Promise<Harness> {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-api-'));
   const file = ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -118,7 +122,7 @@ export async function startBoard({ watch = false, chat, home }: { watch?: boolea
   const build = watch ? watchBuild(dist) : undefined;
   // A temp home folder unless the test brings its own: no test reads the real one (api.md 112).
   const ownHome = home ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), 'vb-home-'));
-  const server = createBoardServer({ ledger, dist, build, chat, home: home ?? fs.realpathSync(ownHome!) });
+  const server = createBoardServer({ ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!) });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.

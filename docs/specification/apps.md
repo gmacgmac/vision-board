@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 scope: The app card contract — an app's folder, manifest, panel protocol, tools module, limits, approval and states
 ---
 
@@ -34,7 +34,9 @@ hyphen (`APP_ID`). The folder holds:
 
 The board reads only `.visionboard/apps/*`. It checks an id against the pattern before it builds any
 path, takes the manifest's file names only as plain names inside the folder (no `/`, no `..`, not
-hidden), and refuses any resolved path that leaves the folder.
+hidden), and refuses any resolved path that leaves the folder, a link out included. A folder whose
+name is not an id is not an app: `list_apps` leaves it out. No file may be over `fileBytes`
+(§ Limits).
 
 ## The manifest
 
@@ -91,6 +93,11 @@ The manifest's `csp` widens it, with MCP Apps' names: each of `connectDomains` a
 `connect-src` (fetch and sockets), and each of `resourceDomains` to `img-src`, `font-src` and
 `style-src`. Each is one https origin with an exact host, such as `https://api.example.com`: no
 wildcard, no path. The board page itself allows frames from its own server only (`frame-src 'self'`).
+
+The route (`apps/board/server/apps/panel.ts` `servePanel`, `panelCsp`) sends the panel file as
+`text/html` with `Cache-Control: no-store` and no cookie. It answers 404 for an id that isn't one
+(it is never decoded), an app that is `missing` or `invalid`, and when app cards are off. The
+`sandbox` directive keeps the panel on an opaque origin even when it is opened on its own.
 
 ## The panel protocol
 
@@ -152,7 +159,7 @@ A request that can't be answered gets a JSON-RPC error, `{ code, message, data? 
 | -32600 | Not a JSON-RPC 2.0 request: no `jsonrpc: "2.0"`, a bad `id` or `method`. |
 | -32601 | No such method. |
 | -32602 | Bad params, such as `tools/call` without a tool name. |
-| -32000 | The board refused or the tool failed: `message` says why in plain words, and `data.problem` holds the board's problem code (§ Approval and § Limits): `needs-approval`, `invalid`, `app-invalid`, `app-failed`, `app-busy`, `app-timeout`, `too-large`, `app-not-found`, or `not-found` when app cards are off. |
+| -32000 | The board refused or the tool failed: `message` says why in plain words, and `data.problem` holds the board's problem code (§ Approval and § Limits): `needs-approval`, `invalid`, `app-invalid`, `app-failed`, `app-busy`, `app-timeout`, `too-large`, `app-not-found`, or `not-found` when app cards are off; `data.detail`, when there is one, the server's own words, for the person who writes the panel. |
 
 A panel should handle `needs-approval` by saying the person must press Allow on the card.
 
@@ -176,28 +183,40 @@ export default {
 - `name`: lower-case letters, digits and `_`, starting with a letter (`APP_TOOL_NAME`).
 - `description`: what the tool does, in a sentence or two.
 - `inputSchema`: a JSON Schema for an object. The board checks the arguments against it before the
-  tool runs; arguments that don't fit never reach `run` (`invalid`).
+  tool runs; arguments that don't fit never reach `run` (`invalid`). The board reads your schemas
+  leniently: a keyword or format it doesn't know is ignored, a top-level `$schema` is not read, and
+  a `$ref` may point only inside the schema.
 - `outputSchema` (optional): a JSON Schema for an object. The board checks the answer against it;
   an answer that doesn't fit is `app-failed`.
 - `run(input, ctx)`: may be `async`. `input` is the checked arguments. `ctx.env` holds only the
-  keys the manifest's `env` names, read from the project's `.env`; `ctx.signal` is an `AbortSignal`
-  that fires when the call runs out of time.
+  keys the manifest's `env` names that the project's `.env` sets (`KEY=value` lines; `export`,
+  quotes and `#` comments allowed); `ctx.signal` is an `AbortSignal` that fires when the panel
+  goes away before the answer, so the tool can stop its work. A call that runs out of time has its
+  whole process stopped (§ Limits).
 - What `run` returns: an object becomes `structuredContent`, and its JSON the `content` text; a
   string becomes the `content` text alone. Anything else is `app-failed`.
 - To refuse bad input in your own words, throw an `Error` with a plain message: the panel gets
   `isError: true` and your message.
 
 The shape of a tool, less `run`, is `manifest.schema.json` `$defs/tool`; the board checks every tool
-the module exports against it, and an app whose module doesn't load or doesn't fit is `invalid`.
+the module exports against it, and an app whose module doesn't load, doesn't finish loading within
+`callMs`, or doesn't fit is `invalid` until its code changes, with the reason in `problems`. The
+board learns this, and the tools' names, only by loading the module, which runs nothing before the
+person allows it: so `list_apps` gives `tools` (and these problems) once the person allowed this
+version and the panel first called a tool; before that `tools` is empty.
 
 **One file.** The tools module imports only Node's built-in modules (`node:crypto`, `node:fs`, …),
 never another file: the hash the person allows covers the manifest and this one file (§ Approval),
-so code in a second file would run without being allowed. The module may read data files in its
-own folder.
+so code in a second file would run without being allowed. The board holds you to it: an `import`
+or `require` of anything but a built-in is refused, so a module that imports another file doesn't
+load (`invalid`), and an import inside a tool is that call's error. The module may read data files
+in its own folder.
 
 **Where it runs.** In its own process, one per app, started on the app's first call, never when the
-board starts. The process can read its own folder and nothing else of the disk, can't write files,
-start processes or workers, or load addons, and gets no other part of the board's environment. It
+board starts, with the app's folder as its working folder. The process can read its own folder and
+nothing else of the disk, can't write files, start processes or workers, or load addons (Node's
+permission model), and gets no other part of the board's environment. What it writes to stderr is
+kept, and the end of it shows in `problems` when the app breaks. It
 may reach the network: calling other systems is what tools are for. The board itself makes no call
 to anyone else (rule 18).
 
@@ -222,14 +241,16 @@ One table, `APP_LIMITS`, which the app host and the panel's frame both read:
 
 | Limit | Value | What it means |
 |---|---|---|
-| `callMs` | 10000 | How long one tool call may run, in ms. Then the process is stopped and the call answers `app-timeout`; the next call starts it again. |
+| `callMs` | 10000 | How long one tool call may run, in ms. Then the process is stopped and the call answers `app-timeout`; the next call starts it again. The tools module has as long to load. |
 | `outputBytes` | 262144 | The most one answer may hold, in bytes of JSON. More answers `too-large`. |
 | `inFlight` | 4 | Tool calls running at once, per app. More wait in line. |
 | `queue` | 16 | Tool calls waiting in line, per app. One more answers `app-busy`. |
 | `crashes` | 3 | Crashes within `crashWindowMs` that mark the app `broken` until its code changes. A crash before that restarts the process on the next call, after a short wait. |
 | `crashWindowMs` | 60000 | The time, in ms, the crashes are counted over. |
+| `restartMs` | 250 | How long the next call waits, in ms, before a crashed process starts again. It doubles with each crash in the window. |
 | `idleMs` | 300000 | How long a process waits for a call, in ms, before it stops. |
 | `memoryMb` | 128 | The memory a process's heap may use, in MB. |
+| `fileBytes` | 1048576 | The most one of the app's files (`app.json`, the panel, the tools file) may hold, in bytes. A bigger one is a problem to fix. |
 | `panelMessagesPerSecond` | 50 | Messages a panel may send in one second. The board ignores the rest; a request among them gets error -32000 with `app-busy`. |
 
 ## States
@@ -241,7 +262,7 @@ every state; none is ever a blank or an error.
 | State | When | The card shows |
 |---|---|---|
 | `missing` | A card names the app, and no folder has it. | "App <id> not found". Adding the folder back brings it back. |
-| `invalid` | The manifest or the files have problems (`problems`). | The problems, for the agent to fix. |
+| `invalid` | The manifest or the files have problems, or the tools module didn't load (`problems`). | The problems, for the agent to fix. |
 | `needs-approval` | It has tools the person has not allowed at this version. | The panel, and **Allow**; with `changed`, "The app's code changed" too. |
 | `ready` | Its panel shows and its tools run. | The panel. |
 | `broken` | Its tools crashed too often. | That it stopped, and **Restart**, which tries again once the code changed. |
@@ -249,7 +270,8 @@ every state; none is ever a blank or an error.
 The card also has states of its own: loading (the frame is starting), and a light placeholder with
 the app's title and no frame when the board is zoomed far out, the card is off screen, or a past
 version of the board is showing (read-only). With the `appCards` flag off, an app card is a plain
-card saying "App cards are off", and the panel route and `call_app_tool` answer `not-found`.
+card saying "App cards are off", and the panel route and `call_app_tool` answer `not-found`. The
+server's own switch is `VB_FLAGS=-appCards` (`apps/board/server.ts`); the page's flags are its own.
 
 ## Drawing an app card
 
@@ -315,6 +337,14 @@ Esc back to the card, theme changes and the approval state.
 - The allow fold, the registry entries and the act rules: `packages/actions/tests/apps.test.ts`.
 - Who may call the operations: `apps/board/tests/api-apps-auth.test.ts`, `route-table.test.ts`,
   `openapi.test.ts`.
-- Not covered here: the app host, the panel route and its CSP, the frame and the example are built
-  and tested by their own tasks (app-cards BE_02, FE_01, FE_02, T_01); each updates this page if
-  what it builds differs.
+- The app host (`apps/board/server/apps.ts` and `apps/`), through the real server on a temp
+  project with the test apps in `apps/board/tests/fixtures/apps/`: approval by hash and again after
+  a change, the time limit, crashes and `broken`, what the process may not do, `env`, the one-file
+  rule, the output cap and both schemas, and every state of `list_apps`
+  (`apps/board/tests/api-apps.test.ts`); the line of calls and `app-busy`, the idle stop, Stop app,
+  the memory limit, a folder switch and the server closing, each checked by the process's pid
+  (`app-host.test.ts`); the panel route's headers, its CSP and its 404s, `frame-src 'self'` and the
+  flag (`app-panel.test.ts`); the folder, file names and links, the hash, the state function's
+  order and the `.env` reader (`app-folder.test.ts`).
+- Not covered here: the frame and the example are built and tested by their own tasks (app-cards
+  FE_01, FE_02, T_01); each updates this page if what it builds differs.

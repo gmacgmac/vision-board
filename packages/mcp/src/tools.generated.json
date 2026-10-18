@@ -4492,7 +4492,7 @@
                     "pattern": "^[a-z][a-z0-9_]{0,39}$",
                     "description": "A tool's name: lower-case letters, digits and `_`, starting with a letter, up to 40."
                   },
-                  "description": "Its tools' names; empty for an app with a panel only."
+                  "description": "Its tools' names, once the person allowed this version and its tools first ran (nothing runs before that); empty until then, and for an app with a panel only."
                 },
                 "hash": {
                   "type": "string",

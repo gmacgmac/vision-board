@@ -6,6 +6,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { OperationId } from '../../../packages/format/src/index.ts';
 import { OPERATIONS } from '../../../packages/format/src/index.ts';
 import type { Agents } from './agents.ts';
+import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
 import { checkFolder, secretElsewhere } from './caller-folder.ts';
 import { callerOf } from './callers.ts';
@@ -21,7 +22,7 @@ import { SPECS, coerce, paramProblems } from './spec.ts';
 export interface ServerEnv { person: string; project: Project; build?: BuildWatch | undefined }
 
 /** What a handler gets: the request, its parsed parameters (defaults filled in), the open folder's
- * ledger, agents store and chat sessions, the signal that ends its streams when the folder closes,
+ * ledger, agents store, chat sessions and app host, the signal that ends its streams when the folder closes,
  * the project (to switch folders, api.md 111), the caller the operation's `security` allowed
  * (api.md 20-22) and, in watch mode only, the build being served (api.md 79). */
 export interface Ctx {
@@ -31,6 +32,7 @@ export interface Ctx {
   ledger: Ledger;
   agents: () => Agents;
   chats: () => Chats;
+  apps: () => AppHost;
   /** Aborted when this folder closes (a switch, the server closing): a stream or held read ends. */
   closed: AbortSignal;
   project: Project;
@@ -124,7 +126,7 @@ export async function dispatch(
     person: env.person, ledger: open.ledger, agents: open.agents, elsewhere: (secret) => secretElsewhere(folder, secret, here),
   });
   await handlers[match.id]({
-    req, res, params, ledger: open.ledger, agents: open.agents, chats: open.chats, closed: open.closed,
+    req, res, params, ledger: open.ledger, agents: open.agents, chats: open.chats, apps: open.apps, closed: open.closed,
     project: env.project, caller, build: env.build,
   });
 }

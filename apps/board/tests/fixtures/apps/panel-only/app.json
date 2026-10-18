@@ -1,0 +1,4 @@
+{
+  "id": "panel-only", "title": "Panel only", "version": "0.1.0",
+  "csp": { "connectDomains": ["https://api.example.com"], "resourceDomains": ["https://cdn.example.com", "https://fonts.example.org:8443"] }
+}

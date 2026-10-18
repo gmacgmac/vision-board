@@ -1,0 +1,33 @@
+/* App frame pattern styles (<vb-app-frame>, packages/ui/src/app-frame). Scoped by the tag, light
+   DOM; tokens only. The panel's size arrives as --app-w and --app-h, set by the element (CSSOM).
+   States (data-state, set by the element): idle, a light placeholder with the app's icon and title;
+   loading, the same with "Loading…" while the frame starts behind it, unseen; ready, the panel. */
+
+vb-app-frame {
+  position: relative; display: block; width: var(--app-w); height: var(--app-h); overflow: hidden;
+  border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); box-shadow: 0 0 0 1px var(--vb-line);
+}
+vb-app-frame .vb-af-ph {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--vb-space-2); padding: var(--vb-space-4); text-align: center;
+}
+vb-app-frame .vb-af-icon {
+  width: 28px; height: 28px; fill: none; stroke: var(--kind, var(--vb-ink-subtle)); stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+vb-app-frame .vb-af-title {
+  max-width: 100%; overflow-wrap: anywhere; font-size: var(--vb-text-lg); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong);
+}
+vb-app-frame .vb-af-wait { display: none; font-size: var(--vb-text-md); color: var(--vb-ink); }
+vb-app-frame[data-state='loading'] .vb-af-wait { display: block; }
+/* The frame covers the box. Hidden (so neither seen nor focused) until the panel is ready, so its
+   first unstyled paint never shows. Its colour scheme is the default one a panel starts with, so a
+   panel that sets none gets no opaque backdrop in the dark theme (CSS Color Adjust § 3.2). */
+vb-app-frame .vb-af-frame {
+  position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0;
+  background: transparent; color-scheme: normal; visibility: hidden;
+}
+vb-app-frame[data-state='ready'] .vb-af-frame { visibility: visible; }
+vb-app-frame[data-state='ready'] .vb-af-ph { visibility: hidden; }
+/* Focus in the panel: the ring says keys now go to the app, not to the board's shortcuts. */
+vb-app-frame:focus-within { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }

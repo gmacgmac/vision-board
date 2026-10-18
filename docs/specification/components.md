@@ -760,3 +760,87 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    a retired card's offer by keyboard; the pause flag; the flag off; the key list; axe light and
    dark; the gallery section's screenshots). The gallery's section (`gallery/go-to-card-section.ts`)
    draws the three states from the same state code.
+
+## App card (D-047, app-cards FE_01)
+
+What an app is, its folder, the panel protocol and the limits are [apps.md](./apps.md); this
+section is how the board draws one. Two patterns share the work.
+
+1. **The node pattern draws the card.** For kind `app`, `node-template.ts` `nodeTemplate` draws,
+   under the title, the line asking for Allow and the panel slot (`appSlot`) in place of the
+   Markdown body; the footer gets Stop app before the toolbar. An app card takes no size control
+   (whatever `sizeControl` says) and no status word (it tells, D-045). With the appCards flag off
+   the page passes `{ appCards: false }` and the card is a plain one saying `APPS_OFF` (ruling 13).
+2. **Its size.** `app-frame-core.ts` `panelSize` is the panel's size: the agent's `app.w`/`app.h`,
+   else the manifest's `size`, else the default, held to `APP_SIZE`. `vb-node.ts` sets it as
+   `--app-w` and `--app-h` through the CSSOM (`render`, then `updateApp` once list_apps names a
+   manifest size); `node.css` makes the card that wide plus its padding and border, whatever its
+   emphasis. The slot keeps that size in every state, so a state change, or the frame coming and
+   going, never moves the card.
+3. **Its states.** `node-app.ts` `appView` turns what the page knows into one of
+   `APP_CARD_STATES`: the page passes `CardConditions.app`, `{}` until list_apps has answered
+   (`checking`), then `{ info }` with the app as list_apps gives it (the app host's one state
+   function, ruling 11), and `{ past: true }` on a past version. `nodeState` returns it as
+   `NodeState.app`, and its `words` end the card's name.
+
+   | State | Shows |
+   |---|---|
+   | `checking` | "Loading…" in place of the panel |
+   | `needs-approval` | the panel; over it "Allow this app to run?" and Allow |
+   | `changed` | the panel; over it "Code changed. Allow it again?" and Allow |
+   | `ready` | the panel; Stop app in the footer once the person allowed this version |
+   | `missing` | "App <id> not found" in place of the panel |
+   | `invalid` | "This app has problems", the problems (a list that scrolls, a tab stop) and Check again |
+   | `broken` | "This app stopped" and Restart |
+   | `past` | the app's title and "Apps don't run in past versions." |
+
+   The words are `node-app.ts` `COPY`; `node-template.ts` `appStateMarkup` draws the view.
+   `vb-node.ts` `updateApp` applies it in place (the view rebuilt only when it changed) and unloads
+   the frame in any state without a panel.
+4. **Its buttons** carry `data-app-act` for the page's delegated listener: `app-allow` and
+   `app-revoke` (the action layer's acts: the person only, confirmed by the page) and `retry`
+   (Check again, Restart: the page reads list_apps again). Each is named with the app ("Allow app:
+   Calculator"); Allow is described by the line asking for it, so a screen reader hears why. They
+   hide at far zoom as the quick actions do.
+5. **The app-frame pattern draws the panel** (`packages/ui/src/app-frame/`): `<vb-app-frame>`
+   (`vb-app-frame.ts`), the DOM-free protocol (`app-frame-core.ts`), `app-frame.css` and its
+   `pattern.json`. Its inputs are `data-app`, `data-label`, `data-w` and `data-h`; unloaded it is a
+   light placeholder with the app's icon and title. The page calls `wire({ callTool, look?,
+   onEscape? })` once, then `load()` while the card is on screen and near enough to use and
+   `unload()` when it leaves (ruling 14). `load()` makes the `<iframe>`: `sandbox="allow-scripts"`
+   and nothing else, `src` `PANEL_PATH` + the id, `title` the app's name, no referrer. The frame
+   stays hidden (so it neither shows nor takes focus) until the panel says it is ready, or
+   `SHOW_AFTER_MS` after it loaded. Left out, `look` is `readLook` (the board's tokens resolved
+   through a probe, light-dark() included, and the theme from the card surface) and Esc focuses
+   the card. `lookChanged()` tells a ready panel the theme changed. `unload()`, also on disconnect,
+   removes the frame and moves focus in it back to the card.
+6. **The protocol** (`createAppBridge`; apps.md § The panel protocol). The element hands the core
+   every message its window gets, marked as the frame's only when `event.source` is this frame's
+   window and `event.origin` is `"null"`; it posts with `'*'` (an opaque origin cannot be named).
+   The core checks each message as JSON-RPC 2.0 (`parsePanelMessage`), answers `ui/initialize`
+   with the host context (`hostContext`; `hostInfo.version` is `LEDGER_FORMAT`), takes `ping`,
+   forwards `tools/call` to `callTool` and answers by the request's id, calls `onEscape` on
+   `ui/notifications/escape`, and posts nothing of its own before `ui/notifications/initialized`;
+   then `host-context-changed` carries only the parts that changed. Errors use `PANEL_ERRORS`:
+   -32000 carries the problem code in `data.problem`, the plain words `PROBLEM_WORDS` in `message`
+   and the server's words in `data.detail`. A panel may send `APP_LIMITS.panelMessagesPerSecond`
+   messages in a second and keep `FRAME_CALLS` tool calls waiting (the host's running plus queue);
+   past either, a request answers `app-busy`. A panel that sends `ui/initialize` again (it
+   restarted) gets no answer meant for the one before.
+7. **Accessibility** (rule 5, ruling 15). The frame's title names the app. Tab goes from the card
+   into the panel and on out of it in the page's order; while focus is in the panel the frame
+   draws the focus ring, since keys then go to the app and not to the board's shortcuts. The board
+   cannot see keys inside the panel, so Esc back to the card needs the panel to send
+   `ui/notifications/escape`. The card's name says its app state (", not allowed yet"); the
+   placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
+   loading.
+8. **The page's part** (app-cards FE_02): it imports `node-app.css` and `app-frame.css` with the
+   other pattern styles, passes `CardConditions.app`, wires and loads the frames, and acts on
+   `data-app-act`.
+9. **Kept true by**: `packages/ui/tests/app-frame-core.test.ts` and `app-frame-limits.test.ts`
+   (every protocol rule, with fake windows: `app-frame-harness.ts`), `packages/ui/tests/node-app.test.ts`
+   (every state's view, words and markup), `node-template.test.ts` (the footer), and the gallery
+   (`apps/board/src/gallery/app-frame-section.ts`: the frame unloaded and loading, an app card in
+   every state, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. Not covered
+   by these: the element in a browser (the frame, its messages, focus), which the app-cards page
+   tests cover.

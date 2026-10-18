@@ -1,14 +1,16 @@
 // The open folder (open-folder task, api.md 109, 111; D-038 proposed): which project folder the
-// server has open, with its ledger, lock, agents and chats, and the only thing that switches it.
+// server has open, with its ledger, lock, agents, chats and app host, and the only thing that switches it.
 // A switch takes the new folder's lock first and changes nothing when it can't (`conflict`), or when
 // the new ledger can't be made or read (its lock is let go). Then, in order: the old folder's chats
-// stop (their CLIs work there), its live streams and held reads end (`closed`), its lock is let go,
+// and app processes stop (they work there), its live streams and held reads end (`closed`), its lock is let go,
 // the new folder becomes the open one, and both are kept in the recent list (the old one only when
 // it is under home). The lock is beaten while held and let go when the server closes or exits.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Agents } from './agents.ts';
 import { openAgents } from './agents.ts';
+import type { AppHost, AppHostOptions } from './apps.ts';
+import { createAppHost } from './apps.ts';
 import type { ChatAdapters, ChatOptions, Chats } from './chat-sessions.ts';
 import { openChats } from './chat-sessions.ts';
 import { displayName, hasBoard, isUnder } from './folders.ts';
@@ -26,6 +28,8 @@ export interface OpenFolder {
   readonly ledger: Ledger;
   agents(): Agents;
   chats(): Chats;
+  /** Its apps (D-047): made on first use; their processes stop when the folder closes. */
+  apps(): AppHost;
   /** Aborted when the folder is closed (a switch, the server closing): its streams and held reads end. */
   readonly closed: AbortSignal;
 }
@@ -41,6 +45,8 @@ export interface ProjectOptions {
   port: () => number;
   base: () => string;
   chat?: { adapters?: ChatAdapters | undefined; approvalTtlMs?: number | undefined; blocked?: ChatOptions['blocked'] } | undefined;
+  /** The server's flags and, for tests, shorter app limits (every folder's app host gets them). */
+  apps?: Pick<AppHostOptions, 'flags' | 'limits'> | undefined;
 }
 
 export interface Project {
@@ -63,16 +69,20 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   let dir: string | undefined;
   let agents: Agents | undefined;
   let chats: Chats | undefined;
+  let apps: AppHost | undefined;
   const abort = new AbortController();
   const getAgents = () => (agents ??= openAgents(data()));
+  const getDir = () => (dir ??= real(path.dirname(data())));
   return {
-    get dir() { return (dir ??= real(path.dirname(data()))); },
+    get dir() { return getDir(); },
     ledger, lock, closed: abort.signal, agents: getAgents,
+    apps: () => (apps ??= createAppHost({ dir: getDir, ledger, flags: o.apps?.flags, limits: o.apps?.limits })),
     chats: () => (chats ??= openChats({
       ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
     })),
     close() {
       chats?.close();
+      apps?.close();
       abort.abort();
       lock?.release();
     },

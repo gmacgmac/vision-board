@@ -10,6 +10,8 @@ import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/node/node-popover.css';
 import '../../../../packages/ui/src/node/node-steps.css';
 import '../../../../packages/ui/src/node/node-parking.css';
+import '../../../../packages/ui/src/node/node-app.css';
+import '../../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
 import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/region/region-narrow.css';
@@ -32,6 +34,7 @@ import { pageFlags } from '../flags.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
+import { appFrameSamples } from './app-frame-section.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
@@ -72,6 +75,7 @@ interface PatternInfo {
 
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
+  'app-frame': appFrameSamples,
   markdown: markdownSamples,
   node: nodeSamples,
   'note-bubble': noteBubbleSamples,

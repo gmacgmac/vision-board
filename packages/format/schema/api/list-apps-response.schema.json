@@ -29,7 +29,7 @@
           "unevaluatedProperties": false,
           "description": "The panel size for a card that sets none: the manifest's, else the default."
         },
-        "tools": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolName"}, "description": "Its tools' names; empty for an app with a panel only."},
+        "tools": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolName"}, "description": "Its tools' names, once the person allowed this version and its tools first ran (nothing runs before that); empty until then, and for an app with a panel only."},
         "hash": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/appHash", "description": "The SHA-256 of its code now (its manifest, then its tools file): the version the person allows."},
         "allowed": {"type": "boolean", "description": "True when the person allowed this `hash`. Only the person allows an app, on its card."},
         "changed": {"const": true, "description": "The person allowed an earlier version, and the code has changed since; the card asks again."},

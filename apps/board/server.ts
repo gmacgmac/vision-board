@@ -9,13 +9,16 @@
 // project has no ledger yet; the fixture itself is never written), VB_WATCH (`1`: watch mode, dev
 // only; dist/ is watched and `watch_project` sends `build` so an open page reloads, api.md 79),
 // VB_KIRO_AGENT (`0`: don't write Kiro's agent file, `~/.kiro/agents/vision-board.json`, which the
-// server otherwise keeps current at start, N34 ruling 1; the page tests' servers set it).
+// server otherwise keeps current at start, N34 ruling 1; the page tests' servers set it), VB_FLAGS
+// (the server's own flags, written as `?flags=` is: `-appCards` turns app cards off, so the panel
+// route and call_app_tool answer not-found; an unknown name stops the start).
 // One server per ledger: `.visionboard/lock` (server/lock.ts) refuses a second one, here or on
 // another computer sharing the folder. Every mode releases it on exit.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseFlags } from '../../packages/format/src/index.ts';
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { DATA_DIR, ledgerPath, openLedger } from './server/ledger.ts';
@@ -63,7 +66,12 @@ process.on('exit', () => lock.release());
 const seeded = seed(FILE, process.env.VB_SEED);
 const build = process.env.VB_WATCH === '1' ? watchBuild(DIST) : undefined;
 const chat = { kiroAgent: process.env.VB_KIRO_AGENT !== '0' };
-const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat });
+const flags = parseFlags(process.env.VB_FLAGS);
+if (flags.refused.length) {
+  console.error(`VB_FLAGS names no such flag: ${flags.refused.join(', ')}. The flags are in packages/format/src/flags.ts.`);
+  process.exit(1);
+}
+const server = createBoardServer({ ledger: openLedger(FILE), lock, home: HOME, dist: DIST, build, chat, flags: flags.overrides });
 
 // Closing the server stops the chats and lets go of the open folder's lock (server/project.ts).
 const stop = () => {

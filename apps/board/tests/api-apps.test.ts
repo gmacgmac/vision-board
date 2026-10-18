@@ -1,0 +1,199 @@
+// The app host through the real server, on a temp project (app-cards BE_02; D-047 rulings 6-9, 11,
+// 12; PLAN.md § Goal state 4c-4i): list_apps gives every state; a tool runs only once the person
+// allowed this version of the code, and asks again after a change; a tool that loops is stopped and
+// the next call works; a crash restarts, and three in the window break the app until its code
+// changes; the process can't write, start processes or workers, or read outside its folder, and
+// may import nothing but Node's built-ins; its env holds only the declared keys; answers over the
+// cap, and arguments or answers that don't fit the tool's schemas, are refused. Test apps:
+// tests/fixtures/apps/. Limits are shortened for time; their real values are APP_LIMITS.
+import { test, after, before } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import type { Harness, Joined } from './api-harness.ts';
+import { AGENT, startBoard } from './api-harness.ts';
+import { addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';
+
+let h: Harness;
+let A: Joined;
+const dirs: Record<string, string> = {};
+const IDS = ['good', 'panel-only', 'invalid-manifest', 'loop', 'crash', 'fs-write', 'big-output', 'bad-input', 'slow-load', 'imports'];
+
+before(async () => {
+  process.env.VB_TEST_BOARD_ONLY = 'the board\'s own environment';
+  h = await startBoard({ appLimits: { callMs: 1500, restartMs: 10 } });
+  A = await h.join('Apps chat');
+  fs.writeFileSync(path.join(h.project, '.env'), '# keys for the apps\nexport GOOD_KEY="from .env"\nOTHER_KEY=not for apps\n');
+  for (const id of IDS) dirs[id] = addApp(h.project, id);
+  fs.mkdirSync(path.join(h.project, '.visionboard', 'apps', 'Not_An_Id'));
+  // An app card whose app has no folder: `missing`.
+  h.ledger.append({ type: 'node', board: 'pricing', node: { region: 'options', kind: 'app', title: 'Ghost', app: { id: 'ghost' } } }, AGENT);
+});
+after(async () => {
+  await h.close();
+  delete process.env.VB_TEST_BOARD_ONLY;
+});
+
+test('list_apps: every folder and every app a card names, each in its state; agent and person read it', async () => {
+  const all = await apps(h);
+  assert.deepEqual([...all.keys()], [...IDS, 'ghost'].sort(), 'by id; a folder whose name is not an id is not an app');
+  assert.deepEqual(all.get('ghost'), { id: 'ghost', state: 'missing', tools: [], allowed: false });
+  const good = all.get('good')!;
+  assert.equal(good.state, 'needs-approval');
+  assert.match(good.hash!, /^[0-9a-f]{64}$/);
+  assert.deepEqual([good.title, good.version, good.size, good.allowed, good.changed], ['Good', '1.0.0', { w: 400, h: 300 }, false, undefined]);
+  assert.deepEqual(good.tools, [], 'tool names are known once the person allowed the code and it ran');
+  const panel = all.get('panel-only')!;
+  assert.deepEqual([panel.state, panel.tools, panel.size], ['ready', [], { w: 360, h: 320 }], 'a panel-only app needs no approval');
+  const bad = all.get('invalid-manifest')!;
+  assert.equal(bad.state, 'invalid');
+  assert.deepEqual(bad.problems!.map((p) => [p.file, p.pointer]).sort(), [['app.json', '/colour'], ['app.json', '/panel']]);
+  assert.deepEqual(await h.ok('list_apps', {}, { as: A.client }), await h.ok('list_apps', {}, { as: h.person }));
+});
+
+test('list_apps: an agent working in another folder is refused, like every agent read', async () => {
+  const other = fs.mkdtempSync(path.join(path.dirname(h.project), 'vb-other-'));
+  try {
+    await h.fails('list_apps', {}, 409, 'wrong-folder', h.agent(A.secret, other));
+  } finally { fs.rmSync(other, { recursive: true, force: true }); }
+});
+
+test('4c: no tool runs before Allow; after a change to tools.mjs or app.json it asks again', async () => {
+  const first = await refused(h, 'good', 'add', 403, 'needs-approval', { a: 1, b: 2 });
+  assert.match(first.detail, /Allow/);
+  const hash = await allow(h, 'good');
+  const ran = await run<{ sum: number; pid: number }>(h, 'good', 'add', { a: 2, b: 3 });
+  assert.equal(ran.structuredContent!.sum, 5);
+  assert.deepEqual(JSON.parse(ran.content[0]!.text), ran.structuredContent);
+  const now = (await apps(h)).get('good')!;
+  assert.deepEqual([now.state, now.allowed, now.hash, now.tools], ['ready', true, hash, ['add', 'env', 'hello', 'refuse']]);
+  touch(path.join(dirs.good!, 'tools.mjs'));
+  const changed = (await apps(h)).get('good')!;
+  assert.deepEqual([changed.state, changed.allowed, changed.changed], ['needs-approval', false, true]);
+  assert.notEqual(changed.hash, hash);
+  await gone(ran.structuredContent!.pid);
+  const again = await refused(h, 'good', 'add', 403, 'needs-approval', { a: 1, b: 1 });
+  assert.match(again.detail, /changed/);
+  await allow(h, 'good');
+  assert.equal((await run<{ sum: number }>(h, 'good', 'add', { a: 1, b: 1 })).structuredContent!.sum, 2);
+  const manifest = path.join(dirs.good!, 'app.json');
+  fs.writeFileSync(manifest, fs.readFileSync(manifest, 'utf8').replace('"1.0.0"', '"1.0.1"'));
+  await refused(h, 'good', 'add', 403, 'needs-approval', { a: 1, b: 1 });
+  await allow(h, 'good');
+});
+
+test('a tool\'s answer: an object, text, or its own error for the panel to show', async () => {
+  const hello = await run(h, 'good', 'hello');
+  assert.deepEqual(hello, { content: [{ type: 'text', text: 'Hello.' }], isError: false });
+  const no = await run(h, 'good', 'refuse');
+  assert.deepEqual(no, { content: [{ type: 'text', text: 'That sum has no answer.' }], isError: true });
+});
+
+test('4g: the tool\'s env holds only the declared keys from the project\'s .env; its folder is its cwd', async () => {
+  const seen = (await run<{ env: Record<string, string>; keys: string[]; cwd: string }>(h, 'good', 'env')).structuredContent!;
+  assert.deepEqual(seen.env, { GOOD_KEY: 'from .env' }, 'declared and set; GOOD_UNSET is declared but not in .env');
+  // macOS adds its text-encoding key to every process it starts; nothing else may be there.
+  assert.deepEqual(seen.keys.filter((k) => k !== '__CF_USER_TEXT_ENCODING'), ['GOOD_KEY']);
+  assert.equal(seen.cwd, fs.realpathSync(dirs.good!));
+});
+
+test('4i: arguments that don\'t fit inputSchema, an unknown tool, an answer over the cap or off its outputSchema are refused', async () => {
+  await allow(h, 'bad-input');
+  assert.equal((await run<{ value: number }>(h, 'bad-input', 'square', { n: 4 })).structuredContent!.value, 16);
+  const type = await refused(h, 'bad-input', 'square', 422, 'invalid', { n: 'four' });
+  assert.deepEqual(type.errors?.map((e) => e.pointer), ['/arguments/n']);
+  const extra = await refused(h, 'bad-input', 'square', 422, 'invalid', { n: 2, m: 3 });
+  assert.deepEqual(extra.errors?.map((e) => e.pointer), ['/arguments/m']);
+  await refused(h, 'bad-input', 'square', 422, 'invalid', { n: 5000 });
+  const unknown = await refused(h, 'bad-input', 'cube', 422, 'invalid', { n: 2 });
+  assert.match(unknown.detail, /square, wrong, number/);
+  const off = await refused(h, 'bad-input', 'wrong', 502, 'app-failed');
+  assert.match(off.detail, /outputSchema/);
+  await refused(h, 'bad-input', 'number', 502, 'app-failed');
+  await refused(h, 'panel-only', 'anything', 422, 'invalid');
+  await allow(h, 'big-output');
+  const big = await refused(h, 'big-output', 'big', 413, 'too-large');
+  assert.match(big.detail, /256 KiB/);
+  assert.deepEqual((await run(h, 'big-output', 'small')).structuredContent, { text: 'x' }, 'the app still answers');
+});
+
+test('4d: a tool that never returns is stopped at the time limit; the next call works; the board answers meanwhile', async () => {
+  await allow(h, 'loop');
+  const { pid } = (await run<{ pid: number }>(h, 'loop', 'quick')).structuredContent!;
+  const spinning = refused(h, 'loop', 'spin', 504, 'app-timeout');
+  const started = Date.now();
+  await h.ok('list_boards');
+  assert.ok(Date.now() - started < 500, 'other routes answer while the app loops');
+  const stopped = await spinning;
+  assert.match(stopped.detail, /took too long/);
+  await gone(pid);
+  const next = (await run<{ pid: number }>(h, 'loop', 'quick')).structuredContent!;
+  assert.notEqual(next.pid, pid, 'a new process');
+});
+
+test('4e: a crash restarts on the next call; three in the window mark the app broken until its code changes', async () => {
+  await allow(h, 'crash');
+  const one = (await run<{ pid: number }>(h, 'crash', 'ok')).structuredContent!.pid;
+  const crashed = await refused(h, 'crash', 'boom', 502, 'app-failed');
+  assert.match(crashed.detail, /stopped while it ran "boom"/);
+  const two = (await run<{ pid: number }>(h, 'crash', 'ok')).structuredContent!.pid;
+  assert.notEqual(two, one);
+  await refused(h, 'crash', 'boom', 502, 'app-failed');
+  assert.equal((await apps(h)).get('crash')!.state, 'ready', 'two crashes: not yet broken');
+  await refused(h, 'crash', 'boom', 502, 'app-failed');
+  const broken = (await apps(h)).get('crash')!;
+  assert.equal(broken.state, 'broken');
+  assert.match(broken.problems![0]!.detail, /3 times/);
+  assert.match(broken.problems![0]!.detail, /stopping on purpose/, 'what it said last, for the agent to fix');
+  const still = await refused(h, 'crash', 'ok', 502, 'app-failed');
+  assert.match(still.detail, /crashed too often/);
+  touch(path.join(dirs.crash!, 'tools.mjs'));
+  assert.equal((await apps(h)).get('crash')!.state, 'needs-approval', 'new code: no longer broken, and asks again');
+  await allow(h, 'crash');
+  assert.ok((await run<{ pid: number }>(h, 'crash', 'ok')).structuredContent!.pid);
+});
+
+test('4f: the tool can read its own folder, and nothing else; writing a file, a process or a worker is refused', async () => {
+  await allow(h, 'fs-write');
+  const code = async (tool: string, args = {}) => (await run<{ code: string }>(h, 'fs-write', tool, args)).structuredContent!.code;
+  assert.equal(await code('write'), 'ERR_ACCESS_DENIED');
+  assert.equal(fs.existsSync(path.join(dirs['fs-write']!, 'written.txt')), false, 'nothing was written');
+  assert.equal(await code('spawn'), 'ERR_ACCESS_DENIED');
+  assert.equal(await code('worker'), 'ERR_ACCESS_DENIED');
+  assert.equal(await code('outside', { path: h.ledger.file }), 'ERR_ACCESS_DENIED', 'not even the board\'s ledger beside it');
+  assert.equal(await code('outside', { path: path.join(h.project, '.env') }), 'ERR_ACCESS_DENIED');
+  assert.match((await run<{ text: string }>(h, 'fs-write', 'inside')).structuredContent!.text, /helper/);
+});
+
+test('one file: a tools module that imports another file is invalid; an import inside a tool is refused', async () => {
+  await allow(h, 'imports');
+  const refusedImport = await refused(h, 'imports', 'one', 422, 'app-invalid');
+  assert.match(refusedImport.detail, /only Node's built-in modules/);
+  const listed = (await apps(h)).get('imports')!;
+  assert.equal(listed.state, 'invalid');
+  assert.equal(listed.problems![0]!.file, 'tools.mjs');
+  assert.match(listed.problems![0]!.detail, /"\.\/helper\.mjs"/);
+  const late = await run(h, 'fs-write', 'sneak');
+  assert.equal(late.isError, true);
+  assert.match(late.content[0]!.text, /only Node's built-in modules/);
+});
+
+test('a tools module that never finishes loading is invalid until its code changes', async () => {
+  await allow(h, 'slow-load');
+  const slow = await refused(h, 'slow-load', 'anything', 422, 'app-invalid');
+  assert.match(slow.detail, /did not finish loading/);
+  assert.equal((await apps(h)).get('slow-load')!.state, 'invalid');
+});
+
+test('4h: an app id with upper case, a slash or dots never reaches a path', async () => {
+  await h.fails('call_app_tool', { app: 'Good', body: { tool: 'add' } }, 400, 'bad-request');
+  for (const bad of ['..%2Fgood', 'good%2F..', '%2E%2Egood', 'go%00od']) {
+    const r = await raw(h.base, `/api/apps/${bad}/calls`, { method: 'POST', headers: { Cookie: h.cookie, 'Content-Type': 'application/json' }, body: '{"tool":"add"}' });
+    assert.equal(r.status, 400, bad);
+  }
+  const dots = await raw(h.base, '/api/apps/%2e%2e/calls', { method: 'POST', headers: { Cookie: h.cookie, 'Content-Type': 'application/json' }, body: '{"tool":"add"}' });
+  assert.equal(dots.status, 404, '`%2e%2e` resolves away: no operation has the path');
+  await h.fails('call_app_tool', { app: 'nope', body: { tool: 'add' } }, 404, 'app-not-found');
+  await h.fails('call_app_tool', { app: 'ghost', body: { tool: 'add' } }, 404, 'app-not-found');
+  await h.fails('call_app_tool', { app: 'invalid-manifest', body: { tool: 'add' } }, 422, 'app-invalid');
+});

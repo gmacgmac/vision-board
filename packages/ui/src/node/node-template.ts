@@ -8,6 +8,9 @@ import { NODE_TYPES } from '../../../format/src/index.ts';
 import { ACTIONS } from '../../../actions/src/index.ts';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
 import type { UpdatesView } from './node-updates.ts';
+import type { AppCardView } from './node-app.ts';
+import { APPS_OFF, appView } from './node-app.ts';
+import { panelSize } from '../app-frame/app-frame-core.ts';
 import { buttonLabel, FLAG_KEY, flagLabel, isItem, isNoteEntry, offers, SIZE_LETTER } from './node-core.ts';
 import { ACTION_ICON, FLAG_ICON, KIND_ICON, SIZE_ICON, svgIcon } from './node-icons.ts';
 import { esc } from '../markdown/inline.ts';
@@ -71,7 +74,7 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
-    + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>${actions}${STEP_NAV}</footer>`;
+    + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>${opts.appCards !== false && n.kind === 'app' ? APP_STOP : ''}${actions}${STEP_NAV}</footer>`;
 }
 
 /** The stepper (FE_02 ruling 3), which takes the footer's place while a changed card is open:
@@ -147,8 +150,10 @@ export function handoverMarkup(v: HandoverView): string {
 }
 
 export interface NodeTemplateOptions {
-  /** Draw the size control (D-030); the page passes it when the nodeSize flag is on. */
+  /** Draw the size control (D-030); the page passes it when the nodeSize flag is on. Never on an app card. */
   sizeControl?: boolean;
+  /** false: the appCards flag is off, so an app card is a plain card saying so (ruling 13). */
+  appCards?: boolean;
   /** Draw the flag button beside Later; the page passes it when the cardFlag flag is on. */
   flag?: boolean;
 }
@@ -170,14 +175,54 @@ function sizeControl(n: ViewNode): string {
     + '</div></div>';
 }
 
+/** An app card's Stop app (D-047 ruling 7), in the footer before the toolbar; `update()` shows it
+ * while the app has tools the person allowed, and names it. The page acts on `data-app-act`. */
+const APP_STOP = '<button type="button" class="vb-pop-btn vb-app-stop" data-app-act="app-revoke" hidden>Stop app</button>';
+
+/** What an app card shows in place of its panel (node-app.ts `appView`): the app's icon, or the
+ * warning one when something is wrong, a line in bold, a line under it, the problems (a list that
+ * scrolls, so a tab stop) and the try-again button. Empty while the panel shows. */
+export function appStateMarkup(v: AppCardView): string {
+  if (v.frame) return '';
+  const warn = v.state === 'invalid' || v.state === 'broken';
+  const problems = v.problems
+    ? `<ul class="vb-app-problems" tabindex="0" aria-label="Problems">${v.problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
+  const retry = v.retry
+    ? `<button type="button" class="vb-pop-btn" data-app-act="retry" aria-label="${esc(v.names.retry ?? v.retry)}">${esc(v.retry)}</button>` : '';
+  return svgIcon(warn ? KIND_ICON.risk : KIND_ICON.app, 24, 'vb-app-icon')
+    + (v.head ? `<p class="vb-app-head">${esc(v.head)}</p>` : '') + (v.text ? `<p class="vb-app-text">${esc(v.text)}</p>` : '')
+    + problems + retry;
+}
+
+/** An app card's panel slot, in place of the Markdown body (ruling 3): the line asking for Allow
+ * (hidden until a state needs it; it describes Allow, so a screen reader hears why), then the box at the panel's size holding the frame
+ * (`<vb-app-frame>`, which the page loads) and the state view, drawn here for `checking` until
+ * `update()` applies the card's state. */
+function appSlot(n: ViewNode): string {
+  const ref = n.app ?? { id: '' };
+  const { w, h } = panelSize(ref);
+  const ask = esc(`vb-app-ask-${n.id}`);
+  return `<div class="vb-app-ask" hidden><p class="vb-app-ask-text" id="${ask}"></p>`
+    + `<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" aria-describedby="${ask}">Allow</button></div>`
+    + '<div class="vb-app" data-app-state="checking" aria-busy="true">'
+    + `<vb-app-frame data-app="${esc(ref.id)}" data-label="${esc(n.title)}" data-w="${w}" data-h="${h}"></vb-app-frame>`
+    + `<div class="vb-app-state">${appStateMarkup(appView(n))}</div></div>`;
+}
+
+/** The content under the title: an app card's slot (or, with the flag off, a line saying so), else
+ * the body as Markdown (D-023; the renderer escapes every text run, so its output is safe markup). */
+function bodyMarkup(n: ViewNode, opts: NodeTemplateOptions): string {
+  if (n.kind === 'app') return opts.appCards === false ? `<div class="vb-node-body">${renderMarkdown(APPS_OFF)}</div>` : appSlot(n);
+  return n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
+}
+
 export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): string {
-  // The body is Markdown (D-023); the renderer escapes every text run, so its output is safe markup.
-  const body = n.body ? `<div class="vb-node-body">${renderMarkdown(n.body)}</div>` : '';
+  const body = bodyMarkup(n, opts);
   const tags = n.tags?.length
     ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
   const note = '<div class="vb-node-notes" hidden></div>';
   // An item's step section (FE_02), right under the text a change touched.
   const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n))}" role="region" aria-live="polite" hidden></div>` : '';
-  return `${tabs(n)}${opts.sizeControl ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
+  return `${tabs(n)}${opts.sizeControl && n.kind !== 'app' ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
     + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n)}`;
 }

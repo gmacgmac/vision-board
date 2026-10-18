@@ -42,10 +42,15 @@ export const APP_LIMITS = {
   /** Crashes within `crashWindowMs` that mark an app broken until its code changes. */
   crashes: 3,
   crashWindowMs: 60_000,
+  /** The wait before a crashed app's process starts again, in ms; it doubles with each crash in
+   * the window. */
+  restartMs: 250,
   /** How long an app's process waits for a call before it stops, in ms. */
   idleMs: 5 * 60_000,
   /** The heap an app's process may use, in MB. */
   memoryMb: 128,
+  /** The most one of an app's files (manifest, panel, tools) may hold, in bytes. */
+  fileBytes: 1024 * 1024,
   /** Messages a panel may send in one second; the rest are refused. */
   panelMessagesPerSecond: 50,
 } as const;

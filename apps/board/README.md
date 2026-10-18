@@ -74,12 +74,22 @@ answers, the board), `server/chat-round.ts` writes the answers part, the board's
 `server/chat-sessions.ts` `tell` hands it over, holding one while a turn runs (api.md 121-122, 131).
 
 The open folder (api.md 109-112): `server/project.ts` holds the folder the server has open (its
-ledger, lock, agents and chats) and is the only code that switches it (`open_project`): the new
-folder's lock first, then the chats stop, the live streams end, the old lock goes. `server/folders.ts`
+ledger, lock, agents, chats and app host) and is the only code that switches it (`open_project`): the new
+folder's lock first, then the chats and app processes stop, the live streams end, the old lock goes. `server/folders.ts`
 is the only module that looks at other folders, all under the home folder (realpath, no hidden
 folder or `node_modules`); `server/recent.ts` is the only module that touches
 `~/.visionboard/recent.json` and picks the start folder. `server/open-folder.ts` answers the three
 routes. `createBoardServer({ home })` takes the home folder, so tests use a temp one.
+
+App cards (D-047, `docs/specification/apps.md`): `server/apps.ts` is the front door other server
+files import; the app host is in `server/apps/`. It reads only `.visionboard/apps/<id>/`
+(`manifest.ts`), works out each app's state fresh in one function (`state.ts` `appState`), serves
+the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list_apps` and
+`call_app_tool` (`routes.ts`), and runs each app's tools in its own permission-limited process
+(`supervisor.ts`, `child.ts`, `runner.mjs`), started on the first call and stopped when idle, when
+its code changes or is stopped, and when the folder closes. `VB_FLAGS=-appCards` turns app cards
+off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_LIMITS`. Test apps:
+`tests/fixtures/apps/`.
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the

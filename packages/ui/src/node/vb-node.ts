@@ -9,7 +9,10 @@ import type { HoverTip } from '../tip/hover-tip.ts';
 import type { NodeTemplateOptions } from './node-template.ts';
 import { bindNoteTip } from './node-note-tip.ts';
 import { bindCardPopover } from './node-popover.ts';
-import { handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
+import { appStateMarkup, handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
+import type { AppSize } from '../../../format/src/index.ts';
+import type { VbAppFrameElement } from '../app-frame/vb-app-frame.ts';
+import { panelSize } from '../app-frame/app-frame-core.ts';
 import { AWAITING, isItem } from './node-core.ts';
 import { bindHoverTip } from '../tip/hover-tip.ts';
 import { pauseControls } from '../paused/paused.ts';
@@ -49,6 +52,8 @@ export function defineVbNode(): void {
     private handoverSrc: string | undefined;
     /** The tip over the footer's "Awaiting" (FE_03), bound once per card. */
     private statusTip: HoverTip | undefined;
+    /** An app card's state view last drawn (D-047). */
+    private appSrc: string | undefined;
 
     render(n: ViewNode, opts: NodeTemplateOptions = {}): void {
       for (const t of this.noteTips) t.close();
@@ -61,8 +66,10 @@ export function defineVbNode(): void {
       this.tabIndex = 0;
       // CSSOM, not a style attribute: the page's CSP refuses inline styles.
       this.style.setProperty('--kind', `var(--vb-kind-${n.kind})`);
+      // An app card is as wide as its panel plus its padding (node.css); no size word applies to it.
+      this.panel(n.kind === 'app' && opts.appCards !== false ? panelSize(n.app ?? { id: '' }) : undefined);
       this.innerHTML = nodeTemplate(n, opts);
-      this.proposalSrc = this.stepSrc = this.handoverSrc = undefined;
+      this.proposalSrc = this.stepSrc = this.handoverSrc = this.appSrc = undefined;
       // Bound once: each listens on the card itself and finds its tab and box afresh on every event.
       this.proposalPop?.close();
       this.handoverPop?.close();
@@ -96,6 +103,7 @@ export function defineVbNode(): void {
       this.updateProposal(st);
       this.updateHandover(st);
       this.updateSteps(st);
+      this.updateApp(st);
       const fresh = this.querySelector<HTMLElement>('[data-tab="new"]');
       if (fresh) fresh.hidden = st.fresh !== true;
       pauseControls(this, PAUSED, st.paused === true, staleAccept);
@@ -206,6 +214,49 @@ export function defineVbNode(): void {
         b.setAttribute('aria-pressed', String(size.picked ? pick === size.tier : pick === 'auto'));
         // While Auto is on, the tier it chose is outlined.
         b.toggleAttribute('data-auto', !size.picked && pick === size.tier);
+      }
+    }
+
+    /** An app card (D-047): the panel's size on the card (its width) and the frame, the line asking
+     *  for Allow, the state view (rebuilt only when it changed) and Stop app. A state with no panel
+     *  unloads the frame. */
+    private updateApp(st: NodeState): void {
+      const v = st.app;
+      const slot = this.querySelector<HTMLElement>('.vb-app');
+      if (!v || !slot) return;
+      this.panel(v.size);
+      slot.dataset.appState = v.state;
+      if (v.state === 'checking') slot.setAttribute('aria-busy', 'true');
+      else slot.removeAttribute('aria-busy');
+      const frame = slot.querySelector<VbAppFrameElement>('vb-app-frame');
+      if (frame) {
+        Object.assign(frame.dataset, { label: v.name, w: String(v.size.w), h: String(v.size.h) });
+        if (!v.frame) frame.unload?.();
+      }
+      const src = JSON.stringify(v);
+      // Markup from appStateMarkup, which escapes every text run.
+      if (this.appSrc !== src) slot.querySelector<HTMLElement>('.vb-app-state')!.innerHTML = appStateMarkup(v);
+      this.appSrc = src;
+      const ask = this.querySelector<HTMLElement>('.vb-app-ask')!;
+      ask.hidden = !v.ask;
+      ask.querySelector('p')!.textContent = v.ask ?? '';
+      ask.querySelector('button')!.setAttribute('aria-label', v.names.allow);
+      const stop = this.querySelector<HTMLButtonElement>('.vb-app-stop');
+      if (stop) {
+        stop.hidden = !v.stop;
+        stop.setAttribute('aria-label', v.names.stop);
+      }
+    }
+
+    /** The panel's size as --app-w and --app-h on the card (CSSOM: the CSP refuses style
+     *  attributes); none on other kinds. */
+    private panel(size: AppSize | undefined): void {
+      if (size) {
+        this.style.setProperty('--app-w', `${size.w}px`);
+        this.style.setProperty('--app-h', `${size.h}px`);
+      } else {
+        this.style.removeProperty('--app-w');
+        this.style.removeProperty('--app-h');
       }
     }
 

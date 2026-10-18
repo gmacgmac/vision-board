@@ -66,6 +66,19 @@ export function schemaProblems(id: string, value: unknown): SchemaProblem[] {
   return validate(value) ? [] : plainProblems(validate.errors ?? []);
 }
 
+/** A check for the JSON Schemas an app's tools give (D-047 ruling 6, apps.md § The tools module):
+ * one ajv instance per call, so no `$id` can clash with the board's schemas or another app's; not
+ * strict, so a keyword or format the board doesn't know is ignored rather than refused; no `$ref`
+ * outside the schema; a top-level `$schema` (often draft-07's) is not read. `compile` throws, in
+ * ajv's words, when a schema can't be used; a check gives problems as plain as the board's own. */
+export function foreignSchemas(): (schema: Record<string, unknown>) => (value: unknown) => SchemaProblem[] {
+  const a = new Ajv2020({ strict: false, allErrors: true, logger: false, addUsedSchema: false });
+  return ({ $schema: _ignored, ...schema }) => {
+    const validate = a.compile(schema);
+    return (value) => (validate(value) ? [] : plainProblems(validate.errors ?? [], 'does not fit any of the shapes the tool takes'));
+  };
+}
+
 /** Every problem with one ledger line (its text) against the stored-line schema. */
 export function ledgerLineProblems(line: string): SchemaProblem[] {
   let value: unknown;
@@ -116,8 +129,11 @@ function removedWords(schemaPath: string): string | undefined {
   return typeof words === 'string' ? words : undefined;
 }
 
+/** What a failed `anyOf` says: in the board's own schemas, the one `anyOf` names a card. */
+const CARD_ANY_OF = 'must be a node number or { "key": "…" }';
+
 /** One plain-English problem for one ajv error. */
-function plain(e: ErrorObject): SchemaProblem {
+function plain(e: ErrorObject, anyOf: string): SchemaProblem {
   const p = e.params as Record<string, unknown>;
   const at = e.instancePath;
   const f = `\`${fieldOf(at)}\``;
@@ -155,16 +171,16 @@ function plain(e: ErrorObject): SchemaProblem {
       const words = removedWords(e.schemaPath);
       return { pointer: at, detail: words ? `${f} is not allowed here. ${words}` : `${f} is not valid` };
     }
-    case 'anyOf': return { pointer: at, detail: `${f} must be a node number or { "key": "…" }` };
+    case 'anyOf': return { pointer: at, detail: `${f} ${anyOf}` };
     default: return { pointer: at, detail: `${f} is not valid` };
   }
 }
 
 /** ajv's errors as problems, one per error, minus ajv's bookkeeping: an `if` error only says its
  * `then` failed (that failure is reported itself), and the branches of a failed `anyOf` are
- * folded into its one message. Exact repeats (a field checked by two rules that both say "text")
- * are reported once. */
-export function plainProblems(errors: readonly ErrorObject[]): SchemaProblem[] {
+ * folded into its one message (`anyOfWords`). Exact repeats (a field checked by two rules that
+ * both say "text") are reported once. */
+export function plainProblems(errors: readonly ErrorObject[], anyOfWords = CARD_ANY_OF): SchemaProblem[] {
   const anyOf = errors.filter((e) => e.keyword === 'anyOf');
   const inAnyOf = (e: ErrorObject) => e.keyword !== 'anyOf' &&
     anyOf.some((a) => e.instancePath === a.instancePath || e.instancePath.startsWith(`${a.instancePath}/`));
@@ -172,7 +188,7 @@ export function plainProblems(errors: readonly ErrorObject[]): SchemaProblem[] {
   const out: SchemaProblem[] = [];
   for (const e of errors) {
     if (e.keyword === 'if' || inAnyOf(e)) continue;
-    const problem = plain(e);
+    const problem = plain(e, anyOfWords);
     const id = `${problem.pointer}\n${problem.detail}`;
     if (!seen.has(id)) { seen.add(id); out.push(problem); }
   }

@@ -4,6 +4,7 @@ import type { ActionId, NodeSize, ParkBundle, ViewNode } from '../../../format/s
 import { NODE_TYPES } from '../../../format/src/index.ts';
 import type { BoardState, ItemNote, ItemStatus } from '../../../actions/src/index.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
+import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
 import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
 
@@ -164,6 +165,8 @@ export interface CardConditions {
   handover?: ParkBundle;
   /** The agent's replies that belong on the card (the cardReplies flag). */
   replies?: readonly CardReply[];
+  /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
+  app?: AppCardInput;
 }
 
 /** One proposal in the box beside the card: who proposes, what, from where and when, and the names
@@ -263,6 +266,7 @@ export interface NodeState {
   /** The board is locked (`BoardState.locked`, N40 ruling 4): the review buttons, the size control,
    *  the note pin and a proposal's answers are paused (paused.ts); the flag is not. */
   paused?: true;
+  app?: AppCardView; // an app card's state view (node-app.ts `appView`); it takes no size control
 }
 
 /** `tier` comes from the page (`sizeTier` in packages/layout, which this layer may not import), and
@@ -279,17 +283,18 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const updates = updatesView(n, c.updates);
   const fresh = isItem(n) && c.new === true;
   const flagged = isItem(n) && s.flags.has(n.id);
+  const app = n.kind === 'app' && c.app ? appView(n, c.app) : undefined;
   return {
     status,
     pinned: s.pins.has(n.id),
     selected,
     label: nodeLabel(n, status, selected,
-      `${awaiting ? ', awaiting context' : ''}${handover ? ', handover ready' : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${fresh ? ', new' : ''}${flagged ? ', flagged' : ''}`),
+      `${awaiting ? ', awaiting context' : ''}${handover ? ', handover ready' : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? ', new' : ''}${flagged ? ', flagged' : ''}`),
     statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),
-    ...(flagged && { flagged: true as const }), ...(s.locked && { paused: true as const }),
+    ...(flagged && { flagged: true as const }), ...(s.locked && { paused: true as const }), ...(app && { app }),
     pressed,
-    ...(tier ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
+    ...(tier && n.kind !== 'app' ? { size: { tier, picked, label: sizeLabel({ tier, picked }), shown: picked ? `◆ ${SIZE_LETTER[tier]}` : '' } } : {}),
   };
 }

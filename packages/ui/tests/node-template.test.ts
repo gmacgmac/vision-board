@@ -50,7 +50,8 @@ test('nodeTemplate draws the footer on items only: kind icon, divider, state wor
   for (const kind of KINDS) {
     const item = nodeTemplate(node({ kind, n: 3 }));
     assert.match(item, new RegExp(`<footer class="vb-node-foot">.*${KIND_ICON[kind].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`
-      + '.*vb-node-sep.*vb-node-status.*</span></span>(<div class="vb-node-actions"|<div class="vb-node-stepnav")'), kind);
+      + `.*vb-node-sep.*vb-node-status.*</span></span>${kind === 'app' ? '<button type="button" class="vb-pop-btn vb-app-stop" data-app-act="app-revoke" hidden>Stop app</button>' : ''}`
+      + '(<div class="vb-node-actions"|<div class="vb-node-stepnav")'), kind);
     assert.doesNotMatch(nodeTemplate(node({ kind })), /vb-node-foot|vb-node-status/, `${kind} non-item`);
   }
 });

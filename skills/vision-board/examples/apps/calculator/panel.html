@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Calculator</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    /* The board sends its colours and fonts as --color-*, --font-* and --border-radius-*
+       variables (apps.md, "Host context") and sets them on this page. What follows each comma is
+       only used until they arrive. */
+    --bg: var(--color-background-primary, Canvas);
+    --key: var(--color-background-secondary, color-mix(in srgb, CanvasText 6%, Canvas));
+    --key-alt: var(--color-background-tertiary, color-mix(in srgb, CanvasText 12%, Canvas));
+    --fill: var(--color-background-inverse, Highlight);
+    --on-fill: var(--color-text-inverse, HighlightText);
+    --ink: var(--color-text-primary, CanvasText);
+    --ink-soft: var(--color-text-secondary, color-mix(in srgb, CanvasText 75%, Canvas));
+    --line: var(--color-border-secondary, color-mix(in srgb, CanvasText 15%, Canvas));
+    --warn: var(--color-text-danger, red);
+    --ring: var(--color-ring-primary, Highlight);
+    --radius: var(--border-radius-md, 10px);
+    --radius-sm: var(--border-radius-sm, 6px);
+    --text: var(--font-text-lg-size, 15px);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: var(--text) var(--font-sans, system-ui, sans-serif); }
+  main { height: 100%; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .screen { background: var(--key); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px 10px;
+    min-height: 84px; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
+  .top { display: flex; align-items: center; gap: 8px; }
+  .sum { flex: 1; min-width: 0; margin: 0; display: flex; justify-content: flex-end; overflow: hidden; white-space: nowrap;
+    font-size: 18px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+    mask-image: linear-gradient(to right, transparent, black 24px); }
+  output { display: block; text-align: right; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere;
+    font-size: clamp(16px, calc(480px / var(--chars, 1)), 36px); font-variant-numeric: tabular-nums; }
+  output:empty::before { content: '0'; color: var(--ink-soft); }
+  output.error { text-align: left; font-size: var(--text); font-weight: 400; padding-inline-start: 10px; border-inline-start: 3px solid var(--warn); }
+  button { --base: var(--key); --tint: var(--ink); font: inherit; color: var(--ink); background: var(--base); border: 1px solid var(--line);
+    border-radius: var(--radius); cursor: pointer; touch-action: manipulation; transition: background-color .1s, transform .06s; }
+  button:hover { background: color-mix(in srgb, var(--tint) 10%, var(--base)); }
+  button:active, button.is-pressed { background: color-mix(in srgb, var(--tint) 22%, var(--base)); transform: scale(.96); }
+  button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  #history button:focus-visible { outline-offset: -2px; } /* the list scrolls, so a ring outside would be cut off */
+  .tool { min-height: 32px; padding: 0 12px; font-size: var(--font-text-md-size, 13px); border-radius: var(--radius-sm); }
+  /* Filled keys tint towards the ink, which moves away from their text colour in both themes. */
+  .tool[aria-expanded="true"], .main { --base: var(--fill); color: var(--on-fill); border-color: transparent; }
+  .keys { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, minmax(40px, 1fr)); gap: 6px; }
+  .keys button { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .keys .op { --base: var(--key-alt); }
+  .keys .main { grid-column: 1 / -1; font-size: 24px; }
+  .keys [aria-disabled="true"] { cursor: progress; }
+  .keys [aria-busy="true"] { animation: wait 1s ease-in-out infinite; }
+  @keyframes wait { 50% { opacity: .55; } }
+  #history { flex: 1; min-height: 0; margin: 0; padding: 0; list-style: none; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+  #history button { width: 100%; min-height: 44px; padding: 6px 12px; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; text-align: left; }
+  #history .what { order: -1; color: var(--ink-soft); overflow-wrap: anywhere; } /* the sum shows first, the answer reads first */
+  #history .val { font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; }
+  #history .note { padding: 24px 12px; text-align: center; color: var(--ink-soft); }
+  @media (forced-colors: active) { .tool[aria-expanded="true"], .main { border: 2px solid Highlight; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+<main>
+  <h1 class="sr-only">Calculator</h1>
+  <section class="screen" aria-label="Display">
+    <div class="top">
+      <button id="history-toggle" class="tool" type="button" aria-expanded="false" aria-controls="history">History</button>
+      <p id="sum" class="sum"><span class="sr-only">Sum: </span><span id="sum-text"></span></p>
+    </div>
+    <output id="result" aria-live="polite" aria-atomic="true"></output>
+  </section>
+  <div id="keys" class="keys" role="group" aria-label="Keypad">
+    <button type="button" class="op" data-key="C" aria-label="Clear all" aria-keyshortcuts="Delete C">C</button>
+    <button type="button" class="op" data-key="(" aria-label="Open bracket">(</button>
+    <button type="button" class="op" data-key=")" aria-label="Close bracket">)</button>
+    <button type="button" class="op" data-key="Backspace" aria-label="Backspace" aria-keyshortcuts="Backspace">&#x232B;</button>
+    <button type="button" data-key="7">7</button>
+    <button type="button" data-key="8">8</button>
+    <button type="button" data-key="9">9</button>
+    <button type="button" class="op" data-key="&#xF7;" aria-label="Divided by">&#xF7;</button>
+    <button type="button" data-key="4">4</button>
+    <button type="button" data-key="5">5</button>
+    <button type="button" data-key="6">6</button>
+    <button type="button" class="op" data-key="&#xD7;" aria-label="Times">&#xD7;</button>
+    <button type="button" data-key="1">1</button>
+    <button type="button" data-key="2">2</button>
+    <button type="button" data-key="3">3</button>
+    <button type="button" class="op" data-key="&#x2212;" aria-label="Minus">&#x2212;</button>
+    <button type="button" data-key="0">0</button>
+    <button type="button" data-key="." aria-label="Decimal point">.</button>
+    <button type="button" class="op" data-key="%" aria-label="Percent">%</button>
+    <button type="button" class="op" data-key="+" aria-label="Plus">+</button>
+    <button type="button" class="main" data-key="=" aria-label="Equals" aria-keyshortcuts="Enter">=</button>
+  </div>
+  <ul id="history" aria-label="History" hidden></ul>
+</main>
+<script>
+  // ---- Talking to the board: JSON-RPC over postMessage (apps.md, "The panel protocol") ----
+  const waiting = new Map();
+  let lastId = 0;
+  const send = (message) => parent.postMessage({ jsonrpc: '2.0', ...message }, '*');
+  const request = (method, params) => new Promise((resolve, reject) => {
+    const id = ++lastId;
+    // The board stops a slow tool itself after 10 seconds; this only covers no answer at all.
+    const timer = setTimeout(() => { waiting.delete(id); reject({ message: 'No answer. Try again.' }); }, 12000);
+    waiting.set(id, { resolve, reject, timer });
+    send({ id, method, params });
+  });
+
+  // The board's colours and fonts: set as variables on the page, so the CSS above follows them.
+  function applyContext({ theme, styles } = {}) {
+    if (theme) document.documentElement.style.colorScheme = theme;
+    for (const [name, value] of Object.entries(styles?.variables ?? {})) document.documentElement.style.setProperty(name, value);
+  }
+
+  addEventListener('message', ({ source, data }) => {
+    if (source !== parent || data?.jsonrpc !== '2.0') return;
+    if (data.method === 'ui/notifications/host-context-changed') return applyContext(data.params);
+    const call = waiting.get(data.id);
+    if (!call) return;
+    waiting.delete(data.id);
+    clearTimeout(call.timer);
+    if (data.error) call.reject(data.error); else call.resolve(data.result);
+  });
+
+  const ready = request('ui/initialize', { protocolVersion: '2026-01-26', appCapabilities: {} }).then((answer) => {
+    applyContext(answer.hostContext);
+    send({ method: 'ui/notifications/initialized' });
+  });
+
+  /** Runs one of this app's tools; throws an Error whose message is fit to show. */
+  async function callTool(name, args = {}) {
+    let answer;
+    try {
+      await ready;
+      answer = await request('tools/call', { name, arguments: args });
+    } catch (error) {
+      if (error.data?.problem === 'needs-approval') throw new Error('Press Allow on the card to calculate');
+      throw new Error(error.message || "That didn't work. Try again.");
+    }
+    if (answer.isError) throw new Error(answer.content?.[0]?.text || "That didn't work. Try again.");
+    return answer.structuredContent;
+  }
+
+  // ---- The sum being typed ----
+  const MAX = 200; // the longest sum the tool takes
+  const [TIMES, DIVIDE, MINUS] = ['×', '÷', '−'];
+  const OPERATORS = `+${MINUS}${TIMES}${DIVIDE}`;
+  const $ = (id) => document.getElementById(id);
+  const [sumText, result, keys, historyBox, toggle] = ['sum-text', 'result', 'keys', 'history', 'history-toggle'].map($);
+  const pad = new Map([...keys.querySelectorAll('button')].map((button) => [button.dataset.key, button]));
+  let sum = '';
+  let answer = ''; // the answer on show, when there is one
+  let busy = false;
+
+  const el = (tag, className, ...children) => {
+    const node = document.createElement(tag);
+    node.className = className;
+    node.append(...children);
+    return node;
+  };
+  const isDigit = (c) => c >= '0' && c <= '9';
+
+  /** What the sum becomes with this key, or null when the key makes no sense there. */
+  function next(text, key) {
+    const last = text.at(-1) ?? '';
+    const afterNumber = isDigit(last) || last === '.' || last === ')' || last === '%';
+    if (isDigit(key) || key === '.' || key === '(') {
+      if (key === '.' && text.match(/[0-9.]*$/)[0].includes('.')) return null;
+      const times = last === ')' || last === '%' || (key === '(' && (isDigit(last) || last === '.'));
+      return text + (times ? TIMES : '') + key;
+    }
+    if (key === ')') return afterNumber && text.split('(').length > text.split(')').length ? text + key : null;
+    if (key === '%') return afterNumber ? text + key : null;
+    if (afterNumber) return text + key;
+    const atStart = last === '' || last === '(';
+    if (key === MINUS && (atStart || (TIMES + DIVIDE).includes(last))) return text + key; // a negative number
+    if (atStart || last === key) return null;
+    return text.replace(new RegExp(`[${OPERATORS}]+$`), '') + key; // a new operator replaces the old one
+  }
+
+  function say(text = '', isError = false) {
+    result.classList.toggle('error', isError);
+    result.style.setProperty('--chars', Math.max(text.length, 1));
+    result.replaceChildren(...(text ? [el('span', 'sr-only', isError ? 'Problem: ' : 'Answer: '), text] : []));
+  }
+  const render = () => { sumText.textContent = sum; };
+
+  function press(key) {
+    if (!historyBox.hidden) showHistory(false);
+    if (key === '=') return equals();
+    if (key === 'C') {
+      sum = '';
+    } else if (key === 'Backspace') {
+      sum = sum.slice(0, -1);
+    } else {
+      // After an answer, an operator carries on from it and anything else starts a new sum.
+      const from = !answer ? sum : isDigit(key) || key === '.' || key === '(' ? '' : answer;
+      const updated = next(from, key);
+      if (updated === null) return;
+      if (updated.length > MAX) return say(`Too long: ${MAX} characters at most`, true);
+      sum = updated;
+    }
+    answer = '';
+    say();
+    render();
+  }
+
+  function working(on) {
+    busy = on;
+    const key = pad.get('=');
+    key.setAttribute('aria-busy', String(on));
+    key.setAttribute('aria-disabled', String(on)); // not `disabled`, so a keyboard user keeps their place
+    key.textContent = on ? '…' : '=';
+  }
+
+  async function equals() {
+    if (busy || answer) return;
+    const asked = sum;
+    working(true);
+    try {
+      const { value } = await callTool('evaluate', { expression: asked });
+      if (sum === asked) { answer = String(value); say(answer); }
+    } catch (error) {
+      if (sum === asked) say(error.message, true);
+    } finally {
+      working(false);
+    }
+  }
+
+  // ---- History: the last sums, kept by the tool ----
+  const entry = ({ expression, value }) => {
+    const use = el('button', '', el('span', 'sr-only', 'Use '), el('span', 'val', String(value)),
+      el('span', 'sr-only', ' from '), el('span', 'what', expression));
+    use.type = 'button';
+    use.dataset.value = String(value);
+    return el('li', '', use);
+  };
+
+  async function showHistory(open) {
+    if (!open && historyBox.contains(document.activeElement)) toggle.focus(); // keep the person's place
+    toggle.setAttribute('aria-expanded', String(open));
+    keys.hidden = open;
+    historyBox.hidden = !open;
+    if (!open) return;
+    historyBox.replaceChildren(el('li', 'note', 'Loading…'));
+    try {
+      const { items } = await callTool('history');
+      historyBox.replaceChildren(...(items.length ? items.map(entry) : [el('li', 'note', 'No sums yet. Press = to add one.')]));
+    } catch (error) {
+      historyBox.replaceChildren(el('li', 'note', error.message));
+    }
+  }
+
+  toggle.addEventListener('click', () => showHistory(historyBox.hidden));
+  historyBox.addEventListener('click', ({ target }) => {
+    const use = target.closest('button');
+    if (!use) return;
+    sum = use.dataset.value;
+    answer = '';
+    say();
+    render();
+    showHistory(false);
+    toggle.focus();
+  });
+
+  // ---- Keypad and keyboard ----
+  keys.addEventListener('click', ({ target }) => {
+    const key = target.closest('button');
+    if (!key || key.getAttribute('aria-disabled') === 'true') return;
+    press(key.dataset.key);
+  });
+
+  // A clicked key keeps focus. Enter should then mean equals, not that key again.
+  let clicked = null;
+  addEventListener('pointerdown', ({ target }) => { clicked = target.closest('button'); });
+  addEventListener('focusin', ({ target }) => { if (target !== clicked) clicked = null; });
+
+  const ALIASES = new Map([['*', TIMES], ['/', DIVIDE], ['-', MINUS], [',', '.'], ['Enter', '='], ['Delete', 'C'], ['c', 'C']]);
+  addEventListener('keydown', (event) => {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === 'Escape') {
+      if (historyBox.hidden) send({ method: 'ui/notifications/escape' });
+      else { showHistory(false); toggle.focus(); }
+      return;
+    }
+    const key = ALIASES.get(event.key) ?? event.key;
+    // Enter on a button reached by keyboard presses that button, as anywhere else.
+    if (!pad.has(key) || (event.key === 'Enter' && event.target.closest('button') && event.target !== clicked)) return;
+    event.preventDefault();
+    press(key);
+    const button = pad.get(key);
+    button.classList.add('is-pressed');
+    setTimeout(() => button.classList.remove('is-pressed'), 120);
+  });
+
+  ready.catch((error) => say(error.message, true));
+</script>
+</html>
