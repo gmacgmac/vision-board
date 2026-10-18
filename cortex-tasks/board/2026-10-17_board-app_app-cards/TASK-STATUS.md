@@ -55,7 +55,7 @@ tracker:
 | 6 | BE_03 | 3 | standard | [Image route and contract, D-048](./BE_03_image-route.md) | Completed | `IMAGE_LIMITS`, `IMAGE_WORDS`, `imagePathProblem` in format; `/board-images/` in `server/images.ts`; images.md, api.md 154-155, D-048; depth = 8 folders: see notes |
 | 7 | FE_03 | 4 | strong | [Images on the page: Markdown image, zoomed view, updates](./FE_03_card-images.md) | Completed | `![alt](path)` image or box (`image.ts`), flag `cardImages` via `setMarkdownImages`, `image-view/` pattern, `card-images.ts` (near-only loads, HEAD version + `?v=`, select/open check, swap, re-measure); page weight 149.7 KB: see notes |
 | 8 | T_02 | 5 | strong | [Skill v3.8: apps and images; scenarios with both agents](./T_02_skill-apps.md) | Completed | v3.8 (SKILL.md 406 lines, no skill-local apps.md: see notes); scenarios 28-31 pass with Claude Code and Kiro (Opus 5.5); new app built from the skill alone in 29, all four runs |
-| 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Pending | |
+| 9 | VERIFY_01 | 6 | strong | [By hand, light and dark, and the goal check](./VERIFY_01_by-hand.md) | Completed | Gates all green (528 pages); 7 findings inside the rulings (1-7, see § VERIFY_01) for FIX tasks; 17 proposed tracker rows (8-24) in § Proposed tracker rows |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrator guide).
@@ -85,18 +85,19 @@ FIX_NN rows are added by the orchestrator after VERIFY_01 (PLAN.md § Orchestrat
 
 | Line | Met? | Evidence (command and result, test name, file) |
 |---|---|---|
-| 1 Tasks | | |
-| 2 Gates | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed. Wave 4: check 0; test 1474+7 pass; verify 0 warnings (page 149.7/150 KB); gen --check 0; build 0; test:pages 528 passed. Wave 5: check 0; test 1474+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 528 passed |
-| 3 End to end | | |
-| 4 Safety (a-j) | | |
-| 5 Contract | | |
-| 6 Card states | | |
-| 7 Docs | | |
-| 8 Example | | |
-| 9 Skill | | |
-| 10 By hand | | |
-| 11 Images | | |
-| 12 Committed | | |
+| 1 Tasks | No (orchestrator) | Now (VERIFY_01): rows 1-9 `Completed`, none `Blocked`; frontmatter still `status: in-progress`. FIX rows for VERIFY_01 findings 1-7 and a VERIFY_02 are still to be added and run (PLAN.md § Orchestrator guide, fix loop) |
+| 2 Gates | Yes, at `a5bde82` (re-run after FIX tasks) | VERIFY_01, one sequential run on `feat/app-cards` at `a5bde82` (tree: only FE_02's `.visionboard/` changes), 2026-10-18: `npm run check` exit 0 (svelte-check 348 files, 0 errors, 0 warnings; tsc 0); `npm test` exit 0 (1474 tests, 1474 pass, 0 fail; `test:timing` 7 pass); `npm run verify` exit 0 ("verify: ok (0 warning(s))"); `node scripts/gen-api.mjs --check` exit 0 ("generated files are current"); `npm run build` exit 0; `npm run test:pages` exit 0 (528 passed, 11.1 min). Logs: `$TMPDIR/vb-vac/logs/{check,test,verify,gen,build,pages}.log`. Earlier waves: |
+| 2 Gates (waves) | (interim) | Wave 1: check 0; test 1322+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 2: check 0; test 1417+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 480 passed. Wave 3: check 0; test 1451+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 505 passed. Wave 4: check 0; test 1474+7 pass; verify 0 warnings (page 149.7/150 KB); gen --check 0; build 0; test:pages 528 passed. Wave 5: check 0; test 1474+7 pass; verify 0 warnings; gen --check 0; build 0; test:pages 528 passed |
+| 3 End to end | Yes | `tests/pages/app-cards.spec.ts` › "end to end (light) › end to end: an agent draws the calculator, the person allows it, 12*3 comes back as 36 from its tool (light)" and "(dark)", passed in the VERIFY_01 page run (tests 11-12; axe in the board and the panel, the 403 before Allow named, no other console error or failed request). By hand (scratch board): Allow → `12*3=` "Answer: 36", `7+5×2` 17, History "Use 17 from 7+5×2", "Use 36 from 12×3"; the `POST /api/apps/calculator/calls` bodies and answers logged |
+| 4 Safety (a-j) | Yes | All passed in the VERIFY_01 runs. (a) `app-safety.spec.ts` › "the panel is isolated › 4a: …"; (b) "… › 4b: a fetch to a domain the manifest did not declare is blocked …"; (c) `api-apps.test.ts` "4c: no tool runs before Allow; after a change to tools.mjs or app.json it asks again"; (d) "4d: a tool that never returns is stopped at the time limit; the next call works; …"; (e) "4e: a crash restarts on the next call; three in the window mark the app broken …"; (f) "4f: the tool can read its own folder, and nothing else; writing a file, a process or a worker is refused"; (g) "4g: the tool's env holds only the declared keys …"; (h) "4h: an app id with upper case, a slash or dots never reaches a path" and `app-folder.test.ts` "4h: manifest file names with a folder, `..`, a hidden name or an absolute path are refused"; (i) "4i: arguments that don't fit inputSchema, an unknown tool, an answer over the cap or off its outputSchema are refused"; (j) `app-safety.spec.ts` "4j: a message to the board from any window but the card's own frame is ignored". By hand: a 1,000-messages-a-second panel (5,000 sent, 245 answered, 4,745 `app-busy`, 120 reached the server, frame gaps at most 17 ms); a 30 MB answer refused 413 in the child (board RSS 164 → 165 MB); a looping tool timed out twice in 25 s of pressing `=` (`=` disabled while busy, board responsive); three crashes → "This app stopped" |
+| 5 Contract | Yes | `packages/format/src/ledger.ts` `LEDGER_FORMAT = 17`, `ACTION_IDS` `app-allow`/`app-revoke`, `APP_ACTIONS`; `view.ts` `KINDS` ends `'app'`; `packages/format/schema/app/manifest.schema.json`; `schema/openapi.json` `info.version` 1.27.0, `GET /api/apps` `list_apps` `x-agent: true` (agent secret or person cookie), `POST /api/apps/{app}/calls` `call_app_tool` (person cookie); `packages/mcp/src/tools.generated.json` has `list_apps`; `packages/cli/src/commands.generated.ts` `list-apps`; drift tests green in `npm test` (1474 pass) and `gen-api --check` current |
+| 6 Card states | Yes | Gallery `app-frame-section.ts` (every state of ruling 10 and the flag off; seen light and dark, `29-gallery-app-frame-{light,dark}.png`); page tests passed: `app-states.spec.ts` "every state the app host gives, each drawn in its card (light|dark)", "loading: … (light|dark)", "zoomed out past FAR_K, no panel runs … (light|dark)", "off screen, no panel runs … (light|dark)", "a past version: app cards are placeholders … (light|dark)", "Restart, once the agent fixed the code …"; `app-gallery.spec.ts` (3 tests). By hand every state was drawn (needs approval, code changed, ready, invalid, broken, missing, past, far), with findings 1 (missing never heals, blank panel), 2 (code changed shown late), 3 (past size) |
+| 7 Docs | No (findings 3, 6) | Present and read: `docs/decisions.md` D-047 and D-048 (each the PLAN text word for word: a diff of the two blocks prints nothing); `docs/specification/apps.md`; `docs/specification/images.md`; `api.md` § "Ledger v17: app cards (app-cards BE_01, D-047)"; `components.md` § App card, § Images in cards, § Image view; `packages/format/README.md` "format 17, readers accept 2 to 17". Two claims are untrue in use: components.md § App card 2 ("a state change … never moves the card": Allow shrinks the card 44 px, finding 6) and the size chain (agent's, else manifest's, else default) in a past version (finding 3) |
+| 8 Example | Yes | `skills/vision-board/examples/apps/calculator/` runs as line 3 (page test and by hand). This repo: `diff -r skills/vision-board/examples/apps/calculator .visionboard/apps/calculator` prints nothing; ledger seq 192-197 (read only): 192 join, 193 board `app-cards` "App cards", 194 region `apps` "Apps", 195 node `kind: app` "Calculator" `app {id: calculator, w: 360, h: 440}`, 196 note "Try the calculator", 197 seen |
+| 9 Skill | Yes (by reading) | `skills/vision-board/SKILL.md` status v3.8 (images; apps); `scenarios.md` §§ 28-31; `NOTES.md` § Skill v3.8 records the runs (Claude Code 2.1.301 and Kiro 2.24.0, both Opus 5.5): 28 ×4, 29 ×4, 30 ×2, 31 ×2 in round 2 pass; a new app `km-miles` built from the skill alone in every 29 run (harness logs `$TMPDIR/vb-skill38/claude-29.log`, `kiro-29-r2.log`: the three app files written). By hand, VERIFY_01 drew Claude's round-1 `km-miles` on a scratch board: Allow, 10 km → "6.213712 miles" from `convert_distance` (200) |
+| 10 By hand | No (findings 1-7 open) | VERIFY_01 done on a scratch board (port 4495, `HOME`/`VB_PROJECT` in `$TMPDIR/vb-vac/`, `VB_KIRO_AGENT=0`), 1600×1000 and 1470×956, light and dark, about 70 screenshots looked at (`$TMPDIR/vb-vac/shots/`). Findings inside the rulings: 1-7 (§ VERIFY_01), each needs a FIX task and VERIFY_02. Findings outside: § Proposed tracker rows 8-24 (with the earlier tasks' known limits) |
+| 11 Images | Yes | `card-images.spec.ts` (13 tests: subfolder at the card's width light/dark, click wide and keyboard tall to 70% at both sizes, Esc/outside/× with focus back, replaced image after select with the conditional request and no timer, opening checks too, motion about 220 ms, reduced motion, axe light/dark) and `card-image-states.spec.ts` (10 tests) passed; route and unit safety: `images-route.test.ts` "path tricks are refused …", "svg is refused (415) …", "a file over the size limit is refused (413) …"; `images.test.ts` "imagePathProblem: …" ×6; `markdown-images.test.ts` "a path the one check refuses is the \"Image not shown\" box …"; `markdown-safety.test.ts` "an image cannot break out of its shape …"; `markdown-adversarial.ts` `IMG_SHAPE`. D-048 appended. By hand: 70% measured (wide 1120/1600, tall 700/1000; 1029/1470, 669/956), overwrite + select swapped to the new file, delete + select "Image not found: tall.png", internet URL and svg boxes, motion frames, reduced motion instant; 30 images × 3.2 MB on an 81-card board: nothing loaded far, frame gaps p95 17 ms panning |
+| 12 Committed | No (orchestrator) | Now: waves 1-5 committed (`f7b8a1f` … `a5bde82`); uncommitted: FE_02's `.visionboard/ledger.jsonl` and `.visionboard/apps/` (committed at the end per the guide) and VERIFY_01's notes (this file, `VERIFY_01_by-hand.md`, `cortex/LOG.md`). LOG lines: one per task so far, the set's line still to come |
 
 ## Decisions taken during the run
 
@@ -120,6 +121,34 @@ _(The orchestrator records each choice it made where a sub-agent's deviation tou
    behaviour ships behind one. Closest to both: FE_03 adds page flag `cardImages` in `flags.ts`, **on** by
    default; off, `![alt](path)` renders as plain text as before. The route needs no flag (it serves only
    files the project put in its images folder).
+
+## Proposed tracker rows
+
+_(Outside the rulings, not fixed in this set: the known limits the tasks named, gathered by VERIFY_01, and
+VERIFY_01's own. Numbered after VERIFY_01's findings 1-7 so one number means one point.)_
+
+| # | From | Row | Seen / example |
+|---|---|---|---|
+| 8 | Decision 4a, BE_02 | ajv checks an allowed app's input-schema `pattern` in the board's own process, so a slow pattern could stall the board. Check input in the app's process, or time-box the pattern. | Not tried by hand |
+| 9 | Decision 4b, BE_02 | The one-file rule stops imports, not a tool that reads a file in its folder and runs it with `node:vm`; that code is outside the Allow hash. | Not tried by hand |
+| 10 | Decision 4c, BE_02 | If the board is killed with SIGKILL while a tool loops, that app process keeps running (the others exit on disconnect). | Not tried; a normal stop and a folder switch left no runner (VERIFY_01 `ps`) |
+| 11 | FE_02 (a) | A page with app cards on against a server with them off (`VB_FLAGS=-appCards`) loads the panel route's 404 into the frame; the page can't tell the server's flag. | Same blank-panel look as finding 1 |
+| 12 | FE_02 (b) | Match card widths can widen an app card; the panel keeps its size at the card's left. | Not tried by hand |
+| 13 | FE_02 (c) | Focus moved by pointer straight from one panel into another keeps the first frame's ring until focus returns to the board. | Not tried by hand |
+| 14 | FE_02 (d), FE_03 | Page weight is 149.7 of 150 KB gzip (about 0.3 KB left). Findings 1, 2, 3, 5 and 6 add a little page code: a trim or a budget decision comes first. | `npm run verify` 0 warnings at `a5bde82` |
+| 15 | FE_03 (a) | Images outside cards (note bubble, container notes, chat) load as the browser does, with no version check; a missing one shows the browser's broken-image mark, not the box. | Not tried by hand |
+| 16 | FE_03 (b) | Only an image in a card's body opens the zoomed view; in a note it is the note's click. | Not tried by hand |
+| 17 | FE_03 (c) | The first load of each file costs one HEAD; a card's images are all asked for at once when the card comes near. | A card with 30 images sent 30 HEADs in 2 ms, then the browser's lazy loading fetched 14 and the rest on scroll (`26b-near-top.png`) |
+| 18 | FE_03 (d) | A picture smaller than the card shows at its own size (ruling 23's "never wider"); the zoomed view scales it up. | Not tried by hand |
+| 19 | T_02 (a) | A panel agent gets the skill's text but not its folder; naming the folder (Claude's prompt, Kiro's agent `resources`) would let it read the calculator and a longer guide. | — |
+| 20 | VERIFY_01 | Go to card leaves a partly visible card where it is, and a card it pans in can end under the toolbar. General board behaviour (go-to-card), not app cards. | At 117%: card 4 with 38 of its 161 px showing, its title under the toolbar; card 7 cut 162 px at the left; card 1 panned in with its top at y 32 under the 52 px toolbar (`01b-k100-card1.png`, `12-card7-1600-light.png`) |
+| 21 | VERIFY_01 | The wheel over a loaded panel scrolls the panel, not the board, so scrolling the board stops whenever a panel passes under the pointer. | Six wheel steps from (1400, 500) moved the board 3,600 px; on the way back a panel under the pointer took the wheel and the board moved 600 px (`08b-panned-away.png`) |
+| 22 | VERIFY_01 | A panel is never told the person allowed or stopped its app, so the calculator keeps "Press Allow on the card to calculate" after Allow until the next key (needs a protocol notification). | `31-after-allow-layout.png` |
+| 23 | VERIFY_01 | The "1 selected" pill sits over a container's tools or a card's kind tab after a go-to. General board. | `12b-goto-9.png`, `15-1470-dark-images.png` |
+| 24 | VERIFY_01 | With its folder gone the app card falls back to 360×320 (no manifest to read), so it changes size when the folder goes; the page could keep the last size it knew. | Card 3 Notice: 300×140 panel → 360×320 after a reload (`24-gone-reloaded.png`) |
+
+T_02's row (b) (an open page shows an app's old state after a file change until Check again) is not here: VERIFY_01
+counts it inside ruling 7 as finding 2.
 
 ---
 
@@ -311,8 +340,95 @@ as the model). Scenarios 28-31 in `scenarios.md`; runs in NOTES.md § Skill v3.8
 Gates: verify 0 warnings; check 0; npm test 1474 + 7 pass. All harness processes stopped.
 
 ### VERIFY_01: By hand
-_Status:_ Pending
-_Notes:_
+_Status:_ Completed (2026-10-18), with findings 1-7 inside the rulings for FIX tasks
+_Notes:_ Gates first, one after another at `a5bde82`: all six exit 0 (§ Goal check line 2). Then one scratch
+board on port 4495 (`HOME`, `VB_PROJECT` in `$TMPDIR/vb-vac/`, `VB_KIRO_AGENT=0`; restarted once after the
+folder switch), the repo's Playwright chromium, 1600×1000 and 1470×956, light and dark. A newly joined agent
+drew board `verify` (Apps: calculator 360×440, T_02's `km-miles`, a panel-only "Notice"; Plans; Images;
+"Try to break it": a flood panel, a 30 MB answer, a looping tool, a second calculator card, a crashing
+tool) and board `big` (81 cards, one with 30 PNGs of 3.2 MB). Person's acts on the page. About 70
+screenshots, each looked at, in `$TMPDIR/vb-vac/shots/`; scripts in `$TMPDIR/vb-vac/scripts/`. Everything
+stopped after (server, driver, browser; no runner left). This repo's `.visionboard/` was only read.
+Design skills run: design-critique, accessibility-review (keyboard order, names, live regions; axe in both
+panels clean light and dark), ux-copy.
+- **Passed by hand**: Allow (confirm, toast "Calculator allowed", focus on the card), keypad and keyboard
+  sums, History; converter 10 km → 6.213712 miles; Stop app (confirm, then "Press Allow on the card to
+  calculate"); a `tools.mjs` change → "Code changed. Allow it again?" after a call; a broken manifest →
+  "This app has problems" with the lines, fixed + Check again → "Calculator updated", focus on the card;
+  far zoom → placeholders, frames gone, back in → panels restart; panned well away → frames gone, back →
+  made again; past version → "Apps don't run in past versions.", no frame; theme light → dark with a
+  panel open (the panel's background followed); select + Z (131%), go to card 1, a note on the card shown
+  like any card's; Tab card → Allow → panel, Esc → card; two cards of one app share one state; a folder
+  switch stopped all three app processes. Images: subfolder, tall and wide at the card's width; click and
+  keyboard open at 70% (both sizes); Esc, outside click and × close with focus back; motion in and out;
+  reduced motion instant; overwrite + select swaps, delete + select says "Image not found"; internet and
+  svg boxes. Break-it results: § Goal check line 4 and 11.
+
+**Findings inside the rulings** (each for a FIX task; screenshots in `$TMPDIR/vb-vac/shots/`):
+
+1. **Rulings 10 and 11: a deleted app folder never says "not found", its panel goes blank, and restoring
+   the folder doesn't heal it.** Steps: card 3 (panel-only "Notice") on screen, move
+   `.visionboard/apps/gone/` away. Seen: the card keeps its old panel; once the frame reloads (pan away and
+   back) the panel is an empty grey box, and the console shows the panel route's 404 blocked by the board's
+   own `frame-ancestors 'none'` (the 404 carries the page CSP). Only a page reload shows "App gone not
+   found". Folder put back: still "not found" after a wait, a pan and a select (the `missing` state has no
+   Check again, and list_apps is read again only on app ledger lines, Allow/Stop, Check again/Restart or a
+   refused call). Should: "App <id> not found" once the panel can't load, and the panel back when the
+   folder is. Fix: read list_apps again when a frame loads or fails (and on select, see 2); give `missing`
+   Check again; let the panel route's 404 carry the panel's `frame-ancestors 'self'`. Files:
+   `apps/board/src/board/app-cards.ts`, `app-state.ts`, `packages/ui/src/node/node-app.ts` (`COPY`),
+   `apps/board/server/apps/panel.ts`, a page test. Adds page code: yes, a little.
+   Shots: `24-gone-pan-back.png`, `24-gone-reloaded.png`, `24-gone-restored-select.png`.
+2. **Ruling 7 (and 11): the card shows "Code changed" only after the person tries the app.** Steps: card 1
+   allowed and ready, append a line to `tools.mjs`, wait, select the card. Seen: still "Item 1, App:
+   Calculator" with Stop app; "Code changed. Allow it again?" appears only after `=` answers "Press Allow
+   on the card to calculate". VERIFY_01 step 1 expects to see it after the change; T_02 proposed this as a
+   tracker row (b). Fix: read list_apps again when an app card is selected and when its frame loads (same
+   seam as 1). Files: `app-cards.ts`, `app-state.ts`, `apps/board/src/board/draw.ts` (select hook), a page
+   test. Adds page code: yes, a little (shared with 1). Shots: `30-code-changed-before-a-call.png`,
+   `06-code-changed-card1.png`.
+3. **Rulings 3 and 10: a past version ignores the manifest's panel size.** Card 2 (Converter, no `w`/`h`,
+   manifest 360×220) is 360×220 now and 360×320 in v19; card 3 (manifest 300×140) also becomes 360×320, so
+   cards change size between now and a past version. Cause: `app-cards.ts` `input()` returns
+   `{ past: true }` without the app's `info`, so `appView` falls back to the default. Fix: keep the known
+   `info` (its `size`) with `past`. Files: `app-cards.ts`, maybe `node-app.ts` `cardState`;
+   `app-states.spec.ts` "a past version" to assert the size. Adds page code: a few bytes.
+   Shots: `09-past-version-1600-light.png` against `01b-k100-card1.png`.
+4. **Ruling 10's problems list, plain words (maintainer's standing instruction): raw code marks on the
+   person's screen.** Seen on the invalid card: "app.json /size/w: \`w\` must be at most 960" and
+   "app.json /colour: unknown field \`colour\`": literal backticks and a JSON pointer. Should read like
+   "app.json: w must be at most 960" / "app.json: unknown field colour". Fix: strip the backticks (and the
+   pointer) in `node-app.ts` `problemLine` (a few bytes of page code), or word list_apps' problems without
+   them (`apps/board/server/apps/manifest.ts`, `server/schema.ts`; no page code, but agents read those
+   words too). Shots: `07-invalid-card1-light.png`, `07-invalid-card1-dark.png`.
+5. **Ruling 19, plain words: an internet picture's box gives a folder rule, not the reason.** Seen on card
+   8: "Image not shown: https://example.com/logo.png (must be inside the images folder)". The person reads
+   a folder rule for a web address. Should say what happened, e.g. "(no images from the internet)", keeping
+   "must be inside the images folder" for `..`, a leading `/` and the like. Fix: one more `IMAGE_WORDS`
+   reason for a scheme or `//` in `packages/format/src/images.ts` `imagePathProblem`, and its row in
+   `docs/specification/images.md` (a test holds that table). Adds page code: a few bytes (the words ship
+   with the page). Shots: `13b-after-update-delete.png`, `15-1470-dark-images.png`.
+6. **Great UX (standing instruction), and components.md § App card 2's claim: Allow makes the board
+   jump.** The ask line exists only in "needs approval" and "code changed", so Allow shrinks the card by 44
+   px (51 px on screen at 117%: card 1 762 → 711 px) and the container below jumps up 52 px under the
+   pointer; Stop app and a code change grow it back. components.md says "a state change … never moves the
+   card" (and `node-app.ts`'s header the same). Fix: keep the row's height in every app state (e.g. the
+   ready state holds Stop app in that row instead of the footer), or correct the two claims. Files:
+   `packages/ui/src/node/node-template.ts` `appStateMarkup`, `node-app.css`, components.md. Adds page code:
+   a little (markup and CSS), none if only the claims change. Shots: `31-after-allow-layout.png`,
+   `02-after-allow-card1.png`.
+7. **Plain words in a problem agents see (standing instruction; minor).** `call_app_tool`'s too-large
+   detail reads "The tool \"evaluate\" of the app \"huge\" answered more than 256 KiB. Answer less." Should
+   be "256 KB". The API already says KiB elsewhere ("over the 64 KiB limit" for a body, "over the 1024 KiB
+   limit" for an app file), so change all of them or none. Fix: `apps/board/server/apps/tool-checks.ts`
+   (`tooLarge`), `apps/board/server/apps/manifest.ts`, `apps/board/server/body.ts`, and the tests that read them
+   (`api-apps.test.ts`, `api-errors.test.ts`, `app-folder.test.ts`). No page code. Optional. (The person's panel shows the plain "The tool's answer is too big.")
+Every other word on screen read plain to the ux-copy review: the asks, the confirms ("The agent wrote this
+app. It runs on this computer and can use the internet, but it can't change your files."), the toasts, the
+panel errors ("The tool took too long.", "The app is busy. Try again."), "Image not found: <path>"; the
+skill's apps and images chapters are precise for agents and raised nothing.
+Tracker rows 8-24: § Proposed tracker rows. Not this run's: headless Chromium shells from `~/.kiro/crew/`
+are running on this machine.
 
 ---
 
