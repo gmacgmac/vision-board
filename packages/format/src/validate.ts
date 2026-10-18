@@ -1,6 +1,7 @@
 import { FORBIDDEN_KEYS, FORMAT_VERSION, ID_PATTERN, KINDS, MODES } from './view.ts';
 import type { View } from './view.ts';
 import { NODE_SIZES } from './ledger.ts';
+import { appNodeRules, appRefProblems } from './app-shape.ts';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -46,6 +47,8 @@ export function validateView(input: unknown): string[] {
     if (!KINDS.includes(n.kind as never)) p.push(`${at}.kind: one of ${KINDS.join(', ')}`);
     if (!isStr(n.title)) p.push(`${at}.title: required`);
     if (n.size !== undefined && !NODE_SIZES.includes(n.size as never)) p.push(`${at}.size: one of ${NODE_SIZES.join(', ')}`);
+    if (n.app !== undefined) appRefProblems(n.app, `${at}.app`, p);
+    appNodeRules(n, at, p);
     if (n.n !== undefined) {
       if (!Number.isInteger(n.n) || (n.n as number) < 1) p.push(`${at}.n: integer >= 1`);
       else if (numbers.has(n.n as number))

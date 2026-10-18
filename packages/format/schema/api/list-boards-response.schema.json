@@ -22,15 +22,15 @@
         ],
         "properties": {
           "board": {
-            "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id",
+            "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id",
             "description": "The board id, which the other operations take in their path."
           },
           "title": {
-            "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/title",
+            "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/title",
             "description": "The board's title."
           },
           "seq": {
-            "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/seq",
+            "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/seq",
             "description": "The board's own last ledger line (`seq`)."
           },
           "locked": {

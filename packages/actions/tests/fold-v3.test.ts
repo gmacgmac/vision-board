@@ -10,7 +10,7 @@ import {
 import { A, B, C, scene } from './ledger-v3.ts';
 
 test('registry: every person action is by the person; the decisions need confirmation', () => {
-  const decisions = new Set(['ack', 'drop', 'later', 'grant', 'deny', 'revoke', 'archive']);
+  const decisions = new Set(['ack', 'drop', 'later', 'grant', 'deny', 'revoke', 'archive', 'app-allow', 'app-revoke']);
   assert.deepEqual(Object.keys(ACTIONS), [...ACTION_IDS]);
   for (const id of ACTION_IDS) {
     assert.equal(ACTIONS[id].by, 'person', id);

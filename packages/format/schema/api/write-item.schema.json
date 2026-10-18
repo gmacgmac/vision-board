@@ -13,22 +13,22 @@
   },
   "oneOf": [
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/board.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/board.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/region.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/node.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/node.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/link.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/link.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/unlink.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/unlink.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/reply.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/reply.schema.json#/$defs/sent"
     },
     {
       "title": "Propose",
@@ -38,20 +38,20 @@
       "required": ["type", "n", "ver", "action", "reason"],
       "properties": {
         "type": {"const": "propose"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeRef"},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/version", "description": "The node version you are proposing an answer on."},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeRef"},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/version", "description": "The node version you are proposing an answer on."},
         "action": {"enum": ["check", "cross"], "description": "What you propose: ✓ (`check`) or ✗ (`cross`). Only the person answers."},
-        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/longText", "description": "Why you propose this."},
-        "source": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
+        "reason": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/longText", "description": "Why you propose this."},
+        "source": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/key"}
       },
       "unevaluatedProperties": false
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/park.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/park.schema.json#/$defs/sent"
     },
     {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/sent"
+      "$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/sent"
     },
     {
       "title": "Append",
@@ -60,10 +60,10 @@
       "required": ["type", "n", "text"],
       "properties": {
         "type": {"const": "append"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeRef"},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
-        "base": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeRef"},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/key"}
       },
       "unevaluatedProperties": false
     }

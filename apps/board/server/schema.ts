@@ -15,7 +15,7 @@ export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema
 export const CHAT_SCHEMA_DIR = fileURLToPath(new URL('../../../packages/chat/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/16/ledger-event.schema.json`;
+export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/17/ledger-event.schema.json`;
 export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */
@@ -89,6 +89,14 @@ const PATTERNS: Record<string, string> = {
   '^a-[a-z0-9]{8}$': 'is not an agent id: "a-" and 8 lowercase letters or digits, as join gives it',
   '\\S': 'must not be blank',
   '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$': 'is not a UTC timestamp like 2026-10-05T09:00:00Z',
+  // The app contract's patterns (schema/app/manifest.schema.json, common.schema.json `appHash`).
+  '^[0-9a-f]{64}$': 'is not an app\'s hash: 64 lowercase hex characters, as list_apps gives it',
+  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.html$': 'is not a plain file name in the app\'s folder ending in .html',
+  '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.mjs$': 'is not a plain file name in the app\'s folder ending in .mjs',
+  '^[A-Z_][A-Z0-9_]{0,63}$': 'is not a .env key: upper-case letters, digits and _',
+  '^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+(:[0-9]{1,5})?$': 'is not an https origin with an exact host, like https://api.example.com (no wildcard, no path)',
+  '^[a-z][a-z0-9_]{0,39}$': 'is not a tool name: lower-case letters, digits and _, starting with a letter, up to 40',
+  '^\\S{1,40}$': 'is not a version: up to 40 characters, no spaces',
 };
 
 const TYPES: Record<string, string> = {

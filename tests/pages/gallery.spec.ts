@@ -17,7 +17,7 @@ const PATTERNS: PatternInfo[] = readdirSync(UI, { withFileTypes: true })
 const THEMES: Theme[] = ['dark', 'light'];
 // every-node ruling 2: the kind decides. A card that asks takes ✓ and ✗; one that tells never does.
 const ASKS = ['question', 'decision', 'action'];
-const TELLS = ['finding', 'risk', 'topic', 'note'];
+const TELLS = ['finding', 'risk', 'topic', 'note', 'app'];
 const STATUSES = ['open', 'acknowledged', 'dropped', 'commented', 'later'];
 
 test.beforeEach(async ({ page }) => {
@@ -53,7 +53,7 @@ test('node: every kind in every status it can reach, cards that ask apart from c
     await expect(cleared.locator('.vb-node-reply')).toHaveCount(1);
   }
   await expect(asks.locator('vb-node')).toHaveCount(18);
-  await expect(tells.locator('vb-node')).toHaveCount(16);
+  await expect(tells.locator('vb-node')).toHaveCount(20);
   // Every card is numbered; ✓ and ✗ only on cards that ask, Check and Cross on every kind (D-045).
   await expect(asks.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
   await expect(tells.locator('vb-node:not(:has(.vb-node-num))')).toHaveCount(0);
@@ -74,8 +74,8 @@ test('node: the other states are drawn', async ({ page }) => {
   await expect(node.locator('vb-node[data-emphasis]')).toHaveCount(1);
   await expect(node.locator('vb-node.dragging')).toHaveCount(1);
   // 3_FE_01 ruling 2: 05's selected look, named in the card's label too.
-  // The "Selected" card in Other states, and one selected card of each of the 7 kinds (FE_01).
-  await expect(node.locator('vb-node[data-selected]')).toHaveCount(8);
+  // The "Selected" card in Other states, and one selected card of each of the 8 kinds (FE_01).
+  await expect(node.locator('vb-node[data-selected]')).toHaveCount(9);
   await expect(node.locator('vb-node[data-selected]').first()).toHaveAttribute('aria-label', /, selected$/);
   await expect(node.locator('.vb-node-tags li')).toHaveCount(3);
   const notes = node.locator('.vb-node-notes');
@@ -86,8 +86,8 @@ test('node: the other states are drawn', async ({ page }) => {
   // The notes board: a pin per noted card, sent notes grey and marked, the count over several.
   await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
   await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
-  // One sent; seven the agent answered (the matrices' "Answered by the agent" rows, D-045), history too.
-  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(8);
+  // One sent; eight the agent answered (the matrices' "Answered by the agent" rows, D-045), history too.
+  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(9);
   // A topic and a note are numbered and take a comment and Later (every-node ruling 2, D-045).
   const others = node.locator('[aria-label="Other node states"]');
   for (const kind of ['topic', 'note']) {

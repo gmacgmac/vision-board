@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/app/manifest.schema.json",
+  "title": "App manifest",
+  "description": "`app.json` in an app's folder, `.visionboard/apps/<id>/`: what the board needs to show the app's panel and run its tools. The agent writes it; the board only reads it. `$defs/tool` is one tool as the tools module exports it, less `run`.",
+  "$comment": "Was: D-047 ruling 2; docs/specification/apps.md § The manifest",
+  "type": "object",
+  "required": ["id", "title", "version"],
+  "properties": {
+    "id": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id", "description": "The app's id: the same as its folder's name."},
+    "title": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/title", "description": "The app's name, as the card and the panel's frame show it."},
+    "version": {"type": "string", "pattern": "^\\S{1,40}$", "description": "The app's version, as you number it (for example 1.0.0)."},
+    "panel": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/panelFile", "default": "panel.html", "description": "The panel: one HTML file in the app's folder, its script and style inside it."},
+    "tools": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolsFile", "default": "tools.mjs", "description": "The tools module: an ES module file in the app's folder. Left out, `tools.mjs` when the folder has one; an app without a tools file has a panel only."},
+    "size": {
+      "type": "object",
+      "description": "The panel's size in px for a card that sets none.",
+      "required": ["w", "h"],
+      "properties": {
+        "w": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/appWidth"},
+        "h": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/appHeight"}
+      },
+      "unevaluatedProperties": false
+    },
+    "env": {
+      "type": "array",
+      "description": "The keys in the project's `.env` the tools may read (`ctx.env`); nothing else from the board's environment reaches them.",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/envName"}
+    },
+    "csp": {
+      "type": "object",
+      "description": "The places beyond the board the panel may reach, in MCP Apps' names. Left out, the panel reaches nothing.",
+      "properties": {
+        "connectDomains": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/domains", "description": "Where the panel may fetch from or open a socket to."},
+        "resourceDomains": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/domains", "description": "Where the panel may load images, fonts and style sheets from."}
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "title": {"type": "string", "pattern": "\\S", "maxLength": 80},
+    "panelFile": {"type": "string", "pattern": "^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.html$", "description": "A plain file name in the app's folder ending in `.html`: no folder, no `..`, not hidden."},
+    "toolsFile": {"type": "string", "pattern": "^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.mjs$", "description": "A plain file name in the app's folder ending in `.mjs`: no folder, no `..`, not hidden."},
+    "envName": {"type": "string", "pattern": "^[A-Z_][A-Z0-9_]{0,63}$", "description": "A key in the project's `.env`: upper-case letters, digits and `_`."},
+    "domain": {"type": "string", "pattern": "^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+(:[0-9]{1,5})?$", "description": "One https origin, an exact host (lower case) and an optional port: no wildcard, no path."},
+    "domains": {"type": "array", "maxItems": 16, "uniqueItems": true, "items": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/domain"}},
+    "toolName": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$", "description": "A tool's name: lower-case letters, digits and `_`, starting with a letter, up to 40."},
+    "objectSchema": {
+      "type": "object",
+      "description": "A JSON Schema for an object: `type` is `object`.",
+      "required": ["type"],
+      "properties": {"type": {"const": "object"}}
+    },
+    "tool": {
+      "type": "object",
+      "description": "One tool as the tools module exports it, less `run` (MCP's tool shape).",
+      "required": ["name", "description", "inputSchema"],
+      "properties": {
+        "name": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolName"},
+        "description": {"type": "string", "pattern": "\\S", "maxLength": 1000, "description": "What the tool does, in a sentence or two."},
+        "inputSchema": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/objectSchema", "description": "The JSON Schema the arguments must fit; the board checks them before the tool runs."},
+        "outputSchema": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/objectSchema", "description": "The JSON Schema the tool's answer must fit; the board checks it before the panel gets it."}
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

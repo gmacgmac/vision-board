@@ -8,6 +8,7 @@ import {
   NODE_SIZES, NOTE_KINDS, PERSON_EVENTS, PERSON_TOO,
 } from './ledger.ts';
 import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES, WIDTHS } from './view.ts';
+import { appActRules, appHashProblems, appNodeRules, appRefProblems } from './app-shape.ts';
 
 /** Every mode a stored line may name: today's, and the old names older lines carry (api.md 129). */
 const LINE_MODES = [...MODES, ...Object.keys(RENAMED_MODES)];
@@ -110,7 +111,7 @@ const NODE: Shape = {
   req: ['region', 'kind', 'title'],
   fields: {
     region: id, kind: oneOf(KINDS), title: text(LIMITS.title), body: text(LIMITS.body), item: bool,
-    lane: text(LIMITS.lane), tags: list(text(LIMITS.tag), LIMITS.tags), emphasis: bool, size: oneOf(NODE_SIZES),
+    lane: text(LIMITS.lane), tags: list(text(LIMITS.tag), LIMITS.tags), emphasis: bool, size: oneOf(NODE_SIZES), app: appRefProblems,
   },
 };
 
@@ -137,7 +138,7 @@ const SHAPES: Record<EventType, Shape> = {
       proposal: int('seq of a propose event'), x: num, y: num, board: id, region: id, mode: oneOf(LINE_MODES),
       request: int('seq of a grant-request event'), holder: agentId, size: oneOf(ACT_SIZES),
       note: int('seq of the comment or context act that made the note'), kind: oneOf(NOTE_KINDS),
-      nodes: nodeNumbers, widths: oneOf(WIDTHS),
+      nodes: nodeNumbers, widths: oneOf(WIDTHS), app: id, hash: appHashProblems,
     },
   },
   seen: { req: [], fields: { n: nodeNumber, ver: int(), board: id, head: int('seq of a line') } },
@@ -222,6 +223,7 @@ function actRules(e: Rec, p: string[]): void {
     need('board', `${a}: board required`);
     for (const f of ['n', 'ver', 'region', 'nodes']) if (has(f)) p.push(`${f}: ${/^[aeiou]/.test(a) ? 'an' : 'a'} ${a} names its board, and nothing else`);
   }
+  appActRules(e, p);
 }
 
 /** A `retire` names its cards, and with `region` the container they were in (api.md 126); without a
@@ -282,6 +284,7 @@ export function eventProblems(input: unknown): string[] {
   modeRules(e, p);
   // From v11 the kind decides; `item` stays readable on older lines (api.md 118).
   if (t === 'node' && (e.v as number) >= 11 && isRec(e.node) && e.node.item !== undefined) p.push(`node.item: ${ITEM_REMOVED}`);
+  if (t === 'node' && isRec(e.node)) appNodeRules(e.node, 'node', p);
   return p;
 }
 

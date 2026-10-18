@@ -7,8 +7,9 @@ import type { ActEvent, ActionId, LedgerEvent } from '../../format/src/index.ts'
 import { actCard, containerKey, isContainerAct, LATER_REGION, latest } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { cardsOf } from './notes.ts';
+import { appCards } from './apps.ts';
 
-export const REFERENCE_KINDS = ['board', 'container', 'card', 'note', 'link', 'request', 'agent'] as const;
+export const REFERENCE_KINDS = ['board', 'container', 'card', 'note', 'link', 'request', 'agent', 'app'] as const;
 export type ReferenceKind = (typeof REFERENCE_KINDS)[number];
 
 /** One container: a region on a board (D-011). */
@@ -83,6 +84,10 @@ export const REFERENCES = {
     lookup: (s: LedgerState, agent: string): Container[] => [...s.index.boards].flatMap(([board, regions]) =>
       [...regions].filter((region) => s.index.holders.get(containerKey(board, region))?.has(agent)).map((region) => ({ board, region }))),
   },
+  app: {
+    to: [], meaning: 'An app is one folder in the project\'s .visionboard/apps/, on no board. App cards name it (node.app.id) and the person\'s allows are on it (api.md 150); a card whose app has no folder is an orphan until the folder is back.',
+    lookup: (s: LedgerState, app: string): number[] => appCards(s, app),
+  },
 } satisfies Record<ReferenceKind, Reference>;
 
 const R = REFERENCES;
@@ -112,6 +117,8 @@ const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   restore: (s, e) => R.board.lookup(s, e.board!),
   lock: (s, e) => R.board.lookup(s, e.board!),
   unlock: (s, e) => R.board.lookup(s, e.board!),
+  // An allow is on its app, which is on no board and no card (api.md 150).
+  'app-allow': none, 'app-revoke': none,
 };
 
 type Rule<T extends LedgerEvent['type']> = (s: LedgerState, e: LedgerEvent & { type: T }) => Scope;

@@ -41,7 +41,7 @@ test('gallery ledger: every kind appears once in every status it can reach, and 
       assert.equal(cells.filter((c) => c === `${kind}/${status}`).length, reachable ? 1 : 0, `${kind} / ${status}`);
     }
   }
-  assert.equal(cells.length, 3 * 6 + 4 * 4);
+  assert.equal(cells.length, 3 * 6 + 5 * 4);
   for (const n of view.nodes.filter((x) => x.region === 'kinds' && cellOf(x.id) === 'cleared'))
     assert.equal(statusOf(state, n.id), 'open', `${n.kind}: open again and unmarked`);
 });

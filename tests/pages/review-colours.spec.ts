@@ -10,7 +10,7 @@ import type { Theme } from './helpers.ts';
 import type { Page } from '@playwright/test';
 
 type Rgb = [number, number, number];
-const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'];
+const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note', 'app'];
 
 /** Any CSS colour as the pixel the browser would draw (so rgb(), color(srgb …) and mixes compare). */
 const pixel = (page: Page, css: string): Promise<Rgb> => page.evaluate((c) => {

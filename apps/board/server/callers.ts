@@ -43,6 +43,7 @@ const NO_SECRET = 'This needs your agent secret, sent as Authorization: Bearer <
 const UNKNOWN_SECRET = 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.';
 const ONLY_GATE = 'Only a chat session\'s gate hook calls this, with its run token. The person answers approvals on the board.';
 const NO_RUN_TOKEN = 'This needs the chat session\'s run token, sent as Authorization: Bearer <token>.';
+const STALE_PAGE = 'The board page has an old session (the board restarted): reload the page. An agent sends its secret from join instead.';
 const BEARER = /^Bearer +(\S+)\s*$/i;
 
 /** The token of an `Authorization: Bearer` header, if the request sends one. */
@@ -84,6 +85,14 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
     if (cookie !== undefined) throw problem('forbidden', ONLY_GATE);
     if (!BEARER.test(req.headers.authorization ?? '')) throw problem('not-authenticated', NO_RUN_TOKEN, { headers: REALM });
     return undefined;
+  }
+  // An agent's secret or the person's cookie (api.md 152): a Bearer header names an agent; else the
+  // page's cookie, refused `forbidden` when stale so the page reloads (api.md 20).
+  if (security === 'agent-or-person') {
+    if (req.headers.authorization !== undefined) return agentOf(req, env);
+    if (cookie === undefined) throw problem('not-authenticated', NO_SECRET, { headers: REALM });
+    if (!same(cookie, env.person)) throw problem('forbidden', STALE_PAGE);
+    return { by: 'person' };
   }
   if (agentOp && req.method !== 'GET' && cookie !== undefined) throw problem('forbidden', ONLY_AGENT);
   if (security === 'agent') return agentOf(req, env);

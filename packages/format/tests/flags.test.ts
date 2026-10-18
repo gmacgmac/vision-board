@@ -68,3 +68,8 @@ test('parseFlags: unknown names are refused, not applied', () => {
   assert.deepEqual(got.refused, ['bogus', 'other', 'constructor', '__proto__']);
   assert.equal(Object.getPrototypeOf(got.overrides), Object.prototype);
 });
+
+test('appCards is on by default (app-cards ruling 13), and -appCards turns it off', () => {
+  assert.equal(flagOn('appCards'), true);
+  assert.equal(flagOn('appCards', parseFlags('-appCards').overrides), false);
+});

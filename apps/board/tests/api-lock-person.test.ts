@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { ActionId } from '../../../packages/format/src/index.ts';
-import { ACTION_IDS, LATER_REGION } from '../../../packages/format/src/index.ts';
+import { ACTION_IDS, APP_ACTIONS, LATER_REGION } from '../../../packages/format/src/index.ts';
 import { boardLocked, LOCKED_PERSON, passesLock, ROUND_HEAD } from '../../../packages/actions/src/index.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -69,6 +69,7 @@ function everyAct(): Record<ActionId, Rec> {
     'note-remove': { n: 1, note: at.note }, move: { n: 1, ver: 1, region: LATER_REGION }, reject: { n: 2, proposal: at.proposal },
     flag: { n: 1 }, unflag: { n: 1 }, widths: { board: VAULT, region: 'ideas', widths: 'match' },
     archive: { board: VAULT }, restore: { board: VAULT }, lock: { board: VAULT }, unlock: { board: VAULT },
+    'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
   };
 }
 
@@ -82,6 +83,7 @@ test('locked, every act in the registry is refused 423 with the person\'s words,
   const acts = everyAct();
   const seq = () => h.ledger.state().seq;
   for (const action of ACTION_IDS) {
+    if (APP_ACTIONS.has(action)) continue; // on no board: the next test walks them while locked
     if (passesLock({ type: 'act', action })) {
       assert.ok(action in MARKS, `${action} passes the lock: say what it answers in MARKS`);
       try { await act({ action, ...acts[action] }); } catch { /* a refusal is checked by status */ }
@@ -96,6 +98,14 @@ test('locked, every act in the registry is refused 423 with the person\'s words,
   }
   assert.equal(locked(), false, 'the walk ends with the unlock');
   await act({ action: 'later', n: 2, ver: 1 });
+});
+
+test('locked, an app\'s allow and stop still go: they are on no board (api.md 150)', async () => {
+  await mark('lock');
+  const acts = everyAct();
+  for (const action of APP_ACTIONS) assert.equal((await act({ action, ...acts[action] })).action, action);
+  assert.equal(locked(), true);
+  await mark('unlock');
 });
 
 test('locked, a rename and a new chat are refused; a seen, the ledger and the chat list still answer', async () => {

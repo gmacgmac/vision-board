@@ -8,6 +8,7 @@
 import type { ActEvent } from '../../format/src/index.ts';
 import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
+import { appRules } from './apps.ts';
 import { archiveRules } from './archive.ts';
 import { lockRules, writeProblem } from './lock.ts';
 import { lockOf } from './note-lock.ts';
@@ -42,6 +43,9 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   restore: (e, s, board, p) => { onBoard(e.board, board, p); archiveRules(e, s, p); },
   lock: (e, s, board, p) => { onBoard(e.board, board, p); lockRules(e, s, p); },
   unlock: (e, s, board, p) => { onBoard(e.board, board, p); lockRules(e, s, p); },
+  // On the app, sent from any board one of its cards is on (api.md 150).
+  'app-allow': (e, s, _board, p) => appRules(e, s, p),
+  'app-revoke': (e, s, _board, p) => appRules(e, s, p),
 };
 
 /** A move (3_FE_03 rulings 1 and 6, api.md 66): every card on one board, the one the act was
@@ -115,8 +119,8 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   else if (board !== undefined && node.board !== board) p.push(`n: node ${cardName(s)(e.id!)} is on board "${node.board}", not "${board}"`);
   else if (ITEM_ACTIONS.includes(e.action)) {
     const kind = latest(node).kind;
-    if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: a ${kind} doesn't offer this`);
-  }
+    if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: ${/^[aeiou]/.test(kind) ? 'an' : 'a'} ${kind} doesn't offer this`);
+  } else if (e.action === 'size' && latest(node).kind === 'app') p.push('size: an app card is as big as its panel, which the agent sets');
   if (def.text === 'required' && !e.text?.trim()) p.push('text: required');
   if (node && !p.length) noteRules(e, s, node.board, p);
   if (node && !p.length) proposalProblems(e, s, p);

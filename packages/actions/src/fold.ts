@@ -6,15 +6,15 @@
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
 // flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
-// board's dates, and the agent's clears (clears.ts). Every map is keyed by a card's identity (`id`);
-// the reads give board numbers (numbers.ts, api.md 125). One board as the page reads it:
-// board-state.ts. Pure: same events, same state; events are assumed valid (readLedger checks them).
+// board's dates, the agent's clears (clears.ts) and each app's allowed hash (apps.ts). Every map is
+// keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
+// as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
 } from '../../format/src/index.ts';
 import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
-import type { BoardDates } from './archive.ts';
-import { foldArchive } from './archive.ts';
+import { type BoardDates, foldArchive } from './archive.ts';
+import { type AppAllows, foldAppAct } from './apps.ts';
 import { foldLock } from './lock.ts';
 import type { Place } from './containers.ts';
 import { applyContainerAct } from './containers.ts';
@@ -26,8 +26,7 @@ import { foldRetire, keepRetiredRegion } from './retire.ts';
 import { foldFlag } from './card-flags.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
-import type { Clear } from './clears.ts';
-import { cutOf, foldClears } from './clears.ts';
+import { type Clear, cutOf, foldClears } from './clears.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -54,8 +53,9 @@ export interface Marks {
 /** A kept grant request's words: why the agent asked, and the person's note if refused. */
 export interface GrantNote { reason: string; at: string; text?: string }
 
-/** What was drawn (DrawnState, from packages/format) plus the person's side. */
-export interface LedgerState extends DrawnState {
+/** What was drawn (DrawnState, from packages/format) plus the person's side, and the person's allows of
+ * app code (`appAllowed`, apps.ts). */
+export interface LedgerState extends DrawnState, AppAllows {
   /** The container index, folded by packages/format (`indexEvent`), never folded again here. */
   index: LedgerIndex;
   /** Agent id -> the label it joined with. */
@@ -154,7 +154,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), flags: new Map(), archived: new Map(), locked: new Map(), dates: new Map(),
+  retiredRegions: new Map(), flags: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -249,6 +249,7 @@ function applyAct(s: LedgerState, e: ActEvent): void {
     case 'send': s.lastSend.set(e.board!, e.seq); break;
     case 'deny': { const note = s.grantNotes.get(e.request!); if (note && e.text) note.text = e.text; break; }
     case 'grant': case 'revoke': break; // holders live in the index
+    case 'app-allow': case 'app-revoke': foldAppAct(s, e); break;
     default: applyItemAct(s, e);
   }
 }

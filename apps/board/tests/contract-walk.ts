@@ -22,7 +22,8 @@ export interface AgentOp {
   input: CallInput;
   /** It names the board, in its path or its body. */
   namesBoard: boolean;
-  /** Only an agent's secret may call it. */
+  /** An agent needs its secret to call it: no call without credentials (list_apps also takes the
+   * person's cookie, which is the page's, not an agent's). */
   agentOnly: boolean;
   /** Any method but GET: it may write. */
   writes: boolean;
@@ -55,7 +56,7 @@ export function agentOps(board: string): AgentOp[] {
     }
     const namesBoard = 'board' in input || (input.body as Rec | undefined)?.board !== undefined;
     const security: Rec[] = op.security ?? [];
-    const agentOnly = security.length > 0 && security.every((s) => Object.keys(s).includes('agentSecret'));
+    const agentOnly = security.length > 0 && security.every((s) => Object.keys(s).length > 0) && security.some((s) => 'agentSecret' in s);
     return { id: id as OperationId, method, input, namesBoard, agentOnly, writes: method !== 'GET' };
   });
 }

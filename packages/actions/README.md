@@ -19,7 +19,10 @@ call the same actions, and each one is recorded in the project ledger as an `act
   (`archive.ts`, api.md 135-137: `boardVisibility`, the one check of whether agents see a board,
   `visibleToAgents`, `archivedProblem`, `UNAVAILABLE`, `archivedBoards`), locked boards (`lock.ts`,
   api.md 138-140: `boardLocked`, which counts an archived board, `writeProblem`, the one "may this
-  line be written" check, `passesLock`, `lockedProblem`, `LOCKED`, `LOCKED_PERSON`), the
+  line be written" check, `passesLock`, `lockedProblem`, `LOCKED`, `LOCKED_PERSON`), app cards
+  (`apps.ts`, api.md 150-151, D-047: `foldAppAct`, the one allowed hash per app in
+  `LedgerState.appAllowed`; `appRules`; `appOf`, the app a card names; `namedApps` and `appCards`,
+  the cards on a board now that name an app), the
   references table (`references.ts`, D-033: `REFERENCES`, one row per kind in `REFERENCE_KINDS`
   saying what it belongs to; `scopeOf`, the board, container and cards any ledger line touches;
   `placeOf`, the container a card is in now; `eventBoard`, behind each board's head in

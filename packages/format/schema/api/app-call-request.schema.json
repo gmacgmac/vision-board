@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/app-call-request.schema.json",
+  "title": "App tool call",
+  "description": "One call of one of an app's tools, from its panel: MCP's `tools/call` params, with the tool named `tool`.",
+  "$comment": "Was: D-047 ruling 6",
+  "type": "object",
+  "required": ["tool"],
+  "properties": {
+    "tool": {"$ref": "https://vision-board.invalid/schema/app/manifest.schema.json#/$defs/toolName", "description": "The tool's name, as the app's tools module gives it."},
+    "arguments": {"type": "object", "description": "The tool's input, checked against its `inputSchema` before it runs. Left out, `{}`."}
+  },
+  "unevaluatedProperties": false
+}

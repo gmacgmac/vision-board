@@ -113,3 +113,14 @@ test('annotations (api.md 49): reads are read-only; writes are not destructive a
   }
   assert.deepEqual(tools.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name).sort(), WRITES);
 });
+
+test('list_apps (D-047 ruling 12): a read with the secret, telling the agent how to draw an app card and that only the person allows', () => {
+  const t = tools.find((x) => x.name === 'list_apps');
+  assert.ok(t, 'generated from openapi.json');
+  assert.equal(t.annotations.readOnlyHint, true);
+  assert.deepEqual(Object.keys(t.inputSchema.properties as object), ['secret']);
+  assert.equal(routeOf('list_apps').secret, true);
+  assert.match(t.description, /kind `app`/);
+  assert.match(t.description, /Only the person allows an app/);
+  assert.equal(tools.some((x) => x.name === 'call_app_tool'), false, 'agents run their own code; only the panel calls app tools');
+});

@@ -66,7 +66,7 @@ export function matchRoute(method: string, pathname: string):
   return allow.length ? { allow } : null;
 }
 
-const NAMES: Record<string, string> = { board: 'board id', n: 'node number', region: 'region id', session: 'chat session id', approval: 'approval id' };
+const NAMES: Record<string, string> = { board: 'board id', n: 'node number', region: 'region id', session: 'chat session id', approval: 'approval id', app: 'app id' };
 
 function readParam(p: ParamSpec, raw: string): unknown {
   const value = coerce(p.type, raw);

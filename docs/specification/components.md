@@ -41,6 +41,11 @@ pattern's markup or styles it.
 - `KINDS` stays the list; `Kind` is its type. A new kind is one entry in `KINDS`, one in
   `NODE_TYPES` and the compiler-required UI entries. Nothing else lists kinds: CSS reads a kind's
   colour through `--kind`, which the element sets from `--vb-kind-<kind>`.
+- **The app card** (`app`, D-047, ledger v17) was added that way: `NODE_TYPES.app` is
+  `tells('App')` (a note and Later, a number, no status word), `KIND_ICON.app` a small window, and
+  `--vb-kind-app` a cyan measured against the label tier in light and dark. What it shows (the
+  app's panel in a sandboxed frame) and its states are § App card; the app contract is
+  [apps.md](./apps.md).
 
 ## The element
 

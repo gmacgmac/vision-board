@@ -20,7 +20,7 @@
       "description": "The View format version; always 1."
     },
     "session": {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id",
+      "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id",
       "description": "The board id"
     },
     "version": {
@@ -29,11 +29,11 @@
       "description": "The ledger position the view was folded at"
     },
     "title": {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/title",
+      "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/title",
       "description": "The board's title."
     },
     "summary": {
-      "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/summary",
+      "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/summary",
       "description": "What the board is for."
     },
     "regions": {
@@ -69,27 +69,27 @@
       ],
       "properties": {
         "id": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id",
           "description": "The container's id."
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/regionTitle",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/regionTitle",
           "description": "The container's title."
         },
         "mode": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/mode",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/mode",
           "description": "How the container lays out its cards."
         },
         "lanes": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/lanes",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/lanes",
           "description": "Lane names, top to bottom, for a container in `lanes` mode."
         },
         "columns": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/columns",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/columns",
           "description": "How many columns a `grid` container uses."
         },
         "widths": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/widths",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/widths",
           "description": "The card widths the agent set; left out, the mode decides (`match` for `grid` and `column`, `own` for the rest). The person's choice (`state.widths`) wins.",
           "$comment": "Was: api.md 132"
         },
@@ -115,19 +115,19 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
         },
         "region": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id",
           "description": "The container the node sits in."
         },
         "kind": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/kind",
-          "description": "What the node is: a question, finding, decision, risk, action, topic or note."
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/kind",
+          "description": "What the node is: a question, finding, decision, risk, action, topic, note or app."
         },
         "title": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/title",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/title",
           "description": "The node's title."
         },
         "body": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeBody",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeBody",
           "description": "The node's text."
         },
         "n": {
@@ -135,11 +135,11 @@
           "description": "The card's number on this board, on every node (1, 2, 3... in the order drawn, never given again; the node's `id` is its text form); its kind decides whether it asks for an answer."
         },
         "lane": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/lane",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/lane",
           "description": "The lane the node sits in, for a container in `lanes` mode."
         },
         "tags": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/tags",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/tags",
           "description": "Short labels for the node."
         },
         "emphasis": {
@@ -147,8 +147,13 @@
           "description": "True when the agent drew the node emphasised."
         },
         "size": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeSize",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeSize",
           "description": "The agent's size suggestion; the person's choice is in `state.sizes`."
+        },
+        "app": {
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/appRef",
+          "description": "An app card's app and panel size; on no other kind.",
+          "$comment": "Was: api.md 150"
         }
       },
       "unevaluatedProperties": false
@@ -167,7 +172,7 @@
           "$ref": "https://vision-board.invalid/schema/api/common.schema.json#/$defs/nodeId"
         },
         "label": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/linkLabel",
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/linkLabel",
           "description": "What the link means, in a few words."
         }
       },

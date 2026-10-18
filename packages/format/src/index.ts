@@ -9,3 +9,4 @@ export * from './board-view.ts';
 export * from './node-types.ts';
 export * from './operations.generated.ts';
 export * from './flags.ts';
+export * from './apps.ts';

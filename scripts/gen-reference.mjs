@@ -6,7 +6,7 @@
 import { lookup, resolveParam } from './openapi-refs.mjs';
 import { inputSources, shape } from './schema-shape.mjs';
 
-const WHO = { none: 'anyone (no credentials)', agent: 'an agent (Bearer secret from `join`)', person: 'the person (the board page cookie)', run: 'a chat session\'s gate hook (Bearer run token)' };
+const WHO = { none: 'anyone (no credentials)', agent: 'an agent (Bearer secret from `join`)', person: 'the person (the board page cookie)', 'agent-or-person': 'an agent (Bearer secret from `join`) or the person (the board page cookie)', run: 'a chat session\'s gate hook (Bearer run token)' };
 const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ').trim();
 const code = (s) => `\`${s}\``;

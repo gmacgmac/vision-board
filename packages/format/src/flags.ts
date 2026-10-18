@@ -158,6 +158,11 @@ export const FLAGS = {
     default: true,
     description: 'A digit typed on the board, outside a text field, opens a small "Go to card" box at the board\'s bottom right holding it: Enter selects and focuses that card (the board pans only when it is off screen, the zoom stays), Backspace edits, Esc closes. A number with no card says so and the box stays; a retired card says it was removed and offers the version where it last appeared. Off, digits do nothing.',
   },
+  appCards: {
+    // On by default (maintainer's go, 2026-10-17, app-cards ruling 13); ?flags=-appCards turns it off.
+    default: true,
+    description: 'An app card (kind `app`, D-047) shows the app the agent built in a sandboxed panel inside the card, sized by the agent; its tools run on the board\'s server only after the person presses Allow for that version of the code (docs/specification/apps.md). Off, an app card draws as a plain card saying "App cards are off", and the panel route and call_app_tool answer not-found.',
+  },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,

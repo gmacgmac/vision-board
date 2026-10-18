@@ -6,10 +6,11 @@
 // `seq`), never a separate file. Meaning only, never coordinates except a person's pin (rule 9).
 // The shape's one source is the JSON Schema in packages/format/schema/ (rule 6, api.md 5-11);
 // these types are hand-written and a test checks they agree with it (api.md 2).
+import type { AppRef } from './apps.ts';
 import type { Kind, Region, Widths } from './view.ts';
 
 /** The format new lines are written in. */
-export const LEDGER_FORMAT = 16;
+export const LEDGER_FORMAT = 17;
 /** Every format a reader accepts. Each format up to v10 only adds to the one before, so older
  * lines stay valid (api.md 11). v4 adds `note-edit` and `note-remove` (api.md 58-61); v5 adds a note on a
  * group of cards, `nodes` in place of `n` (api.md 62-65); v6 adds `move` and the built-in Later
@@ -24,15 +25,16 @@ export const LEDGER_FORMAT = 16;
  * container's card `widths`, on a region and as the person's `widths` act (api.md 132). v14 adds the
  * person's `archive` and `restore` of a whole board (api.md 135). v15 adds the person's `lock` and
  * `unlock` of a whole board (api.md 138). v16 lets the person write a `retire` line, removing cards or
- * a container (api.md 141). */
-export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16] as const;
+ * a container (api.md 141). v17 adds the app card, kind `app` naming its app in `node.app`, and the
+ * person's `app-allow` and `app-revoke` of an app's code (api.md 150, D-047). */
+export const LEDGER_FORMATS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17] as const;
 export type LedgerFormat = (typeof LEDGER_FORMATS)[number];
 
 /** Every action a person or agent can take, as recorded in an `act` event (rule 8). */
 export const ACTION_IDS = [
   'ack', 'drop', 'comment', 'context', 'later', 'reopen', 'pin', 'unpin', 'mode',
   'grant', 'deny', 'revoke', 'size', 'send', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'widths',
-  'archive', 'restore', 'lock', 'unlock',
+  'archive', 'restore', 'lock', 'unlock', 'app-allow', 'app-revoke',
 ] as const;
 export type ActionId = (typeof ACTION_IDS)[number];
 
@@ -49,6 +51,11 @@ export const PRIVATE_ACTIONS: ReadonlySet<ActionId> = new Set([...CARD_MARKS, ..
 /** Whether an act is the person's private mark. */
 export const isPrivateAct = (e: { type: string; action?: string }): boolean =>
   e.type === 'act' && PRIVATE_ACTIONS.has(e.action as ActionId);
+
+/** The person's allow of an app's code at one version, and the stop that takes it back (api.md 150,
+ * D-047 ruling 7). Each names its `app` (an allow also its `hash`) and nothing else: an app is on no
+ * board and no card, so these move no head, answer nothing and no board's lock holds them. */
+export const APP_ACTIONS: ReadonlySet<ActionId> = new Set(['app-allow', 'app-revoke']);
 
 /** The id of every board's built-in Later container (3_FE_03 ruling 5, api.md 66): a `move` may
  * name it; no agent draws it, and from ledger v6 no region may take its id. */
@@ -133,8 +140,10 @@ export interface NodeBody {
   lane?: string;
   tags?: string[];
   emphasis?: boolean;
-  /** The agent's suggestion; the person's `size` action wins (api.md 17). */
+  /** The agent's suggestion; the person's `size` action wins (api.md 17). Never on an app card. */
   size?: NodeSize;
+  /** On an app card only, and always there: which app, and its panel size (api.md 150). */
+  app?: AppRef;
 }
 
 /** Handover written when an item is parked (D-020). */
@@ -172,11 +181,12 @@ export interface LinkEvent extends Base, Keyed { type: 'link' | 'unlink'; from: 
  * coordinates (api.md 71). `nodes` are card identities. A `flag` or `unflag` names one card by `id`
  * and nothing else (api.md 128). A `widths` act sets a container's card widths (`board`, `region`,
  * `widths`), like `mode` (api.md 132). An `archive`, `restore`, `lock` or `unlock` names its `board` and nothing else
- * (api.md 135). */
+ * (api.md 135). An `app-allow` names its `app` and `hash`, an `app-revoke` its `app` (api.md 150). */
 export interface ActEvent extends Base {
   type: 'act'; action: ActionId; id?: number; ver?: number; text?: string; proposal?: number;
   x?: number; y?: number; board?: string; region?: string; mode?: Region['mode']; widths?: Widths;
   request?: number; holder?: string; size?: ActSize; note?: number; kind?: NoteKind; nodes?: number[];
+  app?: string; hash?: string;
 }
 /** The person has seen version `ver` of card `id` (D-018), or, from v8, has looked at `board` up to
  * its line `head` (api.md 87). */

@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { PROBLEMS } from '../server/problem.ts';
 import { SCHEMA_BASE, compileSchema, schemaFiles } from '../server/schema.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { COMPONENTS_ID, ajv, compileInline, deref, doc, ops, pointer, read } from './openapi-ajv.ts';
@@ -55,7 +56,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.26.0');
+  assert.equal(doc.info.version, '1.27.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });
@@ -248,7 +249,7 @@ test('every operation in api.md is in openapi.json, with its method and path, an
 test('the problem codes are the codes of api.md 40', () => {
   const section = apiMd.split(/^## Errors$/m)[1]!.split(/^## /m)[0]!;
   const codes = [...section.matchAll(/^\| `([a-z-]+)` \| (\d{3}) \|/gm)].map((m) => m[1]!);
-  assert.equal(codes.length, 14);
+  assert.equal(codes.length, 20);
   const problem = schemaFiles().find((f) => f.schema.$id === `${API}problem.schema.json`)!.schema as Rec;
   const inPattern = /\(([^)]+)\)\$$/.exec(problem.$defs.code.pattern)![1]!.split('|');
   assert.deepEqual([...inPattern].sort(), [...codes].sort());
@@ -258,6 +259,22 @@ test('each event has a component named after its type, and ledgerEvent is the di
   const types = (doc.components.schemas.ledgerEvent.oneOf as Rec[]).map((o) => String(o.$ref).split('/').pop());
   assert.equal(doc.components.schemas.ledgerEvent.discriminator.propertyName, 'type');
   assert.equal(types.length, 13);
-  for (const t of types) assert.equal(doc.components.schemas[t!].$ref, `${SCHEMA_BASE}schema/ledger/16/events/${t}.schema.json#/$defs/stored`);
+  for (const t of types) assert.equal(doc.components.schemas[t!].$ref, `${SCHEMA_BASE}schema/ledger/17/events/${t}.schema.json#/$defs/stored`);
   assert.equal(types.length, Object.keys(doc.components.schemas).filter((k) => doc.components.schemas[k].$ref?.endsWith('#/$defs/stored')).length);
+});
+
+test('the app operations (D-047 rulings 6, 12): list_apps for an agent or the person, call_app_tool for the person only', () => {
+  const op = (id: string) => ops.find((o) => o.id === id)!.op;
+  assert.deepEqual([op('list_apps')['x-agent'], op('list_apps').security], [true, [{ agentSecret: [] }, { personCookie: [] }]]);
+  assert.deepEqual([op('call_app_tool')['x-agent'], op('call_app_tool').security], [false, [{ personCookie: [] }]]);
+  const named = Object.fromEntries(Object.entries<Rec>(op('call_app_tool').responses).filter(([s]) => /^[45]/.test(s))
+    .map(([s, r]) => [s, String(deref(r).content['application/problem+json'].example.type).split('/').pop()]));
+  for (const [status, code] of Object.entries({ 403: 'needs-approval', 404: 'app-not-found', 413: 'too-large', 422: 'app-invalid', 502: 'app-failed', 503: 'app-busy', 504: 'app-timeout' }))
+    assert.equal(named[status], code, status);
+});
+
+test('the server\'s problem table (server/problem.ts PROBLEMS) has every code of api.md 40, each with its status', () => {
+  const section = apiMd.split(/^## Errors$/m)[1]!.split(/^## /m)[0]!;
+  const rows = [...section.matchAll(/^\| `([a-z-]+)` \| (\d{3}) \|/gm)].map((m) => [m[1]!, Number(m[2])]);
+  assert.deepEqual(Object.entries(PROBLEMS).map(([code, p]) => [code, p.status]).sort(), rows.sort());
 });

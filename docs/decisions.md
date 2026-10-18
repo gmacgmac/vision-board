@@ -585,3 +585,21 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   you".
 - **Rejected**: letting a note answer the card, which brought back questions closing cards (D-045).
 - **Task**: cortex-tasks/board/2026-10-15_board-actions_with-agent-state.md
+
+## D-047 App cards: agent-built apps in a sandboxed frame, hosted by the board
+- **Date**: 2026-10-17 · **Status**: Accepted · **From**: maintainer (chat 223-232; go to plan and
+  build without further review)
+- **Decision**: A new card kind `app` shows an agent-built app inside the card. The app lives in the
+  project's `.visionboard/apps/<id>/` (manifest, panel, optional tools module) and the agent owns it;
+  the board owns the card, the host and the rules. The panel runs in a sandboxed frame with an opaque
+  origin and its own strict CSP, talks to the board only by JSON-RPC messages in MCP Apps' shape, and
+  calls the app's tools through the board's server, which runs each app's tools in its own
+  permission-limited process with timeouts, limits and restarts. Tools run only after the person
+  allows that version of the code. The app's own code may reach the network; the board itself makes
+  no third-party call (rule 18).
+- **Why**: the person and the agent design on the board; the agent can now build the thing and the
+  person can use it in place, without giving agent code any reach into the board.
+- **Rejected**: raw HTML in a card (D-023 stays: Markdown never renders HTML); a second proxy frame
+  on another port (an opaque-origin sandbox gives the same isolation on one server); the board
+  starting servers the agent wrote (the board hosts plugin modules instead).
+- **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md

@@ -21,6 +21,13 @@ export const PROBLEMS = {
   // 423 Locked (RFC 4918 11.3, in the IANA HTTP status registry): the board itself is locked, so
   // a client can tell it from every 409 (a stale `base`, a busy chat, another folder) by status alone.
   locked: { status: 423, title: 'Locked' },
+  // App cards (D-047 rulings 6-8, api.md 153): what a call of an app's tool can meet.
+  'needs-approval': { status: 403, title: 'Needs approval' },
+  'app-not-found': { status: 404, title: 'App not found' },
+  'app-invalid': { status: 422, title: 'App invalid' },
+  'app-failed': { status: 502, title: 'App failed' },
+  'app-busy': { status: 503, title: 'App busy' },
+  'app-timeout': { status: 504, title: 'App timed out' },
 } as const;
 
 export type ProblemCode = keyof typeof PROBLEMS;

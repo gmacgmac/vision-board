@@ -1,6 +1,7 @@
 // The projection layout reads: one board, folded from the project ledger by `boardView`
 // (board-view.ts), never read from a file. Meaning only, never coordinates: layout is the
 // engine's job (project rule 9).
+import type { AppRef } from './apps.ts';
 import type { NodeSize } from './ledger.ts';
 
 export const FORMAT_VERSION = 1;
@@ -29,8 +30,9 @@ export const DEFAULT_WIDTHS: Readonly<Record<Mode, Widths>> = {
  * container's own (`Region.widths`), then the mode's default (api.md 132). */
 export const widthsOf = (mode: Mode, own?: Widths, chosen?: Widths): Widths => chosen ?? own ?? DEFAULT_WIDTHS[mode];
 
-/** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). */
-export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note'] as const;
+/** Node kinds the agent draws from. The kind decides what a card offers (`NODE_TYPES`). An `app`
+ * card shows an app the agent built, in a panel inside the card (ledger v17, D-047). */
+export const KINDS = ['question', 'finding', 'decision', 'risk', 'action', 'topic', 'note', 'app'] as const;
 export type Kind = (typeof KINDS)[number];
 
 export interface Region {
@@ -62,6 +64,8 @@ export interface ViewNode {
   emphasis?: boolean;
   /** The agent's card size suggestion (D-030); the person's `size` act wins (BoardState.sizes). */
   size?: NodeSize;
+  /** An app card's app and panel size (api.md 150); on no other kind. */
+  app?: AppRef;
 }
 
 export interface Link {

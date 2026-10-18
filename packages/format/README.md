@@ -1,7 +1,7 @@
 # packages/format
 
 The format the agent and the board share: the project ledger (`.visionboard/ledger.jsonl`,
-format 13, readers accept 2 to 13; D-017, api.md 125-132), one event per line for every card's
+format 17, readers accept 2 to 17; D-017, api.md 125-153), one event per line for every card's
 identity, versions, the person's actions, the agent's replies, proposals, parking bundles,
 retires, joins and grant requests. A card's identity is its ledger number: the file writes it `n`,
 code calls it `id` (`fromLine`, `toLine`); every request and answer names a card by its board
@@ -9,7 +9,7 @@ number `n` instead, 1, 2, 3... per board in the order drawn (`boardNumber`, `car
 proposed). A
 board version is a position in it (`seq`). Its one source is the JSON Schema in `schema/`
 (`common`, `events/<type>` with `core`, `sent` and `stored` forms, and `ledger-event`; api.md
-5-11), `schema/api/` (request and response bodies that are not events) and `schema/openapi.json` (every
+5-11), `schema/api/` (request and response bodies that are not events), `schema/app/` (an app's manifest, D-047) and `schema/openapi.json` (every
 operation, OpenAPI 3.2; `schema/vendor/` holds the official OAS schema the tests check it against). The
 types and the hand validators here are tested against it; `ajv` runs only in the board
 server (`apps/board/server/schema.ts`), as does the CLI (`npm run validate -- <ledger.jsonl>`).
@@ -34,3 +34,10 @@ never a file. The format-1 view files and transcript are archived in
   `readLedger` and `validateLedger` (a whole file); the drawn fold
   (`foldDrawn`, `applyDrawn`, `nodesOf` (on the board now), `everyNodeOf` (retired too), `latest`) and `boardView` (one board as a `View`); the route table `OPERATIONS` and `OperationId` (each operation's
   method, path, path parameters, `xAgent` and `auth`), generated from `schema/openapi.json` by `npm run gen`.
+- **App cards** (`src/apps.ts`, D-047, [apps.md](../../docs/specification/apps.md)): `APP_ID`,
+  `APP_HASH_PATTERN`, `APP_TOOL_NAME`, `APPS_DIR`, `APP_FILES`, `APP_SIZE`, `APP_LIMITS`,
+  `APP_STATES`, the panel protocol (`APP_PROTOCOL_VERSION`, `PANEL_METHODS`, `HOST_NOTIFICATIONS`,
+  `PANEL_ERRORS`, `APP_STYLE_VARIABLES`), the types `AppRef`, `AppManifest`, `AppToolInfo`,
+  `AppToolResult`, `AppInfo`, and `appSize`; `APP_ACTIONS` (ledger.ts); the manifest's one source is
+  `schema/app/manifest.schema.json`. The hand twin of the app card's schema pieces is
+  `src/app-shape.ts`.

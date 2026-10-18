@@ -50,7 +50,7 @@ test('the walk covers every agent operation, and the board operations of ruling 
   const names = AGENT_OPS.map((o) => o.id);
   for (const id of ['list_boards', 'get_board', 'show_node', 'show_container', 'show_layout', 'list_open', 'check_responses', 'join', 'request_grant', 'write_board'])
     assert.ok(names.includes(id as OperationId), id);
-  assert.deepEqual(AGENT_OPS.filter((o) => !o.namesBoard).map((o) => o.id), ['list_boards', 'join']);
+  assert.deepEqual(AGENT_OPS.filter((o) => !o.namesBoard).map((o) => o.id), ['list_boards', 'join', 'list_apps']);
 });
 
 test('before "ghost" exists, every operation naming it is not found', async () => {

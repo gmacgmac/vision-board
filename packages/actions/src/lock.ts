@@ -9,7 +9,7 @@
 // asks `passesLock` before it sends an act; the server's routes refuse a write on a locked board up
 // front through the same `boardLocked`. Pure.
 import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { PRIVATE_ACTIONS } from '../../format/src/index.ts';
+import { APP_ACTIONS, PRIVATE_ACTIONS } from '../../format/src/index.ts';
 import type { LedgerState } from './fold.ts';
 import { archivedProblem, boardVisibility } from './archive.ts';
 import { eventBoard } from './references.ts';
@@ -29,10 +29,11 @@ export function foldLock(s: LedgerState, e: ActEvent): void {
 export const boardLocked = (s: LedgerState, board: string): boolean => s.locked.has(board) || boardVisibility(s, board) === 'archived';
 
 /** Whether a line still goes on a locked board: the person's own marks (the flag, archive, lock and
- * their undoing), which change nothing an agent reads, and a seen, which only says what the person
- * looked at. Everything else changes the board and waits for an unlock. */
-export const passesLock = (e: { type: string; action?: string }): boolean =>
-  e.type === 'seen' || (e.type === 'act' && PRIVATE_ACTIONS.has(e.action as ActEvent['action']));
+ * their undoing), which change nothing an agent reads, a seen, which only says what the person
+ * looked at, and an app's allow or stop, which is on the app, not the board (api.md 150). Everything
+ * else changes the board and waits for an unlock. */
+export const passesLock = (e: { type: string; action?: string }): boolean => e.type === 'seen' ||
+  (e.type === 'act' && (PRIVATE_ACTIONS.has(e.action as ActEvent['action']) || APP_ACTIONS.has(e.action as ActEvent['action'])));
 
 /** Why line `e` may not be written because its board is locked, or undefined: `LOCKED` for an
  * agent's line, `LOCKED_PERSON` for the person's. */

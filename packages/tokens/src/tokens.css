@@ -123,6 +123,9 @@
   --vb-kind-action: light-dark(#b57c09, #e8b04a); /* light nudged from #c98a0b */
   --vb-kind-topic: var(--vb-state-later);
   --vb-kind-note: var(--vb-ink-subtle);
+  /* An app card (D-047): a cyan between question and finding. APCA Lc 71.2 on the light card and 52.3
+     on its kind tab; 61.5 and 58.9 dark (the label tier is 45). */
+  --vb-kind-app: light-dark(#0b7fa6, #4ec3e6);
 
   /* Lanes */
   --vb-lane-band: light-dark(#f0f0f2, #19191b);

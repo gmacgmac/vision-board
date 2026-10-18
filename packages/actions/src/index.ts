@@ -21,6 +21,8 @@ export type { Place } from './containers.ts';
 export { LATER, placedView } from './moves.ts';
 export type { BoardRun, GrantNote, ItemNote, ItemState, LedgerReply, LedgerState, Marks, Proposal } from './fold.ts';
 export { validateAct } from './act.ts';
+export { appCards, appOf, appRules, foldAppAct, namedApps } from './apps.ts';
+export type { AppAllows } from './apps.ts';
 export { proposeProblem } from './proposals.ts';
 export { creatorOf, grantRequests, holders } from './grants.ts';
 export type { GrantRequestView } from './grants.ts';

@@ -42,6 +42,7 @@ function everyAct(f: { note: number; proposal: number; request: number }): Recor
     'note-remove': { id: 4, note: f.note }, move: { id: 4, region: LATER_REGION }, reject: { id: 4, proposal: f.proposal },
     flag: { id: 4 }, unflag: { id: 4 }, widths: { board: 'b2', region: 'x', widths: 'match' },
     archive: { board: 'b2' }, restore: { board: 'b2' }, lock: { board: 'b2' }, unlock: { board: 'b2' },
+    'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
   };
 }
 
@@ -100,7 +101,8 @@ test('on a locked board every act in the registry is refused but the person\'s o
       assert.ok(!problems.includes(LOCKED_PERSON), `${action}: ${problems.join('; ')}`);
     } else assert.deepEqual(problems, [LOCKED_PERSON], action);
   }
-  assert.deepEqual(passing.sort(), ['archive', 'flag', 'lock', 'restore', 'unflag', 'unlock']);
+  // An app's allow and stop are on no board, so no board's lock holds them (api.md 150).
+  assert.deepEqual(passing.sort(), ['app-allow', 'app-revoke', 'archive', 'flag', 'lock', 'restore', 'unflag', 'unlock']);
   f.l.act({ action: 'unlock', board: 'b2' });
   const open = f.l.state();
   for (const action of ['ack', 'note-edit', 'mode', 'send', 'grant', 'move'] as const)

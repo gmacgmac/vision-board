@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json",
+  "$id": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json",
   "title": "Retire event",
   "description": "An agent takes cards off the board for good: one card `n`, or a whole container `region` with every card in it now; from v16 the person too (`retire_cards`), one or more cards or a container. Retired cards keep their versions, notes and number; they leave the board, its counts and every list, and their numbers are never given again. A card still owed an answer (a comment or More context with no reply, or a Later with no handover) can't be retired by an agent until it has answered it; the person may remove it.",
   "$comment": "Was: api.md 126, 141",
@@ -8,7 +8,7 @@
     "core": {
       "type": "object",
       "properties": {
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id", "description": "The container to retire, with every card in it now, in place of `n`. The container leaves the board too, and its id is never used again on it."}
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id", "description": "The container to retire, with every card in it now, in place of `n`. The container leaves the board too, and its id is never used again on it."}
       }
     },
     "sent": {
@@ -16,12 +16,12 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "retire"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/nodeRef", "description": "The card to retire: its number on this board, or the key of the item that made it."},
-        "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/nodeRef", "description": "The card to retire: its number on this board, or the key of the item that made it."},
+        "key": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/key"}
       },
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/sentRules"}
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/sentRules"}
       ],
       "unevaluatedProperties": false
     },
@@ -38,18 +38,18 @@
       "required": ["type"],
       "properties": {"type": {"const": "retire"}},
       "allOf": [
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stamp"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/stampAgent"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/core"},
-        {"$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/rules"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/stamp"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/stampAgent"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/core"},
+        {"$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/rules"},
         {
           "type": "object",
           "required": ["board", "cards"],
           "properties": {
             "by": {"enum": ["agent", "person"], "description": "Who wrote the line: `agent`, or from v16 `person` (retire_cards)."},
-            "board": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
-            "cards": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/cards", "description": "Every card the line took off the board, by ledger number: the one named, or every card in the container at this line (the person's moves count). The server fills it in."},
-            "key": {"$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/key"}
+            "board": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id", "description": "The board the line belongs to; the server takes it from the path."},
+            "cards": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/cards", "description": "Every card the line took off the board, by ledger number: the one named, or every card in the container at this line (the person's moves count). The server fills it in."},
+            "key": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/key"}
           }
         }
       ],

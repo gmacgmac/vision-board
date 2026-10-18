@@ -46,3 +46,9 @@ test('the inputs the README and the agent docs rely on exist with the right type
   assert.deepEqual([input('join', 'label')?.in, input('join', 'label')?.required], ['body', true]);
   assert.deepEqual([input('write-board', 'items')?.type, input('write-board', 'items')?.required], ['json', true]);
 });
+
+test('vb list-apps (D-047 ruling 12) takes no input; no command calls an app tool', () => {
+  const c = COMMANDS.find((x) => x.name === 'list-apps');
+  assert.deepEqual([c?.operationId, c?.takesBody, c?.inputs.length], ['list_apps', false, 0]);
+  assert.equal(COMMANDS.some((x) => x.operationId === 'call_app_tool'), false);
+});

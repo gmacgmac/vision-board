@@ -13,6 +13,8 @@ export const KIND_ICON: Record<Kind, string> = {
   topic: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
   // The mockups have no note icon: a sheet with a folded corner, in the same stroke style.
   note: '<path d="M5 4h14v10l-6 6H5z"/><path d="M13 20v-6h6"/>',
+  // An app (D-047): a small window, its title bar and two buttons, in the same stroke style.
+  app: '<path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M3 9h18M6.5 6.5h.01M9.5 6.5h.01"/>',
 };
 
 /** The quick-action buttons' icons, 20 x 20. */

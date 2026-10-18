@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -216,13 +216,19 @@ packages/format/schema/openapi.json               every operation, input, output
 | `not-found` | 404 | No such board, node, region or route |
 | `method-not-allowed` | 405 | Known path, wrong method |
 | `conflict` | 409 | `base` is stale, or a key is reused for different content (usually per item) |
-| `too-large` | 413 | Body or batch over the limit |
+| `too-large` | 413 | Body or batch over the limit; an app tool's answer over its limit (153) |
 | `unsupported-media-type` | 415 | Not JSON |
 | `depends-on-failed` | 422 | The item depends on an item that failed (per item) |
 | `invalid` | 422 | Fails the schema or a context rule |
 | `server-error` | 500 | Anything unexpected; details go to the server log, not the answer |
 | `wrong-folder` | 409 | The board has another folder open: an agent call's `VB-Project` names another folder, or its secret is an agent's of a folder opened before (114, 115) |
 | `locked` | 423 | The person locked the board: every write on it is refused, whole, until they unlock it (139) |
+| `needs-approval` | 403 | An app's tool was called before the person allowed this version of the app's code (151, 153) |
+| `app-not-found` | 404 | No app with this id in the project's `.visionboard/apps/` (153) |
+| `app-invalid` | 422 | The app's manifest or files have problems; `list_apps` lists them (152, 153) |
+| `app-failed` | 502 | The app's tool crashed, gave an answer that doesn't fit its `outputSchema`, or the app is broken after crashing too often (153) |
+| `app-busy` | 503 | The app has as many calls running and waiting as it may have (153) |
+| `app-timeout` | 504 | The app's tool ran past its time limit and was stopped (153) |
 
 ## Operations
 
@@ -260,6 +266,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }` (109) |
 | `list_folders` | `GET /api/folders` | person | One folder under home (`path`, default home): found or not, its folders marked `hasBoard`, and `recent` (109, 110) |
 | `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
+| `list_apps` | `GET /api/apps` | agent | `{ apps }`: every app in the folder and every app a card names, each with its state, tools, hash and whether the person allowed it; an agent's secret or the person's cookie (152) |
+| `call_app_tool` | `POST /api/apps/{app}/calls` | person | `{ tool, arguments? }`: run one of an app's tools for its panel; MCP's tool result (153) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
@@ -1267,3 +1275,58 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     seen (a selection, stepping past it, or any act naming it) and `list_open`'s `unseen` holds
     meanwhile (its description says so). `unseenAnswer` (`get_board`'s `itemState`) still means a
     clear only (145).
+
+## Ledger v17: app cards (app-cards BE_01, D-047)
+
+The contract for apps themselves (the folder, the manifest, the panel protocol, the tools module,
+limits and states) is [apps.md](./apps.md); this section is what the ledger and the API add.
+
+150. **The app card and the person's allow** (rulings 3, 7, 11, 13). `LEDGER_FORMAT` becomes 17 and
+    every ledger `$id` moves to `.../schema/ledger/17/`; `openapi.json` `info.version` becomes 1.27.0.
+    Only adds: v2 to v16 lines stay valid. A new kind, `app` (`KINDS`; `NODE_TYPES.app` tells: a note
+    and Later, a number, no status word), whose node carries `app: { id, w?, h? }` (`NodeBody.app`,
+    `ViewNode.app`; common.schema.json `appRef`, its sizes `appWidth` and `appHeight` from
+    `APP_SIZE`). An app card must name `app` and takes no `size` word; no other kind may name `app`
+    (node.schema.json `appRule`, in the sent form and in `rules`; the hand twin is `app-shape.ts`
+    `appNodeRules`). The rule holds on every line, since no line before v17 names either. The person's
+    `size` act on an app card is refused (`validateAct`: its panel's size is the agent's). Two person
+    acts, both `needsConfirmation` and `onItem: false` (registry "Allow app" and "Stop app"):
+    `app-allow { app, hash }` (common.schema.json `appHash`, 64 lowercase hex) and
+    `app-revoke { app }`, each naming nothing else (`APP_ACTIONS`; act.schema.json `rules`,
+    `app-shape.ts` `appActRules`). They are on the app, not on a board or a card (`ACT_SCOPES` give
+    no board and no cards): sent to any board's `act`, they move no head, answer nothing, never reach
+    `check_responses`, and pass a lock (`passesLock`). Their context rules (`apps.ts` `appRules`):
+    allowing a hash already allowed, or stopping an app not allowed, is refused. The fold keeps one
+    allowed hash per app (`LedgerState.appAllowed`, `foldAppAct`): a newer allow replaces it, a stop
+    removes it, and retiring a card leaves it. The references table gains `app`
+    (`REFERENCES.app.lookup`: the cards on a board now that name it; `namedApps`, every named app in
+    one pass, which the app host uses for `missing`). Flag `appCards`, on.
+151. **Approval** (ruling 7). The version the person allows is the SHA-256 of `app.json` followed by
+    the tools file: a change to either asks again. So that this covers all of an app's code, a tools
+    module imports Node's built-in modules only (apps.md § The tools module). The app host compares
+    `appAllowed` with the hash it works out now; that comparison is the only place "allowed" is
+    decided (152).
+152. **`list_apps`** (rulings 11, 12), `GET /api/apps`, `x-agent: true`, with the `VB-Project` header
+    (`wrong-folder`, 114) like every agent operation. Its `security` names either an agent's secret or
+    the person's cookie: `agent-or-person` in the route table (`scripts/gen-api.mjs` `authOf`). The
+    caller check (`callers.ts` `callerOf`): a Bearer header names an agent (unknown: 401); else the
+    person's cookie (stale: `forbidden`, so the page reloads, 20); neither: 401 `not-authenticated`.
+    It answers `{ apps }` (`api/list-apps-response.schema.json`, `AppInfo`): every app folder, and every
+    app a card on a board names that has no folder (`missing`), each with `id`, `state`
+    (`APP_STATES`), the manifest's `title`, `version` and `size`, its `tools` by name, `hash`,
+    `allowed`, `changed` (an earlier version was allowed) and `problems` (`{ file, pointer?, detail }`).
+    The state is worked out fresh by one function in the app host; the page and agents read it,
+    never a copy of their own. It becomes the MCP tool `list_apps` and `vb list-apps` by generation.
+    No agent calls an app's tools through the board: there is no MCP tool for `call_app_tool`.
+153. **`call_app_tool`** (ruling 6), `POST /api/apps/{app}/calls`, `x-agent: false`, the person's
+    cookie (an agent: `forbidden`), JSON only. `{app}` is checked against the id pattern before any
+    path is built (a bad one: `bad-request`). Body `{ tool, arguments? }`
+    (`api/app-call-request.schema.json`); answer 200 in MCP's tool-result shape
+    `{ content, structuredContent?, isError }` (`api/app-call-response.schema.json`,
+    `AppToolResult`), `isError` when the tool threw. Problems: `invalid` (arguments that don't fit
+    the tool's `inputSchema`), `needs-approval`, `app-not-found` (or `not-found` with the `appCards`
+    flag off), `app-invalid`, `app-failed`, `app-busy`, `app-timeout`, and `too-large` for an answer
+    over its limit (apps.md § Limits). The board page calls it through its one I/O layer when a panel
+    sends `tools/call`. The handlers are the app host's (app-cards BE_02); until it lands,
+    `apps/board/server/handlers.ts` answers `list_apps` with no apps and `call_app_tool` with
+    `not-found`.

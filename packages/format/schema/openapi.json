@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.26.0",
+    "version": "1.27.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -1080,7 +1080,7 @@
         "operationId": "write_board",
         "x-agent": true,
         "summary": "Write to a board",
-        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good (kept in its history, numbers never reused); a card still waiting for your answer can't be retired until you answer it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can write a note on or save any node. A node names no `item` (ledger v11), and a region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right); `list` is now `column`. A region may set `widths`, `match` or `own`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) on a question, decision or action and the person answers; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
+        "description": "Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds text to the end of a node's body as a new version, so you add to a card without rewriting it. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good (numbers never reused); a card still waiting for your answer can't be retired until you answer it. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does; the person can write a note on or save any node. Kind `app` shows an app you built: name it in `app: { id }` (list_apps). A region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right). A region may set `widths`, `match` or `own`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers 200 with one result per item, plus `head` and `pending` (cards waiting for your answer). Ask for a board you did not create before writing on it: an item on a board you do not hold fails with `needs-grant` naming the board, and one in another agent's container with `needs-grant` naming the board and region; only a board's creator writes its `board` item again. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) on a question, decision or action and the person answers; a proposal made on an older version of the node can't be accepted, so propose again after you change it.",
         "security": [
           {
             "agentSecret": []
@@ -1231,7 +1231,7 @@
         "operationId": "act",
         "x-agent": false,
         "summary": "Record one action by the person",
-        "description": "Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; an old `context` is still taken), edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, reject an agent's proposal, archive or restore the whole board, or lock or unlock it. An archived board is gone for agents, as if it never existed, and every other action on it is refused until it is restored. A locked board is read-only for everyone: every action on it but the person's own marks (flag, unflag, archive, restore, unlock) is refused with `locked` (423) until it is unlocked; agents see `locked` on `get_board` and `list_boards`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
+        "description": "Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; an old `context` is still taken), edit or remove a note not yet sent, save for later, reopen, move, reset, change layout or card widths, resize, grant or deny a request, revoke, send, reject an agent's proposal, archive or restore the whole board, or lock or unlock it; or allow an app's tools to run at one version of its code (`app-allow` with `app` and `hash`, from list_apps) or stop them (`app-revoke` with `app`), which are on the app, not the board, so a lock doesn't hold them. An archived board is gone for agents, as if it never existed, and every other action on it is refused until it is restored. A locked board is read-only for everyone: every action on it but the person's own marks (flag, unflag, archive, restore, unlock) is refused with `locked` (423) until it is unlocked; agents see `locked` on `get_board` and `list_boards`. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. Pass the board id and the action with its fields. When the board has a chat session (the newest from `start_chat`, or one that moved there), a `send` also hands the session's agent the person's answers since it was last told, as one message in its chat (`message_in`): \"The person updated the board:\", the numbered reply of the cards answered, and the `head` it reads up to. While the agent is still answering, the message waits and goes when the turn ends; a second Send meanwhile makes it cover both. It returns the stored ledger line.",
         "security": [
           {
             "personCookie": []
@@ -2427,6 +2427,198 @@
           }
         }
       }
+    },
+    "/api/apps": {
+      "get": {
+        "operationId": "list_apps",
+        "x-agent": true,
+        "summary": "List the apps in this folder",
+        "description": "List the apps in this folder, so you can draw one on a card and see what to fix. Apps live in the project's `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Each app has its `id` and `state`: `ready`, `needs-approval` (it has tools and the person has not allowed this version of its code; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it but there is no folder). It also gives the manifest's `title`, `version` and panel `size`, the `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw an app card as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. It needs your agent secret.",
+        "security": [
+          {
+            "agentSecret": []
+          },
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/projectHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The apps.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/listAppsResponse"
+                },
+                "example": {
+                  "apps": [
+                    {
+                      "id": "calculator",
+                      "state": "needs-approval",
+                      "title": "Calculator",
+                      "version": "1.0.0",
+                      "size": {
+                        "w": 360,
+                        "h": 440
+                      },
+                      "tools": [
+                        "evaluate",
+                        "history"
+                      ],
+                      "hash": "a3f1c9e2b7d4058e6f2a1b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e",
+                      "allowed": false
+                    },
+                    {
+                      "id": "release-notes",
+                      "state": "invalid",
+                      "tools": [],
+                      "allowed": false,
+                      "problems": [
+                        {
+                          "file": "app.json",
+                          "pointer": "/panel",
+                          "detail": "`panel` is not a plain file name in the app's folder ending in .html"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/notAuthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/wrongFolder"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/apps/{app}/calls": {
+      "post": {
+        "operationId": "call_app_tool",
+        "x-agent": false,
+        "summary": "Call one of an app's tools, for its panel",
+        "description": "Run one tool of an app for its panel on the board, and answer the tool's result. Only the board page calls this, with the person's cookie, when the app's panel asks (`tools/call`); an agent that calls it is refused with `forbidden`, because an agent runs its own code itself. The arguments must fit the tool's `inputSchema` (`invalid`). The tool runs in the app's own process, within the limits in docs/specification/apps.md: the person must have allowed this version of the app's code (`needs-approval`); a tool that runs too long is stopped (`app-timeout`); an answer over the size limit is refused (`too-large`); too many calls at once are refused (`app-busy`); a crash, an answer that doesn't fit the tool's `outputSchema`, or an app broken by crashes is `app-failed`; an app with problems is `app-invalid`, and an unknown one `app-not-found`. It answers in MCP's tool-result shape: `content` (the result as text), `structuredContent` (the object the tool returned) and `isError` (true when the tool threw; `content` then holds its message).",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/appPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/appCallRequest"
+              },
+              "example": {
+                "tool": "evaluate",
+                "arguments": {
+                  "expression": "12*3"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The tool's result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/appCallResponse"
+                },
+                "examples": {
+                  "answer": {
+                    "summary": "An answer",
+                    "dataValue": {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "{\"value\":36}"
+                        }
+                      ],
+                      "structuredContent": {
+                        "value": 36
+                      },
+                      "isError": false
+                    }
+                  },
+                  "thrown": {
+                    "summary": "The tool threw",
+                    "dataValue": {
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "There is a \")\" with no \"(\" before it."
+                        }
+                      ],
+                      "isError": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/appForbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/appNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/appInvalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          },
+          "502": {
+            "$ref": "#/components/responses/appFailed"
+          },
+          "503": {
+            "$ref": "#/components/responses/appBusy"
+          },
+          "504": {
+            "$ref": "#/components/responses/appTimeout"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2516,43 +2708,43 @@
         "$ref": "https://vision-board.invalid/schema/api/sse-build.schema.json"
       },
       "board": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/board.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/board.schema.json#/$defs/stored"
       },
       "region": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/region.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/region.schema.json#/$defs/stored"
       },
       "node": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/node.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/node.schema.json#/$defs/stored"
       },
       "link": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/link.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/link.schema.json#/$defs/stored"
       },
       "unlink": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/unlink.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/unlink.schema.json#/$defs/stored"
       },
       "act": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/act.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/act.schema.json#/$defs/stored"
       },
       "seen": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/seen.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/seen.schema.json#/$defs/stored"
       },
       "reply": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/reply.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/reply.schema.json#/$defs/stored"
       },
       "propose": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/propose.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/propose.schema.json#/$defs/stored"
       },
       "park": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/park.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/park.schema.json#/$defs/stored"
       },
       "join": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/join.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/join.schema.json#/$defs/stored"
       },
       "grant-request": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/grant-request.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/grant-request.schema.json#/$defs/stored"
       },
       "retire": {
-        "$ref": "https://vision-board.invalid/schema/ledger/16/events/retire.schema.json#/$defs/stored"
+        "$ref": "https://vision-board.invalid/schema/ledger/17/events/retire.schema.json#/$defs/stored"
       },
       "ledgerEvent": {
         "description": "A stored ledger line, by `type`.",
@@ -2639,6 +2831,15 @@
       },
       "openProjectRequest": {
         "$ref": "https://vision-board.invalid/schema/api/open-project-request.schema.json"
+      },
+      "listAppsResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/list-apps-response.schema.json"
+      },
+      "appCallRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/app-call-request.schema.json"
+      },
+      "appCallResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/app-call-response.schema.json"
       }
     },
     "parameters": {
@@ -2648,7 +2849,7 @@
         "description": "The board id, from list_boards.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id"
         }
       },
       "nodePath": {
@@ -2666,7 +2867,7 @@
         "description": "The region (container) id.",
         "required": true,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id"
         }
       },
       "boardQuery": {
@@ -2675,7 +2876,7 @@
         "description": "Keep only this board's lines (lines that name only a node are matched through the node's board).",
         "required": false,
         "schema": {
-          "$ref": "https://vision-board.invalid/schema/ledger/16/common.schema.json#/$defs/id"
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id"
         }
       },
       "after": {
@@ -2759,6 +2960,15 @@
           "$ref": "https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderHeader"
         },
         "example": "/Users/example/projects/a"
+      },
+      "appPath": {
+        "name": "app",
+        "in": "path",
+        "description": "The app's id: its folder's name in the project's `.visionboard/apps/`.",
+        "required": true,
+        "schema": {
+          "$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id"
+        }
       }
     },
     "responses": {
@@ -3040,6 +3250,102 @@
               "title": "Locked",
               "status": 423,
               "detail": "This board is locked; ask the person to unlock it."
+            }
+          }
+        }
+      },
+      "appForbidden": {
+        "description": "Only the person calls an app's tools, from its panel on the board (`forbidden`); or the person has not allowed this version of the app's code (`needs-approval`), and the card shows Allow.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/needs-approval",
+              "title": "Needs approval",
+              "status": 403,
+              "detail": "The person has not allowed this version of the app \"calculator\". Press Allow on its card first."
+            }
+          }
+        }
+      },
+      "appNotFound": {
+        "description": "There is no app with this id in the project (`app-not-found`), or app cards are off (`not-found`).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/app-not-found",
+              "title": "App not found",
+              "status": 404,
+              "detail": "There is no app \"calculator\" in this folder's .visionboard/apps/."
+            }
+          }
+        }
+      },
+      "appInvalid": {
+        "description": "The arguments don't fit the tool's `inputSchema` (`invalid`, each fault in `errors`), or the app has problems to fix first (`app-invalid`; list_apps lists them).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/app-invalid",
+              "title": "App invalid",
+              "status": 422,
+              "detail": "The app \"calculator\" has problems in its files: app.json /panel: `panel` is not a plain file name ending in .html. Fix them and try again."
+            }
+          }
+        }
+      },
+      "appFailed": {
+        "description": "The app's tool failed: its process crashed, its answer doesn't fit its `outputSchema`, or the app is broken after crashing too often (change its code to try again).",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/app-failed",
+              "title": "App failed",
+              "status": 502,
+              "detail": "The app \"calculator\" stopped while it ran \"evaluate\". It starts again on the next call."
+            }
+          }
+        }
+      },
+      "appBusy": {
+        "description": "The app has as many calls running and waiting as it may have. Try again when one has answered.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/app-busy",
+              "title": "App busy",
+              "status": 503,
+              "detail": "The app \"calculator\" is busy with other calls. Try again in a moment."
+            }
+          }
+        }
+      },
+      "appTimeout": {
+        "description": "The tool ran past its time limit. Its process was stopped, and the next call starts it again.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/app-timeout",
+              "title": "App timed out",
+              "status": 504,
+              "detail": "The tool \"evaluate\" of the app \"calculator\" took too long and was stopped. The next call starts the app again."
             }
           }
         }

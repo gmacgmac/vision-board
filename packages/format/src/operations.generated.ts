@@ -2,7 +2,7 @@
 // The route table: every operation's id, method, path and path parameters, whether agents get it,
 // and which credential it needs. Callers read this, never openapi.json, so the page bundle stays small.
 
-export type OperationAuth = 'none' | 'agent' | 'person' | 'run';
+export type OperationAuth = 'none' | 'agent' | 'person' | 'agent-or-person' | 'run';
 
 export interface OperationInfo {
   readonly operationId: string;
@@ -13,7 +13,7 @@ export interface OperationInfo {
   readonly pathParams: readonly string[];
   /** True when MCP and `vb` get this operation. */
   readonly xAgent: boolean;
-  /** `agent`: Bearer secret. `person`: the page cookie. `run`: a chat session's run token. `none`: no credentials needed. */
+  /** `agent`: Bearer secret. `person`: the page cookie. `agent-or-person`: either. `run`: a chat session's run token. `none`: no credentials needed. */
   readonly auth: OperationAuth;
 }
 
@@ -133,6 +133,14 @@ export const OPERATIONS = {
   list_folders: {
     operationId: 'list_folders', method: 'GET', path: '/api/folders',
     pathParams: [], xAgent: false, auth: 'person',
+  },
+  list_apps: {
+    operationId: 'list_apps', method: 'GET', path: '/api/apps',
+    pathParams: [], xAgent: true, auth: 'agent-or-person',
+  },
+  call_app_tool: {
+    operationId: 'call_app_tool', method: 'POST', path: '/api/apps/{app}/calls',
+    pathParams: ['app'], xAgent: false, auth: 'person',
   },
 } as const satisfies Record<string, OperationInfo>;
 

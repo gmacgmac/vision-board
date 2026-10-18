@@ -45,7 +45,7 @@ interface Common {
   /** Who may take it. An agent never writes an `act` (rule 8). */
   by: 'person' | 'agent';
   /** A decision only a person's click makes (rule 8): acknowledge, drop, later, grant, deny,
-   * revoke, archive. The page never takes it for the person. */
+   * revoke, archive, allow or stop an app. The page never takes it for the person. */
   needsConfirmation: boolean;
 }
 
@@ -109,6 +109,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // Nothing is lost either way, so the page asks neither time.
   lock: { id: 'lock', label: 'Lock board', ...person, onItem: false },
   unlock: { id: 'unlock', label: 'Unlock board', ...person, onItem: false },
+  // Ledger v17 (api.md 150, D-047 ruling 7): the person lets an app's tools run at one version of its
+  // code, and stops them. Only a person's click does either (rule 8), so the page asks first.
+  'app-allow': { id: 'app-allow', label: 'Allow app', ...decision, onItem: false },
+  'app-revoke': { id: 'app-revoke', label: 'Stop app', ...decision, onItem: false },
 };
 
 /** The review buttons an item offers: an act among them must be one its kind offers (act.ts). */

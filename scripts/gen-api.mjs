@@ -26,10 +26,12 @@ export const TOOLS_OUT = path.join(ROOT, 'packages/mcp/src/tools.generated.json'
 export const REFERENCE_OUT = path.join(ROOT, 'docs/specification/api-reference.md');
 const SCHEME_AUTH = { agentSecret: 'agent', personCookie: 'person', runToken: 'run' };
 
-/** Who a call needs to be: `none` when any caller may (an empty requirement is an alternative). */
+/** Who a call needs to be: `none` when any caller may (an empty requirement is an alternative);
+ * `agent-or-person` when an agent's secret or the person's cookie will do (list_apps, D-047). */
 export function authOf(operationId, security) {
   if (!Array.isArray(security) || security.length === 0 || security.some((r) => Object.keys(r).length === 0)) return 'none';
   const schemes = new Set(security.flatMap((r) => Object.keys(r)));
+  if (schemes.size === 2 && schemes.has('agentSecret') && schemes.has('personCookie') && security.every((r) => Object.keys(r).length === 1)) return 'agent-or-person';
   if (schemes.size !== 1) throw new Error(`${operationId}: security must name one scheme`);
   const auth = SCHEME_AUTH[[...schemes][0]];
   if (!auth) throw new Error(`${operationId}: unknown security scheme ${[...schemes][0]}`);
@@ -69,7 +71,7 @@ export function render(doc) {
     '// The route table: every operation\'s id, method, path and path parameters, whether agents get it,',
     '// and which credential it needs. Callers read this, never openapi.json, so the page bundle stays small.',
     '',
-    "export type OperationAuth = 'none' | 'agent' | 'person' | 'run';",
+    "export type OperationAuth = 'none' | 'agent' | 'person' | 'agent-or-person' | 'run';",
     '',
     'export interface OperationInfo {',
     '  readonly operationId: string;',
@@ -80,7 +82,7 @@ export function render(doc) {
     '  readonly pathParams: readonly string[];',
     '  /** True when MCP and `vb` get this operation. */',
     '  readonly xAgent: boolean;',
-    '  /** `agent`: Bearer secret. `person`: the page cookie. `run`: a chat session\'s run token. `none`: no credentials needed. */',
+    '  /** `agent`: Bearer secret. `person`: the page cookie. `agent-or-person`: either. `run`: a chat session\'s run token. `none`: no credentials needed. */',
     '  readonly auth: OperationAuth;',
     '}',
     '',

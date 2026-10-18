@@ -90,7 +90,7 @@ export interface Joined { agent: string; secret: string; client: Client }
 
 const PERSON_OPS: ReadonlySet<OperationId> = new Set([
   'act', 'mark_seen', 'put_board', 'retire_cards', 'read_ledger', 'start_chat', 'list_chats', 'start_folder_chat', 'list_folder_chats', 'send_chat', 'stop_chat', 'answer_approval', 'watch_chat',
-  'get_project', 'list_folders', 'open_project',
+  'get_project', 'list_folders', 'open_project', 'call_app_tool',
 ]);
 
 const mediaOf = (h: Headers) => (h.get('content-type') ?? '').split(';')[0]!.trim();

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/app-call-response.schema.json",
+  "title": "App tool result",
+  "description": "A tool's answer in MCP's tool-result shape. `isError` is true when the tool threw: `content` then holds its message for the panel to show.",
+  "$comment": "Was: D-047 ruling 6",
+  "type": "object",
+  "required": ["content", "isError"],
+  "properties": {
+    "content": {"type": "array", "items": {"$ref": "https://vision-board.invalid/schema/api/app-call-response.schema.json#/$defs/text"}, "description": "The answer as text: the tool's object as JSON, the text it returned, or the message of the error it threw."},
+    "structuredContent": {"type": "object", "description": "The object the tool returned, checked against its `outputSchema` when it has one. Left out when it returned text or threw."},
+    "isError": {"type": "boolean", "description": "True when the tool threw."}
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "text": {
+      "type": "object",
+      "required": ["type", "text"],
+      "properties": {"type": {"const": "text", "description": "Always `text`."}, "text": {"type": "string", "description": "The text."}},
+      "unevaluatedProperties": false
+    }
+  }
+}

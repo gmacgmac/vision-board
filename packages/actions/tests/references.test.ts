@@ -133,6 +133,10 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   l.v = 15; // api.md 138
   at('act:lock', l.act({ action: 'lock', board: 'b2' }), { board: 'b2', cards: [] });
   at('act:unlock', l.act({ action: 'unlock', board: 'b2' }), { board: 'b2', cards: [] });
+  l.v = 17; // api.md 150: an app card, and the person's allow of its app, which is on no board and no card
+  l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator' } } });
+  at('act:app-allow', l.act({ action: 'app-allow', app: 'calculator', hash: 'a'.repeat(64) }), { cards: [] });
+  at('act:app-revoke', l.act({ action: 'app-revoke', app: 'calculator' }), { cards: [] });
   return { l, want };
 }
 
@@ -199,6 +203,10 @@ const ROW_CASES: Record<ReferenceKind, (s: LedgerState) => void> = {
     assert.deepEqual(REFERENCES.agent.lookup(s, A), [{ board: 'b', region: 'r' }, { board: 'b2', region: 'x' }]);
     assert.deepEqual(REFERENCES.agent.lookup(s, B), [{ board: 'b', region: 'q' }]);
     assert.deepEqual(REFERENCES.agent.lookup(s, C), []);
+  },
+  app: (s) => {
+    assert.deepEqual(REFERENCES.app.lookup(s, 'calculator'), [5]);
+    assert.deepEqual(REFERENCES.app.lookup(s, 'converter'), []);
   },
 };
 

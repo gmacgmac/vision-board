@@ -26,7 +26,7 @@ test('lengths count code points, as the board server does; blank text is refused
 test('a write item is checked against the form its `type` names; an unknown type lists the forms', () => {
   const items = (x: unknown) => checkArgs(input('write_board'), { board: 'b', items: [x] }).problems;
   assert.deepEqual(items({ type: 'node', node: { region: 'r', kind: 'idea', title: 'T' } }),
-    ['/items/0/node/kind: must be one of "question", "finding", "decision", "risk", "action", "topic", "note"']);
+    ['/items/0/node/kind: must be one of "question", "finding", "decision", "risk", "action", "topic", "note", "app"']);
   assert.match(items({ type: 'poster' })[0]!, /^\/items\/0\/type: must be one of "board", "region", "node"/);
   assert.deepEqual(items({ type: 'link', from: { key: 'a' }, to: 3 }), []);
 });

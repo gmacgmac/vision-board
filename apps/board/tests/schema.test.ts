@@ -1,4 +1,4 @@
-// Ledger v16 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130, 132, 135, 138, 141): the JSON Schema is the one source, and the hand validator
+// Ledger v17 schemas (api.md 2, 5-11, 56, 62, 66, 71, 81, 90, 93, 118, 125-130, 132, 135, 138, 141, 150): the JSON Schema is the one source, and the hand validator
 // (eventProblems) must give the same verdict on every fixture line and on every broken line below.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,7 +18,7 @@ import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const LEDGER = `${SCHEMA_BASE}schema/ledger/16/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/17/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
@@ -50,9 +50,9 @@ for (const rel of FIXTURES) {
   });
 }
 
-// ---- 3. Valid v16 lines for every event type and action ----
+// ---- 3. Valid v17 lines for every event type and action ----
 
-test('every event type has a valid v16 line, and every one passes both validators', () => {
+test('every event type has a valid v17 line, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(VALID).sort(), [...EVENT_TYPES].sort());
   for (const [type, e] of Object.entries(VALID)) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, e), [], type);
@@ -60,7 +60,7 @@ test('every event type has a valid v16 line, and every one passes both validator
   }
 });
 
-test('every action has a valid v16 act, and every one passes both validators', () => {
+test('every action has a valid v17 act, and every one passes both validators', () => {
   assert.deepEqual(Object.keys(ACTS).sort(), [...ACTION_IDS].sort());
   for (const action of ACTION_IDS) {
     assert.deepEqual(schemaProblems(LEDGER_EVENT_ID, act(action)), [], action);
@@ -278,11 +278,12 @@ function refsOf(node: unknown, out: string[] = []): string[] {
 test('every schema file compiles, with every $defs entry, and no $ref leaves https://vision-board.invalid/', () => {
   const files = schemaFiles();
   const relOf = (file: string) => path.relative(path.join(ROOT, 'packages/format/schema'), file).split(path.sep).join('/');
-  // The API body schemas (api/) have their own namespace and are checked in openapi.test.ts.
-  assert.equal(files.filter(({ file }) => !relOf(file).startsWith('api/')).length, 2 + EVENT_TYPES.length);
+  // The API body schemas (api/) and the app manifest (app/) have their own namespaces (openapi.test.ts, schema-apps.test.ts).
+  const own = (rel: string) => /^(api|app)\//.test(rel);
+  assert.equal(files.filter(({ file }) => !own(relOf(file))).length, 2 + EVENT_TYPES.length);
   for (const { file, schema } of files) {
     const rel = relOf(file);
-    assert.equal(schema.$id, rel.startsWith('api/') ? `${SCHEMA_BASE}schema/${rel}` : `${LEDGER}${rel}`, rel);
+    assert.equal(schema.$id, own(rel) ? `${SCHEMA_BASE}schema/${rel}` : `${LEDGER}${rel}`, rel);
     compileSchema(schema.$id);
     for (const name of Object.keys((schema.$defs ?? {}) as Rec)) compileSchema(`${schema.$id}#/$defs/${name}`);
     for (const ref of refsOf(schema)) assert.ok(ref.startsWith(SCHEMA_BASE), `${rel}: ${ref}`);

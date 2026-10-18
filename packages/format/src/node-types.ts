@@ -35,4 +35,6 @@ export const NODE_TYPES: Readonly<Record<Kind, NodeType>> = {
   action: asks('Action'),
   topic: tells('Topic'),
   note: tells('Note'),
+  // An app the agent built, shown in a panel inside the card (D-047 ruling 3): a note and Later.
+  app: tells('App'),
 };

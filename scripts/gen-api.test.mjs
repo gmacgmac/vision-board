@@ -19,7 +19,10 @@ test('auth: an empty requirement means anyone; otherwise the one scheme named', 
   assert.equal(authOf('x', [{ agentSecret: [] }]), 'agent');
   assert.equal(authOf('x', [{ personCookie: [] }]), 'person');
   assert.equal(authOf('x', [{ runToken: [] }]), 'run');
-  assert.throws(() => authOf('x', [{ agentSecret: [] }, { personCookie: [] }]), /one scheme/);
+  // An agent's secret or the person's cookie, either one (list_apps, D-047 ruling 12).
+  assert.equal(authOf('x', [{ agentSecret: [] }, { personCookie: [] }]), 'agent-or-person');
+  assert.equal(authOf('x', [{ personCookie: [] }, { agentSecret: [] }]), 'agent-or-person');
+  assert.throws(() => authOf('x', [{ agentSecret: [] }, { runToken: [] }]), /one scheme/);
   assert.throws(() => authOf('x', [{ oauth: [] }]), /unknown security scheme/);
 });
 
