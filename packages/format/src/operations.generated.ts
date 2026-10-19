@@ -142,6 +142,14 @@ export const OPERATIONS = {
     operationId: 'call_app_tool', method: 'POST', path: '/api/apps/{app}/calls',
     pathParams: ['app'], xAgent: false, auth: 'person',
   },
+  get_panel_state: {
+    operationId: 'get_panel_state', method: 'GET', path: '/api/boards/{board}/nodes/{n}/panel-state',
+    pathParams: ['board', 'n'], xAgent: false, auth: 'person',
+  },
+  put_panel_state: {
+    operationId: 'put_panel_state', method: 'PUT', path: '/api/boards/{board}/nodes/{n}/panel-state',
+    pathParams: ['board', 'n'], xAgent: false, auth: 'person',
+  },
 } as const satisfies Record<string, OperationInfo>;
 
 export type OperationId = keyof typeof OPERATIONS;

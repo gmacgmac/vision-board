@@ -6,6 +6,7 @@
 // it is still a folder under home, then the fallback (this repo).
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeFileAtomic } from './atomic-file.ts';
 import { isUnder } from './folders.ts';
 import { DATA_DIR } from './ledger.ts';
 
@@ -32,9 +33,7 @@ export function addRecent(home: string, dir: string): void {
   const file = recentPath(home);
   const folders = [dir, ...readRecent(home).filter((x) => x !== dir)].slice(0, RECENT_MAX);
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify({ folders }, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, file);
+  writeFileAtomic(file, `${JSON.stringify({ folders }, null, 2)}\n`, 0o600);
 }
 
 /** The folder the server opens at start: `project` (VB_PROJECT) when set; else the newest recent

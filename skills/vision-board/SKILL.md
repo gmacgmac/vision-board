@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel. It also shows pictures, and small apps you build, inside a card.
-status: v3.9 (2026-10-19, apps are your own design: a restrained neutral palette from the host's surface and text variables plus at most one accent of your own, never the board's accent, focus rings on `:focus-visible` only, quiet hover and selection); v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.10 (2026-10-19, an app saves its place with `vision-board/save-state` and restores it from `hostContext["vision-board/state"]`, keeps 12 px of padding at its top, and its tools don't keep the person's place); v3.9 (2026-10-19, apps are your own design: a restrained neutral palette from the host's surface and text variables plus at most one accent of your own, never the board's accent, focus rings on `:focus-visible` only, quiet hover and selection); v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -372,11 +372,15 @@ Build an app when the person wants something to use, not to read: it runs in an 
   with the same `id`.
   - `ui/initialize`, `params: { protocolVersion: '2026-01-26', appCapabilities: {} }`: set each of
     `result.hostContext.styles.variables` on `document.documentElement.style` and `color-scheme`
-    to its `theme`; then send `ui/notifications/initialized` (no `id`).
+    to its `theme`; then send `ui/notifications/initialized` (no `id`). If `result.hostContext`
+    has `"vision-board/state"`, it is what the panel last saved: show that place again.
   - `tools/call`, `params: { name, arguments }`: `result.structuredContent` is what the tool
     returned; with `result.isError`, `result.content[0].text` is its message. An `error` answer is
     the board refusing: on `error.data.problem` `needs-approval` say "Press Allow on the card",
     else show `error.message`.
+  - `vision-board/save-state`, `params: { state }`: saves any JSON value (at most 64 KB) for this
+    card; the answer is `{}`. Each save replaces the one before. Ignore a failed save quietly: the
+    app still works.
   - `ui/notifications/host-context-changed` brings a new `theme` and `styles` in `params`: apply
     them. On Esc send `ui/notifications/escape`: focus goes back to the card.
 - **The tools**: `export default { tools: [{ name, description, inputSchema, outputSchema, async
@@ -386,6 +390,14 @@ Build an app when the person wants something to use, not to read: it runs in an 
   reads only its folder, writes no files, starts no processes, has 10 seconds a call, and forgets
   what it holds after 5 idle minutes. `ctx.env` has the `env` keys: never a key in the code; ask
   the person to put it in the project's `.env`.
+- **Keep the person's place**: the board closes a panel it has too many of and starts it again
+  later, and a reload or restart does the same. So save where the person is (the step, what they
+  typed or chose, the open tab) with `vision-board/save-state` a moment after each change (wait
+  about half a second, so typing sends one save), and put it back when `ui/initialize` answers
+  with `"vision-board/state"`. Keep it small, and check its shape before using it (it may be from
+  an older version of the app). Never put a secret or a key in it, and don't save what a tool can
+  work out again. A tool is for work, not for remembering the person's place: it forgets after 5
+  idle minutes.
 - **Good to use**: the app is your own design: give it a restrained, professional look. Take
   neutral surfaces, text and lines from the host's variables, each with a fallback
   (`--color-background-primary`, `--color-background-secondary`, `--color-text-primary`,
@@ -398,7 +410,8 @@ Build an app when the person wants something to use, not to read: it runs in an 
   text Lc 60, short coloured labels Lc 45, icons and rings Lc 30 (APCA), in light and dark. Your own
   SVG, icons and layout are welcome; no outside fonts or files. Also: a visible label on every
   field, real buttons, Enter for the main action, results and errors in plain words in an
-  `aria-live` region. Size: `w` 280 to 960, `h` 120 to 800 px (360 × 320 unset), the smallest that
+  `aria-live` region. Keep 12 px of padding at the panel's top: the card's number and APP tab
+  overlap the top edge. Size: `w` 280 to 960, `h` 120 to 800 px (360 × 320 unset), the smallest that
   fits every control. The model: the calculator, `skills/vision-board/examples/apps/calculator/` in
   the Vision Board repo (contract: its `docs/specification/apps.md`), or a copy in the project's
   `.visionboard/apps/`. When a note asks to restyle an app ("make it look more pro"), change only

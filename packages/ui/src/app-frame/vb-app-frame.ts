@@ -1,11 +1,14 @@
 // App frame pattern, layer 3 (element): <vb-app-frame>, in light DOM (components.md § The element).
 // It draws an app's panel in a sandboxed frame (D-047 ruling 4) and speaks the panel protocol through
 // the core (app-frame-core.ts). The node template puts one in each app card; the page wires it once
-// (`wire`) and calls load() while the card is on screen and near enough to use, unload() when it
-// leaves (ruling 14). Unloaded, it is a light placeholder with the app's title. Its inputs are
+// (`wire`), calls load() the first time the card is on screen and near enough to use, then freeze()
+// while it is off screen or zoomed far and thaw() when it is back, and unload() only for its cap of
+// live panels or a state with no panel (D-050, superseding D-047 ruling 14). Frozen, the
+// panel keeps running and what it holds, but takes no input (inert) and isn't painted: the
+// placeholder shows. Unloaded, it is a light placeholder with the app's title. Its inputs are
 // attributes: data-app (the app's id), data-label (its name: the frame's title), data-w and data-h
 // (the panel's size, held to APP_SIZE). Browser only: the class is created inside defineVbAppFrame().
-import type { AppSize, AppToolResult } from '../../../format/src/index.ts';
+import type { AppSize, AppStateValue, AppToolResult } from '../../../format/src/index.ts';
 import { APP_ID, APP_PANEL_PATH } from '../../../format/src/index.ts';
 import type { AppBridge, AppLook } from './app-frame-core.ts';
 import { createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
@@ -17,11 +20,15 @@ export const VB_APP_FRAME_TAG = 'vb-app-frame';
  * never finishes the handshake is still seen. */
 const SHOW_AFTER_MS = 1500;
 
-/** What the page gives the frame (FE_02): the call to the board's server, and optionally the look
- * and what Esc in the panel does. */
+/** What the page gives the frame (FE_02): the call to the board's server, and optionally the card's
+ * saved state, the look and what Esc in the panel does. */
 export interface AppFrameWiring {
   /** `call_app_tool` through the page's one I/O layer; rejects with an `AppCallError`. */
   callTool(name: string, args: Record<string, unknown>): Promise<AppToolResult>;
+  /** Keep the panel's saved state for this card (the bridge's `saveState`); left out, a save is refused. */
+  saveState?(state: AppStateValue): Promise<void>;
+  /** The value this card's panel last saved, for its start (the bridge's `loadState`); left out, none. */
+  loadState?(): Promise<AppStateValue | undefined>;
   /** The board's look now; left out, the frame reads it from the page's tokens (`readLook`). */
   look?(): AppLook;
   /** How focus came into the panel, asked when it does: 'pointer' draws no ring (a click, as on a
@@ -41,9 +48,15 @@ export interface VbAppFrameElement extends HTMLElement {
   load(): void;
   /** Remove the frame (the panel stops) and show the placeholder; focus in it goes to the card. */
   unload(): void;
+  /** Keep the loaded panel running but out of use: inert (no click, no focus) and not painted, the
+   * placeholder in its place; focus in it goes to the card. Nothing while unloaded. */
+  freeze(): void;
+  /** Put a frozen panel back in use, as it was. */
+  thaw(): void;
   /** The board's theme changed: a ready panel gets `host-context-changed` with what changed. */
   lookChanged(): void;
   readonly loaded: boolean;
+  readonly frozen: boolean;
 }
 
 /** The CSS property that resolves each kind of board token: fonts, text sizes, radii, colours. */
@@ -112,6 +125,8 @@ export function defineVbAppFrame(): void {
 
     get loaded(): boolean { return this.frame !== undefined; }
 
+    get frozen(): boolean { return this.hasAttribute('data-frozen'); }
+
     private get label(): string { return this.dataset.label ?? ''; }
 
     private get size(): AppSize {
@@ -161,6 +176,8 @@ export function defineVbAppFrame(): void {
       this.bridge = createAppBridge({
         send: (m) => frame.contentWindow?.postMessage(m, '*'),
         callTool: (name, args) => (this.wiring ? this.wiring.callTool(name, args) : Promise.reject({ problem: 'not-found' })),
+        saveState: (state) => (this.wiring?.saveState ? this.wiring.saveState(state) : Promise.reject({ problem: 'not-found' })),
+        loadState: () => this.wiring?.loadState?.() ?? Promise.resolve(undefined),
         hostContext: () => hostContext(this.wiring?.look?.() ?? readLook(this), this.size),
         onEscape: () => (this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard()),
         onState: (s) => { if (s === 'ready') this.show(); },
@@ -180,7 +197,21 @@ export function defineVbAppFrame(): void {
       this.append(frame);
     }
 
+    freeze(): void {
+      if (!this.frame || this.frozen) return;
+      // Focus in the panel would be lost to an inert frame: it goes back to the card.
+      if (document.activeElement === this.frame) this.toCard();
+      this.toggleAttribute('data-frozen', true);
+      this.inert = true;
+    }
+
+    thaw(): void {
+      this.removeAttribute('data-frozen');
+      this.inert = false;
+    }
+
     unload(): void {
+      this.thaw();
       window.removeEventListener('message', this.onMessage);
       window.removeEventListener('blur', this.onFocusMove);
       window.removeEventListener('focus', this.onFocusMove);

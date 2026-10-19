@@ -1,13 +1,14 @@
 // Ledger v17 and the app contract (api.md 150-153, D-047, docs/specification/apps.md): an app card
 // names its app, the person's allow names the app and its code's hash, and the manifest, a tool's
-// shape and the two app operations' bodies have one JSON Schema each. The schema and the hand
+// shape, the two app operations' bodies and a card's saved panel state have one JSON Schema each. The schema and the hand
 // validator (eventProblems) give the same verdict on every line here, and the numbers the schema
 // holds are the ones packages/format defines (APP_SIZE, APP_FILES, the patterns).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import type { AppManifest } from '../../../packages/format/src/index.ts';
 import {
-  APP_FILES, APP_HASH_PATTERN, APP_ID, APP_SIZE, APP_STATES, APP_TOOL_NAME, ID_PATTERN, eventProblems,
+  APP_FILES, APP_HASH_PATTERN, APP_ID, APP_LIMITS, APP_SIZE, APP_STATE_FORMAT, APP_STATES, APP_TOOL_NAME, ID_PATTERN, eventProblems,
 } from '../../../packages/format/src/index.ts';
 import { LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaProblems } from '../server/schema.ts';
 import { AGENT, DROP, PERSON, patch } from './schema-cases.ts';
@@ -15,6 +16,7 @@ import { AGENT, DROP, PERSON, patch } from './schema-cases.ts';
 type Rec = Record<string, any>;
 const LEDGER = `${SCHEMA_BASE}schema/ledger/18/`;
 const MANIFEST = `${SCHEMA_BASE}schema/app/manifest.schema.json`;
+const PANEL_STATE = `${SCHEMA_BASE}schema/app/panel-state.schema.json`;
 const API = `${SCHEMA_BASE}schema/api/`;
 const HASH = 'a'.repeat(64);
 
@@ -206,4 +208,28 @@ test('call_app_tool: the request names a tool and its arguments; the answer is M
   assert.notDeepEqual(api('app-call-response', { content: [], structuredContent: 36, isError: false }), [], 'structured content is an object');
   assert.notDeepEqual(api('app-call-response', { content: [{ type: 'image', text: 'x' }], isError: false }), [], 'text only');
   assert.notDeepEqual(api('app-call-response', { content: [] }), [], 'isError is required');
+});
+
+test('panel state: the kept file, the save (the panel\'s params and the route\'s body) and the answers, each closed; the schema holds packages/format\'s numbers', () => {
+  const fits = (def: string, value: unknown) => schemaProblems(def ? `${PANEL_STATE}#/$defs/${def}` : PANEL_STATE, value);
+  const file = { v: APP_STATE_FORMAT, app: 'calculator', state: { display: '36' } };
+  assert.deepEqual(fits('', file), []);
+  assert.deepEqual(fits('', { ...file, state: null }), [], 'null is a value');
+  assert.notDeepEqual(fits('', { ...file, v: APP_STATE_FORMAT + 1 }), [], 'another version');
+  assert.notDeepEqual(fits('', { ...file, app: 'Calculator' }), [], 'not an id');
+  assert.notDeepEqual(fits('', { v: APP_STATE_FORMAT, app: 'calculator' }), [], 'no state');
+  assert.notDeepEqual(fits('', { ...file, board: 'pricing' }), [], 'unknown field');
+  for (const state of [null, 0, 'x', true, [1], { a: { b: [] } }]) assert.deepEqual(fits('save', { state }), [], JSON.stringify(state));
+  assert.notDeepEqual(fits('save', {}), [], 'no state');
+  assert.notDeepEqual(fits('save', { state: 1, n: 2 }), [], 'unknown field');
+  assert.notDeepEqual(fits('save', [1]), [], 'not an object');
+  assert.deepEqual(fits('saved', {}), []);
+  assert.notDeepEqual(fits('saved', { ok: true }), []);
+  assert.deepEqual([fits('read', {}), fits('read', { state: [1] })], [[], []]);
+  assert.notDeepEqual(fits('read', { state: 1, app: 'calculator' }), [], 'the app is the board\'s, never sent');
+  assert.deepEqual(fits('written', { bytes: APP_LIMITS.stateBytes }), []);
+  assert.notDeepEqual(fits('written', { bytes: APP_LIMITS.stateBytes + 1 }), []);
+  assert.notDeepEqual(fits('written', { bytes: 0 }), []);
+  const schema = JSON.parse(fs.readFileSync(new URL('../../../packages/format/schema/app/panel-state.schema.json', import.meta.url), 'utf8'));
+  assert.deepEqual([schema.properties.v.const, schema.$defs.written.properties.bytes.maximum], [APP_STATE_FORMAT, APP_LIMITS.stateBytes]);
 });

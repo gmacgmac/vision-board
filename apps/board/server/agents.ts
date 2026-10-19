@@ -6,6 +6,7 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeFileAtomic } from './atomic-file.ts';
 
 export const AGENTS_FILE = 'agents.json';
 const GITIGNORE = '.gitignore';
@@ -54,9 +55,7 @@ function readHashes(file: string): AgentHash[] {
 
 /** Write atomically (a temp file renamed over the old one), readable by this user only. */
 function writeHashes(file: string, hashes: AgentHash[]): void {
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify({ agents: hashes }, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, file);
+  writeFileAtomic(file, `${JSON.stringify({ agents: hashes }, null, 2)}\n`, 0o600);
 }
 
 /** `.visionboard/.gitignore` names `name`, so the file is never committed. */

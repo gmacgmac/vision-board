@@ -1,7 +1,8 @@
 // Node pattern, app cards in the element (D-047): what `VbNode.update` applies in place on an app
 // card, apart from the element so it stays one job (card-polish FE_04). Browser only. The panel's
 // size on the card, the slot's state and its state view, the footer's app status (card-polish
-// FE_01) and the footer's name with its hover tip (card-polish FE_04, the appTitle flag).
+// FE_01) and the footer's name with its hover tip (card-polish FE_04, the appTitle flag); and from
+// `VbNode.render`, a new version's markup that keeps a loaded panel where it is (app-state-kept FE_01).
 import type { AppSize } from '../../../format/src/index.ts';
 import type { AppCardView } from './node-app.ts';
 import type { HoverTip } from '../tip/hover-tip.ts';
@@ -18,6 +19,51 @@ export function applyPanelSize(card: HTMLElement, size: AppSize | undefined): vo
   } else {
     card.style.removeProperty('--app-w');
     card.style.removeProperty('--app-h');
+  }
+}
+
+/** The elements from `root` (not included) down to `el`, outermost first. */
+function pathTo(root: Node, el: Element): Element[] {
+  const path: Element[] = [];
+  for (let at: Element | null = el; at && at !== root; at = at.parentElement) path.unshift(at);
+  return path;
+}
+
+/** The card's markup `html` in place of what `card` held (`vb-node.ts` `render`), keeping a loaded
+ * panel loaded (D-050; app-state-kept FE_01): a frame taken out of the page reloads its
+ * document, so the frame and each element it sits in stay where they are, each taking the new
+ * markup's attributes, with the new markup's other children round it. The frame keeps its own
+ * children and takes the new app, name and size (`data-app` another app starts it again). With no
+ * loaded frame, or no frame at the same place in the new markup, it is a plain replace. */
+export function renderKeepingPanel(card: HTMLElement, html: string): void {
+  const old = card.querySelector<VbAppFrameElement>('vb-app-frame');
+  if (!old?.loaded) {
+    card.innerHTML = html;
+    return;
+  }
+  const t = document.createElement('template');
+  t.innerHTML = html;
+  const fresh = t.content.querySelector('vb-app-frame');
+  const keep = pathTo(card, old);
+  const want = fresh ? pathTo(t.content, fresh) : [];
+  if (keep.length !== want.length || keep.some((el, i) => el.tagName !== want[i]!.tagName)) {
+    card.replaceChildren(t.content);
+    return;
+  }
+  let host: Node = card;
+  let from: Node = t.content;
+  for (const [i, el] of keep.entries()) {
+    const next = want[i]!;
+    const kids = [...from.childNodes];
+    const at = kids.indexOf(next);
+    for (const c of [...host.childNodes]) if (c !== el) c.remove();
+    el.before(...kids.slice(0, at));
+    el.after(...kids.slice(at + 1));
+    const names = el === old ? ['data-app', 'data-label', 'data-w', 'data-h'] : null;
+    if (!names) for (const a of [...el.attributes]) if (!next.hasAttribute(a.name)) el.removeAttribute(a.name);
+    for (const a of next.attributes) if (!names || names.includes(a.name)) el.setAttribute(a.name, a.value);
+    host = el;
+    from = next;
   }
 }
 

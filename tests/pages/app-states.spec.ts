@@ -1,8 +1,9 @@
 // Every app card state on the board (app-cards FE_02, D-047 ruling 10; PLAN.md § Goal state line 6),
 // light and dark, axe on each: loading (list_apps not answered yet), needs approval, code changed,
 // ready, missing, invalid and broken from the real app host (app-server.ts, with the test apps of
-// apps/board/tests/fixtures/apps/); zoomed out and off screen, the light placeholder and no frame
-// (ruling 14: no frame is made off screen or below FAR_K, and one is made once the card is in view);
+// apps/board/tests/fixtures/apps/); zoomed out and off screen, the light placeholder over a frozen
+// frame (D-050: no frame is made off screen or below FAR_K, one is made once the card is in
+// view, and a loaded one stays loaded; app-alive.spec.ts proves it keeps what it holds);
 // and a past version of the board, read-only, no frame. Allow and "Allowed ▾" are in the footer
 // (card-polish FE_01), so every card has one size in every state.
 import fs from 'node:fs';
@@ -112,22 +113,25 @@ for (const theme of THEMES) {
     expect(await heights(page)).toEqual(loading);
   });
 
-  test(`zoomed out past FAR_K, no panel runs: the placeholder with the app's title; zoomed back in, the panels start again (${theme})`, async ({ page }) => {
+  test(`zoomed out past FAR_K, the panels are frozen: the placeholder with the app's title; zoomed back in, the same panels show again (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await open(page);
     await expectStates(page);
     const stage = page.locator('#stage');
     for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) !== 'far'; i += 1) await page.keyboard.press('-');
     await expect(stage).toHaveAttribute('data-zoom', 'far');
-    await expect(page.locator('vb-app-frame iframe')).toHaveCount(0);
-    await expect(card(page, 2).locator('vb-app-frame')).toHaveAttribute('data-state', 'idle');
+    await expect(page.locator('vb-app-frame[data-frozen][inert] iframe')).toHaveCount(3);
+    await expect(page.locator('vb-app-frame iframe').first()).toBeHidden();
+    await expect(card(page, 2).locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
     await expect(card(page, 2).locator('.vb-af-title')).toHaveText('Probe');
+    await expect(card(page, 2).locator('.vb-af-title')).toBeVisible();
     // The footer's controls hide as the quick actions do.
     await expect(card(page, 0).locator('[data-app-act="app-allow"]')).toBeHidden();
     await expect(card(page, 2).locator('[data-app-menu]')).toBeHidden();
     await expectNoAxeViolations(page);
     for (let i = 0; i < 12 && (await stage.getAttribute('data-zoom')) === 'far'; i += 1) await page.keyboard.press('+');
     await expectStates(page);
+    await expect(page.locator('vb-app-frame[data-frozen]')).toHaveCount(0);
   });
 }
 
@@ -224,15 +228,14 @@ async function panBy(page: Page, dx: number, dy: number): Promise<void> {
 }
 
 for (const theme of THEMES) {
-  test(`off screen, no panel runs: none is made for a card well off screen, and one is made once it comes into view (${theme})`, async ({ page }) => {
+  test(`off screen, no panel starts: a loaded one is frozen, none is made for a card off screen on opening, and one is made once it comes into view (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await open(page);
     await expectStates(page);
-    // Well past a screen away, the frames go.
+    // Well past a screen away, the frames stay loaded, frozen.
     const { width } = (await page.locator('#stage').boundingBox())!;
     await panBy(page, -3 * width, 0);
-    await expect(page.locator('vb-app-frame iframe')).toHaveCount(0);
-    await expect(card(page, 0).locator('vb-app-frame')).toHaveAttribute('data-state', 'idle');
+    await expect(page.locator('vb-app-frame[data-frozen] iframe')).toHaveCount(3);
     // Opened again where the person left it (the view is kept): nothing off screen loads.
     const panels: string[] = [];
     page.on('request', (r) => { if (r.url().includes('/app-panels/')) panels.push(r.url()); });

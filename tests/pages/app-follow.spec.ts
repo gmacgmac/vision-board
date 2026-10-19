@@ -116,7 +116,7 @@ test('a changed tools.mjs asks again as soon as the card is selected, before the
 test.describe('a deleted app folder', () => {
   test.use({ expected: { problems: GONE } });
 
-  test('says "not found" once its panel loads again, without a page reload, at the same height; put back, Check again brings the panel back (finding 1)', async ({ page }) => {
+  test('says "not found" once the card is selected, without a page reload, at the same height; put back, Check again brings the panel back (finding 1)', async ({ page }) => {
     const { board, n: [n] } = await s.draw([{ kind: 'app', title: 'Notice', app: { id: 'panel-only' } }]);
     await open(page, board, 1);
     const card = cardOf(page, n!);
@@ -127,14 +127,20 @@ test.describe('a deleted app folder', () => {
     const folder = s.dir('panel-only');
     fs.renameSync(folder, `${folder}-away`);
     try {
-      // Panned well away and back, as in the finding: the frame goes, loads again, and the route refuses it.
+      // Panned well away and back, as in the finding: the panel stays loaded (D-050), so
+      // nothing reads; selecting the card reads list_apps, and the panel goes.
       const { width } = (await page.locator('#stage').boundingBox())!;
       await panBy(page, -3 * width, 0);
-      await expect(page.locator('vb-app-frame iframe')).toHaveCount(0);
+      await expect(page.locator('vb-app-frame[data-frozen] iframe')).toHaveCount(1);
       await page.keyboard.press('f');
+      await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', 'ready');
+      await card.locator('.vb-app-name-text').click();
       await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', 'missing');
       await expect(card.locator('.vb-app-head')).toHaveText('App panel-only not found');
       await expect(card.locator('vb-app-frame iframe')).toHaveCount(0);
+      // Selection cleared, so the board is as the person left it.
+      await page.keyboard.press('Escape');
+      await expect(card).not.toHaveAttribute('data-selected');
       await expect(card).toHaveAttribute('aria-label', /, app not found$/);
       expect(await heightOf(card)).toBe(height);
       await expectNoAxeViolations(page);

@@ -1,11 +1,15 @@
 // The app contract's one table (packages/format/src/apps.ts, D-047) and the doc that states it
 // (docs/specification/apps.md): a panel's size is the agent's, else the manifest's, else the
-// default; and every limit, size, state and panel message the doc lists is the one the code holds,
-// so a change to either fails here.
+// default; a panel's saved state is any JSON value up to its limit; the board's own panel methods
+// can't collide with MCP Apps'; and every limit, size, state and panel message the doc lists is the
+// one the code holds, so a change to either fails here.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { APP_LIMITS, APP_SIZE, APP_STATES, appSize, HOST_NOTIFICATIONS, PANEL_ERRORS, PANEL_METHODS } from '../src/index.ts';
+import {
+  APP_HOST_NAME, APP_LIMITS, APP_SIZE, APP_STATE_KEY, APP_STATES, appSize, appStateBytes, appStateProblem, HOST_NOTIFICATIONS, PANEL_ERRORS,
+  PANEL_METHODS, PANEL_SAVE_STATE,
+} from '../src/index.ts';
 
 const DOC = fs.readFileSync(new URL('../../../docs/specification/apps.md', import.meta.url), 'utf8');
 /** The rows of the table under heading `title`: each cell, backticks dropped. */
@@ -50,4 +54,31 @@ test('apps.md lists every manifest field the schema has, in its order, and which
   const schema = JSON.parse(fs.readFileSync(new URL('../schema/app/manifest.schema.json', import.meta.url), 'utf8'));
   assert.deepEqual(body('The manifest').map(([field]) => field), Object.keys(schema.properties));
   assert.deepEqual(body('The manifest').filter(([, needed]) => needed === 'yes').map(([field]) => field), schema.required);
+});
+
+test(`a panel may save any JSON value of at most ${APP_LIMITS.stateBytes} bytes of compact UTF-8 JSON, and nothing else`, () => {
+  const most = APP_LIMITS.stateBytes;
+  for (const ok of [null, 0, 'x', true, [], {}, { display: '36', steps: [1, 2] }]) assert.equal(appStateProblem(ok), undefined, JSON.stringify(ok));
+  const fill = (bytes: number) => 'x'.repeat(bytes - 2); // a JSON string's quotes are 2 bytes
+  assert.equal(appStateBytes(fill(most)), most);
+  assert.equal(appStateProblem(fill(most)), undefined);
+  assert.equal(appStateProblem(fill(most + 1)), `The state is ${most + 1} bytes of JSON and the most a panel may save is ${most} (${most / 1024} KB). Save less: what the panel needs to start where it was.`);
+  assert.equal(appStateBytes('\u00e9'), 4, 'bytes, not characters: é is two in UTF-8');
+  const loop: Record<string, unknown> = {};
+  loop.self = loop;
+  for (const bad of [undefined, () => 1, loop, 10n]) assert.match(appStateProblem(bad)!, /must be a JSON value/);
+});
+
+test('the board\'s own panel methods start with its host name, so none can collide with an MCP or MCP Apps method', () => {
+  assert.equal(PANEL_METHODS[PANEL_SAVE_STATE], 'request');
+  assert.ok(PANEL_SAVE_STATE.startsWith(`${APP_HOST_NAME}/`));
+  const standard = (m: string) => m.startsWith('ui/') || m === 'tools/call' || m === 'ping';
+  assert.deepEqual(Object.keys(PANEL_METHODS).filter((m) => !standard(m)), [PANEL_SAVE_STATE]);
+});
+
+test('the saved state comes back under the board\'s own host-context key, so a future MCP Apps field can\'t collide (apps.md § Host context)', () => {
+  assert.equal(APP_STATE_KEY, `${APP_HOST_NAME}/state`);
+  const host = DOC.split(/^### Host context$/m)[1]?.split(/^#+ /m)[0] ?? '';
+  assert.ok(host.includes(`\`${APP_STATE_KEY}\``), 'apps.md § Host context names the key');
+  assert.ok(!/^- `state`:/m.test(host), 'no bare `state` field');
 });

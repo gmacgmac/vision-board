@@ -2,10 +2,11 @@
 // computer, process and port hold the ledger. The folder may be shared between computers (Dropbox),
 // and a second writer would fork the ledger, so a second server refuses to start while the lock is
 // live. Live: the heartbeat is under 2 minutes old and, on this computer, the process still runs.
-// Written atomically (temp file, then rename, as agents.ts does) and git-ignored.
+// Written atomically (atomic-file.ts) and git-ignored.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 
 export const LOCK_FILE = 'lock';
@@ -52,9 +53,7 @@ function readLock(file: string): LockInfo | undefined {
 }
 
 function writeLock(file: string, info: LockInfo): void {
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify(info)}\n`);
-  fs.renameSync(tmp, file);
+  writeFileAtomic(file, `${JSON.stringify(info)}\n`);
 }
 
 const live = (x: LockInfo, env: LockEnv): boolean =>

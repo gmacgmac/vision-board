@@ -90,7 +90,7 @@ the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list
 its code changes or is stopped, and when the folder closes. `VB_FLAGS=-appCards` turns app cards
 off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_LIMITS`. Test apps:
 `tests/fixtures/apps/` (`probe` is the page tests' panel). On the page, `src/board/app-cards.ts`
-wires each app card's frame (loaded only on screen and zoomed in enough, ruling 14; tool calls
+wires each app card's frame (loaded once on screen, then kept and frozen when off screen or zoomed out, at most 8 live, D-050; its state saved per card; tool calls
 through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
 the one sender; `src/board/app-state.ts` holds the one copy of `list_apps`' answer;
 `src/board/app-words.ts` says what the person reads around them (components.md § App card). This

@@ -104,7 +104,7 @@ export function appFrameSamples(body: HTMLElement, fx: Fixture): void {
   const frames = el('div', 'g-cards');
   frames.append(frame('Hello', APP_SIZE.w.min, APP_SIZE.h.min), frame('Calculator', APP_SIZE.w.default, APP_SIZE.h.default), frame('Calculator', 300, 220, true));
   body.append(
-    group('The frame, before it loads', 'A light placeholder with the app\'s title, at the least panel size and the default one, then while the panel starts ("Loading…"). The page makes the frame only while its card is on screen and near enough to use.', frames),
+    group('The frame, before it loads', 'A light placeholder with the app\'s title, at the least panel size and the default one, then while the panel starts ("Loading…"). The page makes the frame the first time its card is on screen and near enough to use, then keeps it; off screen or zoomed far the panel is frozen (still running, inert, not painted) and this placeholder shows in its place.', frames),
     group('An app card in every state', `In order: ${STATES.map(([label]) => label.toLowerCase()).join('; ')}. The slot keeps the panel's size in every state and Allow sits in the footer, so the card never moves. Here no panel runs, so the states that show it show the placeholder.`,
       // One card per state, each with an id of its own, so the ids a card's markup holds stay unique on the page.
       cardList('App card states', ...STATES.map(([, app], i) => card({ ...n, id: `${n.id}-${i}` }, fx, fx.state, { app })))),

@@ -630,3 +630,19 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: keep 150 KB and cut features; count lazily loaded chunks (lazy loading could then
   never lower the number).
 - **Task**: cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/PLAN.md
+
+## D-050 App panels stay loaded and keep their state
+- **Date**: 2026-10-19 · **Status**: Accepted · **From**: maintainer (chat 2026-10-19, points 40B,
+  40C, 41)
+- **Decision**: A loaded app panel stays loaded, frozen (inert, not painted) while its card is off
+  screen or the board is zoomed out; at most 8 panels are live, the least recently used unloaded
+  first (`app-cards.ts` `LIVE_PANELS`). A panel saves a small JSON state per card with the board's
+  own request `vision-board/save-state` (`.visionboard/app-state/<identity>.json`, 64 KB cap,
+  person-only, never in an agent read) and gets it back in `ui/initialize`'s host context under
+  `"vision-board/state"`. Supersedes D-047 ruling 14 (frames removed off screen or zoomed out).
+- **Why**: people working through a multi-step app lost their place on every zoom or pan; MCP Apps
+  has no state mechanism yet (ext-apps lists it as future work), so the board adds its own under a
+  name that cannot collide.
+- **Rejected**: state in the ledger (append-only, read by agents, frequent writes); keeping every
+  panel loaded with no cap (memory on a board of many apps).
+- **Task**: cortex-tasks/board/2026-10-19_board-app_app-state-kept/PLAN.md

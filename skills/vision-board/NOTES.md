@@ -550,3 +550,38 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   should be run with Claude Code and Kiro (as in v3.8) before the maintainer relies on them; Kiro
   reads the new text when the board next starts (`~/.kiro/agents/vision-board.json` is written from
   SKILL.md at start).
+
+## Skill v3.10 (apps keep the person's place)
+
+- 2026-10-19, maintainer: a person three steps into an app was back at step 1 after zooming out,
+  because the board took the panel's frame away and started it again (points 40B and 40C).
+  Task set: `cortex-tasks/board/2026-10-19_board-app_app-state-kept/`.
+- 2026-10-19, agent (AGENT_01): why. The board now keeps loaded panels alive, but unloads the least
+  recently used past a cap, and a reload or restart starts every panel afresh. A panel keeps its
+  place only if it saves it. The board's own request `vision-board/save-state` (`{ state }`, any JSON
+  value up to 64 KB, `APP_LIMITS.stateBytes`) stores it per card, and the value comes back in the
+  `ui/initialize` answer under `hostContext["vision-board/state"]`: namespaced like the method, so
+  it can't collide with a key MCP Apps adds later (the orchestrator's ruling, 2026-10-19; contract in
+  `docs/specification/apps.md` § Saving the panel's state). v3.10 adds a "Keep the person's place"
+  bullet and the two messages; "keep state in a tool" is not in the skill (that line was only in
+  `apps.md`, which the contract task rewrites), but the bullet says a tool is not for the person's
+  place (it forgets after 5 idle minutes). The save is debounced by about half a second and a failed
+  save is ignored, because the app must work on a board that refuses it.
+- 2026-10-19, agent: top padding. The card's number and APP tab overlap the top edge of the panel
+  by 9 px (maintainer point 33); the maintainer chose to leave the card as is and ask apps for
+  12 px of padding at the top. One sentence in "Good to use".
+- 2026-10-19, agent: the calculator (model app) saves `{ sum, answer }` 400 ms after a change
+  (and when an answer arrives), restores them from `hostContext["vision-board/state"]` only when both
+  are strings within the length limits, and ignores a failed save. It already had 12 px padding.
+  `.visionboard/apps/calculator/panel.html` is the same file (`repo-example-app.test.ts`).
+- 2026-10-19, agent: scenario 33 (a three-step app that keeps its place) new. SKILL.md is 428 lines
+  (415 in v3.9).
+- 2026-10-19, agent: dry run, **a read-through against the new text, not a live agent run**. Scenario
+  33: the text says to save a moment after each change with `vision-board/save-state`, to restore
+  from `"vision-board/state"`, to check its shape, to keep secrets and recomputable data out, to
+  keep 12 px at the top, and not to use a tool or storage for the place; an agent following it
+  passes every line of the scenario. Read cold, the bullet answers "how does my app remember where
+  the person was?" and "where does it come back?". **Not yet run with live agents**: run scenario 33
+  with Claude Code and Kiro before relying on it. Kiro reads the new text when the board next starts
+  (`~/.kiro/agents/vision-board.json` is written from SKILL.md at start); a running chat keeps v3.9
+  until then.

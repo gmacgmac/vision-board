@@ -7,6 +7,7 @@
 // Git-ignored from the first write.
 import fs from 'node:fs';
 import path from 'node:path';
+import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import { SCHEMA_BASE, schemaProblems } from './schema.ts';
 
@@ -59,9 +60,7 @@ function readEntries(file: string): StoredSession[] {
 
 /** Write atomically (a temp file renamed over the old one), readable by this user only. */
 function writeEntries(file: string, entries: StoredSession[]): void {
-  const tmp = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(tmp, `${JSON.stringify({ sessions: entries }, null, 2)}\n`, { mode: 0o600 });
-  fs.renameSync(tmp, file);
+  writeFileAtomic(file, `${JSON.stringify({ sessions: entries }, null, 2)}\n`, 0o600);
 }
 
 /** The index in the project's data folder (`.visionboard`). Read once, on first use. */

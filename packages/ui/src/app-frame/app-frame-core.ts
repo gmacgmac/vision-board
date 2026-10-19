@@ -1,13 +1,15 @@
 // App frame pattern, layer 1 (core): the panel protocol (D-047; docs/specification/apps.md § The
 // panel protocol), JSON-RPC 2.0 over postMessage in MCP Apps' shape. No DOM: the element
 // (vb-app-frame.ts) hands it every message its window gets, marked with whether it came from the
-// card's own frame, and a way to post to that frame; the page hands it `callTool` and the board's
-// look. Every number is the shared table's (`APP_LIMITS`, `APP_SIZE` in packages/format).
-import type { AppRef, AppSize, AppToolResult, PanelMethod } from '../../../format/src/index.ts';
+// card's own frame, and a way to post to that frame; the page hands it `callTool`, the card's saved
+// state (`saveState`, `loadState`) and the board's look. Every number is the shared table's
+// (`APP_LIMITS`, `APP_SIZE` in packages/format).
+import type { AppRef, AppSize, AppStateValue, AppToolResult, PanelMethod } from '../../../format/src/index.ts';
 import {
-  APP_LIMITS, APP_PROTOCOL_VERSION, APP_SIZE, APP_STYLE_VARIABLES, APP_TOOL_NAME, appSize, HOST_NOTIFICATIONS,
-  LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS,
+  APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_SIZE, APP_STATE_KEY, APP_STYLE_VARIABLES, APP_TOOL_NAME, appSize,
+  HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_SAVE_STATE,
 } from '../../../format/src/index.ts';
+import { checkSave, SAVE_WORDS } from './app-frame-state.ts';
 
 /** The panel's size in px: the agent's, else the manifest's, else the default (`appSize`), held to
  * `APP_SIZE` (ruling 3). The card and the frame both read it, so they never disagree. */
@@ -30,6 +32,9 @@ export interface AppHostContext {
   containerDimensions: { width: number; height: number };
   styles: { variables: AppStyles };
   platform: 'web';
+  /** The value the panel last saved for its card: in the `ui/initialize` answer only, left out when
+   * none (apps.md § Saving the panel's state). */
+  [APP_STATE_KEY]?: AppStateValue;
 }
 
 /** The board's look, which the page reads from its tokens; the frame adds its own size. */
@@ -135,6 +140,12 @@ export interface AppBridgeOptions {
   callTool(name: string, args: Record<string, unknown>): Promise<AppToolResult>;
   /** The host context now: the board's theme and look, the panel's size. */
   hostContext(): AppHostContext;
+  /** Keep the panel's state for its card (`vision-board/save-state`), resolved once the page holds
+   * it where it lasts; rejects with an `AppCallError`. Left out, a save is refused `not-found`. */
+  saveState?(state: AppStateValue): Promise<void>;
+  /** The value the card's panel last saved, for the `ui/initialize` answer (undefined: none). The
+   * answer waits for it; a rejection starts the panel without. Left out, the answer is at once. */
+  loadState?(): Promise<AppStateValue | undefined>;
   /** The person pressed Esc in the panel (`ui/notifications/escape`): focus goes back to the card. */
   onEscape?(): void;
   /** The handshake moved on (the element shows the panel once it is ready). */
@@ -194,15 +205,39 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     if (Object.keys(changed).length) post('ui/notifications/host-context-changed', changed);
   }
 
+  /** An answer to a request made in this start of the panel only; dropped once it restarted or closed. */
+  const liveFrom = (at: number) => (): boolean => state !== 'closed' && epoch === at;
+  /** Why the page refused, as the panel gets it. */
+  const refusal = (e: unknown): { problem: string; detail?: string } => {
+    const err = isObject(e) ? e : {};
+    return { problem: typeof err.problem === 'string' ? err.problem : 'app-failed', ...(typeof err.detail === 'string' && { detail: err.detail }) };
+  };
+
   function initialize(id: JsonRpcId, params: Record<string, unknown>): void {
     if (typeof params.protocolVersion !== 'string') return fail(id, PANEL_ERRORS.invalidParams, 'ui/initialize needs a protocolVersion.');
     epoch += 1;
-    held = o.hostContext();
-    setState('initializing');
-    reply(id, {
-      protocolVersion: APP_PROTOCOL_VERSION, hostInfo: { name: 'vision-board', version: String(LEDGER_FORMAT) },
-      hostCapabilities: { serverTools: {} }, hostContext: held,
-    });
+    const live = liveFrom(epoch);
+    const answer = (saved?: AppStateValue): void => {
+      if (!live()) return;
+      held = o.hostContext();
+      setState('initializing');
+      reply(id, {
+        protocolVersion: APP_PROTOCOL_VERSION, hostInfo: { name: APP_HOST_NAME, version: String(LEDGER_FORMAT) },
+        hostCapabilities: { serverTools: {} }, hostContext: saved === undefined ? held : { ...held, [APP_STATE_KEY]: saved },
+      });
+    };
+    if (!o.loadState) return answer();
+    Promise.resolve().then(() => o.loadState!()).then(answer, () => answer());
+  }
+
+  /** `vision-board/save-state` (`checkSave`), passed to the page and answered when it settles. */
+  function saveState(id: JsonRpcId, params: Record<string, unknown>): void {
+    const checked = checkSave(params);
+    if ('error' in checked) return send({ jsonrpc: '2.0', id, error: checked.error });
+    const live = liveFrom(epoch);
+    Promise.resolve()
+      .then(() => (o.saveState ? o.saveState(checked.value) : Promise.reject({ problem: 'not-found' })))
+      .then(() => { if (live()) reply(id, {}); }, (e: unknown) => { if (live()) fail(id, PANEL_ERRORS.failed, SAVE_WORDS, refusal(e)); });
   }
 
   function callTool(id: JsonRpcId, params: Record<string, unknown>): void {
@@ -211,14 +246,13 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     if (!isObject(args)) return fail(id, PANEL_ERRORS.invalidParams, 'tools/call arguments must be an object.');
     if (calls >= FRAME_CALLS) return refuse(id, 'app-busy');
     calls += 1;
-    const at = epoch;
-    const live = (): boolean => state !== 'closed' && epoch === at;
+    const live = liveFrom(epoch);
     Promise.resolve()
       .then(() => o.callTool(name, args))
       .then((r) => { if (live()) reply(id, toolResult(r)); }, (e: unknown) => {
         if (!live()) return;
-        const err = isObject(e) ? e : {};
-        refuse(id, typeof err.problem === 'string' ? err.problem : 'app-failed', typeof err.detail === 'string' ? err.detail : undefined);
+        const { problem, detail } = refusal(e);
+        refuse(id, problem, detail);
       })
       .finally(() => { calls -= 1; });
   }
@@ -230,6 +264,7 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     if (!isObject(params)) return fail(id, PANEL_ERRORS.invalidParams, 'params must be an object.');
     if (method === 'ui/initialize') initialize(id, params);
     else if (method === 'ping') reply(id, {});
+    else if (method === PANEL_SAVE_STATE) saveState(id, params);
     else callTool(id, params);
   }
 

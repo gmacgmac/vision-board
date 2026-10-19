@@ -2,16 +2,16 @@
   "name": "app-frame",
   "title": "App frame",
   "tag": "vb-app-frame",
-  "description": "An app's panel inside its card (D-047): a sandboxed frame with an opaque origin (sandbox=\"allow-scripts\" only) on the board's panel route, at the panel's size, which talks to the board only by the panel protocol: JSON-RPC 2.0 over postMessage in MCP Apps' shape (docs/specification/apps.md § The panel protocol). The page makes the frame only while its card is on screen and near enough to use (load / unload); until then it is a light placeholder with the app's title.",
+  "description": "An app's panel inside its card (D-047): a sandboxed frame with an opaque origin (sandbox=\"allow-scripts\" only) on the board's panel route, at the panel's size, which talks to the board only by the panel protocol: JSON-RPC 2.0 over postMessage in MCP Apps' shape (docs/specification/apps.md § The panel protocol). The page makes the frame the first time its card is on screen and near enough to use (load), then keeps it loaded: frozen while the card is off screen or zoomed far (freeze / thaw), unloaded only for the page's cap of live panels or a state with no panel (D-050, superseding D-047 ruling 14). Until it loads, and while frozen, it is a light placeholder with the app's title.",
   "files": {
-    "core": "app-frame-core.ts (createAppBridge: the handshake, tools/call forwarding, escape, host-context-changed, JSON-RPC checks and errors, the message and call caps; panelSize, hostContext, hostStyles, parsePanelMessage, PROBLEM_WORDS, FRAME_CALLS; no DOM)",
+    "core": "app-frame-core.ts (createAppBridge: the handshake with the card's saved state in its host context, tools/call forwarding, vision-board/save-state, escape, host-context-changed, JSON-RPC checks and errors, the message and call caps; panelSize, hostContext, hostStyles, parsePanelMessage, PROBLEM_WORDS, FRAME_CALLS; no DOM) and app-frame-state.ts (checkSave, SAVE_WORDS: the save request's check)",
     "element": "vb-app-frame.ts (defineVbAppFrame, VbAppFrameElement, AppFrameWiring, readLook; light DOM; the route is packages/format APP_PANEL_PATH)",
     "styles": "app-frame.css (scoped by the tag; tokens only; the size from --app-w and --app-h)"
   },
-  "states": ["idle", "loading", "ready", "focus"],
+  "states": ["idle", "loading", "ready", "frozen", "focus"],
   "parts": {
     "vb-af-ph": "the placeholder (aria-hidden: the card's name and the frame's title say it): the app's icon in its kind colour (vb-af-icon), its title (vb-af-title) and, while loading, 'Loading…' (vb-af-wait)",
-    "vb-af-frame": "the <iframe>, made by load(): sandbox=\"allow-scripts\", src /app-panels/<id>, title the app's name, referrerpolicy no-referrer; hidden until the panel says it is ready (ui/notifications/initialized) or 1.5 s after it loaded"
+    "vb-af-frame": "the <iframe>, made by load(): sandbox=\"allow-scripts\", src /app-panels/<id>, title the app's name, referrerpolicy no-referrer; hidden until the panel says it is ready (ui/notifications/initialized) or 1.5 s after it loaded, and while frozen"
   },
   "attributes": {
     "data-app": "the app's id (APP_ID); the frame is made only for an id that fits, and a new one starts the panel again",
@@ -20,12 +20,16 @@
     "data-state": "idle | loading | ready (set by the element)",
     "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring unless data-pointer-focus is set",
     "data-pointer-focus": "focus came into the panel by a click (wire's focusCame said 'pointer'): no ring, as on a card; cleared when focus leaves, and the next focus by keyboard draws the ring",
+    "data-frozen": "the frozen state (set by freeze(), cleared by thaw() and unload()): the panel keeps running and what it holds, its frame not painted (visibility: hidden) and the placeholder shown without 'Loading…', whatever data-state says",
+    "inert": "set with data-frozen: no click, no focus and out of the tab order while frozen",
     "aria-busy": "true while loading (set by the element)"
   },
   "methods": {
-    "wire({ callTool, look?, focusCame?, onEscape?, onLoad? })": "once: the page's call_app_tool through its I/O layer, how focus came into the panel (left out: the ring shows), the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again)",
+    "wire({ callTool, saveState?, loadState?, look?, focusCame?, onEscape?, onLoad? })": "once: the page's call_app_tool through its I/O layer, the card's saved panel state (saveState keeps a save, loadState gives the value for ui/initialize; left out, a save is refused and none is given), how focus came into the panel (left out: the ring shows), the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again)",
     "load()": "make the frame and its protocol bridge, and listen for messages; nothing while loaded, not in the page, or for a bad id",
-    "unload()": "remove the frame, close the bridge, stop listening; focus in the panel goes back to the card; also on disconnect",
+    "unload()": "remove the frame, close the bridge, stop listening, thaw; focus in the panel goes back to the card; also on disconnect",
+    "freeze()": "a loaded panel out of use: data-frozen and inert, the frame unpainted, the placeholder shown; focus in the panel goes back to the card; nothing while unloaded or already frozen",
+    "thaw()": "a frozen panel back in use as it was (data-frozen and inert removed)",
     "lookChanged()": "the board's theme changed: a ready panel gets host-context-changed with the parts that changed"
   },
   "events": [
@@ -35,5 +39,5 @@
   ],
   "whenToUse": "Inside an app card (kind app), which the node template draws it into.",
   "whenNotToUse": "Any other embedded content: Markdown never renders HTML (D-023), and nothing else on the board may run in a frame.",
-  "accessibility": "The frame has a title naming the app, so a screen reader announces it on entry. Tab moves from the card into the panel and on out of it in the page's order; the panel is hidden (so not focusable) until it is ready. Esc in a panel that sends ui/notifications/escape (the example does) returns focus to the card; the board cannot see keys inside the panel, so a panel that sends none is left with Tab or Shift+Tab. The placeholder is aria-hidden; aria-busy marks the frame while it loads. Unloading a frame that holds focus moves focus to the card, never to the page's body."
+  "accessibility": "The frame has a title naming the app, so a screen reader announces it on entry. Tab moves from the card into the panel and on out of it in the page's order; the panel is hidden (so not focusable) until it is ready. Esc in a panel that sends ui/notifications/escape (the example does) returns focus to the card; the board cannot see keys inside the panel, so a panel that sends none is left with Tab or Shift+Tab. The placeholder is aria-hidden; aria-busy marks the frame while it loads. Unloading or freezing a frame that holds focus moves focus to the card, never to the page's body. A frozen frame is inert: it takes no click, no focus and is out of the tab order and the accessibility tree."
 }

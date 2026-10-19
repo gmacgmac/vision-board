@@ -4,7 +4,7 @@ type: specification
 status: active
 created: 2026-10-17
 updated: 2026-10-19
-scope: The app card contract — an app's folder, manifest, panel protocol, tools module, limits, approval and states
+scope: The app card contract — an app's folder, manifest, panel protocol, saved panel state, tools module, limits, approval and states
 ---
 
 # App cards
@@ -18,7 +18,9 @@ This page is the contract for both sides: the agent that builds an app, and the 
 shows and runs it. Its sources: the manifest's JSON Schema
 (`packages/format/schema/app/manifest.schema.json`), the shared table
 (`packages/format/src/apps.ts`), the ledger's app card and acts (api.md 150-151) and the two
-operations, `list_apps` and `call_app_tool` (api.md 152-153). The example app is
+operations, `list_apps` and `call_app_tool` (api.md 152-153); a card's saved panel state has its own
+schema (`packages/format/schema/app/panel-state.schema.json`) and two operations (api.md 157). The
+example app is
 `skills/vision-board/examples/apps/calculator/`.
 
 ## The folder
@@ -76,10 +78,16 @@ The board shows it in a frame inside the card:
   `allow-popups` or `allow-forms`. The panel has an opaque origin: it can't read the board's page,
   cookies or storage, and can't call `/api`.
 - `src` is the board's panel route, `/app-panels/<id>`, outside `/api`; `title` names the app.
-- The frame is made only while its card is on screen and the board is zoomed in enough to use it
-  (the toolbar shows 55% or more); it is removed when the card is more than a screen away or the
-  board zooms out past that, and the panel starts again when it comes back. Keep nothing in the
-  panel that a restart would lose: keep state in a tool.
+- The frame is made the first time its card is on screen and the board is zoomed in enough to use
+  it (the toolbar shows 55% or more), then kept loaded (D-050): while the card is off
+  screen or the board is zoomed out past that, the panel is frozen, still running and holding what
+  it holds, but taking no click or key (`inert`) and not painted, the placeholder in its place; back
+  on screen, it carries on as it was. A panel may be frozen at any time, so its timers may run
+  while nobody sees it. The page keeps at most `LIVE_PANELS` loaded (`apps/board/src/board/app-cards.ts`):
+  past it, the least recently used frozen panel is removed (a panel on screen never is). A frame is
+  also removed when its card goes or its state shows no panel. A removed panel starts again when
+  it comes back, as it does after a page reload, so keep nothing in the panel that a restart would
+  lose unless the panel saves it (§ Saving the panel's state).
 
 ### Panel CSP
 
@@ -115,6 +123,13 @@ panel before it says it is ready.
 1. The panel sends `ui/initialize` and gets the host context.
 2. The panel sends `ui/notifications/initialized`. From now on the board may send it messages.
 3. The panel sends `tools/call` whenever it wants a tool to run, and gets the tool's result.
+4. The panel sends `vision-board/save-state` whenever its place changes, to get it back when it
+   starts again (§ Saving the panel's state).
+
+The board's own methods start with `vision-board/`, the board's `hostInfo.name` (`APP_HOST_NAME`).
+MCP Apps' panel methods start with `ui/`, beside MCP's `tools/call` and `ping`, so a method MCP Apps
+adds later can't collide with one of the board's. `ui/notifications/escape` came before this rule
+and keeps its name.
 
 ### Panel to board
 
@@ -126,6 +141,7 @@ panel before it says it is ready.
 | `ping` | request | Answers `{}`. |
 | `ui/notifications/size-changed` | notification | Ignored: the agent sets the panel's size. |
 | `ui/notifications/escape` | notification | The board's own: the person pressed Esc in the panel; focus goes back to the card. |
+| `vision-board/save-state` | request | The board's own. Params: `{ state }`. Answers `{}` (§ Saving the panel's state). |
 
 ### Board to panel
 
@@ -150,6 +166,10 @@ The `hostContext` in the answer to `ui/initialize`:
   click shows none. The skill teaches this (`skills/vision-board/SKILL.md`, § Apps on the board,
   "Good to use"); nothing checks an app's colours.
 - `platform`: `web`.
+- `vision-board/state` (`APP_STATE_KEY`): the value the panel last saved for this card (§ Saving the
+  panel's state); left out when nothing is saved. The board's own field, named under the board's
+  `hostInfo.name` as its methods are, so a field MCP Apps adds later can't collide. It is in the
+  answer to `ui/initialize` only, never in `host-context-changed`.
 
 `hostInfo` is `{ name: "vision-board", version }`; `hostCapabilities` is `{ serverTools: {} }` (the
 board passes tool calls on).
@@ -168,10 +188,43 @@ A request that can't be answered gets a JSON-RPC error, `{ code, message, data? 
 |---|---|
 | -32600 | Not a JSON-RPC 2.0 request: no `jsonrpc: "2.0"`, a bad `id` or `method`. |
 | -32601 | No such method. |
-| -32602 | Bad params, such as `tools/call` without a tool name. |
+| -32602 | Bad params, such as `tools/call` without a tool name, or `vision-board/save-state` without a `state` or with one that is not JSON. |
 | -32000 | The board refused or the tool failed: `message` says why in plain words, and `data.problem` holds the board's problem code (§ Approval and § Limits): `needs-approval`, `invalid`, `app-invalid`, `app-failed`, `app-busy`, `app-timeout`, `too-large`, `app-not-found`, or `not-found` when app cards are off; `data.detail`, when there is one, the server's own words, for the person who writes the panel. |
 
 A panel should handle `needs-approval` by saying the person must press Allow on the card.
+
+### Saving the panel's state
+
+A panel starts again whenever its frame loads afresh (§ The panel): after a page reload or a board
+restart, or on another computer that opens the folder. To carry on where it was, it saves its state
+and gets it back when it starts:
+
+- **Save.** Send the request `vision-board/save-state` with params `{ state }`: any JSON value, at
+  most `stateBytes` (§ Limits) as compact UTF-8 JSON (`appStateProblem`). Save what the panel needs
+  to show the person the same place, such as the step they are on and what they typed or chose; not
+  what a tool can work out again. Each save replaces the one before. The board answers `{}` once it
+  holds the value; a value with no `state`, or not JSON, is -32602, and one over the limit is
+  -32000 with `too-large` (§ Errors).
+- **Restore.** The answer to `ui/initialize` carries the value last saved for this card as
+  `hostContext["vision-board/state"]`, left out when nothing is saved (§ Host context). Check its
+  shape before you use it: an older version of the panel may have saved it.
+- **How the page keeps it.** The board page holds each card's latest value at once and writes it to
+  the board's server a moment after the last save (`SAVE_DELAY_MS`), one write at a time per card,
+  the latest winning; the answer `{}` comes once the write that carried the value is done, and a
+  write the server refused is that answer's error (-32000 with its problem). The person sees
+  nothing of a refused save. A panel that starts again gets the value from the page's memory, else
+  from one read of the server, waited for at most `LOAD_WAIT_MS`, after which it starts without
+  (`apps/board/src/board/panel-states.ts`).
+- **Where it is kept.** Per card, not per app: two cards showing one app keep two states. The board
+  keeps it in the project, `.visionboard/app-state/<card identity>.json`, beside the ledger, through
+  its two person-only operations (api.md 157). A card that now names another app starts that app
+  with no state; removing the card keeps the file. No agent reads it, and an app's tools don't get
+  it: a panel passes what a tool needs in its call.
+
+`vision-board/save-state` is the board's own method (§ The panel protocol). MCP Apps has no way for
+a view to save its state: its 2026-01-26 specification and its draft list "state persistence and
+restoration" as future work, and the open proposal names no method yet (`modelcontextprotocol/ext-apps`,
+`specification/2026-01-26/apps.mdx`, `specification/draft/apps.mdx`, issue 417; checked 2026-10-19).
 
 ## The tools module
 
@@ -262,6 +315,7 @@ One table, `APP_LIMITS`, which the app host and the panel's frame both read:
 | `memoryMb` | 128 | The memory a process's heap may use, in MB. |
 | `fileBytes` | 1048576 | The most one of the app's files (`app.json`, the panel, the tools file) may hold, in bytes. A bigger one is a problem to fix. |
 | `panelMessagesPerSecond` | 50 | Messages a panel may send in one second. The board ignores the rest; a request among them gets error -32000 with `app-busy`. |
+| `stateBytes` | 65536 | The most a panel's saved state may hold, in bytes of compact UTF-8 JSON. More answers error -32000 with `too-large`. |
 
 ## States
 
@@ -278,8 +332,9 @@ every state; none is ever a blank or an error.
 | `broken` | Its tools crashed too often. | That it stopped, and **Restart**, which tries again once the code changed. |
 
 The card also has states of its own: loading (the frame is starting), and a light placeholder with
-the app's title and no frame when the board is zoomed far out, the card is off screen, or a past
-version of the board is showing (read-only). With the `appCards` flag off, an app card is a plain
+the app's title before the frame first loads, over a frozen frame when the board is zoomed far out
+or the card is off screen, and with no frame when a past version of the board is showing
+(read-only). With the `appCards` flag off, an app card is a plain
 card saying "App cards are off", and the panel route and `call_app_tool` answer `not-found`. The
 server's own switch is `VB_FLAGS=-appCards` (`apps/board/server.ts`); the page's flags are its own.
 
@@ -341,9 +396,16 @@ Esc back to the card, theme changes and the approval state.
   § Board to panel, § Errors) are read from this file by `packages/format/tests/apps.test.ts` and
   compared with the manifest schema, `APP_SIZE`, `APP_LIMITS`, `APP_STATES`, `PANEL_METHODS`,
   `HOST_NOTIFICATIONS` and `PANEL_ERRORS`.
-- The manifest, a tool's shape, the app card and acts, and the two operations' bodies:
-  `apps/board/tests/schema-apps.test.ts` (both validators, and the schema's numbers against
-  `packages/format`).
+- The manifest, a tool's shape, the app card and acts, the two operations' bodies and a card's saved
+  panel state (the kept file, the save and the answers): `apps/board/tests/schema-apps.test.ts`
+  (both validators, and the schema's numbers against `packages/format`). What a panel may save
+  (`appStateProblem`) and the board's own method names (`APP_HOST_NAME`, `PANEL_SAVE_STATE`):
+  `packages/format/tests/apps.test.ts`.
+- The saved panel state through the real server (`apps/board/server/apps/panel-state.ts`): kept by
+  identity and read back, the limit, every refusal, a removed card's file kept, another app's state
+  not handed over, a bad file or a link read as nothing, a folder leading out, the person only, and
+  no agent read changed (`apps/board/tests/api-panel-state.test.ts`); the write whole by a rename
+  (`atomic-file.test.ts`).
 - The allow fold, the registry entries and the act rules: `packages/actions/tests/apps.test.ts`.
 - Who may call the operations: `apps/board/tests/api-apps-auth.test.ts`, `route-table.test.ts`,
   `openapi.test.ts`.
@@ -361,14 +423,25 @@ Esc back to the card, theme changes and the approval state.
   (`skills/vision-board/examples/apps/calculator.test.mjs`); this repo's own copy in
   `.visionboard/apps/calculator/` equals it byte for byte (`apps/board/tests/repo-example-app.test.ts`).
 - The panel protocol in the frame, with fake windows: `packages/ui/tests/app-frame-core.test.ts`
-  and `app-frame-limits.test.ts`.
+  and `app-frame-limits.test.ts`; the save request checked as its schema, answered when the page
+  settles or refused, and the saved value in the `ui/initialize` answer only, under
+  `APP_STATE_KEY` (`app-frame-state.test.ts`; the key's name and this page naming it,
+  `packages/format/tests/apps.test.ts`). The page's debounce, one write in flight, the latest
+  winning, and the bounded restore: `apps/board/tests/panel-states.test.ts`.
 - The board page, in a real browser, on a temp project holding a copy of the example
   (`tests/pages/app-server.ts`): an agent draws the calculator, Allow, `12*3=` worked out by its
   `evaluate` tool and listed by `history`, Tab into the panel and out, Esc back to the card, a code
   change asking again, Stop app, and app cards off on the server and the page
   (`tests/pages/app-cards.spec.ts`); every card state at one size, the frame made only on screen
-  and at or above FAR_K, and a past version at the manifest's size (`app-states.spec.ts`); a deleted
-  folder seen once the frame loads again and brought back by Check again, a code change seen on
+  and at or above FAR_K and frozen off screen and below it, and a past version at the manifest's
+  size (`app-states.spec.ts`); a loaded panel keeping what it holds in memory, loaded once, through
+  a far zoom, a pan two screens away, a new version of its card, a relayout, a selection and a new
+  size, a frozen panel taking no click or Tab, and the cap unloading the least recently used frozen
+  panel, with a zoom step on 12 app cards inside the one-change budget, and a panel getting back
+  what it saved after a page reload and after the cap unloaded it (from the page's memory), and a
+  save the server refuses shown to nobody but the panel (`app-alive.spec.ts`; the
+  cap's rule, `overCap`, in `apps/board/tests/app-live-cap.test.ts`); a deleted
+  folder seen once the card is selected and brought back by Check again, a code change seen on
   select before any call and with no timer, and Allow, a code change and Stop app keeping the card's
   size, and a card with no size of its own keeping its box when app.json breaks or the folder
   goes (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages

@@ -57,6 +57,8 @@ export const APP_LIMITS = {
   fileBytes: 1024 * 1024,
   /** Messages a panel may send in one second; the rest are refused. */
   panelMessagesPerSecond: 50,
+  /** The most a panel's saved state may hold, in bytes of compact UTF-8 JSON (`appStateProblem`). */
+  stateBytes: 64 * 1024,
 } as const;
 
 /** What list_apps says of each app (ruling 11), worked out fresh by one function in the host:
@@ -69,10 +71,24 @@ export type AppState = (typeof APP_STATES)[number];
 /** The MCP Apps version the panel protocol follows (ruling 5). */
 export const APP_PROTOCOL_VERSION = '2026-01-26';
 
+/** The board's name to a panel (`hostInfo.name`), and the start of every panel method the board
+ * adds from D-050 on: MCP's and MCP Apps' methods never start with it, so none can collide
+ * (apps.md § The panel protocol). */
+export const APP_HOST_NAME = 'vision-board';
+
+/** The board's own request: the panel saves its state for its card (apps.md § Saving the panel's
+ * state). MCP Apps (2026-01-26 and its draft) has no state method. */
+export const PANEL_SAVE_STATE = `${APP_HOST_NAME}/save-state` as const;
+
+/** The board's own field in the host context a panel gets in answer to `ui/initialize`: the value the
+ * panel last saved for its card, left out when none (apps.md § Host context). Under the board's name,
+ * so a field MCP Apps adds later can't collide. */
+export const APP_STATE_KEY = `${APP_HOST_NAME}/state` as const;
+
 /** Every message a panel may send the board (JSON-RPC 2.0 over `postMessage`, ruling 5): a request
  * gets an answer, a notification none. Anything else is answered "method not found" when it is a
  * request, and ignored when it is not. `ui/notifications/escape` is the board's own: Esc in the
- * panel puts focus back on the card (ruling 15). */
+ * panel puts focus back on the card (ruling 15); it came before the `APP_HOST_NAME` rule. */
 export const PANEL_METHODS = {
   'ui/initialize': 'request',
   'ui/notifications/initialized': 'notification',
@@ -80,6 +96,7 @@ export const PANEL_METHODS = {
   ping: 'request',
   'ui/notifications/size-changed': 'notification',
   'ui/notifications/escape': 'notification',
+  [PANEL_SAVE_STATE]: 'request',
 } as const;
 export type PanelMethod = keyof typeof PANEL_METHODS;
 
@@ -172,6 +189,38 @@ export interface AppInfo {
   /** The person allowed an earlier version, and the code has changed since. */
   changed?: true;
   problems?: AppProblem[];
+}
+
+/** Where the board keeps each app card's saved panel state, under `.visionboard/`: one file per card,
+ * `<card identity>.json` (D-041), the shape schema/app/panel-state.schema.json gives. */
+export const APP_STATE_DIR = 'app-state';
+
+/** The version of that file's shape (panel-state.schema.json `v`). */
+export const APP_STATE_FORMAT = 1;
+
+/** Any JSON value: what a panel may save (panel-state.schema.json `$defs/value`). */
+export type AppStateValue = null | boolean | number | string | AppStateValue[] | { [key: string]: AppStateValue };
+
+/** One card's saved state as the board keeps it: the app the card named when the panel saved, so a
+ * card that now names another app starts that app afresh. */
+export interface AppStateFile { v: typeof APP_STATE_FORMAT; app: string; state: AppStateValue }
+
+/** The bytes of compact UTF-8 JSON `state` takes; undefined when it is not JSON (a function, a loop,
+ * a BigInt, `undefined`). */
+export function appStateBytes(state: unknown): number | undefined {
+  let text: string | undefined;
+  try { text = JSON.stringify(state); } catch { return undefined; }
+  return text === undefined ? undefined : new TextEncoder().encode(text).length;
+}
+
+/** Why `state` can't be saved, in plain words, or undefined when it can: a JSON value of at most
+ * `APP_LIMITS.stateBytes`. The server's route and the panel's frame both ask this. */
+export function appStateProblem(state: unknown): string | undefined {
+  const bytes = appStateBytes(state);
+  if (bytes === undefined) return 'The state must be a JSON value: no functions, loops or undefined.';
+  const most = APP_LIMITS.stateBytes;
+  if (bytes > most) return `The state is ${bytes} bytes of JSON and the most a panel may save is ${most} (${most / 1024} KB). Save less: what the panel needs to start where it was.`;
+  return undefined;
 }
 
 /** An app card's panel size: the agent's, else the manifest's, else the default (ruling 3). */

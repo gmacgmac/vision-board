@@ -17,6 +17,7 @@ export * from './note-bubble/note-bubble-core.ts';
 export * from './note-bubble/note-bubble-template.ts';
 export type { NoteChoice, NoteEventDetail, VbNoteBubbleElement } from './note-bubble/vb-note-bubble.ts';
 export * from './app-frame/app-frame-core.ts';
+export * from './app-frame/app-frame-state.ts';
 export type { AppFrameWiring, VbAppFrameElement } from './app-frame/vb-app-frame.ts';
 export { readLook } from './app-frame/vb-app-frame.ts';
 export * from './node/node-app.ts';

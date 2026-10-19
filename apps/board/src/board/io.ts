@@ -3,7 +3,7 @@
 // (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActionId, ActSize, AppInfo, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
+import type { ActionId, ActSize, AppInfo, AppStateValue, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
 import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '../../../../packages/format/src/index.ts';
 import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
 import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
@@ -256,25 +256,33 @@ export const listFolders = (path?: string) =>
 export const openProject = (path: string, create = false) =>
   person(() => client.call<FolderInfo>('open_project', { body: { path, ...(create && { create }) } }));
 
-// ---- app cards (D-047, api.md 152-153) -----------------------------------------------------------
+// ---- app cards (D-047, api.md 152-153, 157) --------------------------------------------------------
 
 /** Every app in the open folder and every app a card names, each in its state now (`list_apps`). */
 export const listApps = () => person(() => client.call<{ apps: AppInfo[] }>('list_apps'));
 
-/** How `callAppTool` refuses: the API problem's code and its words (the frame's `AppCallError`). */
+/** How a call for a panel refuses: the API problem's code and its words (the frame's `AppCallError`). */
 export interface AppCallRefusal { problem: string; detail?: string }
 
-/** Run tool `tool` of app `app` for its panel (`call_app_tool`); a refusal rejects with the
- * problem's code, which the frame turns into the panel's JSON-RPC error. */
-export async function callAppTool(app: string, tool: string, args: Record<string, unknown>): Promise<AppToolResult> {
-  try {
-    return await asPerson(() => client.call<AppToolResult>('call_app_tool', { app, body: { tool, arguments: args } }));
-  } catch (err) {
-    const refusal: AppCallRefusal = err instanceof ApiProblem ? { problem: err.code, detail: err.detail }
-      : { problem: 'app-failed', detail: 'The board server is not reachable. Is it running?' };
-    throw refusal;
-  }
-}
+/** A call for a card's panel, as the person; a refusal rejects with an `AppCallRefusal`, which the
+ * frame turns into the panel's JSON-RPC error. */
+const forPanel = <T>(run: () => Promise<T>): Promise<T> => asPerson(run).catch((err: unknown) => {
+  throw (err instanceof ApiProblem ? { problem: err.code, detail: err.detail }
+    : { problem: 'app-failed', detail: 'The board server is not reachable. Is it running?' }) satisfies AppCallRefusal;
+});
+
+/** Run tool `tool` of app `app` for its panel (`call_app_tool`). */
+export const callAppTool = (app: string, tool: string, args: Record<string, unknown>) =>
+  forPanel(() => client.call<AppToolResult>('call_app_tool', { app, body: { tool, arguments: args } }));
+
+/** The value app card `n`'s panel last saved on `board`, or undefined (`get_panel_state`, apps.md
+ * § Saving the panel's state). */
+export const panelState = async (board: string, n: number): Promise<AppStateValue | undefined> =>
+  (await person(() => client.call<{ state?: AppStateValue }>('get_panel_state', { board, n }))).state;
+
+/** Keep `state` as app card `n`'s panel state on `board` (`put_panel_state`); over the limit `too-large`. */
+export const savePanelState = (board: string, n: number, state: AppStateValue) =>
+  forPanel(() => client.call<{ bytes: number }>('put_panel_state', { board, n, body: { state } }));
 
 // ---- images in cards (D-048, images.md § Updates) ---------------------------------------------------
 

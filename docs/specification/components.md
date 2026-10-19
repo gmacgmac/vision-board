@@ -894,15 +894,20 @@ section is how the board draws one. Two patterns share the work.
 5. **The app-frame pattern draws the panel** (`packages/ui/src/app-frame/`): `<vb-app-frame>`
    (`vb-app-frame.ts`), the DOM-free protocol (`app-frame-core.ts`), `app-frame.css` and its
    `pattern.json`. Its inputs are `data-app`, `data-label`, `data-w` and `data-h`; unloaded it is a
-   light placeholder with the app's icon and title. The page calls `wire({ callTool, look?,
-   onEscape?, onLoad? })` once (`onLoad` on each load of the frame's document), then `load()` while the card is on screen and near enough to use and
-   `unload()` when it leaves (ruling 14). `load()` makes the `<iframe>`: `sandbox="allow-scripts"`
+   light placeholder with the app's icon and title. The page calls `wire({ callTool, saveState?,
+   loadState?, look?, onEscape?, onLoad? })` once (`onLoad` on each load of the frame's document), then `load()` the
+   first time the card is on screen and near enough to use, `freeze()` while it is off screen or
+   zoomed far and `thaw()` when it is back, and `unload()` only for the page's cap or a state with
+   no panel (D-050, superseding ruling 14). `load()` makes the `<iframe>`: `sandbox="allow-scripts"`
    and nothing else, `src` `APP_PANEL_PATH` + the id (packages/format: the server's route reads
    the same string), `title` the app's name, no referrer. The frame stays hidden (so it neither shows nor takes focus) until the panel says it is ready, or
    `SHOW_AFTER_MS` after it loaded. Left out, `look` is `readLook` (the board's tokens resolved
    through a probe, light-dark() included, and the theme from the card surface) and Esc focuses
-   the card. `lookChanged()` tells a ready panel the theme changed. `unload()`, also on disconnect,
-   removes the frame and moves focus in it back to the card.
+   the card. `lookChanged()` tells a ready panel the theme changed. `freeze()` keeps the panel
+   running and what it holds, and marks the element `data-frozen` and `inert`: `app-frame.css`
+   leaves the frame unpainted (`visibility: hidden`) and shows the placeholder, whatever
+   `data-state` says; focus in it moves back to the card. `unload()`, also on disconnect, removes
+   the frame and moves focus in it back to the card.
 6. **The protocol** (`createAppBridge`; apps.md § The panel protocol). The element hands the core
    every message its window gets, marked as the frame's only when `event.source` is this frame's
    window and `event.origin` is `"null"`; it posts with `'*'` (an opaque origin cannot be named).
@@ -915,7 +920,13 @@ section is how the board draws one. Two patterns share the work.
    and the server's words in `data.detail`. A panel may send `APP_LIMITS.panelMessagesPerSecond`
    messages in a second and keep `FRAME_CALLS` tool calls waiting (the host's running plus queue);
    past either, a request answers `app-busy`. A panel that sends `ui/initialize` again (it
-   restarted) gets no answer meant for the one before.
+   restarted) gets no answer meant for the one before. The board's own `vision-board/save-state`
+   (app-state-kept FE_02) is checked by `app-frame-state.ts` `checkSave` (params `{ state }` only, as
+   the schema's `$defs/save`; `appStateProblem` for JSON and size), handed to `saveState` as JSON
+   and answered `{}` once that settles, else -32000 with `SAVE_WORDS` and the page's
+   problem; with `loadState` given, the `ui/initialize` answer waits for it and carries its value
+   as `hostContext[APP_STATE_KEY]` (left out when none or when it fails), and only there
+   (`packages/ui/tests/app-frame-state.test.ts`).
 7. **Accessibility** (rule 5, ruling 15). The frame's title names the app. Tab goes from the card
    into the panel and on out of it in the page's order; while focus is in the panel the frame
    draws the focus ring, since keys then go to the app and not to the board's shortcuts (the
@@ -925,7 +936,8 @@ section is how the board draws one. Two patterns share the work.
    `app-cards.spec.ts` "the panel's focus ring"); Tab into the panel always draws it (WCAG 2.4.7). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
    `ui/notifications/escape`. The card's name says its app state (", not allowed yet"); the
    placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
-   loading.
+   loading. A frozen frame is `inert`: no click, no focus, out of the tab order
+   (`app-alive.spec.ts` "a frozen panel takes no click and no Tab…").
 8. **The page's part** (app-cards FE_02, `apps/board/src/board/`): `main.ts` imports `node-app.css`
    and `app-frame.css` with the other pattern styles; the controller makes `app-cards.ts`
    `createAppCards` behind the appCards flag (off: the card set renders `{ appCards: false }` and
@@ -938,18 +950,38 @@ section is how the board draws one. Two patterns share the work.
      an app card (one read for all of them), and when an app card's frame loads (the frame's
      `onLoad`: its panel, or the panel route's 404 once the folder went). No timer: an edited
      `tools.mjs` shows "Code changed" once the card is selected, before any call, and a deleted
-     folder shows "not found" once its frame loads again (`app-follow.spec.ts`). Reads made
+     folder shows "not found" once the card is selected (`app-follow.spec.ts`; a kept panel never
+     loads again by itself, D-050). Reads made
      meanwhile share one more read. A new answer redraws the board, which updates and measures only
      the cards whose state changed.
    - **Conditions**: `card(n)` gives an app card `{ app: {} }` until list_apps answers,
      `{ app: { info } }` after, and `{ app: { info, past: true } }` on a past version, so it keeps
      the manifest's size (`app-states.spec.ts` "a past version: …").
-   - **Frames** (ruling 14): after every draw and every pan or zoom (`draw.ts` `placed`), each app
-     card's `<vb-app-frame>` is wired once (`callTool` → io.ts `callAppTool`, which rejects with the
-     problem's code and words; `onEscape` focuses the card without scrolling) and loaded only while
-     its state shows a panel, its card is on the visible stage (`offscreen.ts` `viewBounds` with no
-     margin) and the zoom is not `isFar` (`viewport.ts`, under `FAR_K`); it is unloaded once the card
-     is more than a screen away, hidden, zoomed out past `FAR_K`, or in a state without a panel.
+   - **Frames** (D-050, superseding ruling 14; app-state-kept FE_01): after every draw
+     and every pan or zoom (`draw.ts` `placed`), `place` wires each app card's `<vb-app-frame>` once
+     (`callTool` → io.ts `callAppTool`, which rejects with the problem's code and words; `saveState`
+     and `loadState` → `panel-states.ts` `createPanelStates` for the card's board, number and app;
+     `onEscape` focuses the card without scrolling). While its state shows a panel, its card is on the visible
+     stage (`offscreen.ts` `viewBounds` with no margin) and the zoom is not `isFar` (`viewport.ts`,
+     under `FAR_K`), the frame is loaded (the first time) or thawed; off the stage, hidden or zoomed
+     out past `FAR_K` it is frozen, never unloaded. It is unloaded in a state without a panel, when
+     its card goes, and for the cap: past `LIVE_PANELS` loaded, `overCap` picks the least recently
+     on-screen frozen ones (a panel on screen never goes; `apps/board/tests/app-live-cap.test.ts`).
+     A new version of the card keeps a loaded frame where it is (`node-app-apply.ts`
+     `renderKeepingPanel`, from `vb-node.ts` `render`: the frame and the elements it sits in stay
+     and take the new markup's attributes, since an `<iframe>` taken out of the page reloads), and
+     the card set never moves a card already in the page (`render.ts` `readingOrder` sorts by the
+     card's number, which never changes).
+     `app-alive.spec.ts` proves a panel keeps what it holds, loaded once, through a far zoom, a pan
+     two screens away, a new version, a relayout, a selection and a new size.
+   - **Saved panel states** (app-state-kept FE_02; apps.md § Saving the panel's state):
+     `panel-states.ts` holds each card's latest saved value in memory at once and writes it through
+     io.ts `savePanelState` `SAVE_DELAY_MS` after the last save, one write in flight per card, the
+     latest winning; each save is answered by the write that carried it. A starting panel gets the
+     card's value from memory, else from one io.ts `panelState` read waited for at most
+     `LOAD_WAIT_MS`. A refused save goes back to the panel only: the person sees nothing
+     (`apps/board/tests/panel-states.test.ts`; `app-alive.spec.ts` "a panel gets back what it saved
+     after a page reload…", "the panel the cap unloaded starts again…", "a save the server refuses…").
    - **Theme**: `watchTheme` (the root's `data-theme` from the toolbar, and the system's scheme)
      calls `lookChanged()` on every frame, so a ready panel gets `host-context-changed`.
    - **Buttons** (`data-app-act`, one delegated click on the stage): Allow and Stop app ask first,

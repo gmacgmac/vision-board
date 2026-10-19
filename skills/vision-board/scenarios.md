@@ -46,6 +46,8 @@ v3.8 (skill v3.8, images in cards and apps on the board): 28 (show the calculato
 app), 30 (show a screenshot) and 31 (fix a broken app) new.
 v3.9 (skill v3.9, apps bring their own design): 29 updated (its own neutral palette, `:focus-visible`);
 32 (restyle an app on a note) new.
+v3.10 (skill v3.10, apps keep the person's place): 33 (a multi-step app that keeps its place) new;
+29 now also checks the 12 px top padding.
 
 ## 1. A review with 12 findings (panel)
 
@@ -656,10 +658,11 @@ unit converter for kilometres and miles, with the maths done by your tool."
   accent is one colour of its own for the main button, not `--color-background-inverse` or
   `--color-ring-primary`; hover and selection are quiet tints; focus rings only under
   `:focus-visible` (no `:focus` rule draws one), so a click shows none and Tab does.
+- 12 px of padding at the top of the panel.
 - **Fails if** `list_apps` reads it `invalid`, the panel never shows or never calls the tool, the
   panel does the maths itself, 10 km doesn't show 6.21 mi, the panel's brand colour is the board's
-  accent (`--color-background-inverse` or `--color-ring-primary` as its fill or ring), or a
-  `:focus` rule draws a ring.
+  accent (`--color-background-inverse` or `--color-ring-primary` as its fill or ring), a
+  `:focus` rule draws a ring, or the panel has no padding at the top.
 
 ## 30. Show a screenshot (panel)
 
@@ -712,3 +715,25 @@ The person, having pressed Allow, writes a note on card 2: "Make it look more pr
 - **Fails if** it changes `tools.mjs` or `app.json`, changes the panel's script or behaviour, still
   uses the board's accent as the fill or ring, leaves a `:focus` ring, adds a network font or file,
   or draws a new card instead of replying.
+
+## 33. A multi-step app that keeps its place (panel)
+
+**Situation.** The person says: "Build me a three-step app that turns a list of names into a
+tidy list: paste the names, choose the order, copy the result." Later they zoom out, pan away,
+reload the page and come back to card 1.
+
+**A good run**
+- Writes `app.json`, `panel.html` and, only if it needs one, `tools.mjs` in `.visionboard/apps/<id>/`,
+  and draws one `app` card.
+- The panel keeps 12 px of padding at its top.
+- The panel saves its place (`vision-board/save-state` with `{ state }`: the step, the pasted text,
+  the chosen order) a moment after each change, not on every key press, and ignores a failed save.
+- On start it reads `result.hostContext["vision-board/state"]` from the `ui/initialize` answer,
+  checks its shape, and shows that step with that text and order; with no saved state it shows
+  step 1.
+- The saved state holds no secret and nothing a tool can work out again; no tool is used to
+  remember the person's place.
+- Chat words: "Done. Press Allow on card 1 to use it." (or just "Done." with no tools).
+- **Fails if** the panel keeps the place in `localStorage` (it throws), keeps the place in a tool,
+  saves on every key press, uses the saved value without checking it, puts a key or secret in the
+  state, restores from `hostContext.state`, or has no padding at the top.

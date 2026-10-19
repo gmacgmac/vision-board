@@ -4,10 +4,14 @@
 //   version's placeholder at the size the app gives (`card`, the card's conditions);
 // - that copy read again when an app card is selected or its frame loads (its panel, or the route's
 //   refusal once the folder went), so a card follows its folder without a timer (app-cards FIX_02);
-// - each card's frame, wired once to `call_app_tool` through the page's one I/O layer (io.ts) and
-//   to Esc (back to its card), loaded only while its card is on the visible stage and the zoom is
-//   at or above FAR_K, and removed once the card is more than a screen away or the board zooms out
-//   past it (ruling 14; the bounds are offscreen.ts');
+// - each card's frame, wired once to `call_app_tool` through the page's one I/O layer (io.ts), to
+//   its card's saved panel state (panel-states.ts: kept in memory, written debounced, restored when
+//   the panel starts again; app-state-kept FE_02) and to Esc (back to its card), loaded the first time its card is on the visible stage and the zoom
+//   is at or above FAR_K, then kept loaded (D-050, superseding ruling 14; app-state-kept
+//   FE_01): frozen while the card is off the stage, hidden or the board zoomed out past FAR_K,
+//   thawed when it is back; unloaded only when its card goes, its state shows no panel, or more
+//   than LIVE_PANELS are loaded (the least recently used frozen one first; the bounds are
+//   offscreen.ts');
 // - the board's theme, told to every loaded panel when it changes (the toolbar's theme or the
 //   system's);
 // - the buttons with `data-app-act`: Allow and Stop app are the person's acts, asked first as the
@@ -26,7 +30,9 @@ import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from './app-words.ts';
 import { menuKeydown } from './menu-keys.ts';
 import type { ActFields, AppCallRefusal } from './io.ts';
-import { callAppTool } from './io.ts';
+import { callAppTool, panelState, savePanelState } from './io.ts';
+import type { PanelKey } from './panel-states.ts';
+import { createPanelStates } from './panel-states.ts';
 import { outside, viewBounds } from './offscreen.ts';
 import { focusCame } from './pointer-focus.ts';
 import type { Selection } from './selection.ts';
@@ -38,6 +44,8 @@ export interface AppCardsDeps {
   on: boolean;
   stage: HTMLElement;
   vp: Viewport;
+  /** The board shown: its app cards' saved panel states are kept under it. */
+  board(): string;
   /** The person's selection: an app card selected reads list_apps again. */
   selection: Pick<Selection, 'has' | 'onChange'>;
   cards(): ReadonlyMap<string, VbNodeElement>;
@@ -59,10 +67,26 @@ export interface AppCards {
   card(n: ViewNode): CardConditions;
   /** Lines were applied to the held state (live.ts): read list_apps again when they touch apps. */
   lines(lines: readonly LedgerEvent[], full: boolean, state: LedgerState | null): void;
-  /** Load the frames of the app cards on screen and near enough, remove those well away; after
-   * every draw and every pan or zoom. */
+  /** Load or thaw the frames of the app cards on screen and near enough, freeze the rest, unload
+   * past the cap; after every draw and every pan or zoom. */
   place(): void;
   destroy(): void;
+}
+
+/** The most panels kept loaded at once (D-050): past it, the least recently used frozen one
+ * unloads. A page concern, not part of the app contract. */
+export const LIVE_PANELS = 8;
+
+/** Which loaded panels to unload so at most `cap` stay loaded: walking `used` (least recently used
+ * first), the frozen ones (not in `live`) until the count fits. A live panel never goes for the cap,
+ * so the panels on screen all run, however many there are. */
+export function overCap(used: readonly string[], live: ReadonlySet<string>, cap: number): string[] {
+  const out: string[] = [];
+  for (const id of used) {
+    if (used.length - out.length <= cap) break;
+    if (!live.has(id)) out.push(id);
+  }
+  return out;
 }
 
 /** Problems that say the app's state moved (its code changed, it broke, it went): read list_apps
@@ -119,6 +143,9 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   /** The app cards drawn, by node id (filled as the cards' conditions are asked for). */
   const shown = new Map<string, ViewNode>();
   const wired = new WeakSet<VbAppFrameElement>();
+  const saved = createPanelStates({ read: (k) => panelState(k.board, k.n), write: (k, state) => savePanelState(k.board, k.n, state) });
+  /** The loaded frames, by node id, least recently on screen first (LIVE_PANELS). */
+  const used = new Map<string, VbAppFrameElement>();
 
   /** The app as list_apps last gave it (none until it answered); a past version keeps its size. */
   const input = (n: ViewNode): AppCardInput => {
@@ -140,8 +167,12 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   function wire(card: VbNodeElement, frame: VbAppFrameElement): void {
     if (wired.has(frame)) return;
     wired.add(frame);
+    /** The card's panel now: the board shown, the card's number, the app its frame shows. */
+    const key = (): PanelKey => ({ board: d.board(), n: Number(card.dataset.id), app: frame.dataset.app ?? '' });
     frame.wire({
       callTool: (name, args) => call(frame.dataset.app ?? '', name, args),
+      saveState: (state) => saved.save(key(), state),
+      loadState: () => saved.load(key()),
       focusCame,
       onEscape: () => card.focus({ preventScroll: true }),
       onLoad: () => void states.refresh(),
@@ -154,20 +185,28 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     const cards = d.cards();
     const near = !isFar(d.vp.k);
     const seen = viewBounds(d.vp, d.stage, 0);
-    const kept = viewBounds(d.vp, d.stage);
+    const live = new Set<string>();
     for (const [id, n] of shown) {
       const el = cards.get(id);
-      if (!el) {
-        shown.delete(id);
-        continue;
-      }
-      const frame = el.querySelector<VbAppFrameElement>('vb-app-frame');
-      if (!frame) continue;
+      if (!el) shown.delete(id);
+      const frame = el?.querySelector<VbAppFrameElement>('vb-app-frame');
+      if (!el || !frame) continue;
       wire(el, frame);
       const b = layout?.nodes.get(id);
-      if (!near || !b || el.hidden || !appView(n, input(n)).frame || outside(b, kept)) {
-        if (frame.loaded) frame.unload();
-      } else if (!frame.loaded && !outside(b, seen)) frame.load();
+      if (!appView(n, input(n)).frame) frame.unload();
+      else if (near && b && !el.hidden && !outside(b, seen)) {
+        frame.load();
+        frame.thaw();
+        live.add(id);
+        used.delete(id);
+        used.set(id, frame);
+      } else frame.freeze();
+    }
+    // A frame that went (its card, its state, or a new frame in its place) is no longer counted.
+    for (const [id, f] of used) if (!f.loaded || !f.isConnected) used.delete(id);
+    for (const id of overCap([...used.keys()], live, LIVE_PANELS)) {
+      used.get(id)!.unload();
+      used.delete(id);
     }
   }
 

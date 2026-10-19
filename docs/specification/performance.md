@@ -12,6 +12,7 @@
 | One change shown | under 50 ms | one act on a 1,000-card board (median of five) | `tests/pages/perf.spec.ts` |
 | Only what changed is redrawn | exactly 50 cards updated, measured and redrawn; only their containers laid out; no whole-board fetch | 50 cards changed in one batch on a 1,000-card board, and 1 card in a second case | `tests/pages/perf.spec.ts`, counting the work, not only timing it |
 | Selecting is view state | selecting 50 cards updates exactly those 50; nothing measured, placed or laid out; no fetch (clearing the same) | 50 cards of one container on the 1,000-card board (3_FE_01) | `tests/pages/perf.spec.ts` |
+| App panels kept loaded | a zoom step under 50 ms with panels loaded and frozen; no more than `LIVE_PANELS` loaded while no more are on screen (D-050) | 12 app cards, each zoomed to in turn | `tests/pages/app-alive.spec.ts`, `apps/board/tests/app-live-cap.test.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
 | Board page weight | under 200 KB gzip (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `board/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
@@ -42,7 +43,9 @@ A budget changes only with a reason in the PLAN of the task that changes it.
    last size.
 4. **Draw only what is on screen.** Cards and links outside the visible area, or below the
    far-zoom level, are skipped or drawn as cheap placeholders (`content-visibility`, or not in
-   the page at all), without changing their place in layout or their keyboard order.
+   the page at all), without changing their place in layout or their keyboard order. An app
+   card's panel, once loaded, stays loaded but frozen there (inert, its frame not painted), and
+   only `LIVE_PANELS` stay loaded at once (`apps/board/src/board/app-cards.ts` `overCap`).
 5. **Batch to the frame.** Several events that land together are applied in one frame
    (`requestAnimationFrame`), never one reflow each. Reads of sizes happen before writes of
    positions, never interleaved.

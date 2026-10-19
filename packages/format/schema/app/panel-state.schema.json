@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/app/panel-state.schema.json",
+  "title": "App panel state",
+  "description": "An app card's saved panel state: the file the board keeps for one card, `.visionboard/app-state/<card identity>.json`, holding the version of this shape, the app the card named when its panel saved, and the value. `$defs/value` is what a panel may save; `$defs/save` the params of the panel's `vision-board/save-state` request and the body of `put_panel_state`; `$defs/saved` the panel's answer; `$defs/read` the answer of `get_panel_state`; `$defs/written` the answer of `put_panel_state`. No agent reads any of it.",
+  "$comment": "D-050; docs/specification/apps.md § Saving the panel's state",
+  "type": "object",
+  "required": ["v", "app", "state"],
+  "properties": {
+    "v": {"const": 1, "description": "The version of this file's shape (`APP_STATE_FORMAT`)."},
+    "app": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The app the card named when its panel saved. A card that now names another app gets no state."},
+    "state": {"$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/value"}
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "value": {
+      "description": "Any JSON value the panel chose to save, so that when it starts again it carries on where it was. At most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON: a schema can't count bytes, so `appStateProblem` checks that, and a bigger value is `too-large`."
+    },
+    "save": {
+      "type": "object",
+      "description": "Save this value for the card, in place of the one before.",
+      "required": ["state"],
+      "properties": {
+        "state": {"$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/value"}
+      },
+      "unevaluatedProperties": false
+    },
+    "saved": {
+      "type": "object",
+      "description": "The panel's answer once the board holds the value: an empty object.",
+      "maxProperties": 0
+    },
+    "read": {
+      "type": "object",
+      "description": "The card's saved value; `state` is left out when nothing is saved, or when the card now names another app.",
+      "properties": {
+        "state": {"$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/value"}
+      },
+      "unevaluatedProperties": false
+    },
+    "written": {
+      "type": "object",
+      "description": "The value is saved: its size in bytes of compact UTF-8 JSON.",
+      "required": ["bytes"],
+      "properties": {
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 65536, "description": "The saved value's size; the most is `APP_LIMITS.stateBytes`."}
+      },
+      "unevaluatedProperties": false
+    }
+  }
+}

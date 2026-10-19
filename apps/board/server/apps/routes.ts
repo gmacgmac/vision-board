@@ -1,11 +1,13 @@
-// The app operations (D-047 rulings 6 and 12, api.md 152-153): `list_apps` (an agent or the person)
+// The app operations (D-047 rulings 6 and 12, api.md 152-153, 157): `list_apps` (an agent or the person)
 // gives every app in its state now; `call_app_tool` (the person's panel only) runs one tool. Both go
-// to the open folder's app host (host.ts).
+// to the open folder's app host (host.ts). The panel's saved state, also the person's alone, is
+// panel-state.ts's.
 import type { Ctx, Handler } from '../dispatch.ts';
 import { problem } from '../problem.ts';
 import { sendJson } from '../respond.ts';
 import { body } from '../writes.ts';
 import { APPS_OFF } from './host.ts';
+import { PANEL_STATE_HANDLERS } from './panel-state.ts';
 
 /** `call_app_tool`: the body checked, then the tool run. The call is given up (its `ctx.signal`
  * aborted) when the page goes away before the answer. */
@@ -21,4 +23,5 @@ const callAppTool: Handler = async ({ req, res, params, apps }: Ctx) => {
 export const APP_HANDLERS = {
   list_apps: ({ res, apps }) => sendJson(res, 200, { apps: apps().list() }),
   call_app_tool: callAppTool,
-} satisfies Record<'list_apps' | 'call_app_tool', Handler>;
+  ...PANEL_STATE_HANDLERS,
+} satisfies Record<'list_apps' | 'call_app_tool' | keyof typeof PANEL_STATE_HANDLERS, Handler>;

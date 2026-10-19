@@ -131,6 +131,7 @@
   const ready = request('ui/initialize', { protocolVersion: '2026-01-26', appCapabilities: {} }).then((answer) => {
     applyContext(answer.hostContext);
     send({ method: 'ui/notifications/initialized' });
+    restore(answer.hostContext?.['vision-board/state']);
   });
 
   /** Runs one of this app's tools; throws an Error whose message is fit to show. */
@@ -189,7 +190,24 @@
     result.style.setProperty('--chars', Math.max(text.length, 1));
     result.replaceChildren(...(text ? [el('span', 'sr-only', isError ? 'Problem: ' : 'Answer: '), text] : []));
   }
-  const render = () => { sumText.textContent = sum; };
+  const render = () => { sumText.textContent = sum; save(); };
+
+  // ---- Keeping the place: the display is saved on the card and comes back when the panel starts ----
+  let saveTimer = 0;
+  /** Saves the display a moment after the last change. A refused save is ignored: the calculator still works. */
+  function save() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => request('vision-board/save-state', { state: { sum, answer } }).catch(() => {}), 400);
+  }
+  /** Puts back a saved display, only when it is the shape this panel saves. */
+  function restore(state) {
+    const text = (value, max) => typeof value === 'string' && value.length <= max;
+    if (!text(state?.sum, MAX) || !text(state?.answer, 400)) return;
+    sum = state.sum;
+    answer = state.answer;
+    sumText.textContent = sum;
+    say(answer);
+  }
 
   function press(key) {
     if (!historyBox.hidden) showHistory(false);
@@ -225,7 +243,7 @@
     working(true);
     try {
       const { value } = await callTool('evaluate', { expression: asked });
-      if (sum === asked) { answer = String(value); say(answer); }
+      if (sum === asked) { answer = String(value); say(answer); save(); }
     } catch (error) {
       if (sum === asked) say(error.message, true);
     } finally {

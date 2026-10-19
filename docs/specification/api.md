@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-19 (ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -216,7 +216,7 @@ packages/format/schema/openapi.json               every operation, input, output
 | `not-found` | 404 | No such board, node, region or route |
 | `method-not-allowed` | 405 | Known path, wrong method |
 | `conflict` | 409 | `base` is stale, or a key is reused for different content (usually per item) |
-| `too-large` | 413 | Body or batch over the limit; an app tool's answer over its limit (153) |
+| `too-large` | 413 | Body or batch over the limit; an app tool's answer over its limit (153); a panel's state over its limit (157) |
 | `unsupported-media-type` | 415 | Not JSON |
 | `depends-on-failed` | 422 | The item depends on an item that failed (per item) |
 | `invalid` | 422 | Fails the schema or a context rule |
@@ -268,6 +268,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
 | `list_apps` | `GET /api/apps` | agent | `{ apps }`: every app in the folder and every app a card names, each with its state, tools, hash and whether the person allowed it; an agent's secret or the person's cookie (152) |
 | `call_app_tool` | `POST /api/apps/{app}/calls` | person | `{ tool, arguments? }`: run one of an app's tools for its panel; MCP's tool result (153) |
+| `get_panel_state` | `GET /api/boards/{board}/nodes/{n}/panel-state` | person | `{ state? }`: the value app card `n`'s panel last saved, left out when none (157) |
+| `put_panel_state` | `PUT /api/boards/{board}/nodes/{n}/panel-state` | person | `{ state }`: keep the panel's value for app card `n`, in place of the one before; `{ bytes }` (157) |
 
 41. Reads take no credentials. With a Bearer secret, `list_open`, `check_responses` and `pending`
     cover only the containers the caller holds, so one agent is never told to answer another's
@@ -1372,3 +1374,28 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     The page's reply to a note (`CardReply`) now carries `at`, the time of the agent's reply line, filled
     in `parking.ts` `createParking` from the reply event (parking.test.ts "every reply carries the time
     of its ledger line"); the ledger line already held it, so the format does not change for that.
+
+## An app card's saved panel state (app-state-kept BE_01, D-050)
+
+157. **The panel's state, the person's alone.** Two operations on one path, both `x-agent: false` and
+    the person's cookie (an agent: `forbidden`), so no MCP tool or `vb` command is generated for them:
+    `get_panel_state` (`GET /api/boards/{board}/nodes/{n}/panel-state`) answers `{ state }`, or `{}`
+    when nothing is saved; `put_panel_state` (`PUT`, JSON only) takes `{ state }`, any JSON value, and
+    answers `{ bytes }`, its size. The shapes are `app/panel-state.schema.json` `$defs/read`, `save`
+    and `written`, the same `save` a panel sends with `vision-board/save-state` (apps.md § Saving the
+    panel's state); `openapi.json` `info.version` becomes 1.29.0. The card is named by its number on
+    the path's board and kept by its identity (125): `.visionboard/app-state/<identity>.json`,
+    `{ v, app, state }` (the schema's root, `AppStateFile`), written whole by a rename
+    (`apps/board/server/atomic-file.ts` `writeFileAtomic`) and read only by
+    `apps/board/server/apps/panel-state.ts`, which checks the file against the schema and the size
+    again when it reads it: a file that doesn't fit, is too big or is a link reads as nothing saved,
+    and so does one saved for another app than the card names now. Its refusals: `too-large` for a
+    value over `APP_LIMITS.stateBytes` bytes of compact UTF-8 JSON (`appStateProblem`, in plain
+    words) or a body over twice that; `invalid` for a body that doesn't fit; `bad-request` and
+    `unsupported-media-type` as every route; `not-found` for an unknown board or card, a removed
+    card, a card that is not an app card, and app cards off. A locked or archived board still takes
+    a save: the value is the person's, not the board's. No ledger line is written, so no agent read
+    and no `check_responses` wait ever carries or moves for it, and a removed card's file stays.
+    The page calls both through its one I/O layer (`apps/board/src/board/io.ts` `panelState`,
+    `savePanelState`). Held by `apps/board/tests/api-panel-state.test.ts`, `schema-apps.test.ts`,
+    `openapi.test.ts`, `route-table.test.ts` and `atomic-file.test.ts`.

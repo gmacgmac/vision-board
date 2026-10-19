@@ -10,7 +10,7 @@ import type { NodeTemplateOptions } from './node-template.ts';
 import { bindNoteTip } from './node-note-tip.ts';
 import { bindCardPopover } from './node-popover.ts';
 import { HISTORY, HISTORY_TAB } from './node-history.ts';
-import { applyApp, applyPanelSize, bindAppNameTip } from './node-app-apply.ts';
+import { applyApp, applyPanelSize, bindAppNameTip, renderKeepingPanel } from './node-app-apply.ts';
 import { handoverMarkup, nodeTemplate, notesMarkup, proposalsMarkup, stepMarkup } from './node-template.ts';
 import { panelSize } from '../app-frame/app-frame-core.ts';
 import { AWAITING, isItem } from './node-core.ts';
@@ -73,7 +73,8 @@ export function defineVbNode(): void {
       // An app card is as wide as its panel plus its padding (node.css); no size word applies to it.
       const app = n.kind === 'app' && opts.appCards !== false;
       applyPanelSize(this, app ? panelSize(n.app ?? { id: '' }) : undefined);
-      this.innerHTML = nodeTemplate(n, opts);
+      // In place of innerHTML: a loaded app panel stays loaded through a new version (D-050).
+      renderKeepingPanel(this, nodeTemplate(n, opts));
       this.proposalSrc = this.stepSrc = this.handoverSrc = this.appSrc = undefined;
       // Bound once: each listens on the card itself and finds its tab and box afresh on every event.
       this.proposalPop?.close();

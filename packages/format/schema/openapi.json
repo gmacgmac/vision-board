@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.28.0",
+    "version": "1.29.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -2620,6 +2620,182 @@
           }
         }
       }
+    },
+    "/api/boards/{board}/nodes/{n}/panel-state": {
+      "get": {
+        "operationId": "get_panel_state",
+        "x-agent": false,
+        "summary": "Read an app card's saved panel state",
+        "description": "Read the value an app card's panel last saved, so the panel can start where it was. Only the board page calls this, with the person's cookie, when the card's panel starts. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. It answers `{ state }`, or `{}` when nothing is saved or the card now names another app than the one that saved. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/nodePath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The saved value, if there is one.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/panelStateRead"
+                },
+                "examples": {
+                  "saved": {
+                    "summary": "A saved value",
+                    "dataValue": {
+                      "state": {
+                        "display": "36",
+                        "step": 2
+                      }
+                    }
+                  },
+                  "none": {
+                    "summary": "Nothing saved",
+                    "dataValue": {}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "description": "No such board or card, a card that is removed or is not an app card, or app cards are off.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/problem"
+                },
+                "example": {
+                  "type": "https://vision-board.invalid/problems/not-found",
+                  "title": "Not found",
+                  "status": 404,
+                  "detail": "Card 3 on board \"pricing\" is not an app card, so it has no panel state."
+                }
+              }
+            }
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      },
+      "put": {
+        "operationId": "put_panel_state",
+        "x-agent": false,
+        "summary": "Save an app card's panel state",
+        "description": "Save the value an app card's panel asks to keep (`vision-board/save-state`), in place of the one before, written whole or not at all. Only the board page calls this, with the person's cookie. The card is named by its number on the board in the path; the server keeps the state by the card's identity, one file per card in `.visionboard/app-state/`. No agent reads it: an agent that calls this is refused with `forbidden`, and no agent read carries it. The body is `{ state }`: any JSON value of at most `APP_LIMITS.stateBytes` bytes as compact UTF-8 JSON; more is `too-large`. A body that is not JSON is `unsupported-media-type` or `bad-request`, and one that doesn't fit is `invalid`. A locked or archived board still takes it: it is the person's own. A card that is not an app card, a removed card, an unknown board or card, and app cards being off are `not-found`. It answers `{ bytes }`, the saved value's size.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/boardPath"
+          },
+          {
+            "$ref": "#/components/parameters/nodePath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/panelStateSave"
+              },
+              "example": {
+                "state": {
+                  "display": "36",
+                  "step": 2
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The value is saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/panelStateWritten"
+                },
+                "example": {
+                  "bytes": 25
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "description": "No such board or card, a card that is removed or is not an app card, or app cards are off.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/problem"
+                },
+                "example": {
+                  "type": "https://vision-board.invalid/problems/not-found",
+                  "title": "Not found",
+                  "status": 404,
+                  "detail": "Card 3 on board \"pricing\" is not an app card, so it has no panel state."
+                }
+              }
+            }
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "description": "The state is over the limit.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/problem"
+                },
+                "example": {
+                  "type": "https://vision-board.invalid/problems/too-large",
+                  "title": "Too large",
+                  "status": 413,
+                  "detail": "The state is 70000 bytes of JSON and the most a panel may save is 65536 (64 KB). Save less: what the panel needs to start where it was."
+                }
+              }
+            }
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2841,6 +3017,15 @@
       },
       "appCallResponse": {
         "$ref": "https://vision-board.invalid/schema/api/app-call-response.schema.json"
+      },
+      "panelStateSave": {
+        "$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/save"
+      },
+      "panelStateRead": {
+        "$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/read"
+      },
+      "panelStateWritten": {
+        "$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/written"
       }
     },
     "parameters": {
