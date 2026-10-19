@@ -13,6 +13,16 @@ let last: Input = 'key';
 /** The window lost focus and no input came since: its return is no input of the person's. */
 let away = true;
 
+/** A key is down in the page: from its keydown to its keyup, a pointer press or the window getting focus back. */
+let keyDown = false;
+/** How focus last left the page's document: a key was down (Tab into a frame) or not (a click in it). */
+let leftBy: Input = 'key';
+
+/** How focus last went into a frame of another origin (the window's blur): such a frame hears no
+ *  key or press here, so what the page heard before the blur says. A frame the page cannot read
+ *  (an app's panel, packages/ui/src/app-frame) asks this for its focus ring. */
+export const focusCame = (): Input => leftBy;
+
 /** The last input before now, as `bindPointerFocus` heard it; null when none came since the page
  *  opened or the window last lost focus (the window getting focus back is not a key). */
 export const lastInput = (): Input | null => (away ? null : last);
@@ -24,24 +34,31 @@ export function bindPointerFocus(stage: HTMLElement): () => void {
   const onPointer = (e: PointerEvent) => {
     last = 'pointer';
     away = false;
+    keyDown = false;
     // A press on the card that already has focus moves none, so no focusin follows: mark it here.
     const card = (e.target as HTMLElement).closest?.('vb-node');
     if (card && card === document.activeElement) card.setAttribute(ATTR, '');
   };
-  const onKey = () => { last = 'key'; away = false; };
-  const onBlur = (e: FocusEvent) => { if (e.target === window) away = true; };
+  const onKey = () => { last = 'key'; away = false; keyDown = true; };
+  const onKeyUp = () => { keyDown = false; };
+  const onFocus = (e: FocusEvent) => { if (e.target === window) keyDown = false; };
+  const onBlur = (e: FocusEvent) => { if (e.target === window) { away = true; leftBy = keyDown ? 'key' : 'pointer'; } };
   const onFocusIn = (e: FocusEvent) => cardOf(e)?.toggleAttribute(ATTR, last === 'pointer');
   const onFocusOut = (e: FocusEvent) => cardOf(e)?.removeAttribute(ATTR);
   // Capture: a handler that stops the event further down must not hide it from here.
   document.addEventListener('pointerdown', onPointer, true);
   document.addEventListener('keydown', onKey, true);
+  document.addEventListener('keyup', onKeyUp, true);
   window.addEventListener('blur', onBlur);
+  window.addEventListener('focus', onFocus);
   stage.addEventListener('focusin', onFocusIn);
   stage.addEventListener('focusout', onFocusOut);
   return () => {
     document.removeEventListener('pointerdown', onPointer, true);
     document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('keyup', onKeyUp, true);
     window.removeEventListener('blur', onBlur);
+    window.removeEventListener('focus', onFocus);
     stage.removeEventListener('focusin', onFocusIn);
     stage.removeEventListener('focusout', onFocusOut);
   };

@@ -12,6 +12,8 @@ import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_KINDS, REGION_OTHER } from './fixture.ts';
 
+/** The notes board's cards the "Notes put away, and note times" group draws (card-polish FE_02). */
+const HIDDEN_AND_TIMES = new Set(['Notes put away', 'A reply since you put them away', 'Note times']);
 /** Classes the board puts on a node while something is happening to it. Keyed by node title. */
 const LIVE_CLASS: Record<string, string> = { 'Being dragged': 'dragging' };
 /** View state the board passes to `nodeState`: the person's selection (3_FE_01). Keyed by title. */
@@ -94,6 +96,21 @@ function notePreviews(fx: Fixture): HTMLElement {
   return list;
 }
 
+/** Notes put away and note times (card-polish FE_02), from the notes board's ledger: a thread put
+ * away (its head alone, Show on the right), one put away before the agent replied ("· 1 new reply"), and a note and its reply
+ * with their time chips showing, as hover or keyboard focus shows them (`data-hover`), the reply
+ * also wearing the ring a history row's highlight gives it for a moment (`data-flash`). */
+function hiddenAndTimes(fx: Fixture): HTMLElement {
+  const of = (title: string) => {
+    const n = fx.notes.view.nodes.find((x) => x.title === title)!;
+    return card(n, fx, fx.notes.state, fx.notes.cards.get(n.n!));
+  };
+  const timed = of('Note times');
+  for (const part of timed.querySelectorAll('.vb-node-note, .vb-node-reply')) part.toggleAttribute('data-hover', true);
+  timed.querySelector('.vb-node-reply')!.toggleAttribute('data-flash', true);
+  return cardList('Notes put away, and note times', of('Notes put away'), of('A reply since you put them away'), timed);
+}
+
 export function nodeSamples(body: HTMLElement, fx: Fixture): void {
   const others = fx.view.nodes.filter((n) => n.region === REGION_OTHER).map((n) => card(n, fx));
   body.append(
@@ -106,7 +123,12 @@ export function nodeSamples(body: HTMLElement, fx: Fixture): void {
     group('Selected, every kind', 'The person\'s pick, about two-thirds of a step toward the strong ink (--vb-select-lift) and a little more saturated (--vb-select-chroma): deeper in light, lighter in dark, the same for the grey note and the purple topic.',
       selectedKinds(fx)),
     group('Notes on a card', 'A numbered pin on the top-right corner (the latest note) and the "Your note" block, oldest first like a chat, a new note at the bottom: a note not yet sent is pink; sent notes are grey and say Sent. A click on the pin or a note opens it in the note bubble.',
-      cardList('Note states', ...fx.notes.view.nodes.map((n) => card(n, fx, fx.notes.state)))),
+      cardList('Note states', ...fx.notes.view.nodes.filter((n) => !HIDDEN_AND_TIMES.has(n.title)).map((n) => card(n, fx, fx.notes.state, fx.notes.cards.get(n.n!))))),
+    group('Notes put away, and note times', '"N notes" heads the thread, over one note too, with one toggle that always sits on the right: Hide puts the thread away, '
+      + 'leaving the head, "2 notes", and Show brings it back. A reply that came after you put them away is counted there, "· 1 new reply", so none is missed. '
+      + 'Hiding is yours alone, never sent to an agent. Hover or keyboard focus on a note or a reply shows its time in a chip at its top right '
+      + '(the whole date in its tooltip); a screen reader hears the time once, after who wrote it. Drawn here as hover draws them; the reply also '
+      + 'wears the ring the card history gives a note it takes you to.', hiddenAndTimes(fx)),
     group('Note preview', 'A note cut at three lines shows its full text, as Markdown, in a box beside the card on hover and on keyboard focus '
       + '(the note is a tab stop; Enter opens it in the note bubble); Esc dismisses it, and it stays while the pointer is on it. '
       + 'A longer note scrolls past the box\'s maximum height (notePreview flag). Both are drawn open here.', notePreviews(fx)),

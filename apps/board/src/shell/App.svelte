@@ -64,6 +64,7 @@
       open: async () => { shell.chatOpen = true; await tick(); },
       waiting: (on) => { shell.sendWaiting = on; },
       attached: (on) => { shell.chatAttached = on; },
+      view: (state) => { shell.chatView = state; },
     });
     chat = c;
     return () => { c.destroy(); chat = null; };
@@ -122,7 +123,7 @@
   <GoToCard box={shell.go} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
     onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} />
 {/if}
-{#if bridge}<ChatSidebar onhost={hostChat} />{/if}
+{#if bridge}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 
 <div id="toast" class="vb-toast" role="alert" hidden={!shell.toast} data-tone={shell.toast?.tone}>
   {shell.toast?.text ?? ''}

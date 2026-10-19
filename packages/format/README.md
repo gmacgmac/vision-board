@@ -1,7 +1,7 @@
 # packages/format
 
 The format the agent and the board share: the project ledger (`.visionboard/ledger.jsonl`,
-format 17, readers accept 2 to 17; D-017, api.md 125-153), one event per line for every card's
+format 18, readers accept 2 to 18; D-017, api.md 125-156), one event per line for every card's
 identity, versions, the person's actions, the agent's replies, proposals, parking bundles,
 retires, joins and grant requests. A card's identity is its ledger number: the file writes it `n`,
 code calls it `id` (`fromLine`, `toLine`); every request and answer names a card by its board

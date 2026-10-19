@@ -179,10 +179,11 @@ test('a click on a card partly off screen, its note, its size control or its foo
   await page.setViewportSize({ width: 1000, height: 600 });
   await open(page, d);
   for (let i = 0; i < 6; i += 1) await page.keyboard.press('+');
-  // The noted card hangs off the stage's right edge.
+  // The noted card hangs off the stage's right edge, its top on the stage (its notes' head, card-polish
+  // FE_02, made it taller than the stage's top half at this zoom).
   const s = await stageBox(page);
   const b = await boxOf(page, noted);
-  await panBy(page, s.x + s.width - 60 - b.x - b.width / 2, 0);
+  await panBy(page, s.x + s.width - 60 - b.x - b.width / 2, Math.max(0, s.y + 40 - b.y));
   const before = await world(page);
   const c = card(page, noted);
   await c.locator('.vb-node-title').click({ position: { x: 4, y: 4 } });

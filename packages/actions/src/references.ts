@@ -107,7 +107,7 @@ function onCards(s: LedgerState, e: ActEvent): Scope {
 const ACT_SCOPES: Record<ActionId, (s: LedgerState, e: ActEvent) => Scope> = {
   ack: onCards, drop: onCards, later: onCards, reopen: onCards, size: onCards,
   comment: onCards, context: onCards, 'note-edit': onCards, 'note-remove': onCards, pin: onCards, unpin: onCards,
-  reject: onCards, flag: onCards, unflag: onCards,
+  reject: onCards, flag: onCards, unflag: onCards, 'notes-hide': onCards, 'notes-show': onCards,
   move: (s, e) => ({ ...onCards(s, e), container: e.region! }),
   mode: onContainer, widths: onContainer, revoke: onAccess,
   grant: (s, e) => R.request.lookup(s, e.request!) ?? none(),

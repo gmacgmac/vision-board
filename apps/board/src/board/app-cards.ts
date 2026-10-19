@@ -11,8 +11,11 @@
 // - the board's theme, told to every loaded panel when it changes (the toolbar's theme or the
 //   system's);
 // - the buttons with `data-app-act`: Allow and Stop app are the person's acts, asked first as the
-//   action registry says and sent through the one sender; Check again and Restart read list_apps
-//   again. Each says what happened (the toast, a live region) and keeps focus on the card.
+//   action registry says and sent through the one sender, the footer's control marked loading while
+//   one is in flight and error when it was refused; Check again and Restart read list_apps again.
+//   Each says what happened (the toast, a live region) and keeps focus on the card;
+// - "Allowed ▾" in the footer (card-polish FE_01): its menu, one item, Stop app, with the board's
+//   menu keys (menu-keys.ts); Esc or a press outside closes it.
 import type { ActionId, LedgerEvent, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { ACTIONS } from '../../../../packages/actions/src/index.ts';
@@ -21,9 +24,11 @@ import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } f
 import { appView } from '../../../../packages/ui/src/index.ts';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from './app-words.ts';
+import { menuKeydown } from './menu-keys.ts';
 import type { ActFields, AppCallRefusal } from './io.ts';
 import { callAppTool } from './io.ts';
 import { outside, viewBounds } from './offscreen.ts';
+import { focusCame } from './pointer-focus.ts';
 import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
 import { isFar } from './viewport.ts';
@@ -76,6 +81,39 @@ export function watchTheme(changed: () => void): () => void {
   };
 }
 
+/** "Allowed ▾"'s menu on an app card (card-polish FE_01): one open at a time, its items focused and
+ * moved through with the board's menu keys; Esc gives focus back to its button, Tab or a press
+ * outside just closes it. Drawn in the card's footer (node-template.ts `appStatus`). */
+function createAppMenus(): { toggle(opener: HTMLButtonElement): void; close(focusBack: boolean): void; destroy(): void } {
+  let open: { opener: HTMLButtonElement; menu: HTMLElement } | null = null;
+  const items = (menu: HTMLElement) => [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+  const keydown = (e: KeyboardEvent) => { if (open) menuKeydown(e, items(open.menu), close); };
+  const outside = (e: PointerEvent) => { if (open && !open.menu.parentElement!.contains(e.target as Node)) close(false); };
+  function close(focusBack: boolean): void {
+    if (!open) return;
+    const { opener, menu } = open;
+    open = null;
+    menu.hidden = true;
+    opener.setAttribute('aria-expanded', 'false');
+    menu.removeEventListener('keydown', keydown);
+    document.removeEventListener('pointerdown', outside, true);
+    if (focusBack && opener.isConnected) opener.focus({ preventScroll: true });
+  }
+  function toggle(opener: HTMLButtonElement): void {
+    const menu = document.getElementById(opener.getAttribute('aria-controls') ?? '');
+    const again = open?.opener === opener;
+    close(again);
+    if (again || !menu) return;
+    open = { opener, menu };
+    menu.hidden = false;
+    opener.setAttribute('aria-expanded', 'true');
+    menu.addEventListener('keydown', keydown);
+    document.addEventListener('pointerdown', outside, true);
+    items(menu)[0]?.focus({ preventScroll: true });
+  }
+  return { toggle, close, destroy: () => close(false) };
+}
+
 export function createAppCards(d: AppCardsDeps): AppCards {
   const states = createAppStates({ on: d.on, changed: () => d.redraw(), fail: d.fail });
   /** The app cards drawn, by node id (filled as the cards' conditions are asked for). */
@@ -104,6 +142,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     wired.add(frame);
     frame.wire({
       callTool: (name, args) => call(frame.dataset.app ?? '', name, args),
+      focusCame,
       onEscape: () => card.focus({ preventScroll: true }),
       onLoad: () => void states.refresh(),
     });
@@ -154,18 +193,33 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     const action: ActionId = what;
     // An allow names the version list_apps gave; with none known yet there is nothing to allow.
     if (action === 'app-allow' && !info?.hash) return;
+    // The footer's control the act is for: Allow, or "Allowed ▾" for its menu's Stop app.
+    const control = button.closest('.vb-app-status')?.querySelector<HTMLButtonElement>(action === 'app-allow' ? '[data-app-act="app-allow"]' : '[data-app-menu]');
+    if (control?.getAttribute('aria-busy') === 'true') return;
+    control?.removeAttribute('data-error');
     if (ACTIONS[action].needsConfirmation && !(await d.confirm(...appAsk(action, name, info?.changed === true)))) return;
     const fields: ActFields = action === 'app-allow' ? { action, app, hash: info!.hash! } : { action, app };
-    if ((await d.act(fields)) !== null) return;
+    for (const a of ['aria-busy', 'aria-disabled']) control?.setAttribute(a, 'true');
+    const problem = await d.act(fields);
+    for (const a of ['aria-busy', 'aria-disabled']) control?.removeAttribute(a);
+    if (problem !== null) {
+      control?.setAttribute('data-error', '');
+      return;
+    }
     await states.refresh();
     card.focus({ preventScroll: true });
     d.toast(appDone(action, name));
   }
 
+  const menus = createAppMenus();
   const onClick = (e: MouseEvent): void => {
-    const b = (e.target as Element).closest<HTMLButtonElement>('button[data-app-act]');
+    const target = e.target as Element;
+    const opener = target.closest<HTMLButtonElement>('button[data-app-menu]');
+    if (opener) return menus.toggle(opener);
+    const b = target.closest<HTMLButtonElement>('button[data-app-act]');
     const card = b?.closest<VbNodeElement>('vb-node');
     const n = card && shown.get(card.dataset.id ?? '');
+    if (b?.getAttribute('role') === 'menuitem') menus.close(true);
     if (b && card && n) void press(card, n, b);
   };
   if (d.on) d.stage.addEventListener('click', onClick);
@@ -185,6 +239,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     place,
     destroy() {
       d.stage.removeEventListener('click', onClick);
+      menus.destroy();
       for (const stop of stops) stop();
     },
   };

@@ -15,10 +15,15 @@
 // `ChatHost.holds`). The board's Send goes through `boardSend`: with the board's session and something
 // attached it is that message with no words (ruling 4); else the `send` act, which waits while the
 // agent works (panel-send ruling 1). Held either way, Send shows it waiting until the next message.
+// The feed follows the latest unless the person scrolls away; sending a message follows again (`feed.follow()`).
+// Only the drawing is lazy (`loadDrawing`, chat-view.ts): the session, its events, the waiting and
+// attached states and the bridge work from the page's start, with the panel closed; the header, feed and
+// composer are made when the panel first opens (or a change chip's link needs them), then drawn from what
+// the panel holds, with the context the bridge gave the composer (`composerSide`).
 // The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
 import type {
-  ChatAnswerDetail, ChatComposerElement, ChatFeedElement, ChatHeaderElement, ChatHost, ChatPickDetail, ChatSendDetail,
+  ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
 } from '../../../../packages/chat/src/index.ts';
 import {
   CHAT_ANSWER_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_SEND_EVENT, CHAT_STOP_EVENT, composerView,
@@ -26,6 +31,7 @@ import {
 } from '../../../../packages/chat/src/index.ts';
 import { renderMarkdown } from '../../../../packages/ui/src/index.ts';
 import type { ChatBridge } from './chat-bridge.ts';
+import type { ChatView } from './chat-view.ts';
 import type { ChatSessionInfo } from './io.ts';
 import { answerApproval, ApiError, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './io.ts';
 import type { Agent, Pick } from './chat-rules.ts';
@@ -35,7 +41,6 @@ import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, message
 const EMPTY = { board: 'No messages yet. Ask the agent about this board.', folder: 'No boards here yet. Ask the agent to draw one.' };
 const NEW_ASK = ['Start a new session?', 'The agent starts again with no memory of this conversation, and a turn still running stops.', 'New session'] as const;
 const listFor = (board?: string) => (board ? listChats(board) : listFolderChats());
-
 
 export interface ChatPanelDeps {
   bridge: ChatBridge;
@@ -51,25 +56,40 @@ export interface ChatPanelDeps {
   waiting(on: boolean): void;
   /** Whether Send has something to send in the chat (`sendsInChat`): it is enabled for it. */
   attached(on: boolean): void;
+  /** The drawing's load (`load`): loading while it comes, ready once drawn, error when it did not come. */
+  view(state: 'loading' | 'ready' | 'error'): void;
 }
+
+export type ChatViewLoader = () => Promise<{ mountChatView(panel: HTMLElement): ChatView }>;
 
 export interface ChatPanel {
   /** The open board ('' a folder with no board; null before the page knows), and whether a past version of it shows. */
   show(board: string | null, past: boolean): void;
   /** The board's Send (`send`, the act), waiting while the agent is mid-turn: null when recorded, else the problem. */
   boardSend(send: () => Promise<string | null>): Promise<string | null>;
+  /** Load the drawing if it has not come yet (a no-op once it has): true once it is drawn, false when it did not come. */
+  load(): Promise<boolean>;
   focus(): void;
   destroy(): void;
 }
 
-export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel {
-  const header = document.createElement('chat-header') as ChatHeaderElement;
-  const feed = document.createElement('chat-feed') as ChatFeedElement;
-  const composer = document.createElement('chat-composer') as ChatComposerElement;
-  panel.append(header, feed, composer);
+/** The drawing's module, loaded on demand: the only import of chat-view.ts (and so of the element code). */
+const loadView: ChatViewLoader = () => import('./chat-view.ts');
+
+export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: ChatViewLoader = loadView): ChatPanel {
+  let view: ChatView | null = null;
+  let [loading, gone] = [null as Promise<boolean> | null, false];
+  /** What the bridge gave the composer; the composer gets it when it exists. */
+  let context: ComposerContext | null = null;
+  const composerSide = { setContext(c: ComposerContext | null) { context = c; view?.composer.setContext(c); } };
+  /** Whether the composer holds anything to send (a chip or the context): the context alone, before it exists. */
+  const attachedNow = () => (view ? view.composer.attached : context !== null);
   let empty = '';
+  const feedOptions = () => ({ render: (src: string) => renderMarkdown(src), boardName: d.boardName, empty });
   const configure = (text: string) => {
-    if (text !== empty) feed.configure({ render: (src) => renderMarkdown(src), boardName: d.boardName, empty: (empty = text) });
+    if (text === empty) return;
+    empty = text;
+    view?.feed.configure(feedOptions());
   };
   configure(EMPTY.board);
 
@@ -83,7 +103,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   };
   let [unfollow, loads] = [() => {}, 0];
   let [waitShown, attachedShown] = [false, false];
-  const inChat = () => sendsInChat(st.session, st.board, composer.attached);
+  const inChat = () => sendsInChat(st.session, st.board, attachedNow());
   const current = (): Pick => shownPick(st.session, st.refused, st.pick);
 
   function render() {
@@ -94,9 +114,33 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
     const { agent, model } = current();
-    header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent] }, st.chat, host));
-    feed.show(st.chat);
-    composer.show(composerView(st.chat, host));
+    if (!view) return;
+    view.header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent] }, st.chat, host));
+    view.feed.show(st.chat);
+    view.composer.show(composerView(st.chat, host));
+  }
+
+  /** Make the header, feed and composer (the first time), then draw them from what the panel holds. */
+  function loadDrawing(): Promise<boolean> {
+    if (view) return Promise.resolve(true);
+    if (loading) return loading;
+    d.view('loading');
+    const run = (async () => {
+      try {
+        const made = (await loader()).mountChatView(panel);
+        if (gone) return false;
+        view = made;
+        view.feed.configure(feedOptions());
+        view.composer.setContext(context);
+        render();
+        d.view('ready');
+        return true;
+      } catch {
+        if (!gone) d.view('error');
+        return false;
+      } finally { loading = null; }
+    })();
+    return (loading = run);
   }
 
   function fail(err: unknown) {
@@ -178,13 +222,14 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   async function send({ text, chips: own }: ChatSendDetail): Promise<string | null> {
     if (st.sending || st.board === null) return 'A message is already on its way.';
     st.sending = true;
+    view?.feed.follow();
     const [ask, chips] = [lastAsk(st.chat), [...own, ...d.bridge.chips()]];
     try {
       // A start already under way says itself why it failed; the composer keeps the text.
       const s = st.starting ? await st.starting.catch(() => null) : st.session ?? (await start(st.pick));
       if (!s) return 'The agent did not start.';
       const answer = await sendChat(s.session, messageBody(text, chips));
-      composer.clear();
+      view?.composer.clear();
       d.bridge.sent(chips);
       // Held while the agent works: Send waits until the next message is the person's.
       if (answer.kind === 'system' && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
@@ -212,18 +257,19 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
   const on = <T>(type: string, fn: (detail: T) => unknown) => panel.addEventListener(type, (e) => void fn((e as CustomEvent<T>).detail));
   on<ChatSendDetail>(CHAT_SEND_EVENT, send);
   on<ChatAnswerDetail>(CHAT_ANSWER_EVENT, ({ approvalId, answer }) => {
-    if (st.session) answerApproval(st.session.session, approvalId, answer).catch((err) => feed.answerFailed(approvalId, (err as Error).message));
+    if (st.session) answerApproval(st.session.session, approvalId, answer).catch((err) => view?.feed.answerFailed(approvalId, (err as Error).message));
   });
   on(CHAT_STOP_EVENT, () => st.session && stopChat(st.session.session).catch(fail));
   on(CHAT_NEW_SESSION_EVENT, () => renew(current()));
   on<ChatPickDetail>(CHAT_PICK_EVENT, picked);
 
   const detach = d.bridge.chat({
-    panel, composer, state: () => st.chat, changed: render,
+    panel, composer: composerSide, state: () => st.chat, changed: render,
     agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
     async reveal(key) {
       await d.open();
-      const row = feed.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
+      if (!(await loadDrawing()) || !view) return;
+      const row = view.feed.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
       row?.scrollIntoView({ block: 'nearest' });
       (row?.querySelector<HTMLElement>('button') ?? row)?.focus({ preventScroll: true });
     },
@@ -246,7 +292,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps): ChatPanel
       if (problem === null && ask !== null && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
       return problem;
     },
-    focus: () => composer.focusText(),
-    destroy() { unfollow(); detach(); panel.replaceChildren(); },
+    load: loadDrawing,
+    focus: () => view?.composer.focusText(),
+    destroy() { gone = true; view = null; unfollow(); detach(); panel.replaceChildren(); },
   };
 }

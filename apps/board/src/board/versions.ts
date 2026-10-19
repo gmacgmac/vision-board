@@ -63,9 +63,8 @@ async function linesTo(seq: number): Promise<LedgerEvent[]> {
   }
 }
 
-/** A version's time as the dropdown and the banner show it, in the person's own clock. */
-export const versionTime = (at: string): string =>
-  new Date(at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+/** A version's time as the dropdown and the banner show it: the node pattern's (node-time.ts), with the note times. */
+export { versionTime } from '../../../../packages/ui/src/index.ts';
 
 export function createVersions(d: VersionsDeps): Versions {
   let state: LedgerState | null = null;

@@ -16,7 +16,7 @@ vb-node .vb-node-btab[hidden] { display: none; }
 /* Two tabs or more (a proposal and "N updates", FE_02) reach under the footer's buttons. The buttons
    rise to the footer's top and the row drops 2px, so each tab's 24px target circle clears them (WCAG
    2.5.8) while the card keeps its size and the row stays clear of the card below. */
-vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) .vb-node-actions { align-self: flex-start; margin-top: -3px; }
+vb-node:has(.vb-node-btabs > .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) :is(.vb-node-actions, .vb-history) { align-self: flex-start; margin-top: -3px; }
 vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hidden])) { bottom: -13px; }
 /* A 24px hit area, without growing the tab. */
 vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
@@ -51,7 +51,8 @@ vb-node .vb-prop { display: grid; gap: var(--vb-space-1); }
 vb-node .vb-prop + .vb-prop { padding-top: var(--vb-space-3); border-top: 1px solid var(--vb-line); }
 vb-node .vb-prop[aria-busy='true'] { opacity: 0.6; cursor: progress; }
 vb-node .vb-prop p { margin: 0; }
-vb-node .vb-prop-head {
+vb-node .vb-prop-head, vb-node .vb-history-head {
+  margin: 0;
   font-size: var(--vb-text-md); font-weight: var(--vb-weight-bold); letter-spacing: 0.07em; text-transform: uppercase; color: var(--vb-accent-text);
 }
 vb-node .vb-prop[data-stale] .vb-prop-head { color: var(--vb-ink-subtle); }
@@ -73,3 +74,28 @@ vb-node .vb-pop-primary:hover { background: var(--vb-accent-fill-hover); }
 /* Out of date, Accept can't be pressed; it stays focusable so its reason is read (aria-describedby). */
 vb-node .vb-pop-btn[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; transform: none; }
 vb-node .vb-pop-primary[aria-disabled='true']:hover { background: var(--vb-accent-fill); }
+
+/* The history box (card-polish FE_03, node-history.ts): when things happened to the card, newest first,
+   a time and one line each. A row naming a note or a reply is a button in the link colour (the Lc 45
+   tier); the rest are text. The ⓘ that opens it sits at the footer's far right, 24px like the flag. */
+vb-node .vb-history { flex: none; }
+/* Opened from the ⓘ at the card's bottom, so it sits level with the card's bottom and grows upward
+   (maintainer, 2026-10-19). */
+vb-node .vb-card-pop[data-pop='history'] { top: auto; bottom: 0; }
+[data-zoom='far'] vb-node .vb-history { visibility: hidden; }
+vb-node .vb-history[aria-expanded='true'] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
+vb-node .vb-history-list { display: grid; margin: 0 calc(-1 * var(--vb-space-2)); padding: 0; list-style: none; }
+vb-node .vb-history-row {
+  display: grid; grid-template-columns: 8.5em 1fr; gap: var(--vb-space-3); align-items: baseline; width: 100%;
+  padding: var(--vb-space-1) var(--vb-space-2); border: 0; border-radius: var(--vb-radius-sm); background: none;
+  font: var(--vb-weight-regular) var(--vb-text-md) var(--vb-font); line-height: 1.4; color: var(--vb-ink-strong); text-align: left;
+}
+vb-node .vb-history-time { color: var(--vb-ink); font-variant-numeric: tabular-nums; }
+vb-node .vb-history-agent { color: var(--vb-ink); }
+vb-node button.vb-history-row { cursor: pointer; }
+vb-node button.vb-history-row .vb-history-words { color: var(--vb-accent-text); font-weight: var(--vb-weight-medium); }
+vb-node button.vb-history-row:hover { background: var(--vb-surface-sunken); }
+vb-node button.vb-history-row:hover .vb-history-words { text-decoration: underline; }
+vb-node button.vb-history-row:active { transform: translateY(1px); }
+vb-node button.vb-history-row:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: -2px; }
+vb-node .vb-history-empty { margin: 0; font-size: var(--vb-text-md); color: var(--vb-ink); }

@@ -331,3 +331,15 @@
 {"v":17,"seq":331,"at":"2026-10-17T09:00:11Z","by":"agent","agent":"a-pricing1","type":"node","board":"gallery","n":145,"ver":1,"node":{"region":"kinds","kind":"app","title":"App: a price calculator","body":"Work out a price in the panel.","app":{"id":"calculator","w":280,"h":160}}}
 {"v":17,"seq":332,"at":"2026-10-17T09:00:12Z","by":"person","type":"act","action":"later","n":145,"ver":1}
 {"v":17,"seq":333,"at":"2026-10-17T09:00:13Z","by":"agent","agent":"a-pricing1","type":"reply","n":144,"text":"Yes: it rounds to whole numbers, and the exact sum shows under it.","to":330}
+{"v":18,"seq":334,"at":"2026-10-17T09:01:01Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":146,"ver":1,"node":{"region":"notes","kind":"question","title":"Notes put away","body":"Hide puts the thread away; Show, in the same place, brings it back."}}
+{"v":18,"seq":335,"at":"2026-10-17T09:01:02Z","by":"person","type":"act","action":"comment","n":146,"ver":1,"text":"Is the trial 14 days?"}
+{"v":18,"seq":336,"at":"2026-10-17T09:01:03Z","by":"agent","agent":"a-pricing1","type":"reply","n":146,"text":"Yes: 14 days, then the plan starts.","to":335}
+{"v":18,"seq":337,"at":"2026-10-17T09:01:04Z","by":"person","type":"act","action":"comment","n":146,"ver":1,"text":"Does it need a card?"}
+{"v":18,"seq":338,"at":"2026-10-17T09:01:05Z","by":"person","type":"act","action":"notes-hide","n":146}
+{"v":18,"seq":339,"at":"2026-10-17T09:01:06Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":147,"ver":1,"node":{"region":"notes","kind":"decision","title":"A reply since you put them away","body":"The head counts what the agent said after you hid the notes, so no reply is missed."}}
+{"v":18,"seq":340,"at":"2026-10-17T09:01:07Z","by":"person","type":"act","action":"comment","n":147,"ver":1,"text":"Can we start on Monday?"}
+{"v":18,"seq":341,"at":"2026-10-17T09:01:08Z","by":"person","type":"act","action":"notes-hide","n":147}
+{"v":18,"seq":342,"at":"2026-10-17T09:01:09Z","by":"agent","agent":"a-pricing1","type":"reply","n":147,"text":"Yes, Monday works.","to":340}
+{"v":18,"seq":343,"at":"2026-10-17T09:01:10Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":148,"ver":1,"node":{"region":"notes","kind":"finding","title":"Note times","body":"Hover or focus a note or a reply: its time shows at its top right."}}
+{"v":18,"seq":344,"at":"2026-10-17T09:01:11Z","by":"person","type":"act","action":"comment","n":148,"ver":1,"text":"Which plan do most teams pick?"}
+{"v":18,"seq":345,"at":"2026-10-17T09:01:12Z","by":"agent","agent":"a-pricing1","type":"reply","n":148,"text":"The team plan, by a wide margin.","to":344}

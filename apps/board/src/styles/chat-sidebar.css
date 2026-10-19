@@ -19,3 +19,12 @@
 
 /* The toolbar's Chat button while the sidebar is open: the pressed look. */
 .vb-btn#chat-toggle[aria-expanded='true'] { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
+
+/* The panel's drawing coming (loading) or not (error, with Try again): the sidebar's own states, as the
+   chat's styles load with its elements (board/chat-view.ts). */
+.vb-chat-state {
+  margin: 0; padding: var(--vb-space-4); display: flex; flex-direction: column; align-items: flex-start; gap: var(--vb-space-3);
+  font: var(--vb-text-sm) var(--vb-font); color: var(--vb-ink-subtle);
+}
+.vb-chat-state[data-state='error'] { border-left: 3px solid var(--vb-state-drop); color: var(--vb-ink); }
+.vb-chat-state > p { margin: 0; }

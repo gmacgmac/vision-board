@@ -58,7 +58,7 @@ export function createParking(d: ParkingDeps): Parking {
       for (const [id, list] of s.replies) {
         for (const r of list) {
           const agent = r.agent === undefined ? undefined : s.agents.get(r.agent);
-          const reply: CardReply = { seq: r.seq, text: r.text, ...(r.to !== undefined && { to: r.to }), ...(agent && { agent }) };
+          const reply: CardReply = { seq: r.seq, text: r.text, at: r.at, ...(r.to !== undefined && { to: r.to }), ...(agent && { agent }) };
           push(own, id, reply);
           if (r.to === undefined) continue;
           push(answers, r.to, reply);

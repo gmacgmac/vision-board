@@ -56,7 +56,7 @@ const validateOas = oas.compile(patchedOas());
 
 test('openapi.json validates against the vendored OpenAPI 3.2 schema', () => {
   assert.equal(doc.openapi, '3.2.0');
-  assert.equal(doc.info.version, '1.27.0');
+  assert.equal(doc.info.version, '1.28.0');
   assert.deepEqual(doc.servers.map((s: Rec) => s.url), ['http://127.0.0.1:4466']);
   assert.ok(validateOas(doc), JSON.stringify(validateOas.errors?.slice(0, 5)));
 });
@@ -259,7 +259,7 @@ test('each event has a component named after its type, and ledgerEvent is the di
   const types = (doc.components.schemas.ledgerEvent.oneOf as Rec[]).map((o) => String(o.$ref).split('/').pop());
   assert.equal(doc.components.schemas.ledgerEvent.discriminator.propertyName, 'type');
   assert.equal(types.length, 13);
-  for (const t of types) assert.equal(doc.components.schemas[t!].$ref, `${SCHEMA_BASE}schema/ledger/17/events/${t}.schema.json#/$defs/stored`);
+  for (const t of types) assert.equal(doc.components.schemas[t!].$ref, `${SCHEMA_BASE}schema/ledger/18/events/${t}.schema.json#/$defs/stored`);
   assert.equal(types.length, Object.keys(doc.components.schemas).filter((k) => doc.components.schemas[k].$ref?.endsWith('#/$defs/stored')).length);
 });
 

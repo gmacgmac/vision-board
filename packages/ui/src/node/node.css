@@ -56,9 +56,9 @@ vb-node[data-size='s'] { width: var(--vb-card-w-s); }
 vb-node[data-size='m'] { width: var(--vb-card-w-m); }
 vb-node[data-size='l'] { width: var(--vb-card-w-l); }
 /* An app card with its panel (D-047; with the appCards flag off it is a plain card): as wide as the
-   panel (--app-w, set by the element) plus the content's padding and the border, whatever its
-   emphasis; no size tier applies (node-app.css). */
-vb-node[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--app-w) + 2 * var(--vb-space-4) + 2px); }
+   panel (--app-w, set by the element) plus the border, whatever its emphasis: the panel runs edge to
+   edge inside the border (card-polish FE_01); no size tier applies (node-app.css). */
+vb-node[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--app-w) + 2px); }
 /* The size pill draws over the card above, so an open card sits over its neighbours. */
 vb-node[data-size]:is(:hover, :focus-within) { z-index: 2; }
 

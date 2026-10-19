@@ -14,7 +14,7 @@ const board = (f: Partial<BoardState> = {}): BoardState =>
   ({ items: new Map(), pins: new Map(), modes: new Map(), widths: new Map(), sizes: new Map(), moves: new Map(), regionPins: new Map(), regionNotes: new Map(), flags: new Set(), ...f });
 const later = (notes: ItemNote[] = []) => board({ items: new Map([['12', { status: 'later', notes }]]) });
 const note = (seq: number, text = 'Is this right?'): ItemNote => ({ seq, kind: 'comment', text, at: '2026-10-08T00:00:00Z', sent: true });
-const reply = (seq: number, text: string, f: Partial<CardReply> = {}): CardReply => ({ seq, text, ...f });
+const reply = (seq: number, text: string, f: Partial<CardReply> = {}): CardReply => ({ seq, text, at: '2026-10-08T00:00:00Z', ...f });
 const bundle: ParkBundle = {
   situation: 'The trial **starts** without a card.', background: 'Support asked twice.', assessment: 'Low risk.',
   recommendation: 'Ship it.', sources: ['Support thread', 'Pricing sheet'],
@@ -81,15 +81,15 @@ test('replies: a note with none carries none; a reply naming no note takes its p
 
 test('replies: with no notes at all the block still shows them, and there is no pin', () => {
   const v = nodeState(r, board(), undefined, false, { replies: [reply(70, 'Heads up')] }).notes!;
-  assert.deepEqual(v.entries, [{ seq: 70, who: 'Agent reply', text: 'Heads up', orphan: true }]);
+  assert.deepEqual(v.entries, [{ seq: 70, who: 'Agent reply', text: 'Heads up', at: '2026-10-08T00:00:00Z', orphan: true }]);
   assert.equal(v.pin, undefined);
-  assert.equal(v.count, undefined);
+  assert.equal(v.count, '1 reply', 'the head counts the replies (card-polish FE_02)');
   assert.equal(nodeState(r, board()).notes, undefined, 'none without notes or replies');
 });
 
 test('notesMarkup: a reply is read-only (no data-note), a tab stop with Markdown and the full-text tip', () => {
   const html = notesMarkup(nodeState(r, later([note(20)]), undefined, false, { replies: [reply(41, 'Yes: **no card** <i>', { to: 20, agent: 'Pricing chat' })] }).notes!);
-  assert.match(html, /<\/div><div class="vb-node-reply" data-reply="41" tabindex="0"><span class="vb-node-note-who">Agent reply · Pricing chat<\/span>/);
+  assert.match(html, /<\/div><div class="vb-node-reply" data-reply="41" data-at="2026-10-08T00:00:00Z" tabindex="0"><span class="vb-node-note-who">Agent reply · Pricing chat<\/span>/);
   assert.equal(html.match(/data-note=/g)!.length, 1);
   assert.ok(html.includes('<strong>no card</strong> &#60;i&#62;'));
   assert.equal(html.match(/<div class="vb-tip vb-note-tip" aria-hidden="true">/g)!.length, 2);
@@ -106,7 +106,7 @@ test('nodeTemplate: an item gets the handover tab and box, the status tip and th
 test('a container note: the replies that name it, oldest first; none for another note', () => {
   const n = note(184, 'Should the trial skip the card step?');
   const replies = [reply(186, 'Yes.', { to: 184, agent: 'Pricing chat' }), reply(187, 'Elsewhere', { to: 9 }), reply(188, 'No `to`')];
-  assert.deepEqual(regionNote([n], false, replies)!.replies, [{ seq: 186, who: 'Agent reply · Pricing chat', text: 'Yes.' }]);
+  assert.deepEqual(regionNote([n], false, replies)!.replies, [{ seq: 186, who: 'Agent reply · Pricing chat', text: 'Yes.', at: '2026-10-08T00:00:00Z' }]);
   assert.equal(regionNote([n], false)!.replies, undefined);
   const view = { title: 'B', version: 1, regions: [{ id: 'g', title: 'G', mode: 'grid' as const }], nodes: [], links: [] };
   const st: RegionState = regionState({ id: 'g', mode: 'grid' }, view as never, board({ regionNotes: new Map([['g', [n]]]) }), new Set(), undefined, new Set(), replies);

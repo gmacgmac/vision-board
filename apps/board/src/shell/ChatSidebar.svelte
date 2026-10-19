@@ -3,15 +3,25 @@
      dragging its left edge, or the arrow keys on that edge, sets its width. Both are kept per viewer
      (localStorage, guarded), and the board's stage shrinks beside it (--vb-chat-w, board.css). Its
      contents are the chat package's elements, which the host fills (`onhost`: the board's
-     board/chat-panel.ts, the gallery's recorded turns). The gallery mounts it in the page flow. -->
+     board/chat-panel.ts, the gallery's recorded turns). On the board they are drawn the first time it
+     opens, at start when it was kept open (`onload`): until then it says it is loading, and when they
+     did not come, so, with Try again, which reloads the page (a browser keeps a module import that failed
+     failed until the page is reloaded; the panel, kept open, then loads at start). The gallery mounts it in
+     the page flow. -->
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { shell } from './shell.svelte.ts';
   import { keep, kept } from './kept.ts';
 
-  let { onhost, placement = 'board' }: {
+  let { onhost, onload, view, onretry = () => location.reload(), placement = 'board' }: {
     /** Fill the panel; returns what undoes it. */
     onhost: (panel: HTMLElement) => (() => void) | void;
+    /** Load the panel's drawing (a no-op once loaded); true once it is drawn. */
+    onload?: () => Promise<boolean>;
+    /** The drawing's state to show instead of the page's (the gallery's loading and error states). */
+    view?: 'idle' | 'loading' | 'ready' | 'error';
+    /** Try again, from the error state: by default the page reloads. */
+    onretry?: () => void;
     /** `board`: fixed on the right; `gallery`: in the page flow, always open. */
     placement?: 'board' | 'gallery';
   } = $props();
@@ -30,6 +40,10 @@
   let panel: HTMLElement;
   if (onBoard()) shell.chatOpen = kept(OPEN_KEY) === '1';
   let was = shell.chatOpen;
+  let focusNext = false;
+  /** Where focus was when the person opened the panel: the composer takes it on load only if it is still there. */
+  let openedFrom: Element | null = null;
+  const loadState = $derived(view ?? shell.chatView);
 
   onMount(() => {
     const undo = onhost(panel);
@@ -44,14 +58,33 @@
     return () => { document.removeEventListener('keydown', onKey); undo?.(); };
   });
 
-  // Opened: the words go in the composer. Kept for the next visit either way.
+  // Open (opened now, or kept open from the last visit): the drawing loads. Opened now, the words go in
+  // the composer once it is there. Kept for the next visit either way.
   $effect(() => {
     const open = shell.chatOpen;
-    if (!onBoard() || open === was) return;
-    was = open;
-    keep(OPEN_KEY, open ? '1' : '0');
-    if (open) queueMicrotask(() => panel.querySelector<HTMLElement>('textarea')?.focus({ preventScroll: true }));
+    if (!onBoard()) return;
+    if (open !== was) {
+      was = open;
+      keep(OPEN_KEY, open ? '1' : '0');
+      focusNext = open;
+      openedFrom = open ? document.activeElement : null;
+    }
+    if (!open) return;
+    untrack(() => void load());
   });
+
+  /** Focus has not moved since the panel opened (or only into the panel): a slow load never takes focus the person moved on. */
+  function focusStayed(): boolean {
+    const at = document.activeElement;
+    return at === openedFrom || at === null || at === document.body || !!panel.closest('aside')?.contains(at);
+  }
+
+  function load() {
+    return (onload?.() ?? Promise.resolve(true)).then((ok) => {
+      if (ok && focusNext && shell.chatOpen && focusStayed()) panel.querySelector<HTMLElement>('textarea')?.focus({ preventScroll: true });
+      if (ok || !shell.chatOpen) focusNext = false;
+    });
+  }
 
   $effect(() => {
     if (!onBoard()) return;
@@ -98,5 +131,13 @@
       aria-controls="chat" aria-valuenow={width} aria-valuemin={MIN} aria-valuemax={widest()} title="Drag to resize · ← →"
       data-dragging={dragging || undefined} onpointerdown={grab} onkeydown={nudge}></div>
   {/if}
-  <div class="chat-panel" bind:this={panel}></div>
+  {#if loadState === 'loading'}
+    <p class="vb-chat-state" role="status">Loading the chat…</p>
+  {:else if loadState === 'error'}
+    <div class="vb-chat-state" role="alert" data-state="error">
+      <p>The chat did not load.</p>
+      <button type="button" class="vb-btn" onclick={() => onretry()}>Try again</button>
+    </div>
+  {/if}
+  <div class="chat-panel" bind:this={panel} hidden={loadState === 'loading' || loadState === 'error'}></div>
 </aside>

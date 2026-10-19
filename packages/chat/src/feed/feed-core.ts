@@ -113,3 +113,36 @@ export function changeLabel(c: ChangeEntry, boardName: (id: string) => string = 
   const n = c.cards.length;
   return n === 0 ? `Wrote on ${on}` : `Drew ${n} card${n === 1 ? '' : 's'} on ${on}`;
 }
+
+// Following the latest. On by default; only the person's own scrolling away turns it off, and
+// reaching the end again (or sending) turns it back on. Nothing the page does counts. No DOM.
+
+/** What the feed reads of its log to decide: the scroll position and the two heights. */
+export interface LogMetrics { scrollTop: number; scrollHeight: number; clientHeight: number }
+
+/** How close to the end still counts as at the end, in pixels. */
+export const BOTTOM_PX = 4;
+
+export const atBottom = (m: LogMetrics): boolean => m.scrollHeight - m.scrollTop - m.clientHeight <= BOTTOM_PX;
+
+/** An input the person made on the log that moves the view up. */
+export type PersonInput = { kind: 'wheel'; deltaY: number } | { kind: 'key'; key: string; shift: boolean };
+
+const UP_KEYS = new Set(['PageUp', 'Home', 'ArrowUp']);
+
+/** Whether `input` takes the view up, with room above it to go: the person scrolling away from the latest. */
+export function leavesLatest(input: PersonInput, m: LogMetrics): boolean {
+  if (m.scrollTop <= 0) return false;
+  return input.kind === 'wheel' ? input.deltaY < 0 : UP_KEYS.has(input.key) || (input.key === ' ' && input.shift);
+}
+
+/** What a scroll event tells: which way it went, and whether the person is moving the view (the wheel, a key, the scrollbar, a touch). */
+export interface ScrollMove { down: boolean; person: boolean }
+
+/** Following after a scroll event: on when the view moves down to the end (a first step up from the end,
+ *  smooth scrolling, is still within a few pixels of it and does not count); off the end it turns off
+ *  only while the person moves the view, never for a scroll the page made. */
+export function followAfterScroll(following: boolean, m: LogMetrics, move: ScrollMove): boolean {
+  if (atBottom(m)) return move.down || following;
+  return move.person ? false : following;
+}

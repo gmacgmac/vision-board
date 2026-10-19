@@ -18,11 +18,12 @@
     "data-label": "the app's name: the placeholder's title and the frame's title",
     "data-w, data-h": "the panel's size in px, held to APP_SIZE (panelSize); set as --app-w and --app-h through the CSSOM; a change tells a ready panel (host-context-changed)",
     "data-state": "idle | loading | ready (set by the element)",
-    "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring",
+    "data-focus-in": "focus is inside the panel (set by the element from the window's blur and focus: Chromium never matches :focus-within on a frame of another origin); the frame draws the focus ring unless data-pointer-focus is set",
+    "data-pointer-focus": "focus came into the panel by a click (wire's focusCame said 'pointer'): no ring, as on a card; cleared when focus leaves, and the next focus by keyboard draws the ring",
     "aria-busy": "true while loading (set by the element)"
   },
   "methods": {
-    "wire({ callTool, look?, onEscape?, onLoad? })": "once: the page's call_app_tool through its I/O layer, the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again)",
+    "wire({ callTool, look?, focusCame?, onEscape?, onLoad? })": "once: the page's call_app_tool through its I/O layer, how focus came into the panel (left out: the ring shows), the board's look (left out: readLook, the tokens resolved through a probe, the theme from the card surface), what Esc in the panel does (left out: focus the card) and what each load of the frame's document does (the panel, or the panel route's 404 once the app went: the page reads list_apps again)",
     "load()": "make the frame and its protocol bridge, and listen for messages; nothing while loaded, not in the page, or for a bad id",
     "unload()": "remove the frame, close the bridge, stop listening; focus in the panel goes back to the card; also on disconnect",
     "lookChanged()": "the board's theme changed: a ready panel gets host-context-changed with the parts that changed"

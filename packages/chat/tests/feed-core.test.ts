@@ -3,7 +3,7 @@
 // change chip for a board write; approval cards settled in place; system lines.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { activityLine, applyEvent, applyEvents, changeLabel, EMPTY_CHAT } from '../src/index.ts';
+import { activityLine, applyEvent, applyEvents, atBottom, BOTTOM_PX, changeLabel, EMPTY_CHAT, followAfterScroll, leavesLatest } from '../src/index.ts';
 import type { Draft } from './support.ts';
 import { COMMAND, SESSION, stamp, TURN, WRITE } from './support.ts';
 
@@ -107,4 +107,36 @@ test('changeLabel: the cards drawn and the board, by the name the host gives', (
   assert.equal(changeLabel(chip, () => 'Pricing'), 'Drew 2 cards on Pricing');
   assert.equal(changeLabel({ ...chip, cards: [5] }, () => 'Pricing'), 'Drew 1 card on Pricing');
   assert.equal(changeLabel({ ...chip, cards: [] }, () => 'Pricing'), 'Wrote on Pricing');
+});
+
+// Following the latest: on by default; only the person's own scrolling away turns it off.
+const log = (scrollTop: number, scrollHeight = 2000, clientHeight = 500) => ({ scrollTop, scrollHeight, clientHeight });
+
+test('atBottom: the end of the log, within a few pixels', () => {
+  assert.equal(atBottom(log(1500)), true);
+  assert.equal(atBottom(log(1500 - BOTTOM_PX)), true);
+  assert.equal(atBottom(log(1500 - BOTTOM_PX - 1)), false);
+  assert.equal(atBottom(log(0, 300, 500)), true, 'a log that fits is at its end');
+});
+
+test('leavesLatest: a wheel or key that goes up, with room above, is the person scrolling away', () => {
+  assert.equal(leavesLatest({ kind: 'wheel', deltaY: -80 }, log(1500)), true);
+  assert.equal(leavesLatest({ kind: 'wheel', deltaY: 80 }, log(1500)), false);
+  assert.equal(leavesLatest({ kind: 'wheel', deltaY: -80 }, log(0)), false, 'nothing above to scroll to');
+  for (const key of ['PageUp', 'Home', 'ArrowUp']) assert.equal(leavesLatest({ kind: 'key', key, shift: false }, log(1500)), true, key);
+  assert.equal(leavesLatest({ kind: 'key', key: ' ', shift: true }, log(1500)), true);
+  for (const [key, shift] of [[' ', false], ['ArrowDown', false], ['PageDown', false], ['End', false], ['a', true]] as const) {
+    assert.equal(leavesLatest({ kind: 'key', key, shift }, log(1500)), false, key);
+  }
+  assert.equal(leavesLatest({ kind: 'key', key: 'PageUp', shift: false }, log(0)), false);
+});
+
+test('followAfterScroll: moving down to the end follows; off the end it changes only while the person drags', () => {
+  const [down, up] = [{ down: true, person: false }, { down: false, person: false }];
+  assert.equal(followAfterScroll(false, log(1500), down), true);
+  assert.equal(followAfterScroll(false, log(1498), up), false, 'a first step up from the end is not arriving');
+  assert.equal(followAfterScroll(true, log(1498), up), true);
+  assert.equal(followAfterScroll(true, log(900), up), true, 'a scroll the page made never turns it off');
+  assert.equal(followAfterScroll(true, log(900), { down: false, person: true }), false, 'the person moving it away does');
+  assert.equal(followAfterScroll(false, log(900), down), false);
 });

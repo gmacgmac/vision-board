@@ -42,3 +42,13 @@ export type ChatEventKind = (typeof CHAT_EVENT_KINDS)[number];
 
 /** The longest words a message carries (the schema's `text`). */
 export const TEXT_MAX = 100_000;
+
+/** The events the elements raise (they bubble). Named here, not in the element files, so a host can listen
+ *  without loading the elements: the board loads them when the panel first opens. */
+export const CHAT_SEND_EVENT = 'chat-send';
+export const CHAT_CHIP_REMOVE_EVENT = 'chat-chip-remove';
+export const CHAT_CHANGE_EVENT = 'chat-change';
+export const CHAT_STOP_EVENT = 'chat-stop';
+export const CHAT_NEW_SESSION_EVENT = 'chat-new-session';
+export const CHAT_PICK_EVENT = 'chat-pick';
+export const CHAT_ANSWER_EVENT = 'chat-answer';

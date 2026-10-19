@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-10-18
+updated: 2026-10-19
 scope: The app card contract — an app's folder, manifest, panel protocol, tools module, limits, approval and states
 ---
 
@@ -139,11 +139,16 @@ The `hostContext` in the answer to `ui/initialize`:
 
 - `theme`: `light` or `dark`, the board's theme now.
 - `containerDimensions`: `{ width, height }`, the panel's size in px.
-- `styles.variables`: the board's look as MCP Apps style variables, each the resolved value of one
-  board token in the board's theme (`APP_STYLE_VARIABLES`): backgrounds, text, borders, the focus
-  ring, the fonts, text sizes and corner radii. A panel that uses them matches the board in light
-  and dark. `--color-background-inverse` is the board's accent fill and `--color-text-inverse` the
-  text on it, for a main button.
+- `styles.variables`: the board's neutral look as MCP Apps style variables, each the resolved value
+  of one board token in the board's theme (`APP_STYLE_VARIABLES`): backgrounds, text, borders, the
+  fonts, text sizes and corner radii. They are for surfaces, text and lines, and for fallbacks until
+  a panel has its own, so light and dark still match the board. They are not the app's brand: the
+  app is the agent's own design, with a restrained palette and at most one accent of its own.
+  `--color-background-inverse` (the board's accent fill), `--color-text-inverse` and
+  `--color-ring-primary` (the board's focus ring) are the board's own colours; a panel does not
+  reach for them. A panel draws its focus ring under `:focus-visible` only, never `:focus`, so a
+  click shows none. The skill teaches this (`skills/vision-board/SKILL.md`, § Apps on the board,
+  "Good to use"); nothing checks an app's colours.
 - `platform`: `web`.
 
 `hostInfo` is `{ name: "vision-board", version }`; `hostCapabilities` is `{ serverTools: {} }` (the
@@ -361,11 +366,11 @@ Esc back to the card, theme changes and the approval state.
   (`tests/pages/app-server.ts`): an agent draws the calculator, Allow, `12*3=` worked out by its
   `evaluate` tool and listed by `history`, Tab into the panel and out, Esc back to the card, a code
   change asking again, Stop app, and app cards off on the server and the page
-  (`tests/pages/app-cards.spec.ts`); every card state at one height, the frame made only on screen
+  (`tests/pages/app-cards.spec.ts`); every card state at one size, the frame made only on screen
   and at or above FAR_K, and a past version at the manifest's size (`app-states.spec.ts`); a deleted
   folder seen once the frame loads again and brought back by Check again, a code change seen on
   select before any call and with no timer, and Allow, a code change and Stop app keeping the card's
-  height, and a card with no size of its own keeping its box when app.json breaks or the folder
+  size, and a card with no size of its own keeping its box when app.json breaks or the folder
   goes (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages
   from other windows ignored (`app-safety.spec.ts`); the gallery's samples and its live panel
   (`app-gallery.spec.ts`).

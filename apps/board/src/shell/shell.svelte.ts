@@ -103,6 +103,8 @@ export const shell = $state({
   chatPanel: false,
   /** The chat sidebar is open (ChatSidebar.svelte keeps it per viewer). */
   chatOpen: false,
+  /** The chat panel's drawing (board/chat-view.ts): idle until the panel first opens, then loading, ready, or error. */
+  chatView: 'idle' as 'idle' | 'loading' | 'ready' | 'error',
   /** Send to agent was pressed while the chat's agent was mid-turn: the answers go when it ends (board/chat-panel.ts). */
   sendWaiting: false,
   /** The person answered on the open board since its last Send (`board.unsent`, board/attention.ts):

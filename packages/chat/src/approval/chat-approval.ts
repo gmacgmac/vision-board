@@ -4,13 +4,13 @@
 // answer is on its way further clicks do nothing (nclite: answer-once, controls left enabled);
 // `setPhase('error')` says why it did not go through and takes clicks again. Browser only.
 import type { ApprovalAnswer } from '../events.ts';
+import { CHAT_ANSWER_EVENT } from '../events.ts';
 import type { ApprovalEntry } from '../feed/feed-core.ts';
 import type { ChoiceId } from './approval-core.ts';
 import { APPROVAL_CHOICES, approvalView, timeLeft } from './approval-core.ts';
 import { approvalTemplate } from './approval-template.ts';
 
 export const CHAT_APPROVAL_TAG = 'chat-approval';
-export const CHAT_ANSWER_EVENT = 'chat-answer';
 /** The `chat-answer` event's detail (bubbles). */
 export interface ChatAnswerDetail { approvalId: string; answer: ApprovalAnswer }
 export type AnswerPhase = 'idle' | 'sending' | 'error';

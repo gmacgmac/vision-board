@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-19 (ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1121,7 +1121,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 139. **Read-only for everyone** (rulings 1, 3, 7). One check in the action layer, beside the
     visibility check: `writeProblem(s, e)` (lock.ts), archived first (`archivedProblem`, 136), then
     locked (`lockedProblem`), which the ledger module asks of every line it appends, whoever writes
-    it: on a locked board only the person's own marks (flag, unflag, archive, restore, lock, unlock;
+    it: on a locked board only the person's own marks (flag, unflag, notes-hide, notes-show, archive, restore, lock, unlock;
     `passesLock`) and a seen go; every other line is refused with `locked`, **423** (RFC 4918's
     Locked, in the IANA registry; not 409, which on agent operations means `wrong-folder` only (114),
     so a client tells a lock from every other refusal by status alone). Words: to an agent "This
@@ -1352,3 +1352,23 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     sentence that point 40 asks of an agent's problems. The route answers `ETag` and `Cache-Control:
     no-cache`, and 304 to a matching `If-None-Match`, so the page can ask again cheaply when a card
     is selected or an image opened (images.md § Updates).
+
+## Ledger v18: hidden notes on a card (card-polish BE_01)
+
+156. **The person puts a card's notes away.** `LEDGER_FORMAT` becomes 18 and every ledger `$id` moves
+    to `.../schema/ledger/18/`; `openapi.json` `info.version` becomes 1.28.0. Only adds: v2 to v17
+    lines stay valid (schema.test.ts "v17 lines still read"). Two person acts, built line for line
+    like the flag (128): `notes-hide { n }` and `notes-show { n }`, one card, any kind, no `ver` (the
+    mark stays through a redraw), no group, no container (act.schema.json `rules`; `eventProblems`,
+    `CARD_MARKS`; schema-cases.ts `BROKEN`). The latest of a card's two decides, and a card has them
+    only while it is on the board (`foldNotesHidden`, `LedgerState.notesHidden`; `notesHiddenOn`;
+    `BoardState.notesHidden`, left out while no card has its notes hidden; card-notes-hidden.test.ts).
+    Registry "Hide notes" and "Show notes", person only, `onItem: false`, no key. **No agent ever
+    reads one** (`PRIVATE_ACTIONS`, `isPrivateAct`): `check_responses`, the Send message, `show_node`,
+    `show_container`, `get_board`, `list_open` and `list_boards` leave them out, and they are no
+    answer, not seeing the card and move no head, as the flag (128); `api-flag.test.ts` holds the whole
+    of every agent read against both words. Only the page's `read_ledger` (130) serves the lines, by
+    identity. A locked board still takes them (`passesLock`, 139; lock.test.ts, api-lock-person.test.ts).
+    The page's reply to a note (`CardReply`) now carries `at`, the time of the agent's reply line, filled
+    in `parking.ts` `createParking` from the reply event (parking.test.ts "every reply carries the time
+    of its ledger line"); the ledger line already held it, so the format does not change for that.

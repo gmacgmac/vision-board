@@ -128,6 +128,8 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-chat-board { display: flex; height: 520px; max-width: 980px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); overflow: hidden; }
 .g-chat-ground { flex: 1; padding: var(--vb-space-6); }
 .g-chat-side { display: flex; }
+.g-chat-load { margin: 0; width: 380px; }
+.g-chat-load-box { display: flex; height: 120px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); overflow: hidden; }
 
 /* Remove cards and containers (personRemove flag, N24): the frame's settings menu is drawn open, so
    the frame leaves room below for it. */

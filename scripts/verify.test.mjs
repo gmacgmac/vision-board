@@ -53,10 +53,13 @@ test('map: lists real dependencies, users and the public API', () => {
   assert.match(map, /\| `packages\/format` \| — \| `packages\/actions` \| \* from view\.ts \|/);
 });
 
-test('page weight: the board page is its HTML\'s assets and what they import, never the gallery\'s', () => {
+test('page weight: the board page is its HTML\'s assets and what they import at start, never the gallery\'s or a lazy chunk', () => {
   const html = '<script type="module" src="/assets/index-a.js"></script><link rel="stylesheet" href="/assets/shared-b.css">';
-  const files = { 'index-a.js': 'import{x}from"./shared-c.js";import("./lazy-d.js")', 'shared-c.js': '', 'lazy-d.js': '', 'gallery-e.js': '' };
-  assert.deepEqual(pageAssets(html, (name) => files[name] ?? null).sort(), ['index-a.js', 'lazy-d.js', 'shared-b.css', 'shared-c.js']);
+  const files = {
+    'index-a.js': 'import{x}from"./shared-c.js";import"./side-f.js";export*from"./shared-g.js";const l=()=>import("./lazy-d.js")',
+    'shared-c.js': '', 'side-f.js': '', 'shared-g.js': '', 'lazy-d.js': 'import{y}from"./lazy-h.js"', 'lazy-h.js': '', 'gallery-e.js': '',
+  };
+  assert.deepEqual(pageAssets(html, (name) => files[name] ?? null).sort(), ['index-a.js', 'shared-b.css', 'shared-c.js', 'shared-g.js', 'side-f.js']);
 });
 
 test('page weight: over the gzip budget fails and names the size, at or under it is silent', () => {

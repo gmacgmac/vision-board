@@ -138,10 +138,11 @@ test('nodeLabel: selected comes last, after the status', () =>
 
 // 2e_FE_01 ruling 7: a numbered pin for the latest note, and the "Your note" block; review-polish
 // ruling 8: oldest first, like a chat.
-test('nodeState: one note not yet sent: "Your note 1", no count, a pin that edits it', () => {
+test('nodeState: one note not yet sent: "Your note 1", "1 note" with Hide over it (card-polish FE_02), a pin that edits it', () => {
   const one = note('Looks right');
   assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
-    entries: [{ seq: one.seq, index: 1, who: 'Your note 1', text: 'Looks right', sent: false }],
+    count: '1 note', toggle: 'Hide notes on item 1',
+    entries: [{ seq: one.seq, index: 1, who: 'Your note 1', text: 'Looks right', sent: false, at: one.at }],
     pin: { seq: one.seq, index: 1, sent: false, label: 'Note 1 on item 1. Edit it' },
   });
 });
@@ -160,9 +161,9 @@ test('nodeState: three notes, two sent: the count, the oldest first, sent ones m
 test('notesView: each note then its replies oldest first; orphan replies by seq among the notes; a new note last', () => {
   const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
   const replies: CardReply[] = [
-    { seq: 33, to: 20, text: 'later answer to first' }, { seq: 40, text: 'orphan, after both notes' },
-    { seq: 31, to: 20, text: 'answer to first' }, { seq: 15, text: 'orphan, before first' },
-    { seq: 25, to: 99, text: 'orphan, to a gone note, between the notes' }, { seq: 32, to: 30, text: 'answer to second' },
+    { seq: 33, to: 20, text: 'later answer to first', at: '2026-10-08T00:00:00Z' }, { seq: 40, text: 'orphan, after both notes', at: '2026-10-08T00:00:00Z' },
+    { seq: 31, to: 20, text: 'answer to first', at: '2026-10-08T00:00:00Z' }, { seq: 15, text: 'orphan, before first', at: '2026-10-08T00:00:00Z' },
+    { seq: 25, to: 99, text: 'orphan, to a gone note, between the notes', at: '2026-10-08T00:00:00Z' }, { seq: 32, to: 30, text: 'answer to second', at: '2026-10-08T00:00:00Z' },
   ];
   const v = notesView(node({ n: 2 }), [a, b], replies)!;
   const flat = v.entries.flatMap((x) => isNoteEntry(x) ? [x.text, ...(x.replies ?? []).map((r) => r.text)] : [`(${x.text})`]);
@@ -171,9 +172,9 @@ test('notesView: each note then its replies oldest first; orphan replies by seq 
     '(orphan, to a gone note, between the notes)', 'second', 'answer to second', '(orphan, after both notes)',
   ]);
   assert.deepEqual(v.entries.filter((x) => !isNoteEntry(x)), [
-    { seq: 15, who: 'Agent reply', text: 'orphan, before first', orphan: true },
-    { seq: 25, who: 'Agent reply', text: 'orphan, to a gone note, between the notes', orphan: true },
-    { seq: 40, who: 'Agent reply', text: 'orphan, after both notes', orphan: true },
+    { seq: 15, who: 'Agent reply', text: 'orphan, before first', at: '2026-10-08T00:00:00Z', orphan: true },
+    { seq: 25, who: 'Agent reply', text: 'orphan, to a gone note, between the notes', at: '2026-10-08T00:00:00Z', orphan: true },
+    { seq: 40, who: 'Agent reply', text: 'orphan, after both notes', at: '2026-10-08T00:00:00Z', orphan: true },
   ]);
   assert.deepEqual([v.pin!.seq, v.pin!.index, v.count], [30, 2, '2 notes'], 'the pin is the latest note; the count is unchanged');
   // A new note goes at the bottom, and the pin moves to it.
@@ -186,9 +187,34 @@ test('notesView: each note then its replies oldest first; orphan replies by seq 
 // card, so the entries are their own function, which notesView reads.
 test('conversation: the entries notesView lists, for notes with no card (a container)', () => {
   const [a, b] = [{ ...note('first', 'comment', true), seq: 20 }, { ...note('second'), seq: 30 }];
-  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'answer' }, { seq: 25, text: 'orphan' }];
+  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'answer', at: '2026-10-08T00:00:00Z' }, { seq: 25, text: 'orphan', at: '2026-10-08T00:00:00Z' }];
   assert.deepEqual(conversation([a, b], replies), notesView(node({ n: 2 }), [a, b], replies)!.entries);
   assert.deepEqual(conversation([], []), []);
+});
+
+// card-polish FE_02: the person puts a card's thread away (notes-hide, `BoardState.notesHidden`: board
+// number -> the seq of the hide); its head alone draws, counting the replies since, so none is missed.
+test('notesView: put away, the head counts the notes and the replies after the hide; the toggle is named for the card', () => {
+  const [a, b] = [{ ...note('first'), seq: 20 }, { ...note('second'), seq: 30 }];
+  const replies: CardReply[] = [{ seq: 31, to: 20, text: 'before', at: '2026-10-08T00:00:00Z' }, { seq: 41, to: 30, text: 'after', at: '2026-10-08T00:00:00Z' },
+    { seq: 42, text: 'after too', at: '2026-10-08T00:00:00Z' }];
+  const shown = notesView(node({ n: 4 }), [a, b], replies)!;
+  assert.deepEqual([shown.count, shown.toggle, shown.hidden], ['2 notes', 'Hide notes on item 4', undefined]);
+  const put = notesView(node({ n: 4 }), [a, b], replies, 35)!;
+  assert.deepEqual([put.count, put.hidden, put.toggle], ['2 notes', '2 notes · 2 new replies', 'Show 2 notes · 2 new replies on item 4']);
+  assert.equal(notesView(node({ n: 4 }), [a, b], replies, 41)!.hidden, '2 notes · 1 new reply');
+  assert.equal(notesView(node({ n: 4 }), [a, b], replies, 50)!.hidden, '2 notes', 'no reply since: the count alone');
+  assert.deepEqual(put.entries, shown.entries, 'the entries stay, so showing it again draws them as they were');
+  // A card with only the agent's replies counts those.
+  assert.deepEqual([notesView(node({ n: 4 }), [], replies.slice(2))!.count, notesView(node({ n: 4 }), [], replies)!.count], ['1 reply', '3 replies']);
+});
+
+test('nodeState: the hidden thread comes from BoardState.notesHidden by board number, and from nowhere else', () => {
+  const notes = [{ ...note('one'), seq: 10 }];
+  const s = { ...withItem('commented', notes), notesHidden: new Map([['1', 12]]) };
+  const replies: CardReply[] = [{ seq: 13, to: 10, text: 'yes', at: '2026-10-08T00:00:00Z' }];
+  assert.equal(nodeState(node({ n: 1 }), s, undefined, false, { replies }).notes!.hidden, '1 note · 1 new reply');
+  assert.equal(nodeState(node({ n: 1 }), withItem('commented', notes), undefined, false, { replies }).notes!.hidden, undefined);
 });
 
 test('nodeState: when every note is sent, the pin shows the latest and only reads it', () => {
@@ -208,7 +234,8 @@ test('nodeState: a note on a group of cards says how many, and its pin names the
 test('nodeState: a note answered before a Send is grey, marked Answered, and its pin shows it rather than editing it', () => {
   const one = { ...note('Why per seat?'), locked: true as const };
   assert.deepEqual(nodeState(node({ n: 1 }), withItem('commented', [one])).notes, {
-    entries: [{ seq: one.seq, index: 1, who: 'Your note 1 · Answered', text: 'Why per seat?', sent: true }],
+    count: '1 note', toggle: 'Hide notes on item 1',
+    entries: [{ seq: one.seq, index: 1, who: 'Your note 1 · Answered', text: 'Why per seat?', sent: true, at: one.at }],
     pin: { seq: one.seq, index: 1, sent: true, label: 'Note 1 on item 1, answered. Show it' },
   });
 });

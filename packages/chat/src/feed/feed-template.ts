@@ -1,5 +1,5 @@
 // Chat feed pattern, layer 2 (template): the feed's own markup. The skeleton (the empty message,
-// the log, the status line), a system line and a change chip; messages and approval cards are
+// the log, the Jump to latest button, the status line), a system line and a change chip; messages and approval cards are
 // their own elements. Pure.
 import { esc } from '../esc.ts';
 import type { ChangeEntry, SystemEntry } from './feed-core.ts';
@@ -11,6 +11,9 @@ export const CHIP_NUMBERS = 6;
 export function feedTemplate(empty: string, label: string): string {
   return `<p class="chat-empty">${esc(empty)}</p>`
     + `<div class="chat-log" role="log" aria-live="polite" aria-label="${esc(label)}" tabindex="0"></div>`
+    + '<div class="chat-jump"><button type="button" class="chat-btn chat-jump-btn" hidden>'
+    + '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 3v9M4 8.5l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    + 'Jump to latest</button></div>'
     + '<p class="chat-activity" role="status"></p>';
 }
 

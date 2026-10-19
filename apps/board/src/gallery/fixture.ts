@@ -63,8 +63,9 @@ export interface Fixture {
   access: BoardAccess;
   /** The notes board's holders (D-034): its creator and an agent the person granted the board. */
   boardAgents: AccessHolder[];
-  /** The notes board, for the note pin, the "Your note" block and the note bubble. */
-  notes: { view: View; state: BoardState };
+  /** The notes board, for the note pin, the "Your note" block and the note bubble, with each card's
+   *  replies as the page reads them (parking.ts): put away notes and note times (card-polish FE_02). */
+  notes: { view: View; state: BoardState; cards: Map<number, CardConditions> };
   /** The containers board (3_FE_04): container notes before and after a Send, and a moved container. */
   containers: Containers;
   containerNotes: Containers;
@@ -88,13 +89,19 @@ export interface Fixture {
   cleared: Map<number, CardConditions>;
 }
 
-/** Card conditions for `board`'s cards the agent's reply cleared, as update-flow.ts and parking.ts give them. */
-function clearedCards(ledger: LedgerState, board: string): Map<number, CardConditions> {
+/** Each card of `board` with the agent's replies on it, as parking.ts gives them to the page. */
+function repliesOn(ledger: LedgerState, board: string): Map<number, CardConditions> {
   const parking = createParking({ handover: false, replies: true, state: () => ledger, board: () => board, awaiting: () => new Set(), readOnly: () => false });
   parking.refresh();
+  return new Map(boardView(ledger, board).nodes.flatMap((n) => (n.n === undefined ? [] : [[n.n, parking.card(n)] as const])));
+}
+
+/** Card conditions for `board`'s cards the agent's reply cleared, as update-flow.ts and parking.ts give them. */
+function clearedCards(ledger: LedgerState, board: string): Map<number, CardConditions> {
+  const replies = repliesOn(ledger, board);
   const state = boardState(ledger, board);
   return new Map(boardView(ledger, board).nodes.flatMap((n) => (n.n === undefined || !state.items.get(n.id)?.unseenAnswer ? []
-    : [[n.n, { updates: { count: unseenCount(ledger, board, n.n) }, replies: parking.card(n).replies ?? [] }] as const])));
+    : [[n.n, { updates: { count: unseenCount(ledger, board, n.n) }, replies: replies.get(n.n)?.replies ?? [] }] as const])));
 }
 
 /** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
@@ -117,7 +124,7 @@ export function loadFixture(): Fixture {
   return {
     view: boardView(ledger, BOARD), state: boardState(ledger, BOARD), access: boardAccess(ledger, BOARD),
     boardAgents: boardAccess(ledger, NOTES_BOARD).boardHolders ?? [],
-    notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD) },
+    notes: { view: boardView(ledger, NOTES_BOARD), state: boardState(ledger, NOTES_BOARD), cards: repliesOn(ledger, NOTES_BOARD) },
     containers: containers(ledger, CONTAINERS_BOARD), containerNotes: containers(ledger, CONTAINER_NOTES_BOARD),
     pastVersion: boardVersions(ledger, BOARD)!.past[0]!,
     proposals: {

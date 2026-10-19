@@ -115,3 +115,45 @@ test('editor: a note that opens with long text starts grown', async ({ page }) =
   const long = page.locator('section[data-pattern="note-bubble"] vb-note-bubble[data-mode="edit"]').getByLabel('Note text').filter({ hasText: 'Before we settle this' });
   expect(Math.round(await long.evaluate((e) => e.getBoundingClientRect().height))).toBe(MAX_H);
 });
+
+// card-polish FE_02: a note's and a reply's time, in a chip at the top right of its box, on hover and on
+// keyboard focus only, gone after; its title the whole date; said once to screen readers after who wrote it.
+test('note time: the chip shows on hover and on keyboard focus only, and goes after; screen readers hear the time once', async ({ page }) => {
+  const note = card(page, 'A sent note').locator('.vb-node-note');
+  const chip = note.locator('.vb-note-time');
+  await expect(chip).toBeHidden();
+  await note.hover();
+  await expect(chip).toBeVisible();
+  const words = (await chip.textContent())!;
+  expect(words).toMatch(/\d/);
+  await expect(chip).toHaveAttribute('aria-hidden', 'true');
+  expect(await chip.getAttribute('title')).toContain('2026');
+  await expect(note.locator('.vb-visually-hidden')).toHaveText(` · ${words}`);
+  // At its top right: on the box's top edge, at its right.
+  const [b, n] = [(await chip.boundingBox())!, (await note.boundingBox())!];
+  expect(b.y).toBeLessThan(n.y);
+  expect(b.x + b.width).toBeGreaterThan(n.x + n.width - 40);
+  await page.mouse.move(0, 0);
+  await expect(chip).toBeHidden();
+  // Keyboard focus shows it; leaving the note hides it.
+  await note.focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+  await expect(note).toBeFocused();
+  await expect(chip).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(chip).toBeHidden();
+});
+
+test('note time: a reply has its chip too, and the gallery draws the hovered ones and the put-away threads', async ({ page }) => {
+  const group = page.locator('[aria-label="Notes put away, and note times"]');
+  const timed = group.locator('vb-node').filter({ hasText: 'Note times' });
+  await expect(timed.locator('.vb-note-time')).toHaveCount(2);
+  for (const chip of await timed.locator('.vb-note-time').all()) await expect(chip).toBeVisible();
+  await expect(timed.locator('.vb-node-reply')).toHaveAttribute('data-flash', '');
+  const put = group.locator('vb-node').filter({ hasText: 'A reply since you put them away' });
+  await expect(put.locator('.vb-node-notes-count')).toHaveText('1 note · 1 new reply');
+  await expect(put.locator('button[data-notes="show"]')).toHaveText('Show');
+  await expect(put.locator('.vb-node-note')).toHaveCount(0);
+  await expect(group.locator('vb-node').filter({ hasText: 'Notes put away' }).locator('.vb-node-notes-count')).toHaveText('2 notes');
+});

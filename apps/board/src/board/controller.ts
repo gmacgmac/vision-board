@@ -8,7 +8,7 @@
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
 // person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
-// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), toolbar-counts.ts (the toolbar's numbers)
+// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), history-flow.ts (a card's history box), toolbar-counts.ts (the toolbar's numbers)
 // and app-cards.ts (app cards: their state from list_apps, their frames, Allow and Stop app; appCards flag).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
 import { placedView } from '../../../../packages/actions/src/index.ts';
@@ -40,6 +40,8 @@ import { createUpdateFlow } from './update-flow.ts';
 import { createParking } from './parking.ts';
 import { zoomToContainer } from './finder.ts';
 import { createFlagFlow } from './flag-flow.ts';
+import { createNoteHide } from './note-hide.ts';
+import { createHistoryFlow } from './history-flow.ts';
 import { createRemoveFlow } from './remove-flow.ts';
 import { retiredCounts, type RetiredCount } from './retired.ts';
 import { createGoTo, GO_PAUSE, type GoTo, goTarget } from './go-to-card.ts';
@@ -90,7 +92,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
-  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04, rule 12)
+  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01); rule 12
 
   const S = {
     id: '',
@@ -128,7 +130,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, retired: () => S.retired,
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired,
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n) }), appCards: apping, placed: () => apps.place(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
@@ -146,7 +148,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     S.drew ||= attention.batch(lines, full);
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
     if (!S.frame && !versions.state) S.frame = requestAnimationFrame(() => { S.frame = 0; redraw(); });
-    boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state);
+    boards.listed(); versions.listed(); lock.apply(); apps.lines(lines, full, live.state); history.refresh();
   }
 
   /** Work the open board out from the held state and draw what changed, now; while a batch of acts
@@ -230,6 +232,9 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   /** The person's flag: the button, Shift+F and the toolbar's chip (flag-flow.ts). */
   const flags = createFlagFlow({ on: flagging, view: () => S.data?.view ?? null, state: () => S.data?.state ?? null, record, focused: () => focus.id,
     drawn: (id) => !!drawing.layout?.nodes.has(id), focusCard: (id) => drawing.cards.get(id)?.focus({ preventScroll: true }), toast: (t) => toast(t) });
+  /** Hide and show a card's notes, and the note highlight the history box calls (note-hide.ts, card-polish FE_02). */
+  const noteHide = createNoteHide({ stage, vp, state: () => S.data?.state ?? null, card: (id) => drawing.cards.get(id), layout: () => drawing.layout, record });
+  const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
   /** The chat panel's side of the board (chat-bridge.ts): chips from the notes and the selection, a change chip's zoom. */
   const unchat = chat?.board({ stage, data: () => S.data, ledger: () => live.state, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
     zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id), jump: (id) => boards.jump(id) });

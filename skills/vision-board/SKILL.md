@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel. It also shows pictures, and small apps you build, inside a card.
-status: v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.9 (2026-10-19, apps are your own design: a restrained neutral palette from the host's surface and text variables plus at most one accent of your own, never the board's accent, focus rings on `:focus-visible` only, quiet hover and selection); v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -386,15 +386,23 @@ Build an app when the person wants something to use, not to read: it runs in an 
   reads only its folder, writes no files, starts no processes, has 10 seconds a call, and forgets
   what it holds after 5 idle minutes. `ctx.env` has the `env` keys: never a key in the code; ask
   the person to put it in the project's `.env`.
-- **Good to use**: colours and fonts only from the host's variables, each with a fallback
-  (`--color-background-primary`, `--color-text-primary`, `--color-text-secondary`,
-  `--color-border-secondary`, `--color-text-danger`, `--color-ring-primary`, `--font-sans`,
-  `--border-radius-md`; the main button `--color-text-inverse` on `--color-background-inverse`),
-  so it matches light and dark; a visible label on every field, real buttons, Enter for the main
-  action, a visible focus ring, results and errors in plain words in an `aria-live` region. Size:
-  `w` 280 to 960, `h` 120 to 800 px (360 × 320 unset), the smallest that fits every control. The
-  model: the calculator, `skills/vision-board/examples/apps/calculator/` in the Vision Board repo
-  (contract: its `docs/specification/apps.md`), or a copy in the project's `.visionboard/apps/`.
+- **Good to use**: the app is your own design: give it a restrained, professional look. Take
+  neutral surfaces, text and lines from the host's variables, each with a fallback
+  (`--color-background-primary`, `--color-background-secondary`, `--color-text-primary`,
+  `--color-text-secondary`, `--color-border-secondary`, `--color-text-danger`, `--font-sans`,
+  `--border-radius-md`), so it matches light and dark. Add at most one accent you choose yourself
+  (a `light-dark()` pair), for the main button only. Never use the board's accent as the app's
+  colour: `--color-background-inverse` and `--color-ring-primary` are the board's, fallbacks at
+  most. Hover and selected states are quiet tints of the neutral, never saturated fills. The focus
+  ring shows on `:focus-visible` only, never `:focus`, so a click draws none. Text contrast: reading
+  text Lc 60, short coloured labels Lc 45, icons and rings Lc 30 (APCA), in light and dark. Your own
+  SVG, icons and layout are welcome; no outside fonts or files. Also: a visible label on every
+  field, real buttons, Enter for the main action, results and errors in plain words in an
+  `aria-live` region. Size: `w` 280 to 960, `h` 120 to 800 px (360 × 320 unset), the smallest that
+  fits every control. The model: the calculator, `skills/vision-board/examples/apps/calculator/` in
+  the Vision Board repo (contract: its `docs/specification/apps.md`), or a copy in the project's
+  `.visionboard/apps/`. When a note asks to restyle an app ("make it look more pro"), change only
+  `panel.html`'s style, never what it does.
 - **Show it**: `list_apps`, and fix every `problems` entry until it reads `needs-approval` or
   `ready`; the board loads `tools.mjs` only after Allow (`tools` is `[]` until a tool runs), so
   check it well. Draw a `node` of kind `app` with `app: { id, w, h }` and no `size`: it takes a

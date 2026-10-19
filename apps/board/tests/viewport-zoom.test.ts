@@ -3,7 +3,7 @@
 // stand-ins with the few members the viewport touches.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FAR_K, revealPan, SELECTION_FIT, Viewport, zoomPercent } from '../src/board/viewport.ts';
+import { APP_FIT, FAR_K, revealPan, SELECTION_FIT, Viewport, zoomPercent } from '../src/board/viewport.ts';
 import { commandTitle, zoomTitle } from '../src/board/commands.ts';
 
 /** The world: its transform, and every custom property written on it, in order. */
@@ -146,6 +146,18 @@ test('fit with SELECTION_FIT: one card fills 75% of the binding side, centred, u
   // A small card: above 110%, but never past the top zoom.
   vp.fit({ x: 0, y: 0, w: 240, h: 120 }, false, SELECTION_FIT);
   assert.equal(vp.k, 2.5);
+});
+
+test('fit with APP_FIT: one app card\'s binding side fills 95% of the stage, centred, up to the top zoom (card-polish FE_01)', () => {
+  const { vp } = viewport(false);
+  vp.fit({ x: 10, y: 20, w: 362, h: 512 }, false, APP_FIT);
+  assert.equal(vp.k, 600 * 0.95 / 512); // the height binds
+  assert.ok(Math.abs(512 * vp.k - 0.95 * 600) < 1e-9);
+  assert.deepEqual({ x: vp.x, y: vp.y }, { x: (800 - 362 * vp.k) / 2 - 10 * vp.k, y: (600 - 512 * vp.k) / 2 - 20 * vp.k });
+  vp.fit({ x: 0, y: 0, w: 900, h: 300 }, false, APP_FIT);
+  assert.equal(vp.k, 800 * 0.95 / 900); // the width binds, below 100%
+  vp.fit({ x: 0, y: 0, w: 120, h: 80 }, false, APP_FIT);
+  assert.equal(vp.k, 2.5); // never past the top zoom
 });
 
 test('a fit waiting for room keeps its options', () => {

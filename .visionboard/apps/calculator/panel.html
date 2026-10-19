@@ -7,19 +7,20 @@
 <style>
   :root {
     color-scheme: light dark;
-    /* The board sends its colours and fonts as --color-*, --font-* and --border-radius-*
+    /* The board sends its neutral colours and fonts as --color-*, --font-* and --border-radius-*
        variables (apps.md, "Host context") and sets them on this page. What follows each comma is
-       only used until they arrive. */
+       only used until they arrive. The app's look is its own: neutral surfaces and text, and its
+       main key in the ink, not the board's accent (--color-background-inverse, --color-ring-primary). */
     --bg: var(--color-background-primary, Canvas);
     --key: var(--color-background-secondary, color-mix(in srgb, CanvasText 6%, Canvas));
     --key-alt: var(--color-background-tertiary, color-mix(in srgb, CanvasText 12%, Canvas));
-    --fill: var(--color-background-inverse, Highlight);
-    --on-fill: var(--color-text-inverse, HighlightText);
+    --fill: var(--ink);
+    --on-fill: var(--bg);
     --ink: var(--color-text-primary, CanvasText);
     --ink-soft: var(--color-text-secondary, color-mix(in srgb, CanvasText 75%, Canvas));
     --line: var(--color-border-secondary, color-mix(in srgb, CanvasText 15%, Canvas));
     --warn: var(--color-text-danger, red);
-    --ring: var(--color-ring-primary, Highlight);
+    --ring: var(--ink);
     --radius: var(--border-radius-md, 10px);
     --radius-sm: var(--border-radius-sm, 6px);
     --text: var(--font-text-lg-size, 15px);
@@ -47,8 +48,8 @@
   button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   #history button:focus-visible { outline-offset: -2px; } /* the list scrolls, so a ring outside would be cut off */
   .tool { min-height: 32px; padding: 0 12px; font-size: var(--font-text-md-size, 13px); border-radius: var(--radius-sm); }
-  /* Filled keys tint towards the ink, which moves away from their text colour in both themes. */
-  .tool[aria-expanded="true"], .main { --base: var(--fill); color: var(--on-fill); border-color: transparent; }
+  /* Filled keys are the ink with surface-coloured text; hover and press tint them towards the surface. */
+  .tool[aria-expanded="true"], .main { --base: var(--fill); --tint: var(--on-fill); color: var(--on-fill); border-color: transparent; }
   .keys { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, minmax(40px, 1fr)); gap: 6px; }
   .keys button { font-size: 20px; font-variant-numeric: tabular-nums; }
   .keys .op { --base: var(--key-alt); }

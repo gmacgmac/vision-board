@@ -8,11 +8,11 @@
   "required": ["session", "agent", "created", "agentId"],
   "properties": {
     "session": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/sessionId", "description": "The session's id; the chat routes name it in their path."},
-    "board": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/id", "description": "The board the session belongs to. Left out while a session started in the folder has none: it moves to the first board its agent creates, and keeps it."},
+    "board": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The board the session belongs to. Left out while a session started in the folder has none: it moves to the first board its agent creates, and keeps it."},
     "agent": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/agent"},
     "model": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/model"},
-    "created": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/timestamp", "description": "When the session started."},
-    "agentId": {"$ref": "https://vision-board.invalid/schema/ledger/17/common.schema.json#/$defs/agentId", "description": "The agent id the session's agent writes on the board as (its `join` line), never a secret: the page works out from it which of the person's answers that agent is told."}
+    "created": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/timestamp", "description": "When the session started."},
+    "agentId": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/agentId", "description": "The agent id the session's agent writes on the board as (its `join` line), never a secret: the page works out from it which of the person's answers that agent is told."}
   },
   "unevaluatedProperties": false
 }

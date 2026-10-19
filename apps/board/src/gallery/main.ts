@@ -10,6 +10,7 @@ import '../../../../packages/ui/src/node/node.css';
 import '../../../../packages/ui/src/node/node-popover.css';
 import '../../../../packages/ui/src/node/node-steps.css';
 import '../../../../packages/ui/src/node/node-parking.css';
+import '../../../../packages/ui/src/node/node-notes.css';
 import '../../../../packages/ui/src/node/node-app.css';
 import '../../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../../packages/ui/src/markdown/markdown.css';
@@ -38,6 +39,7 @@ import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { appFrameSamples } from './app-frame-section.ts';
 import { appSection } from './app-section.ts';
+import { historySection } from './history-section.ts';
 import { imageViewSamples } from './image-view-section.ts';
 import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
@@ -146,6 +148,7 @@ function build(): void {
   const flags = pageFlags();
   main.toggleAttribute('data-title-tip', flagOn('titleTip', flags)); // the title tip (FE_03), as the board's world
   main.toggleAttribute('data-note-preview', flagOn('notePreview', flags)); // the card note preview (FE_04), as the board's world
+  main.toggleAttribute('data-app-title', flagOn('appTitle', flags)); // an app card's title over its panel (card-polish FE_01), as the board's world
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
   if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
   if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
@@ -167,6 +170,7 @@ function build(): void {
   if (flagOn('personRemove', flags)) main.append(removeSection(fx));
   if (flagOn('goToCard', flags)) main.append(goToCardSection());
   if (flagOn('appCards', flags)) main.append(appSection(fx));
+  if (flagOn('cardHistory', flags)) main.append(historySection(fx));
   main.append(appIconSection());
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

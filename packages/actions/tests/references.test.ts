@@ -137,6 +137,9 @@ function every(): { l: Ledger; want: Map<string, { seq: number; scope: Scope }> 
   l.agent(A, { type: 'node', board: 'b', n: 5, ver: 1, node: { region: 'r', kind: 'app', title: 'Calculator', app: { id: 'calculator' } } });
   at('act:app-allow', l.act({ action: 'app-allow', app: 'calculator', hash: 'a'.repeat(64) }), { cards: [] });
   at('act:app-revoke', l.act({ action: 'app-revoke', app: 'calculator' }), { cards: [] });
+  l.v = 18; // api.md 156: the hidden notes name a card, as the flag does (card 2 was moved to Later)
+  at('act:notes-hide', l.act({ action: 'notes-hide', n: 2 }), on('b', LATER_REGION, [2]));
+  at('act:notes-show', l.act({ action: 'notes-show', n: 2 }), on('b', LATER_REGION, [2]));
   return { l, want };
 }
 

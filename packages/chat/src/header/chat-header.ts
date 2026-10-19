@@ -1,13 +1,11 @@
 // Chat header pattern, layer 3 (element): <chat-header>, in light DOM. It raises `chat-stop`,
 // `chat-new-session` (the host confirms first) and `chat-pick` (an agent or a model chosen for the
 // next session); it never calls the server. Browser only.
+import { CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_STOP_EVENT } from '../events.ts';
 import type { HeaderView } from './header-core.ts';
 import { headerTemplate } from './header-template.ts';
 
 export const CHAT_HEADER_TAG = 'chat-header';
-export const CHAT_STOP_EVENT = 'chat-stop';
-export const CHAT_NEW_SESSION_EVENT = 'chat-new-session';
-export const CHAT_PICK_EVENT = 'chat-pick';
 /** The `chat-pick` event's detail (bubbles). */
 export interface ChatPickDetail { field: 'agent' | 'model'; id: string }
 

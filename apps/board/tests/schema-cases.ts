@@ -1,11 +1,11 @@
-// Ledger lines for the schema tests (schema.test.ts): a valid v17 line for every event type and
-// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135, 138 and 141
+// Ledger lines for the schema tests (schema.test.ts): a valid v18 line for every event type and
+// action, and broken lines that each break one rule of api.md 5-11, 14-18, 62-65, 66-70, 71-76, 81, 87, 90, 93, 118, 125-130, 132, 135, 138, 141 and 156
 // (the app card's, api.md 150, are in schema-apps.test.ts).
 type Rec = Record<string, any>;
 
 export const AT = '2026-10-05T09:00:00.000Z';
-export const AGENT = { v: 17, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
-export const PERSON = { v: 17, seq: 1, at: AT, by: 'person' };
+export const AGENT = { v: 18, seq: 1, at: AT, by: 'agent', agent: 'a-abcd1234' };
+export const PERSON = { v: 18, seq: 1, at: AT, by: 'person' };
 /** A note on, or a place for, a whole container (api.md 71): `board` + `region` in place of `n`. */
 export const CONTAINER = { board: 'b', region: 'plan' };
 /** A note on a group of cards (api.md 62): `nodes` in place of `n` and `ver`. */
@@ -41,6 +41,7 @@ export const ACTS: Record<string, Rec> = {
   size: { n: 1, size: 'auto' }, send: { board: 'b' },
   'note-edit': { n: 1, note: 7, text: 'Why per seat, not per use?', kind: 'context' }, 'note-remove': { n: 1, note: 7 },
   move: { n: 1, ver: 1, region: 'plan' }, reject: { n: 1, proposal: 4 }, flag: { n: 1 }, unflag: { n: 1 },
+  'notes-hide': { n: 1 }, 'notes-show': { n: 1 },
   widths: { board: 'b', region: 'plan', widths: 'match' }, archive: { board: 'b' }, restore: { board: 'b' },
   lock: { board: 'b' }, unlock: { board: 'b' },
   'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
@@ -93,7 +94,7 @@ export const BROKEN: [string, Rec][] = [
   ['timestamp with a space', patch(V.board!, 'at', '2026-10-05 09:00:00Z')],
   ['timestamp without a zone', patch(V.board!, 'at', '2026-10-05T09:00:00')],
   ['timestamp as a date only', patch(V.board!, 'at', '2026-10-05')],
-  ['unknown format v18', patch(V.board!, 'v', 18)],
+  ['unknown format v19', patch(V.board!, 'v', 19)],
   ['v3 line with a free-form agent', patch(V.board!, 'agent', 'kiro')],
   ['v2 line with a blank agent', patch(patch(V.board!, 'v', 2), 'agent', '  ')],
   ['blank title', patch(V.board!, 'title', '   ')],
@@ -220,6 +221,12 @@ export const BROKEN: [string, Rec][] = [
   ['flag with a version', act('flag', { ver: 1 })],
   ['flag of a container', act('flag', { n: undefined, ...CONTAINER })],
   ['unflag of a group', act('unflag', { n: undefined, nodes: [1, 2] })],
+  // api.md 156: the hidden notes name one card, and nothing else, like the flag.
+  ['notes-hide without n', act('notes-hide', { n: undefined })],
+  ['notes-hide with a version', act('notes-hide', { ver: 1 })],
+  ['notes-hide of a container', act('notes-hide', { n: undefined, ...CONTAINER })],
+  ['notes-show of a group', act('notes-show', { n: undefined, nodes: [1, 2] })],
+  ['notes-show with a region', act('notes-show', { region: 'plan' })],
   // api.md 129: from v12 `list` is `column`.
   ['a v12 region in list mode', patch(V.region!, 'region.mode', 'list')],
   ['a v12 mode act to list', act('mode', { mode: 'list' })],

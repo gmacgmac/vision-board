@@ -1,4 +1,4 @@
-// The person's flag over the API (field report batch 2 ruling 3, api.md 128, 130), and board numbers
+// The person's flag and hidden notes over the API (field report batch 2 ruling 3, api.md 128, 130, 156), and board numbers
 // at the edge (api.md 125). A flag is stored and `read_ledger` (the page's) serves it; no agent read
 // shows it or moves for it, and a `check_responses` wait is never woken by one. On board `pricing`
 // card 1 is not identity 1 (the roadmap holds the lower ones), so every translation is checked.
@@ -41,6 +41,29 @@ test('a flag: stored by board number, served to the page by identity, and no age
   // Only the person flags; an agent's read of the page's ledger is refused.
   const agent = await h.join('Flag reader');
   await h.fails('act', { board: 'pricing', body: { type: 'act', action: 'flag', n: q } }, 403, 'forbidden', agent.client);
+  await h.fails('read_ledger', {}, 403, 'forbidden', agent.client);
+});
+
+test('hidden notes: stored by board number, served to the page by identity, and no agent read shows or moves for them', async () => {
+  const { q, qId } = h.seeded;
+  const before = await agentSide();
+  const head = h.ledger.state().seq;
+  const hide = await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'notes-hide', n: q } });
+  assert.deepEqual([h.last().status, hide.action, hide.n, 'ver' in hide], [201, 'notes-hide', q, false]);
+  await h.fails('act', { board: 'pricing', body: { type: 'act', action: 'notes-show', n: q, ver: 1 } }, 422, 'invalid');
+  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'notes-show', n: q } });
+  await h.ok('act', { board: 'pricing', body: { type: 'act', action: 'notes-hide', n: q } });
+  const lines = (await h.ok('read_ledger', { after: head })).events;
+  assert.deepEqual(lines.map((e: any) => [e.action, e.n]), [['notes-hide', qId], ['notes-show', qId], ['notes-hide', qId]], 'the page reads the file\'s lines: the identity');
+  // Every agent read, whole: none carries a notes-hide or notes-show line, and none has moved.
+  const reads = [await agentSide(), (await h.ok('check_responses', { board: 'pricing', after: head })).responses,
+    await h.ok('get_board', { board: 'pricing' }), await h.ok('show_node', { board: 'pricing', n: q }), await h.ok('list_boards')];
+  assert.doesNotMatch(JSON.stringify(reads), /notes-(hide|show)/);
+  assert.deepEqual(reads[0], before);
+  assert.deepEqual(reads[1], []);
+  // Only the person marks a card; an agent's read of the page's ledger is refused.
+  const agent = await h.join('Notes reader');
+  await h.fails('act', { board: 'pricing', body: { type: 'act', action: 'notes-hide', n: q } }, 403, 'forbidden', agent.client);
   await h.fails('read_ledger', {}, 403, 'forbidden', agent.client);
 });
 

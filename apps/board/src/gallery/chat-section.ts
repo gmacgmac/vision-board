@@ -39,6 +39,8 @@ interface Sample {
   /** The composer's one chip (the board's selected cards and answers since the last Send), opened when `open`. */
   context?: ComposerContext;
   open?: boolean;
+  /** The person has scrolled away from the latest: the feed is not following and shows Jump to latest. */
+  away?: boolean;
 }
 
 const AGENTS = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
@@ -78,8 +80,22 @@ const SAMPLES: Sample[] = [
     scene: 'session', upTo: 0, host: ON_A_BOARD, context: ANSWERS, open: true },
   { state: 'answers-working', caption: 'While the agent works: what is attached goes when it finishes',
     scene: 'session', upTo: 4, host: ON_A_BOARD, context: ANSWERS },
+  { state: 'scrolled-away', caption: 'Scrolled away from the latest: the feed stops following, a new reply does not move the view, and Jump to latest shows (it follows again, as does scrolling to the end or sending)',
+    scene: 'session', upTo: ALL, away: true },
   { state: 'folder', caption: 'A folder with no board: the agent may draw the first one', scene: 'session', upTo: 0, empty: 'No boards here yet. Ask the agent to draw one.' },
 ];
+
+/** The person's wheel up, once the feed has its size: it leaves the latest and shows Jump to latest. */
+function scrollAway(feed: ChatFeedElement): void {
+  const sized = new ResizeObserver(() => {
+    const log = feed.querySelector<HTMLElement>('.chat-log')!;
+    if (!log.clientHeight) return;
+    sized.disconnect();
+    log.dispatchEvent(new WheelEvent('wheel', { deltaY: -1, bubbles: true }));
+    log.scrollTop = log.scrollHeight / 3;
+  });
+  sized.observe(feed);
+}
 
 /** Fills `box` with the chat's elements in the sample's state. */
 function fill(box: HTMLElement, s: Sample): void {
@@ -96,6 +112,7 @@ function fill(box: HTMLElement, s: Sample): void {
     clock: () => now,
   });
   feed.show(state);
+  if (s.away) scrollAway(feed);
   const composer = document.createElement('chat-composer') as ChatComposerElement;
   composer.show(composerView(state, host));
   composer.setChips(s.chips ?? []);
@@ -106,6 +123,7 @@ function fill(box: HTMLElement, s: Sample): void {
 
 function panel(s: Sample): HTMLElement {
   const box = el('div', 'chat-panel g-chat');
+  if (s.away) box.style.height = '280px';
   fill(box, s);
   return box;
 }
@@ -130,6 +148,20 @@ function onBoard(fx: Fixture): HTMLElement {
   return frame;
 }
 
+/** The sidebar before its drawing is there (it loads on first open): loading, and the chunk not coming. */
+function beforeDrawn(): HTMLElement {
+  const row = el('div', 'g-chats');
+  for (const [view, caption] of [['loading', 'Loading: the sidebar says so while the chat\'s code comes.'], ['error', 'Error: the chunk did not come; Try again reloads the page.']] as const) {
+    const fig = el('figure', 'g-chat-load');
+    fig.dataset.view = view;
+    const box = el('div', 'g-chat-load-box');
+    mount(ChatSidebar, { target: box, props: { placement: 'gallery', view, onhost: () => {}, onload: () => Promise.resolve(true), onretry: () => {} } });
+    fig.append(box, el('figcaption', 'g-note', caption));
+    row.append(fig);
+  }
+  return row;
+}
+
 function sample(s: Sample): HTMLElement {
   const fig = el('figure', 'g-chat-sample');
   fig.dataset.state = s.state;
@@ -151,6 +183,7 @@ export function chatSection(fx: Fixture): HTMLElement {
     el('p', 'g-desc', 'The chat beside the board (D-036, D-037): the agent\'s words, its board writes as change chips, and its file changes and shell commands waiting for Allow or Deny. Styled only by --chat-* properties, mapped to the board\'s tokens in chat-host.css.'),
     meta,
     group('Every state', 'Fed by the recorded Claude turns as chat events. The header\'s status and the composer follow the chat conditions table.', row),
-    group('On the board', 'The sidebar on the right, the board shrinking beside it. The toolbar\'s Chat button and T open and close it; its left edge drags (or takes the arrow keys) to set its width. What goes from the board (the selected cards, the answers since the last Send) is one chip that previews it; a change chip zooms to its cards.', onBoard(fx)));
+    group('On the board', 'The sidebar on the right, the board shrinking beside it. The toolbar\'s Chat button and T open and close it; its left edge drags (or takes the arrow keys) to set its width. What goes from the board (the selected cards, the answers since the last Send) is one chip that previews it; a change chip zooms to its cards.', onBoard(fx)),
+    group('Before the chat is drawn', 'The chat\'s elements load the first time the panel opens (board/chat-view.ts): the sidebar shows its loading state until they are there, and its error state with Try again when they did not come.', beforeDrawn()));
   return box;
 }

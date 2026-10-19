@@ -157,7 +157,7 @@ test('the mode row: Match card widths, a switch after the divider, only with the
 });
 
 test('a reply under the note block is a tab stop that opens the exchange, escaped, as Markdown (popovers-larger-thread ruling 2)', () => {
-  const html = nblockRepliesMarkup([{ seq: 7, who: 'Agent reply · <b>', text: 'Yes, **price** order.' }]);
+  const html = nblockRepliesMarkup([{ seq: 7, at: '2026-10-19T09:42:00Z', who: 'Agent reply · <b>', text: 'Yes, **price** order.' }]);
   assert.equal(html, '<div class="vb-nblock-reply" data-reply="7" tabindex="0"><span class="vb-nblock-who">Agent reply · &#60;b&#62;</span>'
     + '<div class="vb-nblock-reply-text"><p class="vb-md-p">Yes, <strong>price</strong> order.</p></div></div>');
 });

@@ -3,10 +3,11 @@
 // View, by node id = the card's board number as text (api.md 125); each card's status is `cardStatus`
 // (`commented` while it is with the agent, D-046); a card the agent's answer cleared
 // and the person has not looked at since carries `unseenAnswer` (clears.ts, D-045). Cards retired from the board
-// are left out (api.md 127). `get_board` sends all of it but the flags (api.md 128). Pure.
+// are left out (api.md 127). `get_board` sends all of it but the flags and hidden notes (api.md 128, 156). Pure.
 import type { Mode, NodeSize, View, Widths } from '../../format/src/index.ts';
 import { containerKey, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
 import { flagsOn } from './card-flags.ts';
+import { notesHiddenOn } from './card-notes-hidden.ts';
 import { boardLocked } from './lock.ts';
 import type { Place } from './containers.ts';
 import { containerState } from './containers.ts';
@@ -38,6 +39,9 @@ export interface BoardState {
   regionNotes: Map<string, ItemNote[]>;
   /** The cards the person flagged, by node id, in card order: the page's only (api.md 128). */
   flags: Set<string>;
+  /** The cards whose notes the person put away, by node id, each with the `seq` of its `notes-hide` (the
+   *  page counts the replies after it, card-polish FE_02): the page's only (api.md 156). Left out while none is. */
+  notesHidden?: Map<string, number>;
   /** The board is locked (api.md 138): read-only for everyone, so the page pauses every control that
    * changes it (the flag excepted). Left out while it is not; `get_board` says it at its top. */
   locked?: true;
@@ -51,6 +55,8 @@ export function boardState(s: LedgerState, board: string): BoardState {
     ...containerState(s, board), flags: new Set(flagsOn(s, board).map((id) => String(numberOf(s, id)))),
     ...(boardLocked(s, board) && { locked: true as const }),
   };
+  const hidden = notesHiddenOn(s, board);
+  if (hidden.length > 0) out.notesHidden = new Map(hidden.map((id) => [String(numberOf(s, id)), s.notesHidden.get(id)!]));
   for (const node of nodesOf(s, board)) {
     const { id } = node;
     const key = String(numberOf(s, id));

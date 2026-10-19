@@ -1,18 +1,25 @@
-/* App cards in the node pattern (D-047; node-app.ts `appView`, node-template.ts `appSlot`). Tokens
-   only. The slot is the row over the panel, then the frame at the panel's size (--app-w, --app-h,
-   set by the element), in every state: hidden, each keeps its room, so a state change never moves
-   the card (app-cards FIX_02); only a new size does (a card with no w/h: list_apps' first answer,
-   components.md § App card 2). The card is the panel's width plus its padding (node.css). The frame
-   and the row show in needs-approval, changed and ready; every other state draws its view over
-   both, on the frame's own placeholder look. */
+/* App cards in the node pattern (D-047; node-app.ts `appView`, node-template.ts `appSlot`, `appStatus`).
+   Tokens only. The slot is the frame at the panel's size (--app-w, --app-h, set by the element) in
+   every state: hidden, it keeps its room, so a state change never moves the card (app-cards FIX_02);
+   only a new size does (a card with no w/h: list_apps' first answer, components.md § App card 2).
+   The panel runs edge to edge inside the card's border (card-polish FE_01): the card is the panel's
+   width plus its border (node.css), and the slot reaches past the content's side padding, so the
+   title, tags and notes keep theirs. Allow and "Allowed ▾" are in the footer (`.vb-app-status`).
+   The frame shows in needs-approval, changed and ready; every other state draws its view over it,
+   on the frame's own placeholder look. */
 
-vb-node .vb-app { position: relative; display: grid; gap: var(--vb-space-2); width: var(--app-w); }
-vb-node .vb-app:not([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > :is(.vb-app-ask, vb-app-frame) { visibility: hidden; }
+vb-node .vb-app { position: relative; display: grid; width: var(--app-w); margin-inline: calc(-1 * var(--vb-space-4)); }
+vb-node .vb-app:not([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > vb-app-frame { visibility: hidden; }
 vb-node .vb-app:is([data-app-state='needs-approval'], [data-app-state='changed'], [data-app-state='ready']) > .vb-app-state { display: none; }
+/* Flush with the border at both sides: square corners, a hairline above and below only. The focus
+   ring (keys go to the app) draws over the border's sides. */
+vb-node .vb-app > :is(vb-app-frame, .vb-app-state) { border-radius: 0; box-shadow: 0 -1px 0 var(--vb-line), 0 1px 0 var(--vb-line); }
+vb-node .vb-app > vb-app-frame[data-focus-in]:not([data-pointer-focus]) { box-shadow: 0 0 0 var(--vb-focus-w) var(--vb-focus); }
 vb-node .vb-app-state {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center;
-  gap: var(--vb-space-2); padding: var(--vb-space-4); text-align: center;
-  border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken); box-shadow: 0 0 0 1px var(--vb-line);
+  gap: var(--vb-space-2); padding: var(--vb-space-4); text-align: center; background: var(--vb-surface-sunken);
+  /* It never draws past the panel's room (over the footer): on a small panel it scrolls (card-polish FE_04). */
+  overflow: auto; overscroll-behavior: contain;
 }
 vb-node .vb-app-state p { margin: 0; max-width: 100%; overflow-wrap: anywhere; }
 vb-node .vb-app-icon {
@@ -23,10 +30,10 @@ vb-node .vb-app-head { font-size: var(--vb-text-lg); font-weight: var(--vb-weigh
 vb-node .vb-app-text { font-size: var(--vb-text-md); line-height: 1.45; color: var(--vb-ink); }
 /* The problems (invalid): for the agent, in mono, in a box that takes the slot's room left and
    scrolls past it; a tab stop, so a keyboard can scroll it. The view starts at the top, so the list
-   gets that room. */
+   gets that room; it keeps three lines at least, and the view scrolls when the panel has less. */
 vb-node .vb-app[data-app-state='invalid'] .vb-app-state { justify-content: flex-start; }
 vb-node .vb-app-problems {
-  flex: 1 1 auto; align-self: stretch; min-height: 0; overflow: auto; display: grid; align-content: start; gap: var(--vb-space-1);
+  flex: 1 1 auto; align-self: stretch; min-height: calc(3 * 1.45 * var(--vb-text-sm) + 2 * var(--vb-space-2)); overflow: auto; display: grid; align-content: start; gap: var(--vb-space-1);
   margin: 0; padding: var(--vb-space-2) var(--vb-space-3); list-style: none; text-align: left;
   border: 1px solid var(--vb-line); border-radius: var(--vb-radius-sm); background: var(--vb-surface-card);
   font: var(--vb-text-sm) / 1.45 var(--vb-font-mono); color: var(--vb-ink); overflow-wrap: anywhere; user-select: text;
@@ -34,17 +41,59 @@ vb-node .vb-app-problems {
 vb-node .vb-app-problems:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-node .vb-app-state .vb-pop-btn { flex: none; margin-top: var(--vb-space-1); }
 
-/* The row over the panel, at its width and one height in every state: a plain line, edge to edge
-   with the panel, with Stop app (ready, allowed) or nothing to allow (ready, no tools), so it never
-   reads as a field; asking for Allow (needs-approval, changed) it is the board's call to act, a box
-   in the accent's soft tone with Allow as the main button. */
-vb-node .vb-app-ask {
-  display: flex; align-items: center; gap: var(--vb-space-2); height: calc(var(--vb-space-6) + var(--vb-space-1));
-  border: 1px solid transparent; border-radius: var(--vb-radius-md);
-}
-vb-node .vb-app-ask[data-ask] { padding: 0 var(--vb-space-1) 0 var(--vb-space-3); border-color: var(--vb-accent-line); background: var(--vb-accent-soft); }
-vb-node .vb-app-ask-text { flex: 1; min-width: 0; margin: 0; font-size: var(--vb-text-md); line-height: 1.35; color: var(--vb-ink); }
-vb-node .vb-app-ask[data-ask] .vb-app-ask-text { font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
-vb-node .vb-app-ask .vb-pop-btn { flex: none; }
+/* The footer's app status (card-polish FE_01), right after the kind icon: an app card shows no state
+   word (it tells, D-045), so the slot takes the room the word would. One control at most: Allow (the
+   accent button, the board's call to act on the card) or "Allowed ▾", the pop button's quiet look,
+   opening its one-item menu upward, over the panel. Every pop-button state (node-popover.css: hover,
+   pressed, focus, disabled), plus loading while the act is in flight (aria-busy, set by the page)
+   and error when it was refused (data-error, until the next press). */
+vb-node .vb-node-foot:has(> .vb-app-status) > .vb-node-state { flex: none; }
+vb-node .vb-app-status { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
+vb-node .vb-app-status .vb-pop-btn { flex: none; display: inline-flex; align-items: center; gap: var(--vb-space-1); white-space: nowrap; }
+vb-node .vb-app-status .vb-pop-btn[hidden] { display: none; }
+vb-node .vb-app-caret { font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
+vb-node .vb-app-allowed[aria-expanded='true'] { background: var(--vb-surface-sunken); }
+vb-node .vb-app-status .vb-pop-btn[aria-busy='true'] { cursor: progress; opacity: 0.7; transform: none; }
+vb-node .vb-app-status .vb-pop-btn[data-error] { border-color: var(--vb-state-drop); box-shadow: inset 0 0 0 1px var(--vb-state-drop); }
+vb-node .vb-app-menu { top: auto; right: auto; left: 0; bottom: calc(100% + var(--vb-space-1)); min-width: 160px; }
+vb-node:has(.vb-app-menu:not([hidden])) { z-index: 4; }
 /* Zoomed out (N8): the buttons hide as the quick actions do, keeping their space. */
-[data-zoom='far'] vb-node :is(.vb-app-ask, .vb-app-state) .vb-pop-btn { visibility: hidden; }
+[data-zoom='far'] vb-node .vb-app-status, [data-zoom='far'] vb-node .vb-app-state .vb-pop-btn { visibility: hidden; }
+
+/* The window look (card-polish FE_04; the appTitle flag, data-app-title on the board's world or the
+   gallery's main): an app card reads as the app's window. No title in any state (visually hidden, still
+   in the card's name): the panel meets the card's top border, square, and the footer is the window's
+   bar, a quiet tint of the kind's colour under a hairline, with the app's name in the room the
+   controls leave (one line, cut with "…", the whole name in its tip while cut). The border is one step
+   stronger in the kind's colour. Without a panel the state view's own head speaks and the bar names the
+   app; zoomed far, the frame's placeholder shows the app's title. The title takes no room in any
+   state, so no state moves the card. Tokens only; no gradient, no glow. */
+[data-app-title] vb-node .vb-node-content:has(> .vb-app) { position: relative; padding-top: 0; padding-bottom: 0; }
+/* Anything under the panel (tags, notes) keeps the content's bottom padding off the bar. */
+[data-app-title] vb-node .vb-node-content:has(> .vb-app ~ :not([hidden])) { padding-bottom: var(--vb-space-3); }
+[data-app-title] vb-node .vb-node-content:has(> .vb-app) > .vb-node-title {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+/* The panel's top follows the border's curve; the tabs on the top border draw over it. */
+[data-app-title] vb-node .vb-app > :is(vb-app-frame, .vb-app-state) {
+  border-radius: calc(var(--vb-radius-lg) - 1px) calc(var(--vb-radius-lg) - 1px) 0 0; box-shadow: 0 1px 0 var(--vb-line);
+}
+[data-app-title] vb-node:has(> .vb-node-content > .vb-app) > :is(.vb-node-num, .vb-node-kind, .vb-node-pin) { z-index: 1; }
+/* Selected keeps the selection's border (node.css). */
+[data-app-title] vb-node[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app) { border-color: color-mix(in srgb, var(--kind) 60%, var(--vb-line)); }
+[data-app-title] vb-node[data-kind='app']:not([data-selected]):has(> .vb-node-content > .vb-app):hover { border-color: color-mix(in srgb, var(--kind) 85%, var(--vb-line)); }
+[data-app-title] vb-node:has(> .vb-node-content > .vb-app) > .vb-node-foot {
+  border-top-color: color-mix(in srgb, var(--kind) 60%, var(--vb-line));
+  border-radius: 0 0 calc(var(--vb-radius-lg) - 1px) calc(var(--vb-radius-lg) - 1px);
+  position: relative; background: color-mix(in srgb, var(--kind) 10%, var(--surface));
+}
+[data-app-title] vb-node .vb-app-status { flex: none; }
+vb-node .vb-app-name { display: none; }
+[data-app-title] vb-node .vb-app-name { display: block; flex: 1; min-width: 0; padding-inline: var(--vb-space-1); }
+vb-node .vb-app-name-text {
+  display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; color: var(--vb-ink-strong);
+}
+/* The tip spans the bar, just over it, so a long name wraps inside the card. */
+vb-node .vb-app-name-tip { bottom: calc(100% + var(--vb-space-1)); left: var(--vb-space-2); right: var(--vb-space-2); width: auto; max-width: none; text-align: center; }
+vb-node .vb-app-name-tip::before { bottom: auto; top: 100%; }
+vb-node[data-name-tip-open] .vb-app-name-tip { display: block; }

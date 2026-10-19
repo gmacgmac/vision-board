@@ -169,8 +169,8 @@ test('cancelIntent: Esc or Cancel asks only with changed words, and never for a 
 // ---- The exchange (popovers-larger-thread ruling 2): the note, then every reply to it, read-only ----
 
 const replies = [
-  replyEntry({ seq: 60, to: 20, agent: 'Pricing chat', text: 'Yes: **three** accounts.' }),
-  replyEntry({ seq: 64, to: 20, text: 'Also: the sheet is updated.' }),
+  replyEntry({ seq: 60, to: 20, agent: 'Pricing chat', text: 'Yes: **three** accounts.', at: '2026-10-08T00:00:00Z' }),
+  replyEntry({ seq: 64, to: 20, text: 'Also: the sheet is updated.', at: '2026-10-08T00:00:00Z' }),
 ];
 
 test('bubbleView: a sent note carries its replies in order and names its read-only part', () => {
@@ -214,10 +214,10 @@ test('bubbleView: a note the agent answered before a Send reads "answered", not 
 // read-only, with an × in the top corner and no bottom row; the person's note still editable has Edit.
 
 const entries: NotesEntry[] = [
-  { seq: 20, index: 1, who: 'Your note 1 · Sent', text: 'Why **now**?', sent: true, replies: [replies[0]!] },
-  { seq: 62, who: 'Agent reply', text: 'A reply to no note.', orphan: true },
-  { seq: 70, index: 2, who: 'Your note 2 · Answered', text: 'And the sheet?', sent: true, replies: [{ seq: 71, who: 'Agent reply', text: 'Updated.' }] },
-  { seq: 80, index: 3, who: 'Your note 3', text: 'One more.', sent: false },
+  { seq: 20, at: '2026-10-19T09:42:00Z', index: 1, who: 'Your note 1 · Sent', text: 'Why **now**?', sent: true, replies: [replies[0]!] },
+  { seq: 62, at: '2026-10-19T09:42:00Z', who: 'Agent reply', text: 'A reply to no note.', orphan: true },
+  { seq: 70, at: '2026-10-19T09:42:00Z', index: 2, who: 'Your note 2 · Answered', text: 'And the sheet?', sent: true, replies: [{ seq: 71, at: '2026-10-19T09:42:00Z', who: 'Agent reply', text: 'Updated.' }] },
+  { seq: 80, at: '2026-10-19T09:42:00Z', index: 3, who: 'Your note 3', text: 'One more.', sent: false },
 ];
 
 test('bubbleView: the conversation is read-only, names the card or container, and lists the entries as given', () => {

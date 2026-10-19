@@ -27,6 +27,7 @@ test('feed: a polite, named, focusable log between the empty line and the status
   const html = feedTemplate('No messages yet.', 'Conversation');
   assert.match(html, /^<p class="chat-empty">No messages yet\.<\/p>/);
   assert.match(html, /<div class="chat-log" role="log" aria-live="polite" aria-label="Conversation" tabindex="0"><\/div>/);
+  assert.match(html, /<\/div><div class="chat-jump"><button type="button" class="chat-btn chat-jump-btn" hidden>.*Jump to latest<\/button><\/div><p class="chat-activity"/);
   assert.match(html, /<p class="chat-activity" role="status"><\/p>$/);
   assert.equal(systemTemplate({ type: 'system', key: 'e3', text: 'Stopped.', turn: 'stopped' }), '<p class="chat-system" data-turn="stopped">Stopped.</p>');
 });

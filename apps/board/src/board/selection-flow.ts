@@ -19,7 +19,7 @@ import type { NoteFlow } from './notes.ts';
 import type { Selection } from './selection.ts';
 import { createPill } from './selection-pill.ts';
 import type { Viewport } from './viewport.ts';
-import { SELECTION_FIT } from './viewport.ts';
+import { APP_FIT, SELECTION_FIT } from './viewport.ts';
 
 /** The selection's commands that change the board, which a locked board shows disabled. */
 const ACTING_COMMANDS: readonly CommandId[] = SELECTION_COMMANDS.filter((id) => COMMANDS[id].acts);
@@ -76,6 +76,10 @@ interface Point { x: number; y: number }
 /** The world box of the layout boxes `ids` have (hidden cards have none). */
 const worldBoxOf = (layout: BoardLayout | null, ids: readonly string[]): Box | undefined =>
   boxAround(ids.map((id) => layout?.nodes.get(id)).filter((b): b is Box => b !== undefined));
+
+/** Whether card `id` on the stage is an app card with its panel (the appCards flag on). */
+const isAppCard = (stage: HTMLElement, id: string): boolean =>
+  stage.querySelector(`vb-node[data-id="${CSS.escape(id)}"][data-kind="app"] > .vb-node-content > .vb-app`) !== null;
 
 export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   const bar = document.createElement('vb-selection-bar') as VbSelectionBarElement;
@@ -174,9 +178,11 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
       }
       case 'remove': return d.remove?.(d.selection.selected()) ?? false;
       case 'zoom-selection': {
-        // The selection fills 75% of the stage, above 110% when small (review-polish ruling 12).
-        const b = worldBoxOf(layout, d.selection.selected());
-        if (b) d.vp.fit(b, true, SELECTION_FIT);
+        // The selection fills 75% of the stage, above 110% when small (review-polish ruling 12); one
+        // app card fills 95% of it, so its app is big enough to use (card-polish FE_01).
+        const ids = d.selection.selected();
+        const b = worldBoxOf(layout, ids);
+        if (b) d.vp.fit(b, true, ids.length === 1 && isAppCard(d.stage, ids[0]!) ? APP_FIT : SELECTION_FIT);
         return b !== undefined;
       }
       case 'zoom-area': {

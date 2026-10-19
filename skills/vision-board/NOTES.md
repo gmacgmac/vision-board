@@ -511,3 +511,42 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   selected would drop that step (a page change, its own task). (c) Both agents built nearly the
   same converter (same model, Opus 5.5). (d) In round 2 Claude fixed the calculator to `w` 640,
   valid but wider than its 360 design: "the smallest that fits" was not applied to an existing app.
+
+## Skill v3.9 (apps bring their own design)
+
+- 2026-10-19, maintainer: "Let's just have a pro palette. I want the agents to be able to make apps
+  themselves with their own designs because we need this to be modular over time so that as things
+  advance they can get more fancy with their SVGs and all kinds of things." The clip-and-export app
+  came out pink everywhere (checkboxes, slider, selected rows, buttons) with rings showing on click.
+- 2026-10-19, agent (AGENT_01): why. v3.8 said "colours and fonts only from the host's variables"
+  and named `--color-background-inverse` for the main button and `--color-ring-primary` for the
+  ring. Those two are the board's accent fill and focus ring (`APP_STYLE_VARIABLES`,
+  `packages/format/src/apps.ts`), so an agent following the skill to the letter painted its app in
+  the board's accent. v3.9 splits the variables by use: neutral surfaces, text and lines from the
+  host (so light and dark still match), at most one accent the agent picks itself for the main
+  button (a `light-dark()` pair), the board's accent and ring only as fallbacks. Hover and selection
+  are quiet tints; the ring is `:focus-visible` only (a `:focus` ring shows on click); text meets
+  the repo's APCA tiers (Lc 60 / 45 / 30, steering rule 3); an app's own SVG, icons and layout are
+  welcome, still with no outside fonts or files. `apps.md` § Host context says the same for the
+  variables; `packages/format/src/apps.ts` is unchanged (the host still sends all of them).
+- 2026-10-19, agent: the calculator (the model app) followed v3.8, so its main key and ring were the
+  board's accent. Its `panel.html` now fills the main key with the ink (surface-coloured text) and
+  draws the ring in the ink; its ring was already `:focus-visible`. This repo's copy in
+  `.visionboard/apps/calculator/` is the same file (`repo-example-app.test.ts` holds them equal).
+- 2026-10-19, agent: scenarios 29 (a new app: its own neutral palette, accent not the board's,
+  `:focus-visible` only) updated and 32 (a note "make it look more pro": only the style changes,
+  `tools.mjs` and `app.json` untouched so no new Allow, a reply on the card) new. SKILL.md is 415
+  lines (407 in v3.8).
+- 2026-10-19, agent: dry run, **a read-through against the new text, not a live agent run** (the
+  maintainer's board and its Kiro chats were left alone, and the agent file is rewritten only when a
+  board starts). Scenario 29: the text says to take surfaces, text and lines from the host's neutral
+  variables with fallbacks, one accent of its own only on the main button, quiet tints, ring under
+  `:focus-visible`; an agent doing that passes the new lines and the old ones (labels, Enter, plain
+  errors, size). Scenario 32: the restyle sentence limits the change to `panel.html`'s style, so
+  `app.json` and `tools.mjs` stay and the app does not ask for Allow again (`panel.html` doesn't);
+  the reply goes on the card. Read cold, the "Good to use" bullet answers "what colours do I
+  use?" (host neutrals, plus one of your own on the main button, never the board's accent) and "how
+  do focus rings show?" (`:focus-visible` only). **Not yet run with live agents**: both scenarios
+  should be run with Claude Code and Kiro (as in v3.8) before the maintainer relies on them; Kiro
+  reads the new text when the board next starts (`~/.kiro/agents/vision-board.json` is written from
+  SKILL.md at start).

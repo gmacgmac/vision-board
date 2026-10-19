@@ -1,5 +1,5 @@
 /* <chat-feed>: the log that scrolls, its empty line, and the one status line under it while the
-   agent works. Change chips and system lines are the feed's own rows. --_* properties: chat.css. */
+   agent works, and the Jump to latest button over the log's bottom edge. Change chips and system lines are the feed's own rows. --_* properties: chat.css. */
 chat-feed {
   display: flex; flex-direction: column; min-height: 0;
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink);
@@ -45,3 +45,12 @@ chat-feed .chat-system[data-turn='error'] {
   padding: var(--_space-2) var(--_space-3); text-align: start; color: var(--_ink-strong);
   background: var(--_surface-sunken); border-left: 3px solid var(--_danger); border-radius: var(--_radius-sm);
 }
+
+/* Jump to latest: shown while the person has scrolled away from the latest words. The zero-height
+   row sits on the log's bottom edge; the button rises over the log, centred. */
+chat-feed .chat-jump { position: relative; flex: none; height: 0; z-index: 1; }
+chat-feed .chat-jump-btn {
+  position: absolute; bottom: var(--_space-2); left: 50%; translate: -50% 0; gap: var(--_space-1);
+  border-radius: var(--_radius-pill); box-shadow: var(--_shadow);
+}
+chat-feed .chat-jump-btn:active:not(:disabled) { transform: translateY(1px); }

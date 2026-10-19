@@ -14,11 +14,10 @@
 | Selecting is view state | selecting 50 cards updates exactly those 50; nothing measured, placed or laid out; no fetch (clearing the same) | 50 cards of one container on the 1,000-card board (3_FE_01) | `tests/pages/perf.spec.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
-| Board page weight | under 150 KB gzip (JS + CSS) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
+| Board page weight | under 200 KB gzip (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `board/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
 | Server start | under 1 s | a 100,000-event ledger | `apps/board/tests/server-start.timing.ts` |
 
-Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): the board page is
-57.1 KB gzip; layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20
+Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20
 containers; 2026-10-11, field-report batch 3 BE_02: still 3 to 4 ms with connectors routed round the
 cards, and about 32 ms for 1,000 cards with 1,179 links); the first draw of 1,000 cards ends 310 to 340 ms after navigation starts; one act is
 shown in 25 to 30 ms (median of five, the round trip to the server included); a batch of 50 changed
@@ -48,7 +47,10 @@ A budget changes only with a reason in the PLAN of the task that changes it.
    (`requestAnimationFrame`), never one reflow each. Reads of sizes happen before writes of
    positions, never interleaved.
 6. **History is loaded on demand.** The board holds the current state of each node. A node's
-   earlier versions are read only when the person steps through them, and only for that node.
+   earlier versions are read only when the person steps through them, and only for that node. A
+   card's history box reads no ledger: the fold keeps, per card, only when its few kinds of line
+   happened (`packages/actions/src/card-times.ts` `foldCardTimes`: `seq`, time, kind, no words), and
+   the box is built from those when it opens (`apps/board/src/board/history-flow.ts`).
 7. **The ledger starts fast.** The server keeps a checkpoint of the folded state with the
    sequence number it covers, so startup folds only the events after it. The ledger itself stays
    the one source (D-017): a checkpoint can always be thrown away and rebuilt.

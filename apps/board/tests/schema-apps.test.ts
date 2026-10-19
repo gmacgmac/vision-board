@@ -13,7 +13,7 @@ import { LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schema
 import { AGENT, DROP, PERSON, patch } from './schema-cases.ts';
 
 type Rec = Record<string, any>;
-const LEDGER = `${SCHEMA_BASE}schema/ledger/17/`;
+const LEDGER = `${SCHEMA_BASE}schema/ledger/18/`;
 const MANIFEST = `${SCHEMA_BASE}schema/app/manifest.schema.json`;
 const API = `${SCHEMA_BASE}schema/api/`;
 const HASH = 'a'.repeat(64);

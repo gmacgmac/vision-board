@@ -91,7 +91,8 @@ export interface BoardSide {
 export interface ChatSide {
   /** The panel: the chat's events bubble up to it. */
   panel: HTMLElement;
-  composer: ChatComposerElement;
+  /** The composer, which may not be drawn yet: it takes the context whenever it is (chat-panel.ts `composerSide`). */
+  composer: Pick<ChatComposerElement, 'setContext'>;
   state(): ChatState;
   /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
   agent(): string | undefined;

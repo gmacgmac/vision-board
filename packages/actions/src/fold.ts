@@ -6,7 +6,7 @@
 // and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
 // flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
-// board's dates, the agent's clears (clears.ts) and each app's allowed hash (apps.ts). Every map is
+// board's dates, the agent's clears (clears.ts), each app's allowed hash (apps.ts) and each card's times (card-times.ts). Every map is
 // keyed by a card's identity (`id`); the reads give board numbers (numbers.ts, api.md 125). One board
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
@@ -24,9 +24,11 @@ import { eventBoard } from './references.ts';
 import { closeProposals, endProposal } from './proposals.ts';
 import { foldRetire, keepRetiredRegion } from './retire.ts';
 import { foldFlag } from './card-flags.ts';
+import { foldNotesHidden } from './card-notes-hidden.ts';
 import { addDrawing, seeBoard } from './rounds.ts';
 import { foldUnsent } from './unsent.ts';
 import { type Clear, cutOf, foldClears } from './clears.ts';
+import { type CardTimes, foldCardTimes } from './card-times.ts';
 
 export type { ItemNote, ItemState } from './notes.ts';
 
@@ -128,6 +130,8 @@ export interface LedgerState extends DrawnState, AppAllows {
   /** Card id -> `seq` of the person's `flag` on it, while it stands (card-flags.ts, api.md 128).
    * The page's only: no agent read looks here. */
   flags: Map<number, number>;
+  /** Card id -> `seq` of the person's `notes-hide` on it, while it stands; the page's only (card-notes-hidden.ts, api.md 156). */
+  notesHidden: Map<number, number>;
   /** board -> `seq` of the person's `archive` of it, while it stands (archive.ts, api.md 135). Read
    * through `boardVisibility` only. */
   archived: Map<string, number>;
@@ -137,6 +141,8 @@ export interface LedgerState extends DrawnState, AppAllows {
   /** board -> when its first line and its own last line (`heads`) were written: the page's archive
    * confirm and Archived list (api.md 137). */
   dates: Map<string, BoardDates>;
+  /** Card id -> when the history box's few kinds happened to it, without words (card-times.ts, card-polish FE_03). */
+  times: CardTimes;
 }
 
 /** The last line of one run of drawing lines by one agent on one board, with no other line on
@@ -154,7 +160,7 @@ export const emptyState = (): LedgerState => ({
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
   rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
-  retiredRegions: new Map(), flags: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(),
+  retiredRegions: new Map(), flags: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
 });
 
 /** Fold every event, in order, into the current state. */
@@ -164,8 +170,9 @@ export function foldLedger(events: readonly LedgerEvent[]): LedgerState {
   return s;
 }
 
-/** One of the person's private marks: a flag, an archive or restore, a lock or unlock. */
+/** One of the person's private marks: a flag, hidden notes, an archive or restore, a lock or unlock. */
 function foldMark(s: LedgerState, e: ActEvent): void {
+  if (e.action === 'notes-hide' || e.action === 'notes-show') return foldNotesHidden(s, e);
   if (!BOARD_MARKS.has(e.action)) return foldFlag(s, e);
   return e.action === 'lock' || e.action === 'unlock' ? foldLock(s, e) : foldArchive(s, e);
 }
@@ -178,8 +185,8 @@ const marksOf = (s: LedgerState, id: number): Marks => {
 };
 
 /** Apply one valid event to `s`: the drawn part and the index in format, the rest here. The
- * person's private marks fold into `flags`, `archived` and `locked` only: they move no head, see no
- * card and are no answer (api.md 128, 135, 138). */
+ * person's private marks fold into `flags`, `notesHidden`, `archived` and `locked` only: they move no head, see no
+ * card and are no answer (api.md 128, 135, 138, 156). */
 export function applyEvent(s: LedgerState, e: LedgerEvent): void {
   if (e.type === 'retire') keepRetiredRegion(s, e);
   applyDrawn(s, e);
@@ -220,6 +227,7 @@ export function applyEvent(s: LedgerState, e: LedgerEvent): void {
       break;
     case 'park': s.parks.set(e.id, e.bundle); marksOf(s, e.id).park = e.seq; break;
   }
+  foldCardTimes(s, e);
 }
 
 function applyAct(s: LedgerState, e: ActEvent): void {

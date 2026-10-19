@@ -5,6 +5,7 @@
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { act, draw, open, reply, write } from './agent-board.ts';
 
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const bubble = (page: Page) => page.locator('vb-note-bubble');
@@ -183,3 +184,54 @@ for (const theme of THEMES) {
     await page.keyboard.press('Escape');
   });
 }
+
+// card-polish FE_02 (api.md 156): the toggle on the right of a card's "N notes" line puts its notes away
+// and brings them back from the same place; the mark is the person's, so it lasts a reload; a reply that
+// came after it is counted; only the card's own container lays out again (rule 15). Its own board.
+interface Work { containers: string[]; cardsUpdated: number }
+const work = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { work: Work } }).__vbWork.work);
+
+test('Hide puts a card\'s notes away and Show brings them back from the same place; it lasts a reload; a later reply is counted; one container lays out', async ({ page, request }) => {
+  await page.goto('/?setup');
+  const d = await draw(request, 2, 'hide-notes');
+  const [extra] = await write(request, d, [{ type: 'region', region: { id: 'q', title: 'Other', mode: 'grid' } },
+    { type: 'node', node: { region: 'q', kind: 'finding', title: 'Elsewhere' } }]).then((r) => r.slice(1).map((x) => x.n!));
+  d.n.push(extra!);
+  const n = d.n[0]!;
+  const note = await act(page, d, { action: 'comment', n, ver: 1, text: 'Is the trial 14 days?' });
+  await open(page, d, '?vbwork');
+  const c = card(page, n);
+  const count = c.locator('.vb-node-notes-count');
+  const toggle = c.locator('.vb-node-notes-head button[data-notes]');
+  await expect(count).toHaveText('1 note');
+  await expect(toggle).toHaveText('Hide');
+  await expect(toggle).toHaveAttribute('aria-label', `Hide notes on item ${n}`);
+  const right = async () => { const [b, k] = [(await toggle.boundingBox())!, (await c.boundingBox())!]; return Math.round(k.x + k.width - (b.x + b.width)); };
+  const at = await right();
+  await page.evaluate(() => (window as unknown as { __vbWork: { reset(): void } }).__vbWork.reset());
+  await toggle.click();
+  await expect(toggle).toHaveText('Show');
+  await expect(c.locator('.vb-node-note')).toHaveCount(0);
+  await expect(count).toHaveText('1 note');
+  expect(await right()).toBe(at);
+  const w = await work(page);
+  expect(w.containers).toEqual(['p']);
+  await expectNoAxeViolations(page);
+  // The person's mark: it is in the ledger, so a reload draws it put away.
+  await page.reload();
+  await expect(toggle).toHaveText('Show');
+  // A reply after it is counted, so none is missed.
+  await reply(request, d, n, 'Yes: 14 days.', note);
+  await expect(count).toHaveText('1 note · 1 new reply');
+  await expect(toggle).toHaveAttribute('aria-label', `Show 1 note · 1 new reply on item ${n}`);
+  // The keyboard: Enter on the toggle shows the thread, and focus stays on the toggle, now Hide.
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveText('Hide');
+  await expect(toggle).toBeFocused();
+  await expect(c.locator('.vb-node-note, .vb-node-reply')).toHaveCount(2);
+  await expect(count).toHaveText('1 note');
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveText('Show');
+  await expect(toggle).toBeFocused();
+});

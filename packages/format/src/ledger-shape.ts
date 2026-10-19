@@ -155,7 +155,7 @@ const SHAPES: Record<EventType, Shape> = {
 
 /** Actions on one node version; actions on a node's place or size; actions that name no node. */
 const ON_VERSION = new Set(['ack', 'drop', 'comment', 'context', 'later', 'reopen']);
-const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag']);
+const ON_NODE = new Set(['pin', 'unpin', 'size', 'note-edit', 'note-remove', 'move', 'reject', 'flag', 'unflag', 'notes-hide', 'notes-show']);
 /** Acts that change a person's note, named by the `seq` of the act that made it (api.md 58-61). */
 const ON_NOTE = new Set(['note-edit', 'note-remove']);
 const NO_NODE = new Set(['grant', 'deny', 'revoke', 'send']);
@@ -216,7 +216,7 @@ function actRules(e: Rec, p: string[]): void {
   if (a === 'note-edit') need('text', 'text: required');
   if (a === 'reject') need('proposal', 'proposal: the seq of the propose event being turned down');
   if (NO_NODE.has(a) && has('n')) p.push(`n: ${a} names no node`);
-  // The flag marks one card, whatever its version (api.md 128).
+  // The flag and the hidden notes mark one card, whatever its version (api.md 128, 156).
   if (CARD_MARKS.has(a as ActionId)) for (const f of ['ver', 'region']) if (has(f)) p.push(`${f}: a ${a} names one card with n, and nothing else`);
   // Archive, restore, lock and unlock mark a whole board (api.md 135, 138).
   if (BOARD_MARKS.has(a as ActionId)) {

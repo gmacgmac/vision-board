@@ -99,6 +99,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
   // bind: F is Fit today.
   flag: { id: 'flag', label: 'Flag', ...person, onItem: false },
   unflag: { id: 'unflag', label: 'Remove flag', ...person, onItem: false },
+  // Ledger v18 (api.md 156): the person puts one card's notes away, and brings them back. Private like
+  // the flag: not an answer (`onItem` false) and no agent reads it. No key; the card's own buttons do it.
+  'notes-hide': { id: 'notes-hide', label: 'Hide notes', ...person, onItem: false },
+  'notes-show': { id: 'notes-show', label: 'Show notes', ...person, onItem: false },
   // Ledger v13 (api.md 132): a container's card widths, Match or Own, from its toolbar like the mode.
   widths: { id: 'widths', label: 'Card widths', ...person, onItem: false },
   // Ledger v14 (api.md 135): the person hides a whole board from every agent, and brings it back.

@@ -44,6 +44,8 @@ v3.7 (skill v3.7, ask, never guess, for ✓ as well as ✗): 27 (a ✓ that does
 25 run again (the rule it checks now covers ✓ too), unchanged.
 v3.8 (skill v3.8, images in cards and apps on the board): 28 (show the calculator), 29 (build a new
 app), 30 (show a screenshot) and 31 (fix a broken app) new.
+v3.9 (skill v3.9, apps bring their own design): 29 updated (its own neutral palette, `:focus-visible`);
+32 (restyle an app on a note) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -650,8 +652,14 @@ unit converter for kilometres and miles, with the maths done by your tool."
   6.21 mi, worked out by the tool (the page sends `call_app_tool`).
 - Labels on its fields, keyboard use, plain error words. No `eval` or `Function`, no network call,
   no key or secret in the code.
+- Its own look: surfaces, text and lines from the host's neutral variables with fallbacks; any
+  accent is one colour of its own for the main button, not `--color-background-inverse` or
+  `--color-ring-primary`; hover and selection are quiet tints; focus rings only under
+  `:focus-visible` (no `:focus` rule draws one), so a click shows none and Tab does.
 - **Fails if** `list_apps` reads it `invalid`, the panel never shows or never calls the tool, the
-  panel does the maths itself, or 10 km doesn't show 6.21 mi.
+  panel does the maths itself, 10 km doesn't show 6.21 mi, the panel's brand colour is the board's
+  accent (`--color-background-inverse` or `--color-ring-primary` as its fill or ring), or a
+  `:focus` rule draws a ring.
 
 ## 30. Show a screenshot (panel)
 
@@ -684,3 +692,23 @@ and writes: "Show me the settings screen you mean on the card."
 - Changes no other file; draws no new card. Chat words: "Done." and that one line.
 - **Fails if** it changes the panel or the tools, draws a new card, or the app still reads
   `invalid`; and, after the person presses Check again, the card doesn't offer Allow.
+
+## 32. Restyle an app on a note (panel)
+
+**Situation.** The project's `.visionboard/apps/converter/` holds a working unit converter whose
+panel draws every fill and ring in the board's accent (`--color-background-inverse`,
+`--color-ring-primary`) and its focus ring on `:focus`. Board "Workbench" has app card 2 for it.
+The person, having pressed Allow, writes a note on card 2: "Make it look more pro."
+
+**A good run**
+- Edits only `panel.html`'s `<style>` (and markup classes if needed): neutral surfaces, text and
+  lines from the host's variables with fallbacks; at most one accent of its own for the main
+  button; quiet hover and selected tints; the focus ring under `:focus-visible` only.
+- Changes nothing about what it does: `tools.mjs` and `app.json` are untouched (so no new Allow),
+  the same fields, the same Enter and Esc behaviour, 10 km still shows 6.21 mi from the tool.
+- Answers the note with a `reply` on card 2 in a line or two ("Restyled: neutral colours, one blue
+  accent on Convert, focus ring for the keyboard only. Reload the card to see it."). Draws no new
+  card; asks no ✓ or ✗.
+- **Fails if** it changes `tools.mjs` or `app.json`, changes the panel's script or behaviour, still
+  uses the board's accent as the fill or ring, leaves a `:focus` ring, adds a network font or file,
+  or draws a new card instead of replying.

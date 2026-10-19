@@ -58,11 +58,13 @@ and Esc closes it with focus back on the chip. With `host.holds` the composer's 
 takes a message with no words when anything is attached, and one while the agent works, which the
 host holds and sends when the turn ends; without it, a message needs words, as before.
 
-The elements raise events and never call a server: `chat-send` `{ text, chips }`,
+The elements raise events and never call a server (the names are constants in `src/events.ts`, so a host can listen before it loads the elements, as the board does: it loads them when its panel first opens, `apps/board/src/board/chat-view.ts`): `chat-send` `{ text, chips }`,
 `chat-chip-remove` `{ chip }`, `chat-answer` `{ approvalId, answer }`, `chat-change`
 `{ board, cards, head? }`, `chat-stop`, `chat-new-session`, `chat-pick` `{ field, id }`. The host
 answers them with its own routes (here the board's chat routes, api.md 98-107), clears the composer
-once a message went through, and calls `feed.answerFailed(id, why)` when an answer did not.
+once a message went through, calls `feed.follow()` when the person sends (the feed otherwise follows
+the latest words until the person scrolls away, and shows a "Jump to latest" button meanwhile), and
+calls `feed.answerFailed(id, why)` when an answer did not.
 
 - **Markdown**: the host passes its renderer to `feed.configure({ render })`; it must escape every
   text run. Without one the agent's words show as typed. The person's words are never markup.

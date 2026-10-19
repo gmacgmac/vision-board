@@ -71,6 +71,8 @@ export interface DrawDeps {
   replies(): readonly CardReply[];
   /** The cardFlag flag: every card with a number has the flag button (flag-flow.ts). */
   flag?: boolean;
+  /** The cardHistory flag: every card with a footer has the ⓘ and its history box (history-flow.ts). */
+  history?: boolean;
   /** Each container's "N cards retired" marker (retiredMarker flag, retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
   /** The appCards flag: off, an app card draws as a plain card saying so (ruling 13). */
@@ -103,7 +105,7 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, appCards: d.appCards !== false });
+  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false });
   const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true });
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined);
   const cache = createLayoutCache();

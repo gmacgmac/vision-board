@@ -246,7 +246,7 @@ record is `api.md` 58-61.
    popover, 15px: the text typed in the comment box is the size of the text around it; the
    maintainer's changes, chats 698 and 701), `--vb-pop-w` (360px),
    `--vb-pop-max-h` (320px, past which the text box, the read-only part and the boxes scroll) and
-   `--vb-pop-pad`. The note bubble, the card popover (`.vb-card-pop`: proposal and handover), the
+   `--vb-pop-pad`. The note bubble, the card popover (`.vb-card-pop`: proposal, handover and history), the
    container note preview (`.vb-note-pop`) and the note and reply hover tip (`.vb-note-tip`) all
    read them, so changing a token scales every popover together. Labels and chips in them are
    `--vb-text-md`; buttons are 32px tall.
@@ -280,6 +280,53 @@ record is `api.md` 58-61.
    it is grey and says "· Answered", and its pin shows it rather than editing it; C or M on the card
    then starts a new note. A container note answered before a Send reads "Answered" and is
    read-only in its block.
+8. **Put away, and timed** (card-polish FE_02,
+   `cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/FE_02_hide-notes-and-times.md`).
+   The block's head (`node-template.ts` `notesHead`) is the count on the left ("1 note", "3 notes",
+   "2 replies" with only replies; `node-notes.ts` `notesView`) and one toggle that always sits on
+   the right (maintainer, 2026-10-19): Hide, which puts the thread away, and then Show. Put away, the
+   head alone shows, and the count adds the replies that came after the person's `notes-hide`
+   ("2 notes · 1 new reply", from `BoardState.notesHidden`, board number to that line's `seq`). The
+   toggle sends `notes-hide` or `notes-show` (`note-hide.ts` `notesAct`), the person's private mark
+   (api.md 156), and keeps focus when the card is drawn again (`vb-node.ts` `updateNotes`); only the
+   card's container lays out again. Each note and reply carries `data-at` and shows its time in a
+   chip on its top edge at the right on hover and keyboard focus only (`node-notes.css`
+   `.vb-note-time`, `title` the whole date, `fullTime`); screen readers hear it once, after who wrote
+   it. The words are `node-time.ts` `noteTime` ("Today 09:42", "Yesterday 18:10", else
+   `versionTime`). `note-hide.ts` `highlight` brings a note or reply into view on its card
+   (`vp.reveal`), showing the thread first if it is put away, and rings it for `FLASH_MS`
+   (`data-flash`). Proven by `packages/ui/tests/node-core.test.ts` (notesView put away),
+   `node-template.test.ts`, `node-time.test.ts`, `tests/pages/notes.spec.ts` (Hide and Show) and
+   `note-polish.spec.ts` (note time); `highlight` by `tests/pages/card-history.spec.ts` (a note row
+   and a reply row of the history box).
+
+## A card's history (card-polish FE_03)
+
+The ⓘ at the far right of a card's footer opens, beside the card, when things happened to it
+(maintainer, 2026-10-19, point 20: `cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/FE_03_history-box.md`).
+Behind the `cardHistory` flag (on by default).
+
+- **Property**: the box lists first drawn and each update (vN), each note sent, each agent reply,
+  ✓, ✗ and reopened, and the card's app allowed or stopped (`TIME_KINDS`), newest first, a time
+  (`noteTime`, the whole date as its `title`) and one line in the history model's words, the agent's
+  label on its rows. No note or reply text and no private mark (flag, hidden notes) reaches it. A row
+  naming a note still on the card, or an agent's reply, is a button that closes the box and rings
+  that note (`note-hide.ts` `highlight`); the rest are text. Up and Down move between those rows.
+  A line for the card that lands while the box is open adds its row at the top, focus left alone.
+- **Where**: the times are folded with the ledger, no ledger read: `packages/actions/src/card-times.ts`
+  `foldCardTimes` (called by `fold.ts` `applyEvent`, `LedgerState.times`, ids only, no words) and
+  `cardTimeRows`, which match and word each line with the history model's own `cardsAbout`, `saidOf`
+  and `historyRow` (`card-history.ts`), so the box and `cardHistory` never disagree. The ⓘ and the
+  empty box are `packages/ui/src/node/node-history.ts` (`historyButton`, `historyBox`, drawn by
+  `node-template.ts` `footer` when `NodeTemplateOptions.history`); the box is the card popover
+  (`node-popover.ts` `bindCardPopover` with the ⓘ as its tab), which fires `POPOVER_SHOW` as it shows
+  and closes on `POPOVER_CLOSE`; the page fills it then (`apps/board/src/board/history-flow.ts`
+  `createHistoryFlow`, `historyMarkup`).
+- **Proven by**: `packages/actions/tests/card-history.test.ts` (card times: the box's kinds only, as
+  `cardHistory` says them; no words and no private mark kept), `tests/pages/card-history.spec.ts`
+  (click and keyboard, rows in order, no note text and no flag, note and reply rows, a live row, Esc,
+  the footer on one line on an S card and the smallest app card, axe light and dark).
+- **Not covered**: a new version of the card draws its markup again, which closes an open box.
 
 ## Selecting and moving (3_FE_01)
 
@@ -406,7 +453,9 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
 5. **View commands are never ledger events.** Zoom and clearing only move the viewport or the
    selection. **Z** (Zoom to the selection, and the chat's "zoom to these cards", which runs it)
    fits one card or several to 75% of the stage's width or height, whichever binds, centred, up to the
-   top zoom (250%): `Viewport.fit(box, animate, SELECTION_FIT)` (review polish ruling 12). Fit,
+   top zoom (250%): `Viewport.fit(box, animate, SELECTION_FIT)` (review polish ruling 12). Exactly one
+   app card fits with `APP_FIT` instead, 95%, so its app is big enough to use (card-polish FE_01;
+   `viewport-zoom.test.ts` "fit with APP_FIT: …", `app-cards.spec.ts` "Z on the one app card …"). Fit,
    Zoom to this area and a container's zoom keep `fit`'s default, 32px a side and at most 110%.
    Comment opens the note bubble, whose own write goes through the action layer as usual (rule 8).
 
@@ -770,20 +819,38 @@ What an app is, its folder, the panel protocol and the limits are [apps.md](./ap
 section is how the board draws one. Two patterns share the work.
 
 1. **The node pattern draws the card.** For kind `app`, `node-template.ts` `nodeTemplate` draws,
-   under the title, the panel slot (`appSlot`) in place of the Markdown body: the row over the
-   panel (its line, then Allow or Stop app), the frame and the state view. An app card takes no
-   size control (whatever `sizeControl` says) and no status word (it tells, D-045). With the appCards flag off
-   the page passes `{ appCards: false }` and the card is a plain one saying `APPS_OFF` (ruling 13).
+   under the title, the panel slot (`appSlot`) in place of the Markdown body: the frame and the state
+   view; and in the footer, after the kind icon, the app status (`appStatus`, card-polish FE_01): Allow,
+   or "Allowed ▾" and its one-item menu, Stop app. An app card has a footer even without a number,
+   for Allow. An app card takes no size control (whatever `sizeControl` says) and no status word (it
+   tells, D-045). With the appCards flag off the page passes `{ appCards: false }` and the card is a
+   plain one saying `APPS_OFF` (ruling 13). **The window look** (card-polish FE_04; the `appTitle`
+   flag, on; the page sets `data-app-title` on the world, the gallery on its `main`): the card reads
+   as the app's window. Its title is drawn in no state (visually hidden, still in the card's name):
+   the panel meets the top border, its corners following the border's curve, under the tabs; a
+   state without a panel says what is wrong in its own head; zoomed far, the frame's placeholder
+   shows the app's title. The footer is the window's bar: a tint of the kind's colour under a
+   hairline in it, the card's border a step stronger in it, and between the app status and the quick
+   actions the app's name (`appName`, `AppCardView.name`, written in place by `node-app-apply.ts`
+   `applyApp`), one line taking the room left, cut with "…" and whole in a tip while cut, on hover of
+   the name or while keyboard focus is in the footer, not while the app's menu is open
+   (`bindAppNameTip`, the shared hover tip). The title takes no room, so no state moves the card and
+   the bar's height never changes (`app-states.spec.ts` "the window look …", with a cut name beside
+   Allow on a 282px card; "with the appTitle flag off …"). The state view never draws past the panel's
+   room: it scrolls when the panel is too small for it (`node-app.css` `.vb-app-state`).
 2. **Its size.** `app-frame-core.ts` `panelSize` is the panel's size: the agent's `app.w`/`app.h`,
-   else the manifest's `size`, else the default, held to `APP_SIZE`. `vb-node.ts` sets it as
-   `--app-w` and `--app-h` through the CSSOM (`render`, then `updateApp` once list_apps names a
-   manifest size); `node.css` makes the card that wide plus its padding and border, whatever its
-   emphasis. The slot is the row over the panel and the panel's size in every state (`node-app.css`:
-   a state without a panel hides both and keeps their room, and draws its view over them), so a
-   state change, or the frame coming and going, never moves the card: one height for every state
+   else the manifest's `size`, else the default, held to `APP_SIZE`. `node-app-apply.ts` sets it as
+   `--app-w` and `--app-h` through the CSSOM (`applyPanelSize` from `vb-node.ts` `render`, then
+   `applyApp` once list_apps names a manifest size); `node.css` makes the card that wide plus its border, whatever its emphasis: the
+   panel runs edge to edge inside the border (the slot reaches past the content's side padding, so
+   the title, tags and notes keep theirs; `app-cards.spec.ts` "end to end: …" and
+   `app-states.spec.ts` "every state the app host gives…" check its sides meet the border within
+   1px). The slot is the panel's size in every state (`node-app.css`: a state without a panel hides
+   the frame and keeps its room, and draws its view over it), and Allow is in the footer, so a state
+   change, or the frame coming and going, never moves the card: one size for every state
    (`tests/pages/app-states.spec.ts` "every state the app host gives…", "loading: …"), and Allow, a
    code change and Stop app keep it (`app-follow.spec.ts` "Allow, a code change and Stop app leave
-   the card's height as it was…"). Only a new size moves it. A card with no `w`/`h` of its own is
+   the card's size as it was…"). Only a new size moves it. A card with no `w`/`h` of its own is
    the default size until list_apps first gives the manifest's, then takes it. After that it
    keeps its size while app.json has problems or the folder is gone: list_apps still sends a good
    `size` from a broken app.json (`server/apps/manifest.ts` `AppFolder.size`), and the page keeps the
@@ -798,25 +865,32 @@ section is how the board draws one. Two patterns share the work.
    | State | Shows |
    |---|---|
    | `checking` | "Loading…" in place of the panel |
-   | `needs-approval` | the panel; over it "Allow this app to run?" and Allow |
-   | `changed` | the panel; over it "Code changed. Allow it again?" and Allow |
-   | `ready` | the panel; over it "Allowed to run" and Stop app once the person allowed this version, else "Nothing to allow" |
+   | `needs-approval` | the panel; Allow in the footer, its tip "Not allowed yet" |
+   | `changed` | the panel; Allow in the footer, its tip "Code changed" |
+   | `ready` | the panel; "Allowed ▾" in the footer once the person allowed this version, else nothing |
    | `missing` | "App <id> not found" and Check again in place of the panel |
    | `invalid` | "This app has problems", the problems (a list that scrolls, a tab stop) and Check again |
    | `broken` | "This app stopped" and Restart |
    | `past` | the app's title and "Apps don't run in past versions." |
 
-   The words are `node-app.ts` `COPY` (and `appView`'s "Allowed to run"); `node-template.ts`
-   `appStateMarkup` draws the view.
-   `vb-node.ts` `updateApp` applies it in place (the view rebuilt only when it changed) and unloads
-   the frame in any state without a panel.
+   The words are `node-app.ts` `COPY`; `appView`'s `control` (`allow`, `allowed` or `none`) says
+   which footer control shows, and `reason` is Allow's tip. `node-template.ts` `appStateMarkup` draws
+   the view. `node-app-apply.ts` `applyApp`, from `vb-node.ts` `update`, applies it in place (the view
+   rebuilt only when it changed, the footer's control shown and named, its menu closed when
+   "Allowed ▾" hides, the footer's name) and unloads the frame in any state without a panel.
 4. **Its buttons** carry `data-app-act` for the page's delegated listener: `app-allow` and
    `app-revoke` (the action layer's acts: the person only, confirmed by the page) and `retry`
-   (Check again, Restart: the page reads list_apps again). Each is named with the app ("Allow app:
-   Calculator"); Allow is described by the line asking for it, so a screen reader hears why. They
-   hide at far zoom as the quick actions do. A state change that takes the focused button away
-   leaves focus on the card (`vb-node.ts` `updateApp`; `app-follow.spec.ts` "a state change that
-   takes the focused button away leaves focus on the card").
+   (Check again, Restart: the page reads list_apps again). Each is named with the app; Allow's name
+   ends with its reason ("Allow app: Calculator. Not allowed yet"), so a screen reader hears why.
+   "Allowed ▾" (`data-app-menu`, "App allowed: Calculator") is a menu button: the page opens its menu
+   upward over the panel, in the board's menu look, focuses Stop app ("Stop app: Calculator") and
+   handles its keys with `menu-keys.ts` `menuKeydown` (`app-cards.ts` `createAppMenus`; Esc gives
+   focus back to the button). While an act is in flight its footer control is `aria-busy` (loading)
+   and when it is refused `data-error`, until the next press. The footer's controls and the state
+   view's buttons hide at far zoom as the quick actions do. A state change that takes the focused
+   control away leaves focus on the card (`node-app-apply.ts` `applyApp`; `app-follow.spec.ts` "a state
+   change that takes the focused button away leaves focus on the card"). Stop app, then Allow again:
+   `app-cards.spec.ts` "Stop app (in "Allowed ▾"'s menu) asks first…".
 5. **The app-frame pattern draws the panel** (`packages/ui/src/app-frame/`): `<vb-app-frame>`
    (`vb-app-frame.ts`), the DOM-free protocol (`app-frame-core.ts`), `app-frame.css` and its
    `pattern.json`. Its inputs are `data-app`, `data-label`, `data-w` and `data-h`; unloaded it is a
@@ -846,7 +920,9 @@ section is how the board draws one. Two patterns share the work.
    into the panel and on out of it in the page's order; while focus is in the panel the frame
    draws the focus ring, since keys then go to the app and not to the board's shortcuts (the
    element marks it `data-focus-in` from the window's blur and focus: Chromium never matches
-   `:focus-within` on a frame of another origin). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
+   `:focus-within` on a frame of another origin). Focus a click brought in draws no ring, as on a
+   card (`data-pointer-focus`, from the page's `focusCame` in `pointer-focus.ts`, passed to `wire`;
+   `app-cards.spec.ts` "the panel's focus ring"); Tab into the panel always draws it (WCAG 2.4.7). The board cannot see keys inside the panel, so Esc back to the card needs the panel to send
    `ui/notifications/escape`. The card's name says its app state (", not allowed yet"); the
    placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
    loading.
@@ -889,7 +965,8 @@ section is how the board draws one. Two patterns share the work.
    (every protocol rule, with fake windows: `app-frame-harness.ts`), `packages/ui/tests/node-app.test.ts`
    (every state's view, words and markup), `node-template.test.ts` (the footer), and the gallery
    (`apps/board/src/gallery/app-frame-section.ts`: the frame unloaded and loading, an app card in
-   every state, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. The element
+   every state, the footer's app status loading, refused and with its menu open, the window look with
+   a cut name and its tip, the flag off), which `tests/pages/gallery.spec.ts` checks has samples. The element
    and the page's part in a browser: `tests/pages/app-cards.spec.ts` (end to end, the keyboard, a
    code change, Stop app, the flag off), `app-states.spec.ts` (every state, on and off screen, far
    zoom, a past version), `app-safety.spec.ts` (opaque origin, CSP, other windows' messages) and

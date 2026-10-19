@@ -163,6 +163,16 @@ export const FLAGS = {
     default: true,
     description: 'An app card (kind `app`, D-047) shows the app the agent built in a sandboxed panel inside the card, sized by the agent; its tools run on the board\'s server only after the person presses Allow for that version of the code (docs/specification/apps.md). Off, an app card draws as a plain card saying "App cards are off", and the panel route and call_app_tool answer not-found.',
   },
+  appTitle: {
+    // On by default (maintainer, 2026-10-19, card-polish point 28, option A: the window look; card-polish FE_04); ?flags=-appTitle turns it off.
+    default: true,
+    description: 'An app card reads as the app\'s window: no title over the panel in any state (the card\'s name still says it; the app\'s own header names it, a state without a panel says what is wrong, and zoomed out past FAR_K the panel\'s placeholder shows the app\'s title), the panel meets the card\'s top border, and the footer is the window\'s bar, tinted with the kind\'s colour, holding the app\'s name between Allow or "Allowed ▾" and the quick actions, one line, cut with "…" and whole in a tip while cut. The title takes no room in any state, so no state moves the card. Off, the title shows above the panel as on every card and the footer names nothing.',
+  },
+  cardHistory: {
+    // On by default (maintainer, 2026-10-19, card-polish point 20); ?flags=-cardHistory turns it off.
+    default: true,
+    description: 'Every card with a footer has an ⓘ at its far right that opens the card\'s history beside it: when it was first drawn and each update (vN), each note sent, each agent reply, ✓, ✗ and reopened, and its app allowed or stopped, newest first, a time and one line each, from the state the page already holds. A note or reply row rings that note on the card. No note text and no private mark shows. Off, no ⓘ.',
+  },
   cardImages: {
     // On by default (app-cards orchestrator decision 5, D-048 rulings 19-23); ?flags=-cardImages turns it off.
     default: true,

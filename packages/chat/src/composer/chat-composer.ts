@@ -6,14 +6,12 @@
 // the chips) and `chat-chip-remove`; it never calls the server, and it keeps the words until the host
 // calls `clear()` once the message went through. Browser only.
 import type { Chip } from '../events.ts';
-import { TEXT_MAX } from '../events.ts';
+import { CHAT_CHIP_REMOVE_EVENT, CHAT_SEND_EVENT, TEXT_MAX } from '../events.ts';
 import type { ComposerContext, ComposerView } from './composer-core.ts';
 import { chipKey, COMPOSER_KEYS, sendIntent, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
 
 export const CHAT_COMPOSER_TAG = 'chat-composer';
-export const CHAT_SEND_EVENT = 'chat-send';
-export const CHAT_CHIP_REMOVE_EVENT = 'chat-chip-remove';
 /** The `chat-send` event's detail (bubbles). */
 export interface ChatSendDetail { text: string; chips: Chip[] }
 /** The `chat-chip-remove` event's detail (bubbles): the chip the person took off. */

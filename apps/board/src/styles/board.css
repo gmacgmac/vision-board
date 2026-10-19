@@ -183,7 +183,7 @@ body {
 
 /* A past version (navigation FE_01, versionView flag): the banner under the header, and the board
    read-only. The world carries data-readonly; every control that acts is hidden (the card's review
-   buttons but a lit ✓ or ✗, size control and note pin, a container's grip, tools and note buttons, a holder's
+   buttons but a lit ✓ or ✗, size control, note pin and the notes' Hide or Show, a container's grip, tools and note buttons, a holder's
    Remove access), and the kind tab no longer looks like a handle. The page's handlers and sender.ts
    refuse the rest; selection, zoom and pan stay. */
 .vb-banner {
@@ -194,7 +194,7 @@ body {
 .vb-banner[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
 .vb-banner-text b { font-weight: var(--vb-weight-bold); }
-.vb-world[data-readonly] :is(.vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove) { visibility: hidden; }
+.vb-world[data-readonly] :is(.vb-region-grip, .vb-region-tools, .vb-nblock-acts, .vb-holder-remove, .vb-node-notes-toggle) { visibility: hidden; }
 /* A card's mark stays (review polish FIX_01): an answered card shows its ✓ or ✗ lit, as now, so it never
    looks open; every other button of the row is hidden, and the row is inert, a mark that takes no press,
    no focus and no hover (its name already says "checked" or "crossed"). Zoomed out the row hides whole. */

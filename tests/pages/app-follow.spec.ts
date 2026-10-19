@@ -3,8 +3,8 @@
 // panel, or the panel route's refusal once the folder went) and when an app card is selected, never
 // on a timer: a deleted folder says "not found" without a page reload and Check again brings the
 // panel back once the folder is back; a changed tools.mjs asks again as soon as the card is selected,
-// before the panel calls anything. The row over the panel keeps its room in every state, so Allow,
-// Stop app and a code change leave the card's height as it was; a card with no size of its own keeps
+// before the panel calls anything. Allow and "Allowed ▾" are in the footer (card-polish FE_01), so
+// Allow, Stop app and a code change leave the card's size as it was; a card with no size of its own keeps
 // its box when its app.json breaks or its folder goes (FIX_03, finding 25). A half-written app.json and
 // Check again after its folder went say what happened in plain words (FIX_04, findings 27 and 28). On a
 // temp project of its own (app-server.ts) with the example calculator and the panel-only test app.
@@ -31,6 +31,8 @@ async function open(page: Page, board: string, count: number): Promise<void> {
 const cardOf = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 /** The card's height as laid out (unscaled by the board's zoom). */
 const heightOf = (card: Locator) => card.evaluate((c: HTMLElement) => c.offsetHeight);
+/** The card's width and height as laid out. */
+const sizeOf = (card: Locator) => card.evaluate((c: HTMLElement) => [c.offsetWidth, c.offsetHeight]);
 const listApps = (page: Page, seen: string[]) =>
   page.on('request', (r) => { if (r.method() === 'GET' && r.url() === `${s.base}/api/apps`) seen.push(r.url()); });
 
@@ -42,6 +44,16 @@ async function panBy(page: Page, dx: number, dy: number): Promise<void> {
   await page.mouse.wheel(-dx, -dy);
 }
 
+/** The footer's one app control showing, if any. */
+const control = (card: Locator) => card.locator('.vb-app-status > button:visible');
+
+/** "Allowed ▾", its menu's Stop app, then the confirm, as the person does. */
+async function stopApp(page: Page, card: Locator): Promise<void> {
+  await card.getByRole('button', { name: 'App allowed: Calculator' }).click();
+  await card.getByRole('menuitem', { name: 'Stop app: Calculator' }).click();
+  await page.getByRole('dialog', { name: 'Stop Calculator?' }).getByRole('button', { name: 'Stop app' }).click();
+}
+
 /** Allow in the card, then the confirm, as the person does. */
 async function allow(page: Page, card: Locator, heading: string): Promise<void> {
   await card.getByRole('button', { name: 'Allow app: Calculator' }).click();
@@ -51,30 +63,27 @@ async function allow(page: Page, card: Locator, heading: string): Promise<void> 
 }
 
 // First in the file: the calculator has never been allowed on this server yet.
-test('Allow, a code change and Stop app leave the card\'s height as it was, so nothing under it moves (finding 6)', async ({ page }) => {
+test('Allow, a code change and Stop app leave the card\'s size as it was, so nothing under it moves (finding 6)', async ({ page }) => {
   const { board, n: [n] } = await s.draw([CALCULATOR]);
   await open(page, board, 1);
   const card = cardOf(page, n!);
-  const row = card.locator('.vb-app-ask-text');
-  await expect(row).toHaveText('Allow this app to run?');
-  const height = await heightOf(card);
-  // Allowed: the row says so and holds Stop app, where Allow was.
+  await expect(control(card)).toHaveAttribute('title', 'Not allowed yet');
+  const size = await sizeOf(card);
+  // Allowed: "Allowed ▾" in the footer, where Allow was.
   await allow(page, card, 'Allow Calculator to run?');
-  await expect(row).toHaveText('Allowed to run');
-  await expect(card.getByRole('button', { name: 'Stop app: Calculator' })).toBeVisible();
-  expect(await heightOf(card)).toBe(height);
+  await expect(control(card)).toHaveAccessibleName('App allowed: Calculator');
+  expect(await sizeOf(card)).toEqual(size);
   // The agent changes its code; selected, the card asks again.
   fs.appendFileSync(path.join(s.dir('calculator'), 'tools.mjs'), `\n// changed by the page test ${Date.now()}\n`);
-  await card.locator('.vb-node-title').click();
-  await expect(row).toHaveText('Code changed. Allow it again?');
-  expect(await heightOf(card)).toBe(height);
+  await card.locator('.vb-app-name-text').click();
+  await expect(control(card)).toHaveAttribute('title', 'Code changed');
+  expect(await sizeOf(card)).toEqual(size);
   await allow(page, card, 'Allow Calculator again?');
-  expect(await heightOf(card)).toBe(height);
+  expect(await sizeOf(card)).toEqual(size);
   // Stopped: asking again.
-  await card.getByRole('button', { name: 'Stop app: Calculator' }).click();
-  await page.getByRole('dialog', { name: 'Stop Calculator?' }).getByRole('button', { name: 'Stop app' }).click();
-  await expect(row).toHaveText('Allow this app to run?');
-  expect(await heightOf(card)).toBe(height);
+  await stopApp(page, card);
+  await expect(control(card)).toHaveAttribute('title', 'Not allowed yet');
+  expect(await sizeOf(card)).toEqual(size);
 });
 
 test('a changed tools.mjs asks again as soon as the card is selected, before the panel calls anything, and nothing asks on a timer (finding 2)', async ({ page }) => {
@@ -85,7 +94,7 @@ test('a changed tools.mjs asks again as soon as the card is selected, before the
   await open(page, board, 1);
   const card = cardOf(page, n!);
   await expect(card.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
-  await expect(card.locator('.vb-app-ask-text')).toHaveText('Allowed to run');
+  await expect(control(card)).toHaveAccessibleName('App allowed: Calculator');
   await page.waitForTimeout(300); // the reads the page made on its way in have answered
   const reads: string[] = [];
   listApps(page, reads);
@@ -95,11 +104,11 @@ test('a changed tools.mjs asks again as soon as the card is selected, before the
   expect(reads).toEqual([]);
   await expect(card.locator('.vb-app')).toHaveAttribute('data-app-state', 'ready');
   // Selected: one read, and the card asks again before any call.
-  await card.locator('.vb-node-title').click();
+  await card.locator('.vb-app-name-text').click();
   await expect(card).toHaveAttribute('data-selected', '');
-  await expect(card.locator('.vb-app-ask-text')).toHaveText('Code changed. Allow it again?');
+  await expect(control(card)).toHaveAttribute('title', 'Code changed');
   await expect(card).toHaveAttribute('aria-label', /, code changed, not allowed yet, selected$/);
-  await expect(card.getByRole('button', { name: 'Stop app: Calculator' })).toBeHidden();
+  await expect(card.getByRole('button', { name: 'App allowed: Calculator' })).toBeHidden();
   expect(reads).toHaveLength(1);
   expect(calls).toEqual([]);
 });
@@ -112,7 +121,8 @@ test.describe('a deleted app folder', () => {
     await open(page, board, 1);
     const card = cardOf(page, n!);
     await expect(card.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
-    await expect(card.locator('.vb-app-ask-text')).toHaveText('Nothing to allow');
+    await expect(control(card)).toHaveCount(0);
+    await expect(card).not.toContainText('Nothing to allow');
     const height = await heightOf(card);
     const folder = s.dir('panel-only');
     fs.renameSync(folder, `${folder}-away`);
@@ -148,12 +158,12 @@ test('a state change that takes the focused button away leaves focus on the card
   await s.act(board, { action: 'app-allow', app: 'calculator', hash: (await s.apps()).get('calculator')!.hash });
   await open(page, board, 1);
   const card = cardOf(page, n!);
-  const stop = card.getByRole('button', { name: 'Stop app: Calculator' });
+  const stop = card.getByRole('button', { name: 'App allowed: Calculator' });
   await stop.focus();
   // The code changes, and the agent's next line about the app has the page read list_apps again.
   fs.appendFileSync(path.join(s.dir('calculator'), 'tools.mjs'), `\n// changed by the page test ${Date.now()}\n`);
   await s.write(board, [{ type: 'node', node: { region: 'tools', ...CALCULATOR, title: 'A second calculator' } }]);
-  await expect(card.locator('.vb-app-ask-text')).toHaveText('Code changed. Allow it again?');
+  await expect(control(card)).toHaveAttribute('title', 'Code changed');
   await expect(stop).toBeHidden();
   await expect(card).toBeFocused();
 });
@@ -177,7 +187,7 @@ test('a card with no size of its own keeps its box when its app.json breaks and 
     const select = async () => {
       await page.keyboard.press('Escape');
       await expect(card).not.toHaveAttribute('data-selected', '');
-      await card.locator('.vb-node-title').click();
+      await card.locator('.vb-app-name-text').click();
     };
     const checkAgain = async (toast: string) => {
       await card.getByRole('button', { name: 'Check again: Notice' }).click();

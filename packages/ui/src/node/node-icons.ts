@@ -30,6 +30,9 @@ export const ACTION_ICON: Partial<Record<ActionId, string>> = {
  * cloth (`vb-flag-cloth`) fills in while the card is flagged (node.css). */
 export const FLAG_ICON = '<path d="M5.5 17.5v-14"/><path class="vb-flag-cloth" d="M5.5 4h9.5l-2.5 3.75L15 11.5H5.5z"/>';
 
+/** The history button's icon, 20 x 20 like the flag (card-polish FE_03): ⓘ, a circle and an i. */
+export const INFO_ICON = '<circle cx="10" cy="10" r="7.5"/><path d="M10 9v5M10 6.25v.01"/>';
+
 /** The size control's glyph, 24 x 24: a width between two bars (mockup 07, i-size). */
 export const SIZE_ICON = '<path d="M3 5v14M21 5v14M7 12h10M10 9l-3 3 3 3M14 9l3 3-3 3"/>';
 

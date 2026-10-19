@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-10-11
+updated: 2026-10-19
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -71,6 +71,18 @@ wires it: `packages/chat/README.md`. Every state is in the gallery behind the `c
 fed by the recorded Claude turns (`apps/board/src/gallery/gallery.chat.json`, checked against the
 recording by `apps/board/tests/chat-fixture.test.ts`).
 
+**The feed follows the latest** (`chat-feed.ts` `ChatFeed`, decisions in `feed-core.ts`). Following is
+on by default; only the person's own scrolling away from the latest turns it off: the wheel, Page Up,
+Home, the arrow up or Shift+Space in the log (`leavesLatest`), or dragging the scrollbar or a touch
+(`followAfterScroll`). Nothing the page does counts: the Working line, chips from a board selection,
+approvals, a growing reply, the composer resizing. While on, a `ResizeObserver` on the log and its rows
+keeps the view at the end, and a panel that opens shows the latest. Moving down to the end by hand,
+sending a message (the host calls `feed.follow()`; `board/chat-panel.ts` `send`) or the "Jump to
+latest" button (shown only while off) turns it on again. Held by `packages/chat/tests/feed-core.test.ts`
+(the pure decisions), `tests/pages/chat-follow.spec.ts` (a reply growing with the composer, chips,
+the panel opening, the wheel, the keys, sending, the button, the board's own panel) and the gallery
+state `scrolled-away` (`tests/pages/chat.spec.ts`).
+
 ## On the board (apps/board/src)
 
 The sidebar is `shell/ChatSidebar.svelte` (flag `chatPanel`): on the right, opened and closed by the
@@ -103,6 +115,20 @@ ids for Kiro, see § Kiro).
 `board/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
 as the composer's one chip (the cards a message took are spent until the selection changes); a change chip selects and zooms to its cards
 (opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
+
+**The drawing loads the first time the panel opens.** The session, its events, the waiting and attached
+states and the bridge run from the page's start with the panel closed (`board/chat-panel.ts`
+`createChatPanel`, `board/chat-bridge.ts`); the header, feed and composer, with the chat's element code
+and CSS, are a chunk of their own (`board/chat-view.ts` `mountChatView`, the only import of the
+elements). It loads when the panel opens (the Chat button, T), at start when the panel was kept open,
+and when a card's "Show in the chat" link needs a row (`ChatPanel.load`, `reveal`); a context the bridge
+set before it came is handed to the composer then (`composerSide`). Until it is drawn the sidebar says
+it is loading, and when the chunk does not come it says so, with Try again (`ChatSidebar.svelte`,
+`shell.chatView`), which reloads the page: a browser keeps a module import that failed failed until then. The events' names the board listens for are in `packages/chat/src/events.ts`
+(`CHAT_SEND_EVENT` and the others), so listening needs no element code. Held by
+`tests/pages/chat-lazy.spec.ts` (no chunk requested and no element defined with the panel closed; opening
+loads it once and a message goes; T; kept open; the card link; the error state and Try again; the loading
+state) and, for the budget counting only what loads at start, `scripts/verify.test.mjs` (`pageAssets`).
 
 ## Another host
 

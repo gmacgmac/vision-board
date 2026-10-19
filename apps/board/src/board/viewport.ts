@@ -25,6 +25,9 @@ export interface ViewSnapshot { x: number; y: number; k: number }
 export interface FitOptions { fill: number; cap: number }
 /** Z, zoom to the selection (review-polish ruling 12): 75% of the stage, up to the top zoom. */
 export const SELECTION_FIT: FitOptions = { fill: 0.75, cap: MAX_K };
+/** Z on exactly one app card (card-polish FE_01): its longer side fills 95% of the stage, so the app
+ *  is big enough to use, up to the top zoom. */
+export const APP_FIT: FitOptions = { fill: 0.95, cap: MAX_K };
 
 /** The margin a reveal leaves between a card and the stage's edge, in screen pixels. */
 const REVEAL_MARGIN = 48;
@@ -141,7 +144,7 @@ export class Viewport {
   }
 
   /** Centre a box: Fit, zoom-area and a container's zoom as they are (32px a side, at most 110%),
-   *  or by `o` (Z passes SELECTION_FIT). */
+   *  or by `o` (Z passes SELECTION_FIT, or APP_FIT for one app card). */
   fit(b: Box, animate = true, o?: FitOptions): void {
     const r = this.stage.getBoundingClientRect();
     if (!b.w || !b.h) return;

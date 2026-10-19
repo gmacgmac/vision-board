@@ -11,7 +11,9 @@ import { createParking } from '../src/board/parking.ts';
 
 const A = 'a-aaaa1111';
 let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 10, seq: ++seq, at: `2026-10-08T13:${String(seq).padStart(2, '0')}:00Z`, ...e });
+/** The time `line` gives the line with this `seq`. */
+const AT = (n: number) => `2026-10-08T13:${String(n).padStart(2, '0')}:00Z`;
+const line = (e: object) => JSON.stringify({ v: 10, seq: ++seq, at: AT(seq), ...e });
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const item = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'r', kind: 'question', title: `Card ${n}`, item: true } });
@@ -71,10 +73,10 @@ test('a past version has no awaiting (today\'s fact); the written handover still
 test('a reply sits on the card its note is on; one naming no note stays on its own card', () => {
   const p = make(ledger());
   assert.deepEqual(p.card(card(3)).replies, [
-    { seq: 14, text: 'Because.', to: 11, agent: 'Pricing chat' }, { seq: 15, text: 'Also, FYI', agent: 'Pricing chat' },
-    { seq: 16, text: 'Yes, both.', to: 12, agent: 'Pricing chat' },
+    { seq: 14, text: 'Because.', at: AT(14), to: 11, agent: 'Pricing chat' }, { seq: 15, text: 'Also, FYI', at: AT(15), agent: 'Pricing chat' },
+    { seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat' },
   ]);
-  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', to: 12, agent: 'Pricing chat' }], 'a group note is answered on every card it is on');
+  assert.deepEqual(p.card(card(4)).replies, [{ seq: 16, text: 'Yes, both.', at: AT(16), to: 12, agent: 'Pricing chat' }], 'a group note is answered on every card it is on');
 });
 
 test('a reply to a container note is on no card; the frame reads it', () => {
@@ -98,4 +100,12 @@ test('a non-item has nothing; a new line shows after refresh', () => {
   s.seq += 1;
   p.refresh();
   assert.equal(p.card(card(3)).replies!.length, before + 1);
+});
+
+// Note and reply times (card-polish BE_01, api.md 156): each reply the page passes in carries `at`,
+// the time of its ledger line, for the time chip on hover (card 4's reply is checked above).
+test('every reply carries the time of its ledger line', () => {
+  const p = make(ledger());
+  assert.deepEqual(p.card(card(3)).replies!.map((r) => r.at), [AT(14), AT(15), AT(16)]);
+  assert.deepEqual(p.containers().map((r) => r.at), [AT(17)], 'a reply to a container note too');
 });

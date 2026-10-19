@@ -15,14 +15,16 @@ call the same actions, and each one is recorded in the project ledger as an `act
   agent or the person reads names a card by its number on its board), retiring cards
   (`retire.ts`, api.md 126-127, 141-142: `retireCards`, `retireProblem`, and `owedNotice`, the person's
   warning before they remove cards; `unsent.ts` `dropRetired`), the person's private flags
-  (`card-flags.ts`, api.md 128: `flagsOn`; no agent read looks at them), archived boards
+  (`card-flags.ts`, api.md 128: `flagsOn`; no agent read looks at them) and hidden notes (`card-notes-hidden.ts`, api.md 156: `notesHiddenOn`, the same), archived boards
   (`archive.ts`, api.md 135-137: `boardVisibility`, the one check of whether agents see a board,
   `visibleToAgents`, `archivedProblem`, `UNAVAILABLE`, `archivedBoards`), locked boards (`lock.ts`,
   api.md 138-140: `boardLocked`, which counts an archived board, `writeProblem`, the one "may this
   line be written" check, `passesLock`, `lockedProblem`, `LOCKED`, `LOCKED_PERSON`), app cards
   (`apps.ts`, api.md 150-151, D-047: `foldAppAct`, the one allowed hash per app in
   `LedgerState.appAllowed`; `appRules`; `appOf`, the app a card names; `namedApps` and `appCards`,
-  the cards on a board now that name an app), the
+  the cards on a board now that name an app), each card's times (`card-times.ts`, card-polish FE_03:
+  `foldCardTimes`, folded into `LedgerState.times`, ids and times only, no words; `cardTimeRows`, the
+  history box's rows, matched and worded by `card-history.ts` `cardsAbout`, `saidOf` and `historyRow`), the
   references table (`references.ts`, D-033: `REFERENCES`, one row per kind in `REFERENCE_KINDS`
   saying what it belongs to; `scopeOf`, the board, container and cards any ledger line touches;
   `placeOf`, the container a card is in now; `eventBoard`, behind each board's head in

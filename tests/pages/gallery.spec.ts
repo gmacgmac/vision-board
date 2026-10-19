@@ -86,8 +86,9 @@ test('node: the other states are drawn', async ({ page }) => {
   // The notes board: a pin per noted card, sent notes grey and marked, the count over several.
   await expect(notes.locator('.vb-node-notes-count:text-is("3 notes")')).toBeVisible();
   await expect(notes.locator('.vb-node-note[data-sent] .vb-node-note-who:text-is("Your note 2 · Sent")')).toBeVisible();
-  // One sent; eight the agent answered (the matrices' "Answered by the agent" rows, D-045), history too.
-  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(9);
+  // One sent; eight the agent answered (the matrices' "Answered by the agent" rows, D-045), and two in
+  // "Notes put away, and note times" (card-polish FE_02), history too.
+  await expect(node.locator('.vb-note-pin[data-sent]')).toHaveCount(11);
   // A topic and a note are numbered and take a comment and Later (every-node ruling 2, D-045).
   const others = node.locator('[aria-label="Other node states"]');
   for (const kind of ['topic', 'note']) {

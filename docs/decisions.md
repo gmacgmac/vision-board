@@ -618,3 +618,15 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: images from the internet (rule 18), data URIs in the body (unbounded size in the
   ledger), svg (it can carry script).
 - **Task**: cortex-tasks/board/2026-10-17_board-app_app-cards/PLAN.md
+
+## D-049 Board page weight budget: 200 KB gzip, counted at start
+- **Date**: 2026-10-19 · **Status**: Accepted · **From**: maintainer (chat 2026-10-19, points 21A,
+  23, 30)
+- **Decision**: The board page's budget is 200 KB gzip (JS + CSS), up from 150 KB, counted on what
+  the page loads at start (its static imports, `scripts/verify.mjs` `pageAssets`); code loaded on
+  demand, such as the chat panel's drawing on first open, does not count.
+- **Why**: the page had grown with features to the old limit with nothing bloated (Svelte is the
+  only dependency); start weight is what makes the board slow to open.
+- **Rejected**: keep 150 KB and cut features; count lazily loaded chunks (lazy loading could then
+  never lower the number).
+- **Task**: cortex-tasks/board/2026-10-19_board-ui_card-polish-and-history/PLAN.md

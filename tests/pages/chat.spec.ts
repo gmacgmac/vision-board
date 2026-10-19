@@ -7,7 +7,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error', 'send-queued', 'send-handed', 'answers', 'selected', 'answers-open', 'answers-working', 'folder'];
+const STATES = ['empty', 'thinking', 'tool', 'streaming', 'approval', 'approval-command', 'denied', 'blocked', 'stopped', 'error', 'send-queued', 'send-handed', 'answers', 'selected', 'answers-open', 'answers-working', 'scrolled-away', 'folder'];
 const sample = (page: Page, state: string) => page.locator(`.g-chat-sample[data-state="${state}"]`);
 
 /** Collects the chat's events on the page, in order. */
@@ -48,6 +48,16 @@ test('every state is drawn: a header, a named polite log and a labelled composer
   await expect(sample(page, 'send-handed').locator('chat-message[data-from="person"]').last()).toContainText('The person updated the board:');
   await expect(sample(page, 'folder').locator('.chat-empty')).toHaveText('No boards here yet. Ask the agent to draw one.');
   await expect(sample(page, 'empty').getByRole('combobox', { name: 'Model' }).locator('option:checked')).toHaveText('Sonnet 5.5');
+});
+
+test('scrolled away from the latest: the feed shows Jump to latest, and the other states do not', async ({ page }) => {
+  const away = sample(page, 'scrolled-away');
+  await expect(away.getByRole('button', { name: 'Jump to latest' })).toBeVisible();
+  await expect(away.locator('chat-feed')).toHaveAttribute('data-following', 'false');
+  await expect(sample(page, 'streaming').getByRole('button', { name: 'Jump to latest' })).toBeHidden();
+  await away.getByRole('button', { name: 'Jump to latest' }).click();
+  await expect(away.locator('chat-feed')).toHaveAttribute('data-following', 'true');
+  await expect(away.getByRole('button', { name: 'Jump to latest' })).toBeHidden();
 });
 
 test('the status line and the header follow the turn', async ({ page }) => {

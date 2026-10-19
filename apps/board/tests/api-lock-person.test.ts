@@ -67,7 +67,7 @@ function everyAct(): Record<ActionId, Rec> {
     grant: { request: at.request }, deny: { request: at.request }, revoke: { holder: B.agent, board: VAULT },
     size: { n: 1, size: 'l' }, send: { board: VAULT }, 'note-edit': { n: 1, note: at.note, text: 'Why not?' },
     'note-remove': { n: 1, note: at.note }, move: { n: 1, ver: 1, region: LATER_REGION }, reject: { n: 2, proposal: at.proposal },
-    flag: { n: 1 }, unflag: { n: 1 }, widths: { board: VAULT, region: 'ideas', widths: 'match' },
+    flag: { n: 1 }, unflag: { n: 1 }, 'notes-hide': { n: 1 }, 'notes-show': { n: 1 }, widths: { board: VAULT, region: 'ideas', widths: 'match' },
     archive: { board: VAULT }, restore: { board: VAULT }, lock: { board: VAULT }, unlock: { board: VAULT },
     'app-allow': { app: 'calculator', hash: 'a'.repeat(64) }, 'app-revoke': { app: 'calculator' },
   };
@@ -75,7 +75,7 @@ function everyAct(): Record<ActionId, Rec> {
 
 /** What each of the person's own marks answers on the locked board, walked in registry order:
  * archive then restore come back to the lock, a second lock is refused, and the unlock ends it. */
-const MARKS: Partial<Record<ActionId, number>> = { flag: 201, unflag: 201, archive: 201, restore: 201, lock: 422, unlock: 201 };
+const MARKS: Partial<Record<ActionId, number>> = { flag: 201, unflag: 201, 'notes-hide': 201, 'notes-show': 201, archive: 201, restore: 201, lock: 422, unlock: 201 };
 
 test('locked, every act in the registry is refused 423 with the person\'s words, but their own marks', async () => {
   await act({ action: 'ack', n: 3, ver: 1 }); // an answer to the chat's agent not yet sent, for the chat test below
