@@ -404,12 +404,20 @@ icon and number in place of its words under 290px; and under 226px (261px with a
 to the cog, and Comment while its badge shows, with the holders leaving the line whole. The others
 stay in the row at no width and still focusable, so it expands over the label side on hover or focus
 as before. So nothing on the label side is covered at any zoom where the controls show (`FAR_K`, 55%,
-to 250%; `container-polish.spec.ts`). Measured on a one-card frame with a marker (336px): at 55% the
-title keeps its few letters and the count gives way; from 60% "1/1" shows whole; from about 96% the
-marker's words come back. Below `FAR_K` the tools, the grip, the retired marker and the
+to 250%; `container-polish.spec.ts`). Measured on a one-card frame with a marker (336px): at 55% and
+60% the title keeps its few letters and the count is out of sight; from about 62% "1/1" shows whole;
+from about 96% the marker's words come back. Below `FAR_K` the tools, the grip, the retired marker and the
 holders leave the line (`display: none`), so the title takes their room. In a narrow line the tools
 never shrink beyond these forms; the holders give way first, then the title, one line ending in "…"
-(never broken mid-word) down to about three letters, then the count. The heading keeps the full title
+(never broken mid-word) down to about three letters, then the count. Each holder and the count show
+whole or not at all, never a clipped sliver (VERIFY_01 finding 1, FIX_48): the holders' slot and the
+handle (`region.css` `.vb-region-holders`, `.vb-region-handle`) are wrapping rows one line high whose
+second line is clipped, so a part with no room on the line wraps out of sight whole (the last holder
+first) and stays in the accessible tree: the count's words, "0 of 1 answered", and each holder's name
+are read as before. The title's flex base is its few letters, so the count wraps only once the title
+is down to them, and the title takes back the count's room. A holder with keyboard focus keeps its
+room, the title giving way to it. CSS only: a zoom step measures nothing (`container-title.spec.ts`,
+the count and each holder at every step from 100% to 20%). The heading keeps the full title
 (the container's accessible name) and the title tip shows it on hover and focus. At 20% the line's
 lower edge reaches about 1px into the first row's top edge (the line's room is `REGION_HEAD` board
 units).

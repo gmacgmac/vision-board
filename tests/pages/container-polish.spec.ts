@@ -131,7 +131,9 @@ async function headsAt(page: Page, request: APIRequestContext, ks: number[]): Pr
     const line = (id: string) => page.locator(`vb-region[data-region="${id}"]`).evaluate((e): HeadAt => {
       const marker = e.querySelector<HTMLElement>('.vb-region-retired')!;
       const tools = e.querySelector<HTMLElement>('.vb-region-tools')!.getBoundingClientRect();
-      const parts = [...e.querySelectorAll<HTMLElement>('.vb-region-label > :not(.vb-tip), .vb-holder')].filter((p) => p.getBoundingClientRect().width > 0);
+      // A part in sight: a holder or the count with no room wraps below its one-line box, out of sight (FIX_48).
+      const inSight = (p: HTMLElement) => p.getBoundingClientRect().width > 0 && p.getBoundingClientRect().top < p.parentElement!.getBoundingClientRect().bottom;
+      const parts = [...e.querySelectorAll<HTMLElement>('.vb-region-label > :not(.vb-tip), .vb-holder, .vb-region-count')].filter(inSight);
       const icon = marker.querySelector('svg');
       return {
         whole: marker.hidden === true || marker.scrollWidth <= marker.clientWidth,

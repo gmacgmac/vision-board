@@ -63,6 +63,16 @@ the task file and `temp/v01/diffs/`). Walk on port 4540, light and dark, no cons
    clipped slivers ("(" and "· W") beside the tools. Never overlaps the tools, so the criterion holds;
    whether the slivers were there before the set is not established (no before shot of a narrow frame
    with a holder). The maintainer may want the count and holder to drop out whole.
+   **Fixed (FIX_48, 2026-10-20):** the count and each holder now show whole or not at all. CSS only
+   (`region.css`): the handle and the holders' slot are wrapping rows one line high whose second line
+   is clipped (`overflow: clip`, a clip margin for focus rings, a wider row gap), each with a strut so
+   even its first wrappable part can wrap; the title's flex base is its few letters, so the count
+   wraps only once the title is down to them. Same shrink order; wrapped parts stay in the accessible
+   tree; a holder with keyboard focus keeps its room. No JS, nothing per zoom (rule 15). Test first:
+   `container-title.spec.ts` (every step 100% to 20%, failed with 40+ slivers, now passes). Knock-on:
+   send-access's holder tests zoom to 250% first (at 110% its one-card frame has no room for holders)
+   and its `target-size` axe exception is gone; agent-access gallery shots refreshed. Shots:
+   `temp/fix48/`.
 2. **Untested doc claim**: components.md says a drag on the title of a past version pans. Checked by hand
    (the whole board moved with the pointer, ledger unchanged; `past.mjs`), but no test holds it
    (`container-title.spec.ts` and `containers.spec.ts` don't open a past version). A test is the smallest fix.

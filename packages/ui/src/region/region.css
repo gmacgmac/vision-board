@@ -59,25 +59,35 @@ vb-region .vb-region-label { cursor: grab; }
 :is(.panning, [data-dragging]) .vb-region-label, vb-region .vb-region-handle:active { cursor: grabbing; }
 vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
 vb-region .vb-region-label {
-  min-width: 0; gap: var(--vb-space-2); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
+  --label-gap: var(--vb-space-2);
+  min-width: 0; gap: var(--label-gap); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
 }
 vb-region .vb-region-tools { position: relative; flex: none; }
 vb-region .vb-region-label { position: relative; }
 /* A narrow line (review polish ruling 9, tracker N41, decision 7): the retired marker and the
-   controls never shrink; the holders give way first, then the title, down to about three letters
-   and "…" (or its own width when shorter), then the count, which keeps its words while there is room
-   for them (only the narrowest frames have none, FE_02). The title is one line ending in "…", never
-   broken mid-word; the full text stays in the DOM for screen readers (it names the container) and
-   shows in the tip below when it is cut. The order is in the shrink factors (each weighed by the
-   part's width): each holder 1e12, the handle 1e6 and in it the title 1e6, count 1, so far apart that the next part's share is
-   under a 64th of a pixel (any share would cut its words by a hair and show "…"); they stay at 1
-   or more, as a sum under 1 would leave the overflow unshared. */
+   controls never shrink; the holders give way first, each leaving whole (the last first), then the
+   title, down to about three letters and "…" (or its own width when shorter), then the count, which
+   leaves whole: never a sliver of either (VERIFY_01 finding 1, FIX_48). The title is one line ending
+   in "…", never broken mid-word; the full text stays in the DOM for screen readers (it names the
+   container) and shows in the tip below when it is cut. The holders' slot (shrink 1e12, weighed by
+   width) gives way before the handle (1e6). Each is a wrapping row one line high, its second line
+   clipped: a part with no room wraps out of sight whole and stays in the accessible tree. The title's
+   flex base is its few letters, growing back to its full width, so the count wraps only once the
+   title is down to them. CSS only, nothing measured (rule 15): a zoom step lays out the line as
+   before. The clip margin keeps focus rings whole; the wider row gap keeps line two out of it. */
 /* The handle: the grip, the title and the count in one box, the label's first part, giving way as the
    title does (its parts keep their own order inside it). Hovered, it takes the grip's hover tint
    whole, so the grip and the title light together (the maintainer, 2026-10-19); it keeps it while
-   the container moves. Tokens only: the tint is --vb-surface-sunken, as the grip's own. */
+   the container moves. Tokens only: the tint is --vb-surface-sunken, as the grip's own. One line high
+   (the grip's, or zoomed out the count's); a strut first keeps the title still when the count wraps. */
+vb-region .vb-region-handle, vb-region .vb-region-holders {
+  display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; min-width: 0;
+  row-gap: var(--vb-space-2); height: var(--vb-space-5); overflow: clip; overflow-clip-margin: var(--vb-space-1);
+}
+vb-region .vb-region-handle::before, vb-region .vb-region-holders::before { content: ''; height: 100%; }
+vb-region .vb-region-handle::before { margin-inline-end: calc(-1 * var(--label-gap)); }
 vb-region .vb-region-handle {
-  display: flex; align-items: center; gap: inherit; min-width: 0; flex: 0 1000000 auto;
+  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-sm);
   padding-inline-end: var(--vb-space-1); border-radius: var(--vb-radius-sm);
 }
 vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-region[data-dragging] .vb-region-handle {
@@ -88,15 +98,12 @@ vb-region :is(.vb-region-handle:hover, .vb-region-handle[data-look], [data-dragg
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink-strong));
 }
 vb-region .vb-region-head h2 {
-  margin: 0; flex: 0 1000000 auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  margin: 0; flex: 1 0 0; max-width: max-content; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
   font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
-vb-region .vb-region-count {
-  min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
-}
+vb-region .vb-region-count { flex: none; white-space: nowrap; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
 /* "1/1" to the eye (round 2 ruling 1); its words, "1 of 1 answered", for screen readers only. */
 vb-region .vb-region-count-words {
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
@@ -119,26 +126,28 @@ vb-region .vb-region-retired[aria-disabled='true'] { cursor: default; text-decor
 
 /* Holders (agentAccess flag): after the count, in its muted style. A removable holder is a quiet
    button; on hover or keyboard focus it shows "Remove access" in a small bubble just below it,
-   over the frame's empty top room, so the top line never reflows. Giving way first in a narrow
-   line (FE_02), each holder keeps a 24px target ("· P…"), so it can still be hovered and pressed. */
-/* The slot draws no box: each holder is one of the label's parts, so it can give way down to its
-   target. Holders sit closer to each other than the label's parts do, as before. */
-vb-region .vb-region-holders { display: contents; }
-vb-region .vb-holder + .vb-holder { margin-inline-start: calc(var(--vb-space-1) - var(--vb-space-2)); }
-@container (max-width: 408px) { vb-region .vb-holder + .vb-holder { margin-inline-start: 0; } }
+   over the frame's empty top room, so the top line never reflows. They leave a narrow line whole
+   (FIX_48, the shrink order above; the slot's strut lets even the first wrap); the gap before the slot
+   is on its first holder, so an empty-looking slot adds no room. The bubble's box is the label's (a
+   holder is not positioned; pressed, it moves by its padding), so the slot's clip never cuts it. A
+   holder with keyboard focus (or the gallery's hover look) keeps its room, the title giving way (WCAG 2.4.11). */
+vb-region .vb-region-holders { flex: 0 1e12 auto; margin-inline-start: calc(-1 * var(--label-gap)); }
+vb-region .vb-region-holders:empty { display: none; }
+vb-region .vb-region-holders:has(:focus-visible, [data-look='hover']) { flex-shrink: 0; }
+vb-region .vb-holder:first-child { margin-inline-start: var(--label-gap); }
+vb-region .vb-holder + .vb-holder { margin-inline-start: var(--vb-space-1); }
 vb-region .vb-holder {
-  position: relative; display: inline-flex; flex: 0 1e12 auto; align-items: center; gap: var(--vb-space-1); min-width: var(--vb-space-5); white-space: nowrap;
+  display: inline-flex; flex: none; align-items: center; gap: var(--vb-space-1); white-space: nowrap;
   font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
   background: none; border: 0; border-radius: var(--vb-radius-sm); padding: 2px var(--vb-space-1);
 }
-vb-region .vb-holder-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 vb-region button.vb-holder { cursor: pointer; min-height: 24px; }
 vb-region button.vb-holder:hover, vb-region button.vb-holder:focus-visible, vb-region button.vb-holder[data-look='hover'] {
   color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
 }
-vb-region button.vb-holder:active { transform: translateY(1px); }
+vb-region button.vb-holder:active { padding-block: 3px 1px; }
 vb-region .vb-holder-remove {
-  display: none; position: absolute; top: calc(100% + var(--vb-space-1)); left: 0; z-index: 1;
+  display: none; position: absolute; top: calc(100% + var(--vb-space-1)); margin-inline-start: calc(-1 * var(--vb-space-1)); z-index: 1;
   padding: 2px var(--vb-space-2); border-radius: var(--vb-radius-sm); white-space: nowrap;
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-state-drop);
   background: var(--vb-surface-raised); border: 1px solid var(--vb-line-strong); box-shadow: var(--vb-shadow-card);
@@ -159,7 +168,6 @@ vb-region[data-drop] .vb-region-head h2 { color: var(--vb-accent-text); }
 /* A fixed frame (the built-in Later, ruling 5): the board sets its layout, so its mode row holds
    only the cog. */
 vb-region[data-fixed] .vb-mode-row { gap: 0; }
-
 
 /* The mode row (README pick 1, mockup 05 .mode-row / .mseg): six layout icons, a divider and the
    settings cog in one box on the top line's right. The ring in the canvas colour is its gap in the
@@ -284,11 +292,9 @@ vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(-
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
 vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
 
-
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the
    cards, as the note preview does. Only the label takes the pointer, so the cards under it stay reachable. */
 vb-region[data-title-tip-open] { z-index: 4; pointer-events: none; }
 vb-region .vb-title-tip { top: calc(100% + var(--vb-space-1)); left: 0; }
 vb-region[data-title-tip-open] .vb-title-tip { display: block; }
-

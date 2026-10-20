@@ -186,3 +186,100 @@ test('the gallery draws the three places with the board\'s own drawing: centred,
   expect([mid.labelMid < mid.frameMid - 2, mid.labelLeft > mid.headLeft + 1, mid.labelRight <= mid.toolsLeft!]).toEqual([true, true, true]);
   expect([Math.abs(far.labelLeft - far.headLeft) <= 1, far.toolsLeft]).toEqual([true, null]);
 });
+
+// A narrow line shows the count and each holder whole or not at all (VERIFY_01 finding 1, FIX_48):
+// never a clipped sliver ("(" or "· W" beside the tools). Two frames of a board of their own, each held
+// by its creator and "Second" by a second agent too: "Second" (the frame VERIFY_01 shot at 70%, here
+// with three cards, so both holders show at 100%) and a one-card frame, the narrowest. At every step of a zoom-out from 100% to 20% each count and
+// holder is either whole (its box all inside the line's clips, nothing of it cut, clear of the tools)
+// or wholly out of sight (no box, or a box all outside the clips). Read with the pointer away.
+type Seen = { part: string; state: 'whole' | 'gone' | 'sliver'; box: number[]; shown: number[] };
+const parts = (f: Locator) => f.evaluate((e): Seen[] => {
+  const tools = e.querySelector<HTMLElement>('.vb-region-tools')!.getBoundingClientRect();
+  const shown = (p: HTMLElement): DOMRect => {
+    let r = p.getBoundingClientRect();
+    for (let a = p.parentElement; a && a !== e; a = a.parentElement) {
+      const s = getComputedStyle(a);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const m = s.overflowX === 'clip' || s.overflowY === 'clip' ? parseFloat(s.overflowClipMargin) || 0 : 0;
+      const c = a.getBoundingClientRect();
+      const [x0, x1] = s.overflowX === 'visible' ? [r.left, r.right] : [Math.max(r.left, c.left - m), Math.min(r.right, c.right + m)];
+      const [y0, y1] = s.overflowY === 'visible' ? [r.top, r.bottom] : [Math.max(r.top, c.top - m), Math.min(r.bottom, c.bottom + m)];
+      r = new DOMRect(x0, y0, Math.max(0, x1 - x0), Math.max(0, y1 - y0));
+    }
+    return r;
+  };
+  const cut = (p: HTMLElement) => [p, ...p.querySelectorAll<HTMLElement>('.vb-holder-name')].some((x) => x.scrollWidth > x.clientWidth + 0.5);
+  return [...e.querySelectorAll<HTMLElement>('.vb-region-count, .vb-holder')].map((p) => {
+    const [b, v] = [p.getBoundingClientRect(), shown(p)];
+    const gone = b.width === 0 || b.height === 0 || v.width === 0 || v.height === 0;
+    const whole = !gone && !cut(p) && Math.abs(v.width - b.width) < 0.5 && Math.abs(v.height - b.height) < 0.5
+      && (tools.width === 0 || b.right <= tools.left + 0.5);
+    const part = p.classList.contains('vb-region-count') ? 'count' : `holder ${p.querySelector('.vb-holder-name')!.textContent}`;
+    return { part, state: gone ? 'gone' : whole ? 'whole' : 'sliver', box: [b.left, b.width].map(Math.round), shown: [v.left, v.width].map(Math.round) };
+  });
+});
+
+test('a narrow line shows the count and each holder whole or not at all, at every zoom from 100% to 20%', async ({ page, request }) => {
+  const d = await draw(request, 0, 'slivers');
+  await write(request, d, [
+    { type: 'region', region: { id: 'q', title: 'Second', mode: 'row' } },
+    { type: 'region', region: { id: 'o', title: 'Release checklist for the spring launch', mode: 'row' } },
+    ...[5, 6, 7].map((i) => ({ type: 'node', node: { region: 'q', kind: 'decision', title: `Decision ${i}` } })),
+    { type: 'node', node: { region: 'o', kind: 'question', title: 'Ship it?' } },
+  ]);
+  await page.goto(`/#${d.board}`);
+  await expect(page.locator('vb-node')).toHaveCount(4);
+  // A second holder on "Second": an agent asks for it and the person grants it.
+  const b = await (await request.post('/api/agents', { data: { label: 'Launch chat' } })).json() as { secret: string };
+  const ask = await request.post('/api/grants', { headers: { Authorization: `Bearer ${b.secret}` }, data: { board: d.board, region: 'q', reason: 'Add items.' } });
+  expect(ask.status(), await ask.text()).toBe(201);
+  const granted = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', action: 'grant', request: (await ask.json() as { request: number }).request } });
+  expect(granted.status(), await granted.text()).toBe(201);
+  const [q, o] = [page.locator('vb-region[data-region="q"]'), page.locator('vb-region[data-region="o"]')];
+  await expect(q.locator('.vb-holder')).toHaveCount(2);
+  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  const zoomAt = async (k: number) => {
+    const at = centre(await boxOf(q.locator('.vb-region-head h2')));
+    await page.mouse.move(at.x, at.y);
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -Math.log(k / await zoom(page)) / 0.0015);
+    await page.keyboard.up('Control');
+    await expect.poll(() => zoom(page)).toBeCloseTo(k, 2);
+    await page.mouse.move(2, 990);
+  };
+  const [slivers, states, sweep] = [[] as string[], new Set<string>(), [] as string[]];
+  const ks = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.56, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2];
+  for (const k of ks) {
+    await zoomAt(k);
+    for (const [id, f] of [['q', q], ['o', o]] as const) {
+      for (const s of await parts(f)) {
+        states.add(`${id} ${s.part} ${s.state}`);
+        sweep.push(`${Math.round(k * 100)}% ${id} ${s.part} ${s.state}`);
+        if (s.state === 'sliver') slivers.push(`${id} at ${Math.round(k * 100)}%: ${JSON.stringify(s)}`);
+      }
+    }
+  }
+  test.info().annotations.push({ type: 'sweep', description: sweep.join('; ') });
+  expect(slivers).toEqual([]);
+  // The sweep saw both: whole with room, and out of sight in the narrow lines.
+  for (const s of ['o count whole', 'o count gone', 'q holder Pricing chat whole', 'q holder Pricing chat gone', 'q holder Launch chat whole', 'q holder Launch chat gone'])
+    expect([...states], s).toContain(s);
+  // Out of sight, but still read out: at zooms where the controls show and the one-card frame's count,
+  // then "Second"'s second holder, is out of sight, each stays in the accessible tree, as before.
+  const goneAt = (part: string) => ks.find((x) => x >= 0.56 && sweep.includes(`${Math.round(x * 100)}% ${part} gone`));
+  const [countGone, holderGone] = [goneAt('o count'), goneAt('q holder Launch chat')];
+  expect([countGone, holderGone], sweep.join('; ')).not.toContain(undefined);
+  await zoomAt(countGone!);
+  await expect(o.locator('.vb-region-count')).toHaveAttribute('title', '0 of 1 answered');
+  await expect(o.locator('.vb-region-count-words')).toHaveText('0 of 1 answered');
+  await expect(o.locator('.vb-region-count-words')).not.toHaveCSS('display', 'none');
+  await zoomAt(holderGone!);
+  const holder = q.getByRole('button', { name: 'Launch chat: remove access' });
+  await expect(holder).toHaveCount(1);
+  // Keyboard focus brings a holder out of sight back whole, the title giving way to it (WCAG 2.4.11).
+  await holder.focus();
+  await expect(holder).toHaveCSS('outline-style', 'solid');
+  expect((await parts(q)).filter((x) => x.part === 'holder Launch chat').map((x) => x.state)).toEqual(['whole']);
+  await expect(holder.locator('.vb-holder-remove')).toBeVisible();
+});

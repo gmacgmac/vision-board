@@ -17,17 +17,6 @@ const REGION = 'pricing';
 const CONTAINER = 'Pricing thread';
 const CREATOR = 'Pricing chat';
 const THEMES: Theme[] = ['dark', 'light'];
-/**
- * Known axe failure (2d_FE_01, Open item 3): `target-size` on the holders' Remove access
- * buttons, once several accumulate on the access board's one frame (336px, the minimum: one S
- * card). The collapsed row (2d_FE_01, item 1) frees the space the full row used to take, so two
- * holders now fit at >=24px (measured 25x26, 29x26) and the regular tests pass without it. By
- * the time this axe test runs, earlier tests in the file have left 3-4 holders granted on the
- * same region (none are revoked along the way) and each button narrows under 24px (measured
- * 12-13px wide with 4). The frame cannot grow for them: its width comes from its one card's
- * content (`packages/layout`), which this task does not touch.
- */
-const KNOWN_AXE = ['target-size'];
 
 interface Agent { agent: string; secret: string; label: string }
 
@@ -73,6 +62,15 @@ async function grant(page: Page, seq: number): Promise<void> {
 interface Holder { agent: string; label: string; creator?: true }
 const holdersNow = async (page: Page): Promise<Holder[]> =>
   ((await (await page.request.get(`/api/boards/${BOARD}`)).json()) as { holders?: Record<string, Holder[]> }).holders?.[REGION] ?? [];
+/** Take back every holder but the creator (setup): earlier tests leave theirs granted, and on this
+ * one-card frame a holder with no room on the line is out of sight (FIX_48), so a test that points at
+ * its holder starts from the creator alone. */
+async function revokeOthers(page: Page): Promise<void> {
+  for (const h of (await holdersNow(page)).filter((x) => !x.creator)) {
+    const r = await page.request.post(`/api/boards/${BOARD}/act`, { data: { type: 'act', action: 'revoke', board: BOARD, region: REGION, holder: h.agent } });
+    expect(r.status(), await r.text()).toBe(201);
+  }
+}
 const openRequests = async (page: Page): Promise<number[]> =>
   (((await (await page.request.get(`/api/boards/${BOARD}`)).json()) as { requests?: { seq: number }[] }).requests ?? []).map((r) => r.seq);
 
@@ -93,6 +91,14 @@ async function openAccess(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}#${BOARD}`);
   await expect(page.locator('vb-node')).toHaveCount(1);
   await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+}
+
+/** Zoom in to 250% (the + key), where the one-card frame's line has room for two holders: a holder
+ * with no room leaves the line whole (FIX_48), so at the opening zoom only the title and count show. */
+async function zoomToHolders(page: Page): Promise<void> {
+  const percent = () => page.locator('#world').evaluate((e) => Math.round(new DOMMatrix(getComputedStyle(e).transform).a * 100));
+  for (let i = 0; i < 30 && (await percent()) < 250; i += 1) await page.keyboard.press('+');
+  await expect.poll(percent).toBe(250);
 }
 
 /** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */
@@ -305,18 +311,22 @@ test('keyboard: Tab reaches Send to agent, and Enter sends', async ({ page }) =>
 
 for (const theme of THEMES) {
   test(`axe passes on the board with the strip, a refusing note and holders (${theme})`, async ({ page, request }) => {
+    // No known failure: the holders show whole or not at all (FIX_48), so none narrows under 24px
+    // (target-size, once excused here: 2d_FE_01 Open item 3).
+    await revokeOthers(page);
     const a = await ask(request, `Axe ${theme} chat`);
     const b = await ask(request, `Axe ${theme} holder`);
     await grant(page, b.seq);
     await setTheme(page, theme);
     await openAccess(page);
-    await expectNoAxeViolations(page, KNOWN_AXE);
+    await expectNoAxeViolations(page);
+    await zoomToHolders(page);
     await row(page, `Axe ${theme} chat`).getByRole('button', { name: `Refuse Axe ${theme} chat` }).click();
     await holderButton(page, `Axe ${theme} holder`).hover();
-    await expectNoAxeViolations(page, KNOWN_AXE);
+    await expectNoAxeViolations(page);
     await grant(page, a.seq);
-    // Take both back (3_FE_04): with the grip and Comment on the title line, a sixth holder here
-    // is pushed under the mode row, so the light run and the tests after it could not reach theirs.
+    // Take both back (3_FE_04), so the light run and the tests after it start from fewer holders: a
+    // holder with no room on this one-card frame's line is out of sight (FIX_48).
     for (const x of [a, b]) {
       const r = await page.request.post(`/api/boards/${BOARD}/act`, { data: { type: 'act', action: 'revoke', board: BOARD, region: REGION, holder: x.agent } });
       expect(r.status(), await r.text()).toBe(201);
@@ -325,10 +335,12 @@ for (const theme of THEMES) {
 }
 
 test('Remove access shows on hover, asks to confirm, and Cancel keeps the holder', async ({ page, request }) => {
+  await revokeOthers(page);
   const a = await ask(request, 'Launch chat');
   await grant(page, a.seq);
   const before = await head(page);
   await openAccess(page);
+  await zoomToHolders(page);
   const holder = holderButton(page, 'Launch chat');
   await expect(holder.locator('.vb-holder-remove')).toBeHidden();
   await holder.hover();
