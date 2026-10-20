@@ -33,7 +33,8 @@ async function open(page: Page, url: string): Promise<void> {
 const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 const finder = (page: Page) => page.getByLabel('Containers', { exact: true });
 const frame = (page: Page, id: string) => page.locator(`vb-region[data-region="${id}"]`);
-const texts = (page: Page) => finder(page).locator('option').allTextContents();
+/** The rows' words: each option's `label` (MenuSelect puts its words there, not in its text). */
+const texts = (page: Page) => finder(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
 /** Whether the frame is inside the stage and its centre is the stage's centre (to a few pixels). */
 async function centred(page: Page, id: string): Promise<boolean> {

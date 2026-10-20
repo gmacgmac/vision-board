@@ -6,7 +6,8 @@
 // pans only by `revealPan`'s rule (the controller's `arrive`, ruling 3). A number the board never
 // gave says "No card 99"; a retired card says it was removed and offers the version where it last
 // appeared, as the container's retired marker does (`lastShown`, ruling 4). Card numbers go
-// through card-numbers.ts. `goTarget` is pure; `createGoTo` keeps the box's state and its timer.
+// through card-numbers.ts. `goTarget` is pure; `createGoTo` keeps the box's state and its timer. The
+// toolbar's open list goes to a card through the same path (`to`, open-list FE_01).
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { idOf } from './card-numbers.ts';
 import { lastShown } from './retired.ts';
@@ -77,6 +78,9 @@ export interface GoTo {
   edit(text: string): void;
   /** Enter: go to the number, or say why not and stay open. */
   enter(): void;
+  /** Go to card `n` chosen elsewhere (the toolbar's open list, open-list FE_01) as Enter would for
+   *  the box holding it: an open box closes; not there, the box opens saying why. */
+  to(n: number): void;
   /** Esc, or focus leaving the box: close it without going. */
   close(): void;
   /** The retired card's offer: open its version, and go to it there. */
@@ -122,6 +126,11 @@ export function createGoTo(d: GoDeps): GoTo {
     },
     edit: typed,
     enter,
+    to(n) {
+      stop();
+      box = { text: String(n) };
+      enter();
+    },
     close,
     async openPast() {
       const past = box?.past;

@@ -2,9 +2,9 @@
 // a frame's title line opens the note bubble beside it (one unsent note, edit, Remove, read-only
 // after Send); the note shows only as Comment's badge, its preview (hover or focus: Edit, Show in
 // container) and, when shown, the note block that pushes the containers below down; changed words
-// are never lost silently (note-discard.spec.ts); the grip moves the frame and its cards and
-// writes one container pin; a plain drag on the title line still pans and Shift+drag still
-// lassoes; containers never overlap; "Put container back" unpins; Alt+arrows on the grip move it;
+// are never lost silently (note-discard.spec.ts); the grip, and the title beside it (open list and
+// container title FE_02), move the frame and its cards and write one container pin; a drag on the
+// line's empty part still pans and Shift+drag on the title still lassoes; containers never overlap; "Put container back" unpins; Alt+arrows on the grip move it;
 // C or N on the title line opens the note. Runs on its own board, written through the API by an
 // agent, so no other file's board changes.
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
@@ -217,15 +217,29 @@ test('the grip moves the frame and its cards; the drop writes one container pin;
   await page.keyboard.press('Escape');
 });
 
-test('a plain drag on the title line pans and writes nothing; Shift+drag on it draws the lasso', async ({ page }) => {
+test('a drag on the title moves the container like the grip; one on the line\'s empty part pans and writes nothing; Shift+drag on the title draws the lasso', async ({ page }) => {
   await openFrames(page);
-  const before = await head(page);
   const title = frame(page, 'plan').locator('h2');
-  const f0 = await boxOf(page, frame(page, 'plan'));
+  const [f0, r0] = [await boxOf(page, frame(page, 'plan')), await boxOf(page, frame(page, 'backlog'))];
   const t = centre(await boxOf(page, title));
-  await drag(page, t, { x: t.x + 120, y: t.y + 40 });
-  const f1 = await boxOf(page, frame(page, 'plan'));
-  expect([Math.round(f1.x - f0.x), Math.round(f1.y - f0.y)]).toEqual([120, 40]);
+  await drag(page, t, { x: t.x, y: t.y + 40 });
+  await settled(page);
+  await expect.poll(() => regionPins(page).then((p) => Object.keys(p))).toEqual(['plan']);
+  expect(Math.abs((await boxOf(page, frame(page, 'plan'))).y - f0.y - 40)).toBeLessThanOrEqual(1);
+  await putAllBack(page);
+  await expect.poll(async () => boxOf(page, frame(page, 'plan'))).toEqual(f0);
+  const before = await head(page);
+  // The line outside the label and the tools is the frame's own, so a drag there pans: every frame
+  // moves on screen, and nothing is written. The wider of the two empty stretches: before the label
+  // (centred or sliding) or between it and the tools (at the start).
+  const part = (sel: string) => boxOf(page, frame(page, 'backlog').locator(sel));
+  const [line, label, tools] = [await part('.vb-region-head'), await part('.vb-region-label'), await part('.vb-region-tools')];
+  const [lead, gap] = [label.x - line.x, tools.x - (label.x + label.width)];
+  expect(Math.max(lead, gap)).toBeGreaterThanOrEqual(10);
+  const from = { x: lead > gap ? line.x + lead / 2 : tools.x - gap / 2, y: label.y + label.height / 2 };
+  await drag(page, from, { x: from.x + 120, y: from.y + 40 });
+  const [f2, r1] = [await boxOf(page, frame(page, 'plan')), await boxOf(page, frame(page, 'backlog'))];
+  expect([Math.round(r1.x - r0.x), Math.round(r1.y - r0.y), Math.round(f2.x - f0.x), Math.round(f2.y - f0.y)]).toEqual([120, 40, 120, 40]);
   expect(await head(page)).toBe(before);
   const t2 = centre(await boxOf(page, title));
   await page.keyboard.down('Shift');
@@ -281,8 +295,10 @@ for (const theme of THEMES) {
     await grip(page, 'risks').focus();
     await page.keyboard.press('Alt+ArrowDown');
     await expect.poll(() => regionPins(page).then((p) => Object.keys(p))).toEqual(['risks']);
-    // Parked is the last container, panned left, so its bubble opens over empty board, not another card's buttons.
-    const t = centre(await boxOf(page, frame(page, 'parked').locator('h2')));
+    // Parked is the last container, panned left (from the empty board under it), so its bubble opens
+    // over empty board, not another card's buttons.
+    const p = await boxOf(page, frame(page, 'parked'));
+    const t = { x: p.x + p.width / 2, y: p.y + p.height + 40 };
     await drag(page, t, { x: t.x - 420, y: t.y });
     await comment(page, 'Parked').click();
     await expect(page.getByRole('dialog', { name: /container Parked/ })).toBeVisible();

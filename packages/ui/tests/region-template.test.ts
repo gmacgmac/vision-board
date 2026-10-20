@@ -61,7 +61,7 @@ test('the settings menu holds Reset places and Put container back, each disabled
 
 test('the grip starts the title line: a labelled button with grip dots, for Alt+arrows too (3_FE_04 ruling 5)', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<div class="vb-region-label"><button type="button" class="vb-region-grip" aria-label="Move container Review" aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Alt\+ArrowUp Alt\+ArrowDown" title="Move container · Alt\+arrows"><\/button><h2 id="region-review">/);
+  assert.match(html, /<div class="vb-region-label"><span class="vb-region-handle"><button type="button" class="vb-region-grip" aria-label="Move container Review" aria-keyshortcuts="Alt\+ArrowLeft Alt\+ArrowRight Alt\+ArrowUp Alt\+ArrowDown" title="Move container · Alt\+arrows"><\/button><h2 id="region-review">/);
   // Later can be placed: a fixed frame keeps its grip.
   assert.match(regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true }), /class="vb-region-grip" aria-label="Move container Later"/);
 });
@@ -106,10 +106,12 @@ test('regionTemplate carries no inline style and no style element (the CSP refus
   assert.doesNotMatch(regionTemplate(region), /style=|<style/);
 });
 
-test('the top line: title, count, the retired marker (field report batch 2), holders and the title tip (the full title, hidden from assistive tech) in a label group, then the row, popover and menu in a tools group', () => {
+// Open list and container title FE_02: the grip, the title and the count are one handle (one hover
+// tint, a drag on any of them moves the container); the line's bar places the label in the middle.
+test('the top line: in its bar, a label group (the handle: grip, title and count; then the retired marker (field report batch 2), holders and the title tip, the full title hidden from assistive tech), then the row, popover and menu in a tools group', () => {
   const html = regionTemplate(region);
-  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-label"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
-  assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/header>/);
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label"><span class="vb-region-handle"><button type="button" class="vb-region-grip"[^>]*><\/button><h2 id="region-review">Review<\/h2><span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders"><\/span><span class="vb-tip vb-title-tip" aria-hidden="true">Review<\/span><\/div><div class="vb-region-tools"><div class="vb-mode-row"/);
+  assert.match(html, /<\/div><div class="vb-mode-pop".*<\/div><div class="vb-note-pop".*<\/div><div class="vb-region-menu".*<\/button><\/div><\/div><\/div><\/header>/);
 });
 
 test('holdersTemplate: the creator is plain text; any other holder is a labelled Remove access button; text is escaped', () => {
@@ -140,9 +142,9 @@ test('a long title is never cut in the markup: the heading and the tip hold it w
   assert.ok(html.includes(`<span class="vb-tip vb-title-tip" aria-hidden="true">${long}</span>`));
 });
 
-test('the title line holds the retired marker after the count, hidden until update() fills it', () => {
+test('the title line holds the retired marker after the count (outside the handle: a button of its own), hidden until update() fills it', () => {
   const html = regionTemplate(region);
-  assert.match(html, /<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders">/);
+  assert.match(html, /<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"><\/span><span class="vb-region-count-words"><\/span><\/span><\/span><button type="button" class="vb-region-retired" hidden><svg class="vb-retired-icon"[^>]*>.*?<\/svg><span class="vb-retired-n"><\/span><span class="vb-retired-word"> retired<\/span><\/button><span class="vb-region-holders">/);
   assert.match(regionTemplate(region, { fixed: true }), /class="vb-region-retired" hidden/, 'Later too: a card can be retired from it');
 });
 

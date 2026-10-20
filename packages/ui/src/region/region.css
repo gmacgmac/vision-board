@@ -21,8 +21,8 @@ vb-region {
   transition: transform var(--vb-motion) var(--vb-ease), width var(--vb-motion) var(--vb-ease), height var(--vb-motion) var(--vb-ease);
 }
 
-/* The top line straddles the border. Only its two groups take the pointer, so the line between
-   them stays part of the frame. The label's canvas-coloured background is the gap in the border;
+/* The top line straddles the border. Only its two groups take the pointer, so the rest of the line
+   stays part of the frame. The label's canvas-coloured background is the gap in the border;
    the mode row draws its own gap as a canvas-coloured ring (mockup 05 .mode-row).
    It keeps one on-screen size at every zoom (review polish ruling 2, decision 6), so a title reads
    zoomed all the way out and the controls never grow past 100%: a counter-scale of the world's zoom,
@@ -33,14 +33,30 @@ vb-region .vb-region-head {
   position: absolute; left: var(--vb-space-4); width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
   top: calc(var(--region-line-w) / -2); transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom))) translateY(-50%);
   container-type: inline-size;
-  display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3);
   pointer-events: none; cursor: default;
 }
+/* The label in the middle of the frame, the tools at the end (open list and container title FE_02,
+   PLAN § Proposed Solution 2): three columns, the label's between two equal flexible ones, the
+   tools' never narrower than the tools (with their gap to the label). With room, the two side
+   columns are equal, so the label is centred on the frame. As the line narrows on screen (zooming
+   out) the tools' column stops at the tools' own width and the first column takes what is left, so
+   the label slides left beside the tools, never onto them, until the first column is gone; only
+   then is the title cut (the label's shrink order below); zoomed out (region-narrow.css) it starts
+   the line. The tools' width is read by the grid as
+   it is at every zoom (their narrow forms too, region-narrow.css): nothing is measured, and a zoom
+   step lays out only this line, as before (rule 15). The line is the query container, so the
+   columns are on this bar inside it, whose first column (--region-lead) its narrow forms may close. */
+vb-region .vb-region-bar {
+  display: grid; grid-template-columns: var(--region-lead, minmax(0, 1fr)) minmax(0, auto) minmax(max-content, 1fr); align-items: center;
+}
+vb-region .vb-region-label { grid-column: 2; }
+vb-region .vb-region-tools { grid-column: 3; justify-self: end; margin-inline-start: var(--vb-space-3); }
 /* A glide (Fit, Z) animates the world's transform; the line's zoom follows it, so it never jumps. */
 .gliding vb-region .vb-region-head { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
-/* The label is part of the frame's background: a drag on it pans the board (3_FE_01 ruling 6). */
+/* A drag on the label (its own buttons aside) moves the container (FE_02, superseding 3_FE_01 ruling 6
+   for the label; pointer.ts), so it shows a hand; a closed one while it moves or pans (Cmd + drag). */
 vb-region .vb-region-label { cursor: grab; }
-.panning vb-region .vb-region-label { cursor: grabbing; }
+:is(.panning, [data-dragging]) .vb-region-label, vb-region .vb-region-handle:active { cursor: grabbing; }
 vb-region .vb-region-label, vb-region .vb-region-tools { display: flex; align-items: center; pointer-events: auto; }
 vb-region .vb-region-label {
   min-width: 0; gap: var(--vb-space-2); padding: 0 var(--vb-space-2); background: var(--vb-surface-canvas);
@@ -53,9 +69,24 @@ vb-region .vb-region-label { position: relative; }
    for them (only the narrowest frames have none, FE_02). The title is one line ending in "…", never
    broken mid-word; the full text stays in the DOM for screen readers (it names the container) and
    shows in the tip below when it is cut. The order is in the shrink factors (each weighed by the
-   part's width): each holder 1e12, title 1e6, count 1, so far apart that the next part's share is
+   part's width): each holder 1e12, the handle 1e6 and in it the title 1e6, count 1, so far apart that the next part's share is
    under a 64th of a pixel (any share would cut its words by a hair and show "…"); they stay at 1
    or more, as a sum under 1 would leave the overflow unshared. */
+/* The handle: the grip, the title and the count in one box, the label's first part, giving way as the
+   title does (its parts keep their own order inside it). Hovered, it takes the grip's hover tint
+   whole, so the grip and the title light together (the maintainer, 2026-10-19); it keeps it while
+   the container moves. Tokens only: the tint is --vb-surface-sunken, as the grip's own. */
+vb-region .vb-region-handle {
+  display: flex; align-items: center; gap: inherit; min-width: 0; flex: 0 1000000 auto;
+  padding-inline-end: var(--vb-space-1); border-radius: var(--vb-radius-sm);
+}
+vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-region[data-dragging] .vb-region-handle {
+  background: var(--vb-surface-sunken);
+}
+/* On the tint the title takes the strong ink in its mix, as the grip does, so it keeps Lc 60 (rule 3). */
+vb-region :is(.vb-region-handle:hover, .vb-region-handle[data-look], [data-dragging] .vb-region-handle) h2 {
+  color: color-mix(in srgb, var(--region) 20%, var(--vb-ink-strong));
+}
 vb-region .vb-region-head h2 {
   margin: 0; flex: 0 1000000 auto; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
@@ -230,10 +261,11 @@ vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
    room (FE_02). */
 [data-zoom='far'] vb-region :is(.vb-region-tools, .vb-region-grip, .vb-region-retired, .vb-region-holders) { display: none; }
 
-/* The grip (3_FE_04 ruling 5): the only handle that moves the container, at the start of the
-   title line. Always there for the keyboard and screen readers; its dots (a glyph, sized by the
-   text tokens, hidden from assistive tech) show on hover of the title line and on focus. The page
-   sets data-dragging on the frame while it is moved: only its transform changes, so no transition. */
+/* The grip (3_FE_04 ruling 5), at the start of the label: with the title and the count it moves the
+   container (FE_02), and it is the container's keyboard handle (Alt+arrows). Always there for the
+   keyboard and screen readers; its dots (a glyph, sized by the text tokens, hidden from assistive
+   tech) show on hover of the label and on focus. The page sets data-dragging on the frame while it is
+   moved: only its transform changes, so no transition. */
 vb-region .vb-region-grip {
   display: grid; place-items: center; flex: none; width: var(--vb-space-4); height: var(--vb-space-5); padding: 0;
   border: 0; border-radius: var(--vb-radius-sm); background: none; color: var(--vb-ink-subtle); cursor: grab;
@@ -243,8 +275,11 @@ vb-region .vb-region-grip::before {
   opacity: 0; transition: opacity var(--vb-motion-fast);
 }
 vb-region .vb-region-label:hover .vb-region-grip::before, vb-region .vb-region-grip:focus-visible::before,
-vb-region .vb-region-grip[data-look]::before, vb-region[data-dragging] .vb-region-grip::before { opacity: 1; }
-vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'] { color: var(--vb-ink-strong); background: var(--vb-surface-sunken); }
+vb-region .vb-region-grip[data-look]::before, vb-region .vb-region-handle[data-look] .vb-region-grip::before,
+vb-region[data-dragging] .vb-region-grip::before { opacity: 1; }
+vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'], vb-region .vb-region-handle:is(:hover, [data-look]) .vb-region-grip {
+  color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
+}
 vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
 vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }

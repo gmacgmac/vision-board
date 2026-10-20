@@ -18,16 +18,13 @@ import type {
 } from '../../../../packages/chat/src/index.ts';
 import { CHAT_CHANGE_EVENT } from '../../../../packages/chat/src/index.ts';
 import type { BoardData } from './io.ts';
+import { clip } from './clip.ts';
 import type { Selection } from './selection.ts';
 
 /** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
 export const SOURCE_LABEL = 'Show in the chat';
 
 const LABEL_MAX = 80;
-const clip = (text: string): string => {
-  const flat = text.replace(/\s+/g, ' ').trim();
-  return flat.length <= LABEL_MAX ? flat : `${flat.slice(0, LABEL_MAX - 1)}…`;
-};
 
 /** The selected cards, in the order they were selected, by number and title; a node with no number is no card. */
 export function selectedCards(d: BoardData, ids: readonly string[]): SelectedCard[] {
@@ -42,7 +39,7 @@ export const boardCards = (d: BoardData, selected: readonly string[], spent: Rea
   selectedCards(d, selected).filter((c) => !spent.has(c.n));
 
 /** A card as the message's chip: its body's `cards`, the label the feed shows. */
-export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title) || `Card ${c.n}` });
+export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title, LABEL_MAX) || `Card ${c.n}` });
 
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 

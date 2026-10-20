@@ -1,14 +1,16 @@
 // Gallery entry for the toolbar's end group with its icons and "⋯" menu (toolbarMenu flag, toolbar
 // icons and menu): the board's own ToolbarEnd, mounted in the page flow without the board's ids,
 // wide (words), narrow (icons, as a window of 1500px or less draws it: the sample carries
-// data-narrow itself) and narrow with the menu open. Shown only with the flag on, so
-// ?flags=-toolbarMenu draws the gallery as it was.
+// data-narrow itself) and narrow with the menu open; with the openList flag, the "N open" chip's
+// samples (open-list-section.ts). Shown only with the flag on, so ?flags=-toolbarMenu draws the
+// gallery as it was.
 import { mount } from 'svelte';
 import ToolbarEnd from '../shell/ToolbarEnd.svelte';
 import { flagOn } from '../../../../packages/format/src/index.ts';
 import { pageFlags } from '../flags.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
+import { openListGroups } from './open-list-section.ts';
 
 function sample(fx: Fixture, narrow: boolean, zoom: number, menuOpen = false): HTMLElement {
   const host = el('div', 'g-toolbar');
@@ -39,6 +41,7 @@ export function toolbarSection(fx: Fixture): HTMLElement {
     meta,
     group('Wide', 'A window wider than 1500px: the buttons show their words.', sample(fx, false, 100)),
     group('Narrow', 'A window of 1500px or less: Agents, Send to agent and Chat show their icon (Agents with its count); the words stay for screen readers and the tooltip says them.', sample(fx, true, 75)),
-    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide answered is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, 250, true)));
+    group('Menu open', 'A click or Enter on "⋯": each row with its icon and key; Hide answered is a checkbox row, and so is Centre cards with the alignSetting flag; with the openFolder flag, Open folder… ends it. Esc, a click outside or a choice closes it.', sample(fx, true, 250, true)),
+    ...(flagOn('openList', pageFlags()) ? [openListGroups(fx)] : []));
   return box;
 }

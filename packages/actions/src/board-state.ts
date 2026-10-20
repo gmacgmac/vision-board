@@ -75,6 +75,20 @@ export function boardState(s: LedgerState, board: string): BoardState {
 /** One item's status on a board; an item nobody has answered is open. */
 export const statusOf = (s: BoardState, id: string): ItemStatus => s.items.get(id)?.status ?? 'open';
 
+/** One open card as the toolbar's open list shows it (open-list FE_01): its board number, node id
+ * (`String(n)`) and title. */
+export interface OpenCard { n: number; id: string; title: string }
+
+/** Whether a card with status `x` needs the person: no ✓ or ✗, not Later, not with the agent. */
+const needsPerson = (x: ItemStatus) => !DECIDED.has(x) && x !== 'later' && x !== 'commented';
+
+/** The board's open cards in board number order: the cards `counts` counts as open (it reads this
+ * list, so the "N open" chip and its list never disagree; open-list FE_01). */
+export function openCards(view: View, s: BoardState): OpenCard[] {
+  return view.nodes.filter((n) => NODE_TYPES[n.kind].answer && needsPerson(statusOf(s, n.id)))
+    .map((n) => ({ n: Number(n.id), id: n.id, title: n.title })).sort((a, b) => a.n - b.n);
+}
+
 /** How many of a board's cards that need an answer (api.md 118) are open (they need the person), with
  * the agent (a note of the person's waits for its answer, `commented`), answered (✓ or ✗) and later:
  * "N open · N replied · N answered · N later" on the page (D-045, D-046, replied-word ruling 1). A card
@@ -87,6 +101,6 @@ export function counts(view: View, s: BoardState) {
     answered: st.filter((x) => DECIDED.has(x)).length,
     later: st.filter((x) => x === 'later').length,
     withAgent: st.filter((x) => x === 'commented').length,
-    open: st.filter((x) => !DECIDED.has(x) && x !== 'later' && x !== 'commented').length,
+    open: openCards(view, s).length,
   };
 }

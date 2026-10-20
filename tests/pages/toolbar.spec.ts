@@ -241,7 +241,8 @@ test('gallery: the toolbar section shows by default, wide, narrow and with the m
 for (const theme of THEMES) {
   test(`gallery: the toolbar section passes axe and matches its screenshot (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html');
+    // Without the open list's samples (openList flag), which open-list.spec.ts shoots on their own.
+    await page.goto('/gallery.html?flags=-openList');
     await expect(section(page)).toBeVisible();
     await expectNoAxeViolations(page);
     await expect(section(page)).toHaveScreenshot(`toolbar-${theme}.png`);

@@ -3,7 +3,9 @@
      titles only, the title heading is for screen readers, and the version dropdown lists the open
      board's own versions, "now" first, then each past one with its time (board/versions.ts);
      choosing one shows the board as it was, read-only (VersionBanner), with no Agents or Send.
-     With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it. The picker marks a board the person has not opened " · new" and one an agent wrote on
+     With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it.
+     With the openList flag the "N open" chip lists the open cards and goes to the one chosen (OpenChip;
+     both dropdowns are MenuSelect). The picker marks a board the person has not opened " · new" and one an agent wrote on
      since they last looked " · changed", never the open one, and a chip counts both (the conditions
      table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
@@ -29,6 +31,8 @@
   import ButtonIcon from './ButtonIcon.svelte';
   import FlaggedChip from './FlaggedChip.svelte';
   import LockedChip from './LockedChip.svelte';
+  import MenuSelect from './MenuSelect.svelte';
+  import OpenChip from './OpenChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
@@ -37,12 +41,14 @@
   import { flagOn } from '../../../../packages/format/src/index.ts';
   import { pageFlags } from '../flags.ts';
 
-  let { onboard, onversion, ongo, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {
+  let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {
     onboard: (id: string) => void;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
     /** Zoom to a container (containerFinder flag, board/finder.ts). */
     ongo: (container: string) => void;
+    /** Go to open card `n` (openList flag, OpenChip). */
+    onopen: (n: number) => void;
     oncommand: (id: CommandId) => void;
     onhide: () => void;
     onsend: () => Promise<string | null>;
@@ -75,6 +81,7 @@
   const toolbarMenu = flagOn('toolbarMenu', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
   const locking = flagOn('lockBoard', pageFlags());
+  const openList = flagOn('openList', pageFlags());
   /** The picker entry that opens the Archived list: never a board id, which holds no ":". */
   const ARCHIVED = ':archived';
   /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
@@ -141,19 +148,13 @@
   {/if}
   <LockedChip id="locked" locked={shell.locked} />
   {#if shell.containers.length}
-    <label class="vb-visually-hidden" for="containers">Containers</label>
-    <select id="containers" class="vb-select vb-select-menu" value=""
-      onchange={(e) => { if (e.currentTarget.value) ongo(e.currentTarget.value); e.currentTarget.value = ''; }}>
-      <option value="">Containers</option>
-      {#each shell.containers as c (c.id)}
-        <option value={c.id} disabled={!c.usable}>{label(rowText(c))}</option>
-      {/each}
-    </select>
+    <MenuSelect id="containers" label="Containers" name="Containers" onpick={ongo}
+      rows={shell.containers.map((c) => ({ value: c.id, text: label(rowText(c)), disabled: !c.usable }))} />
   {/if}
   <div id="counts" class="vb-counts" aria-live="polite">
     {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
     {#if shell.version !== null}
-      <span class="vb-chip" data-tone="open" title="Open items"><b>{shell.counts.open}</b> <span class="vb-chip-word">open</span></span>
+      <OpenChip count={shell.counts.open} cards={openList ? shell.openCards : []} onpick={onopen} />
       {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Replied items"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">replied</span></span>{/if}
       <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>

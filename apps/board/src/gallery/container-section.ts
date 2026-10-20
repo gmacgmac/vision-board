@@ -1,5 +1,5 @@
 // Gallery samples for notes on a whole container and moving containers (3_FE_04): the title
-// line's grip and Comment at rest, hovered, focused and pressed; every container-note state of
+// line's grip (with the title, one hover tint: FE_02) and Comment at rest, hovered, focused and pressed; every container-note state of
 // step 4G: Comment's badge with no note, unsent (bright), sent and waiting (quiet) and answered
 // (none); the note preview open by hover and by keyboard focus; the note block shown in the
 // container, short and long (cut at 3 lines with "Show all"); a narrow frame with a badge; Comment
@@ -43,6 +43,8 @@ const EXTRA: Record<string, Extra> = {
 
 function lookOf(f: VbRegionElement, look: Look): void {
   f.querySelector('.vb-region-grip')?.setAttribute('data-look', look);
+  // Hovering the grip or the title tints the whole handle (open list and container title FE_02).
+  if (look === 'hover') f.querySelector('.vb-region-handle')?.setAttribute('data-look', look);
   const comment = f.querySelector('.vb-region-comment');
   if (look === 'hover') comment?.toggleAttribute('data-hover', true);
   else comment?.setAttribute('data-look', look);
@@ -74,8 +76,9 @@ function frames(board: Containers): HTMLElement {
 
 export function containerSamples(body: HTMLElement, fx: Fixture): void {
   body.append(group('Notes on a container, and moving it',
-    'The grip at the start of the title line moves the container; Comment, beside the cog, opens its note. '
-    + '"Hover", "Focus" and "Pressed" draw the grip and Comment in that look. A note gives Comment a badge "1": '
+    'A drag on the grip, the title or the count moves the container; Comment, beside the cog, opens its note. '
+    + '"Hover", "Focus" and "Pressed" draw the grip and Comment in that look (hovered, the grip and the title '
+    + 'tint together). A note gives Comment a badge "1": '
     + 'bright while unsent, quiet once sent. "Hover" has the note preview open as the pointer opens it, "Focus" '
     + 'as keyboard focus does; "Note sent" shows its note in the container. "Note open" is how '
     + 'the title line looks while its bubble is up. The cog\'s menu is open on "At rest" (Put container back '

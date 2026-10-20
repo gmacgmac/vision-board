@@ -2,14 +2,15 @@
 // click selects it (Shift, Cmd or Ctrl adds or removes it), a drag on its kind tab moves it, with
 // the rest of the selection when it is selected (the drop is judged by moves.ts: another
 // container, its own, or nowhere), and a drag on its content selects text and never pans. On the
-// board's or a container's background (its top line outside its controls included): a drag pans
+// board's or a container's background (its top line outside its label and tools): a drag pans
 // and a click clears the selection; Shift+drag draws the lasso (Shift+Cmd/Ctrl+drag adds). The
 // middle button pans anywhere, and so does a Cmd or Ctrl + drag (review-polish ruling 13): over
 // text, a card, a control, a hover box or a popover; held still, that press keeps its own meaning
 // (a Cmd click adds or removes a card, opens a link in a new tab, presses a button). While that key
 // is held over the board the pointer is a hand, a closed one during the pan (review polish round 2
-// ruling 6; text fields keep their cursor, board.css). A drag on a container's grip moves the
-// container (3_FE_04 ruling 5, container-drag.ts). While a pan, a move or a lasso runs, nothing on
+// ruling 6; text fields keep their cursor, board.css). A drag on a container's label (its grip, title
+// or count, not its other buttons) moves the container (3_FE_04 ruling 5; open list and container
+// title FE_02, container-drag.ts); held still, a press on the title is the background's click. While a pan, a move or a lasso runs, nothing on
 // the page gets text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live
 // in keys.ts (project rule 5).
 import type { Box, Point } from '../../../../packages/layout/src/index.ts';
@@ -36,8 +37,8 @@ export interface PointerHandlers {
   lassoMove(from: Point, to: Point): void;
   lassoEnd(from: Point, to: Point, add: boolean): void;
   lassoCancel(): void;
-  /** A drag on a container's grip (3_FE_04 ruling 5): it starts, moves by `d` board units since
-   *  the press, and ends (null: the pointer was lost). A click on the grip calls none of them. */
+  /** A drag on a container's label (3_FE_04 ruling 5, FE_02): it starts, moves by `d` board units
+   *  since the press, and ends (null: the pointer was lost). A click on the label calls none of them. */
   frameStart(region: string): void;
   frameMove(d: Point): void;
   frameEnd(d: Point | null): void;
@@ -51,8 +52,10 @@ const INTERACTIVE = 'button, select, a, input, textarea, .vb-region-tools, vb-no
 const OWN_MIDDLE = 'a, input, textarea, select, vb-note-bubble';
 /** The one place a card is moved from (ruling 4): the kind tab with its grip dots. */
 const HANDLE = '.vb-node-kind';
-/** The one place a container is moved from (3_FE_04 ruling 5): the grip on its title line. */
+/** The container's keyboard handle (3_FE_04 ruling 5), the start of its label; a drag on it, or on the
+ *  rest of the label but its own buttons and its tip (FE_02), moves the container. */
 const GRIP = '.vb-region-grip';
+const LABEL = '.vb-region-label';
 /** Where a Cmd or Ctrl press keeps the field's own press (a caret, a selection): never a pan. */
 const OWN_PRESS = 'input, textarea, select, [contenteditable]';
 export const DRAG_THRESHOLD = 4;
@@ -72,8 +75,9 @@ type Gesture =
   | Start & { kind: 'press'; id: string; el: HTMLElement; add: boolean }
   /** Shift on a background: the lasso; `add` when Cmd or Ctrl is held too. */
   | Start & { kind: 'lasso'; add: boolean }
-  /** On a container's grip: the frame and its cards move (container-drag.ts). */
-  | Start & { kind: 'frame'; region: string; el: HTMLElement };
+  /** On a container's label: the frame and its cards move (container-drag.ts). `el`: its grip, which
+   *  takes focus after a move; `grip`: the press was on the grip itself, so a click focuses it too. */
+  | Start & { kind: 'frame'; region: string; el: HTMLElement; grip: boolean };
 
 export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): void {
   let g: Gesture | null = null;
@@ -106,13 +110,15 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
 
   /** The gesture a left press starts, Cmd and Ctrl aside (a Cmd or Ctrl press wraps it). */
   function begin(e: PointerEvent, t: HTMLElement): void {
-    // The grip is a button (it takes focus for Alt+arrows), so it is looked for before the other
-    // controls; a press on it starts a container move, never a pan (unless Cmd or Ctrl drags it).
-    const gripEl = e.button === 0 && !e.shiftKey ? t.closest<HTMLElement>(GRIP) : null;
-    const region = gripEl?.closest<HTMLElement>('vb-region')?.dataset.region;
-    if (gripEl && region) {
-      g = { kind: 'frame', ...start(e), region, el: gripEl };
-      stopMouse = true; // no text selection; focus is given on release
+    // The label moves its container, never pans (unless Cmd or Ctrl drags it). The grip is a button
+    // (it takes focus for Alt+arrows), so the label is looked for before the other controls.
+    const frame = e.button === 0 && !e.shiftKey ? frameAt(t) : null;
+    if (frame) {
+      g = { kind: 'frame', ...start(e), ...frame };
+      // The grip's press: no text selection, focus is given on release. The title's keeps a
+      // background press's default, so a click there does what it did (3_FE_01 ruling 6).
+      stopMouse = frame.grip;
+      if (!frame.grip) document.getSelection()?.removeAllRanges();
       return capture(e);
     }
     if (e.button !== 0 || t.closest(INTERACTIVE)) return;
@@ -223,7 +229,8 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
       d.el.focus({ preventScroll: true });
     } else if (d.kind === 'frame') {
       if (d.moved) h.frameEnd(e.type === 'pointerup' ? { x: (e.clientX - d.sx) / vp.k, y: (e.clientY - d.sy) / vp.k } : null);
-      d.el.focus({ preventScroll: true });
+      if (d.moved || d.grip) d.el.focus({ preventScroll: true });
+      else if (click) h.clear();
     } else if (d.kind === 'press' && click) {
       // A plain click focused the card itself; a modified one was kept from doing so.
       if (d.add) d.el.focus({ preventScroll: true });
@@ -250,6 +257,17 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (e.ctrlKey || e.metaKey) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
     else vp.panBy(-e.deltaX, -e.deltaY);
   }, { passive: false });
+}
+
+/** The container a press on `t` moves, with its grip: on the grip, or on the rest of its label but the
+ *  label's own buttons and its tip. On a past version (read-only) only the grip, which is hidden there:
+ *  nothing moves, so the title is the frame's background again and pans. */
+function frameAt(t: HTMLElement): { region: string; el: HTMLElement; grip: boolean } | null {
+  const grip = t.closest(GRIP) !== null;
+  const label = grip || !t.closest(`${INTERACTIVE}, .vb-tip, [data-readonly]`) ? t.closest(LABEL) : null;
+  const f = label?.closest<HTMLElement>('vb-region');
+  const el = f?.querySelector<HTMLElement>(GRIP);
+  return f?.dataset.region && el ? { region: f.dataset.region, el, grip } : null;
 }
 
 /** The hand that says a drag will pan (round 2 ruling 6): `data-pan-key` on the stage while the pan

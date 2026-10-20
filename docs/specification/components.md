@@ -343,8 +343,9 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
    `cards.ts`: those cards are updated, nothing is measured, placed or laid out.
 3. **Pointer** (`pointer.ts`): a click on a card selects it (Shift, Cmd or Ctrl adds or removes);
    only the kind tab (`.vb-node-kind`) moves a card; a drag on a card's content selects text; a
-   drag on a background (the board, a frame, a frame's title line outside its tools) pans and a
-   click there clears; Shift+drag on a background is the lasso's; the middle button pans anywhere.
+   drag on a background (the board, a frame, a frame's title line outside its label and tools) pans
+   and a click there clears (a drag on the label moves its container: open list and container title
+   FE_02, below); Shift+drag on a background is the lasso's; the middle button pans anywhere.
    **Cmd or Ctrl + drag pans from anywhere** (review polish ruling 13): over a card's text, its kind
    tab, a note, a reply, a button, an open hover tip, the note bubble or a card's popover. The press
    becomes a pan only once it moves past the drag threshold (`DRAG_THRESHOLD`, 4px), then holds the
@@ -412,6 +413,28 @@ never shrink beyond these forms; the holders give way first, then the title, one
 (the container's accessible name) and the title tip shows it on hover and focus. At 20% the line's
 lower edge reaches about 1px into the first row's top edge (the line's room is `REGION_HEAD` board
 units).
+
+**The title's place, and moving a container by it (open list and container title FE_02, superseding
+3_FE_01 ruling 6 for the label).** The label (grip, title and count: one `.vb-region-handle`, then the
+retired marker and the holders) sits in the middle of the top line. The line's bar (`region.css`
+`.vb-region-bar`) is a grid of three columns, the label's between two equal flexible ones, the tools'
+never narrower than the tools and their gap. With room the label is centred on the frame; as the line
+narrows on screen (zooming out) the tools' column stops at the tools' width and the first column takes
+what is left, so the label slides left beside the tools, never onto them, until the first column is
+gone; only then is the title cut. Nothing is measured: the grid reads the tools as they are at each
+zoom, their narrow forms included. In the collapsed forms the first column is closed
+(`region-narrow.css` `--region-lead`), since the expanded row leaves the flow; the full row leaves no
+room to centre there, so the label never jumps. Below `FAR_K`, where the tools leave the line, it is
+closed too: zooming out only ever moves a title left, and it takes the tools' room. A drag on the
+label (its other buttons and its tip aside) moves the container as the grip does, at any zoom, and
+writes one container `pin` (`pointer.ts` `frameAt`, `container-drag.ts`);
+the grip takes focus after the move and keeps Alt+arrows. Held still, a click on the title is the
+background's click (it clears the selection). The rest of the line, and Cmd or Ctrl + drag anywhere,
+still pan; on a past version the title pans. Hovering the handle tints the grip, the title and the
+count together in the grip's hover look (`--vb-surface-sunken`), kept while the frame moves. Held by
+`tests/pages/container-title.spec.ts` (centred within 2px at 100%, slid left at 70%, never on the
+tools, at the start from 50% and cut at 20%; the drag at 100% and 40%; the click; the tint and its APCA, the
+title Lc 60 or more on it) and `containers.spec.ts`.
 
 ## The lasso, the selection bar and view commands (3_FE_02)
 
@@ -532,6 +555,9 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    ("0 items") while empty. Choosing one zooms to its frame (`Board.goToContainer`, `vp.fit`) and
    focuses its title; zooming is no act, so it works in a past version too. There is no key. Code:
    `apps/board/src/board/finder.ts` (`containerRows`, `zoomToContainer`), `shell/Toolbar.svelte`.
+   The dropdown is `shell/MenuSelect.svelte`, the one menu dropdown pattern (item 7 uses it too): a
+   native select that shows its name, calls `onpick` with a row's value and shows its name again
+   (`tests/pages/finder.spec.ts`).
 3. **The key bubble** (`keyBubble` flag). The round "?" at the bottom left lists every key. It is
    generated from `COMMANDS` and the registry `ACTIONS`, never written twice (see 3_FE_02 item 6).
    Code: `apps/board/src/board/key-help.ts`, `shell/KeyHelp.svelte`, `styles/key-help.css`.
@@ -571,6 +597,23 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    last board is kept per folder. Styles: `styles/folder-dialog.css`. The gallery draws the picker in
    each state (`gallery/folder-section.ts`); `tests/pages/open-folder.spec.ts` covers it. Off, the menu
    and title are as before and the page never calls the folder routes.
+
+7. **The open cards list** (`openList` flag, on by default; task set
+   `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's
+   "N open" chip (`shell/OpenChip.svelte`) is a `MenuSelect` lying unseen over the chip
+   (`.vb-menu-face`, `.vb-menu-over` in `styles/board.css`), named "Go to an open card": the chip
+   keeps its look and draws the hover, pressed and focus looks. Its rows are the open cards
+   (`packages/actions` `board-state.ts` `openCards`, which `counts.open` counts, so the two cannot
+   disagree; `packages/actions/tests/open-cards.test.ts`) as "12 · title" in board number order,
+   a title past `OPEN_ROW_MAX` cut with "…" (`finder.ts` `openRow`, `board/clip.ts` `clip`) and
+   whole in the option's tooltip (`apps/board/tests/open-list.test.ts`). Choosing one goes to the
+   card as Go to card's Enter does (`go-to-card.ts` `to`, § Go to a card by its number); it is no
+   act, so it works in a past version, on that version's open cards. With nothing open it is the
+   plain chip. The list's keys are the browser's: Playwright cannot drive a native popup, so
+   `tests/pages/open-list.spec.ts` checks Tab reach, the named combobox and its options, a choice
+   (focus, selection, pan), the cut title, nothing open, a past version (nothing sent), the flag
+   off, axe light and dark, and the gallery samples' screenshots (`gallery/open-list-section.ts`,
+   in the toolbar section). Off, the chip is plain.
 
 ## Every card in the conversation (every-node FE_01)
 

@@ -168,3 +168,18 @@ test('nothing goes by itself; with the goAfterPause flag a pause after the last 
   on.go.edit(''); // nothing typed: nothing to go to
   assert.equal(on.timer(), null);
 });
+
+test('a number chosen elsewhere (the open list) goes as Enter would, closing an open box; not there, the box says why', () => {
+  const b = box({ 12: { to: 'card', id: '12' } });
+  b.go.open('9');
+  b.go.to(12);
+  assert.deepEqual(b.did, ['arrive 12']);
+  assert.equal(b.go.box, null);
+  const c = box({ 1: { to: 'card', id: '1' } }, 1000);
+  c.go.to(1);
+  assert.deepEqual(c.did, ['arrive 1']);
+  assert.equal(c.timer(), null, 'no pause starts');
+  const d = box({ 4: { to: 'hidden' } });
+  d.go.to(4);
+  assert.deepEqual(d.last(), { text: '4', said: 'Card 4 is hidden with the answered cards (H shows them)' });
+});

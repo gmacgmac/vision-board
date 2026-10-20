@@ -158,6 +158,11 @@ export const FLAGS = {
     default: true,
     description: 'A digit typed on the board, outside a text field, opens a small "Go to card" box at the board\'s bottom right holding it: Enter selects and focuses that card (the board pans only when it is off screen, the zoom stays), Backspace edits, Esc closes. A number with no card says so and the box stays; a retired card says it was removed and offers the version where it last appeared. Off, digits do nothing.',
   },
+  openList: {
+    // On by default: the maintainer asked for it (chat 2026-10-19, point 43; open-list FE_01); ?flags=-openList turns it off.
+    default: true,
+    description: 'The toolbar\'s "N open" chip is a menu dropdown listing the open cards as "number · title" in board order (a long title cut with "…", whole in the option\'s tooltip); choosing one goes to it as Go to card does: selected and focused, the board panning only when it is off screen. It works in a past version. With nothing open it is the plain chip. Off, the chip is plain.',
+  },
   appCards: {
     // On by default (maintainer's go, 2026-10-17, app-cards ruling 13); ?flags=-appCards turns it off.
     default: true,

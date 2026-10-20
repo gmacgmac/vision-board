@@ -203,14 +203,21 @@ test('a drag on the board\'s background pans and selects nothing', async ({ page
   expect(await docSelection(page)).toBe('');
 });
 
-test('U5: a drag across a container\'s title pans and leaves no text selected', async ({ page }) => {
+test('U5: a drag across a container\'s title moves the container and leaves no text selected', async ({ page }) => {
   await openBoard(page);
   const h2 = page.locator('vb-region[data-region="review"] h2');
   const before = await worldAt(page);
   const start = await at(h2, 0.1, 0.5);
-  await drag(page, start, 260, 30);
+  // The title moves its container (open list and container title FE_02), not the board. Brought back
+  // to where it started, so nothing is written and the shared board keeps its layout.
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 260, start.y + 30, { steps: 8 });
+  await expect(page.locator('vb-region[data-region="review"]')).toHaveAttribute('data-dragging', '');
+  await page.mouse.move(start.x, start.y, { steps: 8 });
+  await page.mouse.up();
   expect(await docSelection(page)).toBe('');
-  expect(await worldAt(page)).toEqual({ x: before.x + 260, y: before.y + 30 });
+  expect(await worldAt(page)).toEqual(before);
   // From inside the frame, across the title and a card, too.
   const frame = (await page.locator('vb-region[data-region="review"]').boundingBox())!;
   await drag(page, { x: frame.x + 8, y: frame.y + frame.height - 8 }, 300, -frame.height + 20);

@@ -102,8 +102,9 @@ test('node: the other states are drawn', async ({ page }) => {
 test('region: each mode, the count, the empty message and no count; Later and a drop target (3_FE_03)', async ({ page }) => {
   const frames = page.locator('section[data-pattern="region"] vb-region');
   // Eleven frames (a row frame, field report batch 2 ruling 4), the three long titles (FE_03), then the eight container
-  // samples (3_FE_04), the three container note states (step 4G) and a container drawn at 40% (review polish FE_02).
-  await expect(frames).toHaveCount(26);
+  // samples (3_FE_04), the three container note states (step 4G), a container drawn at 40% (review polish FE_02)
+  // and the title's three places (open list and container title FE_02).
+  await expect(frames).toHaveCount(29);
   for (const mode of ['grid', 'flow', 'lanes', 'radial', 'column', 'row']) {
     const frame = frames.filter({ has: page.locator(`h2:text-is("${mode[0]!.toUpperCase()}${mode.slice(1)} mode")`) });
     await expect(frame).toHaveAttribute('data-mode', mode);

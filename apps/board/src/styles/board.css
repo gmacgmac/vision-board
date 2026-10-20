@@ -105,8 +105,14 @@ body {
    are the chip's ink; the flag is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on
    the chip; 58.7, -53.6 hovered). */
 .vb-chip-btn { border: 0; font: inherit; font-size: var(--vb-text-sm); cursor: pointer; }
-.vb-chip-btn:hover { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
-.vb-chip-btn:active { transform: translateY(1px); }
+.vb-chip-btn:hover, .vb-menu-face:hover, .vb-menu-face[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
+.vb-chip-btn:active, .vb-menu-face:active, .vb-menu-face[data-look='pressed'] { transform: translateY(1px); }
+/* A menu dropdown over a chip (shell/MenuSelect.svelte with a face: the "N open" chip, open-list FE_01):
+   the select lies unseen over the chip, so a click or a key opens its list while the chip keeps its
+   look; the chip draws the hover and pressed looks above and the focus ring the select would. */
+.vb-menu-face { position: relative; cursor: pointer; }
+.vb-menu-over { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font: inherit; cursor: pointer; }
+.vb-menu-face:has(.vb-menu-over:focus-visible), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 .vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag); }
 
 /* Stage and world */

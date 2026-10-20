@@ -22,8 +22,8 @@ export const regionIds = (id: string) => ({
   noteText: `region-${id}-note-text`,
 });
 
-/** The grip at the start of the title line (3_FE_04 ruling 5): the only handle that moves the
- * container. Its dots are drawn by region.css; the page wires drag and Alt+arrows to it. */
+/** The grip at the start of the label (3_FE_04 ruling 5), the container's keyboard handle: Alt+arrows
+ * move it. Its dots are drawn by region.css; the page wires drag and Alt+arrows to it. */
 const grip = (title: string): string =>
   `<button type="button" class="vb-region-grip" aria-label="Move container ${title}"`
   + ' aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="Move container · Alt+arrows"></button>';
@@ -138,6 +138,12 @@ const RETIRED_MARKER = `<button type="button" class="vb-region-retired" hidden>$
 const COUNT = '<span class="vb-region-count" hidden><span class="vb-region-count-n" aria-hidden="true"></span>'
   + '<span class="vb-region-count-words"></span></span>';
 
+/** What a drag moves the container by (open list and container title FE_02): the grip, the title and
+ * the count, one box with one hover tint (region.css). The line's bar sets it in the middle of the
+ * frame, sliding left when the line is short. */
+const handle = (title: string, heading: string): string =>
+  `<span class="vb-region-handle">${grip(title)}<h2 id="${heading}">${title}</h2>${COUNT}</span>`;
+
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
   const title = esc(r.title);
@@ -147,10 +153,10 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
-  return `<header class="vb-region-head"><div class="vb-region-label">${grip(title)}<h2 id="${ids.heading}">${title}</h2>`
-    + `${COUNT}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
+  return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
+    + `${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`
-    + `</header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
+    + `</div></header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 
 /**

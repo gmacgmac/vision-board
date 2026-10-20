@@ -83,6 +83,7 @@
   onboard={(id) => board?.switchTo(id)}
   onversion={(seq) => board?.showVersion(seq) ?? Promise.resolve()}
   ongo={(id) => board?.goToContainer(id)}
+  onopen={(n) => board?.go.to(n)}
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
   onsend={() => (board ? send(board) : Promise.resolve('The board is not ready yet.'))}
