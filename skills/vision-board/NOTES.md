@@ -585,3 +585,19 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   with Claude Code and Kiro before relying on it. Kiro reads the new text when the board next starts
   (`~/.kiro/agents/vision-board.json` is written from SKILL.md at start); a running chat keeps v3.9
   until then.
+- 2026-10-25, agent (tool-examples): v3.11 adds one bullet to Writing cards: each item wraps its
+  content (`node: { ... }`, `region: { ... }`), and `write_board`'s description and a refusal show the
+  exact shape. Why: a field agent guessed flat items and found the shape only by reading the ledger.
+  The shapes are not copied into the skill (rule 6): they live in the schemas and reach the agent
+  through the tool descriptions and the refusals. Scenario 34 is new (the task file said 26, which
+  was taken).
+- 2026-10-25, agent: **a live run of scenario 34, one agent, once.** A fresh agent (model `sonnet`,
+  a sub-agent given only the MCP's server instructions and tool list through a stdio bridge to
+  `vb-mcp.ts`, on a test board server on port 4570 over a temporary empty project; not the skill, not the
+  ledger) joined and made one `write_board` call: a `board` item, a `region` item with
+  `region: { id, title, mode }`, two `node` items with `node: { region, kind, title }` (`question`,
+  `action`) and a `link` by `{ key }`, every item keyed. All five items answered `ok` on that call;
+  no refusal. The server's own call log confirms the shape. A good run. Not run: Kiro, a second
+  model, or a run without the examples to compare (so this shows the shape is reachable from the tool
+  list, not that the examples caused it). One gap the agent named: nothing says how to pick the
+  path's `board` id for a new board (it slugged the title, which worked).

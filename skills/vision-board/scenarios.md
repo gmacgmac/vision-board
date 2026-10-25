@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.8
+status: v3.11
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -48,6 +48,8 @@ v3.9 (skill v3.9, apps bring their own design): 29 updated (its own neutral pale
 32 (restyle an app on a note) new.
 v3.10 (skill v3.10, apps keep the person's place): 33 (a multi-step app that keeps its place) new;
 29 now also checks the 12 px top padding.
+v3.11 (skill v3.11, tool examples): 34 (the first write in a new project, with no ledger to copy from)
+new. It is numbered 34 because 26 was already taken.
 
 ## 1. A review with 12 findings (panel)
 
@@ -737,3 +739,21 @@ reload the page and come back to card 1.
 - **Fails if** the panel keeps the place in `localStorage` (it throws), keeps the place in a tool,
   saves on every key press, uses the saved value without checking it, puts a key or secret in the
   state, restores from `hostContext.state`, or has no padding at the top.
+
+## 34. First write in a new project, with no ledger to copy from (own chat)
+
+**Situation.** A new project with no `.visionboard/` ledger of its own. The agent has joined and
+knows only the tool list. The person says: "Put the launch checklist on the board: a container for
+the open points, a question card 'Ship on Friday or Monday?', an action card 'Book the release
+call', and a link between them."
+
+**A good run**
+- Its first `write_board` call has the wrapped shape: a `board` item with `title`, a `region` item
+  with `region: { id, title, mode }`, two `node` items each with `node: { region, kind, title }`
+  (kinds `question` and `action`), and a `link` item naming the two by `{ key }`; every item has a
+  `key`. It did not read a ledger file to learn the shape.
+- All items answer `ok` on that one call; the link needs no second call.
+- If an item is refused, it reads the `example` in the refusal and resends only that item with the
+  same key.
+- **Fails if** an item puts `title` or `kind` beside `type` (a flat node), needs a call to find the
+  shape, reads `.visionboard/ledger.jsonl` for it, or writes coordinates.

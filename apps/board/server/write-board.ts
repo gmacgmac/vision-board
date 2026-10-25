@@ -9,7 +9,9 @@ import type { LedgerEvent } from '../../../packages/format/src/index.ts';
 import { LIMITS, codePoints, latest, toLine } from '../../../packages/format/src/index.ts';
 import type { LedgerState, RetireTarget, WriteItem } from '../../../packages/actions/src/index.ts';
 import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '../../../packages/actions/src/index.ts';
+import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
 import type { Ledger } from './ledger.ts';
+import type { PointerError } from './problem.ts';
 import { ProblemError } from './problem.ts';
 import { schemaProblems } from './schema.ts';
 import type { ItemProblem } from './write-problem.ts';
@@ -18,8 +20,8 @@ import type { Batch } from './write-refs.ts';
 import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
 
 export type { ItemProblem } from './write-problem.ts';
+export { WRITE_ITEM_ID };
 
-export const WRITE_ITEM_ID = 'https://vision-board.invalid/schema/api/write-item.schema.json';
 const KEY_ID = 'https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key';
 
 type Rec = Record<string, unknown>;
@@ -205,12 +207,20 @@ function checkProposeWord(i: number, raw: unknown): void {
 /** The item as the ledger names it: a proposal's `check` or `cross` stored as `ack` or `drop`. */
 const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, action: actionIn(String(item.action)) } : item);
 
+/** A refused item (api.md 40): one naming a known `type` comes back with that form's example; one
+ * with a missing or unknown `type` lists the ten types. */
+function refuse(i: number, raw: unknown, errors: readonly PointerError[]): never {
+  const example = itemExample(isRec(raw) ? raw.type : undefined);
+  if (example === undefined) {
+    fail('invalid', `Each item needs a \`type\`, one of ${itemTypes().map((t) => `\`${t}\``).join(', ')}, and the fields of that type. Each type's form in the items schema of write_board has an example. Fix the fields listed in errors and send it again.`, { errors: under(i, errors) });
+  }
+  fail('invalid', 'This item does not fit the write-item schema. Fix the fields listed in errors, as `example` shows for this type, and send it again.', { errors: under(i, errors), example });
+}
+
 function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): WriteResult {
   checkProposeWord(i, raw);
   const errors = schemaProblems(WRITE_ITEM_ID, raw);
-  if (errors.length) {
-    fail('invalid', 'This item does not fit the write-item schema. Fix the fields listed in errors and send it again.', { errors: under(i, errors) });
-  }
+  if (errors.length) refuse(i, raw, errors);
   const item = storedNames(raw as Rec);
   const e = item.type === 'append' ? appended(b, i, resolve(b, i, item), key) : eventOf(b, resolve(b, i, item));
   const replayed = key === undefined ? undefined : replay(b, i, key, e);

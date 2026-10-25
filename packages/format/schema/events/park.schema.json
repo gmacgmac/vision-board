@@ -13,6 +13,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "park", "key": "fee-park", "n": 1, "bundle": {"situation": "The pricing model is undecided.", "background": "The team has ten people and may grow.", "assessment": "Per seat scales with the team; a flat fee is simpler.", "recommendation": "Decide the model before drafting the plan page."}}],
       "type": "object",
       "required": ["type", "n"],
       "properties": {

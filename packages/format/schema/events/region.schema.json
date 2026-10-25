@@ -13,6 +13,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "region", "key": "options-region", "region": {"id": "options", "title": "Options", "mode": "grid"}}],
       "type": "object",
       "required": ["type"],
       "properties": {

@@ -11,6 +11,7 @@ import { BODY_LIMIT, KIB, readJson } from './body.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';
 import { cardsIn } from './edge.ts';
+import { bodyExample } from './examples.ts';
 import { problem } from './problem.ts';
 import { sendJson } from './respond.ts';
 import { bodyProblems } from './spec.ts';
@@ -22,14 +23,14 @@ const JOIN_LIMIT = 4 * KIB;
 const WRITE_LIMIT = 512 * KIB;
 const MAX_ITEMS = 200;
 
-const invalid = (errors: { pointer: string; detail: string }[]) =>
-  problem('invalid', 'The request does not fit the schema. Fix the fields listed in errors and send it again.', { errors });
+const invalid = (errors: { pointer: string; detail: string }[], id?: OperationId) =>
+  problem('invalid', 'The request does not fit the schema. Fix the fields listed in errors and send it again.', { errors, ...(id && bodyExample(id)) });
 
 /** The body, checked against the operation's request schema. */
 export async function body(id: OperationId, req: Ctx['req'], limit = BODY_LIMIT): Promise<Record<string, unknown>> {
   const value = await readJson(req, limit);
   const errors = bodyProblems(id, value);
-  if (errors.length) throw invalid(errors);
+  if (errors.length) throw invalid(errors, id);
   return value as Record<string, unknown>;
 }
 
@@ -141,7 +142,7 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   }
   // Each item is checked on its own as it runs, so one bad item never fails the batch.
   const top = bodyProblems('write_board', value).filter((p) => !/^\/items\/\d+(\/|$)/.test(p.pointer));
-  if (top.length) throw invalid(top);
+  if (top.length) throw invalid(top, 'write_board');
   const list = items as unknown[];
   const board = String(params.board);
   writeTarget(ledger.state(), board, list.findIndex((x) => (x as { type?: unknown } | null)?.type === 'board'));

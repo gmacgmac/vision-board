@@ -42,6 +42,8 @@ export interface ProblemExtras {
   ver?: number;
   board?: string;
   region?: string;
+  /** `invalid`: a worked request that fits (api.md 40). */
+  example?: unknown;
   headers?: Record<string, string>;
 }
 
@@ -55,6 +57,7 @@ export interface ProblemBody {
   ver?: number;
   board?: string;
   region?: string;
+  example?: unknown;
 }
 
 /** A problem a handler throws; the dispatcher sends `body` with `status` and `headers`. */

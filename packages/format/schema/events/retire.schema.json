@@ -12,6 +12,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "retire", "key": "fee-retire", "n": 1}],
       "type": "object",
       "required": ["type"],
       "properties": {

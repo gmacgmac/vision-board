@@ -22,6 +22,8 @@ export interface ProblemDocument {
   /** `needs-grant`: the board needed, and the container when it names `region`. */
   board?: string;
   region?: string;
+  /** `invalid`: a worked request that fits, in the shape the refused body should have. */
+  example?: unknown;
 }
 
 /** A problem answer, thrown by `call`. `code` is the last part of `type` (`not-found`). */
@@ -35,6 +37,7 @@ export class ApiProblem extends Error {
   readonly ver?: number;
   readonly board?: string;
   readonly region?: string;
+  readonly example?: unknown;
   constructor(p: ProblemDocument) {
     super(p.detail);
     this.name = 'ApiProblem';
@@ -47,6 +50,7 @@ export class ApiProblem extends Error {
     if (p.ver !== undefined) this.ver = p.ver;
     if (p.board !== undefined) this.board = p.board;
     if (p.region !== undefined) this.region = p.region;
+    if (p.example !== undefined) this.example = p.example;
   }
 }
 

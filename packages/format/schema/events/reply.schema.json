@@ -13,6 +13,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "reply", "key": "fee-reply", "n": 1, "text": "Per seat: it matches how the team grows."}],
       "type": "object",
       "required": ["type", "n"],
       "properties": {

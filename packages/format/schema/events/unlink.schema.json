@@ -7,6 +7,7 @@
   "$defs": {
     "core": {"$ref": "https://vision-board.invalid/schema/ledger/18/events/link.schema.json#/$defs/core"},
     "sent": {
+      "examples": [{"type": "unlink", "key": "fee-unlink", "from": 1, "to": 2}],
       "type": "object",
       "required": ["type", "from", "to"],
       "properties": {

@@ -12,6 +12,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "link", "key": "fee-link", "from": {"key": "fee-question"}, "to": {"key": "seat-note"}}],
       "type": "object",
       "required": ["type", "from", "to"],
       "properties": {

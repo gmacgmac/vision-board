@@ -309,3 +309,5 @@
 [[2026-10-20 12:30]] [board-ui] VERIFY_01: ran npm test, check, verify and the full page suite (589 pass after refreshing 28 sub-pixel baselines), walked the criteria in a browser light and dark, audited components.md, ticked PLAN.md → Task: [[cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/VERIFY_01_testing.md]]
 [[2026-10-20 03:30]] [board-ui] Completed set: Open-Cards List and Container Title → Task: [[cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/TASK-STATUS.md]]
 [[2026-10-20 09:29]] [board-ui] Fixed clipped count/holder slivers on narrow container title lines → Notes: `packages/ui/src/region/region.css` (`.vb-region-handle`, `.vb-region-holders`) — VERIFY_01 finding 1
+[[2026-10-25 12:10]] [board-agent] Linked ~/.claude/skills/vision-board and ~/.kiro/skills/vision-board to the main checkout's skills/vision-board (one source, no copies) → Notes: `skills/vision-board/SKILL.md` — Kiro's panel agent already points its prompt here
+[[2026-10-25 12:20]] [board-agent] Completed: Tool Examples For Agents → Task: [[cortex-tasks/board/2026-10-25_board-agent_tool-examples.md]]

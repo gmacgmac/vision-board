@@ -13,6 +13,7 @@
       }
     },
     "sent": {
+      "examples": [{"type": "node", "key": "fee-question", "node": {"region": "options", "kind": "question", "title": "Flat fee or per seat?", "body": "Which model fits a team of ten?"}}],
       "type": "object",
       "required": ["type"],
       "properties": {

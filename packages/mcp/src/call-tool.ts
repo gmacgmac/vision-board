@@ -46,7 +46,7 @@ export function split(route: Route, args: Readonly<Record<string, unknown>>, env
 /** What a failed call says: a problem's detail and pointer errors, or how to start the server. */
 export function failureText(err: unknown, base: string): string {
   if (err instanceof ApiProblem) {
-    return [err.detail, ...err.errors.map((e) => `${e.pointer || '/'}: ${e.detail}`)].join('\n');
+    return [err.detail, ...err.errors.map((e) => `${e.pointer || '/'}: ${e.detail}`), ...(err.example === undefined ? [] : [`Example: ${JSON.stringify(err.example)}`])].join('\n');
   }
   const why = err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err);
   return `The board server at ${base} is not answering (${why}). Start it with \`npm run board\`, then call again.`;

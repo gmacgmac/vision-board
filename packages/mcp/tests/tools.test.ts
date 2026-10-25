@@ -5,6 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { OPERATIONS } from '../../format/src/index.ts';
@@ -123,4 +124,29 @@ test('list_apps (D-047 ruling 12): a read with the secret, telling the agent how
   assert.match(t.description, /kind `app`/);
   assert.match(t.description, /Only the person allows an app/);
   assert.equal(tools.some((x) => x.name === 'call_app_tool'), false, 'agents run their own code; only the panel calls app tools');
+});
+
+test('every tool whose request has an example ends its description with it, compact (no per-tool code)', () => {
+  const doc = JSON.parse(readFileSync(new URL('../../format/schema/openapi.json', import.meta.url), 'utf8'));
+  const withBody = Object.values<Record<string, any>>(doc.paths).flatMap((item) => Object.values(item))
+    .filter((op) => op['x-agent'] === true && op.requestBody?.content?.['application/json']);
+  assert.deepEqual(withBody.map((op) => op.operationId).sort(), WRITES, 'the operations with a JSON body');
+  for (const op of withBody) {
+    const media = op.requestBody.content['application/json'];
+    assert.ok(media.example ?? media.examples, `${op.operationId} has a request example`);
+    const example = media.example ?? Object.values<any>(media.examples)[0].value;
+    assert.ok(tools.find((t) => t.name === op.operationId)!.description.endsWith(` Example: ${JSON.stringify(example)}`), op.operationId);
+  }
+});
+
+test('write_board ends with a wrapped region, nodes and a link by key, and still fits the 2,048 characters clients keep', () => {
+  const d = tools.find((t) => t.name === 'write_board')!.description;
+  const shown = JSON.parse(d.slice(d.indexOf(' Example: ') + ' Example: '.length)) as { items: { type: string; node?: unknown; region?: unknown; from?: unknown }[] };
+  assert.deepEqual(shown.items.map((i) => i.type), ['region', 'node', 'node', 'link']);
+  assert.ok(shown.items.every((i) => (i.type === 'node' ? i.node : i.type === 'region' ? i.region : i.from)), 'each item wraps its content');
+  assert.ok(d.length < 2048, `${d.length} characters`);
+});
+
+test('tools with no request body carry no example', () => {
+  for (const t of tools.filter((x) => !WRITES.includes(x.name))) assert.doesNotMatch(t.description, /Example: /, t.name);
 });

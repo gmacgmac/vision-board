@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-25 (worked examples: tools end with their request example, refusals carry the item's: 39, 47, 48); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -202,7 +202,11 @@ packages/format/schema/openapi.json               every operation, input, output
     body, such as `/items/2/node/title` (ajv's `instancePath` form). A write item's `problem` is
     the same object without `status`, because the response's own status is 200.
 39. Extension members: `conflict` carries `ver` (the node's current version); `needs-grant`
-    carries `board` and `region`. A 401 sends `WWW-Authenticate: Bearer realm="vision-board"`; a
+    carries `board` and `region`; `invalid` can carry `example`, a worked request that fits. A
+    refused write item names a known `type`: its `example` is that form's `examples[0]` from the
+    write-item schema (`itemExample`, `apps/board/server/examples.ts`; `write-examples.test.ts`); a
+    missing or unknown `type` lists the ten types in `detail` and has no `example`; a refused body
+    carries the operation's request example (`bodyExample`, held by the same test). A 401 sends `WWW-Authenticate: Bearer realm="vision-board"`; a
     405 sends `Allow`.
 40. `detail` is plain English written for an agent to act on: what is wrong and what to do. It
     never shows internals. Codes:
@@ -304,10 +308,16 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     not resolve refs), flattens composed objects into `properties` plus
     `additionalProperties: false`, puts no `oneOf` at the root, and strips `$id`, `$schema`,
     `discriminator` and `x-*`. A test checks none remain and that no two merged inputs share a
-    name. The server still checks every call with the strict schemas.
+    name. The server still checks every call with the strict schemas. Examples are part of the
+    contract: each write item form's `sent` schema carries an `examples` entry (an annotation, so
+    what the schema accepts does not change; they stay in the tool's `inputSchema`), and a tool
+    whose request body has an `example` ends its description with `Example: <compact JSON>`, added
+    by `describe` in `scripts/gen-mcp.mjs` for every tool alike (held by `tools.test.ts`). A tool
+    description stays under 2,048 characters, which some clients cut off at, so the example counts
+    toward that.
 48. Each tool declares `outputSchema` = the operation's success response and returns it as
     `structuredContent` plus a short text form. A whole-call problem returns `isError: true` with
-    the problem as text only. Per-item failures return `isError: false`, unless every item failed.
+    the problem as text only (`detail`, each pointer error and, when it has one, `Example:`). Per-item failures return `isError: false`, unless every item failed.
 49. Annotations: reads `readOnlyHint: true`; every tool `openWorldHint: false`; `write_board`,
     `join` and `request_grant` `destructiveHint: false` (the ledger only grows) and
     `idempotentHint: false` (an item without a key is written again). Hints are advice to the

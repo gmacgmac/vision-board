@@ -35,6 +35,8 @@ export interface OperationSpec {
   security: Security;
   /** `x-agent`: an operation agents get (api.md 41). */
   agent: boolean;
+  /** The request body's worked example (`example`, or the first of `examples`), when it has one. */
+  example?: unknown;
 }
 
 /** The kind of caller an operation's `security` list allows. */
@@ -69,8 +71,10 @@ function operationSpec(id: OperationId): OperationSpec {
   // Header parameters (`VB-Project`) are read by their own module (caller-folder.ts), not here.
   const params = ((op.parameters ?? []) as Rec[]).map(local).filter((p) => p.in !== 'header').map(paramSpec);
   const ref = op.requestBody?.content?.['application/json']?.schema;
+  const media: Rec | undefined = op.requestBody?.content?.['application/json'];
+  const example = media?.example ?? Object.values<Rec>(media?.examples ?? {})[0]?.value;
   return {
-    params, ...(ref && { body: String(local(ref).$ref) }),
+    params, ...(ref && { body: String(local(ref).$ref) }), ...(example !== undefined && { example }),
     security: securityOf(op.security ?? doc.security), agent: op['x-agent'] === true,
   };
 }

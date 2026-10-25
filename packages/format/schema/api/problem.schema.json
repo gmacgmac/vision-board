@@ -75,6 +75,9 @@
           },
           "description": "Where in the request body each fault is, when there is more than one."
         },
+        "example": {
+          "description": "`invalid`: a worked request that fits, in the shape the refused item or body should have: for a refused write item, the example of its `type`; for a refused body, the operation's request example."
+        },
         "ver": {
           "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version",
           "description": "`conflict`: the node's current version"

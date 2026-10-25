@@ -58,15 +58,24 @@ function inputOf(op, doc, schemas) {
   return { input, route };
 }
 
+/** The operation's JSON request body example: `example`, or the first of `examples`. */
+function requestExample(op) {
+  const media = op.requestBody?.content?.['application/json'];
+  return media?.example ?? Object.values(media?.examples ?? {})[0]?.value;
+}
+
 /** The operation's description, plus how MCP carries the secret (api.md 22): tools that take it
- * say so; `join` says which tools take it. */
+ * say so; `join` says which tools take it. A tool whose request has an example ends with it, in
+ * the body's own shape, so an agent never has to guess it (api.md 47). */
 function describe(op, secretTools) {
   const base = (op.description ?? op.summary ?? '').trim();
-  if (takesSecret(op)) return `${base} ${SECRET_SAYS}`;
+  const example = requestExample(op);
+  const end = example === undefined ? '' : ` Example: ${JSON.stringify(example)}`;
+  if (takesSecret(op)) return `${base} ${SECRET_SAYS}${end}`;
   if (op.operationId === 'join') {
-    return `${base} Here you send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat that shares this MCP configuration.`;
+    return `${base} Here you send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat that shares this MCP configuration.${end}`;
   }
-  return base;
+  return `${base}${end}`;
 }
 
 /** Every x-agent operation as an MCP tool, in document order, and how to call it back. */
