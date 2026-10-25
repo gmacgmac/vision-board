@@ -3,9 +3,11 @@
 // fixture board and a live session go through the same code). The stage is sized to the drawn
 // board. Measuring needs the page, so each mini board draws once the gallery is in the document
 // (`drawMiniBoards`, main.ts).
-import type { View } from '../../../../packages/format/src/index.ts';
+import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import type { Align } from '../../../../packages/layout/src/index.ts';
+import type { CardConditions } from '../../../../packages/ui/src/index.ts';
+import type { FreshCount } from '../board/board-data.ts';
 import { createDrawing, type Drawing } from '../board/draw.ts';
 import { FAR_K, Viewport } from '../board/viewport.ts';
 import { el } from './dom.ts';
@@ -23,6 +25,10 @@ export interface MiniOptions {
   suffix?: string;
   /** The zoom it is drawn at (1 when left out); below FAR_K the stage is far, as the board's is. */
   zoom?: number;
+  /** What the conditions table says about each card (its NEW or updates tab), by board number. */
+  facts?: (n: ViewNode) => CardConditions;
+  /** The container's fresh pill counts (freshCards flag), keyed by its own id. */
+  fresh?: ReadonlyMap<string, FreshCount>;
   /** Called once drawn, for a sample that shows a hover or focus look. */
   then?: (host: HTMLElement, drawing: Drawing) => void;
 }
@@ -69,7 +75,8 @@ export function miniBoard(board: { view: View; state: BoardState }, region: stri
     labels: o.labels === true, widthsControl: o.widths === true, align: () => o.align ?? 'start',
     data: () => ({ head: 0, view, state: board.state, versions: {}, access: { requests: [], holders: {} } }),
     hidden: () => new Set(), focus: () => null, selected: () => false, insets: () => new Map(), owed: () => new Set(),
-    facts: () => ({}), replies: () => [],
+    facts: o.facts ?? (() => ({})), replies: () => [],
+    fresh: () => new Map([...(o.fresh ?? [])].map(([id, c]) => [as(id), c])),
   });
   pending.push(() => {
     drawing.draw(true);

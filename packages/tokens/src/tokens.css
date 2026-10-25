@@ -114,6 +114,12 @@
   --vb-state-comment-soft: var(--vb-accent-soft);
   --vb-state-context-soft: color-mix(in srgb, var(--vb-state-context) 12%, var(--vb-surface-card));
   --vb-state-later-soft: color-mix(in srgb, var(--vb-state-later) 12%, var(--vb-surface-card));
+  /* A container holding new or updated cards the person has not engaged with (new-and-updated point 88):
+     its border and its "3 new · 1 updated" pill. The app icon's teal. APCA (tests/pages/fresh-cards.spec.ts):
+     the border on the canvas Lc 58.6 light, 67.4 dark (decoration, 30); the pill's words on its -soft
+     Lc 54.8 and 63.5 (labels, 45). */
+  --vb-state-fresh: light-dark(#0d9488, #2dd4bf);
+  --vb-state-fresh-soft: color-mix(in srgb, var(--vb-state-fresh) 12%, var(--vb-surface-card));
 
   /* Node kinds (Architect families, D-024) */
   --vb-kind-question: light-dark(#3471d0, #72a6f2);

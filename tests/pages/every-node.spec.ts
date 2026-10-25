@@ -144,11 +144,12 @@ test('three mixed cards lassoed and commented once: one note on exactly those ca
   await expect(bubble(page)).toBeHidden();
   const acts = await responsesAfter(page, d, before);
   expect(acts.map((e) => [e.action, e.nodes, e.n])).toEqual([['comment', ids, undefined]]);
-  for (const n of ids) {
-    await expect(card(page, n).locator('.vb-node-note-who')).toHaveText('Your note 1 · 3 cards');
-    await expect(card(page, n).locator('.vb-note-pin')).toHaveText('1');
-  }
-  for (const n of [d.act, d.risk]) await expect(card(page, n).locator('.vb-note-pin')).toBeHidden();
+  // Drawn once, as the group's pin (groupNoteOnce flag, group-note.spec.ts): no card repeats it.
+  const group = page.locator('.vb-group-pin');
+  await expect(group).toHaveCount(1);
+  await expect(group).toHaveText('1');
+  await expect(group).toHaveAttribute('aria-label', `Note 1 on items ${[...ids].sort((x, y) => x - y).join(', ')}. Edit it`);
+  for (const n of [...ids, d.act, d.risk]) await expect(card(page, n).locator('.vb-note-pin')).toBeHidden();
   // A note never answers a card (D-045): the question stays open, and nothing is answered.
   await expect(page.locator('#counts')).toContainText('0 answered');
   await expect(card(page, d.ask)).toHaveAttribute('data-status', 'commented');
@@ -215,7 +216,7 @@ for (const theme of THEMES) {
     await bubble(page).locator('textarea').fill('Both before Friday.');
     await page.keyboard.press('Enter');
     await expect(bubble(page)).toBeHidden();
-    await expect(card(page, d.risk).locator('.vb-node-note-who')).toHaveText('Your note 1 · 2 cards');
+    await expect(page.locator('.vb-group-pin')).toHaveAttribute('aria-label', /^Note 1 on items \d+, \d+\. Edit it$/);
     await expectNoAxeViolations(page);
   });
 }

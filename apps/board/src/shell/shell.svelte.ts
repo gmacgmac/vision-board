@@ -1,7 +1,7 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, confirm dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { AccessHolder, ArchivedBoard, BoardActionId, BoardListItem, BoardRun, OpenCard } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, ArchivedBoard, BoardActionId, BoardListItem, BoardRun, FreshCard, OpenCard } from '../../../../packages/actions/src/index.ts';
 import type { BoardMark } from '../board/board-data.ts';
 import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
@@ -72,6 +72,8 @@ export const shell = $state({
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 },
   /** The open cards, by board number (`openCards`): the "N open" chip's list (openList flag, open-list FE_01). */
   openCards: [] as OpenCard[],
+  /** The new and updated cards, in board order (`freshCards`): the "N new" chip and its list (freshCards flag). */
+  freshCards: [] as FreshCard[],
   answered: 0,
   /** How many cards on the open board the person flagged (cardFlag flag): the toolbar's chip. */
   flagged: 0,

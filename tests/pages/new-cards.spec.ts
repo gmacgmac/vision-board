@@ -1,8 +1,9 @@
 // NEW cards on the page (stage5-follow-ups FE_01, tracker U1), behind the newCards flag (rule 12, on
 // by default): a card the agent adds after the person first opened the board shows a NEW tab on its
 // bottom edge (a label, not a button) and its name ends ", new"; a fresh board shows none; selecting
-// the card sends its seen line (`clearedBy` names select) and takes the tab away; after a Send and a
-// new drawing only the newer cards are NEW; axe light and dark; then the gallery's New card sample.
+// the card sends its seen line (`clearedBy` names select) and takes the tab away; a Send and a new
+// drawing end no NEW (new-and-updated Design 2): the older card stays NEW beside the newer; axe light
+// and dark; then the gallery's New card sample.
 //
 // Each test draws its own board through the API as a joined agent, opens the page, then the agent
 // adds a card, so the card arrives live. Agent calls go through `request` (no person cookie);
@@ -103,7 +104,7 @@ test('selecting a NEW card sends its seen line and takes the tab away; a second 
   expect(await seenAfter(page, before, d.board)).toEqual([[c, 1]]);
 });
 
-test('after a Send and a new drawing, the older NEW goes and only the newer card is NEW', async ({ page, request }) => {
+test('after a Send and a new drawing, the older card stays NEW beside the newer one until it is engaged', async ({ page, request }) => {
   const d = await draw(request);
   await open(page, d);
   const older = await add(request, d, 'Card 2');
@@ -116,8 +117,8 @@ test('after a Send and a new drawing, the older NEW goes and only the newer card
   await expect(tag(page, older), 'a Send alone ends nothing').toBeVisible();
   const newer = await add(request, d, 'Card 3');
   await expect(tag(page, newer)).toBeVisible();
-  await expect(tag(page, older)).toBeHidden();
-  await expect(card(page, older)).toHaveAttribute('aria-label', /Risk: Card \d+$/);
+  await expect(tag(page, older), 'the agent drawing again ends nothing').toBeVisible();
+  await expect(card(page, older)).toHaveAttribute('aria-label', /Risk: Card \d+, new$/);
 });
 
 test('flag off: no NEW tab and the name does not say new', async ({ page, request }) => {

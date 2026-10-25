@@ -314,3 +314,6 @@
 [[2026-10-25 13:12]] [board-agent] Completed: Tool List Trim And Rename → Task: [[cortex-tasks/board/2026-10-25_board-agent_tool-list-trim.md]]
 [[2026-10-25 14:13]] [board-ui] Completed: Container Tool Rail → Task: [[cortex-tasks/board/2026-10-25_board-ui_container-tool-rail.md]]
 [[2026-10-25 15:10]] [project-docs] Steering: MCP server named vision-board (maintainer approved, point 59) → Notes: `.kiro/steering/vision-board-proj.md` (Running the board) — follows the tool-list trim and rename task
+[[2026-10-25 21:34]] [needs-human-input] Group Note Drawn Once stopped before code: a group spanning containers gives an extents box covering unrelated cards (roadmap {1,16} covers 2-15), and the box corner collides with the corner card's own pin; drawing proposed, awaiting ruling → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]
+[[2026-10-25 23:40]] [board-ui] Completed: New And Updated Cards Easy To Find → Task: [[cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md]]
+[[2026-10-25 23:41]] [board-ui] Completed: Group Note Drawn Once → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]

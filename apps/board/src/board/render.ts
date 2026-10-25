@@ -6,7 +6,8 @@ import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
 import type { AccessHolder, BoardState } from '../../../../packages/actions/src/index.ts';
 import type { CardReply, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState, retiredMarker } from '../../../../packages/ui/src/index.ts';
+import { regionFresh, regionState, retiredMarker } from '../../../../packages/ui/src/index.ts';
+import type { FreshCount } from './board-data.ts';
 import type { RetiredCount } from './retired.ts';
 import { LATER_REGION } from '../../../../packages/format/src/index.ts';
 import { work } from './work.ts';
@@ -31,10 +32,11 @@ export interface RegionSet {
    * agentAccess flag): region id -> the agents that hold it. `owed`: the containers the agent
    * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). `replies`: the agent's replies to show
    * under container notes (the cardReplies flag, FE_03). `retired`: each container's "N cards retired"
-   * marker (the retiredMarker flag, retired.ts). */
+   * marker (the retiredMarker flag, retired.ts). `fresh`: each fresh container's pill counts (the
+   * freshCards flag, `container.fresh`): its teal border and "3 new · 1 updated". */
   place(
     layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>, owed?: ReadonlySet<string>,
-    replies?: readonly CardReply[], retired?: ReadonlyMap<string, RetiredCount>,
+    replies?: readonly CardReply[], retired?: ReadonlyMap<string, RetiredCount>, fresh?: ReadonlyMap<string, FreshCount>,
   ): boolean;
   clear(): void;
 }
@@ -76,7 +78,7 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         prev = el;
       }
     },
-    place(layout, view, s, holders, owed, replies, retired) {
+    place(layout, view, s, holders, owed, replies, retired, fresh) {
       const placed = new Set(layout.nodes.keys());
       let moved = false;
       for (const r of layout.regions) {
@@ -84,7 +86,11 @@ export function createRegionSet(host: HTMLElement, opts: { widths?: boolean; rem
         if (!el) continue;
         const box = JSON.stringify(r.box);
         const gone = retired?.get(r.id);
-        const st = { ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }) };
+        const count = fresh?.get(r.id);
+        const pill = count && regionFresh(count.added, count.updated);
+        const st = {
+          ...regionState(r, view, s, placed, holders?.[r.id], owed, replies), ...(gone && { retired: retiredMarker(gone.count, gone.version, gone.until) }), ...(pill && { fresh: pill }),
+        };
         const state = JSON.stringify(st);
         const was = shown.get(r.id);
         if (was?.box !== box) {

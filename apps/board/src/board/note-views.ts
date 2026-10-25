@@ -27,6 +27,9 @@ export interface ViewDeps {
   replies(id: string): readonly CardReply[];
   /** The agent's replies to notes on whole containers, oldest first. */
   regionReplies(): readonly CardReply[];
+  /** The groupNoteOnce flag: a card's conversation leaves out notes on a group of cards, which the
+   *  group's own pin and bubble show once (group-pins.ts). */
+  groups?: boolean;
 }
 
 /** What `show` takes: the view, and the edge and chip the bubble wears. */
@@ -47,7 +50,8 @@ const answered = (o: Open): boolean => o.note?.locked === true && o.note.sent !=
 export function cardView(d: ViewDeps, o: Open): Shown | null {
   const n = d.node(o.id);
   if (!n || n.n === undefined) return null;
-  const notes = d.state().items.get(o.id)?.notes ?? [];
+  const all = d.state().items.get(o.id)?.notes ?? [];
+  const notes = d.groups && !o.group ? all.filter((x) => !x.nodes) : all;
   const index = o.note ? notes.findIndex((x) => x.seq === o.note!.seq) + 1 : undefined;
   const numbers = o.group?.map(Number);
   const replies = repliesOf(o, d.replies(o.id));

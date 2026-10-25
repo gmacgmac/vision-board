@@ -92,7 +92,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     on('wireLayers'), on('containerFinder'), on('proposals'), on('cardUpdates'), on('newCards'), on('everyNode'), on('cardFlag'), on('retiredMarker'), on('linkLabels'), on('alignSetting'), on('widthsControl'), on('personRemove'), on('goToCard'), on('appCards')];
   shell.agentAccess = access;
   world.toggleAttribute('data-wire-layers', layers);
-  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01); rule 12
+  for (const [attr, flag] of [['data-title-tip', 'titleTip'], ['data-note-preview', 'notePreview'], ['data-app-title', 'appTitle'], ['data-fresh-cards', 'freshCards']] as const) world.toggleAttribute(attr, flagOn(flag, pageFlags())); // hover tips (FE_03, FE_04), an app card's title (card-polish FE_01), the pink updates tab (freshCards); rule 12
 
   const S = {
     id: '',
@@ -119,7 +119,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const hiddenSet = (): Set<string> => (shell.hide && S.data ? answeredIds(S.data, attention.owedCards()) : new Set()); // kept while owed (FE_01)
 
   const live = createLive(onLines);
-  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state });
+  const attention = createAttention({ state: () => live.state, board: () => S.id, fail, readOnly: () => !!versions.state, fresh: on('freshCards') });
   /** The version dropdown and a past version, read-only (navigation FE_01), behind the versionView flag. */
   const versions = createVersions({
     world, on: (shell.versionView = on('versionView')), live: () => live.state, board: () => S.id, fail,
@@ -130,7 +130,7 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
   const selection = createSelection();
   const drawing = createDrawing({
     els, vp, sizing, access, layers, labels, widthsControl, removing, align: () => (aligning ? shell.align : 'start'), data: () => S.data!, hidden: hiddenSet, focus: () => focus.id, selected: (id) => selection.has(id),
-    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'),
+    insets: () => regionNotes.insets(), owed: () => attention.owed(), replies: () => parking.containers(), flag: flagging, history: on('cardHistory'), retired: () => S.retired, rail: on('toolRail'), fresh: () => attention.freshIn(),
     facts: (n) => ({ ...proposals.card(n), ...updates.card(n), ...parking.card(n), ...apps.card(n) }), appCards: apping, placed: () => apps.place(),
   });
   const focus = createFocus({ cards: els.cards, vp, view, layout: () => drawing.layout, changed: () => drawing.refocus() });
@@ -199,10 +199,10 @@ export function createBoard(els: BoardElements, chat?: ChatBridge): Board {
     readOnly: () => !!versions.state, card: (id) => drawing.cards.get(id), seen: (marks) => sender.seen(marks), redraw: () => redraw(), source: (n) => chat?.source(n) });
   /** "Awaiting", the handover and the agent's replies under notes (parking.ts), from the state the board is drawn from. */
   const parking = createParking({ handover: on('handover'), replies: on('cardReplies'), state: () => versions.state ?? live.state, board: () => S.id,
-    awaiting: () => attention.awaiting(), readOnly: () => !!versions.state });
-  /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note. */
+    awaiting: () => attention.awaiting(), readOnly: () => !!versions.state, apart: on('groupNoteOnce') });
+  /** Notes beside cards (2e_FE_01): the bubble, opened by C, M, the pin or a note; a group's pin (groupNoteOnce flag, group-pins.ts). */
   const notes = createNoteFlow({
-    stage, vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
+    stage, world, selection, groups: on('groupNoteOnce'), vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
     discard: () => askConfirm(...DISCARD_ASK), paused: lock.paused,

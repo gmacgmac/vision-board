@@ -1,33 +1,47 @@
-<!-- The toolbar's "N open" chip (open-list FE_01, openList flag). While any card is open it is a menu
-     dropdown over the chip (MenuSelect, the Containers finder's pattern): its list holds the open
-     cards as "12 · title" in board order (board/finder.ts `openRow`), and choosing one goes to it as
-     Go to card does (board/go-to-card.ts `to`). With nothing open (or `cards` empty: the flag off) it
-     is the plain chip. The count stays on a narrow toolbar, the word for screen readers (board.css).
-     The toolbar and the gallery both draw this. -->
+<!-- A toolbar chip that lists cards and goes to the one chosen: the "N open" chip (open-list FE_01,
+     openList flag) and the "N new" chip (new-and-updated Design 5, freshCards flag), one pattern.
+     While it has cards it is a menu dropdown over the chip (MenuSelect, the Containers finder's
+     pattern): its list holds the cards as "12 · title" in board order, an updated one ending
+     "· updated" (board/finder.ts `openRow`), and choosing one goes to it as Go to card does
+     (board/go-to-card.ts `to`). With no cards (or `cards` empty: the flag off) it is the plain chip.
+     The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
+     the gallery both draw this. -->
 <script lang="ts">
   import MenuSelect from './MenuSelect.svelte';
+  import type { RowCard } from '../board/finder.ts';
   import { openRow } from '../board/finder.ts';
-  import type { OpenCard } from '../../../../packages/actions/src/index.ts';
 
-  let { count, cards, onpick, id = 'open-cards', look }: {
+  let {
+    count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = 'Go to an open card',
+    title = 'Open items: choose one to go to it', plainTitle = 'Open items',
+  }: {
     count: number;
-    /** The open cards to list, by board number; none draws the plain chip. */
-    cards: readonly OpenCard[];
+    /** The cards to list, by board number; none draws the plain chip. */
+    cards: readonly RowCard[];
     /** Go to card `n`. */
     onpick: (n: number) => void;
     id?: string;
     /** A state drawn without the pointer or keys: the gallery's samples only (MenuSelect). */
     look?: 'hover' | 'focus' | 'pressed';
+    /** The word after the count: "open", "new". */
+    word?: string;
+    /** The chip's tone (board.css `.vb-chip[data-tone]`). */
+    tone?: string;
+    /** The dropdown's accessible name. */
+    label?: string;
+    /** The tooltip, as a dropdown and as the plain chip. */
+    title?: string;
+    plainTitle?: string;
   } = $props();
 
   const rows = $derived(cards.map(openRow));
 </script>
 
-{#snippet face()}<b>{count}</b> <span class="vb-chip-word">open</span>{/snippet}
+{#snippet face()}<b>{count}</b> <span class="vb-chip-word">{word}</span>{/snippet}
 
 {#if rows.length}
-  <MenuSelect {id} label="Go to an open card" name="{count} open" {rows} onpick={(v) => onpick(Number(v))}
-    {face} {look} tone="open" title="Open items: choose one to go to it" />
+  <MenuSelect {id} {label} name="{count} {word}" {rows} onpick={(v) => onpick(Number(v))}
+    {face} {look} {tone} {title} />
 {:else}
-  <span class="vb-chip" data-tone="open" title="Open items">{@render face()}</span>
+  <span class="vb-chip" data-tone={tone} title={plainTitle}>{@render face()}</span>
 {/if}

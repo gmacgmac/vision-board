@@ -242,7 +242,8 @@ const responsesAfter = async (page: Page, after: number) =>
   (await (await page.request.get(`/api/boards/roadmap/responses?after=${after}`)).json() as { responses: Record<string, unknown>[] }).responses;
 const pinOf = (page: Page, n: string) => card(page, n).locator('.vb-note-pin');
 
-test('Comment on a group: one note, saved once, the same pin on every card, edited and removed from any pin', async ({ page }) => {
+// With the groupNoteOnce flag (on by default) the note is drawn once, as the group's pin; group-note.spec.ts holds the rest.
+test('Comment on a group: one note, saved once, drawn once as the group\'s pin, edited and removed from it', async ({ page }) => {
   await openBoard(page);
   const ids = await freeCards(page, [12, 13, 14, 15, 16, 17], 3);
   const [a, b, c] = ids as [string, string, string];
@@ -260,26 +261,28 @@ test('Comment on a group: one note, saved once, the same pin on every card, edit
   await page.keyboard.press('Enter');
   await expect(bubble(page)).toBeHidden();
   await expect(bar(page)).toBeVisible();
+  const group = page.locator(`.vb-group-pin[data-group="${ids.join(',')}"]`);
+  await expect(group).toHaveText('1');
   for (const n of ids) {
-    await expect(pinOf(page, n)).toBeVisible();
-    await expect(pinOf(page, n)).toHaveText('1');
-    await expect(card(page, n).locator('.vb-node-notes')).toContainText('Same order for all three.');
+    await expect(pinOf(page, n)).toBeHidden();
+    await expect(card(page, n).locator('.vb-node-notes')).toBeHidden();
   }
   const acts = await responsesAfter(page, before);
   expect(acts.map((e) => [e.action, e.nodes, e.n])).toEqual([['comment', ids.map(Number), undefined]]);
-  // Edit from the last card's pin; every card shows the new words. `dispatchEvent` rather than a
-  // coordinate click: the pin's hover-scale transition and the stage's own zoom transform leave a
-  // synthetic mouse click an unreliable hit test on this small, offset-corner target.
-  await pinOf(page, c).dispatchEvent('click');
+  // Edit from the group's pin. `dispatchEvent` rather than a coordinate click: the pin's hover-scale
+  // transition and the stage's own zoom transform leave a synthetic mouse click an unreliable hit
+  // test on this small target.
+  await group.dispatchEvent('click');
   await expect(bubble(page)).toHaveAttribute('aria-label', `Edit note on 3 cards: ${a}, ${b}, ${c}`);
   await bubble(page).locator('textarea').fill('Same order, please.');
   await page.keyboard.press('Enter');
   await expect(bubble(page)).toBeHidden();
-  for (const n of ids) await expect(card(page, n).locator('.vb-node-notes')).toContainText('Same order, please.');
-  // Remove it from the middle card's pin: gone from every card.
-  await pinOf(page, b).dispatchEvent('click');
+  await expect(group).toHaveAttribute('aria-label', `Note 1 on items ${a}, ${b}, ${c}. Edit it`);
+  // Remove it from the pin: gone, from the board and from every card.
+  await group.dispatchEvent('click');
   await bubble(page).getByRole('button', { name: 'Remove' }).click();
   await expect(bubble(page)).toBeHidden();
+  await expect(group).toHaveCount(0);
   for (const n of ids) await expect(pinOf(page, n)).toBeHidden();
 });
 

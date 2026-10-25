@@ -5,7 +5,9 @@
      choosing one shows the board as it was, read-only (VersionBanner), with no Agents or Send.
      With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it.
      With the openList flag the "N open" chip lists the open cards and goes to the one chosen (OpenChip;
-     both dropdowns are MenuSelect). The picker marks a board the person has not opened " · new" and one an agent wrote on
+     both dropdowns are MenuSelect). With the freshCards flag the "N new" chip beside it lists the new and
+     updated cards (`freshCards`, board/attention.ts) the same way, while there are any and no past
+     version shows. The picker marks a board the person has not opened " · new" and one an agent wrote on
      since they last looked " · changed", never the open one, and a chip counts both (the conditions
      table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
@@ -47,7 +49,7 @@
     onversion: (seq: number | null) => Promise<void>;
     /** Zoom to a container (containerFinder flag, board/finder.ts). */
     ongo: (container: string) => void;
-    /** Go to open card `n` (openList flag, OpenChip). */
+    /** Go to card `n`: an open one (openList flag) or a new or updated one (freshCards flag), OpenChip. */
     onopen: (n: number) => void;
     oncommand: (id: CommandId) => void;
     onhide: () => void;
@@ -155,6 +157,10 @@
     {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
     {#if shell.version !== null}
       <OpenChip count={shell.counts.open} cards={openList ? shell.openCards : []} onpick={onopen} />
+      {#if shell.freshCards.length && !shell.past}
+        <OpenChip id="fresh-cards" count={shell.freshCards.length} cards={shell.freshCards} onpick={onopen} word="new" tone="new"
+          label="Go to a new or updated card" title="New and updated cards: choose one to go to it" />
+      {/if}
       {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Replied items"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">replied</span></span>{/if}
       <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
       <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>

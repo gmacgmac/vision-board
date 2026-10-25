@@ -3,7 +3,7 @@
 // `indexEvent` in packages/format: agents, creators, holders, grant requests), plus the person's
 // responses (status and notes: notes.ts), replies, proposals, parks, sizes, moves (moves.ts), Sends
 // and what the person has seen (each node's version, each board's line), each agent's retry keys,
-// and each board's own last line, last drawing line, last agent line, runs and rounds (rounds.ts),
+// and each board's own last line, last drawing line, last agent line, runs and from where its cards are new (rounds.ts),
 // what its next Send carries (unsent.ts), what was retired (retire.ts), the person's private
 // flags (card-flags.ts), the boards the person archived (archive.ts) and locked (lock.ts), each
 // board's dates, the agent's clears (clears.ts), each app's allowed hash (apps.ts) and each card's times (card-times.ts). Every map is
@@ -114,13 +114,11 @@ export interface LedgerState extends DrawnState, AppAllows {
   agentHeads: Map<string, number>;
   /** board -> the highest `head` of the person's board `seen` (api.md 87): `board.new`, `board.changed`. */
   seenBoards: Map<string, number>;
-  /** board -> the `head` of the person's first board seen on it: before a Send, `item.new` (rounds.ts). */
+  /** board -> the `head` of the person's first board seen on it: `item.new` counts from it (rounds.ts). */
   firstSeenBoards: Map<string, number>;
   /** board -> the end of each run of agent drawing lines on it, oldest first: its versions
    * (reads.ts `boardVersions`). */
   runs: Map<string, BoardRun[]>;
-  /** board -> `seq` of its latest round's first drawing line, once a Send was answered (rounds.ts). */
-  rounds: Map<string, number>;
   /** Card id -> `seq` of the line that drew its first version: conditions `item.new`. */
   firstDrawn: Map<number, number>;
   /** board -> its first card line and the index in `runs` of the run it came in (rounds.ts). */
@@ -159,7 +157,7 @@ export const emptyState = (): LedgerState => ({
   keys: new Map(), seen: new Map(), looked: new Map(), clears: new Map(), proposals: new Map(), parks: new Map(), marks: new Map(),
   logs: new Map(), asks: new Map(), regionPins: new Map(), regionLogs: new Map(), acts: [], heads: new Map(),
   drawnHeads: new Map(), agentHeads: new Map(), seenBoards: new Map(), runs: new Map(),
-  rounds: new Map(), firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
+  firstDrawn: new Map(), firstSeenBoards: new Map(), firstCards: new Map(),
   retiredRegions: new Map(), flags: new Map(), notesHidden: new Map(), archived: new Map(), locked: new Map(), dates: new Map(), appAllowed: new Map(), times: new Map(),
 });
 

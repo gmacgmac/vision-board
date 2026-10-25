@@ -20,6 +20,7 @@ import type { BoardData } from './io.ts';
 import { createLayoutCache } from './layout-cache.ts';
 import { markOffscreen, outside, viewBounds } from './offscreen.ts';
 import { createRegionSet } from './render.ts';
+import type { FreshCount } from './board-data.ts';
 import type { RetiredCount } from './retired.ts';
 import { tierOf } from './size.ts';
 import type { Viewport } from './viewport.ts';
@@ -77,6 +78,8 @@ export interface DrawDeps {
   history?: boolean;
   /** Each container's "N cards retired" marker (retiredMarker flag, retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
+  /** Each fresh container's pill counts (freshCards flag, attention.ts `freshIn`). */
+  fresh?(): ReadonlyMap<string, FreshCount>;
   /** The appCards flag: off, an app card draws as a plain card saying so (ruling 13). */
   appCards?: boolean;
   /** Cards were placed or the view moved: app cards load or remove their frames (app-cards.ts). */
@@ -179,7 +182,7 @@ export function createDrawing(d: DrawDeps): Drawing {
     work.containersLaidOut += run.laidOut.length;
     work.containers.push(...run.laidOut);
     layout = run.layout;
-    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies(), d.retired?.());
+    const framesMoved = regions.place(layout, data.view, data.state, d.access ? holdersOf(data) : undefined, d.owed(), d.replies(), d.retired?.(), d.fresh?.());
     if (cards.place(layout, sizes) || framesMoved || fresh) settleWires();
     wires.draw(layout, d.focus());
     markOffscreen(cards.els, layout, sizes, d.vp, els.stage);

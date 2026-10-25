@@ -6,8 +6,8 @@
 // button, the toolbar).
 import { DRAG_THRESHOLD } from './pointer.ts';
 
-/** Presses that open a bubble themselves (wiring.ts, region-notes.ts): never a click outside. */
-const OPENS = '[data-note], .vb-node-reply[data-reply], .vb-nblock-text, .vb-nblock-reply';
+/** Presses that open a bubble themselves (wiring.ts, region-notes.ts, group-pins.ts): never a click outside. */
+const OPENS = '[data-note], .vb-group-pin, .vb-node-reply[data-reply], .vb-nblock-text, .vb-nblock-reply';
 
 /** `shown`: whether a read-only bubble is open now; `close(focus)`: close it, focus back when true.
  *  Returns the unbind. */

@@ -93,6 +93,9 @@ export interface CardConditions {
   handover?: ParkBundle;
   /** The agent's replies that belong on the card (the cardReplies flag). */
   replies?: readonly CardReply[];
+  /** The groupNoteOnce flag: the card leaves out notes on a group of cards and the replies to them,
+   *  which the group's own pin shows once (`notesView`'s `apart`). */
+  groupNotesApart?: boolean;
   /** An app card's app from list_apps (`{}` until it answers; none with the appCards flag off), and whether a past version shows (node-app.ts). */
   app?: AppCardInput;
 }
@@ -203,7 +206,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
   const status = statusOf(s, n.id);
   const pressed: Partial<Record<ActionId, boolean>> = {};
   for (const a of offers(n)) pressed[a] = isPressed(a, status);
-  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], c.replies, s.notesHidden?.get(n.id));
+  const notes = notesView(n, s.items.get(n.id)?.notes ?? [], c.replies, s.notesHidden?.get(n.id), c.groupNotesApart);
   const awaiting = isItem(n) && c.awaiting === true;
   const handover = handoverView(n, c.handover, awaiting);
   const picked = s.sizes.has(n.id);

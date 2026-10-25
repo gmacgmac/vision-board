@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.12
+status: v3.13
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -50,6 +50,7 @@ v3.10 (skill v3.10, apps keep the person's place): 33 (a multi-step app that kee
 29 now also checks the 12 px top padding.
 v3.11 (skill v3.11, tool examples): 34 (the first write in a new project, with no ledger to copy from)
 new. It is numbered 34 because 26 was already taken.
+v3.13 (skill v3.13, a note on a group answered once): 35 (a note on a selection of cards) new.
 
 ## 1. A review with 12 findings (panel)
 
@@ -758,3 +759,19 @@ call', and a link between them."
   no call of its own.
 - **Fails if** an item puts `title` or `kind` beside `type` (a flat node), needs a call to find the
   shape, reads `.visionboard/ledger.jsonl` for it, or writes coordinates.
+
+## 35. A note on a selection of cards (own chat)
+
+**Situation.** Board "Pricing review" has a container "Plans" (`row`) with three cards the agent
+drew: question 1 ("Keep the free tier?"), finding 2 ("Annual plans renew more often") and question 3
+("Drop the monthly Pro plan?"). The person selects 1 and 3, comments once on the selection ("Do these
+two depend on each other?") and presses Send. `check_responses` gives the note once, at card 1, with
+`nodes` naming 1 and 3, and its `seq`.
+
+**A good run**
+- Answers the note once: one `reply` on card 1 or card 3 whose `to` is the note's `seq`, in one
+  `write_board` call. After it, `check_responses` shows nothing `pending` on 1 or 3.
+- Its reply answers the question asked (whether the two depend on each other) in a sentence or two,
+  and asks for a ✓ or ✗ again only where it still needs one. Chat words: one short line.
+- **Fails if** it writes a reply on each card of the group (two replies to one note), answers with a
+  reply that names no `to`, draws a new card to answer it, or leaves the note unanswered.

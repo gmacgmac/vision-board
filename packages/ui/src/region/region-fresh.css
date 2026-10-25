@@ -1,0 +1,31 @@
+/* Region pattern styles, a fresh container (<vb-region data-fresh>, freshCards flag; new-and-updated
+   Design 3 and 4, region-fresh.ts): it holds new or updated cards the person has not engaged with.
+   After region.css and region-narrow.css. Tokens only.
+   Its border takes --vb-state-fresh, the app icon's teal, a few steps brighter than the plain frame
+   line (--region, --vb-line-contrast): APCA on the canvas Lc 58.6 light, 67.4 dark (decoration tier
+   30; the plain line is 33.7 light). A dragged frame keeps its drag look; a drop target its own. */
+vb-region[data-fresh]:not([data-dragging], [data-drop]) { border-color: var(--vb-state-fresh); }
+
+/* The pill after the count: "3 new · 1 updated", teal words on the -soft fill (APCA Lc 54.8 light,
+   63.5 dark; label tier 45), its full words for screen readers and in its tooltip. It follows the
+   label's shrink order (region.css): the holders give way first, then the pill, then the title. The
+   slot is a wrapping row one line high with its second line clipped, like the holders', so with no
+   room the pill wraps out of sight whole and stays in the accessible tree; its strut lets it wrap,
+   and the gap before it is on the pill, so an empty-looking slot adds no room. Zoomed out it stays:
+   the line keeps its on-screen size, so the pill is what finds a fresh container on a large board. */
+vb-region .vb-region-fresh-slot {
+  display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; flex: 0 1e9 auto; min-width: 0;
+  row-gap: var(--vb-space-2); height: var(--vb-space-5); overflow: clip; overflow-clip-margin: var(--vb-space-1);
+  margin-inline-start: calc(-1 * var(--label-gap));
+}
+vb-region .vb-region-fresh-slot::before { content: ''; height: 100%; }
+vb-region .vb-region-fresh-slot:not(:has(> .vb-region-fresh:not([hidden]))) { display: none; }
+vb-region .vb-region-fresh {
+  flex: none; margin-inline-start: var(--label-gap); padding: 1px 7px; border-radius: var(--vb-radius-pill); white-space: nowrap;
+  background: var(--vb-state-fresh-soft); color: var(--vb-state-fresh);
+  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
+}
+vb-region .vb-region-fresh[hidden] { display: none; }
+vb-region .vb-region-fresh-words {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}

@@ -19,6 +19,7 @@ import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/region/region-narrow.css';
 import '../../../../packages/ui/src/region/region-note.css';
 import '../../../../packages/ui/src/region/region-rail.css';
+import '../../../../packages/ui/src/region/region-fresh.css';
 import '../../../../packages/ui/src/tip/tip.css';
 import '../../../../packages/ui/src/paused/paused.css';
 import '../../../../packages/ui/src/note-bubble/note-bubble.css';
@@ -47,6 +48,8 @@ import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
 import { regionSamples } from './region-section.ts';
 import { railSection } from './rail-section.ts';
+import { freshSection } from './fresh-section.ts';
+import { groupNotesSection } from './group-notes-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
@@ -151,13 +154,14 @@ function build(): void {
   main.toggleAttribute('data-title-tip', flagOn('titleTip', flags)); // the title tip (FE_03), as the board's world
   main.toggleAttribute('data-note-preview', flagOn('notePreview', flags)); // the card note preview (FE_04), as the board's world
   main.toggleAttribute('data-app-title', flagOn('appTitle', flags)); // an app card's title over its panel (card-polish FE_01), as the board's world
+  main.toggleAttribute('data-fresh-cards', flagOn('freshCards', flags)); // the pink "N updates" tab (freshCards), as the board's world
   if (flagOn('nodeSize', flags)) main.append(sizeSection(fx));
   if (flagOn('agentAccess', flags)) main.append(accessSection(fx));
   if (flagOn('wireLayers', flags)) main.append(wireSection(fx));
   if (flagOn('versionView', flags)) main.append(versionSection(fx));
   if (flagOn('keyBubble', flags)) main.append(keyHelpSection());
   if (flagOn('proposals', flags)) main.append(proposalsSection(fx));
-  if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags)));
+  if (flagOn('cardUpdates', flags)) main.append(updatesSection(fx, flagOn('newCards', flags), flagOn('freshCards', flags)));
   if (flagOn('handover', flags) || flagOn('cardReplies', flags)) main.append(parkingSection(fx));
   if (flagOn('chatPanel', flags)) main.append(chatSection(fx));
   if (flagOn('toolbarMenu', flags)) main.append(toolbarSection(fx));
@@ -176,6 +180,8 @@ function build(): void {
   main.append(appIconSection());
   // Last, so the sections above keep their place (and their screenshots) with the flag on or off.
   if (flagOn('toolRail', flags)) main.append(railSection(fx));
+  if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
+  if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

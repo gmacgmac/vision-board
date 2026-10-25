@@ -1,5 +1,5 @@
 // Region pattern, layer 2 (template): one pure function from a region to the markup of its
-// frame: the top line (title, answered count and holders, in a gap cut from the frame's border; on
+// frame: the top line (title, answered count, the fresh pill and holders, in a gap cut from the frame's border; on
 // the right the mode row: six layout icons, a divider and the settings cog, README pick 1 / mockup
 // 05, or with the toolRail flag that row in a rail on the frame's left edge instead), the layout popover and the settings menu (both closed until the element
 // opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
@@ -147,6 +147,12 @@ const COUNT = '<span class="vb-region-count" hidden><span class="vb-region-count
 const handle = (title: string, heading: string): string =>
   `<span class="vb-region-handle">${grip(title)}<h2 id="${heading}">${title}</h2>${COUNT}</span>`;
 
+/** "3 new · 1 updated" after the count (freshCards flag, region-fresh.ts), hidden until `update` says
+ * how many; its full words are its tooltip and what screen readers read. Its slot is a wrapping row
+ * one line high, like the holders', so with no room the pill leaves the line whole (region-fresh.css). */
+const FRESH = '<span class="vb-region-fresh-slot"><span class="vb-region-fresh" hidden><span class="vb-region-fresh-n" aria-hidden="true"></span>'
+  + '<span class="vb-region-fresh-words"></span></span></span>';
+
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
   const ids = regionIds(r.id);
   const title = esc(r.title);
@@ -159,7 +165,7 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
   const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}`
     + `${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
-    + `${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
+    + `${FRESH}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `${opts.rail ? '' : tools}</div></header>${opts.rail ? `<div class="vb-region-rail">${tools}</div>` : ''}`
     + `${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }

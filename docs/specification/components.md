@@ -150,9 +150,10 @@ server, the page and (through the API) agents. Nothing in them is stored, so not
   the words it shows. An agent's rows are scoped through `PERMISSIONS`.
 
 On the page, one read (`pageConditions`, `apps/board/src/board/board-data.ts`, also the gallery's)
-gives the picker marks, the container badges, the open requests, `board.drawn` and whether Send to
+gives the picker marks, the container badges, the open requests, `board.drawn`, whether Send to
 agent has anything to send (`board.unsent`: without it the button is disabled, "Nothing new to
-send", api.md 123);
+send", api.md 123), and the new and updated cards with the fresh containers (`freshCards`,
+`container.fresh`, api.md 158);
 `attention.ts` runs it after every batch and on every switch, decides what is news (a request or a
 drawing line in the batch), and sends the board seen that ends the marks. Components only render.
 
@@ -508,9 +509,29 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
 4. **Group notes.** Comment on two or more selected cards opens one note on the group
    (`notes.ts` `group()`, `BubbleInput.numbers`): the bubble's head names every item ("Note on 3
    cards: 12, 14, 15") instead of a number chip, and its act carries `nodes` in place of `n`/`ver`
-   (api.md 62-65). Any of the group's pins reopens, edits or removes it on every card at once; a
-   card may also hold its own single-card note (named by `n`) independently. With exactly one card
-   selected, Comment is that card's own note (2e), unchanged.
+   (api.md 62-65). A card may also hold its own single-card note (named by `n`) independently. With
+   exactly one card selected, Comment is that card's own note (2e), unchanged.
+   **Drawn once** (`groupNoteOnce` flag, on by default; task
+   `cortex-tasks/board/2026-10-25_board-ui_group-note-once.md`, maintainer ruling point 103). The
+   note is one pin per group of cards (`node-notes.ts` `groupMarkers`: its latest note, numbered
+   among the group's notes, labelled as a card's pin is), in its own layer of the world above the
+   cards (`group-pins.ts` `createGroupPins`, `.vb-group-notes`), on the right edge of the group's
+   lowest-numbered card drawn, in the column of that card's own pin and just under it
+   (`groupPinAt`). A group whose lowest card already holds a group pin takes its next card drawn that
+   holds none (`groupAnchors`); only when all of them do does it stack, down clear of the footer, then
+   a column out.
+   It wears the card pin's look and states (`node.css` `.vb-note-pin`, `paused.css`). Hovering or
+   focusing it, and its bubble being open, put a dashed ring round each card of the group
+   (`data-group-ring`, `node-notes.css`): the accent while the note can be edited, `--vb-ink-subtle`
+   once it is history; never a box, so no unrelated card is marked. Pressing it selects the group's
+   cards and opens the note (`notes.ts` `show`), to edit or remove it, with the agent's replies to
+   it once; focus goes back to the pin. The cards' pins, "Your note" blocks and conversations leave
+   the group's notes and the replies to them out (`notesView`'s `apart`, `CardConditions.groupNotesApart`
+   from `parking.ts`; `note-views.ts` `cardView`). Off, the note and its replies show on every card
+   of the group and any of their pins opens it. Kept true by `packages/ui/tests/group-notes.test.ts`
+   and `tests/pages/group-note.spec.ts` (one pin, no card repeating it, its place, rings on hover,
+   focus and open, select, edit, the reply once, two groups sharing a card, Remove, the flag off, axe
+   light and dark); the gallery's "Notes on groups of cards" section (`group-notes-section.ts`).
 5. **View commands are never ledger events.** Zoom and clearing only move the viewport or the
    selection. **Z** (Zoom to the selection, and the chat's "zoom to these cards", which runs it)
    fits one card or several to 75% of the stage's width or height, whichever binds, centred, up to the
@@ -652,6 +673,26 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    (focus, selection, pan), the cut title, nothing open, a past version (nothing sent), the flag
    off, axe light and dark, and the gallery samples' screenshots (`gallery/open-list-section.ts`,
    in the toolbar section). Off, the chip is plain.
+8. **New and updated cards at board scale** (`freshCards` flag, on by default; task
+   `cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md`, api.md 158). The "N updates" tab is
+   outlined in the accent's pink with pink words at rest (`node-steps.css`, scoped by the world's
+   `data-fresh-cards`), so it reads at a distance as NEW does; hovered or open it takes the amber
+   edge as before. A container holding a card new or updated since the person last engaged with any
+   card in it (`container.fresh`) carries `data-fresh`: its border takes `--vb-state-fresh` (teal)
+   and its title line a pill after the count, "3 new · 1 updated" (`region-fresh.ts` `regionFresh`,
+   `region-fresh.css`), which leaves a narrow line whole, after the holders and before the title,
+   and stays zoomed out. Selecting one of its new or updated cards, or any act on one of its cards,
+   ends it; a click on the frame does not. The toolbar's "N new" chip beside "N open" is the same
+   `OpenChip` (generalised: its word, tone and names are props), listing `freshCards` as "46 ·
+   title", an updated one ending "· updated" (`finder.ts` `openRow`, the title giving way to a cut,
+   never the ending); choosing one goes to it as Go to card does, which selects it and so ends its
+   NEW. The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
+   they never disagree. Hidden at zero, and with the flag off or a past version (`attention.ts`
+   `freshIn`, `Toolbar.svelte`). APCA, measured by `tests/pages/fresh-cards.spec.ts`: the border on
+   the canvas Lc 58.6 light, 67.4 dark; the pill's words 54.8 and 63.5; the tab's words 74.8 and
+   49.8, its outline 72.0 and 47.7. The gallery's "New and updated cards" section draws them
+   (`gallery/fresh-section.ts`). Off, the tab is grey until hovered and no container, pill or chip
+   shows.
 
 ## Every card in the conversation (every-node FE_01)
 

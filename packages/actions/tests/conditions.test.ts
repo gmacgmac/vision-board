@@ -1,6 +1,6 @@
 // The conditions table (BE_04, D-033, api.md 87): what needs attention. One case per row (when it
-// is true, when it ends), checked for coverage so a row added later without a case fails; agent
-// scoping through the permissions table (a board revoke ends what an agent is told it owes); and
+// is true, when it ends), checked for coverage so a row added later without a case fails (who is
+// told, and agent scoping through the permissions table: conditions-audience.test.ts); and
 // on every fixture ledger, for every board and every agent, the rows equal the functions they
 // replaced (kept here only as the oracle).
 import { test } from 'node:test';
@@ -10,8 +10,7 @@ import type { LedgerNode } from '../../format/src/index.ts';
 import { latest, nodesOf, readLedger } from '../../format/src/index.ts';
 import type { Condition, ConditionContext, ConditionKind, LedgerState } from '../src/index.ts';
 import {
-  boardNews, canWrite, CONDITION_KINDS, CONDITIONS, conditionsOf, foldLedger, grantRequests, holders, openContainers, openItems,
-  pendingItems, REFERENCE_KINDS, responsesAfter,
+  boardNews, canWrite, CONDITION_KINDS, CONDITIONS, conditionsOf, foldLedger, grantRequests, holders, REFERENCE_KINDS,
 } from '../src/index.ts';
 import { cardsOf, latestAsk } from '../src/notes.ts';
 import { CLOSED } from '../src/registry.ts';
@@ -120,7 +119,7 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     l.agent(A, { type: 'reply', n: 1, text: 'More.', to: note });
     assert.deepEqual(of(l.state(), { board: 'b' }, 'container.owed'), [], 'a reply naming it ends it');
   },
-  'item.new': () => { // the round rules in detail: rounds.test.ts
+  'item.new': () => { // from where cards are new, in detail: rounds.test.ts
     const l = v8();
     const fresh = () => of(l.state(), { board: 'b' }, 'item.new').map((c) => c.id);
     l.seenBoard('b', l.seq);
@@ -128,6 +127,16 @@ const ROW_CASES: Record<ConditionKind, () => void> = {
     assert.deepEqual(fresh(), [5], 'only what was drawn after the first board seen; its board only');
     l.seen(5, 1);
     assert.deepEqual(fresh(), [], 'the person\'s seen ends it');
+  },
+  'container.fresh': () => { // in detail: fresh.test.ts
+    const l = v8();
+    const fresh = () => of(l.state(), { board: 'b' }, 'container.fresh').map((c) => c.container);
+    l.seenBoard('b', l.seq);
+    const drew = l.node(B, 5, 1, { region: 'q' });
+    assert.deepEqual(of(l.state(), { board: 'b' }, 'container.fresh'), [{ kind: 'container.fresh', board: 'b', container: 'q', seq: drew }]);
+    assert.deepEqual(of(l.state(), { board: 'b', agent: B }, 'container.fresh'), [], 'agents are never told');
+    l.seen(5, 1);
+    assert.deepEqual(fresh(), [], 'the person\'s seen of a card in it ends it');
   },
   'item.unseen': () => {
     const l = v8();
@@ -262,35 +271,7 @@ for (const kind of CONDITION_KINDS) {
     assert.ok(['person', 'agent', 'both'].includes(row.audience));
     assert.equal(row.shows.length > 0, row.audience !== 'agent', 'the page shows what the person is told');
     assert.ok(row.trueWhen.length > 0 && row.endsWhen.length > 0);
-    assert.ok(row.clearedBy.length === 0 || row.shows.includes('card'), 'only a card\'s label is cleared by the person (rounds.test.ts)');
+    assert.ok(row.clearedBy.length === 0 || row.shows.includes('card') || row.shows.includes('container'), 'only a card\'s or a container\'s label is cleared by the person (rounds.test.ts)');
     ROW_CASES[kind]();
   });
 }
-
-// ---- Who is told. ----
-
-test('an agent is never told the person\'s rows; the person is told every agent\'s', () => {
-  const l = v8();
-  l.request(C, 'r');
-  l.act({ action: 'comment', n: 1, ver: 1, text: 'For A.' });
-  const person = new Set(CONDITION_KINDS.filter((k) => CONDITIONS[k].audience === 'person'));
-  assert.ok(conditionsOf(l.state(), { board: 'b' }).some((c) => person.has(c.kind)));
-  for (const agent of [A, B, C]) assert.ok(!conditionsOf(l.state(), { board: 'b', agent }).some((c) => person.has(c.kind)), agent);
-});
-
-test('a board revoke (D-034) ends what the agent is told it owes there, and the container acts it hears about', () => {
-  const l = v8();
-  const card = l.act({ action: 'comment', n: 2, ver: 1, text: 'For B.' });
-  const note = l.act({ action: 'comment', board: 'b', region: 'q', text: 'On all of q.' });
-  const mode = l.act({ action: 'mode', board: 'b', region: 'q', mode: 'list' });
-  const owed = () => kinds(l.state(), { board: 'b', agent: B }, 'item.owed', 'container.owed').map((c) => c.seq);
-  const heard = () => responsesAfter(l.state(), 'b', 0, B).map((e) => e.seq);
-  assert.deepEqual(owed(), [card, note]);
-  assert.deepEqual(heard(), [card, note, mode]);
-  const revoke = l.act({ action: 'revoke', holder: B, board: 'b' });
-  assert.deepEqual(owed(), []);
-  assert.deepEqual(pendingItems(l.state(), 'b', B), []);
-  assert.deepEqual([openItems(l.state(), 'b', B), openContainers(l.state(), 'b', B)], [[], []]);
-  assert.deepEqual(heard(), [revoke], 'it hears only that it lost the board');
-  assert.deepEqual(kinds(l.state(), { board: 'b' }, 'item.owed', 'container.owed').map((c) => c.seq), [card, note], 'still owed to the board');
-});

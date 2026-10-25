@@ -76,7 +76,7 @@ export const FLAGS = {
   newCards: {
     // On by default (maintainer, 2026-10-08, stage5-follow-ups FE_01); ?flags=-newCards turns it off.
     default: true,
-    description: 'A card the agent added after the person first opened the board (`item.new`, api.md 97) carries a NEW tab on its bottom edge until the person selects or acts on it, or the next round starts (a Send, then the agent drawing again). A new card shows NEW only, never "N updates". Selecting a card sends seen for each card condition whose `clearedBy` names select. Off while a past version shows. Off, no NEW tab and the card shows its updates as before.',
+    description: 'A card the agent added after the person first opened the board (`item.new`, api.md 97) carries a NEW tab on its bottom edge until the person selects, acts on or decides it; a Send and the agent drawing again never end it. A new card shows NEW only, never "N updates". Selecting a card sends seen for each card condition whose `clearedBy` names select. Off while a past version shows. Off, no NEW tab and the card shows its updates as before.',
   },
   handover: {
     // On by default (maintainer, 2026-10-08, proposals-seen-parking FE_03); ?flags=-handover turns it off.
@@ -187,6 +187,16 @@ export const FLAGS = {
     // On by default (maintainer, 2026-10-25, container tool rail, chat points 1-15); ?flags=-toolRail turns it off.
     default: true,
     description: 'A container\'s tools (the layout icons, Match card widths, Comment and the settings cog) sit in a slim vertical rail on the frame\'s left edge, dimmed until hovered or focused, so the top line holds only the title, centred, with the whole line for it; a short frame\'s rail collapses and expands over the cards on hover or focus, and its popovers open to the right of it. Off, the tools sit on the top line after the title as before.',
+  },
+  freshCards: {
+    // On by default (maintainer, 2026-10-25, chat points 78, 80, 86, 88; new-and-updated task); ?flags=-freshCards turns it off.
+    default: true,
+    description: 'New and updated cards are found at board scale: the "N updates" tab is outlined in pink at rest; a container holding a card that is new or updated since the person last engaged with any card in it (`container.fresh`, api.md 158) has a teal border and a "3 new · 1 updated" pill on its title line, until they select or act on one of its cards; and the toolbar\'s "N new" chip lists those cards as "number · title" (updated ones end "· updated") in board order, choosing one going to it as Go to card does. None of it shows in a past version. Off, the tab is grey until hovered and no container, pill or chip shows.',
+  },
+  groupNoteOnce: {
+    // On by default (maintainer, 2026-10-25, chat points 91-93 and 103; group-note-once task); ?flags=-groupNoteOnce turns it off.
+    default: true,
+    description: 'A note on a selection of cards (one note with `nodes`, api.md 62) is drawn once: one pin per group, on the right edge of the group\'s lowest-numbered card just under that card\'s own note pin (or its next card, when an earlier group\'s pin is already there), in its own layer above the cards. Hovering or focusing it, and its bubble being open, ring each card of the group with a dashed line (never a box); pressing it selects the group\'s cards and opens the note, to edit or remove it, with the agent\'s replies to it shown once there. The cards\' own pins, "Your note" blocks and conversations leave the group\'s notes and replies out. Off, the note and its replies show on every card of the group.',
   },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.

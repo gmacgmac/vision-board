@@ -343,3 +343,11 @@
 {"v":18,"seq":343,"at":"2026-10-17T09:01:10Z","by":"agent","agent":"a-pricing1","type":"node","board":"notes","n":148,"ver":1,"node":{"region":"notes","kind":"finding","title":"Note times","body":"Hover or focus a note or a reply: its time shows at its top right."}}
 {"v":18,"seq":344,"at":"2026-10-17T09:01:11Z","by":"person","type":"act","action":"comment","n":148,"ver":1,"text":"Which plan do most teams pick?"}
 {"v":18,"seq":345,"at":"2026-10-17T09:01:12Z","by":"agent","agent":"a-pricing1","type":"reply","n":148,"text":"The team plan, by a wide margin.","to":344}
+{"v":18,"seq":346,"at":"2026-10-25T09:00:00Z","by":"agent","agent":"a-pricing1","type":"board","board":"groups","title":"Notes on groups of cards"}
+{"v":18,"seq":347,"at":"2026-10-25T09:00:01Z","by":"agent","agent":"a-pricing1","type":"region","board":"groups","region":{"id":"groups","title":"Pricing questions","mode":"grid","columns":3}}
+{"v":18,"seq":348,"at":"2026-10-25T09:00:02Z","by":"agent","agent":"a-pricing1","type":"node","board":"groups","n":149,"ver":1,"node":{"region":"groups","kind":"question","title":"Which plan is the default?"}}
+{"v":18,"seq":349,"at":"2026-10-25T09:00:03Z","by":"agent","agent":"a-pricing1","type":"node","board":"groups","n":150,"ver":1,"node":{"region":"groups","kind":"question","title":"Do annual plans get a discount?"}}
+{"v":18,"seq":350,"at":"2026-10-25T09:00:04Z","by":"agent","agent":"a-pricing1","type":"node","board":"groups","n":151,"ver":1,"node":{"region":"groups","kind":"risk","title":"Seat counts change mid-year"}}
+{"v":18,"seq":351,"at":"2026-10-25T09:01:00Z","by":"person","type":"act","action":"comment","nodes":[149,151],"text":"Settle these two together: they decide the invoice."}
+{"v":18,"seq":352,"at":"2026-10-25T09:02:00Z","by":"agent","agent":"a-pricing1","type":"reply","n":151,"text":"Agreed. I will answer them as one change.","to":351}
+{"v":18,"seq":353,"at":"2026-10-25T09:03:00Z","by":"person","type":"act","action":"comment","nodes":[149,150],"text":"Same owner for both?"}

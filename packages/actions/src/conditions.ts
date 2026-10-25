@@ -3,7 +3,8 @@
 // true and when it ends, and how it is worked out from the folded ledger. `conditionsOf` is every
 // row's answer, read alike by the agent reads (`list_open`, `write_board`'s `pending`), the page
 // and the tests. A row shown on a card also names what the person does that clears it
-// (`clearedBy`), which the page reads to know when selecting a card marks it seen. A check needed in more than one place is a row here, never a local check. Every
+// (`clearedBy`), which the page reads to know when selecting a card marks it seen; a row shown on a
+// container names what ends it on any card in it (`container.fresh`). A check needed in more than one place is a row here, never a local check. Every
 // row reads folded indexes (marks, asks, replies, seen, heads, requests, proposals), per board;
 // none walks the events. Pure.
 import type { LedgerNode } from '../../format/src/index.ts';
@@ -15,13 +16,15 @@ import { mayAnswer, mayAnswerIn } from './permissions.ts';
 import { visibleToAgents } from './archive.ts';
 import type { ReferenceKind } from './references.ts';
 import { standing } from './proposals.ts';
-import { inLatestRound } from './rounds.ts';
+import { drawnAfterOpening } from './rounds.ts';
+import type { FreshCard } from './fresh.ts';
+import { freshContainers, freshOf } from './fresh.ts';
 import type { ItemStatus } from './registry.ts';
 import { CLOSED, isDecided } from './registry.ts';
 import { unsentOn } from './unsent.ts';
 
 export const CONDITION_KINDS = [
-  'item.owed', 'container.owed', 'item.new', 'item.unseen', 'item.awaiting', 'proposal.open', 'proposal.stale', 'grant.requested',
+  'item.owed', 'container.owed', 'item.new', 'item.unseen', 'container.fresh', 'item.awaiting', 'proposal.open', 'proposal.stale', 'grant.requested',
   'board.drawn', 'board.new', 'board.changed', 'board.unsent',
 ] as const;
 export type ConditionKind = (typeof CONDITION_KINDS)[number];
@@ -30,10 +33,10 @@ export type ConditionKind = (typeof CONDITION_KINDS)[number];
 export type Audience = 'person' | 'agent' | 'both';
 /** Where the page shows a condition; none for one only agents read. `send`: Send to agent. */
 export type Shows = 'picker' | 'card' | 'container' | 'strip' | 'toast' | 'send';
-/** What the person does that ends a card's label: `select` the card (the page sends its `seen`),
- * `act` on it (any act naming it but a Send, api.md 94), or the next `round` starting (a Send, then
- * the agent drawing again: rounds.ts). */
-export type ClearedBy = 'select' | 'act' | 'round';
+/** What the person does that ends a card's label: `select` the card (the page sends its `seen`), or
+ * `act` on it (any act naming it but a Send, api.md 94). A Send ends no label (new-and-updated
+ * Design 2). */
+export type ClearedBy = 'select' | 'act';
 
 /** One thing that needs attention, by ids only, never text. `seq` is the line it is about; `id`
  * the card's identity (a read gives its board number: numbers.ts). */
@@ -48,7 +51,8 @@ export interface ConditionContext { board?: string; agent?: string }
  * the docs), and how it is worked out. */
 export interface ConditionRow {
   about: ReferenceKind; audience: Audience; shows: readonly Shows[]; trueWhen: string; endsWhen: string;
-  /** What clears it, for a row shown on a card; empty elsewhere, and on a card row nothing of these ends. */
+  /** What clears it, for a row shown on a card or a container (on any card in it); empty elsewhere,
+   * and on such a row nothing of these ends. */
   clearedBy: readonly ClearedBy[];
   derive: (s: LedgerState, ctx: ConditionContext) => Condition[];
 }
@@ -160,12 +164,12 @@ export const CONDITIONS: Rows = {
     })),
   },
   'item.new': {
-    about: 'card', audience: 'person', shows: ['card'], clearedBy: ['select', 'act', 'round'],
-    trueWhen: 'A card of any kind, not decided (registry.ts `isDecided`), that the agent first drew in the board\'s latest round (rounds.ts: after the person\'s first board seen on it, or after the agent\'s first drawing with a card when they opened it with none, so a first drawing is never new; or once a Send was answered, from the first drawing after it), with no seen at any version: the card\'s NEW tab.',
-    endsWhen: 'The person selecting it (its `seen`), any act of theirs naming it but a Send (api.md 94), or the next round: a Send, then the agent drawing again.',
+    about: 'card', audience: 'person', shows: ['card'], clearedBy: ['select', 'act'],
+    trueWhen: 'A card of any kind, not decided (registry.ts `isDecided`), that the agent first drew after the person first opened the board (rounds.ts `newFrom`: after the person\'s first board seen on it, or after the agent\'s first drawing with a card when they opened it with none, so a first drawing is never new), with no seen at any version: the card\'s NEW tab. A Send and the agent drawing again change nothing (new-and-updated Design 2).',
+    endsWhen: 'The person selecting it (its `seen`), any act of theirs naming it but a Send (api.md 94), or a decision on it.',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx).flatMap((x) => {
       const seq = s.firstDrawn.get(x.id) ?? 0;
-      const fresh = !s.seen.has(x.id) && !decided(s, x) && inLatestRound(s, board, seq);
+      const fresh = !s.seen.has(x.id) && !decided(s, x) && drawnAfterOpening(s, board, seq);
       return fresh ? [{ kind: 'item.new' as const, board, id: x.id, seq }] : [];
     })),
   },
@@ -175,6 +179,13 @@ export const CONDITIONS: Rows = {
     endsWhen: 'The person\'s `seen` for that version (any card `seen` after the agent\'s answer or reply), or any act of theirs naming the card but a Send (api.md 94).',
     derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => cardsOn(s, board, ctx)
       .filter((x) => latest(x).ver > (s.seen.get(x.id) ?? 0) || unseenAnswer(s, x.id) || unseenReply(s, x.id) !== undefined).map((x) => ({ kind: 'item.unseen' as const, board, id: x.id }))),
+  },
+  'container.fresh': {
+    about: 'container', audience: 'person', shows: ['container'], clearedBy: ['select', 'act'],
+    trueWhen: 'A container holds a card `item.new` or `item.unseen` holds for (as its tab shows it: fresh.ts `freshOf`) whose newest change, the agent\'s latest version or reply on it, is after the person\'s latest card seen or act on any card in the container (`looked`): its teal border and its "3 new · 1 updated" pill (new-and-updated Design 3). Nothing is stored.',
+    endsWhen: 'The person selecting a new or updated card in it (its `seen`) or any act of theirs naming a card in it, until the agent changes one of its cards again. A click on the frame ends nothing.',
+    derive: (s, ctx) => boardsIn(s, ctx).flatMap((board) => [...freshContainers(s, board, freshCards(s, board))]
+      .map(([container, seq]) => ({ kind: 'container.fresh' as const, board, container, seq }))),
   },
   'item.awaiting': {
     about: 'card', audience: 'both', shows: ['card'], clearedBy: [],
@@ -239,9 +250,17 @@ export const CONDITIONS: Rows = {
 };
 
 /** Whether selecting a card ends condition `kind` on it (its row's `clearedBy`): the page sends the
- * card's `seen` for each such condition it holds. */
+ * card's `seen` for each card condition it holds, which also ends a container's (`container.fresh`). */
 export const clearsOnSelect = (kind: ConditionKind): boolean => CONDITIONS[kind].clearedBy.includes('select');
 
 /** Everything that needs attention for `ctx`, row by row in `CONDITION_KINDS` order. */
 export const conditionsOf = (s: LedgerState, ctx: ConditionContext = {}): Condition[] =>
   CONDITION_KINDS.flatMap((kind) => (ctx.agent !== undefined && CONDITIONS[kind].audience === 'person' ? [] : CONDITIONS[kind].derive(s, ctx)));
+
+/** The new and updated cards of `board` (`item.new`, `item.unseen` as the tab shows it), in board
+ * order: the toolbar's "N new" list and every container's pill read this one list, so the count, the
+ * list and the tabs never disagree (new-and-updated Design 5). */
+export function freshCards(s: LedgerState, board: string): FreshCard[] {
+  const ids = (kind: ConditionKind) => new Set(CONDITIONS[kind].derive(s, { board }).map((c) => c.id!));
+  return freshOf(s, board, ids('item.new'), ids('item.unseen'));
+}

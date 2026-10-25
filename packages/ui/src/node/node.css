@@ -167,20 +167,21 @@ vb-node .vb-node-note[data-tip-open] .vb-note-tip { display: block; }
 vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }
 
 /* The note pin (ruling 7, 05 `.card .pin`): a numbered drop hanging off the top-right corner,
-   the latest note's number. It clears the size control's hit area (tracker N10). */
-vb-node .vb-note-pin {
+   the latest note's number. It clears the size control's hit area (tracker N10). A group's pin
+   (groupNoteOnce flag) wears the same look in its own layer (node-notes.css `.vb-group-notes`). */
+:is(vb-node, .vb-group-notes) .vb-note-pin {
   position: absolute; z-index: 4; top: -12px; right: -12px; display: grid; place-items: center;
   width: 26px; height: 26px; padding: 0; cursor: pointer;
   border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
   color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
   transition: scale var(--vb-motion-fast);
 }
-vb-node .vb-note-pin[hidden] { display: none; }
-vb-node .vb-note-pin:hover { scale: 1.1; }
-vb-node .vb-note-pin[data-sent] {
+:is(vb-node, .vb-group-notes) .vb-note-pin[hidden] { display: none; }
+:is(vb-node, .vb-group-notes) .vb-note-pin:hover { scale: 1.1; }
+:is(vb-node, .vb-group-notes) .vb-note-pin[data-sent] {
   background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
 }
-vb-node .vb-note-pin:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+:is(vb-node, .vb-group-notes) .vb-note-pin:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 /* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
 vb-node[data-bubble] { z-index: 3; }
 

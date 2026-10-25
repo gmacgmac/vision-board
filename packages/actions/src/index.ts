@@ -33,7 +33,9 @@ export { latestMarks, pendingItems, replyScope, responsesAfter } from './pending
 export { inCardOrder, responsesPage } from './response-order.ts';
 export type { ReportedAct } from './response-order.ts';
 export type { PendingItem } from './pending.ts';
-export { boardNews, clearsOnSelect, CONDITION_KINDS, CONDITIONS, conditionsOf } from './conditions.ts';
+export { boardNews, clearsOnSelect, CONDITION_KINDS, CONDITIONS, conditionsOf, freshCards } from './conditions.ts';
+export { showsUpdates } from './fresh.ts';
+export type { FreshCard } from './fresh.ts';
 export type { Audience, ClearedBy, Condition, ConditionContext, ConditionKind, ConditionRow, Shows } from './conditions.ts';
 export { boardAccess, boardList, boardVersions, containerDetail, itemsOut, linkedDetails, nodeDetail, openContainers, openItems } from './reads.ts';
 export type { AccessHolder, AccessRequest, BoardAccess, BoardListItem, BoardVersions, ContainerDetail, NodeDetail, NodeVersionView, OpenContainer, OpenItem } from './reads.ts';

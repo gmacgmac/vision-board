@@ -1,8 +1,8 @@
 ---
 task_name: New And Updated Cards Easy To Find
 created: 2026-10-25
-completed:
-status: pending
+completed: 2026-10-25
+status: completed
 categories: [board-ui]
 type: implementation
 model: strong
@@ -82,7 +82,56 @@ only unanswered asks. All the facts already exist in the condition registry
 
 ## Implementation Notes
 
-_To be completed by agent after task execution._
+**STOP check (no stop).** `item.new` without rounds keeps the first-open baseline (`rounds.ts`
+`newFrom`: the first board seen, or the end of the first drawing with a card), so a first drawing is
+still never new; only the Send rounds are gone. Counted on real-shaped ledgers, today vs without
+rounds, per board: the uplynk-studio project ledger (3 boards: 3/3, 0/0, 0/0), this repo's
+`.visionboard` (4 boards: 0/0, 0/0, 5/5, 0/0), the roadmap page-test fixture (0/0) and the gallery
+fixture (9 boards, 0/0 or 1/1). No old card turns NEW on any of them.
+
+**What changed.**
+- Point 2 (not flagged): `rounds.ts` keeps runs and `newFrom` / `drawnAfterOpening`; the Send rounds
+  (`LedgerState.rounds`, `roundStart`, `inLatestRound`) are gone, dead once `item.new` stopped
+  reading them; `ClearedBy` is `select | act`. fold.ts shrank (308 -> 306 lines).
+- Point 3: `packages/actions/src/fresh.ts` (`freshOf`, `freshContainers`, `showsUpdates`); the
+  `container.fresh` row and `freshCards(state, board)` in conditions.ts, the one list behind the
+  pill, the chip and the row; nothing stored, `looked` read as planned.
+- Point 4: tokens `--vb-state-fresh` light-dark(#0d9488, #2dd4bf) (the app icon's teal) and
+  `--vb-state-fresh-soft` (12% on the card surface); `region-fresh.ts` / `region-fresh.css`; the
+  pill's slot sits between the count and the retired marker, shrink weight 1e9 (holders 1e12 leave
+  first, then the pill whole, then the title).
+- Point 1: the updates tab's pink outline is in `node-steps.css`, scoped by the world's
+  `data-fresh-cards` (the flag), so off is today.
+- Point 5: `OpenChip.svelte` generalised (word, tone, names as props); `finder.ts` `openRow` takes
+  `{ n, title, updated? }`; the chip shows only with cards and no past version.
+- Page wiring: `pageConditions` gives `freshCards` and `freshIn` (counts per fresh container from
+  the one list); `attention.ts` gates them by the flag and a past version; `render.ts` adds
+  `RegionState.fresh`.
+- `conditions.test.ts` would have gone over 300 lines: its "who is told" tests moved, unchanged, to
+  `conditions-audience.test.ts`.
+
+**APCA (measured in `tests/pages/fresh-cards.spec.ts`, APCA-W3 0.0.98G-4g).**
+
+| Pair | Tier | Light | Dark |
+|---|---|---|---|
+| Fresh border on the canvas | 30 | 58.6 | 67.4 |
+| (plain frame line on the canvas, for reference) | - | 33.7 | 11.7 |
+| Pill words on `--vb-state-fresh-soft` | 45 | 54.8 | 63.5 |
+| Updates tab words (`--vb-accent-text`) on the card | 45 | 74.8 | 49.8 |
+| Updates tab outline (`--vb-accent`) on the card | 30 | 72.0 | 47.7 |
+
+
+**Verification.** `npm test` 1592/1592; `npm run verify` ok (warnings only: controller.ts 305, io.ts
+301, fold.ts 306, all over 300 before this task); `npm run check` 0 errors. Page tests on port 4590:
+`fresh-cards.spec.ts` 12/12 (new), `new-cards.spec.ts` updated (an older NEW survives a Send and a
+redraw), `card-updates.spec.ts`'s quiet-tab test now opens with `-freshCards`. Full suite: 611 passed,
+7 failed: the perf "selecting 50 cards" test timed out once under the full run and passes alone (twice);
+the other 6 (`send-access.spec.ts` x4, `size.spec.ts` gallery x2) fail identically at HEAD (checked in a
+detached worktree), so they are not this task's. Flag off = today: the whole page suite with
+`freshCards` defaulted off matched every existing baseline but those same 6.
+Baselines refreshed on purpose: `gallery.spec.ts` (pink tabs, the new section at the end) and
+`card-updates.spec.ts` (pink tab); new: `fresh-cards.spec.ts` fresh-section light and dark. The
+Changed cards gallery words keep their old length so no section below moves.
 
 ## On Completion
 

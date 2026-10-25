@@ -202,11 +202,12 @@ test('Send leaves the tabs; tabbing past and hovering send nothing', async ({ pa
   expect(await seenAfter(page, d.board, before)).toEqual([]);
 });
 
-test('the tab is small and quiet (field report batch 1, ruling 3): muted ink, lower case, a 24px target, amber when hovered', async ({ page, request }) => {
+// With the freshCards flag (on by default) the tab is pink at rest instead: tests/pages/fresh-cards.spec.ts.
+test('the tab is small and quiet with -freshCards (field report batch 1, ruling 3): muted ink, lower case, a 24px target, amber when hovered', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
   await append(request, d, n, APPENDED);
-  await open(page, d);
+  await open(page, d, '?flags=-freshCards');
   await expect(tab(page, n)).toHaveText('1 update');
   const look = () => tab(page, n).evaluate((e) => {
     const probe = document.createElement('span');

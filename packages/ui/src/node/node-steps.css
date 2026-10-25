@@ -1,8 +1,11 @@
 /* A changed card (proposals-seen-parking FE_02 ruling 3, mockup 03 Part B option B; node-core.ts
-   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css), small and
-   quiet (field report batch 1, ruling 3): lower case, medium weight, less padding, the muted ink on
-   the card's surface (a status word, APCA Lc 45: light 76.2, dark 48.8). Hovered or open, its edge
-   takes the CHANGED family's amber and its words the ink. It is still a button with a 24px target (its ::after),
+   `updatesView`). The "N updates" tab sits in the bottom-edge slot (node-popover.css), small (field
+   report batch 1, ruling 3): lower case, medium weight, less padding, on the card's surface with no
+   fill. With the freshCards flag (new-and-updated Design 1) it is found at board scale: the accent's
+   pink outline and words at rest (the world's data-fresh-cards; APCA on the card: the words Lc 74.8
+   light, 49.8 dark, label tier 45; the outline 72.0 and 47.7, decoration tier 30); off, the muted ink
+   on a grey line as before (light 76.2, dark 48.8). Hovered or open, its edge takes the CHANGED
+   family's amber and its words the ink. It is still a button with a 24px target (its ::after),
    and its 1px margins keep it centred on the bottom edge like the 20px tabs beside it.
    Opened, the card grows by one section for the step shown, right under its text, and its footer
    becomes the stepper (data-stepping). Tokens only. */
@@ -11,7 +14,9 @@ vb-node .vb-node-btab[data-tab='updates'] {
   align-self: center; height: 18px; margin-block: 1px; padding: 0 var(--vb-space-1); border-color: var(--vb-line-strong); background: var(--vb-surface-card);
   color: var(--vb-ink-subtle); font-weight: var(--vb-weight-medium); letter-spacing: 0; text-transform: none;
 }
-vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
+[data-fresh-cards] vb-node .vb-node-btab[data-tab='updates'] { border-color: var(--vb-accent); color: var(--vb-accent-text); }
+vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']),
+[data-fresh-cards] vb-node .vb-node-btab[data-tab='updates']:is(:hover, [aria-expanded='true']) { border-color: var(--vb-state-context); color: var(--vb-ink); }
 
 /* The step: version, when and who; the change chips; what the text gained. Opaque, so its text
    reads the same over a see-through card (wireLayers). */

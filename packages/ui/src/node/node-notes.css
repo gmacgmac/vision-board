@@ -28,3 +28,15 @@ vb-node :is(.vb-node-note, .vb-node-reply):is(:hover, :focus-visible, [data-hove
 /* The highlight: a ring in the note's state colour, fading once the page takes it off. */
 vb-node :is(.vb-node-note, .vb-node-reply) { transition: box-shadow var(--vb-motion) var(--vb-ease); }
 vb-node :is(.vb-node-note, .vb-node-reply)[data-flash] { box-shadow: 0 0 0 3px var(--vb-state-comment); }
+
+/* A note on a group of cards, drawn once (groupNoteOnce flag, group-note-once task; apps/board
+   group-pins.ts): the group's pin sits in its own layer of the world above the cards, at the place
+   `groupPinAt` gives (its translate), wearing the card pin's look and states (node.css). Hovering or
+   focusing it, and its bubble being open, ring each card of the group with a dashed line in the
+   note's tone: the accent while it can be edited, the subtle ink once it is history (`data-group-ring`
+   "sent"). The keyboard focus ring wins on the card that has focus. */
+.vb-group-notes { position: absolute; left: 0; top: 0; --gap: var(--vb-surface-canvas); }
+.vb-group-notes .vb-note-pin { top: 0; right: auto; left: 0; }
+.vb-group-notes .vb-note-pin[aria-expanded='true'] { scale: 1.1; }
+vb-node[data-group-ring]:not(:focus-visible) { outline: 2px dashed var(--vb-accent); outline-offset: 5px; }
+vb-node[data-group-ring='sent']:not(:focus-visible) { outline-color: var(--vb-ink-subtle); }

@@ -5,7 +5,9 @@
 // proposals on the cards and the bar (`proposal.open`, `proposal.stale`; announced when their line
 // is in the batch), the changed cards (`item.unseen`, update-flow.ts), the cards awaiting a handover
 // (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`) and the
-// "agent drew" toast (`board.drawn`, when its line is in the batch). `pageConditions` (board-data.ts, also the
+// "agent drew" toast (`board.drawn`, when its line is in the batch), and with the freshCards flag the
+// new and updated cards (`shell.freshCards`, the toolbar's "N new") and the fresh containers
+// (`container.fresh`, their border and pill), none while a past version shows. `pageConditions` (board-data.ts, also the
 // gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
@@ -14,7 +16,7 @@
 import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
 import type { LedgerState } from '../../../../packages/actions/src/index.ts';
 import { boardNews } from '../../../../packages/actions/src/index.ts';
-import type { ProposalFound } from './board-data.ts';
+import type { FreshCount, ProposalFound } from './board-data.ts';
 import { pageConditions } from './board-data.ts';
 import { markBoardSeen } from './io.ts';
 import { shell } from '../shell/shell.svelte.ts';
@@ -29,6 +31,8 @@ export interface AttentionDeps {
   fail(err: unknown): void;
   /** A past version of the open board shows: no board seen. */
   readOnly(): boolean;
+  /** The freshCards flag: the "N new" list and the fresh containers. */
+  fresh?: boolean;
 }
 
 export interface Attention {
@@ -50,6 +54,9 @@ export interface Attention {
   awaiting(): ReadonlySet<number>;
   /** The cards on the open board owed an answer or a handover (`item.owed`): "Hide answered" keeps them. */
   owedCards(): ReadonlySet<number>;
+  /** The fresh containers on the open board and their pills' counts (`container.fresh`); none with
+   * the freshCards flag off or while a past version shows. */
+  freshIn(): ReadonlyMap<string, FreshCount>;
   destroy(): void;
 }
 
@@ -60,6 +67,8 @@ export function createAttention(d: AttentionDeps): Attention {
   let fresh: ReadonlySet<number> = new Set();
   let awaiting: ReadonlySet<number> = new Set();
   let owedCards: ReadonlySet<number> = new Set();
+  let freshIn: ReadonlyMap<string, FreshCount> = new Map();
+  const none: ReadonlyMap<string, FreshCount> = new Map();
   let timer = 0;
   let sentAt = 0;
   /** board -> the head last sent, so a board seen still on its way is not sent twice. */
@@ -96,6 +105,9 @@ export function createAttention(d: AttentionDeps): Attention {
     fresh = c.fresh;
     awaiting = c.awaiting;
     owedCards = c.owedCards;
+    freshIn = d.fresh ? c.freshIn : none;
+    const cards = d.fresh ? c.freshCards : [];
+    if (JSON.stringify(cards) !== JSON.stringify(shell.freshCards)) shell.freshCards = cards;
     if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
     shell.unsent = c.unsent;
     const news = c.requests.filter((seq) => seq >= from);
@@ -127,6 +139,7 @@ export function createAttention(d: AttentionDeps): Attention {
     fresh: () => fresh,
     awaiting: () => awaiting,
     owedCards: () => owedCards,
+    freshIn: () => (d.readOnly() ? none : freshIn),
     destroy() {
       clearTimeout(timer);
       removeEventListener('pagehide', leave);

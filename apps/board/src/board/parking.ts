@@ -14,6 +14,8 @@ export interface ParkingDeps {
   handover: boolean;
   /** The cardReplies flag: replies under the notes. */
   replies: boolean;
+  /** The groupNoteOnce flag: a card leaves its notes on a group of cards to the group's pin (group-pins.ts). */
+  apart?: boolean;
   /** The state the board is drawn from: the held one, or a past version's (versions.ts). */
   state(): LedgerState | null;
   /** The open board: a card drawn is named by its number on it (card-numbers.ts). */
@@ -76,6 +78,7 @@ export function createParking(d: ParkingDeps): Parking {
       const replies = d.replies ? repliesOn(s, id) : [];
       return {
         ...(awaiting && { awaiting }), ...(bundle && { handover: bundle }), ...(replies.length && { replies }),
+        ...(d.apart && { groupNotesApart: true }),
       };
     },
     containers: () => container,

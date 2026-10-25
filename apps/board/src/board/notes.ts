@@ -7,10 +7,11 @@
 // on the card (or container) oldest first, beside what was pressed and scrolled to it (review polish
 // ruling 6; what it says: note-views.ts); it closes with its ×, Esc or a click outside (ruling 7,
 // note-outside.ts); Edit on the person's note still editable opens today's edit mode (decision 8).
-// Every write goes through the controller's `attempt` (rule 8); this module only opens, places and
-// closes the bubble. Changed words are never lost silently (note-discard.ts).
+// With the groupNoteOnce flag a note on a group is drawn once, as the group's pin (group-pins.ts),
+// which opens it here. Every write goes through the controller's `attempt` (rule 8); this module only
+// opens, places and closes the bubble. Changed words are never lost silently (note-discard.ts).
 import type { NoteKind } from '../../../../packages/format/src/index.ts';
-import type { BoardState, ItemNote } from '../../../../packages/actions/src/index.ts';
+import type { BoardState } from '../../../../packages/actions/src/index.ts';
 import type { VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
 import { placeBubble, readOnlyMode, saveIntent } from '../../../../packages/ui/src/index.ts';
 import type { NoteEventDetail } from '../../../../packages/ui/src/index.ts';
@@ -23,6 +24,9 @@ import type { AnchorDeps } from './note-anchor.ts';
 import { anchorBox } from './note-anchor.ts';
 import type { Open, ViewDeps } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
+import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
+import type { Selection } from './selection.ts';
+import { createGroupPins, groupPinOf } from './group-pins.ts';
 
 /** `frame`: a container on the board (3_FE_04): the bubble sits beside its title line (note-anchor.ts). */
 export interface NoteDeps extends ViewDeps, AnchorDeps {
@@ -41,6 +45,10 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
   discard: AskDiscard;
   /** Why the board can't change now (a locked board, lock-flow.ts): no bubble opens, the toast says why. */
   paused?(): string | null;
+  /** The world, where the group pins draw in their own layer (groupNoteOnce flag, group-pins.ts). */
+  world: HTMLElement;
+  /** A press on a group pin selects the group's cards. */
+  selection: Pick<Selection, 'select'>;
 }
 
 export interface NoteFlow {
@@ -71,29 +79,17 @@ export interface NoteFlow {
   destroy(): void;
 }
 
-/** The card's own note not yet history (`locked`: sent or answered, ruling 5), if any. A note on a group of
- * cards is not the card's own (3_FE_02 ruling 3), so C on the card starts its own note. */
-export const unsentNote = (s: BoardState, id: string): ItemNote | undefined =>
-  s.items.get(id)?.notes.find((x) => !x.locked && !x.nodes);
-
-/** The note not yet sent on exactly this group of cards, if there is one. */
-const unsentGroupNote = (s: BoardState, ids: readonly string[]): ItemNote | undefined => {
-  const key = [...ids].map(Number).sort((a, b) => a - b).join(',');
-  return s.items.get(ids[0]!)?.notes.find((x) => !x.locked && x.nodes && [...x.nodes].sort((a, b) => a - b).join(',') === key);
-};
-
-/** The container's note not yet sent, if it has one (3_FE_04 ruling 2: at most one). */
-const unsentRegionNote = (s: BoardState, region: string): ItemNote | undefined =>
-  s.regionNotes.get(region)?.find((x) => !x.locked);
-
 export function createNoteFlow(d: NoteDeps): NoteFlow {
   const bubble = document.createElement('vb-note-bubble') as VbNoteBubbleElement;
   bubble.hidden = true;
   d.stage.append(bubble);
   let open: Open | null = null;
+  // The groupNoteOnce flag: a note on a group of cards is drawn once, as the group's pin.
+  const pins = d.groups ? createGroupPins({ ...d, open: (cards, anchor, seq) => { d.selection.select(cards, 'only'); show(anchor, seq); } }) : undefined;
 
   function mark(o: Open, on: boolean) {
     if (o.region) return d.frame(o.region)?.setNoteOpen(on);
+    if (o.group && o.note) pins?.mark(on ? o.note.seq : undefined);
     for (const id of o.anchor) {
       const card = d.card(id);
       card?.toggleAttribute('data-bubble', on);
@@ -171,7 +167,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     if (fromNote) return talk(id, seq, `.vb-node-note[data-note="${seq}"]`);
     if (open?.id === id && !open.region && open.mode !== 'thread' && open.note?.seq === seq) return again(undefined);
     // From any pin of a note on a group, beside that card (3_FE_02 ruling 3).
-    const groupOf = note.nodes && { group: note.nodes.map(String) };
+    const groupOf = note.nodes && { group: note.nodes.map(String), ...(pins && { at: groupPinOf(seq) }) };
     openWith({ id, anchor: [id], mode: note.locked ? 'sent' : 'edit', kind: note.kind, note, ...groupOf });
   }
 
@@ -211,6 +207,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
   }
 
   function place() {
+    pins?.draw();
     if (!open) return;
     // A removed note takes its bubble with it, changed words or not: there is nothing to save to.
     if (noteGone(open)) return close(false);
@@ -288,7 +285,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
 
   return {
     press, group, show: (id, seq, fromNote) => show(id, seq, fromNote), reply, container, showContainer, place,
-    destroy: () => { unbindOutside(); bubble.remove(); },
+    destroy: () => { unbindOutside(); bubble.remove(); pins?.destroy(); },
     close: () => {
       if (!bubble.dirty) return close();
       const o = open;

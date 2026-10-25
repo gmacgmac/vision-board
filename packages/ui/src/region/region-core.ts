@@ -7,6 +7,7 @@ import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
 import { isDecided, statusOf } from '../../../actions/src/index.ts';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
 import { asksAnswer, replyEntry } from '../node/node-core.ts';
+import type { RegionFresh } from './region-fresh.ts';
 
 /** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
  * so a new mode fails to compile here. */
@@ -171,6 +172,10 @@ export interface RegionState {
   /** "3 cards retired" after the count (retiredMarker flag): the cards the agent retired one at a
    * time from the container; left out when none was. The page adds it (`retiredMarker`). */
   retired?: RegionRetired;
+  /** "3 new · 1 updated" after the count, and the teal border (freshCards flag, `container.fresh`):
+   *  the container holds new or updated cards the person has not engaged with. Left out while it
+   *  does not; the page adds it (`regionFresh`). */
+  fresh?: RegionFresh;
   /** The board is locked (`BoardState.locked`, N40 ruling 4): the layout icons, the widths switch,
    *  the grip, Comment, the note's Edit and Remove, Reset places, Put container back and Remove
    *  access are paused (paused.ts); the cog still opens its menu. Left out while it is not. */

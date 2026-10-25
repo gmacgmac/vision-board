@@ -3,8 +3,8 @@
 // with each one's card count, Later always last; Later with no card is listed but cannot be chosen
 // (it has no frame then, `placedView`); a choice zooms to it. The open list (open-list FE_01,
 // openList flag): the open cards (`openCards`, the "N open" chip's own count) as "12 · title"; a
-// choice goes to the card (go-to-card.ts `to`). Neither is an act, so both work in a past version (versions.ts).
-import type { OpenCard } from '../../../../packages/actions/src/index.ts';
+// choice goes to the card (go-to-card.ts `to`). The "N new" list (freshCards flag) is the same row,
+// an updated card's ending "· updated" (`freshCards`). Neither is an act, so both work in a past version (versions.ts).
 import type { View } from '../../../../packages/format/src/index.ts';
 import { LATER_REGION } from '../../../../packages/format/src/index.ts';
 import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
@@ -38,10 +38,15 @@ export const rowText = (r: ContainerRow): string => `${r.title} · ${r.count} it
 /** The most characters an open list row shows; past it the title ends in "…" (`openRow`). */
 export const OPEN_ROW_MAX = 60;
 
-/** An open card's row: "12 · Pick a plan", cut at OPEN_ROW_MAX with the whole text its tooltip. */
-export function openRow(c: OpenCard): MenuRow {
-  const whole = `${c.n} · ${c.title}`;
-  const text = clip(whole, OPEN_ROW_MAX);
+/** What a card's row is made from: an open card (`openCards`) or a new or updated one (`freshCards`). */
+export interface RowCard { n: number; title: string; updated?: boolean }
+
+/** A card's row: "12 · Pick a plan", an updated card's ending " · updated", cut at OPEN_ROW_MAX
+ * (the title giving way, never the ending) with the whole text its tooltip. */
+export function openRow(c: RowCard): MenuRow {
+  const end = c.updated ? ' · updated' : '';
+  const whole = `${c.n} · ${c.title}${end}`;
+  const text = clip(`${c.n} · ${c.title}`, OPEN_ROW_MAX - end.length) + end;
   return { value: String(c.n), text, ...(text !== whole && { title: whole }) };
 }
 

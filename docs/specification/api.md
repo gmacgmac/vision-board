@@ -576,7 +576,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     away) and, while the board stays open, at most once a minute when an agent's line arrives.
 88. **The conditions table.** What needs attention is one row per kind in `CONDITIONS`
     (`packages/actions/src/conditions.ts`): `item.owed`, `container.owed`, `item.unseen`,
-    `grant.requested`, `board.drawn`, `board.new`, `board.changed` (and later rows: `board.unsent`, 123). `conditionsOf(state, { board,
+    `grant.requested`, `board.drawn`, `board.new`, `board.changed` (and later rows: `board.unsent`, 123; `container.fresh`, 158). `conditionsOf(state, { board,
     agent })` returns ids only (`{ kind, board, container?, n?, seq? }`). `list_open`'s `pending`
     and `unseen`, its `containers`, and `write_board`'s `pending` and `containers` read it, as do
     `get_board`'s `requests` and the page. With an agent, rows for the person only are left out and
@@ -655,22 +655,22 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 ## NEW cards and what clears a label (stage5-follow-ups BE_01, D-033)
 
 97. **`item.new`**, about a card, for the person, on the card (its NEW tab): an undecided item the
-    agent first drew in the board's latest round, with no `seen` at any version: NEW only on a card
-    the agent adds after the person has already opened the board and after its first drawing. A round starts at the first
-    agent drawing line after a Send that came after the previous round's start; before any, at the
-    later of the `head` of the person's first board seen on that board (87) and, when the board had
-    no card then, the end of the agent's first drawing with a card (the run its first card came in;
-    FIX_01 ruling 7). So whatever was drawn when they first opened it, by any number of agents, is
-    never NEW; a board opened while empty shows no NEW on its first drawing, even with a Send (a
-    chat message) before it, and no Send starts a round before the board's first card; with no
-    board seen no card on it is (`packages/actions/src/rounds.ts`; the fold's `rounds`,
-    `firstDrawn`, `firstCards` and `firstSeenBoards`, beside `seenBoards`). It ends when the
-    person selects the card (its `seen`), acts on it (94), decides it, or the next round starts
-    (a Send, then the agent drawing again). The page leaves a NEW card out of `item.unseen` (NEW
-    only, no "N updates" tab); `list_open`'s `unseen` is unchanged, and agents are not told
-    `item.new`. **`clearedBy`.** Every conditions row names what the person does that clears it:
-    `select`, `act` or `round`, on a row shown on a card, else none. `item.new` is cleared by all
-    three, `item.unseen` by `select` and `act`, the rest by none of them. The page reads it
+    agent first drew after the person first opened the board, with no `seen` at any version: NEW
+    only on a card the agent adds after the person has already opened the board and after its first
+    drawing. Cards are new from the later of the `head` of the person's first board seen on that
+    board (87) and, when the board had no card then, the end of the agent's first drawing with a
+    card (the run its first card came in; FIX_01 ruling 7). So whatever was drawn when they first
+    opened it, by any number of agents, is never NEW; a board opened while empty shows no NEW on its
+    first drawing, even with a Send (a chat message) before it; with no board seen no card on it is
+    (`packages/actions/src/rounds.ts` `newFrom`; the fold's `firstDrawn`, `firstCards` and
+    `firstSeenBoards`, beside `seenBoards`). It ends when the person selects the card (its `seen`),
+    acts on it (94) or decides it, and only then: a Send and the agent drawing again end nothing
+    (new-and-updated Design 2, which ended the rounds that used to; `rounds.test.ts` "item.new
+    ends"). The page leaves a NEW card out of `item.unseen` (NEW only, no "N updates" tab);
+    `list_open`'s `unseen` is unchanged, and agents are not told `item.new`. **`clearedBy`.** Every
+    conditions row names what the person does that clears it: `select` or `act`, on a row shown on a
+    card or a container (158), else none. `item.new` and `item.unseen` are cleared by both, the rest
+    by none of them. The page reads it
     (`clearsOnSelect(kind)`) to know which labels selecting a card ends, so it sends that card's
     `seen`; a test checks each row's `clearedBy` against the fold. No contract change.
 
@@ -1415,3 +1415,19 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     The page calls both through its one I/O layer (`apps/board/src/board/io.ts` `panelState`,
     `savePanelState`). Held by `apps/board/tests/api-panel-state.test.ts`, `schema-apps.test.ts`,
     `openapi.test.ts`, `route-table.test.ts` and `atomic-file.test.ts`.
+
+## New and updated cards at board scale (new-and-updated, 2026-10-25)
+
+158. **`container.fresh`**, about a container, for the person, on the container: it holds a card that
+    `item.new` or `item.unseen` holds for, as its tab shows it (NEW, or "N updates": past version 1, or
+    an agent reply not looked at since; `packages/actions/src/fresh.ts` `showsUpdates`), whose newest
+    change (the agent's latest version or reply on it, the card's times) is after the person's latest
+    card `seen` or act naming any card now in the container (`LedgerState.looked`). So selecting one
+    new or updated card in it, or acting on any of its cards, ends it for the whole container until
+    the agent changes one of its cards again; nothing is stored, a Send ends nothing, and a click on
+    the frame's empty space changes nothing. `clearedBy` is `select` and `act`. `freshCards(state,
+    board)` (conditions.ts) is the one list behind it, the toolbar's "N new" chip and each container's
+    "3 new · 1 updated" pill: every card either row holds for that shows its tab, in board order, with
+    its container and whether it is updated; a card both rows hold for is new only. Agents are never
+    told. No contract change. Held by `packages/actions/tests/fresh.test.ts`, `conditions.test.ts`
+    and `rounds.test.ts`; the page by `tests/pages/fresh-cards.spec.ts` (freshCards flag).

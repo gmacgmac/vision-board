@@ -95,6 +95,7 @@ export function defineVbRegion(): void {
       else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
       this.applyNote(st);
       this.applyRetired(st);
+      this.applyFresh(st);
       this.piece('.vb-region-empty').hidden = !st.showEmpty;
       const key = JSON.stringify(st.holders ?? []);
       if (key !== this.holdersKey) {
@@ -165,6 +166,17 @@ export function defineVbRegion(): void {
       if (r?.until === undefined) delete b.dataset.until;
       else b.dataset.until = String(r.until);
       b.setAttribute('aria-disabled', String(r?.version === undefined));
+    }
+
+    /** A fresh container (freshCards flag): `data-fresh` (its teal border) and the pill's words. */
+    private applyFresh(st: RegionState): void {
+      const f = st.fresh;
+      this.toggleAttribute('data-fresh', f !== undefined);
+      const pill = this.piece('.vb-region-fresh');
+      pill.hidden = !f;
+      pill.title = f?.label ?? '';
+      this.piece('.vb-region-fresh-n').textContent = f?.text ?? '';
+      this.piece('.vb-region-fresh-words').textContent = f?.label ?? '';
     }
 
     /** Comment's name and badge, the preview and the note block; a fixed frame (Later) has none
