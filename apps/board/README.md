@@ -65,7 +65,7 @@ whether one is locked: a write on a locked board is refused there, whole, with `
 (`server/chat.ts`, api.md 98-107) run sessions through `packages/agent`: `server/chat-sessions.ts`
 starts and resumes them (the only code that starts a CLI), `server/chat-index.ts` is the only
 module that touches `.visionboard/chat-sessions.json`, `server/chat-access.ts` joins and grants the
-session's agent, gives its secret to the vb MCP server only and keeps Kiro's agent file
+session's agent, gives its secret to the board's MCP server only and keeps Kiro's agent file
 (`~/.kiro/agents/vision-board.json`) current at start (`chat: { kiroAgent: true }`, as server.ts
 does unless `VB_KIRO_AGENT=0`), `server/chat-session.ts` stamps and
 streams a session's events, `server/chat-approvals.ts` holds the gate's asks,

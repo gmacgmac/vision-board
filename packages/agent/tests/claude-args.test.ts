@@ -12,8 +12,8 @@ import { GATED_TOOLS, GATE_BIN, HOOK_TIMEOUT_S, buildClaudeArgs, gateSettings, i
 const ID = '3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37';
 const START: StartOptions = {
   cwd: '/home/someone/project',
-  mcpServers: { vb: { command: 'node', args: ['vb-mcp.ts'], env: { VB_SERVER: 'http://127.0.0.1:4466', VB_AGENT_SECRET: 'not-a-real-secret' } } },
-  allowedTools: ['mcp__vb__*', 'Read'],
+  mcpServers: { 'vision-board': { command: 'node', args: ['vb-mcp.ts'], env: { VB_SERVER: 'http://127.0.0.1:4466', VB_AGENT_SECRET: 'not-a-real-secret' } } },
+  allowedTools: ['mcp__vision-board__*', 'Read'],
   gate: { url: 'http://127.0.0.1:4466/api/run/approvals', token: 'run-token' },
 };
 
@@ -32,7 +32,7 @@ test('the MCP config is a file, strict; permission mode default; the gate inline
   assert.ok(args.includes('--strict-mcp-config'));
   assert.equal(at('--permission-mode'), 'default');
   assert.equal(at('--settings'), '{"hooks":{}}');
-  assert.deepEqual(args.slice(-3), ['--allowedTools', 'mcp__vb__*', 'Read']);
+  assert.deepEqual(args.slice(-3), ['--allowedTools', 'mcp__vision-board__*', 'Read']);
   assert.ok(!args.includes('--bare'), 'never --bare: it would skip the person\'s login');
   assert.ok(!args.includes('--model') && !args.includes('--append-system-prompt-file'), 'only when asked');
   assert.ok(!args.join(' ').includes('not-a-real-secret'), 'no secret on the command line');
@@ -51,7 +51,7 @@ test('the gate hook: every gated tool, anchored, the gate run by node, fail-clos
   assert.equal(rest.length, 0);
   assert.equal(entry.matcher, '^(Write|Edit|MultiEdit|NotebookEdit|Bash)$');
   for (const tool of GATED_TOOLS) assert.match(tool, new RegExp(entry.matcher));
-  for (const tool of ['Read', 'mcp__vb__write_board', 'NotebookEditor', 'ToolSearch']) assert.doesNotMatch(tool, new RegExp(entry.matcher));
+  for (const tool of ['Read', 'mcp__vision-board__write_board', 'NotebookEditor', 'ToolSearch']) assert.doesNotMatch(tool, new RegExp(entry.matcher));
   assert.deepEqual(entry.hooks, [{ type: 'command', command: `'/usr/bin/node' --no-warnings '/pkg/bin/gate.ts' || exit 2`, timeout: HOOK_TIMEOUT_S }]);
   assert.match(JSON.parse(gateSettings()).hooks.PreToolUse[0].hooks[0].command, new RegExp(path.basename(GATE_BIN)));
   assert.match(JSON.parse(gateSettings("/it's/node", '/g')).hooks.PreToolUse[0].hooks[0].command, /^'\/it'\\''s\/node'/, 'quoted for the shell');

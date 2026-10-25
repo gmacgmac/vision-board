@@ -50,6 +50,15 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 .g-frames vb-region[data-title-tip-open] { margin-bottom: calc(var(--vb-space-6) * 2); }
 /* So does an open note preview (the "Hover" and "Focus" container samples). */
 .g-frames vb-region[data-preview] { margin-bottom: calc(var(--vb-space-6) * 3); }
+/* The tool rail samples (toolRail flag, rail-section.ts): room on the left for the rail, which reaches
+   past the frame, and between frames for its popovers; a frame with a set height for each rail form
+   (full, collapsed, narrowest), and room above a short frame, whose expanded rail grows upward. */
+.g-rail-frames { gap: var(--vb-space-6) calc(var(--vb-space-6) * 2); padding-left: calc(var(--vb-space-6) * 1.5); }
+.g-rail-frames vb-region { width: calc(var(--vb-card-w) * 1.5); }
+.g-rail-frames vb-region[data-sample='tall'] { height: calc(var(--vb-space-6) * 10); }
+.g-rail-frames vb-region[data-sample='short'] { height: calc(var(--vb-space-6) * 5); }
+.g-rail-frames vb-region[data-sample='short']:not([data-fixed]) { margin-top: calc(var(--vb-space-6) * 5); }
+.g-rail-frames vb-region[data-sample='shortest'] { height: calc(var(--vb-space-6) * 3); }
 
 /* Kind by status: one row per status, one column per kind. */
 /* Rows far enough apart that a bottom-edge tab ("1 update", D-045's cleared row) clears the next row's top tabs. */

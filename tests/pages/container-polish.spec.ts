@@ -98,7 +98,8 @@ test('a narrow container: the marker and the controls stay whole, the title is o
 // controls: the marker is whole ("3 retired", or its icon and "3" when the line has no room for the
 // words) and ends before the controls start, and the title keeps its few letters. A frame with no
 // marker the same. Measured with the pointer away, so the row is not expanded over the label, which it
-// may be while hovered.
+// may be while hovered. With the toolRail flag the controls are a rail on the frame's left edge, so
+// "covered" is any overlap of the two boxes; the same test holds for both.
 interface HeadAt { whole: boolean; uncovered: string[]; title: number; icon: boolean; shown: string }
 type HeadsAt = Record<string, { n: HeadAt; u: HeadAt }>;
 
@@ -137,7 +138,12 @@ async function headsAt(page: Page, request: APIRequestContext, ks: number[]): Pr
       const icon = marker.querySelector('svg');
       return {
         whole: marker.hidden === true || marker.scrollWidth <= marker.clientWidth,
-        uncovered: parts.filter((p) => p.getBoundingClientRect().right > tools.left + 0.5).map((p) => p.className || p.localName),
+        // Covered: its box overlaps the tools' (on the line's right end, or the rail on the frame's left
+        // edge with the toolRail flag).
+        uncovered: parts.filter((p) => {
+          const b = p.getBoundingClientRect();
+          return tools.width > 0 && b.right > tools.left + 0.5 && b.left < tools.right - 0.5 && b.bottom > tools.top + 0.5 && b.top < tools.bottom - 0.5;
+        }).map((p) => p.className || p.localName),
         title: Math.round(e.querySelector<HTMLElement>('.vb-region-head h2')!.getBoundingClientRect().width),
         icon: icon !== null && icon.getBoundingClientRect().width > 0,
         shown: marker.hidden === true ? '' : marker.innerText.trim(),

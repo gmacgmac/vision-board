@@ -8,14 +8,14 @@ import type { AgentUpdate } from '../src/index.ts';
 import { ClaudeStream, boardWriteSummary, shortToolName } from '../src/index.ts';
 import { DRAW, REFUSED, events } from './support.ts';
 
-function run(lines: unknown[], servers = ['vb']): { updates: AgentUpdate[]; logs: string[]; stream: ClaudeStream } {
+function run(lines: unknown[], servers = ['vision-board']): { updates: AgentUpdate[]; logs: string[]; stream: ClaudeStream } {
   const logs: string[] = [];
   const stream = new ClaudeStream(servers, (l) => logs.push(l));
   const updates = lines.flatMap((e) => stream.push(e));
   return { updates: [...updates, ...stream.end()], logs, stream };
 }
 
-const INIT = { type: 'system', subtype: 'init', mcp_servers: [{ name: 'vb', status: 'connected' }] };
+const INIT = { type: 'system', subtype: 'init', mcp_servers: [{ name: 'vision-board', status: 'connected' }] };
 const RESULT = { type: 'result', subtype: 'success', is_error: false, result: 'All done.', usage: { input_tokens: 3, output_tokens: 9 } };
 const say = (...content: unknown[]) => ({ type: 'assistant', message: { content } });
 const text = (t: string) => ({ type: 'text', text: t });
@@ -60,19 +60,19 @@ test('text is held back a block: interim when anything follows it, the last one 
 });
 
 test('a board write: its board from the input, its cards and head from the result; a failed one has neither', () => {
-  const write = use('w1', 'mcp__vb__write_board', { board: 'pricing', items: [{ type: 'node' }] });
+  const write = use('w1', 'mcp__vision-board__write_board', { board: 'pricing', items: [{ type: 'node' }] });
   const result = JSON.stringify({ results: [{ index: 0, ok: true, seq: 7, n: 4 }, { index: 1, ok: true, seq: 8 }, { index: 2, ok: false, problem: {} }, { index: 3, ok: true, seq: 9, n: 4 }], head: 9, pending: [] });
   assert.deepEqual(run([INIT, say(write), answer('w1', [{ type: 'text', text: result }]), RESULT]).updates[1],
     { type: 'tool', call: 'w1', tool: 'write_board', state: 'done', board: 'pricing', cards: [4], head: 9 });
   assert.deepEqual(run([INIT, say(write), answer('w1', 'The board server is not answering.', true), RESULT]).updates[1],
     { type: 'tool', call: 'w1', tool: 'write_board', state: 'failed', board: 'pricing' });
-  assert.deepEqual(run([INIT, say(use('w2', 'mcp__vb__write_board', { board: '../etc' })), RESULT]).updates[0],
+  assert.deepEqual(run([INIT, say(use('w2', 'mcp__vision-board__write_board', { board: '../etc' })), RESULT]).updates[0],
     { type: 'tool', call: 'w2', tool: 'write_board', state: 'running' }, 'a board id that is not one is left out');
   assert.deepEqual(boardWriteSummary('not json'), { cards: [] });
 });
 
 test('tool names are short and fit the chat schema; a result for an unknown call is passed over', () => {
-  assert.equal(shortToolName('mcp__vb__write_board'), 'write_board');
+  assert.equal(shortToolName('mcp__vision-board__write_board'), 'write_board');
   assert.equal(shortToolName('mcp__my_server__do_it'), 'do_it');
   assert.equal(shortToolName('Bash'), 'Bash');
   assert.equal(shortToolName('weird name!'), 'weird-name-');
@@ -81,9 +81,9 @@ test('tool names are short and fit the chat schema; a result for an unknown call
 });
 
 test('an MCP server that did not connect stops the turn with a clear error', () => {
-  const failed = { ...INIT, mcp_servers: [{ name: 'vb', status: 'failed' }] };
+  const failed = { ...INIT, mcp_servers: [{ name: 'vision-board', status: 'failed' }] };
   const { updates, stream } = run([failed, RESULT]);
-  assert.match(stream.problem!, /vb tool server did not connect \(status: failed\)/);
+  assert.match(stream.problem!, /vision-board tool server did not connect \(status: failed\)/);
   assert.deepEqual(updates, [{ type: 'error', message: stream.problem }]);
   assert.match(run([{ ...INIT, mcp_servers: [] }, RESULT]).stream.problem!, /not registered/);
   assert.equal(run([INIT, RESULT], []).stream.problem, null, 'no servers asked for, none checked');

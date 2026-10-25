@@ -18,7 +18,7 @@ import { CHAT_EVENT_ID, CHAT_SCHEMA_DIR, schemaFiles, schemaProblems } from '../
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 const SCENES = JSON.parse(read('../src/gallery/gallery.chat.json')) as Record<'session' | 'stopped' | 'error' | 'send', ChatEvent[]>;
 const replay = (name: string): AgentUpdate[] => {
-  const stream = new ClaudeStream(['vb'], () => {});
+  const stream = new ClaudeStream(['vision-board'], () => {});
   const lines = read(`../../../packages/agent/tests/fixtures/${name}`).split('\n').filter(Boolean);
   return [...lines.flatMap((l) => stream.push(JSON.parse(l))), ...stream.end()];
 };

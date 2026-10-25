@@ -2,17 +2,29 @@
 // free port, spoken to over stdio as a client would (api.md 45-48). A modern 2026-07-28 session
 // covers server/discover, tools/list and the agent loop (join, a write with a needs-grant item,
 // request_grant, the person's grant, check_responses, the resent write, show_node); a legacy
-// 2025-11-25 session covers the handshake. Every structuredContent is held to its outputSchema.
+// 2025-11-25 session covers the handshake. Tools declare no outputSchema (api.md 48), so every
+// structuredContent is held to the operation's success response in openapi.json, the contract.
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { createClient } from '../../client/src/index.ts';
 import { TOOL_FILE } from '../src/index.ts';
 import type { Board, Session } from './support.ts';
 import { MODERN_META, call, startBoard, startMcp } from './support.ts';
 
-const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true });
-const outputs = new Map(TOOL_FILE.tools.map((t) => [t.name, ajv.compile(t.outputSchema)]));
+const SCHEMAS = new URL('../../format/schema/', import.meta.url);
+const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, discriminator: true });
+for (const f of readdirSync(SCHEMAS, { recursive: true, encoding: 'utf8' })) {
+  if (f.endsWith('.schema.json') && !f.startsWith('vendor')) ajv.addSchema(JSON.parse(readFileSync(new URL(f, SCHEMAS), 'utf8')));
+}
+const spec = JSON.parse(readFileSync(new URL('openapi.json', SCHEMAS), 'utf8'));
+/** Each tool's success response schema: its operation's lowest 2xx, a component that names a schema file. */
+const outputs = new Map(Object.values<any>(spec.paths).flatMap((item) => Object.values<any>(item)).filter((op) => op['x-agent']).map((op) => {
+  const status = Object.keys(op.responses).filter((s) => /^2\d\d$/.test(s)).sort()[0]!;
+  const ref: string = op.responses[status].content['application/json'].schema.$ref;
+  return [op.operationId as string, ajv.compile({ $ref: spec.components.schemas[ref.split('/').pop()!].$ref })];
+}));
 const SERVER_INFO = 'io.modelcontextprotocol/serverInfo';
 
 let board: Board;
@@ -23,7 +35,7 @@ before(async () => {
 });
 after(async () => { await mcp.close(); await board.close(); });
 
-/** A tool call that should work: not an error, and its structuredContent fits the outputSchema. */
+/** A tool call that should work: not an error, and its structuredContent fits the success response. */
 async function ok(name: string, args: Record<string, unknown>): Promise<any> {
   const r = await call(mcp, name, args);
   assert.equal(r.isError, false, `${name}: ${JSON.stringify(r)}`);
@@ -55,6 +67,7 @@ test('server/discover: both versions, the tools capability, serverInfo, instruct
 test('tools/list: the generated tools, unchanged, with ttlMs and cacheScope', async () => {
   const r = (await mcp.request('tools/list', { _meta: MODERN_META })).result;
   assert.deepEqual(r.tools, TOOL_FILE.tools);
+  assert.deepEqual([...outputs.keys()], TOOL_FILE.tools.map((t) => t.name), 'every tool\'s answer is checked against its success response');
   assert.deepEqual([r.resultType, typeof r.ttlMs, r.cacheScope], ['complete', 'number', 'public']);
 });
 

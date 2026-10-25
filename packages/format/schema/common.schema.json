@@ -10,7 +10,7 @@
     "text": { "type": "string", "pattern": "\\S" },
     "timestamp": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$" },
     "seq": { "type": "integer", "minimum": 1 },
-    "nodeNumber": { "type": "integer", "minimum": 1, "description": "A card. On a ledger line, its ledger number: its identity in the project, given once by the server and never reused. In a request or an answer, its number on the board the operation names: 1, 2, 3... in the order drawn, never reused.", "$comment": "Was: D-017, D-041, api.md 125" },
+    "nodeNumber": { "type": "integer", "minimum": 1, "description": "A card: its number on the board (from 1, in draw order, never reused); on a ledger line, its ledger number, unique in the project.", "$comment": "Was: D-017, D-041, api.md 125" },
     "nodeNumbers": { "type": "array", "minItems": 2, "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeNumber" }, "description": "Two or more distinct node numbers, each once.", "$comment": "Was: api.md 62, 66" },
     "cards": { "type": "array", "maxItems": 500, "uniqueItems": true, "items": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeNumber" }, "description": "The cards a retire took off the board, by ledger number, each once.", "$comment": "Was: api.md 126" },
     "version": { "type": "integer", "minimum": 1 },
@@ -24,7 +24,7 @@
     "tag": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
     "lane": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 40 },
     "source": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 500 },
-    "key": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 64, "description": "The agent's retry key, scoped to the agent across the project", "$comment": "Was: api.md 13, 29" },
+    "key": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 64, "description": "Retry key, per agent across the project.", "$comment": "Was: api.md 13, 29" },
     "person": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/text", "type": "string", "maxLength": 80 },
     "tags": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/tag" } },
     "lanes": { "type": "array", "maxItems": 12, "items": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/lane" } },
@@ -33,7 +33,7 @@
     "kind": { "enum": ["question", "finding", "decision", "risk", "action", "topic", "note", "app"] },
     "mode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row"], "description": "How a container lays out its cards: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom in card order) or `row` (left to right in card order).", "$comment": "Was: api.md 129" },
     "lineMode": { "enum": ["grid", "flow", "lanes", "radial", "column", "row", "list"], "description": "A mode as a ledger line may name it: `list` on lines from ledger v11 and older only, read as `column`.", "$comment": "Was: api.md 129" },
-    "notList": { "not": { "const": "list" }, "description": "Renamed in ledger v12: `list` is now `column` (cards top to bottom in card order); `row` lays them left to right, and `flow` follows the links.", "$comment": "Was: api.md 129" },
+    "notList": { "not": { "const": "list" }, "description": "`list` is now `column` (top to bottom in card order); `row` runs left to right, `flow` follows the links.", "$comment": "Was: api.md 129" },
     "widths": { "enum": ["match", "own"], "description": "How wide a container's cards are: `match`, every card in a column as wide as the column's widest card, or `own`, each card its own width. Left out, the container's mode decides: `match` for `grid` and `column`, `own` for `flow`, `row`, `lanes` and `radial`.", "$comment": "Was: api.md 132" },
     "nodeSize": { "enum": ["s", "m", "l"] },
     "actSize": { "enum": ["s", "m", "l", "auto"] },
@@ -47,21 +47,21 @@
       "$comment": "Was: api.md 150, D-047 ruling 3",
       "required": ["id"],
       "properties": {
-        "id": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The app's id: its folder's name in the project's `.visionboard/apps/`." },
-        "w": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appWidth", "description": "The panel's width in px; the card is this wide plus its own padding." },
+        "id": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The app's folder name in `.visionboard/apps/`." },
+        "w": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appWidth", "description": "The panel's width in px; the card adds its padding." },
         "h": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/appHeight", "description": "The panel's height in px." }
       },
       "unevaluatedProperties": false
     },
     "nodeRef": {
-      "description": "A card named by its number on the board the write names, or by the key of the item that made it. Sent forms only.",
+      "description": "A card: its number on this board, or `{ key }` of the item that drew it.",
       "$comment": "Was: api.md 35",
       "anyOf": [
-        { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeNumber" },
+        { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeNumber", "description": "Its number on this board." },
         {
           "type": "object",
           "required": ["key"],
-          "properties": { "key": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key" } },
+          "properties": { "key": { "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key", "description": "The key of the item that drew it." } },
           "unevaluatedProperties": false
         }
       ]

@@ -54,6 +54,8 @@ export interface DrawDeps {
   widthsControl?: boolean;
   /** The personRemove flag: Remove container in each frame's settings (N24). */
   removing?: boolean;
+  /** The toolRail flag: each frame's tools in a rail on its left edge (container tool rail). */
+  rail?: boolean;
   /** The viewer's alignment (ruling 4; `start` without the alignSetting flag). */
   align?(): Align;
   data(): BoardData;
@@ -106,7 +108,7 @@ const SETTLE_MS = 380;
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
   const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false });
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true });
   const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();

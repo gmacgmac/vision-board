@@ -5,7 +5,9 @@
 // "menu"), which region.css reads. Picks and the menu's items are plain clicks that bubble to the
 // page's delegated listener (data-mode, data-reset, data-put-back, data-remove-region); a disabled
 // item is stopped here, but one a locked board paused (`data-paused`) goes on, so the page says why.
-// Up and Down move between the menu's items, Home and End to the first and the last.
+// Up and Down move between the menu's items, Home and End to the first and the last. With the
+// toolRail flag the row is a vertical rail (`data-rail` on the frame): Right on the cog opens its
+// menu and Left in the menu closes it, back to the cog.
 // Nothing here touches HTMLElement at import, so the ui front door stays importable from Node.
 import type { Mode } from '../../../format/src/index.ts';
 import { MODE_HINT } from './region-core.ts';
@@ -64,6 +66,12 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (line) line.textContent = MODE_HINT[(mode ?? current ?? 'grid') as Mode];
   }
 
+  /** Esc in the rail with no popover open: a short frame's rail collapses (region-rail.css reads
+   * data-shut on the row; the focused button stays drawn) until the pointer comes back or focus moves. */
+  const shut = () => q('.vb-mode-row')?.toggleAttribute('data-shut', true);
+
+  const unshut = () => q('.vb-mode-row')?.removeAttribute('data-shut');
+
   function onOutside(e: PointerEvent) {
     if (!inTools(e.target)) closeMenu(true);
   }
@@ -95,23 +103,28 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     if (focus) q<HTMLElement>(ITEM)?.focus({ preventScroll: true });
   }
 
-  /** Arrow keys inside the row: Left/Up back, Right/Down on, Home/End; wraps. Down on the cog
-   * opens its menu instead (a menu button). */
+  /** Arrow keys inside the row: Left/Up back, Right/Down on, Home/End; wraps. The key towards the
+   * cog's menu opens it instead (a menu button): Down on the top line, where the menu opens below;
+   * Right in the rail (`data-rail`, toolRail flag), where it opens to the right and Down moves on. */
   function onRowKey(e: KeyboardEvent, from: HTMLElement) {
     const list = stops();
     const i = list.indexOf(from as HTMLButtonElement);
-    const isCog = from.matches(COG);
+    const opener = from.matches(COG) ? (host.hasAttribute('data-rail') ? 'ArrowRight' : 'ArrowDown') : null;
     let to: number | null = null;
-    if (e.key === 'ArrowRight' || (e.key === 'ArrowDown' && !isCog)) to = (i + 1) % list.length;
+    if (e.key === opener) {
+      e.preventDefault();
+      return openMenu();
+    }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') to = (i + 1) % list.length;
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') to = (i - 1 + list.length) % list.length;
     else if (e.key === 'Home') to = 0;
     else if (e.key === 'End') to = list.length - 1;
-    else if (e.key === 'ArrowDown' && isCog) {
+    else if (e.key === 'Escape' && (host.dataset.open === 'modes' || host.hasAttribute('data-rail'))) {
+      // Esc closes the popover; in the rail it also collapses a short frame's rail.
       e.preventDefault();
-      return openMenu();
-    } else if (e.key === 'Escape' && host.dataset.open === 'modes') {
-      e.preventDefault();
-      return closeModes();
+      closeModes();
+      if (host.hasAttribute('data-rail')) shut();
+      return;
     }
     if (to === null) return;
     e.preventDefault();
@@ -119,7 +132,8 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   }
 
   function onMenuKey(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
+    // In the rail the menu opens to the right of the cog, so Left goes back to it, as Esc does.
+    if (e.key === 'Escape' || (e.key === 'ArrowLeft' && host.hasAttribute('data-rail'))) {
       e.preventDefault();
       closeMenu(true);
     } else if (e.key === 'Tab') {
@@ -142,6 +156,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   host.addEventListener('mouseover', (e) => {
     const t = e.target as HTMLElement;
+    if (inRow(t) && !inRow(e.relatedTarget)) unshut();
     const radio = t.closest<HTMLElement>(RADIO);
     if (radio) openModes(radio.dataset.mode as Mode);
     else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
@@ -156,6 +171,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   host.addEventListener('focusin', (e) => {
     const t = e.target as HTMLElement;
     if (!inRow(t)) return;
+    unshut();
     rove(t);
     if (t.matches(RADIO)) openModes(t.dataset.mode as Mode);
     else closeModes();
@@ -163,6 +179,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   host.addEventListener('focusout', (e) => {
     if (inTools((e as FocusEvent).relatedTarget)) return;
+    unshut();
     closeModes();
     closeMenu(false);
     sync();

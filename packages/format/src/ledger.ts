@@ -121,13 +121,13 @@ interface Keyed { key?: string }
 
 /** Why a v11 node line may not name `item` (api.md 118); the node schema's `noItem` says the same
  * and a test checks they agree. */
-export const ITEM_REMOVED = 'Removed in ledger v11: the kind decides whether a card asks for an answer. '
-  + 'Draw a question, decision or action card to ask the person; every other kind takes a comment, more context or Later.';
+export const ITEM_REMOVED = '`item` is gone: the kind decides. '
+  + 'A `question`, `decision` or `action` card asks the person; any other kind takes a note or Later.';
 
 /** Why a v12 line (or a sent item) may not name mode `list` (api.md 129); the common schema's
  * `noList` says the same and a test checks they agree. */
-export const LIST_RENAMED = 'Renamed in ledger v12: `list` is now `column` (cards top to bottom in card order); '
-  + '`row` lays them left to right, and `flow` follows the links.';
+export const LIST_RENAMED = '`list` is now `column` (top to bottom in card order); '
+  + '`row` runs left to right, `flow` follows the links.';
 
 /** What the agent says about a node. Its `kind` decides whether it asks for an answer
  * (`NODE_TYPES`, api.md 118). */

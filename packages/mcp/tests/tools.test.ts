@@ -1,11 +1,11 @@
 // The generated tool list (api.md 46-50): current with openapi.json, one tool per x-agent
 // operation in route-table order, names and descriptions every client accepts, plain schemas
 // (no $ref, $id, $schema, discriminator or x- key; an object at the root) that compile as JSON
-// Schema 2020-12, no merged input named twice, and the annotations of point 49.
+// Schema 2020-12, no merged input named twice, the annotations of point 49, no output schema and
+// no example in a description (api.md 47-48), and the list's size budget.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { OPERATIONS } from '../../format/src/index.ts';
@@ -78,13 +78,12 @@ test('schemas are plain: no $ref, $id, $schema, $defs, discriminator or x- key a
   }
 });
 
-test('an object at the root of every input and output: no root oneOf, anyOf or allOf; inputs closed', () => {
+test('an object at the root of every input: no root oneOf, anyOf or allOf; closed', () => {
   for (const t of tools) {
-    for (const [which, s] of [['inputSchema', t.inputSchema], ['outputSchema', t.outputSchema]] as const) {
-      assert.equal(s.type, 'object', `${t.name} ${which}`);
-      for (const k of ['oneOf', 'anyOf', 'allOf']) assert.equal(k in s, false, `${t.name} ${which} has a root ${k}`);
-    }
-    assert.equal(t.inputSchema.additionalProperties, false, `${t.name} input is closed`);
+    const s = t.inputSchema;
+    assert.equal(s.type, 'object', t.name);
+    for (const k of ['oneOf', 'anyOf', 'allOf']) assert.equal(k in s, false, `${t.name} has a root ${k}`);
+    assert.equal(s.additionalProperties, false, `${t.name} input is closed`);
   }
 });
 
@@ -97,12 +96,9 @@ test('no two merged inputs share a name, and the route names every input once', 
   }
 });
 
-test('every inputSchema and outputSchema compiles as JSON Schema 2020-12 (strict)', () => {
+test('every inputSchema compiles as JSON Schema 2020-12 (strict)', () => {
   const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true });
-  for (const t of tools) {
-    assert.doesNotThrow(() => ajv.compile(t.inputSchema), `${t.name} inputSchema`);
-    assert.doesNotThrow(() => ajv.compile(t.outputSchema), `${t.name} outputSchema`);
-  }
+  for (const t of tools) assert.doesNotThrow(() => ajv.compile(t.inputSchema), `${t.name} inputSchema`);
 });
 
 test('annotations (api.md 49): reads are read-only; writes are not destructive and not idempotent; all closed-world', () => {
@@ -126,27 +122,28 @@ test('list_apps (D-047 ruling 12): a read with the secret, telling the agent how
   assert.equal(tools.some((x) => x.name === 'call_app_tool'), false, 'agents run their own code; only the panel calls app tools');
 });
 
-test('every tool whose request has an example ends its description with it, compact (no per-tool code)', () => {
-  const doc = JSON.parse(readFileSync(new URL('../../format/schema/openapi.json', import.meta.url), 'utf8'));
-  const withBody = Object.values<Record<string, any>>(doc.paths).flatMap((item) => Object.values(item))
-    .filter((op) => op['x-agent'] === true && op.requestBody?.content?.['application/json']);
-  assert.deepEqual(withBody.map((op) => op.operationId).sort(), WRITES, 'the operations with a JSON body');
-  for (const op of withBody) {
-    const media = op.requestBody.content['application/json'];
-    assert.ok(media.example ?? media.examples, `${op.operationId} has a request example`);
-    const example = media.example ?? Object.values<any>(media.examples)[0].value;
-    assert.ok(tools.find((t) => t.name === op.operationId)!.description.endsWith(` Example: ${JSON.stringify(example)}`), op.operationId);
+test('no tool declares an outputSchema; each description says in words what comes back', () => {
+  for (const t of tools) {
+    assert.equal('outputSchema' in t, false, t.name);
+    assert.match(t.description, /\b(Returns|returns)\b/, `${t.name} says what it returns`);
   }
 });
 
-test('write_board ends with a wrapped region, nodes and a link by key, and still fits the 2,048 characters clients keep', () => {
-  const d = tools.find((t) => t.name === 'write_board')!.description;
-  const shown = JSON.parse(d.slice(d.indexOf(' Example: ') + ' Example: '.length)) as { items: { type: string; node?: unknown; region?: unknown; from?: unknown }[] };
-  assert.deepEqual(shown.items.map((i) => i.type), ['region', 'node', 'node', 'link']);
-  assert.ok(shown.items.every((i) => (i.type === 'node' ? i.node : i.type === 'region' ? i.region : i.from)), 'each item wraps its content');
-  assert.ok(d.length < 2048, `${d.length} characters`);
+test('no tool description carries an example: examples live in the skill, the schemas and the refusals', () => {
+  for (const t of tools) assert.doesNotMatch(t.description, /Example:/, t.name);
 });
 
-test('tools with no request body carry no example', () => {
-  for (const t of tools.filter((x) => !WRITES.includes(x.name))) assert.doesNotMatch(t.description, /Example: /, t.name);
+/** The size budget: the whole `tools/list` and each tool, as compact JSON. Set from the trimmed
+ * list plus about 10% (task 2026-10-25_board-agent_tool-list-trim); raise it only on purpose. */
+const LIST_CAP = 30_400;
+const TOOL_CAPS: Record<string, number> = {
+  list_boards: 600, get_board: 1050, show_node: 1100, show_container: 850, show_layout: 1050, list_open: 1150,
+  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350,
+};
+
+test('the tool list fits its size budget, as a whole and per tool', () => {
+  const size = (v: unknown) => JSON.stringify(v).length;
+  assert.ok(size({ tools }) <= LIST_CAP, `tools/list is ${size({ tools })} characters, over ${LIST_CAP}`);
+  assert.deepEqual(Object.keys(TOOL_CAPS).sort(), tools.map((t) => t.name).sort(), 'one cap per tool');
+  for (const t of tools) assert.ok(size(t) <= TOOL_CAPS[t.name]!, `${t.name} is ${size(t)} characters, over ${TOOL_CAPS[t.name]}`);
 });

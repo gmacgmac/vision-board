@@ -182,10 +182,11 @@ test('by keyboard: Space selects a focused card, Delete asks, Tab and Enter conf
   await page.keyboard.press('Enter');
   await idle(page);
   await expect(card(page, 3)).toHaveCount(0);
-  // The cog: Down opens its menu on the first row; Down twice more reaches Remove container; Enter asks.
+  // The cog: Right opens its menu on the first row (in the rail, toolRail flag, the menu opens to the
+  // right; Down on the top line); Down twice more reaches Remove container; Enter asks.
   const f = frame(page, 'p');
   await f.locator('button.vb-cog').focus();
-  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press((await f.getAttribute('data-rail')) !== null ? 'ArrowRight' : 'ArrowDown');
   await expect(f.getByRole('menuitem', { name: 'Reset places' })).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowDown');

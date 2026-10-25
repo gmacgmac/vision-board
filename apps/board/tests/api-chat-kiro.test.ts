@@ -12,8 +12,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createKiroAdapter } from '../../../packages/agent/src/index.ts';
-import { INSTRUCTIONS_FILE } from '../server/chat-access.ts';
+import { KIRO_AGENT_DRAFT, createKiroAdapter } from '../../../packages/agent/src/index.ts';
+import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME } from '../server/chat-access.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
@@ -38,6 +38,15 @@ after(async () => {
 });
 
 const valid = (events: Event[]) => { for (const e of events) assert.deepEqual(schemaProblems(CHAT_EVENT_ID, e), [], JSON.stringify(e)); };
+
+test('the board\'s MCP server is `vision-board` everywhere the chats name it: Claude Code\'s allowed tools and Kiro\'s agent draft', () => {
+  assert.equal(MCP_NAME, 'vision-board');
+  assert.equal(CHAT_TOOLS[0], `mcp__${MCP_NAME}__*`);
+  const draft = JSON.parse(fs.readFileSync(KIRO_AGENT_DRAFT, 'utf8'));
+  assert.ok(draft.tools.includes(`@${MCP_NAME}`) && draft.allowedTools.includes(`@${MCP_NAME}`), 'Kiro may use and need not ask for the board\'s tools');
+  assert.deepEqual(draft.permissions.rules.filter((r: { capability: string }) => r.capability === 'mcp').map((r: { match: string[] }) => r.match), [[`${MCP_NAME}/*`]]);
+  assert.doesNotMatch(JSON.stringify(draft), /@vb\b|"vb\//, 'no old server name');
+});
 
 test('start-up writes the agent file under home: the repo\'s skill as its prompt, by an absolute path', () => {
   const file = path.join(home, '.kiro', 'agents', 'vision-board.json');

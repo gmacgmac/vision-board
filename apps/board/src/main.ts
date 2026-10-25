@@ -20,6 +20,7 @@ import '../../../packages/ui/src/image-view/image-view.css';
 import '../../../packages/ui/src/region/region.css';
 import '../../../packages/ui/src/region/region-narrow.css';
 import '../../../packages/ui/src/region/region-note.css';
+import '../../../packages/ui/src/region/region-rail.css';
 import '../../../packages/ui/src/tip/tip.css';
 import '../../../packages/ui/src/paused/paused.css';
 import '../../../packages/ui/src/note-bubble/note-bubble.css';

@@ -41,7 +41,7 @@ export interface ProjectOptions {
   lock?: Lock | undefined;
   /** The person's home folder, a real path. */
   home: string;
-  /** The port the server listens on (for a new lock) and its own address (for the chats' vb server). */
+  /** The port the server listens on (for a new lock) and its own address (for the chats' MCP server). */
   port: () => number;
   base: () => string;
   chat?: { adapters?: ChatAdapters | undefined; approvalTtlMs?: number | undefined; blocked?: ChatOptions['blocked'] } | undefined;

@@ -4,7 +4,10 @@
    narrow: the full mode row; the collapsed row (408px, or 568px with a retired marker); the marker's
    icon and number in place of "3 retired" (under 290px); the row down to the cog (under 226px, or
    261px with a marker). Each step keeps the label side uncovered at every zoom where the controls
-   show (FAR_K, 55%, to 250%; round 2 rulings 1 and 2). Tokens only. */
+   show (FAR_K, 55%, to 250%; round 2 rulings 1 and 2). Tokens only.
+   The row's forms are for a row on the top line only: with the toolRail flag (data-rail) the row is
+   a rail with forms of its own (region-rail.css), and its line holds the label alone, so they are
+   scoped to vb-region:not([data-rail]). The retired marker's form is the line's, so it holds for both. */
 
 /* Collapsed (under 408px of top line on screen, a 440px frame at 100%, where the full row would
    leave under ~200px for the label side): only the checked icon, Comment and the cog show (Match card widths waits for the row to
@@ -19,27 +22,27 @@
 vb-region:has(> .vb-region-head .vb-region-retired:not([hidden])) { --region-marked: 1; }
 @container (max-width: 408px) or ((max-width: 568px) and style(--region-marked: 1)) {
   /* Tighter between the label's parts, so a narrow frame's count stays in sight a little longer. */
-  vb-region .vb-region-label { --label-gap: var(--vb-space-1); }
+  vb-region:not([data-rail]) .vb-region-label { --label-gap: var(--vb-space-1); }
   /* The label starts the line (FE_02): the row expands out of the flow, so the tools' column would
      narrow under it and a label slid towards the centre would move with it. Never a jump: with the full
      row (about 260px) a label needs over 520px of line to leave the start. A fixed frame's row never
      expands, so Later's title keeps its place. */
-  vb-region:not([data-fixed]) .vb-region-bar { --region-lead: 0px; }
+  vb-region:not([data-fixed], [data-rail]) .vb-region-bar { --region-lead: 0px; }
   /* The expanded row leaves the flow, so the tools box would collapse to nothing and the popovers
      anchored under it would start at the line's centre, under the row. Keep the row's own height
      (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
-  vb-region .vb-region-tools { min-height: 32px; }
-  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
-  vb-region .vb-mode-row:not(:hover, :focus-within) .vb-widths {
+  vb-region:not([data-rail]) .vb-region-tools { min-height: 32px; }
+  vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
+  vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-widths {
     width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
-  vb-region .vb-mode-row:hover, vb-region .vb-mode-row:focus-within {
+  vb-region:not([data-rail]) .vb-mode-row:hover, vb-region:not([data-rail]) .vb-mode-row:focus-within {
     position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
     box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
   }
   /* Expanded, each icon takes the 24px target and no more, so the row stays a target's room clear of
      the grip even in the narrowest frame (one S card). */
-  vb-region .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
+  vb-region:not([data-rail]) .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
 }
 /* The retired marker's narrow form (round 2 ruling 1): when the line has no room for "3 retired"
    beside the grip, a few letters of title, "1/1" and the collapsed row (under 290px, a one-card frame
@@ -57,10 +60,10 @@ vb-region:has(> .vb-region-head .vb-region-retired:not([hidden])) { --region-mar
    the row's gaps go with them. The holders leave the line whole, as when zoomed out (no "· P…" stub
    left: VERIFY_01 item 8). */
 @container (max-width: 225px) or ((max-width: 260px) and style(--region-marked: 1)) {
-  vb-region .vb-mode-row:not(:hover, :focus-within) { gap: 0; }
-  vb-region .vb-region-holders { display: none; }
-  vb-region .vb-mode-row:not(:hover, :focus-within) :is(.vb-mseg[role='radio'], .vb-mode-div),
-  vb-region:not([data-badge='unsent'], [data-badge='sent']) .vb-mode-row:not(:hover, :focus-within) .vb-region-comment {
+  vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) { gap: 0; }
+  vb-region:not([data-rail]) .vb-region-holders { display: none; }
+  vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) :is(.vb-mseg[role='radio'], .vb-mode-div),
+  vb-region:not([data-rail], [data-badge='unsent'], [data-badge='sent']) .vb-mode-row:not(:hover, :focus-within) .vb-region-comment {
     width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
 }

@@ -1,10 +1,10 @@
 // The MCP schema flattener and tool generator (api.md 47-49), on small documents: refs inlined
 // and the stripped keys gone, allOf folded with the tighter bound, two patterns kept, if/then
-// dropped but its fields still known, closures moved to additionalProperties, a root union made
-// one object, and a merged input named twice refused.
+// dropped but its fields still known, closures moved to additionalProperties, no output schema,
+// and a merged input named twice refused.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { flatten, merge, objectRoot } from './mcp-schema.mjs';
+import { flatten, merge } from './mcp-schema.mjs';
 import { toolsOf } from './gen-mcp.mjs';
 
 const ID = 'https://x.invalid/common.json';
@@ -41,14 +41,6 @@ test('if/then is dropped (looser), but a field only `then` names stays a known f
   assert.deepEqual(flatten(s, {}, schemas), { type: 'object', properties: { v: { enum: [2, 3] }, agent: {} }, additionalProperties: false });
 });
 
-test('a root union of objects becomes one object: all properties, required only where every branch has it', () => {
-  const s = objectRoot({ description: 'Either.', oneOf: [
-    { type: 'object', required: ['board', 'request'], properties: { board: { type: 'string' }, request: { type: 'integer' } }, additionalProperties: false },
-    { type: 'object', required: ['board', 'held'], properties: { board: { type: 'string' }, held: { const: true } }, additionalProperties: false },
-  ] });
-  assert.deepEqual(s, { description: 'Either.', type: 'object', properties: { board: { type: 'string' }, request: { type: 'integer' }, held: { const: true } }, required: ['board'], additionalProperties: false });
-});
-
 const opDoc = (op, route = '/api/things/{thing}', method = 'post') => ({
   info: { version: '9.9.9' },
   paths: { [route]: { [method]: { operationId: 'make_thing', summary: 'Make a thing', description: 'Makes a thing.', 'x-agent': true, responses: { 201: { content: { 'application/json': { schema: ref('core') } } } }, ...op } } },
@@ -67,9 +59,9 @@ test('a tool: path, query and body merged into one closed object; secret where a
   assert.equal(tools[0].inputSchema.additionalProperties, false);
   assert.equal(tools[0].inputSchema.properties.thing.description, 'Which thing.');
   assert.deepEqual(routes.make_thing, { path: ['thing'], query: ['dry'], body: ['label', 'key'], secret: true });
-  assert.match(tools[0].description, /^Makes a thing\. Here the Bearer secret is the `secret` argument/);
+  assert.match(tools[0].description, /^Makes a thing\. Over MCP the secret is the `secret` argument/);
   assert.deepEqual(tools[0].annotations, { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false });
-  assert.equal(tools[0].outputSchema.type, 'object');
+  assert.equal('outputSchema' in tools[0], false, 'no output schema in the tool list');
 });
 
 test('an input named in both the path and the body is refused', () => {

@@ -80,7 +80,7 @@ test('an empty folder: the chat works, and the first board its agent draws opens
   expect(given.prompt).toContain('No board is open in this folder yet');
   await expect(replies(page)).toContainText('I wrote the "Scratch" board');
   await expect(page.locator('#message')).toContainText('No boards yet');
-  const secret = given.mcpConfig.mcpServers.vb!.env.VB_AGENT_SECRET!;
+  const secret = given.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
   await srv.write('scratch', [
     { type: 'board', key: 'board', title: 'Scratch' }, { type: 'region', key: 'ideas', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },
     card('q1', 'Ship on Friday?'), card('q2', 'Add dark mode?'),

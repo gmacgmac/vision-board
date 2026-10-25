@@ -18,8 +18,8 @@ let notes = 0;
 
 const START: StartOptions = {
   cwd: dir,
-  mcpServers: { vb: { command: 'node', args: ['vb-mcp.ts'], env: { VB_AGENT_SECRET: 'not-a-real-secret' } } },
-  allowedTools: ['mcp__vb__*'],
+  mcpServers: { 'vision-board': { command: 'node', args: ['vb-mcp.ts'], env: { VB_AGENT_SECRET: 'not-a-real-secret' } } },
+  allowedTools: ['mcp__vision-board__*'],
   gate: { url: 'http://127.0.0.1:1/api/run/approvals', token: 'run-token' },
 };
 

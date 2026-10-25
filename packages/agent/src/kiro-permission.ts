@@ -47,7 +47,7 @@ const diffs = (content: unknown): Rec[] =>
 
 /**
  * What to do for `toolCall` (an ACP tool call with its `kind`, `locations`, `content` and
- * `rawInput`). `own` says whether the tool is one of the board's own (the vb server's).
+ * `rawInput`). `own` says whether the tool is one of the board's own (the `vision-board` server's).
  */
 export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (path: string) => boolean): Verdict {
   if (own) return { allow: true };

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-25 (worked examples: tools end with their request example, refusals carry the item's: 39, 47, 48); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -292,7 +292,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 
 ## MCP (`packages/mcp`)
 
-45. Our own stdio server (D-028), calling the HTTP API through `packages/client`. It speaks MCP
+45. Our own stdio server (D-028), calling the HTTP API through `packages/client`, configured in
+    every client under the name `vision-board` (`packages/mcp/README.md`; the chat panel's
+    `chat-access.ts` `MCP_NAME`, held by `api-chat-kiro.test.ts`). It speaks MCP
     2026-07-28 and answers the 2025-11-25 handshake for clients that have not moved yet:
     - modern: `server/discover` (supported versions both, capabilities, `serverInfo`, and
       `instructions`: join once, save the secret, write with keys, then `check_responses`);
@@ -310,13 +312,17 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     `discriminator` and `x-*`. A test checks none remain and that no two merged inputs share a
     name. The server still checks every call with the strict schemas. Examples are part of the
     contract: each write item form's `sent` schema carries an `examples` entry (an annotation, so
-    what the schema accepts does not change; they stay in the tool's `inputSchema`), and a tool
-    whose request body has an `example` ends its description with `Example: <compact JSON>`, added
-    by `describe` in `scripts/gen-mcp.mjs` for every tool alike (held by `tools.test.ts`). A tool
-    description stays under 2,048 characters, which some clients cut off at, so the example counts
-    toward that.
-48. Each tool declares `outputSchema` = the operation's success response and returns it as
-    `structuredContent` plus a short text form. A whole-call problem returns `isError: true` with
+    what the schema accepts does not change; they stay in the tool's `inputSchema`), and a refused
+    item or body carries one (39). A tool description carries none (`describe` in
+    `scripts/gen-mcp.mjs`; held by `tools.test.ts`); the worked example is the skill's
+    (`skills/vision-board/SKILL.md` § Writing cards). Descriptions are written for a model reader:
+    what the tool does, what it needs, what it refuses, what comes back. A size budget holds the
+    whole `tools/list` and each tool, as compact JSON, under the caps `LIST_CAP` and `TOOL_CAPS` in
+    `packages/mcp/tests/tools.test.ts`.
+48. A tool declares no `outputSchema` (MCP allows that): its description says in a few words what
+    comes back, and the operation's success response in `openapi.json` stays the contract, which
+    `session.test.ts` holds every `structuredContent` to. A call returns the answer as
+    `structuredContent` plus the same JSON as text. A whole-call problem returns `isError: true` with
     the problem as text only (`detail`, each pointer error and, when it has one, `Example:`). Per-item failures return `isError: false`, unless every item failed.
 49. Annotations: reads `readOnlyHint: true`; every tool `openWorldHint: false`; `write_board`,
     `join` and `request_grant` `destructiveHint: false` (the ledger only grows) and
@@ -729,10 +735,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     messages aren't shown after a restart; the agent still remembers them." (FIX_01 ruling 4).
 106. **The agent's board access** (`chat-access.ts`). On `start_chat` the server joins an agent
     labelled `<CLI> chat <the session id's first 8 characters>`, appends its `grant-request` for the
-    board and the person's `grant` of it. The secret goes only into the vb MCP server's environment
+    board and the person's `grant` of it. The secret goes only into the board's MCP server's environment
     (`VB_AGENT_SECRET`); with it set, the MCP instructions say not to join and to leave `secret`
     out. Secrets are never stored: after a restart the same agent gets a fresh one (one more hash
-    in `agents.json`). The agent may call the vb tools, `ToolSearch`, `Read`, `Glob`, `Grep` and the
+    in `agents.json`). The agent may call the `vision-board` tools (`CHAT_TOOLS`), `ToolSearch`, `Read`, `Glob`, `Grep` and the
     gated tools, which the gate asks about; its instructions are `skills/vision-board/SKILL.md`.
 107. **Turns and approvals** (`chat-session.ts`, `chat-approvals.ts`). `send_chat` records the
     board's Send (`act` `send`) only once the message is accepted and its turn started; a message to
@@ -748,7 +754,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     CLI's default) through `packages/agent/src/kiro.ts`; its session id is Kiro's own UUID, and the
     CLI process stays up between turns (Stop sends `session/cancel` and kills it after 3 s only if
     it ignores that; a new session on the board and the server closing end it). Kiro's permission requests become the
-    same `approval_request`/`answer_approval` flow: the `vb` tools and reading go unasked, a file
+    same `approval_request`/`answer_approval` flow: the `vision-board` tools and reading go unasked, a file
     change or a command is asked, anything else is refused; a "for this session" yes is kept by the
     server (Kiro is always answered with its one-time option). No model list is offered for Kiro
     (`--model` is passed when a model is given). Usage is not reported by Kiro's ACP v2. A board
@@ -821,7 +827,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     generic answer. Found: `wrong-folder`, never "join again". Both refusals say the same: "The
     board has switched to `~/projects/b`. Your work is in `~/projects/a`. Ask the person to open it
     again; don't join here."
-116. **The `vb` MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
+116. **The board's MCP server and the `vb` CLI name their folder** (`packages/client/src/project.ts` `projectOf`), worked out
     once at start: `VB_PROJECT` when set, else the nearest folder at or above its working folder
     with `.visionboard/ledger.jsonl` (a home folder that only keeps `recent.json` is no project),
     else none. `packages/client` sends it as `VB-Project` on every call (`project` option). The
@@ -829,7 +835,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     tell the person, and do not join.
 117. **Answers name the open folder.** `join` and `list_boards` answer `project`, the open folder's
     display name (`~/projects/example`), so an agent can check where it is. The chat panel's CLI runs
-    in the open folder and its `vb` MCP gets `VB_PROJECT` set to it (`chat-access.ts` `vbServer`),
+    in the open folder and its MCP server gets `VB_PROJECT` set to it (`chat-access.ts` `boardMcpServer`),
     so it always matches; a switch stops its chats (111).
 
 ## Ledger v11: the kind decides (every-node BE_01, D-040 proposed)

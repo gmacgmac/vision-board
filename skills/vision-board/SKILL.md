@@ -1,7 +1,7 @@
 ---
 name: vision-board
 description: Chat through the Vision Board. Each point you would number in a chat reply becomes its own card, so the person can answer any card in any order (✓ or ✗ on a card that asks, a note, Later); then read their answers back and redraw. Use when the person says "put it on the board", when the conversation runs through the board, when a reply would be a long numbered list, and always in the board's own chat panel. It also shows pictures, and small apps you build, inside a card.
-status: v3.11 (2026-10-25, one line in Writing cards: each item wraps its content, and `write_board`'s description and any refusal show the exact shape); v3.10 (2026-10-19, an app saves its place with `vision-board/save-state` and restores it from `hostContext["vision-board/state"]`, keeps 12 px of padding at its top, and its tools don't keep the person's place); v3.9 (2026-10-19, apps are your own design: a restrained neutral palette from the host's surface and text variables plus at most one accent of your own, never the board's accent, focus rings on `:focus-visible` only, quiet hover and selection); v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
+status: v3.12 (2026-10-25, Writing cards shows one worked `write_board` call, since tool descriptions carry no example; the server is `vision-board`); v3.11 (2026-10-25, one line in Writing cards: each item wraps its content, and `write_board`'s description and any refusal show the exact shape); v3.10 (2026-10-19, an app saves its place with `vision-board/save-state` and restores it from `hostContext["vision-board/state"]`, keeps 12 px of padding at its top, and its tools don't keep the person's place); v3.9 (2026-10-19, apps are your own design: a restrained neutral palette from the host's surface and text variables plus at most one accent of your own, never the board's accent, focus rings on `:focus-visible` only, quiet hover and selection); v3.8 (2026-10-18, images in cards from the project's `.visionboard/images/`; apps you build in `.visionboard/apps/<id>/`, shown in an `app` card: files, panel messages, tools, size, Allow, `list_apps`, good to use); v3.7 (2026-10-16, when a ✓ or ✗ doesn't make sense on that card, ask in a reply what it meant, never act on a guess; the board says "Replied" where you read `with-agent`); v3.6 (2026-10-16, a card that asks says on the card what ✓ and ✗ each mean, unless it is a plain yes/no question; the Send message's "Waiting for your reply" lists the cards you owe a reply, "Still open" only what needs the person); v3.5 (2026-10-16, ✓ and ✗ answer what the card asks: ask so either mark reads one way; an answer in words is asked for in a note, then restated in your reply for ✓; a ✗ that could mean more than one thing is asked about in a reply, never guessed; a summary states only what ✓ and ✗ settled); v3.4 (2026-10-15, the answer model, D-045: ✓ and ✗ are the person's two marks, read from what the card asks; a note never answers; your answer to a note clears the card, so ask again; consolidate a container only after the person's ✓ on your proposal); v3.3 (2026-10-12, a locked board: say so in one line and stop); v3.2 (2026-10-12, which board "the board" means); v3.1 (2026-10-11, the board is how we chat: one point per card, the person picks the structure first, layouts fitted to the task and the screen, links inside containers, distil only when asked, board numbers only, no `size`, one- or two-line chat); v1 to v2.5 (2026-10-09 to 2026-10-11) are recorded in NOTES.md; scenarios in scenarios.md
 ---
 
 # Vision Board
@@ -9,7 +9,7 @@ status: v3.11 (2026-10-25, one line in Writing cards: each item wraps its conten
 The board is how you and the person chat. Each point you would number in a chat reply is its own
 card. The board numbers the cards (1, 2, 3... on each board), and the person answers any card, in
 any order: ✓ or ✗ on a card that asks, a note or Later on any card. They press
-**Send** when done; you read their answers, answer, and redraw. The `vb` tools are the only way in;
+**Send** when done; you read their answers, answer, and redraw. The `vision-board` tools are the only way in;
 their descriptions hold the exact fields.
 
 ## The conversation
@@ -37,7 +37,7 @@ their descriptions hold the exact fields.
 
 ## Where you are running
 
-**From your own chat** (the `vb` MCP server in your client's settings):
+**From your own chat** (the `vision-board` MCP server in your client's settings):
 - Call `join` once with a short label ("Pricing chat"). Save the agent id and secret in your
   durable notes at once; pass the secret as `secret` on every call that takes it. On
   `not-authenticated`, join again and ask again for the boards you need.
@@ -182,8 +182,16 @@ cross another; 0 is the aim); `empty` cells. It doesn't count links between cont
 - **Body**: short Markdown (paragraphs, bold, bullets, `###` small labels, `>` callouts, short
   code). `emphasis` sparingly. **Never write coordinates**: the engine places cards.
 - **Each item wraps its content**: `node: { ... }`, `region: { ... }`, never fields beside `type`.
-  `write_board`'s description ends with the exact shape (a region, two nodes and a link), and a
-  refused item comes back with the example for its `type`: copy that, never guess.
+  A refused item comes back with the example for its `type`: copy that, never guess. A container,
+  two cards and a link by key, as `write_board`'s arguments:
+  ```json
+  {"board": "pricing", "items": [
+    {"type": "region", "key": "pricing-r1", "region": {"id": "options", "title": "Options", "mode": "grid"}},
+    {"type": "node", "key": "pricing-f1", "node": {"region": "options", "kind": "question", "title": "Flat fee or per seat?", "body": "Which fits a team of ten?"}},
+    {"type": "node", "key": "pricing-f2", "node": {"region": "options", "kind": "note", "title": "Revisit annual billing"}},
+    {"type": "link", "key": "pricing-l1", "from": {"key": "pricing-f1"}, "to": {"key": "pricing-f2"}}
+  ]}
+  ```
 - Each item is answered on its own. Fix the failed ones and resend only those, with the same
   keys. `pending` in the answer lists what you still owe the person.
 

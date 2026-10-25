@@ -12,7 +12,7 @@ import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 
 const fixture = (name: string) => fileURLToPath(new URL(`../../../packages/agent/tests/fixtures/${name}`, import.meta.url));
 const replay = (name: string): AgentUpdate[] => {
-  const stream = new ClaudeStream(['vb'], () => {});
+  const stream = new ClaudeStream(['vision-board'], () => {});
   const lines = readFileSync(fixture(name), 'utf8').split('\n').filter(Boolean);
   return [...lines.flatMap((l) => stream.push(JSON.parse(l))), ...stream.end()];
 };

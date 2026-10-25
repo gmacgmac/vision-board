@@ -1,7 +1,7 @@
 // The chat agent's board access (chat-panel PLAN ruling 8, BE_03 ruling 3): for each new session the
 // server joins the board as an agent labelled with the CLI's name and the session, and records the
 // person's grant of the board to it (starting the session was the person's click). The secret goes
-// only to the vb MCP server, in its environment (`VB_AGENT_SECRET`), so it never appears in a tool
+// only to the board's MCP server (`vision-board`), in its environment (`VB_AGENT_SECRET`), so it never appears in a tool
 // call, the CLI's command line, the transcript or a chat event. Secrets are never stored: after a
 // restart the server gives the same agent a fresh one (`rekey`). Kiro gets the skill as its agent's
 // prompt instead (N34 ruling 1): the server keeps `~/.kiro/agents/vision-board.json` current at start
@@ -14,13 +14,16 @@ import { newSecret } from './agents.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { Ledger } from './ledger.ts';
 
-/** The vb MCP server the agent gets, run with this Node. */
+/** The name the agent knows the board's MCP server by: its tools are `mcp__vision-board__*` in
+ * Claude Code and `@vision-board` in Kiro (`packages/agent/kiro/vision-board.agent.json`). */
+export const MCP_NAME = 'vision-board';
+/** The board's MCP server the agent gets, run with this Node. */
 export const VB_MCP = fileURLToPath(new URL('../../../packages/mcp/bin/vb-mcp.ts', import.meta.url));
 /** The launched agent's instructions (BE_03 ruling 7; T_01 rewrites the file). */
 export const INSTRUCTIONS_FILE = fileURLToPath(new URL('../../../skills/vision-board/SKILL.md', import.meta.url));
 /** What the agent may call without asking: the board's tools, reading, and the gated tools, which
  * the gate asks the person about first (PLAN ruling 5). */
-export const CHAT_TOOLS = ['mcp__vb__*', 'ToolSearch', 'Read', 'Glob', 'Grep', ...GATED_TOOLS];
+export const CHAT_TOOLS = [`mcp__${MCP_NAME}__*`, 'ToolSearch', 'Read', 'Glob', 'Grep', ...GATED_TOOLS];
 
 const NAMES: Record<ChatSession['agent'], string> = { claude: 'Claude Code', kiro: 'Kiro' };
 
@@ -56,9 +59,9 @@ export function rekey(agents: Agents, agentId: string): string {
   return secret;
 }
 
-/** The vb MCP server for one session: the board server, the secret (in its environment only) and
- * the open folder the CLI works in, so its calls match it (folder-mismatch ruling 4). */
-export function vbServer(base: string, secret: string, project: string): McpServer {
+/** The board's MCP server for one session: the board server, the secret (in its environment only)
+ * and the open folder the CLI works in, so its calls match it (folder-mismatch ruling 4). */
+export function boardMcpServer(base: string, secret: string, project: string): McpServer {
   return { command: process.execPath, args: ['--no-warnings', VB_MCP], env: { VB_SERVER: base, VB_AGENT_SECRET: secret, VB_PROJECT: project } };
 }
 

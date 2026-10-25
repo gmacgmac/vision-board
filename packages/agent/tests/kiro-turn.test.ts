@@ -17,7 +17,7 @@ const run = (updates: unknown[], stop: unknown = 'end_turn', log: (l: string) =>
 };
 
 test('text chunks join into a block; a tool after it makes the block interim; the last block is the reply', () => {
-  const out = run([text('One '), text('thing.'), { sessionUpdate: 'tool_call', toolCallId: 'a', title: 'Running: @vb/get_board', _meta: { kiro: { toolName: 'get_board', mcpServerName: 'vb' } } }, text('Done '), text('now.')]);
+  const out = run([text('One '), text('thing.'), { sessionUpdate: 'tool_call', toolCallId: 'a', title: 'Running: @vision-board/get_board', _meta: { kiro: { toolName: 'get_board', mcpServerName: 'vision-board' } } }, text('Done '), text('now.')]);
   assert.deepEqual(out.map((u) => u.type), ['text', 'tool', 'text', 'done']);
   assert.deepEqual(out[0], { type: 'text', text: 'One thing.', interim: true });
   assert.deepEqual(out[1], { type: 'tool', call: 'a', tool: 'get_board', state: 'running' });
@@ -27,7 +27,7 @@ test('text chunks join into a block; a tool after it makes the block interim; th
 test('a board write names its board when called and its cards and head when done (ACP content shape)', () => {
   const result = JSON.stringify({ head: 61, results: [{ ok: true, n: 3 }, { ok: true, n: 4 }, { ok: false }, { ok: true, n: 3 }] });
   const out = run([
-    { sessionUpdate: 'tool_call', toolCallId: 'w', title: 'Running: @vb/write_board', rawInput: { board: 'pricing', items: [{ secret: 'never leaves' }] }, _meta: { kiro: { toolName: 'write_board' } } },
+    { sessionUpdate: 'tool_call', toolCallId: 'w', title: 'Running: @vision-board/write_board', rawInput: { board: 'pricing', items: [{ secret: 'never leaves' }] }, _meta: { kiro: { toolName: 'write_board' } } },
     { sessionUpdate: 'tool_call_update', toolCallId: 'w', status: 'completed', content: [{ type: 'content', content: { type: 'text', text: result } }], rawOutput: { never: 'leaves' } },
   ]);
   assert.deepEqual(out.slice(0, 2), [
@@ -40,7 +40,7 @@ test('a board write names its board when called and its cards and head when done
 test('a board write\'s result in rawOutput (kiro-cli 2.28.0: items of Json content) gives its cards and head', () => {
   const result = JSON.stringify({ head: 57, results: [{ ok: true, seq: 56 }, { ok: true, n: 20 }] });
   const out = run([
-    { sessionUpdate: 'tool_call', toolCallId: 'w', title: 'Running: @vb/write_board', rawInput: { board: 'pricing' }, _meta: { kiro: { toolName: 'write_board' } } },
+    { sessionUpdate: 'tool_call', toolCallId: 'w', title: 'Running: @vision-board/write_board', rawInput: { board: 'pricing' }, _meta: { kiro: { toolName: 'write_board' } } },
     { sessionUpdate: 'tool_call_update', toolCallId: 'w', status: 'completed', rawOutput: { items: [{ Json: { content: [{ type: 'text', text: result }], isError: false } }] } },
   ]);
   assert.deepEqual(out[1], { type: 'tool', call: 'w', tool: 'write_board', state: 'done', board: 'pricing', cards: [20], head: 57 });
@@ -49,7 +49,7 @@ test('a board write\'s result in rawOutput (kiro-cli 2.28.0: items of Json conte
 test('a tool update for a call not seen starts it; a bad board name is dropped; a failed call has no cards', () => {
   const out = run([
     { sessionUpdate: 'tool_call_update', toolCallId: 'x', title: 'write', status: 'failed', _meta: { kiro: { toolName: 'write' } } },
-    { sessionUpdate: 'tool_call', toolCallId: 'y', title: 'Running: @vb/write_board', rawInput: { board: '../etc' }, _meta: { kiro: { toolName: 'write_board' } } },
+    { sessionUpdate: 'tool_call', toolCallId: 'y', title: 'Running: @vision-board/write_board', rawInput: { board: '../etc' }, _meta: { kiro: { toolName: 'write_board' } } },
   ]);
   assert.deepEqual(out.slice(0, 3), [
     { type: 'tool', call: 'x', tool: 'write', state: 'running' },
@@ -92,8 +92,8 @@ const request = (toolCall: object, extra: object = {}) => readRequest({
 })!;
 
 test('a permission request: read from its parts, answered with a one-time option only', () => {
-  const r = request({ toolCallId: 't' }, { _meta: { mcpToolIdentity: { serverName: 'vb', toolName: 'write_board' } } });
-  assert.equal(r.server, 'vb');
+  const r = request({ toolCallId: 't' }, { _meta: { mcpToolIdentity: { serverName: 'vision-board', toolName: 'write_board' } } });
+  assert.equal(r.server, 'vision-board');
   assert.equal(pickOption(r.options, true), 'allow_once');
   assert.equal(pickOption(r.options, false), 'reject_once');
   assert.equal(pickOption([{ optionId: 'a', name: '', kind: 'allow_always' }], true), null, 'never an "always"');

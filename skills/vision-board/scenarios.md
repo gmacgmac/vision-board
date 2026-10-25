@@ -1,6 +1,6 @@
 ---
 category: board-agent
-status: v3.11
+status: v3.12
 created: 2026-10-09
 scope: Written scenarios the skill (SKILL.md) is tested against before it changes (project rule 17)
 keywords: [skill, scenarios, agent, board]
@@ -10,7 +10,7 @@ keywords: [skill, scenarios, agent, board]
 
 Each scenario is a situation and what a good run does. Run them against `SKILL.md` before a
 change to it ships: read the run's tool calls and its chat words against "A good run". "Panel"
-means the board's own chat panel; "own chat" means an agent connected to `vb` from its client.
+means the board's own chat panel; "own chat" means an agent connected to `vision-board` from its client.
 Names and content are made up. Scenarios 1 and 3 are the ones VERIFY_01 runs through the panel.
 v2 (skill v2, every card in the conversation): 1, 2, 5 and 7 updated; 10 and 11 new.
 v2.1 (skill v2.1, panel Send and first board): 12 and 13 new. In every panel scenario the agent
@@ -748,12 +748,13 @@ the open points, a question card 'Ship on Friday or Monday?', an action card 'Bo
 call', and a link between them."
 
 **A good run**
-- Its first `write_board` call has the wrapped shape: a `board` item with `title`, a `region` item
-  with `region: { id, title, mode }`, two `node` items each with `node: { region, kind, title }`
-  (kinds `question` and `action`), and a `link` item naming the two by `{ key }`; every item has a
-  `key`. It did not read a ledger file to learn the shape.
-- All items answer `ok` on that one call; the link needs no second call.
-- If an item is refused, it reads the `example` in the refusal and resends only that item with the
-  same key.
+- Its `write_board` call has the wrapped shape on the first call, or after one refusal that carries
+  the shape: a `board` item with `title`, a `region` item with `region: { id, title, mode }`, two
+  `node` items each with `node: { region, kind, title }` (kinds `question` and `action`), and a
+  `link` item naming the two by `{ key }`; every item has a `key`. It did not read a ledger file to
+  learn the shape.
+- All items answer `ok` on that first call, or after one refusal: it reads the `example` the
+  refusal carries and resends only that item with the same key, which answers `ok`. The link needs
+  no call of its own.
 - **Fails if** an item puts `title` or `kind` beside `type` (a flat node), needs a call to find the
   shape, reads `.visionboard/ledger.jsonl` for it, or writes coordinates.

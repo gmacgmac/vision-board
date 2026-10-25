@@ -127,7 +127,7 @@ test('a folder opened by its link and by its real path is one folder: one recent
   assert.deepEqual(await h.ok('get_project'), opened);
 });
 
-test('an agent working through the home link matches the open folder (its vb MCP sends the link path)', async () => {
+test('an agent working through the home link matches the open folder (its board MCP sends the link path)', async () => {
   const header = projectOf({}, path.join(repoByLink, 'src'), { fs, path });
   assert.equal(header, repoByLink, 'the upward search keeps the link path');
   const joined = await h.ok('join', { body: { label: 'Cloud agent' } }, { as: h.agent(undefined, header) });

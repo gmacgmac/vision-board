@@ -1,7 +1,7 @@
 // Region pattern, layer 2 (template): one pure function from a region to the markup of its
-// frame: the top line (title, answered count and holders on the left, in a gap cut from the frame's
-// border; on the right the mode row: six layout icons, a divider and the settings cog, README
-// pick 1 / mockup 05), the layout popover and the settings menu (both closed until the element
+// frame: the top line (title, answered count and holders, in a gap cut from the frame's border; on
+// the right the mode row: six layout icons, a divider and the settings cog, README pick 1 / mockup
+// 05, or with the toolRail flag that row in a rail on the frame's left edge instead), the layout popover and the settings menu (both closed until the element
 // opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
 // State is applied in place by the element (`VbRegion.update`), so this runs once per view version;
 // the holders slot is filled by `holdersTemplate` whenever the holders change.
@@ -120,8 +120,11 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean): string 
  * Comment, note preview or note block, but keeps its grip (Later can be placed). `empty`: the
  * message it shows when the layout drew none of its cards, in place of `EMPTY_DECIDED`. `widths`:
  * the Match card widths switch (widthsControl flag); a fixed frame never has it. `remove`: Remove
- * container in the settings menu (personRemove flag, N24); a fixed frame never has it. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean }
+ * container in the settings menu (personRemove flag, N24); a fixed frame never has it. `rail`: the tools
+ * group (row, popover, note preview, menu) sits in a rail on the frame's left edge, after the header,
+ * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
+ * the label alone. A fixed frame's rail holds only the cog. */
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = 'Everything here is answered.';
@@ -153,10 +156,12 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
+  const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}`
+    + `${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
     + `${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
-    + `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`
-    + `</div></header>${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
+    + `${opts.rail ? '' : tools}</div></header>${opts.rail ? `<div class="vb-region-rail">${tools}</div>` : ''}`
+    + `${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 
 /**

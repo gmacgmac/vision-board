@@ -52,7 +52,7 @@ test('another agent\'s new board leaves it; the first board its own agent create
   const other = await h.join('Another chat');
   await h.ok('write_board', newBoard('elsewhere', 'Elsewhere'), { as: other.client });
   assert.equal(stored()[0]!.board, undefined);
-  const secret = (await fake.run(1)).mcpConfig.mcpServers.vb!.env.VB_AGENT_SECRET!;
+  const secret = (await fake.run(1)).mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
   await h.ok('write_board', newBoard('launch', 'Launch plan'), { as: h.agent(secret) });
   await h.ok('write_board', newBoard('second', 'Second board'), { as: h.agent(secret) });
   assert.equal(stored()[0]!.board, 'launch', 'the first board only');

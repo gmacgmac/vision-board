@@ -45,9 +45,9 @@ async function gateServer(approve: boolean) {
 
 const START = (url = 'http://127.0.0.1:1/api/run/approvals'): StartOptions => ({
   cwd: dir,
-  mcpServers: { vb: { command: '/usr/local/bin/node', args: ['vb-mcp.ts'], env: { VB_SERVER: 'http://127.0.0.1:4466', VB_AGENT_SECRET: 'not-a-real-secret' } } },
+  mcpServers: { 'vision-board': { command: '/usr/local/bin/node', args: ['vb-mcp.ts'], env: { VB_SERVER: 'http://127.0.0.1:4466', VB_AGENT_SECRET: 'not-a-real-secret' } } },
   instructionsFile: instructions,
-  allowedTools: ['mcp__vb__*'],
+  allowedTools: ['mcp__vision-board__*'],
   gate: { url, token: 'run-token' },
 });
 
@@ -75,7 +75,7 @@ test('a turn: handshake, the tool server in session/new, the person\'s words alo
   const [made] = sent('session/new');
   assert.equal(made.params.cwd, dir);
   assert.deepEqual(made.params.mcpServers, [{
-    name: 'vb', command: '/usr/local/bin/node', args: ['vb-mcp.ts'],
+    name: 'vision-board', command: '/usr/local/bin/node', args: ['vb-mcp.ts'],
     env: [{ name: 'VB_SERVER', value: 'http://127.0.0.1:4466' }, { name: 'VB_AGENT_SECRET', value: 'not-a-real-secret' }],
   }]);
   assert.ok(!made.args.join(' ').includes('not-a-real-secret'), 'the secret is not on the command line');
@@ -152,7 +152,7 @@ test('resume: session/load with the id and the tool servers again; the replayed 
   const session = await adapter.start({ ...START(), sessionId: '00000000-0000-4000-8000-000000000001' });
   const [loaded] = sent('session/load');
   assert.equal(loaded.params.sessionId, '00000000-0000-4000-8000-000000000001');
-  assert.equal(loaded.params.mcpServers[0].name, 'vb');
+  assert.equal(loaded.params.mcpServers[0].name, 'vision-board');
   assert.equal(loaded.params.mcpServers[0].env[1].name, 'VB_AGENT_SECRET');
   assert.equal(sent('session/new').length, 0);
   const updates = await collect(session.prompt('hi'));
@@ -228,7 +228,7 @@ test('a Kiro that ended between turns is started again and the session loaded', 
   const updates = await collect(session.prompt('two'));
   assert.equal(updates.at(-1)?.type, 'done');
   const [loaded] = sent('session/load');
-  assert.deepEqual([loaded.params.sessionId, loaded.params.mcpServers[0].name], [session.id, 'vb']);
+  assert.deepEqual([loaded.params.sessionId, loaded.params.mcpServers[0].name], [session.id, 'vision-board']);
   assert.equal(sent('session/prompt')[1].params.prompt[0].text, 'two');
   session.close?.();
 });
@@ -245,7 +245,7 @@ test('the time limit stops a turn that runs too long, as an error', async () => 
 test('a tool server that never starts ends the turn in an error before anything is sent', async () => {
   const { adapter, sent } = fake('no-servers', { serversWaitMs: 300 });
   const session = await adapter.start(START());
-  assert.deepEqual(await collect(session.prompt('hi')), [{ type: 'error', message: 'The vb tool server did not start in Kiro, so the turn was not run.' }]);
+  assert.deepEqual(await collect(session.prompt('hi')), [{ type: 'error', message: 'The vision-board tool server did not start in Kiro, so the turn was not run.' }]);
   assert.equal(sent('session/prompt').length, 0);
   session.close?.();
 });

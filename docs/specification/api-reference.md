@@ -45,13 +45,13 @@ API version 1.30.0. Every operation on the project ledger, defined once. The MCP
 
 `GET /api/boards` · who: anyone (no credentials) · MCP tool `list_boards`, `vb` command `vb list-boards`
 
-List every board in the project with its title and its own last ledger line. Call it first to find the board id the other operations take in their path. It takes no input. It returns `project`, the folder the board has open (`~/projects/example`), `boards` (each with `board`, `title` and `seq`, the board's latest ledger line, and `locked: true` on a board the person has locked, which takes no write) and `head`, the ledger's latest line number. Reads need no credentials.
+List the project's boards. Call it first: the other tools take a board id. No input, no credentials. Returns `project` (the folder the board has open), `head` (the ledger's latest line) and `boards`, each with `board` (its id), `title`, `seq` (its own latest line) and `locked: true` when the person has locked it (no writes).
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -95,14 +95,14 @@ Example:
 
 `GET /api/boards/{board}` · who: anyone (no credentials) · MCP tool `get_board`, `vb` command `vb get-board`
 
-Read one board as it is now: the full View (regions, nodes and links, meaning only, no coordinates), the person's answers on every node, each node's latest version, and `head`. On a board agents write to, it also carries the open grant requests (`requests`) and each region's holders (`holders`), both left out when empty, and `locked: true` while the person has the board locked: read it as usual, but don't write on it (every write is refused with `locked`). Pass the board id. Use it to see the whole board before you draw on it; use `show_node` for one node's history. `state` and `versions` are keyed by node id, the string form of the card's number on this board. Each board numbers its cards from 1 in the order drawn, and a number is never given again on that board; retired cards are not on the board, yours and those the person removed.
+Read one board as it is now. Pass `board`. Returns `head`, the View (regions, nodes and links; meaning only, no coordinates), `state` (the person's answers on each card, pins and modes) and `versions` (each card's latest version), cards keyed by number as a string. Cards are numbered from 1 per board in draw order, never reused; retired cards are left out. When agents write to the board, also open grant `requests` and each region's `holders` (left out when empty). `locked: true`: read it, but don't write (every write answers `locked`). For one node's history, use `show_node`.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -225,7 +225,7 @@ Media type `application/json`.
 | `title` | string | yes | The board's title. |
 | `summary` | string | no | One or two sentences on what the board is for. |
 | `board` | string | yes | The board the line belongs to; the server takes it from the path. |
-| `key` | string | no | The agent's retry key, scoped to the agent across the project |
+| `key` | string | no | Retry key, per agent across the project. |
 | `type` | `"board"` | yes |  |
 
 Example:
@@ -258,7 +258,7 @@ Media type `application/json`.
 | `title` | string | yes | The board's title. |
 | `summary` | string | no | One or two sentences on what the board is for. |
 | `board` | string | yes | The board the line belongs to; the server takes it from the path. |
-| `key` | string | no | The agent's retry key, scoped to the agent across the project |
+| `key` | string | no | Retry key, per agent across the project. |
 | `type` | `"board"` | yes |  |
 
 Example:
@@ -293,7 +293,7 @@ Example:
 
 `GET /api/boards/{board}/nodes/{n}` · who: anyone (no credentials) · MCP tool `show_node`, `vb` command `vb show-node`
 
-Read one node with every version it has had, the person's notes, replies, proposals, the park bundle if there is one, its links, its container (`region`) and the person's size. Pass the board id and the card's number `n` on that board (each board numbers its cards from 1). A retired card still answers, with `retired`. Add `linked=true` to also get the nodes linked to it, one hop away. Use it before you answer a comment or redraw a node, so you build on the latest version.
+Read one card with its history. Pass `board` and `n`, the card's number on that board; `linked: true` adds the nodes linked to it, one hop away. Returns every version, the person's notes, replies, proposals, the park bundle if any, links, its container (`region`) and the person's size; a retired card still answers, with `retired`. Read it before you answer a note or redraw a card, to build on the latest version.
 
 ### Inputs
 
@@ -302,7 +302,7 @@ Read one node with every version it has had, the person's notes, replies, propos
 | `board` | path | string | yes | The board id, from list_boards. |
 | `n` | path | integer | yes | The card's number on this board (1, 2, 3... in the order drawn). |
 | `linked` | query | boolean | no | True also returns the nodes linked to this one. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -428,7 +428,7 @@ Example:
 
 `GET /api/boards/{board}/regions/{region}` · who: anyone (no credentials) · MCP tool `show_container`, `vb` command `vb show-container`
 
-Read one container (a region) with its full history: the region itself, the agents that hold it, and every node it has held with every version and note. Pass the board id and the region id. Use it to see what a container holds before you write to it or ask for a grant. `holders` is empty for a region written before agents had ids.
+Read one container (region) with its history. Pass `board` and `region`. Returns the region, the agents that hold it (`holders`, empty on an old region) and every node it has held, with every version and note. Read it before you write to a container or ask for a grant on it.
 
 ### Inputs
 
@@ -436,7 +436,7 @@ Read one container (a region) with its full history: the region itself, the agen
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
 | `region` | path | string | yes | The region (container) id. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -538,7 +538,7 @@ Example:
 
 `GET /api/boards/{board}/regions/{region}/layout` · who: anyone (no credentials) · MCP tool `show_layout`, `vb` command `vb show-layout`
 
-Read how the board arranges one container, as structure only: the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by its number on this board, how many of the container's links cross another link, and how many cells are empty. Pass the board id and the region id. Call it once after you first draw a `flow` or `lanes` container to check it reads well (few crossings, few empty cells), and redraw if it does not; don't call it after every write. It is not in `write_board`'s answer.
+Read how one container is arranged, as structure only. Pass `board` and `region`. Returns the mode and card widths in effect, each card's column and row (and lane in `lanes` mode) by card number, how many of its links cross another, and how many cells are empty. Call it once after you first draw a `flow` or `lanes` container, and redraw if it reads badly (many crossings or empty cells); not after every write. `write_board` does not return it.
 
 ### Inputs
 
@@ -546,7 +546,7 @@ Read how the board arranges one container, as structure only: the mode and card 
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
 | `region` | path | string | yes | The region (container) id. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -629,14 +629,14 @@ Example:
 
 `GET /api/boards/{board}/open` · who: anyone (no credentials) · MCP tool `list_open`, `vb` command `vb list-open`
 
-List the open cards on a board: every question, decision or action the person has not answered with ✓ or ✗ yet (a note never answers a card), and every card of any kind waiting for you. Each card gives its latest `ver` and `status`, whether it is `pending` your answer (a note nobody has answered, or moved to Later with no park bundle), and whether it is `unseen` (a newer version than the person last saw, or your answer cleared it and the person has not looked since). Pass the board id. With your Bearer secret the list covers only the containers you hold, so you are never told to answer another agent's cards.
+List a board's open cards. Pass `board`. Returns every question, decision or action the person has not marked ✓ or ✗ (a note never answers a card), and every card waiting for you, each with its latest `ver`, `status`, `pending` (waiting for your answer: an unanswered note, or Later with no park bundle) and `unseen` (newer than the person last saw, or your answer cleared it and they have not looked since). With your secret, only the containers you hold, so you never answer another agent's cards.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -687,17 +687,17 @@ Example:
 
 `GET /api/boards/{board}/responses` · who: anyone (no credentials) · MCP tool `check_responses`, `vb` command `vb check-responses`
 
-Read what the person did on a board after a ledger position, including the answers to your grant requests. Pass `after`, the `head` you last saw (0 for everything), and optionally `limit` and `wait` (0-60 seconds) to hold the call until the person presses Send or answers a request. A wait that times out returns `{ responses: [], head }`. A note is reported as the `comment` act that made it (`context` on a note made with the old More context), carrying the note's latest text and kind, again whenever the person edits it; a note removed before you could see it never appears, and a `note-remove` appears only for a note you may already have read. Each batch, up to and ending with its Send, comes sorted by card number: a note on several cards at its lowest card, a note on a whole container at the lowest card in it, and several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's two marks on a card that asks, which mean what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) come folded to its latest, and only when it leaves the card otherwise than it was at `after`, so ✓ then cleared shows nothing. The server keeps no state for you: pass back the `head` you got. `more: true` means `limit` cut the list in ledger order: read again at once with `after` set to the highest `seq` in `responses`. With your Bearer secret the answer covers only the containers you hold.
+Read what the person did on a board after a ledger position, including answers to your grant requests. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
-| `after` | query | integer | no | A ledger `seq`: return what came after it. 0 (the default) means from the start. Pass the `head` you last saw. |
+| `after` | query | integer | no | Return what came after this ledger `seq` (default 0: from the start). Pass the `head` you last saw. |
 | `limit` | query | integer | no | How many to return at most (default 100, at most 500). |
-| `wait` | query | integer | no | Seconds (0-60) to hold the call until the person presses Send or answers a request. 0 answers at once. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `wait` | query | integer | no | Seconds (0-60) to wait for the person's Send or an answer to a request; 0 answers at once. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 
@@ -763,7 +763,7 @@ Read raw ledger lines after a position, oldest first, from every writer: the per
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
-| `after` | query | integer | no | A ledger `seq`: return what came after it. 0 (the default) means from the start. Pass the `head` you last saw. |
+| `after` | query | integer | no | Return what came after this ledger `seq` (default 0: from the start). Pass the `head` you last saw. |
 | `limit` | query | integer | no | How many to return at most (default 100, at most 500). |
 | `board` | query | string | no | Keep only this board's lines (lines that name only a node are matched through the node's board). |
 
@@ -870,14 +870,14 @@ Example (Two lines):
 
 `POST /api/agents` · who: anyone (no credentials) · MCP tool `join`, `vb` command `vb join`
 
-Join the project as an agent and get your agent id and secret, once. Pass a short `label` such as "Pricing chat". Joining grants nothing: you may draw a new board of your own; for a board another agent made, call `request_grant` with just its `board` first. Save `agent` and `secret` in your durable notes now, because a context compaction loses them and the secret cannot be read again; send it as `Authorization: Bearer <secret>` on your writes. It answers `project`, the folder the board has open: check it is the folder you work in. If a write answers `not-authenticated`, join again and ask for your grants again; if a call answers `wrong-folder`, the board has another folder open: stop and tell the person, and do not join. This is the one write that needs no credentials.
+Join the project as an agent, once. Pass a short `label`, such as "Pricing chat". Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `label` | body | string | yes | A short name for this chat or agent, such as "Pricing chat". The person sees it when you ask for access. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 Example request:
 
@@ -926,17 +926,17 @@ Example:
 
 `POST /api/grants` · who: an agent (Bearer secret from `join`) · MCP tool `request_grant`, `vb` command `vb request-grant`
 
-Ask the person for write access to a board, or to one container on it. Ask for the board first: before you write anything on a board you did not create, call this with just `board`. Then, for another agent's container, call it with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` so the person knows why; then wait for the answer in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). If you already have an open request for it, that request is returned with `replayed: true`; if you already hold it you get `{ held: true }`.
+Ask the person for write access to a board, or to one container on it. Before you write on a board you did not create, call it with just `board`; for another agent's container, with `board` and `region`. Call it once when `write_board` answers `needs-grant`, naming what that answer names, with a `reason` the person can decide on; then wait in `check_responses` and resend the same items with the same keys. A locked board takes no request (`locked`, 423). Returns `request`, the request's `seq` (the person's answer names it); an open request for the same thing comes back with `replayed: true`, and `{ held: true }` when you already hold it.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
 | `board` | body | string | yes | The board you need to write to, or that holds the container. |
-| `region` | body | string | no | The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it. |
+| `region` | body | string | no | The container (region) you need. Leave it out to ask for the whole board. |
 | `reason` | body | string | yes | Why you need write access, so the person can decide. |
-| `key` | body | string | no | The agent's retry key, scoped to the agent across the project |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `key` | body | string | no | Retry key, per agent across the project. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 Example request:
 
@@ -1035,7 +1035,7 @@ Example (A request for the whole board):
 
 `POST /api/boards/{board}/write` · who: an agent (Bearer secret from `join`) · MCP tool `write_board`, `vb` command `vb write-board`
 
-Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. Pass `items` (at most 200), run in order; each item has a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. Every `n`, `from` and `to` is a card's number on this board, which numbers its cards from 1 in the order drawn. `append { n, text }` adds to the end of a card's body. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. A node's `kind` decides whether it asks the person for an answer: a `question`, `decision` or `action` does. A region's mode is `grid`, `flow` (follows the links), `lanes`, `radial`, `column` or `row`. Give each item a `key` so a retry never writes twice, and `base` (the version you read) on a node update so a stale edit fails. It answers one result per item, plus `head` and `pending` (cards waiting for your answer). On a board you did not create, an item fails with `needs-grant` naming the board (or the board and region): call `request_grant` first. Only a board's creator writes its `board` item again. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) on a question, decision or action and the person answers; a proposal made on an older version of the node can't be accepted, so propose again after you change it.
+Write to one board: draw boards, regions, nodes and links, and answer the person with replies, proposals and park bundles. For a new board, choose its id yourself and start with a `board` item. Pass `items` (1-200), run in order, each with a `type`: `board`, `region`, `node`, `link`, `unlink`, `reply`, `propose`, `park`, `retire` or `append`. `n`, `from` and `to` name a card by its number on this board (from 1, in draw order) or by `{ key }` of the item that drew it. Give every item a `key` so a retry never writes twice, and a node update `base` (the `ver` you read) so a stale edit fails with `conflict`. Kinds `question`, `decision` and `action` ask the person for ✓ or ✗; kind `app` shows an app you built (`app: { id }`, from `list_apps`). Region modes: `grid`, `flow` (follows the links), `lanes`, `radial`, `column` (top to bottom) and `row` (left to right); `widths` is `match` or `own`. `append { n, text }` adds to the end of a card's body as a new version. `retire { n }` or `retire { region }` takes a card, or a container and its cards, off the board for good; answer a card waiting on you first. You cannot answer a card: `propose` its ✓ (`check`) or ✗ (`cross`) and the person answers; a proposal on an older version can't be accepted, so propose again after you change the card. On a board you did not create, call `request_grant` first: an item there fails with `needs-grant` naming the board (or the board and region, in another agent's container). Only a board's creator writes its `board` item again. Returns one result per item, `head`, and `pending` (cards waiting for your answer).
 
 ### Inputs
 
@@ -1043,7 +1043,7 @@ Write to one board: draw boards, regions, nodes and links, and answer the person
 |---|---|---|---|---|
 | `board` | path | string | yes | The board id, from list_boards. |
 | `items` | body | list of object | yes | The items to write, run in order (1 to 200); each has a `type`. |
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 Example request:
 
@@ -1194,7 +1194,7 @@ Record one action by the person: ✓ (`ack`), ✗ (`drop`), a note (`comment`; a
 | `y` | body | number | no | Where to place the node down, for `pin`: in its container's coordinates for a card, in board coordinates (the frame's top-left) for a container. |
 | `board` | body | string | no | The board the action is about, for `mode`, `widths`, `revoke`, `send`, `archive`, `restore`, `lock` and `unlock`, and for a note on or a place for a whole container (with `region`). |
 | `region` | body | string | no | The container the action is about, for `mode`, `widths` and `revoke` (a `revoke` without it removes access to the whole board); for `move`, the container the cards go in: one on their board, or `later`, the board's built-in Later. On a `comment`, `context`, `note-edit`, `note-remove`, `pin` or `unpin`, it names a whole container in place of `n` (with `board`); `pin` and `unpin` may name `later`. |
-| `mode` | body | any | no | Renamed in ledger v12: `list` is now `column` (cards top to bottom in card order); `row` lays them left to right, and `flow` follows the links. |
+| `mode` | body | any | no | `list` is now `column` (top to bottom in card order); `row` runs left to right, `flow` follows the links. |
 | `widths` | body | `"match"` or `"own"` | no | The card widths to set, for `widths`: `match` or `own`. |
 | `request` | body | integer | no | The `seq` of the grant request being answered, for `grant` and `deny`. |
 | `holder` | body | string | no | The agent whose access is removed, for `revoke`: to the container, or with no `region` to the board. |
@@ -1330,10 +1330,10 @@ Media type `application/json`.
 | `by` | `"agent"` or `"person"` | yes | Who wrote the line: `agent`, or from v16 `person` (retire_cards). |
 | `agent` | string | no | The agent that wrote the line: an agent id from v3, any name on v2. |
 | `person` | string | no | The person's name, written only once a board has more than one person. |
-| `region` | string | no | The container to retire, with every card in it now, in place of `n`. The container leaves the board too, and its id is never used again on it. |
+| `region` | string | no | In place of `n`: the container to retire, with every card in it now. Its id is never used again on this board. |
 | `board` | string | yes | The board the line belongs to; the server takes it from the path. |
 | `cards` | list of integer | yes | Every card the line took off the board, by ledger number: the one named, or every card in the container at this line (the person's moves count). The server fills it in. |
-| `key` | string | no | The agent's retry key, scoped to the agent across the project |
+| `key` | string | no | Retry key, per agent across the project. |
 | `type` | `"retire"` | yes |  |
 
 Example:
@@ -2287,13 +2287,13 @@ Example:
 
 `GET /api/apps` · who: an agent (Bearer secret from `join`) or the person (the board page cookie) · MCP tool `list_apps`, `vb` command `vb list-apps`
 
-List the apps in this folder, so you can draw one on a card and see what to fix. Apps live in the project's `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Each app has its `id` and `state`: `ready`, `needs-approval` (it has tools and the person has not allowed this version of its code; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it but there is no folder). It also gives the manifest's `title`, `version` and panel `size`, the `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw an app card as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. It needs your agent secret.
+List the apps in this folder, to draw one on a card or see what to fix. Apps live in `.visionboard/apps/<id>/` (the Vision Board skill says what goes there). Returns each app's `id` and `state`: `ready`, `needs-approval` (it has tools the person has not allowed at this version; `changed: true` when they allowed an earlier one), `invalid` (fix its `problems`), `broken` (its tools crashed too often; change the code to try again) or `missing` (a card names it, but there is no folder); and the manifest's `title`, `version` and panel `size`, its `tools` by name, and `hash`, the version of its code, with `allowed: true` once the person allowed that hash. Only the person allows an app, on its card. Draw one as a `node` item of kind `app` with `app: { id, w?, h? }`, the panel's size in px. Needs your secret.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
-| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vb` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
+| `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 ### Answer
 

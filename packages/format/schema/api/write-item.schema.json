@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/write-item.schema.json",
   "title": "Write item",
-  "description": "One of the ten sent forms, by `type`: eight ledger events' sent forms (`retire` takes a card or a whole container off the board), `propose`, which names ✓ `check` and ✗ `cross` and is stored as a `propose` line, and `append`, which the server stores as a `node` line. The server validates each item on its own against this, so one bad item never fails the batch; a sent item carries no `board`, the path names it.",
+  "description": "One item, by `type`. Each is checked on its own, so a bad item fails alone. No `board`: the call names it.",
   "$comment": "Was: api.md 24, 34, 95, 126, 147",
   "type": "object",
   "required": [
@@ -32,7 +32,7 @@
     },
     {
       "title": "Propose",
-      "description": "Propose the person's ✓ or ✗ on version `ver` of card `n`; only the person answers. The server stores it as a `propose` line, `check` as `ack` and `cross` as `drop`; the old `ack` and `drop` are refused.",
+      "description": "Propose the person's ✓ or ✗ on version `ver` of card `n`; only the person answers. The old `ack` and `drop` are refused.",
       "$comment": "Was: D-018, api.md 147 (D-045)",
       "examples": [{"type": "propose", "key": "fee-propose", "n": 1, "ver": 1, "action": "check", "reason": "The cost model supports it."}],
       "type": "object",
@@ -40,8 +40,8 @@
       "properties": {
         "type": {"const": "propose"},
         "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeRef"},
-        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version", "description": "The node version you are proposing an answer on."},
-        "action": {"enum": ["check", "cross"], "description": "What you propose: ✓ (`check`) or ✗ (`cross`). Only the person answers."},
+        "ver": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version", "description": "The card version you propose on."},
+        "action": {"enum": ["check", "cross"], "description": "✓ `check` or ✗ `cross`."},
         "reason": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/longText", "description": "Why you propose this."},
         "source": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/source", "description": "Where the evidence is, such as a file path or a link."},
         "key": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key"}
@@ -56,15 +56,15 @@
     },
     {
       "title": "Append",
-      "description": "Add text to the end of node `n`'s body, after a blank line, as a new version; every other field stays as it is. The server stores it as an ordinary `node` line.",
+      "description": "Add `text` to the end of card `n`'s body, after a blank line, as a new version; nothing else changes.",
       "examples": [{"type": "append", "key": "fee-append", "n": 1, "text": "Update: seats are billed monthly."}],
       "type": "object",
       "required": ["type", "n", "text"],
       "properties": {
         "type": {"const": "append"},
         "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeRef"},
-        "text": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeBody", "description": "The text to add. The node's whole body, with it added, must fit the body limit."},
-        "base": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version", "description": "The `ver` you read. If the node has moved on since, the item fails with `conflict`."},
+        "text": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeBody", "description": "The text to add; the body with it must still fit its limit."},
+        "base": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/version", "description": "The `ver` you read; if the card has moved on, the item fails with `conflict`."},
         "key": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key"}
       },
       "unevaluatedProperties": false

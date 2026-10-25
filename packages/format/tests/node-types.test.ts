@@ -30,7 +30,7 @@ test('the two action lists: four on an answer card, two on any other; no More co
     assert.equal(NODE_TYPES[kind].actions, NODE_TYPES[kind].answer ? ANSWER_ACTIONS : NOTE_ACTIONS, kind);
 });
 
-test('the ledger v11 message for a node naming item says the kind decides', () => {
-  assert.match(ITEM_REMOVED, /v11/);
-  assert.match(ITEM_REMOVED, /question, decision or action/);
+test('the message for a node naming item (refused from ledger v11) says the kind decides', () => {
+  assert.match(ITEM_REMOVED, /the kind decides/);
+  assert.match(ITEM_REMOVED, /`question`, `decision` or `action`/);
 });

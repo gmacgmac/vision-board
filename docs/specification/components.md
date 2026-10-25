@@ -387,8 +387,10 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_sele
 keeps no fill. Chosen by eye, not by the APCA tier (D-009): the measured scores are in
 `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_01_colours.md`.
 
-**A container's top line (review polish FE_02, rulings 2 and 9).** The whole line (grip, title,
-count, retired marker, holders and the tools with their popovers) keeps one on-screen size at every
+**A container's top line (review polish FE_02, rulings 2 and 9).** With the toolRail flag (on by
+default) the tools are not on this line but in a rail on the frame's left edge (below); what this
+paragraph and the next say of the tools on the line holds with the flag off. The whole line (grip, title,
+count, retired marker, holders and, flag off, the tools with their popovers) keeps one on-screen size at every
 zoom, so a title reads zoomed all the way out and the controls never grow past 100%. `Viewport.apply`
 writes the zoom once on the world as `--vb-zoom` (only when it changed); `region.css` registers it
 (`@property`, a number, not inherited, so a zoom step restyles no card: only the regions layer, each
@@ -443,6 +445,34 @@ count together in the grip's hover look (`--vb-surface-sunken`), kept while the 
 `tests/pages/container-title.spec.ts` (centred within 2px at 100%, slid left at 70%, never on the
 tools, at the start from 50% and cut at 20%; the drag at 100% and 40%; the click; the tint and its APCA, the
 title Lc 60 or more on it) and `containers.spec.ts`.
+
+**The tool rail (container tool rail, toolRail flag; a component ruling superseding mockup 05's place
+for the mode row).** The tools group, the same markup in the same order (layouts, divider, Match card
+widths, Comment, the cog; then the layout popover, the note preview and the settings menu), sits in
+`.vb-region-rail` after the header instead of on the top line (`region-template.ts` `regionTemplate`,
+option `rail`; the frame carries `data-rail`). The line then holds the label alone, centred on the
+whole line at every zoom (`region-rail.css` `.vb-region-bar`), with its shrink order and tip as above.
+The rail is a box over the whole frame, counter-scaled by `--vb-zoom` like the line, a size container
+whose height is the frame's on-screen height, so its forms follow the room on screen with nothing
+measured (rule 15); its width is the line's, so the layout popover's compact form follows the same
+568px query as before. In it the rail strip runs down the left border from just under the line, 30px
+across on screen (24px buttons, WCAG 2.5.8) and offset outward, so at every zoom where it shows it
+reaches at most `REGION_PAD` x `FAR_K` - 2 into the frame and `REGION_GAP` x `FAR_K` - 2 past it, its
+canvas ring and Comment's badge (on its outer side) included: it never covers a card or a lane label
+and never touches the next container (`packages/layout` is unchanged). By its room on screen it is
+whole, collapsed to the checked layout, Comment and the cog, or down to the cog and Comment while its
+badge shows; a collapsed rail sits by its foot, so hovered or focused it expands upward over the cards
+(the frame raised as for an open popover) and Comment and the cog stay under the pointer; it collapses
+on leave, blur or Esc (`region-row.ts`, `data-shut`). At rest its icons draw at `--vb-rail-rest`
+(`tokens.css`, one value per theme, each keeping the quiet icon at APCA Lc 30 or more on the canvas and
+on the rail); hovered, focused, with a popover or the note bubble open, or on a touch screen they are at
+full strength, and the badge is never dimmed. Popovers open to the right of the rail, top-aligned with
+the layouts, Comment and the cog. Keys: Up and Down move through the rail; on the cog Right opens the
+menu and Left in the menu closes it. Flag off, the row is on the line exactly as before: the template
+places it there, and `region-narrow.css` scopes the row's narrow forms to frames without `data-rail`.
+Held by `tests/pages/container-rail.spec.ts` (placement, the bounds at 100% to 56%, rest and lit, APCA
+light and dark, collapse and expand, popovers, keys, flag off, touch) and
+`packages/ui/tests/region-template.test.ts` (the markup with and without `rail`).
 
 ## The lasso, the selection bar and view commands (3_FE_02)
 

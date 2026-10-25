@@ -141,7 +141,7 @@ test('person routes and the page are unaffected by the header', async () => {
   assert.equal(page.status, 200);
 });
 
-/** One `tools/call` to the vb MCP server exactly as a CLI would start it: command, args and env
+/** One `tools/call` to the board's MCP server exactly as a CLI would start it: command, args and env
  * from its MCP config, in the folder the CLI ran in. */
 async function callMcp(server: { command: string; args: string[]; env: Record<string, string> }, cwd: string, name: string, args: Record<string, unknown>): Promise<any> {
   const env: NodeJS.ProcessEnv = { ...process.env, ...server.env };
@@ -156,12 +156,12 @@ async function callMcp(server: { command: string; args: string[]; env: Record<st
   return r.result;
 }
 
-test('the chat panel\'s agent still draws after a switch: its vb MCP names the open folder', async () => {
+test('the chat panel\'s agent still draws after a switch: its board MCP names the open folder', async () => {
   const { session } = await h.ok('start_chat', { board: 'plans-b', body: { agent: 'claude' } });
   await h.ok('send_chat', { session, body: { text: 'Draw it.' } });
   const run = await fake.run(1);
   assert.equal(fs.realpathSync(run.cwd), b);
-  const vb = run.mcpConfig.mcpServers.vb!;
+  const vb = run.mcpConfig.mcpServers['vision-board']!;
   assert.equal(vb.env.VB_PROJECT, b, 'the MCP is told the open folder');
   const r = await callMcp(vb, run.cwd, 'write_board', { board: 'plans-b', items: [{ type: 'region', key: 'chat-1', region: { id: 'chat', title: 'Chat', mode: 'grid' } }] });
   assert.equal(r.isError, false, JSON.stringify(r));

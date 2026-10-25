@@ -1,25 +1,18 @@
 // The MCP tool list (api.md 45-50): one tool per x-agent operation of openapi.json, written to
 // packages/mcp/src/tools.generated.json by scripts/gen-api.mjs. Each tool's input is the
 // operation's path, query and body inputs merged into one plain object (plus `secret` where the
-// operation takes the agent secret), its output the success response, both flattened by
-// mcp-schema.mjs. `routes` says where each input goes back to, so the server can rebuild the call.
-import { flatten, objectRoot } from './mcp-schema.mjs';
+// operation takes the agent secret), flattened by mcp-schema.mjs. A tool declares no output
+// schema (api.md 48): its description says what comes back, and openapi.json stays the contract.
+// `routes` says where each input goes back to, so the server can rebuild the call.
+import { flatten } from './mcp-schema.mjs';
 import { METHODS, lookup, resolveParam } from './openapi-refs.mjs';
 
 const SECRET_REF = 'https://vision-board.invalid/schema/api/common.schema.json#/$defs/secret';
-const SECRET_SAYS = 'Here the Bearer secret is the `secret` argument, the one `join` gave you; leave it out only when this MCP server was started with `VB_AGENT_SECRET`.';
+const SECRET_SAYS = 'Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.';
 const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** True when the operation accepts the agent's Bearer secret (required or optional). */
 const takesSecret = (op) => (op.security ?? []).some((r) => 'agentSecret' in r);
-
-/** The success response's JSON schema: the lowest 2xx status that has one. */
-function successSchema(op) {
-  const status = Object.keys(op.responses ?? {}).filter((s) => /^2\d\d$/.test(s)).sort()[0];
-  const schema = status && op.responses[status].content?.['application/json']?.schema;
-  if (!schema) throw new Error(`${op.operationId}: no JSON success response`);
-  return schema;
-}
 
 /** Annotations (api.md 49): hints only; the grant check in the server is the control. */
 function annotationsOf(method) {
@@ -58,24 +51,16 @@ function inputOf(op, doc, schemas) {
   return { input, route };
 }
 
-/** The operation's JSON request body example: `example`, or the first of `examples`. */
-function requestExample(op) {
-  const media = op.requestBody?.content?.['application/json'];
-  return media?.example ?? Object.values(media?.examples ?? {})[0]?.value;
-}
-
 /** The operation's description, plus how MCP carries the secret (api.md 22): tools that take it
- * say so; `join` says which tools take it. A tool whose request has an example ends with it, in
- * the body's own shape, so an agent never has to guess it (api.md 47). */
+ * say so; `join` says which tools take it. Examples stay out (api.md 47): they live in the skill,
+ * the schemas' `examples` and the refusals. */
 function describe(op, secretTools) {
   const base = (op.description ?? op.summary ?? '').trim();
-  const example = requestExample(op);
-  const end = example === undefined ? '' : ` Example: ${JSON.stringify(example)}`;
-  if (takesSecret(op)) return `${base} ${SECRET_SAYS}${end}`;
+  if (takesSecret(op)) return `${base} ${SECRET_SAYS}`;
   if (op.operationId === 'join') {
-    return `${base} Here you send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat that shares this MCP configuration.${end}`;
+    return `${base} Over MCP, send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat sharing this MCP configuration.`;
   }
-  return `${base}${end}`;
+  return base;
 }
 
 /** Every x-agent operation as an MCP tool, in document order, and how to call it back. */
@@ -91,7 +76,6 @@ export function toolsOf(doc, schemas) {
       title: op.summary ?? op.operationId,
       description: describe(op, secretTools),
       inputSchema: input,
-      outputSchema: objectRoot(flatten(successSchema(op), doc, schemas)),
       annotations: annotationsOf(method),
     });
     routes[op.operationId] = route;

@@ -8,7 +8,7 @@
     "core": {
       "type": "object",
       "properties": {
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The container to retire, with every card in it now, in place of `n`. The container leaves the board too, and its id is never used again on it."}
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "In place of `n`: the container to retire, with every card in it now. Its id is never used again on this board."}
       }
     },
     "sent": {
@@ -17,7 +17,7 @@
       "required": ["type"],
       "properties": {
         "type": {"const": "retire"},
-        "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeRef", "description": "The card to retire: its number on this board, or the key of the item that made it."},
+        "n": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/nodeRef", "description": "The card to retire."},
         "key": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key"}
       },
       "allOf": [

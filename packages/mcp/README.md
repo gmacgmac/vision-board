@@ -1,6 +1,7 @@
 # packages/mcp
 
-`vb-mcp`: our own stdio MCP server for the board API (D-028, api.md 45-50). It gives an agent one
+`vb-mcp`: our own stdio MCP server for the board API (D-028, api.md 45-50), configured under the
+name `vision-board` (its tools are `mcp__vision-board__*` in Claude Code, `@vision-board` in Kiro). It gives an agent one
 tool per `x-agent` operation of `openapi.json`, generated into `src/tools.generated.json` by
 `npm run gen` (`npm run gen -- --check` fails when it is stale), and calls the board server
 through `packages/client`. It speaks MCP 2026-07-28 (`server/discover`, version and capabilities on
@@ -31,7 +32,7 @@ Every MCP client takes the same entry. Use absolute paths (`which node` gives th
 ```json
 {
   "mcpServers": {
-    "vb": {
+    "vision-board": {
       "command": "/absolute/path/to/node",
       "args": ["/absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts"]
     }
@@ -43,7 +44,7 @@ Where it goes:
 
 - Kiro: `~/.kiro/settings/mcp.json` (every project) or `.kiro/settings/mcp.json` (one project).
 - Claude Code: `.mcp.json` in a project, or from the terminal (add `-s user` for every project):
-  `claude mcp add vb -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`
+  `claude mcp add vision-board -- /absolute/path/to/node /absolute/path/to/vision-board/packages/mcp/bin/vb-mcp.ts`
 - Cursor: `~/.cursor/mcp.json` or `.cursor/mcp.json`.
 - Any other client: the same `command` and `args`.
 
@@ -63,7 +64,7 @@ When the agent's own folder (`VB_PROJECT`) is the one now open, that secret answ
 
 `VB_AGENT_SECRET` in the `env` above makes one identity for every chat that shares that MCP
 configuration, so two chats would write as one agent and share its grants. Set it only for a
-single-chat setup (or for `vb`); for several chats, leave it out and let each chat join.
+single-chat setup (or for the `vb` CLI); for several chats, leave it out and let each chat join.
 
 - **Depends on**: `packages/format`, `packages/client`.
 - **Used by**: MCP clients (Kiro, Claude Code, Cursor), through `bin/vb-mcp.ts`.

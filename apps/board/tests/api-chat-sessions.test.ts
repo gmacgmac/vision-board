@@ -1,7 +1,7 @@
 // Chat sessions on the board server (chat-panel BE_03, api.md 101-102) with the agent package's
 // fake `claude` replaying a recorded real turn: starting a session joins the board as its agent and
 // records the person's grant; a message becomes the prompt (chips spelled out, the board id) and the
-// board's Send; the turn streams in order as valid chat events; the secret reaches only the vb MCP
+// board's Send; the turn streams in order as valid chat events; the secret reaches only the board MCP
 // server's environment; one turn at a time; Stop; a new session replaces the old one and stops its
 // CLI; and after a restart the session is listed and resumed.
 import { test, after, before } from 'node:test';
@@ -72,13 +72,13 @@ test('a message: chips, the board\'s Send, the prompt, and the turn streamed in 
   assert.equal(run.prompt, `Draw the options.\n\nThe person selected these cards:\n- Card ${q}: ${title}\n\nAttached from the board:\n- Note ${comment} on card ${q} "${title}": Why per seat?\n\nBoard: pricing`);
   const flag = (name: string) => run.args[run.args.indexOf(name) + 1];
   assert.deepEqual([flag('--session-id'), flag('--model'), flag('--append-system-prompt-file')], [first.session, 'sonnet', INSTRUCTIONS_FILE]);
-  assert.ok(run.args.includes('mcp__vb__*'));
+  assert.ok(run.args.includes('mcp__vision-board__*'));
   assert.deepEqual(run.gate.url, `${h.base}/api/run/approvals`);
 });
 
-test('the secret reaches only the vb server\'s environment, and it is the session\'s agent', async () => {
+test('the secret reaches only the board MCP server\'s environment, and it is the session\'s agent', async () => {
   const run = await fake.run(1);
-  const { env } = run.mcpConfig.mcpServers.vb!;
+  const { env } = run.mcpConfig.mcpServers['vision-board']!;
   const secret = env.VB_AGENT_SECRET!;
   assert.match(secret, /^[A-Za-z0-9_-]{43}$/);
   assert.equal(env.VB_SERVER, h.base);
@@ -155,7 +155,7 @@ test('after a restart the session is listed and resumed, as the same agent with 
     assert.equal(events.filter((e) => e.kind === 'system' && e.turn === undefined).length, 1);
     const run = await fake.run(runs + 1);
     assert.deepEqual(run.args.slice(4, 6), ['--resume', current.session]);
-    const secret = run.mcpConfig.mcpServers.vb!.env.VB_AGENT_SECRET!;
+    const secret = run.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
     assert.equal(openAgents(dataDir()).find(secret, () => true), current.agentId);
   } finally {
     server.closeAllConnections();

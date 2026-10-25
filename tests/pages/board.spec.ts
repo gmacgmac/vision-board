@@ -216,6 +216,8 @@ test('each layout mode draws every region', async ({ page }) => {
       // Each pick reveals the region, which can move its row out of the view: bring it back first.
       await panTo(page, region.locator('.vb-mode-row'));
       const icon = region.getByRole('radio', { name: mode, exact: true });
+      // A short frame's rail (toolRail flag) shows every layout while hovered.
+      if ((await region.getAttribute('data-rail')) !== null) await region.locator('.vb-region-tools').hover();
       await icon.click();
       await expect(region).toHaveAttribute('data-mode', mode.toLowerCase());
       await expect(icon).toHaveAttribute('aria-checked', 'true');
@@ -230,6 +232,8 @@ test('the mode row by keyboard: one Tab stop, arrows move, Enter applies, Esc cl
   await openBoard(page);
   await zoomToButtons(page);
   await panTo(page, row(page, 'review'));
+  // The keyboard alone: the pointer leaves the row, which panTo set it on.
+  await page.mouse.move(800, 980);
   const review = page.locator('vb-region[data-region="review"]');
   const pop = review.locator('[role="tooltip"]');
   await expect(pop).toBeHidden();
@@ -320,8 +324,9 @@ test('the cog opens the settings menu; Reset places puts a moved card back, then
   await expect(cog).toBeFocused();
   await expect(cog).toHaveAttribute('aria-expanded', 'false');
 
-  // Nothing moved now: the item stays, disabled, and says why; a click on it does nothing.
-  await page.keyboard.press('ArrowDown');
+  // Nothing moved now: the item stays, disabled, and says why; a click on it does nothing. Right on the
+  // cog opens its menu in the rail (toolRail flag), whose menu opens to the right; Down on the top line.
+  await page.keyboard.press((await review.getAttribute('data-rail')) !== null ? 'ArrowRight' : 'ArrowDown');
   await expect(menu).toBeVisible();
   await expect(reset).toHaveAttribute('aria-disabled', 'true');
   await expect(menu.getByText('No cards moved')).toBeVisible();
@@ -331,10 +336,12 @@ test('the cog opens the settings menu; Reset places puts a moved card back, then
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
   await expect(cog).toBeFocused();
-  // An outside click closes it too.
+  // An outside click closes it too: on the empty canvas at the stage's right edge (at 800, 980 another
+  // container's tool rail can sit, toolRail flag, and the click would press its button).
   await cog.click();
   await expect(menu).toBeVisible();
-  await page.mouse.click(800, 980);
+  expect(await page.evaluate(() => document.elementFromPoint(1590, 980)?.closest('vb-region, vb-node, button') ?? null)).toBeNull();
+  await page.mouse.click(1590, 980);
   await expect(menu).toBeHidden();
 });
 

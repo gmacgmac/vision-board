@@ -123,6 +123,8 @@ test('locked, a press on a paused control says why and writes nothing: a button,
   await expect(card(page, 2).locator('button[data-act="drop"]')).toHaveAttribute('aria-pressed', 'false');
   await page.keyboard.press('c');
   await expect(page.locator('vb-note-bubble')).toBeHidden(); // no note can be written
+  // A short frame's rail (toolRail flag) shows its other layouts while hovered.
+  if ((await frame(page).getAttribute('data-rail')) !== null) await frame(page).locator('.vb-region-tools').hover();
   await frame(page).locator('button[data-mode="column"]').click({ force: true });
   await expect(frame(page)).toHaveAttribute('data-mode', 'grid');
   await card(page, 1).click();

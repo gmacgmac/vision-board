@@ -1,0 +1,126 @@
+/* Region pattern, the container tool rail (<vb-region data-rail>, toolRail flag; after
+   region-narrow.css; cortex-tasks/board/2026-10-25_board-ui_container-tool-rail.md, Design 1-9).
+   The tools group (.vb-region-tools: the mode row, the layout popover, the note preview and the
+   settings menu) leaves the top line for a slim vertical rail across the frame's left border, so
+   the line holds only the label, centred, with the whole line for the title. Every rule here is
+   scoped to data-rail; without it the row sits on the top line as before (region.css,
+   region-narrow.css). Tokens only, but for the rail's own geometry below, which is screen pixels. */
+
+/* Top line: the label alone, centred on the whole line. The tools' column goes; the label keeps its
+   shrink order (holders, title to "…", count) and its tip (region.css). Centred at every zoom: no
+   tool shares the line, so nothing pushes it to the start (the far zoom's --region-lead is unused). */
+vb-region[data-rail] .vb-region-bar { grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr); }
+
+/* The rail's room: one box over the whole frame, counter-scaled like the top line (region.css), so it
+   keeps the frame's on-screen size and everything in it is screen pixels at every zoom (rule 15:
+   nothing measured, a zoom step lays out only this box). Its height is the frame's on-screen height
+   (a percentage of the frame's padding box, plus the border, times the zoom); its width is the top
+   line's on-screen width, so the layout popover's compact form (region.css, 568px) follows the same
+   room as before. It is a size container: the rail's forms below follow its on-screen height. It
+   takes no pointer; only the rail does. */
+vb-region[data-rail] > .vb-region-rail {
+  /* The rail's geometry, on screen. Out: how far its box reaches past the frame's outer edge; the
+     rail is 30px across (24px buttons, WCAG 2.5.8, in 2px padding and a 1px border), so it reaches
+     30 - 20 = 10px into the frame, 12px with its 2px canvas ring: under REGION_PAD x FAR_K - 2
+     (28 x 0.55 - 2 = 13.4px), so it never covers a card; outside, 22px with the ring and 27px with
+     Comment's badge (on its outer side, below): under REGION_GAP x FAR_K - 2 (56 x 0.55 - 2 = 28.8px),
+     so it never touches the next container (packages/layout types.ts; viewport.ts FAR_K). Top: just
+     under the top line, whose label reaches 12px below the border. Foot: the room kept under it. */
+  --rail-w: 30px; --rail-out: 20px; --rail-ring: 2px; --rail-top: var(--vb-space-4); --rail-foot: var(--vb-space-3);
+  --rail-btn: 24px; --vb-zoom: inherit;
+  position: absolute; left: calc(-1 * var(--region-line-w)); top: calc(-1 * var(--region-line-w));
+  width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
+  height: calc((100% + 2 * var(--region-line-w)) * var(--vb-zoom));
+  transform-origin: 0 0; transform: scale(calc(1 / var(--vb-zoom)));
+  container: vb-rail / size;
+  pointer-events: none;
+}
+.gliding vb-region[data-rail] > .vb-region-rail { transition: --vb-zoom var(--vb-motion) var(--vb-ease); }
+
+/* The rail: the tools group, across the left border, from just under the top line. It grows down
+   with its row and holds the popovers, so they anchor to it. The canvas-coloured ring is its gap in
+   the border, as the row's was on the top line. */
+vb-region[data-rail] .vb-region-tools {
+  position: absolute; top: var(--rail-top); left: calc(-1 * var(--rail-out)); width: var(--rail-w);
+  margin: 0; align-items: stretch;
+}
+vb-region[data-rail] .vb-mode-row {
+  flex: 1 1 auto; flex-direction: column; gap: 0; padding: 2px; box-shadow: 0 0 0 var(--rail-ring) var(--vb-surface-canvas);
+}
+/* Each button is the 24px target; 1px above and below makes the 2px between two. */
+vb-region[data-rail] .vb-mseg { width: var(--rail-btn); height: var(--rail-btn); margin-block: 1px; }
+vb-region[data-rail] .vb-mode-div { width: var(--vb-space-4); height: 1px; margin: 3px 0; }
+/* Comment's badge sits on the rail's outer side, so the rail's reach into the frame stays its own. */
+vb-region[data-rail] .vb-region-badge { right: auto; left: calc(var(--vb-space-2) * -1); }
+
+/* Popovers open to the right of the rail, over the cards, top-aligned with what opened them: the
+   layout popover with the layouts (the rail's top), the note preview with Comment and the menu with
+   the cog, the last two counted up from the rail's foot (the cog is always last, Comment just above
+   it: border 1px, padding 2px, margin 1px, a 24px button and 2px between). Still z 4 inside a frame
+   raised by data-open or data-preview (region.css, region-note.css). The bridge on their left keeps
+   the pointer inside while it crosses the gap (WCAG 1.4.13: hoverable). */
+vb-region[data-rail] :is(.vb-mode-pop, .vb-note-pop, .vb-region-menu) {
+  --rail-gap: calc(var(--rail-ring) + var(--vb-space-1));
+  left: calc(100% + var(--rail-gap)); right: auto;
+}
+vb-region[data-rail] .vb-mode-pop { top: 0; }
+vb-region[data-rail] .vb-region-menu { top: calc(100% - 4px - var(--rail-btn)); }
+vb-region[data-rail] .vb-note-pop { top: calc(100% - 6px - 2 * var(--rail-btn)); }
+vb-region[data-rail] :is(.vb-mode-pop, .vb-note-pop)::before {
+  left: auto; right: 100%; top: 0; bottom: 0; width: var(--rail-gap); height: auto;
+}
+
+/* Dimmed at rest (Design 5): the icons and the divider at --vb-rail-rest (tokens.css; each icon keeps
+   APCA Lc 30, the decoration tier, light and dark), full strength while the rail is hovered or holds
+   focus, or while one of the frame's popovers or its note bubble is open. Comment's badge is never
+   dimmed. A touch screen has no hover, so there the rail is never dimmed. The gallery draws the hovered
+   look with data-look on the rail (lit, and a short frame's rail expanded), as it does for other parts. */
+vb-region[data-rail] :is(.vb-mode-icon, .vb-mode-div) { transition: opacity var(--vb-motion-fast); }
+@media (hover: hover) {
+  vb-region[data-rail]:not([data-open], [data-preview], [data-note-open]) .vb-region-tools:not(:hover, :focus-within, [data-look])
+    :is(.vb-mode-icon, .vb-mode-div) { opacity: var(--vb-rail-rest); }
+}
+
+/* Short frames (Design 4), by the rail's room on screen, mirroring the top line's row. The full rail
+   is 247px (221px without Match card widths: 2px border, 4px padding, nine 26px stops, the divider's
+   7px), so it needs that plus its top and foot: 275px (249px). Below that it collapses to the checked
+   layout, Comment and the cog (84px, so 112px of room); below that to the cog, and Comment while its
+   badge shows (an unsent or a waiting note). The others stay in the rail at no height and still
+   focusable. Hovering or focusing the rail expands it whole as an overlay drawn over the cards (the
+   frame is raised, below), moving nothing. A collapsed rail is placed by its foot, so it expands
+   upward and Comment and the cog stay under the pointer, as the top line's row expanded leftward
+   from its right end (a rail that grew down moved them away mid-click). It collapses again on leave,
+   blur or Esc (data-shut, set by region-row.ts until the pointer comes back or focus moves; the
+   button with focus stays drawn, so focus is always seen). Expanded is the rail's hover or focus, not
+   the row's, so it stays expanded while the pointer is on one of its popovers (which sit in it). */
+vb-region[data-rail]:has(.vb-widths) { --rail-widths: 1; }
+@container vb-rail (max-height: 248.98px) or ((max-height: 274.98px) and style(--rail-widths: 1)) {
+  /* The foot of the collapsed rail: the checked layout, Comment and the cog (2px padding and a 1px
+     border each end, three 26px stops) under its top. */
+  vb-region[data-rail]:not([data-fixed]) .vb-region-tools {
+    top: auto; bottom: calc(100% - var(--rail-top) - 6px - 3 * (var(--rail-btn) + 2px));
+  }
+  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut])
+    :is(.vb-mseg[role='radio']:not([aria-checked='true']), .vb-widths, .vb-mode-div):not(:focus) {
+    height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+  vb-region[data-rail] .vb-region-tools:is(:hover, :focus-within, [data-look]) > .vb-mode-row:not([data-shut]) {
+    box-shadow: 0 0 0 var(--rail-ring) var(--vb-surface-canvas), var(--vb-shadow-lift);
+  }
+}
+@container vb-rail (max-height: 111.98px) {
+  /* The cog alone, or Comment and the cog while the badge shows. */
+  vb-region[data-rail]:not([data-fixed]) .vb-region-tools { bottom: calc(100% - var(--rail-top) - 6px - (var(--rail-btn) + 2px)); }
+  vb-region[data-rail]:is([data-badge='unsent'], [data-badge='sent']):not([data-fixed]) .vb-region-tools {
+    bottom: calc(100% - var(--rail-top) - 6px - 2 * (var(--rail-btn) + 2px));
+  }
+  vb-region[data-rail] :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-mseg[role='radio']:not(:focus),
+  vb-region[data-rail]:not([data-badge='unsent'], [data-badge='sent'])
+    :is(.vb-region-tools:not(:hover, :focus-within, [data-look]) > .vb-mode-row, .vb-mode-row[data-shut]) .vb-region-comment:not(:focus) {
+    height: 0; padding-block: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
+  }
+}
+/* While the rail is hovered or holds focus the frame is drawn above every card, as for an open
+   popover (region.css data-open), so an expanded rail is never under the next container's cards;
+   only the rail and the top line take the pointer then, so the frame's own cards stay reachable. */
+vb-region[data-rail]:has(> .vb-region-rail .vb-region-tools:is(:hover, :focus-within, [data-look])) { z-index: 4; pointer-events: none; }

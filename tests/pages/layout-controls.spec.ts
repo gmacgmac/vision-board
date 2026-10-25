@@ -132,6 +132,10 @@ const MIXED = '#mixed';
 const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const widthsSwitch = (page: Page, region: string) => frame(page, region).getByRole('switch', { name: 'Match card widths' });
 const act = (page: Page, body: Record<string, unknown>) => page.request.post(`${PERF_BASE}/api/boards/mixed/act`, { data: { type: 'act', ...body } });
+/** A short frame's rail (toolRail flag) shows its other layouts and the switch while hovered. */
+const reveal = async (page: Page, region: string) => {
+  if ((await frame(page, region).getAttribute('data-rail')) !== null) await frame(page, region).locator('.vb-region-tools').hover();
+};
 const widthsOn = async (page: Page) =>
   ((await (await page.request.get(`${PERF_BASE}/api/boards/mixed`)).json()) as { state: { widths?: Record<string, string> } }).state.widths ?? {};
 
@@ -146,6 +150,7 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('title', 'Card widths: Own');
   // "Prove the idea" as a column, card 4 at L: the column matches it, every card 464 wide.
   expect((await act(page, { action: 'size', n: 4, size: 'l' })).ok()).toBe(true);
+  await reveal(page, 'prove');
   await frame(page, 'prove').locator('button[data-mode="column"]').click();
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('aria-checked', 'true');
   await expect.poll(async () => [(await boxOf(page, 4)).w, (await boxOf(page, 5)).w, (await boxOf(page, 6)).w]).toEqual([464, 464, 464]);
@@ -156,6 +161,7 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
   };
   expect(await gaps()).toEqual([24, 24]);
   // A press: own widths, so 5 and 6 go back to their own width.
+  await reveal(page, 'prove');
   await widthsSwitch(page, 'prove').click();
   await expect(widthsSwitch(page, 'prove')).toHaveAttribute('aria-checked', 'false');
   expect((await widthsOn(page)).prove).toBe('own');

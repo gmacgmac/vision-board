@@ -18,6 +18,7 @@ import '../../../../packages/ui/src/image-view/image-view.css';
 import '../../../../packages/ui/src/region/region.css';
 import '../../../../packages/ui/src/region/region-narrow.css';
 import '../../../../packages/ui/src/region/region-note.css';
+import '../../../../packages/ui/src/region/region-rail.css';
 import '../../../../packages/ui/src/tip/tip.css';
 import '../../../../packages/ui/src/paused/paused.css';
 import '../../../../packages/ui/src/note-bubble/note-bubble.css';
@@ -45,6 +46,7 @@ import { markdownSamples } from './markdown-section.ts';
 import { nodeSamples } from './node-section.ts';
 import { noteBubbleSamples } from './note-bubble-section.ts';
 import { regionSamples } from './region-section.ts';
+import { railSection } from './rail-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
 import { accessSection } from './access-section.ts';
@@ -172,6 +174,8 @@ function build(): void {
   if (flagOn('appCards', flags)) main.append(appSection(fx));
   if (flagOn('cardHistory', flags)) main.append(historySection(fx));
   main.append(appIconSection());
+  // Last, so the sections above keep their place (and their screenshots) with the flag on or off.
+  if (flagOn('toolRail', flags)) main.append(railSection(fx));
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

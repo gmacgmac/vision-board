@@ -13,7 +13,7 @@ import { creatorOf, roundOf } from '../../../packages/actions/src/index.ts';
 import type { AgentAdapter, StartOptions } from '../../../packages/agent/src/index.ts';
 import { createClaudeAdapter, createKiroAdapter } from '../../../packages/agent/src/index.ts';
 import type { Agents } from './agents.ts';
-import { CHAT_TOOLS, INSTRUCTIONS_FILE, agentName, chatLabel, joinAndGrant, newIdentity, rekey, vbServer } from './chat-access.ts';
+import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
@@ -111,10 +111,10 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
   const waiting = new Map<string, Held>();
   const key = (board: Place) => board ?? '';
 
-  /** What the adapter needs for one session: the vb server with its secret, and the gate. */
+  /** What the adapter needs for one session: the board's MCP server with its secret, and the gate. */
   const options = (secret: string, token: string, extra: Partial<StartOptions>): StartOptions => ({
     cwd, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS,
-    mcpServers: { vb: vbServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
+    mcpServers: { [MCP_NAME]: boardMcpServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
   });
 
   const keep = (record: StoredSession, adapterSession: Parameters<typeof createLiveSession>[1], token: string, resumed = false) => {

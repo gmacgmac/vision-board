@@ -64,7 +64,7 @@ test('setup: a chat in the empty folder draws the board "Launch" (scratch, the b
   await srv.write('scratch', [
     { type: 'board', key: 'board', title: 'Launch' }, { type: 'region', key: 'plan', region: { id: 'plan', title: 'Plan', mode: 'grid' } },
     node('q1', 'Ship on Friday?'), node('q2', 'Add dark mode?'), node('a3', 'Book the venue', 'action'),
-  ], given.mcpConfig.mcpServers.vb!.env.VB_AGENT_SECRET!);
+  ], given.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!);
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(page).toHaveURL(/#scratch$/);
 });

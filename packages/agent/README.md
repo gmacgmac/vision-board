@@ -33,7 +33,7 @@ uses it: `docs/specification/chat.md`.
   (`initialize`, then `session/new`, or `session/load` to resume) and opened again with
   `session/load` when it has ended; `session/prompt` per turn (`prompt: [{ type: 'text' }]`, not
   `content`: Kiro answers a `content` prompt with nothing); `session/cancel` to stop (killed after
-  3 s if Kiro ignores it); `close()` ends the process. The `vb` MCP server goes in `mcpServers` with its `env` as name/value
+  3 s if Kiro ignores it); `close()` ends the process. The board's MCP server (`vision-board`) goes in `mcpServers` with its `env` as name/value
   pairs (so the secret is only there), and again in every `session/load`. **The agent** (`src/kiro-agent.ts`,
   N34): Kiro starts as `kiro-cli acp --agent vision-board --model <model> --effort high`, the model the host
   names or `claude-opus-5.5` (never `auto`, which is refused). The agent is a file the host writes with
@@ -47,14 +47,14 @@ uses it: `docs/specification/chat.md`.
   so `session/new` must report `modes.currentModeId` `vision-board` and list the model in
   `models.availableModels` (`sessionProblem`); anything else ends the session before any prompt, saying
   why (a `session/load` is checked on what it reports). The draft's tools: `read`, `grep`, `glob`, `write`,
-  `shell`, `@vb`; reading and `@vb` pre-approved, `write` and `shell` left to ask. The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
+  `shell`, `@vision-board`; reading and `@vision-board` pre-approved, `write` and `shell` left to ask. The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
   (20 s) and ends the turn in an error when one never starts. Updates: `agent_message_chunk` text
   (held a block, as Claude's), `tool_call`/`tool_call_update` by `toolCallId` (name from
   `_meta.kiro.toolName`; a board write names its board and, when done, its cards and head from the
   result's text: the update's `content`, or its `rawOutput`, where kiro-cli 2.28.0 puts an MCP tool's
   result as `{ items: [{ Json: { content } }] }`). Usage is not reported (`done` carries zeros). **Permissions**:
   `session/request_permission` becomes the same approval the Claude gate asks, over the same route
-  and token (`askOverHttp`, ended when the turn is cancelled): the `vb` server's own tools
+  and token (`askOverHttp`, ended when the turn is cancelled): the `vision-board` server's own tools
   (`_meta.mcpToolIdentity.serverName`) and reading go ahead unasked; a file change (facts from
   the call's diff, which Kiro's request itself does not carry, so the turn remembers each call) or a
   command is asked; anything else (a web fetch, another MCP server's tool) is refused. Only
@@ -76,8 +76,8 @@ uses it: `docs/specification/chat.md`.
 
 ## Hosting it (here, or in nclite)
 
-1. Start a session: `createClaudeAdapter().start({ cwd, mcpServers: { vb: { command, args, env } },
-   allowedTools: ['mcp__vb__*', 'Read', 'Write', 'Edit'], gate: { url, token } })`. Keep
+1. Start a session: `createClaudeAdapter().start({ cwd, mcpServers: { 'vision-board': { command, args, env } },
+   allowedTools: ['mcp__vision-board__*', 'Read', 'Write', 'Edit'], gate: { url, token } })`. Keep
    `session.id` to resume after a restart.
 2. Serve the gate's route: authenticate the run token, show the facts to the person, answer
    `{ approved, status, approvalId?, scope? }` (the chat schema's `outcome`) when they decide.

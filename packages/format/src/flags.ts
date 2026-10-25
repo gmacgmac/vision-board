@@ -183,6 +183,11 @@ export const FLAGS = {
     default: true,
     description: 'Markdown draws `![alt](path)` as the image in the project\'s `.visionboard/images/` (D-048), which opens over the board at 70% of the screen. Off, it stays its text.',
   },
+  toolRail: {
+    // On by default (maintainer, 2026-10-25, container tool rail, chat points 1-15); ?flags=-toolRail turns it off.
+    default: true,
+    description: 'A container\'s tools (the layout icons, Match card widths, Comment and the settings cog) sit in a slim vertical rail on the frame\'s left edge, dimmed until hovered or focused, so the top line holds only the title, centred, with the whole line for it; a short frame\'s rail collapses and expands over the cards on hover or focus, and its popovers open to the right of it. Off, the tools sit on the top line after the title as before.',
+  },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,

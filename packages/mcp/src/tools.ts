@@ -6,13 +6,12 @@ import { readFileSync } from 'node:fs';
 /** A JSON Schema as the generator wrote it: plain 2020-12, no `$ref`. */
 export type JsonSchema = boolean | { readonly [keyword: string]: unknown };
 
-/** One MCP tool definition, exactly as `tools/list` sends it. */
+/** One MCP tool definition, exactly as `tools/list` sends it: no `outputSchema` (api.md 48). */
 export interface ToolDef {
   readonly name: string;
   readonly title: string;
   readonly description: string;
   readonly inputSchema: { readonly [keyword: string]: unknown };
-  readonly outputSchema: { readonly [keyword: string]: unknown };
   readonly annotations: { readonly [hint: string]: boolean };
 }
 

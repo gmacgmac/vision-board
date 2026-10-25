@@ -163,3 +163,31 @@ test('a reply under the note block is a tab stop that opens the exchange, escape
   assert.equal(html, '<div class="vb-nblock-reply" data-reply="7" tabindex="0"><span class="vb-nblock-who">Agent reply · &#60;b&#62;</span>'
     + '<div class="vb-nblock-reply-text"><p class="vb-md-p">Yes, <strong>price</strong> order.</p></div></div>');
 });
+
+// Container tool rail (toolRail flag, cortex-tasks/board/2026-10-25_board-ui_container-tool-rail.md,
+// Design 1): the same tools group, unchanged in content, moves out of the top line into a rail after
+// the header, so the line holds only the label; the note block and the empty message follow it.
+test('with the rail option the tools group leaves the top line for a rail after the header, before the note block', () => {
+  const html = regionTemplate(region, { rail: true, widths: true });
+  assert.match(html, /^<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">.*?<\/div><\/div><\/header><div class="vb-region-rail"><div class="vb-region-tools"><div class="vb-mode-row" role="radiogroup" aria-label="Layout for Review">/);
+  assert.match(html, /<\/div><\/div><\/div><section class="vb-region-note-block"/, 'the rail ends before the note block');
+  const head = html.slice(0, html.indexOf('</header>'));
+  assert.doesNotMatch(head, /vb-region-tools|vb-mode-row|vb-cog/, 'no tool on the top line');
+  // Same controls, same order: layouts, divider, widths, Comment, cog; then the popover, the preview and the menu.
+  const order = [...html.matchAll(/data-mode="(\w+)"|class="vb-mode-div"|vb-widths"|vb-region-comment"|vb-cog"|class="vb-mode-pop"|class="vb-note-pop"|class="vb-region-menu"/g)].map((m) => m[1] ?? m[0]);
+  assert.deepEqual(order, [...MODES, 'class="vb-mode-div"', 'vb-widths"', 'vb-region-comment"', 'vb-cog"', 'class="vb-mode-pop"', 'class="vb-note-pop"', 'class="vb-region-menu"']);
+});
+
+test('the rail holds exactly the markup the top line held without it', () => {
+  const tools = (h: string) => h.slice(h.indexOf('<div class="vb-region-tools">'), h.indexOf('<section class="vb-region-note-block"'));
+  const off = regionTemplate(region, { widths: true });
+  const on = regionTemplate(region, { widths: true, rail: true });
+  assert.equal(tools(on), `${tools(off).replace(/<\/div><\/header>$/, '')}</div>`);
+});
+
+test('a fixed frame with the rail: only the cog in its rail; no rail option, no rail', () => {
+  const later = regionTemplate({ id: 'later', title: 'Later', mode: 'grid' }, { fixed: true, rail: true });
+  assert.match(later, /<\/header><div class="vb-region-rail"><div class="vb-region-tools"><div class="vb-mode-row"><button type="button" class="vb-mseg vb-cog"/);
+  assert.equal((later.match(/class="vb-mseg/g) ?? []).length, 1);
+  assert.doesNotMatch(regionTemplate(region), /vb-region-rail/);
+});

@@ -16,15 +16,15 @@ import { lc, pixel, resolved } from './apca.ts';
 type Point = { x: number; y: number };
 const TITLE = 'Pricing questions for the plans';
 
-/** One container, four cards in a row under TITLE. */
-async function board(page: Page, request: APIRequestContext): Promise<Drawn> {
+/** One container, four cards in a row under TITLE; `query` is the page's address query (flags). */
+async function board(page: Page, request: APIRequestContext, query = ''): Promise<Drawn> {
   const d = await draw(request, 0, 'title');
   const out = await write(request, d, [
     { type: 'region', region: { id: 'p', title: TITLE, mode: 'row' } },
     ...[1, 2, 3, 4].map((i) => ({ type: 'node', node: { region: 'p', kind: 'question', title: `Card ${i}?` } })),
   ]);
   const drawn = { ...d, n: out.slice(1).map((x) => x.n!) };
-  await page.goto(`/#${d.board}`);
+  await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(4);
   await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
   return drawn;
@@ -74,8 +74,10 @@ const place = (f: Locator) => f.evaluate((e): Place => {
   };
 });
 
+// The tools on the top line (the toolRail flag off): with the rail the line holds the label alone,
+// centred at every zoom (container-rail.spec.ts).
 test('the label is centred at 100%, slides left before it would touch the tools, starts the line zoomed out, cut at the far end', async ({ page, request }) => {
-  await board(page, request);
+  await board(page, request, '?flags=-toolRail');
   const ks = [1, 0.9, 0.8, 0.7, 0.6, 0.56, 0.5, 0.4, 0.3, 0.2];
   const seen: Record<string, Place> = {};
   for (const k of ks) {
@@ -213,14 +215,17 @@ const parts = (f: Locator) => f.evaluate((e): Seen[] => {
   return [...e.querySelectorAll<HTMLElement>('.vb-region-count, .vb-holder')].map((p) => {
     const [b, v] = [p.getBoundingClientRect(), shown(p)];
     const gone = b.width === 0 || b.height === 0 || v.width === 0 || v.height === 0;
-    const whole = !gone && !cut(p) && Math.abs(v.width - b.width) < 0.5 && Math.abs(v.height - b.height) < 0.5
-      && (tools.width === 0 || b.right <= tools.left + 0.5);
+    // Clear of the tools: no overlap with their box (on the line's right end, or the rail on the frame's
+    // left edge with the toolRail flag).
+    const clear = tools.width === 0 || b.right <= tools.left + 0.5 || b.left >= tools.right - 0.5 || b.bottom <= tools.top + 0.5 || b.top >= tools.bottom - 0.5;
+    const whole = !gone && !cut(p) && Math.abs(v.width - b.width) < 0.5 && Math.abs(v.height - b.height) < 0.5 && clear;
     const part = p.classList.contains('vb-region-count') ? 'count' : `holder ${p.querySelector('.vb-holder-name')!.textContent}`;
     return { part, state: gone ? 'gone' : whole ? 'whole' : 'sliver', box: [b.left, b.width].map(Math.round), shown: [v.left, v.width].map(Math.round) };
   });
 });
 
-test('a narrow line shows the count and each holder whole or not at all, at every zoom from 100% to 20%', async ({ page, request }) => {
+// With the rail (the toolRail flag, on by default) and with the row on the top line (off).
+for (const query of ['', '?flags=-toolRail']) test(`a narrow line shows the count and each holder whole or not at all, at every zoom from 100% to 20%${query ? ', the row on the top line' : ''}`, async ({ page, request }) => {
   const d = await draw(request, 0, 'slivers');
   await write(request, d, [
     { type: 'region', region: { id: 'q', title: 'Second', mode: 'row' } },
@@ -228,7 +233,7 @@ test('a narrow line shows the count and each holder whole or not at all, at ever
     ...[5, 6, 7].map((i) => ({ type: 'node', node: { region: 'q', kind: 'decision', title: `Decision ${i}` } })),
     { type: 'node', node: { region: 'o', kind: 'question', title: 'Ship it?' } },
   ]);
-  await page.goto(`/#${d.board}`);
+  await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(4);
   // A second holder on "Second": an agent asks for it and the person grants it.
   const b = await (await request.post('/api/agents', { data: { label: 'Launch chat' } })).json() as { secret: string };
@@ -266,7 +271,9 @@ test('a narrow line shows the count and each holder whole or not at all, at ever
   for (const s of ['o count whole', 'o count gone', 'q holder Pricing chat whole', 'q holder Pricing chat gone', 'q holder Launch chat whole', 'q holder Launch chat gone'])
     expect([...states], s).toContain(s);
   // Out of sight, but still read out: at zooms where the controls show and the one-card frame's count,
-  // then "Second"'s second holder, is out of sight, each stays in the accessible tree, as before.
+  // then "Second"'s second holder, is out of sight, each stays in the accessible tree, as before. With
+  // the rail the line is the label's alone, so neither goes out of sight while the controls show.
+  if (!query) return;
   const goneAt = (part: string) => ks.find((x) => x >= 0.56 && sweep.includes(`${Math.round(x * 100)}% ${part} gone`));
   const [countGone, holderGone] = [goneAt('o count'), goneAt('q holder Launch chat')];
   expect([countGone, holderGone], sweep.join('; ')).not.toContain(undefined);

@@ -78,3 +78,8 @@ test('cardImages is on by default (app-cards orchestrator decision 5, D-048), an
   assert.equal(flagOn('cardImages'), true);
   assert.equal(flagOn('cardImages', parseFlags('-cardImages').overrides), false);
 });
+
+test('toolRail is on by default (maintainer, 2026-10-25, container tool rail), and -toolRail turns it off', () => {
+  assert.equal(flagOn('toolRail'), true);
+  assert.equal(flagOn('toolRail', parseFlags('-toolRail').overrides), false);
+});

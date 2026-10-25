@@ -1,8 +1,8 @@
 ---
 task_name: Container Tool Rail
 created: 2026-10-25
-completed:
-status: pending
+completed: 2026-10-25
+status: completed
 categories: [board-ui]
 type: implementation
 model: strong
@@ -141,13 +141,13 @@ is dimmed at rest and full strength on hover, focus or while one of its popovers
 
 ## Success Criteria
 
-- [ ] A narrow frame shows its whole title (or as much as the full line allows), centred; no tool on the top line
-- [ ] Rail bounds met at 100, 90, 80, 70, 60, 56% (measurement table in Implementation Notes)
-- [ ] Rest / lit / collapsed / expanded / popover states work by mouse, keyboard and touch; Esc closes
-- [ ] APCA: icons at rest Lc >= 30, lit as today, light and dark (numbers recorded)
-- [ ] Flag off reproduces today's row exactly (existing specs pass with the flag off)
-- [ ] New tests failed first; `npm test`, `npm run test:pages`, `npm run verify` pass
-- [ ] Gallery, `pattern.json` and `components.md` updated; task file updated with completion notes
+- [x] A narrow frame shows its whole title (or as much as the full line allows), centred; no tool on the top line
+- [x] Rail bounds met at 100, 90, 80, 70, 60, 56% (measurement table in Implementation Notes)
+- [x] Rest / lit / collapsed / expanded / popover states work by mouse, keyboard and touch; Esc closes
+- [x] APCA: icons at rest Lc >= 30, lit as today, light and dark (numbers recorded)
+- [x] Flag off reproduces today's row exactly (existing specs pass with the flag off)
+- [ ] New tests failed first; `npm test`, `npm run test:pages`, `npm run verify` pass (all but: test:pages 600 passed, 6 failed: send-access x4, the OPEN item under Issues; size.spec gallery screenshot x2, 3-6px antialiasing noise in a section the rail does not touch)
+- [x] Gallery, `pattern.json` and `components.md` updated; task file updated with completion notes
 
 ---
 
@@ -161,21 +161,108 @@ is dimmed at rest and full strength on hover, focus or while one of its popovers
 
 ## Implementation Notes
 
-_To be completed by agent after task execution._
-
-**Completed**: YYYY-MM-DD HH:MM
+**Completed**: 2026-10-25 (time in the LOG entry)
 
 ### Changes Made
--
+- `packages/ui/src/region/region-template.ts` `regionTemplate`, `RegionFrameOptions.rail`: the tools group
+  (unchanged markup and order) goes into `.vb-region-rail` after `</header>` when `rail` is set; the top
+  line keeps the label alone. Later's rail holds only the cog.
+- `packages/ui/src/region/vb-region.ts` `render`: `data-rail` from the option.
+- `packages/ui/src/region/region-row.ts` `onRowKey` / `onMenuKey`: in the rail Right on the cog opens its
+  menu (Down moves on, wrapping), Left in the menu closes it back to the cog; Esc closes the layout
+  popover and collapses a short frame's rail (`data-shut` on the row; cleared when the pointer comes back
+  or focus moves). Flag off, the keys are as before.
+- `packages/ui/src/region/region-rail.css` (new, 126 lines): label-only top line centred; the rail's room
+  (`.vb-region-rail`, counter-scaled by `--vb-zoom`, a size container named `vb-rail`, frame-on-screen
+  height, line width so the 568px compact popover query is unchanged); the strip (30px, `--rail-out`
+  20px, 2px canvas ring, 24px buttons); badge on the outer side; popovers to the right, top-aligned with
+  the layouts, Comment and the cog; rest dim; the forms by rail room (275/249px, 112px) with a collapsed
+  rail anchored by its foot so it expands upward; frame raised while the rail is hovered or focused;
+  `data-look` hook for the gallery.
+- `packages/ui/src/region/region-narrow.css`: the row's top-line forms scoped to `vb-region:not([data-rail])`
+  (kept for the flag off; see Deviations). `region.css` untouched (300 lines).
+- `packages/tokens/src/tokens.css`: `--vb-rail-rest` 0.5 light, 0.76 dark (per-theme number via
+  `prefers-color-scheme` and `data-theme`).
+- `packages/format/src/flags.ts` `toolRail` (default on); plumbed `controller.ts` -> `draw.ts` `rail` ->
+  `render.ts` `createRegionSet({ rail })` (Later too).
+- Gallery: `apps/board/src/gallery/rail-section.ts` (rest, lit, collapsed, expanded, narrowest with and
+  without badge, layout popover, menu, Later), `gallery.css` `.g-rail-frames`, `main.ts` (CSS import, section
+  behind the flag). Existing gallery samples keep the top-line row (same as the widths/remove precedent).
+- `pattern.json` (`flaggedStates.rail`, `data-rail`, render options, keys, styles list);
+  `docs/specification/components.md` "The tool rail" ruling and a flag-off qualifier on the top-line paragraph.
+- Tests: `packages/ui/tests/region-template.test.ts` (+3), `packages/format/tests/flags.test.ts` (+1);
+  `tests/pages/container-rail.spec.ts` (placement, line, bounds, dim, APCA x2, flag off),
+  `tests/pages/container-rail-states.spec.ts` (collapse/expand/Esc, popovers, keys, axe x2, touch, gallery
+  screenshot x2), helpers `tests/pages/rail-board.ts`. Updated: `container-title.spec.ts` (tools-overlap is a
+  box intersection; the sliding-label test pinned to `?flags=-toolRail`; the sliver sweep runs both ways),
+  `container-polish.spec.ts` (overlap as box intersection), `board.spec.ts` (hover the rail before a hidden
+  layout; pointer parked for the keyboard test; menu key by `data-rail`), `person-remove.spec.ts` and
+  `lock-board.spec.ts` (same, by `data-rail`).
 
 ### Measurements
--
+Measurement pass by a Sonnet sub-agent (own server, Playwright, screen px, ring-inclusive; frames: one-card
+p/q side by side, lanes l, tall t, retired-marker r, s, Later; with and without Comment's badge). All 84
+frame/zoom/badge rows pass.
+
+| zoom | inside reach (bound 13.4) | outside, no badge / badge (bound 28.8) | min gap to card | min gap to lane label | rail reach to left neighbour (frame gap) | rail top - head bottom |
+|---|---|---|---|---|---|---|
+| 100 | 11.5 | 22.5 / 25.5 | 16.5 | 12.5 | 33.5 / 30.5 (56.0) | 1.2 |
+| 90 | 11.6 | 22.5 / 25.5 | 13.7 | 10.0 | 28.0 / 25.0 (50.4) | 1.3 |
+| 80 | 11.6 | 22.4 / 25.4 | 10.8 | 7.6 | 22.4 / 19.4 (44.8) | 1.4 |
+| 70 | 11.7 | 22.4 / 25.4 | 8.0 | 5.1 | 16.9 / 13.9 (39.2) | 1.5 |
+| 60 | 11.7 | 22.3 / 25.3 | 5.1 | 2.7 | 11.3 / 8.3 (33.6) | 1.5 |
+| 56 | 11.7 | 22.3 / 25.3 | 4.0 | 1.7 | 9.1 / 6.1 (31.4) | 1.6 |
+
+Forms: one- and two-card frames collapsed at 80-100%, narrowest at 70% and below (Comment kept with a
+badge); the lanes frame full at 80-100%, collapsed below; tall frames full; Later cog only. The rail's
+bottom stays at least 12.2px inside the frame at rest. The rail's top never overlaps the label.
+
+APCA (as drawn, icon colour at its opacity over its own fill / over the canvas):
+
+| theme | state | unchecked layout | checked layout | cog |
+|---|---|---|---|---|
+| light | rest (0.5) | 39.8 / 36.5 | 52.1 / 57.6 | 39.8 / 36.5 |
+| light | lit | 95.1 / 98.6 (hovered) | 89.3 / 98.6 | 76.3 / 70.3 |
+| dark | rest (0.76) | 32.7 / 32.6 | 63.9 / 63.6 | 32.7 / 32.6 |
+| dark | lit | 93.8 / 95.7 (hovered) | 92.5 / 95.7 | 48.8 / 49.6 |
+
+Lit, the quiet icon is as before (`--vb-ink-subtle` at full strength: 76.2 light, 48.8 dark on the fill).
 
 ### Issues & Resolutions
--
+- A collapsed rail that expanded downward moved Comment and the cog from under the pointer between
+  hover and click (board.spec, containers.spec failed): a collapsed rail is now placed by its foot and
+  expands upward, as the top-line row expanded leftward from its fixed right end.
+- Expansion keyed on the row's hover collapsed the rail while the pointer was on a popover (the popover
+  jumped away): expansion now keys on the rail's (tools') hover and focus.
+- Esc on a focused layout first only closed the popover; in the rail one Esc now closes it and collapses.
+- board.spec's "outside click closes the menu" clicked at (800, 980), where decide's rail Column button
+  now sits, so it switched decide to column and broke move-and-later.spec and notes.spec later in the run
+  (found by diffing the roadmap ledger after board.spec with the flag on and off). The click now goes to
+  an empty point at the stage's right edge, asserted free first. layout-controls.spec hovers a short
+  frame's rail before pressing a hidden layout or the widths switch (only when `data-rail` is set).
+- OPEN (needs the maintainer): `send-access.spec.ts` "axe passes on the board with the strip..." fails
+  with the rail on: axe target-size on the card's `.vb-size-trig` (27.5 x 22px, so it needs 24px of free
+  space) against a holder button that has wrapped out of sight under the top line (FIX_48: a holder with
+  no room wraps to the slot's clipped second line, stays focusable and in the accessibility tree). With the
+  label centred on the whole line, that clipped holder now sits at x 837-941, y 498 (board at 110%), just
+  above the size trigger at x 899, y 508. Flag off the wrapped holder lands elsewhere, so the test passed.
+  Not fixed here: it is the label's wrap-out-of-sight pattern (FIX_48) meeting the node pattern's
+  under-24px size trigger, both outside this task. The two send-access tests after it fail only because
+  the failed test leaves its access request pending.
+- Unrelated to this task: board.spec's screenshot baseline holds toolbar chips from a full-suite run order
+  (v153, "6 boards updated"), so it fails when that spec runs alone; the gallery screenshot showed
+  15-2,500 px of text-antialiasing noise outside the region sections before the rail section was added.
 
 ### Deviations from Plan
-- None / [Describe if any, and why approved]
+- Design 2 says remove the collapsed-row forms from `region-narrow.css`; they are kept and scoped to
+  `vb-region:not([data-rail])`, because the success criterion requires flag off to reproduce today's row
+  exactly. Delete them when the flag is retired.
+- Design 4 does not say which way a collapsed rail expands; it expands upward (from its foot) so Comment
+  and the cog stay put (see Issues). It may reach above the frame as an overlay.
+- The existing gallery region samples keep the top-line row (rendered without `rail`, as the widths and
+  remove samples are); the rail has its own gallery section behind the flag.
+- The lane bands (`rect.vb-lane`, 8 board units inside the frame) run under the rail's inner 3.5-7.2px;
+  the lane labels stay clear (1.7px at 56%). Not a Design 3 bound; noted for the maintainer.
 
 ---
 

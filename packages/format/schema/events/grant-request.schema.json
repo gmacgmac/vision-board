@@ -10,7 +10,7 @@
       "required": ["board", "reason"],
       "properties": {
         "board": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The board you need to write to, or that holds the container."},
-        "region": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The container (region) you need to write to. Leave it out to ask for the board: ask for a board you did not create before writing anything on it."},
+        "region": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/id", "description": "The container (region) you need. Leave it out to ask for the whole board."},
         "reason": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/longText", "description": "Why you need write access, so the person can decide."}
       }
     },

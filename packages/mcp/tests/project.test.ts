@@ -1,4 +1,4 @@
-// The folder the vb MCP server works in (folder-mismatch task, ruling 2; api.md 116): VB_PROJECT
+// The folder the board's MCP server works in (folder-mismatch task, ruling 2; api.md 116): VB_PROJECT
 // when set, else the nearest folder at or above its working folder with a Vision Board
 // (`.visionboard/ledger.jsonl`), else none. It sends that folder as `VB-Project` on every call, and
 // sends nothing when there is none. The instructions tell an agent refused with `wrong-folder` to

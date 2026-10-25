@@ -601,3 +601,19 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   model, or a run without the examples to compare (so this shows the shape is reachable from the tool
   list, not that the examples caused it). One gap the agent named: nothing says how to pick the
   path's `board` id for a new board (it slugged the title, which worked).
+- 2026-10-25, agent (tool-list-trim): v3.12. Tool descriptions no longer end with an example and
+  tools carry no output schema (the list went from about 108,700 to about 27,700 characters), so
+  Writing cards now shows one worked `write_board` call (a container, two cards, a link by key),
+  held by `apps/board/tests/write-examples.test.ts` against the schema and a live write. The MCP
+  server is now configured as `vision-board` (tools `mcp__vision-board__*`, Kiro `@vision-board`).
+- 2026-10-25, agent: **a live run of scenario 34 on the trimmed list, one agent, once.** A fresh
+  agent (model `sonnet`, a sub-agent given only the MCP's instructions and tool list through a stdio
+  bridge to `vb-mcp.ts`, on a test board server on port 4593 over a temporary empty project and a
+  temporary home; not the skill, not the ledger) called `list_boards`, `join`, then one
+  `write_board`: a `board` item, a `region` with `region: { id, title, mode }`, two `node` items
+  with `node: { region, kind, title }` (`question`, `action`) and a `link` by `{ key }`, every item
+  keyed. All five answered `ok` on that call; no refusal. The bridge's call log and the ledger
+  confirm it. A good run. Not run: Kiro, a second model, the board's chat panel. Gaps it named:
+  how to pick a new board's id (again; `write_board`'s description now says to choose it and start
+  with a `board` item, added after this run), what link direction means, and which mode suits a
+  small checklist.

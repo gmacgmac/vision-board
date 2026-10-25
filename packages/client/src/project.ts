@@ -1,4 +1,4 @@
-// The folder an agent's tool works in (the vb MCP and the vb CLI; D-039, api.md 116), worked out
+// The folder an agent's tool works in (the board MCP and the `vb` CLI; D-039, api.md 116), worked out
 // once at start and sent on every call as `VB-Project`: `VB_PROJECT` when set (resolved against the
 // working folder), else the nearest folder at or above the working folder with a Vision Board
 // (`.visionboard/ledger.jsonl`, so a home folder that only keeps `recent.json` does not count), else

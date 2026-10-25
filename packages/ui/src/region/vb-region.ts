@@ -27,7 +27,8 @@ export const VB_REGION_TAG = 'vb-region';
 /** What the page holds: a <vb-region> it renders once and updates in place. */
 export interface VbRegionElement extends HTMLElement {
   /** Build from the template; sets data-region, role, aria-labelledby and `--region`; a fixed
-   *  frame (`opts.fixed`, the built-in Later) also carries `data-fixed`. */
+   *  frame (`opts.fixed`, the built-in Later) also carries `data-fixed`, and a frame with its tools
+   *  in the rail (`opts.rail`, toolRail flag) `data-rail`. */
   render(r: Region, opts?: RegionFrameOptions): void;
   /** Apply the current state (from `regionState`) without rebuilding the markup. */
   update(st: RegionState): void;
@@ -65,6 +66,7 @@ export function defineVbRegion(): void {
       this.titleTip.close();
       this.dataset.region = r.id;
       this.toggleAttribute('data-fixed', opts.fixed === true);
+      this.toggleAttribute('data-rail', opts.rail === true);
       this.setAttribute('role', 'region');
       this.setAttribute('aria-labelledby', regionIds(r.id).heading);
       this.style.setProperty('--region', regionColour(r));

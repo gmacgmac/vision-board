@@ -311,3 +311,6 @@
 [[2026-10-20 09:29]] [board-ui] Fixed clipped count/holder slivers on narrow container title lines → Notes: `packages/ui/src/region/region.css` (`.vb-region-handle`, `.vb-region-holders`) — VERIFY_01 finding 1
 [[2026-10-25 12:10]] [board-agent] Linked ~/.claude/skills/vision-board and ~/.kiro/skills/vision-board to the main checkout's skills/vision-board (one source, no copies) → Notes: `skills/vision-board/SKILL.md` — Kiro's panel agent already points its prompt here
 [[2026-10-25 12:20]] [board-agent] Completed: Tool Examples For Agents → Task: [[cortex-tasks/board/2026-10-25_board-agent_tool-examples.md]]
+[[2026-10-25 13:12]] [board-agent] Completed: Tool List Trim And Rename → Task: [[cortex-tasks/board/2026-10-25_board-agent_tool-list-trim.md]]
+[[2026-10-25 14:13]] [board-ui] Completed: Container Tool Rail → Task: [[cortex-tasks/board/2026-10-25_board-ui_container-tool-rail.md]]
+[[2026-10-25 15:10]] [project-docs] Steering: MCP server named vision-board (maintainer approved, point 59) → Notes: `.kiro/steering/vision-board-proj.md` (Running the board) — follows the tool-list trim and rename task

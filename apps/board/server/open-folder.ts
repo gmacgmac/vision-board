@@ -51,7 +51,7 @@ const HOME_ITSELF = 'Choose a project folder under ~, not the home folder itself
 const openProject: Handler = async ({ req, res, project }) => {
   const b = await body('open_project', req) as { path: string; create?: boolean };
   const dir = resolveFolder(project.home, b.path);
-  // A board in home itself would be every folder's nearest board (the vb MCP's upward search).
+  // A board in home itself would be every folder's nearest board (the board MCP's upward search).
   if (dir === project.home) throw problem('forbidden', HOME_ITSELF);
   const open = project.open(dir, b.create === true);
   sendJson(res, 200, shown(project, open.dir));

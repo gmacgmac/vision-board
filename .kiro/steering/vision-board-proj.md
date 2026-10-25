@@ -209,10 +209,11 @@ Use these words consistently in code, docs and the UI.
   this repo. "⋯" › Open folder… opens another project folder under your home folder (or creates
   its `.visionboard/`) in place of this one; every open page reloads onto it, running chats stop,
   and agents join again. One server per ledger; the lock refuses a second.
-- MCP server `vb` (any client): command `/usr/local/bin/node` (check `which node` on another
+- MCP server `vision-board` (any client; tools `mcp__vision-board__*` in Claude Code,
+  `@vision-board` in Kiro): command `/usr/local/bin/node` (check `which node` on another
   computer), args `["<repo>/packages/mcp/bin/vb-mcp.ts"]`, env
   `{ "VB_SERVER": "http://127.0.0.1:4466" }`, where `<repo>` is this folder's absolute path.
-  Claude Code: `claude mcp add vb --env VB_SERVER=http://127.0.0.1:4466 -- <node>
+  Claude Code: `claude mcp add vision-board --env VB_SERVER=http://127.0.0.1:4466 -- <node>
   <repo>/packages/mcp/bin/vb-mcp.ts` (add `-s user` for every project). Kiro: the same entry in
   `.kiro/settings/mcp.json` or `~/.kiro/settings/mcp.json`. Leave `VB_AGENT_SECRET` unset so
   each chat joins as its own agent. The MCP names the folder it works in (`VB_PROJECT`, else the

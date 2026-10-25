@@ -94,19 +94,3 @@ export function flatten(schema, doc, schemas, depth = 0) {
   if (conditional.length) parts.push({ properties: Object.fromEntries(conditional.map((n) => [n, {}])) });
   return close(parts.reduce((a, b) => merge(a, b), true));
 }
-
-/** A root union of objects (`oneOf`/`anyOf`) as one object, since MCP wants an object at the
- * root: every branch's properties, required only where every branch requires it. */
-export function objectRoot(s) {
-  const branches = s.oneOf ?? s.anyOf;
-  if (!branches) return s;
-  const { oneOf: _o, anyOf: _a, ...rest } = s;
-  if (!branches.every((b) => isObj(b) && (b.type === undefined || b.type === 'object'))) throw new Error('a root union must be of objects');
-  const properties = {};
-  for (const b of branches) {
-    for (const [n, p] of Object.entries(b.properties ?? {})) properties[n] = !(n in properties) || same(properties[n], p) ? p : { anyOf: [properties[n], p] };
-  }
-  const required = branches.map((b) => b.required ?? []).reduce((acc, r) => acc.filter((x) => r.includes(x)));
-  const closed = branches.every((b) => b.additionalProperties === false);
-  return { ...rest, type: 'object', properties, ...(required.length && { required }), ...(closed && { additionalProperties: false }) };
-}

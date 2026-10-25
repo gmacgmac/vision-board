@@ -26,7 +26,7 @@ export interface StartOptions {
   sessionId?: string;
   /** As the CLI names it (`opus`); left out for the CLI's default. */
   model?: string;
-  /** By name; the name is how tools are spelled (`mcp__vb__write_board`). */
+  /** By name; the name is how tools are spelled (`mcp__vision-board__write_board`). */
   mcpServers: Record<string, McpServer>;
   /** Extra instructions appended to the agent's own system prompt, every turn. */
   instructionsFile?: string;

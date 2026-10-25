@@ -16,7 +16,7 @@ type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 
-/** `mcp__vb__write_board` → `write_board`; anything else cut to the chat schema's tool pattern. */
+/** `mcp__vision-board__write_board` → `write_board`; anything else cut to the chat schema's tool pattern. */
 export function shortToolName(name: string): string {
   const mcp = /^mcp__.+?__(.+)$/.exec(name);
   return ((mcp ? mcp[1]! : name).replace(/[^A-Za-z0-9_.:-]/g, '-').slice(0, 80)) || 'tool';
