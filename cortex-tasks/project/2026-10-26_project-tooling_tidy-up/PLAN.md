@@ -27,6 +27,35 @@ factories (§10). Six page tests fail before any change.
 
 ---
 
+## The Plugin Contract (nclite, draft v0.1)
+
+nclite's handover (2026-10-26) gives the contract the board will be hosted under:
+`~/ai/nclite/docs/plugins.md`, proven by `~/ai/nclite/prototypes/plugin-host/` (commit `e08d402e`).
+It is a draft, and the maintainer's ruling is that **the board's needs shape it, not the reverse**
+(chat 2026-10-26): where the board needs a different shape, the task builds the board's shape and
+lists the change for nclite under `REQUESTS`. The tidy-up builds the seams the contract needs; it
+does not build the plugin (manifest, skill, pane, token map: Out of Scope).
+
+| Contract | Board seam | Task |
+|---|---|---|
+| View: `mount(root, host)` → `{ unmount, pageChip, reveal }`; stays inside its root | `mount` over `createBoard`; no listener outlives `unmount`; two boards on one page | ARCH_03 |
+| `PluginHost`: `api`, `events`, `addToChat`, `settings`, `notify` | The board's host interface in that shape, plus `confirm` (the board's need) | ARCH_03 |
+| Engine part: `createEngine(dir)` → `route`, `resolve`, `tools`, `watch` | The board's engine, HTTP-free; the standalone server and MCP are hosts of it | ENGINE_01 |
+| Data in the bot's `plugins/board/` folder | The ledger's folder is the engine's `dir`, injected, not found | ENGINE_01 |
+| Chips `{ plugin, kind, ref, label, detail }`, resolved on send | One chip type and one pure `resolveChip`; the answers since the last message as a query | ARCH_04 |
+| Routes under `/api/bots/{bot}/plugins/board/`, called through `host.api` | The typed client takes its transport, paths relative | ARCH_02 |
+| Tools declared in the manifest with input schemas | Tool declarations generated from the one OpenAPI source | ARCH_02 |
+| Styles under the view's root; the host's element rules reach in | Scoped stylesheets; the board sets what it relies on; sized by its own width | UI_01 |
+| Words in the plugin's words file | Namespaced keys a plugin words file can be built from | ARCH_05 |
+
+**Where the board needs a different shape** (asked of nclite in the handover reply): tool inputs as
+full JSON Schema (`write_board` takes a list of items, the contract's are flat); `confirm` on the
+host (four board actions ask first, one with a list); routes and tools that may return a promise;
+a turn hook for the person's answers since the bot's last message (`roundOf`); a change event that
+carries the board and the ledger head; `vb-`-prefixed names counting as scoped CSS.
+
+---
+
 ## Proposed Solution
 
 Close the gaps in dependency order, one checkpoint per wave, everything green at each checkpoint.
@@ -45,8 +74,10 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
    in `packages/ui`; the app keeps only board rules; style checks in `verify`.
 5. **Ledger answers and geometry in packages** (ARCH_04): pure queries and one board-data builder move
    to `packages/actions`; box geometry gets one home.
-6. **The board is hostable** (ARCH_03): `createBoard` takes one host interface; no board module
+6. **The board is hostable** (ARCH_03): `mount(root, host)` in the contract's shape; no board module
    imports the Svelte shell; `io`/flags singletons injected; the standalone app is one host.
+   Beside it, **the board's engine part** (ENGINE_01): `createEngine(dir)` with routes, chip resolve,
+   tools and a ledger watcher, HTTP-free; the standalone server and MCP call it.
 7. **Test support and parallel page tests** (TEST_01): shared helpers and fixtures in their packages;
    order-independent specs; more than one worker.
 8. **Words files** (ARCH_05): one home per area for screen text and agent words, with its test.
@@ -61,8 +92,9 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 - Wave 1: FIX_01 (a refactor needs a green start) and FIX_02 (a bug fix), on disjoint files.
 - ARCH_01 alone next: every later task moves or adds imports, and must use the new names.
 - Wave 3 runs ARCH_02, UI_01 and ARCH_04 in parallel on disjoint files (TASK-STATUS File Ownership).
-- ARCH_03 after wave 3: it consumes the typed client (ARCH_02), the shared dialog/menu (UI_01) and the
-  moved queries (ARCH_04).
+- ARCH_03 and ENGINE_01 after wave 3, in parallel (the page and the server, disjoint files): they
+  consume the typed client and tool table (ARCH_02), the shared dialog/menu (UI_01), and the moved
+  queries, chip type and `resolveChip` (ARCH_04).
 - TEST_01, ARCH_05, ARCH_06 then run one per wave: each touches files across the tree.
 - Shared Foundations: TASK-STATUS.md.
 
@@ -90,10 +122,11 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 
 ## Out of Scope
 
-- Pulling the server apart (review §6: HTTP kit, chat server, app host) and the chat package's own
-  cleanup (§3 chat shapes, §8 chat palette): nclite's engine and chat replace them. Only the small
-  helper moves that the other tasks need are in.
-- Any new feature (search, the plugin manifest, the host link to nclite's chat): planned after this set.
+- The rest of the server split (review §6: HTTP kit, chat server, app host) and the chat package's own
+  cleanup (§3 chat shapes, §8 chat palette): nclite's engine and chat replace them. Only the engine
+  seam (ENGINE_01) and the small helper moves the other tasks need are in.
+- Any new feature (search, tracker M7; the plugin itself: manifest, skill, pane, the token map, the
+  host link to nclite's chat): planned after this set.
 - Splitting `packages/actions` into `ledger` + `actions` (review 12): ARCH_04 drafts the decision only.
 
 ---
@@ -114,6 +147,10 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 ## References
 
 - `docs/principles.md` (§ Architecture we adopt, § The board is a plugin) — the target
+- nclite's plugin contract, draft v0.1: `~/ai/nclite/docs/plugins.md`; the spike
+  `~/ai/nclite/prototypes/plugin-host/` (`host/plugin-engine.ts`, `host/runtime.ts`, `host/manifest.ts`,
+  `public/host/plugin-host.js`); the handover `~/ai/nclite/temp/vision-board-handover-plugin-contract.md`.
+  Read only: never write in nclite.
 - `cortex-tasks/board/2026-10-26_project-tooling_code-organisation-review.md` — the gaps, §1-§19
 - `cortex-architecture` skill and its references (contracts, registries, words)
 - `docs/decisions.md` (D-005, D-016, D-026, D-029, D-037), `docs/specification/modules.md`
@@ -125,7 +162,10 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 
 - [ ] Every confirmed review finding §1-§5 and §7-§11 is closed or has a tracker row saying why not
 - [ ] `verify` fails on a deep import, a CSS back door, a colour literal outside the tokens, I/O outside its layer, and (warning) a long function
-- [ ] The board mounts with a fake host in a test, with no Svelte import
+- [ ] The board mounts with a fake host in a test, with no Svelte import: twice on one page, and
+      `unmount` leaves no listener and an empty root
+- [ ] The board's engine runs with no HTTP server in a test: a route, a chip resolve, each tool, a watch event
+- [ ] The board draws unchanged under a host's global element rules and at a pane's width (~550 px)
 - [ ] The full page suite passes with more than one worker, three runs in a row
 - [ ] No screenshot changed except where a task fixed a known failure
 - [ ] All tests pass; `verify`, `check` and `gen --check` clean

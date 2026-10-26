@@ -29,8 +29,10 @@ helpers: `isRec` ×9 (`packages/mcp` exports `isRecord`), plural `n === 1 ? '' :
 
 ## Steps
 
-1. [ ] **Feature folders**: `canvas/`, `cards/`, `notes/`, `selection/`, `links/`, `chat/`, `apps/`
-   (adjust to what the code shows; say why), each with a public file; outside code imports only that.
+1. [ ] **Feature folders**: `canvas/`, `cards/`, `notes/`, `selection/`, `links/`, `apps/` (adjust to
+   what the code shows; say why), each with a public file; outside code imports only that. The board's
+   `mount` (ARCH_03) stays the one way in from a host; the standalone host's own parts (its chat panel,
+   folder switching) sit apart from the board's. The server's `engine/` (ENGINE_01) keeps its public file.
 2. [ ] **Split** each long factory at its seams into named functions or modules; `io.ts` into `io/`
    behind `io.ts` (skill rule 3); `write-board.ts`'s retry-key replay into its own file.
 3. [ ] **Helpers**: one home each (`packages/format` for `isRecord` and plural; the server's in one

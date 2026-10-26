@@ -15,6 +15,13 @@ Ownership). `boardData`/`getBoard` (one board-data builder) is ARCH_04's, not yo
 server's own types are out of scope (PLAN § Out of Scope); chat operations still get generated types
 like every other operation.
 
+nclite's plugin contract (PLAN § The Plugin Contract) calls the board's routes through `host.api(path,
+init)` under `/api/bots/{bot}/plugins/board/`, and declares the bot's tools in a manifest. So the
+client takes its transport instead of owning one, and the operations table carries what a tool
+declaration needs. Where the contract's shape is too narrow for the board (its tool inputs are flat
+strings and booleans; `write_board` takes a list of items), keep the board's full JSON Schema and list
+the gap under `REQUESTS` for nclite; do not flatten a schema to fit.
+
 ## Inputs
 
 - **Files to modify**: as listed for ARCH_02 in TASK-STATUS File Ownership.
@@ -28,7 +35,9 @@ like every other operation.
 ## Steps
 
 1. [ ] **Typed client**: `npm run gen` also emits each operation's input and output types from the
-   schemas; `call` is typed by `OperationId` so the caller writes no `T`. Replace `io.ts`'s hand-written
+   schemas; `call` is typed by `OperationId` so the caller writes no `T`. The client is made with a
+   transport (`(path, init) => Promise<Response>`, paths relative to the board's route prefix), so the
+   standalone page passes `fetch` on its origin and a host passes its `api`; it holds no origin itself. Replace `io.ts`'s hand-written
    types with the generated ones; the server's copy of `FolderEntry` imports the same. A type test fails
    when a schema and a caller disagree.
 2. [ ] **Problems**: the problem schema is the source of codes and their HTTP status (an `x-` field);
@@ -40,11 +49,16 @@ like every other operation.
    `REFERENCES`, read both ways by `server/edge.ts` `cardsIn`, `server/write-refs.ts` `refsOf`/`resolve`,
    `packages/actions/src/numbers.ts` `eventOut` and `apps/board/src/board/card-numbers.ts` `answerEvent`.
    A test lists every event type's card fields from the schema and fails on a missing row.
-5. [ ] **Constants once**: the ledger version from `LEDGER_FORMAT` (`server/schema.ts` `LEDGER_EVENT_ID`,
+5. [ ] **Tool declarations from the one source**: the table `gen-api.mjs` emits names, for every
+   operation an agent may call, what a declared tool needs: its name, its words (the description, D-056),
+   its input schema and whether it writes. `gen-mcp.mjs` reads that table; a later plugin manifest can be
+   generated from it too (not built here). A test: every agent operation has one row, and no row lacks
+   an operation.
+6. [ ] **Constants once**: the ledger version from `LEDGER_FORMAT` (`server/schema.ts` `LEDGER_EVENT_ID`,
    `write-board.ts` `KEY_ID`); `writes.ts` `MAX_ITEMS` from the schema's `maxItems`; port 4466, the
    `VB_*` environment names and the `VB-Project` header each defined once (a constants module in
    `packages/format`), imported everywhere else.
-6. [ ] `npm run gen`; `gen --check` green; tests failing first for 1, 2 and 4.
+7. [ ] `npm run gen`; `gen --check` green; tests failing first for 1, 2, 4 and 5.
 
 ## Validation
 

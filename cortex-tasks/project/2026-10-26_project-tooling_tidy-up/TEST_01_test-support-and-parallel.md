@@ -23,8 +23,9 @@ tests read `apps/board/src/gallery/gallery.ledger.jsonl`; `packages/cli` and `pa
 - **Files to modify**: `packages/testing/**` (new, private), `tests/**`, every `*/tests/**`,
   `tests/pages/playwright.config.ts`, the gallery fixture (move to `packages/format/fixtures/`, its
   importers), the root `package.json` `imports` (one line, `#testing`) and `scripts` (test globs).
-- **Shared artifacts to reuse**: module names (ARCH_01), the board host interface (ARCH_03) for any
-  page-free board test.
+- **Shared artifacts to reuse**: module names (ARCH_01), the board host interface (ARCH_03) and the
+  board's engine (ENGINE_01) for any page-free or server-free test: their fake host and temp-folder
+  engine move into `packages/testing` as the one copy.
 - **Skills**: `cortex-architecture` (rules 1, 8).
 
 ## Steps

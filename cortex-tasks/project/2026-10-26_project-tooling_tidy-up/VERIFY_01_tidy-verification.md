@@ -28,7 +28,13 @@ history of how it got here: a rule is met when the code shows it, not when a doc
 2. [ ] **Plant a back door of each kind** in a scratch copy (deep import, CSS back door, colour literal,
    I/O outside its layer, a board import of the shell, a user-facing literal, a 120-line function) and
    show `verify` or the tests catch each; remove them.
-3. [ ] **Mount the board with a fake host** and walk a round: draw, answer, note, Send to the fake chat.
+3. [ ] **Mount the board with a fake host** and walk a round: draw, answer, note, Send to the fake
+   chat; mount two boards on one page; `unmount` and show nothing is left. Run the board's engine with
+   no HTTP server: a route, a chip and its refusal, each tool, a watch event.
+3b. [ ] **Against nclite's contract** (`~/ai/nclite/docs/plugins.md`, read only): every row of PLAN
+   § The Plugin Contract met by the code, and every difference the set asked nclite for listed once,
+   with its reason, for the handover reply. Draw the board under the hostile host stylesheet and at
+   550 px.
 4. [ ] **Full gates**: `npm test`, `npm run verify`, `npm run check`, `gen --check`, the full page suite
    three times on several workers; record the times.
 5. [ ] **Doc audit** (`cortex-docs`): every doc that describes code this set moved still holds.

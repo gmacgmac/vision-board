@@ -17,6 +17,14 @@ times; four dialogs repeating `showModal`/`close`; `packages/ui` emitting classe
 22. A sibling plugin (Journal, Organizer) needs these on day one. Runs in wave 3 beside ARCH_02 and
 ARCH_04: touch only your files.
 
+Under nclite's plugin contract (PLAN § The Plugin Contract; `~/ai/nclite/docs/plugins.md` § The view
+and its host, § Panes; read only) the board's styles share a page with the app's: nothing of ours may
+reach the app, and the app's element rules reach in (it draws every `h2` small and in capitals; it
+styles `p`, `button`, `input`, `select` globally). The board opens in a pane beside the chat, about
+550 px wide when two plugins are open. The draft asks for every rule under the view's root class; our
+names are already namespaced (`vb-` elements and classes, `--vb-` tokens), so propose under `REQUESTS`
+that a `vb-`-prefixed selector counts as scoped, and build to that.
+
 ## Inputs
 
 - **Files to modify**: as listed for UI_01 in TASK-STATUS File Ownership.
@@ -42,11 +50,22 @@ ARCH_04: touch only your files.
    maintainer's yes; until then keep today's values.
 5. [ ] **Verify**: fail on a colour literal outside `packages/tokens`, and on network or file I/O outside
    its layer (`docs/principles.md` § Dependencies says verify checks both). Tests failing first.
-6. [ ] Gallery: the base pieces in every state; `pattern.json` for each.
+6. [ ] **Styles that live in a host's page**: every rule in `packages/ui` and the board's stylesheets
+   names only `vb-`-prefixed elements or classes, or sits under the board's root class; rules on
+   `html`, `body` or bare elements live only in the standalone shell's stylesheet. The board sets every
+   property it relies on for the elements a host styles globally (`h1`–`h3`, `p`, `button`, `input`,
+   `select`, `dialog`). `verify` fails on an unscoped selector (tests failing first).
+7. [ ] **Sized by its own width**: layout inside the board responds to the board's width (container
+   queries on its root), not the window's (today's three `@media … width` rules).
+8. [ ] **A page test under a hostile host**: the board drawn inside a page whose stylesheet restyles
+   `h2` (small capitals), `p`, `button` and `input`, and at a 550 px pane: screenshots unchanged from the
+   board's own.
+9. [ ] Gallery: the base pieces in every state; `pattern.json` for each.
 
 ## Validation
 
 - [ ] One implementation each of menu keys, dismiss and dialog open/close (`grep`)
+- [ ] `verify` passes the scoping rule; the hostile-host and 550 px screenshots match
 - [ ] No screenshot changes except the popover surfaces you unified, each listed and shown
 - [ ] `npm test`, `npm run verify`, `npm run check`; menus, dialogs, notes, toolbar, gallery specs on your port; axe passes
 

@@ -16,6 +16,13 @@ Today screen text sits in Svelte and TS templates, refusals in server handlers, 
 `packages/mcp/src/info.ts`. Tool and parameter descriptions are already one source
 (`packages/format/schema/openapi.json`, D-056): declare it a words home, don't move it.
 
+nclite's plugin contract (PLAN § The Plugin Contract; `~/ai/nclite/docs/plugins.md` § Settings, words
+and the skill) gives each plugin one words file of keyed sentences (`organizer.chip.task`), naming the
+plugin, its chip kinds, settings, tool descriptions and its view's screen text. Keep our one home per
+area, and key every sentence so that file can be built from the homes later (`board.<area>.<key>`).
+nclite writes US English for now; this task changes no wording, so note any sentence that would
+differ and leave the choice to the maintainer.
+
 ## Inputs
 
 - **Files to modify**: any file that holds a sentence a person or agent reads (`apps/board/src/**`,
@@ -31,9 +38,11 @@ Today screen text sits in Svelte and TS templates, refusals in server handlers, 
    reason for any file that can't import words (HTML, a config), in `docs/specification/words.md`.
 2. [ ] **Move the sentences**, area by area; code imports them. Keep each sentence word for word (this
    task changes no wording); fix only a sentence said two different ways for one thing, and list those.
-3. [ ] **The test**: the doc's list and the code agree both ways; a user-facing string literal outside a
+3. [ ] **Keys**: every sentence has a stable key, `board.<area>.<key>`, unique across the homes; a test
+   lists them all and fails on a duplicate. Building the plugin's one words file is not this task.
+4. [ ] **The test**: the doc's list and the code agree both ways; a user-facing string literal outside a
    words home fails (with the reference's allowed exceptions: ids, keys, CSS, log lines).
-4. [ ] Screenshots unchanged.
+5. [ ] Screenshots unchanged.
 
 ## Validation
 

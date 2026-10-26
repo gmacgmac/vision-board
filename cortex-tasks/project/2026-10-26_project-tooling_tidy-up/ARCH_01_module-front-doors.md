@@ -38,7 +38,10 @@ published. Each module is named once, in the root `package.json` `imports` map (
 
 1. [ ] **Prove it first on one module** (`#format`): Node type-stripping (server and scripts), Vite
    (page and gallery, dev and build), `npm run check` (svelte-check, tsc) and Playwright specs all
-   resolve `#format`. If any cannot, STOP and report what fails; do not work around it.
+   resolve `#format`. Also prove a consumer outside this repo can import the board's code by path
+   (a scratch Vite page and a Node script in `temp/`, as nclite would: PLAN § The Plugin Contract), with
+   `#` names resolved against this repo's `package.json`. If any cannot, STOP and report what fails;
+   do not work around it.
 2. [ ] **Names**: one `#<module>` per folder under `packages/`, pointing at `src/index.ts`; one
    `#<module>/styles.css` for modules with CSS (one CSS file that imports that module's sheets in their
    current order); asset paths (schemas, the OpenAPI file, the MCP bin, instructions) exported as

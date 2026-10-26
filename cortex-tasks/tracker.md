@@ -3,7 +3,7 @@ category: project-docs
 type: tracker
 status: active
 created: 2026-09-30
-last_updated: 2026-10-07
+last_updated: 2026-10-26
 scope: The live queue for Vision Board, from founding rules to a board any agent session can use
 keywords: [tracker, queue, roadmap]
 ---
@@ -98,7 +98,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | N27 | Selection bar covers an open card box | **Problem:** the floating selection bar draws above an open proposal or handover box, hiding its top line. **Solution:** hide or move the bar while a card box is open. | VERIFY, Stage 5, 2026-10-08 |
 | N28 | Launcher and desktop app | **Problem:** starting the board means typing `npm run board` in this repo. **Example:** opening the board without a terminal. **Solution:** a launcher on a fixed port with Launch/Stop/Open, a registry of running boards so `vb-mcp` finds its board by folder, a small app built per computer (chat 398, 402, 403). Paused by the maintainer until U12 is in use. | Maintainer, 2026-10-09 |
 | N38 | Agents draw a container per area with links between them | **Problem:** in skill v2.5 runs the model drew one container per area with 7-8 links between containers instead of lanes or a phase flow; it also sets `size` on every card and ends with long chat words. **Example:** batch 3 T_01 runs (scenario 17). **Solution:** a firmer skill rule (named areas with handoffs: lanes or a phase flow), or `show_layout` reporting links that leave the container; test against scenario 17. | VERIFY, 2026-10-11 |
-| N43 | The "N selected" pill covers content | **Problem:** the floating selection pill draws over what is under it. **Example:** a container's count, and a card's title in a past view (review-polish VERIFY_01, item 16). **Solution:** unknown; move the pill clear of the selection, or keep it out of the board area. | Maintainer, 2026-10-16 (186) |
+| N43 | The "N selected" pill covers content | **Problem:** the floating selection pill draws over what is under it. The container title line and its count are fixed (commit 895763f, point 283). **Example:** a container's count, and a card's title in a past view (review-polish VERIFY_01, item 16). **Solution:** unknown; move the pill clear of the selection, or keep it out of the board area. | Maintainer, 2026-10-16 (186) |
 
 ## MEDIUM TERM
 
@@ -109,6 +109,7 @@ foundation is in: Cortex categories, a flag-only doc fence, D-016 module layers 
 | M5 | App cards are all app; notes go beside them | **Problem:** an app card also holds the person's notes under its panel, so the card is not 100% the app, and Z zooms to the notes too. **Example:** the clip-and-export app card with a long note thread (2026-10-19). **Solution:** an app card holds only its panel; notes on it show in a note beside the card (linked), and Z fills the screen with the panel alone. Until then, hiding a card's notes (card-polish FE_02) covers it. Design to be discussed. | Maintainer, 2026-10-19 |
 | M6 | An app card in a wide grid column leaves a blank strip | **Problem:** in grid mode a column wider than an app card stretches the card but not its panel, so a blank strip shows beside the panel. **Example:** an app card in a grid with a wider card in its column (card-polish FE_04, 2026-10-19). **Solution:** unknown; keep an app card at its panel's width in any column, or let the panel grow to the card. | FE_04, 2026-10-19 |
 | M4 | A scroll that reaches a card's end pans the board | **Problem:** scrolling a card's text with a trackpad or wheel, the same gesture carries on into panning the board once the text reaches its end, so the board swipes away. **Example:** a long note scrolled hard to the bottom. **Solution:** a scroll gesture that started in a card stays in it; only the next gesture pans (gesture boundaries from a gap in wheel events, trackpad momentum included). Paused 2026-10-16: harder to get right than it looks, and ⌘ + drag already pans from anywhere. | Maintainer, 2026-10-16 (193) |
+| M7 | Search the board in plain words | **Problem:** a card can be found only by its number. **Example:** on a 60-card board, finding the card about annual pricing. **Solution:** for people, not a syntax to learn: the board works out what someone means as they type (words in any order, part of a word, case and accents ignored, best matches first, which part matched: title, text, note, reply, container). The bottom-right Go to card box takes letters too: digits still jump to a card; letters ring the matches, dim the rest, show "3 of 12", ↓/↑ step, Esc clears. One search engine in `packages/`, shared with the Journal under nclite's plugin contract; plan it after the tidy-up set (its last step reminds). Draft: chat points 184-189. | Maintainer, 2026-10-26 (285) |
 
 ## LONG TERM
 

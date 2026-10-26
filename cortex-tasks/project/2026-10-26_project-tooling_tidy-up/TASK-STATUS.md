@@ -43,6 +43,7 @@ tracker:
 | 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Pending | port 4730 |
 | 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Pending | port 4740 |
 | 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Pending | port 4750 |
+| 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Pending | port 4755 |
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Pending | port 4760 (+ worker ports) |
 | 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Pending | port 4770 |
 | 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4780 |
@@ -65,7 +66,10 @@ tracker:
 | `packages/ui/src/base/` (menu, layer, dialog) and its CSS (button, surface, menu, a11y) | UI_01 | ARCH_03, ARCH_06 |
 | Ledger queries and one board-data builder in `packages/actions` | ARCH_04 | ARCH_03, ARCH_06 |
 | One geometry home (`Box`, overlap, bounds, clamp) | ARCH_04 | ARCH_06 |
-| Board host interface (`createBoard(els, host)`) | ARCH_03 | TEST_01, ARCH_06 |
+| `Chip` type and `resolveChip`; `roundOf` as the turn query (`packages/actions`) | ARCH_04 | ARCH_03, ENGINE_01 |
+| Tool table from the one OpenAPI source (`gen-api.mjs`) | ARCH_02 | ENGINE_01 |
+| Board host interface and `mount(root, host)` | ARCH_03 | TEST_01, ARCH_06, VERIFY_01 |
+| Board engine `createEngine({ dir, ... })` (`apps/board/server/engine/`) | ENGINE_01 | TEST_01, ARCH_06, VERIFY_01 |
 | Test support module and fixtures in their packages | TEST_01 | ARCH_05, ARCH_06, VERIFY_01 |
 | Words homes and their test | ARCH_05 | ARCH_06 |
 
@@ -80,9 +84,11 @@ tracker:
 | 3 | ARCH_02 | `packages/client/**`, `scripts/gen-api.mjs`, `scripts/gen-mcp.mjs`, `scripts/openapi-refs.mjs`, `packages/format/schema/api/problem.schema.json`, `packages/format/src/constants*` (new), `apps/board/server/{problem,spec,dispatch,edge,write-refs,schema,writes,write-board}.ts`, `packages/actions/src/numbers.ts`, `apps/board/src/board/{io,card-numbers}.ts`, the generated files `npm run gen` writes, their tests |
 | 3 | UI_01 | `packages/ui/src/base/**` (new), `packages/ui/src/tip/hover-tip.ts`, `packages/ui/src/region/{region-row,region-note}.ts`, every `*.css` under `packages/ui/src/` and `apps/board/src/styles/`, `apps/board/src/shell/{ConfirmDialog,BoardDialog,FolderDialog,ArchivedDialog,ToolbarMenu,MenuSelect}.svelte`, `apps/board/src/board/{move-menu,menu-keys,app-cards,selection-pill,note-outside}.ts`, `scripts/verify.mjs`, their tests |
 | 3 | ARCH_04 | `packages/actions/src/**` except `numbers.ts`, `packages/actions/tests/**`, `packages/format/src/geometry.ts` (new), `packages/layout/src/{geometry,types}.ts`, `packages/ui/src/note-bubble/note-bubble-core.ts`, `packages/ui/src/selection-bar/selection-bar-core.ts`, `apps/board/src/board/{updates,retired,proposals,go-to-card,board-data,remove-words}.ts`, `apps/board/server/reads.ts`, their tests in `apps/board/tests/` |
+| 4 | ARCH_03 | `apps/board/src/**`, `scripts/verify.mjs`, `scripts/verify.test.mjs`, `docs/specification/components.md`, their tests |
+| 4 | ENGINE_01 | `apps/board/server/**`, `apps/board/server.ts`, `packages/mcp/src/**` (where it reaches the board), `docs/specification/api.md`, their tests |
 | — | orchestrator | `package-lock.json`, `docs/decisions.md`, `packages/tokens/src/tokens.css` (new tokens), `.kiro/steering/`, `CLAUDE.md`, `AGENTS.md`, `docs/specification/modules.md` (`npm run map`, after each wave) |
 
-Waves 2 and 4-8 have one task each: it owns what its task file lists.
+Waves 2 and 5-8 have one task each: it owns what its task file lists.
 
 ---
 
@@ -140,6 +146,12 @@ _Notes:_
 
 ---
 
+### ENGINE_01: The board's engine part
+_Status:_ Pending  
+_Notes:_ 
+
+---
+
 ### TEST_01: Test support and parallel page tests
 _Status:_ Pending  
 _Notes:_ 
@@ -183,3 +195,4 @@ When ALL tasks are done and the full gates pass, the orchestrator:
    [[YYYY-MM-DD HH:MM]] [project-tooling] Completed set: Tidy-Up To The Target Architecture → Task: [[cortex-tasks/project/2026-10-26_project-tooling_tidy-up/TASK-STATUS.md]]
    ```
 3. Updates `docs/principles.md` § "Where we are" (with the maintainer's yes): the gaps closed, any left as tracker rows.
+4. Reminds the maintainer that search is next: tracker M7 (search the board in plain words), planned from there.

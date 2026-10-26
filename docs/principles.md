@@ -84,15 +84,23 @@ reasoning, this list says how they land here. Consult the skill before planning 
 ## The board is a plugin
 
 Vision Board's destination is a plugin inside nclite, beside Journal and Organizer; the standalone
-app stays for development and the gallery.
+app stays for development and the gallery. It is hosted under nclite's plugin contract
+(`~/ai/nclite/docs/plugins.md`, draft). Where the board needs a different shape, the contract
+changes, not the board (maintainer, 2026-10-26).
 
-- **Host-independent.** The board (canvas, cards, containers, layout) mounts in any host through one
-  host interface: the host supplies the folder, the chat, notices and confirmations. Nothing in the
-  board imports the standalone app's shell.
+- **Host-independent.** The board mounts in any host as `mount(root, host)`. The host supplies its
+  routes, change events, the chat, settings, notices and confirmations. Nothing in the board imports
+  the standalone app's shell, and nothing is left behind when it is removed.
+- **Its own engine.** The server side is an engine given its folder and its caller. It opens no
+  socket and finds no folder of its own. The standalone server and the MCP server are hosts of it,
+  as nclite's engine will be.
 - **The host's chat, the board's link to it.** The board has no chat of its own in a host. A Send
   from the board reaches the agent through the host's chat, and the agent answers on the board.
 - **Its own storage.** Unlike Journal and Organizer (plain Markdown files), the board keeps its
-  append-only JSONL ledger (`.visionboard/ledger.jsonl`).
+  append-only JSONL ledger, in whatever folder the host gives it (`.visionboard/` standalone, the
+  bot's `plugins/board/` in nclite).
+- **Lives in a host's page.** Its styles reach nothing outside it, it sets every property it relies
+  on, and it lays out by its own width, not the window's.
 - **Shared pieces are shared.** What a sibling plugin needs (the hover tip, menus, dialogs, search,
   ledger queries) lives in `packages/`, framework-free where it is UI, never only inside
   `apps/board/`.
