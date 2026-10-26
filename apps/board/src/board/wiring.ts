@@ -97,8 +97,9 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     const sizeBtn = t.closest<HTMLButtonElement>('button[data-size-pick]');
     const pick = sizeBtn?.dataset.sizePick;
     if (sizeBtn && isSizePick(pick)) return h.setSize(cardOf(sizeBtn), pick);
-    const modeBtn = t.closest<HTMLButtonElement>('button[data-mode]');
-    if (modeBtn) return h.setMode(modeBtn.dataset.region!, modeBtn.dataset.mode as Mode);
+    // A layout icon (data-mode) or a tile of the layout popover (data-tile): the one action.
+    const modeBtn = t.closest<HTMLButtonElement>('button[data-mode], button[data-tile]');
+    if (modeBtn) return h.setMode(modeBtn.dataset.region!, (modeBtn.dataset.mode ?? modeBtn.dataset.tile) as Mode);
     const widthsBtn = t.closest<HTMLButtonElement>('button.vb-widths[data-widths]');
     if (widthsBtn) return h.setWidths(widthsBtn.dataset.region!, widthsBtn.dataset.widths as Widths);
     const reset = t.closest<HTMLButtonElement>('button[data-reset]');

@@ -89,11 +89,13 @@ const widthsSwitch = (id: string): string =>
   + ` data-region="${esc(id)}">${svgIcon(WIDTHS_ICON.match, 24, 'vb-mode-icon vb-widths-match')}`
   + `${svgIcon(WIDTHS_ICON.own, 24, 'vb-mode-icon vb-widths-own')}</button>`;
 
-/** The popover (mockup 05 .mode-pop): one tile per layout with its one-liner, then the foot. The
- * line under the tiles shows the highlighted layout's one-liner in the compact layout only. */
+/** The popover (mockup 05 .mode-pop): one tile per layout with its one-liner, then the foot. A tile
+ * is a button out of the tab order (the row's icons carry the keyboard); a click sets the layout
+ * through the page's click wiring, as the icon does (`data-tile` is its mode, `data-region` the frame).
+ * The line under the tiles shows the highlighted layout's one-liner in the compact layout only. */
 const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
-  const tiles = MODES.map((m) => `<div class="vb-mtile" data-tile="${m}">${svgIcon(MODE_ICON[m], 24, 'vb-mtile-icon')}`
-    + `<span class="vb-mtile-name">${MODE_LABEL[m]}</span><small>${MODE_HINT[m]}</small></div>`).join('');
+  const tiles = MODES.map((m) => `<button type="button" class="vb-mtile" tabindex="-1" data-tile="${m}" data-region="${esc(r.id)}">`
+    + `${svgIcon(MODE_ICON[m], 24, 'vb-mtile-icon')}<span class="vb-mtile-name">${MODE_LABEL[m]}</span><small>${MODE_HINT[m]}</small></button>`).join('');
   return `<div class="vb-mode-pop" id="${regionIds(r.id).modes}" role="tooltip"><div class="vb-mode-tiles">${tiles}</div>`
     + '<p class="vb-mode-line"></p>'
     + `<div class="vb-mode-foot"><span>${agentChoiceText(r.mode)}</span>`

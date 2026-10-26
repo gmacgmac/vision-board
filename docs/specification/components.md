@@ -475,10 +475,15 @@ whole, collapsed to the checked layout, Comment and the cog, or down to the cog 
 badge shows; a collapsed rail sits by its foot, so hovered or focused it expands upward over the cards
 (the frame raised as for an open popover) and Comment and the cog stay under the pointer; it collapses
 on leave, blur or Esc (`region-row.ts`, `data-shut`). At rest its icons draw at `--vb-rail-rest`
-(`tokens.css`, one value per theme, each keeping the quiet icon at APCA Lc 30 or more on the canvas and
-on the rail); hovered, focused, with a popover or the note bubble open, or on a touch screen they are at
+(`tokens.css`: 0.5 in both themes, a trial approved 2026-10-26: light keeps the quiet icon at APCA Lc 30
+or more, dark does not, Lc 16.9 to 17.7 for the unchecked icons and the cog, recorded in
+`container-rail.spec.ts` until the maintainer rules); hovered, focused, with a popover or the note bubble open, or on a touch screen they are at
 full strength, and the badge is never dimmed. Popovers open to the right of the rail, top-aligned with
-the layouts, Comment and the cog. Keys: Up and Down move through the rail; on the cog Right opens the
+the layouts, Comment and the cog. A tile of the layout popover (`region-template.ts` `modePopover`,
+`button.vb-mtile`, out of the tab order) applies its layout on a click or Enter: the page's click wiring
+(`wiring.ts`) sends the rail icon's `setMode` for it, so there is one action; the popover closes, a past
+version and a locked board keep it inert (`layout-tiles.spec.ts`, `lock-board.spec.ts`). A container's title
+(`.vb-region-handle` and its `h2`) takes `--vb-text-md`. Keys: Up and Down move through the rail; on the cog Right opens the
 menu and Left in the menu closes it. Flag off, the row is on the line exactly as before: the template
 places it there, and `region-narrow.css` scopes the row's narrow forms to frames without `data-rail`.
 Held by `tests/pages/container-rail.spec.ts` (placement, the bounds at 100% to 56%, rest and lit, APCA

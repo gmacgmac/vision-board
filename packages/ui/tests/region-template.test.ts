@@ -36,7 +36,7 @@ test('the mode row ends in a divider, Comment and the cog, a menu button for the
 test('the popover is a tooltip with one tile per mode and its one-liner, then the agent\'s choice and the keys', () => {
   const html = regionTemplate(region);
   assert.match(html, /<div class="vb-mode-pop" id="region-review-modes" role="tooltip">/);
-  const tiles = [...html.matchAll(/<div class="vb-mtile" data-tile="(\w+)"><svg[^>]*>.*?<\/svg><span class="vb-mtile-name">(\w+)<\/span><small>([^<]+)<\/small><\/div>/g)];
+  const tiles = [...html.matchAll(/<button type="button" class="vb-mtile" tabindex="-1" data-tile="(\w+)" data-region="review"><svg[^>]*>.*?<\/svg><span class="vb-mtile-name">(\w+)<\/span><small>([^<]+)<\/small><\/button>/g)];
   assert.deepEqual(tiles.map((t) => t[1]), [...MODES]);
   for (const [, mode, name, hint] of tiles) {
     assert.equal(name, MODE_LABEL[mode as (typeof MODES)[number]]);

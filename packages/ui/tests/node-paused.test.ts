@@ -34,7 +34,7 @@ test('the elements pause every control that changes the board, and never the fla
   assert.match(html, /<button type="button" class="vb-act vb-flag" data-flag /);
   assert.doesNotMatch(html, /data-flag[^>]*data-act|data-act="flag"/);
   const frameList = list('../src/region/vb-region.ts');
-  for (const sel of ['button[data-mode]', '.vb-widths', '.vb-region-grip', '.vb-region-comment', 'data-note-act="edit"', 'data-note-act="remove"', 'data-revoke'])
+  for (const sel of ['button[data-mode]', 'button.vb-mtile', '.vb-widths', '.vb-region-grip', '.vb-region-comment', 'data-note-act="edit"', 'data-note-act="remove"', 'data-revoke'])
     assert.ok(frameList.includes(sel), sel);
   assert.doesNotMatch(frameList, /vb-cog|data-note-act="show"/, 'the cog and Show in container stay');
 });

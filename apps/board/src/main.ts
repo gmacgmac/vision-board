@@ -18,6 +18,7 @@ import '../../../packages/ui/src/app-frame/app-frame.css';
 import '../../../packages/ui/src/markdown/markdown.css';
 import '../../../packages/ui/src/image-view/image-view.css';
 import '../../../packages/ui/src/region/region.css';
+import '../../../packages/ui/src/region/region-modes.css';
 import '../../../packages/ui/src/region/region-narrow.css';
 import '../../../packages/ui/src/region/region-note.css';
 import '../../../packages/ui/src/region/region-rail.css';

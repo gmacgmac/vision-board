@@ -20,7 +20,7 @@ import { pauseControls } from '../paused/paused.ts';
 /** The controls a locked board pauses on a frame (N40 ruling 4), but Reset places and Put container
  * back, whose aria-disabled `update` sets itself. The cog still opens its menu; Remove container
  * (N24 ruling 4) pauses with the rest. */
-const PAUSED = 'button[data-mode], .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region]';
+const PAUSED = 'button[data-mode], button.vb-mtile, .vb-widths, .vb-region-grip, .vb-region-comment, .vb-note-btn[data-note-act="edit"], .vb-note-btn[data-note-act="remove"], button.vb-holder[data-revoke], button[data-remove-region]';
 
 export const VB_REGION_TAG = 'vb-region';
 
@@ -78,7 +78,7 @@ export function defineVbRegion(): void {
 
     update(st: RegionState): void {
       this.dataset.mode = st.mode;
-      for (const b of this.querySelectorAll<HTMLButtonElement>('button[data-mode]'))
+      for (const b of this.querySelectorAll<HTMLButtonElement>('button[role="radio"]'))
         b.setAttribute('aria-checked', String(b.dataset.mode === st.mode));
       for (const t of this.querySelectorAll<HTMLElement>('.vb-mtile')) t.toggleAttribute('data-current', t.dataset.tile === st.mode);
       this.applyWidths(st);

@@ -127,6 +127,12 @@ test('locked, a press on a paused control says why and writes nothing: a button,
   if ((await frame(page).getAttribute('data-rail')) !== null) await frame(page).locator('.vb-region-tools').hover();
   await frame(page).locator('button[data-mode="column"]').click({ force: true });
   await expect(frame(page)).toHaveAttribute('data-mode', 'grid');
+  // A tile of the layout popover is paused with the icons: aria-disabled, and a press says why and sends nothing.
+  const tile = frame(page).locator('button.vb-mtile[data-tile="column"]');
+  await expect(tile).toHaveAttribute('aria-disabled', 'true');
+  await tile.evaluate((e) => (e as HTMLElement).click());
+  await expect(toast(page)).toHaveText(REASON);
+  await expect(frame(page)).toHaveAttribute('data-mode', 'grid');
   await card(page, 1).click();
   await openSelectionBar(page);
   await expect(page.locator('vb-selection-bar button[data-command="comment"]')).toBeDisabled();

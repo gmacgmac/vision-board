@@ -16,6 +16,7 @@ import { regionIds } from './region-template.ts';
 export type RegionOpen = 'modes' | 'menu';
 
 const RADIO = 'button[role="radio"]';
+const TILE = 'button.vb-mtile';
 const COMMENT = 'button.vb-region-comment';
 const WIDTHS = 'button.vb-widths';
 const COG = 'button.vb-cog';
@@ -158,7 +159,9 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     const t = e.target as HTMLElement;
     if (inRow(t) && !inRow(e.relatedTarget)) unshut();
     const radio = t.closest<HTMLElement>(RADIO);
-    if (radio) openModes(radio.dataset.mode as Mode);
+    const tile = t.closest<HTMLElement>(TILE);
+    if (tile) highlight(tile.dataset.tile as Mode);
+    else if (radio) openModes(radio.dataset.mode as Mode);
     else if (t.closest(COG) || t.closest(COMMENT) || t.closest(WIDTHS)) closeModes();
   });
 
@@ -185,10 +188,18 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     sync();
   });
 
+  // A tile never takes focus from the icon the keyboard is on (and a hidden tile would lose it).
+  host.addEventListener('mousedown', (e) => {
+    if ((e.target as HTMLElement).closest(TILE)) e.preventDefault();
+  });
+
   host.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest(RADIO) || t.closest(COMMENT) || t.closest(WIDTHS)) {
-      // A pick, Match card widths or Comment (its click bubbles on to the page, which sends the act
+    const tile = t.closest<HTMLElement>(TILE);
+    // Enter on a tile (a hidden tile would drop the focus): back to that layout's icon, then close.
+    if (tile && document.activeElement === tile) radios().find((b) => b.dataset.mode === tile.dataset.tile)?.focus({ preventScroll: true });
+    if (t.closest(RADIO) || tile || t.closest(COMMENT) || t.closest(WIDTHS)) {
+      // A pick (icon or tile), Match card widths or Comment (its click bubbles on to the page, which sends the act
       // or opens the note bubble).
       closeMenu(false);
       return closeModes();

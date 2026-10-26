@@ -318,3 +318,4 @@
 [[2026-10-25 23:40]] [board-ui] Completed: New And Updated Cards Easy To Find → Task: [[cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md]]
 [[2026-10-25 23:41]] [board-ui] Completed: Group Note Drawn Once → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]
 [[2026-10-26 10:26]] [board-ui] Completed: Hover Tips Reachable → Task: [[cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md]]
+[[2026-10-26 10:55]] [board-ui] Completed: Rail And Title Polish → Task: [[cortex-tasks/board/2026-10-26_board-ui_rail-polish.md]]

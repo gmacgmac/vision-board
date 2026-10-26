@@ -28,17 +28,25 @@ interface Sample {
   /** The hovered look: lit, and a collapsed rail expanded. */
   lit?: true;
   open?: { what: 'modes'; mode: 'flow' } | { what: 'menu' };
+  /** The popover's tiles drawn pressed and with the focus ring (data-look), by layout. */
+  tiles?: { pressed: string; focus: string };
+  /** The board cannot change (locked): the tiles are paused. */
+  paused?: true;
 }
 
 /** Draw one frame of `region` (from `view` and `state`) under the sample id. */
 function frame(s: Sample, region: Region, view: View, state: BoardState, owed?: ReadonlySet<string>, fixed = false): VbRegionElement {
   const f = document.createElement('vb-region') as VbRegionElement;
   f.render({ ...region, id: `rail-${s.id}` }, fixed ? { ...LATER_FRAME, rail: true } : { rail: true, widths: true });
-  f.update(regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed));
+  f.update({ ...regionState(region, view, state, new Set(view.nodes.map((n) => n.id)), undefined, owed), ...(s.paused && { paused: true }) });
   f.querySelector<HTMLElement>('.vb-region-empty')!.hidden = true;
   f.dataset.sample = s.height;
   if (s.lit) f.querySelector('.vb-region-tools')!.setAttribute('data-look', 'hover');
   if (s.open) f.showPanel(s.open.what, { ...(s.open.what === 'modes' && { mode: s.open.mode }), focus: false });
+  if (s.tiles) {
+    f.querySelector(`.vb-mtile[data-tile="${s.tiles.pressed}"]`)?.setAttribute('data-look', 'pressed');
+    f.querySelector(`.vb-mtile[data-tile="${s.tiles.focus}"]`)?.setAttribute('data-look', 'focus');
+  }
   return f;
 }
 
@@ -67,7 +75,7 @@ export function railSection(fx: Fixture): HTMLElement {
       + 'the frame\'s left border, so the top line holds only the title, centred, with the whole line for it. The rail keeps one '
       + 'size on screen at every zoom and never reaches a card or the next container.'),
     meta,
-    group('At rest and lit', 'At rest the icons are dimmed (--vb-rail-rest, still APCA Lc 30 or more); hovered, focused or with a '
+    group('At rest and lit', 'At rest the icons are dimmed to half strength (--vb-rail-rest 0.5 in both themes, a trial: dark is under APCA Lc 30 at rest); hovered, focused or with a '
       + 'popover open they are at full strength. A touch screen never dims them.',
     frames(draw({ id: 'rest', height: 'tall' }), draw({ id: 'lit', height: 'tall', lit: true }))),
     group('A short frame', 'With no room for the whole rail it keeps the checked layout, Comment and the cog. Hovered or focused it '
@@ -79,6 +87,10 @@ export function railSection(fx: Fixture): HTMLElement {
     group('Popovers', 'The layout popover and the settings menu open to the right of the rail, over the cards, top-aligned with '
       + 'what opened them: the layouts, the cog.',
     frames(draw({ id: 'modes', height: 'tall', open: { what: 'modes', mode: 'flow' } }), draw({ id: 'menu', height: 'tall', open: { what: 'menu' } }))),
+    group('Layout tiles', 'A tile is a button: a click, or Enter on it, sets that layout as the rail\'s icon does, and the popover closes. '
+      + 'Flow is hovered, Radial pressed, Row has the focus ring and Grid is the layout in force; locked, the tiles are paused.',
+    frames(draw({ id: 'tiles', height: 'tall', open: { what: 'modes', mode: 'flow' }, tiles: { pressed: 'radial', focus: 'row' } }),
+      draw({ id: 'tiles-locked', height: 'tall', open: { what: 'modes', mode: 'flow' }, paused: true }))),
     group('Later', 'The board sets Later\'s layout, so its rail holds only the cog.',
       frames(frame({ id: 'later', height: 'short' }, laterRegion, later, fx.state, undefined, true))));
   return box;

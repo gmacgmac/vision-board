@@ -87,7 +87,7 @@ vb-region .vb-region-handle, vb-region .vb-region-holders {
 vb-region .vb-region-handle::before, vb-region .vb-region-holders::before { content: ''; height: 100%; }
 vb-region .vb-region-handle::before { margin-inline-end: calc(-1 * var(--label-gap)); }
 vb-region .vb-region-handle {
-  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-sm);
+  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-md);
   padding-inline-end: var(--vb-space-1); border-radius: var(--vb-radius-sm);
 }
 vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-region[data-dragging] .vb-region-handle {
@@ -100,7 +100,7 @@ vb-region :is(.vb-region-handle:hover, .vb-region-handle[data-look], [data-dragg
 vb-region .vb-region-head h2 {
   margin: 0; flex: 1 0 0; max-width: max-content; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
-  font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
+  font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
 vb-region .vb-region-count { flex: none; white-space: nowrap; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
@@ -203,44 +203,6 @@ vb-region .vb-widths[aria-checked='true'] .vb-widths-own, vb-region .vb-widths:n
    moves or resizes, README pick 5). Only the top line takes the pointer then, so the cards inside
    the raised frame stay reachable. */
 vb-region[data-open] { z-index: 4; pointer-events: none; }
-
-/* The layout popover (mockup 05 .mode-pop / .mtile), right-aligned under the row. It may reach past
-   a narrow frame. The bridge above it keeps the pointer inside while it crosses the gap. Every
-   popover of the top line (this, the settings menu, the note preview, the title tip) is z 4, above
-   the collapsed row, which is z 3 while it is expanded. */
-vb-region .vb-mode-pop {
-  display: none; position: absolute; z-index: 4; top: calc(100% + 3px); right: 0; width: 680px;
-  gap: var(--vb-space-2); padding: 10px; border-radius: var(--vb-radius-lg); cursor: default;
-  border: 1px solid var(--vb-line); background: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
-}
-vb-region .vb-mode-pop::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--vb-space-1); }
-vb-region[data-open='modes'] .vb-mode-pop { display: grid; }
-vb-region .vb-mode-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-vb-region .vb-mtile {
-  display: grid; justify-items: center; align-content: start; gap: 6px; padding: 12px 6px 10px; text-align: center;
-  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-card);
-  color: var(--vb-ink); font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
-}
-vb-region .vb-mtile-icon { width: 22px; height: 22px; }
-vb-region .vb-mtile small, vb-region .vb-mode-line {
-  font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-ink-subtle); line-height: 1.3;
-}
-vb-region .vb-mtile[data-hover] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); border-color: var(--vb-line-strong); }
-vb-region .vb-mtile[data-current] { border-color: var(--vb-accent-line); background: var(--vb-accent-soft); color: var(--vb-accent-text); }
-vb-region .vb-mode-line { display: none; margin: 0; padding: 0 var(--vb-space-1); }
-vb-region .vb-mode-foot {
-  display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--vb-space-1) var(--vb-space-3);
-  padding: 0 var(--vb-space-1); font-size: var(--vb-text-xs); color: var(--vb-ink-subtle);
-}
-/* Under 568px of top line (a 600px frame at 100%) the six tiles drop to icon and name, in two rows of three, and the
-   highlighted layout's one-liner shows once, on the line under them (2d ruling 3). */
-@container (max-width: 568px) {
-  vb-region .vb-mode-pop { width: max-content; max-width: calc(var(--vb-card-w-s) + var(--vb-space-6) * 2); }
-  vb-region .vb-mode-tiles { grid-template-columns: repeat(3, 1fr); }
-  vb-region .vb-mtile { min-width: calc(var(--vb-space-6) + var(--vb-space-5)); padding: var(--vb-space-2) var(--vb-space-1); }
-  vb-region .vb-mtile small { display: none; }
-  vb-region .vb-mode-line { display: block; }
-}
 
 /* The settings menu, anchored under the cog. Today it holds Reset places alone: enabled when a
    card of the frame was moved, otherwise disabled with its hint. */

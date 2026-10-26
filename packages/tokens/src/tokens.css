@@ -147,13 +147,15 @@
 
 /* A container's tool rail at rest (toolRail flag, container tool rail Design 5; approved in chat
    2026-10-25, point 4): its icons' opacity until it is hovered, focused or one of its popovers is
-   open. A number, so not a light-dark() value: one per theme, each the dimmest that keeps the quiet
-   icon (--vb-ink-subtle) at APCA Lc 30 or more (the decoration tier, D-009) on the canvas and on the
-   rail's own fill. Light 0.5: Lc 36.5 on the canvas, 39.8 on the fill. Dark 0.76: Lc 32.6 and 32.7
-   (lit, the quiet icon is only Lc 48.8 in dark, so it can dim less). */
+   open. A number, so not a light-dark() value: one per theme. Both 0.5 since 2026-10-26 (rail polish,
+   a trial the maintainer approved: "try 50%, test it"). Light 0.5 keeps the quiet icon (--vb-ink-subtle)
+   at APCA Lc 30 or more (the decoration tier, D-009): Lc 36.5 on the canvas, 39.8 on the rail's fill.
+   Dark 0.5 does not: Lc 16.9 on the canvas and 17.7 on the fill for the unchecked icons and the cog
+   (the checked layout 33.8 and 36.5); it was 0.76 (Lc 32.6 and 32.7) because lit the quiet icon is only
+   Lc 48.8 in dark. Reported, awaiting the maintainer: keep, or dim dark less. */
 :root { --vb-rail-rest: 0.5; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --vb-rail-rest: 0.76; } }
-:root[data-theme='dark'] { --vb-rail-rest: 0.76; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --vb-rail-rest: 0.5; } }
+:root[data-theme='dark'] { --vb-rail-rest: 0.5; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --vb-motion: 0ms; --vb-motion-fast: 0ms; }
