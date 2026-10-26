@@ -323,3 +323,4 @@
 [[2026-10-26 12:12]] [project-tooling] Code organisation review → Task: [[cortex-tasks/board/2026-10-26_project-tooling_code-organisation-review.md]]
 [[2026-10-26 13:20]] [board-app] Completed: Current Folder Always Visible → Task: [[cortex-tasks/board/2026-10-26_board-app_current-folder.md]]
 [[2026-10-26 15:30]] [project-docs] Principles rewritten as the target architecture (maintainer approved): source of truth for this project, adopts the cortex-architecture practices, new § Architecture we adopt and § The board is a plugin; gaps tracked in the code organisation review → Notes: `docs/principles.md` (Architecture we adopt, The board is a plugin)
+[[2026-10-26 15:45]] [project-docs] Project instructions slimmed to v0.3 (maintainer approved): general, point to docs/principles.md as the source of truth, Cortex skills as reference, precedence stated → Notes: `.kiro/steering/vision-board-proj.md`
