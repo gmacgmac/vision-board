@@ -651,7 +651,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    menu. Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
    their icon only when narrow. The smallest supported width is 768px: at 1000px and below the
    gaps tighten, the app icon steps aside, the picker may go to 150px, the version and containers
-   dropdowns take 6em and the count chips draw closer, so every control stays whole. The end group is
+   dropdowns take 6em and the count chips draw closer, so every control stays whole. (With the folder chip, § 6, the picker goes to
+   125px and the two dropdowns to 5em: `styles/current-folder.css`.) The end group is
    `shell/ToolbarEnd.svelte`, which the gallery mounts wide, narrow and with the menu open. Off, the
    toolbar is as it was. `tests/pages/toolbar.spec.ts` checks 1500, 1440, 1280, 1200, 1100, 1024,
    900 and 768px (with that chip showing): nothing clipped, overlapping or scrolling, every control
@@ -671,6 +672,24 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    last board is kept per folder. Styles: `styles/folder-dialog.css`. The gallery draws the picker in
    each state (`gallery/folder-section.ts`); `tests/pages/open-folder.spec.ts` covers it. Off, the menu
    and title are as before and the page never calls the folder routes.
+
+   **The open folder always on show** (`currentFolder` flag, on by default, needs `openFolder`; task
+   `cortex-tasks/board/2026-10-26_board-app_current-folder.md`). Nothing else on the page names the open
+   folder, so three places do, from `shell.folder` (`FolderInfo`), with no server, ledger or schema change.
+   (1) `shell/FolderChip.svelte`, the toolbar's first control after the app icon: a folder icon and the
+   folder's own name (`board/folder-path.ts` `folderName`) in the toolbar's chip-button look, its tooltip
+   and accessible name the whole path with the home folder as `~` (`folderPath`, the server's `displayName`);
+   a press opens the folder dialog. A long name is cut with "…" (`.vb-folder-chip-name`, `max-width: 18ch`),
+   down to 36px (its icon and an ellipsis), and at 1000px and below the picker and the two dropdowns give up a
+   little room so 768px still shows every control. (2) The "⋯" menu has a plain line under Open folder…, "Current: ~/…/name"
+   (`ToolbarMenu.svelte`, `role="none"`, so the menu's keys skip it; `elidePath` elides the middle of a path
+   over 32 characters, the whole path is its tooltip). (3) The folder dialog's heading reads "Open folder —
+   choose a project folder", and above the lists, outside their scrolling box, a "Current folder" group with
+   the whole path and a Copy button (`FolderPicker.svelte` `here`, `copyPath`): it copies the absolute path
+   and says "Copied" for two seconds (a refusal says so in a status line). Reading text Lc 60 or more, the
+   folder icon Lc 30 or more, light and dark. The gallery's own section is `gallery/current-folder-section.ts`;
+   tests are `apps/board/tests/folder-path.test.ts` and `tests/pages/current-folder.spec.ts`. Off, the name is
+   only in the page title and the Open folder… tooltip, and the dialog is as it was.
 
 7. **The open cards list** (`openList` flag, on by default; task set
    `cortex-tasks/board/2026-10-19_board-ui_open-list-and-container-title/`, FE_01). The toolbar's

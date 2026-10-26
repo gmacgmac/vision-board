@@ -1,0 +1,38 @@
+/* The open folder always on show (currentFolder flag, current-folder task): the toolbar's chip
+   (shell/FolderChip.svelte), the "⋯" menu's Current line (ToolbarMenu.svelte) and the folder dialog's
+   Current folder line (FolderPicker.svelte). Tokens only. */
+
+/* The chip: the toolbar's chip-button look (board.css), the name in the strong ink (reading tier), the
+   folder in the quiet ink (decoration). It gives up room before the board picker does, never under its
+   icon and a "…" (36px), and cuts a long name with "…". */
+.vb-folder-chip { flex: 0 1 auto; min-width: 36px; max-width: 18ch; color: var(--vb-ink-strong); }
+.vb-folder-chip .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-ink-subtle); }
+.vb-folder-chip-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vb-folder-chip[data-look='hover'] { background: var(--vb-surface-deep); }
+.vb-folder-chip[data-look='pressed'] { background: var(--vb-surface-deep); transform: translateY(1px); }
+.vb-folder-chip[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+/* A window of 1000px or less (board.css, data-menu): the smallest supported width, 768px, still shows every
+   control whole, so with the chip the picker gives up another 25px (to 125px) and the version and
+   containers dropdowns 1em each (to 5em). */
+@media (max-width: 1000px) {
+  .vb-toolbar[data-menu]:has(.vb-folder-chip) > #board { min-width: 125px; }
+  .vb-toolbar[data-menu]:has(.vb-folder-chip) > select:is(#version, #containers) { width: 5em; }
+}
+
+/* The "⋯" menu's line under Open folder…: plain text, not a row. */
+.vb-menu-current {
+  margin: 0; padding: 0 var(--vb-space-3) var(--vb-space-1) calc(var(--vb-space-3) + 18px + var(--vb-space-2));
+  font-size: var(--vb-text-sm); color: var(--vb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.vb-menu-current b { font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); }
+
+/* The dialog's line: its label, the whole path (broken anywhere when it must be), and Copy, in a box
+   apart from the lists below. */
+.vb-folder-current {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--vb-space-1) var(--vb-space-2);
+  margin: 0 0 var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-3);
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); background: var(--vb-surface-sunken);
+}
+.vb-folder-current-label { grid-column: 1 / -1; font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold); color: var(--vb-ink); }
+.vb-folder-current-path { min-width: 0; overflow-wrap: anywhere; font-size: var(--vb-text-sm); color: var(--vb-ink-strong); }
+.vb-folder-current .vb-btn[data-done] { border-color: var(--vb-accent); color: var(--vb-accent); }

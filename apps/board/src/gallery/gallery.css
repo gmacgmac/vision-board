@@ -110,6 +110,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
    menu hangs below its button, so that sample keeps room for it. */
 .g-toolbar { display: flex; align-items: center; padding: var(--vb-space-2) var(--vb-space-4); background: var(--vb-surface-region);
   border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
+.g-folder-narrow { width: 160px; }
 .g-toolbar[data-menu-open] { padding-bottom: calc(var(--vb-space-6) * 5); align-items: flex-start; }
 /* The archive and lock sections' "⋯" alone (archive-section.ts, lock-section.ts): at the strip's right end, as in the toolbar, so its menu hangs inside. */
 .g-archive-menu { justify-content: flex-end; }

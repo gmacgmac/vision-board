@@ -21,6 +21,8 @@
      list (ArchivedDialog), and the "⋯" menu has Archive board… (ruling 5, ToolbarMenu). A locked board
      shows "Locked" after its name and version (LockedChip, N40 ruling 4); with the lockBoard flag the
      "⋯" menu has Lock board or Unlock board.
+     With the currentFolder flag (and openFolder) the folder chip (FolderChip) sits first, after the app icon:
+     the open folder's name, its path in the tooltip, a click opening the folder dialog.
      The picker never goes under 220px from a 1024px window up; at 1500px and below the toolbar
      carries data-narrow, and the end group's text buttons shrink to icon buttons (ButtonIcon) and the
      counts show their numbers only (title and screen readers keep the words), all in board.css; "with
@@ -32,10 +34,12 @@
   import AppIcon from './AppIcon.svelte';
   import ButtonIcon from './ButtonIcon.svelte';
   import FlaggedChip from './FlaggedChip.svelte';
+  import FolderChip from './FolderChip.svelte';
   import LockedChip from './LockedChip.svelte';
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
+  import { currentFolderOn } from '../board/folder.ts';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
   import type { CommandId } from '../board/commands.ts';
@@ -84,6 +88,7 @@
   const archiving = flagOn('archiveBoard', pageFlags());
   const locking = flagOn('lockBoard', pageFlags());
   const openList = flagOn('openList', pageFlags());
+  const folderChip = currentFolderOn();
   /** The picker entry that opens the Archived list: never a board id, which holds no ":". */
   const ARCHIVED = ':archived';
   /** A narrow toolbar shows the end group's icons and bare counts (board.css `[data-narrow]`). */
@@ -114,6 +119,7 @@
 
 <header class="vb-toolbar" data-narrow={narrow.current || undefined} data-menu={toolbarMenu || undefined}>
   <AppIcon />
+  {#if folderChip && shell.folder}<FolderChip id="folder-chip" folder={shell.folder} onclick={() => { shell.folderDialog = true; }} />{/if}
   {#if shell.versionView}<h1 id="title" class="vb-visually-hidden">{shell.title}</h1>{/if}
   <label class="vb-visually-hidden" for="board">Board</label>
   <select id="board" class="vb-select" value={shell.boardId}

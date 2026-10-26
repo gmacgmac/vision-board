@@ -320,3 +320,5 @@
 [[2026-10-26 10:26]] [board-ui] Completed: Hover Tips Reachable → Task: [[cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md]]
 [[2026-10-26 10:55]] [board-ui] Completed: Rail And Title Polish → Task: [[cortex-tasks/board/2026-10-26_board-ui_rail-polish.md]]
 [[2026-10-26 12:00]] [project-docs] Decisions D-051 to D-058 added at the maintainer's request (rail, rail rest, note look, new and updated, group notes, lean tools, one skill and MCP name, hover grace) → Notes: `docs/decisions.md` (D-051..D-058)
+[[2026-10-26 12:12]] [project-tooling] Code organisation review → Task: [[cortex-tasks/board/2026-10-26_project-tooling_code-organisation-review.md]]
+[[2026-10-26 13:20]] [board-app] Completed: Current Folder Always Visible → Task: [[cortex-tasks/board/2026-10-26_board-app_current-folder.md]]

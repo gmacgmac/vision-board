@@ -108,6 +108,11 @@ export const FLAGS = {
     default: true,
     description: 'The "⋯" menu ends with Open folder…, a picker of the folders under the home folder (recent first, a folder with a Vision Board marked) that opens one, or creates its Vision Board, in place of the open folder (api.md 109-113); every open page then reloads onto it. The page title names the open folder and the last board is kept per folder. Off, the page never asks which folder is open.',
   },
+  currentFolder: {
+    // On by default (maintainer, 2026-10-26, current-folder task, chat points 193-197); ?flags=-currentFolder turns it off.
+    default: true,
+    description: 'The folder the board has open is always on show (needs openFolder): a chip with its name at the far left of the toolbar, its full path in the tooltip, a click opening the folder dialog; a "Current:" line under Open folder… in the "⋯" menu; and a "Current folder" line with the full path and a Copy button at the top of the folder dialog, apart from its lists. Off, the name is only in the page title and the Open folder… tooltip.',
+  },
   everyNode: {
     // On by default (maintainer, 2026-10-10, every-node PLAN rulings 1-4, FE_01); ?flags=-everyNode turns it off.
     default: true,

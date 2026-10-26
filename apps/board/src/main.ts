@@ -31,6 +31,7 @@ import './styles/chat-sidebar.css';
 import './styles/folder-dialog.css';
 import './styles/archived-dialog.css';
 import './styles/lock.css';
+import './styles/current-folder.css';
 import { flagOn } from '../../../packages/format/src/index.ts';
 import { defineBoardElements, setMarkdownImages } from '../../../packages/ui/src/index.ts';
 import { pageFlags } from './flags.ts';

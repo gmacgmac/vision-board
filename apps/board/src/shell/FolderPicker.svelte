@@ -6,16 +6,22 @@
      Open, or "No Vision Board here" with Create), and Cancel. A view only: FolderDialog.svelte holds
      it in the modal dialog and does the calls; the gallery draws it in each state (home, loading,
      found, not found, problem, opening). `uid` keeps
-     its ids apart. Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
+     its ids apart. With the currentFolder flag (`here` given) the heading reads "Open folder — choose a
+     project folder", and under it, apart from the lists, a "Current folder" line: the whole path (`~` for
+     home) and a Copy button that copies the absolute path and says "Copied" for a moment (current-folder
+     task). Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
 <script lang="ts">
-  import type { FolderEntry, FolderList } from '../board/io.ts';
+  import type { FolderEntry, FolderInfo, FolderList } from '../board/io.ts';
   import ButtonIcon from './ButtonIcon.svelte';
+  import { folderPath } from '../board/folder-path.ts';
 
-  let { listing, current, uid, loading = false, problem = null, busy = false, onchoose, onaccept, oncancel }: {
+  let { listing, current, here = null, uid, loading = false, problem = null, busy = false, onchoose, onaccept, oncancel }: {
     /** The chosen folder and what is in it; null until the first listing. */
     listing: FolderList | null;
     /** The folder open now: left out of recent, and not offered again. */
     current: string | null;
+    /** The open folder, to show as the Current folder line (currentFolder flag); null, no line. */
+    here?: Pick<FolderInfo, 'path' | 'name'> | null;
     uid: string;
     loading?: boolean;
     problem?: string | null;
@@ -43,6 +49,17 @@
     : isHome ? 'Choose a project folder under ~'
     : isOpen ? `This folder is open now${boards(listing.boards)}.`
     : listing.found ? `Vision Board found${boards(listing.boards)}` : 'No Vision Board here');
+  /** Copy the open folder's absolute path: "Copied" for a moment, or why it could not. */
+  let copied: 'done' | 'failed' | null = $state(null);
+  let copiedTimer = 0;
+  async function copyPath() {
+    clearTimeout(copiedTimer);
+    try {
+      await navigator.clipboard.writeText(here!.path);
+      copied = 'done';
+    } catch { copied = 'failed'; }
+    copiedTimer = window.setTimeout(() => { copied = null; }, 2000);
+  }
   const action = $derived(listing?.found || isHome ? (busy ? 'Opening…' : 'Open') : busy ? 'Creating…' : 'Create');
 </script>
 
@@ -55,8 +72,17 @@
   </li>
 {/snippet}
 
-<h2 id="{uid}-title">Open folder</h2>
-<p id="{uid}-body" class="vb-dialog-item">Choose a project folder under your home folder. The board then shows that folder's boards, and the chat works there.</p>
+<h2 id="{uid}-title">{here ? 'Open folder — choose a project folder' : 'Open folder'}</h2>
+<p id="{uid}-body" class="vb-dialog-item">{here ? 'Under your home folder.' : 'Choose a project folder under your home folder.'} The board then shows that folder's boards, and the chat works there.</p>
+{#if here}
+  <div class="vb-folder-current" role="group" aria-labelledby="{uid}-current">
+    <span class="vb-folder-current-label" id="{uid}-current">Current folder</span>
+    <code class="vb-folder-current-path">{folderPath(here)}</code>
+    <button type="button" class="vb-btn vb-btn-small" id="{uid}-copy" data-done={copied === 'done' || undefined}
+      title="Copy the full path" onclick={() => void copyPath()}>{copied === 'done' ? 'Copied' : 'Copy'}</button>
+    <span class="vb-visually-hidden" role="status">{copied === 'done' ? 'Path copied' : copied === 'failed' ? 'Could not copy: select the path and copy it by hand' : ''}</span>
+  </div>
+{/if}
 <nav class="vb-folder-crumbs" aria-label="Folder path">
   <ol>
     {#each crumbs as c, i (c.path)}

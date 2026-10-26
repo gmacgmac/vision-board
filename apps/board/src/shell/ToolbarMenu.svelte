@@ -5,7 +5,9 @@
      ruling 5; off, aria-disabled, while no board is open or a past version shows), with the lockBoard flag (`onlock` given)
      Lock board, or on a locked board Unlock board (N40 ruling 4: no confirm, nothing is lost either way; off like Archive
      board…), and with the openFolder flag Open folder…, which opens
-     the folder picker (FolderDialog.svelte); its tooltip names the open folder. A click or Enter on "⋯" opens it and focuses the
+     the folder picker (FolderDialog.svelte); its tooltip names the open folder; with the currentFolder flag a plain line
+     under it, "Current: ~/…/name" (the middle of a long path elided, the whole path in its tooltip; not a row, so
+     the menu's keys skip it). A click or Enter on "⋯" opens it and focuses the
      first row; the keys are the Move to list's (board/menu-keys.ts): Up, Down, Home, End, Esc
      (focus back on "⋯"), Tab; a press outside or a choice closes it. H in the menu chooses Hide
      answered, as H does on the board (keys.ts). Its look is the Move to list's (board.css). The
@@ -18,8 +20,11 @@
   import { flagOn } from '../../../../packages/format/src/index.ts';
   import { pageFlags } from '../flags.ts';
   import { keepAlign } from './align.ts';
+  import { currentFolderOn } from '../board/folder.ts';
+  import { elidePath, folderPath } from '../board/folder-path.ts';
+  import type { FolderInfo } from '../board/io.ts';
 
-  let { theme, ontheme, onhide, onarchive, onlock, locked = undefined, open: forced = false, placement = 'board' }: {
+  let { theme, ontheme, onhide, onarchive, onlock, locked = undefined, folder = undefined, current = undefined, open: forced = false, placement = 'board' }: {
     theme: string;
     /** The next theme: system, light, dark. */
     ontheme: () => void;
@@ -30,6 +35,10 @@
     onlock?: (() => void) | undefined;
     /** Draw the row for a locked board (the gallery); left out, the open board's own state. */
     locked?: boolean | undefined;
+    /** The open folder (the gallery's); left out, the page's own (`shell.folder`). */
+    folder?: Pick<FolderInfo, 'path' | 'name'> | null | undefined;
+    /** Show the Current line (the gallery's); left out, the currentFolder flag. */
+    current?: boolean | undefined;
     open?: boolean;
     placement?: 'board' | 'gallery';
   } = $props();
@@ -48,7 +57,11 @@
   const isLocked = $derived(locked ?? shell.locked);
   const lockTip = $derived(archiveOff ? (shell.past ? `Go back to now to ${isLocked ? 'unlock' : 'lock'} this board` : 'No board is open')
     : isLocked ? 'Let you and the agents change this board again' : 'Make this board read-only for everyone, agents included, until you unlock it');
-  const folderTip = $derived(shell.folder ? `Open another folder (open now: ${shell.folder.name})` : 'Open a project folder');
+  const here = $derived(folder === undefined ? shell.folder : folder);
+  const folderTip = $derived(here ? `Open another folder (open now: ${here.name})` : 'Open a project folder');
+  const showCurrent = $derived((current ?? currentFolderOn()) && openFolder);
+  /** The Current line's longest path before its middle is elided (the menu is 220 to 360px wide). */
+  const CURRENT_MAX = 32;
   let open = $state(false);
   const shown = $derived(forced || open);
   let root: HTMLElement;
@@ -135,6 +148,9 @@
         aria-haspopup="dialog" title={folderTip} onclick={() => choose(() => { shell.folderDialog = true; })}>
         <ButtonIcon name="folder" /><span class="vb-menu-label">Open folder…</span>
       </button>
+      {#if showCurrent && here}
+        <p class="vb-menu-current" role="none" title={folderPath(here)}>Current: <b>{elidePath(folderPath(here), CURRENT_MAX)}</b></p>
+      {/if}
     {/if}
   </div>
 </div>

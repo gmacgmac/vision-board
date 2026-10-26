@@ -7,12 +7,14 @@ import { pageFlags } from '../flags.ts';
 import { shell } from '../shell/shell.svelte.ts';
 import type { FolderInfo } from './io.ts';
 import { getProject } from './io.ts';
+import { folderName } from './folder-path.ts';
 import { LAST_BOARD_KEY } from './start-board.ts';
 
 export const openFolderOn = (): boolean => flagOn('openFolder', pageFlags());
 
-/** The folder's own name: the last part of its path. */
-export const folderName = (f: Pick<FolderInfo, 'path' | 'name'>): string => f.path.split('/').filter(Boolean).at(-1) ?? f.name;
+export { elidePath, folderName, folderPath } from './folder-path.ts';
+/** The current-folder flag (on by default; needs openFolder): the open folder is always on show. */
+export const currentFolderOn = (): boolean => openFolderOn() && flagOn('currentFolder', pageFlags());
 
 /** Read the open folder and name it in the page title; null when it can't be read (the board
  * still opens, with the last board kept for every folder alike). */

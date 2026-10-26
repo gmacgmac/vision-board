@@ -31,6 +31,7 @@ import '../styles/chat-sidebar.css';
 import '../styles/folder-dialog.css';
 import '../styles/archived-dialog.css';
 import '../styles/lock.css';
+import '../styles/current-folder.css';
 import './gallery.css';
 import type { FlagName } from '../../../../packages/format/src/index.ts';
 import { flagOn } from '../../../../packages/format/src/index.ts';
@@ -65,6 +66,7 @@ import { updatesSection } from './updates-section.ts';
 import { chatSection } from './chat-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
+import { currentFolderSection } from './current-folder-section.ts';
 import { flagSection } from './flag-section.ts';
 import { archiveSection } from './archive-section.ts';
 import { lockSection } from './lock-section.ts';
@@ -183,6 +185,7 @@ function build(): void {
   if (flagOn('toolRail', flags)) main.append(railSection(fx));
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
   if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
+  if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }
