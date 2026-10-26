@@ -90,7 +90,7 @@ Waves 2 and 4-8 have one task each: it owns what its task file lists.
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| FIX_01-R1 | FIX_01 | The selection bar and its pill cover a container's Move grip when the selection is in the first row (a real overlap, not only a test one) | orchestrator, now (maintainer, point 283) | Open |
+| FIX_01-R1 | FIX_01 | The selection bar and its pill cover a container's Move grip when the selection is in the first row (a real overlap, not only a test one) | orchestrator, now (maintainer, point 283): `placeBar` takes boxes to avoid; the board passes each container title line | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 

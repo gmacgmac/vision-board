@@ -131,7 +131,16 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     const size = { w: bar.offsetWidth, h: bar.offsetHeight };
     // Over cards it clears their tabs at any zoom (pillGap); the area bar has no tabs under it.
     const gap = area ? BAR_GAP : pillGap(d.vp.k);
-    bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, gap));
+    bar.place(placeBar(toStage(world), size, { w: d.stage.clientWidth, h: d.stage.clientHeight }, gap, titleLines()));
+  }
+
+  /** Each container's title line (its Move grip, title and count) on the stage: the bar never covers one. */
+  function titleLines(): StageBox[] {
+    const s = d.stage.getBoundingClientRect();
+    return [...d.stage.querySelectorAll<HTMLElement>('vb-region .vb-region-label')]
+      .map((e) => e.getBoundingClientRect())
+      .filter((r) => r.width > 0 && r.height > 0)
+      .map((r) => ({ x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }));
   }
 
   function dismissArea() {

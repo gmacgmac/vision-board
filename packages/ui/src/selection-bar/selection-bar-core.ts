@@ -33,11 +33,20 @@ export function pillGap(k: number): number {
   return TAB_RISE * k + clamp(TAB_CLEAR_PER_K * k, TAB_CLEAR_MIN, TAB_CLEAR_MAX);
 }
 
+/** Whether two boxes share any area (touching edges do not). */
+const overlaps = (a: StageBox, b: StageBox): boolean =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
 /** The bar centred on `box` (the selection on the stage), `gap` above it (BAR_GAP, or `pillGap`
- *  over cards), else BAR_GAP below it. */
-export function placeBar(box: StageBox, bar: StageSize, stage: StageSize, gap = BAR_GAP): BarPlacement {
+ *  over cards), else BAR_GAP below it. Above, it never covers a box in `avoid` (a container's title
+ *  line, with its Move grip, maintainer point 283): it rises BAR_GAP over each it would cover. */
+export function placeBar(box: StageBox, bar: StageSize, stage: StageSize, gap = BAR_GAP,
+  avoid: readonly StageBox[] = []): BarPlacement {
   const x = clamp(box.x + box.w / 2 - bar.w / 2, BAR_EDGE, stage.w - BAR_EDGE - bar.w);
-  const above = box.y - gap - bar.h;
+  const hit = (y: number) => avoid.find((b) => overlaps({ x, y, w: bar.w, h: bar.h }, b));
+  // Each rise ends above the box it met, so y only falls and the loop ends.
+  let above = box.y - gap - bar.h;
+  for (let b = hit(above); b && above >= BAR_EDGE; b = hit(above)) above = b.y - BAR_GAP - bar.h;
   if (above >= BAR_EDGE) return { side: 'above', x, y: above };
   return { side: 'below', x, y: clamp(box.y + box.h + BAR_GAP, BAR_EDGE, stage.h - BAR_EDGE - bar.h) };
 }

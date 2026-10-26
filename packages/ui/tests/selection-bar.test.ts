@@ -89,6 +89,17 @@ test('pillGap: the tabs\' rise at the zoom plus a clear space from the minimum (
   assert.ok(pillGap(0.2) < pillGap(1) && pillGap(1) < pillGap(2.5), 'it grows with zoom');
 });
 
+test('placeBar: it rises over a container title line it would cover, and over the next one too', () => {
+  const sel = { x: 400, y: 300, w: 200, h: 100 };
+  const title = { x: 420, y: 270, w: 150, h: 22 };
+  assert.deepEqual(placeBar(sel, BAR, STAGE, BAR_GAP, [title]), { side: 'above', x: 350, y: 270 - BAR_GAP - BAR.h });
+  const higher = { x: 300, y: 240, w: 300, h: 10 };
+  assert.equal(placeBar(sel, BAR, STAGE, BAR_GAP, [title, higher]).y, 240 - BAR_GAP - BAR.h);
+  // A title line it does not cover changes nothing; one with no room over it sends the bar below.
+  assert.deepEqual(placeBar(sel, BAR, STAGE, BAR_GAP, [{ x: 0, y: 270, w: 100, h: 22 }]), placeBar(sel, BAR, STAGE));
+  assert.equal(placeBar({ ...sel, y: 100 }, BAR, STAGE, BAR_GAP, [{ ...title, y: 30 }]).side, 'below');
+});
+
 test('placeBar: a gap given puts the bar that far above the selection; below it keeps BAR_GAP', () => {
   assert.equal(placeBar({ x: 400, y: 200, w: 200, h: 100 }, BAR, STAGE, pillGap(2.5)).y, 200 - 41 - BAR.h);
   assert.deepEqual(placeBar({ x: 400, y: 40, w: 200, h: 100 }, BAR, STAGE, pillGap(2.5)), { side: 'below', x: 350, y: 140 + BAR_GAP });

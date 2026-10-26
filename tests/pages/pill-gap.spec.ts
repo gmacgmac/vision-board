@@ -7,6 +7,10 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
 
 let boards = 0;
+/** Three rows: the card measured is in the last, so no container title line is under its pill even
+ *  zoomed out, where the pill is taller than a row (a pill that would cover the title line rises over
+ *  it, point 283). */
+const TITLES = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'].map((n) => `${n} idea`);
 
 async function draw(request: APIRequestContext): Promise<string> {
   const r = await request.post('/api/agents', { data: { label: 'Gap chat' } });
@@ -15,14 +19,14 @@ async function draw(request: APIRequestContext): Promise<string> {
   const items = [
     { type: 'board', title: 'Gap board' },
     { type: 'region', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },
-    ...['First idea', 'Second idea'].map((title) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title } })),
+    ...TITLES.map((title) => ({ type: 'node', node: { region: 'ideas', kind: 'question', title } })),
   ];
   const w = await request.post(`/api/boards/${board}/write`, { headers: { Authorization: `Bearer ${secret}` }, data: { items } });
   expect(w.status(), await w.text()).toBe(200);
   return board;
 }
 
-const card = (page: Page) => page.locator('vb-node').first();
+const card = (page: Page) => page.locator('vb-node').last();
 const view = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 
 /** Zoom with Ctrl+wheel at the card's centre (pointer.ts: factor exp(-deltaY * 0.0015)) to `k`. */
@@ -44,7 +48,7 @@ const clear = (page: Page) => page.evaluate(() => {
 
 test('the pill sits clear of the selected card\'s tabs at three zooms, the space growing with zoom', async ({ page, request }) => {
   await page.goto(`/#${await draw(request)}`);
-  await expect(page.locator('vb-node')).toHaveCount(2);
+  await expect(page.locator('vb-node')).toHaveCount(TITLES.length);
   await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
   await card(page).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(1);

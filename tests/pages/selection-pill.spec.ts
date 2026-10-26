@@ -230,3 +230,19 @@ for (const theme of THEMES) {
     await expect(section).toHaveScreenshot(`selection-pill-gallery-${theme}.png`);
   });
 }
+
+test('a card in the first row: the pill and the open bar rise over the container title line, never on it (point 283)', async ({ page, request }) => {
+  await open(page, request);
+  const title = (await page.locator('vb-region .vb-region-label').first().boundingBox())!;
+  const clear = async () => {
+    const b = (await bar(page).boundingBox())!;
+    const overlap = b.x < title.x + title.width && title.x < b.x + b.width && b.y < title.y + title.height && title.y < b.y + b.height;
+    expect(overlap, `bar ${JSON.stringify(b)} on the title line ${JSON.stringify(title)}`).toBe(false);
+  };
+  await cards(page).nth(0).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
+  await expect(pill(page)).toBeVisible();
+  await clear();
+  await pill(page).click();
+  await expect(pill(page)).toHaveAttribute('aria-expanded', 'true');
+  await clear();
+});
