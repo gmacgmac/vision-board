@@ -317,3 +317,4 @@
 [[2026-10-25 21:34]] [needs-human-input] Group Note Drawn Once stopped before code: a group spanning containers gives an extents box covering unrelated cards (roadmap {1,16} covers 2-15), and the box corner collides with the corner card's own pin; drawing proposed, awaiting ruling → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]
 [[2026-10-25 23:40]] [board-ui] Completed: New And Updated Cards Easy To Find → Task: [[cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md]]
 [[2026-10-25 23:41]] [board-ui] Completed: Group Note Drawn Once → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]
+[[2026-10-26 10:26]] [board-ui] Completed: Hover Tips Reachable → Task: [[cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md]]

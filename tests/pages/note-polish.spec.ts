@@ -42,8 +42,12 @@ test('note preview: hover on a cut note shows the full text as Markdown, beside 
   await expect(tip).toBeVisible();
   await expect(tip).toContainText('Who signs off on the final wording');
   await expect(tip.locator('li')).toHaveCount(12);
-  const m = await tip.evaluate((e) => ({ h: e.clientHeight, scrolls: e.scrollHeight > e.clientHeight, left: e.getBoundingClientRect().left,
-    cardRight: e.closest('vb-node')!.getBoundingClientRect().right }));
+  // The box stays unclipped (its bridge sits outside it); the body inside it scrolls (hover-tip-reachable).
+  const m = await tip.evaluate((e) => {
+    const body = e.querySelector('.vb-tip-body')!;
+    return { h: e.clientHeight, scrolls: body.scrollHeight > body.clientHeight, left: e.getBoundingClientRect().left,
+      cardRight: e.closest('vb-node')!.getBoundingClientRect().right };
+  });
   expect(m.h).toBeLessThanOrEqual(MAX_H);
   expect(m.scrolls).toBe(true);
   expect(m.left).toBeGreaterThanOrEqual(m.cardRight);

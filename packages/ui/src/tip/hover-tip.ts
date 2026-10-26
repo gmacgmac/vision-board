@@ -2,12 +2,14 @@
 // text of something the pattern had to cut. The open rules are WCAG 1.4.13 and are the ones the
 // container-note preview uses (`previewStep` in region/region-preview.ts): hoverable (it stays
 // while the pointer crosses onto it), persistent (it stays while focus is in the group) and
-// dismissible without moving anything (Esc). Browser only. The helper draws nothing: it sets one
-// attribute on the host while the tip should show, and the pattern's CSS reads it. Touch has no
+// dismissible without moving anything (Esc). The pointer leaving waits a short grace before the close
+// (close-grace.ts); opening and every other close are immediate. Browser only. The helper draws
+// nothing: it sets one attribute on the host while the tip should show, and the pattern's CSS reads it. Touch has no
 // hover: a tap on the anchor opens it, a tap outside closes it. With `opens` (the card popover,
 // proposals FE_01), a click or Enter on the anchor opens it for good, so its buttons can be reached.
 import type { PreviewEvent } from '../region/region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from '../region/region-preview.ts';
+import { closeGrace } from './close-grace.ts';
 
 export interface HoverTipOptions {
   /** Hovering or focusing this (a selector, inside the host; `:host` is the host itself) shows the tip. */
@@ -41,9 +43,14 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
   const within = (n: EventTarget | null, sel: string) => n instanceof Node && !!pick(sel)?.contains(n);
   const inTip = (n: EventTarget | null) => within(n, group) || within(n, o.anchor) || within(n, o.tip);
 
+  const grace = closeGrace();
+
   function step(e: PreviewEvent) {
     state = previewStep(state, e);
-    const on = previewShown(state, o.needed?.() ?? true);
+    grace.set(e, host.hasAttribute(o.attr), previewShown(state, o.needed?.() ?? true), show);
+  }
+  /** Draw the open state (the grace calls this when it ends, or at once). */
+  function show(on: boolean) {
     if (on !== host.hasAttribute(o.attr)) o.onToggle?.(on);
     host.toggleAttribute(o.attr, on);
     // Esc and a press outside are heard on the page only while the tip is open.

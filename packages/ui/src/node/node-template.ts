@@ -69,7 +69,7 @@ export function notesMarkup(v: NotesView, now = new Date()): string {
     const text = renderMarkdown(x.text);
     return `<div class="vb-node-note" data-note="${x.seq}" data-at="${esc(x.at)}"${x.sent ? ' data-sent' : ''} tabindex="0">`
       + `<span class="vb-node-note-who">${esc(x.who)}</span>${timeMarkup(x.at, now)}<div class="vb-node-note-text">${text}</div>`
-      + `<div class="vb-tip vb-note-tip" aria-hidden="true">${text}</div></div>${(x.replies ?? []).map((r) => replyMarkup(r, now)).join('')}`;
+      + `<div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>${(x.replies ?? []).map((r) => replyMarkup(r, now)).join('')}`;
   }).join('');
 }
 
@@ -78,7 +78,7 @@ export function notesMarkup(v: NotesView, now = new Date()): string {
 function replyMarkup(r: ReplyEntry, now: Date): string {
   const text = renderMarkdown(r.text);
   return `<div class="vb-node-reply" data-reply="${r.seq}" data-at="${esc(r.at)}" tabindex="0"><span class="vb-node-note-who">${esc(r.who)}</span>`
-    + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true">${text}</div></div>`;
+    + `${timeMarkup(r.at, now)}<div class="vb-node-note-text">${text}</div><div class="vb-tip vb-note-tip" aria-hidden="true"><div class="vb-tip-body">${text}</div></div></div>`;
 }
 
 /** The flag button beside Later (cardFlag flag, field report batch 2 assumption A): the person's

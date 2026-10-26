@@ -251,6 +251,16 @@ record is `api.md` 58-61.
    container note preview (`.vb-note-pop`) and the note and reply hover tip (`.vb-note-tip`) all
    read them, so changing a token scales every popover together. Labels and chips in them are
    `--vb-text-md`; buttons are 32px tall.
+   A hover tip stays open while the pointer travels to it (hover-tip-reachable,
+   `cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md`): the pointer leaving the anchor or
+   the tip waits `CLOSE_GRACE_MS` (300 ms, `closeGrace`, `packages/ui/src/tip/close-grace.ts`) before
+   the close, and coming back cancels it; opening, Esc, a press outside, focus leaving and `close()`
+   stay immediate. `bindHoverTip` and the container note preview (`region-note.ts`) both use it. The
+   note and reply tip (`.vb-note-tip`) keeps its box unclipped so its bridge over the gap takes the
+   pointer, and scrolls the `.vb-tip-body` inside it (the wheel exemption in `board/pointer.ts` is
+   `.vb-tip`, which matches it). The card popover's box is itself the scroller (a tab stop, filled by
+   three producers), so it relies on the grace alone. Tests: `close-grace.test.ts`,
+   `tests/pages/hover-tip.spec.ts`.
 6. **The conversation** (review polish rulings 6 and 7, decisions 8 and 9,
    `cortex-tasks/board/2026-10-15_board-ui_review-polish/FE_04_conversation-window.md`; it replaced
    popovers-larger-thread ruling 2's one-note exchange). A click, Enter or Space on a note in a card's

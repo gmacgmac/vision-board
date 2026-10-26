@@ -9,6 +9,7 @@ import { REGION_NOTE_EVENT, REGION_NOTE_RESIZE_EVENT } from './region-core.ts';
 import type { PreviewEvent } from './region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
 import { nblockRepliesMarkup, regionIds } from './region-template.ts';
+import { closeGrace } from '../tip/close-grace.ts';
 
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
@@ -49,15 +50,18 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
   const within = (n: EventTarget | null, sel: string) => n instanceof Node && !!q(sel)?.contains(n);
   const inPreview = (n: EventTarget | null) => within(n, COMMENT) || within(n, POP);
 
+  const grace = closeGrace();
+  // The settings menu has the row: the preview never draws over it.
+  const wanted = () => previewShown(state, note !== undefined) && host.dataset.open !== 'menu';
+
   function step(e: PreviewEvent) {
     state = previewStep(state, e);
-    draw();
+    grace.set(e, host.hasAttribute('data-preview'), wanted(), draw);
   }
 
-  /** Draw the preview's open state; a note removed or arriving redraws it with no event. */
-  function draw() {
-    // The settings menu has the row: the preview never draws over it.
-    const on = previewShown(state, note !== undefined) && host.dataset.open !== 'menu';
+  /** Draw the preview's open state; a note removed or arriving redraws it with no event. The pointer
+   * leaving holds it for the shared grace (tip/close-grace.ts); the tap listener follows the state. */
+  function draw(on = wanted()) {
     host.toggleAttribute('data-preview', on);
     const comment = q(COMMENT);
     if (on) comment?.setAttribute('aria-describedby', regionIds(host.dataset.region ?? '').previewText);
@@ -204,6 +208,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     if (edit) edit.textContent = next && !next.editable ? 'Open' : 'Edit';
     applyMore();
     shown(host.hasAttribute('data-note-shown'));
+    grace.cancel();
     draw();
   }
 
@@ -223,6 +228,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     const block = q(BLOCK);
     if (block) observer?.observe(block);
     state = PREVIEW_CLOSED;
+    grace.cancel();
     host.removeAttribute('data-preview');
     repliesSrc = undefined;
   }
