@@ -60,20 +60,25 @@ your files (TASK-STATUS File Ownership).
 
 _To be completed by agent after task completion. Re-run? Add a `### Run N` block; never overwrite._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-10-26 18:55  
 
 ### Changes Made
-- 
+- `apps/board/src/board/proposals.ts`: new `answerable(rows, ver)` (rows on a card the board has a version for); `proposalAct` returns undefined for an accept with no version, so an accept without `ver` is never built.
+- `apps/board/src/board/proposal-flow.ts`: `refresh` (now a named function) shows only `answerable` rows (the row for a card the board can't find is dropped); `answer` and `acceptAll` send no accept without a version and call `refresh` after any refused answer.
+- `packages/actions/src/conditions.ts`: `endsWhen` of `proposal.open` and `proposal.stale` now say "or the card being retired".
+- `docs/specification/api.md` (95 Ending, 96): a retire also ends a proposal (as 127 already said); the page shows no proposal without a version and never sends an accept without one.
+- Tests, written first: `packages/actions/tests/retire.test.ts` (every proposal on retired cards, open and out of date, by card or container: closed, `standing` undefined, no proposal condition); `apps/board/tests/proposals.test.ts` (a retire leaves no row; `proposalAct` accept with no version is undefined; `answerable`); `tests/pages/proposals.spec.ts` (retire a card with a proposal: tab and bar go, Accept all sends only accepts carrying `ver`).
 
 ### Issues & Resolutions
-- 
+- The stated cause is not reproducible in this tree: `foldRetire` (`packages/actions/src/retire.ts`) already ends every undecided proposal on a retired card with outcome `closed` (since ledger v12, api.md 127), and `retire.test.ts` already asserted it. The new unit and page tests for the fold passed before any code change; so no change to `retire.ts`, `standing` or `endProposal` was made. The page-side defects (an accept sent without `ver`; a row stuck after a refusal) are real in the code and are fixed above. What made the observed ledger keep the proposal open is not established in the sources: possible that the board server that showed it ran an older build. Not investigated further, as the other project's ledger was out of bounds.
+- Outcome `closed` fits (an answer the person did not give): no schema change, no decision entry needed.
 
 ### Caught Beyond the Brief
 - None
 
 ### Deviations from Plan
-- None
+- Step 2 (fold change) was already true of the tree; nothing to change. Step 1's failing tests: the fold tests passed at once, the `answerable` / `proposalAct` test failed first, as expected.
 
 ---
 

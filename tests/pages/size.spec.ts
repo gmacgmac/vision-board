@@ -184,6 +184,11 @@ for (const theme of THEMES) {
     await page.goto('/gallery.html?flags=nodeSize');
     await expect(section(page)).toBeVisible();
     await expectNoAxeViolations(page);
-    await expect(section(page)).toHaveScreenshot(`node-size-${theme}.png`);
+    // Text anti-aliasing, a few pixels (3 to 6 differ at Playwright's default per-pixel threshold): all of
+    // them in the lines that hold the "◆" glyph (the section's prose, the size control's letter), where
+    // the text after it sits a sub-pixel off [INFERENCE: the glyph comes from a fallback font]. A
+    // tolerance of 20 pixels keeps the picture exact enough to fail on any real change, which differs by
+    // hundreds, without a baseline that drifts again.
+    await expect(section(page)).toHaveScreenshot(`node-size-${theme}.png`, { maxDiffPixels: 20 });
   });
 }

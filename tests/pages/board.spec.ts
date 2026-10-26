@@ -4,6 +4,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { startRoadmapServer } from './roadmap-server.ts';
 import { REGION_HEAD } from '../../packages/layout/src/index.ts';
 
 const NODES = 17;
@@ -13,9 +14,9 @@ const THEMES: Theme[] = ['dark', 'light'];
 
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 
-/** Open the board and wait until it has drawn and stopped moving. */
-async function openBoard(page: Page, query = ''): Promise<void> {
-  await page.goto(`/${query}`);
+/** Open the board (of the test server, or of the server at `base`) and wait until it has drawn and stopped moving. */
+async function openBoard(page: Page, query = '', base = ''): Promise<void> {
+  await page.goto(`${base}/${query}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
   await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
   await expect(page.locator('#wires')).not.toHaveClass(/settling/);
@@ -82,10 +83,18 @@ for (const theme of THEMES) {
   // screenshot taken before a flag must be (components.md § Feature flags); send-access.spec.ts,
   // versions.spec.ts and finder.spec.ts cover the board with them on. The key bubble (keyBubble flag,
   // key-bubble.spec.ts) stays on: it replaces the key bar this screenshot used to show.
+  // It draws the roadmap board on a server of its own (roadmap-server.ts), not the shared one: the
+  // earlier specs write to the shared board and raise "N boards updated", and a picture of it would
+  // show whatever they left (FIX_01).
   test(`screenshot (${theme})`, async ({ page }) => {
-    await setTheme(page, theme);
-    await openBoard(page, '?flags=-agentAccess,-versionView,-containerFinder,-chatPanel');
-    await expect(page).toHaveScreenshot(`board-${theme}.png`);
+    const roadmap = await startRoadmapServer();
+    try {
+      await setTheme(page, theme);
+      await openBoard(page, '?flags=-agentAccess,-versionView,-containerFinder,-chatPanel', roadmap.base);
+      await expect(page).toHaveScreenshot(`board-${theme}.png`);
+    } finally {
+      await roadmap.close();
+    }
   });
 }
 

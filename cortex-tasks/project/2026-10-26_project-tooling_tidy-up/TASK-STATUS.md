@@ -2,7 +2,7 @@
 task_name: Tidy-Up To The Target Architecture
 created: 2026-10-26
 completed:
-status: planned
+status: in-progress
 categories: [project-tooling]
 tracker:
 ---
@@ -36,8 +36,8 @@ tracker:
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | FIX_01 | 1 | standard | — | [Green baseline](./FIX_01_green-baseline.md) | Pending | port 4700 |
-| 1b | FIX_02 | 1 | standard | — | [A proposal on a retired card ends](./FIX_02_proposal-on-retired-card.md) | Pending | port 4705 |
+| 1 | FIX_01 | 1 | standard | — | [Green baseline](./FIX_01_green-baseline.md) | Completed | port 4700 |
+| 1b | FIX_02 | 1 | standard | — | [A proposal on a retired card ends](./FIX_02_proposal-on-retired-card.md) | Completed | port 4705 |
 | 2 | ARCH_01 | 2 | strong | Build and tooling engineer — a module has one front door, and a back door that the checks can't see is a back door that will be used. | [One front door per module](./ARCH_01_module-front-doors.md) | Pending | port 4710 |
 | 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Pending | port 4720 |
 | 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Pending | port 4730 |
@@ -90,6 +90,7 @@ Waves 2 and 4-8 have one task each: it owns what its task file lists.
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| FIX_01-R1 | FIX_01 | The selection bar and its pill cover a container's Move grip when the selection is in the first row (a real overlap, not only a test one) | orchestrator, now (maintainer, point 283) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -98,14 +99,14 @@ Waves 2 and 4-8 have one task each: it owns what its task file lists.
 ## Implementation Notes
 
 ### FIX_01: Green baseline
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Grip is a 24px target (region.css); every-node clears the selection before axe; size.spec `maxDiffPixels: 20`; board.spec screenshot on its own roadmap server (`tests/pages/roadmap-server.ts`), no baseline refreshed; review-colours reads distinct colours once (outside the named specs). send-access failure did not reproduce (5 full runs green): see the task file. Full suite green twice (657 passed). Selection bar covering a container's grip is open for UI_01 / the maintainer. Deviation (send-access left alone, review-colours fixed outside the named specs) accepted by the maintainer (point 284).
 
 ---
 
 ### FIX_02: A proposal on a retired card ends
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ The fold already closed proposals on a retire (retire.ts `foldRetire`, tested); the bug as described did not reproduce. Fixed the page side: `answerable` rows only, `proposalAct` undefined for an accept with no `ver`, `refresh` after a refused answer. `endsWhen` words and api.md updated. Unit, verify, check and the two proposals page specs green on 4705; no screenshot changed.
 
 ---
 

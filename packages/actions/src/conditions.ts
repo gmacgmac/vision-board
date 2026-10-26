@@ -199,13 +199,13 @@ export const CONDITIONS: Rows = {
   'proposal.open': {
     about: 'card', audience: 'person', shows: ['card', 'strip'], clearedBy: [],
     trueWhen: 'An agent proposed acknowledging or dropping a card that needs an answer and is not closed, on its latest version, and the person has not answered (api.md 93, 120).',
-    endsWhen: 'The person accepting or rejecting it, ✓ or ✗ on the card, or a newer version (then `proposal.stale`).',
+    endsWhen: 'The person accepting or rejecting it, ✓ or ✗ on the card, the card being retired, or a newer version (then `proposal.stale`).',
     derive: (s, ctx) => proposalsAt(s, ctx, 'open'),
   },
   'proposal.stale': {
     about: 'card', audience: 'person', shows: ['card', 'strip'], clearedBy: [],
     trueWhen: 'A proposal not yet answered on a card that needs an answer and is not closed, with a newer version than the one it was made on: it can only be rejected (api.md 93).',
-    endsWhen: 'The person rejecting it, or ✓ or ✗ on the card.',
+    endsWhen: 'The person rejecting it, ✓ or ✗ on the card, or the card being retired.',
     derive: (s, ctx) => proposalsAt(s, ctx, 'stale'),
   },
   'grant.requested': {

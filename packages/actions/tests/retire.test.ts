@@ -9,6 +9,7 @@ import { boardView, readLedger } from '../../format/src/index.ts';
 import {
   boardState, conditionsOf, containerDetail, counts, nodeDetail, openItems, owedNotice, pendingItems, retireCards, retireProblem,
 } from '../src/index.ts';
+import { standing } from '../src/proposals.ts';
 import { A, B, scene } from './ledger-v3.ts';
 
 const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendation: 'R' };
@@ -164,4 +165,21 @@ test('the person\'s retire of a container: a note on it waits for no Send; a lin
   assert.equal(containerDetail(s, 'b', 'q')!.retired !== undefined, true);
   const old = readLedger([...l.lines, JSON.stringify({ v: 15, seq: l.seq + 1, at: '2026-10-12T10:00:00Z', by: 'person', type: 'retire', board: 'b', cards: [5] })]);
   assert.match(old.problems.join(), /retire: written by an agent/);
+});
+
+test('a retire ends every proposal on its cards, open or out of date, by card or by container: none stands, none is a condition', () => {
+  const l = cards();
+  const open = l.agent(A, { type: 'propose', n: 6, ver: 1, action: 'ack', reason: 'Settled.' });
+  const second = l.agent(A, { type: 'propose', n: 6, ver: 1, action: 'drop', reason: 'Or this.' });
+  draw(l, 6, 2, { region: 'r', kind: 'question' });
+  const stale = l.agent(A, { type: 'propose', n: 5, ver: 1, action: 'ack', reason: 'Old.' });
+  draw(l, 5, 2, { region: 'r', kind: 'finding' });
+  const kinds = (b: string) => conditionsOf(l.state(), { board: b }).filter((c) => c.kind.startsWith('proposal.')).map((c) => [c.kind, c.id]);
+  assert.deepEqual(kinds('b'), [['proposal.stale', 6], ['proposal.stale', 6]], 'both stand, out of date, before the retire (a finding takes no proposal condition)');
+  const gone = l.agent(A, { type: 'retire', board: 'b', region: 'r', cards: [1, 5, 6] });
+  const s = l.state();
+  for (const seq of [open, second, stale]) {
+    assert.deepEqual([s.proposals.get(seq)!.outcome, s.proposals.get(seq)!.decidedBy, standing(s, s.proposals.get(seq)!)], ['closed', gone, undefined]);
+  }
+  assert.deepEqual(kinds('b'), [], 'no proposal condition on a retired card');
 });

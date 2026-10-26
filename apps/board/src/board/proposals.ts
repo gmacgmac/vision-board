@@ -29,10 +29,16 @@ export function proposalRows(s: LedgerState, found: readonly ProposalFound[], ti
   }).sort((a, b) => b.seq - a.seq);
 }
 
-/** The act for an answer: accepting is the proposal's own action at the card's version `ver`. */
-export const proposalAct = (row: ProposalRow, answer: ProposalAnswer, ver?: number): ActFields =>
-  (answer === 'accept' ? { action: row.action, n: row.n, ...(ver !== undefined && { ver }), proposal: row.seq }
-    : { action: 'reject', n: row.n, proposal: row.seq });
+/** The rows the person can answer: those on a card the board has a version for. A card the board
+ * can't find (it was removed) has none, and an accept without a version is one the server refuses. */
+export const answerable = (rows: readonly ProposalRow[], ver: (n: number) => number | undefined): ProposalRow[] =>
+  rows.filter((r) => ver(r.n) !== undefined);
+
+/** The act for an answer: accepting is the proposal's own action at the card's version `ver`, and
+ * with no version there is no act (undefined), so the page never sends an accept the server refuses. */
+export const proposalAct = (row: ProposalRow, answer: ProposalAnswer, ver?: number): ActFields | undefined =>
+  answer === 'reject' ? { action: 'reject', n: row.n, proposal: row.seq }
+    : ver === undefined ? undefined : { action: row.action, n: row.n, ver, proposal: row.seq };
 
 const verb = (row: ProposalRow) => ACTIONS[row.action].label.toLowerCase();
 

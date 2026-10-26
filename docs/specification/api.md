@@ -629,7 +629,9 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     check, so the person reads these words, not the ledger's. **Ending.** The fold sets a
     proposal's `decidedBy` and `outcome`: `rejected` by a `reject`, `accepted` by the act that
     names it, and `closed` for every other open proposal on a card the person acknowledges or
-    drops, through a proposal or not. `show_node`'s proposals carry both, or neither while open.
+    drops, through a proposal or not, and for every open proposal on a card that is retired (127).
+    The page shows no proposal on a card the board has no version for, and never sends an accept
+    without one; a refused answer makes the bar work its rows out again. `show_node`'s proposals carry both, or neither while open.
 94. **Seen by acting.** Any person act that names a card (`n` or `nodes`; every action but
     `send`, and not a note on or place for a whole container) also counts as the person seeing
     each named card's latest version at that line: the fold raises `seen`, never lowers it. No
@@ -645,8 +647,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     notes.
 96. **Conditions rows** (88): `proposal.open`, about a card, for the person, on the card and the
     strip: a proposal not yet answered on an undecided item, made on the card's latest version;
-    `proposal.stale`, the same once the card has a newer version (it ends on a reject or a
-    decision on the card); `item.awaiting`, about a card, for both, on the card: an item in Later
+    `proposal.stale`, the same once the card has a newer version (it ends on a reject, a
+    decision on the card, or the card's retire); `item.awaiting`, about a card, for both, on the card: an item in Later
     with no park after its "later" (the same helper as `item.owed`'s "later", so it is checked in
     one place). `item.unseen` is now for both and shown on the card; the page reads it as `ver >
     max(seen, 1)`, so a card at version 1 carries no "updates" tab. The agent's reading

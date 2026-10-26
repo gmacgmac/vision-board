@@ -236,9 +236,13 @@ vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
    keyboard and screen readers; its dots (a glyph, sized by the text tokens, hidden from assistive
    tech) show on hover of the label and on focus. The page sets data-dragging on the frame while it is
    moved: only its transform changes, so no transition. */
+/* Its target is 24px wide (WCAG 2.5.8), as high as it is: the 16px it draws plus 8px into the gap before
+   the title, taken back by the same negative margin so the line lays out as it did. The tint draws on
+   the 16px (background-clip) and the focus ring on a pseudo-element of that size, so neither grows. */
 vb-region .vb-region-grip {
-  display: grid; place-items: center; flex: none; width: var(--vb-space-4); height: var(--vb-space-5); padding: 0;
-  border: 0; border-radius: var(--vb-radius-sm); background: none; color: var(--vb-ink-subtle); cursor: grab;
+  position: relative; display: grid; place-items: center; flex: none; box-sizing: content-box; width: var(--vb-space-4); height: var(--vb-space-5);
+  padding: 0 var(--vb-space-2) 0 0; margin-inline-end: calc(-1 * var(--vb-space-2));
+  border: 0; border-radius: var(--vb-radius-sm); background: none; background-clip: content-box; color: var(--vb-ink-subtle); cursor: grab;
 }
 vb-region .vb-region-grip::before {
   content: '\283F' / ''; font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font-mono); line-height: 1;
@@ -248,9 +252,13 @@ vb-region .vb-region-label:hover .vb-region-grip::before, vb-region .vb-region-g
 vb-region .vb-region-grip[data-look]::before, vb-region .vb-region-handle[data-look] .vb-region-grip::before,
 vb-region[data-dragging] .vb-region-grip::before { opacity: 1; }
 vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'], vb-region .vb-region-handle:is(:hover, [data-look]) .vb-region-grip {
-  color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
+  color: var(--vb-ink-strong); background-color: var(--vb-surface-sunken);
 }
-vb-region .vb-region-grip:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-region .vb-region-grip:is(:focus-visible, [data-look='focus']) { outline: none; }
+vb-region .vb-region-grip:is(:focus-visible, [data-look='focus'])::after {
+  content: ''; position: absolute; inset: 0 var(--vb-space-2) 0 0; border-radius: var(--vb-radius-sm);
+  outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px;
+}
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
 vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
 

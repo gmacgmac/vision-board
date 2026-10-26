@@ -7,7 +7,7 @@ import { readLedger } from '../../../packages/format/src/index.ts';
 import { applyEvent, foldLedger } from '../../../packages/actions/src/index.ts';
 import type { LedgerState } from '../../../packages/actions/src/index.ts';
 import { pageConditions } from '../src/board/board-data.ts';
-import { acceptAllPlan, acceptAllWords, answerDone, barWords, proposalAct, proposalRows } from '../src/board/proposals.ts';
+import { acceptAllPlan, acceptAllWords, answerDone, answerable, barWords, proposalAct, proposalRows } from '../src/board/proposals.ts';
 
 const A = 'a-aaaa1111';
 let seq = 0;
@@ -81,4 +81,21 @@ test('a decision on the card ends its proposals: no row is left for it', () => {
   const s = ledger();
   applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'person', type: 'act', action: 'ack', id: 3, ver: 1 });
   assert.deepEqual(pageConditions(s, 'b').proposals.map((p) => p.n).sort(), [1, 2]);
+});
+
+test('a retire ends the proposals on its cards: no row is left for them', () => {
+  seq = 0;
+  const s = ledger();
+  applyEvent(s, { v: 10, seq: s.seq + 1, at: '2026-10-08T14:00:00Z', by: 'agent', agent: A, type: 'retire', board: 'b', cards: [3, 2] });
+  assert.deepEqual(pageConditions(s, 'b').proposals.map((p) => p.n), [1]);
+});
+
+test('an accept needs the card\'s version: with none the act is never built and the row is not answerable', () => {
+  seq = 0;
+  const s = ledger();
+  const rows = proposalRows(s, pageConditions(s, 'b').proposals, time);
+  assert.equal(proposalAct(rows[0]!, 'accept'), undefined);
+  assert.deepEqual(proposalAct(rows[0]!, 'reject'), { action: 'reject', n: rows[0]!.n, proposal: rows[0]!.seq });
+  const ver = (n: number) => (n === 3 ? undefined : 1);
+  assert.deepEqual(answerable(rows, ver).map((r) => [r.n, r.action]), [[2, 'ack'], [1, 'drop']], 'card 3 has no version on the board: its rows go');
 });

@@ -43,7 +43,10 @@ for (const theme of THEMES) {
     const tips = page.locator('.vb-tip');
     expect(await tips.count()).toBeGreaterThan(0);
     const want = await pixel(page, await resolved(page, 'var(--vb-line-contrast)'));
-    for (const border of await tips.evaluateAll((all) => all.map((e) => getComputedStyle(e).borderTopColor))) {
+    // Each distinct colour once: the gallery holds hundreds of tips, and a pixel read per tip took the test
+    // to the edge of its 30s (27s light, 30s dark under load).
+    const borders = new Set(await tips.evaluateAll((all) => all.map((e) => getComputedStyle(e).borderTopColor)));
+    for (const border of borders) {
       expect(await pixel(page, border)).toEqual(want);
     }
     const raised = await pixel(page, await resolved(page, 'var(--vb-surface-raised)'));

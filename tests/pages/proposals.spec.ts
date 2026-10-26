@@ -133,6 +133,25 @@ test('Accept drops the card through the proposal; the tab and the bar go', async
   expect(typeof act!.proposal).toBe('number');
 });
 
+test('retiring the card ends its proposal: the tab and the bar go, and the page sends no accept without a version', async ({ page, request }) => {
+  const d = await draw(request, ['question', 'question']);
+  const [n, other] = d.n as [number, number];
+  await open(page, d);
+  await propose(request, d, n, 'cross', 'the client declined');
+  await propose(request, d, other, 'check', 'settled in chat');
+  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('2 proposals');
+  const sent: string[] = [];
+  page.on('request', (r) => { if (r.method() === 'POST' && r.url().includes('/act')) sent.push(r.postData() ?? ''); });
+  await write(request, d, [{ type: 'retire', n }]);
+  await expect(card(page, n)).toHaveCount(0);
+  await expect(bar(page).getByRole('heading', { level: 2 })).toHaveText('1 proposal');
+  await bar(page).getByRole('button', { name: 'Accept all (1)' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Apply 1 proposal' }).click();
+  await expect(card(page, other)).toHaveAttribute('data-status', 'acknowledged');
+  await expect(bar(page)).toHaveCount(0);
+  expect(sent.filter((b) => !b.includes('"ver"')), 'every accept carries the card version').toEqual([]);
+});
+
 test('Reject clears the proposal and leaves the card open', async ({ page, request }) => {
   const d = await draw(request);
   const [n] = d.n as [number];
