@@ -15,7 +15,7 @@ A research task produces a **research result file** — a self-contained documen
 
 ## Pre-Flight
 
-1. Read the research task file — note its Research Objectives, Execution Steps, and Constraints.
+1. Read the research task file — note its Research Objectives, Steps, and Constraints.
 2. Consult `references/methodology.md` — apply Universal Tenets + the directives for the task's `research_category` (from frontmatter).
 3. If security-relevant, consult `references/security-methodology.md` — applies when `research_category` includes `security` OR the task content surfaces security concerns. Load on demand; do not preload for non-security tasks.
 4. Confirm research mode: the task has `type: research` and an explicit "DO NOT implement" constraint.
@@ -34,7 +34,7 @@ If your environment exposes a specialized research/context-gathering sub-agent, 
 
 ### Fallback: Direct Execution
 
-If no sub-agent is available: read the task's Execution Steps, execute directly using read/grep tools. Be deliberate about what you read — don't over-fetch. **Long File Strategy applies here too**: when writing the result file, if it exceeds 50 lines, CREATE then APPEND in chunks.
+If no sub-agent is available: read the task's Steps, execute directly using read/grep tools. Be deliberate about what you read — don't over-fetch. **Long File Strategy applies here too**: when writing the result file, if it exceeds 50 lines, CREATE then APPEND in chunks.
 
 In either case, the output shape is identical.
 
@@ -47,7 +47,7 @@ In either case, the output shape is identical.
 Invoke the chosen sub-agent with the research task file as contextFile. Prompt:
 
 ```
-Execute the research task in the provided file. Follow its Research Objectives and Execution Steps exactly.
+Execute the research task in the provided file. Follow its Research Objectives and Steps exactly.
 
 Rules:
 - RESEARCH ONLY. Do NOT modify any source files.
@@ -61,7 +61,7 @@ Return Contract:
 RESEARCH_TASK: <task file path>
 STATUS: COMPLETED | BLOCKED
 FINDINGS: <structured prose, one section per Research Objective>
-BLAST_RADIUS: <files affected, classified as trivial/non-trivial>
+BLAST_RADIUS: <files affected, classified as local/cross-module>
 RECOMMENDATIONS: <numbered list of recommended next steps>
 ASSUMPTIONS: <explicit assumptions underpinning the findings>
 NOTES: <anything the orchestrator needs to know>
@@ -72,7 +72,7 @@ Parse the structured block. Do not re-read files the sub-agent already audited.
 
 ### Direct Execution
 
-Walk the task's Execution Steps in order. Read only what's necessary. Build findings internally.
+Walk the task's Steps in order. Read only what's necessary. Build findings internally.
 
 ---
 

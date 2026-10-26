@@ -29,7 +29,8 @@ enforced when the module loads, so a malformed route refuses to start, naming it
 ## One API shape
 
 - Consistent resource shapes, error envelope, paging and naming across every route.
-- Errors are codes, not sentences; the client owns the words.
+- Errors are codes, not sentences; the client owns the words, in its words files
+  (`references/words.md`).
 - Shared shapes (batch request/result, list page, error) are named schemas reused by `$ref`.
 - Each convention is a row in a conventions index with a test that asserts it over **every**
   route in the served spec — not a fixture. A new route is held to the rule the moment it exists.

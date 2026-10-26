@@ -36,7 +36,10 @@
 - **Files to reference**: `path/to/reference.extension`
 - **Patterns to follow**: [Link or description]
 - **Shared artifacts to reuse**: `path/to/shared.ext` (`symbolName`) — built by [TASK_ID]. Import it; do not re-create it. See TASK-STATUS.md Shared Foundations.
-- **Skills**: `cortex-architecture` (dev work) · `cortex-docs` (doc work, or code a doc describes) — load before starting. Delete if none apply.
+- **Skills**: `cortex-architecture` (dev work) · `cortex-docs` (doc work, or code a doc describes) · `cortex-research` (investigation only), plus any project skill the task needs — load before starting. Delete if none apply.
+
+> Modify only the files this task owns (TASK-STATUS.md File Ownership, or *Files to modify*).
+> Need a change in a file you don't own? Don't make it — list it under `REQUESTS` in your return block.
 
 ---
 
@@ -58,6 +61,7 @@
 ## Implementation Notes
 
 _To be completed by agent after task completion._
+_Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
 **Status**: Pending  
 **Completed**: YYYY-MM-DD HH:MM  
@@ -67,6 +71,9 @@ _To be completed by agent after task completion._
 
 ### Issues & Resolutions
 - 
+
+### Caught Beyond the Brief
+- None / [what you noticed that this task didn't ask about]
 
 ### Deviations from Plan
 - None / [Describe if any, and why approved]
@@ -86,5 +93,6 @@ _To be completed by agent after task completion._
 
    `[CATEGORY]` from `PROFILE.md` §2. Cite files by path + symbol, never by line number.
 
-> The orchestrator logs the **set** separately when every task is done — do not write that entry,
-> and do not write to `AUDITED.md`. That is `cortex-garden`'s ledger alone.
+> The **set** entry is written once, by whoever closes the set — the orchestrator, or with no
+> orchestrator the agent that finishes the last row (`cortex-task-exe` § Task-Set Frontmatter
+> Lifecycle). As a sub-agent, never write it. Do not write to `AUDITED.md`. That is `cortex-garden`'s ledger alone.

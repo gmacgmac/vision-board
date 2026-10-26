@@ -1,8 +1,8 @@
-# Registries: References and Conditions
+# Registries: References, Conditions and Jobs
 
-Replace scattered local checks with two declared tables. **References** say who depends on whom
+Replace scattered local checks with declared tables. **References** say who depends on whom
 and hold no state. **Conditions** say what is true now. Root cause comes from walking one with
-the other.
+the other. **Jobs** say what is running now — added only when the project needs it.
 
 The failure they prevent: the same fact re-derived in three places — a delete route, a banner
 and a screen each decide "this is orphaned" — and the day a new kind is added, the copies
@@ -42,6 +42,21 @@ For each condition, take its `entity`, walk the reference edges to what it depen
 it at the condition about that dependency. No scoring, no hand-written cause pairs. A surface
 draws a symptom **under** its root, never on its own.
 
+## Jobs — what is running now
+
+Add it once two or more kinds of long-running work exist (downloads, imports, builds). Until
+then, keep progress local.
+
+One table keyed by job kind, typed `Record<Kind, Row>`. Each row declares its label, `scope`
+(one item's, or the whole install's) and whether it can be cancelled. One tracker holds every
+running job: started, progress, done, failed, cancelled.
+
+- **Unlike the other two, it holds state.** Workers write to it; everything else only reads.
+- **Callers use its interface** (start, update, finish, list), never its storage — so where jobs
+  live can change without touching a caller.
+- **It reports; it doesn't schedule.** A queue still decides what runs next.
+- **A failed job raises a condition**, so failures surface where every other fact does.
+
 ## When to use a local check
 
 A local check is fine for state one screen owns. The moment a second reader appears, move it to
@@ -53,3 +68,5 @@ the tables.
 - Every edge's read is exercised: a dependant appears in `dependents`; deleting its referent
   makes it an orphan; re-adding heals it.
 - Root-cause attribution over a fixture with a known dependency chain.
+- Jobs, if present: every kind has a row; a job moves through each state; a failure raises its
+  condition.

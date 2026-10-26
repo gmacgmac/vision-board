@@ -10,7 +10,7 @@ When the task `type` is `research`, apply these format changes:
 1. Banner: `> **RESEARCH ONLY — DO NOT implement.**`
 2. Problem Statement
 3. Research Objectives (RO-1, RO-2, ... with specific questions)
-4. Execution Steps (read/grep/trace actions to satisfy objectives)
+4. Steps (read/grep/trace actions to satisfy objectives)
 5. Files Involved table (read-only inputs, not files to modify)
 6. Constraints (must include "DO NOT modify any source file")
 7. Success Criteria (checkboxes, mapped to ROs)

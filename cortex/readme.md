@@ -1,6 +1,6 @@
 # Cortex System
 
-> **Version**: 3.2 | **Updated**: 2026-07-30
+> **Version**: 3.3 | **Updated**: 2026-10-21
 
 A structured kernel for AI-augmented development and project management. Designed for Kiro agents operating autonomously across any project.
 
@@ -74,7 +74,7 @@ Eleven skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.
 | `cortex-route` | Explicit routing: classify an item, resolve the handler per `router.md § Resolution` |
 | `cortex-garden` | The Gardener: coalesce LOG entries into threads, verify changes, fix doc-drift inside the tracked surface, report it in flagged files (read-only outside both) |
 | `cortex-docs` | Write and file docs in the doc surface, and keep them true: every claim about code held by a symbol and a named test |
-| `cortex-architecture` | How code is organized: reuse, one job per file, one source per contract (schema → code → OpenAPI → MCP), registries for dependencies and conditions |
+| `cortex-architecture` | How code is organized: reuse, one job per file, one source per contract (schema → code → OpenAPI → MCP), one interface per concern, registries for dependencies, conditions and jobs, one home per sentence (words files) |
 | `cortex-archive` | Retire or supersede content into `.archive/` |
 | `cortex-search` | Layered search across the doc surface and project |
 | `cortex-write-task` | Create task files (single or multi-file) from templates |
@@ -89,10 +89,10 @@ Eleven skills under `.kiro/skills/`, each a self-contained folder with a `SKILL.
 
 | Component | Count | Size (bytes) | ~Tokens |
 |-----------|-------|-------------|---------|
-| Steering (5 files inline: rules, change-protocol, routing, profile, principles) | 5 files | ~12,477 | ~3,119 |
-| `PROFILE.md` (resolved by the `cortex-profile` link) | 1 | ~2,798 | ~700 |
-| Skill descriptions (name + description × 10) | 10 | ~3,072 | ~768 |
-| **Total always-in-context** | **16** | **~18,347** | **~4,587** |
+| Steering (5 files inline: rules, change-protocol, routing, profile, principles) | 5 files | ~14,651 | ~3,662 |
+| `PROFILE.md` (resolved by the `cortex-profile` link) | 1 | ~3,097 | ~774 |
+| Skill descriptions (name + description × 11) | 11 | ~3,703 | ~925 |
+| **Total always-in-context** | **17** | **~21,451** | **~5,362** |
 
 **On-demand (NOT resident):** `router.md`, `REGISTRY.md`, and every skill *body* — loaded only
 when a skill or reflex needs them. Token estimate uses ~4 chars/token. A project's resident cost

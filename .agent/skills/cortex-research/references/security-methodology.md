@@ -85,4 +85,4 @@ Could-not-determine (explicit gaps):
 1. Task frontmatter includes `research_category: security` (or combined), or the content surfaces security concerns.
 2. The `cortex-research` skill Pre-Flight step 3 routes here on demand.
 3. Agent applies general Universal Tenets plus security tenets, scopes vectors from the menu, produces verdict-gated output.
-4. Execution mechanics (isolation, static-before-dynamic, sandbox tooling) live in the task file's Execution Steps — not here.
+4. Execution mechanics (isolation, static-before-dynamic, sandbox tooling) live in the task file's Steps — not here.

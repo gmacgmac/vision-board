@@ -36,6 +36,16 @@
 
 ---
 
+## House Rules
+
+_Optional — omit if none. Project rules every task and the orchestrator follow for this set._
+
+- **Orchestrator-only files**: [e.g. lockfiles, generated code, version files — mirror TASK-STATUS.md File Ownership]
+- **Commits**: none during the set (default) / [e.g. orchestrator commits once per wave]
+- **Project checks**: [e.g. file-length limits, required type-check]
+
+---
+
 ## Out of Scope
 
 - [Explicitly list what this task will NOT do]

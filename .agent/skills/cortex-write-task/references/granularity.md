@@ -45,7 +45,7 @@ Same wave = runs in parallel. Higher wave = runs later. You assign these in TASK
 `Wave` column; the orchestrator obeys them without reading task files.
 
 **Same wave only if all hold:**
-- Disjoint file sets — no shared target.
+- Disjoint file sets — no shared target. Record them in TASK-STATUS.md's File Ownership table.
 - Neither consumes anything the other creates.
 - Neither needs to see the other's output to decide its approach.
 

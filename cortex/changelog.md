@@ -16,13 +16,44 @@
 
 ---
 
-## v4.0.0 — 2026-10-15
+## v4.1.1 — 2026-10-21
+**Root README with GitLab and GitHub install steps; never shipped to consumers.**
+
+### Synced
+- `README.md` (template repo only): what Cortex is, install for GitLab (internal, SSH) and GitHub (public), `/cortex-setup`, `copier update`, what gets installed, troubleshooting.
+- `copier.yml`: `/README.md` added to `_exclude`, so a consumer's own README is never created, merged or overwritten.
+- Tag `v4.0.1` points at the same README commit; it was numbered below the existing v4.1.0 by mistake. Use v4.1.1.
+
+### Migrations
+- None.
+
+---
+
+## v4.1.0 — 2026-10-21
+**Task sets coordinate better: requests, file ownership, gates between waves, personas. Architecture gains one interface per concern, jobs and words.**
+
+### Synced
+- Task sets: sub-agents list changes they need in files they don't own (`REQUESTS`); the orchestrator routes each one.
+- TASK-STATUS: File Ownership, Requests and Persona; PLAN: optional House Rules.
+- Parallel runs check between waves: requests routed, orchestrator files updated, tests green.
+- Only the orchestrator closes a set, after the full tests. Sub-agents never commit.
+- Re-runs add a Run N block; tasks that need a person live run in the foreground.
+- Trivial changes need no task file, but are logged and committed.
+- `cortex-architecture`: one interface per concern; jobs registry; words files (`references/words.md`).
+- Research blast radius is `local` / `cross-module`; "Execution Steps" is now "Steps".
+
+### Migrations
+- None. No change to `PROFILE.md` or `REGISTRY.md`. Older task sets keep working: the orchestrator adds a Requests table when needed, and asks before running a parallel wave that has no File Ownership table.
+
+---
+
+## v4.0.0 — 2026-10-16
 **Breaking: `cortex-organize` renamed `cortex-docs`; new `cortex-architecture` skill. Docs are held true by tests, not re-read later.**
 
 ### Synced
 - `cortex-docs` (was `cortex-organize`): filing flow kept; adds "Keep it true" — every claim about code cites a symbol and a test, never a line number; no current state in durable docs; numbers derived from code constants; audit-first UPDATE (cite, test, or delete each claim). New `references/doc-truth.md`: mechanism shape (Property / Where / Proven by / Not covered), index + three-way tripwire tests, symbol-existence test, VERIFY doc audit, no-test-suite fallback.
 - `cortex-architecture` (new): before-you-build checklist and rules for reuse, one job per file, one source per contract, one layer per concern, and registries. References: `contracts.md` (schema → code → OpenAPI → MCP, tested end to end), `registries.md` (references and conditions, root cause by walking edges).
-- `cortex-write-task`: Skill Routing table; planner loads `cortex-architecture` for dev work and names skills in each task; VERIFY runs the doc audit when code a doc describes changes.
+- `cortex-write-task`: Skill Routing table (replaces the v3.3.3 doc-placement Constraints line — doc tasks name `cortex-docs`); planner loads `cortex-architecture` for dev work and names skills in each task; VERIFY runs the doc audit when code a doc describes changes.
 - `task-template.md` (`Skills` input), `single-task-template.md` (`skills:` frontmatter), `generic-document.md` (Mechanism block).
 - `cortex-change-protocol.md`, `CORTEX-SYSTEM.md`, `cortex-archive`, `cortex/readme.md`: references updated to `cortex-docs`.
 
@@ -32,7 +63,7 @@
 
 ---
 
-## v3.3.3 — 2026-10-15
+## v3.3.3 — 2026-10-16
 **Trimmed for stronger models; stale references and contradictions removed.**
 
 ### Synced
@@ -41,7 +72,7 @@
 - `task-template.md`, `single-task-template.md`: Pre-Task Requirements block removed; `cortex-write-task` now adds a doc-placement Constraints line instead.
 - `task-status-template.md`: table status `COMPLETED` → `Completed`.
 - `sequential.md`, `parallel.md`: Pre-Loop Pledge replaced by a one-line read-discipline checkpoint; redundant AUDITED reminder dropped from dispatch prompts; "No external dependencies" scoped to "unless the task file calls for them". Long File Strategy and `cwd` reminders kept.
-- `cortex-write-task`: FE/BE split generalised to surface boundaries.
+- `cortex-write-task`: FE/BE split generalised to surface boundaries; `research-variant.md` "Agent Notes" → "Implementation Notes".
 - `cortex-organize`: stale PROFILE §3/§5 references point to `REGISTRY.md` `docs`; archive-before-update removed; tasks deferred to `cortex-write-task`; duplicate check uses `cortex-search`.
 - `cortex-archive`: `versioned` reason removed — archiving always moves; no pre-edit snapshots.
 - `cortex-search`: Layer 1 scopes to `include` + `flag` minus `exclude`; shell commands replaced with tool-agnostic steps; Scaling table removed.
@@ -51,7 +82,7 @@
 
 ---
 
-## v3.3.2 — 2026-10-12
+## v3.3.2 — 2026-10-15
 **Model class per task, reuse-never-copy, and scoped testing for sub-agents.**
 
 ### Synced

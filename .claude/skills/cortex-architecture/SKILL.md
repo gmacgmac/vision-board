@@ -1,6 +1,6 @@
 ---
 name: cortex-architecture
-description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, and central registries for dependencies and conditions. Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
+description: "How code is organized so it stays reusable, consistent and testable: reuse-before-create, one job per file, one source per contract (schema → code → OpenAPI → MCP), one layer per concern, central registries for dependencies, conditions and jobs, and one home per sentence (words files). Use when planning or building front-end, back-end, API, MCP, schema, data-layer or shared-component work. Not for visual design — how the UI looks."
 ---
 
 # Architecture
@@ -17,17 +17,19 @@ where the task names it.
 **Project numbers live in project steering** — file-length limits, layer names, token names.
 This skill gives the method and defaults.
 
-## Before you build — answer in order, stop at the first "no"
+## Before you build — answer in order; settle each point before the next
 
-1. **Is there a task for it?** Non-trivial work is planned in a task file first.
+1. **Is it planned?** Non-trivial work is planned in a task file first; trivial work needs none
+   (`cortex-change-protocol` § Trivial changes).
 2. **Does a pattern already exist?** Search for it (UI component, request helper, action, test
    fixture). Extend it before creating one.
 3. **Is the contract defined?** Data shapes and endpoints exist in the schema / spec first. Missing
    → change the contract, then build.
 4. **Does an action already exist?** Anything a user or agent can do goes through the action layer.
 5. **Does a decision already cover it?** Follow it, or plan a superseding decision.
-6. **Will a second place need to know this?** If yes, it goes in a registry (§ Registries), not a
-   local check.
+6. **Will a second place need to know this?** If yes, it goes in a registry (rule 6,
+   `references/registries.md`), not a local check.
+7. **Does it show or send a sentence?** It goes in a words file (rule 7), not in the code.
 
 ## The rules
 
@@ -42,20 +44,29 @@ This skill gives the method and defaults.
    live in `store/skills/`. Code outside the folder imports only the public file.
 4. **One source per contract.** Every contract has exactly one source; everything else is
    generated from it or tested against it. See `references/contracts.md`.
-5. **One layer per concern.** One request / I/O layer (only it calls APIs or touches files; it
-   validates what it reads and writes). One action layer shared by people and agents. A button
-   never calls an API directly.
+5. **One layer per concern, one interface into it.** Callers use the interface and never reach
+   past it to the storage or mechanism behind. That single point is where logging, routing,
+   testing and later swaps (memory → database, one provider → another) happen, without touching
+   a caller. Defaults: one request / I/O layer (only it calls APIs or touches files; it validates
+   what it reads and writes). One action layer shared by people and agents. A button never calls
+   an API directly.
 6. **App-wide awareness goes through registries, never a local check.** Dependencies are edges in
-   a references table; facts more than one place must know are rows in a conditions table. See
+   a references table; facts more than one place must know are rows in a conditions table;
+   long-running work, once there is more than one kind, is tracked in a jobs table. See
    `references/registries.md`.
-7. **Mock the data, not the screens.** Fixtures in the exact contract shape; switching to real
+7. **Words have one home.** Every sentence a person or an agent reads — screen text,
+   notifications, errors, tool descriptions and refusals — lives in a words file for its area,
+   never in the code that shows or sends it. Code imports the words. Start the home with the
+   first screen; add the test that enforces it once text spans several files. See
+   `references/words.md`.
+8. **Mock the data, not the screens.** Fixtures in the exact contract shape; switching to real
    data is a setting, not a rebuild.
-8. **UI structure is pattern-owned.** Each control in a plan names the component it reuses,
+9. **UI structure is pattern-owned.** Each control in a plan names the component it reuses,
    decided at planning; no fit → ask the user. Style comes only from design tokens. Every state
    (idle, hover, focus, pressed, loading, success, error, disabled; data: loading, empty, error,
    partial, stale) belongs to the pattern, so a screen gets it by reuse. Accessibility is a gate.
-9. **A bug fix starts with the failing test.**
-10. **Prompts and agent instructions are code** — versioned, reviewed, and run against scenarios
+10. **A bug fix starts with the failing test.**
+11. **Prompts and agent instructions are code** — versioned, reviewed, and run against scenarios
     before they change.
 
 ## Planning outputs
@@ -63,7 +74,8 @@ This skill gives the method and defaults.
 When this skill shapes a plan, PLAN.md / task files record:
 - the existing pattern or module each piece reuses (path + symbol);
 - the contract change that comes first, and the tests that hold code to it;
-- any new registry row (reference edge or condition) and who reads it;
+- any new registry row (reference edge, condition or job kind) and who reads it;
+- the words file each new sentence goes in;
 - shared artifacts in TASK-STATUS.md Shared Foundations.
 
 Docs that describe this code are held true by `cortex-docs`.

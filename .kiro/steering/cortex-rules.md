@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 2.8 | **Updated**: 2026-10-15
+> **Version**: 2.9 | **Updated**: 2026-10-21
 
 0. When writing documentation or comments, NEVER include PII as examples. Always use non-identifiable examples.
 1. We opt for Concise Code
@@ -23,7 +23,7 @@ inclusion: always
    GitHub Actions: Pin actions by full commit SHA, not tag. Tags can be force-pushed (ref: Trivy/TeamPCP March 2026).
    Credential Safety: Never expose environment variables or secrets during any install or build process.
    Context: The March 2026 TeamPCP campaign compromised Trivy, npm packages, Checkmarx KICS, and litellm on PyPI in a single week-long chain.
-12. Some agents like KIRO do NOT read the `.agent/` folder by default, so Cortex ships Kiro steering files under `.kiro/steering/`. The rule files are self-contained; `cortex-profile`/`cortex-principles` link their source with Kiro's file-include directive (e.g. to `cortex/PROFILE.md`). You MUST ALWAYS read any linked target files.
+12. Some agents like KIRO do NOT read the `.agent/` folder by default, so Cortex ships Kiro steering files under `.kiro/steering/`. The rule files are self-contained; `cortex-profile` links its source with Kiro's file-include directive (to `cortex/PROFILE.md`). You MUST ALWAYS read any linked target files.
 13. Grounding (reputation-critical): classify output CREATIVE or GROUNDED before writing.
    CREATIVE (ideation, naming, tone) — grounding optional.
    GROUNDED (sales, pricing, accounting, math, legal, RFP, compliance, client-facing,

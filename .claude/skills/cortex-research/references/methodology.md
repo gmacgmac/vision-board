@@ -31,7 +31,7 @@ Researching how to implement, replace, or refactor something in the codebase.
 **Directives:**
 - Map all call-sites and consumers of the target code before proposing changes.
 - Identify shared interfaces — changes here ripple to every consumer.
-- Classify blast radius: `trivial` (localised, no API change) vs `non-trivial` (cross-module, breaking).
+- Classify blast radius: `local` (one module, no API change) vs `cross-module` (spans modules, or breaks an interface).
 - Check for existing tests that would break or need updating.
 - Surface any circular dependencies the change introduces.
 - Output must include: files-affected table, breaking-change assessment, recommended task ordering.

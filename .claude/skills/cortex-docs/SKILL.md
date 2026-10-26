@@ -9,7 +9,8 @@ Two jobs: put a doc in the right place, and keep what it says true. The second j
 the test suite at the moment of change — not by someone re-reading docs later.
 
 **Docs come from task files.** Doc work is planned in a task (`cortex-write-task`), so the
-reasoning is recorded with it. A small ad-hoc doc edit still follows this skill.
+reasoning is recorded with it. A trivial doc edit (`cortex-change-protocol` § Trivial changes)
+needs no task, but still follows this skill.
 
 ## 1. Classify
 

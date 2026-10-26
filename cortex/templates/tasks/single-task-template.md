@@ -6,7 +6,8 @@ status: pending      # pending | in-progress | completed | deferred
 categories: []       # From cortex/PROFILE.md §2 (Categories)
 type: implementation # implementation | research | analysis | migration | review
 model: standard      # standard | strong — mapped to a model by project steering
-skills: []           # cortex-architecture (dev work) | cortex-docs (doc work) | cortex-research — load before starting
+persona:             # optional: <real job title> — <1–2 sentences: what they won't compromise on>; required for review and strong tasks
+skills: []           # cortex-architecture (dev work) | cortex-docs (doc work) | cortex-research | any project skill — load before starting
 tracker:             # optional: path#ID[,ID]
 ---
 
@@ -40,6 +41,9 @@ tracker:             # optional: path#ID[,ID]
 | `path/to/target.extension` | Target for changes |
 | `path/to/reference.extension` | Reference implementation |
 
+> Modify only the files listed for changes here. Need a change elsewhere? Don't make it — list it
+> under `REQUESTS` in your return block (sub-agent), or tell the user.
+
 ---
 
 ## Constraints
@@ -69,6 +73,7 @@ tracker:             # optional: path#ID[,ID]
 ## Implementation Notes
 
 _To be completed by agent after task execution._
+_Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
 **Completed**: YYYY-MM-DD HH:MM
 
@@ -77,6 +82,9 @@ _To be completed by agent after task execution._
 
 ### Issues & Resolutions
 - 
+
+### Caught Beyond the Brief
+- None / [what you noticed that this task didn't ask about]
 
 ### Deviations from Plan
 - None / [Describe if any, and why approved]

@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 1.4 | **Updated**: 2026-08-18
+> **Version**: 1.6 | **Updated**: 2026-10-21
 
 One change lifecycle: gates **before** you edit, a record **after** you edit.
 
@@ -24,6 +24,19 @@ here** — load it when an edit might touch a doc.
 **System files**: anything matching `cortex/*`, `.kiro/steering/cortex-*.md`, or
 `.kiro/skills/cortex-*/` is system content — one category, `[cortex-infra]`, always logged.
 Discover them by pattern; this file deliberately keeps no inventory.
+
+## Trivial changes
+
+Decide this before you start: does the change need a task file?
+
+**Trivial** = one area (one category, one surface) · no contract change (API, schema, shared
+type, public interface) · no decision for the user. All three hold → **no task file**. Any one
+fails → plan it in a task (`cortex-write-task`).
+
+Trivial still needs a record:
+- a LOG entry with the `Informal change` trail (§ After editing);
+- a commit. Several trivial changes may share one commit; its message names each. Commit only
+  when the user asks — otherwise tell them what is ready to commit.
 
 ## After editing — LOG.md
 

@@ -1,13 +1,15 @@
 # Sequential Orchestration Protocol
 
 You are the orchestrator. Your ONLY job is to coordinate — you NEVER do task work directly.
+One exception: a task that needs a person live you run yourself, in the foreground (SKILL.md
+§ Sub-Agent Dispatch Protocol).
 
 ## Input Modes
 
 - **Batch mode**: A TASK-STATUS.md containing a table of tasks.
 - **Individual mode**: One or more standalone task files provided directly by the user.
 
-In BOTH cases, spawn a task-execution sub-agent for EACH task. One sub-agent per task, sequentially.
+In BOTH cases, spawn a task-execution sub-agent for EACH task (except the live-person exception above). One sub-agent per task, sequentially.
 
 ---
 
@@ -17,7 +19,9 @@ In BOTH cases, spawn a task-execution sub-agent for EACH task. One sub-agent per
 1. Read TASK-STATUS.md — extract the task table.
 2. Read PLAN.md — understand the full context.
 3. Identify pending tasks — filter for `Pending` or `In Progress` status, preserve order.
-4. Frontmatter Lifecycle (SKILL.md): flip `status` to `in-progress` if needed.
+4. Note the **File Ownership** table if present — which task owns which files, and the
+   `orchestrator` row of files only you may touch. Note PLAN.md's **House Rules** if present.
+5. Frontmatter Lifecycle (SKILL.md): flip `status` to `in-progress` if needed.
 
 ### Individual Mode
 1. Read each task file provided by the user.
@@ -25,7 +29,7 @@ In BOTH cases, spawn a task-execution sub-agent for EACH task. One sub-agent per
 3. If a task file references a parent context doc, read that too.
 
 ### Then (both modes)
-4. Confirm with user: "I found N pending tasks: [list]. Proceeding sequentially via sub-agents."
+Confirm with user: "I found N pending tasks: [list]. Proceeding sequentially via sub-agents."
 
 ---
 
@@ -42,7 +46,7 @@ For each pending task (in order):
 ### 1. Prepare
 - Identify the next pending task ID.
 - DO NOT read the task file yourself — the sub-agent will.
-- DO NOT re-read TASK-STATUS.md or PLAN.md inside the loop.
+- DO NOT re-read PLAN.md inside the loop. Re-read TASK-STATUS.md only to route requests (§ 3).
 
 ### 2. Dispatch
 
@@ -52,15 +56,20 @@ Invoke a task-execution sub-agent with:
 - Batch mode: TASK-STATUS.md and PLAN.md
 - Individual mode: the task file itself (and parent docs if any)
 
-**Prompt** (lean):
+**Prompt** (lean; persona lines only when the task has one — batch: its `Persona` cell, individual: its `persona:` field; none or `—` → omit both):
 ```
+{Persona, verbatim}
+This is your point of view. Use it to notice problems the task doesn't mention. It never changes your scope, file ownership or stop rules — report what you notice (REQUESTS / NOTES / BLOCKED), don't act outside your task.
+
 Complete the next pending task ({TASK_ID}) from the provided TASK-STATUS.md.
 
 Rules:
 - You are a Sub-Agent
-- Read the task file and PLAN.md for full context
+- Read the task file and PLAN.md for full context; load the skills its Skills field names before starting
 - Read notes from completed tasks before starting
+- Only modify the files your task owns (TASK-STATUS.md File Ownership if present, otherwise your task's Files to modify / Files Involved). Need a change in a file you don't own? Don't make it — list it under REQUESTS
 - No git commits
+- Don't close the set (`status: completed`, the set LOG entry) — the orchestrator does that
 - Don't over-engineer — be concise
 - Reuse existing patterns: search the repo first, import or follow what exists, never copy it
 - If you need to deviate from the plan, report back to the orchestrator
@@ -77,15 +86,27 @@ TASK_ID: {TASK_ID}
 STATUS: COMPLETED | BLOCKED | DEVIATION
 FILES: <comma-separated paths created/modified, or "none">
 VERIFICATION: <what was checked and the result>
+REQUESTS: <one per line: `path` — what's needed — blocking | non-blocking; or "none">
 NOTES: <one line for the orchestrator; "none" if nothing>
 ---
 ```
 
+When a request was routed to this task, add it to the prompt: `Also handle {REQUEST_ID}: {need}.`
+Re-running a blocked task? Tell the sub-agent it is Run N; it adds a Run N block to its notes rather than overwriting.
+
 ### 3. Wait & Verify
-- Trust the sub-agent's return block. Parse STATUS, FILES, VERIFICATION, NOTES.
-- If `STATUS: COMPLETED` — brief status update, proceed to next task.
+- Trust the sub-agent's return block. Parse STATUS, FILES, VERIFICATION, REQUESTS, NOTES.
+- **Route every request before the next dispatch.** Batch mode: re-read TASK-STATUS.md, add each
+  to its Requests table (`{TASK_ID}-R{n}`; no table in an older set → add one from the template)
+  and route it — a later task that owns the file (per File Ownership) · you, if the file is
+  orchestrator-owned · a tracker row, if it is outside this set · `closed` with a reason.
+  Individual mode: report each to the user. No owner fits → stop and ask the user.
+- **Requests routed to you**: make the change before the next dispatch.
+- **Mark a request `Done`** once a return block (or your own change) shows it handled.
 - If `STATUS: BLOCKED` or `DEVIATION` — STOP, inform user with the sub-agent's NOTES.
 - If the return block is missing or malformed — treat as failure, ask the sub-agent to re-report.
+- If `STATUS: COMPLETED` — commit only if PLAN.md's House Rules ask for it (never otherwise),
+  give a brief status update, proceed to the next task.
 
 ### 4. Status Update
 After each task: `[check] [TASK_ID] complete. [N] remaining.`
@@ -97,11 +118,12 @@ After each task: `[check] [TASK_ID] complete. [N] remaining.`
 Reads of TASK-STATUS.md and PLAN.md are budgeted:
 - **Once at pre-flight** — to identify pending tasks.
 - **Once at the end** — to confirm final state before logging.
-- **Never inside the loop** — trust sub-agent return blocks.
+- **Inside the loop** — TASK-STATUS.md only, and only to route requests. Never PLAN.md. Otherwise
+  trust sub-agent return blocks.
 
 Each sub-agent owns its task file.
 
-Between dispatch cycles, the orchestrator's only inputs are the structured return blocks from prior sub-agents.
+Between dispatch cycles, the orchestrator's inputs are the structured return blocks from prior sub-agents. Its only TASK-STATUS.md edit inside the loop is the Requests table.
 
 ---
 
