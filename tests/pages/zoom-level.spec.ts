@@ -200,9 +200,11 @@ test('a container title keeps one on-screen size at 20%, about 100% and 250%, an
   expect(await expectInSync(page)).toBe(250);
   at['250'] = await titleLines(page);
   const first = Object.values(at)[0]!;
+  // The title's size is the token (D-051: --vb-text-lg), read from the page rather than written here.
+  const size = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vb-text-lg')));
   for (const [zoom, lines] of Object.entries(at)) {
     for (const [i, l] of lines.entries()) {
-      expect(l.textPx, `${l.id} at ${zoom}%: 12px text on screen`).toBeCloseTo(12, 1);
+      expect(l.textPx, `${l.id} at ${zoom}%: ${size}px text on screen`).toBeCloseTo(size, 1);
       expect(l.h2Height, `${l.id} at ${zoom}%: the same height`).toBeCloseTo(first[i]!.h2Height, 0);
       expect(l.h2Width, `${l.id} at ${zoom}%: some of the title shows`).toBeGreaterThan(20);
       expect(l.h2Right, `${l.id} at ${zoom}%: inside its frame`).toBeLessThanOrEqual(l.frameRight + 0.5);

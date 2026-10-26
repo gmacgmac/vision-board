@@ -646,3 +646,89 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: state in the ledger (append-only, read by agents, frequent writes); keeping every
   panel loaded with no cap (memory on a board of many apps).
 - **Task**: cortex-tasks/board/2026-10-19_board-app_app-state-kept/PLAN.md
+
+## D-051 Container tools on a rail down the frame's left edge; the title owns the top line
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chats 2026-10-25 and 2026-10-26)
+- **Decision**: A container's tools (layouts, Match card widths, Comment, settings) sit in a slim
+  vertical rail across the frame's left border (`toolRail` flag), screen-sized at every zoom and
+  collapsing on short frames. The top line holds only the label, centred, its title at
+  `--vb-text-lg`. A tile in the layout popover applies its layout on click, through the same action
+  as the rail's icon. Supersedes mockup 05's row on the top line.
+- **Why**: on a narrow container the row took about 260px of the top line and cut the title to a few
+  letters; the rail gives the title the whole line.
+- **Rejected**: keeping the row and shrinking it further (the title still lost); widening the frame's
+  left padding (moves every card on every board).
+- **Task**: cortex-tasks/board/2026-10-25_board-ui_container-tool-rail.md,
+  cortex-tasks/board/2026-10-26_board-ui_rail-polish.md
+
+## D-052 The rail rests at half strength in both themes (contrast overruled by eye)
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-26, point 155)
+- **Decision**: `--vb-rail-rest` is 0.5 in light and dark. In dark the rail's quiet icons rest at
+  APCA Lc 16.9 on the canvas, under the Lc 30 decoration tier (rule 3); accepted by eye under D-009.
+  Hover, focus, an open popover and touch screens show it at full strength; the Comment badge is never dimmed.
+- **Why**: the rail should not call attention to itself; people hover it to use it.
+- **Rejected**: 0.76 in dark (kept Lc 30 but read as fully visible); brightening the dark quiet ink (a
+  token change felt across the board).
+- **Task**: cortex-tasks/board/2026-10-26_board-ui_rail-polish.md
+
+## D-053 The person's note: neutral, with the accent as a left edge only
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-26)
+- **Decision**: "Your note" takes the agent reply's look: `--vb-surface-sunken` fill, `--vb-ink-strong`
+  text, a quiet `--vb-ink-subtle` label. While it can be edited, a 3px `--vb-accent` rule runs down its
+  left edge, feathering into the fill; once sent the rule is `--vb-line-strong` and the feather goes.
+- **Why**: the pink fill, border and label together read muddy and loud; the note and the reply now
+  read as one conversation.
+- **Rejected**: a full pink border on a neutral fill; a lighter pink tint.
+- **Task**: none (a direct styling change, `packages/ui/src/node/node.css` `.vb-node-note`)
+
+## D-054 New and updated cards stay marked until engaged; containers show what they hold
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-25, points 73-90)
+- **Decision**: NEW and "N updates" end only when the person selects or acts on the card (no clearing
+  when a round starts), the same over MCP and the chat panel. "N updates" is pink-outlined at rest. A
+  container holding a new or updated card gets a `--vb-state-fresh` (teal) border and a "N new · N
+  updated" pill until any of its cards is engaged after the latest change (derived from the ledger,
+  `container.fresh` in the condition registry; nothing stored). A toolbar "N new" list goes to each card.
+- **Why**: on a large board new and changed cards could not be found.
+- **Rejected**: a stored "container seen" (a format change); clearing on zoom (the highlight would
+  vanish with cards still unseen); a pink container border.
+- **Task**: cortex-tasks/board/2026-10-25_board-ui_new-and-updated.md
+
+## D-055 A note on a group of cards is drawn once
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-26, point 103)
+- **Decision**: A note on a selection (one ledger act with `nodes`) draws as one pin on its
+  lowest-numbered card (`groupNoteOnce` flag); hovering, focusing or opening it rings each card of the
+  group; it is never repeated on each card, and the agent's reply shows once, in its bubble.
+- **Why**: the same note on every card read as copies and confused the replies.
+- **Rejected**: a box round the group's extents (it covered unrelated cards, within and across containers).
+- **Task**: cortex-tasks/board/2026-10-25_board-ui_group-note-once.md
+
+## D-056 Agent tools stay lean: shapes live in the skill and in refusals
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-25, points 43-57)
+- **Decision**: The MCP tool list carries no output schemas and no worked examples; descriptions are
+  written for a model reader in the fewest words. Each write item form has a schema `examples` entry;
+  a refused item or body comes back with the example for its type; the skill shows one worked
+  example. A test caps the list's size (30,400 characters) and each tool's.
+- **Why**: the list was 108,761 characters, 70% output schemas, paid in full by any client that loads
+  tools up front; an agent that guesses a shape learns it from its first refusal.
+- **Rejected**: examples in every tool description (cost on every load, and a 2,048-character cap).
+- **Task**: cortex-tasks/board/2026-10-25_board-agent_tool-examples.md,
+  cortex-tasks/board/2026-10-25_board-agent_tool-list-trim.md
+
+## D-057 One skill, one MCP name, read by every client
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-25, points 22-31, 48)
+- **Decision**: The MCP server is configured as `vision-board` (it already reported that name). The
+  skill's one source is this repo's `skills/vision-board/`; `~/.claude/skills/vision-board` and
+  `~/.kiro/skills/vision-board` are links to the main checkout's copy, never copies.
+- **Why**: `vb` was ambiguous across projects; copies of the skill drift.
+- **Rejected**: `vision_board`; copying the skill into each project or client.
+- **Task**: cortex-tasks/board/2026-10-25_board-agent_tool-list-trim.md
+
+## D-058 Hover tips can be reached: a shared close grace
+- **Date**: 2026-10-26 · **Status**: Accepted · **From**: maintainer (chat 2026-10-26, points 141-148)
+- **Decision**: Every hover tip (and the container note preview) closes about 300 ms after the pointer
+  leaves both its anchor and the tip (`packages/ui/src/tip/close-grace.ts` `CLOSE_GRACE_MS`); opening,
+  Esc and a press outside stay immediate. A tip that scrolls does so in an inner body, so its gap
+  bridge is never clipped.
+- **Why**: a reply's tip closed before the pointer reached it, so long replies could not be scrolled.
+- **Rejected**: a longer delay (tips linger); clicking to read (it opens the whole conversation).
+- **Task**: cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md

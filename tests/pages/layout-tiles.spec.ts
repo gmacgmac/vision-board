@@ -2,7 +2,7 @@
 // or Enter on a focused tile, sets it through the page's one click wiring, the action the rail's icon
 // sends, and the popover closes. A past version and a locked board keep the tiles inert. Then the two
 // small looks of the same task: the rail rests at 50% in both themes, and a container's title is one
-// text step larger (--vb-text-md). On a board of its own, drawn through the API (rail-board.ts).
+// two text steps larger (--vb-text-lg). On a board of its own, drawn through the API (rail-board.ts).
 import type { Page } from '@playwright/test';
 import { act, write } from './agent-board.ts';
 import { boardLines } from './board-lines.ts';
@@ -111,13 +111,13 @@ for (const theme of THEMES) {
   });
 }
 
-test('a container\'s title is one text step larger: the handle and the title take --vb-text-md', async ({ page, request }) => {
+test('a container\'s title is two text steps larger: the handle and the title take --vb-text-lg', async ({ page, request }) => {
   await board(page, request);
   await zoomTo(page, 1);
   const f = frame(page);
   const md = await page.evaluate(() => {
     const probe = document.createElement('i');
-    probe.style.fontSize = 'var(--vb-text-md)';
+    probe.style.fontSize = 'var(--vb-text-lg)';
     document.body.append(probe);
     const px = getComputedStyle(probe).fontSize;
     probe.remove();

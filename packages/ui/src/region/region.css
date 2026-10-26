@@ -87,7 +87,7 @@ vb-region .vb-region-handle, vb-region .vb-region-holders {
 vb-region .vb-region-handle::before, vb-region .vb-region-holders::before { content: ''; height: 100%; }
 vb-region .vb-region-handle::before { margin-inline-end: calc(-1 * var(--label-gap)); }
 vb-region .vb-region-handle {
-  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-md);
+  column-gap: var(--label-gap); flex: 0 1000000 auto; font-size: var(--vb-text-lg);
   padding-inline-end: var(--vb-space-1); border-radius: var(--vb-radius-sm);
 }
 vb-region .vb-region-handle:hover, vb-region .vb-region-handle[data-look], vb-region[data-dragging] .vb-region-handle {
@@ -100,7 +100,7 @@ vb-region :is(.vb-region-handle:hover, .vb-region-handle[data-look], [data-dragg
 vb-region .vb-region-head h2 {
   margin: 0; flex: 1 0 0; max-width: max-content; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
   min-width: 0; min-width: calc-size(max-content, min(size, calc(4.2 * (1ch + 0.22em))));
-  font: var(--vb-weight-bold) var(--vb-text-md) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
+  font: var(--vb-weight-bold) var(--vb-text-lg) var(--vb-font-mono); letter-spacing: 0.22em; text-transform: uppercase;
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
 vb-region .vb-region-count { flex: none; white-space: nowrap; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }

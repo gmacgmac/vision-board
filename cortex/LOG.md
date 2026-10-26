@@ -319,3 +319,4 @@
 [[2026-10-25 23:41]] [board-ui] Completed: Group Note Drawn Once → Task: [[cortex-tasks/board/2026-10-25_board-ui_group-note-once.md]]
 [[2026-10-26 10:26]] [board-ui] Completed: Hover Tips Reachable → Task: [[cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md]]
 [[2026-10-26 10:55]] [board-ui] Completed: Rail And Title Polish → Task: [[cortex-tasks/board/2026-10-26_board-ui_rail-polish.md]]
+[[2026-10-26 12:00]] [project-docs] Decisions D-051 to D-058 added at the maintainer's request (rail, rail rest, note look, new and updated, group notes, lean tools, one skill and MCP name, hover grace) → Notes: `docs/decisions.md` (D-051..D-058)

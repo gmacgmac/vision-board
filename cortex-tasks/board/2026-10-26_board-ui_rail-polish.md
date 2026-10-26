@@ -90,3 +90,4 @@ tracker:
 1. Frontmatter `status: completed`, `completed:` date.
 2. Append one LOG line: `[[YYYY-MM-DD HH:MM]] [board-ui] Completed: Rail And Title Polish → Task: [[cortex-tasks/board/2026-10-26_board-ui_rail-polish.md]]`
 3. Do not write to `AUDITED.md`.
+- **3b, titles one more step (maintainer, 2026-10-26).** `--vb-text-md` -> `--vb-text-lg` (15px) on `.vb-region-handle` and its `h2`; `layout-tiles.spec.ts` follows.
