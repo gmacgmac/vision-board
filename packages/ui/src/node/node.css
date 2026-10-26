@@ -139,7 +139,7 @@ vb-node .vb-node-notes-count {
 vb-node .vb-node-note {
   display: grid; gap: var(--vb-space-1); padding: 10px var(--vb-space-3); cursor: pointer;
   border: 1px solid var(--vb-line); border-left: 3px solid var(--vb-accent); border-radius: var(--vb-radius-md);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--vb-accent) 14%, transparent), transparent var(--vb-space-6)) var(--vb-surface-sunken);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--vb-accent) 14%, transparent), transparent var(--vb-space-3)) var(--vb-surface-sunken);
   font-size: var(--vb-text-md); color: var(--vb-ink-strong);
 }
 vb-node .vb-node-note[data-sent] { border-left-color: var(--vb-line-strong); background: var(--vb-surface-sunken); }
