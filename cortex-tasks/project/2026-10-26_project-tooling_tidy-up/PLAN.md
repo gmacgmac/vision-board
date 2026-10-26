@@ -34,6 +34,8 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 ### Key Changes
 
 1. **Green baseline** (FIX_01): the six failing page tests fixed, `temp/` cleared.
+   Beside it, one bug fix (FIX_02, maintainer 2026-10-26): retiring a card ends any proposal standing
+   on it, and the page never sends an accept the server will refuse.
 2. **One front door per module, by name** (ARCH_01): the root `package.json` `imports` map gives each
    module a short name (`#format`, `#ui`, …) pointing at its one public file; CSS and asset front
    doors; a codemod; `verify` catches every back door. Modules, not npm packages (maintainer, point 224).
@@ -56,7 +58,7 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 
 ## Dependencies
 
-- FIX_01 first: a refactor needs a green start.
+- Wave 1: FIX_01 (a refactor needs a green start) and FIX_02 (a bug fix), on disjoint files.
 - ARCH_01 alone next: every later task moves or adds imports, and must use the new names.
 - Wave 3 runs ARCH_02, UI_01 and ARCH_04 in parallel on disjoint files (TASK-STATUS File Ownership).
 - ARCH_03 after wave 3: it consumes the typed client (ARCH_02), the shared dialog/menu (UI_01) and the

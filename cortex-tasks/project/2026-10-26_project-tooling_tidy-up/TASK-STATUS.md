@@ -37,6 +37,7 @@ tracker:
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
 | 1 | FIX_01 | 1 | standard | — | [Green baseline](./FIX_01_green-baseline.md) | Pending | port 4700 |
+| 1b | FIX_02 | 1 | standard | — | [A proposal on a retired card ends](./FIX_02_proposal-on-retired-card.md) | Pending | port 4705 |
 | 2 | ARCH_01 | 2 | strong | Build and tooling engineer — a module has one front door, and a back door that the checks can't see is a back door that will be used. | [One front door per module](./ARCH_01_module-front-doors.md) | Pending | port 4710 |
 | 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Pending | port 4720 |
 | 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Pending | port 4730 |
@@ -74,12 +75,14 @@ tracker:
 
 | Wave | Owner | Files |
 |------|-------|-------|
+| 1 | FIX_01 | the four failing specs and their baselines, `packages/ui/src/region/{region,region-narrow}.css`, `packages/ui/src/node/*.css` (target size only), `temp/` |
+| 1 | FIX_02 | `packages/actions/src/{retire,proposals,conditions}.ts`, `apps/board/src/board/{proposal-flow,proposals}.ts`, their tests, a proposals page spec, `docs/specification/api.md` |
 | 3 | ARCH_02 | `packages/client/**`, `scripts/gen-api.mjs`, `scripts/gen-mcp.mjs`, `scripts/openapi-refs.mjs`, `packages/format/schema/api/problem.schema.json`, `packages/format/src/constants*` (new), `apps/board/server/{problem,spec,dispatch,edge,write-refs,schema,writes,write-board}.ts`, `packages/actions/src/numbers.ts`, `apps/board/src/board/{io,card-numbers}.ts`, the generated files `npm run gen` writes, their tests |
 | 3 | UI_01 | `packages/ui/src/base/**` (new), `packages/ui/src/tip/hover-tip.ts`, `packages/ui/src/region/{region-row,region-note}.ts`, every `*.css` under `packages/ui/src/` and `apps/board/src/styles/`, `apps/board/src/shell/{ConfirmDialog,BoardDialog,FolderDialog,ArchivedDialog,ToolbarMenu,MenuSelect}.svelte`, `apps/board/src/board/{move-menu,menu-keys,app-cards,selection-pill,note-outside}.ts`, `scripts/verify.mjs`, their tests |
 | 3 | ARCH_04 | `packages/actions/src/**` except `numbers.ts`, `packages/actions/tests/**`, `packages/format/src/geometry.ts` (new), `packages/layout/src/{geometry,types}.ts`, `packages/ui/src/note-bubble/note-bubble-core.ts`, `packages/ui/src/selection-bar/selection-bar-core.ts`, `apps/board/src/board/{updates,retired,proposals,go-to-card,board-data,remove-words}.ts`, `apps/board/server/reads.ts`, their tests in `apps/board/tests/` |
 | — | orchestrator | `package-lock.json`, `docs/decisions.md`, `packages/tokens/src/tokens.css` (new tokens), `.kiro/steering/`, `CLAUDE.md`, `AGENTS.md`, `docs/specification/modules.md` (`npm run map`, after each wave) |
 
-Waves 1, 2 and 4-8 have one task each: it owns what its task file lists.
+Waves 2 and 4-8 have one task each: it owns what its task file lists.
 
 ---
 
@@ -95,6 +98,12 @@ Waves 1, 2 and 4-8 have one task each: it owns what its task file lists.
 ## Implementation Notes
 
 ### FIX_01: Green baseline
+_Status:_ Pending  
+_Notes:_ 
+
+---
+
+### FIX_02: A proposal on a retired card ends
 _Status:_ Pending  
 _Notes:_ 
 
