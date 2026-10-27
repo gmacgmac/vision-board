@@ -3,7 +3,7 @@
      "<agent> wants to draw on this board") and its reason, with Allow and Refuse. Refuse opens a one-line optional note, then sends `deny`; Allow sends `grant`.
      Both are the person's decision (rule 8), sent through the board's act path. A region
      landmark with a heading; a polite live region, always present so it is heard, announces the
-     requests in `news`: those that arrived in the page's latest batch (board/attention.ts, the
+     requests in `news`: those that arrived in the page's latest batch (board/cards/attention.ts, the
      `grant.requested` condition). The strip itself shows only while a request is open. The gallery
      passes `refusing` to draw a row with its note open. -->
 <script lang="ts">
@@ -12,7 +12,7 @@
   import * as shellCommonWords from './words/shell-common.ts';
   import { tick } from 'svelte';
   import type { AccessRequestRow } from './shell.svelte.ts';
-  import { askWords } from '../board/access.ts';
+  import { askWords } from '../board/access/index.ts';
 
   let { requests, onanswer, refusing = null, placement = 'board', news = [] }: {
     requests: AccessRequestRow[];

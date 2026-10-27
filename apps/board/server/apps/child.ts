@@ -9,6 +9,7 @@ import { fork } from 'node:child_process';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import * as appsSupervisorWords from '../words/apps-supervisor.ts';
+import { isRecord } from '#format';
 
 export const RUNNER = fs.realpathSync(fileURLToPath(new URL('./runner.mjs', import.meta.url)));
 
@@ -49,7 +50,6 @@ export interface Child {
 }
 
 const SAID = 2000;
-const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** What a message from the process says about call `m.id`, when it is one. */
 function answerOf(m: Record<string, unknown>): Answer {
@@ -97,7 +97,7 @@ export function startChild(o: ChildOptions): Child {
   };
 
   proc.on('message', (m: unknown) => {
-    if (!isRec(m)) return;
+    if (!isRecord(m)) return;
     if (m.type === 'ready' && Array.isArray(m.tools)) {
       clearTimeout(loadTimer);
       return settle({ tools: m.tools });

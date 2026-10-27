@@ -178,8 +178,8 @@ One literal at a time, with its reason. The test fails when an exemption names a
 
 | File | Literal | Why |
 |---|---|---|
-| `apps/board/src/board/history-flow.ts` | `Home` | a keyboard key name (KeyboardEvent.key) |
-| `apps/board/src/board/history-flow.ts` | `End` | a keyboard key name (KeyboardEvent.key) |
+| `apps/board/src/board/cards/history-flow.ts` | `Home` | a keyboard key name (KeyboardEvent.key) |
+| `apps/board/src/board/cards/history-flow.ts` | `End` | a keyboard key name (KeyboardEvent.key) |
 | `packages/ui/src/base/menu-core.ts` | `Escape` | a keyboard key name (KeyboardEvent.key) |
 | `apps/board/server/chat-access.ts` | `Read` | a tool name the agent client knows (an id, not a sentence) |
 | `apps/board/server/chat-access.ts` | `Glob` | a tool name the agent client knows (an id, not a sentence) |

@@ -2,6 +2,7 @@
 // commandFacts, answer, outcome in packages/chat/schema/chat-event.schema.json), which follow
 // nclite's (container/approval-ask.ts). The gate sends facts, never a sentence, and obeys the
 // outcome; how the question reads is the host's.
+import { isRecord } from './record.ts';
 
 export type WriteOp = 'create' | 'replace' | 'edit' | 'append';
 
@@ -51,7 +52,6 @@ export const PATH_MAX = 4096;
 const UNSAFE_PATH = /[\u0000-\u001f\u007f\u0085\u2028\u2029\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/;
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 /** Cut to the preview limit, saying so. */
@@ -73,7 +73,7 @@ function write(op: WriteOp, path: string, preview: string): WriteFacts {
  * to the person as it is. `exists` says whether a file is there (so a Write is create or replace).
  */
 export function factsFor(input: unknown, exists: (path: string) => boolean): Facts | { refuse: string } {
-  if (!isRec(input) || !isRec(input.tool_input)) return { refuse: 'The gate could not read the tool call.' };
+  if (!isRecord(input) || !isRecord(input.tool_input)) return { refuse: 'The gate could not read the tool call.' };
   const tool = str(input.tool_name);
   const args = input.tool_input;
   if (tool === 'Bash') {
@@ -91,7 +91,7 @@ export function factsFor(input: unknown, exists: (path: string) => boolean): Fac
     case 'Write': return write(exists(path) ? 'replace' : 'create', path, str(args.content));
     case 'Edit': return write('edit', path, diff(str(args.old_string), str(args.new_string)));
     case 'MultiEdit': {
-      const edits = Array.isArray(args.edits) ? args.edits.filter(isRec) : [];
+      const edits = Array.isArray(args.edits) ? args.edits.filter(isRecord) : [];
       return write('edit', path, edits.map((e) => diff(str(e.old_string), str(e.new_string))).join('\n\n'));
     }
     case 'NotebookEdit': return write('edit', path, marked('+ ', str(args.new_source)));

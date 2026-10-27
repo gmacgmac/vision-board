@@ -10,7 +10,7 @@ import { initialStatus } from '../board/status.ts';
 import type { FolderInfo } from './page-io.ts';
 import { keptAlign } from './align.ts';
 
-export type { AccessRequestRow } from '../board/access.ts';
+export type { AccessRequestRow } from '../board/access/index.ts';
 export type { ConfirmItem, ConfirmList } from '../board/host.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }

@@ -1,7 +1,7 @@
 // Proves every rule in verify.mjs fails when broken and passes when kept.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMap, checkBoardHost, checkLength, checkManifest, checkReferences, checkWeight, namesOf, pageAssets } from './verify.mjs';
+import { buildMap, checkBoardHost, checkFeatureFolders, checkLength, checkManifest, checkReferences, checkWeight, namesOf, pageAssets } from './verify.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -144,4 +144,19 @@ test('the board is hostable: a file under apps/board/src/board/ importing the pa
     assert.match(r[0].message, /imports Svelte/);
   }
   assert.deepEqual(checkBoardHost('apps/board/src/shell/a.ts', "import { s } from './shell.svelte.ts';\nimport { b } from '../board/mount.ts';"), [], 'the host may import the board');
+});
+
+test('feature folders: outside code imports a folder\'s index.ts, a split file its own file; the inside and words are free', () => {
+  const page = 'apps/board/src/board/controller.ts';
+  assert.deepEqual(checkFeatureFolders(page, "import { createNoteFlow } from './notes/index.ts';\nimport { a } from './words/board.ts';\nimport { b } from './io.ts';"), []);
+  assert.deepEqual(checkFeatureFolders('apps/board/src/board/notes/notes.ts', "import { x } from './note-find.ts';\nimport { s } from '../selection/index.ts';\nimport * as w from '../words/notes.ts';"), []);
+  assert.deepEqual(checkFeatureFolders('apps/board/src/board/io.ts', "import { e } from './io/errors.ts';"), [], 'a split file reaches its parts');
+  assert.deepEqual(checkFeatureFolders('apps/board/src/shell/Toolbar.svelte', "  import { rowText } from '../board/find/index.ts';"), []);
+  for (const [rel, spec] of [[page, './notes/note-find.ts'], ['apps/board/src/shell/a.ts', '../board/find/finder.ts'],
+    ['apps/board/src/board/cards/cards.ts', '../selection/moves.ts'], ['apps/board/src/gallery/a.ts', '../board/io/errors.ts']]) {
+    const r = checkFeatureFolders(rel, `import { x } from '${spec}';`);
+    assert.deepEqual(levels(r), ['fail'], spec);
+    assert.match(r[0].message, /front door/);
+  }
+  assert.deepEqual(checkFeatureFolders('apps/board/tests/a.test.ts', "import { x } from '../src/board/notes/note-find.ts';"), [], 'a unit test may reach the inside');
 });

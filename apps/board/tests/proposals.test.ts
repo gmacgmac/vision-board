@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ProposalRow } from '#actions';
 import { acceptAllPlan } from '#actions';
-import { acceptAllWords, answerDone, barWords, proposalAct } from '../src/board/proposals.ts';
+import { acceptAllWords, answerDone, barWords, proposalAct } from '../src/board/cards/proposals.ts';
 
 const row = (n: number, seq: number, action: 'ack' | 'drop', reason: string, stale = false): ProposalRow =>
   ({ n, seq, action, reason, when: '13:08', stale });

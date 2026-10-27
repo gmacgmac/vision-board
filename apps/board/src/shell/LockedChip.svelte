@@ -1,4 +1,4 @@
-<!-- "Locked" beside the board's name (N40 ruling 4, board/lock-flow.ts): the open board is read-only
+<!-- "Locked" beside the board's name (N40 ruling 4, board/boards/lock-flow.ts): the open board is read-only
      for everyone until the person unlocks it from the "⋯" menu. A chip, not a button (unlocking is the
      menu's); a padlock and the word, never shortened on a narrow toolbar; its title gives the reason
      the board's controls are paused. Beside it, out of the toolbar's flow, a polite live region that is

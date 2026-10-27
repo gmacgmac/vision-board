@@ -1,5 +1,6 @@
 // JSON-RPC 2.0 as MCP uses it over stdio: one message per line, the standard error codes plus
 // MCP's UnsupportedProtocolVersion (-32022), and the response shapes.
+import { isRecord } from '#format';
 import * as protocolWords from './words/protocol.ts';
 
 export type Id = string | number;
@@ -36,8 +37,6 @@ export class RpcError extends Error {
     if (data !== undefined) this.data = data;
   }
 }
-
-export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const validId = (id: unknown): id is Id => typeof id === 'string' || (typeof id === 'number' && Number.isInteger(id));
 

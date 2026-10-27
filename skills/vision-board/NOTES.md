@@ -456,7 +456,7 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   `APP_LIMITS` `callMs`, `idleMs`, `fileBytes`, `APP_PROTOCOL_VERSION`, `PANEL_METHODS`,
   `HOST_NOTIFICATIONS`, `APP_STYLE_VARIABLES`), `manifest.schema.json` (unknown fields refused),
   `app-shape.ts` (an app card takes no `size`), `packages/ui/src/node/node-app.ts` `COPY` (the
-  buttons Check again and Restart), `apps/board/src/board/app-state.ts` (when the page reads
+  buttons Check again and Restart), `apps/board/src/board/apps/app-state.ts` (when the page reads
   `list_apps` again), `packages/format/src/images.ts` (`IMAGE_LIMITS`, `imagePathProblem`) and
   `packages/ui/src/markdown/image.ts` (a refused path shows "Image not shown"). What a sandboxed
   panel can't do was seen in Chromium in a `sandbox="allow-scripts"` frame: a form's submit is

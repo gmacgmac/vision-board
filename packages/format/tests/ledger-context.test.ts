@@ -2,7 +2,7 @@
 // sizes and sends, judged against what came before.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { containerKey, readLedger } from '../src/index.ts';
+import { containerKey, indexEvent, readLedger, readLine } from '../src/index.ts';
 
 const A = 'a-abcd1234';
 const B = 'a-wxyz9876';
@@ -122,4 +122,21 @@ test('a person board line (api.md 90): creates a board with no creator, renames 
   assert.equal(index.holders.has('mine'), false);
   assert.deepEqual([...index.boards.get('b')!], ['r'], 'a rename keeps the board\'s containers');
   assert.equal(index.creators.get('b'), A, 'and its creator');
+});
+
+test('readLine: a good line is the event, a bad one is what is wrong with it and moves seq on', () => {
+  const read1 = readLedger(base().map((e) => JSON.stringify(e)));
+  const ix = read1.index;
+  const next = agent(A, { type: 'board', board: 'c', title: 'C' });
+  const good = readLine(ix, JSON.stringify(next));
+  assert.equal(good.event?.type, 'board');
+  indexEvent(ix, good.event!);
+  const bad = readLine(ix, JSON.stringify({ ...next, seq: 99, board: 'Bad Id' }));
+  assert.equal(bad.event, undefined);
+  assert.equal('notJSON' in bad && bad.notJSON, false);
+  assert.ok('problems' in bad && bad.problems.length > 0);
+  assert.equal(ix.seq, 99);
+  const torn = readLine(ix, '{"v":3,');
+  assert.deepEqual(torn, { notJSON: true, problems: [] });
+  assert.equal(ix.seq, 100);
 });

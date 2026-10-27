@@ -8,13 +8,13 @@ import type { ActionId } from './ledger.ts';
 import { ID_PATTERN } from './view.ts';
 import * as formatCommonWords from './words/format-common.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
+import { isRecord } from './records.ts';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Problems with an app card's `app`, named from `f` (`node.app`): its id, and a size in range. */
 export function appRefProblems(v: unknown, f: string, p: string[]): void {
-  if (!isRec(v)) return void p.push(formatCommonWords.mustBeAnObject(f));
+  if (!isRecord(v)) return void p.push(formatCommonWords.mustBeAnObject(f));
   for (const k of Object.keys(v)) if (!['id', 'w', 'h'].includes(k)) p.push(formatLedgerWords.unknownField(f, k));
   if (typeof v.id !== 'string' || !ID_PATTERN.test(v.id)) p.push(`${f}.id: the app's id, its folder's name in .visionboard/apps/`);
   for (const d of ['w', 'h'] as const) {

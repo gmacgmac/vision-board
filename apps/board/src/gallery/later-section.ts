@@ -7,7 +7,7 @@ import { LATER_REGION } from '#format';
 import { LATER, placedView } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import { LATER_FRAME } from '../board/render.ts';
+import { LATER_FRAME } from '../board/canvas/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

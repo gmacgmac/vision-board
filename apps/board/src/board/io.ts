@@ -4,68 +4,27 @@
 // It reads the ledger itself (`read_ledger`, live.ts) and works each board out from it (packages/actions
 // board-data.ts), so it never fetches a whole board to show one change (N12_FE_01). A refused call
 // comes back as an ApiError carrying the problem's pointer errors (api.md 38). The standalone page's
-// own calls (its change stream, the chat, the folder) are its own (shell/page-io.ts).
-import type { ActionId, AppStateValue, LedgerEvent, OperationInput } from '#format';
-import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
+// own calls (its change stream, the chat, the folder) are its own (shell/page-io.ts). Its failures,
+// the acts' shapes and the picture request live in io/ (this file stays the one way in).
+import type { AppStateValue, LedgerEvent } from '#format';
+import { fromLine } from '#format';
 import type { Transport } from '#client';
 import { ApiProblem, createClient } from '#client';
-import * as boardWords from './words/board.ts';
+import type { ActFields, BoardFields, RetireFields } from './io/acts.ts';
+import { namesBoard } from './io/acts.ts';
+import type { AppCallRefusal, PersonCall } from './io/errors.ts';
+import { ApiError, asApiError, UNREACHABLE } from './io/errors.ts';
 
 /** One board as the page draws it: the one board-data builder's (`#actions` `boardData`). */
 export type { BoardData } from '#actions';
-
-/** What the page sends for one person action (`act`'s body, act.schema.json `sent`, less its
- * `type`); the server stamps the rest. */
-export type ActFields = Omit<OperationInput<'act'>['body'], 'type'>;
-
-/** What the person gives a board: `put_board`'s body (api.md 90). */
-export type BoardFields = OperationInput<'put_board'>['body'];
-
-/** What the person removes from a board: `retire_cards`' body (N24, api.md 141), cards by number
- * or a whole container. */
-export type RetireFields = OperationInput<'retire_cards'>['body'];
-
-/** How a call for a panel refuses: the API problem's code and its words (the frame's `AppCallError`). */
-export interface AppCallRefusal { problem: string; detail?: string }
-
-export class ApiError extends Error {
-  /** HTTP status, or 0 when the server could not be reached. */
-  status: number;
-  problems: string[];
-  constructor(message: string, status = 0, problems: string[] = []) {
-    super(message);
-    this.status = status;
-    this.problems = problems;
-  }
-}
-
-/** What a failure the server never answered says. */
-export const UNREACHABLE = boardWords.theBoardServerIsNot;
-
-/** One call, with every failure as an ApiError the page can show. */
-export async function asApiError<T>(run: () => Promise<T>): Promise<T> {
-  try {
-    return await run();
-  } catch (err) {
-    if (err instanceof ApiProblem) throw new ApiError(err.detail, err.status, err.errors.map((e) => e.detail));
-    throw new ApiError(UNREACHABLE);
-  }
-}
-
-/** Runs a person's call: the standalone page's reloads once for a fresh cookie when one is
- * refused as `forbidden` (shell/page-io.ts `asPerson`); a host's runs it as it is. */
-export type PersonCall = <T>(run: () => Promise<T>) => Promise<T>;
+// The parts of this module (io/): its failures, the acts' shapes and the one picture request.
+export type { ActFields, BoardFields, RetireFields } from './io/acts.ts';
+export type { AppCallRefusal, PersonCall } from './io/errors.ts';
+export { ApiError, asApiError, UNREACHABLE } from './io/errors.ts';
+export { imageVersion } from './io/image.ts';
 
 /** The most lines one `read_ledger` call returns (api.md 31). */
 const PAGE = 500;
-
-/** Acts the schema asks to name their board (api.md 16, 135, 138): it is always the board they are sent
- * to. Every board mark does (archive, restore, lock, unlock). */
-const NAMES_BOARD: ReadonlySet<ActionId> = new Set(['mode', 'widths', 'send', 'revoke', ...BOARD_MARKS]);
-/** A note or a place on a whole container names `board` + `region` in place of `n` (api.md 71). */
-const CONTAINER_ACTS: ReadonlySet<ActionId> = new Set(['comment', 'note-edit', 'note-remove', 'pin', 'unpin']);
-const namesBoard = (f: ActFields) =>
-  NAMES_BOARD.has(f.action) || (CONTAINER_ACTS.has(f.action) && f.region !== undefined && f.n === undefined);
 
 /** Every call the board makes, through one transport. */
 export function createIo(api: Transport, asPerson: PersonCall = (run) => run()) {
@@ -124,20 +83,3 @@ export function createIo(api: Transport, asPerson: PersonCall = (run) => run()) 
 /** The board's calls (`createIo`). */
 export type Io = ReturnType<typeof createIo>;
 
-// ---- images in cards (D-048, images.md § Updates) ---------------------------------------------------
-// The image route is the page's own (`IMAGE_ROUTE`, not under the API prefix), so this is no call
-// through the host's transport: a host serves the pictures at the same path (ARCH_03 REQUESTS).
-
-/** What the image route says of `path` now: `same` when `etag` is still its version (304), else its
- * version's ETag, or why it is not shown (the problem's words, `IMAGE_WORDS`). A HEAD, so no picture
- * comes back. The route is not an API operation, so this is the page's one request for it by code; the
- * browser loads the picture itself (`<img src>`). Throws when the board can't be reached. */
-export async function imageVersion(path: string, etag?: string): Promise<{ same?: true; etag?: string; problem?: string }> {
-  const url = IMAGE_ROUTE + path;
-  const head = await fetch(url, { method: 'HEAD', cache: 'no-store', ...(etag && { headers: { 'If-None-Match': etag } }) });
-  await head.arrayBuffer(); // empty; read so the request ends as finished, not aborted
-  if (head.status === 304) return { same: true };
-  if (head.ok) return { etag: head.headers.get('ETag') ?? '' };
-  const got = await fetch(url, { cache: 'no-store' }).then((r) => r.json() as Promise<{ detail?: unknown }>).catch(() => ({ detail: undefined }));
-  return { problem: typeof got.detail === 'string' ? got.detail : IMAGE_WORDS.missing };
-}

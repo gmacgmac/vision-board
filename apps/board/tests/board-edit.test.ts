@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ID_PATTERN } from '#format';
-import { archiveAsk, boardIdFor, createBoardEdit, dayOf, LOCK_DONE } from '../src/board/board-edit.ts';
+import { archiveAsk, boardIdFor, createBoardEdit, dayOf, LOCK_DONE } from '../src/board/boards/board-edit.ts';
 import type { ActFields } from '../src/board/io.ts';
 import type { BoardFields } from '../src/board/io.ts';
 

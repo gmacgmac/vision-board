@@ -9,6 +9,7 @@ import { defineBoardElements, PATTERNS, setMarkdownImages } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
+import { keep, kept } from '../shell/kept.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
@@ -87,7 +88,7 @@ type Theme = (typeof THEMES)[number];
 
 /** The same choice and storage key as the board's toolbar, so the two pages agree. */
 function themeButton(): HTMLButtonElement {
-  const stored = localStorage.getItem('vb-theme');
+  const stored = kept('vb-theme');
   let theme: Theme = THEMES.includes(stored as Theme) ? (stored as Theme) : 'system';
   const button = el('button', 'vb-btn');
   button.type = 'button';
@@ -95,7 +96,7 @@ function themeButton(): HTMLButtonElement {
   const apply = () => {
     if (theme === 'system') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
-    localStorage.setItem('vb-theme', theme);
+    keep('vb-theme', theme);
     button.textContent = `Theme: ${theme}`;
   };
   button.addEventListener('click', () => {

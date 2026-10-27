@@ -4,8 +4,8 @@
 // the live region announces (ruling 9).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSelection, selectionText } from '../src/board/selection.ts';
-import type { SelectionChange } from '../src/board/selection.ts';
+import { createSelection, selectionText } from '../src/board/selection/selection.ts';
+import type { SelectionChange } from '../src/board/selection/selection.ts';
 
 function watched() {
   const sel = createSelection();

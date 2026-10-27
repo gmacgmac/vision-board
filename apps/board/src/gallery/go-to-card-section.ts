@@ -6,8 +6,8 @@
 import { mount } from 'svelte';
 import GoToCard from '../shell/GoToCard.svelte';
 import type { GoTarget } from '#actions';
-import type { GoBox } from '../board/go-to-card.ts';
-import { createGoTo } from '../board/go-to-card.ts';
+import type { GoBox } from '../board/find/index.ts';
+import { createGoTo } from '../board/find/index.ts';
 import { el, group } from './dom.ts';
 
 /** The box after typing `digits` on a board where they name `target`, and Enter when `enter`. */

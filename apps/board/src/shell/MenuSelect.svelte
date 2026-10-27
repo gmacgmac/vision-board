@@ -1,4 +1,4 @@
-<!-- A dropdown that is a menu (board/finder.ts): the toolbar's Containers finder and the "N open"
+<!-- A dropdown that is a menu (board/find/finder.ts): the toolbar's Containers finder and the "N open"
      chip's list of open cards (OpenChip, open-list FE_01). A native select, so its keys, list and
      screen reader reading are the browser's: it shows its name (the first row); choosing a row calls
      `onpick` with its value, and it shows its name again. A row's `title` is its tooltip (the whole
@@ -6,7 +6,7 @@
      `.vb-menu-face`), so the face keeps its look and draws the hover, focus and pressed looks. -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import type { MenuRow } from '../board/finder.ts';
+  import type { MenuRow } from '../board/find/index.ts';
 
   let { id, label, name, rows, onpick, face, tone, title, look }: {
     id: string;

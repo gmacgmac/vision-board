@@ -3,7 +3,7 @@
 // composer, zooms to a change chip's cards and links a changed card's stepper to the chat. A host
 // whose chat takes chips (nclite) needs none of it: Send hands it the chips (`addToChat`).
 import type { BoardData, LedgerState } from '#actions';
-import type { Selection } from './selection.ts';
+import type { Selection } from './selection/index.ts';
 
 export interface BoardSide {
   stage: HTMLElement;

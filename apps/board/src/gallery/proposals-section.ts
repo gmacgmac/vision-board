@@ -12,7 +12,7 @@ import { nodeState } from '#ui';
 import ProposalsBar from '../shell/ProposalsBar.svelte';
 import ConfirmList from '../shell/ConfirmList.svelte';
 import { acceptAllPlan } from '#actions';
-import { acceptAllWords } from '../board/proposals.ts';
+import { acceptAllWords } from '../board/cards/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

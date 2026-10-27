@@ -11,7 +11,7 @@ import type { McpServer } from '#agent';
 import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '#agent';
 import { MCP_BIN } from '#mcp';
 import type { Agents } from './agents.ts';
-import { newSecret } from './agents.ts';
+import { newToken } from './secrets.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { Ledger } from './ledger.ts';
 import * as serverChatWords from './words/server-chat.ts';
@@ -36,7 +36,7 @@ export interface Identity { agentId: string; secret: string }
 
 /** A new agent id and secret, not yet stored: the session must start before the server joins. */
 export function newIdentity(ledger: Ledger, agents: Agents): Identity {
-  return { agentId: agents.mint(ledger.state().index.agents), secret: newSecret() };
+  return { agentId: agents.mint(ledger.state().index.agents), secret: newToken() };
 }
 
 /** Join as `identity` (the hash first, then the `join` line, as `join` does), then ask for the
@@ -54,7 +54,7 @@ export function joinAndGrant(ledger: Ledger, agents: Agents, identity: Identity,
 
 /** A fresh secret for an agent the server joined for a session before this start. */
 export function rekey(agents: Agents, agentId: string): string {
-  const secret = newSecret();
+  const secret = newToken();
   agents.add(agentId, secret);
   return secret;
 }

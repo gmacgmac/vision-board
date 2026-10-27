@@ -1,111 +1,50 @@
-// The board controller: holds the project ledger state (live.ts), works the open board out from it (packages/actions board-data.ts), draws
-// what changed (draw.ts), and routes every person action through the action layer and the I/O module. Layout, formats and
-// actions live in packages/; the modules beside this one wire them to the canvas: boards.ts (boot, picker, kept view),
-// attention.ts (marks, badges, toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
-// access-flow.ts (agent access), notes.ts and region-notes.ts (note bubbles, container notes), selection.ts and
-// selection-flow.ts (selection, lasso, bar, view commands), places.ts (pins, modes, card widths, sizes), moves.ts (containers,
-// Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), lock-flow.ts (a locked board), finder.ts (the
-// container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
-// parking.ts (handover, replies), chat-side.ts (what a host's own chat reads of the board), flag-flow.ts (the
-// person's flag, cardFlag flag), packages/actions retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
-// card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), history-flow.ts (a card's history box), toolbar-counts.ts (the toolbar's numbers)
-// and app-cards.ts (app cards: their state from list_apps, their frames, Allow and Stop app; appCards flag).
+// The board controller: holds the project ledger state (live.ts), works the open board out from it
+// (packages/actions board-data.ts), draws what changed (canvas/draw.ts), and routes every person action
+// through the action layer and the I/O module. Layout, formats and actions live in packages/; the
+// feature folders beside this one wire them to the canvas, each reached through its index.ts:
+//   boards/ (boot, picker, kept view, versions, a locked board, New/Rename/Archive/Restore)
+//   canvas/ (the draw, viewport, focus, places: pins, modes, widths, sizes)  links/ (connectors, labels)
+//   cards/ (cards, images, attention, item acts, flag, proposals, updates, parking, remove, history)
+//   notes/ (note bubbles, container notes, group pins)  selection/ (selection, lasso, bar, moves, drags)
+//   input/ (commands, keys, pointer, the stage's wiring)  find/ (container finder, Go to card)
+//   access/ (agent access)  apps/ (app cards: list_apps state, frames, Allow and Stop app)
+// and, beside this file, sender.ts (sending acts), toolbar-counts.ts (the toolbar's numbers) and
+// chat-side.ts (what a host's own chat reads of the board); controller/ holds the pieces split out of it.
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
 import { answeredIds, boardData, goTarget, placedView, retiredCounts } from '#actions';
-import type { RetiredCount } from '#actions';
-import { ApiError, type BoardData, type Io } from './io.ts';
-import type { BoardHost, BoardPage, ConfirmList } from './host.ts';
+import { ApiError } from './io.ts';
+import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf } from './host.ts';
 import type { BoardSide } from './chat-side.ts';
-import type { Status } from './status.ts';
-import { createBoards } from './boards.ts';
+import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
-import { createAttention } from './attention.ts';
-import { type BoardElements, createDrawing } from './draw.ts';
+import { createAttention, createFlagFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
+import { type BoardElements, createDrawing, createFocus, createPlaces, Viewport, zoomPercent } from './canvas/index.ts';
 import { createLive } from './live.ts';
-import { createFocus } from './focus.ts';
-import { bindStage } from './wiring.ts';
-import { Viewport, zoomPercent } from './viewport.ts';
-import { createPlaces } from './places.ts';
-import { type AccessFlow, createAccessFlow } from './access-flow.ts';
-import { createNoteFlow } from './notes.ts';
-import { DISCARD_ASK } from './note-discard.ts';
-import { createRegionNotes } from './region-notes.ts';
-import { createItemActs } from './item-acts.ts';
-import { createSelection } from './selection.ts';
-import { createSelectionFlow } from './selection-flow.ts';
-import { createMoves } from './moves.ts';
-import { createContainerDrag } from './container-drag.ts';
+import { bindStage } from './input/index.ts';
+import { createAccessFlow } from './access/index.ts';
+import { createNoteFlow, createNoteHide, createRegionNotes, DISCARD_ASK } from './notes/index.ts';
+import { createContainerDrag, createMoves, createSelection, createSelectionFlow } from './selection/index.ts';
 import { createSender, READ_ONLY } from './sender.ts';
-import { createLockFlow } from './lock-flow.ts';
-import { type BoardEdit, createBoardEdit } from './board-edit.ts';
-import { createVersions } from './versions.ts';
-import { createProposalFlow, type ProposalFlow } from './proposal-flow.ts';
-import { createUpdateFlow } from './update-flow.ts';
-import { createParking } from './parking.ts';
-import { zoomToContainer } from './finder.ts';
-import { createFlagFlow } from './flag-flow.ts';
-import { createNoteHide } from './note-hide.ts';
-import { createHistoryFlow } from './history-flow.ts';
-import { createRemoveFlow } from './remove-flow.ts';
-import { createGoTo, GO_PAUSE, type GoTo } from './go-to-card.ts';
+import { createGoTo, GO_PAUSE, zoomToContainer } from './find/index.ts';
 import { showCounts } from './toolbar-counts.ts';
-import { createAppCards } from './app-cards.ts';
-import type { CommandId } from './commands.ts';
+import { createAppCards } from './apps/index.ts';
+import type { Board, BoardDeps } from './controller/board-types.ts';
+import { createBoardState } from './controller/board-state.ts';
+import { stageHandlers } from './controller/stage-handlers.ts';
 import * as boardWords from './words/board.ts';
 
-export type { BoardElements } from './draw.ts';
-
-export interface Board {
-  boot(): Promise<void>;
-  switchTo(id: string): void;
-  /** Show a past version of the open board, read-only, or now with null; `until`: a retired marker's (versions.ts). */
-  showVersion(seq: number | null, until?: number): Promise<void>;
-  /** A view command from the header (zoom out, Fit, zoom in; commands.ts), or the finder's zoom to a container. */
-  command(id: CommandId): void;
-  goToContainer(id: string): boolean;
-  toggleHide(): void;
-  /** Allow or Refuse a grant request, Remove access (agentAccess flag, access-flow.ts). */
-  access: AccessFlow;
-  /** The proposals notice's Review and Accept all (proposals flag, proposal-flow.ts). */
-  proposals: Pick<ProposalFlow, 'review' | 'acceptAll'>;
-  /** Send to agent; null when recorded, else the problem's detail. */
-  send(): Promise<string | null>;
-  /** New board, Rename board, Archive board, Restore, Lock board and Unlock board (board-edit.ts). */
-  boardEdit: BoardEdit;
-  /** The toolbar's "N flagged" chip: the next flagged card (cardFlag flag, flag-flow.ts). */
-  nextFlagged(): void;
-  go: GoTo; // the Go to card box's typing, Enter, Esc and offer (goToCard flag, go-to-card.ts)
-  /** The open board's id; '' before one opens. */
-  id(): string;
-  /** What a host's own chat reads of the board (chat-side.ts). */
-  side: BoardSide;
-  /** Show note `seq` on card `id` in its bubble. */
-  showNote(id: string, seq: number): void;
-  /** Throw away the held state, read the whole ledger, draw from scratch (a page test's `rebuild`). */
-  rebuild(): Promise<void>;
-  /** Resolves once no read is in flight and no draw is waiting for a frame (a page test's `idle`). */
-  idle(): Promise<void>;
-  destroy(): void;
-}
-
-/** What the board is made with: its host, its calls, its status and its message over the stage. */
-export interface BoardDeps {
-  host: BoardHost;
-  io: Io;
-  status: Status;
-  /** The message over the stage ("No boards yet"); null hides it. */
-  say(text: string | null): void;
-  page: BoardPage;
-  /** The mount's prefix for the ids its cards, frames and connectors set (mount-ids.ts); none for the first. */
-  ids?: string;
-}
-
+export type { BoardElements } from './canvas/index.ts';
+export type { Board, BoardDeps } from './controller/board-types.ts';
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
+/** The board: every module it wires, one statement each, reading the state they share (`S`, `drawing`,
+ * `versions`). The input table (controller/stage-handlers.ts) and the held state (controller/board-state.ts)
+ * are out already.
+ * verify: long-function the composition root: each statement hands one module its dependencies as closures over this scope, and a split would pass that scope around, not shorten it */
 export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const { stage, world } = els;
   const { host, io, status } = b;
@@ -125,22 +64,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const ask = (heading: string, body: string, confirm: string, list?: ConfirmList) => host.confirm({ heading, body, confirm, ...(list && { list }) });
   let chatSource: ((n: number) => string | undefined) | null = null;
 
-  const S = {
-    id: '',
-    data: null as BoardData | null,
-    /** A draw waiting for the next frame, so lines that land together draw once (approach 5). */
-    frame: 0,
-    /** The waiting draw starts from scratch (the state was read afresh). */
-    fresh: false,
-    /** The waiting draw shows lines in which the agent drew on this board (`board.drawn`). */
-    drew: false,
-    /** A card is being dragged: Later shows as a drop target although it holds none (3_FE_03). */
-    later: false,
-    /** The board as the agent drew it, before the person's moves (where Reopen sends a card). */
-    drawn: null as View | null,
-    /** Each container's "N cards retired" marker (retiredMarker flag). */
-    retired: new Map() as ReadonlyMap<string, RetiredCount>,
-  };
+  const S = createBoardState();
 
   const view = (): View => S.data!.view;
   const nodeOf = (id: string): ViewNode | undefined => view().nodes.find((n) => n.id === id);
@@ -285,33 +209,9 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
 
   // ---- wiring --------------------------------------------------------------------------------
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
-  const unbind = bindStage(stage, vp, versions.guard(lock.guard({
-    act: (id, a) => void act(id, a), ...(flagging && { flag: (id: string) => void flags.toggle(id) }), showVersion: (seq, until) => void showVersion(seq, until),
-    answer: (id, seq, a) => void proposals.answer(id, seq, a),
-    showNote: (id, seq, fromNote) => notes.show(id, seq, fromNote), showReply: (id, seq) => notes.reply(id, seq), setSize: places.setSize,
-    setMode: (region, mode) => void places.setMode(region, mode), setWidths: (region, widths) => void places.setWidths(region, widths),
-    resetRegion: (region) => void places.resetRegion(region), putBack: (region) => void places.putBack(region),
-    regionComment: (region) => notes.container(region),
-    ...(access && { revoke: (region: string, holder: string) => void accessFlow.revoke(region, holder) }), ...(removal && { removeRegion: removal.container }),
-    pin: (id, box) => void places.pin(id, box), pinRegion: (region, at) => void frames.pin(region, at),
-    frameStart: frames.start, frameMove: frames.move, frameEnd: (d) => void frames.end(d),
-    regionCommand: (_id, region) => notes.container(region, 'comment'), unpin: (id) => void places.unpin(id),
-    layout: () => drawing.layout, view, drawDrag: (layout, id) => drawing.wiresFor(layout, id),
-    carried: moves.carried, dragStart: moves.dragStart, dragOver: moves.dragOver,
-    drop: (boxes, at) => void moves.drop(boxes, at),
-    step: (from, dir) => { const next = focus.neighbour(from, dir); if (next) drawing.cards.get(next)?.focus({ preventScroll: true }); },
-    command: (id, key) => flow.command(id, key), toggleHide, lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
-    pick: (id, add) => { selection.select([id], add ? 'toggle' : 'only'); updates.saw([id]); },
-    toggle: (id) => selection.select([id], 'toggle'), clear: () => { selection.clear(); flow.dismissArea(); },
-    // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else clears the selection (ruling 1).
-    escape: () => {
-      if (notes.open) return notes.close();
-      if (flow.collapse()) return;
-      if (versions.state) return void versions.show(null);
-      status.set({ replyOpen: false });
-      flow.dismissArea(); selection.clear();
-    },
-  })), () => { if (drawing.layout) vp.resized(); });
+  const handlers = stageHandlers({ act, flags: flagging ? flags : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
+    versions, selection, drawing, focus, view, showVersion, toggleHide, status });
+  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); });
 
   // ---- boards --------------------------------------------------------------------------------
   /** Boot, and switching boards (boards.ts). */

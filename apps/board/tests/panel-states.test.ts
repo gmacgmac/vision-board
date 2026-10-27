@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { AppStateValue } from '#format';
-import type { PanelKey } from '../src/board/panel-states.ts';
-import { createPanelStates, LOAD_WAIT_MS, SAVE_DELAY_MS } from '../src/board/panel-states.ts';
+import type { PanelKey } from '../src/board/apps/panel-states.ts';
+import { createPanelStates, LOAD_WAIT_MS, SAVE_DELAY_MS } from '../src/board/apps/panel-states.ts';
 
 const A: PanelKey = { board: 'b', n: 2, app: 'calculator' };
 const B: PanelKey = { board: 'b', n: 3, app: 'calculator' };

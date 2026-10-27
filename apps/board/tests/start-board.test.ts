@@ -1,8 +1,8 @@
-// Which board the page opens (page-polish ruling B, board/start-board.ts): the hash always wins;
+// Which board the page opens (page-polish ruling B, board/boards/start-board.ts): the hash always wins;
 // with none, the board this viewer last looked at if it still exists; else the first, as before.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LAST_BOARD_KEY, nextBoard, startBoard } from '../src/board/start-board.ts';
+import { LAST_BOARD_KEY, nextBoard, startBoard } from '../src/board/boards/start-board.ts';
 
 const BOARDS = ['roadmap', 'pricing', 'hiring'];
 

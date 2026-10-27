@@ -8,7 +8,7 @@ import { readLedger } from '#format';
 import { boardData, foldLedger, replyText } from '#actions';
 import { boardCards } from '../src/shell/chat-bridge.ts';
 import type { ActFields } from '../src/board/io.ts';
-import { createFlagFlow, flagAct, flaggedIds, flaggedWords, nextFlagged } from '../src/board/flag-flow.ts';
+import { createFlagFlow, flagAct, flaggedIds, flaggedWords, nextFlagged } from '../src/board/cards/flag-flow.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';

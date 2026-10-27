@@ -8,6 +8,7 @@ import type { LedgerState, Proposal } from './fold.ts';
 import type { ItemNote } from './notes.ts';
 import type { ReportedAction } from './registry.ts';
 import { actionOut } from './registry.ts';
+import { isRecord } from '#format';
 
 /** Card `id`'s number on its board. Every card the ledger holds has one; an unknown id is a slip
  * that comes out undefined (a JSON answer then leaves the field out, and its schema check fails). */
@@ -35,7 +36,6 @@ export const linkOut = (s: LedgerState, l: { from: number; to: number; label?: s
   ({ from: numberOf(s, l.from), to: numberOf(s, l.to), ...(l.label !== undefined && { label: l.label }) });
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Ledger event `e` (with any extra fields, such as `means`, kept in place) as an answer shows it:
  * the line the file holds (`toLine`), with every card it names by board number, as the card-reference
@@ -46,7 +46,7 @@ export function eventOut<E extends LedgerEvent>(s: { index: LedgerIndex }, e: E)
   // The card-reference table: a link's ends are cards; a reply's `to` is the `seq` of the act it answers.
   for (const f of cardFields(e.type)) {
     const holder = f.in === undefined ? line : line[f.in];
-    if (!isRec(holder) || holder[f.field] === undefined) continue;
+    if (!isRecord(holder) || holder[f.field] === undefined) continue;
     const value = holder[f.field];
     const out = f.list ? (Array.isArray(value) ? value.map(num) : value) : num(value);
     if (f.in === undefined) line[f.field] = out;

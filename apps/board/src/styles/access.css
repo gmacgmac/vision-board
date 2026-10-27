@@ -69,8 +69,6 @@
 .vb-agents-panel {
   position: absolute; right: 0; top: calc(100% + var(--vb-space-1));
   min-width: calc(var(--vb-card-w-s) * 1.2); padding: var(--vb-space-3);
-  background: var(--vb-surface-raised); border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg);
-  box-shadow: var(--vb-shadow-lift);
 }
 .vb-agents-title { margin: 0 0 var(--vb-space-2); font: var(--vb-weight-bold) var(--vb-text-sm) var(--vb-font); color: var(--vb-ink-strong); }
 .vb-agents-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--vb-space-1); }

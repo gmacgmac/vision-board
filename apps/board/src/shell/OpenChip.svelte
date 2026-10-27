@@ -2,15 +2,15 @@
      openList flag) and the "N new" chip (new-and-updated Design 5, freshCards flag), one pattern.
      While it has cards it is a menu dropdown over the chip (MenuSelect, the Containers finder's
      pattern): its list holds the cards as "12 · title" in board order, an updated one ending
-     "· updated" (board/finder.ts `openRow`), and choosing one goes to it as Go to card does
-     (board/go-to-card.ts `to`). With no cards (or `cards` empty: the flag off) it is the plain chip.
+     "· updated" (board/find/finder.ts `openRow`), and choosing one goes to it as Go to card does
+     (board/find/go-to-card.ts `to`). With no cards (or `cards` empty: the flag off) it is the plain chip.
      The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
      the gallery both draw this. -->
 <script lang="ts">
   import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import MenuSelect from './MenuSelect.svelte';
-  import type { RowCard } from '../board/finder.ts';
-  import { openRow } from '../board/finder.ts';
+  import type { RowCard } from '../board/find/index.ts';
+  import { openRow } from '../board/find/index.ts';
 
   let {
     count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = shellGoToCardWords.goToAnOpenCard,

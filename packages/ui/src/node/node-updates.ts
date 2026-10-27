@@ -2,14 +2,14 @@
 // stepper a changed card opens, worded from the versions the page passes in. Split out of
 // node-core.ts along this seam (the flag, field report batch 2, grew it past 300 lines). No DOM.
 import type { ViewNode } from '#format';
-import type { Change, FieldChange } from '#actions';
+import type { Change, FieldChange, UnseenStep } from '#actions';
 import * as nodeUpdatesWords from '../words/node-updates.ts';
 
 /** One version a changed card steps through (FE_02): when and by whom, and what changed from the
  *  version before (`versionChanges`). `when` is in the person's clock; `agent` the writer's label.
  *  `reply`: the step is the agent's answer to the person's note, which cleared the card (D-045,
  *  answer-model ruling 7) and changed no version; `ver` is then the card's latest. */
-export interface CardStep { ver: number; when: string; agent?: string; changes: readonly FieldChange[]; reply?: string }
+export type CardStep = UnseenStep;
 
 /** A changed card (`item.unseen`, past version 1): `count`, the versions the person has not seen;
  *  while the stepper is open, `steps`, the versions it steps through, oldest first, and `at`, the one

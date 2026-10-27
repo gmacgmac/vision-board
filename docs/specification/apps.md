@@ -83,7 +83,7 @@ The board shows it in a frame inside the card:
   screen or the board is zoomed out past that, the panel is frozen, still running and holding what
   it holds, but taking no click or key (`inert`) and not painted, the placeholder in its place; back
   on screen, it carries on as it was. A panel may be frozen at any time, so its timers may run
-  while nobody sees it. The page keeps at most `LIVE_PANELS` loaded (`apps/board/src/board/app-cards.ts`):
+  while nobody sees it. The page keeps at most `LIVE_PANELS` loaded (`apps/board/src/board/apps/app-cards.ts`):
   past it, the least recently used frozen panel is removed (a panel on screen never is). A frame is
   also removed when its card goes or its state shows no panel. A removed panel starts again when
   it comes back, as it does after a page reload, so keep nothing in the panel that a restart would
@@ -214,7 +214,7 @@ and gets it back when it starts:
   write the server refused is that answer's error (-32000 with its problem). The person sees
   nothing of a refused save. A panel that starts again gets the value from the page's memory, else
   from one read of the server, waited for at most `LOAD_WAIT_MS`, after which it starts without
-  (`apps/board/src/board/panel-states.ts`).
+  (`apps/board/src/board/apps/panel-states.ts`).
 - **Where it is kept.** Per card, not per app: two cards showing one app keep two states. The board
   keeps it in the project, `.visionboard/app-state/<card identity>.json`, beside the ledger, through
   its two person-only operations (api.md 157). A card that now names another app starts that app

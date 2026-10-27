@@ -1,12 +1,10 @@
 // `write_board` (api.md 24-25, 29-37): one agent's batch of write items for the board in the
 // path, run in order, one result each. Per item: the write-item schema, then the cards it names
-// (board numbers and `{ key }`s, write-refs.ts), then its own retry key (before grants), then
+// (board numbers and `{ key }`s, write-refs.ts), then its own retry key (before grants; write-replay.ts), then
 // `base`, then the board, a proposal's card kind, the grant and a retire's owed cards, then the
 // ledger module's own checks as it appends. One failure never stops the rest, except items naming a
 // failed item's key, directly or through another failed item. Results name cards by board number.
-import { createHash } from 'node:crypto';
-import type { LedgerEvent } from '#format';
-import { LIMITS, codePoints, latest, toLine } from '#format';
+import { LIMITS, codePoints, isRecord, latest } from '#format';
 import type { LedgerState, RetireTarget, WriteItem } from '#actions';
 import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '#actions';
 import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
@@ -16,55 +14,26 @@ import { ProblemError } from './problem.ts';
 import { LEDGER_SCHEMA_BASE, schemaProblems } from './schema.ts';
 import type { ItemProblem } from './write-problem.ts';
 import { ItemFailed, fail, under } from './write-problem.ts';
+import { replay } from './write-replay.ts';
+import type { WriteResult } from './write-result.ts';
+import { written } from './write-result.ts';
 import type { Batch } from './write-refs.ts';
 import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
 import * as writesWords from './words/writes.ts';
 
 export type { ItemProblem } from './write-problem.ts';
+export type { WriteResult } from './write-result.ts';
 export { WRITE_ITEM_ID };
 
 const KEY_ID = `${LEDGER_SCHEMA_BASE}common.schema.json#/$defs/key`;
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
-
-/** One item's result; every card in it by board number (api.md 125). */
-export type WriteResult =
-  | { index: number; key?: string; ok: true; seq: number; n?: number; ver?: number; title?: string; retired?: number[]; replayed?: true }
-  | { index: number; key?: string; ok: false; problem: ItemProblem };
 
 /** Item types that carry the path's board on the stored line. */
 const ON_BOARD = new Set(['board', 'region', 'node', 'retire']);
-/** Stamped or server-held fields, left out when two items are compared (api.md 29). */
-const NOT_CONTENT = ['v', 'seq', 'at', 'by', 'agent', 'person', 'key', 'base', 'n', 'ver'];
-
-/** The same JSON for the same value, whatever order its keys came in. */
-function canonical(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map(canonical).join(',')}]`;
-  if (!isRec(v)) return JSON.stringify(v);
-  return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
-}
-
-/** A hash of what an item says, without its stamp, key or server-assigned numbers. A node's own
- * `n` and `ver` are server-held, so they are compared apart (`sameNode`); `propose`'s `ver` is
- * content. A container's retire is the container: which cards it took depends on when it ran. */
-function contentHash(e: Rec): string {
-  const content: Rec = {};
-  for (const [k, v] of Object.entries(e)) {
-    if (NOT_CONTENT.includes(k) && !(k === 'ver' && e.type === 'propose') && !(k === 'n' && e.type !== 'node')) continue;
-    if (k === 'cards' && e.region !== undefined) continue;
-    content[k] = v;
-  }
-  return createHash('sha256').update(canonical(content)).digest('hex');
-}
-
-/** A node item names the same node as the stored line: the same `n`, or none when it was new. */
-const sameNode = (item: Rec, stored: Rec): boolean =>
-  item.type !== 'node' || (item.n === undefined ? stored.ver === 1 : item.n === stored.n);
-
 /** The item's key, when it is a valid one (it is echoed in the result). */
 function keyOf(raw: unknown): string | undefined {
-  const key = isRec(raw) ? raw.key : undefined;
+  const key = isRecord(raw) ? raw.key : undefined;
   return typeof key === 'string' && schemaProblems(KEY_ID, key).length === 0 ? key : undefined;
 }
 
@@ -93,28 +62,6 @@ function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec 
       { errors: [{ pointer: `/items/${i}/text`, detail: writesWords.theBodyWouldBeOver(LIMITS.body) }] });
   }
   return { type: 'node', board: b.board, n: id, node: { ...was, body }, ...(item.key !== undefined && { key: item.key }) };
-}
-
-function written(s: LedgerState, i: number, key: string | undefined, e: LedgerEvent, replayed = false): WriteResult {
-  return {
-    index: i, ...(key !== undefined && { key }), ok: true, seq: e.seq,
-    ...(e.type === 'node' && { n: numberOf(s, e.id), ver: e.ver, title: e.node.title }),
-    ...(e.type === 'retire' && { retired: e.cards.map((id) => numberOf(s, id)) }),
-    ...(replayed && { replayed: true as const }),
-  };
-}
-
-/** A key sent before: the same content returns the first result and writes nothing; other
- * content is a `conflict` (api.md 29). Undefined when the key is new. */
-function replay(b: Batch, i: number, key: string, e: Rec): WriteResult | undefined {
-  const stored = storedFor(b, key);
-  if (!stored) return undefined;
-  const line = toLine(stored);
-  if (contentHash(line) !== contentHash(e) || !sameNode(e, line)) {
-    fail('conflict', writesWords.theKeyWasUsedBefore(key),
-      { errors: [{ pointer: `/items/${i}/key`, detail: writesWords.keyReusedForDifferentContent2 }] });
-  }
-  return written(b.ledger.state(), i, key, stored, true);
 }
 
 /** A node update based on a version that is no longer the latest is a `conflict` carrying the
@@ -197,7 +144,7 @@ function append(b: Batch, i: number, key: string | undefined, item: Rec, e: Rec)
 /** A `propose` names ✓ `check` and ✗ `cross` (D-045, api.md 147): the old `ack` and `drop` are
  * refused by name, before the schema, so the reason says the new word. */
 function checkProposeWord(i: number, raw: unknown): void {
-  const word = isRec(raw) && raw.type === 'propose' && typeof raw.action === 'string' && Object.hasOwn(ACTION_OUT, raw.action)
+  const word = isRecord(raw) && raw.type === 'propose' && typeof raw.action === 'string' && Object.hasOwn(ACTION_OUT, raw.action)
     ? ACTION_OUT[raw.action as keyof typeof ACTION_OUT] : undefined;
   if (word === undefined) return;
   const old = String((raw as Rec).action);
@@ -211,7 +158,7 @@ const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, ac
 /** A refused item (api.md 40): one naming a known `type` comes back with that form's example; one
  * with a missing or unknown `type` lists the ten types. */
 function refuse(i: number, raw: unknown, errors: readonly PointerError[]): never {
-  const example = itemExample(isRec(raw) ? raw.type : undefined);
+  const example = itemExample(isRecord(raw) ? raw.type : undefined);
   if (example === undefined) {
     fail('invalid', writesWords.eachItemNeedsAType(itemTypes().map((t) => `\`${t}\``).join(', ')), { errors: under(i, errors) });
   }
@@ -244,7 +191,7 @@ export function writeItems(ledger: Ledger, agent: string, board: string, items: 
       return writeOne(b, i, raw, key);
     } catch (err) {
       if (!(err instanceof ItemFailed)) throw err;
-      if (isRec(raw) && typeof raw.key === 'string') b.failed.add(raw.key);
+      if (isRecord(raw) && typeof raw.key === 'string') b.failed.add(raw.key);
       return { index: i, ...(key !== undefined && { key }), ok: false, problem: err.problem };
     }
   });

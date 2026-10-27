@@ -11,7 +11,7 @@ import type { Frame, Locator, Page } from '@playwright/test';
 import { tabTo } from './agent-board.ts';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
-import { LIVE_PANELS } from '../../apps/board/src/board/app-cards.ts';
+import { LIVE_PANELS } from '../../apps/board/src/board/apps/app-cards.ts';
 import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
 import { card as cardOf, panelOf } from './board-page.ts';

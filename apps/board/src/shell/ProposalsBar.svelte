@@ -7,14 +7,14 @@
      Page polish: the number (.vb-proposals-n) sits at the same spot in the pill and in the notice, so
      opening only grows the box down and to the right (proposals.css).
      A region landmark; a polite live region, always present so it is heard (the pill too), announces
-     the proposals in `news`: those that arrived in the page's latest batch (board/attention.ts).
+     the proposals in `news`: those that arrived in the page's latest batch (board/cards/attention.ts).
      Off while a past version shows: the page passes no rows. -->
 <script lang="ts">
   import * as shellProposalsWords from './words/shell-proposals.ts';
   import { tick } from 'svelte';
   import type { ProposalRow } from '#actions';
   import { acceptAllPlan } from '#actions';
-  import { barWords } from '../board/proposals.ts';
+  import { barWords } from '../board/cards/index.ts';
   import { keep, kept } from './kept.ts';
 
   let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false }: {

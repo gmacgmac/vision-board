@@ -3,11 +3,20 @@
 // draws and sends names a card by its number on its board: the View's node ids, the DOM's
 // `data-id`, every act body. These turn one into the other, on the page's side, so a module that
 // indexes the folded state with a number it drew goes through here. Pure.
-import type { LedgerEvent, LedgerLine } from '#format';
+import type { LedgerEvent, LedgerLine, View, ViewNode } from '#format';
 import { boardNumber, cardFields, cardId, fromLine } from '#format';
 import type { LedgerState } from '#actions';
 
 type Held = Pick<LedgerState, 'index'>;
+
+/** Items first in number order, then the rest: DOM order is tab order is reading order, and every
+ * list on the stage follows it. */
+export function readingOrder(view: View): ViewNode[] {
+  return view.nodes
+    .map((n, i) => ({ n, i }))
+    .sort((a, b) => (a.n.n ?? Infinity) - (b.n.n ?? Infinity) || a.i - b.i)
+    .map((x) => x.n);
+}
 
 /** The identity of card `n` on `board`, or undefined for a number the board has not given. */
 export const idOf = (s: Held, board: string, n: number): number | undefined => cardId(s.index, board, n);

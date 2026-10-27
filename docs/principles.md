@@ -126,6 +126,10 @@ entry before anything uses it.
 
 - About 300 lines per file, functions about 50. The repo check warns over 300 and fails over 500
   unless the file says why (`verify: long-file <reason>`).
+- The repo check warns on a function over 50 lines of its own (a closure's inner functions count on
+  their own), unless it says why (`verify: long-function <reason>`).
+- The board (`apps/board/src/board/`) is in feature folders, each with one public file (`index.ts`);
+  code outside a folder imports only that, and the repo check fails on a path past it.
 - A file's name says its one job. If you need "and" to describe it, split it.
 - This matters doubly for AI-assisted work: small files fit in context, get read in full, and get
   edited correctly.

@@ -36,7 +36,7 @@ import type { ChatSessionInfo } from './page-io.ts';
 import { ApiError } from '../board/io.ts';
 import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
 import type { Agent, Pick } from './chat-rules.ts';
-import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, sendsInChat, shownPick } from './chat-rules.ts';
+import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
 import * as chatWords from './words/chat.ts';
 
 const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
@@ -94,14 +94,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   };
   configure(EMPTY.board);
 
-  const st = {
-    board: null as string | null, past: false, session: null as ChatSessionInfo | null, chat: EMPTY_CHAT,
-    /** Send was pressed while the agent answered this message (`lastAsk`): waiting until the next. */
-    wait: null as string | null,
-    pick: { agent: 'claude', model: '' } as Pick, refused: undefined as string | undefined, sending: false,
-    /** A session starting (New session, a pick, a first message): a message waits for it. */
-    starting: null as Promise<ChatSessionInfo | null> | null,
-  };
+  const st = panelState();
   let [unfollow, loads] = [() => {}, 0];
   let [waitShown, attachedShown] = [false, false];
   const inChat = () => sendsInChat(st.session, st.board, attachedNow());
@@ -264,16 +257,30 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   on(CHAT_NEW_SESSION_EVENT, () => renew(current()));
   on<ChatPickDetail>(CHAT_PICK_EVENT, picked);
 
+  /** Open the sidebar and bring the feed row `key` (a change chip's target) into view. */
+  async function reveal(key: string) {
+    await d.open();
+    if (!(await loadDrawing()) || !view) return;
+    const row = view.feed.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
+    row?.scrollIntoView({ block: 'nearest' });
+    (row?.querySelector<HTMLElement>('button') ?? row)?.focus({ preventScroll: true });
+  }
+
+  /** The board's Send: with the board's session and something attached, it is the message with no words (ruling 4). */
+  async function boardSend(act: () => Promise<string | null>): Promise<string | null> {
+    if (inChat()) return send({ text: '', chips: [] });
+    const s = st.session;
+    const ask = s && s.board !== undefined && s.board === st.board && st.chat.busy ? lastAsk(st.chat) : null;
+    const problem = await act();
+    // Recorded while the same message is still being answered: the server holds the answers.
+    if (problem === null && ask !== null && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
+    return problem;
+  }
+
   const detach = d.bridge.chat({
     panel, composer: composerSide, state: () => st.chat, changed: render,
     agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
-    async reveal(key) {
-      await d.open();
-      if (!(await loadDrawing()) || !view) return;
-      const row = view.feed.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
-      row?.scrollIntoView({ block: 'nearest' });
-      (row?.querySelector<HTMLElement>('button') ?? row)?.focus({ preventScroll: true });
-    },
+    reveal,
   });
   render();
 
@@ -283,16 +290,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       st.past = past;
       render();
     },
-    async boardSend(act) {
-      // With the board's session and something attached, Send is the message with no words (ruling 4).
-      if (inChat()) return send({ text: '', chips: [] });
-      const s = st.session;
-      const ask = s && s.board !== undefined && s.board === st.board && st.chat.busy ? lastAsk(st.chat) : null;
-      const problem = await act();
-      // Recorded while the same message is still being answered: the server holds the answers.
-      if (problem === null && ask !== null && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
-      return problem;
-    },
+    boardSend,
     load: loadDrawing,
     focus: () => view?.composer.focusText(),
     destroy() { gone = true; view = null; unfollow(); detach(); panel.replaceChildren(); },

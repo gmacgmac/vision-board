@@ -7,7 +7,7 @@ import { mount } from 'svelte';
 import type { ArchivedBoard } from '#actions';
 import ArchivedList from '../shell/ArchivedList.svelte';
 import ToolbarMenu from '../shell/ToolbarMenu.svelte';
-import { archiveAsk } from '../board/board-edit.ts';
+import { archiveAsk } from '../board/boards/index.ts';
 import { el, group } from './dom.ts';
 
 const BOARDS: ArchivedBoard[] = [

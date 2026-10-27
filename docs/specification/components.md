@@ -225,6 +225,13 @@ host; nclite's pane will be another.
   (`shell/chat-panel.ts`, `chat-bridge.ts`): it reads the board through `board/chat-side.ts` `BoardSide`,
   so its `addToChat` stages nothing more. No file under `apps/board/src/board/` imports the page around
   it or Svelte: `scripts/verify.mjs` `checkBoardHost` fails it (`scripts/verify.test.mjs`).
+  The board's folder is in feature folders (`canvas/`, `links/`, `cards/`, `notes/`, `selection/`, `input/`,
+  `find/`, `boards/`, `access/`, `apps/`), each with one public file, `index.ts`: code outside a folder imports
+  that and nothing else, and `io.ts` is the one way into `io/`. `scripts/verify.mjs` `checkFeatureFolders`
+  fails any other path in (`scripts/verify.test.mjs`); a unit test of a folder's inside may reach the inside.
+  A function over about 50 lines of its own warns (`scripts/verify-functions.mjs`
+  `checkFunctionLength`, proved in `verify-functions.test.mjs`), unless its header says why
+  (`verify: long-function <reason>`): `createBoard` does, as the board's composition root.
 - **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
   plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
   `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a
@@ -271,7 +278,7 @@ record is `api.md` 58-61.
    draws above the board at any zoom and moves nothing; `bubbleView` says what it reads in each
    mode (`new`, `edit`, `sent`, and `thread` for the conversation, item 6); the element emits
    `vb-note` and never writes anything itself.
-2. **The page** has one bubble, owned by `apps/board/src/board/notes.ts`: C, M, the footer
+2. **The page** has one bubble, owned by `apps/board/src/board/notes/notes.ts`: C, M, the footer
    buttons, the pin and a click on a note open it; it follows its card through
    `Viewport.onApply` and every relayout; every write goes through the controller's `attempt`.
 3. **On the card** (`<vb-node>`): `nodeState().notes` gives the pin (the latest note's number,
@@ -308,7 +315,7 @@ record is `api.md` 58-61.
    the close, and coming back cancels it; opening, Esc, a press outside, focus leaving and `close()`
    stay immediate. `bindHoverTip` and the container note preview (`region-note.ts`) both use it. The
    note and reply tip (`.vb-note-tip`) keeps its box unclipped so its bridge over the gap takes the
-   pointer, and scrolls the `.vb-tip-body` inside it (the wheel exemption in `board/pointer.ts` is
+   pointer, and scrolls the `.vb-tip-body` inside it (the wheel exemption in `board/input/pointer.ts` is
    `.vb-tip`, which matches it). The card popover's box is itself the scroller (a tab stop, filled by
    three producers), so it relies on the grace alone. Tests: `close-grace.test.ts`,
    `tests/pages/hover-tip.spec.ts`.
@@ -382,7 +389,7 @@ Behind the `cardHistory` flag (on by default).
   empty box are `packages/ui/src/node/node-history.ts` (`historyButton`, `historyBox`, drawn by
   `node-template.ts` `footer` when `NodeTemplateOptions.history`); the box is the card popover
   (`node-popover.ts` `bindCardPopover` with the ⓘ as its tab), which fires `POPOVER_SHOW` as it shows
-  and closes on `POPOVER_CLOSE`; the page fills it then (`apps/board/src/board/history-flow.ts`
+  and closes on `POPOVER_CLOSE`; the page fills it then (`apps/board/src/board/cards/history-flow.ts`
   `createHistoryFlow`, `historyMarkup`).
 - **Proven by**: `packages/actions/tests/card-history.test.ts` (card times: the box's kinds only, as
   `cardHistory` says them; no words and no private mark kept), `tests/pages/card-history.spec.ts`
@@ -395,7 +402,7 @@ Behind the `cardHistory` flag (on by default).
 The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_01_select-and-drag.md`).
 
 1. **The selection** is view state, never a ledger event. It lives in one page module,
-   `apps/board/src/board/selection.ts`: `selected()`, `has(id)`, `select(ids, mode)` (`only`, `add`,
+   `apps/board/src/board/selection/selection.ts`: `selected()`, `has(id)`, `select(ids, mode)` (`only`, `add`,
    `remove`, `toggle`), `clear()`, `keep(ids)` (drops ids that left the board, after each redraw) and
    `onChange`, whose event names only the ids that changed. The lasso and the selection bar call it.
 2. **On the card**, the page passes `selected` to `nodeState`; `<vb-node>` sets `data-selected`
@@ -545,12 +552,12 @@ light and dark, collapse and expand, popovers, keys, flag off, touch) and
 
 The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lasso-and-zoom.md`).
 
-1. **One command table**, `apps/board/src/board/commands.ts` (`COMMANDS`, keyed by `CommandId`):
+1. **One command table**, `apps/board/src/board/input/commands.ts` (`COMMANDS`, keyed by `CommandId`):
    zoom out, Fit and zoom in (the header), Comment, Move to (3_FE_03), Reset places (navigation FE_03; R, disabled while no selected card is
    pinned), Remove and Zoom (the selection bar; Clear is not a button, a click on empty board and Esc clear), Zoom to this area (the area bar it draws when a lasso touches no card). Each entry holds
    its label (the visible word), when the label is short what it means in full (`means`: the tooltip, the accessible name and the key list read it, with the key), and keys; the header buttons, the bar's buttons and `keys.ts` all read from it, so a
    command is wired once (ruling 5).
-2. **The lasso and the bar**, `apps/board/src/board/selection-flow.ts` (`createSelectionFlow`):
+2. **The lasso and the bar**, `apps/board/src/board/selection/selection-flow.ts` (`createSelectionFlow`):
    `pointer.ts`'s `lasso` gesture (Shift+drag on a background; Shift+Cmd/Ctrl adds) reports its
    screen box through `lassoMove`/`lassoEnd`; the cards it touches (`touches`, `packages/format/src/geometry.ts`, which
    `packages/ui`'s `selection-bar` pattern re-exports; `packages/format/tests/geometry.test.ts`) replace or add to the selection the same `selection.ts` module 3_FE_01
@@ -564,7 +571,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    pressed button's `CommandId`; the element never acts itself (rule 8). With the `selectionPill`
    flag (stage5-follow-ups FE_02, on by default) the bar is compact and over a selection starts as
    a pill ("3 selected" and a chevron, `aria-expanded`): its `vb-toggle` opens it, and
-   `board/selection-pill.ts` closes it on a press outside, a wheel pan, Esc (focus back on the
+   `board/selection/selection-pill.ts` closes it on a press outside, a wheel pan, Esc (focus back on the
    pill) or the selection clearing. The selection's keys work with it closed. **Clear of the
    tabs** (page polish ruling C, `cortex-tasks/board/2026-10-09_board-app_page-polish.md`): over
    cards the bar sits `pillGap(k)` above the selection, not `BAR_GAP`, because the cards' top tabs
@@ -610,7 +617,7 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
 6. **The key commands bubble** (navigation FE_04, `keyBubble` flag, on by default): a round "?" at the
    bottom left (`shell/KeyHelp.svelte`, `styles/key-help.css`) replaces the old key bar. Hover or focus
    opens the list through `bindHoverTip` (`packages/ui/src/tip/`): it stays while the pointer is on
-   it, Esc closes it, and `?` opens it. The list is generated by `board/key-help.ts` `keyGroups()`
+   it, Esc closes it, and `?` opens it. The list is generated by `board/input/key-help.ts` `keyGroups()`
    from `COMMANDS` and the registry `ACTIONS` (Items, Selection, Board, View); only inputs neither
    table owns (J/K, Space, Alt+arrows, H, pointer gestures) are listed by hand there, and a unit
    test fails when a command or action with a key is missing. A command with too many keys to list
@@ -664,7 +671,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    answered by then keeps its ✓ or ✗ lit, as now, so it never looks open: the act row is inert (no
    press, focus or hover) and shows only that mark (`board.css`; review polish FIX_01).
    `shell/VersionBanner.svelte` shows the banner with Back to now (Esc does the same). Code:
-   `apps/board/src/board/versions.ts`, `shell/Toolbar.svelte`, `shell/VersionBanner.svelte`.
+   `apps/board/src/board/boards/versions.ts`, `shell/Toolbar.svelte`, `shell/VersionBanner.svelte`.
    **From a container's "N retired" marker** (retiredMarker flag; review polish ruling 10,
    tracker N42) the same past view opens the version where the cards last appeared (the latest run
    before the latest of those retires) with the person's answers as they stood just before the
@@ -679,13 +686,13 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    board's containers in board order with their card counts, Later always last and disabled
    ("0 items") while empty. Choosing one zooms to its frame (`Board.goToContainer`, `vp.fit`) and
    focuses its title; zooming is no act, so it works in a past version too. There is no key. Code:
-   `apps/board/src/board/finder.ts` (`containerRows`, `zoomToContainer`), `shell/Toolbar.svelte`.
+   `apps/board/src/board/find/finder.ts` (`containerRows`, `zoomToContainer`), `shell/Toolbar.svelte`.
    The dropdown is `shell/MenuSelect.svelte`, the one menu dropdown pattern (item 7 uses it too): a
    native select that shows its name, calls `onpick` with a row's value and shows its name again
    (`tests/pages/finder.spec.ts`).
 3. **The key bubble** (`keyBubble` flag). The round "?" at the bottom left lists every key. It is
    generated from `COMMANDS` and the registry `ACTIONS`, never written twice (see 3_FE_02 item 6).
-   Code: `apps/board/src/board/key-help.ts`, `shell/KeyHelp.svelte`, `styles/key-help.css`.
+   Code: `apps/board/src/board/input/key-help.ts`, `shell/KeyHelp.svelte`, `styles/key-help.css`.
 4. **The toolbar keeps its room** (verification fix). The board picker never goes under 220px from a
    1024px window up (its title truncates inside). At 1500px and below the toolbar carries
    `data-narrow` (`shell/Toolbar.svelte`, a `MediaQuery`): the end group's text buttons show an icon
@@ -698,7 +705,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    decided before D-045) and Reply move into a "⋯" menu at the toolbar's end (`shell/ToolbarMenu.svelte`):
    rows with their icon and key, Hide answered a `menuitemcheckbox`; a click or Enter opens it and focuses the first row; Up,
    Down, Home, End, Esc (focus back on "⋯") and Tab are the Move to list's keys, one helper for both
-   (`board/menu-keys.ts`); a press outside or a choice closes it; H works on the board and in the
+   (`#ui` `menuKeydown`, `packages/ui/src/base/menu.ts`); a press outside or a choice closes it; H works on the board and in the
    menu. Agents (a bot with its holder count), Send to agent (a bot with a send arrow) and Chat show
    their icon only when narrow. The smallest supported width is 768px: at 1000px and below the
    gaps tighten, the app icon steps aside, the picker may go to 150px, the version and containers
@@ -878,14 +885,14 @@ behind the `archiveBoard` flag (on by default; `?flags=-archiveBoard`).
    its tooltip) while no board is open or a past version shows; the disabled look is the Move to
    list's, shared (`board.css`). It asks first through the shell's confirm dialog (`ConfirmDialog`,
    reused): "Archive 'Multi-bot'?", "Created 11 Oct, last updated 11 Oct. Agents won't see it; you
-   can restore it from the board picker.", Cancel focused, then Archive (`board/board-edit.ts`
+   can restore it from the board picker.", Cancel focused, then Archive (`board/boards/board-edit.ts`
    `archiveAsk`; days in the viewer's locale, the year only when not this one, from the fold's
    `dates`). Archiving sends one `archive` act through the one sender (`sender.ts` `actOn`).
-2. **The next board opens** (`board/boards.ts` `listed`, `leave`): whoever archived the open board,
+2. **The next board opens** (`board/boards/boards.ts` `listed`, `leave`): whoever archived the open board,
    this page or another, the board after it in the picker opens, else the one before; with none left
    the page reloads into its empty state (as it boots in a folder with no board), which says how
    many boards are archived. The hash and the remembered last board never open an archived board:
-   the next board after it opens instead (`board/start-board.ts` `startBoard`, `nextBoard`).
+   the next board after it opens instead (`board/boards/start-board.ts` `startBoard`, `nextBoard`).
 3. **Archived (N)…** ends the board picker while any board is archived (`shell/Toolbar.svelte`). It
    opens `shell/ArchivedDialog.svelte`, a native modal dialog holding `shell/ArchivedList.svelte`:
    each archived board, the latest archived first, with when it was last updated and Restore (its
@@ -915,13 +922,13 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    `unlock`; 24 grid, 1.5 stroke, `currentColor`). It acts on the open board with no confirm (nothing
    is lost either way) and is `aria-disabled`, explained in its tooltip, while no board is open or a
    past version shows, like Archive board…. It sends one `lock` or `unlock` act through the one
-   sender (`board/board-edit.ts` `lock`) and the toast says what it did (`LOCK_DONE`).
+   sender (`board/boards/board-edit.ts` `lock`) and the toast says what it did (`LOCK_DONE`).
 2. **"Locked"** follows the board's name and version in the toolbar while it is locked
    (`shell/LockedChip.svelte`): a quiet chip ringed in `--vb-line-strong`, the padlock and the word,
    never shortened on a narrow toolbar, its title "Locked: unlock to change it". A visually hidden
    polite live region beside it, outside the toolbar's flow, announces a lock from another tab.
    Styles: `styles/lock.css`.
-3. **Paused in place** (`board/lock-flow.ts`). After every batch and switch `apply` reads the lock
+3. **Paused in place** (`board/boards/lock-flow.ts`). After every batch and switch `apply` reads the lock
    from the folded ledger through the action layer's `boardLocked` and sets `data-locked` on the world
    and the status's `locked` (`board/status.ts`). The elements pause their own controls from `BoardState.locked`
    (`NodeState.paused`, `RegionState.paused`; `packages/ui/src/paused/paused.ts` `pauseControls`,
@@ -953,7 +960,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
 Task `cortex-tasks/board/2026-10-12_board-app_person-removes-cards.md` (rulings 1-5; api.md 141-142),
 behind the `personRemove` flag (on by default; `?flags=-personRemove`).
 
-1. **Remove** is the selection bar's command `remove` (`board/commands.ts`), between Reset
+1. **Remove** is the selection bar's command `remove` (`board/input/commands.ts`), between Reset
    places and Zoom: the button reads "Remove" and its tooltip and accessible name "Remove the selected
    card · Delete" over one card, "Remove the selected cards · Delete" over several
    (`selectionButtons`); Delete or Backspace run it on the selection (the key bubble lists them). A
@@ -966,7 +973,7 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
    listed (`ConfirmList`), "Remove container 'Notes' and its 3 cards?" with its cards listed; the body
    says they leave the board and stay in its history, then warns of each card still owed an answer
    ("Card 4 still has an unanswered comment.", more than three in one sentence) and of the
-   container's unanswered note (the action layer's `owedNotice`). Confirmed, `board/remove-flow.ts`
+   container's unanswered note (the action layer's `owedNotice`). Confirmed, `board/cards/remove-flow.ts`
    sends the person's `retire` line through the one sender (`sender.ts` `retire`, `retire_cards`); the
    toast says what went ("Removed card 4"); the cards leave the selection, focus that was on them goes
    back to the board, and the container shows "N retired" (retiredMarker flag).
@@ -1091,7 +1098,7 @@ section is how the board draws one. Two patterns share the work.
    ends with its reason ("Allow app: Calculator. Not allowed yet"), so a screen reader hears why.
    "Allowed ▾" (`data-app-menu`, "App allowed: Calculator") is a menu button: the page opens its menu
    upward over the panel, in the board's menu look, focuses Stop app ("Stop app: Calculator") and
-   handles its keys with `menu-keys.ts` `menuKeydown` (`app-cards.ts` `createAppMenus`; Esc gives
+   handles its keys with `#ui` `menuKeydown` (`apps/app-cards.ts` `createAppMenus`; Esc gives
    focus back to the button). While an act is in flight its footer control is `aria-busy` (loading)
    and when it is refused `data-error`, until the next press. The footer's controls and the state
    view's buttons hide at far zoom as the quick actions do. A state change that takes the focused
@@ -1232,7 +1239,7 @@ draws an image. Three patterns share the work, behind the `cardImages` flag.
    widths tall (`--vb-card-w-s`; the zoomed view shows it whole), centred. Until its size is known it is
    a sunken box at the full width, 16 by 10, with nothing drawn in it (a transparent picture stands in
    for the missing one, so no alt text and no broken-image mark).
-4. **The page's part** (`apps/board/src/board/card-images.ts` `createCardImages`, made by `draw.ts`):
+4. **The page's part** (`apps/board/src/board/cards/card-images.ts` `createCardImages`, made by `draw.ts`):
    - *Holding back*: a card's images (body, notes, replies, its boxes) lose their `src` when the card is
      drawn and keep their path in `data-path`; one in the card's body (not in a link) becomes the
      button that opens it (`imageButton`). After every draw, pan and zoom, in the next frame (once a

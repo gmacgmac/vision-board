@@ -4,15 +4,15 @@ import { NODE_SIZES } from './ledger.ts';
 import { appNodeRules, appRefProblems } from './app-shape.ts';
 import * as formatViewWords from './words/format-view.ts';
 import * as formatCommonWords from './words/format-common.ts';
+import { isRecord } from './records.ts';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isStr = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
 
 /** Every problem in a view file, in reading order. Empty means valid. */
 export function validateView(input: unknown): string[] {
   const p: string[] = [];
-  if (!isRec(input)) return [formatViewWords.viewMustBeAnObject];
+  if (!isRecord(input)) return [formatViewWords.viewMustBeAnObject];
   if (input.format !== FORMAT_VERSION) p.push(formatViewWords.formatMustBe(FORMAT_VERSION));
   if (!isStr(input.session) || !ID_PATTERN.test(input.session)) p.push(formatViewWords.sessionInvalidId);
   if (!Number.isInteger(input.version) || (input.version as number) < 1) p.push('version: integer >= 1');
@@ -24,7 +24,7 @@ export function validateView(input: unknown): string[] {
   const regionById = new Map<string, Rec>();
   regions.forEach((r, i) => {
     const at = `regions[${i}]`;
-    if (!isRec(r)) return p.push(formatCommonWords.mustBeAnObject(at));
+    if (!isRecord(r)) return p.push(formatCommonWords.mustBeAnObject(at));
     if (!isStr(r.id) || !ID_PATTERN.test(r.id)) return p.push(formatViewWords.idInvalidId(at));
     if (regionById.has(r.id)) p.push(formatViewWords.idDuplicate(at, r.id));
     regionById.set(r.id, r);
@@ -38,7 +38,7 @@ export function validateView(input: unknown): string[] {
   const numbers = new Map<number, string>();
   nodes.forEach((n, i) => {
     const at = `nodes[${i}]`;
-    if (!isRec(n)) return p.push(formatCommonWords.mustBeAnObject(at));
+    if (!isRecord(n)) return p.push(formatCommonWords.mustBeAnObject(at));
     if (!isStr(n.id) || !ID_PATTERN.test(n.id)) return p.push(formatViewWords.idInvalidId(at));
     if (nodeIds.has(n.id)) p.push(formatViewWords.idDuplicate(at, n.id));
     nodeIds.add(n.id);
@@ -64,11 +64,11 @@ export function validateView(input: unknown): string[] {
   });
 
   regions.forEach((r, i) => {
-    if (isRec(r) && r.center !== undefined && !nodeIds.has(r.center as string))
+    if (isRecord(r) && r.center !== undefined && !nodeIds.has(r.center as string))
       p.push(formatViewWords.regionsCenterUnknownNode(i, String(r.center)));
   });
   links.forEach((l, i) => {
-    if (!isRec(l)) return p.push(formatViewWords.linksMustBeAnObject(i));
+    if (!isRecord(l)) return p.push(formatViewWords.linksMustBeAnObject(i));
     if (!nodeIds.has(l.from as string)) p.push(formatViewWords.linksFromUnknownNode(i, String(l.from)));
     if (!nodeIds.has(l.to as string)) p.push(formatViewWords.linksToUnknownNode(i, String(l.to)));
   });

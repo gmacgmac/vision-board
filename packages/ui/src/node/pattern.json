@@ -44,7 +44,7 @@
     "aria-label": "number, kind, title and, on a card that asks, its status (nodeLabel, set by update: 'Open', 'checked', 'crossed', 'Replied', 'Saved for later'), then ', selected' while selected",
     "data-noted": "present when the item has a note (set by update)",
     "data-bubble": "present while its note bubble is open, so the card draws over its neighbours (set by the page)",
-    "data-pointer-focus": "present while the card has focus that a pointer press gave it (set by the page, apps/board/src/board/pointer-focus.ts): no focus ring draws when a key that moves no focus (Z, Esc, Space) makes the browser match :focus-visible; focus the keyboard moves never carries it",
+    "data-pointer-focus": "present while the card has focus that a pointer press gave it (set by the page, apps/board/src/board/canvas/pointer-focus.ts): no focus ring draws when a key that moves no focus (Z, Esc, Space) makes the browser match :focus-visible; focus the keyboard moves never carries it",
     "data-open": "on a card popover's box (vb-card-pop), while it shows: hover or keyboard focus on its tab previews it, a click or Enter on the tab opens it (set by the card popover, which also sets the tab's aria-expanded); the card is drawn above its neighbours meanwhile",
     "aria-busy": "on a proposal (vb-prop) while its answer is on its way (set by the page)",
     "data-tip-open": "on a note (vb-node-note), while its full-text tip is open beside the card, and the card is drawn above its neighbours: the pointer on the note or the tip, or focus on the note, while the note is cut (set by the note-tip behaviour; notePreview flag, which the page shows as data-note-preview on its world); Esc dismisses it, a click opens the bubble instead",

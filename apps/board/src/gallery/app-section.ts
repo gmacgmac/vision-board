@@ -10,7 +10,7 @@
 import type { AppInfo, ViewNode } from '#format';
 import type { VbAppFrameElement, VbNodeElement } from '#ui';
 import { appView, nodeState } from '#ui';
-import { watchTheme } from '../board/app-cards.ts';
+import { watchTheme } from '../board/apps/index.ts';
 import { pageIo } from '../shell/page-io.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

@@ -11,9 +11,9 @@ import type { Ledger } from './ledger.ts';
 import { fail } from './write-problem.ts';
 import { agentSees } from './visibility.ts';
 import * as writesWords from './words/writes.ts';
+import { isRecord } from '#format';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** One batch: the ledger, the writing agent, the path's board, and the keys of items that failed. */
 export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string> }
@@ -66,10 +66,10 @@ export function resolve(b: Batch, i: number, item: Rec): Rec {
   const out: Rec = { ...item };
   for (const f of cardFields(item.type)) {
     const holder = f.in === undefined ? item : item[f.in];
-    const ref = isRec(holder) ? holder[f.field] : undefined;
+    const ref = isRecord(holder) ? holder[f.field] : undefined;
     if (f.list || ref === undefined) continue; // an item names its cards one by one
     const pointer = `/items/${i}/${f.in === undefined ? '' : `${f.in}/`}${f.field}`;
-    const id = f.in === undefined && isRec(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
+    const id = f.in === undefined && isRecord(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
     if (f.in === undefined) out[f.field] = id;
     else out[f.in] = { ...(out[f.in] as Rec), [f.field]: id };
   }

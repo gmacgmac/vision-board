@@ -2,7 +2,7 @@
 // the bar, the whole meaning and the key in the tooltip and the accessible name; no Clear.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { commandTitle, SELECTION_COMMANDS, selectionButtons } from '../src/board/commands.ts';
+import { commandTitle, SELECTION_COMMANDS, selectionButtons } from '../src/board/input/commands.ts';
 
 test('the bar reads Comment, Move to, Reset places, Remove, Zoom; Clear is not a button', () => {
   assert.deepEqual(selectionButtons(2, true).map((b) => b.label), ['Comment', 'Move to', 'Reset places', 'Remove', 'Zoom']);

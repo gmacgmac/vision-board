@@ -16,7 +16,7 @@ import {
   boardCards, boardContext, cardChip, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL,
 } from '../src/shell/chat-bridge.ts';
 import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/shell/chat-rules.ts';
-import { createSelection } from '../src/board/selection.ts';
+import { createSelection } from '../src/board/selection/selection.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';

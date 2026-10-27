@@ -1,6 +1,6 @@
 <!-- The key commands bubble (navigation FE_04, keyBubble flag): a round "?" at the board's bottom left;
      hover or focus lists every command, grouped Items, Selection, Board, View, from the one command
-     table and the action registry (board/key-help.ts). The open rules are the shared hover tip
+     table and the action registry (board/input/key-help.ts). The open rules are the shared hover tip
      (packages/ui/src/tip/hover-tip.ts, WCAG 1.4.13): it stays while the pointer is on it, Esc
      closes it. "?" (Shift+/) opens it from anywhere on the page but a text field. The gallery
      mounts it in the page flow, open. -->
@@ -8,7 +8,7 @@
   import * as shellKeyHelpWords from './words/shell-key-help.ts';
   import { onMount } from 'svelte';
   import { bindHoverTip } from '#ui';
-  import { keyGroups } from '../board/key-help.ts';
+  import { keyGroups } from '../board/input/index.ts';
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 

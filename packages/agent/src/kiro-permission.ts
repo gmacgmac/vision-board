@@ -7,9 +7,9 @@
 // "for this session" is the board server's to remember.
 import type { Facts } from './approvals.ts';
 import { factsFor } from './approvals.ts';
+import { isRecord } from './record.ts';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 /** What to do with one permission request. */
@@ -25,10 +25,10 @@ export interface PermissionRequest {
 
 /** The request's shape, or null when it is not one we can answer. */
 export function readRequest(params: unknown): PermissionRequest | null {
-  if (!isRec(params) || !isRec(params.toolCall) || !Array.isArray(params.options)) return null;
+  if (!isRecord(params) || !isRecord(params.toolCall) || !Array.isArray(params.options)) return null;
   const options = params.options.flatMap((o) =>
-    isRec(o) && typeof o.optionId === 'string' && typeof o.kind === 'string' ? [{ optionId: o.optionId, name: str(o.name), kind: o.kind }] : []);
-  const identity = isRec(params._meta) && isRec(params._meta.mcpToolIdentity) ? str(params._meta.mcpToolIdentity.serverName) : '';
+    isRecord(o) && typeof o.optionId === 'string' && typeof o.kind === 'string' ? [{ optionId: o.optionId, name: str(o.name), kind: o.kind }] : []);
+  const identity = isRecord(params._meta) && isRecord(params._meta.mcpToolIdentity) ? str(params._meta.mcpToolIdentity.serverName) : '';
   return { sessionId: str(params.sessionId), toolCall: params.toolCall, options, ...(identity !== '' && { server: identity }) };
 }
 
@@ -43,7 +43,7 @@ export const outcome = (optionId: string | null) =>
 
 /** `{ type: 'diff', path, oldText, newText }` entries of a tool call's content. */
 const diffs = (content: unknown): Rec[] =>
-  (Array.isArray(content) ? content.filter((c): c is Rec => isRec(c) && c.type === 'diff' && typeof c.path === 'string') : []);
+  (Array.isArray(content) ? content.filter((c): c is Rec => isRecord(c) && c.type === 'diff' && typeof c.path === 'string') : []);
 
 /**
  * What to do for `toolCall` (an ACP tool call with its `kind`, `locations`, `content` and
@@ -53,14 +53,14 @@ export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (pa
   if (own) return { allow: true };
   const kind = str(toolCall.kind);
   if (kind === 'read' || kind === 'search' || kind === 'think') return { allow: true };
-  const input = isRec(toolCall.rawInput) ? toolCall.rawInput : {};
+  const input = isRecord(toolCall.rawInput) ? toolCall.rawInput : {};
   if (kind === 'execute') {
     const asked = factsFor({ tool_name: 'Bash', tool_input: { command: str(input.command) }, cwd }, exists);
     return 'refuse' in asked ? asked : { ask: asked };
   }
   if (kind === 'edit' || kind === 'delete' || kind === 'move') {
     const [change] = diffs(toolCall.content);
-    const loc = Array.isArray(toolCall.locations) && isRec(toolCall.locations[0]) ? str(toolCall.locations[0].path) : '';
+    const loc = Array.isArray(toolCall.locations) && isRecord(toolCall.locations[0]) ? str(toolCall.locations[0].path) : '';
     const file = change ? str(change.path) : loc || str(input.path) || str(input.file_path);
     if (file === '') return { refuse: 'The file change did not say which file, so it was refused.' };
     // The change as a diff when Kiro sent one; else from the tool's own input (create, or replace some text).

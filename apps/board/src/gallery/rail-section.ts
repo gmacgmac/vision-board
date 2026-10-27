@@ -14,7 +14,7 @@ import type { BoardState } from '#actions';
 import { placedView } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
-import { LATER_FRAME } from '../board/render.ts';
+import { LATER_FRAME } from '../board/canvas/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { FRAME_PREFIX } from './fixture.ts';

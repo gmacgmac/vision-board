@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '#format';
 import {
-  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger,
+  LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger, readLine,
 } from '#format';
 import type { LedgerState } from '#actions';
 import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '#actions';
@@ -22,6 +22,7 @@ import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
 import * as serverFoldersWords from './words/server-folders.ts';
+import { isRecord } from '#format';
 
 export const DATA_DIR = '.visionboard';
 export const LEDGER_FILE = 'ledger.jsonl';
@@ -60,7 +61,6 @@ export const ledgerPath = (projectDir: string): string =>
   path.join(path.resolve(projectDir), DATA_DIR, LEDGER_FILE);
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Highest integer `seq` on any line that parses, valid or not. */
 function highestSeq(lines: string[]): number {
@@ -77,7 +77,7 @@ function highestSeq(lines: string[]): number {
 /** The body with the server's stamp. A new node (no `n`) gets the next identity; every node event
  * gets the next version. */
 function stamp(input: unknown, caller: Caller, seq: number, ix: LedgerIndex): Rec {
-  const body: Rec = isRec(input) ? { ...input } : {};
+  const body: Rec = isRecord(input) ? { ...input } : {};
   for (const k of STAMPED) delete body[k];
   const e: Rec = {
     v: LEDGER_FORMAT, seq, at: new Date().toISOString(), by: caller.by,
@@ -105,7 +105,7 @@ const wrongCaller = (e: Rec): PointerError => ({
  * never written there, api.md 136), or on a locked one, which throws `locked` (423, api.md 139), then
  * an act's action rules, so the person reads their plain words first (api.md 93), then the context. */
 function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
-  if (!isRec(input)) return [{ pointer: '', detail: serverFoldersWords.theEventMustBeAn }];
+  if (!isRecord(input)) return [{ pointer: '', detail: serverFoldersWords.theEventMustBeAn }];
   const hand = (list: string[]) => list.map((t) => pointerError(t, e));
   if (input.type === 'node' && Number.isInteger(input.n) && !ix.nodes.has(input.n as number))
     return hand([serverFoldersWords.nUnknownNodeLeaveN(String(input.n))]);
@@ -149,17 +149,12 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       try { fn(event); } catch (err) { warn(`ledger: listener failed: ${String(err)}`); }
     }
   };
-  /** One line another writer appended, checked as `readLedger` checks a line on open. */
+  /** One line another writer appended, checked as `readLedger` checks a line on open (`readLine`). */
   const takeLine = (line: string) => {
-    let e: unknown;
-    try { e = JSON.parse(line); } catch { ix.seq += 1; return warn('ledger: a line another writer appended is not JSON'); }
-    const shape = eventProblems(e);
-    const event = shape.length ? undefined : fromLine(e as Rec);
-    const problems = event ? contextProblems(ix, event) : shape;
-    if (event && !problems.length) return add(event);
-    for (const p of problems) warn(`ledger: a line another writer appended: ${p}`);
-    const seq = (e as { seq?: unknown } | null)?.seq;
-    if (Number.isInteger(seq)) ix.seq = Math.max(ix.seq, seq as number);
+    const read = readLine(ix, line);
+    if (read.event) return add(read.event);
+    if (read.notJSON) return warn('ledger: a line another writer appended is not JSON');
+    for (const p of read.problems) warn(`ledger: a line another writer appended: ${p}`);
   };
   const refresh = () => {
     const now = fs.statSync(file, { throwIfNoEntry: false })?.size ?? 0;
@@ -173,7 +168,7 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
     torn = false;
     for (const line of whole.toString('utf8').split('\n')) if (line.trim()) takeLine(line);
   };
-  const poll = () => refresh();
+  let timer: ReturnType<typeof setInterval> | undefined;
 
   return {
     file,
@@ -186,12 +181,14 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
     },
     refresh,
     follow() {
-      if (followers++ === 0) fs.watchFile(file, { interval: FOLLOW_MS, persistent: false }, poll);
+      // Polled against the size this ledger last read, not `fs.watchFile`: its first look is taken
+      // later, so a line written in between was never seen as a change.
+      if (followers++ === 0) timer = setInterval(refresh, FOLLOW_MS).unref();
       let on = true;
       return () => {
         if (!on) return;
         on = false;
-        if (--followers === 0) fs.unwatchFile(file, poll);
+        if (--followers === 0) clearInterval(timer);
       };
     },
     append(input, caller, opts = {}) {

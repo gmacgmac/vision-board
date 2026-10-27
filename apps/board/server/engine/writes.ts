@@ -7,7 +7,7 @@
 import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '#actions';
 import type { OperationId } from '#format';
 import { openRequestOf } from '#format';
-import { newSecret } from '../agents.ts';
+import { newToken } from '../secrets.ts';
 import { cardsIn } from '../edge.ts';
 import { bodyExample } from '../examples.ts';
 import { problem } from '../problem.ts';
@@ -102,7 +102,7 @@ const join: Op = async (ctx) => {
   const { label } = await body('join', ctx, JOIN_LIMIT);
   const store = agents();
   const agent = store.mint(ledger.state().index.agents);
-  const secret = newSecret();
+  const secret = newToken();
   store.add(agent, secret);
   ledger.append({ type: 'join', label }, { by: 'agent', agent });
   return reply(201, { agent, secret, project: name() });

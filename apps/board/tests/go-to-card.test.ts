@@ -6,9 +6,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { GoTarget } from '#actions';
-import type { GoBox, GoDeps } from '../src/board/go-to-card.ts';
-import { createGoTo, goDigits } from '../src/board/go-to-card.ts';
-import { commandForKey } from '../src/board/commands.ts';
+import type { GoBox, GoDeps } from '../src/board/find/go-to-card.ts';
+import { createGoTo, goDigits } from '../src/board/find/go-to-card.ts';
+import { commandForKey } from '../src/board/input/commands.ts';
 
 test('a digit is the go command; the box keeps digits only, at most six', () => {
   for (const k of '0123456789') assert.equal(commandForKey(k), 'go-to-card', k);

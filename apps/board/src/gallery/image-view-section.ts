@@ -9,7 +9,7 @@ import type { ViewNode } from '#format';
 import { IMAGE_WORDS, imageNotReal } from '#format';
 import type { VbImageViewElement } from '#ui';
 import { showProblem } from '#ui';
-import { createCardImages } from '../board/card-images.ts';
+import { createCardImages } from '../board/cards/index.ts';
 import { wholePixels } from './app-frame-section.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

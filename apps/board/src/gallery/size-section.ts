@@ -6,7 +6,7 @@
 import type { ViewNode } from '#format';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
-import { tierOf } from '../board/size.ts';
+import { tierOf } from '../board/cards/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_SIZES } from './fixture.ts';

@@ -20,7 +20,8 @@ import type { ChatMessage } from './chat-prompt.ts';
 import { promptFor, wordsOf } from './chat-prompt.ts';
 import { previousSend } from './chat-round.ts';
 import type { ChatEvent, LiveSession } from './chat-session.ts';
-import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
+import { createLiveSession, hasToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
+import { newToken } from './secrets.ts';
 import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import { isLocked } from './visibility.ts';
@@ -129,7 +130,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
     if (!make) throw problem('conflict', serverChatWords.isNotAvailableOnThis(agentName(record.agent)));
     const why = blocked[record.agent];
     if (why) throw problem('conflict', serverChatWords.couldNotBeStarted(agentName(record.agent), why));
-    const token = newRunToken();
+    const token = newToken();
     try {
       const extra = { sessionId: record.session, ...(record.model && { model: record.model }) };
       const started = await make().start(options(rekey(agents(), record.agentId), token, extra));
@@ -200,7 +201,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       const why = blocked[agent];
       if (why) throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: why }] });
       const identity = newIdentity(ledger, agents());
-      const token = newRunToken();
+      const token = newToken();
       let started;
       const at = key(board);
       starts.set(at, (starts.get(at) ?? 0) + 1);

@@ -1,6 +1,6 @@
 // A per-viewer convenience kept in this browser (localStorage, guarded): the chat sidebar's width
 // and open state, the proposals notice hidden or shown, the board last looked at
-// (board/start-board.ts). Storage can be refused (a private window's policy, a blocked site) or
+// (board/boards/start-board.ts). Storage can be refused (a private window's policy, a blocked site) or
 // absent; then nothing is kept and the page behaves as on a first visit.
 
 /** The value kept under `key`, or null when there is none or storage can't be read. */

@@ -7,7 +7,8 @@
 import { callTool } from './call-tool.ts';
 import { CACHE, CAPABILITIES, INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, META, MODERN, SERVER_INFO, SUPPORTED_VERSIONS } from './info.ts';
 import type { RpcMessage, RpcResponse } from './rpc.ts';
-import { CODES, RpcError, errorResponse, isRecord } from './rpc.ts';
+import { isRecord } from '#format';
+import { CODES, RpcError, errorResponse } from './rpc.ts';
 import { TOOL_FILE } from './tools.ts';
 import * as protocolWords from './words/protocol.ts';
 

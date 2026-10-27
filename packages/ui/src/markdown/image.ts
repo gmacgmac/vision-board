@@ -3,7 +3,7 @@
 // the board's image route, lazy and decoded off the main thread; a refused path is the box saying why
 // (`imageNote`), so nothing outside the images folder, and nothing from the internet, is ever asked
 // for; no alt text is the path as plain text. The page sizes and versions the image once it knows it
-// (apps/board/src/board/card-images.ts); the zoomed view is the image-view pattern's.
+// (apps/board/src/board/cards/card-images.ts); the zoomed view is the image-view pattern's.
 import { IMAGE_ROUTE, IMAGE_WORDS, imagePathProblem } from '#format';
 import { esc } from './inline.ts';
 import * as markdownWords from '../words/markdown.ts';

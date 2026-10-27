@@ -8,7 +8,7 @@
 // (chat-bridge.ts, board/chat-side.ts), so `addToChat` has nothing more to stage here.
 import { flagOn, isFlag } from '#format';
 import type { BoardHost, BoardEvent } from '../board/host.ts';
-import { LAST_BOARD_KEY } from '../board/start-board.ts';
+import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
 import { keep, kept } from './kept.ts';

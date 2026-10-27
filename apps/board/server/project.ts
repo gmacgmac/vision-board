@@ -15,7 +15,7 @@ import type { ChatAdapters, ChatOptions, Chats } from './chat-sessions.ts';
 import { openChats } from './chat-sessions.ts';
 import type { Engine } from './engine/index.ts';
 import { createEngine } from './engine/index.ts';
-import { displayName, hasBoard, isUnder } from './folders.ts';
+import { displayName, hasBoard, isUnder, realPath } from './folders.ts';
 import type { Ledger } from './ledger.ts';
 import { DATA_DIR, ledgerPath, openLedger } from './ledger.ts';
 import type { Lock } from './lock.ts';
@@ -66,8 +66,6 @@ export interface Project {
 
 interface Held extends OpenFolder { readonly lock: Lock | undefined; close(): void }
 
-const real = (dir: string): string => { try { return fs.realpathSync(dir); } catch { return path.resolve(dir); } };
-
 /** The folder's parts, each made on first use (the data folder, the real path and the engine too,
  * the engine on the ledger already opened under its lock). A Send through the engine hands the folder's chat session
  * the person's answers (api.md 121); a session that can't be loaded leaves the Send as it was. */
@@ -78,7 +76,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   let apps: AppHost | undefined;
   let engine: Engine | undefined;
   const abort = new AbortController();
-  const getDir = () => (dir ??= real(path.dirname(data())));
+  const getDir = () => (dir ??= realPath(path.dirname(data())));
   const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend }));
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({

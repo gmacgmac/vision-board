@@ -7,7 +7,7 @@
 <script lang="ts">
   import * as shellBoardsWords from './words/shell-boards.ts';
   import type { ArchivedBoard } from '#actions';
-  import { dayOf } from '../board/board-edit.ts';
+  import { dayOf } from '../board/boards/index.ts';
 
   let { boards, uid, busy = null, problem = null, now = new Date(), onrestore, onclose }: {
     boards: readonly ArchivedBoard[];

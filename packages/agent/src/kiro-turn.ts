@@ -6,9 +6,9 @@
 // state, and a board write also its board, cards and head (the same summary the Claude adapter makes).
 import type { AgentUpdate } from './adapter.ts';
 import { BOARD_WRITE, boardWriteSummary, shortToolName } from './claude-stream.ts';
+import { isRecord } from './record.ts';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const BOARD_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const PASSED_OVER = new Set([
   'agent_thought_chunk', 'user_message_chunk', 'plan', 'available_commands_update', 'current_mode_update',
@@ -16,24 +16,24 @@ const PASSED_OVER = new Set([
 ]);
 
 /** The text of an ACP content block (`{ type: 'text', text }`), or ''. */
-export const blockText = (block: unknown): string => (isRec(block) && block.type === 'text' && typeof block.text === 'string' ? block.text : '');
+export const blockText = (block: unknown): string => (isRecord(block) && block.type === 'text' && typeof block.text === 'string' ? block.text : '');
 
 /** The text a tool call's `content` carries: `[{ type: 'content', content: { type: 'text', text } }]`. */
 function contentText(content: unknown): string {
-  return Array.isArray(content) ? content.map((c) => (isRec(c) ? blockText(c.content) : '')).join('') : '';
+  return Array.isArray(content) ? content.map((c) => (isRecord(c) ? blockText(c.content) : '')).join('') : '';
 }
 
 /** The text an MCP tool's `rawOutput` carries: kiro-cli 2.28.0 sends `{ items: [{ Json: { content:
  * [{ type: 'text', text }] } }] }` there and no `content` on the update; a plain string is taken as is. */
 function rawOutputText(raw: unknown): string {
   if (typeof raw === 'string') return raw;
-  const items = isRec(raw) && Array.isArray(raw.items) ? raw.items : [];
-  return items.map((i) => (isRec(i) && isRec(i.Json) && Array.isArray(i.Json.content) ? i.Json.content.map(blockText).join('') : '')).join('');
+  const items = isRecord(raw) && Array.isArray(raw.items) ? raw.items : [];
+  return items.map((i) => (isRecord(i) && isRecord(i.Json) && Array.isArray(i.Json.content) ? i.Json.content.map(blockText).join('') : '')).join('');
 }
 
 /** Kiro's own facts about a tool call: `_meta.kiro` (`toolName`, and for an MCP tool `mcpServerName`). */
 export function kiroMeta(update: Rec): Rec {
-  return isRec(update._meta) && isRec(update._meta.kiro) ? update._meta.kiro : {};
+  return isRecord(update._meta) && isRecord(update._meta.kiro) ? update._meta.kiro : {};
 }
 
 /** The tool's own name (`write_board`, `write`), else the last word of its title. */
@@ -66,7 +66,7 @@ export class KiroTurn {
 
   /** The updates one `session/update` notification's `update` means. */
   push(update: unknown): AgentUpdate[] {
-    if (!isRec(update)) return [];
+    if (!isRecord(update)) return [];
     const kind = String(update.sessionUpdate);
     if (kind === 'agent_message_chunk') {
       this.pending += blockText(update.content);
@@ -95,7 +95,7 @@ export class KiroTurn {
     if (!known) {
       out.push(...this.flush());
       const tool = nameOf(update);
-      const input = isRec(update.rawInput) ? update.rawInput : {};
+      const input = isRecord(update.rawInput) ? update.rawInput : {};
       const board = tool === BOARD_WRITE && typeof input.board === 'string' && BOARD_ID.test(input.board) ? input.board : undefined;
       this.tools.set(call, { tool, ...(board && { board }) });
       out.push({ type: 'tool', call, tool, state: 'running', ...(board && { board }) });

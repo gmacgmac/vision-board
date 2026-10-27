@@ -1,19 +1,19 @@
 <!-- The toolbar: board picker, board title and version, counts, the zoom group and the board-wide
      buttons. With the versionView flag (navigation FE_01) each fact shows once: the picker holds
      titles only, the title heading is for screen readers, and the version dropdown lists the open
-     board's own versions, "now" first, then each past one with its time (board/versions.ts);
+     board's own versions, "now" first, then each past one with its time (board/boards/versions.ts);
      choosing one shows the board as it was, read-only (VersionBanner), with no Agents or Send.
-     With the containerFinder flag a Containers dropdown follows (board/finder.ts): choosing one zooms to it.
+     With the containerFinder flag a Containers dropdown follows (board/find/finder.ts): choosing one zooms to it.
      With the openList flag the "N open" chip lists the open cards and goes to the one chosen (OpenChip;
      both dropdowns are MenuSelect). With the freshCards flag the "N new" chip beside it lists the new and
-     updated cards (`freshCards`, board/attention.ts) the same way, while there are any and no past
+     updated cards (`freshCards`, board/cards/attention.ts) the same way, while there are any and no past
      version shows. The picker marks a board the person has not opened " · new" and one an agent wrote on
      since they last looked " · changed", never the open one, and a chip counts both (the conditions
-     table, board/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
+     table, board/cards/attention.ts; FE_01 ruling 1); the chip sits in the counts' live region.
      The end group (ToolbarEnd): zoom, then Send to agent and the board's Agents list with the agentAccess
      flag, Chat with the chatPanel flag (ChatSidebar), and with the toolbarMenu flag the "⋯" menu
      (ToolbarMenu) holding Theme, Hide answered and Reply.
-     With the cardFlag flag the counts end in "N flagged" (board/flag-flow.ts) while any card is flagged
+     With the cardFlag flag the counts end in "N flagged" (board/cards/flag-flow.ts) while any card is flagged
      and no past version shows: a button that focuses the next flagged card, wrapping.
      With the boardEdit flag the picker ends with New board… and Rename board… (navigation BE_01,
      BOARD_ACTIONS): each opens BoardDialog; both are off while a past version shows. With the archiveBoard
@@ -42,18 +42,19 @@
   import OpenChip from './OpenChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
   import { currentFolderOn } from './folder.ts';
-  import { versionTime } from '../board/versions.ts';
-  import { rowText } from '../board/finder.ts';
-  import type { CommandId } from '../board/commands.ts';
+  import { versionTime } from '#ui';
+  import { rowText } from '../board/find/index.ts';
+  import type { CommandId } from '../board/input/index.ts';
   import { BOARD_ACTION_IDS, BOARD_ACTIONS, type BoardActionId } from '#actions';
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
+  import { keep, kept } from './kept.ts';
 
   let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {
     onboard: (id: string) => void;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
-    /** Zoom to a container (containerFinder flag, board/finder.ts). */
+    /** Zoom to a container (containerFinder flag, board/find/finder.ts). */
     ongo: (container: string) => void;
     /** Go to card `n`: an open one (openList flag) or a new or updated one (freshCards flag), OpenChip. */
     onopen: (n: number) => void;
@@ -72,13 +73,13 @@
 
   const THEMES = ['system', 'light', 'dark'] as const;
   type Theme = (typeof THEMES)[number];
-  const stored = localStorage.getItem('vb-theme');
+  const stored = kept('vb-theme');
   let theme: Theme = $state(THEMES.includes(stored as Theme) ? (stored as Theme) : 'system');
 
   $effect(() => {
     if (theme === 'system') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = theme;
-    localStorage.setItem('vb-theme', theme);
+    keep('vb-theme', theme);
   });
 
   const nextTheme = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]!; };

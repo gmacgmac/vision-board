@@ -47,7 +47,7 @@ tracker:
 | 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Completed | port 4755 |
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Completed | port 4760 (+ 10 per worker from 4770) |
 | 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Completed | port 4800 |
-| 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4900 |
+| 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Completed | port 4900 |
 | 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Pending | port 5000 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -111,8 +111,8 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | UI_01-R4 | UI_01 | nclite: `vb-` selectors count as scoped; root class `vb-board` | orchestrator: nclite-contract-reply.md | Done |
 | UI_01-R5 | UI_01 | `vb-board` on the mount root; 550 px pane inside a wider page in host-styles.spec | ARCH_03: `mount.ts` `BOARD_ROOT`; host-styles pane case (layout compare) | Done |
 | UI_01-R6 | UI_01 | `styles/page.ts` lists `shell.css` first, not `@import` | Wave 3 gate sub-agent | Done |
-| UI_01-R7 | UI_01 | `history-flow.ts` imports `menuKeydown` from `#ui`; delete `board/menu-keys.ts` | ARCH_06 | Open |
-| UI_01-R8 | UI_01 | ReplyPanel, BoardAgents, GoToCard take `.vb-surface-panel` / `.vb-surface-pop` | ARCH_06 | Open |
+| UI_01-R7 | UI_01 | `history-flow.ts` imports `menuKeydown` from `#ui`; delete `board/menu-keys.ts` | ARCH_06 | Done |
+| UI_01-R8 | UI_01 | ReplyPanel, BoardAgents, GoToCard take `.vb-surface-panel` / `.vb-surface-pop` | ARCH_06 | Done |
 | UI_01-R9 | UI_01 | `packages/ui/README.md`: the base and its recipes | Wave 3 gate sub-agent | Done |
 | ARCH_02-R1 | ARCH_02 | `gen-reference.mjs` `optional-agent` row, then `npm run gen` | Wave 3 gate sub-agent | Done |
 | ARCH_02-R2 | ARCH_02 | `#format` exports `constants.ts`; `files.ts` exports `TOOLS_FILE` | Wave 3 gate sub-agent | Done |
@@ -120,7 +120,7 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_02-R4 | ARCH_02 | `DEFAULT_PORT` / `ENV` for 4466 and `VB_*`: cli, client, reply.ts now; `server.ts`, `vb-mcp.ts` | Wave 3 gate sub-agent; ENGINE_01 for server and mcp (done: `server.ts`, `vb-mcp.ts`) | Done |
 | ARCH_02-R5 | ARCH_02 | nclite: full JSON Schema tool inputs; `url()` / `watch()` through `host.events` | orchestrator (reply); ARCH_03 (`host.events`: done, the board never calls `url`/`watch`; only `shell/page-io.ts` does) | Done |
 | ARCH_04-R1 | ARCH_04 | Docs: components, performance, board README, actions README to `answers/` | Wave 3 gate sub-agent | Done |
-| ARCH_04-R2 | ARCH_04 | `CardStep` alias of `UnseenStep`, `CardProposal` a pick of `ProposalRow` | ARCH_06 | Open |
+| ARCH_04-R2 | ARCH_04 | `CardStep` alias of `UnseenStep`, `CardProposal` a pick of `ProposalRow` | ARCH_06 | Done |
 | ARCH_04-R3 | ARCH_04 | `io.ts` `BoardData` re-exported from `#actions` | ARCH_03 | Done |
 | ARCH_04-R4 | ARCH_04 | Private `clip` copies → `#format` `clip`: delete `board/clip.ts` (`chat-bridge.ts`, `finder.ts` import it), and `chat-prompt.ts`'s copy | ARCH_03 (page: done, `board/clip.ts` deleted, components.md claim updated), ENGINE_01 (server: done, the prompt's labels come from the chips) | Done |
 | ARCH_04-R5 | ARCH_04 | `chat-prompt.ts` built from `cardChip` / `noteChip` / `resolveChip` / `turnOf`; the `hidden` refusal applies at once | ENGINE_01 | Done |
@@ -128,7 +128,7 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_04-R7 | ARCH_04 | Actions split: not now (drafted case in ARCH_04 notes) | orchestrator: accepted, no entry; split when a consumer needs reads without actions | Closed |
 | ENGINE_01-R1 | ENGINE_01 | Name for the board's test server, e.g. `#board/testing` → `apps/board/tests/serve-fixture.ts`, resolved by the cli/mcp tests with `import.meta.resolve` (and verify taught to read it) | TEST_01: `#board/testing` → `apps/board/tests/support.ts`, which serves the harness when run (serve-fixture.ts deleted); verify reads `import.meta.resolve` and fails a path into an app from outside its tests | Done |
 | ENGINE_01-R2 | ENGINE_01 | `apps/board/README.md` § server: `reads.ts`/`writes.ts` are now `server/engine/`, dispatch calls the engine (cortex-docs) | orchestrator (Wave 4 gate docs) | Done |
-| ENGINE_01-R3 | ENGINE_01 | `#format` `readLedger`'s per-line check as an export (`readLine(index, line)`), so `ledger.ts` `refresh` stops repeating its body | ARCH_06 | Open |
+| ENGINE_01-R3 | ENGINE_01 | `#format` `readLedger`'s per-line check as an export (`readLine(index, line)`), so `ledger.ts` `refresh` stops repeating its body | ARCH_06 | Done |
 | ENGINE_01-R4 | ENGINE_01 | nclite reply: the engine's differences (api.md 163), and the grants note below | orchestrator (reply) | Done |
 | ARCH_03-R1 | ARCH_03 (deviation) | A board chip kind `{ board, head }`, `boardChip`, its `resolveChip` case; `pageChip()` returns it | Wave 4 gate sub-agent | Done |
 | ARCH_03-R2 | ARCH_03 | Aria ids inside cards and frames unique per mount | Wave 4 gate sub-agent | Done |
@@ -148,7 +148,11 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_05-R3 | ARCH_05 | Decision: words homes | orchestrator: D-063 appended (Accepted, for review) | Done |
 | ARCH_05-R4 | ARCH_05 | Project instructions: `words.md` in Sources of truth; a new sentence goes in a words file | maintainer (protected): approved as point 290, applied (Sources of truth row, How to work § Sentences) | Done |
 | ARCH_05-R5 | ARCH_05 | nclite reply: keys, the six homes, the US English sentences | orchestrator: `nclite-contract-reply.md` § For nclite to weigh | Done |
-| ARCH_05-R6 | ARCH_05 (note) | `board/words/` stays under `board/`; moved files fix their `words/` imports | ARCH_06 (in its dispatch) | Open |
+| ARCH_05-R6 | ARCH_05 (note) | `board/words/` stays under `board/`; moved files fix their `words/` imports | ARCH_06 (in its dispatch) | Done |
+| ARCH_06-R1 | ARCH_06 | `npm run map` (`records.ts` joined `#format`) | orchestrator: run in the Wave 7 gate | Done |
+| ARCH_06-R2 | ARCH_06 | image-view `pattern.json` path to `cards/card-images.ts`; `gallery-images-{light,dark}` baselines | orchestrator: applied; baselines refreshed, only the "Use for" path line differs (checked by eye) | Done |
+| ARCH_06-R3 | ARCH_06 | `docs/principles.md` § One job per file: function-length warning and feature folders | maintainer (protected): approved as point 291, applied | Done |
+| ARCH_06-R4 | ARCH_06 (question) | Split the factories made of short inner functions (`createNoteFlow`, `createCardSet`, …) into modules anyway? | orchestrator: no; each inner function is 37 lines at most, so each reads in one screen, and a split would only add files (cortex-architecture rule 2) | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -219,8 +223,8 @@ Run 2: Completed. `packages/format/src/words` (134 keys) and `packages/actions/s
 ---
 
 ### ARCH_06: Feature folders and short functions
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `apps/board/src/board/` in ten feature folders (`canvas`, `links`, `cards`, `notes`, `selection`, `input`, `find`, `boards`, `access`, `apps`), each with one `index.ts`; the core stays at the root (`mount`, `host`, `status`, `io` + `io/`, `controller` + `controller/`, `live`, `sender`, `work`...). `verify` gains `checkFeatureFolders` (a path past a folder's `index.ts` fails) and `checkFunctionLength` (`scripts/verify-functions.mjs`, a function over 50 lines of its own warns; inner functions count on their own; `verify: long-function <reason>`); one function warning is left, `createBoard` (124 own lines, the composition root, with its reason; its input table, state and types are out in `controller/`). Cut: `onKey`, `wires` `draw`, `contextProblems`, `write-board.ts` (replay, result), `io.ts` (`io/`). Helpers: `isRecord` in `#format` (`packages/agent` keeps one copy with a parity test), `server/secrets.ts` (`newToken`, `sameText`), `realPath` in `folders.ts`, localStorage through `kept.ts`; plural stays in the words files (D-063: a words file imports only words). Requests UI_01-R7/R8, ARCH_04-R2, ENGINE_01-R3, ARCH_05-R6 done. Gates: unit 1735 + 10, check, gen, verify (only `modules.md` out of date: `npm run map`), 70 page specs in four groups on 4900, no screenshot changed. Not split into modules (each is a row of inner functions of 37 lines at most): `createNoteFlow`, `createCardImages`, `createCardSet`, `bindNoteParts`, `bindModeRow`, `openChats`, `createSupervisor`. Requests: `npm run map`; `packages/ui/src/image-view/pattern.json` `whenToUse` path (`board/cards/card-images.ts`) with the two `gallery-images-*.png` baselines; `docs/principles.md` § One job per file (function warning, feature folders).
 
 ---
 
@@ -230,12 +234,76 @@ _Notes:_
 
 ---
 
+## The Run (orchestrator)
+
+Waves 2–8 ran on 2026-10-26/27 under the maintainer's delegation for the calls that came up; each call
+is below, with its approval. One commit and tag per wave, after the gates.
+
+| Wave | Tasks | Commit · tag | Gates |
+|---|---|---|---|
+| 1 | FIX_01, FIX_02 | c2f6110 · `tidy/wave-1` | green |
+| — | Principles 286, set refined | e9218f8 | verify ok |
+| 2 | ARCH_01 (Run 2, after D-059) | 818c502 · `tidy/wave-2` | 1620 + 10 unit; 658 page specs |
+| 3 | ARCH_02, UI_01, ARCH_04 | fe64b9c · `tidy/wave-3` | 1690 + 10 unit; 664 page specs; gallery gained the Base section (appended last) |
+| 4 | ARCH_03, ENGINE_01 | 80a3a2c · `tidy/wave-4` | 1707 + 10 unit; 667 page specs, no screenshot changed |
+| 5 | TEST_01 | a9bb4b3 · `tidy/wave-5` | 1710 + 10 unit; 667 page specs on 3 workers in 6.4 min (was 16.1 on 1) |
+| 6 | ARCH_05 (Runs 1, 2) | 613efd7 · `tidy/wave-6` | 1723 + 10 unit; 667 page specs on 5 workers in 6.2 min; app-cards and chat changed by one gallery text line |
+| 7 | ARCH_06 | commit below · `tidy/wave-7` | 1735 + 10 unit; 667 page specs on 5 workers in 5.1 min; first run hung 5 h on the ledger follower race (fixed, Found along the way); image-view gallery baselines refreshed for its moved path |
+| 8 | VERIFY_01 | — | — |
+
+Every wave also: `npm run check` 0 errors, `gen-api --check` current, `verify` ok.
+
+### Calls made, and their approval
+
+- **Decisions D-059 to D-063** (one package scope; a module's names; the CSS scope; test support per
+  module; words homes): approved by the maintainer, 2026-10-27 (points 292–296).
+- **Protected files, approved by the maintainer:** the project instructions v0.4 (the Tests line,
+  points 288 and TEST_01-R2; `words.md` and Sentences, point 290); principles § One job per file
+  (point 291); principles § Dependencies (the npm-workspaces line, with D-059).
+- **Test time** (maintainer, points 287–289): 5 workers; a task runs only the specs for what it changed
+  (rule 12), the full suite once per wave gate; tracker M9, a quick check.
+- **New design tokens** (UI_01, protected): `--vb-z-*`, `--vb-control-h` / `-small` / `-target`,
+  `--vb-focus-offset` / `-tight` / `-inset` / `-card`, each at today's literal value, so no picture moved; approved by the maintainer, 2026-10-27 (point 297).
+- **Design calls within the delegation:** the gallery's Base entry (placed last); no split of
+  `#actions` into ledger + actions yet (118 importers need both halves); a chip on a card whose notes
+  are hidden is refused (`hidden`); chip refs `{board,n,ver}` / `{board,seq,rev}` / `{board,head}`;
+  ARCH_03's two deviations (the `board` chip; raster tolerance 2 in host-styles); aria ids per mount;
+  the MCP server stays a relay, not an engine host; tracker M8 (the board's controls travel with it);
+  the gallery's lanes sample was wrong, not the rule; "Allow" and "Send to agent" stay in both the page's
+  and `#actions`' words until the plugin's words file is built; factories of short inner functions are
+  not split further (ARCH_06-R4).
+
+### Found along the way (beyond the task files' own notes)
+
+- Timing and budget tests fail under load (another project's suite beside them, load ~22): server start
+  1.8–2.7 s against 1 s, the 1,200-link layout 1.0–1.8 s against 100 ms. They pass on a quiet machine;
+  run them alone before reading a failure as a regression.
+- The page servers must run in a child process: in-process, the 1,000-card first draw slipped past its
+  1,000 ms budget. `--shard` needs `--project=chromium`; `perf.spec.ts` alone needs `--no-deps`.
+- A page-test filter `board` matches every spec (the worktree path contains `vision-board`).
+- Three unit runs hung mid-Wave 4 (an intermittent `node --test` hang, ARCH_03-R7); stopped with the
+  maintainer's yes. Found at the Wave 7 gate (hung 5 h on `engine.test.ts`): a followed ledger used
+  `fs.watchFile`, whose first look is taken later, so another writer's line written in between was
+  never told (a real miss, seen under load). `follow` now polls `refresh` against the size it last
+  read (`apps/board/server/ledger.ts`); `npm test` has a 120 s per-test limit, so a stuck test fails.
+- One orchestrator slip: a stray command briefly made an empty `temp-rows.txt` in the main checkout;
+  removed within minutes.
+
+---
+
 ## Completion Checklist
 
 - [ ] All implementation tasks complete
 - [ ] Verification task complete
 - [ ] Every request `Done` or `Closed`
 - [ ] LOG entry created (see below)
+- [ ] The maintainer looks in a browser, light and dark (page screenshots stood in overnight):
+  - the ⋯ menu, Move to (Shift+M), a container's settings menu, the app card's "Allowed ▾";
+  - New/Rename board, Open folder…, Archived…, a confirm: Esc, Cancel, backdrop click, focus back;
+  - hover tip and note preview (grace, Esc, tap then press outside), read-only note bubble, the selection pill;
+  - the toolbar at 1200, 1000 and 768 px; the gallery's Base section;
+  - the board at 1600 and 768 px; the chat sidebar open; archiving the last board; switching the open
+    folder; the past-version banner; H (Hide answered); Esc closing the Reply panel
 
 ---
 

@@ -2,22 +2,24 @@
 // Rules: steering rule 1 (layers; front doors: a module is reached only by its name, D-059), rule 2
 // (file length), rule 15 (the board page's weight, from the last `npm run build`), rule 20 and
 // cortex-rules 11 (exact versions, dependency register), the generated module map
-// (docs/specification/modules.md), and the style and layer rules in verify-style.mjs (colour
+// (docs/specification/modules.md), the board's feature-folder front doors, a function's length
+// (verify-functions.mjs), and the style and layer rules in verify-style.mjs (colour
 // literals only in the tokens, I/O only in its layers, scoped board stylesheets; UI_01).
 // Each check is a pure function over strings, so scripts/verify.test.mjs proves every rule fails
 // when broken. `--write-map` regenerates the module map instead of checking it.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gzipSync } from 'node:zlib';
+import { checkFunctionLength } from './verify-functions.mjs';
 import { checkStyleAndLayers } from './verify-style.mjs';
+import { checkWeight, PAGE, pageAssets, pageWeight, weightOf } from './verify-weight.mjs';
+
+export { checkWeight, PAGE, pageAssets, pageWeight };
 
 export const LIMITS = { warn: 300, fail: 500 };
 export const ROOTS = ['apps', 'packages', 'scripts', 'tests', 'skills'];
 export const MAP_FILE = 'docs/specification/modules.md';
 export const REGISTER = 'docs/specification/dependencies.md';
-/** Rule 15: the board page's JS and CSS, gzipped (docs/specification/performance.md § Budgets). */
-export const PAGE = { html: 'apps/board/dist/index.html', budgetKb: 200 };
 
 /** Which packages each package may import (D-016, D-029). Apps may import any package; nothing imports an app. */
 export const LAYERS = {
@@ -151,41 +153,25 @@ export function checkBoardHost(fromRel, text) {
   return out;
 }
 
-/** The board page's assets at start: what its HTML loads from /assets/, and every file those import
- * statically. A chunk reached only through `import()` is not loaded at start (the chat panel's drawing,
- * board/chat-view.ts), so it is not counted. `read(name)` gives an asset's text, or null. */
-export function pageAssets(html, read) {
-  const seen = new Set();
-  const queue = [...html.matchAll(/(?:src|href)="\/assets\/([\w.-]+\.(?:js|css))"/g)].map((m) => m[1]);
-  while (queue.length) {
-    const name = queue.shift();
-    if (seen.has(name)) continue;
-    seen.add(name);
-    if (name.endsWith('.js')) for (const m of (read(name) ?? '').matchAll(/(?:\bfrom|\bimport)\s*["']\.\/([\w.-]+\.(?:js|css))["']/g)) queue.push(m[1]);
+/** ARCH_06, rule 3 of the architecture skill: the board's feature folders (`board/cards/`, `board/notes/`,
+ * ...) each have one public file, `index.ts`, and code outside a folder imports only that. A folder
+ * that splits one file (`board/io.ts` and `board/io/`) is reached through that file. Words folders
+ * (`words/`) are homes, read by file. Tests of a folder's inside may import the inside. */
+export function checkFeatureFolders(fromRel, text) {
+  if (!fromRel.startsWith('apps/board/src/') || !CODE.test(fromRel)) return [];
+  const out = [];
+  for (const { how, spec } of referencesOf(fromRel, text)) {
+    if (how !== 'import' || !spec.startsWith('.')) continue;
+    const target = path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec));
+    const m = /^apps\/board\/src\/board\/([\w-]+)\/(.+)$/.exec(target);
+    if (!m || m[1] === 'words') continue;
+    const [, folder, file] = m;
+    const inside = fromRel.startsWith(`${BOARD_DIR}${folder}/`) || fromRel === `${BOARD_DIR}${folder}.ts`;
+    if (!inside && file !== 'index.ts') {
+      out.push(fail(fromRel, `reaches into board/${folder}/ by ${file} (${spec}): import its front door, board/${folder}/index.ts, or board/${folder}.ts for a split file`));
+    }
   }
-  return [...seen];
-}
-
-/** Rule 15: the page's gzipped weight against its budget. */
-export function checkWeight(file, gzipBytes, budgetKb) {
-  if (gzipBytes <= budgetKb * 1024) return [];
-  return [fail(file, `the board page is ${(gzipBytes / 1024).toFixed(1)} KB gzip (JS + CSS), budget ${budgetKb} KB (docs/specification/performance.md)`)];
-}
-
-/** The built board page's gzipped weight in bytes, or null when it has not been built. */
-export function pageWeight(root) {
-  const html = path.join(root, PAGE.html);
-  if (!existsSync(html)) return null;
-  const dir = path.join(path.dirname(html), 'assets');
-  const read = (name) => (existsSync(path.join(dir, name)) ? readFileSync(path.join(dir, name), 'utf8') : null);
-  return pageAssets(readFileSync(html, 'utf8'), read)
-    .reduce((sum, name) => sum + gzipSync(readFileSync(path.join(dir, name))).length, 0);
-}
-
-function weightOf(root) {
-  const bytes = pageWeight(root);
-  if (bytes === null) return [warn(PAGE.html, 'not built, so the page weight was not checked: run npm run build')];
-  return checkWeight(PAGE.html, bytes, PAGE.budgetKb);
+  return out;
 }
 
 /** Rule 20: exact versions only, and every dependency listed in the register. */
@@ -258,7 +244,7 @@ export function verify(root, { writeMap = false } = {}) {
   const files = ROOTS.filter((r) => existsSync(path.join(root, r))).flatMap((r) => walk(root, r, []));
   const names = namesOf(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')));
   const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names)),
-    ...checkStyleAndLayers(rel, text), ...checkBoardHost(rel, text)]);
+    ...checkStyleAndLayers(rel, text), ...checkBoardHost(rel, text), ...checkFeatureFolders(rel, text), ...checkFunctionLength(rel, text)]);
   const registerPath = path.join(root, REGISTER);
   const register = existsSync(registerPath) ? readFileSync(registerPath, 'utf8') : null;
   const manifests = ['package.json', ...['apps', 'packages'].flatMap((r) =>

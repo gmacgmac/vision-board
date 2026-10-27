@@ -54,7 +54,7 @@ const NODE_IO = /(?:^|\n)\s*import\s+(?!type\b)[^'"]*from\s*['"]node:(?:fs|fs\/p
 /** The Node-side layers: the board's server and bins, the agent runner, the MCP server, the CLI's I/O file and bins. */
 const NODE_LAYERS = ['apps/board/server/', 'apps/board/server.ts', 'apps/board/bin/', 'packages/agent/', 'packages/mcp/',
   'packages/cli/src/node-io.ts', 'packages/cli/bin/'];
-const NETWORK_LAYERS = ['apps/board/src/board/io.ts', 'apps/board/src/shell/page-io.ts', 'packages/client/src/', ...NODE_LAYERS];
+const NETWORK_LAYERS = ['apps/board/src/board/io.ts', 'apps/board/src/board/io/', 'apps/board/src/shell/page-io.ts', 'packages/client/src/', ...NODE_LAYERS];
 const within = (rel, layers) => layers.some((l) => rel === l || (l.endsWith('/') && rel.startsWith(l)));
 
 /** Network, file, socket or process access outside its layer fails (one I/O layer, docs/principles.md). */

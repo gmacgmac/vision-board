@@ -1,5 +1,5 @@
 <!-- The Go to card box (goToCard flag; cortex-tasks/board/2026-10-15_board-app_go-to-card-number.md):
-     a small box at the board's bottom right, opened by a digit typed on the board (board/go-to-card.ts
+     a small box at the board's bottom right, opened by a digit typed on the board (board/find/go-to-card.ts
      keeps its state). A labelled text field that keeps digits only; Enter goes, Backspace edits, Esc
      closes, and so does focus leaving the box. What a go found when it did not arrive ("No card 99",
      "Card 7 was removed") is announced (role status) and the box stays; a retired card's version is
@@ -9,7 +9,7 @@
   import * as commonWords from '../board/words/common.ts';
   import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import { onMount } from 'svelte';
-  import { GO_DIGITS, goDigits, type GoBox } from '../board/go-to-card.ts';
+  import { GO_DIGITS, goDigits, type GoBox } from '../board/find/index.ts';
 
   let { box, placement = 'board', onedit, onenter, onclose, onpast }: {
     box: GoBox;
@@ -60,7 +60,7 @@
 
 <!-- The box listens for the keys and focus of the field and the button inside it. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="vb-go" data-placement={placement} data-state={box.past ? 'retired' : box.said ? 'not-found' : 'typing'}
+<div class="vb-go vb-surface-pop" data-placement={placement} data-state={box.past ? 'retired' : box.said ? 'not-found' : 'typing'}
   bind:this={host} {onkeydown} {onfocusout}>
   <label class="vb-go-label" for="vb-go-field-{uid}">{commonWords.goToCard}</label>
   <input class="vb-go-field" id="vb-go-field-{uid}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength={GO_DIGITS}

@@ -6,7 +6,7 @@
 <script lang="ts">
   import * as toolbarWords from './words/toolbar.ts';
   import type { BoardRun } from '#actions';
-  import { versionTime } from '../board/versions.ts';
+  import { versionTime } from '#ui';
 
   let { run, onback, placement = 'board' }: {
     run: BoardRun;

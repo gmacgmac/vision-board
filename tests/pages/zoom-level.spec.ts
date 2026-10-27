@@ -10,7 +10,7 @@ import type { Theme } from './helpers.ts';
 import { openBoard } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-/** FAR_K (apps/board/src/board/viewport.ts) as a percentage: 55 since review polish round 2 ruling 2
+/** FAR_K (apps/board/src/board/canvas/viewport.ts) as a percentage: 55 since review polish round 2 ruling 2
  *  (tracker N13 closed), so the controls show from 55%. */
 const FAR_PERCENT = 55;
 

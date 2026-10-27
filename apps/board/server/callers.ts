@@ -3,7 +3,6 @@
 // cookie the server set when it served the page, minted fresh at each start. An agent sends its
 // Bearer secret from `join`. Person routes refuse a Bearer header; agent writes refuse the person
 // cookie; refusals never name the cookie. This stops mistakes, not attackers (api.md 27).
-import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import type { OperationId } from '#format';
 import type { Agents } from './agents.ts';
@@ -11,6 +10,7 @@ import { ONLY_PERSON } from './engine/index.ts';
 import type { Caller, Ledger } from './ledger.ts';
 import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
+import { sameText } from './secrets.ts';
 import { SPECS } from './spec.ts';
 import * as httpWords from './words/http.ts';
 
@@ -18,7 +18,6 @@ export const PERSON_COOKIE = 'vb_person';
 export const REALM = { 'WWW-Authenticate': 'Bearer realm="vision-board"' };
 
 /** A fresh person token for one server start: 32 random bytes, base64url. */
-export const newPersonToken = (): string => randomBytes(32).toString('base64url');
 
 /** The `Set-Cookie` value the page gets with the page itself (api.md 20). */
 export const personCookie = (token: string): string =>
@@ -33,11 +32,6 @@ export function cookieOf(req: IncomingMessage): string | undefined {
   return undefined;
 }
 
-const same = (a: string, b: string): boolean => {
-  const x = Buffer.from(a);
-  const y = Buffer.from(b);
-  return x.length === y.length && timingSafeEqual(x, y);
-};
 
 const ONLY_AGENT = httpWords.onlyAnAgentCanDo;
 const NO_SECRET = httpWords.thisNeedsYourAgentSecret;
@@ -76,7 +70,7 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
   const { security, agent: agentOp } = SPECS[id];
   const cookie = cookieOf(req);
   if (security === 'person') {
-    if (req.headers.authorization !== undefined || cookie === undefined || !same(cookie, env.person))
+    if (req.headers.authorization !== undefined || cookie === undefined || !sameText(cookie, env.person))
       throw problem('forbidden', ONLY_PERSON);
     return { by: 'person' };
   }
@@ -92,7 +86,7 @@ export function callerOf(req: IncomingMessage, id: OperationId, env: CallerEnv):
   if (security === 'agent-or-person') {
     if (req.headers.authorization !== undefined) return agentOf(req, env);
     if (cookie === undefined) throw problem('not-authenticated', NO_SECRET, { headers: REALM });
-    if (!same(cookie, env.person)) throw problem('forbidden', STALE_PAGE);
+    if (!sameText(cookie, env.person)) throw problem('forbidden', STALE_PAGE);
     return { by: 'person' };
   }
   if (agentOp && req.method !== 'GET' && cookie !== undefined) throw problem('forbidden', ONLY_AGENT);

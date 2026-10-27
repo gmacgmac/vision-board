@@ -3,8 +3,8 @@
 // stand-ins with the few members the viewport touches.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { APP_FIT, FAR_K, revealPan, SELECTION_FIT, Viewport, zoomPercent } from '../src/board/viewport.ts';
-import { commandTitle, zoomTitle } from '../src/board/commands.ts';
+import { APP_FIT, FAR_K, revealPan, SELECTION_FIT, Viewport, zoomPercent } from '../src/board/canvas/viewport.ts';
+import { commandTitle, zoomTitle } from '../src/board/input/commands.ts';
 
 /** The world: its transform, and every custom property written on it, in order. */
 function worldStub() {

@@ -5,7 +5,7 @@
 // Some models send an object or list argument as JSON text, so that is parsed when the schema
 // wants an object or list. Lengths count code points, like the board server (api.md 10).
 import type { JsonSchema } from './tools.ts';
-import { isRecord } from './rpc.ts';
+import { isRecord } from '#format';
 import * as checkArgsWords from './words/check-args.ts';
 
 export interface Checked {

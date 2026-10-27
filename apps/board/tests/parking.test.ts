@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import type { ViewNode } from '#format';
 import { foldLedger, pageConditions } from '#actions';
-import { createParking } from '../src/board/parking.ts';
+import { createParking } from '../src/board/cards/parking.ts';
 import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';

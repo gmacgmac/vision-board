@@ -5,9 +5,9 @@ import { boardView, readLedger } from '#format';
 import type { AccessHolder, BoardAccess, BoardRun, BoardState, ProposalRow, RetiredCount } from '#actions';
 import type { LedgerState } from '#actions';
 import { boardAccess, boardState, boardVersions, foldLedger, pageConditions, proposalRows, retiredCounts, unseenCount, unseenSteps } from '#actions';
-import { versionTime } from '../board/versions.ts';
 import type { CardConditions, CardReply, CardUpdates } from '#ui';
-import { createParking } from '../board/parking.ts';
+import { versionTime } from '#ui';
+import { createParking } from '../board/cards/index.ts';
 import ledgerText from '#format/gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */

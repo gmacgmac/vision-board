@@ -86,7 +86,7 @@ reference"). Kept with the board v3 design (D-024); delete once board v3 has abs
 | Composer chips | Chat panel, Stage 6 | Chips reference node numbers |
 | Busy shimmer, banner | App shell states (rule 4) | Same |
 | Change chips per version | Conversation panel and the decision flow mode (D-021) | Read from the ledger |
-| Dot grid, zoom, fit | `apps/board/src/board/viewport.ts` | Ours already pans and zooms; add the scaled dot grid |
+| Dot grid, zoom, fit | `apps/board/src/board/canvas/viewport.ts` | Ours already pans and zooms; add the scaled dot grid |
 | Google Fonts (Figtree, Bricolage Grotesque, Plex Mono) | Not allowed (rule 18) | Self-host (all three are OFL-licensed) with a decision entry, or stay on system fonts |
 
 Kind → family colour proposal: question = content blue, finding = channels teal,

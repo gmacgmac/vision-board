@@ -3,9 +3,9 @@
 // its toolbar, strips and lists (the standalone page mirrors it into its Svelte state, shell.svelte.ts).
 // Nothing in it is the host's: a host never writes it, and the board never reads the host's state.
 import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, FreshCard, OpenCard, ProposalRow } from '#actions';
-import type { AccessRequestRow } from './access.ts';
-import type { ContainerRow } from './finder.ts';
-import type { GoBox } from './go-to-card.ts';
+import type { AccessRequestRow } from './access/index.ts';
+import type { ContainerRow } from './find/index.ts';
+import type { GoBox } from './find/index.ts';
 import * as boardWords from './words/board.ts';
 
 export interface BoardStatus {

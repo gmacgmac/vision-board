@@ -8,7 +8,7 @@ import { shell } from './shell.svelte.ts';
 import type { FolderInfo } from './page-io.ts';
 import { getProject } from './page-io.ts';
 import { folderName } from './folder-path.ts';
-import { LAST_BOARD_KEY } from '../board/start-board.ts';
+import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import * as foldersWords from './words/folders.ts';
 
 export const openFolderOn = (): boolean => flagOn('openFolder', pageFlags());

@@ -2,7 +2,7 @@
 // every rule here is unit-tested under plain Node; the element only applies the result.
 import type { ActionId, NodeSize, ParkBundle, ViewNode } from '#format';
 import { NODE_TYPES } from '#format';
-import type { BoardState, ItemStatus } from '#actions';
+import type { BoardState, ItemStatus, ProposalRow } from '#actions';
 import type { CardReply, NotesView } from './node-notes.ts';
 import { notesView } from './node-notes.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
@@ -76,10 +76,9 @@ export const sizeLabel = (v: { tier: NodeSize; picked: boolean }): string =>
 
 /** One open proposal on a card (D-018, api.md 93), as the page passes it in: found by the conditions
  *  table (`proposal.open`, or `proposal.stale` when the card changed since), worded from the ledger.
- *  `when` is its time in the person's clock; `agent` the proposing agent's label. */
-export interface CardProposal {
-  seq: number; action: 'ack' | 'drop'; reason: string; source?: string; when: string; agent?: string; stale: boolean;
-}
+ *  `when` is its time in the person's clock; `agent` the proposing agent's label. The page's
+ *  `ProposalRow` (#actions) without the card's number: the card is the one it is passed in. */
+export type CardProposal = Omit<ProposalRow, 'n'>;
 
 /** What the conditions table says about a card, passed in by the page like the selection. */
 export interface CardConditions {

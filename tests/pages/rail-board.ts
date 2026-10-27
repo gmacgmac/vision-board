@@ -8,7 +8,7 @@ import { expect } from './helpers.ts';
 import { scale as zoom } from './board-page.ts';
 import type { Theme } from './helpers.ts';
 import { REGION_GAP, REGION_PAD } from '#layout';
-import { FAR_K } from '../../apps/board/src/board/viewport.ts';
+import { FAR_K } from '../../apps/board/src/board/canvas/viewport.ts';
 
 export type Box = { x: number; y: number; width: number; height: number };
 export const THEMES: Theme[] = ['light', 'dark'];

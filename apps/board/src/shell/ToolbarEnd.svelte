@@ -1,4 +1,4 @@
-<!-- The toolbar's end group: the zoom group (one command table, board/commands.ts; the zoom level
+<!-- The toolbar's end group: the zoom group (one command table, board/input/commands.ts; the zoom level
      shows beside Fit, ZoomLevel, and the buttons' tooltips say it too, N13), then the board-wide
      buttons. With the toolbarMenu flag (`menu`): Agents and Send to agent (agentAccess flag, when
      `holders` is given), Chat (chatPanel flag) and the "⋯" menu holding Theme, Hide answered and
@@ -16,8 +16,8 @@
   import ButtonIcon from './ButtonIcon.svelte';
   import ZoomLevel from './ZoomLevel.svelte';
   import ToolbarMenu from './ToolbarMenu.svelte';
-  import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../board/commands.ts';
-  import type { CommandId } from '../board/commands.ts';
+  import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../board/input/index.ts';
+  import type { CommandId } from '../board/input/index.ts';
   import type { AccessHolder } from '#actions';
   import { LOCKED_PERSON } from '#actions';
 

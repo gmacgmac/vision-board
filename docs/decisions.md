@@ -734,7 +734,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md
 
 ## D-059 One package scope: modules are folders named in the root imports map
-- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27); builds on point 224
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 292) · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27); builds on point 224
 - **Decision**: The repo has one `package.json`, at the root, with every dependency and script.
   `apps/board/package.json` and npm workspaces are gone. Modules are reached by the names in the
   root `imports` map (`#format`, `#ui`, …), which Node, Vite, TypeScript and Playwright all resolve.
@@ -747,7 +747,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_01_module-front-doors.md
 
 ## D-060 A module's names: one way in per kind of use
-- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_01's draft
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 293) · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_01's draft
 - **Decision**: `#<module>` is a module's front door (`src/index.ts`); `#<module>/styles.css` its one
   stylesheet; `#<module>/files` the file paths Node reads from it (schemas, fixtures), only for a module
   the page loads, so `node:` stays out of the page bundle (a Node-only module exports them from its
@@ -759,7 +759,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_01_module-front-doors.md
 
 ## D-061 The board's CSS scope in a host's page
-- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from UI_01's draft
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 294) · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from UI_01's draft
 - **Decision**: Every board rule is scoped: a `vb-`-prefixed selector (element, class or `[class*='vb-']`)
   counts as scoped, so the gallery's patterns need no board root. The board's root class is
   `vb-board`, which is also its `@container vb-board`; width rules are container queries, never
@@ -777,7 +777,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/UI_01_shared-ui-base.md
 
 ## D-062 Test support per module, and fixtures a page loads as text
-- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from TEST_01's draft (an addendum to D-060)
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 295) · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from TEST_01's draft (an addendum to D-060)
 - **Decision**: A module's test support is `#<module>/testing`; an app's is named too (`#board/testing`),
   and another module finds it only with `import.meta.resolve`, to run it as a child process (its
   fixture server), never imports it (D-016). A fixture a page loads as text is named by its file
@@ -788,7 +788,7 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/TEST_01_test-support-and-parallel.md
 
 ## D-063 Words homes: one per part, keyed for the plugin's words file
-- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_05's draft
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 296: words centralised as in nclite, so the words an agent reads are easy to see and change; a test keeps each in its home) · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_05's draft
 - **Decision**: Every sentence a person or an agent reads lives in a words file, one per area, in a
   `words/` folder of the part that sends it: the board (`apps/board/src/board/words/`, inside `board/`
   so it stays hostable), the standalone page (`shell/words/`, which may import the board's, never the

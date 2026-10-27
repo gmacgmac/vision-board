@@ -62,3 +62,13 @@ export function messageBody(text: string, chips: readonly Chip[]): ChatMessageBo
  *  and something is attached (ruling 4). */
 export const sendsInChat = (s: ChatSessionInfo | null, board: string | null, attached: boolean): boolean =>
   attached && !!board && s?.board === board;
+
+/** What the panel holds between renders. */
+export const panelState = () => ({
+  board: null as string | null, past: false, session: null as ChatSessionInfo | null, chat: EMPTY_CHAT,
+  /** Send was pressed while the agent answered this message (`lastAsk`): waiting until the next. */
+  wait: null as string | null,
+  pick: { agent: 'claude', model: '' } as Pick, refused: undefined as string | undefined, sending: false,
+  /** A session starting (New session, a pick, a first message): a message waits for it. */
+  starting: null as Promise<ChatSessionInfo | null> | null,
+});

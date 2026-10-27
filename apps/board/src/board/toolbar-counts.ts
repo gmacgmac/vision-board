@@ -7,8 +7,8 @@
 import type { View } from '#format';
 import type { BoardLayout } from '#layout';
 import { counts, openCards, replyText } from '#actions';
-import { boardHoldersOf, requestRows } from './access.ts';
-import { containerRows } from './finder.ts';
+import { boardHoldersOf, requestRows } from './access/index.ts';
+import { containerRows } from './find/index.ts';
 import type { BoardData } from './io.ts';
 import type { Status } from './status.ts';
 

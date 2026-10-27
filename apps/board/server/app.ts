@@ -16,7 +16,8 @@ import { IMAGE_ROUTE } from '#format';
 import type { AppLimits } from './apps.ts';
 import { PANEL_PATH, servePanel } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
-import { newPersonToken, personCookie } from './callers.ts';
+import { personCookie } from './callers.ts';
+import { newToken } from './secrets.ts';
 import { keepKiroAgent } from './chat-access.ts';
 import type { ChatAdapters } from './chat-sessions.ts';
 import type { ServerEnv } from './dispatch.ts';
@@ -72,7 +73,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
     ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...chat, ...(kiro && { blocked: { kiro } }) },
     apps: { flags, limits: appLimits },
   });
-  const env: ServerEnv = { person: newPersonToken(), project, build };
+  const env: ServerEnv = { person: newToken(), project, build };
   const server = http.createServer(async (req, res) => {
     for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.setHeader(k, v);
     try {

@@ -7,8 +7,8 @@ import type { View, ViewNode } from '#format';
 import type { BoardState, FreshCount } from '#actions';
 import type { Align } from '#layout';
 import type { CardConditions } from '#ui';
-import { createDrawing, type Drawing } from '../board/draw.ts';
-import { FAR_K, Viewport } from '../board/viewport.ts';
+import { createDrawing, type Drawing } from '../board/canvas/index.ts';
+import { FAR_K, Viewport } from '../board/canvas/index.ts';
 import { el } from './dom.ts';
 
 export interface MiniOptions {

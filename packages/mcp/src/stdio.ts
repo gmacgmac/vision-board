@@ -5,7 +5,8 @@
 import { createInterface } from 'node:readline';
 import type { McpServer } from './protocol.ts';
 import type { Id, RpcResponse } from './rpc.ts';
-import { isRecord, parseLine } from './rpc.ts';
+import { isRecord } from '#format';
+import { parseLine } from './rpc.ts';
 
 export interface StdioStreams {
   readonly input: NodeJS.ReadableStream;

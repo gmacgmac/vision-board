@@ -4,10 +4,11 @@
 // server) is `isError: true` with the problem as text only. A write whose every item failed is
 // `isError: true` too, keeping its per-item results; one that partly worked is not an error.
 import type { OperationId } from '#format';
+import { isRecord } from '#format';
 import type { CallInput } from '#client';
 import { ApiProblem, createClient } from '#client';
 import { checkArgs } from './check-args.ts';
-import { CODES, RpcError, isRecord } from './rpc.ts';
+import { CODES, RpcError } from './rpc.ts';
 import type { Route } from './tools.ts';
 import { TOOLS, routeOf } from './tools.ts';
 import * as protocolWords from './words/protocol.ts';

@@ -26,7 +26,7 @@
     {:else}
       <summary class="vb-btn">{shellBoardsWords.agents} <b>{holders.length}</b></summary>
     {/if}
-    <div class="vb-agents-panel">
+    <div class="vb-agents-panel vb-surface-panel">
       <h2 class="vb-agents-title">{shellBoardsWords.canDrawOnThisBoard}</h2>
       <ul class="vb-agents-list">
         {#each holders as h (h.agent)}

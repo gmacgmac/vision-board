@@ -11,6 +11,7 @@ import { FORBIDDEN_KEYS, ID_PATTERN, KINDS, MODES, RENAMED_MODES, WIDTHS } from 
 import { appActRules, appHashProblems, appNodeRules, appRefProblems } from './app-shape.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
 import * as formatCommonWords from './words/format-common.ts';
+import { isRecord } from './records.ts';
 
 /** Every mode a stored line may name: today's, and the old names older lines carry (api.md 129). */
 const LINE_MODES = [...MODES, ...Object.keys(RENAMED_MODES)];
@@ -41,7 +42,6 @@ type Check = (v: unknown, f: string, p: string[]) => void;
  * refused (api.md 7). */
 interface Shape { req: readonly string[]; fields: Record<string, Check> }
 
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const isText = (v: unknown): v is string => typeof v === 'string' && NON_BLANK.test(v);
 
 const text = (max?: number): Check => (v, f, p) => {
@@ -66,7 +66,7 @@ const list = (item: Check, max: number): Check => (v, f, p) => {
   v.forEach((x, i) => item(x, `${f}[${i}]`, p));
 };
 const obj = (shape: Shape, extra?: (o: Rec, f: string, p: string[]) => void): Check => (v, f, p) => {
-  if (!isRec(v)) return void p.push(formatCommonWords.mustBeAnObject(f));
+  if (!isRecord(v)) return void p.push(formatCommonWords.mustBeAnObject(f));
   fieldProblems(v, shape, `${f}.`, p);
   extra?.(v, f, p);
 };
@@ -237,7 +237,7 @@ function retireRules(e: Rec, p: string[]): void {
 /** From v12 a line names no renamed mode (api.md 129). */
 function modeRules(e: Rec, p: string[]): void {
   if ((e.v as number) < 12) return;
-  const region = isRec(e.region) ? e.region.mode : undefined;
+  const region = isRecord(e.region) ? e.region.mode : undefined;
   if (e.type === 'region' && typeof region === 'string' && region in RENAMED_MODES) p.push(formatLedgerWords.regionMode(LIST_RENAMED));
   if (e.type === 'act' && typeof e.mode === 'string' && e.mode in RENAMED_MODES) p.push(formatLedgerWords.mode(LIST_RENAMED));
 }
@@ -262,7 +262,7 @@ const STAMP: Shape = {
 
 /** Every shape problem in one event. Empty means well formed. */
 export function eventProblems(input: unknown): string[] {
-  if (!isRec(input)) return ['event: must be an object'];
+  if (!isRecord(input)) return ['event: must be an object'];
   const e = input;
   const p: string[] = [];
   const { agent, type, ...rest } = e;
@@ -285,8 +285,8 @@ export function eventProblems(input: unknown): string[] {
   if (t === 'retire') retireRules(e, p);
   modeRules(e, p);
   // From v11 the kind decides; `item` stays readable on older lines (api.md 118).
-  if (t === 'node' && (e.v as number) >= 11 && isRec(e.node) && e.node.item !== undefined) p.push(formatLedgerWords.nodeItem(ITEM_REMOVED));
-  if (t === 'node' && isRec(e.node)) appNodeRules(e.node, 'node', p);
+  if (t === 'node' && (e.v as number) >= 11 && isRecord(e.node) && e.node.item !== undefined) p.push(formatLedgerWords.nodeItem(ITEM_REMOVED));
+  if (t === 'node' && isRecord(e.node)) appNodeRules(e.node, 'node', p);
   return p;
 }
 

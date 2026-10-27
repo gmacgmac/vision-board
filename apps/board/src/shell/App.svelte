@@ -2,7 +2,7 @@
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
      the Go to card box while a digit typed on the board has it open (goToCard flag),
      the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag),
-     the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes.ts). The stage is the
+     the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes/notes.ts). The stage is the
      board's root: the framework-free board (D-005) is mounted in it with this page as its host (board/mount.ts,
      page-host.ts), and the page draws from the board's status. -->
 <script lang="ts">

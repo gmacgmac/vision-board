@@ -28,7 +28,7 @@
     "close()": "shrink back to the card and close; focus goes back to the image's button (or its card)",
     "shown (getter)": "the image on its card that is open, else null"
   },
-  "whenToUse": "Any picture an agent puts on a card: a screenshot, a diagram, a mock-up. The page wires loading, the update check and the view (apps/board/src/board/card-images.ts).",
+  "whenToUse": "Any picture an agent puts on a card: a screenshot, a diagram, a mock-up. The page wires loading, the update check and the view (apps/board/src/board/cards/card-images.ts).",
   "whenNotToUse": "Pictures from the internet or outside the project's images folder (never shown), and icons or decoration of the board itself.",
   "accessibility": "The image's button is named by its alt text (an image needs one) and says it opens a dialog. The view is a modal dialog named by the alt text; focus moves to the × and stays there (Tab keeps it), Esc, a click outside the image and the × close it, and focus goes back to the image's button. Keys and the wheel stay in the dialog, so the board neither pans nor zooms. Under reduced motion nothing moves. The box saying why is plain text."
 }

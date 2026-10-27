@@ -45,7 +45,7 @@ A budget changes only with a reason in the PLAN of the task that changes it.
    far-zoom level, are skipped or drawn as cheap placeholders (`content-visibility`, or not in
    the page at all), without changing their place in layout or their keyboard order. An app
    card's panel, once loaded, stays loaded but frozen there (inert, its frame not painted), and
-   only `LIVE_PANELS` stay loaded at once (`apps/board/src/board/app-cards.ts` `overCap`).
+   only `LIVE_PANELS` stay loaded at once (`apps/board/src/board/apps/app-cards.ts` `overCap`).
 5. **Batch to the frame.** Several events that land together are applied in one frame
    (`requestAnimationFrame`), never one reflow each. Reads of sizes happen before writes of
    positions, never interleaved.
@@ -53,7 +53,7 @@ A budget changes only with a reason in the PLAN of the task that changes it.
    earlier versions are read only when the person steps through them, and only for that node. A
    card's history box reads no ledger: the fold keeps, per card, only when its few kinds of line
    happened (`packages/actions/src/card-times.ts` `foldCardTimes`: `seq`, time, kind, no words), and
-   the box is built from those when it opens (`apps/board/src/board/history-flow.ts`).
+   the box is built from those when it opens (`apps/board/src/board/cards/history-flow.ts`).
 7. **The ledger starts fast.** The server keeps a checkpoint of the folded state with the
    sequence number it covers, so startup folds only the events after it. The ledger itself stays
    the one source (D-017): a checkpoint can always be thrown away and rebuilt.

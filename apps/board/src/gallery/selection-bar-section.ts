@@ -8,7 +8,7 @@
 import type { ViewNode } from '#format';
 import type { VbSelectionBarElement } from '#ui';
 import { BAR_GAP, barView, pillGap, placeBar } from '#ui';
-import { AREA_COMMANDS, barButtons, selectionButtons } from '../board/commands.ts';
+import { AREA_COMMANDS, barButtons, selectionButtons } from '../board/input/index.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';

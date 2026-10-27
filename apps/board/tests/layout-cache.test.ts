@@ -9,8 +9,8 @@ import { boardView, foldDrawn, readLedger } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import type { Point, Size } from '#layout';
 import { layoutBoard, layoutRegion } from '#layout';
-import { createLayoutCache } from '../src/board/layout-cache.ts';
-import type { LayoutInputs } from '../src/board/layout-cache.ts';
+import { createLayoutCache } from '../src/board/canvas/layout-cache.ts';
+import type { LayoutInputs } from '../src/board/canvas/layout-cache.ts';
 import type { Random } from './random.ts';
 import { seeded } from './random.ts';
 

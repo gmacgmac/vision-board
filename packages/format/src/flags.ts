@@ -17,7 +17,7 @@ export const FLAGS = {
   hideControlsZoomedOut: {
     // On by default (maintainer, 2026-10-12, N13 ruling 2); ?flags=-hideControlsZoomedOut turns it off.
     default: true,
-    description: 'Below the zoom FAR_K (apps/board/src/board/viewport.ts; the toolbar shows the zoom as a percentage), hide the cards\' buttons, the size control and the containers\' icon row, so none draws too small to press (N8; 55% since review polish round 2, N13 closed). Off, every control stays visible at every zoom.',
+    description: 'Below the zoom FAR_K (apps/board/src/board/canvas/viewport.ts; the toolbar shows the zoom as a percentage), hide the cards\' buttons, the size control and the containers\' icon row, so none draws too small to press (N8; 55% since review polish round 2, N13 closed). Off, every control stays visible at every zoom.',
   },
   agentAccess: {
     default: true,
@@ -206,7 +206,7 @@ export const FLAGS = {
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,
-    description: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/go-to-card.ts). Off, only Enter goes.',
+    description: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   },
 } as const satisfies Record<string, FlagDef>;
 

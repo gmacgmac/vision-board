@@ -4,6 +4,7 @@
 // here: a tool becomes its short name and state, and a board write also its board, cards and head.
 // An unknown event type is logged once and passed over; a turn without a `result` is an error.
 import type { AgentUpdate, Usage } from './adapter.ts';
+import { isRecord } from './record.ts';
 
 /** The board write tool (packages/mcp, `mcp__<server>__write_board`): its result names the cards. */
 export const BOARD_WRITE = 'write_board';
@@ -13,7 +14,6 @@ const BOARD_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const MAX_CARDS = 200;
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 const count = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 
 /** `mcp__vision-board__write_board` → `write_board`; anything else cut to the chat schema's tool pattern. */
@@ -28,23 +28,23 @@ const callId = (id: unknown) => (typeof id === 'string' ? id.replace(/[^A-Za-z0-
 function resultText(content: unknown): string {
   if (typeof content === 'string') return content;
   if (!Array.isArray(content)) return '';
-  return content.map((b) => (isRec(b) && b.type === 'text' && typeof b.text === 'string' ? b.text : '')).join('');
+  return content.map((b) => (isRecord(b) && b.type === 'text' && typeof b.text === 'string' ? b.text : '')).join('');
 }
 
 /** The cards a board write drew or changed, and the head after it, from its result's JSON. */
 export function boardWriteSummary(content: unknown): { cards: number[]; head?: number } {
   let answer: unknown;
   try { answer = JSON.parse(resultText(content)); } catch { return { cards: [] }; }
-  if (!isRec(answer)) return { cards: [] };
+  if (!isRecord(answer)) return { cards: [] };
   const results = Array.isArray(answer.results) ? answer.results : [];
   const cards = [...new Set(results.flatMap((r) =>
-    isRec(r) && r.ok === true && Number.isInteger(r.n) && (r.n as number) >= 1 ? [r.n as number] : []))].slice(0, MAX_CARDS);
+    isRecord(r) && r.ok === true && Number.isInteger(r.n) && (r.n as number) >= 1 ? [r.n as number] : []))].slice(0, MAX_CARDS);
   const head = Number.isInteger(answer.head) && (answer.head as number) >= 0 ? answer.head as number : undefined;
   return { cards, ...(head !== undefined && { head }) };
 }
 
 function usageOf(result: Rec): Usage {
-  const u = isRec(result.usage) ? result.usage : {};
+  const u = isRecord(result.usage) ? result.usage : {};
   const cost = result.total_cost_usd;
   return {
     input: count(u.input_tokens),
@@ -77,7 +77,7 @@ export class ClaudeStream {
   }
 
   push(event: unknown): AgentUpdate[] {
-    if (!isRec(event)) return [];
+    if (!isRecord(event)) return [];
     this.sawEvent = true;
     switch (event.type) {
       case 'system': return this.system(event);
@@ -98,7 +98,7 @@ export class ClaudeStream {
 
   private system(event: Rec): AgentUpdate[] {
     if (event.subtype !== 'init') return [];
-    const reported = Array.isArray(event.mcp_servers) ? event.mcp_servers.filter(isRec) : [];
+    const reported = Array.isArray(event.mcp_servers) ? event.mcp_servers.filter(isRecord) : [];
     for (const name of this.servers) {
       const status = reported.find((s) => s.name === name)?.status;
       if (status !== 'connected') {
@@ -118,10 +118,10 @@ export class ClaudeStream {
   }
 
   private assistant(event: Rec): AgentUpdate[] {
-    const content = isRec(event.message) && Array.isArray(event.message.content) ? event.message.content : [];
+    const content = isRecord(event.message) && Array.isArray(event.message.content) ? event.message.content : [];
     const out: AgentUpdate[] = [];
     for (const block of content) {
-      if (!isRec(block)) continue;
+      if (!isRecord(block)) continue;
       if (block.type === 'text' && typeof block.text === 'string' && block.text.trim() !== '') {
         out.push(...this.flush());
         this.pending = block.text;
@@ -129,7 +129,7 @@ export class ClaudeStream {
         out.push(...this.flush());
         const call = callId(block.id);
         const tool = shortToolName(String(block.name ?? ''));
-        const board = tool === BOARD_WRITE && isRec(block.input) && typeof block.input.board === 'string' && BOARD_ID.test(block.input.board)
+        const board = tool === BOARD_WRITE && isRecord(block.input) && typeof block.input.board === 'string' && BOARD_ID.test(block.input.board)
           ? block.input.board : undefined;
         this.tools.set(call, { tool, ...(board && { board }) });
         out.push({ type: 'tool', call, tool, state: 'running', ...(board && { board }) });
@@ -141,10 +141,10 @@ export class ClaudeStream {
   }
 
   private user(event: Rec): AgentUpdate[] {
-    const content = isRec(event.message) && Array.isArray(event.message.content) ? event.message.content : [];
+    const content = isRecord(event.message) && Array.isArray(event.message.content) ? event.message.content : [];
     const out: AgentUpdate[] = [];
     for (const block of content) {
-      if (!isRec(block) || block.type !== 'tool_result') continue;
+      if (!isRecord(block) || block.type !== 'tool_result') continue;
       const call = callId(block.tool_use_id);
       const known = this.tools.get(call);
       if (!known) continue;

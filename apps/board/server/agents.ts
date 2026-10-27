@@ -28,9 +28,6 @@ export interface Agents {
 
 const sha256 = (text: string): Buffer => createHash('sha256').update(text, 'utf8').digest();
 
-/** 32 random bytes, base64url: 43 characters (api.md 21). */
-export const newSecret = (): string => randomBytes(32).toString('base64url');
-
 /** `a-` and 8 lowercase letters or digits, unbiased (bytes of 252 and above are redrawn). */
 function randomId(): string {
   let out = 'a-';

@@ -5,12 +5,12 @@
 // Pure and lossless for a line of the current format: `toLine(fromLine(line))` is that line.
 import type { LedgerEvent } from './ledger.ts';
 import { CARD_EVENTS } from './ledger.ts';
+import { isRecord } from './records.ts';
 import { RENAMED_MODES } from './view.ts';
 
 /** One stored line, parsed: what `eventProblems` and the stored-line schema check. */
 export type LedgerLine = Record<string, unknown>;
 
-const isRec = (v: unknown): v is LedgerLine => typeof v === 'object' && v !== null && !Array.isArray(v);
 const mode = (m: unknown): unknown => (typeof m === 'string' && RENAMED_MODES[m]) || m;
 
 /** `o` with key `from` renamed `to`, every key kept in its place. */
@@ -20,7 +20,7 @@ const renamed = (o: LedgerLine, from: string, to: string): LedgerLine =>
 /** The event a well-formed line (eventProblems found nothing) stands for. */
 export function fromLine(line: LedgerLine): LedgerEvent {
   let e = CARD_EVENTS.has(line.type as never) ? renamed(line, 'n', 'id') : { ...line };
-  if (e.type === 'region' && isRec(e.region) && e.region.mode !== undefined) e = { ...e, region: { ...e.region, mode: mode(e.region.mode) } };
+  if (e.type === 'region' && isRecord(e.region) && e.region.mode !== undefined) e = { ...e, region: { ...e.region, mode: mode(e.region.mode) } };
   if (e.type === 'act' && e.mode !== undefined) e = { ...e, mode: mode(e.mode) };
   return e as unknown as LedgerEvent;
 }

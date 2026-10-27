@@ -2,7 +2,7 @@
 // node and region elements, which pass their own list. A paused control stays where it is and in the
 // tab order, aria-disabled, so the person still sees what they could do and hears that they can't;
 // `data-paused` gives it the quiet look (paused.css). A press still reaches the page, which says why
-// (board/lock-flow.ts). A control that is aria-disabled for a reason of its own (`keep`) keeps it
+// (board/boards/lock-flow.ts). A control that is aria-disabled for a reason of its own (`keep`) keeps it
 // when the board is unlocked. The flag is never in a list: it stays usable. Browser only.
 
 /** Pause, or resume, every control in `root` that matches `selector`. */

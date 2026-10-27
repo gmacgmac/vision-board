@@ -3,7 +3,7 @@
 // ending "· updated"; and the shared cut (`#format` `clip`), which the chat's chip labels use too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OPEN_ROW_MAX, openRow } from '../src/board/finder.ts';
+import { OPEN_ROW_MAX, openRow } from '../src/board/find/finder.ts';
 import { clip } from '#format';
 
 test('a row is the card number and title, chosen by number', () => {

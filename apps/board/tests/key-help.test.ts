@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ACTIONS } from '#actions';
-import { COMMAND_IDS, COMMANDS } from '../src/board/commands.ts';
-import { KEY_GROUPS, keyGroups } from '../src/board/key-help.ts';
+import { COMMAND_IDS, COMMANDS } from '../src/board/input/commands.ts';
+import { KEY_GROUPS, keyGroups } from '../src/board/input/key-help.ts';
 
 const rows = () => keyGroups().flatMap((g) => g.rows);
 

@@ -10,13 +10,13 @@ import { foreignSchemas, schemaProblems } from '../schema.ts';
 import type { Answer } from './child.ts';
 import { fieldWords, MANIFEST_ID } from './manifest.ts';
 import * as appsSupervisorWords from '../words/apps-supervisor.ts';
+import { isRecord } from '#format';
 
 const TOOL_ID = `${MANIFEST_ID}#/$defs/tool`;
 
 /** One tool, checked: its shape, and the checks of its arguments and its answer. */
 export interface CheckedTool { info: AppToolInfo; input: (v: unknown) => SchemaProblem[]; output?: (v: unknown) => SchemaProblem[] }
 
-const isRec = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const said = (ps: SchemaProblem[]) => ps.map((p) => p.detail).join('; ');
 
 /** The tools by name, in the module's order; or what is wrong with them, for the agent. */
@@ -25,7 +25,7 @@ export function checkTools(infos: unknown[], file: string): Map<string, CheckedT
   const tools = new Map<string, CheckedTool>();
   const compile = foreignSchemas();
   infos.forEach((info, i) => {
-    const label = isRec(info) && typeof info.name === 'string' ? `"${info.name}"` : appsSupervisorWords.number(i + 1);
+    const label = isRecord(info) && typeof info.name === 'string' ? `"${info.name}"` : appsSupervisorWords.number(i + 1);
     const shape = schemaProblems(TOOL_ID, info);
     if (shape.length) return void problems.push({ file, detail: appsSupervisorWords.tool(label, shape.map(fieldWords).join('; ')) });
     const tool = info as AppToolInfo;
@@ -63,6 +63,6 @@ export function resultOf(app: string, tool: CheckedTool, answer: Exclude<Answer,
   const off = tool.output?.(result) ?? [];
   if (off.length) throw problem('app-failed', appsSupervisorWords.answeredSomethingItsOutputSchemaRefuses(name, said(off)));
   if (typeof result === 'string') return { content: [{ type: 'text', text: result }], isError: false };
-  if (isRec(result)) return { content: [{ type: 'text', text: text! }], structuredContent: result, isError: false };
+  if (isRecord(result)) return { content: [{ type: 'text', text: text! }], structuredContent: result, isError: false };
   throw problem('app-failed', appsSupervisorWords.answeredAnswerAnObjectOr(name, result === undefined));
 }

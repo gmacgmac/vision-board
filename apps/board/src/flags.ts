@@ -4,16 +4,12 @@
 // old bookmark cannot break the page. Tests and the gallery's samples pass overrides directly.
 import type { FlagOverrides } from '#format';
 import { parseFlags } from '#format';
+import { kept } from './shell/kept.ts';
 
 export const FLAGS_KEY = 'vb.flags';
 
 export function pageFlags(): FlagOverrides {
-  let stored: string | null = null;
-  try {
-    stored = localStorage.getItem(FLAGS_KEY);
-  } catch {
-    // Storage refused (a private window's policy): the defaults and the address still apply.
-  }
+  const stored = kept(FLAGS_KEY); // storage refused (a private window's policy): the defaults and the address still apply
   const address = new URLSearchParams(location.search).get('flags');
   return { ...parseFlags(stored).overrides, ...parseFlags(address).overrides };
 }

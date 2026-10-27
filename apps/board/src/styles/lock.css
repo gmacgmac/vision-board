@@ -1,4 +1,4 @@
-/* A locked board (N40 ruling 4, board/lock-flow.ts). "Locked" after the board's name and version
+/* A locked board (N40 ruling 4, board/boards/lock-flow.ts). "Locked" after the board's name and version
    (LockedChip.svelte): a quiet chip, the padlock and the word in --vb-ink-strong on the chip's own
    ground, ringed in --vb-line-strong so it reads as a state, not a count; never shortened on a narrow
    toolbar. On the board the world carries data-locked: the controls that change it are paused in

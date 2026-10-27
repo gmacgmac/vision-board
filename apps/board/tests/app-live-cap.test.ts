@@ -3,7 +3,7 @@
 // screen never goes for the cap. The page test is tests/pages/app-alive.spec.ts.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { LIVE_PANELS, overCap } from '../src/board/app-cards.ts';
+import { LIVE_PANELS, overCap } from '../src/board/apps/app-cards.ts';
 
 const ids = (count: number) => Array.from({ length: count }, (_, i) => `p${i}`);
 

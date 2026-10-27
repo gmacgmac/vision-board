@@ -21,7 +21,7 @@
   }
 </script>
 
-<aside id="reply" class="vb-reply" aria-label={replyWords.yourReply} hidden={!shell.replyOpen}>
+<aside id="reply" class="vb-reply vb-surface-panel" aria-label={replyWords.yourReply} hidden={!shell.replyOpen}>
   <header>
     <h2>{replyWords.yourReply}</h2>
     <button type="button" class="vb-btn vb-btn-primary" id="copy" onclick={copy}>{shellCommonWords.copy}</button>

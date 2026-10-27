@@ -6,13 +6,13 @@
 // panel-send ruling 1; the person's message with the board's answers, chat-board-context ruling 5)
 // waits, one at most, and goes when the turn ends, its text made then. The CLI's own transcript is
 // the record, so nothing here is written to disk.
-import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { AgentSession, ChatEventDraft } from '#agent';
 import { toChatEvent } from '#agent';
 import type { ApprovalDraft, Approvals } from './chat-approvals.ts';
 import { createApprovals } from './chat-approvals.ts';
 import type { StoredSession } from './chat-index.ts';
 import type { Chip } from './chat-prompt.ts';
+import { sameText } from './secrets.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
 export type MessageIn = { kind: 'message_in'; text: string; chips?: Chip[] };
@@ -56,15 +56,8 @@ export const QUEUED = serverChatWords.yourAnswersGoToThe;
 /** The line when the person's message with the board's answers waits for the turn to end. */
 export const QUEUED_WORDS = serverChatWords.yourMessageGoesToThe;
 
-/** A fresh run token: 32 random bytes, base64url. */
-export const newRunToken = (): string => randomBytes(32).toString('base64url');
-
 /** Whether `given` is this session's token, compared in constant time. */
-export function hasToken(live: LiveSession, given: string): boolean {
-  const a = Buffer.from(live.token);
-  const b = Buffer.from(given);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
+export const hasToken = (live: LiveSession, given: string): boolean => sameText(live.token, given);
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 

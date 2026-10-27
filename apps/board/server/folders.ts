@@ -58,6 +58,9 @@ export function countBoards(dir: string): number | undefined {
   } catch { return undefined; }
 }
 
+/** The real path of `dir`, or its absolute path when it is not there (yet). */
+export const realPath = (dir: string): string => { try { return fs.realpathSync(dir); } catch { return path.resolve(dir); } };
+
 /** The real folder `raw` names, checked against `home` (a real path): `forbidden` outside home or
  * through a hidden part, `not-found` when it is not there or not a folder. */
 export function resolveFolder(home: string, raw: string): string {

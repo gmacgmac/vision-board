@@ -3,9 +3,9 @@
 // notifications the agent makes reach the handlers. Nothing here knows Kiro; kiro.ts uses it.
 import type { ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { isRecord } from './record.ts';
 
 type Rec = Record<string, unknown>;
-const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** A JSON-RPC error answer. */
 export class RpcError extends Error {
@@ -96,7 +96,7 @@ export class AcpConnection {
     this.handlers.tap?.('in', line);
     let message: unknown;
     try { message = JSON.parse(line); } catch { this.handlers.odd?.('a line that is not JSON'); return; }
-    if (!isRec(message)) { this.handlers.odd?.('a message that is not an object'); return; }
+    if (!isRecord(message)) { this.handlers.odd?.('a message that is not an object'); return; }
     const { id, method } = message;
     if (typeof method === 'string') {
       if (typeof id === 'number' || typeof id === 'string') void this.answer(id, method, message.params);
@@ -106,7 +106,7 @@ export class AcpConnection {
     const w = typeof id === 'number' ? this.waiting.get(id) : undefined;
     if (!w || typeof id !== 'number') { this.handlers.odd?.('an answer to a request we did not make'); return; }
     this.waiting.delete(id);
-    if (isRec(message.error)) w.reject(new RpcError(Number(message.error.code) || -32000, String(message.error.message ?? 'the agent refused')));
+    if (isRecord(message.error)) w.reject(new RpcError(Number(message.error.code) || -32000, String(message.error.message ?? 'the agent refused')));
     else w.resolve(message.result);
   }
 

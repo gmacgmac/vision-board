@@ -4,8 +4,6 @@
 // them (`fromLine`): a card is its `id`.
 import type { ActEvent, LedgerEvent } from './ledger.ts';
 import { actCard, CONTAINER_PLACES, isContainerAct, LATER_REGION } from './ledger.ts';
-import { eventProblems } from './ledger-shape.ts';
-import { fromLine } from './ledger-line.ts';
 import { retireContext } from './retire-rules.ts';
 import { accessKey, accessName, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
 import * as formatLedgerWords from './words/format-ledger.ts';
@@ -93,32 +91,14 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
       if (e.v >= 6 && e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
         p.push(formatLedgerWords.regionIdIsTheBoard(LATER_REGION));
       break;
-    case 'node': {
-      const regions = ix.boards.get(e.board);
-      if (!regions) p.push(formatLedgerWords.boardUnknown(e.board));
-      else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(formatLedgerWords.nodeRegionContainerWasRetired(e.node.region));
-      else if (!regions.has(e.node.region)) p.push(formatLedgerWords.nodeRegionUnknown(e.node.region));
-      const prev = ix.nodes.get(e.id);
-      if (!prev && e.id <= ix.maxId) p.push(formatLedgerWords.nWasAlreadyUsedNew(e.id, ix.maxId + 1));
-      if (prev && prev.board !== e.board) p.push(formatLedgerWords.nNodeBelongsToBoard(name(e.id), prev.board));
-      if (prev && ix.retired.has(e.id)) p.push(formatLedgerWords.nCardIsRetiredDraw(name(e.id)));
-      const want = (prev?.ver ?? 0) + 1;
-      if (e.ver !== want) p.push(formatLedgerWords.verExpected(want));
-      break;
-    }
+    case 'node': nodeContext(ix, e, p, name); break;
     case 'link': case 'unlink': node(e.from, 'from'); node(e.to, 'to'); break;
     case 'act':
       actContext(ix, e, p);
       for (const id of e.nodes ?? []) node(id, 'nodes');
       if (e.id === undefined) break;
       verAtMost(e.id, e.ver);
-      if (e.proposal !== undefined) {
-        const prop = ix.proposals.get(e.proposal);
-        const cur = ix.nodes.get(e.id)?.ver;
-        if (!prop || prop.id !== e.id) p.push(formatLedgerWords.proposalNoProposalForNode(e.proposal, name(e.id)));
-        // An out-of-date proposal can't be accepted, but it can be turned down (api.md 93).
-        else if (prop.ver !== cur && e.action !== 'reject') p.push(formatLedgerWords.proposalOutOfDateNode(name(e.id)));
-      }
+      if (e.proposal !== undefined) proposalContext(ix, e, e.id, e.proposal, p, name);
       break;
     case 'retire': retireContext(ix, e, p, name); break;
     case 'seen':
@@ -140,6 +120,29 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
     }
   }
   return p;
+}
+
+/** A card line: its board and container, a number not used before, and the next version. */
+function nodeContext(ix: LedgerIndex, e: Extract<LedgerEvent, { type: 'node' }>, p: string[], name: CardName): void {
+  const regions = ix.boards.get(e.board);
+  if (!regions) p.push(formatLedgerWords.boardUnknown(e.board));
+  else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(formatLedgerWords.nodeRegionContainerWasRetired(e.node.region));
+  else if (!regions.has(e.node.region)) p.push(formatLedgerWords.nodeRegionUnknown(e.node.region));
+  const prev = ix.nodes.get(e.id);
+  if (!prev && e.id <= ix.maxId) p.push(formatLedgerWords.nWasAlreadyUsedNew(e.id, ix.maxId + 1));
+  if (prev && prev.board !== e.board) p.push(formatLedgerWords.nNodeBelongsToBoard(name(e.id), prev.board));
+  if (prev && ix.retired.has(e.id)) p.push(formatLedgerWords.nCardIsRetiredDraw(name(e.id)));
+  const want = (prev?.ver ?? 0) + 1;
+  if (e.ver !== want) p.push(formatLedgerWords.verExpected(want));
+}
+
+/** An answer to a proposal: it names a proposal made on this card, and one the card has moved on
+ * from can't be accepted, but it can be turned down (api.md 93). */
+function proposalContext(ix: LedgerIndex, e: ActEvent, id: number, proposal: number, p: string[], name: CardName): void {
+  const prop = ix.proposals.get(proposal);
+  const cur = ix.nodes.get(id)?.ver;
+  if (!prop || prop.id !== id) p.push(formatLedgerWords.proposalNoProposalForNode(proposal, name(id)));
+  else if (prop.ver !== cur && e.action !== 'reject') p.push(formatLedgerWords.proposalOutOfDateNode(name(id)));
 }
 
 /** The container rules of an `act`: mode, widths, move, grant, deny, revoke, send and the board marks (api.md 16, 23, 66, 132, 135, 138),
@@ -250,35 +253,3 @@ function indexAct(ix: LedgerIndex, e: ActEvent): void {
     }
   } else if (e.action === 'revoke') ix.holders.get(accessKey(e.board!, e.region))?.delete(e.holder!);
 }
-
-export interface ReadLedger { events: LedgerEvent[]; problems: string[]; index: LedgerIndex }
-
-/** Parse and check a whole ledger: each line's shape as the file holds it, then the event code
- * reads (`fromLine`) in context. `events` holds the valid events in order; `problems` every
- * problem as "line N: ...". Lines with problems are skipped, so one bad event is reported without
- * hiding the rest (D-019). */
-export function readLedger(lines: string[]): ReadLedger {
-  const events: LedgerEvent[] = [];
-  const problems: string[] = [];
-  const index = emptyIndex();
-  lines.forEach((line, i) => {
-    if (!line.trim()) return;
-    let e: unknown;
-    try { e = JSON.parse(line); } catch { index.seq += 1; return void problems.push(formatLedgerWords.lineNotJSON(i + 1)); }
-    let p = eventProblems(e);
-    const event = p.length ? undefined : fromLine(e as Record<string, unknown>);
-    if (event) p = contextProblems(index, event);
-    if (p.length || !event) {
-      problems.push(...p.map((x) => formatLedgerWords.line(i + 1, x)));
-      const seq = (e as { seq?: unknown }).seq;
-      if (Number.isInteger(seq)) index.seq = Math.max(index.seq, seq as number); // one bad line, not a cascade
-    } else {
-      indexEvent(index, event);
-      events.push(event);
-    }
-  });
-  return { events, problems, index };
-}
-
-/** Every problem in a whole ledger. Empty means valid. */
-export const validateLedger = (lines: string[]): string[] => readLedger(lines).problems;

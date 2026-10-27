@@ -4,7 +4,15 @@ The Vision Board app: the page in `src/` and the small local server (`server.ts`
 serves the built page and reads and appends the project ledger
 (`<VB_PROJECT>/.visionboard/ledger.jsonl`, D-017) through `server/ledger.ts`. `src/shell/` is the
 Svelte shell (toolbar, reply panel, note dialog; D-012). `src/board/` is the framework-free canvas
-controller it mounts (layout, drawing, pointer, keys, I/O; D-005). Vite builds `src/` into `dist/`
+controller it mounts (layout, drawing, pointer, keys, I/O; D-005), in feature folders: `canvas/` (the draw, the viewport,
+focus, places), `links/` (connectors and their labels), `cards/` (the card set, images, attention, the review
+buttons, the flag, proposals, updates, parking, Remove, a card's history), `notes/` (note bubbles, container notes,
+group pins), `selection/` (selection, lasso, bar, moves, container drags), `input/` (commands, keys, pointer, the
+stage's wiring), `find/` (the container finder, Go to card), `boards/` (boot, the picker, versions, a locked board,
+board edits), `access/` (agent access) and `apps/` (app cards), with `controller.ts` (and `controller/`), `mount.ts`,
+`host.ts`, `status.ts`, `io.ts` (and `io/`), `live.ts` and `sender.ts` at its root. Each folder has one public
+file, `index.ts`, and code outside it imports only that (`npm run verify`, `checkFeatureFolders`); a unit test of a
+folder's inside may import the inside. Vite builds `src/` into `dist/`
 (gitignored). Localhost only, with Host and Origin checks, JSON only. `bin/reply.ts <board>
 [--json]` prints the numbered reply for a board from the project ledger. `bin/validate.ts
 <ledger.jsonl>` (`npm run validate -- <file>`) checks ledger files line by line against the JSON
@@ -16,27 +24,27 @@ from `packages/ui`; they hold no layout maths, file formats or actions themselve
 `<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the page's stylesheet list
 (`src/styles/page.ts`: the tokens, the page's own rules (`shell.css`), the board's sheets, `#ui/styles.css`, the shell's; the gallery imports
 it too; the chat's sheets are `src/styles/chat.ts`, loaded with the panel), and
-`src/board/cards.ts` and `src/board/render.ts` create, measure and place the elements but never
+`src/board/cards/cards.ts` and `src/board/canvas/render.ts` create, measure and place the elements but never
 build their markup. The page works in proportion to what changed (N12,
 `docs/specification/performance.md`): `src/board/live.ts` reads the ledger once and applies each new
 line to the state it holds, `boardData` (`packages/actions/src/answers/board-data.ts`, which the server's `get_board` is built from
 too) works the open board and what needs attention (`pageConditions`, from the conditions table;
-`attention.ts` shows it and sends the board seen) out from that state, and `draw.ts`
-updates, measures and lays out only what a change touched (`layout-cache.ts` per container,
-`wires.ts` per connector, `offscreen.ts` for cards well off screen), counting the work in `work.ts`.
+`cards/attention.ts` shows it and sends the board seen) out from that state, and `canvas/draw.ts`
+updates, measures and lays out only what a change touched (`canvas/layout-cache.ts` per container,
+`links/wires.ts` per connector, `canvas/offscreen.ts` for cards well off screen), counting the work in `work.ts`.
 The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), so its state is by
 card identity, while everything it draws and sends names a card by its number on its board (api.md
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
-flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
-flag), the person's Remove card and Remove container (`remove-flow.ts`, whose words are
-`cardsWords` and `containerWords`, personRemove flag), the Go to card box (`go-to-card.ts` over `goTarget`,
+flag (`cards/flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
+flag), the person's Remove card and Remove container (`cards/remove-flow.ts`, whose words are
+`cardsWords` and `containerWords`, personRemove flag), the Go to card box (`find/go-to-card.ts` over `goTarget`,
 `src/shell/GoToCard.svelte`, goToCard flag)
 and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
-3: `wires.ts` draws a link's label on its line where the layout found it room (`link-labels.ts`)
-and a marker that floats the label on hover and focus where it did not (`link-marks.ts`, linkLabels
-flag); `cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the
+3: `links/wires.ts` draws a link's label on its line where the layout found it room (`links/link-labels.ts`)
+and a marker that floats the label on hover and focus where it did not (`links/link-marks.ts`, linkLabels
+flag); `cards/cards.ts` measures a card the layout widens (Match card widths, widthsControl flag: the
 switch in each frame's mode row) at the width it is drawn at; the viewer's alignment is the "⋯"
-menu's Centre cards (`src/shell/align.ts`, alignSetting flag); and `bubble-clear.ts` keeps the note
+menu's Centre cards (`src/shell/align.ts`, alignSetting flag); and `notes/bubble-clear.ts` keeps the note
 bubble clear of a neighbouring card's footer buttons. The gallery draws these through the board's
 own drawing (`src/gallery/mini-board.ts`).
 
@@ -95,10 +103,10 @@ the panel at `GET /app-panels/<id>` with its own CSP (`panel.ts`), answers `list
 (`supervisor.ts`, `child.ts`, `runner.mjs`), started on the first call and stopped when idle, when
 its code changes or is stopped, and when the folder closes. `VB_FLAGS=-appCards` turns app cards
 off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_LIMITS`. Test apps:
-`tests/fixtures/apps/` (`probe` is the page tests' panel). On the page, `src/board/app-cards.ts`
+`tests/fixtures/apps/` (`probe` is the page tests' panel). On the page, `src/board/apps/app-cards.ts`
 wires each app card's frame (loaded once on screen, then kept and frozen when off screen or zoomed out, at most 8 live, D-050; its state saved per card; tool calls
 through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
-the one sender; `src/board/app-state.ts` holds the one copy of `list_apps`' answer;
+the one sender; `src/board/apps/app-state.ts` holds the one copy of `list_apps`' answer;
 `src/board/words/app-cards.ts` says what the person reads around them (components.md § App card; `tests/words-app-cards.test.ts`). This
 repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
 (`tests/repo-example-app.test.ts` keeps it equal to the skill's).
@@ -106,7 +114,7 @@ repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
 Images in cards (D-048, `docs/specification/images.md`): `server/images.ts` `serveImage` answers
 `GET /board-images/<path>` (and `HEAD`) from `.visionboard/images/` only, after `imagePathProblem`
 (packages/format, the one path check the Markdown renderer makes too), with an ETag and 304. On the
-page, `src/board/card-images.ts` (made by `draw.ts`) loads a card's images once it is near and the
+page, `src/board/cards/card-images.ts` (made by `canvas/draw.ts`) loads a card's images once it is near and the
 zoom is not far (ruling 23), asks the route which version each is through `io.ts` `imageVersion`,
 asks again when a card is selected or an image is opened (no timer), swaps a newer one in, shows the
 box saying why for a refused file, has a card measured again when its image changed its height, and
