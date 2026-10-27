@@ -194,7 +194,7 @@ export const FLAGS = {
     description: 'With cardImages, an svg in the project\'s `.visionboard/images/` is a picture like a png (D-064): drawn only through <img>, so its CSS and SMIL animation play and its script never runs, and served under its own policy (no script, sandboxed) at its own address; at most 1 MB, and it must say its size (a viewBox, or a width and height). Off, an svg is refused as before ("only png, jpeg, webp or gif") by the page\'s Markdown (`setMarkdownSvg`) and by the server\'s route (its own flags).',
   },
   leavePrompt: {
-    // On by default, proposed (host-fixes-and-svg M11_01: words lost is the worse failure); ?flags=-leavePrompt turns it off.
+    // On by default (maintainer, point 310; host-fixes-and-svg M11_01: words lost is the worse failure); ?flags=-leavePrompt turns it off.
     default: true,
     description: 'On the standalone page, while a note holds changed words not yet saved (the board\'s `unsaved`), closing or reloading the tab gets the browser\'s own "Leave site?" prompt, and so do the page\'s own reloads (a rebuilt page, a refused cookie, another tab opening another folder); opening another folder from the picker asks "Discard your changes?" first, before the server switches. The listener is there only while words are unsaved. Off, the tab closes without asking, as before. A host other than the page asks with the board\'s `leave()`, flag or not.',
   },

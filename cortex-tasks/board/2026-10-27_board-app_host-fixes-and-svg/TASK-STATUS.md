@@ -1,8 +1,8 @@
 ---
 task_name: Host Fixes and SVG Images
 created: 2026-10-27
-completed:
-status: in-progress
+completed: 2026-10-27
+status: completed
 categories: [board-app, board-security]
 tracker: cortex-tasks/tracker.md#M10,M11
 ---
@@ -95,7 +95,7 @@ tracker: cortex-tasks/tracker.md#M10,M11
 | M11_01-R3 | M11_01 (caught beyond) | Switching boards drops a note's unsaved words silently (`boards.ts` `switchTo`) | M11_01 Run 2 (ownership widened) | Done |
 | M11_01-R4 | M11_01 (caught beyond) | A folder switch asks only after the server switched; Cancel leaves page and server on different folders (`FolderDialog.svelte` `accept`, `folder.ts` `folderMoved`) | M11_01 Run 2 (ownership widened) | Done |
 | M11_01-R5 | M11_01 (caught beyond) | A card or container leaving the layout (agent removes it, Hide answered) closes its open note with no question | Maintainer agreed (point 309): Hide answered asks first, M11_01 Run 4; an agent's redraw, tracker M24 | Done |
-| M11_01-R6 | M11_01 | `leavePrompt` flag default on | The maintainer (point 310) | Open |
+| M11_01-R6 | M11_01 | `leavePrompt` flag default on | Maintainer: on by default (point 310) | Done |
 | M11_01-R7 | M11_01 (Run 2) | `apps/board/src/shell/Toolbar.svelte` `pickBoard`: one line puts the picker back after a Cancel; record it as M11_01's | Orchestrator: accepted | Done |
 | M11_01-R8 | M11_01 (Run 2) | `folder.ts` `folderMoved` (another tab opened another folder) can't ask first: the server has already switched; only the browser's prompt asks before the reload. A server-side answer needs a design | Tracker M20 | Done |
 | VERIFY_01-R1 | VERIFY_01 F1 | `images.ts` `svgProblem`: a comment or PI holding `<svg ` hides a later `<!ENTITY` (D-064 point 3 untrue) | SVG_01 Run 4 (in this set) | Done |
@@ -155,14 +155,14 @@ _Notes:_ Every PLAN.md criterion met with evidence; the full page suite is the g
 
 ## Completion Checklist
 
-- [ ] All implementation tasks complete
-- [ ] Verification task complete
-- [ ] Every request `Done` or `Closed`
-- [ ] The new decision entry appended with the maintainer's yes
-- [ ] The nclite reply updated (keys, `leave()`, SVG)
-- [ ] The maintainer looks in a browser, light and dark: an SVG card and its zoomed view; a note
+- [x] All implementation tasks complete
+- [x] Verification task complete
+- [x] Every request `Done` or `Closed`
+- [x] The new decision entry appended with the maintainer's yes
+- [x] The nclite reply updated (keys, `leave()`, SVG)
+- [x] The maintainer looks in a browser, light and dark: an SVG card and its zoomed view; a note
       with unsaved words and a tab close (flag on); the shortcuts after a click on the canvas
-- [ ] LOG entry created (see below)
+- [x] LOG entry created (see below)
 
 ---
 
