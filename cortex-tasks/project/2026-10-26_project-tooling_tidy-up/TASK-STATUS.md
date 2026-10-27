@@ -1,8 +1,8 @@
 ---
 task_name: Tidy-Up To The Target Architecture
 created: 2026-10-26
-completed:
-status: in-progress
+completed: 2026-10-27
+status: completed
 categories: [project-tooling]
 tracker:
 ---
@@ -157,8 +157,8 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | VERIFY_01-R2 | VERIFY_01 | nclite reply: bot tools (F6), unmount (F2), keys (F1), theme (F12), pictures left to the host (F15) | orchestrator: `nclite-contract-reply.md` § The view's host (gaps, pictures) and § For nclite to weigh (theme) | Done |
 | VERIFY_01-R3 | VERIFY_01 | `components.md` drift: `readingOrder`'s home, the key claim, the host gaps (F9) | orchestrator: corrected; gaps named under § The board's host interface, Not covered | Done |
 | VERIFY_01-R4 | VERIFY_01 | Clear the set's `temp/` leftovers (F13) | orchestrator: cleared (41 entries, git-ignored) | Done |
-| VERIFY_01-R5 | VERIFY_01 | `docs/principles.md` (protected): `primitives.css` → `packages/tokens/src/tokens.css` (F9); § Where we are at close | maintainer: points 298, 299 | Open |
-| VERIFY_01-R6 | VERIFY_01 | Success criterion "No screenshot changed": 8 gallery baselines changed, each approved at its gate (F16) | maintainer: point 300 | Open |
+| VERIFY_01-R5 | VERIFY_01 | `docs/principles.md` (protected): `primitives.css` → `packages/tokens/src/tokens.css` (F9); § Where we are at close | maintainer: approved as points 298 and 299 (2026-10-27), applied | Done |
+| VERIFY_01-R6 | VERIFY_01 | Success criterion "No screenshot changed": 8 gallery baselines changed, each approved at its gate (F16) | maintainer: accepted as point 300 (2026-10-27); PLAN's criterion reworded | Done |
 | VERIFY_01-R7 | VERIFY_01 | `gen-contract.mjs` `LEDGER_EVENT_ID` hard-codes ledger/18 (F11) | orchestrator: no row; it fails loudly on a bump, derive it in the next change there | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
@@ -256,7 +256,7 @@ is below, with its approval. One commit and tag per wave, after the gates.
 | 5 | TEST_01 | a9bb4b3 · `tidy/wave-5` | 1710 + 10 unit; 667 page specs on 3 workers in 6.4 min (was 16.1 on 1) |
 | 6 | ARCH_05 (Runs 1, 2) | 613efd7 · `tidy/wave-6` | 1723 + 10 unit; 667 page specs on 5 workers in 6.2 min; app-cards and chat changed by one gallery text line |
 | 7 | ARCH_06 | 28f0890 · `tidy/wave-7` | 1735 + 10 unit; 667 page specs on 5 workers in 5.1 min; first run hung 5 h on the ledger follower race (fixed, Found along the way); image-view gallery baselines refreshed for its moved path |
-| 8 | VERIFY_01 | commit below · `tidy/wave-8` | 1735 + 10 unit (by VERIFY_01); 667 page specs on 5 workers in 5.2 min at the gate, the second full run on unchanged code after Wave 7's 5.1 min (two, not the three PLAN asked: the code did not change between them); findings F1–F16, open ones at tracker M10–M19 |
+| 8 | VERIFY_01 | 4c0f441 · `tidy/wave-8` | 1735 + 10 unit (by VERIFY_01); 667 page specs on 5 workers in 5.2 min at the gate, the second full run on unchanged code after Wave 7's 5.1 min (two, not the three PLAN asked: the code did not change between them); findings F1–F16, open ones at tracker M10–M19 |
 
 Every wave also: `npm run check` 0 errors, `gen-api --check` current, `verify` ok.
 
@@ -300,10 +300,10 @@ Every wave also: `npm run check` 0 errors, `gen-api --check` current, `verify` o
 
 ## Completion Checklist
 
-- [ ] All implementation tasks complete
-- [ ] Verification task complete
-- [ ] Every request `Done` or `Closed`
-- [ ] LOG entry created (see below)
+- [x] All implementation tasks complete
+- [x] Verification task complete
+- [x] Every request `Done` or `Closed`
+- [x] LOG entry created (see below)
 - [ ] The maintainer looks in a browser, light and dark (page screenshots stood in overnight):
   - the ⋯ menu, Move to (Shift+M), a container's settings menu, the app card's "Allowed ▾";
   - New/Rename board, Open folder…, Archived…, a confirm: Esc, Cancel, backdrop click, focus back;

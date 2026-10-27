@@ -1,6 +1,6 @@
 ---
 category: project-docs
-last_updated: 2026-10-26
+last_updated: 2026-10-27
 status: draft
 scope: Vision Board's architecture and design principles, the target we build to, and why
 keywords: [principles, architecture, patterns, reuse, components, tokens, actions, plugin, quality, dependencies]
@@ -20,9 +20,11 @@ page is silent, consult the skill. The board-specific parts were adapted from Up
 `docs/specification/architecture.md`, `packages/ui/README.md`, `packages/tokens/README.md`, the
 Studio Scaffold decision drafts, 2026-09-29 and 2026-09-30).
 
-**Where we are (2026-10-26):** behind the target. The gaps are listed in
-`cortex-tasks/board/2026-10-26_project-tooling_code-organisation-review.md`; the tidy-up that closes
-them is planned from it.
+**Where we are (2026-10-27):** the tidy-up (`cortex-tasks/project/2026-10-26_project-tooling_tidy-up/`)
+closed the review's gaps: one front door per module, one source per contract, words homes, feature
+folders, a hostable board and an HTTP-free engine. `npm run verify` and the tests keep them closed.
+What's still open is tracked: the board under a host (tracker M8, M10–M15), and smaller recipe and
+test items (M16–M19).
 
 **Our tenet: we don't know what the future looks like; we have to build it.** So we future-proof:
 we choose open, swappable shapes over ones that assume today's tools. Point 1 below is this tenet
@@ -160,7 +162,7 @@ back with Studio.
 ## Design tokens and contrast
 
 - Tokens are the only source of colour, type, spacing, radius and motion. Colour literals exist
-  in one file (`primitives.css`); everything else reads semantic tokens (what a colour is *for*).
+  in one file (`packages/tokens/src/tokens.css`); everything else reads semantic tokens (what a colour is *for*).
 - Each colour is one `light-dark(<light>, <dark>)` value, so the themes can't drift.
 - **APCA contrast in three tiers**, in light and dark, measured with APCA-W3 0.0.98G-4g: Lc 60
   for reading text (body, muted, white on a button fill), Lc 45 for short coloured labels (links,

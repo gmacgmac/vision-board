@@ -167,5 +167,5 @@ Close the gaps in dependency order, one checkpoint per wave, everything green at
 - [ ] The board's engine runs with no HTTP server in a test: a route, a chip resolve, each tool, a watch event
 - [ ] The board draws unchanged under a host's global element rules and at a pane's width (~550 px)
 - [ ] The full page suite passes with more than one worker, three runs in a row
-- [ ] No screenshot changed except where a task fixed a known failure
+- [x] No screenshot of the person's board changed; a gallery screenshot changes only with a look by eye at its gate (reworded by the maintainer, point 300, 2026-10-27: the 8 gallery baselines that changed are accepted)
 - [ ] All tests pass; `verify`, `check` and `gen --check` clean
