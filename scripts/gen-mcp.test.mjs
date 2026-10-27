@@ -5,7 +5,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { flatten, merge } from './mcp-schema.mjs';
-import { toolsOf } from './gen-mcp.mjs';
+import { toolsOf as mcpToolsOf } from './gen-mcp.mjs';
+import { toolTable } from './gen-tools.mjs';
+
+/** The MCP list made the way gen-api.mjs makes it: the tool table first, then MCP's own additions. */
+const toolsOf = (doc, schemas) => mcpToolsOf(toolTable(doc, schemas), doc, schemas);
 
 const ID = 'https://x.invalid/common.json';
 const schemas = new Map([[ID, { $id: ID, $schema: 'https://json-schema.org/draft/2020-12/schema', $defs: {

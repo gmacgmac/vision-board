@@ -4,8 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { applyEvent, foldLedger } from '#actions';
-import { boardData } from '../src/board/board-data.ts';
+import { applyEvent, boardData, foldLedger } from '#actions';
 import { answerEvent, idOf, numOf } from '../src/board/card-numbers.ts';
 
 const A = 'a-aaaa1111';

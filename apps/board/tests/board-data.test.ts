@@ -1,15 +1,15 @@
 // The page folds the ledger itself (N12_FE_01 ruling 2): it reads `read_ledger` once, folds it with
 // the shared action layer, and applies every later line to the state it holds. What it then draws
-// must be what `get_board` would have answered, for every board, and stay so as lines arrive.
+// must be what `get_board` answers, for every board, and stay so as lines arrive. `get_board` and the
+// page build the board from the one `boardData` (packages/actions); the server sends `boardJson` of it.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerEvent, LedgerLine } from '#format';
 import { fromLine } from '#format';
-import { applyEvent, eventBoard, foldLedger, itemsOut } from '#actions';
+import { applyEvent, boardData, boardJson, eventBoard, foldLedger, pageConditions } from '#actions';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
-import { boardData, canApply, pageConditions } from '../src/board/board-data.ts';
-import type { BoardData } from '../src/board/io.ts';
+import { canApply } from '../src/board/board-data.ts';
 
 let h: Harness;
 before(async () => { h = await startBoard(); });
@@ -26,36 +26,22 @@ async function allLines(): Promise<LedgerEvent[]> {
   }
 }
 
-/** `BoardData` in the JSON shape `get_board` answers with: the page keeps the stored statuses, and
- * `get_board` names them at the edge (`itemsOut`, api.md 147). */
-const asJson = (d: BoardData) => ({
-  head: d.head,
-  view: d.view,
-  state: {
-    items: itemsOut(d.state.items), pins: Object.fromEntries(d.state.pins), modes: Object.fromEntries(d.state.modes),
-    ...(d.state.sizes.size > 0 && { sizes: Object.fromEntries(d.state.sizes) }),
-    ...(d.state.moves.size > 0 && { moves: Object.fromEntries(d.state.moves) }),
-    ...(d.state.regionNotes.size > 0 && {
-      containerNotes: Object.fromEntries([...d.state.regionNotes].map(([r, notes]) => [r, notes.map(({ region: _, ...x }) => x)])),
-    }),
-    ...(d.state.regionPins.size > 0 && { containerPins: Object.fromEntries(d.state.regionPins) }),
-  },
-  versions: d.versions,
-  ...d.access,
-});
+/** `get_board`'s answer, as the server builds it from the one builder (`boardJson`): `locked` is the
+ * server's own (visibility.ts), and no fixture board here is locked. */
+const asJson = (s: Parameters<typeof boardData>[0], board: string) => boardJson(boardData(s, board));
 
 test('boardData from the folded read_ledger lines equals get_board, for every board', async () => {
   const s = foldLedger(await allLines());
   const { boards } = await h.ok<{ boards: { board: string }[] }>('list_boards');
   assert.ok(boards.length >= 2);
-  for (const { board } of boards) assert.deepEqual(asJson(boardData(s, board)), await h.ok('get_board', { board }), board);
+  for (const { board } of boards) assert.deepEqual(asJson(s, board), await h.ok('get_board', { board }), board);
 });
 
 test('lines applied one at a time to a held state give the same board as folding them all', async () => {
   const lines = await allLines();
   const held = foldLedger([]);
   for (const e of lines) applyEvent(held, e);
-  assert.deepEqual(asJson(boardData(held, 'pricing')), asJson(boardData(foldLedger(lines), 'pricing')));
+  assert.deepEqual(asJson(held, 'pricing'), asJson(foldLedger(lines), 'pricing'));
 });
 
 test('pageConditions: the page reads the conditions table; marks never the open board, and a person act is not news', async () => {
@@ -87,7 +73,7 @@ test('a container note and a container place (3_FE_04): the folded board still e
   const note = await h.ok<{ seq: number }>('act', body({ action: 'comment', text: 'Thin enough?' }));
   await h.ok('act', body({ action: 'pin', x: 2400, y: 0 }));
   const s = foldLedger(await allLines());
-  assert.deepEqual(asJson(boardData(s, 'roadmap')), await h.ok('get_board', { board: 'roadmap' }));
+  assert.deepEqual(asJson(s, 'roadmap'), await h.ok('get_board', { board: 'roadmap' }));
   await h.ok('act', body({ action: 'note-remove', note: note.seq }));
   await h.ok('act', body({ action: 'unpin' }));
 });

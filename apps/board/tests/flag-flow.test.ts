@@ -5,8 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { foldLedger, replyText } from '#actions';
-import { boardData } from '../src/board/board-data.ts';
+import { boardData, foldLedger, replyText } from '#actions';
 import { boardCards } from '../src/board/chat-bridge.ts';
 import type { ActFields } from '../src/board/io.ts';
 import { createFlagFlow, flagAct, flaggedIds, flaggedWords, nextFlagged } from '../src/board/flag-flow.ts';

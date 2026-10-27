@@ -5,7 +5,8 @@
 // with the flag on, so ?flags=-goToCard draws the gallery as it was.
 import { mount } from 'svelte';
 import GoToCard from '../shell/GoToCard.svelte';
-import type { GoBox, GoTarget } from '../board/go-to-card.ts';
+import type { GoTarget } from '#actions';
+import type { GoBox } from '../board/go-to-card.ts';
 import { createGoTo } from '../board/go-to-card.ts';
 import { el, group } from './dom.ts';
 

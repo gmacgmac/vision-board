@@ -3,7 +3,7 @@
 // The reads here turn one into the other, once each: a card, a note's group, a proposal, a link and
 // a whole ledger event. Numbers coming in are the server's edge (apps/board/server/edge.ts). Pure.
 import type { LedgerEvent, LedgerIndex } from '#format';
-import { boardNumber, toLine } from '#format';
+import { boardNumber, cardFields, toLine } from '#format';
 import type { LedgerState, Proposal } from './fold.ts';
 import type { ItemNote } from './notes.ts';
 import type { ReportedAction } from './registry.ts';
@@ -35,19 +35,22 @@ export const linkOut = (s: LedgerState, l: { from: number; to: number; label?: s
   ({ from: numberOf(s, l.from), to: numberOf(s, l.to), ...(l.label !== undefined && { label: l.label }) });
 
 type Rec = Record<string, unknown>;
+const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Ledger event `e` (with any extra fields, such as `means`, kept in place) as an answer shows it:
- * the line the file holds (`toLine`), with every card it names by board number: `n`, `nodes`,
- * `from`, `to`, a region's `center`, a retire's `cards`. */
+ * the line the file holds (`toLine`), with every card it names by board number, as the card-reference
+ * table (`CARD_FIELDS`) lists them: `n`, `nodes`, `from`, `to`, a region's `center`, a retire's `cards`. */
 export function eventOut<E extends LedgerEvent>(s: { index: LedgerIndex }, e: E): Rec {
   const line: Rec = toLine(e);
   const num = (v: unknown) => (typeof v === 'number' ? numberOf(s, v) : v);
-  const nums = (v: unknown) => (Array.isArray(v) ? v.map(num) : v);
-  // A link's ends are cards; a reply's `to` is the `seq` of the act it answers.
-  const cards = e.type === 'link' || e.type === 'unlink' ? ['from', 'to'] as const : ['n'] as const;
-  for (const f of cards) if (line[f] !== undefined) line[f] = num(line[f]);
-  for (const f of ['nodes', 'cards'] as const) if (line[f] !== undefined) line[f] = nums(line[f]);
-  const region = line.region as Rec | undefined;
-  if (e.type === 'region' && region?.center !== undefined) line.region = { ...region, center: num(region.center) };
+  // The card-reference table: a link's ends are cards; a reply's `to` is the `seq` of the act it answers.
+  for (const f of cardFields(e.type)) {
+    const holder = f.in === undefined ? line : line[f.in];
+    if (!isRec(holder) || holder[f.field] === undefined) continue;
+    const value = holder[f.field];
+    const out = f.list ? (Array.isArray(value) ? value.map(num) : value) : num(value);
+    if (f.in === undefined) line[f.field] = out;
+    else line[f.in] = { ...holder, [f.field]: out };
+  }
   return line;
 }

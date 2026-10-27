@@ -1,0 +1,17 @@
+/* The button (UI_01): one look for every text button, and for the select that sits beside them, in
+   every state: idle, hover, focus (base/a11y.css), pressed, toggled on (aria-pressed), busy, disabled;
+   the accent fill for the one primary action, and a small size. data-look draws a state without the
+   pointer: the gallery's samples only. Tokens only. */
+.vb-select, .vb-btn {
+  font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
+  height: var(--vb-control-h); padding: 0 var(--vb-space-3); cursor: pointer;
+}
+.vb-btn:hover, .vb-btn[data-look='hover'] { background: var(--vb-surface-sunken); }
+.vb-btn:active, .vb-btn[data-look='pressed'] { transform: translateY(1px); }
+.vb-btn[aria-pressed='true'] { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
+.vb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.vb-btn-primary { background: var(--vb-accent-fill); border-color: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
+.vb-btn-primary:hover, .vb-btn-primary[data-look='hover'] { background: var(--vb-accent-fill-hover); }
+.vb-btn-small { height: var(--vb-control-h-small); padding: 0 var(--vb-space-2); font-size: var(--vb-text-sm); }
+.vb-btn[aria-busy='true'] { cursor: progress; }

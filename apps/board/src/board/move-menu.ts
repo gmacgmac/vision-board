@@ -1,11 +1,11 @@
 // The Move to list (3_FE_03 ruling 8): Shift+M, or the selection bar's Move to, opens a small menu
 // of the board's containers, Later last, under the bar. Up and Down (Home, End) move between them,
 // Enter or a click moves the selection there, Esc or a click elsewhere closes it and gives focus
-// back (menu-keys.ts). A container the selection cannot go in (Later, when a card cannot be saved for later) is
+// back (the shared menu, `#ui` `openMenu`). A container the selection cannot go in (Later, when a card cannot be saved for later) is
 // shown disabled. The menu handles its own keys, so none reaches the board's shortcuts (keys.ts).
 // It is drawn on the stage, above the cards, and touches none of them.
-import type { StageBox } from '#ui';
-import { menuKeydown } from './menu-keys.ts';
+import type { OpenMenu, StageBox } from '#ui';
+import { openMenu } from '#ui';
 
 export interface MoveTarget { id: string; title: string; disabled?: boolean }
 
@@ -28,34 +28,23 @@ const GAP = 6;
 
 export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
   const el = document.createElement('div');
-  el.className = 'vb-move-menu';
+  el.className = 'vb-menu-list vb-move-menu';
   el.setAttribute('role', 'menu');
   el.hidden = true;
   d.stage.append(el);
-  let back: HTMLElement | null = null;
-
-  const items = () => [...el.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+  let shown: OpenMenu | null = null;
 
   function close(focusBack = true) {
-    if (el.hidden) return;
-    el.hidden = true;
-    el.replaceChildren();
-    document.removeEventListener('pointerdown', outside, true);
-    if (focusBack && back?.isConnected) back.focus({ preventScroll: true });
-    back = null;
-  }
-  function outside(e: PointerEvent) {
-    if (!el.contains(e.target as Node)) close(false);
+    shown?.close(focusBack);
   }
 
   function show(count: number, targets: readonly MoveTarget[], anchor: StageBox) {
     close(false);
-    back = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     el.setAttribute('aria-label', `Move ${count} card${count === 1 ? '' : 's'} to`);
     for (const t of targets) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'vb-move-item';
+      b.className = 'vb-menu-item vb-move-item';
       b.setAttribute('role', 'menuitem');
       b.tabIndex = -1;
       b.dataset.region = t.id;
@@ -71,9 +60,8 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
     // CSSOM, not a style attribute: the page's CSP refuses inline styles.
     el.style.left = `${Math.round(Math.min(Math.max(GAP, anchor.x), w - el.offsetWidth - GAP))}px`;
     el.style.top = `${Math.round(top)}px`;
-    document.addEventListener('pointerdown', outside, true);
-    const first = items().find((b) => !b.hasAttribute('aria-disabled')) ?? items()[0];
-    first?.focus({ preventScroll: true });
+    // Its keys, a press outside and focus back (to what had it) are the shared menu's.
+    shown = openMenu({ menu: el, onClose: () => { shown = null; el.hidden = true; el.replaceChildren(); } });
   }
 
   el.addEventListener('click', (e) => {
@@ -82,7 +70,6 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
     close();
     d.pick(b.dataset.region!);
   });
-  el.addEventListener('keydown', (e) => menuKeydown(e, items(), close));
 
   return {
     get open() { return !el.hidden; },

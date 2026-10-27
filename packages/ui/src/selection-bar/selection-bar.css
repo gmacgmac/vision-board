@@ -5,7 +5,7 @@
    The page places both in stage pixels, above the cards: they move nothing (3_FE_02 rulings 1-2). */
 
 vb-selection-bar {
-  position: absolute; z-index: 28; left: 0; top: 0;
+  position: absolute; z-index: var(--vb-z-selection); left: 0; top: 0;
   display: flex; align-items: center; gap: var(--vb-space-2); padding: 5px 5px 5px var(--vb-space-3);
   border: 1px solid color-mix(in srgb, var(--vb-line-strong) 80%, transparent); border-radius: 12px;
   background: color-mix(in srgb, var(--vb-surface-raised) 72%, transparent);
@@ -28,7 +28,6 @@ vb-selection-bar .vb-sb-btn:disabled { color: var(--vb-ink-subtle); cursor: not-
 /* data-look draws a state without the pointer: the gallery's samples only. */
 vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):is(:hover, [data-look='hover']):not(:disabled) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
 vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):active:not(:disabled) { transform: translateY(1px); }
-vb-selection-bar :is(.vb-sb-btn, .vb-sb-pill):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-selection-bar .vb-sb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
 /* As specific as the plain hover above, and after it: the primary darkens its accent fill (light)
    or lightens it (dark) under the same ink, as the toolbar's .vb-btn-primary does (FE_02 ruling 4). */
@@ -38,7 +37,7 @@ vb-selection-bar .vb-sb-primary:is(:hover, [data-look='hover']):not(:disabled) {
    padding and gap, 24px buttons (the WCAG 2.5.8 minimum); over a selection the pill comes first
    and the buttons show only while it is open. The chevron points the way the bar opens. */
 vb-selection-bar[data-pill] { gap: var(--vb-space-1); padding: var(--vb-space-1); border-radius: var(--vb-radius-md); }
-vb-selection-bar[data-pill] :is(.vb-sb-btn, .vb-sb-pill) { height: 24px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm); }
+vb-selection-bar[data-pill] :is(.vb-sb-btn, .vb-sb-pill) { height: var(--vb-control-target); padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-sm); }
 vb-selection-bar[data-pill]:not([data-open]) .vb-sb-pill ~ .vb-sb-btn { display: none; }
 vb-selection-bar .vb-sb-pill { gap: var(--vb-space-2); font-weight: var(--vb-weight-bold); font-variant-numeric: tabular-nums; }
 vb-selection-bar .vb-sb-chevron {
@@ -49,7 +48,7 @@ vb-selection-bar[data-open] .vb-sb-chevron { transform: rotate(135deg); margin: 
 
 /* The lasso: drawn by the page while a Shift+drag runs, never a pointer target. */
 .vb-lasso {
-  position: absolute; z-index: 27; left: 0; top: 0; pointer-events: none;
+  position: absolute; z-index: var(--vb-z-lasso); left: 0; top: 0; pointer-events: none;
   border: 1.5px dashed var(--vb-accent); border-radius: 6px;
   background: color-mix(in srgb, var(--vb-accent) 8%, transparent);
 }

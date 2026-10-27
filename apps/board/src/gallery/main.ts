@@ -14,6 +14,7 @@ import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { appFrameSamples } from './app-frame-section.ts';
 import { appSection } from './app-section.ts';
+import { baseSamples } from './base-section.ts';
 import { historySection } from './history-section.ts';
 import { imageViewSamples } from './image-view-section.ts';
 import { markdownSamples } from './markdown-section.ts';
@@ -49,6 +50,7 @@ import { drawMiniBoards } from './mini-board.ts';
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'app-frame': appFrameSamples,
+  base: (body) => baseSamples(body),
   'image-view': imageViewSamples,
   markdown: markdownSamples,
   node: nodeSamples,
@@ -59,6 +61,9 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
 };
 
 const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
+// The shared base is the last section of all, so every section above keeps its place: a section's
+// screenshot depends on where its top falls, to the fraction of a pixel.
+const LAST = 'base';
 
 function section(p: PatternInfo, fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');
@@ -107,7 +112,7 @@ function build(): void {
   head.append(el('h1', 'g-page-title', 'Pattern gallery'), themeButton());
   const main = el('main', 'g-main');
   main.append(el('p', 'g-intro', 'Every pattern in every state, drawn from fixture data in the real ledger schema.'),
-    ...patterns.map((p) => section(p, fx)));
+    ...patterns.filter((p) => p.name !== LAST).map((p) => section(p, fx)));
   // Behind its flag, so the gallery without it (and its screenshot) is unchanged.
   const flags = pageFlags();
   main.toggleAttribute('data-title-tip', flagOn('titleTip', flags)); // the title tip (FE_03), as the board's world
@@ -142,6 +147,7 @@ function build(): void {
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
   if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
+  main.append(...patterns.filter((p) => p.name === LAST).map((p) => section(p, fx))); // last of all, so the sections above keep their place
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

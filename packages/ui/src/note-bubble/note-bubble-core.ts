@@ -2,11 +2,13 @@
 // in each state. No DOM, so it is unit-tested under plain Node. README picks 5 and 11-12, mockup
 // 05 section 1 (`.ovl.note`), Architect `positionPop`: the right of the card, else the left, else
 // below; never over the card, and it moves nothing.
-import type { NoteKind } from '#format';
+import type { Box, NoteKind, Size } from '#format';
+import { clamp, overlaps } from '#format';
 import type { NotesEntry, ReplyEntry } from '../node/node-core.ts';
 
-export interface StageBox { x: number; y: number; w: number; h: number }
-export interface StageSize { w: number; h: number }
+/** A box and a size in stage pixels: format's `Box` and `Size` (geometry.ts), named for where they are used. */
+export type StageBox = Box;
+export type StageSize = Size;
 
 export type BubbleSide = 'right' | 'left' | 'below';
 
@@ -23,19 +25,13 @@ export const BUBBLE_ARROW_AT = 22;
 export const BUBBLE_EDGE = 8;
 const CORNER = 16;
 
-/** `v` within [lo, hi]; `lo` when the range is empty (a bubble taller than the stage). */
-const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
-
-/** Whether two stage boxes overlap. */
-const meets = (a: StageBox, b: StageBox) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-
 /** The bubble at `x` on one side of `card`: at its usual height when that is clear of `avoid`, else
  *  the nearest height above or below a strip in the way that is clear, inside the stage, with the
  *  arrow still on the card's top part; undefined when there is none. */
 function clearAt(x: number, card: StageBox, bubble: StageSize, stage: StageSize, avoid: readonly StageBox[]): number | undefined {
   const at = card.y + BUBBLE_DROP + BUBBLE_ARROW_AT;
   const y0 = clamp(card.y + BUBBLE_DROP, BUBBLE_EDGE, stage.h - BUBBLE_EDGE - bubble.h);
-  const clear = (y: number) => !avoid.some((a) => meets({ x, y, ...bubble }, a));
+  const clear = (y: number) => !avoid.some((a) => overlaps({ x, y, ...bubble }, a));
   if (clear(y0)) return y0;
   const fits = (y: number) => y >= BUBBLE_EDGE && y + bubble.h <= stage.h - BUBBLE_EDGE && at - y >= CORNER && at - y <= bubble.h - CORNER;
   const tries = avoid.flatMap((a) => [a.y - BUBBLE_EDGE - bubble.h, a.y + a.h + BUBBLE_EDGE]).filter((y) => fits(y) && clear(y));
@@ -59,7 +55,7 @@ export function placeBubble(card: StageBox, bubble: StageSize, stage: StageSize,
     }
     // Neither side clear: below the card, when that is clear and inside the stage.
     const under = below(card, bubble, stage);
-    if (avoid.length && under.y + bubble.h <= stage.h - BUBBLE_EDGE && !avoid.some((a) => meets({ x: under.x, y: under.y, ...bubble }, a))) return under;
+    if (avoid.length && under.y + bubble.h <= stage.h - BUBBLE_EDGE && !avoid.some((a) => overlaps({ x: under.x, y: under.y, ...bubble }, a))) return under;
     // Covered every way: the first side, at its usual height. The arrow keeps pointing at the
     // card's top part when the bubble is pushed up or down.
     const [side, x] = sides[0]!;

@@ -26,6 +26,3 @@ vb-region .vb-region-fresh {
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-bold);
 }
 vb-region .vb-region-fresh[hidden] { display: none; }
-vb-region .vb-region-fresh-words {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-}

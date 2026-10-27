@@ -1,90 +1,55 @@
-// The MCP tool list (api.md 45-50): one tool per x-agent operation of openapi.json, written to
-// packages/mcp/src/tools.generated.json by scripts/gen-api.mjs. Each tool's input is the
-// operation's path, query and body inputs merged into one plain object (plus `secret` where the
-// operation takes the agent secret), flattened by mcp-schema.mjs. A tool declares no output
-// schema (api.md 48): its description says what comes back, and openapi.json stays the contract.
-// `routes` says where each input goes back to, so the server can rebuild the call.
+// The MCP tool list (api.md 45-50), written to packages/mcp/src/tools.generated.json by
+// scripts/gen-api.mjs. It reads the tool table (gen-tools.mjs: one row per x-agent operation, with
+// its words, merged input, whether it writes and whether it takes the agent secret) and adds what is
+// MCP's own: the secret as a `secret` argument (with its words), and the annotations. A tool declares
+// no output schema (api.md 48): its description says what comes back, and openapi.json stays the
+// contract. `routes` says where each input goes back to, so the server can rebuild the call.
 import { flatten } from './mcp-schema.mjs';
-import { METHODS, lookup, resolveParam } from './openapi-refs.mjs';
+import { lookup } from './openapi-refs.mjs';
 
 const SECRET_REF = 'https://vision-board.invalid/schema/api/common.schema.json#/$defs/secret';
 const SECRET_SAYS = 'Over MCP the secret is the `secret` argument; leave it out only when this server has `VB_AGENT_SECRET`.';
-const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
-
-/** True when the operation accepts the agent's Bearer secret (required or optional). */
-const takesSecret = (op) => (op.security ?? []).some((r) => 'agentSecret' in r);
 
 /** Annotations (api.md 49): hints only; the grant check in the server is the control. */
-function annotationsOf(method) {
-  if (method === 'get') return { readOnlyHint: true, openWorldHint: false };
+function annotationsOf(writes) {
+  if (!writes) return { readOnlyHint: true, openWorldHint: false };
   return { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
 }
 
-/** The merged input: path, then query, then the body's top-level properties, then `secret`. */
-function inputOf(op, doc, schemas) {
-  const properties = {};
-  const required = [];
-  const route = { path: [], query: [], body: [], secret: takesSecret(op) };
-  const add = (name, where, schema, isRequired) => {
-    if (name in properties) throw new Error(`${op.operationId}: input "${name}" is named twice once merged`);
-    properties[name] = schema;
-    if (isRequired) required.push(name);
-    if (where) route[where].push(name);
-  };
-  for (const where of ['path', 'query']) {
-    for (const p of (op.parameters ?? []).map((x) => resolveParam(doc, x)).filter((x) => x.in === where)) {
-      const schema = flatten(p.schema ?? {}, doc, schemas);
-      add(p.name, where, p.description ? { ...schema, description: p.description } : schema, where === 'path' || p.required === true);
-    }
+/** The row's words, plus how MCP carries the secret (api.md 22): tools that take it say so; `join`
+ * says which tools take it. Examples stay out (api.md 47): they live in the skill, the schemas'
+ * `examples` and the refusals. */
+function describe(row, secretTools) {
+  if (row.secret) return `${row.description} ${SECRET_SAYS}`;
+  if (row.name === 'join') {
+    return `${row.description} Over MCP, send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat sharing this MCP configuration.`;
   }
-  const body = op.requestBody?.content?.['application/json']?.schema;
-  if (body) {
-    const flat = flatten(body, doc, schemas);
-    if (!isObj(flat.properties)) throw new Error(`${op.operationId}: the body must be an object with properties`);
-    for (const [name, schema] of Object.entries(flat.properties)) add(name, 'body', schema, (flat.required ?? []).includes(name));
-  }
-  if (route.secret) {
-    const { schema, doc: home } = lookup(SECRET_REF, doc, schemas);
-    add('secret', undefined, { ...flatten(schema, home, schemas), description: 'Your agent secret from join.' }, false);
-  }
-  const input = { type: 'object', properties, ...(required.length && { required }), additionalProperties: false };
-  return { input, route };
+  return row.description;
 }
 
-/** The operation's description, plus how MCP carries the secret (api.md 22): tools that take it
- * say so; `join` says which tools take it. Examples stay out (api.md 47): they live in the skill,
- * the schemas' `examples` and the refusals. */
-function describe(op, secretTools) {
-  const base = (op.description ?? op.summary ?? '').trim();
-  if (takesSecret(op)) return `${base} ${SECRET_SAYS}`;
-  if (op.operationId === 'join') {
-    return `${base} Over MCP, send the secret as the \`secret\` argument of ${secretTools.map((t) => `\`${t}\``).join(', ')}, or set \`VB_AGENT_SECRET\` when one identity serves every chat sharing this MCP configuration.`;
-  }
-  return base;
+/** The row's input, with `secret` last where the operation takes it. */
+function inputOf(row, secret) {
+  if (!row.secret) return row.input;
+  if ('secret' in row.input.properties) throw new Error(`${row.name}: input "secret" is named twice once merged`);
+  return { ...row.input, properties: { ...row.input.properties, secret } };
 }
 
-/** Every x-agent operation as an MCP tool, in document order, and how to call it back. */
-export function toolsOf(doc, schemas) {
-  const ops = Object.values(doc.paths ?? {}).flatMap((item) => METHODS.filter((m) => item[m]?.['x-agent'] === true).map((m) => ({ method: m, op: item[m] })));
-  const secretTools = ops.filter(({ op }) => takesSecret(op)).map(({ op }) => op.operationId);
-  const tools = [];
-  const routes = {};
-  for (const { method, op } of ops) {
-    const { input, route } = inputOf(op, doc, schemas);
-    tools.push({
-      name: op.operationId,
-      title: op.summary ?? op.operationId,
-      description: describe(op, secretTools),
-      inputSchema: input,
-      annotations: annotationsOf(method),
-    });
-    routes[op.operationId] = route;
-  }
-  return { apiVersion: doc.info?.version ?? '0.0.0', tools, routes };
+/** Every row of the tool table as an MCP tool, in its order, and how to call it back. `doc` and
+ * `schemas` give the secret's schema. */
+export function toolsOf(table, doc, schemas) {
+  const secretTools = table.tools.filter((r) => r.secret).map((r) => r.name);
+  const needsSecret = secretTools.length > 0;
+  const secret = needsSecret ? (({ schema, doc: home }) => ({ ...flatten(schema, home, schemas), description: 'Your agent secret from join.' }))(lookup(SECRET_REF, doc, schemas)) : undefined;
+  const tools = table.tools.map((row) => ({
+    name: row.name, title: row.title, description: describe(row, secretTools),
+    inputSchema: inputOf(row, secret), annotations: annotationsOf(row.writes),
+  }));
+  const routes = Object.fromEntries(table.tools.map((row) => [row.name, { ...row.route, secret: row.secret }]));
+  return { apiVersion: table.apiVersion, tools, routes };
 }
 
 /** The text of tools.generated.json: stable key order, two-space indent, a closing newline. */
-export function renderTools(doc, schemas) {
+export function renderTools(table, doc, schemas) {
   const note = 'GENERATED by scripts/gen-api.mjs from packages/format/schema/openapi.json. Do not edit; run `npm run gen`.';
-  return `${JSON.stringify({ note, ...toolsOf(doc, schemas) }, null, 2)}\n`;
+  return `${JSON.stringify({ note, ...toolsOf(table, doc, schemas) }, null, 2)}\n`;
 }

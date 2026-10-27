@@ -149,7 +149,7 @@ server, the page and (through the API) agents. Nothing in them is stored, so not
   derived. A condition is ids only (`{ kind, board, container?, n?, seq? }`); a component looks up
   the words it shows. An agent's rows are scoped through `PERMISSIONS`.
 
-On the page, one read (`pageConditions`, `apps/board/src/board/board-data.ts`, also the gallery's)
+On the page, one read (`pageConditions`, `packages/actions/src/answers/page-conditions.ts`, also the gallery's; `apps/board/tests/board-data.test.ts`)
 gives the picker marks, the container badges, the open requests, `board.drawn`, whether Send to
 agent has anything to send (`board.unsent`: without it the button is disabled, "Nothing new to
 send", api.md 123), and the new and updated cards with the fresh containers (`freshCards`,
@@ -501,8 +501,8 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    command is wired once (ruling 5).
 2. **The lasso and the bar**, `apps/board/src/board/selection-flow.ts` (`createSelectionFlow`):
    `pointer.ts`'s `lasso` gesture (Shift+drag on a background; Shift+Cmd/Ctrl adds) reports its
-   screen box through `lassoMove`/`lassoEnd`; the cards it touches (`touches`, `packages/ui`'s
-   `selection-bar` pattern) replace or add to the selection the same `selection.ts` module 3_FE_01
+   screen box through `lassoMove`/`lassoEnd`; the cards it touches (`touches`, `packages/format/src/geometry.ts`, which
+   `packages/ui`'s `selection-bar` pattern re-exports; `packages/format/tests/geometry.test.ts`) replace or add to the selection the same `selection.ts` module 3_FE_01
    uses. Touching none opens the **area bar** instead, holding the lassoed world box until a click
    away, a new lasso, or Zoom to this area dismisses it; the real selection bar shows "whenever the
    selection is not empty and no bubble is open" (ruling 2), for one card same as several.
@@ -618,8 +618,8 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    tracker N42) the same past view opens the version where the cards last appeared (the latest run
    before the latest of those retires) with the person's answers as they stood just before the
    first `retire` line on the board after that version: the marker carries that line as
-   `data-until` (`retired.ts` `retiredCounts`), the ledger is read on to just before it, and
-   `retired.ts` `pastLines` leaves out the board's drawing lines after the version, so the cards
+   `data-until` (`packages/actions/src/answers/retired.ts` `retiredCounts`), the ledger is read on to just before it, and
+   `pastLines` (same file) leaves out the board's drawing lines after the version, so the cards
    are exactly that version's (not a summary drawn with the retire) while every act, note, move and
    agent reply (a reply that cleared a ✓ shows the card open, D-045) up to the retire counts. It is
    read-only in the same way, and the banner is the same. A version chosen from the dropdown still
@@ -736,7 +736,7 @@ behind the `everyNode` flag (on by default; `?flags=-everyNode`).
 1. **Numbers and buttons from the kind.** Every card shows its number; `offers` reads
    `NODE_TYPES[kind].actions`, so a question, decision or action draws ✓, ✗, Comment and Later, and
    every other kind Comment and Later (More context is gone, D-045). Off, `numberedView`
-   (`apps/board/src/board/board-data.ts`) drops the number from cards that need no answer, so they
+   (`apps/board/src/board/board-data.ts`, the page's own draw rule) drops the number from cards that need no answer, so they
    draw with no number, buttons or tabs and take no note.
 2. **No meaning on ✓ and ✗** (superseded by D-045; was one meaning per kind, `action-words.ts`,
    now deleted). See "The answer model" below.
@@ -774,7 +774,7 @@ Task set `cortex-tasks/board/2026-10-15_board-actions_answer-model/` (rulings 1-
    An old `context` note reads as "Your note" everywhere (`KIND_WORD`, the bubble's placeholder).
 5. **The agent's answer clears the card** (`ItemState.unseenAnswer`, from the action layer): the card
    is open and unmarked, and the reply is one update of its own on the "N updates" tab, the marker a
-   new version gets (`updates.ts` `unseenCount`, `unseenSteps`: a step "Reply · when · who" with its
+   new version gets (`packages/actions/src/answers/updates.ts` `unseenCount`, `unseenSteps`; `packages/actions/tests/updates.test.ts`: a step "Reply · when · who" with its
    words, at the card's latest version). Selecting the card or stepping past the reply sends the card
    seen line that ends it (`seenDue`: due although that version was seen). An answer by a new version
    is that version's step. **Any reply of the agent's is such an update** (review polish round 2
@@ -911,7 +911,7 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
    `data-remove-region`), after Reset places and Put container back; never on Later. The menu's
    Up and Down move between its rows, Home and End to the first and the last (`region-row.ts`).
 3. **The confirm** is the shell's `ConfirmDialog` (Cancel focused first), with the words of
-   `board/remove-words.ts`: "Remove card 4 'Venue lead time'?", "Remove 3 cards?" with the cards
+   `packages/actions/src/answers/remove-words.ts` (`cardsWords`, `containerWords`): "Remove card 4 'Venue lead time'?", "Remove 3 cards?" with the cards
    listed (`ConfirmList`), "Remove container 'Notes' and its 3 cards?" with its cards listed; the body
    says they leave the board and stay in its history, then warns of each card still owed an answer
    ("Card 4 still has an unanswered comment.", more than three in one sentence) and of the
@@ -927,8 +927,8 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
 5. Tests: `tests/pages/person-remove.spec.ts` (one card by the bar, a selection by Delete with an
    owed card and Cancel, a container by its menu, keyboard throughout, a past version, a locked board,
    the flag off, axe light and dark with the confirm and the menu open, the gallery section's
-   screenshots); `apps/board/tests/remove-words.test.ts`, `retired.test.ts`,
-   `api-person-retire.test.ts`; `packages/actions/tests/retire.test.ts`. The gallery's section
+   screenshots); `packages/actions/tests/remove-words.test.ts`, `retired-markers.test.ts`, `retire.test.ts`;
+   `apps/board/tests/retired.test.ts`, `api-person-retire.test.ts`. The gallery's section
    (`gallery/remove-section.ts`) draws the settings menu open, the same on a locked board, and the
    three confirms from the fixture ledger.
 
@@ -949,15 +949,15 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    it), and focus goes back where it was. Nothing goes by itself: with the `goAfterPause` flag (off
    by default) a pause of `GO_PAUSE` (1 second) after the last digit goes too. States: typing, not
    found, retired; the field has the shared hover and focus looks.
-3. **Arriving.** `goTarget` reads the number through `card-numbers.ts` `idOf` on the state the board
-   is drawn from. A card drawn with that number is selected (`selection.select`, as a click is) and
+3. **Arriving.** `goTarget` (`packages/actions/src/answers/go-target.ts`; `packages/actions/tests/go-target.test.ts`)
+   reads the number through `idOf` on the state the board is drawn from. A card drawn with that number is selected (`selection.select`, as a click is) and
    focused (`focus.ts`); the board pans only by `viewport.ts` `revealPan`'s rule (`Viewport.reveal`,
    review polish FE_05: a card that fits comes fully in when any of it is outside, a bigger one only
    when none of it shows), and the zoom stays. Z then zooms to it.
 4. **Not there.** A number the board never gave: "No card 99", the box stays open. A retired card:
    "Card 7 was removed" with a "Show v42" button (named "Show v42, where it last appeared") that
    opens the version where it last appeared, read-only, with the answers as they stood just before
-   the retire, as the container's retired marker does (`retired.ts` `lastShown`, shared with
+   the retire, as the container's retired marker does (`packages/actions/src/answers/retired.ts` `lastShown`, shared with
    `retiredCounts`), then goes to the card there. Without the versionView flag it only says so. A
    card on the board but not drawn (hidden with the answered cards, H): "Card 4 is hidden with the
    answered cards (H shows them)".

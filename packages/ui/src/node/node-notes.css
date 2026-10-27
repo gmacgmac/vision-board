@@ -7,18 +7,17 @@
 vb-node .vb-node-notes-head { display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-2); }
 vb-node .vb-node-notes-head:not(:only-child) { margin-bottom: var(--vb-space-1); }
 vb-node .vb-node-notes-toggle {
-  flex: none; display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--vb-space-2); cursor: pointer;
+  flex: none; display: inline-flex; align-items: center; min-height: var(--vb-control-target); padding: 0 var(--vb-space-2); cursor: pointer;
   border: 0; border-radius: var(--vb-radius-pill); background: none;
   font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); color: var(--vb-ink-subtle);
   transition: background-color var(--vb-motion-fast), color var(--vb-motion-fast);
 }
 vb-node .vb-node-notes-toggle:hover { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
 vb-node .vb-node-notes-toggle:active { background: var(--vb-line-strong); color: var(--vb-ink-strong); }
-vb-node .vb-node-notes-toggle:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 
 /* The time chip: on the box's top edge so it covers none of its words. */
 vb-node .vb-note-time {
-  position: absolute; z-index: 1; top: 0; right: var(--vb-space-2); translate: 0 -50%; display: none;
+  position: absolute; z-index: var(--vb-z-raised); top: 0; right: var(--vb-space-2); translate: 0 -50%; display: none;
   padding: 1px var(--vb-space-2); border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-pill);
   background: var(--vb-surface-raised); color: var(--vb-ink); white-space: nowrap;
   font: var(--vb-weight-medium) var(--vb-text-xs) var(--vb-font); letter-spacing: normal; text-transform: none;

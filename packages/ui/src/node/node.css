@@ -29,7 +29,7 @@ vb-node::before {
   border-radius: 0 0 2px 2px; background: color-mix(in srgb, var(--kind) 75%, transparent);
 }
 vb-node:hover { border-color: color-mix(in srgb, var(--kind) 70%, var(--vb-line)); }
-vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 3px; z-index: 2; }
+vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-card); z-index: var(--vb-z-hover); }
 /* A card a pointer press focused (data-pointer-focus, set by the page) draws no ring when a key that
    moves no focus makes the browser match :focus-visible (Z, Esc, Space); focus the keyboard moved
    never carries it, so the ring always shows for the keyboard (pointer-focus ring, 2026-10-09). */
@@ -46,7 +46,7 @@ vb-node[data-selected] {
 }
 vb-node[data-selected]::before { background: var(--select); }
 vb-node[data-selected]:not([data-emphasis])::before { height: 1.5px; }
-vb-node.dragging { transition: none; box-shadow: var(--vb-shadow-lift); z-index: 3; }
+vb-node.dragging { transition: none; box-shadow: var(--vb-shadow-lift); z-index: var(--vb-z-drag); }
 vb-node.dragging, vb-node.dragging .vb-node-kind { cursor: grabbing; }
 vb-node[data-emphasis] { width: var(--vb-card-w-wide); }
 vb-node[data-emphasis]::before { height: 2px; background: var(--kind); }
@@ -60,7 +60,7 @@ vb-node[data-size='l'] { width: var(--vb-card-w-l); }
    edge inside the border (card-polish FE_01); no size tier applies (node-app.css). */
 vb-node[data-kind='app']:has(> .vb-node-content > .vb-app) { width: calc(var(--app-w) + 2px); }
 /* The size pill draws over the card above, so an open card sits over its neighbours. */
-vb-node[data-size]:is(:hover, :focus-within) { z-index: 2; }
+vb-node[data-size]:is(:hover, :focus-within) { z-index: var(--vb-z-hover); }
 
 vb-node[data-kind='topic'] { --surface: var(--card-surface-sunken, var(--vb-surface-sunken)); }
 vb-node[data-kind='note'] {
@@ -157,8 +157,7 @@ vb-node .vb-node-note-text {
    data-tip-open is on the note, which also raises the card above its neighbours. The note is a tab
    stop (focus shows the tip), so it takes the focus ring. The bridge spans the gap to the card. */
 vb-node .vb-node-note { position: relative; --reach: calc(var(--vb-space-4) + 1px + var(--vb-space-2)); }
-vb-node .vb-node-note:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
-vb-node:has(.vb-node-note[data-tip-open]) { z-index: 4; }
+vb-node:has(.vb-node-note[data-tip-open]) { z-index: var(--vb-z-open); }
 vb-node .vb-note-tip {
   top: 0; left: calc(100% + var(--reach)); width: var(--vb-pop-w); max-width: none; padding: 0;
   font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text); line-height: 1.45;
@@ -179,7 +178,7 @@ vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { b
    the latest note's number. It clears the size control's hit area (tracker N10). A group's pin
    (groupNoteOnce flag) wears the same look in its own layer (node-notes.css `.vb-group-notes`). */
 :is(vb-node, .vb-group-notes) .vb-note-pin {
-  position: absolute; z-index: 4; top: -12px; right: -12px; display: grid; place-items: center;
+  position: absolute; z-index: var(--vb-z-open); top: -12px; right: -12px; display: grid; place-items: center;
   width: 26px; height: 26px; padding: 0; cursor: pointer;
   border: 2px solid var(--gap); border-radius: 50% 50% 50% 4px; background: var(--vb-accent-fill);
   color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) var(--vb-font); box-shadow: var(--vb-shadow-card);
@@ -190,9 +189,8 @@ vb-node :is(.vb-node-note-text, .vb-note-tip) :is(.vb-md-icode, .vb-md-code) { b
 :is(vb-node, .vb-group-notes) .vb-note-pin[data-sent] {
   background: var(--vb-surface-raised); color: var(--vb-ink-strong); box-shadow: inset 0 0 0 1px var(--vb-line-strong), var(--vb-shadow-card);
 }
-:is(vb-node, .vb-group-notes) .vb-note-pin:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 /* While its bubble is open, the card draws over its neighbours (05 `.card.has-ovl`). */
-vb-node[data-bubble] { z-index: 3; }
+vb-node[data-bubble] { z-index: var(--vb-z-drag); }
 
 /* Footer: kind icon, divider, state word, then the quick actions. */
 vb-node .vb-node-foot {
@@ -214,7 +212,7 @@ vb-node .vb-node-kico, vb-node .vb-act-icon {
 vb-node .vb-node-actions { display: flex; flex: none; }
 
 vb-node .vb-act {
-  display: grid; place-items: center; width: 24px; height: 26px; padding: 0; cursor: pointer;
+  display: grid; place-items: center; width: var(--vb-control-target); height: var(--vb-control-h-small); padding: 0; cursor: pointer;
   background: none; border: 1px solid transparent; border-radius: var(--vb-radius-sm); color: var(--vb-ink-subtle);
 }
 vb-node .vb-act-icon { width: 15px; height: 15px; stroke-width: 1.8; }
@@ -240,7 +238,7 @@ vb-node .vb-flag[aria-pressed='true'] .vb-flag-cloth { fill: currentColor; }
    state; the pill is visibility:hidden at rest, so only the glyph is in the tab order. It draws
    on top, so the card never changes size or moves while it is open. data-open forces it open
    (gallery samples). */
-vb-node .vb-size { position: absolute; z-index: 6; top: -11px; right: var(--vb-space-5); }
+vb-node .vb-size { position: absolute; z-index: var(--vb-z-panel); top: -11px; right: var(--vb-space-5); }
 vb-node .vb-size-trig {
   position: relative; display: inline-grid; grid-auto-flow: column; place-items: center; gap: var(--vb-space-1);
   height: 20px; min-width: 22px; padding: 0 5px; cursor: pointer;
@@ -265,15 +263,14 @@ vb-node[data-size-picked] .vb-size-glyph { display: none; }
 /* The pill lifts above the top edge, right-aligned to the glyph. */
 vb-node .vb-size-menu {
   position: absolute; right: calc(var(--vb-space-1) * -1); bottom: calc(100% + var(--vb-space-2));
-  display: flex; gap: 2px; padding: 3px; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
-  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+  display: flex; gap: 2px; padding: 3px; /* on the popover surface: base/surface.css */
   visibility: hidden; opacity: 0; transition: opacity var(--vb-motion-fast), visibility 0s var(--vb-motion-fast);
 }
 /* A bridge over the gap, so the pointer can travel from the glyph to the pill. */
 vb-node .vb-size-menu::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: var(--vb-space-3); }
 vb-node .vb-size:is(:hover, :focus-within, [data-open]) .vb-size-menu { visibility: visible; opacity: 1; transition: opacity var(--vb-motion-fast); }
 vb-node .vb-size-opt {
-  display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 7px;
+  display: inline-flex; align-items: center; justify-content: center; min-width: var(--vb-control-h-small); height: var(--vb-control-h-small); padding: 0 7px;
   border: 0; border-radius: 7px; background: none; cursor: pointer; white-space: nowrap;
   color: var(--vb-ink); font: inherit; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-medium);
 }
@@ -284,7 +281,7 @@ vb-node .vb-size-opt[aria-pressed='true'] {
 }
 /* While Auto is on, the tier it chose is outlined. */
 vb-node .vb-size-opt[data-auto] { box-shadow: inset 0 0 0 1px var(--vb-line-strong); }
-vb-node .vb-size-opt:focus-visible, vb-node .vb-size-trig:focus-visible { outline-offset: 1px; }
+vb-node .vb-size-opt:focus-visible, vb-node .vb-size-trig:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 vb-node .vb-size-sep { width: 1px; align-self: stretch; margin: var(--vb-space-1) 2px; background: var(--vb-line-strong); }
 /* The size control hides the same way, the pill included, which would otherwise stay visible. */
 [data-zoom='far'] vb-node .vb-size, [data-zoom='far'] vb-node .vb-size .vb-size-menu { visibility: hidden; }

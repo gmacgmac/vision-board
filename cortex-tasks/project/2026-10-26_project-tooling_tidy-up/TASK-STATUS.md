@@ -39,9 +39,9 @@ tracker:
 | 1 | FIX_01 | 1 | standard | — | [Green baseline](./FIX_01_green-baseline.md) | Completed | port 4700 |
 | 1b | FIX_02 | 1 | standard | — | [A proposal on a retired card ends](./FIX_02_proposal-on-retired-card.md) | Completed | port 4705 |
 | 2 | ARCH_01 | 2 | strong | Build and tooling engineer — a module has one front door, and a back door that the checks can't see is a back door that will be used. | [One front door per module](./ARCH_01_module-front-doors.md) | Completed | port 4710 |
-| 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Pending | port 4720 |
-| 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Pending | port 4730 |
-| 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Pending | port 4740 |
+| 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Completed | port 4720 |
+| 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Completed | port 4730 |
+| 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Completed | port 4740 |
 | 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Pending | port 4750 |
 | 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Pending | port 4755 |
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Pending | port 4760 (+ worker ports) |
@@ -62,11 +62,11 @@ tracker:
 | Module names (root `package.json` `imports`: `#format`, `#ui`, …) and their CSS/asset front doors | ARCH_01 | every later task |
 | `verify` back-door checks (`scripts/verify.mjs`) | ARCH_01 | every later task (keep green) |
 | Typed client: `call` typed by `OperationId` (`packages/client`) | ARCH_02 | ARCH_03, ARCH_06 |
-| One card-reference table (beside `packages/actions` `REFERENCES`) | ARCH_02 | ARCH_03, ARCH_06 |
-| `packages/ui/src/base/` (menu, layer, dialog) and its CSS (button, surface, menu, a11y) | UI_01 | ARCH_03, ARCH_06 |
+| One card-reference table, generated: `#format` `CARD_FIELDS` / `cardFields` | ARCH_02 | ARCH_03, ARCH_06 |
+| `packages/ui/src/base/` (menu, layer, dialog) and its CSS recipes (root, a11y, text, surface, button, chip, menu, dialog); root class `vb-board` (D-061) | UI_01 | ARCH_03, ARCH_06 |
 | Ledger queries and one board-data builder in `packages/actions` | ARCH_04 | ARCH_03, ARCH_06 |
 | One geometry home (`Box`, overlap, bounds, clamp) | ARCH_04 | ARCH_06 |
-| `Chip` type and `resolveChip`; `roundOf` as the turn query (`packages/actions`) | ARCH_04 | ARCH_03, ENGINE_01 |
+| `Chip`, `cardChip`, `noteChip`, `resolveChip`, `turnOf` (`#actions` `answers/chips.ts`); `clip` and geometry in `#format` | ARCH_04 | ARCH_03, ENGINE_01 |
 | Tool table from the one OpenAPI source (`gen-api.mjs`) | ARCH_02 | ENGINE_01 |
 | Board host interface and `mount(root, host)` | ARCH_03 | TEST_01, ARCH_06, VERIFY_01 |
 | Board engine `createEngine({ dir, ... })` (`apps/board/server/engine/`) | ENGINE_01 | TEST_01, ARCH_06, VERIFY_01 |
@@ -104,6 +104,27 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_01-R3 | ARCH_01 Run 2 | READMEs and `components.md`: claims to the names (cortex-docs) | orchestrator, a Sonnet docs sub-agent during the wave gate: six READMEs and components.md updated | Done |
 | ARCH_01-R6 | ARCH_01 Run 2 (note) | `perf-ledger` imported by the actions/layout timing tests: move into a module's `/testing` so verify's warnings clear | TEST_01 | Open |
 | ARCH_01-R7 | ARCH_01 Run 2 (note) | cli/mcp tests and the calculator skill test reach into the board server: the engine is their front door | ENGINE_01 | Open |
+| UI_01-R1 | UI_01 | Gallery entry for the base (PATTERNS, SAMPLES, pattern.json), gallery baselines | orchestrator: Wave 3 gate sub-agent | Done |
+| UI_01-R2 | UI_01 | New tokens `--vb-z-*`, `--vb-control-*`, `--vb-focus-offset*` (today's values), then apply | orchestrator approved under delegation; Wave 3 gate sub-agent | Done |
+| UI_01-R3 | UI_01 | Decision: the board's CSS scope | orchestrator: D-061 | Done |
+| UI_01-R4 | UI_01 | nclite: `vb-` selectors count as scoped; root class `vb-board` | orchestrator: nclite-contract-reply.md | Done |
+| UI_01-R5 | UI_01 | `vb-board` on the mount root; 550 px pane inside a wider page in host-styles.spec | ARCH_03 | Open |
+| UI_01-R6 | UI_01 | `styles/page.ts` lists `shell.css` first, not `@import` | Wave 3 gate sub-agent | Done |
+| UI_01-R7 | UI_01 | `history-flow.ts` imports `menuKeydown` from `#ui`; delete `board/menu-keys.ts` | ARCH_06 | Open |
+| UI_01-R8 | UI_01 | ReplyPanel, BoardAgents, GoToCard take `.vb-surface-panel` / `.vb-surface-pop` | ARCH_06 | Open |
+| UI_01-R9 | UI_01 | `packages/ui/README.md`: the base and its recipes | Wave 3 gate sub-agent | Done |
+| ARCH_02-R1 | ARCH_02 | `gen-reference.mjs` `optional-agent` row, then `npm run gen` | Wave 3 gate sub-agent | Done |
+| ARCH_02-R2 | ARCH_02 | `#format` exports `constants.ts`; `files.ts` exports `TOOLS_FILE` | Wave 3 gate sub-agent | Done |
+| ARCH_02-R3 | ARCH_02 | `folders.ts` `FolderEntry` from `OperationOutput`; `caller-folder.ts` `PROJECT_HEADER` from `#format`; `write-problem.ts` `ProblemDocument`, drop `ProblemBody` | ENGINE_01 | Open |
+| ARCH_02-R4 | ARCH_02 | `DEFAULT_PORT` / `ENV` for 4466 and `VB_*`: cli, client, reply.ts now; `server.ts`, `vb-mcp.ts` | Wave 3 gate sub-agent; ENGINE_01 for server and mcp | Open |
+| ARCH_02-R5 | ARCH_02 | nclite: full JSON Schema tool inputs; `url()` / `watch()` through `host.events` | orchestrator (reply); ARCH_03 (`host.events`) | Open |
+| ARCH_04-R1 | ARCH_04 | Docs: components, performance, board README, actions README to `answers/` | Wave 3 gate sub-agent | Done |
+| ARCH_04-R2 | ARCH_04 | `CardStep` alias of `UnseenStep`, `CardProposal` a pick of `ProposalRow` | ARCH_06 | Open |
+| ARCH_04-R3 | ARCH_04 | `io.ts` `BoardData` re-exported from `#actions` | ARCH_03 | Open |
+| ARCH_04-R4 | ARCH_04 | Private `clip` copies → `#format` `clip`: delete `board/clip.ts` (`chat-bridge.ts`, `finder.ts` import it), and `chat-prompt.ts`'s copy | ARCH_03 (page, owns `apps/board/src`), ENGINE_01 (server) | Open |
+| ARCH_04-R5 | ARCH_04 | `chat-prompt.ts` built from `cardChip` / `noteChip` / `resolveChip` / `turnOf`; the `hidden` refusal applies at once | ENGINE_01 | Open |
+| ARCH_04-R6 | ARCH_04 | nclite: `ref` is opaque JSON; refusal `{ code, reason }`; `detail` is the composer's second line | orchestrator: nclite-contract-reply.md | Done |
+| ARCH_04-R7 | ARCH_04 | Actions split: not now (drafted case in ARCH_04 notes) | orchestrator: accepted, no entry; split when a consumer needs reads without actions | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -131,20 +152,20 @@ Run 2: Completed (after D-059). Step 1 re-proved in every resolver, from `apps/b
 ---
 
 ### ARCH_02: One source per contract
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `npm run gen` now also writes `api-types.generated.ts` (each operation's input/output, gen-types.mjs) and `tools.generated.json` (the tool table, gen-tools.mjs; gen-mcp reads it, MCP list byte-identical), and `operations.generated.ts` gains `PROBLEMS`/`PROBLEM_BASE` (from problem.schema.json `$defs/codes`), `PATH_WORDS`, `PROJECT_HEADER`, `DEFAULT_SERVER`/`DEFAULT_PORT`, `ROUTE_PREFIX`, `CARD_FIELDS`/`cardFields` (generated from the event and write item schemas, read by edge, write-refs, `eventOut`, `answerEvent`) and `auth: 'optional-agent'`. Client: `call<Id>` typed by operation, made with a `Transport` (`httpTransport` standalone); io.ts has no `<T>` and no hand-written response type (`BoardData` is the page model, left for ARCH_04's builder). `ENV` in `packages/format/src/constants.ts`, not yet exported. Deviations: codes as a plain schema, not an `x-` keyword (strict ajv); card table generated in `#format`, not hand-kept beside `REFERENCES`. Requests: format index export of constants, `TOOLS_FILE`, gen-reference `WHO` row, server `FolderEntry`, the remaining 4466/`VB_*`/`vb-project` copies, `npm run map`.
 
 ---
 
 ### UI_01: Shared UI base
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `packages/ui/src/base/` (menu, layer, dialog: pure cores + framework-free browser side, 18 tests; `#ui`). Every menu (Move to, app card's, toolbar "⋯", region settings), the 8 dismiss copies and the 4 dialogs moved onto them; `board/menu-keys.ts` passes `menuKeydown` on for `history-flow.ts`. CSS recipes first in `#ui/styles.css` (root/scope + host guard, a11y, text, surface, button, chip, menu, dialog); `board.css` keeps board rules; the standalone page's rules in `styles/shell.css`; `@media` width rules are `@container vb-board`. `verify` gains `scripts/verify-style.mjs` (colour literals, I/O layers, scoped selectors; tests first). `tests/pages/host-styles.spec.ts`: the board at 1600/550px and every gallery sample pixel-identical under a host's element rules. No screenshot changed (475 page tests on 4730; computed-style diff clean). Not done, handed on: the gallery wiring of the base section (changes `gallery-*.png`; files ready), the tokens (drafted), the pane test inside a wider page (needs ARCH_03's `mount`). Outside the row: `packages/ui/src/index.ts` (exports appended), new `verify-style.*`, `host-styles.spec.ts`, `gallery/base-section.ts`. Root class for ARCH_03: `vb-board`.
 
 ---
 
 ### ARCH_04: Ledger answers and geometry in packages
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Queries in `packages/actions/src/answers/` (updates, retired, proposal rows, go target, page conditions, remove words), each with its test moved or added; the app keeps the act, the proposal words, the go box, `numberedView`, `canApply`. One builder: `boardData` and `boardJson` (the server's `getBoard` is `boardJson(boardData(...))` plus `locked`). Geometry in `packages/format/src/geometry.ts` (a format file, not a layer: layout and ui already may use format): `Box`, `clamp`, `overlaps`, `touches`, `boundsOf`, `boxAround`, `boxBetween`; layout and ui keep their names as re-exports/aliases. `clip` promoted to `packages/format/src/clip.ts`. Chips: `Chip` `{ plugin, kind, ref, label, detail }` (ref carries the card's version / the note's last edit), `cardChip`, `noteChip`, `resolveChip` (refusals `gone|retired|hidden|changed`), `turnOf` (roundOf + refusal for an unknown board). Split decision drafted in the task file (recommend: not yet). Unit tests for actions, format, ui, layout and the touched app tests green; page specs on 4740 (card-updates, flag-retire, go-to-card, group-note, proposals, proposals-notice, person-remove, notes, note-polish, note-discard, key-bubble, select, selection-pill, zoom-and-lasso, toolbar, gallery, board): 223 passed, no screenshot changed. Full `npm test`: 5 failures in server writes and the route table, ARCH_02's in-flight files.
 
 ---
 

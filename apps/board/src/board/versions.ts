@@ -8,13 +8,12 @@
 // (`guard`), sender.ts refuses every act and attention.ts sends no board seen; selection, zoom, pan
 // and the finder still work. A container's "N cards retired" marker opens its version with the
 // person's answers as they stood just before the retire (review polish ruling 10, N42): the ledger
-// is read on to that line and folded without the board's later drawing (retired.ts `pastLines`). The live state keeps following the ledger underneath; new lines never
+// is read on to that line and folded without the board's later drawing (packages/actions retired.ts `pastLines`). The live state keeps following the ledger underneath; new lines never
 // redraw the past view, but the dropdown's "now" moves. Esc or "Back to now" ends it.
 import type { LedgerEvent } from '#format';
 import type { BoardRun, LedgerState } from '#actions';
-import { boardVersions, foldLedger } from '#actions';
+import { boardVersions, foldLedger, pastLines } from '#actions';
 import { readLedger } from './io.ts';
-import { pastLines } from './retired.ts';
 import type { StageHandlers } from './wiring.ts';
 import { shell } from '../shell/shell.svelte.ts';
 

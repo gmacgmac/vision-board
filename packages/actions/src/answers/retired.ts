@@ -9,11 +9,11 @@
 // (not `placeOf`, which falls back to the drawn container once the one it was moved into is gone). A
 // whole container retired takes its cards and its frame with it, so it shows no marker; nor does a
 // container retired later. The same version is where going to a retired card by its number offers
-// to open (`lastShown`, go-to-card.ts). Pure: the held state in.
+// to open (`lastShown`, go-target.ts). Pure: the held state in.
 import type { LedgerEvent } from '#format';
 import { containerKey, everyNodeOf, LATER_REGION, latest } from '#format';
-import type { LedgerState } from '#actions';
-import { DRAWING_EVENTS } from '#actions';
+import { DRAWING_EVENTS } from '../fold.ts';
+import type { LedgerState } from '../fold.ts';
 
 /** One container's marker: how many cards were retired from it, the board version (a run's `seq`)
  * that last showed the latest of them, when there is one, and with it `until`, the first `retire`
@@ -48,7 +48,7 @@ export function retiredCounts(s: LedgerState, board: string, versions = true): M
 
 /** The board version (a run's `seq`) that last showed a card retired at line `retired`, and with it
  * `until`, the first `retire` line on the board after that version; empty when no version came
- * before. The marker opens it, and so does going to a retired card by its number (go-to-card.ts). */
+ * before. The marker opens it, and so does going to a retired card by its number (go-target.ts). */
 export function lastShown(s: LedgerState, board: string, retired: number,
   retires = retireLines(s, board, containerRetires(s, board))): Pick<RetiredCount, 'version' | 'until'> {
   const version = (s.runs.get(board) ?? []).filter((r) => r.seq < retired).at(-1)?.seq;

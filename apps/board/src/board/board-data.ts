@@ -1,31 +1,8 @@
-// What the page draws, worked out from the ledger state it holds (N12_FE_01 ruling 2): the page
-// reads `read_ledger` once when it opens, folds it with the shared action layer (packages/actions),
-// and applies each later line to the same state, so it never re-fetches a board to show one event.
-// `boardData` is `get_board`'s answer from that state, built from the same reads the server uses
-// (apps/board/server/reads.ts `getBoard`); a test holds the two equal. `pageConditions` is what needs
-// the person's attention, from the conditions table (attention.ts shows it). Pure: no DOM, no network.
+// What the page draws, worked out from the ledger state it holds (N12_FE_01 ruling 2): the page's
+// two rules over what packages/actions builds from the ledger (`boardData`, `pageConditions`): the
+// view as the everyNode flag draws it, and whether a line can be applied in place. Pure.
 import type { LedgerEvent, View } from '#format';
-import { boardView, LEDGER_FORMAT, latest, NODE_TYPES, nodesOf } from '#format';
-import type { FreshCard, LedgerState } from '#actions';
-import { boardAccess, boardState, conditionsOf, freshCards, isDecided, numberOf, statusOf } from '#actions';
-import type { BoardData } from './io.ts';
-
-/** One board as the page draws it, from the held state. */
-export function boardData(s: LedgerState, board: string): BoardData {
-  return {
-    head: s.seq,
-    view: boardView(s, board),
-    state: boardState(s, board),
-    versions: Object.fromEntries(nodesOf(s, board).map((x) => [String(numberOf(s, x.id)), latest(x).ver])),
-    access: boardAccess(s, board),
-  };
-}
-
-/** The board's answered cards, only ever ones that need an answer (api.md 120): what "Hide
- * answered" leaves out. One the agent still owes an answer (`owed`, by number: `item.owed`) stays
- * until it lands, so the person sees the reply to their comment (every-node FE_01). */
-export const answeredIds = (d: BoardData, owed: ReadonlySet<number> = new Set()): Set<string> =>
-  new Set(d.view.nodes.filter((n) => isDecided(n.kind, statusOf(d.state, n.id)) && !owed.has(Number(n.id))).map((n) => n.id));
+import { LEDGER_FORMAT, NODE_TYPES } from '#format';
 
 /** The view as the everyNode flag draws it (rule 12): on, every card keeps its number, and so its
  * buttons; off, only a card that needs an answer does, so every other card draws as before the
@@ -33,72 +10,6 @@ export const answeredIds = (d: BoardData, owed: ReadonlySet<number> = new Set())
 export const numberedView = (view: View, everyNode: boolean): View => (everyNode ? view : {
   ...view, nodes: view.nodes.map((x) => (NODE_TYPES[x.kind].answer ? x : (({ n: _, ...rest }) => rest)(x))),
 });
-
-/** A board's mark in the picker: `board.new` or `board.changed`. */
-export type BoardMark = 'new' | 'changed';
-
-/** An open proposal on the open board: its card, its line, and whether the card changed since. */
-export interface ProposalFound { n: number; seq: number; stale: boolean }
-
-/** How many new and updated cards a fresh container holds: its pill (`regionFresh`). */
-export interface FreshCount { added: number; updated: number }
-
-/** What needs the person's attention with `board` open, by the conditions table's rows: `marks`,
- * each other board's picker mark (`board.new`, `board.changed`); `owed`, the containers badged
- * (`container.owed`); `requests`, the open grant requests' lines (`grant.requested`); `drawn`, the
- * agent's last drawing line not yet seen (`board.drawn`); `proposals`, the agent's proposals not yet
- * answered (`proposal.open`, `proposal.stale`); `fresh`, the items the agent added in the board's
- * latest round and the person has not seen (`item.new`); `unseen`, the items whose latest version
- * the person has not seen (`item.unseen`), but a `fresh` one (NEW only); `awaiting`, the items in Later whose handover the agent still owes
- * (`item.awaiting`); `owedCards`, every card owed an answer or a handover (`item.owed`); `unsent`,
- * whether the person answered since the board's last Send, so Send to agent has something to send
- * (`board.unsent`); `freshCards`, the new and updated cards (`freshCards`: the toolbar's "N new"),
- * and `freshIn`, each fresh container (`container.fresh`) with how many of them it holds, counted from
- * that one list. Lines, so a batch's news can be told. */
-export interface PageConditions {
-  marks: Record<string, BoardMark>;
-  owed: Set<string>;
-  requests: number[];
-  drawn?: number;
-  proposals: ProposalFound[];
-  fresh: Set<number>;
-  unseen: Set<number>;
-  awaiting: Set<number>;
-  /** The cards the agent owes an answer or a handover (`item.owed`): "Hide answered" keeps them. */
-  owedCards: Set<number>;
-  unsent: boolean;
-  freshCards: FreshCard[];
-  freshIn: Map<string, FreshCount>;
-}
-
-/** The card rows name a card by its identity (`c.id`, conditions.ts); the page by its board number,
- * as the View does (api.md 125), so every card set here is in board numbers. */
-export function pageConditions(s: LedgerState, board: string): PageConditions {
-  const n = (c: { id?: number }) => numberOf(s, c.id!);
-  const out: PageConditions = {
-    marks: {}, owed: new Set(), requests: [], proposals: [], fresh: new Set(), unseen: new Set(), awaiting: new Set(), owedCards: new Set(), unsent: false,
-    freshCards: freshCards(s, board), freshIn: new Map(),
-  };
-  for (const c of conditionsOf(s, { board })) {
-    if (c.kind === 'board.new' || c.kind === 'board.changed') out.marks[c.board] = c.kind === 'board.new' ? 'new' : 'changed';
-    else if (c.kind === 'container.owed') out.owed.add(c.container!);
-    else if (c.kind === 'grant.requested') out.requests.push(c.seq!);
-    else if (c.kind === 'board.drawn') out.drawn = c.seq!;
-    else if (c.kind === 'item.new') out.fresh.add(n(c));
-    else if (c.kind === 'item.unseen') out.unseen.add(n(c));
-    else if (c.kind === 'item.awaiting') out.awaiting.add(n(c));
-    else if (c.kind === 'item.owed') out.owedCards.add(n(c));
-    else if (c.kind === 'board.unsent') out.unsent = true;
-    else if (c.kind === 'container.fresh') out.freshIn.set(c.container!, { added: 0, updated: 0 });
-    else if (c.kind === 'proposal.open' || c.kind === 'proposal.stale') out.proposals.push({ n: n(c), seq: c.seq!, stale: c.kind === 'proposal.stale' });
-  }
-  for (const x of out.fresh) out.unseen.delete(x);
-  for (const c of out.freshCards) {
-    const count = out.freshIn.get(c.container);
-    if (count) count[c.updated ? 'updated' : 'added'] += 1;
-  }
-  return out;
-}
 
 /** Whether the page can apply a line in place: a format it knows. A newer one makes the page read
  * the whole ledger again (a full fetch, counted). */

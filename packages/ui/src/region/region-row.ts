@@ -7,11 +7,14 @@
 // item is stopped here, but one a locked board paused (`data-paused`) goes on, so the page says why.
 // Up and Down move between the menu's items, Home and End to the first and the last. With the
 // toolRail flag the row is a vertical rail (`data-rail` on the frame): Right on the cog opens its
-// menu and Left in the menu closes it, back to the cog.
+// menu and Left in the menu closes it, back to the cog. The menu's keys and the press outside are the
+// shared base's (base/menu.ts `menuKeydown`, base/layer.ts `dismissable`).
 // Nothing here touches HTMLElement at import, so the ui front door stays importable from Node.
 import type { Mode } from '#format';
 import { MODE_HINT } from './region-core.ts';
 import { regionIds } from './region-template.ts';
+import { menuItems, menuKeydown } from '../base/menu.ts';
+import { dismissable } from '../base/layer.ts';
 
 export type RegionOpen = 'modes' | 'menu';
 
@@ -73,9 +76,8 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   const unshut = () => q('.vb-mode-row')?.removeAttribute('data-shut');
 
-  function onOutside(e: PointerEvent) {
-    if (!inTools(e.target)) closeMenu(true);
-  }
+  /** The settings menu's press outside, heard only while it is open: it closes, focus back on the cog. */
+  let stopOutside: (() => void) | null = null;
 
   function closeModes() {
     if (host.dataset.open === 'modes') delete host.dataset.open;
@@ -83,7 +85,8 @@ export function bindModeRow(host: HTMLElement): ModeRow {
   }
 
   function closeMenu(focusCog: boolean) {
-    document.removeEventListener('pointerdown', onOutside, true);
+    stopOutside?.();
+    stopOutside = null;
     if (host.dataset.open !== 'menu') return;
     delete host.dataset.open;
     q(COG)?.setAttribute('aria-expanded', 'false');
@@ -100,7 +103,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     closeModes();
     host.dataset.open = 'menu';
     q(COG)?.setAttribute('aria-expanded', 'true');
-    document.addEventListener('pointerdown', onOutside, true);
+    stopOutside ??= dismissable({ within: inTools, dismiss: () => closeMenu(true) });
     if (focus) q<HTMLElement>(ITEM)?.focus({ preventScroll: true });
   }
 
@@ -132,21 +135,11 @@ export function bindModeRow(host: HTMLElement): ModeRow {
     list[to]!.focus({ preventScroll: true });
   }
 
+  /** The settings menu's keys (the shared menu's); in the rail it opens to the right of the cog, so
+   * Left goes back to it, as Esc does. Keys it does not use go on to the page. */
   function onMenuKey(e: KeyboardEvent) {
-    // In the rail the menu opens to the right of the cog, so Left goes back to it, as Esc does.
-    if (e.key === 'Escape' || (e.key === 'ArrowLeft' && host.hasAttribute('data-rail'))) {
-      e.preventDefault();
-      closeMenu(true);
-    } else if (e.key === 'Tab') {
-      closeMenu(false);
-    } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) {
-      e.preventDefault();
-      const list = [...host.querySelectorAll<HTMLElement>(ITEM)];
-      const i = list.indexOf(e.target as HTMLElement);
-      const last = list.length - 1;
-      const to = e.key === 'Home' ? 0 : e.key === 'End' ? last : e.key === 'ArrowDown' ? (i + 1) % list.length : i <= 0 ? last : i - 1;
-      list[to]?.focus({ preventScroll: true });
-    }
+    const back = host.hasAttribute('data-rail') ? ['ArrowLeft'] : [];
+    menuKeydown(e, menuItems(q('.vb-region-menu') ?? host), closeMenu, { back, stop: false });
   }
 
   host.addEventListener('keydown', (e) => {

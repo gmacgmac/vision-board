@@ -20,8 +20,7 @@ import type { BoardData } from './io.ts';
 import { createLayoutCache } from './layout-cache.ts';
 import { markOffscreen, outside, viewBounds } from './offscreen.ts';
 import { createRegionSet } from './render.ts';
-import type { FreshCount } from './board-data.ts';
-import type { RetiredCount } from './retired.ts';
+import type { FreshCount, RetiredCount } from '#actions';
 import { tierOf } from './size.ts';
 import type { Viewport } from './viewport.ts';
 import { isFar } from './viewport.ts';
@@ -76,7 +75,7 @@ export interface DrawDeps {
   flag?: boolean;
   /** The cardHistory flag: every card with a footer has the ⓘ and its history box (history-flow.ts). */
   history?: boolean;
-  /** Each container's "N cards retired" marker (retiredMarker flag, retired.ts). */
+  /** Each container's "N cards retired" marker (retiredMarker flag, packages/actions retired.ts). */
   retired?(): ReadonlyMap<string, RetiredCount>;
   /** Each fresh container's pill counts (freshCards flag, attention.ts `freshIn`). */
   fresh?(): ReadonlyMap<string, FreshCount>;

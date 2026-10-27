@@ -104,15 +104,12 @@ vb-region .vb-region-head h2 {
   color: color-mix(in srgb, var(--region) 20%, var(--vb-ink));
 }
 vb-region .vb-region-count { flex: none; white-space: nowrap; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
-/* "1/1" to the eye (round 2 ruling 1); its words, "1 of 1 answered", for screen readers only. */
-vb-region .vb-region-count-words {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-}
+/* "1/1" to the eye (round 2 ruling 1); its words, "1 of 1 answered", for screen readers only (base/a11y.css). */
 /* "3 retired" (retiredMarker flag; round 2 ruling 1, "3 cards retired" in its name and tooltip): the
    count's muted words, a quiet button that opens the board version where the cards last appeared;
    with none to open it is aria-disabled and does nothing. Its icon shows only in the narrow form. */
 vb-region .vb-region-retired {
-  flex: none; min-height: 24px; padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm);
+  flex: none; min-height: var(--vb-control-target); padding: 2px var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm);
   background: none; font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); white-space: nowrap; cursor: pointer;
   text-decoration: underline dotted; text-underline-offset: 3px;
 }
@@ -141,13 +138,13 @@ vb-region .vb-holder {
   font: inherit; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle);
   background: none; border: 0; border-radius: var(--vb-radius-sm); padding: 2px var(--vb-space-1);
 }
-vb-region button.vb-holder { cursor: pointer; min-height: 24px; }
+vb-region button.vb-holder { cursor: pointer; min-height: var(--vb-control-target); }
 vb-region button.vb-holder:hover, vb-region button.vb-holder:focus-visible, vb-region button.vb-holder[data-look='hover'] {
   color: var(--vb-ink-strong); background: var(--vb-surface-sunken);
 }
 vb-region button.vb-holder:active { padding-block: 3px 1px; }
 vb-region .vb-holder-remove {
-  display: none; position: absolute; top: calc(100% + var(--vb-space-1)); margin-inline-start: calc(-1 * var(--vb-space-1)); z-index: 1;
+  display: none; position: absolute; top: calc(100% + var(--vb-space-1)); margin-inline-start: calc(-1 * var(--vb-space-1)); z-index: var(--vb-z-raised);
   padding: 2px var(--vb-space-2); border-radius: var(--vb-radius-sm); white-space: nowrap;
   font-size: var(--vb-text-xs); font-weight: var(--vb-weight-medium); color: var(--vb-state-drop);
   background: var(--vb-surface-raised); border: 1px solid var(--vb-line-strong); box-shadow: var(--vb-shadow-card);
@@ -179,7 +176,7 @@ vb-region .vb-mode-row {
 }
 /* The row's narrow forms, and the retired marker's, live in region-narrow.css (loaded next). */
 vb-region .vb-mseg {
-  display: grid; place-items: center; width: 28px; height: 24px; padding: 0; cursor: pointer;
+  display: grid; place-items: center; width: 28px; height: var(--vb-control-target); padding: 0; cursor: pointer;
   border: 0; border-radius: 7px; background: none; color: var(--vb-ink-subtle);
 }
 vb-region .vb-mseg:hover, vb-region .vb-mseg[data-hover], vb-region .vb-mseg[aria-expanded='true'] {
@@ -189,7 +186,7 @@ vb-region .vb-mseg[aria-checked='true'] {
   background: color-mix(in srgb, var(--region) 18%, var(--vb-surface-sunken)); color: var(--vb-ink-strong); box-shadow: var(--vb-shadow-card);
 }
 vb-region .vb-mseg:active, vb-region .vb-mseg[data-look='pressed'] { transform: translateY(1px); }
-vb-region .vb-mseg:focus-visible { outline-offset: 1px; }
+vb-region .vb-mseg:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 vb-region .vb-mode-icon, vb-region .vb-mtile-icon {
   flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
 }
@@ -202,26 +199,14 @@ vb-region .vb-widths[aria-checked='true'] .vb-widths-own, vb-region .vb-widths:n
 /* While the popover or the menu is open the frame is drawn above every card (an overlay: nothing
    moves or resizes, README pick 5). Only the top line takes the pointer then, so the cards inside
    the raised frame stay reachable. */
-vb-region[data-open] { z-index: 4; pointer-events: none; }
+vb-region[data-open] { z-index: var(--vb-z-open); pointer-events: none; }
 
 /* The settings menu, anchored under the cog. Today it holds Reset places alone: enabled when a
    card of the frame was moved, otherwise disabled with its hint. */
-vb-region .vb-region-menu {
-  display: none; position: absolute; z-index: 4; top: calc(100% + 3px); right: 0; min-width: max-content; padding: 3px;
-  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
-  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
-}
+vb-region .vb-region-menu { display: none; position: absolute; z-index: var(--vb-z-open); top: calc(100% + 3px); right: 0; min-width: max-content; padding: 3px; }
 vb-region[data-open='menu'] .vb-region-menu { display: block; }
-vb-region .vb-menu-item {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 32px;
-  padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px; background: none; cursor: pointer;
-  font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium); color: var(--vb-ink-strong); text-align: left; white-space: nowrap;
-}
-vb-region .vb-menu-item:hover, vb-region .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }
-vb-region .vb-menu-item:active { transform: translateY(1px); }
-vb-region .vb-menu-item:focus-visible { outline-offset: -2px; }
-vb-region .vb-menu-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
-vb-region .vb-menu-item[aria-disabled='true']:hover { background: none; }
+/* Its items are the shared menu's (base/menu.css), each its words over a hint. */
+vb-region .vb-menu-item { flex-direction: column; align-items: flex-start; gap: 2px; }
 vb-region .vb-menu-hint { font-size: var(--vb-text-xs); font-weight: var(--vb-weight-regular); color: var(--vb-ink-subtle); }
 vb-region .vb-menu-item[aria-disabled='false'] .vb-menu-hint { display: none; }
 
@@ -257,14 +242,14 @@ vb-region .vb-region-grip:hover, vb-region .vb-region-grip[data-look='hover'], v
 vb-region .vb-region-grip:is(:focus-visible, [data-look='focus']) { outline: none; }
 vb-region .vb-region-grip:is(:focus-visible, [data-look='focus'])::after {
   content: ''; position: absolute; inset: 0 var(--vb-space-2) 0 0; border-radius: var(--vb-radius-sm);
-  outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px;
+  outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight);
 }
 vb-region .vb-region-grip:active, vb-region .vb-region-grip[data-look='pressed'], vb-region[data-dragging] .vb-region-grip { cursor: grabbing; color: var(--vb-ink-strong); }
-vb-region[data-dragging] { transition: none; z-index: 4; border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
+vb-region[data-dragging] { transition: none; z-index: var(--vb-z-open); border-color: color-mix(in srgb, var(--region) 85%, var(--vb-ink-strong)); }
 
 /* The title's full-text tip (titleTip flag, WCAG 1.4.13; box: tip/tip.css), below the label over the
    frame's top room while data-title-tip-open is on the frame, which also raises the frame above the
    cards, as the note preview does. Only the label takes the pointer, so the cards under it stay reachable. */
-vb-region[data-title-tip-open] { z-index: 4; pointer-events: none; }
+vb-region[data-title-tip-open] { z-index: var(--vb-z-open); pointer-events: none; }
 vb-region .vb-title-tip { top: calc(100% + var(--vb-space-1)); left: 0; }
 vb-region[data-title-tip-open] .vb-title-tip { display: block; }

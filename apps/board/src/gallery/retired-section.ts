@@ -3,7 +3,7 @@
 // one at a time. The cards left the board; the frame's title line says "2 cards retired", a quiet
 // button that opens the board version where they last appeared, with the person's answers as they
 // stood just before the retire (review polish ruling 10). The frame is a real <vb-region>,
-// with the marker the board works out from the fixture ledger (retired.ts, render.ts).
+// with the marker the board works out from the fixture ledger (packages/actions retired.ts, render.ts).
 import type { VbRegionElement } from '#ui';
 import { regionState, retiredMarker } from '#ui';
 import { el, group } from './dom.ts';

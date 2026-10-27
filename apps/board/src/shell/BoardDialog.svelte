@@ -4,12 +4,14 @@
      title and summary, whatever was typed before a close (Cancel, Esc, a click on the backdrop). Create or Rename sends one `put_board` through the board's one
      sender (onsave); while it is on its way the button is busy, and a refusal stays in the dialog
      with the words kept. Native <dialog>: modal, Esc or Cancel closes, focus starts in the title
-     and goes back to the picker on close. -->
+     and goes back to the picker on close. Opened, closed and closed by its backdrop by the shared
+     modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). -->
 <script lang="ts">
   import { BOARD_ACTIONS, type BoardActionId } from '#actions';
   import { LIMITS } from '#format';
   import type { BoardFields } from '../board/io.ts';
   import { shell } from './shell.svelte.ts';
+  import { backdropClick, syncModal, whenShut } from '#ui';
 
   let { onsave }: { onsave: (action: BoardActionId, fields: BoardFields) => Promise<string | null> } = $props();
 
@@ -25,24 +27,19 @@
 
   $effect(() => {
     const req = shell.boardDialog;
-    if (req && !dlg.open) {
+    syncModal(dlg, !!req, () => {
+      if (!req) return;
       [title, summary, problem, saving] = [req.title, req.summary, null, false];
       // The fields too, not only the state: words that arrived without an input event (autofill,
       // an input method) never reached the state, so the state's reset would not clear them.
       [titleInput.value, summaryInput.value] = [req.title, req.summary];
-      dlg.showModal();
       titleInput.focus();
       titleInput.select();
-    } else if (!req && dlg.open) dlg.close();
+    });
   });
 
-  /** A click outside the dialog's box (on the backdrop) closes it like Cancel. */
-  function backdrop(e: MouseEvent) {
-    if (e.target !== dlg) return; // a click inside, or Enter's click on the button (which has no position)
-    const r = dlg.getBoundingClientRect();
-    const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
-    if (outside && !saving) shell.boardDialog = null;
-  }
+  /** A click on the backdrop closes it like Cancel. */
+  const backdrop = backdropClick(() => { if (!saving) shell.boardDialog = null; });
 
   async function save(e: SubmitEvent) {
     e.preventDefault();
@@ -56,7 +53,7 @@
 </script>
 
 <dialog id="board-dialog" class="vb-dialog" aria-labelledby="board-dialog-title" aria-describedby="board-dialog-body"
-  bind:this={dlg} onclose={() => { if (!dlg.open) shell.boardDialog = null; }} onclick={backdrop}>
+  bind:this={dlg} onclose={whenShut(() => { shell.boardDialog = null; })} onclick={backdrop}>
   <form onsubmit={save}>
     <h2 id="board-dialog-title">{BOARD_ACTIONS[action].label}</h2>
     <p id="board-dialog-body" class="vb-dialog-item">

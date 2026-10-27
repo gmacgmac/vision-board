@@ -7,7 +7,7 @@
 vb-node .vb-node-state { position: relative; }
 vb-node .vb-status-tip { bottom: calc(100% + var(--vb-space-1)); left: 0; }
 vb-node .vb-status-tip::before { bottom: auto; top: 100%; }
-vb-node[data-status-tip-open] { z-index: 4; }
+vb-node[data-status-tip-open] { z-index: var(--vb-z-open); }
 vb-node[data-status-tip-open] .vb-status-tip { display: block; }
 
 /* The handover box: headed sections, then the sources. Longer than a proposal, so it is allowed more height. */
@@ -32,7 +32,6 @@ vb-node .vb-node-reply {
   background: var(--vb-surface-sunken); font-size: var(--vb-text-md); color: var(--vb-ink);
 }
 vb-node .vb-node-reply .vb-node-note-who { color: var(--vb-ink); }
-vb-node .vb-node-reply:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
-vb-node:has(.vb-node-reply[data-tip-open]) { z-index: 4; }
+vb-node:has(.vb-node-reply[data-tip-open]) { z-index: var(--vb-z-open); }
 vb-node .vb-node-reply[data-tip-open] .vb-note-tip { display: block; }
 vb-node .vb-node-reply :is(.vb-md-icode, .vb-md-code) { background: var(--vb-surface-deep); }

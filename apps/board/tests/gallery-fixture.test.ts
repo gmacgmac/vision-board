@@ -5,9 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '#format';
 import type { ActEvent } from '#format';
-import { boardAccess, boardState, conditionsOf, foldLedger, statusOf, validateAct } from '#actions';
-import { pageConditions } from '../src/board/board-data.ts';
-import { unseenCount, unseenSteps } from '../src/board/updates.ts';
+import { boardAccess, boardState, conditionsOf, foldLedger, pageConditions, statusOf, unseenCount, unseenSteps, validateAct } from '#actions';
 
 const FILE = new URL('../src/gallery/gallery.ledger.jsonl', import.meta.url);
 const lines = fs.readFileSync(FILE, 'utf8').trim().split('\n');

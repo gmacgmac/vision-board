@@ -6,11 +6,13 @@
      refusal stays in the dialog. Native <dialog>: Esc, Cancel or a click on the backdrop closes it
      (not while Open is on its way), and focus goes back to "⋯"; its close event, queued after it shut,
      is taken only while it is still shut, as in ArchivedDialog.svelte. The view is FolderPicker.svelte; with the currentFolder flag it also shows the open
-     folder on a "Current folder" line with Copy. -->
+     folder on a "Current folder" line with Copy. Opened, closed and closed by its backdrop by the shared
+     modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). -->
 <script lang="ts">
   import { tick } from 'svelte';
   import { shell } from './shell.svelte.ts';
   import FolderPicker from './FolderPicker.svelte';
+  import { backdropClick, syncModal, whenShut } from '#ui';
   import { listFolders, openProject, type FolderList } from '../board/io.ts';
   import { currentFolderOn, reloadOnto } from '../board/folder.ts';
 
@@ -52,11 +54,10 @@
   }
 
   $effect(() => {
-    if (shell.folderDialog && !dlg.open) {
+    syncModal(dlg, shell.folderDialog, () => {
       [listing, problem, busy] = [null, null, false];
-      dlg.showModal();
       void choose();
-    } else if (!shell.folderDialog && dlg.open) dlg.close();
+    });
   });
 
   async function accept() {
@@ -74,17 +75,13 @@
 
   const close = () => { if (!busy) shell.folderDialog = false; };
 
-  /** A click outside the dialog's box (on the backdrop) closes it like Cancel. */
-  function backdrop(e: MouseEvent) {
-    if (e.target !== dlg) return;
-    const r = dlg.getBoundingClientRect();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
-  }
+  /** A click on the backdrop closes it like Cancel. */
+  const backdrop = backdropClick(close);
 </script>
 
 <dialog id={UID} class="vb-dialog vb-folder-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy) e.preventDefault(); }}
-  onclose={() => { if (!dlg.open) shell.folderDialog = false; }}>
+  onclose={whenShut(() => { shell.folderDialog = false; })}>
   <FolderPicker uid={UID} {listing} current={shell.folder?.path ?? null} here={currentFolderOn() ? shell.folder : null} {loading} {problem} {busy}
     onchoose={(p) => void choose(p)} onaccept={() => void accept()} oncancel={close} />
 </dialog>

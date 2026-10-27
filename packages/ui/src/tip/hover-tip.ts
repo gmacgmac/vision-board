@@ -10,6 +10,7 @@
 import type { PreviewEvent } from '../region/region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from '../region/region-preview.ts';
 import { closeGrace } from './close-grace.ts';
+import { dismissable } from '../base/layer.ts';
 
 export interface HoverTipOptions {
   /** Hovering or focusing this (a selector, inside the host; `:host` is the host itself) shows the tip. */
@@ -53,23 +54,14 @@ export function bindHoverTip(host: HTMLElement, o: HoverTipOptions): HoverTip {
   function show(on: boolean) {
     if (on !== host.hasAttribute(o.attr)) o.onToggle?.(on);
     host.toggleAttribute(o.attr, on);
-    // Esc and a press outside are heard on the page only while the tip is open.
-    if (on) {
-      document.addEventListener('keydown', onKey, true);
-      document.addEventListener('pointerdown', onOutside, true);
-    } else {
-      document.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('pointerdown', onOutside, true);
+    // Esc and a press outside (the shared dismissable layer) are heard on the page only while the tip is open.
+    if (on) stopDismiss ??= dismissable({ within: inTip, escape: true, dismiss: step });
+    else {
+      stopDismiss?.();
+      stopDismiss = null;
     }
   }
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key !== 'Escape') return;
-    e.stopPropagation();
-    step('escape');
-  };
-  const onOutside = (e: PointerEvent) => {
-    if (!inTip(e.target)) step('outside');
-  };
+  let stopDismiss: (() => void) | null = null;
 
   const hovering = (e: PointerEvent) => e.pointerType !== 'touch';
   host.addEventListener('pointerover', (e) => {

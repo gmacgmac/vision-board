@@ -39,7 +39,6 @@
   color: var(--vb-ink); user-select: text; cursor: text;
 }
 .vb-md-code > code { font: inherit; }
-.vb-md-code:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 /* Inside a quote the ground is already sunken, so code sits one step deeper. */
 .vb-md-quote .vb-md-icode, .vb-md-quote .vb-md-code { background: var(--vb-surface-deep); }
 
@@ -48,7 +47,7 @@
   overflow-wrap: anywhere;
 }
 .vb-md-link:hover { text-decoration-thickness: 2px; }
-.vb-md-link:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; border-radius: 2px; }
+.vb-md-link:focus-visible { border-radius: 2px; }
 
 /* An image (D-048 ruling 23): never wider than what holds it, its own aspect ratio, and no taller than a
    tall card should be (the zoomed view shows it whole). Until the page knows its size it is a sunken box

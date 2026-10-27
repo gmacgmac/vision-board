@@ -1,0 +1,22 @@
+/* The board in any page (UI_01; nclite's plugin contract, docs/plugins.md § The view and its host):
+   what the board relies on, set by the board and scoped to it, so it holds in a host's page and
+   reaches nothing outside. The board's scope is `[class*='vb-']`: every element it draws has a vb-
+   class or sits inside one. `.vb-board` is the root a host mounts it in: its type and ink, and the
+   container the board sizes by (@container vb-board), as body is on the standalone page (shell.css).
+   Tokens only. */
+.vb-board {
+  font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font);
+  color: var(--vb-ink);
+  container: vb-board / inline-size;
+}
+:where([class*='vb-'], [class*='vb-'] *) { box-sizing: border-box; }
+/* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
+:where([class*='vb-'], [class*='vb-'] *)[hidden] { display: none !important; }
+/* A host styles these elements globally (nclite draws every h2 small and in capitals, and styles p,
+   button, input and select); inside the board each starts again from the browser's own look, which
+   the board's rules then set. The element named twice (specificity 0,0,2) is over a host's element
+   rule and under every rule of the board's, which all name a class. */
+:is(h1, h2, h3, p, button, input, select, textarea, dialog):where([class*='vb-'], [class*='vb-'] *):not(html) {
+  all: revert;
+  box-sizing: border-box;
+}

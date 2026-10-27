@@ -3,6 +3,7 @@
 // pattern folder is missing from the list.
 import type { FlagName } from '#format';
 import appFrame from './app-frame/pattern.json' with { type: 'json' };
+import base from './base/pattern.json' with { type: 'json' };
 import imageView from './image-view/pattern.json' with { type: 'json' };
 import markdown from './markdown/pattern.json' with { type: 'json' };
 import node from './node/pattern.json' with { type: 'json' };
@@ -27,4 +28,4 @@ export interface PatternInfo {
   flag?: FlagName;
 }
 
-export const PATTERNS: readonly PatternInfo[] = [appFrame, imageView, markdown, node, noteBubble, region, selectionBar] as PatternInfo[];
+export const PATTERNS: readonly PatternInfo[] = [appFrame, base, imageView, markdown, node, noteBubble, region, selectionBar] as PatternInfo[];

@@ -13,7 +13,7 @@ vb-note-bubble {
      same as the card while you type: the bubble never outshines its card (maintainer, 749). */
   --edge: color-mix(in srgb, var(--kind) 24%, var(--vb-line));
   --arrow: 22px;
-  position: absolute; z-index: 30; left: 0; top: 0;
+  position: absolute; z-index: var(--vb-z-bubble); left: 0; top: 0;
   display: grid; gap: var(--vb-space-2); width: var(--vb-pop-w); padding: var(--vb-pop-pad);
   border: 1px solid var(--edge); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
   box-shadow: var(--vb-shadow-lift); color: var(--vb-ink); font-size: var(--vb-pop-text); --vb-md-text: var(--vb-pop-text);
@@ -56,7 +56,7 @@ vb-note-bubble .vb-nb-x {
 }
 vb-note-bubble .vb-nb-x:hover { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); }
 vb-note-bubble .vb-nb-x:active { transform: translateY(1px); }
-vb-note-bubble .vb-nb-x:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-note-bubble .vb-nb-x:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 vb-note-bubble .vb-nb-x-icon { width: var(--vb-space-4); height: var(--vb-space-4); fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 /* The card's number chip (05 `.nref`). */
 vb-note-bubble .vb-nb-num {
@@ -84,7 +84,6 @@ vb-note-bubble .vb-nb-thread {
   display: grid; gap: var(--vb-space-3); max-height: var(--vb-pop-max-h); overflow: auto; line-height: 1.45;
   border-radius: var(--vb-radius-sm);
 }
-vb-note-bubble .vb-nb-thread:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-note-bubble .vb-nb-read { display: grid; gap: var(--vb-space-2); }
 vb-note-bubble .vb-nb-replies { display: grid; gap: var(--vb-space-2); margin: 0; padding: 0; list-style: none; }
 vb-note-bubble .vb-nb-reply {
@@ -104,7 +103,7 @@ vb-note-bubble .vb-nb-note-top { display: flex; align-items: center; justify-con
 vb-note-bubble .vb-nb-note-text { display: grid; gap: var(--vb-space-2); min-width: 0; color: var(--vb-ink-strong); overflow-wrap: anywhere; }
 vb-note-bubble .vb-nb-orphan { margin-left: 0; }
 vb-note-bubble .vb-nb-edit { flex: none; height: var(--vb-space-5); padding: 0 var(--vb-space-3); font-size: var(--vb-text-md); }
-vb-note-bubble .vb-nb-convo > :focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+vb-note-bubble .vb-nb-convo > :focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 /* Read-only, nothing sits under the list (ruling 7): the room of the bottom row (a button and its gap)
    goes to the list. */
 vb-note-bubble:is([data-mode='sent'], [data-mode='thread']) .vb-nb-thread { max-height: calc(var(--vb-pop-max-h) + var(--vb-space-6) + var(--vb-space-2)); }
@@ -137,5 +136,4 @@ vb-note-bubble .vb-nb-btn:disabled { opacity: 0.5; cursor: progress; }
 vb-note-bubble .vb-nb-btn[data-note-do='remove'] { margin-right: auto; color: var(--vb-state-drop); }
 vb-note-bubble .vb-nb-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
 vb-note-bubble .vb-nb-primary:hover { background: var(--vb-accent-fill-hover); }
-vb-note-bubble .vb-nb-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-note-bubble[data-phase='saving'] { cursor: progress; }

@@ -1,6 +1,7 @@
 // The flags every command takes, besides the operation's own inputs (api.md 51). One list: the
 // parser reads the names and the help prints the descriptions. The commands test checks that no
 // generated input is named like one of these.
+import { DEFAULT_SERVER, ENV } from '#format';
 
 export interface GlobalFlag {
   readonly name: string;
@@ -9,11 +10,9 @@ export interface GlobalFlag {
   readonly description: string;
 }
 
-export const DEFAULT_SERVER = 'http://127.0.0.1:4466';
-
 export const GLOBAL_FLAGS: readonly GlobalFlag[] = [
-  { name: 'server', value: 'url', description: `The board server. Default: $VB_SERVER, else ${DEFAULT_SERVER}.` },
-  { name: 'secret', value: 'secret', description: 'Your agent secret, from `vb join`. Default: $VB_AGENT_SECRET.' },
+  { name: 'server', value: 'url', description: `The board server. Default: $${ENV.server}, else ${DEFAULT_SERVER}.` },
+  { name: 'secret', value: 'secret', description: `Your agent secret, from \`vb join\`. Default: $${ENV.agentSecret}.` },
   { name: 'json-body', value: 'file|-', description: 'The whole request body as JSON, from a file or from stdin (-). Flags for body inputs override its fields.' },
   { name: 'text', description: 'Print `key: value` lines instead of JSON.' },
   { name: 'help', description: 'Print help for the command.' },

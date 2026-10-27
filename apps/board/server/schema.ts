@@ -9,11 +9,14 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 import { CHAT_SCHEMA_DIR } from '#chat/files';
+import { LEDGER_FORMAT } from '#format';
 import { SCHEMA_DIR } from '#format/files';
 
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
-export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/18/ledger-event.schema.json`;
+/** The ledger's schemas, at the format's version (`LEDGER_FORMAT`): `…/schema/ledger/<version>/`. */
+export const LEDGER_SCHEMA_BASE = `${SCHEMA_BASE}schema/ledger/${LEDGER_FORMAT}/`;
+export const LEDGER_EVENT_ID = `${LEDGER_SCHEMA_BASE}ledger-event.schema.json`;
 export const CHAT_EVENT_ID = `${SCHEMA_BASE}schema/chat/1/chat-event.schema.json`;
 
 /** One problem: where (a JSON Pointer into the value) and what to do about it. */

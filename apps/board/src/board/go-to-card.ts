@@ -5,25 +5,15 @@
 // GO_PAUSE after the last digit goes (ruling 2). Going selects and focuses the card; the board
 // pans only by `revealPan`'s rule (the controller's `arrive`, ruling 3). A number the board never
 // gave says "No card 99"; a retired card says it was removed and offers the version where it last
-// appeared, as the container's retired marker does (`lastShown`, ruling 4). Card numbers go
-// through card-numbers.ts. `goTarget` is pure; `createGoTo` keeps the box's state and its timer. The
-// toolbar's open list goes to a card through the same path (`to`, open-list FE_01).
-import type { LedgerState } from '#actions';
-import { idOf } from './card-numbers.ts';
-import { lastShown } from './retired.ts';
+// appeared, as the container's retired marker does (`lastShown`, ruling 4). What a number names is
+// packages/actions' `goTarget`; `createGoTo` keeps the box's state and its timer. The toolbar's open
+// list goes to a card through the same path (`to`, open-list FE_01).
+import type { GoTarget } from '#actions';
 
 /** The most digits the box holds. */
 export const GO_DIGITS = 6;
 /** The pause after the last digit that goes by itself, with the goAfterPause flag (ruling 2). */
 export const GO_PAUSE = 1000;
-
-/** What a number names on the board: a card drawn with it, nothing, a card on the board but not
- *  drawn (hidden with the answered cards), or a retired card with the version that last showed it. */
-export type GoTarget =
-  | { to: 'card'; id: string }
-  | { to: 'none' }
-  | { to: 'hidden' }
-  | { to: 'retired'; version?: number; until?: number };
 
 /** The box as the page shows it: the digits, what the last go found when it did not arrive, and a
  *  retired card's version to open (`label` is the button's accessible name). */
@@ -35,19 +25,6 @@ export interface GoBox {
 
 /** The digits of what was typed, at most GO_DIGITS. */
 export const goDigits = (text: string): string => text.replace(/\D/g, '').slice(0, GO_DIGITS);
-
-/** Card `n` on `board` in state `s` (none before the ledger is read). `drawn`: whether the layout drew a card id (the View's ids are
- *  board numbers). `versions`: past versions can show (the versionView flag). */
-export function goTarget(s: LedgerState | null, board: string, n: number, drawn: (id: string) => boolean, versions = true): GoTarget {
-  const id = String(n);
-  if (drawn(id)) return { to: 'card', id };
-  if (!s) return { to: 'none' };
-  const x = idOf(s, board, n);
-  const card = x === undefined ? undefined : s.nodes.get(x);
-  if (!card) return { to: 'none' };
-  if (card.retired === undefined) return { to: 'hidden' };
-  return { to: 'retired', ...(versions && lastShown(s, board, card.retired)) };
-}
 
 /** What the box says for a go that did not arrive. */
 const SAYS: Record<Exclude<GoTarget['to'], 'card'>, (n: number) => string> = {

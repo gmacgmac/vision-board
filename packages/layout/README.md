@@ -15,5 +15,5 @@ unit-tested.
 - **Public API** (`src/index.ts`): `layoutBoard`, `layoutRegion`, `packRegions`, `MODE_FNS`,
   `routeLinks` (pass `BoardLayout.groups` to route moved boxes as the board does), `routeLines`,
   `roundedPath`, `crossingLines`, `crossingPoints`, `labelSize`, `structureOf`, `boundsOf`,
-  `overlaps`, region constants, and the layout types (among them `Align`, `LabelPlace`,
+  `overlaps` (both from `#format` `geometry.ts`), region constants, and the layout types (among them `Align`, `LabelPlace`,
   `LayoutStructure` and `CardCell`, a container's structure as `show_layout` serves it, api.md 133).

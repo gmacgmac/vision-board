@@ -1,8 +1,7 @@
-import type { Link, Mode, Region, ViewNode, Widths } from '#format';
+import type { Box, Link, Mode, Point, Region, Size, ViewNode, Widths } from '#format';
 
-export interface Size { w: number; h: number }
-export interface Point { x: number; y: number }
-export interface Box extends Point, Size {}
+// The box types are format's (geometry.ts); a layout's callers reach them here.
+export type { Box, Point, Size };
 
 /** How cards line up across a layout's main direction (field-report batch 3 ruling 4): `start` is
  *  top for horizontal layouts (row, flow, lanes) and left for vertical ones (column); `center`

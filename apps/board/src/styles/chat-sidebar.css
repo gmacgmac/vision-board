@@ -3,7 +3,7 @@
    (--vb-chat-w while open). The stage's right edge is the sidebar's left one. Its left edge is the
    grip: drag it, or focus it and use the arrow keys. The chat inside styles itself (chat-host.css). */
 .vb-chat {
-  position: fixed; right: 0; bottom: 0; z-index: 4; width: var(--vb-chat-w);
+  position: fixed; right: 0; bottom: 0; z-index: var(--vb-z-open); width: var(--vb-chat-w);
   top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px));
   display: flex; flex-direction: column; border-left: 1px solid var(--vb-line); background: var(--vb-surface-region);
 }
@@ -11,7 +11,7 @@
 .vb-chat[data-placement='gallery'] { position: relative; inset: auto; z-index: auto; width: 380px; height: 100%; }
 
 /* The grip: a strip over the edge, a line on hover, focus or drag. */
-.vb-chat-grip { position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; z-index: 1; cursor: col-resize; touch-action: none; }
+.vb-chat-grip { position: absolute; left: -5px; top: 0; bottom: 0; width: 10px; z-index: var(--vb-z-raised); cursor: col-resize; touch-action: none; }
 .vb-chat-grip::after { content: ''; position: absolute; left: 4px; top: 0; bottom: 0; width: 2px; background: transparent; }
 .vb-chat-grip:is(:hover, :focus-visible, [data-dragging])::after { background: var(--vb-accent); }
 .vb-chat-grip:focus-visible { outline: none; }

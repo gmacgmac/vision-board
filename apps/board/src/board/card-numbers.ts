@@ -4,7 +4,7 @@
 // `data-id`, every act body. These turn one into the other, on the page's side, so a module that
 // indexes the folded state with a number it drew goes through here. Pure.
 import type { LedgerEvent, LedgerLine } from '#format';
-import { boardNumber, cardId, fromLine } from '#format';
+import { boardNumber, cardFields, cardId, fromLine } from '#format';
 import type { LedgerState } from '#actions';
 
 type Held = Pick<LedgerState, 'index'>;
@@ -20,10 +20,11 @@ export const numOf = (s: Held, id: number): number | undefined => boardNumber(s.
 export function answerEvent(s: Held, board: string, line: LedgerLine): LedgerEvent {
   const id = (n: unknown) => (typeof n === 'number' ? idOf(s, board, n) ?? n : n);
   const out: LedgerLine = { ...line };
-  if (out.n !== undefined) out.n = id(out.n);
-  for (const f of ['nodes', 'cards'] as const) {
-    const list = out[f];
-    if (Array.isArray(list)) out[f] = list.map(id);
+  // The card-reference table, read back: each card field from its board number to its identity.
+  for (const f of cardFields(line.type)) {
+    const value = f.in === undefined ? out[f.field] : undefined; // these lines name no card inside another field
+    if (value === undefined) continue;
+    out[f.field] = f.list ? (Array.isArray(value) ? value.map(id) : value) : id(value);
   }
   return fromLine(out);
 }

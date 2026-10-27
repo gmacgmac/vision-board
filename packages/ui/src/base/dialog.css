@@ -1,0 +1,22 @@
+/* The modal dialog (UI_01, base/dialog.ts): a native <dialog class="vb-dialog"> on the panel surface
+   (base/surface.css) over a scrim; its heading, its words (`.vb-dialog-item`), labelled fields
+   (`.vb-field`, `.vb-input`, a textarea), a problem it was refused with, a hint, and its buttons at
+   the end (base/button.css). Tokens only. */
+.vb-dialog { width: min(480px, 92vw); padding: var(--vb-space-5); color: var(--vb-ink); }
+.vb-dialog::backdrop { background: var(--vb-scrim); }
+.vb-dialog h2 { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); color: var(--vb-ink-strong); }
+.vb-dialog-item { margin: 0 0 var(--vb-space-3); color: var(--vb-ink-subtle); }
+.vb-dialog textarea, .vb-dialog .vb-input {
+  width: 100%; font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); padding: var(--vb-space-2); resize: vertical;
+}
+.vb-dialog .vb-field { display: block; margin: var(--vb-space-3) 0 var(--vb-space-1); font-weight: 600; color: var(--vb-ink-strong); }
+.vb-field-note { font-weight: 400; color: var(--vb-ink-subtle); }
+.vb-dialog .vb-input:hover, .vb-dialog textarea:hover { border-color: var(--vb-accent); }
+.vb-dialog .vb-input:user-invalid { border-color: var(--vb-state-drop); }
+.vb-dialog-problem {
+  margin: var(--vb-space-3) 0 0; padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong);
+  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft); border-radius: var(--vb-radius-sm);
+}
+.vb-dialog-hint { margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
+.vb-dialog-actions { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-4); }

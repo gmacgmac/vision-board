@@ -11,8 +11,9 @@
      Off while a past version shows: the page passes no rows. -->
 <script lang="ts">
   import { tick } from 'svelte';
-  import type { ProposalRow } from '../board/proposals.ts';
-  import { acceptAllPlan, barWords } from '../board/proposals.ts';
+  import type { ProposalRow } from '#actions';
+  import { acceptAllPlan } from '#actions';
+  import { barWords } from '../board/proposals.ts';
   import { keep, kept } from './kept.ts';
 
   let { rows, news = [], onreview, onacceptall, placement = 'board', collapsed = false }: {

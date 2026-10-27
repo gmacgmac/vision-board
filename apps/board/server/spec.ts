@@ -3,7 +3,7 @@
 // (operations.generated.ts) says where an operation lives; this says what its inputs may hold.
 // Server only: it uses ajv through schema.ts, which never reaches the page (api.md 12).
 import fs from 'node:fs';
-import type { OperationId } from '#format';
+import type { OperationAuth, OperationId } from '#format';
 import { OPERATIONS } from '#format';
 import { OPENAPI_FILE } from '#format/files';
 import type { SchemaProblem } from './schema.ts';
@@ -21,10 +21,11 @@ export interface ParamSpec {
   description: string;
 }
 
-/** Who may call an operation, from its `security` (api.md 20-22, 41, 102, 152): `person` needs the person
- * cookie, `agent` a Bearer secret, `agent-or-person` either one, `optional-agent` takes a Bearer secret to
- * scope a read, `run` a chat session's run token, and `none` takes no credentials. */
-export type Security = 'none' | 'person' | 'agent' | 'agent-or-person' | 'optional-agent' | 'run';
+/** Who may call an operation: the route table's `auth` (api.md 20-22, 41, 102, 152), worked out once
+ * by the generator (gen-api.mjs `authOf`) from the operation's `security`. `person` needs the person
+ * cookie, `agent` a Bearer secret, `agent-or-person` either one, `optional-agent` takes a Bearer secret
+ * to scope a read, `run` a chat session's run token, and `none` takes no credentials. */
+export type Security = OperationAuth;
 
 export interface OperationSpec {
   params: ParamSpec[];
@@ -35,15 +36,6 @@ export interface OperationSpec {
   agent: boolean;
   /** The request body's worked example (`example`, or the first of `examples`), when it has one. */
   example?: unknown;
-}
-
-/** The kind of caller an operation's `security` list allows. */
-function securityOf(list: Rec[] | undefined): Security {
-  const names = (list ?? []).map((req) => Object.keys(req).join(','));
-  if (names.includes('personCookie')) return names.includes('agentSecret') ? 'agent-or-person' : 'person';
-  if (names.includes('runToken')) return 'run';
-  if (!names.includes('agentSecret')) return 'none';
-  return names.includes('') ? 'optional-agent' : 'agent';
 }
 
 const doc: Rec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8'));
@@ -73,7 +65,7 @@ function operationSpec(id: OperationId): OperationSpec {
   const example = media?.example ?? Object.values<Rec>(media?.examples ?? {})[0]?.value;
   return {
     params, ...(ref && { body: String(local(ref).$ref) }), ...(example !== undefined && { example }),
-    security: securityOf(op.security ?? doc.security), agent: op['x-agent'] === true,
+    security: OPERATIONS[id].auth, agent: OPERATIONS[id].xAgent,
   };
 }
 

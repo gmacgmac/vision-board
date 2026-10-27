@@ -2,18 +2,12 @@
 // through the same checks and folds the live board uses. Nothing here is hand-written markup.
 import type { View } from '#format';
 import { boardView, readLedger } from '#format';
-import type { AccessHolder, BoardAccess, BoardRun, BoardState } from '#actions';
+import type { AccessHolder, BoardAccess, BoardRun, BoardState, ProposalRow, RetiredCount } from '#actions';
 import type { LedgerState } from '#actions';
-import { boardAccess, boardState, boardVersions, foldLedger } from '#actions';
-import { pageConditions } from '../board/board-data.ts';
-import type { ProposalRow } from '../board/proposals.ts';
-import { proposalRows } from '../board/proposals.ts';
+import { boardAccess, boardState, boardVersions, foldLedger, pageConditions, proposalRows, retiredCounts, unseenCount, unseenSteps } from '#actions';
 import { versionTime } from '../board/versions.ts';
 import type { CardConditions, CardReply, CardUpdates } from '#ui';
 import { createParking } from '../board/parking.ts';
-import { unseenCount, unseenSteps } from '../board/updates.ts';
-import type { RetiredCount } from '../board/retired.ts';
-import { retiredCounts } from '../board/retired.ts';
 import ledgerText from './gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */
@@ -78,9 +72,9 @@ export interface Fixture {
   /** The parking board, with each card's awaiting, handover and replies as the page reads them (parking.ts), and the
    *  replies that answer container notes (the container notes board's "Answered" one). */
   parking: { view: View; state: BoardState; cards: Map<number, CardConditions>; containerReplies: readonly CardReply[] };
-  /** The marks board, with each container's "N cards retired" marker as the page works it out (retired.ts). */
+  /** The marks board, with each container's "N cards retired" marker as the page works it out (packages/actions retired.ts). */
   marks: { view: View; state: BoardState; retired: ReadonlyMap<string, RetiredCount> };
-  /** The whole ledger folded, as the board holds it: the Remove samples' confirm words (remove-words.ts). */
+  /** The whole ledger folded, as the board holds it: the Remove samples' confirm words (packages/actions' remove words). */
   ledger: LedgerState;
   /** The layout board, drawn through the board's own drawing (mini-board.ts). */
   layout: { view: View; state: BoardState };
@@ -104,7 +98,7 @@ function clearedCards(ledger: LedgerState, board: string): Map<number, CardCondi
     : [[n.n, { updates: { count: unseenCount(ledger, board, n.n) }, replies: replies.get(n.n)?.replies ?? [] }] as const])));
 }
 
-/** A board of container samples; `owed` as the board page reads it (board-data.ts `pageConditions`). */
+/** A board of container samples; `owed` as the board page reads it (packages/actions `pageConditions`). */
 export interface Containers { view: View; state: BoardState; owed: ReadonlySet<string> }
 
 function containers(ledger: LedgerState, board: string): Containers {

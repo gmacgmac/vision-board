@@ -2,73 +2,35 @@
 // extras?)` builds one; handlers throw it, the dispatcher sends it as application/problem+json.
 // `detail` is plain English for an agent to act on and never shows internals (api.md 40).
 import type { ServerResponse } from 'node:http';
+import type { PointerError, ProblemCode, ProblemDocument } from '#format';
+import { PROBLEM_BASE, PROBLEMS } from '#format';
 
-/** The codes of api.md 40, with their status and title. */
-export const PROBLEMS = {
-  'bad-request': { status: 400, title: 'Bad request' },
-  'not-authenticated': { status: 401, title: 'Not authenticated' },
-  forbidden: { status: 403, title: 'Forbidden' },
-  'needs-grant': { status: 403, title: 'Needs a grant' },
-  'not-found': { status: 404, title: 'Not found' },
-  'method-not-allowed': { status: 405, title: 'Method not allowed' },
-  conflict: { status: 409, title: 'Conflict' },
-  'too-large': { status: 413, title: 'Too large' },
-  'unsupported-media-type': { status: 415, title: 'Unsupported media type' },
-  'depends-on-failed': { status: 422, title: 'Depends on a failed item' },
-  invalid: { status: 422, title: 'Invalid' },
-  'server-error': { status: 500, title: 'Server error' },
-  'wrong-folder': { status: 409, title: 'Wrong folder' },
-  // 423 Locked (RFC 4918 11.3, in the IANA HTTP status registry): the board itself is locked, so
-  // a client can tell it from every 409 (a stale `base`, a busy chat, another folder) by status alone.
-  locked: { status: 423, title: 'Locked' },
-  // App cards (D-047 rulings 6-8, api.md 153): what a call of an app's tool can meet.
-  'needs-approval': { status: 403, title: 'Needs approval' },
-  'app-not-found': { status: 404, title: 'App not found' },
-  'app-invalid': { status: 422, title: 'App invalid' },
-  'app-failed': { status: 502, title: 'App failed' },
-  'app-busy': { status: 503, title: 'App busy' },
-  'app-timeout': { status: 504, title: 'App timed out' },
-} as const;
+// The codes, their status and title, `PROBLEM_BASE` and the document's shape are generated from
+// problem.schema.json (`#format`): this file adds only what the server does with them. Its importers
+// get the shapes here too.
+export type { PointerError, ProblemCode } from '#format';
+export { PROBLEMS } from '#format';
 
-export type ProblemCode = keyof typeof PROBLEMS;
-export const PROBLEM_BASE = 'https://vision-board.invalid/problems/';
+/** The problem document, as sent. Kept for its importers; the name for it is `ProblemDocument`. */
+export type ProblemBody = ProblemDocument;
 
-/** One pointer error: where in the request body, and what is wrong there (api.md 38). */
-export interface PointerError { pointer: string; detail: string }
-
-/** Extension members (api.md 39), the pointer errors, and response headers (never in the body). */
-export interface ProblemExtras {
-  errors?: PointerError[];
-  ver?: number;
-  board?: string;
-  region?: string;
-  /** `invalid`: a worked request that fits (api.md 40). */
+/** Extension members (api.md 39) and the pointer errors, as the schema has them, and response
+ * headers (never in the body). */
+export type ProblemExtras = Partial<Pick<ProblemDocument, 'errors' | 'ver' | 'board' | 'region'>> & {
+  /** `invalid`: a worked request that fits (api.md 40), read from a schema's examples, so JSON. */
   example?: unknown;
   headers?: Record<string, string>;
-}
-
-/** The problem document, as sent. */
-export interface ProblemBody {
-  type: string;
-  title: string;
-  status: number;
-  detail: string;
-  errors?: PointerError[];
-  ver?: number;
-  board?: string;
-  region?: string;
-  example?: unknown;
-}
+};
 
 /** A problem a handler throws; the dispatcher sends `body` with `status` and `headers`. */
 export class ProblemError extends Error {
   readonly code: ProblemCode;
   readonly status: number;
-  readonly body: ProblemBody;
+  readonly body: ProblemDocument;
   readonly headers: Record<string, string>;
   constructor(code: ProblemCode, detail: string, extras: ProblemExtras = {}) {
     super(detail);
-    const { headers = {}, errors, ...ext } = extras;
+    const { headers = {}, errors, example, ...ext } = extras;
     const { status, title } = PROBLEMS[code];
     this.code = code;
     this.status = status;
@@ -76,6 +38,7 @@ export class ProblemError extends Error {
     this.body = {
       type: `${PROBLEM_BASE}${code}`, title, status, detail,
       ...(errors && errors.length > 0 && { errors }), ...ext,
+      ...(example !== undefined && { example: example as ProblemDocument['example'] }),
     };
   }
 }

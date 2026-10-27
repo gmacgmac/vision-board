@@ -14,14 +14,18 @@ import { cardsIn } from './edge.ts';
 import { bodyExample } from './examples.ts';
 import { problem } from './problem.ts';
 import { sendJson } from './respond.ts';
-import { bodyProblems } from './spec.ts';
+import { compileSchema } from './schema.ts';
+import { SPECS, bodyProblems } from './spec.ts';
 import { writeItems } from './write-board.ts';
 import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } from './visibility.ts';
 
-/** `join` takes 4 KiB; `write_board` 512 KiB and 200 items (api.md 28). */
+/** `join` takes 4 KiB; `write_board` 512 KiB and as many items as its schema allows (api.md 28). */
 const JOIN_LIMIT = 4 * KIB;
 const WRITE_LIMIT = 512 * KIB;
-const MAX_ITEMS = 200;
+
+/** The most items one `write_board` takes: its request schema's `items.maxItems`. */
+const maxItems = (): number =>
+  (compileSchema(SPECS.write_board.body!).schema as { properties: { items: { maxItems: number } } }).properties.items.maxItems;
 
 const invalid = (errors: { pointer: string; detail: string }[], id?: OperationId) =>
   problem('invalid', 'The request does not fit the schema. Fix the fields listed in errors and send it again.', { errors, ...(id && bodyExample(id)) });
@@ -45,7 +49,7 @@ function agentOf(caller: Ctx['caller']): string {
  * that can't be loaded leaves the Send as it was. */
 const act: Handler = async ({ req, res, params, ledger, chats }) => {
   const board = personBoard(ledger.state(), params.board);
-  const e = cardsIn(ledger.state(), board, await body('act', req));
+  const e = cardsIn(ledger.state(), board, await body('act', req), 'act');
   const stored = ledger.append(e, { by: 'person' }, { board });
   sendJson(res, 201, eventOut(ledger.state(), stored));
   if (stored.type === 'act' && stored.action === 'send') {
@@ -60,7 +64,7 @@ const markSeen: Handler = async ({ req, res, params, ledger }) => {
   const e = await body('mark_seen', req);
   if (e.board !== undefined && e.board !== board)
     throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
-  const stored = ledger.append({ ...cardsIn(ledger.state(), board, e), type: 'seen' }, { by: 'person' });
+  const stored = ledger.append({ ...cardsIn(ledger.state(), board, e, 'seen'), type: 'seen' }, { by: 'person' });
   sendJson(res, 201, eventOut(ledger.state(), stored));
 };
 
@@ -79,7 +83,7 @@ const putBoard: Handler = async ({ req, res, params, ledger }) => {
  * or a locked board. Answers the stored line, its cards by board number. */
 const retireCards: Handler = async ({ req, res, params, ledger }) => {
   const board = personBoard(ledger.state(), params.board);
-  const b = cardsIn(ledger.state(), board, await body('retire_cards', req));
+  const b = cardsIn(ledger.state(), board, await body('retire_cards', req), 'retire');
   const region = b.region === undefined ? undefined : String(b.region);
   const cards = region === undefined ? b.cards : cardsOf(ledger.state(), { board, region });
   const stored = ledger.append({ type: 'retire', board, ...(region !== undefined && { region }), cards }, { by: 'person' }, { board });
@@ -137,8 +141,9 @@ const writeBoard: Handler = async ({ req, res, params, ledger, caller }) => {
   const agent = agentOf(caller);
   const value = await readJson(req, WRITE_LIMIT);
   const items = (value as { items?: unknown } | null)?.items;
-  if (Array.isArray(items) && items.length > MAX_ITEMS) {
-    throw problem('too-large', `The batch has ${items.length} items and the limit is ${MAX_ITEMS}. Split the items across several calls.`);
+  const most = maxItems();
+  if (Array.isArray(items) && items.length > most) {
+    throw problem('too-large', `The batch has ${items.length} items and the limit is ${most}. Split the items across several calls.`);
   }
   // Each item is checked on its own as it runs, so one bad item never fails the batch.
   const top = bodyProblems('write_board', value).filter((p) => !/^\/items\/\d+(\/|$)/.test(p.pointer));

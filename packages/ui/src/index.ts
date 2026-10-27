@@ -38,3 +38,10 @@ export { pauseControls } from './paused/paused.ts';
 export { defineBoardElements } from './elements.ts';
 export { PATTERNS } from './patterns.ts';
 export type { PatternInfo } from './patterns.ts';
+// The shared base (UI_01): menu, dismissable layer and modal dialog, for every screen and plugin.
+export * from './base/menu-core.ts';
+export * from './base/menu.ts';
+export * from './base/layer-core.ts';
+export * from './base/layer.ts';
+export * from './base/dialog-core.ts';
+export * from './base/dialog.ts';

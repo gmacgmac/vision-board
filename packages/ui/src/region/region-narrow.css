@@ -31,18 +31,18 @@ vb-region:has(> .vb-region-head .vb-region-retired:not([hidden])) { --region-mar
   /* The expanded row leaves the flow, so the tools box would collapse to nothing and the popovers
      anchored under it would start at the line's centre, under the row. Keep the row's own height
      (24px icons + 2 x 3px padding + 2 x 1px border), so they open just below it as in a wide frame. */
-  vb-region:not([data-rail]) .vb-region-tools { min-height: 32px; }
+  vb-region:not([data-rail]) .vb-region-tools { min-height: var(--vb-control-h); }
   vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-mseg[role='radio']:not([aria-checked='true']),
   vb-region:not([data-rail]) .vb-mode-row:not(:hover, :focus-within) .vb-widths {
     width: 0; padding-inline: 0; border-width: 0; margin: 0; overflow: hidden; opacity: 0;
   }
   vb-region:not([data-rail]) .vb-mode-row:hover, vb-region:not([data-rail]) .vb-mode-row:focus-within {
-    position: absolute; z-index: 3; top: 50%; right: 0; transform: translateY(-50%);
+    position: absolute; z-index: var(--vb-z-drag); top: 50%; right: 0; transform: translateY(-50%);
     box-shadow: 0 0 0 6px var(--vb-surface-canvas), var(--vb-shadow-lift);
   }
   /* Expanded, each icon takes the 24px target and no more, so the row stays a target's room clear of
      the grip even in the narrowest frame (one S card). */
-  vb-region:not([data-rail]) .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: 24px; }
+  vb-region:not([data-rail]) .vb-mode-row:is(:hover, :focus-within) .vb-mseg { width: var(--vb-control-target); }
 }
 /* The retired marker's narrow form (round 2 ruling 1): when the line has no room for "3 retired"
    beside the grip, a few letters of title, "1/1" and the collapsed row (under 290px, a one-card frame

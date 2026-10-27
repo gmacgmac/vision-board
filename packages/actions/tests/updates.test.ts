@@ -4,9 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { foldLedger } from '#actions';
-import { pageConditions } from '../src/board/board-data.ts';
-import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/board/updates.ts';
+import { foldLedger, pageConditions, seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/index.ts';
 
 const A = 'a-aaaa1111';
 let seq = 0;

@@ -10,6 +10,7 @@ import type { PreviewEvent } from './region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
 import { nblockRepliesMarkup, regionIds } from './region-template.ts';
 import { closeGrace } from '../tip/close-grace.ts';
+import { dismissable } from '../base/layer.ts';
 
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
@@ -66,13 +67,14 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     const comment = q(COMMENT);
     if (on) comment?.setAttribute('aria-describedby', regionIds(host.dataset.region ?? '').previewText);
     else comment?.removeAttribute('aria-describedby');
-    if (state.tapped) document.addEventListener('pointerdown', onOutside, true);
-    else document.removeEventListener('pointerdown', onOutside, true);
+    // A tap opened it: a press outside (the shared dismissable layer) closes it.
+    if (state.tapped) stopOutside ??= dismissable({ within: inPreview, dismiss: step });
+    else {
+      stopOutside?.();
+      stopOutside = null;
+    }
   }
-
-  function onOutside(e: PointerEvent) {
-    if (!inPreview(e.target)) step('outside');
-  }
+  let stopOutside: (() => void) | null = null;
 
   function emit(action: RegionNoteAction, reply?: number) {
     if (!note) return;

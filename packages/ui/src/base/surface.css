@@ -1,0 +1,21 @@
+/* The surfaces things float on (UI_01; review 18). The popover surface: raised, a strong line, the
+   middle radius, lifted: menus, the settings menu, the size control's pill and the container note's
+   preview. The panel surface: raised, the quiet line, the large radius, lifted: dialogs. Kept apart,
+   on purpose (decided by eye, UI_01 notes): the layout popover sits on the card surface with the
+   quiet line and the large radius (it shows card-coloured tiles), the hover tip has the contrast line
+   (one line of words over anything), and the note bubble draws its edge in its state's colour. Each
+   pattern's sheet places its surface; this is only its look. Anything else that floats takes the class
+   (`.vb-surface-pop`, `.vb-surface-panel`). Tokens only. */
+.vb-surface-pop,
+.vb-menu-list,
+vb-region .vb-region-menu,
+vb-node .vb-size-menu,
+vb-region .vb-note-pop {
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
+  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+}
+.vb-surface-panel,
+.vb-dialog {
+  border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg);
+  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
+}

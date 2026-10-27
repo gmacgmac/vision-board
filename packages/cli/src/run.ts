@@ -1,6 +1,7 @@
 // `run`: one `vb` invocation, start to exit code (api.md 51). 0 = done, 1 = the call failed (a
 // problem answer or no answer), 2 = the arguments were wrong. Everything the outside world
 // supplies (output, stdin, files, environment, fetch) comes in as `Io`, so tests run it whole.
+import { DEFAULT_SERVER, ENV } from '#format';
 import type { OperationId } from '#format';
 import { createClient } from '#client';
 import { assemble, parseArgs } from './args.ts';
@@ -10,7 +11,6 @@ import { COMMANDS } from './commands.generated.ts';
 import type { CommandInfo } from './commands.generated.ts';
 import { failureLines } from './failure.ts';
 import { formatText } from './format-text.ts';
-import { DEFAULT_SERVER } from './globals.ts';
 import { commandHelp, overview } from './help.ts';
 
 export interface Io {
@@ -35,7 +35,7 @@ function usage(io: Io, message: string, command?: CommandInfo): number {
 
 /** The server to call, from the flag, then the environment, then the default; it must be a URL. */
 function serverOf(parsed: Parsed, io: Io): string | undefined {
-  const base = (parsed.server ?? io.env.VB_SERVER ?? DEFAULT_SERVER).replace(/\/+$/, '');
+  const base = (parsed.server ?? io.env[ENV.server] ?? DEFAULT_SERVER).replace(/\/+$/, '');
   try { return /^https?:$/.test(new URL(base).protocol) ? base : undefined; } catch { return undefined; }
 }
 
@@ -61,7 +61,7 @@ export async function run(argv: readonly string[], io: Io): Promise<number> {
 
 async function call(command: CommandInfo, parsed: Parsed, io: Io): Promise<number> {
   const base = serverOf(parsed, io);
-  if (!base) return usage(io, 'The server must be an http or https address, such as http://127.0.0.1:4466.', command);
+  if (!base) return usage(io, `The server must be an http or https address, such as ${DEFAULT_SERVER}.`, command);
   let jsonBody: Record<string, unknown> | undefined;
   if (parsed.jsonBody !== undefined) {
     if (!command.takesBody) return usage(io, `${command.name} takes no body, so --json-body does not apply.`, command);
@@ -71,7 +71,7 @@ async function call(command: CommandInfo, parsed: Parsed, io: Io): Promise<numbe
   }
   const built = assemble(command, parsed, jsonBody);
   if (!built.ok) return usage(io, built.message, command);
-  const secret = parsed.secret ?? io.env.VB_AGENT_SECRET;
+  const secret = parsed.secret ?? io.env[ENV.agentSecret];
   const client = createClient({ base, ...(secret && { secret }), ...(io.project && { project: io.project }), ...(io.fetch && { fetch: io.fetch }) });
   try {
     const answer = await client.call(command.operationId as OperationId, built.input);

@@ -10,7 +10,8 @@
 |---|---|---|---|---|
 | 1 | FIX_01, FIX_02 | Done (before tonight) | c2f6110 · `tidy/wave-1` | green |
 | — | Principles 286, set refined | Done | e9218f8 | verify ok |
-| 2 | ARCH_01 | Run 1 blocked at step 1 (below); Run 2 running | | Baseline before: 1626 unit tests pass, verify ok |
+| 2 | ARCH_01 | Done (Run 2, after D-059) | 818c502 · `tidy/wave-2` | 1620 + 10 unit, check 0 errors, gen current, verify ok (18 warnings), 658 page specs passed |
+| 3 | ARCH_02, UI_01, ARCH_04 | Done, with the gate fixes (tokens applied, Base gallery entry, docs) | see git log · `tidy/wave-3` | 1690 + 10 unit, check 0 errors, gen current, verify ok (19 warnings), 664 page specs passed; only gallery-{light,dark} changed (new Base section, appended last, every old row identical) |
 
 ## Decisions taken (for the maintainer's review)
 
@@ -21,18 +22,56 @@
   (`npm install --ignore-scripts --offline`, nothing new fetched). Fits point 224 (modules, not npm
   packages). This touched protected files under your delegation: `docs/decisions.md` (D-059 appended),
   `docs/principles.md` § Dependencies are a cost (the "npm workspaces" line).
+- **D-060, a module's names**, from ARCH_01's draft: `#m` front door, `#m/styles.css`, `#m/files` (file
+  paths Node reads, kept off the front door so `node:` stays out of the page bundle), `#m/testing`.
+  `verify` fails on any other way in, from `tests/` and `skills/` too.
+
+- **D-061, the board's CSS scope** (UI_01): `vb-`-prefixed selectors count as scoped, root class
+  `vb-board` is also the `@container`, a guard undoes a host's element rules, width rules are
+  container queries. Proven pixel-identical under a hostile host sheet.
+- **New design tokens approved** (UI_01, protected): `--vb-z-*`, `--vb-control-h` / `-small` /
+  `-target`, `--vb-focus-offset` / `-tight` / `-inset` / `-card`, each valued at today's literal, so no
+  picture moves. Applied in the Wave 3 gate.
+- **The base pattern gets a gallery entry**, so the gallery screenshots gain one section (Wave 3 gate).
+- **No split of `actions` into `ledger` + `actions` yet** (ARCH_04's case): 118 files import `#actions`
+  and every consumer needs both halves. Split when a consumer needs the reads alone (nclite's chip
+  `resolve` may be the first).
+- **A chip on a card whose notes are hidden is refused** (`hidden`), applied at once by ENGINE_01: the
+  bot never gets words the person can't see (nclite § Chips).
+- **Chips:** a card's `ref` is `{ board, n, ver }`, a note's `{ board, seq, rev }`; refusals carry a
+  code. Added to `nclite-contract-reply.md` with the `vb-board` root and importing-in-place notes.
 
 ## Requests routed
 
 - ARCH_01-R1 (fold the scope), ARCH_01-R2 (decision entry): done by the orchestrator, D-059.
+- ARCH_01-R4 (module map), R5 (D-060): orchestrator. R3 (six READMEs and `components.md` to the
+  names): a Sonnet docs sub-agent. R6 (`perf-ledger` into a module's `/testing`) → TEST_01. R7 (tests
+  reaching into the board server) → ENGINE_01.
 
-## Caught beyond the brief
+## Caught beyond the brief (ARCH_01)
 
-None yet.
+- verify's old check missed six back-door shapes (side-effect and dynamic imports, `new URL`, globs,
+  HTML `href`/`src`, CSS `@import`); the new `checkReferences` catches them.
+- nclite resolves `#` names against this repo's `package.json` only while it imports the board's files
+  where they sit; copying them into nclite's tree would break the names. Worth a line in the contract.
+- verify now scans `tests/` and `skills/`: 15 new length warnings (10 page specs, the calculator's
+  `panel.html`, `schema.test.ts` at 301 lines). Warnings, not failures.
+
+## Caught beyond the brief (Wave 3)
+
+- ARCH_02: the problem-codes table is a plain schema, not an `x-` field, because strict ajv rejects
+  unknown keywords; the card table is generated into `#format` (`CARD_FIELDS`) rather than hand-kept.
+- ARCH_02: a page-test filter `board` matches every spec (the worktree path contains `vision-board`).
+- UI_01: Up with no menu row focused now goes to the last row (the old keys went to the second-last).
+- UI_01: `localStorage` is used in 5 places `checkIO` does not cover; `vb-image-view` keeps its own dialog.
+- ARCH_04: `clip` existed twice; promoted to `#format`.
 
 ## To look at by eye (light and dark)
 
-None yet.
+- The ⋯ menu, the Move to list (Shift+M), a container's settings menu, the app card's "Allowed ▾".
+- New/Rename board, Open folder…, Archived…, and a confirm: Esc, Cancel, backdrop click, focus back.
+- Hover tip and note preview (grace, Esc, tap then press outside); read-only note bubble; the selection pill.
+- The toolbar at 1200, 1000 and 768 px. The gallery's new Base section.
 
 ## Points for the maintainer
 

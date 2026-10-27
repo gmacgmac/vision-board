@@ -1,6 +1,7 @@
-// The board page's stylesheets, in cascade order: the tokens, the board's own sheets, the patterns
-// (`#ui/styles.css`), then the shell's. The one list: main.ts and the gallery both import it (D-059).
+// The board page's stylesheets, in cascade order: the tokens, the page's own rules (shell.css), the
+// board's own sheets, the patterns (`#ui/styles.css`), then the shell's. The one list: main.ts and the gallery both import it (D-059).
 import '#tokens/styles.css';
+import './shell.css';
 import './board.css';
 import './access.css';
 import './key-help.css';

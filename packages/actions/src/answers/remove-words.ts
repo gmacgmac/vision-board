@@ -3,10 +3,10 @@
 // cards?"), lists the cards when there are several, and warns of every card or container note still
 // owed an answer (the action layer's `owedNotice`: "Card 4 still has an unanswered comment."). The
 // toast after says what went. Pure: the held state in, words out.
-import type { LedgerState } from '#actions';
-import { owedNotice, retireCards } from '#actions';
-import { latest } from '#format';
-import { idOf, numOf } from './card-numbers.ts';
+import { cardId, latest } from '#format';
+import type { LedgerState } from '../fold.ts';
+import { numberOf } from '../numbers.ts';
+import { owedNotice, retireCards } from '../retire.ts';
 
 /** One card the confirm lists: its number and title (the shell's `ConfirmItem`). */
 export interface RemoveItem { ref: string; text: string }
@@ -23,11 +23,11 @@ const EMPTY = 'It leaves the board and stays in the board\'s history.';
 const said = (lead: string, warnings: readonly string[]) => [lead, ...warnings].join(' ');
 
 /** Card `id` as the confirm lists it: its number and title. */
-const item = (s: LedgerState, id: number): RemoveItem => ({ ref: String(numOf(s, id)), text: latest(s.nodes.get(id)!).title });
+const item = (s: LedgerState, id: number): RemoveItem => ({ ref: String(numberOf(s, id)), text: latest(s.nodes.get(id)!).title });
 
 /** Remove card: the cards `numbers` (board numbers on `board`, in the order shown). */
 export function cardsWords(s: LedgerState, board: string, numbers: readonly number[]): RemoveWords {
-  const ids = [...numbers].sort((a, b) => a - b).map((n) => idOf(s, board, n)!);
+  const ids = [...numbers].sort((a, b) => a - b).map((n) => cardId(s.index, board, n)!);
   const warnings = owedNotice(s, { board, id: ids[0]! }, ids);
   if (ids.length === 1) {
     const one = item(s, ids[0]!);

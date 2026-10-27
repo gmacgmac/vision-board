@@ -1,14 +1,14 @@
 // The read operations (api.md Operations, 31, 41, 43, 44, 78-80, 133): every answer carries `head`,
-// the ledger's latest `seq`. The shapes are built by packages/actions (and `show_layout`'s by
-// packages/layout); nothing is folded here. A read
+// the ledger's latest `seq`. The shapes are built by packages/actions (`get_board`'s with the page's
+// own `boardData`) and packages/layout (`show_layout`'s); nothing is folded here. A read
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 // Every read naming a board an agent may call names it through `requireBoard` (visibility.ts), so an
 // archived board is not found (api.md 136); `read_ledger` is the person's and names any board.
 import type { LedgerEvent } from '#format';
-import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '#format';
+import { boardView, containerKey, toLine, widthsOf } from '#format';
 import type { LedgerState } from '#actions';
 import {
-  boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, itemsOut, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
+  boardData, boardJson, boardList, boardState, containerDetail, eventBoard, linkedDetails, nodeDetail, openContainers, openItems,
   placedView, responsesAfter, responsesPage,
 } from '#actions';
 import { structureOf } from '#layout';
@@ -33,21 +33,8 @@ const listBoards: Handler = ({ res, ledger, project }) => {
 const getBoard: Handler = ({ res, params, ledger }) => {
   const s = ledger.state();
   const id = requireBoard(s, params.board);
-  const st = boardState(s, id);
-  sendJson(res, 200, {
-    head: s.seq,
-    view: boardView(s, id),
-    state: {
-      items: itemsOut(st.items), pins: Object.fromEntries(st.pins), modes: Object.fromEntries(st.modes),
-      ...(st.widths.size > 0 && { widths: Object.fromEntries(st.widths) }),
-      ...(st.sizes.size > 0 && { sizes: Object.fromEntries(st.sizes) }),
-      ...(st.moves.size > 0 && { moves: Object.fromEntries(st.moves) }),
-      ...containerJson(st),
-    },
-    versions: Object.fromEntries(nodesOf(s, id).map((x) => [String(numberOf(s, x.id)), latest(x).ver])),
-    ...boardAccess(s, id),
-    ...(isLocked(s, id) && { locked: true }), // read-only for everyone until the person unlocks it (api.md 139)
-  });
+  // The page draws the same `boardData`; `locked` is the server's (api.md 139): read-only for everyone until the person unlocks it.
+  sendJson(res, 200, { ...boardJson(boardData(s, id)), ...(isLocked(s, id) && { locked: true }) });
 };
 
 const showNode: Handler = ({ res, params, ledger }) => {

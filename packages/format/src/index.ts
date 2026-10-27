@@ -12,3 +12,6 @@ export * from './operations.generated.ts';
 export * from './flags.ts';
 export * from './apps.ts';
 export * from './images.ts';
+export * from './geometry.ts';
+export * from './clip.ts';
+export * from './constants.ts';

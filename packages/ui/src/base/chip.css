@@ -1,0 +1,16 @@
+/* The chip (UI_01): a small pill of words, a count or a state, toned by what it says (data-tone:
+   agent, answered, later, new); a chip that is a button (`.vb-chip-btn`) darkens on hover and
+   presses down. data-look draws a state without the pointer: the gallery's samples only. Tokens only. */
+.vb-chip {
+  display: inline-flex; align-items: center; gap: var(--vb-space-1); height: var(--vb-control-target); padding: 0 var(--vb-space-2);
+  border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
+  font-size: var(--vb-text-sm); white-space: nowrap;
+}
+.vb-chip b { color: var(--vb-ink-strong); }
+.vb-chip[data-tone='agent'] { background: var(--vb-state-comment-soft); color: var(--vb-state-comment); }
+.vb-chip[data-tone='answered'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
+.vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
+.vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
+.vb-chip-btn { border: 0; font: inherit; font-size: var(--vb-text-sm); cursor: pointer; }
+.vb-chip-btn:hover, .vb-chip-btn[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
+.vb-chip-btn:active, .vb-chip-btn[data-look='pressed'] { transform: translateY(1px); }

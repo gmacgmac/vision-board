@@ -1,14 +1,16 @@
 // Project rule checks, one command, zero dependencies (D-016). Run: npm run verify.
 // Rules: steering rule 1 (layers; front doors: a module is reached only by its name, D-059), rule 2
 // (file length), rule 15 (the board page's weight, from the last `npm run build`), rule 20 and
-// cortex-rules 11 (exact versions, dependency register), and the generated module map
-// (docs/specification/modules.md).
+// cortex-rules 11 (exact versions, dependency register), the generated module map
+// (docs/specification/modules.md), and the style and layer rules in verify-style.mjs (colour
+// literals only in the tokens, I/O only in its layers, scoped board stylesheets; UI_01).
 // Each check is a pure function over strings, so scripts/verify.test.mjs proves every rule fails
 // when broken. `--write-map` regenerates the module map instead of checking it.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
+import { checkStyleAndLayers } from './verify-style.mjs';
 
 export const LIMITS = { warn: 300, fail: 500 };
 export const ROOTS = ['apps', 'packages', 'scripts', 'tests', 'skills'];
@@ -229,7 +231,8 @@ function walk(root, dir, out) {
 export function verify(root, { writeMap = false } = {}) {
   const files = ROOTS.filter((r) => existsSync(path.join(root, r))).flatMap((r) => walk(root, r, []));
   const names = namesOf(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')));
-  const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names))]);
+  const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names)),
+    ...checkStyleAndLayers(rel, text)]);
   const registerPath = path.join(root, REGISTER);
   const register = existsSync(registerPath) ? readFileSync(registerPath, 'utf8') : null;
   const manifests = ['package.json', ...['apps', 'packages'].flatMap((r) =>

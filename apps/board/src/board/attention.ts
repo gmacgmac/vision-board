@@ -7,7 +7,7 @@
 // (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`) and the
 // "agent drew" toast (`board.drawn`, when its line is in the batch), and with the freshCards flag the
 // new and updated cards (`shell.freshCards`, the toolbar's "N new") and the fresh containers
-// (`container.fresh`, their border and pill), none while a past version shows. `pageConditions` (board-data.ts, also the
+// (`container.fresh`, their border and pill), none while a past version shows. `pageConditions` (packages/actions, also the
 // gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
@@ -15,9 +15,8 @@
 // the board shows (versions.ts): the person is not looking at now.
 import type { LedgerEvent } from '#format';
 import type { LedgerState } from '#actions';
-import { boardNews } from '#actions';
-import type { FreshCount, ProposalFound } from './board-data.ts';
-import { pageConditions } from './board-data.ts';
+import type { FreshCount, ProposalFound } from '#actions';
+import { boardNews, pageConditions } from '#actions';
 import { markBoardSeen } from './io.ts';
 import { shell } from '../shell/shell.svelte.ts';
 

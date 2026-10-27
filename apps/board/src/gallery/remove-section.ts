@@ -1,16 +1,15 @@
 // Gallery entry for the person's Remove card and Remove container (personRemove flag, N24 rulings
 // 1-4, api.md 141): a container's settings menu, open, ending with Remove container, and the same on a
 // locked board, paused in place; then the confirm, as the shell's dialog shows it, with the words the
-// board works out from the fixture ledger (remove-words.ts): one card, several cards still owed an
+// board works out from the fixture ledger (packages/actions' remove words): one card, several cards still owed an
 // answer, and a whole container. Remove card on the selection bar is drawn in the selection bar's own
 // samples. Shown only with the flag on, so ?flags=-personRemove draws the gallery as it was.
 import { mount } from 'svelte';
-import type { BoardState } from '#actions';
+import type { BoardState, RemoveWords } from '#actions';
+import { cardsWords, containerWords } from '#actions';
 import type { VbRegionElement } from '#ui';
 import { regionState } from '#ui';
 import ConfirmList from '../shell/ConfirmList.svelte';
-import type { RemoveWords } from '../board/remove-words.ts';
-import { cardsWords, containerWords } from '../board/remove-words.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { BOARD } from './fixture.ts';

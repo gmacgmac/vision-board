@@ -7,12 +7,12 @@
 // a card the board has no version for (it was removed) is never shown, and an accept with no
 // version is never sent. None while a past version shows. Split out of controller.ts.
 import type { ViewNode } from '#format';
-import type { LedgerState } from '#actions';
+import type { LedgerState, ProposalFound, ProposalRow } from '#actions';
+import { acceptAllPlan, answerable, proposalRows } from '#actions';
 import type { CardConditions } from '#ui';
-import type { ProposalFound } from './board-data.ts';
 import type { ActFields } from './io.ts';
-import type { ProposalAnswer, ProposalRow } from './proposals.ts';
-import { acceptAllPlan, acceptAllWords, answerable, answerDone, proposalAct, proposalRows } from './proposals.ts';
+import type { ProposalAnswer } from './proposals.ts';
+import { acceptAllWords, answerDone, proposalAct } from './proposals.ts';
 import { versionTime } from './versions.ts';
 import { askConfirm, shell } from '../shell/shell.svelte.ts';
 

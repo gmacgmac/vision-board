@@ -757,3 +757,21 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: a wildcard `#ui/*` (every file a door); file paths on the front door (`node:url` in the
   page bundle); a `styles.css` wrapper for a module with one sheet.
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_01_module-front-doors.md
+
+## D-061 The board's CSS scope in a host's page
+- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from UI_01's draft
+- **Decision**: Every board rule is scoped: a `vb-`-prefixed selector (element, class or `[class*='vb-']`)
+  counts as scoped, so the gallery's patterns need no board root. The board's root class is
+  `vb-board`, which is also its `@container vb-board`; width rules are container queries, never
+  `@media` by width. A guard (specificity 0,0,2, `all: revert`) undoes a host's element rules for
+  h1–h3, p, button, input, select, textarea and dialog inside the board. Rules for the standalone page
+  itself live only in `apps/board/src/styles/shell.css` and `chat-host.css`. `verify-style.mjs` fails on
+  an unscoped selector or a width `@media`.
+- **Why**: the board lives in nclite's page (principles § The board is a plugin): nclite's element rules
+  reach in (its `h2` is small capitals) and the board's must not reach out; it sits in a pane of any
+  width. Measured: the board and about 250 gallery samples are pixel-identical under a hostile host sheet
+  (`tests/pages/host-styles.spec.ts`).
+- **Rejected**: Shadow DOM (nclite rejected it: it blocks the app's patterns); every rule under the
+  root class only (nclite's draft; the gallery shows patterns with no board root, and our names are
+  already namespaced).
+- **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/UI_01_shared-ui-base.md

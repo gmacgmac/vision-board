@@ -5,8 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { foldLedger } from '#actions';
-import { cardsWords, containerWords } from '../src/board/remove-words.ts';
+import { cardsWords, containerWords, foldLedger } from '../src/index.ts';
 
 const A = 'a-aaaa1111';
 let seq = 0;

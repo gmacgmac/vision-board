@@ -3,7 +3,7 @@
 // Usage: node apps/board/bin/reply.ts <board> [--json]   (VB_PROJECT = project folder, default repo root)
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { boardView } from '#format';
+import { ENV, boardView } from '#format';
 import { boardState, replyText } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 
@@ -13,7 +13,7 @@ if (!id || id.startsWith('-')) {
   console.error('Usage: node apps/board/bin/reply.ts <board> [--json]');
   process.exit(2);
 }
-const s = openLedger(ledgerPath(process.env.VB_PROJECT ?? ROOT)).state();
+const s = openLedger(ledgerPath(process.env[ENV.project] ?? ROOT)).state();
 if (!s.boards.has(id)) {
   console.error(`No board "${id}" in the project ledger.`);
   process.exit(2);

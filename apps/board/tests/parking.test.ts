@@ -5,8 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import type { ViewNode } from '#format';
-import { foldLedger } from '#actions';
-import { pageConditions } from '../src/board/board-data.ts';
+import { foldLedger, pageConditions } from '#actions';
 import { createParking } from '../src/board/parking.ts';
 
 const A = 'a-aaaa1111';

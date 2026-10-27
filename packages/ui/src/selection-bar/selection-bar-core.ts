@@ -3,7 +3,11 @@
 // `.selbar` (architect-extract README §2 point 9), 3_FE_02 rulings 1-2: a glass bar centred above
 // the selection's screen box, below it when there is no room above, kept inside the stage; it
 // draws above the cards and moves nothing.
+import { boxAround, boxBetween, clamp, overlaps, touches } from '#format';
 import type { StageBox, StageSize } from '../note-bubble/note-bubble-core.ts';
+
+// The lasso's box and the touch test are format's (geometry.ts); the bar's callers reach them here.
+export { boxAround, boxBetween, touches };
 
 /** Space between the selection and the bar (Architect: 12px); how close it may come to the edge. */
 export const BAR_GAP = 12;
@@ -11,9 +15,6 @@ export const BAR_EDGE = 8;
 
 export type BarSide = 'above' | 'below';
 export interface BarPlacement { side: BarSide; x: number; y: number }
-
-/** `v` within [lo, hi]; `lo` when the range is empty. */
-const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
 
 /** How far a card's top tabs (number, kind, moved-by-you, size) rise above its box, in world
  *  pixels: node.css sets them at `top: -11px` inside the card's 1px border. */
@@ -32,10 +33,6 @@ export const TAB_CLEAR_PER_K = 8;
 export function pillGap(k: number): number {
   return TAB_RISE * k + clamp(TAB_CLEAR_PER_K * k, TAB_CLEAR_MIN, TAB_CLEAR_MAX);
 }
-
-/** Whether two boxes share any area (touching edges do not). */
-const overlaps = (a: StageBox, b: StageBox): boolean =>
-  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /** The bar centred on `box` (the selection on the stage), `gap` above it (BAR_GAP, or `pillGap`
  *  over cards), else BAR_GAP below it. Above, it never covers a box in `avoid` (a container's title
@@ -67,21 +64,4 @@ export const selectedCount = (n: number): string => `${n} selected`;
 export function barView(n: number, buttons: BarButton[], pill?: { open: boolean }): BarView {
   if (n === 0) return { name: 'Area', count: '', buttons, ...(pill && { pill: true }) };
   return { name: `Selection: ${selectedCount(n)}`, count: selectedCount(n), buttons, ...(pill && { pill: true, open: pill.open }) };
-}
-
-/** The box two corners of a drag span, in any order. */
-export function boxBetween(a: { x: number; y: number }, b: { x: number; y: number }): StageBox {
-  return { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y), w: Math.abs(a.x - b.x), h: Math.abs(a.y - b.y) };
-}
-
-/** Whether two boxes overlap or touch (a lasso "touches" a card). */
-export const touches = (a: StageBox, b: StageBox): boolean =>
-  a.x <= b.x + b.w && b.x <= a.x + a.w && a.y <= b.y + b.h && b.y <= a.y + a.h;
-
-/** The box round several boxes; undefined for none. */
-export function boxAround(boxes: readonly StageBox[]): StageBox | undefined {
-  if (!boxes.length) return undefined;
-  const x = Math.min(...boxes.map((b) => b.x));
-  const y = Math.min(...boxes.map((b) => b.y));
-  return { x, y, w: Math.max(...boxes.map((b) => b.x + b.w)) - x, h: Math.max(...boxes.map((b) => b.y + b.h)) - y };
 }

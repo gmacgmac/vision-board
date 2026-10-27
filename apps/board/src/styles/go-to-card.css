@@ -7,7 +7,7 @@
   border-radius: var(--vb-radius-md); background: var(--vb-surface-raised); color: var(--vb-ink);
   border: 1px solid var(--vb-line-strong); box-shadow: var(--vb-shadow-lift); font: var(--vb-text-md) var(--vb-font);
 }
-.vb-go[data-placement='board'] { position: fixed; right: calc(var(--vb-chat-w, 0px) + var(--vb-space-4)); bottom: var(--vb-space-3); z-index: 5; }
+.vb-go[data-placement='board'] { position: fixed; right: calc(var(--vb-chat-w, 0px) + var(--vb-space-4)); bottom: var(--vb-space-3); z-index: var(--vb-z-chrome); }
 .vb-go[data-placement='gallery'] { position: relative; }
 .vb-go-label { font-weight: var(--vb-weight-bold); color: var(--vb-ink-strong); }
 .vb-go-field {
@@ -16,7 +16,7 @@
   color: var(--vb-ink-strong); background: var(--vb-surface-card); border: 1px solid var(--vb-line-strong);
 }
 .vb-go-field:hover { border-color: var(--vb-accent); }
-.vb-go-field:focus-visible { outline-offset: 1px; }
+.vb-go-field:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 .vb-go-hint { margin: 0; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
 .vb-go-said { margin: 0; }
 .vb-go-said:not(:empty) {

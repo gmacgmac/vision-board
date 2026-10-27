@@ -48,6 +48,35 @@
   --vb-focus-w: 2px;
   --vb-wire-w: 1.6px;
 
+  /* Layers (UI_01): the order things stack in. A dragged or open card draws over the wire layers;
+     chrome (toolbar, strips, banner) over the cards; panels and menus over the chrome. The values
+     are the ones the sheets already used. */
+  --vb-z-raised: 1; /* the top wire layer, a link mark */
+  --vb-z-hover: 2; /* a hovered or focused card */
+  --vb-z-drag: 3; /* a dragged card, the mode row, a card with its bubble open */
+  --vb-z-open: 4; /* an open frame, popover, tip, card menu */
+  --vb-z-chrome: 5; /* toolbar, strips, banner, Go to card */
+  --vb-z-panel: 6; /* the reply panel */
+  --vb-z-chrome-open: 7; /* the toolbar with a menu open */
+  --vb-z-skip: 10;
+  --vb-z-toast: 20;
+  --vb-z-lasso: 27; /* on the stage: the lasso, the selection bar, the menu, the note bubble */
+  --vb-z-selection: 28;
+  --vb-z-menu: 29;
+  --vb-z-bubble: 30;
+
+  /* Controls (UI_01): the heights of buttons and what they sit with. 22px and 28px stay literal
+     until a third use says what they are. */
+  --vb-control-h: 32px; /* a button, a select, a menu row, an icon button */
+  --vb-control-h-small: 26px; /* a small button, a note field */
+  --vb-control-target: 24px; /* the smallest target: a chip, a grip, a link mark */
+
+  /* Focus ring offsets (UI_01): the ring itself is --vb-focus-w. */
+  --vb-focus-offset: 2px;
+  --vb-focus-offset-tight: 1px; /* where 2px would not fit */
+  --vb-focus-offset-inset: -2px; /* a row that fills its box */
+  --vb-focus-offset-card: 3px;
+
   /* Motion */
   --vb-motion-fast: 120ms;
   --vb-motion: 360ms;

@@ -11,11 +11,10 @@
 // table finds new (`item.new`); a selection marks seen every card a condition holds for whose row's
 // `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected.
 import type { ViewNode } from '#format';
-import type { LedgerState } from '#actions';
+import type { LedgerState, SeenMark } from '#actions';
+import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
 import type { CardConditions, CardStep } from '#ui';
 import type { Selection } from './selection.ts';
-import type { SeenMark } from './updates.ts';
-import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from './updates.ts';
 import { versionTime } from './versions.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */

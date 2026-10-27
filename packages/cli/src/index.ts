@@ -8,4 +8,4 @@ export { parseArgs, assemble } from './args.ts';
 export type { Parsed, ParseResult } from './args.ts';
 export { formatText } from './format-text.ts';
 export { overview, commandHelp } from './help.ts';
-export { GLOBAL_FLAGS, GLOBAL_NAMES, DEFAULT_SERVER } from './globals.ts';
+export { GLOBAL_FLAGS, GLOBAL_NAMES } from './globals.ts';

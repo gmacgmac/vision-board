@@ -1,0 +1,34 @@
+{
+  "name": "base",
+  "title": "Shared base: menu, layer, dialog, button, chip, surfaces",
+  "entry": "openMenu, menuKeydown, dismissable, syncModal, backdropClick, whenShut; and the recipes in #ui/styles.css",
+  "selector": ".vb-btn",
+  "description": "What every screen and every sibling plugin builds its controls from, built once with every state and keyboard path (UI_01). The menu: a role=menu list of menuitem rows with the WAI-ARIA keys (Up and Down wrap, Home and End, Esc closes with focus back, Tab closes and moves on), a press outside closing it, its opener's aria-expanded, its first enabled row focused. The dismissable layer: Esc and a press (or only a click) outside close a menu, popover or tip, heard first in the capture phase, only while it is open; only Esc gives focus back. The modal dialog: a native <dialog> shown modal from the state that wants it (the browser keeps focus in it and gives it back on close), a click on its backdrop closing it like Cancel, its close event taken only while it is still shut. The recipes: the button, the chip, the menu's rows, the popover and panel surfaces, the dialog's parts, a key, code, visually hidden words, the focus ring, and the board's own baseline in any host's page (root.css).",
+  "files": {
+    "core": "menu-core.ts (menuStep), layer-core.ts (focusBackOn, isClick), dialog-core.ts (modalStep, onBackdrop): pure, no DOM",
+    "browser": "menu.ts (menuKeydown, openMenu, menuItems, firstItem), layer.ts (dismissable), dialog.ts (syncModal, backdropClick, whenShut): framework-free, nothing touches the DOM at import",
+    "styles": "root.css (.vb-board, the board's scope [class*='vb-'], box-sizing, [hidden], the host guard for h1-h3, p, button, input, select, textarea, dialog), a11y.css (focus ring, visually hidden), text.css (kbd, code), surface.css (popover and panel), button.css, chip.css, menu.css, dialog.css; first in #ui/styles.css; tokens only"
+  },
+  "states": ["button idle", "hover", "focus", "pressed", "on", "busy", "disabled", "primary", "small", "chip tones", "chip button", "menu open", "menu row hover", "menu row focus", "menu row pressed", "menu row ticked", "menu row disabled", "dialog", "dialog problem", "key", "code"],
+  "parts": {
+    "vb-btn": "a text button (vb-btn-primary: the one primary action; vb-btn-small); aria-pressed draws it on, aria-busy busy, disabled muted",
+    "vb-select": "a select beside the buttons, in their look",
+    "vb-chip": "a pill of words or a count; data-tone agent | answered | later | new; vb-chip-btn when it is a button",
+    "vb-menu-list": "the role=menu list on the popover surface, hung under its opener's right edge; a page that places it moves it",
+    "vb-menu-item": "a row: its icon, vb-menu-label (cut with an ellipsis), vb-menu-check (a menuitemcheckbox's tick), its kbd",
+    "vb-dialog": "the panel surface of a <dialog> (or a sample div): h2, vb-dialog-item, vb-field + vb-input or a textarea, vb-dialog-problem, vb-dialog-hint, vb-dialog-actions",
+    "vb-visually-hidden": "words for screen readers only",
+    "vb-board": "the root a host mounts the board in: its type, ink and the vb-board container"
+  },
+  "methods": {
+    "openMenu({ menu, opener?, within?, key?, onClose })": "a menu the caller drew open: its keys, a press outside, aria-expanded, first row focused; returns { close(focusBack?) }",
+    "menuKeydown(e, items, close, { back?, stop? })": "the keys alone, for a menu that hears its keys itself",
+    "dismissable({ within, dismiss, escape?, clickWithin? })": "listen for Esc and a press or click outside; returns the stop",
+    "syncModal(dialog, wants, opened?)": "show the dialog modal or close it, following its state",
+    "backdropClick(close)": "a click handler: a click on the backdrop closes it",
+    "whenShut(shut)": "a close-event handler taken only while the dialog is still shut"
+  },
+  "whenToUse": "Any menu, popover, tip or dialog on the board or in a sibling plugin; any text button, chip or key; anything focusable.",
+  "whenNotToUse": "A native select's list (MenuSelect: the browser's own keys), a pattern's own control with a look of its own (a card's quick actions, the layout row), or the image viewer's dialog (its own open and close motion).",
+  "accessibility": "The WAI-ARIA menu pattern: role=menu and menuitem rows, roving focus by the keys, Esc gives focus back to the opener, Tab moves on; the opener carries aria-haspopup, aria-expanded and aria-controls. Dialogs are native and modal: focus stays inside, the rest of the page is inert, focus goes back on close; each has a name (aria-labelledby) and a description. The focus ring is the decoration tier (Lc 30) in light and dark; every button keeps a visible label or a name."
+}

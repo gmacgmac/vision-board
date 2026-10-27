@@ -4,20 +4,19 @@
      Cancel is focused first so Enter never removes by accident. Opened by askConfirm() in
      shell.svelte.ts. The answer is taken on the button's submit or on Esc's cancel, for the request
      the dialog showed, and given on close (after the dialog has put focus back, so the asker can
-     move it). A second ask can come before that close event: it is never the one answered. -->
+     move it). A second ask can come before that close event: it is never the one answered. Opened by
+     the shared modal dialog (`#ui` `syncModal`, base/dialog.css). -->
 <script lang="ts">
   import { shell } from './shell.svelte.ts';
   import ConfirmList from './ConfirmList.svelte';
+  import { syncModal } from '#ui';
 
   let dlg: HTMLDialogElement;
   let cancel: HTMLButtonElement;
 
   $effect(() => {
-    if (shell.confirm && !dlg.open) {
-      dlg.returnValue = '';
-      dlg.showModal();
-      cancel.focus();
-    }
+    // Only opened here: the form's submit and Esc's cancel close it.
+    if (shell.confirm) syncModal(dlg, true, () => { dlg.returnValue = ''; cancel.focus(); });
   });
 
   /** The request answered and how, until the dialog's close event gives the answer. */

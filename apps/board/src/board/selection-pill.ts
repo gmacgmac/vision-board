@@ -3,7 +3,9 @@
 // It stays open until a press anywhere outside it (cards and the board's background included, so
 // a drag that pans or lassos too), a pan with the wheel, Esc (selection-flow.ts `collapse`), or
 // the selection clearing; a new selection starts closed. The selection's keys work either way
-// (commands.ts). View state only, like the selection itself (selection.ts).
+// (commands.ts). View state only, like the selection itself (selection.ts). The press outside is the
+// shared dismissable layer's (`#ui` `dismissable`).
+import { dismissable } from '#ui';
 import type { Selection } from './selection.ts';
 
 export interface PillDeps {
@@ -30,10 +32,9 @@ export function createPill(d: PillDeps): Pill {
     open = next;
     d.changed();
   };
-  const outside = (e: Event) => { if (open && !d.bar.contains(e.target as Node)) set(false); };
   // Ctrl or Cmd with the wheel zooms (pointer.ts); only a pan closes it.
   const pan = (e: WheelEvent) => { if (!e.ctrlKey && !e.metaKey) set(false); };
-  document.addEventListener('pointerdown', outside, true);
+  const stopOutside = dismissable({ within: (t) => !open || d.bar.contains(t), dismiss: () => set(false) });
   d.stage.addEventListener('wheel', pan, { passive: true });
   const stop = d.selection.onChange((c) => { if (!c.count) open = false; });
 
@@ -48,7 +49,7 @@ export function createPill(d: PillDeps): Pill {
       return true;
     },
     destroy() {
-      document.removeEventListener('pointerdown', outside, true);
+      stopOutside();
       d.stage.removeEventListener('wheel', pan);
       stop();
     },

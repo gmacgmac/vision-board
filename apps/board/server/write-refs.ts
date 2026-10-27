@@ -3,6 +3,7 @@
 // identity; a `retire` item becomes its stored line, with `cards` filled in. A number the board has
 // not given, or a key no node item carried, fails the item at its pointer.
 import type { LedgerEvent } from '#format';
+import { cardFields } from '#format';
 import type { LedgerState } from '#actions';
 import { retireCards } from '#actions';
 import { cardOn, noCard } from './edge.ts';
@@ -16,10 +17,11 @@ const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !
 /** One batch: the ledger, the writing agent, the path's board, and the keys of items that failed. */
 export interface Batch { ledger: Ledger; agent: string; board: string; failed: Set<string> }
 
-/** The fields of an item of `type` that hold a card's board number or `{ key }` (api.md 35): a
- * link's two ends, else `n`. A reply's `to` is the `seq` of the act it answers, never a card. */
-export const refsOf = (type: unknown): readonly ('n' | 'from' | 'to')[] =>
-  (type === 'link' || type === 'unlink' ? ['from', 'to'] : ['n']);
+/** The top-level fields of an item of `type` that hold one card's board number or `{ key }` (api.md
+ * 35), from the one card-reference table (`CARD_FIELDS`): a link's two ends, else `n`. A reply's
+ * `to` is the `seq` of the act it answers, never a card. */
+export const refsOf = (type: unknown): readonly string[] =>
+  cardFields(type).filter((f) => !f.in && !f.list).map((f) => f.field);
 
 /** The line this agent's retry key is stored on, across the project (api.md 29), as code reads it.
  * A key on a line agents don't see (an archived board, api.md 136) is free again: none is found. */
@@ -56,19 +58,20 @@ function numbered(b: Batch, s: LedgerState, n: unknown, pointer: string): number
   return id;
 }
 
-/** The item with every card it names by identity: `n`, `from`, `to` and a region's `center`. */
+/** The item with every card it names by identity, as the card-reference table lists them (`n`,
+ * `from`, `to`, a region's `center`); a top-level one may be a `{ key }`. */
 export function resolve(b: Batch, i: number, item: Rec): Rec {
   const s = b.ledger.state();
   const out: Rec = { ...item };
-  for (const f of refsOf(item.type)) {
-    const ref = item[f];
-    if (ref === undefined) continue;
-    const pointer = `/items/${i}/${f}`;
-    out[f] = isRec(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
+  for (const f of cardFields(item.type)) {
+    const holder = f.in === undefined ? item : item[f.in];
+    const ref = isRec(holder) ? holder[f.field] : undefined;
+    if (f.list || ref === undefined) continue; // an item names its cards one by one
+    const pointer = `/items/${i}/${f.in === undefined ? '' : `${f.in}/`}${f.field}`;
+    const id = f.in === undefined && isRec(ref) ? keyed(b, ref, pointer) : numbered(b, s, ref, pointer);
+    if (f.in === undefined) out[f.field] = id;
+    else out[f.in] = { ...(out[f.in] as Rec), [f.field]: id };
   }
-  const region = item.region;
-  if (item.type === 'region' && isRec(region) && region.center !== undefined)
-    out.region = { ...region, center: numbered(b, s, region.center, `/items/${i}/region/center`) };
   return out;
 }
 

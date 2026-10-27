@@ -1,5 +1,14 @@
 /* The CSS front door of packages/ui (`#ui/styles.css`, D-059): every pattern's sheet, in cascade
-   order. A host imports this one file, never a sheet by its path. */
+   order. A host imports this one file, never a sheet by its path. The shared base comes first (UI_01):
+   the board's own baseline in any page, then the recipes every pattern and screen reuses. */
+@import './base/root.css';
+@import './base/a11y.css';
+@import './base/text.css';
+@import './base/surface.css';
+@import './base/button.css';
+@import './base/chip.css';
+@import './base/menu.css';
+@import './base/dialog.css';
 @import './node/node.css';
 @import './node/node-popover.css';
 @import './node/node-steps.css';

@@ -4,6 +4,7 @@
 // (`.visionboard/ledger.jsonl`, so a home folder that only keeps `recent.json` does not count), else
 // none, and then nothing is sent and the server checks nothing. The page loads this package too, so
 // the caller hands in Node's `fs` and `path` rather than this file importing them.
+import { ENV } from '#format';
 
 /** The parts of Node's `fs` and `path` this needs (the page's types have no Node). */
 export interface ProjectFs {
@@ -11,9 +12,10 @@ export interface ProjectFs {
   path: { resolve(...parts: string[]): string; dirname(file: string): string; join(...parts: string[]): string };
 }
 
-export function projectOf(env: { readonly VB_PROJECT?: string | undefined }, cwd: string, node: ProjectFs): string | undefined {
+export function projectOf(env: Readonly<Record<string, string | undefined>>, cwd: string, node: ProjectFs): string | undefined {
   const { fs, path } = node;
-  if (env.VB_PROJECT) return path.resolve(cwd, env.VB_PROJECT);
+  const set = env[ENV.project];
+  if (set) return path.resolve(cwd, set);
   const hasBoard = (dir: string): boolean => {
     try { return fs.statSync(path.join(dir, '.visionboard', 'ledger.jsonl'), { throwIfNoEntry: false })?.isFile() ?? false; } catch { return false; }
   };

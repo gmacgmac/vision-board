@@ -1,14 +1,13 @@
 // The person removes cards and containers on the page (N24 rulings 1-5, api.md 141; personRemove
 // flag): Remove card on a selection (the selection bar's button, Delete or Backspace) and Remove
 // container in a container's settings. Each asks first in the confirm dialog (rule 8), with the words
-// of remove-words.ts, then sends the person's `retire` line through the one sender (sender.ts), which
+// of packages/actions' remove words, then sends the person's `retire` line through the one sender (sender.ts), which
 // refuses it while a past version shows or the board is locked. The cards leave the selection on the
 // redraw (controller.ts `selection.keep`); focus that was on what left goes back to the board.
-import type { LedgerState } from '#actions';
+import type { LedgerState, RemoveWords } from '#actions';
+import { cardsWords, containerWords } from '#actions';
 import type { ConfirmList } from '../shell/shell.svelte.ts';
 import type { RetireFields } from './io.ts';
-import type { RemoveWords } from './remove-words.ts';
-import { cardsWords, containerWords } from './remove-words.ts';
 
 export interface RemoveDeps {
   stage: HTMLElement;

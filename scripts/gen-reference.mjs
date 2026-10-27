@@ -6,7 +6,7 @@
 import { lookup, resolveParam } from './openapi-refs.mjs';
 import { inputSources, shape } from './schema-shape.mjs';
 
-const WHO = { none: 'anyone (no credentials)', agent: 'an agent (Bearer secret from `join`)', person: 'the person (the board page cookie)', 'agent-or-person': 'an agent (Bearer secret from `join`) or the person (the board page cookie)', run: 'a chat session\'s gate hook (Bearer run token)' };
+const WHO = { none: 'anyone (no credentials)', 'optional-agent': 'anyone; with an agent\'s Bearer secret from `join`, only what that agent holds', agent: 'an agent (Bearer secret from `join`)', person: 'the person (the board page cookie)', 'agent-or-person': 'an agent (Bearer secret from `join`) or the person (the board page cookie)', run: 'a chat session\'s gate hook (Bearer run token)' };
 const isObj = (v) => typeof v === 'object' && v !== null && !Array.isArray(v);
 const cell = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ').trim();
 const code = (s) => `\`${s}\``;
@@ -113,7 +113,7 @@ export function renderReference(doc, schemas, operations) {
     '> `npm test` fails when this file is out of date.', '',
     `API version ${doc.info?.version ?? ''}. ${doc.info?.description ?? ''}`, '',
     '| Operation | Method and path | Who | Agents get it |', '|---|---|---|---|',
-    ...operations.map((o) => `| [${code(o.operationId)}](#${o.operationId}) | ${code(`${o.method} ${o.path}`)} | ${o.auth === 'none' ? 'anyone' : o.auth} | ${o.xAgent ? 'yes' : 'no'} |`), '',
+    ...operations.map((o) => `| [${code(o.operationId)}](#${o.operationId}) | ${code(`${o.method} ${o.path}`)} | ${o.auth === 'none' || o.auth === 'optional-agent' ? 'anyone' : o.auth} | ${o.xAgent ? 'yes' : 'no'} |`), '',
     ...operations.flatMap((o) => section(doc, schemas, o)),
   ].join('\n').replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
 }

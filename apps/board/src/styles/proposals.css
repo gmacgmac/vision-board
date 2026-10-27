@@ -16,7 +16,7 @@
   color: var(--vb-ink-strong);
 }
 .vb-proposals[data-placement='board'] {
-  position: fixed; z-index: 4; left: var(--vb-space-3); top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-space-2));
+  position: fixed; z-index: var(--vb-z-open); left: var(--vb-space-3); top: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-space-2));
   max-width: calc(100vw - var(--vb-chat-w, 0px) - 2 * var(--vb-space-3));
 }
 .vb-proposals[data-placement='gallery'] { position: absolute; left: var(--vb-space-3); top: var(--vb-space-3); }
@@ -41,7 +41,7 @@
   border: 0; border-radius: var(--vb-radius-sm); background: transparent; cursor: pointer; color: var(--vb-ink-strong);
 }
 .vb-proposals .vb-proposals-hide {
-  display: inline-flex; align-items: center; justify-content: center; flex: none; height: 26px; min-width: 26px; padding: 0 var(--vb-space-2);
+  display: inline-flex; align-items: center; justify-content: center; flex: none; height: var(--vb-control-h-small); min-width: var(--vb-control-h-small); padding: 0 var(--vb-space-2);
 }
 .vb-proposals :is(.vb-proposals-hide, .vb-proposals-pill):is(:hover, [data-look='hover']) { background: color-mix(in srgb, var(--vb-ink) 8%, transparent); }
 .vb-proposals :is(.vb-proposals-hide, .vb-proposals-pill):active { transform: translateY(1px); }

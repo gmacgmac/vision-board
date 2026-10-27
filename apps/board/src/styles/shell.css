@@ -1,0 +1,25 @@
+/* The standalone page's own rules (UI_01): the page around the board, which a host replaces with its
+   own. Only here (and in chat-host.css) may a rule style html, body or a bare element: the board's
+   sheets name vb- classes or elements, so they reach nothing in a host's page (scripts/verify-style.mjs
+   checkScope). The board sets what it relies on itself (#ui/styles.css, base/root.css); these are
+   the page's defaults around it. body is the board's container here, as a host's pane is in nclite
+   (`.vb-board`), so the board sizes by its own width (@container vb-board). Tokens only. */
+
+* { box-sizing: border-box; }
+/* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; }
+body {
+  font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font);
+  color: var(--vb-ink);
+  background: var(--vb-surface-canvas);
+  overflow: hidden;
+  container: vb-board / inline-size;
+}
+:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+/* The page's own keys and code (the gallery's notes, the chat panel); the board's are base/text.css. */
+kbd {
+  font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;
+  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
+}
+code { font-family: var(--vb-font-mono); }

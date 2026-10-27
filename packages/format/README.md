@@ -47,5 +47,13 @@ never a file. The format-1 view files and transcript are archived in
   plain words for why an image is not shown), `imagePathProblem` (the one path check, used by the
   board's route and the Markdown renderer), `imageTypeByName`, `imageTypeOf` and the type
   `ImageName`. Pure string logic: no Node and no DOM.
-- **Files Node reads** (`#format/files`, `src/files.ts`, D-060): `SCHEMA_DIR`, `OPENAPI_FILE`, `FIXTURES_DIR`.
+- **Geometry and text** (ARCH_04): `src/geometry.ts`, the one home of a box on the board (`Box`,
+  `Point`, `Size`, `clamp`, `overlaps`, `touches`, `boundsOf`, `boxAround`, `boxBetween`; layout and
+  `packages/ui` re-export what they name; `tests/geometry.test.ts`), and `src/clip.ts` (`clip`, a line cut to
+  a length).
+- **Names defined once** (ARCH_02, `src/constants.ts`): `ENV`, the `VB_*` environment variable names;
+  the port, default server, folder header and route prefix are generated into `operations.generated.ts`
+  (`DEFAULT_PORT`, `DEFAULT_SERVER`, `PROJECT_HEADER`, `ROUTE_PREFIX`; `tests/constants.test.ts`).
+- **Files Node reads** (`#format/files`, `src/files.ts`, D-060): `SCHEMA_DIR`, `OPENAPI_FILE`, `TOOLS_FILE`
+  (the tool table `npm run gen` writes), `FIXTURES_DIR`.
   Not on `#format`, which the page loads, so `node:url` stays out of the page bundle.

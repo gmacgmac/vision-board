@@ -19,16 +19,16 @@
 //   one is in flight and error when it was refused; Check again and Restart read list_apps again.
 //   Each says what happened (the toast, a live region) and keeps focus on the card;
 // - "Allowed ▾" in the footer (card-polish FE_01): its menu, one item, Stop app, with the board's
-//   menu keys (menu-keys.ts); Esc or a press outside closes it.
+//   menu keys (the shared menu, `#ui` `openMenu`); Esc or a press outside closes it.
 import type { ActionId, LedgerEvent, ViewNode } from '#format';
 import type { LedgerState } from '#actions';
 import { ACTIONS } from '#actions';
 import type { BoardLayout } from '#layout';
 import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
-import { appView } from '#ui';
+import type { OpenMenu } from '#ui';
+import { appView, openMenu } from '#ui';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from './app-words.ts';
-import { menuKeydown } from './menu-keys.ts';
 import type { ActFields, AppCallRefusal } from './io.ts';
 import { callAppTool, panelState, savePanelState } from './io.ts';
 import type { PanelKey } from './panel-states.ts';
@@ -106,34 +106,18 @@ export function watchTheme(changed: () => void): () => void {
 }
 
 /** "Allowed ▾"'s menu on an app card (card-polish FE_01): one open at a time, its items focused and
- * moved through with the board's menu keys; Esc gives focus back to its button, Tab or a press
+ * moved through with the shared menu's keys; Esc gives focus back to its button, Tab or a press
  * outside just closes it. Drawn in the card's footer (node-template.ts `appStatus`). */
 function createAppMenus(): { toggle(opener: HTMLButtonElement): void; close(focusBack: boolean): void; destroy(): void } {
-  let open: { opener: HTMLButtonElement; menu: HTMLElement } | null = null;
-  const items = (menu: HTMLElement) => [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')];
-  const keydown = (e: KeyboardEvent) => { if (open) menuKeydown(e, items(open.menu), close); };
-  const outside = (e: PointerEvent) => { if (open && !open.menu.parentElement!.contains(e.target as Node)) close(false); };
-  function close(focusBack: boolean): void {
-    if (!open) return;
-    const { opener, menu } = open;
-    open = null;
-    menu.hidden = true;
-    opener.setAttribute('aria-expanded', 'false');
-    menu.removeEventListener('keydown', keydown);
-    document.removeEventListener('pointerdown', outside, true);
-    if (focusBack && opener.isConnected) opener.focus({ preventScroll: true });
-  }
+  let open: { opener: HTMLButtonElement; menu: OpenMenu } | null = null;
+  const close = (focusBack: boolean): void => open?.menu.close(focusBack);
   function toggle(opener: HTMLButtonElement): void {
     const menu = document.getElementById(opener.getAttribute('aria-controls') ?? '');
     const again = open?.opener === opener;
     close(again);
     if (again || !menu) return;
-    open = { opener, menu };
     menu.hidden = false;
-    opener.setAttribute('aria-expanded', 'true');
-    menu.addEventListener('keydown', keydown);
-    document.addEventListener('pointerdown', outside, true);
-    items(menu)[0]?.focus({ preventScroll: true });
+    open = { opener, menu: openMenu({ menu, opener, within: (t) => !!menu.parentElement?.contains(t), onClose: () => { open = null; menu.hidden = true; } }) };
   }
   return { toggle, close, destroy: () => close(false) };
 }

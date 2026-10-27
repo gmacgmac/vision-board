@@ -1,25 +1,13 @@
-/* Board shell: toolbar, stage, regions, wires, reply panel, dialog. Tokens only. */
+/* Board shell: toolbar, stage, regions, wires, reply panel. Tokens only. The page's own rules are
+   shell.css (the standalone page); buttons, chips, menus, dialogs, kbd and the focus ring are the
+   shared base (#ui/styles.css, packages/ui/src/base/). */
 
-* { box-sizing: border-box; }
-/* Author display rules (flex, grid) beat the browser's [hidden]; this keeps hidden hidden. */
-[hidden] { display: none !important; }
-html, body { margin: 0; height: 100%; }
-body {
-  font: var(--vb-weight-regular) var(--vb-text-md) / 1.45 var(--vb-font);
-  color: var(--vb-ink);
-  background: var(--vb-surface-canvas);
-  overflow: hidden;
-}
-:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
-.vb-visually-hidden {
-  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
-}
-.vb-skip { position: absolute; left: var(--vb-space-2); top: -100px; z-index: 10; }
+.vb-skip { position: absolute; left: var(--vb-space-2); top: -100px; z-index: var(--vb-z-skip); }
 .vb-skip:focus { top: var(--vb-space-2); }
 
 /* Toolbar */
 .vb-toolbar {
-  position: fixed; inset: 0 0 auto 0; height: var(--vb-toolbar-h); z-index: 5;
+  position: fixed; inset: 0 0 auto 0; height: var(--vb-toolbar-h); z-index: var(--vb-z-chrome);
   display: flex; align-items: center; gap: var(--vb-space-3); padding: 0 var(--vb-space-4);
   background: var(--vb-surface-region); border-bottom: 1px solid var(--vb-line);
 }
@@ -46,22 +34,22 @@ body {
    Agents bot, beside its number (review polish FIX_01): decoration in the chip's own ink, Lc 64.0 light,
    49.1 dark (with-agent task), over the 30 tier. */
 [data-narrow] .vb-counts .vb-chip[data-tone='agent'] .vb-btn-icon { display: block; width: 14px; height: 14px; }
-[data-narrow] .vb-toolbar-end .vb-btn-iconic { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
-/* A window under 1200px with every toolbar control showing (Chat, Send to agent): the gaps and side padding
+[data-narrow] .vb-toolbar-end .vb-btn-iconic { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
+/* A board under 1200px wide with every toolbar control showing (Chat, Send to agent): the gaps and side padding
    tighten so the toolbar stays whole; the board picker keeps its 220px. */
-@media (max-width: 1200px) {
+@container vb-board (max-width: 1200px) {
   .vb-toolbar { gap: var(--vb-space-2); padding-inline: var(--vb-space-2); }
 }
-/* A window of 1000px or less with the toolbarMenu flag (data-menu): every control still shows down to 768px,
+/* A board of 1000px or less with the toolbarMenu flag (data-menu): every control still shows down to 768px,
    the smallest supported width. The gaps tighten, the app icon steps aside, the board picker may go to 150px,
    the version and containers dropdowns show their choice cut to a set width (their lists still open whole),
    and the count chips draw closer. */
-@media (max-width: 1000px) {
+@container vb-board (max-width: 1000px) {
   .vb-toolbar[data-menu], .vb-toolbar[data-menu] :is(.vb-counts, .vb-toolbar-end) { gap: var(--vb-space-1); }
   .vb-toolbar[data-menu] .vb-brand { display: none; }
   .vb-toolbar[data-menu] > #board { min-width: 150px; }
   .vb-toolbar[data-menu] > select:is(#version, #containers) { width: 6em; flex-shrink: 0; }
-  .vb-toolbar[data-menu] .vb-counts .vb-chip { justify-content: center; min-width: 24px; padding: 0 var(--vb-space-1); }
+  .vb-toolbar[data-menu] .vb-counts .vb-chip { justify-content: center; min-width: var(--vb-control-target); padding: 0 var(--vb-space-1); }
 }
 .vb-zoom { display: flex; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); overflow: hidden; }
 .vb-zoom .vb-btn { border: 0; border-radius: 0; }
@@ -73,46 +61,22 @@ body {
   border-inline: 1px solid var(--vb-line-strong); background: var(--vb-surface-card);
   color: var(--vb-ink); font-size: var(--vb-text-sm); font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.vb-select, .vb-btn {
-  font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
-  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
-  height: 32px; padding: 0 var(--vb-space-3); cursor: pointer;
-}
 /* The container finder (navigation FE_02): a menu that shows its name, not the longest container. */
 /* The board picker gives up room first, as the title did (ellipsis), but never under 220px; the other
    dropdowns keep their text whole. The end group makes room by showing icons (below). */
 .vb-toolbar > #board { min-width: 220px; }
 .vb-select-menu { width: 8.5em; flex-shrink: 0; }
-.vb-btn:hover { background: var(--vb-surface-sunken); }
-/* data-look draws a state without the pointer: the gallery's samples only. */
-.vb-btn:active, .vb-btn[data-look='pressed'] { transform: translateY(1px); }
-.vb-btn[aria-pressed='true'] { background: var(--vb-accent-soft); border-color: var(--vb-accent); color: var(--vb-accent); }
-.vb-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.vb-btn-primary { background: var(--vb-accent-fill); border-color: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
-.vb-btn-primary:hover, .vb-btn-primary[data-look='hover'] { background: var(--vb-accent-fill-hover); }
-.vb-btn-small { height: 26px; padding: 0 var(--vb-space-2); font-size: var(--vb-text-sm); }
-.vb-chip {
-  display: inline-flex; align-items: center; gap: var(--vb-space-1); height: 24px; padding: 0 var(--vb-space-2);
-  border-radius: var(--vb-radius-pill); background: var(--vb-surface-sunken); color: var(--vb-ink);
-  font-size: var(--vb-text-sm); white-space: nowrap;
-}
-.vb-chip b { color: var(--vb-ink-strong); }
-.vb-chip[data-tone='agent'] { background: var(--vb-state-comment-soft); color: var(--vb-state-comment); }
-.vb-chip[data-tone='answered'] { background: var(--vb-state-ack-soft); color: var(--vb-state-ack); }
-.vb-chip[data-tone='later'] { background: var(--vb-state-later-soft); color: var(--vb-state-later); }
-.vb-chip[data-tone='new'] { background: var(--vb-accent-soft); color: var(--vb-accent); }
-/* "N flagged" (cardFlag flag): a chip that is a button, stepping through the flagged cards. Its words
-   are the chip's ink; the flag is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on
-   the chip; 58.7, -53.6 hovered). */
-.vb-chip-btn { border: 0; font: inherit; font-size: var(--vb-text-sm); cursor: pointer; }
-.vb-chip-btn:hover, .vb-menu-face:hover, .vb-menu-face[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
-.vb-chip-btn:active, .vb-menu-face:active, .vb-menu-face[data-look='pressed'] { transform: translateY(1px); }
+/* "N flagged" (cardFlag flag) is a chip that is a button (#ui base/chip.css `.vb-chip-btn`); its flag
+   is decoration in --vb-state-flag (APCA Lc 65.1 light, -55.5 dark on the chip; 58.7, -53.6 hovered). */
+/* The "N open" chip's face (MenuSelect.svelte): hovered over any tone. */
+.vb-chip.vb-menu-face:hover, .vb-chip.vb-menu-face[data-look='hover'] { background: var(--vb-surface-deep); color: var(--vb-ink-strong); }
+.vb-menu-face:active, .vb-menu-face[data-look='pressed'] { transform: translateY(1px); }
 /* A menu dropdown over a chip (shell/MenuSelect.svelte with a face: the "N open" chip, open-list FE_01):
    the select lies unseen over the chip, so a click or a key opens its list while the chip keeps its
    look; the chip draws the hover and pressed looks above and the focus ring the select would. */
 .vb-menu-face { position: relative; cursor: pointer; }
 .vb-menu-over { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font: inherit; cursor: pointer; }
-.vb-menu-face:has(.vb-menu-over:focus-visible), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
+.vb-menu-face:has(.vb-menu-over:focus-visible), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
 .vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag); }
 
 /* Stage and world */
@@ -127,6 +91,8 @@ body {
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }
+/* Focused (the skip link, a click on the board) it draws no ring: the cards and their own rings do. */
+.vb-stage:focus-visible { outline: none; }
 /* Cmd (Ctrl elsewhere) held over the board (review polish round 2 ruling 6, pointer.ts panKey): a drag
    then pans from anywhere, so everything on the board shows a hand but a text field, which keeps its
    caret; during any pan, a closed hand. Over every part's own cursor, so marked important. */
@@ -151,7 +117,7 @@ body {
   --note-surface: var(--card-surface);
 }
 .vb-world[data-wire-layers] .vb-wires:not(.vb-wires-top) { z-index: -1; }
-.vb-wires-top { z-index: 1; }
+.vb-wires-top { z-index: var(--vb-z-raised); }
 
 /* Wires and lanes */
 .vb-wire { fill: none; stroke: var(--vb-wire); stroke-width: var(--vb-wire-w); stroke-linecap: round; }
@@ -168,17 +134,17 @@ body {
 .vb-wire-tag rect { fill: var(--vb-surface-canvas); }
 .vb-wire-tag .vb-wire-label { stroke: none; }
 .vb-link-marks { position: absolute; left: 0; top: 0; }
-.vb-link-mark { position: absolute; left: -12px; top: -12px; z-index: 1; }
-.vb-link-mark[data-tip-open] { z-index: 5; }
+.vb-link-mark { position: absolute; left: -12px; top: -12px; z-index: var(--vb-z-raised); }
+.vb-link-mark[data-tip-open] { z-index: var(--vb-z-chrome); }
 .vb-link-mark-btn {
-  display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+  display: grid; place-items: center; width: var(--vb-control-target); height: var(--vb-control-target); padding: 0; border: 0; border-radius: 50%;
   background: none; color: var(--vb-wire); cursor: help;
 }
 .vb-link-mark-btn::before {
   content: ''; width: 8px; height: 8px; border-radius: 50%; border: 2px solid currentColor; background: var(--vb-surface-canvas);
 }
 .vb-link-mark-btn:hover, .vb-link-mark[data-tip-open] .vb-link-mark-btn { color: var(--vb-wire-hot); }
-.vb-link-mark-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 1px; }
+.vb-link-mark-btn:focus-visible { outline-offset: var(--vb-focus-offset-tight); }
 .vb-link-mark-btn:active { transform: scale(0.9); }
 .vb-link-mark .vb-link-tip { top: calc(100% + var(--vb-space-1)); left: 50%; transform: translateX(-50%); }
 .vb-link-mark[data-tip-open] .vb-link-tip { display: block; }
@@ -196,7 +162,7 @@ body {
   display: flex; align-items: center; gap: var(--vb-space-3); padding: var(--vb-space-2) var(--vb-space-4);
   background: var(--vb-accent-soft); color: var(--vb-ink-strong); border-bottom: 1px solid var(--vb-line);
 }
-.vb-banner[data-placement='board'] { position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: 5; }
+.vb-banner[data-placement='board'] { position: fixed; top: var(--vb-toolbar-h); left: 0; right: 0; z-index: var(--vb-z-chrome); }
 .vb-banner[data-placement='gallery'] { border: 1px solid var(--vb-line); border-radius: var(--vb-radius-md); }
 .vb-banner-text { margin: 0; font-size: var(--vb-text-sm); }
 .vb-banner-text b { font-weight: var(--vb-weight-bold); }
@@ -217,20 +183,16 @@ body {
   color: var(--vb-ink-subtle); font-size: var(--vb-text-lg); padding: var(--vb-space-6); pointer-events: none;
 }
 .vb-toast {
-  position: fixed; left: 50%; bottom: var(--vb-space-6); transform: translateX(-50%); z-index: 20;
+  position: fixed; left: 50%; bottom: var(--vb-space-6); transform: translateX(-50%); z-index: var(--vb-z-toast);
   max-width: min(640px, 90vw); padding: var(--vb-space-2) var(--vb-space-4); border-radius: var(--vb-radius-md);
   background: var(--vb-ink-strong); color: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
 }
 .vb-toast[data-tone='error'] { background: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
-kbd {
-  font: var(--vb-text-xs) var(--vb-font-mono); padding: 0 4px; border-radius: 4px;
-  border: 1px solid var(--vb-line-strong); background: var(--vb-surface-card); color: var(--vb-ink-strong);
-}
 
 /* Reply panel */
 .vb-reply {
   position: fixed; top: calc(var(--vb-toolbar-h) + var(--vb-space-3)); right: calc(var(--vb-chat-w, 0px) + var(--vb-space-3)); bottom: var(--vb-space-3);
-  width: min(420px, 92vw); z-index: 6; display: flex; flex-direction: column; gap: var(--vb-space-2);
+  width: min(420px, 92vw); z-index: var(--vb-z-panel); display: flex; flex-direction: column; gap: var(--vb-space-2);
   padding: var(--vb-space-4); border-radius: var(--vb-radius-lg); background: var(--vb-surface-raised);
   border: 1px solid var(--vb-line); box-shadow: var(--vb-shadow-lift);
 }
@@ -241,60 +203,15 @@ kbd {
   flex: 1; margin: 0; overflow: auto; white-space: pre-wrap; font: var(--vb-text-md) / 1.6 var(--vb-font-mono);
   color: var(--vb-ink-strong); background: var(--vb-surface-sunken); border-radius: var(--vb-radius-md); padding: var(--vb-space-3);
 }
-code { font-family: var(--vb-font-mono); }
 
-/* Note dialog */
-.vb-dialog {
-  width: min(480px, 92vw); border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); padding: var(--vb-space-5);
-  background: var(--vb-surface-raised); color: var(--vb-ink); box-shadow: var(--vb-shadow-lift);
-}
-.vb-dialog::backdrop { background: var(--vb-scrim); }
-.vb-dialog h2 { margin: 0 0 var(--vb-space-1); font-size: var(--vb-text-lg); color: var(--vb-ink-strong); }
-.vb-dialog-item { margin: 0 0 var(--vb-space-3); color: var(--vb-ink-subtle); }
-.vb-dialog textarea, .vb-dialog .vb-input {
-  width: 100%; font: inherit; color: var(--vb-ink-strong); background: var(--vb-surface-card);
-  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md); padding: var(--vb-space-2); resize: vertical;
-}
-/* The board dialog's fields (BoardDialog.svelte): a label above each, the problem below them. */
-.vb-dialog .vb-field { display: block; margin: var(--vb-space-3) 0 var(--vb-space-1); font-weight: 600; color: var(--vb-ink-strong); }
-.vb-field-note { font-weight: 400; color: var(--vb-ink-subtle); }
-.vb-dialog .vb-input:hover, .vb-dialog textarea:hover { border-color: var(--vb-accent); }
-.vb-dialog .vb-input:user-invalid { border-color: var(--vb-state-drop); }
-.vb-dialog-problem {
-  margin: var(--vb-space-3) 0 0; padding: var(--vb-space-1) var(--vb-space-2); color: var(--vb-ink-strong);
-  border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft); border-radius: var(--vb-radius-sm);
-}
-.vb-btn[aria-busy='true'] { cursor: progress; }
-.vb-dialog-hint { margin: var(--vb-space-1) 0 0; font-size: var(--vb-text-xs); color: var(--vb-ink-subtle); }
-.vb-dialog-actions { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-4); }
-
-/* The Move to list (3_FE_03 ruling 8, move-menu.ts): the board's containers, Later last, drawn on
-   the stage above the cards and the selection bar, in the settings menu's look. The toolbar's "⋯"
-   menu (toolbarMenu flag, ToolbarMenu.svelte) has the same look. */
-.vb-move-menu, .vb-menu-list {
-  position: absolute; z-index: 29; left: 0; top: 0; display: grid; min-width: 200px; max-width: 360px; padding: 3px;
-  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-md);
-  background: var(--vb-surface-raised); box-shadow: var(--vb-shadow-lift);
-}
-.vb-move-menu[hidden], .vb-menu-list[hidden] { display: none; }
-.vb-move-item, .vb-menu-item {
-  display: block; width: 100%; min-height: 32px; padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px;
-  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium);
-  color: var(--vb-ink-strong); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.vb-move-item:hover, .vb-move-item:focus-visible, .vb-menu-item:hover, .vb-menu-item:focus-visible { background: var(--vb-surface-sunken); }
-:is(.vb-move-item, .vb-menu-item):focus-visible { outline-offset: -2px; }
-:is(.vb-move-item, .vb-menu-item):active { transform: translateY(1px); }
-:is(.vb-move-item, .vb-menu-item)[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
-:is(.vb-move-item, .vb-menu-item)[aria-disabled='true']:hover { background: none; }
+/* The Move to list (3_FE_03 ruling 8, move-menu.ts): the shared menu (#ui base/menu.css), drawn on
+   the stage above the cards and the selection bar at the place move-menu.ts gives it, its items one
+   line of words each. */
+.vb-menu-list.vb-move-menu { left: 0; right: auto; top: 0; min-width: 200px; }
+.vb-menu-item.vb-move-item { display: block; }
 /* The "⋯" menu hangs under its button at the toolbar's right end, over the requests strip and the
    reply panel while open; each row is its icon, its words, then its tick and key. */
-.vb-toolbar:has(.vb-menu-btn[aria-expanded='true']) { z-index: 7; }
+.vb-toolbar:has(.vb-menu-btn[aria-expanded='true']) { z-index: var(--vb-z-chrome-open); }
 .vb-menu { position: relative; }
-.vb-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; padding: 0; }
+.vb-btn.vb-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
 .vb-menu .vb-btn-icon { display: block; }
-.vb-menu-list { left: auto; right: 0; top: calc(100% + var(--vb-space-1)); min-width: 220px; }
-.vb-menu-item { display: flex; align-items: center; gap: var(--vb-space-2); }
-.vb-menu-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-.vb-menu-check { color: var(--vb-accent); font-weight: var(--vb-weight-bold); visibility: hidden; }
-.vb-menu-item[aria-checked='true'] .vb-menu-check { visibility: visible; }

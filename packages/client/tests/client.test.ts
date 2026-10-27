@@ -2,8 +2,10 @@
 // are parsed into ApiProblem, and a missing path parameter is refused before any request.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import type { OperationId } from '#format';
 import { OPERATIONS } from '#format';
-import { ApiProblem, buildRequest, createClient, urlFor } from '../src/index.ts';
+import type { CallInput } from '../src/index.ts';
+import { ApiProblem, buildRequest, createClient, httpTransport, urlFor } from '../src/index.ts';
 
 const BASE = 'http://127.0.0.1:4466';
 
@@ -23,15 +25,15 @@ const json = (body: unknown, status = 200, type = 'application/json; charset=utf
 test('every operation in the route table builds a request with its method and path', () => {
   for (const [id, op] of Object.entries(OPERATIONS)) {
     const input = Object.fromEntries(op.pathParams.map((p) => [p, p === 'n' ? 7 : 'x-1']));
-    const r = buildRequest(BASE, id as keyof typeof OPERATIONS, op.method === 'GET' ? input : { ...input, body: {} });
+    const r = buildRequest(id as keyof typeof OPERATIONS, op.method === 'GET' ? input : { ...input, body: {} });
     const path = op.path.replace(/\{n\}/, '7').replace(/\{[^}]+\}/g, 'x-1');
-    assert.deepEqual([r.method, r.url], [op.method, `${BASE}${path}`], id);
+    assert.deepEqual([r.method, `/api/${r.path}`], [op.method, path], id);
   }
 });
 
 test('path parameters are encoded, the other inputs become the query, a GET has no body', () => {
-  const r = buildRequest(BASE, 'show_node', { board: 'a b/c', n: 3, linked: true });
-  assert.equal(r.url, `${BASE}/api/boards/a%20b%2Fc/nodes/3?linked=true`);
+  const r = buildRequest('show_node', { board: 'a b/c', n: 3, linked: true });
+  assert.equal(r.path, 'boards/a%20b%2Fc/nodes/3?linked=true');
   assert.equal(r.body, undefined);
   assert.equal(r.headers['Content-Type'], undefined);
   assert.equal(r.headers.Accept, 'application/json, application/problem+json');
@@ -39,28 +41,29 @@ test('path parameters are encoded, the other inputs become the query, a GET has 
 });
 
 test('a write sends its body as JSON, and the secret as a Bearer header', () => {
-  const r = buildRequest(BASE, 'act', { board: 'roadmap', body: { type: 'act', action: 'ack', n: 1, ver: 1 } }, { secret: 's3cret' });
-  assert.deepEqual([r.method, r.url], ['POST', `${BASE}/api/boards/roadmap/act`]);
+  const r = buildRequest('act', { board: 'roadmap', body: { type: 'act', action: 'ack', n: 1, ver: 1 } }, { secret: 's3cret' });
+  assert.deepEqual([r.method, r.path], ['POST', 'boards/roadmap/act']);
   assert.equal(r.headers['Content-Type'], 'application/json');
   assert.equal(r.headers.Authorization, 'Bearer s3cret');
   assert.deepEqual(JSON.parse(r.body!), { type: 'act', action: 'ack', n: 1, ver: 1 });
-  assert.equal(buildRequest(BASE, 'list_boards').headers.Authorization, undefined);
-  assert.equal(buildRequest(BASE, 'read_ledger', {}, { accept: 'application/jsonl' }).headers.Accept, 'application/jsonl');
+  assert.equal(buildRequest('list_boards').headers.Authorization, undefined);
+  assert.equal(buildRequest('read_ledger', {}, { accept: 'application/jsonl' }).headers.Accept, 'application/jsonl');
 });
 
 test('a folder is sent as VB-Project, percent-encoded so the header stays ASCII; none, no header', () => {
-  assert.equal(buildRequest(BASE, 'list_boards', {}, { project: '/home/example/my projects/café' }).headers['VB-Project'], '/home/example/my%20projects/caf%C3%A9');
-  assert.equal(buildRequest(BASE, 'list_boards').headers['VB-Project'], undefined);
+  assert.equal(buildRequest('list_boards', {}, { project: '/home/example/my projects/café' }).headers['VB-Project'], '/home/example/my%20projects/caf%C3%A9');
+  assert.equal(buildRequest('list_boards').headers['VB-Project'], undefined);
 });
 
 test('a missing path parameter, a body on a GET or an unknown operation is refused before any request', async () => {
   const { calls, fetch } = fake(() => json({}));
   const client = createClient({ base: BASE, fetch });
+  // Inputs the types refuse too: sent as a relay would (an id read at run time, any named values).
   for (const [id, input] of [['get_board', {}], ['show_node', { board: 'roadmap' }], ['act', { board: '', body: {} }]] as const) {
-    await assert.rejects(client.call(id, input), (err: unknown) =>
+    await assert.rejects(client.call(id as OperationId, input as CallInput), (err: unknown) =>
       err instanceof ApiProblem && err.code === 'bad-request' && err.status === 400 && /is part of the path/.test(err.detail));
   }
-  await assert.rejects(client.call('list_boards', { body: {} }), /takes no body/);
+  await assert.rejects(client.call('list_boards' as OperationId, { body: {} }), /takes no body/);
   await assert.rejects(client.call('nope' as 'list_boards'), /no operation "nope"/);
   assert.equal(calls.length, 0);
 });
@@ -75,10 +78,22 @@ test('call sends what buildRequest built, same-origin credentials included, and 
   assert.equal(client.url('get_board', { board: 'roadmap' }), `${BASE}/api/boards/roadmap`);
 });
 
+test('the client holds no origin: its transport gets each path relative to the route prefix', async () => {
+  const sent: [string, RequestInit][] = [];
+  const client = createClient({ transport: async (path, init) => { sent.push([path, init]); return json({ boards: [], head: 0 }); } });
+  await client.call('list_boards');
+  await client.call('show_node', { board: 'roadmap', n: 4, linked: true });
+  assert.deepEqual(sent.map(([path, init]) => [path, init.method]), [['boards', 'GET'], ['boards/roadmap/nodes/4?linked=true', 'GET']]);
+  // The standalone transport is fetch on <origin>/api/.
+  const { calls, fetch } = fake(() => json({}));
+  await httpTransport(`${BASE}/`, fetch)('boards', {});
+  assert.equal(calls[0]!.url, `${BASE}/api/boards`);
+});
+
 test('JSON Lines come back as a list', async () => {
   const { fetch } = fake(() => json('{"seq":1}\n{"seq":2}\n', 200, 'application/jsonl'));
   const client = createClient({ base: BASE, fetch });
-  assert.deepEqual(await client.call('read_ledger', {}, { accept: 'application/jsonl' }), [{ seq: 1 }, { seq: 2 }]);
+  assert.deepEqual(await client.call('read_ledger', {}, { accept: 'application/jsonl' }) as unknown, [{ seq: 1 }, { seq: 2 }]);
 });
 
 test('a problem answer is thrown as an ApiProblem with every field', async () => {

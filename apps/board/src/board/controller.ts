@@ -1,4 +1,4 @@
-// The board controller: holds the project ledger state (live.ts), works the open board out from it (board-data.ts), draws
+// The board controller: holds the project ledger state (live.ts), works the open board out from it (packages/actions board-data.ts), draws
 // what changed (draw.ts), and routes every person action through the action layer and the I/O module. Layout, formats and
 // actions live in packages/; the modules beside this one wire them to the canvas: boards.ts (boot, picker, kept view),
 // attention.ts (marks, badges, toast, board seen), focus.ts (navigation), wiring.ts (input), item-acts.ts (review buttons),
@@ -7,14 +7,15 @@
 // Later, Move to), sender.ts (sending acts), versions.ts (the version dropdown, the read-only past view), lock-flow.ts (a locked board), finder.ts (the
 // container finder), board-edit.ts (New board, Rename board, Archive board, Restore), proposal-flow.ts (proposals), update-flow.ts (changed cards),
 // parking.ts (handover, replies), chat-bridge.ts (the chat panel's side of the board, chatPanel flag), flag-flow.ts (the
-// person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
+// person's flag, cardFlag flag), packages/actions retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
 // card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), history-flow.ts (a card's history box), toolbar-counts.ts (the toolbar's numbers)
 // and app-cards.ts (app cards: their state from list_apps, their frames, Allow and Stop app; appCards flag).
 import { flagOn, type LedgerEvent, type View, type ViewNode } from '#format';
-import { placedView } from '#actions';
+import { answeredIds, boardData, goTarget, placedView, retiredCounts } from '#actions';
+import type { RetiredCount } from '#actions';
 import { ApiError, type BoardData } from './io.ts';
 import { createBoards } from './boards.ts';
-import { answeredIds, boardData, numberedView } from './board-data.ts';
+import { numberedView } from './board-data.ts';
 import { createAttention } from './attention.ts';
 import { type BoardElements, createDrawing } from './draw.ts';
 import { createLive } from './live.ts';
@@ -43,8 +44,7 @@ import { createFlagFlow } from './flag-flow.ts';
 import { createNoteHide } from './note-hide.ts';
 import { createHistoryFlow } from './history-flow.ts';
 import { createRemoveFlow } from './remove-flow.ts';
-import { retiredCounts, type RetiredCount } from './retired.ts';
-import { createGoTo, GO_PAUSE, type GoTo, goTarget } from './go-to-card.ts';
+import { createGoTo, GO_PAUSE, type GoTo } from './go-to-card.ts';
 import { showCounts } from './toolbar-counts.ts';
 import { createAppCards } from './app-cards.ts';
 import type { CommandId } from './commands.ts';

@@ -5,7 +5,7 @@
 .vb-folder-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--vb-space-1); margin: 0; padding: 0; list-style: none; }
 .vb-folder-crumbs li + li::before { content: '/'; margin-right: var(--vb-space-1); color: var(--vb-ink-subtle); }
 .vb-folder-crumb {
-  min-height: 24px; padding: 0 var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm); background: none;
+  min-height: var(--vb-control-target); padding: 0 var(--vb-space-1); border: 0; border-radius: var(--vb-radius-sm); background: none;
   font: inherit; font-weight: var(--vb-weight-medium); color: var(--vb-accent); cursor: pointer;
 }
 .vb-folder-crumb:hover { background: var(--vb-surface-sunken); text-decoration: underline; }
@@ -22,12 +22,12 @@
 }
 .vb-folder-list { margin: 0; padding: 0; list-style: none; }
 .vb-folder-row {
-  display: flex; align-items: center; gap: var(--vb-space-2); width: 100%; min-height: 32px; padding: var(--vb-space-1) var(--vb-space-2);
+  display: flex; align-items: center; gap: var(--vb-space-2); width: 100%; min-height: var(--vb-control-h); padding: var(--vb-space-1) var(--vb-space-2);
   border: 0; border-radius: var(--vb-radius-sm); background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md);
   color: var(--vb-ink-strong); text-align: left;
 }
 .vb-folder-row:hover, .vb-folder-row:focus-visible { background: var(--vb-surface-sunken); }
-.vb-folder-row:focus-visible { outline-offset: -2px; }
+.vb-folder-row:focus-visible { outline-offset: var(--vb-focus-offset-inset); }
 .vb-folder-row:active { transform: translateY(1px); }
 .vb-folder-row:disabled { cursor: progress; transform: none; }
 .vb-folder-row .vb-btn-icon { display: block; flex: none; width: 18px; height: 18px; color: var(--vb-ink-subtle); }

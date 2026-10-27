@@ -22,7 +22,6 @@ vb-node .vb-node-btabs:has(> .vb-node-btab:not([hidden]) ~ .vb-node-btab:not([hi
 vb-node .vb-node-btab::after { content: ''; position: absolute; inset: -3px -2px; }
 vb-node .vb-node-btab:hover, vb-node .vb-node-btab[aria-expanded='true'] { border-color: var(--vb-accent); }
 vb-node .vb-node-btab:active { transform: translateY(1px); }
-vb-node .vb-node-btab:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 /* Out of date (ruling 3): the CHANGED family, amber, in place of the accent. */
 vb-node .vb-node-btab[data-stale] {
   border-color: color-mix(in srgb, var(--vb-state-context) 45%, var(--vb-line)); background: var(--vb-state-context-soft); color: var(--vb-state-context);
@@ -43,8 +42,7 @@ vb-node .vb-card-pop {
 }
 vb-node .vb-card-pop::before { top: 0; bottom: 0; left: auto; right: 100%; width: var(--vb-space-3); height: auto; }
 vb-node .vb-card-pop[data-open] { display: grid; gap: var(--vb-space-3); }
-vb-node .vb-card-pop:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
-vb-node:has(.vb-card-pop[data-open]) { z-index: 4; }
+vb-node:has(.vb-card-pop[data-open]) { z-index: var(--vb-z-open); }
 
 /* A proposal in the box: who, what, from where and when, the reason it is out of date, the buttons. */
 vb-node .vb-prop { display: grid; gap: var(--vb-space-1); }
@@ -61,14 +59,13 @@ vb-node .vb-prop-from { font-size: var(--vb-text-md); color: var(--vb-ink-subtle
 vb-node .vb-prop-why { font-size: var(--vb-pop-text); font-weight: var(--vb-weight-medium); color: var(--vb-state-context); }
 vb-node .vb-prop-acts { display: flex; justify-content: flex-end; gap: var(--vb-space-2); margin-top: var(--vb-space-1); }
 vb-node .vb-pop-btn {
-  height: 26px; padding: 0 var(--vb-space-3); cursor: pointer; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
+  height: var(--vb-control-h-small); padding: 0 var(--vb-space-3); cursor: pointer; border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm);
   background: var(--vb-surface-raised); color: var(--vb-ink-strong); font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font);
 }
 /* In the popover box they take its size (the card's stepper keeps the small ones, node-steps.css). */
 vb-node .vb-card-pop .vb-pop-btn { height: var(--vb-space-6); padding: 0 var(--vb-pop-pad); font-size: var(--vb-pop-text); }
 vb-node .vb-pop-btn:hover { background: var(--vb-surface-sunken); }
 vb-node .vb-pop-btn:active { transform: translateY(1px); }
-vb-node .vb-pop-btn:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: 2px; }
 vb-node .vb-pop-primary { border-color: var(--vb-accent-fill); background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); }
 vb-node .vb-pop-primary:hover { background: var(--vb-accent-fill-hover); }
 /* Out of date, Accept can't be pressed; it stays focusable so its reason is read (aria-describedby). */
@@ -97,5 +94,5 @@ vb-node button.vb-history-row .vb-history-words { color: var(--vb-accent-text); 
 vb-node button.vb-history-row:hover { background: var(--vb-surface-sunken); }
 vb-node button.vb-history-row:hover .vb-history-words { text-decoration: underline; }
 vb-node button.vb-history-row:active { transform: translateY(1px); }
-vb-node button.vb-history-row:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: -2px; }
+vb-node button.vb-history-row:focus-visible { outline-offset: var(--vb-focus-offset-inset); }
 vb-node .vb-history-empty { margin: 0; font-size: var(--vb-text-md); color: var(--vb-ink); }

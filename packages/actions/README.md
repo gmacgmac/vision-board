@@ -51,6 +51,17 @@ call the same actions, and each one is recorded in the project ledger as an `act
   the agent's answer clearing a card (`clears.ts`: the fold's clears, and `unseenAnswer` until the
   person looks, D-045). Each card's ✓, ✗, Later and clear reach the agent folded to its latest
   (`pending.ts` `latestMarks`, and `unsent.ts` for Send).
+- **Answers** (`src/answers/`, ARCH_04): the pure queries a host asks of the folded ledger, each with
+  its test in `tests/`: the board as the page and `get_board` read it (`boardData`, `boardJson`,
+  `answeredIds`; `board-data.test.ts`), what needs attention on the page (`pageConditions`), the
+  unseen updates and what was seen (`unseenCount`, `unseenSteps`, `seenDue`, `seenMarks`,
+  `seenOnSelect`, `seenVer`; `updates.test.ts`), the retired cards (`retiredCounts`, `lastShown`,
+  `pastLines`; `retired-markers.test.ts`), the open proposals' rows (`proposalRows`, `answerable`,
+  `acceptAllPlan`; `proposal-rows.test.ts`), where Go to card goes (`goTarget`; `go-target.test.ts`),
+  the words of a removal (`cardsWords`, `containerWords`; `remove-words.test.ts`), and the chat's
+  chips (`Chip`, `cardChip`, `noteChip`, `resolveChip`, and `turnOf`, `roundOf` with a refusal for a
+  board the ledger does not hold; `chips.test.ts`). The page keeps what it does with them (the act
+  and the words of a proposal answer, the Go to card box, `numberedView`, `canApply`).
 - **Awareness tables** (D-033): what belongs to what (`REFERENCES`), who may write what
   (`PERMISSIONS`) and what needs attention (`CONDITIONS`) are each one typed table, derived from
   the folded ledger; a new kind without a row is a type error, and every row has a test. A check

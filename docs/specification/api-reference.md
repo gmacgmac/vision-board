@@ -627,7 +627,7 @@ Example:
 
 ## `list_open`
 
-`GET /api/boards/{board}/open` · who: anyone (no credentials) · MCP tool `list_open`, `vb` command `vb list-open`
+`GET /api/boards/{board}/open` · who: anyone; with an agent's Bearer secret from `join`, only what that agent holds · MCP tool `list_open`, `vb` command `vb list-open`
 
 List a board's open cards. Pass `board`. Returns every question, decision or action the person has not marked ✓ or ✗ (a note never answers a card), and every card waiting for you, each with its latest `ver`, `status`, `pending` (waiting for your answer: an unanswered note, or Later with no park bundle) and `unseen` (newer than the person last saw, or your answer cleared it and they have not looked since). With your secret, only the containers you hold, so you never answer another agent's cards.
 
@@ -685,7 +685,7 @@ Example:
 
 ## `check_responses`
 
-`GET /api/boards/{board}/responses` · who: anyone (no credentials) · MCP tool `check_responses`, `vb` command `vb check-responses`
+`GET /api/boards/{board}/responses` · who: anyone; with an agent's Bearer secret from `join`, only what that agent holds · MCP tool `check_responses`, `vb` command `vb check-responses`
 
 Read what the person did on a board after a ledger position, including answers to your grant requests. Pass `board` and `after` (the `head` you last saw; 0 for all); optional `limit`, and `wait` (0-60 seconds) to hold until the person presses Send or answers a request. Returns `responses`, `head` and `more`; a wait that times out returns `{ responses: [], head }`. A note comes as the `comment` act that made it (`context` on an old More context note) with its latest text and kind, again whenever the person edits it; a note removed before you saw it never appears, and `note-remove` appears only for one you may have read. Each batch, up to its Send, is sorted by card number: a note on several cards at its lowest card, a note on a container at its lowest card, several acts on one card in the order made. ✓ reads `check` and ✗ reads `cross`: the person's marks on a card that asks, meaning what your card asks; a note never answers a card. Each card's ✓, ✗, Later and clear (`reopen`) fold to its latest, shown only when it differs from how it stood at `after` (✓ then cleared shows nothing). No state is kept for you: pass back the `head` you got. `more: true`: `limit` cut the list in ledger order, so read again at once with `after` set to the highest `seq` in `responses`. With your secret, only the containers you hold.
 

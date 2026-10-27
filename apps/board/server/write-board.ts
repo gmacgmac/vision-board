@@ -13,7 +13,7 @@ import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
 import type { Ledger } from './ledger.ts';
 import type { PointerError } from './problem.ts';
 import { ProblemError } from './problem.ts';
-import { schemaProblems } from './schema.ts';
+import { LEDGER_SCHEMA_BASE, schemaProblems } from './schema.ts';
 import type { ItemProblem } from './write-problem.ts';
 import { ItemFailed, fail, under } from './write-problem.ts';
 import type { Batch } from './write-refs.ts';
@@ -22,7 +22,7 @@ import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
 export type { ItemProblem } from './write-problem.ts';
 export { WRITE_ITEM_ID };
 
-const KEY_ID = 'https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/key';
+const KEY_ID = `${LEDGER_SCHEMA_BASE}common.schema.json#/$defs/key`;
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);

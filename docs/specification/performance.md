@@ -94,7 +94,8 @@ state and everything drawn and draws again from a fresh read.
 ## Where this lands
 
 - Points 1, 3 and 5 belong to the page (`apps/board/src/board`: `live.ts` holds the ledger state and
-  applies new lines, `board-data.ts` works a board out of it, `draw.ts`, `cards.ts`, `render.ts`
+  applies new lines, `boardData` (`packages/actions/src/answers/board-data.ts`, held by
+  `apps/board/tests/board-data.test.ts`) works a board out of it, `draw.ts`, `cards.ts`, `render.ts`
   and `wires.ts` draw what changed) and the shared client (`packages/client`, the live stream);
   point 2 to `packages/layout` (`layoutRegion`, `packRegions`) and the page's `layout-cache.ts`;
   point 4 to `offscreen.ts` and `viewport.ts`; point 6 to the reads in the API (`show_node`);

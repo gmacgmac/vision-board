@@ -28,6 +28,94 @@
       "description": "`https://vision-board.invalid/problems/<code>`; the codes are listed in the API reference.",
       "$comment": "Was: api.md 40"
     },
+    "codes": {
+      "type": "object",
+      "description": "Every problem code, with the HTTP status it is sent with (`const`) and its `title` (the same for every problem with that code). The source of the codes: the server and the client are generated from it (scripts/gen-api.mjs), and `code`'s pattern must list exactly these.",
+      "$comment": "423 Locked (RFC 4918 11.3): the board itself is locked, so a client can tell it from every 409 by status alone. The app codes are D-047 rulings 6-8 (api.md 153).",
+      "properties": {
+        "bad-request": {
+          "const": 400,
+          "title": "Bad request"
+        },
+        "not-authenticated": {
+          "const": 401,
+          "title": "Not authenticated"
+        },
+        "forbidden": {
+          "const": 403,
+          "title": "Forbidden"
+        },
+        "needs-grant": {
+          "const": 403,
+          "title": "Needs a grant"
+        },
+        "not-found": {
+          "const": 404,
+          "title": "Not found"
+        },
+        "method-not-allowed": {
+          "const": 405,
+          "title": "Method not allowed"
+        },
+        "conflict": {
+          "const": 409,
+          "title": "Conflict"
+        },
+        "too-large": {
+          "const": 413,
+          "title": "Too large"
+        },
+        "unsupported-media-type": {
+          "const": 415,
+          "title": "Unsupported media type"
+        },
+        "depends-on-failed": {
+          "const": 422,
+          "title": "Depends on a failed item"
+        },
+        "invalid": {
+          "const": 422,
+          "title": "Invalid"
+        },
+        "server-error": {
+          "const": 500,
+          "title": "Server error"
+        },
+        "wrong-folder": {
+          "const": 409,
+          "title": "Wrong folder"
+        },
+        "locked": {
+          "const": 423,
+          "title": "Locked"
+        },
+        "needs-approval": {
+          "const": 403,
+          "title": "Needs approval"
+        },
+        "app-not-found": {
+          "const": 404,
+          "title": "App not found"
+        },
+        "app-invalid": {
+          "const": 422,
+          "title": "App invalid"
+        },
+        "app-failed": {
+          "const": 502,
+          "title": "App failed"
+        },
+        "app-busy": {
+          "const": 503,
+          "title": "App busy"
+        },
+        "app-timeout": {
+          "const": 504,
+          "title": "App timed out"
+        }
+      },
+      "additionalProperties": false
+    },
     "pointerError": {
       "type": "object",
       "required": [

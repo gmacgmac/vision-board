@@ -4,7 +4,7 @@
 // wrong method: `method-not-allowed` with `Allow`.
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { OperationId } from '#format';
-import { OPERATIONS } from '#format';
+import { OPERATIONS, PATH_WORDS } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
@@ -68,13 +68,11 @@ export function matchRoute(method: string, pathname: string):
   return allow.length ? { allow } : null;
 }
 
-const NAMES: Record<string, string> = { board: 'board id', n: 'node number', region: 'region id', session: 'chat session id', approval: 'approval id', app: 'app id' };
-
 function readParam(p: ParamSpec, raw: string): unknown {
   const value = coerce(p.type, raw);
   const problems = paramProblems(p, value);
   if (!problems.length) return value;
-  const what = p.in === 'path' ? `The ${NAMES[p.name] ?? p.name} in the path` : `The query parameter \`${p.name}\``;
+  const what = p.in === 'path' ? `The ${PATH_WORDS[p.name] ?? p.name} in the path` : `The query parameter \`${p.name}\``;
   throw problem('bad-request', `${what} ${problems[0]}. ${p.description}`.trim());
 }
 
@@ -86,7 +84,7 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
   OPERATIONS[id].pathParams.forEach((name, i) => {
     let text: string;
     try { text = decodeURIComponent(raw[i] ?? ''); } catch {
-      throw problem('bad-request', `The ${NAMES[name] ?? name} in the path is not valid percent-encoding.`);
+      throw problem('bad-request', `The ${PATH_WORDS[name] ?? name} in the path is not valid percent-encoding.`);
     }
     out[name] = readParam(specs.find((p) => p.in === 'path' && p.name === name)!, text);
   });

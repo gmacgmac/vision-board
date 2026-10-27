@@ -7,11 +7,14 @@
      goes back to the picker. Esc closes it at once, not on the close event that follows, so the
      picker's entry chosen again right after opens it again; and that close event, queued as a task
      after the dialog shut, is taken only while the dialog is still shut: arriving after the entry
-     has opened it again, it closes nothing (the flake in picker-archive.spec.ts, N40 step 5). -->
+     has opened it again, it closes nothing (the flake in picker-archive.spec.ts, N40 step 5). Opened,
+     closed and closed by its backdrop by the shared modal dialog (`#ui` `syncModal`, `backdropClick`,
+     `whenShut`). -->
 <script lang="ts">
   import { tick } from 'svelte';
   import { shell } from './shell.svelte.ts';
   import ArchivedList from './ArchivedList.svelte';
+  import { backdropClick, syncModal, whenShut } from '#ui';
 
   let { onrestore }: { onrestore: (board: string) => Promise<string | null> } = $props();
 
@@ -21,11 +24,10 @@
   let problem: string | null = $state(null);
 
   $effect(() => {
-    if (shell.archivedDialog && !dlg.open) {
+    syncModal(dlg, shell.archivedDialog, () => {
       [busy, problem] = [null, null];
-      dlg.showModal();
       void tick().then(() => (dlg.querySelector<HTMLElement>('.vb-archived-restore') ?? dlg.querySelector<HTMLElement>(`#${UID}-close`))?.focus());
-    } else if (!shell.archivedDialog && dlg.open) dlg.close();
+    });
   });
 
   async function restore(board: string) {
@@ -39,16 +41,12 @@
 
   const close = () => { if (busy === null) shell.archivedDialog = false; };
 
-  /** A click outside the dialog's box (on the backdrop) closes it like Close. */
-  function backdrop(e: MouseEvent) {
-    if (e.target !== dlg) return;
-    const r = dlg.getBoundingClientRect();
-    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close();
-  }
+  /** A click on the backdrop closes it like Close. */
+  const backdrop = backdropClick(close);
 </script>
 
 <dialog id={UID} class="vb-dialog" aria-labelledby="{UID}-title" aria-describedby="{UID}-body"
   bind:this={dlg} onclick={backdrop} oncancel={(e) => { if (busy !== null) e.preventDefault(); else shell.archivedDialog = false; }}
-  onclose={() => { if (!dlg.open) shell.archivedDialog = false; }}>
+  onclose={whenShut(() => { shell.archivedDialog = false; })}>
   <ArchivedList boards={shell.archived} uid={UID} {busy} {problem} onrestore={(b) => void restore(b)} onclose={close} />
 </dialog>

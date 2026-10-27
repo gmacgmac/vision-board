@@ -27,7 +27,7 @@ vb-region[data-rail] > .vb-region-rail {
      so it never touches the next container (packages/layout types.ts; viewport.ts FAR_K). Top: just
      under the top line, whose label reaches 12px below the border. Foot: the room kept under it. */
   --rail-w: 30px; --rail-out: 20px; --rail-ring: 2px; --rail-top: var(--vb-space-4); --rail-foot: var(--vb-space-3);
-  --rail-btn: 24px; --vb-zoom: inherit;
+  --rail-btn: var(--vb-control-target); --vb-zoom: inherit;
   position: absolute; left: calc(-1 * var(--region-line-w)); top: calc(-1 * var(--region-line-w));
   width: calc((100cqw - 2 * var(--vb-space-4)) * var(--vb-zoom));
   height: calc((100% + 2 * var(--region-line-w)) * var(--vb-zoom));
@@ -123,4 +123,4 @@ vb-region[data-rail]:has(.vb-widths) { --rail-widths: 1; }
 /* While the rail is hovered or holds focus the frame is drawn above every card, as for an open
    popover (region.css data-open), so an expanded rail is never under the next container's cards;
    only the rail and the top line take the pointer then, so the frame's own cards stay reachable. */
-vb-region[data-rail]:has(> .vb-region-rail .vb-region-tools:is(:hover, :focus-within, [data-look])) { z-index: 4; pointer-events: none; }
+vb-region[data-rail]:has(> .vb-region-rail .vb-region-tools:is(:hover, :focus-within, [data-look])) { z-index: var(--vb-z-open); pointer-events: none; }

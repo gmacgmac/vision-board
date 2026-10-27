@@ -46,7 +46,9 @@
 | `route` and tools return at once | May return a promise | `check_responses` waits up to 60 s for the person (`reads.ts` `checkResponses`); body reads are async |
 | No per-turn hook | `turn(since)` on the engine part | The person's answers ride with the next message |
 | No `confirm` | `confirm({ heading, body, confirm, list? })` | Four actions ask first, one with a list |
-| Every CSS rule under the root class | A `vb-`-prefixed selector counts as scoped | Our elements, classes and tokens are already namespaced; the gallery shows patterns with no board root |
+| Every CSS rule under the root class | A `vb-`-prefixed selector counts as scoped | Our elements, classes and tokens are already namespaced; the gallery shows patterns with no board root. Our root class is `vb-board`, also our `@container` (D-061) |
+| Chip `ref` a plain string | An opaque JSON `ref` | The board's is `{ board, n, ver }` for a card and `{ board, seq, rev }` for a note: the version is how "changed since you added it" is caught |
+| `resolve` refuses with a reason | A refusal `{ code, reason }` | Codes `gone`, `retired`, `hidden`, `changed`, so the host can word or mark them; `detail` stays the composer's second line |
 
 ## For nclite to weigh
 
@@ -56,3 +58,8 @@
   does. It is not in our tidy-up.
 - **Spelling:** our screen text is British in places, and nclite writes US English. That's the
   maintainer's call, and our tidy-up changes no wording.
+- **Importing in place:** the board's modules are reached by `#` names from its own `package.json`
+  `imports` (D-059, D-060). They resolve while nclite imports the board's files where they sit; copied
+  into nclite's tree, they would resolve against nclite's `package.json` instead.
+- **Live updates:** the standalone client's change stream (`EventSource`) needs an origin. Under a host
+  the view takes changes from `host.events` instead.

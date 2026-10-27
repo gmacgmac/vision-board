@@ -1,0 +1,25 @@
+/* The menu (UI_01, base/menu.ts): a list of rows on the popover surface (base/surface.css), hung under
+   the button that opens it at its right edge; each row is its icon, its words (`.vb-menu-label`, cut
+   with an ellipsis), then its tick (`.vb-menu-check`, for a menuitemcheckbox) and key. Rows in every
+   state: hover and focus (sunken), pressed, disabled (aria-disabled: muted, no press). A menu placed
+   by its page (the board's Move to list, an app card's) moves it there. data-look draws a state without
+   the pointer: the gallery's samples only. Tokens only. */
+.vb-menu-list {
+  position: absolute; z-index: var(--vb-z-menu); left: auto; right: 0; top: calc(100% + var(--vb-space-1)); display: grid;
+  min-width: 220px; max-width: 360px; padding: 3px;
+}
+.vb-menu-list[hidden] { display: none; }
+.vb-menu-item {
+  display: flex; align-items: center; gap: var(--vb-space-2); width: 100%; min-height: var(--vb-control-h);
+  padding: var(--vb-space-1) var(--vb-space-3); border: 0; border-radius: 7px;
+  background: none; cursor: pointer; font: inherit; font-size: var(--vb-text-md); font-weight: var(--vb-weight-medium);
+  color: var(--vb-ink-strong); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.vb-menu-item:hover, .vb-menu-item:focus-visible, .vb-menu-item:is([data-look='hover'], [data-look='focus']) { background: var(--vb-surface-sunken); }
+.vb-menu-item:focus-visible, .vb-menu-item[data-look='focus'] { outline-offset: var(--vb-focus-offset-inset); }
+.vb-menu-item:active, .vb-menu-item[data-look='pressed'] { transform: translateY(1px); }
+.vb-menu-item[aria-disabled='true'] { color: var(--vb-ink-subtle); cursor: not-allowed; transform: none; }
+.vb-menu-item[aria-disabled='true']:hover { background: none; }
+.vb-menu-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.vb-menu-check { color: var(--vb-accent); font-weight: var(--vb-weight-bold); visibility: hidden; }
+.vb-menu-item[aria-checked='true'] .vb-menu-check { visibility: visible; }

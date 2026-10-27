@@ -8,10 +8,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { boardBlocks, foldLedger, roundOf, ROUND_HEAD, SELECTED_HEAD } from '#actions';
+import { boardBlocks, boardData, foldLedger, roundOf, ROUND_HEAD, SELECTED_HEAD } from '#actions';
 import type { ChatComposerElement, ChatEvent, ChatState, Chip, ComposerContext } from '#chat';
 import { applyEvents, CHAT_CHANGE_EVENT, EMPTY_CHAT } from '#chat';
-import { boardData } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
 import {
   boardCards, boardContext, cardChip, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL,

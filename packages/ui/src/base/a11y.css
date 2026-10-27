@@ -1,0 +1,10 @@
+/* Accessibility recipes (UI_01). The focus ring: one look for everything the board draws that takes
+   focus, in any host; a pattern states only an offset where 2px does not fit (inset rows -2px, small
+   controls 1px, cards 3px). Visually hidden: words for screen readers only. Tokens only. */
+:where([class*='vb-'], [class*='vb-'] *):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+.vb-visually-hidden,
+vb-region .vb-region-count-words,
+vb-region .vb-region-fresh-words,
+[data-app-title] vb-node .vb-node-content:has(> .vb-app) > .vb-node-title {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}

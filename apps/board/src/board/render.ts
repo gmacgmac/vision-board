@@ -4,11 +4,9 @@
 // what it shows changed (N12_FE_01). Cards live in cards.ts, connectors in wires.ts.
 import type { View, ViewNode } from '#format';
 import type { BoardLayout } from '#layout';
-import type { AccessHolder, BoardState } from '#actions';
+import type { AccessHolder, BoardState, FreshCount, RetiredCount } from '#actions';
 import type { CardReply, VbRegionElement } from '#ui';
 import { regionFresh, regionState, retiredMarker } from '#ui';
-import type { FreshCount } from './board-data.ts';
-import type { RetiredCount } from './retired.ts';
 import { LATER_REGION } from '#format';
 import { work } from './work.ts';
 
@@ -32,7 +30,7 @@ export interface RegionSet {
    * agentAccess flag): region id -> the agents that hold it. `owed`: the containers the agent
    * still owes an answer on (`regionState`'s, 3_FE_04 step 4G). `replies`: the agent's replies to show
    * under container notes (the cardReplies flag, FE_03). `retired`: each container's "N cards retired"
-   * marker (the retiredMarker flag, retired.ts). `fresh`: each fresh container's pill counts (the
+   * marker (the retiredMarker flag, packages/actions retired.ts). `fresh`: each fresh container's pill counts (the
    * freshCards flag, `container.fresh`): its teal border and "3 new · 1 updated". */
   place(
     layout: BoardLayout, view: View, s: BoardState, holders?: Readonly<Record<string, AccessHolder[]>>, owed?: ReadonlySet<string>,

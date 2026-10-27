@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { LedgerEvent } from '#format';
-import { applyEvent, foldLedger } from '#actions';
-import { answeredIds, boardData, numberedView, pageConditions } from '../src/board/board-data.ts';
+import { answeredIds, applyEvent, boardData, foldLedger, pageConditions } from '#actions';
+import { numberedView } from '../src/board/board-data.ts';
 
 const at = '2026-10-10T09:00:00Z';
 const agent = { by: 'agent', agent: 'a-pricing1' } as const;

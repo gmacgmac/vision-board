@@ -1,47 +1,22 @@
 // The page's side of packages/client (rule 7, D-029): the client is the only code that calls the
 // server; this wraps it in the shapes the page draws from. The page reads the ledger itself
-// (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
+// (`read_ledger`, live.ts) and works each board out from it (packages/actions board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActionId, ActSize, AppInfo, AppStateValue, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '#format';
+import type { ActionId, AppStateValue, LedgerEvent, OperationInput, OperationOutput, View } from '#format';
 import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
 import type { BoardAccess, BoardState } from '#actions';
-import { ApiProblem, createClient } from '#client';
+import type { Transport } from '#client';
+import { ApiProblem, createClient, httpTransport } from '#client';
 import type { ApprovalAnswer, ChatEvent } from '#chat';
 
 /** One board as the page draws it. `versions`: node id -> latest `ver`, sent back with an act;
  * `head`: the ledger's latest `seq`; `access`: open grant requests and each region's holders. */
 export interface BoardData { head: number; view: View; state: BoardState; versions: Record<string, number>; access: BoardAccess }
 
-/** What the page sends for one person action; the server stamps the rest. */
-export interface ActFields {
-  action: ActionId;
-  n?: number;
-  ver?: number;
-  text?: string;
-  x?: number;
-  y?: number;
-  region?: string;
-  mode?: Mode;
-  /** `widths`: the person's card widths for the container in `region` (field report batch 3 ruling 5). */
-  widths?: Widths;
-  size?: ActSize;
-  /** `grant` and `deny`: the `seq` of the grant request answered. */
-  request?: number;
-  /** `revoke`: the agent losing access to `region`. */
-  holder?: string;
-  /** `note-edit` and `note-remove`: the `seq` of the act that made the note; `kind`: what an
-   * edited note now asks for. */
-  note?: number;
-  kind?: NoteKind;
-  /** A note on a group of cards (`comment`, 3_FE_02): the items it is on, in place of `n`. */
-  nodes?: number[];
-  /** An agent's proposal answered (api.md 93): accepted with its own action, or `reject`. */
-  proposal?: number;
-  /** `app-allow` and `app-revoke` (api.md 150): the app, and the version of its code allowed. */
-  app?: string;
-  hash?: string;
-}
+/** What the page sends for one person action (`act`'s body, act.schema.json `sent`, less its
+ * `type`); the server stamps the rest. */
+export type ActFields = Omit<OperationInput<'act'>['body'], 'type'>;
 
 export class ApiError extends Error {
   /** HTTP status, or 0 when the server could not be reached. */
@@ -54,7 +29,9 @@ export class ApiError extends Error {
   }
 }
 
-const client = createClient();
+/** The page's transport: `fetch` on its own origin. A host hands the board its own (ARCH_03). */
+const pageTransport: Transport = httpTransport('');
+const client = createClient({ transport: pageTransport });
 
 /** One call through the client, with every failure as an ApiError the page can show. */
 async function call<T>(run: () => Promise<T>): Promise<T> {
@@ -73,7 +50,7 @@ const PAGE = 500;
  * its identity, `id`, and an old `list` mode reads `column`; api.md 125, 129); `more` when there
  * are more. The one place the page turns a line into an event (live.ts, versions.ts read here). */
 export async function readLedger(after: number): Promise<{ events: LedgerEvent[]; head: number; more?: true }> {
-  const page = await call(() => client.call<{ events: LedgerLine[]; head: number; more?: true }>('read_ledger', { after, limit: PAGE }));
+  const page = await call(() => client.call('read_ledger', { after, limit: PAGE }));
   return { ...page, events: page.events.map(fromLine) };
 }
 
@@ -106,28 +83,28 @@ const namesBoard = (f: ActFields) =>
 
 /** One person action; the stored line, its cards by board number (live.ts `own` reads it back). */
 export const sendAct = (id: string, fields: ActFields) =>
-  call(() => asPerson(() => client.call<LedgerLine>('act', {
+  call(() => asPerson(() => client.call('act', {
     board: id, body: { type: 'act', ...fields, ...(namesBoard(fields) && { board: id }) },
   })));
 
 /** What the person gives a board: `put_board`'s body (api.md 90). */
-export interface BoardFields { title: string; summary?: string }
+export type BoardFields = OperationInput<'put_board'>['body'];
 
 /** Create board `id`, or rename it when it exists (api.md 90); the stored `board` line. */
 export const putBoard = (id: string, fields: BoardFields) =>
-  call(() => asPerson(() => client.call<LedgerLine>('put_board', { board: id, body: fields })));
+  call(() => asPerson(() => client.call('put_board', { board: id, body: fields })));
 
 /** What the person removes from a board: `retire_cards`' body (N24, api.md 141), cards by number
  * or a whole container. */
-export type RetireFields = { cards: number[] } | { region: string };
+export type RetireFields = OperationInput<'retire_cards'>['body'];
 
 /** Remove cards, or a container with its cards, from board `id`; the stored `retire` line, its cards
  * by board number (live.ts `own` reads it back). */
 export const retireCards = (id: string, fields: RetireFields) =>
-  call(() => asPerson(() => client.call<LedgerLine>('retire_cards', { board: id, body: fields })));
+  call(() => asPerson(() => client.call('retire_cards', { board: id, body: fields })));
 
 /** The client for a call made as the page goes away: its request outlives the page (keepalive). */
-const leavingClient = createClient({ fetch: (url, init) => globalThis.fetch(url, { ...init, keepalive: true }) });
+const leavingClient = createClient({ transport: (path, init) => pageTransport(path, { ...init, keepalive: true }) });
 
 /** The person has looked at `board` up to its line `head` (a board seen, api.md 87). `leaving`: the
  * page is going away, so the request outlives it and nothing waits for the answer. */
@@ -139,7 +116,7 @@ export function markBoardSeen(board: string, head: number, leaving = false): Pro
 
 /** The person has seen version `ver` of card `n` (its board number, D-018): a card seen; the stored line. */
 export const markCardSeen = (board: string, n: number, ver: number) =>
-  call(() => asPerson(() => client.call<LedgerLine>('mark_seen', { board, body: { n, ver } })));
+  call(() => asPerson(() => client.call('mark_seen', { board, body: { n, ver } })));
 
 /** What the project's live stream reports (`watch_project`, api.md 78-80). */
 export interface ProjectEvents {
@@ -164,34 +141,34 @@ export function watchProject(on: ProjectEvents): () => void {
 
 /** One chat session on a board (`start_chat`, `list_chats`), or in the folder on no board yet
  * (`start_folder_chat`, `list_folder_chats`, api.md 122): `board` left out until its agent creates one. */
-export interface ChatSessionInfo { session: string; board?: string; agent: 'claude' | 'kiro'; model?: string; created: string; agentId: string }
+export type ChatSessionInfo = OperationOutput<'start_chat'>;
 
 /** What a message carries: the words, the notes by `seq` and the cards by number. */
-export interface ChatMessageBody { text?: string; notes?: number[]; cards?: number[] }
+export type ChatMessageBody = OperationInput<'send_chat'>['body'];
 
 const person = <T>(run: () => Promise<T>) => call(() => asPerson(run));
 
 /** The board's sessions, newest first; the first is the one in use. */
 export const listChats = (board: string) =>
-  person(() => client.call<{ sessions: ChatSessionInfo[] }>('list_chats', { board }));
+  person(() => client.call('list_chats', { board }));
 
 /** A new session on `board`; starting one grants the board to its agent (api.md 106). */
 export const startChat = (board: string, agent: ChatSessionInfo['agent'], model?: string) =>
-  person(() => client.call<ChatSessionInfo>('start_chat', { board, body: { agent, ...(model && { model }) } }));
+  person(() => client.call('start_chat', { board, body: { agent, ...(model && { model }) } }));
 
 /** The folder's sessions on no board, newest first; a session leaves the list once its agent creates a board. */
 export const listFolderChats = () =>
-  person(() => client.call<{ sessions: ChatSessionInfo[] }>('list_folder_chats'));
+  person(() => client.call('list_folder_chats'));
 
 /** A new session in the folder, on no board; it grants nothing (api.md 122). */
 export const startFolderChat = (agent: ChatSessionInfo['agent'], model?: string) =>
-  person(() => client.call<ChatSessionInfo>('start_folder_chat', { body: { agent, ...(model && { model }) } }));
+  person(() => client.call('start_folder_chat', { body: { agent, ...(model && { model }) } }));
 
 /** The person's message; the answer is its `message_in` event. `conflict` while the agent answers. */
 export const sendChat = (session: string, body: ChatMessageBody) =>
-  person(() => client.call<ChatEvent>('send_chat', { session, body }));
+  person(() => client.call('send_chat', { session, body }));
 
-export const stopChat = (session: string) => person(() => client.call<{ stopped: boolean }>('stop_chat', { session }));
+export const stopChat = (session: string) => person(() => client.call('stop_chat', { session }));
 
 export const answerApproval = (session: string, approval: string, answer: ApprovalAnswer) =>
   person(() => client.call('answer_approval', { session, approval, body: answer }));
@@ -237,29 +214,29 @@ export function watchChat(session: string, after: () => number, on: (e: ChatEven
 // ---- the open folder (open-folder task, api.md 109-113) ---------------------------------------
 
 /** A folder as the server shows it: the open one (`get_project`), or the one a picker lists. */
-export interface FolderInfo { path: string; name: string; found: boolean; boards?: number }
-
-/** One folder in a listing: its name (its `~/...` name in the recent list), path and whether it has a board. */
-export interface FolderEntry { name: string; path: string; hasBoard: boolean }
+export type FolderInfo = OperationOutput<'get_project'>;
 
 /** `list_folders`: a folder, the folders in it and the recent ones; on home, the cloud storage places. */
-export interface FolderList extends FolderInfo { parent?: string; folders: FolderEntry[]; recent: FolderEntry[]; places?: FolderEntry[]; more?: true }
+export type FolderList = OperationOutput<'list_folders'>;
+
+/** One folder in a listing: its name (its `~/...` name in the recent list), path and whether it has a board. */
+export type FolderEntry = FolderList['folders'][number];
 
 /** The folder the server has open. */
-export const getProject = () => person(() => client.call<FolderInfo>('get_project'));
+export const getProject = () => person(() => client.call('get_project'));
 
 /** One folder under home (home itself when `path` is left out). */
 export const listFolders = (path?: string) =>
-  person(() => client.call<FolderList>('list_folders', path === undefined ? {} : { path }));
+  person(() => client.call('list_folders', path === undefined ? {} : { path }));
 
 /** Open `path` in place of the open folder; `create` makes its Vision Board. */
 export const openProject = (path: string, create = false) =>
-  person(() => client.call<FolderInfo>('open_project', { body: { path, ...(create && { create }) } }));
+  person(() => client.call('open_project', { body: { path, ...(create && { create }) } }));
 
 // ---- app cards (D-047, api.md 152-153, 157) --------------------------------------------------------
 
 /** Every app in the open folder and every app a card names, each in its state now (`list_apps`). */
-export const listApps = () => person(() => client.call<{ apps: AppInfo[] }>('list_apps'));
+export const listApps = () => person(() => client.call('list_apps'));
 
 /** How a call for a panel refuses: the API problem's code and its words (the frame's `AppCallError`). */
 export interface AppCallRefusal { problem: string; detail?: string }
@@ -273,16 +250,16 @@ const forPanel = <T>(run: () => Promise<T>): Promise<T> => asPerson(run).catch((
 
 /** Run tool `tool` of app `app` for its panel (`call_app_tool`). */
 export const callAppTool = (app: string, tool: string, args: Record<string, unknown>) =>
-  forPanel(() => client.call<AppToolResult>('call_app_tool', { app, body: { tool, arguments: args } }));
+  forPanel(() => client.call('call_app_tool', { app, body: { tool, arguments: args } }));
 
 /** The value app card `n`'s panel last saved on `board`, or undefined (`get_panel_state`, apps.md
  * § Saving the panel's state). */
 export const panelState = async (board: string, n: number): Promise<AppStateValue | undefined> =>
-  (await person(() => client.call<{ state?: AppStateValue }>('get_panel_state', { board, n }))).state;
+  (await person(() => client.call('get_panel_state', { board, n }))).state;
 
 /** Keep `state` as app card `n`'s panel state on `board` (`put_panel_state`); over the limit `too-large`. */
 export const savePanelState = (board: string, n: number, state: AppStateValue) =>
-  forPanel(() => client.call<{ bytes: number }>('put_panel_state', { board, n, body: { state } }));
+  forPanel(() => client.call('put_panel_state', { board, n, body: { state } }));
 
 // ---- images in cards (D-048, images.md § Updates) ---------------------------------------------------
 

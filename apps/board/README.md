@@ -14,22 +14,23 @@ Schemas and the hand validator, then in order, and prints every problem with its
 `compileSchema`); the page never imports it. Pages arrange patterns
 from `packages/ui`; they hold no layout maths, file formats or actions themselves. Every card is a
 `<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the page's stylesheet list
-(`src/styles/page.ts`: the tokens, the board's sheets, `#ui/styles.css`, the shell's; the gallery imports
+(`src/styles/page.ts`: the tokens, the page's own rules (`shell.css`), the board's sheets, `#ui/styles.css`, the shell's; the gallery imports
 it too; the chat's sheets are `src/styles/chat.ts`, loaded with the panel), and
 `src/board/cards.ts` and `src/board/render.ts` create, measure and place the elements but never
 build their markup. The page works in proportion to what changed (N12,
 `docs/specification/performance.md`): `src/board/live.ts` reads the ledger once and applies each new
-line to the state it holds, `board-data.ts` works the open board and what needs attention
-(`pageConditions`, from the conditions table; `attention.ts` shows it and sends the board seen) out
-from that state, and `draw.ts`
+line to the state it holds, `boardData` (`packages/actions/src/answers/board-data.ts`, which the server's `get_board` is built from
+too) works the open board and what needs attention (`pageConditions`, from the conditions table;
+`attention.ts` shows it and sends the board seen) out from that state, and `draw.ts`
 updates, measures and lays out only what a change touched (`layout-cache.ts` per container,
 `wires.ts` per connector, `offscreen.ts` for cards well off screen), counting the work in `work.ts`.
 The page reads every line through `src/board/io.ts` `readLedger` (`fromLine`), so its state is by
 card identity, while everything it draws and sends names a card by its number on its board (api.md
 125): `src/board/card-numbers.ts` turns one into the other, and an act's answer back. The person's
-flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retired.ts`, retiredMarker
-flag), the person's Remove card and Remove container (`remove-flow.ts`, `remove-words.ts`,
-personRemove flag), the Go to card box (`go-to-card.ts`, `src/shell/GoToCard.svelte`, goToCard flag)
+flag (`flag-flow.ts`, cardFlag flag), the "N cards retired" markers (`retiredCounts`, retiredMarker
+flag), the person's Remove card and Remove container (`remove-flow.ts`, whose words are
+`cardsWords` and `containerWords`, personRemove flag), the Go to card box (`go-to-card.ts` over `goTarget`,
+`src/shell/GoToCard.svelte`, goToCard flag)
 and the toolbar's numbers (`toolbar-counts.ts`) sit beside the controller. Field report batch
 3: `wires.ts` draws a link's label on its line where the layout found it room (`link-labels.ts`)
 and a marker that floats the label on hover and focus where it did not (`link-marks.ts`, linkLabels

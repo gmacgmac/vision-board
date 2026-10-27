@@ -4,10 +4,9 @@
 // board. Measuring needs the page, so each mini board draws once the gallery is in the document
 // (`drawMiniBoards`, main.ts).
 import type { View, ViewNode } from '#format';
-import type { BoardState } from '#actions';
+import type { BoardState, FreshCount } from '#actions';
 import type { Align } from '#layout';
 import type { CardConditions } from '#ui';
-import type { FreshCount } from '../board/board-data.ts';
 import { createDrawing, type Drawing } from '../board/draw.ts';
 import { FAR_K, Viewport } from '../board/viewport.ts';
 import { el } from './dom.ts';
