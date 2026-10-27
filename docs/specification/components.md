@@ -202,7 +202,7 @@ host; nclite's pane will be another.
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
   `destroy`; the one element outside `root`, a modal dialog's top layer) and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
-  status and controller, and a key belongs to the board whose root it is pressed in (`keys.ts`
+  status and controller, and a key pressed in one board's root never reaches another (`keys.ts`
   `bindKeys`), so two boards on one page work apart. The ids inside cards and frames (popovers, step
   section, app menu, a frame's menus, the connectors' arrowheads) carry the mount's prefix
   (`board/mount-ids.ts` `takeIdPrefix`: none for the first live mount, `vb2-`, `vb3-` after it;
@@ -240,7 +240,10 @@ host; nclite's pane will be another.
 - **Not covered**: the toolbar, strips,
   dialogs and reply panel are the standalone page's Svelte, so a host draws its own from the status;
   the work counters (`work.ts`) and the input-modality reading (`pointer-focus.ts`) are the page's, shared
-  by every board on it.
+  by every board on it. Open (VERIFY_01, tracker M10–M13): a key pressed outside every board (a host
+  button) still reaches each one; `unmount` drops a note's unsaved words without asking; card images
+  follow the page's `setMarkdownImages`, not `host.settings`; the saved view
+  (`boards/kept-view.ts`) writes `sessionStorage` itself, keyed by board id only.
 
 ## Node size (D-030, tracker U7)
 
@@ -1185,7 +1188,7 @@ section is how the board draws one. Two patterns share the work.
      A new version of the card keeps a loaded frame where it is (`node-app-apply.ts`
      `renderKeepingPanel`, from `vb-node.ts` `render`: the frame and the elements it sits in stay
      and take the new markup's attributes, since an `<iframe>` taken out of the page reloads), and
-     the card set never moves a card already in the page (`render.ts` `readingOrder` sorts by the
+     the card set never moves a card already in the page (`card-numbers.ts` `readingOrder` sorts by the
      card's number, which never changes).
      `app-alive.spec.ts` proves a panel keeps what it holds, loaded once, through a far zoom, a pan
      two screens away, a new version, a relayout, a selection and a new size.

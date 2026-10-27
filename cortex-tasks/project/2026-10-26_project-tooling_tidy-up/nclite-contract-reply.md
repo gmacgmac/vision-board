@@ -78,12 +78,25 @@
 - **`pageChip()`** returns the board on show as a `board` chip, ref `{ board, head }`.
 - **Pictures:** card images load from the board's image route (`IMAGE_ROUTE`), outside `api`, because an
   `<img>` fetches by URL. nclite either serves that path under the plugin's prefix or gives the board an
-  image transport.
+  image transport. The engine (`createEngine`) has no picture route: the standalone server serves
+  them (`apps/board/server/images.ts`), so under nclite serving them is the host's.
+- **Gaps we close before the plugin stage** (found by the set's review, VERIFY_01; tracker M10–M15):
+  a key pressed outside every board (a host button) still reaches each board (M10); `unmount` drops a
+  note's unsaved words, where the draft says it saves them: we'll either save the draft or tell the host
+  the view holds unsaved words so it asks first (M11); card images follow a page switch, not
+  `settings` (M12); the saved zoom and position go to `sessionStorage` keyed by board id only (M13);
+  the view and its styles get one import name, `#board` (M14). **Tools:** today the engine also serves
+  `join` and `request_grant` and leaves `list_apps` out, while the tool table lists `list_apps` and
+  answer 3 says a bot has no `join` or `request_grant`. A per-tool mark in our OpenAPI source will
+  say which tools a plugin bot gets, so the manifest and the engine can't disagree (M15).
 - **Not yet in the board:** the toolbar, the strips (proposals, a past version, a lock) and the dialogs
   are the standalone page's own. Making them part of the board is planned with the plugin (tracker M8).
 
 ## For nclite to weigh
 
+- **Theme:** app frames inside cards take their light or dark from the page (`data-theme` on
+  `<html>`, else `prefers-color-scheme`; `apps/board/src/board/apps/app-cards.ts`). How should a host
+  tell a plugin its theme: an attribute, a `settings` value, or an event?
 - **Content security policy:** the board's page runs under a strict one today (no inline styles or
   scripts), so it will not be the plugin that blocks nclite adding one.
 - **Tokens:** later, the board reads nclite's tokens through a map with fallbacks, as the Journal

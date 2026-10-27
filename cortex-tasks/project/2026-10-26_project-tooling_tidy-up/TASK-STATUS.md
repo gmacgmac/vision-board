@@ -48,7 +48,7 @@ tracker:
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Completed | port 4760 (+ 10 per worker from 4770) |
 | 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Completed | port 4800 |
 | 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Completed | port 4900 |
-| 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Pending | port 5000 |
+| 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Completed | port 5000 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -153,6 +153,13 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_06-R2 | ARCH_06 | image-view `pattern.json` path to `cards/card-images.ts`; `gallery-images-{light,dark}` baselines | orchestrator: applied; baselines refreshed, only the "Use for" path line differs (checked by eye) | Done |
 | ARCH_06-R3 | ARCH_06 | `docs/principles.md` § One job per file: function-length warning and feature folders | maintainer (protected): approved as point 291, applied | Done |
 | ARCH_06-R4 | ARCH_06 (question) | Split the factories made of short inner functions (`createNoteFlow`, `createCardSet`, …) into modules anyway? | orchestrator: no; each inner function is 37 lines at most, so each reads in one screen, and a split would only add files (cortex-architecture rule 2) | Closed |
+| VERIFY_01-R1 | VERIFY_01 | Tracker rows for the open findings F1–F8, F10, F14 | orchestrator: tracker M10–M19 (M10 keys and M11 unmount marked "before the plugin stage") | Done |
+| VERIFY_01-R2 | VERIFY_01 | nclite reply: bot tools (F6), unmount (F2), keys (F1), theme (F12), pictures left to the host (F15) | orchestrator: `nclite-contract-reply.md` § The view's host (gaps, pictures) and § For nclite to weigh (theme) | Done |
+| VERIFY_01-R3 | VERIFY_01 | `components.md` drift: `readingOrder`'s home, the key claim, the host gaps (F9) | orchestrator: corrected; gaps named under § The board's host interface, Not covered | Done |
+| VERIFY_01-R4 | VERIFY_01 | Clear the set's `temp/` leftovers (F13) | orchestrator: cleared (41 entries, git-ignored) | Done |
+| VERIFY_01-R5 | VERIFY_01 | `docs/principles.md` (protected): `primitives.css` → `packages/tokens/src/tokens.css` (F9); § Where we are at close | maintainer: points 298, 299 | Open |
+| VERIFY_01-R6 | VERIFY_01 | Success criterion "No screenshot changed": 8 gallery baselines changed, each approved at its gate (F16) | maintainer: point 300 | Open |
+| VERIFY_01-R7 | VERIFY_01 | `gen-contract.mjs` `LEDGER_EVENT_ID` hard-codes ledger/18 (F11) | orchestrator: no row; it fails loudly on a bump, derive it in the next change there | Closed |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -229,8 +236,8 @@ _Notes:_ `apps/board/src/board/` in ten feature folders (`canvas`, `links`, `car
 ---
 
 ### VERIFY_01: Verification
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Findings in `VERIFY_01_findings.md`. Gates: `npm test` 1735 + 10 (unit 12.9 s, timing 1.4 s), verify ok (13 warnings), check 0 errors, gen current; `board-host.spec.ts` + `host-styles.spec.ts` 9 passed on 5000; full suite left to the gate (rule 12). Review §1-§5, §7-§11 closed with evidence, open items with tracker rows. Eight back doors planted in a scratch copy, every one caught (7 verify failures, 1 warning, the words test). Engine: no socket, env or folder lookup in its 25 files; an agent's ✓/✗ refused. The person's board pixel-identical to pre-tidy (da59607) in 12 views (1600/768, light/dark, three zooms). New against nclite's contract: F1 a key pressed anywhere on the page reaches every board; F2 `unmount` drops a note's unsaved words; F3 Markdown images ignore `host.settings`; F4 sessionStorage of its own; F5 no `#board` front door for the view and its CSS; F6 tool table, engine tools and reply disagree (`list_apps`, `join`, `request_grant`). Also F7 words check misses `packages/client`; F8 pressed offset ×21; F9 doc drift (`readingOrder`, principles `primitives.css`); F16 eight gallery baselines changed (the criterion's wording). None blocks closing the set; F1, F2 block the plugin stage.
 
 ---
 
@@ -248,8 +255,8 @@ is below, with its approval. One commit and tag per wave, after the gates.
 | 4 | ARCH_03, ENGINE_01 | 80a3a2c · `tidy/wave-4` | 1707 + 10 unit; 667 page specs, no screenshot changed |
 | 5 | TEST_01 | a9bb4b3 · `tidy/wave-5` | 1710 + 10 unit; 667 page specs on 3 workers in 6.4 min (was 16.1 on 1) |
 | 6 | ARCH_05 (Runs 1, 2) | 613efd7 · `tidy/wave-6` | 1723 + 10 unit; 667 page specs on 5 workers in 6.2 min; app-cards and chat changed by one gallery text line |
-| 7 | ARCH_06 | commit below · `tidy/wave-7` | 1735 + 10 unit; 667 page specs on 5 workers in 5.1 min; first run hung 5 h on the ledger follower race (fixed, Found along the way); image-view gallery baselines refreshed for its moved path |
-| 8 | VERIFY_01 | — | — |
+| 7 | ARCH_06 | 28f0890 · `tidy/wave-7` | 1735 + 10 unit; 667 page specs on 5 workers in 5.1 min; first run hung 5 h on the ledger follower race (fixed, Found along the way); image-view gallery baselines refreshed for its moved path |
+| 8 | VERIFY_01 | commit below · `tidy/wave-8` | 1735 + 10 unit (by VERIFY_01); 667 page specs on 5 workers in 5.2 min at the gate, the second full run on unchanged code after Wave 7's 5.1 min (two, not the three PLAN asked: the code did not change between them); findings F1–F16, open ones at tracker M10–M19 |
 
 Every wave also: `npm run check` 0 errors, `gen-api --check` current, `verify` ok.
 
