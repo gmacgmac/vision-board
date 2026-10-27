@@ -29,6 +29,8 @@
      agent" keeps the agent's mark (the Agents bot) beside its number there, so it never reads as
      "board updated", which shares its pink (review polish FIX_01). -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as toolbarWords from './words/toolbar.ts';
   import { shell } from './shell.svelte.ts';
   import { MediaQuery } from 'svelte/reactivity';
   import AppIcon from './AppIcon.svelte';
@@ -121,10 +123,10 @@
   <AppIcon />
   {#if folderChip && shell.folder}<FolderChip id="folder-chip" folder={shell.folder} onclick={() => { shell.folderDialog = true; }} />{/if}
   {#if shell.versionView}<h1 id="title" class="vb-visually-hidden">{shell.title}</h1>{/if}
-  <label class="vb-visually-hidden" for="board">Board</label>
+  <label class="vb-visually-hidden" for="board">{commonWords.board}</label>
   <select id="board" class="vb-select" value={shell.boardId}
     onchange={(e) => pickBoard(e.currentTarget)}>
-    {#if !shell.boards.length}<option value="" disabled>No boards yet</option>{/if}
+    {#if !shell.boards.length}<option value="" disabled>{toolbarWords.noBoardsYet}</option>{/if}
     {#each shell.boards as b (b.board)}
       <option value={b.board}>{label(b.title)}{shell.versionView ? '' : ` · v${b.seq}`}{shell.boardMarks[b.board] ? ` · ${shell.boardMarks[b.board]}` : ''}</option>
     {/each}
@@ -138,17 +140,17 @@
     {/if}
     {#if archiving && shell.archived.length}
       {#if !boardEdit}<hr />{/if}
-      <option value={ARCHIVED} disabled={!!shell.past}>Archived ({shell.archived.length})…</option>
+      <option value={ARCHIVED} disabled={!!shell.past}>{toolbarWords.archived(shell.archived.length)}</option>
     {/if}
   </select>
   {#if !shell.versionView}
     <h1 id="title" class="vb-title">{shell.title}</h1>
     <span id="version" class="vb-chip" hidden={shell.version === null} title={shell.summary}>v{shell.version}</span>
   {:else if shell.version !== null}
-    <label class="vb-visually-hidden" for="version">Version</label>
+    <label class="vb-visually-hidden" for="version">{toolbarWords.version}</label>
     <select id="version" class="vb-select" value={String(shell.past?.seq ?? 'now')}
       aria-busy={shell.loadingVersion} onchange={(e) => pickVersion(e.currentTarget)}>
-      <option value="now">v{shell.version} · now</option>
+      <option value="now">{toolbarWords.vNow(shell.version)}</option>
       {#each shell.versions as v (v.seq)}
         <option value={String(v.seq)}>v{v.seq} · {versionTime(v.at)}</option>
       {/each}
@@ -160,16 +162,16 @@
       rows={shell.containers.map((c) => ({ value: c.id, text: label(rowText(c)), disabled: !c.usable }))} />
   {/if}
   <div id="counts" class="vb-counts" aria-live="polite">
-    {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title="{updated} board{updated === 1 ? '' : 's'} updated"><b>{updated}</b> <span class="vb-chip-word">board{updated === 1 ? '' : 's'} updated</span></span>{/if}
+    {#if updated}<span id="boards-updated" class="vb-chip" data-tone="new" title={toolbarWords.boardUpdated(updated)}><b>{updated}</b> <span class="vb-chip-word">{toolbarWords.boardUpdatedWord(updated)}</span></span>{/if}
     {#if shell.version !== null}
       <OpenChip count={shell.counts.open} cards={openList ? shell.openCards : []} onpick={onopen} />
       {#if shell.freshCards.length && !shell.past}
         <OpenChip id="fresh-cards" count={shell.freshCards.length} cards={shell.freshCards} onpick={onopen} word="new" tone="new"
-          label="Go to a new or updated card" title="New and updated cards: choose one to go to it" />
+          label="Go to a new or updated card" title={toolbarWords.newAndUpdatedCardsChoose} />
       {/if}
-      {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title="Replied items"><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">replied</span></span>{/if}
-      <span class="vb-chip" data-tone="answered" title="Answered items"><b>{shell.counts.answered}</b> <span class="vb-chip-word">answered</span></span>
-      <span class="vb-chip" data-tone="later" title="Later items"><b>{shell.counts.later}</b> <span class="vb-chip-word">later</span></span>
+      {#if shell.counts.withAgent}<span class="vb-chip" data-tone="agent" title={toolbarWords.repliedItems}><ButtonIcon name="agents" /><b>{shell.counts.withAgent}</b> <span class="vb-chip-word">{toolbarWords.replied}</span></span>{/if}
+      <span class="vb-chip" data-tone="answered" title={toolbarWords.answeredItems}><b>{shell.counts.answered}</b> <span class="vb-chip-word">{toolbarWords.answered}</span></span>
+      <span class="vb-chip" data-tone="later" title={toolbarWords.laterItems}><b>{shell.counts.later}</b> <span class="vb-chip-word">{toolbarWords.later}</span></span>
       {#if shell.flagged && !shell.past}
         <FlaggedChip id="flagged" count={shell.flagged} onclick={onflagged} />
       {/if}

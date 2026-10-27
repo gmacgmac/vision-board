@@ -8,6 +8,8 @@
 import type { AppInfo, AppProblem, AppSize, ViewNode } from '#format';
 import { ACTIONS } from '#actions';
 import { panelSize } from '../app-frame/app-frame-core.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
+import * as nodeAppWords from '../words/node-app.ts';
 
 /** Every state an app card draws: `checking` until list_apps has answered, the app host's five
  * states with `changed` apart from a first `needs-approval`, and `past` (a past version of the
@@ -51,7 +53,7 @@ export interface AppCardView {
 }
 
 /** The plain card the flag off draws (ruling 13). */
-export const APPS_OFF = 'App cards are off.';
+export const APPS_OFF = uiCommonWords.appCardsAreOff;
 
 /** One problem as the card lists it, for the agent to fix: the file and what (the server names the
  * field in its words and sends no pointer, app-cards FIX_01). */
@@ -60,14 +62,14 @@ export const problemLine = (p: AppProblem): string => `${p.file}: ${p.detail}`;
 /** The words of each state that draws no panel, and what each adds to the card's name. Plain and
  * short: the person reads them; the problems are the agent's to fix. */
 const COPY: Record<AppCardState, { head?: (id: string, name: string) => string; text?: string; reason?: string; retry?: string; words: string }> = {
-  checking: { text: 'Loading…', words: ', loading' },
-  missing: { head: (id) => `App ${id} not found`, text: 'Ask the agent to add it.', retry: 'Check again', words: ', app not found' },
-  invalid: { head: () => 'This app has problems', text: 'Ask the agent to fix them.', retry: 'Check again', words: ', app has problems' },
-  'needs-approval': { reason: 'Not allowed yet', words: ', not allowed yet' },
-  changed: { reason: 'Code changed', words: ', code changed, not allowed yet' },
+  checking: { text: uiCommonWords.loading, words: nodeAppWords.loading },
+  missing: { head: (id) => nodeAppWords.appNotFound(id), text: nodeAppWords.askTheAgentToAdd, retry: nodeAppWords.checkAgain, words: nodeAppWords.appNotFound2 },
+  invalid: { head: () => nodeAppWords.thisAppHasProblems, text: nodeAppWords.askTheAgentToFix, retry: nodeAppWords.checkAgain, words: nodeAppWords.appHasProblems },
+  'needs-approval': { reason: nodeAppWords.notAllowedYet, words: nodeAppWords.notAllowedYet2 },
+  changed: { reason: nodeAppWords.codeChanged, words: nodeAppWords.codeChangedNotAllowedYet },
   ready: { words: '' },
-  broken: { head: () => 'This app stopped', text: 'It kept crashing. Restart once the agent fixes it.', retry: 'Restart', words: ', app stopped' },
-  past: { head: (_id, name) => name, text: 'Apps don\'t run in past versions.', words: ', not running in a past version' },
+  broken: { head: () => nodeAppWords.thisAppStopped, text: nodeAppWords.itKeptCrashingRestartOnce, retry: nodeAppWords.restart, words: nodeAppWords.appStopped },
+  past: { head: (_id, name) => name, text: nodeAppWords.appsDonTRunIn, words: nodeAppWords.notRunningInAPast },
 };
 
 /** The state an app card is in: a past version first, then whether list_apps has answered. */
@@ -95,7 +97,7 @@ export function appView(n: ViewNode, input: AppCardInput = {}): AppCardView {
     ...(c.reason && { reason: c.reason }), ...(c.head && { head: c.head(id, name) }), ...(c.text && { text: c.text }),
     ...(problems.length > 0 && { problems }), ...(c.retry && { retry: c.retry }),
     names: {
-      allow: c.reason ? `${allow}. ${c.reason}` : allow, allowed: `App allowed: ${name}`, stop: `${ACTIONS['app-revoke'].label}: ${name}`,
+      allow: c.reason ? `${allow}. ${c.reason}` : allow, allowed: nodeAppWords.appAllowed(name), stop: `${ACTIONS['app-revoke'].label}: ${name}`,
       ...(c.retry && { retry: `${c.retry}: ${name}` }),
     },
     words: c.words,

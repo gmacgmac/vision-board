@@ -13,6 +13,7 @@ import { boardList } from '#actions';
 import type { OperationOutput } from '#format';
 import { ledgerPath, openLedger } from './ledger.ts';
 import { problem } from './problem.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
 
 /** The most folders one listing holds; `more` says there were more. */
 export const MAX_FOLDERS = 500;
@@ -26,7 +27,7 @@ const CLOUD_STORAGE = path.join('Library', 'CloudStorage');
 /** One folder in a listing (`project.schema.json` `entry`), as `list_folders` answers it. */
 export type FolderEntry = OperationOutput<'list_folders'>['folders'][number];
 
-const OUTSIDE = 'Only folders under your home folder can be opened, and not hidden ones or node_modules. Choose a folder under ~.';
+const OUTSIDE = serverFoldersWords.onlyFoldersUnderYourHome;
 
 /** A folder name left out of every listing and refused in a path. */
 const skipped = (name: string): boolean => name.startsWith('.') || name === 'node_modules';
@@ -63,14 +64,14 @@ export function resolveFolder(home: string, raw: string): string {
   let real: string;
   try { real = fs.realpathSync(raw); } catch {
     if (!isUnder(home, path.resolve(raw))) throw problem('forbidden', OUTSIDE);
-    throw problem('not-found', `There is no folder ${displayName(home, path.resolve(raw))}. Choose one from list_folders.`);
+    throw problem('not-found', serverFoldersWords.thereIsNoFolderChoose(displayName(home, path.resolve(raw))));
   }
   if (!isUnder(home, real) || path.relative(home, real).split(path.sep).some(skipped)) throw problem('forbidden', OUTSIDE);
-  if (!fs.statSync(real).isDirectory()) throw problem('not-found', `${displayName(home, real)} is not a folder. Choose one from list_folders.`);
+  if (!fs.statSync(real).isDirectory()) throw problem('not-found', serverFoldersWords.isNotAFolderChoose(displayName(home, real)));
   return real;
 }
 
-const UNREADABLE = 'The board server is not allowed to read this folder (macOS may need Files and Folders access for the app that started the board). Choose another one.';
+const UNREADABLE = serverFoldersWords.theBoardServerIsNot;
 
 /** The real folders in `dir` (no link, hidden folder or `node_modules`), by name. */
 function folderNames(dir: string): string[] {

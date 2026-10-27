@@ -8,11 +8,12 @@ import { isDecided, statusOf } from '#actions';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
 import { asksAnswer, replyEntry } from '../node/node-core.ts';
 import type { RegionFresh } from './region-fresh.ts';
+import * as regionWords from '../words/region.ts';
 
 /** Each layout's name: the mode row's icon labels and the popover's tile names. Typed on `Mode`,
  * so a new mode fails to compile here. */
 export const MODE_LABEL: Record<Mode, string> = {
-  grid: 'Grid', flow: 'Flow', lanes: 'Lanes', radial: 'Radial', column: 'Column', row: 'Row',
+  grid: regionWords.grid, flow: regionWords.flow, lanes: regionWords.lanes, radial: regionWords.radial, column: regionWords.column, row: regionWords.row,
 };
 
 /**
@@ -20,29 +21,29 @@ export const MODE_LABEL: Record<Mode, string> = {
  * field report batch 2 ruling 4: `list` is `column` now): the popover's tiles show it. The one place this text lives, so the agent skill can read the same words (tracker U4).
  */
 export const MODE_HINT: Record<Mode, string> = {
-  grid: 'A numbered set to work through in order',
-  flow: 'Connected steps and where they branch',
-  lanes: 'Several flows side by side, one per lane',
-  radial: 'One subject, everything related around it',
-  column: 'One card under another, in card order',
-  row: 'One card beside another, in card order',
+  grid: regionWords.aNumberedSetToWork,
+  flow: regionWords.connectedStepsAndWhereThey,
+  lanes: regionWords.severalFlowsSideBySide,
+  radial: regionWords.oneSubjectEverythingRelatedAround,
+  column: regionWords.oneCardUnderAnotherIn,
+  row: regionWords.oneCardBesideAnotherIn,
 };
 
 /** The popover's foot: the layout the agent drew the container in (the view's mode, not the
  * person's pick). */
-export const agentChoiceText = (mode: Mode): string => `The agent chose ${MODE_LABEL[mode]} for this container.`;
+export const agentChoiceText = (mode: Mode): string => regionWords.theAgentChoseForThis(MODE_LABEL[mode]);
 
 /** The Match card widths switch's name (widthsControl flag, field report batch 3 ruling 5); its
  * state is `aria-checked`, and its tooltip says which widths are in force (`widthsTip`). */
-export const WIDTHS_LABEL = 'Match card widths';
-export const widthsTip = (w: Widths): string => `Card widths: ${w === 'match' ? 'Match' : 'Own'}`;
+export const WIDTHS_LABEL = regionWords.matchCardWidths;
+export const widthsTip = (w: Widths): string => regionWords.cardWidths(w === 'match' ? regionWords.match : regionWords.own);
 
 /** Under a disabled "Reset places" in the settings menu: why there is nothing to reset. */
-export const RESET_NONE_HINT = 'No cards moved';
+export const RESET_NONE_HINT = regionWords.noCardsMoved;
 
 /** Under a disabled "Put container back": the container has no place of its own (3_FE_04
  * ruling 7). */
-export const PUT_BACK_NONE_HINT = 'Not moved';
+export const PUT_BACK_NONE_HINT = regionWords.notMoved;
 
 /**
  * The colour a region's frame is drawn in, as a CSS value: the element sets it as `--region` and
@@ -69,7 +70,7 @@ export type RegionBadge = 'none' | 'unsent' | 'sent';
 
 /** The state line of the preview and the note block, per stage. */
 export const NOTE_STAGE_TEXT: Record<RegionNoteStage, string> = {
-  unsent: 'Unsent', sent: 'Sent, waiting for the agent', answered: 'Sent, answered',
+  unsent: regionWords.unsent, sent: regionWords.sentWaitingForTheAgent, answered: 'Sent, answered',
 };
 
 /** A container's latest note as Comment's badge, its preview and its note block show it. */
@@ -110,18 +111,18 @@ export function regionNote(notes: readonly ItemNote[] | undefined, owed = true, 
   const answers = replies.filter((r) => r.to === note.seq).map(replyEntry);
   return {
     seq: note.seq, stage, badge: noteBadge(stage), text: note.text ?? '',
-    stateText: note.sent !== true && stage === 'answered' ? 'Answered' : NOTE_STAGE_TEXT[stage],
+    stateText: note.sent !== true && stage === 'answered' ? regionWords.answered : NOTE_STAGE_TEXT[stage],
     editable: stage === 'unsent',
-    readOnlyText: stage === 'sent' ? 'Read-only until the agent answers' : stage === 'answered' ? 'Read-only' : '',
+    readOnlyText: stage === 'sent' ? regionWords.readOnlyUntilTheAgent : stage === 'answered' ? 'Read-only' : '',
     ...(answers.length && { replies: answers }),
   };
 }
 
 /** Comment's accessible name: the container, then what its badge says. */
 export function commentLabel(title: string, badge: RegionBadge): string {
-  const base = `Comment on container ${title}`;
-  if (badge === 'unsent') return `${base}, 1 unsent note`;
-  return badge === 'sent' ? `${base}, 1 sent note waiting for the agent` : base;
+  const base = regionWords.commentOnContainer(title);
+  if (badge === 'unsent') return regionWords.n1UnsentNote(base);
+  return badge === 'sent' ? regionWords.n1SentNoteWaitingFor(base) : base;
 }
 
 /** What the person asked of the container's note, from the preview or the note block. The
@@ -192,11 +193,11 @@ export interface RegionRetired { count: number; text: string; label: string; ver
 /** The marker for `count` cards retired from the container, opening board version `version` with
  * the person's answers as at line `until`. */
 export function retiredMarker(count: number, version?: number, until?: number): RegionRetired {
-  const words = `${count} card${count === 1 ? '' : 's'} retired`;
+  const words = regionWords.cardRetired(count);
   return {
     count,
-    text: `${count} retired`,
-    label: version === undefined ? `${words} from this container` : `${words} from this container. Show v${version}, where ${count === 1 ? 'it' : 'they'} last appeared`,
+    text: regionWords.retired(count),
+    label: version === undefined ? regionWords.fromThisContainer(words) : regionWords.fromThisContainerShowV(words, version, count),
     ...(version !== undefined && { version }),
     ...(version !== undefined && until !== undefined && { until }),
   };
@@ -235,7 +236,7 @@ export function regionState(
     mode: r.mode,
     widths: widthsOf(r.mode, view.regions.find((g) => g.id === r.id)?.widths, s.widths.get(r.id)),
     countText: items.length ? `${answered}/${items.length}` : '',
-    countLabel: items.length ? `${answered} of ${items.length} answered` : '',
+    countLabel: items.length ? regionWords.ofAnswered(answered, items.length) : '',
     canReset: nodes.some((n) => s.pins.has(n.id)),
     canPutBack: s.regionPins.has(r.id),
     ...(note && { note }),

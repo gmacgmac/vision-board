@@ -5,15 +5,16 @@
 import type { ChatEvent, ChatOption, ChatState, Chip } from '#chat';
 import { applyEvent, EMPTY_CHAT } from '#chat';
 import type { ChatMessageBody, ChatSessionInfo } from './page-io.ts';
+import * as chatWords from './words/chat.ts';
 
 export type Agent = ChatSessionInfo['agent'];
 
-export const AGENTS: readonly ChatOption[] = [{ id: 'claude', label: 'Claude' }, { id: 'kiro', label: 'Kiro' }];
+export const AGENTS: readonly ChatOption[] = [{ id: 'claude', label: chatWords.claude }, { id: 'kiro', label: chatWords.kiro }];
 /** The models each agent offers, the first what picking the agent gives; '' is its default. Claude's by
  *  exact id, with the 1M context (panel-send ruling 5). Kiro's by Kiro's ids, never `auto` (N34 ruling 3). */
 export const MODELS: Record<Agent, readonly ChatOption[]> = {
-  claude: [{ id: '', label: 'Default' }, { id: 'claude-opus-5-5[1m]', label: 'Opus 5.5' }, { id: 'claude-sonnet-5-5[1m]', label: 'Sonnet 5.5' }],
-  kiro: [{ id: 'claude-opus-5.5', label: 'Opus 5.5' }, { id: 'claude-sonnet-5.5', label: 'Sonnet 5.5' }],
+  claude: [{ id: '', label: chatWords.defaultText }, { id: 'claude-opus-5-5[1m]', label: chatWords.opus55 }, { id: 'claude-sonnet-5-5[1m]', label: chatWords.sonnet55 }],
+  kiro: [{ id: 'claude-opus-5.5', label: chatWords.opus55 }, { id: 'claude-sonnet-5.5', label: chatWords.sonnet55 }],
 };
 export const firstModel = (agent: Agent): string => MODELS[agent][0]?.id ?? ''; // what picking `agent` gives
 /** The model a session runs: the one recorded, else the agent's first (Kiro with none runs Opus 5.5). */
@@ -21,14 +22,14 @@ export const shownModel = (agent: Agent, model?: string): string => model || fir
 /** What the header shows: the session in use, else the pick (none in use, or its start was refused). */
 export const shownPick = (s: ChatSessionInfo | null, refused: string | undefined, pick: Pick): Pick => (
   s && refused === undefined ? { agent: s.agent, model: shownModel(s.agent, s.model) } : pick);
-export const LOADING = 'Loading…';
-export const PAST = 'A past version of the board is showing. Go back to now to send a message.';
+export const LOADING = chatWords.loading;
+export const PAST = chatWords.aPastVersionOfThe;
 
 /** What the session runs, or will when it starts. */
 export interface Pick { agent: Agent; model: string }
 
 /** Why a chat on an archived board takes no message (N39 ruling 3): its agent can't see the board. */
-export const ARCHIVED = 'This board is archived, so its agent can\'t see it. Restore it from the board picker to chat about it.';
+export const ARCHIVED = chatWords.thisBoardIsArchivedSo;
 
 /** Why no message can go, in the order it matters: the page not knowing yet where it is (null; ''
  *  is a folder with no board), a past version, an archived board, a refused start. */

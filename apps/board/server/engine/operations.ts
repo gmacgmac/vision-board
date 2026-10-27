@@ -10,6 +10,7 @@ import type { Caller, Ledger } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import type { ParamSpec } from '../spec.ts';
 import { SPECS, coerce, paramProblems } from '../spec.ts';
+import * as httpWords from '../words/http.ts';
 
 /** An answer: its status, its JSON body, and any headers a problem carries (`Allow`, `WWW-Authenticate`). */
 export interface EngineReply { status: number; body: unknown; headers?: Record<string, string> }
@@ -60,7 +61,7 @@ function readParam(p: ParamSpec, raw: string): unknown {
   const value = coerce(p.type, raw);
   const problems = paramProblems(p, value);
   if (!problems.length) return value;
-  const what = p.in === 'path' ? `The ${PATH_WORDS[p.name] ?? p.name} in the path` : `The query parameter \`${p.name}\``;
+  const what = p.in === 'path' ? httpWords.theInThePath(PATH_WORDS[p.name] ?? p.name) : httpWords.theQueryParameter(p.name);
   throw problem('bad-request', `${what} ${problems[0]}. ${p.description}`.trim());
 }
 
@@ -72,7 +73,7 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
   OPERATIONS[id].pathParams.forEach((name, i) => {
     let text: string;
     try { text = decodeURIComponent(raw[i] ?? ''); } catch {
-      throw problem('bad-request', `The ${PATH_WORDS[name] ?? name} in the path is not valid percent-encoding.`);
+      throw problem('bad-request', httpWords.theInThePathIs(PATH_WORDS[name] ?? name));
     }
     out[name] = readParam(specs.find((p) => p.in === 'path' && p.name === name)!, text);
   });
@@ -80,11 +81,11 @@ export function readParams(id: OperationId, raw: string[], query: URLSearchParam
   for (const name of new Set(query.keys())) {
     const p = known.find((x) => x.name === name);
     if (!p) {
-      const takes = known.length ? `It takes: ${known.map((x) => x.name).join(', ')}.` : 'It takes no query parameters.';
-      throw problem('bad-request', `Unknown query parameter \`${name}\`. ${takes}`);
+      const takes = known.length ? httpWords.itTakes(known.map((x) => x.name).join(', ')) : httpWords.itTakesNoQueryParameters;
+      throw problem('bad-request', httpWords.unknownQueryParameter(name, takes));
     }
     const values = query.getAll(name);
-    if (values.length > 1) throw problem('bad-request', `The query parameter \`${name}\` is given more than once; give it once.`);
+    if (values.length > 1) throw problem('bad-request', httpWords.theQueryParameterIsGiven(name));
     out[name] = readParam(p, values[0]!);
   }
   return withDefaults(id, out);
@@ -96,9 +97,9 @@ export function withDefaults(id: OperationId, params: Record<string, unknown>): 
   return params;
 }
 
-export const ONLY_PERSON = 'Only the person can do this, on the board; send a propose or reply item instead.';
-const ONLY_AGENT = 'Only an agent can do this. The person acts on the board itself.';
-const NO_AGENT = 'This needs an agent: the host passes the agent that is calling.';
+export const ONLY_PERSON = httpWords.onlyThePersonCanDo;
+const ONLY_AGENT = httpWords.onlyAnAgentCanDoThis;
+const NO_AGENT = httpWords.thisNeedsAnAgentThe;
 
 /** Refuse a caller the operation does not take (the host's caller check already ran in the
  * standalone server, so there this never refuses): the person's operations take the person, an

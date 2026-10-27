@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import { readLedger } from '#format';
 import { ledgerLineProblems } from '../server/schema.ts';
+import * as binWords from '../server/words/bin.ts';
 
 /** Every problem in one ledger file, as "line N: ...". */
 function fileProblems(file: string): string[] {
@@ -14,7 +15,7 @@ function fileProblems(file: string): string[] {
   const out: string[] = [];
   lines.forEach((line, i) => {
     if (!line.trim()) return;
-    for (const p of ledgerLineProblems(line)) out.push(`line ${i + 1}: schema ${p.pointer || '/'}: ${p.detail}`);
+    for (const p of ledgerLineProblems(line)) out.push(binWords.lineSchema(i + 1, p.pointer || '/', p.detail));
   });
   // readLedger runs eventProblems on each line, then the context rules on the lines that pass.
   out.push(...readLedger(lines).problems);
@@ -32,7 +33,7 @@ for (const file of files) {
   try {
     problems = fileProblems(file);
   } catch (err) {
-    problems = [`cannot read: ${(err as Error).message}`];
+    problems = [binWords.cannotRead((err as Error).message)];
   }
   if (problems.length) {
     failed++;

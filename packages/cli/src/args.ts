@@ -3,6 +3,7 @@
 // booleans; a `json` input takes a JSON text). Nothing here runs a command or reads a file.
 import type { CommandInfo, CommandInput } from './commands.generated.ts';
 import { GLOBAL_NAMES } from './globals.ts';
+import * as argsWords from './words/args.ts';
 
 /** What the command line said: inputs by name (typed), the global flags, nothing checked for presence yet. */
 export interface Parsed {
@@ -25,13 +26,13 @@ export function typed(input: CommandInput, raw: string): { ok: true; value: unkn
   const flag = `--${flagOf(input.name)}`;
   switch (input.type) {
     case 'string':
-      return raw === '' ? fail(`${flag} needs a value.`) : { ok: true, value: raw };
+      return raw === '' ? fail(argsWords.needsAValue(flag)) : { ok: true, value: raw };
     case 'integer':
-      return /^-?\d+$/.test(raw) ? { ok: true, value: Number(raw) } : fail(`${flag} must be a whole number, not "${raw}".`);
+      return /^-?\d+$/.test(raw) ? { ok: true, value: Number(raw) } : fail(argsWords.mustBeAWholeNumber(flag, raw));
     case 'number':
-      return raw.trim() !== '' && Number.isFinite(Number(raw)) ? { ok: true, value: Number(raw) } : fail(`${flag} must be a number, not "${raw}".`);
+      return raw.trim() !== '' && Number.isFinite(Number(raw)) ? { ok: true, value: Number(raw) } : fail(argsWords.mustBeANumberNot(flag, raw));
     case 'boolean':
-      return raw === 'true' || raw === 'false' ? { ok: true, value: raw === 'true' } : fail(`${flag} must be true or false, not "${raw}".`);
+      return raw === 'true' || raw === 'false' ? { ok: true, value: raw === 'true' } : fail(argsWords.mustBeTrueOrFalse(flag, raw));
     case 'json':
       try { return { ok: true, value: JSON.parse(raw) as unknown }; } catch { return fail(`${flag} must be JSON text (or give the whole body with --json-body).`); }
   }

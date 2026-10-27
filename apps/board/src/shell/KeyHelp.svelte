@@ -5,6 +5,7 @@
      closes it. "?" (Shift+/) opens it from anywhere on the page but a text field. The gallery
      mounts it in the page flow, open. -->
 <script lang="ts">
+  import * as shellKeyHelpWords from './words/shell-key-help.ts';
   import { onMount } from 'svelte';
   import { bindHoverTip } from '#ui';
   import { keyGroups } from '../board/key-help.ts';
@@ -36,7 +37,7 @@
 </script>
 
 <div class="vb-keys" data-placement={placement} bind:this={host}>
-  <button type="button" class="vb-keys-btn" bind:this={button} aria-label="Key commands" aria-describedby="vb-keys-list-{uid}" aria-keyshortcuts="Shift+/">?</button>
+  <button type="button" class="vb-keys-btn" bind:this={button} aria-label={shellKeyHelpWords.keyCommands} aria-describedby="vb-keys-list-{uid}" aria-keyshortcuts="Shift+/">?</button>
   <div class="vb-tip vb-keys-tip" id="vb-keys-list-{uid}" role="tooltip">
     <div class="vb-keys-body">
     {#each groups as g (g.group)}

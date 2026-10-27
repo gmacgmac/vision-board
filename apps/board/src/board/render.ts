@@ -9,10 +9,11 @@ import type { CardReply, VbRegionElement } from '#ui';
 import { regionFresh, regionState, retiredMarker } from '#ui';
 import { LATER_REGION } from '#format';
 import { work } from './work.ts';
+import * as boardWords from './words/board.ts';
 
 /** The built-in Later's frame (3_FE_03 ruling 5): its layout is the grid, set by the board, and
  * while it is empty it shows only while a card is dragged, as a drop target. */
-export const LATER_FRAME = { fixed: true, empty: 'Drop a card here to save it for later.' } as const;
+export const LATER_FRAME = { fixed: true, empty: boardWords.dropACardHereTo } as const;
 
 /** Items first in number order, then the rest: DOM order is tab order is reading order. */
 export function readingOrder(view: View): ViewNode[] {

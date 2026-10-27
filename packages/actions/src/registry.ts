@@ -3,6 +3,7 @@
 // through `write_board` or `request_grant`, never as an `act`.
 import type { ActionId, Kind } from '#format';
 import { NODE_TYPES } from '#format';
+import * as actionsRegistryWords from './words/actions-registry.ts';
 
 /** Where a card stands with the person. `commented`: with the agent, its latest note owed an answer,
  * neither open nor answered (conditions.ts `cardStatus`, D-046; the page says "Replied", agents
@@ -67,56 +68,56 @@ const decision = { by: 'person', needsConfirmation: true } as const;
 
 export const ACTIONS: Record<ActionId, ActionDef> = {
   // ✓ and ✗ are named for what they are, Check and Cross, never for a meaning (D-045).
-  ack: { id: 'ack', label: 'Check', key: 'a', ...decision, onItem: true, status: 'acknowledged', reply: '✓' },
-  drop: { id: 'drop', label: 'Cross', key: 'x', ...decision, onItem: true, status: 'dropped', reply: '✗' },
-  comment: { id: 'comment', label: 'Comment', key: 'c', ...person, onItem: true, text: 'required', reply: 'comment' },
+  ack: { id: 'ack', label: actionsRegistryWords.check, key: 'a', ...decision, onItem: true, status: 'acknowledged', reply: '✓' },
+  drop: { id: 'drop', label: actionsRegistryWords.cross, key: 'x', ...decision, onItem: true, status: 'dropped', reply: '✗' },
+  comment: { id: 'comment', label: actionsRegistryWords.comment, key: 'c', ...person, onItem: true, text: 'required', reply: 'comment' },
   // Kept so old lines read and the server still takes one (D-045): no card offers it, no key presses
   // it, and it reads as a note everywhere (notes.ts `itemOf`).
-  context: { id: 'context', label: 'More context', ...person, onItem: true, text: 'optional', reply: 'comment' },
-  later: { id: 'later', label: 'Save for later', key: 'l', ...decision, onItem: true, status: 'later', reply: 'saved for later' },
-  reopen: { id: 'reopen', label: 'Reopen', key: 'o', ...person, onItem: true, status: 'open' },
-  pin: { id: 'pin', label: 'Move', ...person, onItem: false },
-  unpin: { id: 'unpin', label: 'Reset position', ...person, onItem: false },
-  mode: { id: 'mode', label: 'Change layout', ...person, onItem: false },
+  context: { id: 'context', label: actionsRegistryWords.moreContext, ...person, onItem: true, text: 'optional', reply: 'comment' },
+  later: { id: 'later', label: actionsRegistryWords.saveForLater, key: 'l', ...decision, onItem: true, status: 'later', reply: actionsRegistryWords.savedForLater },
+  reopen: { id: 'reopen', label: actionsRegistryWords.reopen, key: 'o', ...person, onItem: true, status: 'open' },
+  pin: { id: 'pin', label: actionsRegistryWords.move, ...person, onItem: false },
+  unpin: { id: 'unpin', label: actionsRegistryWords.resetPosition, ...person, onItem: false },
+  mode: { id: 'mode', label: actionsRegistryWords.changeLayout, ...person, onItem: false },
   // Ledger v3 (api.md 16). No item status, so none of them appears in the numbered reply.
-  grant: { id: 'grant', label: 'Allow', ...decision, onItem: false },
-  deny: { id: 'deny', label: 'Refuse', ...decision, onItem: false, text: 'optional' },
-  revoke: { id: 'revoke', label: 'Remove access', ...decision, onItem: false },
-  size: { id: 'size', label: 'Card size', ...person, onItem: false },
-  send: { id: 'send', label: 'Send to agent', ...person, onItem: false },
+  grant: { id: 'grant', label: actionsRegistryWords.allow, ...decision, onItem: false },
+  deny: { id: 'deny', label: actionsRegistryWords.refuse, ...decision, onItem: false, text: 'optional' },
+  revoke: { id: 'revoke', label: actionsRegistryWords.removeAccess, ...decision, onItem: false },
+  size: { id: 'size', label: actionsRegistryWords.cardSize, ...person, onItem: false },
+  send: { id: 'send', label: actionsRegistryWords.sendToAgent, ...person, onItem: false },
   // Ledger v4 (api.md 58-61): change a note not yet sent, named by the act that made it. No status
   // of their own; the item's status is worked out again from its notes (notes.ts).
-  'note-edit': { id: 'note-edit', label: 'Edit note', ...person, onItem: true, text: 'required' },
-  'note-remove': { id: 'note-remove', label: 'Remove note', ...person, onItem: true },
+  'note-edit': { id: 'note-edit', label: actionsRegistryWords.editNote, ...person, onItem: true, text: 'required' },
+  'note-remove': { id: 'note-remove', label: actionsRegistryWords.removeNote, ...person, onItem: true },
   // Ledger v6 (api.md 66-70): put cards in a container on their board or in the built-in Later.
   // The person's move wins over the agent's region (3_FE_03 ruling 2).
-  move: { id: 'move', label: 'Move to', ...person, onItem: false },
+  move: { id: 'move', label: actionsRegistryWords.moveTo, ...person, onItem: false },
   // Ledger v10 (api.md 93): turn down an agent's proposal, named by its `seq`. Not a decision on
   // the item, so no status; accepting is the proposal's own action (`ack` or `drop`) with `proposal`.
-  reject: { id: 'reject', label: 'Reject', ...person, onItem: true },
+  reject: { id: 'reject', label: actionsRegistryWords.reject, ...person, onItem: true },
   // Ledger v12 (api.md 128): the person's private mark on any card. Not an answer (`onItem` false,
   // so Send never carries it) and no agent reads it. Its key (F in assumption A) is the page's to
   // bind: F is Fit today.
-  flag: { id: 'flag', label: 'Flag', ...person, onItem: false },
-  unflag: { id: 'unflag', label: 'Remove flag', ...person, onItem: false },
+  flag: { id: 'flag', label: actionsRegistryWords.flag, ...person, onItem: false },
+  unflag: { id: 'unflag', label: actionsRegistryWords.removeFlag, ...person, onItem: false },
   // Ledger v18 (api.md 156): the person puts one card's notes away, and brings them back. Private like
   // the flag: not an answer (`onItem` false) and no agent reads it. No key; the card's own buttons do it.
-  'notes-hide': { id: 'notes-hide', label: 'Hide notes', ...person, onItem: false },
-  'notes-show': { id: 'notes-show', label: 'Show notes', ...person, onItem: false },
+  'notes-hide': { id: 'notes-hide', label: actionsRegistryWords.hideNotes, ...person, onItem: false },
+  'notes-show': { id: 'notes-show', label: actionsRegistryWords.showNotes, ...person, onItem: false },
   // Ledger v13 (api.md 132): a container's card widths, Match or Own, from its toolbar like the mode.
-  widths: { id: 'widths', label: 'Card widths', ...person, onItem: false },
+  widths: { id: 'widths', label: actionsRegistryWords.cardWidths, ...person, onItem: false },
   // Ledger v14 (api.md 135): the person hides a whole board from every agent, and brings it back.
   // Archiving takes the board away from the agents, so the page asks first; restoring does not.
-  archive: { id: 'archive', label: 'Archive board', ...decision, onItem: false },
-  restore: { id: 'restore', label: 'Restore', ...person, onItem: false },
+  archive: { id: 'archive', label: actionsRegistryWords.archiveBoard, ...decision, onItem: false },
+  restore: { id: 'restore', label: actionsRegistryWords.restore, ...person, onItem: false },
   // Ledger v15 (api.md 138): the person makes a whole board read-only for everyone, and ends it.
   // Nothing is lost either way, so the page asks neither time.
-  lock: { id: 'lock', label: 'Lock board', ...person, onItem: false },
-  unlock: { id: 'unlock', label: 'Unlock board', ...person, onItem: false },
+  lock: { id: 'lock', label: actionsRegistryWords.lockBoard, ...person, onItem: false },
+  unlock: { id: 'unlock', label: actionsRegistryWords.unlockBoard, ...person, onItem: false },
   // Ledger v17 (api.md 150, D-047 ruling 7): the person lets an app's tools run at one version of its
   // code, and stops them. Only a person's click does either (rule 8), so the page asks first.
-  'app-allow': { id: 'app-allow', label: 'Allow app', ...decision, onItem: false },
-  'app-revoke': { id: 'app-revoke', label: 'Stop app', ...decision, onItem: false },
+  'app-allow': { id: 'app-allow', label: actionsRegistryWords.allowApp, ...decision, onItem: false },
+  'app-revoke': { id: 'app-revoke', label: actionsRegistryWords.stopApp, ...decision, onItem: false },
 };
 
 /** The review buttons an item offers: an act among them must be one its kind offers (act.ts). */
@@ -147,14 +148,14 @@ export interface AgentActionDef extends Common {
 const agent = { by: 'agent', needsConfirmation: false } as const;
 
 export const AGENT_ACTIONS: Record<AgentActionId, AgentActionDef> = {
-  reply: { id: 'reply', label: 'Reply', ...agent, inputs: { n: 'required', text: 'required', to: 'optional' } },
+  reply: { id: 'reply', label: actionsRegistryWords.reply, ...agent, inputs: { n: 'required', text: 'required', to: 'optional' } },
   propose: {
-    id: 'propose', label: 'Propose a decision', ...agent,
+    id: 'propose', label: actionsRegistryWords.proposeADecision, ...agent,
     inputs: { n: 'required', ver: 'required', action: 'required', reason: 'required', source: 'optional' },
   },
-  park: { id: 'park', label: 'Write the handover', ...agent, inputs: { n: 'required', bundle: 'required' } },
+  park: { id: 'park', label: actionsRegistryWords.writeTheHandover, ...agent, inputs: { n: 'required', bundle: 'required' } },
   request_grant: {
-    id: 'request_grant', label: 'Ask for access', ...agent,
+    id: 'request_grant', label: actionsRegistryWords.askForAccess, ...agent,
     inputs: { board: 'required', region: 'required', reason: 'required' },
   },
 };
@@ -172,11 +173,11 @@ export interface BoardActionDef extends Common {
   inputs: Readonly<Record<string, 'required' | 'optional'>>;
 }
 
-const boardInputs = { title: 'required', summary: 'optional' } as const;
+const boardInputs = { title: actionsRegistryWords.required, summary: actionsRegistryWords.optional } as const;
 
 export const BOARD_ACTIONS: Record<BoardActionId, BoardActionDef> = {
-  'new-board': { id: 'new-board', label: 'New board', ...person, inputs: boardInputs },
-  'rename-board': { id: 'rename-board', label: 'Rename board', ...person, inputs: boardInputs },
+  'new-board': { id: 'new-board', label: actionsRegistryWords.newBoard, ...person, inputs: boardInputs },
+  'rename-board': { id: 'rename-board', label: actionsRegistryWords.renameBoard, ...person, inputs: boardInputs },
 };
 
 /** What the person takes off a board (N24, api.md 141): the person's `retire` line through
@@ -195,6 +196,6 @@ export interface RetireActionDef extends Common {
 }
 
 export const RETIRE_ACTIONS: Record<RetireActionId, RetireActionDef> = {
-  'remove-cards': { id: 'remove-cards', label: 'Remove card', ...decision, inputs: { cards: 'required' } },
-  'remove-container': { id: 'remove-container', label: 'Remove container', ...decision, inputs: { region: 'required' } },
+  'remove-cards': { id: 'remove-cards', label: actionsRegistryWords.removeCard, ...decision, inputs: { cards: 'required' } },
+  'remove-container': { id: 'remove-container', label: actionsRegistryWords.removeContainer, ...decision, inputs: { region: 'required' } },
 };

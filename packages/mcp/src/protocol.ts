@@ -9,6 +9,7 @@ import { CACHE, CAPABILITIES, INSTRUCTIONS, INSTRUCTIONS_JOINED, LEGACY, META, M
 import type { RpcMessage, RpcResponse } from './rpc.ts';
 import { CODES, RpcError, errorResponse, isRecord } from './rpc.ts';
 import { TOOL_FILE } from './tools.ts';
+import * as protocolWords from './words/protocol.ts';
 
 export interface ServerOptions {
   /** The board server, such as `http://127.0.0.1:4466`. */
@@ -30,7 +31,7 @@ export interface McpServer {
 const complete = (result: Record<string, unknown>) => ({ resultType: 'complete', ...result, _meta: { [META.serverInfo]: SERVER_INFO } });
 
 const unsupported = (requested?: unknown) =>
-  new RpcError(CODES.unsupportedProtocolVersion, 'Unsupported protocol version', {
+  new RpcError(CODES.unsupportedProtocolVersion, protocolWords.unsupportedProtocolVersion, {
     supported: SUPPORTED_VERSIONS, ...(requested !== undefined && { requested }),
   });
 
@@ -44,7 +45,7 @@ function checkEra(params: Readonly<Record<string, unknown>>, legacy: boolean): v
   }
   if (typeof version !== 'string' || !SUPPORTED_VERSIONS.includes(version)) throw unsupported(version);
   if (version === MODERN && !isRecord(meta?.[META.capabilities])) {
-    throw new RpcError(CODES.invalidParams, `Invalid params: _meta["${META.capabilities}"] is required on every request.`);
+    throw new RpcError(CODES.invalidParams, protocolWords.invalidParamsMetaIsRequired(META.capabilities));
   }
 }
 
@@ -73,7 +74,7 @@ export function createMcpServer(opts: ServerOptions): McpServer {
           ...(opts.fetch && { fetch: opts.fetch }), ...(signal && { signal }),
         }) };
       default:
-        throw new RpcError(CODES.methodNotFound, `Method not found: ${method}`);
+        throw new RpcError(CODES.methodNotFound, protocolWords.methodNotFound(method));
     }
   }
 
@@ -85,7 +86,7 @@ export function createMcpServer(opts: ServerOptions): McpServer {
       } catch (err) {
         if (err instanceof RpcError) return errorResponse(err, message.id);
         log(`vb-mcp: ${message.method} failed: ${err instanceof Error ? err.stack ?? err.message : String(err)}`);
-        return errorResponse(new RpcError(CODES.internalError, 'Internal error; the server log has the details.'), message.id);
+        return errorResponse(new RpcError(CODES.internalError, protocolWords.internalErrorTheServerLog), message.id);
       }
     },
   };

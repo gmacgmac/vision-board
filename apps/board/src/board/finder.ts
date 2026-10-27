@@ -10,6 +10,7 @@ import { clip, LATER_REGION } from '#format';
 import type { BoardLayout } from '#layout';
 import type { VbRegionElement } from '#ui';
 import type { Viewport } from './viewport.ts';
+import * as cardsWords from './words/cards.ts';
 
 /** One row of a menu dropdown: what a choice names, its words, and its tooltip when the words are cut. */
 export interface MenuRow { value: string; text: string; disabled?: boolean; title?: string }
@@ -28,11 +29,11 @@ export function containerRows(view: View, layout: BoardLayout | null): Container
   const row = (id: string, title: string): ContainerRow =>
     ({ id, title, count: count(id), usable: layout?.regions.some((r) => r.id === id) === true && (id !== LATER_REGION || count(id) > 0) });
   const rows = view.regions.filter((r) => r.id !== LATER_REGION).map((r) => row(r.id, r.title));
-  return [...rows, row(LATER_REGION, 'Later')];
+  return [...rows, row(LATER_REGION, cardsWords.later)];
 }
 
 /** The row's text: "Ideas · 3 items". */
-export const rowText = (r: ContainerRow): string => `${r.title} · ${r.count} item${r.count === 1 ? '' : 's'}`;
+export const rowText = (r: ContainerRow): string => cardsWords.item(r.title, r.count);
 
 /** The most characters an open list row shows; past it the title ends in "…" (`openRow`). */
 export const OPEN_ROW_MAX = 60;

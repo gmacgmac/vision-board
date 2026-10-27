@@ -13,6 +13,8 @@ import { readOnlyMode } from './note-bubble-core.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { MAX_TEXT } from '#format';
+import * as noteBubbleWords from '../words/note-bubble.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 const button = (act: string, label: string, primary = false): string =>
   `<button type="button" class="vb-nb-btn${primary ? ' vb-nb-primary' : ''}" data-note-do="${act}">${esc(label)}</button>`;
@@ -37,7 +39,7 @@ const seqAt = (seq: number): string => ` data-seq="${seq}" tabindex="-1"`;
  *  edited (not sent or answered, decision 8), which turns the window into the edit mode for it. */
 function noteItem(e: NoteEntry): string {
   const edit = e.sent ? ''
-    : `<button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="${e.seq}" aria-label="Edit note ${e.index}">Edit</button>`;
+    : `<button type="button" class="vb-nb-btn vb-nb-edit" data-note-do="edit" data-edit="${e.seq}" aria-label="${noteBubbleWords.editNote(e.index)}">${uiCommonWords.edit}</button>`;
   return `<li class="vb-nb-note"${seqAt(e.seq)}><div class="vb-nb-note-top"><span class="vb-nb-who">${esc(e.who)}</span>${edit}</div>`
     + `<div class="vb-nb-note-text">${renderMarkdown(e.text)}</div></li>`;
 }
@@ -65,9 +67,9 @@ export function noteBubbleTemplate(v: BubbleView, number?: number): string {
   // A sent note is history: it is shown, as Markdown (D-023), never edited. The conversation lists
   // every note and reply. Neither has a bottom row: the room goes to the list (ruling 7).
   if (shown) return `${head}${thread(v, v.mode === 'sent' ? `<div class="vb-nb-read">${renderMarkdown(v.text)}</div>` : '')}`;
-  const body = `<textarea class="vb-nb-text" aria-label="Note text" rows="3" maxlength="${MAX_TEXT}"`
+  const body = `<textarea class="vb-nb-text" aria-label="${noteBubbleWords.noteText}" rows="3" maxlength="${MAX_TEXT}"`
     + ` placeholder="${esc(v.placeholder)}">${esc(v.text)}</textarea>${thread(v, '')}`;
-  const row = `${v.remove ? button('remove', 'Remove') : ''}${hint(v.hint)}${button('cancel', v.cancel)}`
+  const row = `${v.remove ? button('remove', uiCommonWords.remove) : ''}${hint(v.hint)}${button('cancel', v.cancel)}`
     + `${v.primary ? button('save', v.primary, true) : ''}`;
   return `${head}${body}<p class="vb-nb-error" role="alert" hidden></p><div class="vb-nb-row">${row}</div>`;
 }

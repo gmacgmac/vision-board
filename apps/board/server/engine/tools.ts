@@ -11,6 +11,7 @@ import { TOOLS_FILE } from '#format/files';
 import type { Caller } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import { foreignSchemas } from '../schema.ts';
+import * as httpWords from '../words/http.ts';
 
 /** One row of the tool table, as the engine reads it. */
 interface ToolRow {
@@ -34,7 +35,7 @@ export type RunOp = (id: OperationId, input: {
 const ROWS: readonly ToolRow[] = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: ToolRow[] }).tools;
 
 const refused = (errors: { pointer: string; detail: string }[], name: string): ToolOutcome =>
-  ({ ok: false, problem: problem('invalid', `The input does not fit ${name}. Fix the fields listed in errors and call it again.`, { errors }).body });
+  ({ ok: false, problem: problem('invalid', httpWords.theInputDoesNotFit(name), { errors }).body });
 
 /** The tools for the operations `serves` holds, each running through `run`. */
 export function makeTools(serves: (id: string) => id is OperationId, run: RunOp): Record<string, EngineTool> {

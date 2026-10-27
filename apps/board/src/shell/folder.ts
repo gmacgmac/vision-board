@@ -9,6 +9,7 @@ import type { FolderInfo } from './page-io.ts';
 import { getProject } from './page-io.ts';
 import { folderName } from './folder-path.ts';
 import { LAST_BOARD_KEY } from '../board/start-board.ts';
+import * as foldersWords from './words/folders.ts';
 
 export const openFolderOn = (): boolean => flagOn('openFolder', pageFlags());
 
@@ -22,7 +23,7 @@ export async function loadFolder(): Promise<FolderInfo | null> {
   try {
     const f = await getProject();
     shell.folder = f;
-    document.title = `${folderName(f)} · Vision Board`;
+    document.title = foldersWords.visionBoard(folderName(f));
     return f;
   } catch { return null; }
 }

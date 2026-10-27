@@ -11,6 +11,7 @@ import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
 import { CHAT_SCHEMA_DIR } from '#chat/files';
 import { LEDGER_FORMAT } from '#format';
 import { SCHEMA_DIR } from '#format/files';
+import * as schemaWords from './words/schema.ts';
 
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
@@ -76,14 +77,14 @@ export function foreignSchemas(): (schema: Record<string, unknown>) => (value: u
   const a = new Ajv2020({ strict: false, allErrors: true, logger: false, addUsedSchema: false });
   return ({ $schema: _ignored, ...schema }) => {
     const validate = a.compile(schema);
-    return (value) => (validate(value) ? [] : plainProblems(validate.errors ?? [], 'does not fit any of the shapes the tool takes'));
+    return (value) => (validate(value) ? [] : plainProblems(validate.errors ?? [], schemaWords.doesNotFitAnyOf));
   };
 }
 
 /** Every problem with one ledger line (its text) against the stored-line schema. */
 export function ledgerLineProblems(line: string): SchemaProblem[] {
   let value: unknown;
-  try { value = JSON.parse(line); } catch { return [{ pointer: '', detail: 'the line is not JSON' }]; }
+  try { value = JSON.parse(line); } catch { return [{ pointer: '', detail: schemaWords.theLineIsNotJSON }]; }
   return schemaProblems(LEDGER_EVENT_ID, value);
 }
 
@@ -95,27 +96,27 @@ const child = (pointer: string, key: string) => `${pointer}/${escape(key)}`;
 /** The field a pointer ends at, for messages: `/node/title` -> `title`. */
 const fieldOf = (pointer: string) => {
   const last = pointer.split('/').pop() ?? '';
-  return last ? last.replace(/~1/g, '/').replace(/~0/g, '~') : 'the event';
+  return last ? last.replace(/~1/g, '/').replace(/~0/g, '~') : schemaWords.theEvent;
 };
 
 const PATTERNS: Record<string, string> = {
-  '^[a-z0-9][a-z0-9-]{0,63}$': 'is not a valid id: lowercase letters, digits and hyphens, up to 64, not starting with a hyphen',
-  '^a-[a-z0-9]{8}$': 'is not an agent id: "a-" and 8 lowercase letters or digits, as join gives it',
-  '\\S': 'must not be blank',
-  '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$': 'is not a UTC timestamp like 2026-10-05T09:00:00Z',
+  '^[a-z0-9][a-z0-9-]{0,63}$': schemaWords.isNotAValidId,
+  '^a-[a-z0-9]{8}$': schemaWords.isNotAnAgentId,
+  '\\S': schemaWords.mustNotBeBlank,
+  '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$': schemaWords.isNotAUTCTimestamp,
   // The app contract's patterns (schema/app/manifest.schema.json, common.schema.json `appHash`).
-  '^[0-9a-f]{64}$': 'is not an app\'s hash: 64 lowercase hex characters, as list_apps gives it',
+  '^[0-9a-f]{64}$': schemaWords.isNotAnAppS,
   '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.html$': 'must be a file name ending in .html, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 100, not starting with a dot or hyphen, no two dots in a row',
   '^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9._-]{0,94}\\.mjs$': 'must be a file name ending in .mjs, directly in the app\'s folder: letters, digits, dots, hyphens and _, up to 99, not starting with a dot or hyphen, no two dots in a row',
   '^[A-Z_][A-Z0-9_]{0,63}$': 'is not a .env key: upper-case letters, digits and _',
-  '^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+(:[0-9]{1,5})?$': 'is not an https origin with an exact host, like https://api.example.com (no wildcard, no path)',
-  '^[a-z][a-z0-9_]{0,39}$': 'is not a tool name: lower-case letters, digits and _, starting with a letter, up to 40',
-  '^\\S{1,40}$': 'is not a version: up to 40 characters, no spaces',
+  '^https://[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+(:[0-9]{1,5})?$': schemaWords.isNotAnHttpsOrigin,
+  '^[a-z][a-z0-9_]{0,39}$': schemaWords.isNotAToolName,
+  '^\\S{1,40}$': schemaWords.isNotAVersionUp,
 };
 
 const TYPES: Record<string, string> = {
-  integer: 'a whole number', number: 'a number', string: 'text', boolean: 'true or false',
-  object: 'an object', array: 'a list', null: 'null',
+  integer: schemaWords.aWholeNumber, number: 'a number', string: 'text', boolean: schemaWords.trueOrFalse,
+  object: schemaWords.anObject, array: 'a list', null: 'null',
 };
 
 const quote = (v: unknown) => JSON.stringify(v);
@@ -131,7 +132,7 @@ function removedWords(schemaPath: string): string | undefined {
 }
 
 /** What a failed `anyOf` says: in the board's own schemas, the one `anyOf` names a card. */
-const CARD_ANY_OF = 'must be a node number or { "key": "…" }';
+const CARD_ANY_OF = schemaWords.mustBeANodeNumber;
 
 /** One plain-English problem for one ajv error. */
 function plain(e: ErrorObject, anyOf: string): SchemaProblem {
@@ -141,39 +142,39 @@ function plain(e: ErrorObject, anyOf: string): SchemaProblem {
   switch (e.keyword) {
     case 'required': {
       const missing = String(p.missingProperty);
-      return { pointer: child(at, missing), detail: `\`${missing}\` is required` };
+      return { pointer: child(at, missing), detail: schemaWords.isRequired(missing) };
     }
     case 'unevaluatedProperties': case 'additionalProperties': {
       const extra = String(p.unevaluatedProperty ?? p.additionalProperty);
-      return { pointer: child(at, extra), detail: `unknown field \`${extra}\`` };
+      return { pointer: child(at, extra), detail: schemaWords.unknownField(extra) };
     }
     case 'discriminator': {
       // `type` for a ledger line; `kind` for a chat event or approval facts.
       const tag = String(p.tag ?? 'type');
-      const what = tag === 'type' ? 'event type' : tag;
+      const what = tag === 'type' ? schemaWords.eventType : tag;
       return {
         pointer: child(at, tag),
-        detail: p.error === 'mapping' ? `unknown ${what} ${quote(p.tagValue)}` : `\`${tag}\` must be text naming the ${what}`,
+        detail: p.error === 'mapping' ? schemaWords.unknown(what, quote(p.tagValue)) : schemaWords.mustBeTextNamingThe(tag, what),
       };
     }
-    case 'type': return { pointer: at, detail: `${f} must be ${String(p.type).split(',').map((t) => TYPES[t] ?? t).join(' or ')}` };
-    case 'pattern': return { pointer: at, detail: `${f} ${PATTERNS[String(p.pattern)] ?? 'is not in the expected form'}` };
-    case 'maxLength': return { pointer: at, detail: `${f} is longer than ${String(p.limit)} characters` };
-    case 'minLength': return { pointer: at, detail: `${f} is shorter than ${String(p.limit)} characters` };
-    case 'maximum': return { pointer: at, detail: `${f} must be at most ${String(p.limit)}` };
-    case 'minimum': return { pointer: at, detail: `${f} must be at least ${String(p.limit)}` };
-    case 'maxItems': return { pointer: at, detail: `${f} has more than ${String(p.limit)} entries` };
-    case 'minItems': return { pointer: at, detail: `${f} needs at least ${String(p.limit)} ${p.limit === 1 ? 'entry' : 'entries'}` };
-    case 'uniqueItems': return { pointer: at, detail: `${f} names the same entry twice` };
-    case 'enum': return { pointer: at, detail: `${f} must be one of ${(p.allowedValues as unknown[]).map(String).join(', ')}` };
-    case 'const': return { pointer: at, detail: `${f} must be ${quote(p.allowedValue)} here` };
-    case 'false schema': return { pointer: at, detail: `${f} is not allowed here` };
+    case 'type': return { pointer: at, detail: schemaWords.mustBe(f, String(p.type).split(',').map((t) => TYPES[t] ?? t).join(' or ')) };
+    case 'pattern': return { pointer: at, detail: `${f} ${PATTERNS[String(p.pattern)] ?? schemaWords.isNotInTheExpected}` };
+    case 'maxLength': return { pointer: at, detail: schemaWords.isLongerThanCharacters(f, String(p.limit)) };
+    case 'minLength': return { pointer: at, detail: schemaWords.isShorterThanCharacters(f, String(p.limit)) };
+    case 'maximum': return { pointer: at, detail: schemaWords.mustBeAtMost(f, String(p.limit)) };
+    case 'minimum': return { pointer: at, detail: schemaWords.mustBeAtLeast(f, String(p.limit)) };
+    case 'maxItems': return { pointer: at, detail: schemaWords.hasMoreThanEntries(f, String(p.limit)) };
+    case 'minItems': return { pointer: at, detail: schemaWords.needsAtLeast(f, String(p.limit), p.limit === 1 ? 'entry' : 'entries') };
+    case 'uniqueItems': return { pointer: at, detail: schemaWords.namesTheSameEntryTwice(f) };
+    case 'enum': return { pointer: at, detail: schemaWords.mustBeOneOf(f, (p.allowedValues as unknown[]).map(String).join(', ')) };
+    case 'const': return { pointer: at, detail: schemaWords.mustBeHere(f, quote(p.allowedValue)) };
+    case 'false schema': return { pointer: at, detail: schemaWords.isNotAllowedHere(f) };
     case 'not': {
       const words = removedWords(e.schemaPath);
-      return { pointer: at, detail: words ? `${f} is not allowed here. ${words}` : `${f} is not valid` };
+      return { pointer: at, detail: words ? schemaWords.isNotAllowedHere2(f, words) : schemaWords.isNotValid(f) };
     }
     case 'anyOf': return { pointer: at, detail: `${f} ${anyOf}` };
-    default: return { pointer: at, detail: `${f} is not valid` };
+    default: return { pointer: at, detail: schemaWords.isNotValid(f) };
   }
 }
 

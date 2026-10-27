@@ -9,6 +9,7 @@ import type { ActionId, AppStateValue, LedgerEvent, OperationInput } from '#form
 import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
 import type { Transport } from '#client';
 import { ApiProblem, createClient } from '#client';
+import * as boardWords from './words/board.ts';
 
 /** One board as the page draws it: the one board-data builder's (`#actions` `boardData`). */
 export type { BoardData } from '#actions';
@@ -39,7 +40,7 @@ export class ApiError extends Error {
 }
 
 /** What a failure the server never answered says. */
-export const UNREACHABLE = 'The board server is not reachable. Is it running?';
+export const UNREACHABLE = boardWords.theBoardServerIsNot;
 
 /** One call, with every failure as an ApiError the page can show. */
 export async function asApiError<T>(run: () => Promise<T>): Promise<T> {

@@ -18,6 +18,7 @@ import type { ItemProblem } from './write-problem.ts';
 import { ItemFailed, fail, under } from './write-problem.ts';
 import type { Batch } from './write-refs.ts';
 import { refsOf, resolve, retireLine, storedFor } from './write-refs.ts';
+import * as writesWords from './words/writes.ts';
 
 export type { ItemProblem } from './write-problem.ts';
 export { WRITE_ITEM_ID };
@@ -88,8 +89,8 @@ function appended(b: Batch, i: number, item: Rec, key: string | undefined): Rec 
   const { ver: _ver, at: _at, agent: _agent, item: _item, ...was } = from ?? latest(node);
   const body = was.body === undefined ? String(item.text) : `${was.body}\n\n${String(item.text)}`;
   if (codePoints(body) > LIMITS.body) {
-    fail('invalid', `With this text, node ${numberOf(s, id)}'s body would be ${codePoints(body)} characters, and the limit is ${LIMITS.body}. Send less, or rewrite the node with a node item.`,
-      { errors: [{ pointer: `/items/${i}/text`, detail: `the body would be over ${LIMITS.body} characters` }] });
+    fail('invalid', writesWords.withThisTextNodeS(numberOf(s, id), codePoints(body), LIMITS.body),
+      { errors: [{ pointer: `/items/${i}/text`, detail: writesWords.theBodyWouldBeOver(LIMITS.body) }] });
   }
   return { type: 'node', board: b.board, n: id, node: { ...was, body }, ...(item.key !== undefined && { key: item.key }) };
 }
@@ -110,8 +111,8 @@ function replay(b: Batch, i: number, key: string, e: Rec): WriteResult | undefin
   if (!stored) return undefined;
   const line = toLine(stored);
   if (contentHash(line) !== contentHash(e) || !sameNode(e, line)) {
-    fail('conflict', `The key "${key}" was used before for different content. Use a new key for new content, or resend the same content to get the first result.`,
-      { errors: [{ pointer: `/items/${i}/key`, detail: 'key reused for different content' }] });
+    fail('conflict', writesWords.theKeyWasUsedBefore(key),
+      { errors: [{ pointer: `/items/${i}/key`, detail: writesWords.keyReusedForDifferentContent2 }] });
   }
   return written(b.ledger.state(), i, key, stored, true);
 }
@@ -125,8 +126,8 @@ function checkBase(s: LedgerState, i: number, item: Rec, e: Rec): void {
   const ver = latest(node).ver;
   if (ver === item.base) return;
   const n = numberOf(s, e.n);
-  fail('conflict', `Node ${n} is at version ${ver}, not ${item.base}: it changed since you read it. Read it again with show_node, then send your change with base ${ver}.`,
-    { ver, errors: [{ pointer: `/items/${i}/base`, detail: `node ${n} is at version ${ver}` }] });
+  fail('conflict', writesWords.nodeIsAtVersionNot(n, ver, item.base, ver),
+    { ver, errors: [{ pointer: `/items/${i}/base`, detail: writesWords.nodeIsAtVersion(n, ver) }] });
 }
 
 /** Every card an item names must be on the board in the path (api.md 24): a `{ key }` can name a
@@ -137,8 +138,8 @@ function checkBoard(b: Batch, s: LedgerState, i: number, e: Rec): void {
     const node = typeof id === 'number' ? s.nodes.get(id) : undefined;
     if (!node || node.board === b.board) continue;
     const n = numberOf(s, id as number);
-    fail('invalid', `This call writes board "${b.board}", and node ${n} is on board "${node.board}". Send the item to that board's write_board.`,
-      { errors: [{ pointer: `/items/${i}/${f}`, detail: `node ${n} is on board "${node.board}", not "${b.board}"` }] });
+    fail('invalid', writesWords.thisCallWritesBoardAnd(b.board, n, node.board),
+      { errors: [{ pointer: `/items/${i}/${f}`, detail: writesWords.nodeIsOnBoardNot(n, node.board, b.board) }] });
   }
 }
 
@@ -146,7 +147,7 @@ function checkBoard(b: Batch, s: LedgerState, i: number, e: Rec): void {
 function checkProposal(s: LedgerState, i: number, e: Rec): void {
   const why = e.type === 'propose' && typeof e.n === 'number' ? proposeProblem(s, e.n) : undefined;
   if (why === undefined) return;
-  fail('invalid', `You can propose only on a question, decision or action card: ${why}. Answer it with a reply instead.`,
+  fail('invalid', writesWords.youCanProposeOnlyOn(why),
     { errors: [{ pointer: `/items/${i}/n`, detail: why }] });
 }
 
@@ -156,14 +157,14 @@ function checkGrant(b: Batch, s: LedgerState, i: number, e: Rec): void {
   if (need === 'ok') return;
   if (need === 'creator') {
     const person = s.index.creators.get(b.board) === undefined; // no agent creator: the person made it (D-034)
-    fail('forbidden', `${person ? 'Only the person can' : `Only the agent that created board "${b.board}" can`} change its title and summary. Leave the board item out and write your regions and nodes.`,
-      { errors: [{ pointer: `/items/${i}/type`, detail: `board "${b.board}" was ${person ? 'made by the person' : 'created by another agent'}` }] });
+    fail('forbidden', writesWords.changeItsTitleAndSummary(person ? writesWords.onlyThePersonCan : writesWords.onlyTheAgentThatCreated(b.board)),
+      { errors: [{ pointer: `/items/${i}/type`, detail: writesWords.boardWas(b.board, person ? writesWords.madeByThePerson : writesWords.createdByAnotherAgent) }] });
   }
-  const maker = s.index.creators.get(need.board) === undefined ? 'the person' : 'another agent';
+  const maker = s.index.creators.get(need.board) === undefined ? writesWords.thePerson : writesWords.anotherAgent;
   const what = need.region === undefined
-    ? `You may not write on board "${need.board}" yet: ${maker} made it. Call request_grant once with just the board`
-    : `You do not hold the container "${need.region}" on board "${need.board}". Call request_grant once`;
-  fail('needs-grant', `${what}, wait for the person's answer in check_responses, then resend the same items with the same keys.`,
+    ? writesWords.youMayNotWriteOn(need.board, maker)
+    : writesWords.youDoNotHoldThe(need.region, need.board);
+  fail('needs-grant', writesWords.waitForThePersonS(what),
     { board: need.board, ...(need.region !== undefined && { region: need.region }) });
 }
 
@@ -173,7 +174,7 @@ function checkOwed(b: Batch, s: LedgerState, i: number, item: Rec, e: Rec): void
   const t: RetireTarget = e.region === undefined ? { board: b.board, id: (e.cards as number[])[0]! } : { board: b.board, region: String(e.region) };
   const why = retireProblem(s, t, e.cards as number[]);
   if (why === undefined) return;
-  fail('invalid', `You can't retire this yet: ${why}. Then send the retire again with the same key.`,
+  fail('invalid', writesWords.youCanTRetireThis(why),
     { errors: [{ pointer: `/items/${i}/${item.region === undefined ? 'n' : 'region'}`, detail: why }] });
 }
 
@@ -200,8 +201,8 @@ function checkProposeWord(i: number, raw: unknown): void {
     ? ACTION_OUT[raw.action as keyof typeof ACTION_OUT] : undefined;
   if (word === undefined) return;
   const old = String((raw as Rec).action);
-  fail('invalid', `Propose ✓ as \`check\` and ✗ as \`cross\`: send action "${word}", not "${old}".`,
-    { errors: [{ pointer: `/items/${i}/action`, detail: `"${old}" is now "${word}"` }] });
+  fail('invalid', writesWords.proposeAsCheckAndAs(word, old),
+    { errors: [{ pointer: `/items/${i}/action`, detail: writesWords.isNow(old, word) }] });
 }
 
 /** The item as the ledger names it: a proposal's `check` or `cross` stored as `ack` or `drop`. */
@@ -212,9 +213,9 @@ const storedNames = (item: Rec): Rec => (item.type === 'propose' ? { ...item, ac
 function refuse(i: number, raw: unknown, errors: readonly PointerError[]): never {
   const example = itemExample(isRec(raw) ? raw.type : undefined);
   if (example === undefined) {
-    fail('invalid', `Each item needs a \`type\`, one of ${itemTypes().map((t) => `\`${t}\``).join(', ')}, and the fields of that type. Each type's form in the items schema of write_board has an example. Fix the fields listed in errors and send it again.`, { errors: under(i, errors) });
+    fail('invalid', writesWords.eachItemNeedsAType(itemTypes().map((t) => `\`${t}\``).join(', ')), { errors: under(i, errors) });
   }
-  fail('invalid', 'This item does not fit the write-item schema. Fix the fields listed in errors, as `example` shows for this type, and send it again.', { errors: under(i, errors), example });
+  fail('invalid', writesWords.thisItemDoesNotFit, { errors: under(i, errors), example });
 }
 
 function writeOne(b: Batch, i: number, raw: unknown, key: string | undefined): WriteResult {

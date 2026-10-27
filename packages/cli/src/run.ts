@@ -12,6 +12,7 @@ import type { CommandInfo } from './commands.generated.ts';
 import { failureLines } from './failure.ts';
 import { formatText } from './format-text.ts';
 import { commandHelp, overview } from './help.ts';
+import * as failureWords from './words/failure.ts';
 
 export interface Io {
   stdout(text: string): void;
@@ -29,7 +30,7 @@ const HELP_WORDS = ['help', '--help', '-h'];
 
 /** Print a usage mistake and give the exit code for it. */
 function usage(io: Io, message: string, command?: CommandInfo): number {
-  io.stderr(`${message}\nRun \`vb ${command ? `${command.name} --help` : 'help'}\` for usage.\n`);
+  io.stderr(failureWords.runVbForUsage(message, command?.name));
   return 2;
 }
 
@@ -41,7 +42,7 @@ function serverOf(parsed: Parsed, io: Io): string | undefined {
 
 function helpFor(words: readonly string[], io: Io): number {
   const command = words[0] ? COMMANDS.find((c) => c.name === words[0]) : undefined;
-  if (words[0] && !command) return usage(io, `There is no command "${words[0]}".`);
+  if (words[0] && !command) return usage(io, failureWords.thereIsNoCommand(words[0]));
   io.stdout(`${command ? commandHelp(command) : overview()}\n`);
   return 0;
 }
@@ -52,7 +53,7 @@ export async function run(argv: readonly string[], io: Io): Promise<number> {
   if (word === undefined) { io.stderr(`${overview()}\n`); return 2; }
   if (HELP_WORDS.includes(word)) return helpFor(rest, io);
   const command = COMMANDS.find((c) => c.name === word);
-  if (!command) return usage(io, `There is no command "${word}".`);
+  if (!command) return usage(io, failureWords.thereIsNoCommand(word));
   const parsed = parseArgs(command, rest);
   if (!parsed.ok) return usage(io, parsed.message, command);
   if (parsed.value.help) return helpFor([command.name], io);
@@ -61,7 +62,7 @@ export async function run(argv: readonly string[], io: Io): Promise<number> {
 
 async function call(command: CommandInfo, parsed: Parsed, io: Io): Promise<number> {
   const base = serverOf(parsed, io);
-  if (!base) return usage(io, `The server must be an http or https address, such as ${DEFAULT_SERVER}.`, command);
+  if (!base) return usage(io, failureWords.theServerMustBeAn(DEFAULT_SERVER), command);
   let jsonBody: Record<string, unknown> | undefined;
   if (parsed.jsonBody !== undefined) {
     if (!command.takesBody) return usage(io, `${command.name} takes no body, so --json-body does not apply.`, command);

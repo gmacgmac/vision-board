@@ -12,6 +12,7 @@ import type { Caller, Ledger } from './ledger.ts';
 import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
 import { SPECS } from './spec.ts';
+import * as httpWords from './words/http.ts';
 
 export const PERSON_COOKIE = 'vb_person';
 export const REALM = { 'WWW-Authenticate': 'Bearer realm="vision-board"' };
@@ -38,12 +39,12 @@ const same = (a: string, b: string): boolean => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
-const ONLY_AGENT = 'Only an agent can do this, with the secret join gave it. The person acts on the board itself.';
-const NO_SECRET = 'This needs your agent secret, sent as Authorization: Bearer <secret>. If you have none, call join, then request_grant for each container you need.';
-const UNKNOWN_SECRET = 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.';
-const ONLY_GATE = 'Only a chat session\'s gate hook calls this, with its run token. The person answers approvals on the board.';
-const NO_RUN_TOKEN = 'This needs the chat session\'s run token, sent as Authorization: Bearer <token>.';
-const STALE_PAGE = 'The board page has an old session (the board restarted): reload the page. An agent sends its secret from join instead.';
+const ONLY_AGENT = httpWords.onlyAnAgentCanDo;
+const NO_SECRET = httpWords.thisNeedsYourAgentSecret;
+const UNKNOWN_SECRET = httpWords.theServerDoesNotKnow;
+const ONLY_GATE = httpWords.onlyAChatSessionS;
+const NO_RUN_TOKEN = httpWords.thisNeedsTheChatSession;
+const STALE_PAGE = httpWords.theBoardPageHasAn;
 const BEARER = /^Bearer +(\S+)\s*$/i;
 
 /** The token of an `Authorization: Bearer` header, if the request sends one. */

@@ -21,6 +21,7 @@ import { SCHEMA_BASE, schemaProblems } from '../schema.ts';
 import { personBoard } from '../visibility.ts';
 import { body } from '../body.ts';
 import { APPS_OFF } from './host.ts';
+import * as appsHostWords from '../words/apps-host.ts';
 
 /** The one source of a kept file's shape, and of the route's bodies (`$defs`). */
 export const PANEL_STATE_SCHEMA = `${SCHEMA_BASE}schema/app/panel-state.schema.json`;
@@ -38,10 +39,10 @@ function appCard({ ledger, params, apps }: Ctx): AppCard {
   const board = personBoard(s, params.board);
   const n = Number(params.n);
   const id = cardOn(s, board, n);
-  if (id === undefined) throw problem('not-found', `There is no card ${n} on board "${board}".`);
-  if (s.nodes.get(id)?.retired !== undefined) throw problem('not-found', `Card ${n} on board "${board}" is removed, so it has no panel state.`);
+  if (id === undefined) throw problem('not-found', appsHostWords.thereIsNoCardOn(n, board));
+  if (s.nodes.get(id)?.retired !== undefined) throw problem('not-found', appsHostWords.cardOnBoardIsRemoved(n, board));
   const app = appOf(s, id);
-  if (app === undefined) throw problem('not-found', `Card ${n} on board "${board}" is not an app card, so it has no panel state.`);
+  if (app === undefined) throw problem('not-found', appsHostWords.cardOnBoardIsNot(n, board));
   return { id, app };
 }
 
@@ -71,10 +72,10 @@ export function readPanelState(file: string, app: string): AppStateValue | undef
   try { fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); } catch { return undefined; }
   try {
     const stat = fs.fstatSync(fd);
-    if (!stat.isFile() || stat.size > WRAPPED_LIMIT) return unreadable(file, 'is not a file of at most the limit');
+    if (!stat.isFile() || stat.size > WRAPPED_LIMIT) return unreadable(file, appsHostWords.isNotAFileOf);
     let doc: AppStateFile;
-    try { doc = JSON.parse(fs.readFileSync(fd, 'utf8')) as AppStateFile; } catch { return unreadable(file, 'is not JSON'); }
-    if (schemaProblems(PANEL_STATE_SCHEMA, doc).length > 0 || appStateProblem(doc.state)) return unreadable(file, 'does not fit the schema');
+    try { doc = JSON.parse(fs.readFileSync(fd, 'utf8')) as AppStateFile; } catch { return unreadable(file, appsHostWords.isNotJSON); }
+    if (schemaProblems(PANEL_STATE_SCHEMA, doc).length > 0 || appStateProblem(doc.state)) return unreadable(file, appsHostWords.doesNotFitTheSchema);
     return doc.app === app ? doc.state : undefined;
   } finally { fs.closeSync(fd); }
 }

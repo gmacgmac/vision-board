@@ -28,7 +28,8 @@ tracker:
 9. **Add implementation notes** to your task file and brief notes here. Re-run? Add a `Run N:`
    line here and a `### Run N` block in your task file; never overwrite an earlier run
 10. **No git commits** — the orchestrator commits and tags once per wave (PLAN House Rules)
-11. **Your page-test port** is in the Task List's Notes column; never 4466. The page suite runs 3 workers on `VB_TEST_PORT` + 10 per worker, so tasks running page suites at once take ports 100 apart (TEST_01)
+11. **Your page-test port** is in the Task List's Notes column; never 4466. The page suite runs 5 workers on `VB_TEST_PORT` + 10 per worker, so tasks running page suites at once take ports 100 apart (TEST_01)
+12. **No full page suite in a task** (maintainer, 2026-10-27): run unit tests, `check`, `gen-api --check`, `verify` and the page specs for what you changed; the orchestrator runs the full suite once, at the wave gate
 
 ---
 
@@ -45,7 +46,7 @@ tracker:
 | 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Completed | port 4750 |
 | 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Completed | port 4755 |
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Completed | port 4760 (+ 10 per worker from 4770) |
-| 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Pending | port 4800 |
+| 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Completed | port 4800 |
 | 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4900 |
 | 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Pending | port 5000 |
 
@@ -133,7 +134,7 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_03-R2 | ARCH_03 | Aria ids inside cards and frames unique per mount | Wave 4 gate sub-agent | Done |
 | ARCH_03-R3 | ARCH_03 | chat.md, performance.md, chat README: `board/chat-*` → `shell/chat-*`, chat calls → `shell/page-io.ts` | Wave 4 gate sub-agent | Done |
 | ARCH_03-R4 | ARCH_03 | nclite: the optional `page` part, `notify`'s tone, `api` resolves to a Response, the image route outside `api` | orchestrator: nclite-contract-reply.md | Done |
-| ARCH_03-R5 | ARCH_03 | Gallery screen text naming `board/chat-view.ts` and `io.ts listApps` | ARCH_05 (words; the gallery baselines may change by that text only) | Open |
+| ARCH_03-R5 | ARCH_03 | Gallery screen text naming `board/chat-view.ts` and `io.ts listApps` | ARCH_05 (words; the gallery baselines may change by that text only): now `shell/chat-view.ts` and `page-io.ts listApps, callAppTool`; app-cards and chat baselines changed by that line only | Done |
 | ARCH_03-R6 | ARCH_03 (deviation) | Raster tolerance 2 in host-styles `sameUnderHost` | orchestrator: accepted (a 1-step edge flicker on the toolbar select; a leak moves pixels far more) | Closed |
 | ARCH_03-R7 | ARCH_03 | `engine.test.ts` hangs inside `npm test` | orchestrator: not reproduced on the finished tree (alone 7/7 in 0.5 s; full suite 1698 + 10 exits 0); the hang was a run caught mid-change | Closed |
 | ARCH_03-R8 | ARCH_03 (note) | A host gets the canvas, status and controls; the toolbar, strips and dialogs are the standalone page's Svelte, so a host draws its own | orchestrator: tracker row for the plugin stage (point for the maintainer) | Done |
@@ -141,7 +142,13 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | TEST_01-R2 | TEST_01 | Steering § How to work, the Tests line: 3 workers, per-worker ports, ports 100 apart | orchestrator: applied under the delegation, flagged for review | Done |
 | TEST_01-R3 | TEST_01 | Tasks running page suites at once take `VB_TEST_PORT`s 100 apart | orchestrator: rule 11 and the Notes ports (4800, 4900, 5000) | Done |
 | TEST_01-R4 | TEST_01 | Docs pass: performance.md, components.md and four READMEs (perf-ledger in `#format/testing`, budgets project, gallery ledger home, `#board/testing`, page-suite ports) | orchestrator: a Sonnet docs sub-agent in the Wave 5 gate (apps/board, cli, format, mcp READMEs; performance.md; components.md) | Done |
-| TEST_01-R5 | TEST_01 | The gallery's "Lanes mode" sample has two cards with no lane (n 44, 45), so it fails `validateView` (todo in validate.test.ts) | orchestrator: the sample is wrong, the rule stays (a lanes-mode card names its lane) → ARCH_05: give n 44 lane "Now" and n 45 lane "Next", drop the todo; the gallery baselines may change in that section | Open |
+| TEST_01-R5 | TEST_01 | The gallery's "Lanes mode" sample has two cards with no lane (n 44, 45), so it fails `validateView` (todo in validate.test.ts) | orchestrator: the sample is wrong, the rule stays (a lanes-mode card names its lane) → ARCH_05: give n 44 lane "Now" and n 45 lane "Next", drop the todo; the gallery baselines may change in that section. ARCH_05: lanes given; the Lanes frame draws no cards, so no picture moved | Done |
+| ARCH_05-R1 | ARCH_05 | `packages/actions/src` and `packages/format/src` sentences into words homes (about 340) | ARCH_05 Run 2: 4 format and 5 actions words files (293 keys); flags, condition and edge descriptions stay as developer text | Done |
+| ARCH_05-R2 | ARCH_05 | `apps/board/README.md` and `components.md` repointed to `board/words/app-cards.ts` | ARCH_05 Run 2 (cortex-docs) | Done |
+| ARCH_05-R3 | ARCH_05 | Decision: words homes | orchestrator: D-063 appended (Accepted, for review) | Done |
+| ARCH_05-R4 | ARCH_05 | Project instructions: `words.md` in Sources of truth; a new sentence goes in a words file | maintainer (protected): approved as point 290, applied (Sources of truth row, How to work § Sentences) | Done |
+| ARCH_05-R5 | ARCH_05 | nclite reply: keys, the six homes, the US English sentences | orchestrator: `nclite-contract-reply.md` § For nclite to weigh | Done |
+| ARCH_05-R6 | ARCH_05 (note) | `board/words/` stays under `board/`; moved files fix their `words/` imports | ARCH_06 (in its dispatch) | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -205,8 +212,9 @@ _Notes:_ Test support per module (D-060), not a `packages/testing` (it could not
 ---
 
 ### ARCH_05: Words files
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ 756 sentences in six words folders (`board/words`, `shell/words`, `packages/ui/src/words`, `server/words`, mcp, cli), keys `board.<area>.<name>`; the board's words sit inside `board/` (verify's host rule), the shell reads them. Test: `scripts/words.test.mjs` + `words-scan.test.mjs` (rule in `words-text.mjs`, `words-scan.mjs`, config `words-homes.mjs`); doc `docs/specification/words.md`. `app-words.ts` is now `board/words/app-cards.ts`. ARCH_03-R5 and TEST_01-R5 done; baselines changed only: app-gallery app-cards light/dark and chat light/dark (one text line each, checked by eye). Unit 1723, check, verify (13 warnings), gen green; page suite 655 + 10 budgets passing (budgets alone on a quiet machine). Not scanned yet: `packages/actions`, `packages/format` (REQUEST). US English: "Centre cards" (toolbar words) and SKILL.md "colour". For ARCH_06: moving files into feature folders must keep each file's relative `words/` import (`board/words/` stays under `board/`).
+Run 2: Completed. `packages/format/src/words` (134 keys) and `packages/actions/src/words` (159) moved with the same codemod, no wording changed, tests of the messages untouched; format words import nothing. Left in code, listed under "Developer text" in words.md: `flags.ts`, `conditions.ts`, `references.ts`; `images.ts` is an other home (images-pure.test.ts). Docs repointed (apps/board/README.md, components.md). 230 page specs on the screens that show these sentences pass, no screenshot changed beyond Run 1's four.
 
 ---
 

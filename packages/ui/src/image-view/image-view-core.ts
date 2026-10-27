@@ -3,6 +3,7 @@
 // that direction (small images scaled up to it), never past the screen in the other; it moves there
 // from its place on the card and back (`flipFrom`), for MOTION_SHARE of the board's motion token, so
 // reduced motion, which sets the token to 0ms (tokens.css), means no motion at all.
+import * as uiCommonWords from '../words/ui-common.ts';
 
 export interface Size { w: number; h: number }
 export interface Rect extends Size { x: number; y: number }
@@ -44,6 +45,6 @@ export const motionMs = (time: string): number => msOf(time) * MOTION_SHARE;
 /** The view's words (plain, fewest: the maintainer's standing instruction). */
 export const IMAGE_VIEW_WORDS = {
   /** The ×'s name, and its tip with the key that does the same. */
-  close: 'Close',
+  close: uiCommonWords.close,
   closeTip: 'Close · Esc',
 } as const;

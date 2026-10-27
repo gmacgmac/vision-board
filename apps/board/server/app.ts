@@ -30,6 +30,7 @@ import { ProblemError, problem, serverError } from './problem.ts';
 import { openProject } from './project.ts';
 import { sendProblem } from './respond.ts';
 import { resolveStatic, sendStatic } from './static.ts';
+import * as httpWords from './words/http.ts';
 
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
@@ -79,11 +80,11 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
       if (url.pathname.startsWith(IMAGE_ROUTE)) return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), project.current().dir);
-      if (req.method !== 'GET') throw problem('method-not-allowed', 'The page answers GET only.', { headers: { Allow: 'GET' } });
+      if (req.method !== 'GET') throw problem('method-not-allowed', httpWords.thePageAnswersGETOnly, { headers: { Allow: 'GET' } });
       const panel = PANEL_PATH.exec(url.pathname);
       if (panel) return servePanel(res, panel[1]!, project.current().apps());
       const file = resolveStatic(url.pathname, dist);
-      if (!file) throw problem('not-found', 'There is no such page. Open / for the board.');
+      if (!file) throw problem('not-found', httpWords.thereIsNoSuchPage);
       if (file.endsWith('.html')) res.setHeader('Set-Cookie', personCookie(env.person));
       sendStatic(res, file);
     } catch (err) {

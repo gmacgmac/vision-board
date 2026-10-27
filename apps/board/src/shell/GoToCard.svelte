@@ -6,6 +6,8 @@
      offered as a button. Opened, it takes focus; closed without going, focus goes back where it was
      (a go has focused the card already). The gallery mounts it in the page flow, in each state. -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import { onMount } from 'svelte';
   import { GO_DIGITS, goDigits, type GoBox } from '../board/go-to-card.ts';
 
@@ -60,13 +62,13 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="vb-go" data-placement={placement} data-state={box.past ? 'retired' : box.said ? 'not-found' : 'typing'}
   bind:this={host} {onkeydown} {onfocusout}>
-  <label class="vb-go-label" for="vb-go-field-{uid}">Go to card</label>
+  <label class="vb-go-label" for="vb-go-field-{uid}">{commonWords.goToCard}</label>
   <input class="vb-go-field" id="vb-go-field-{uid}" type="text" inputmode="numeric" pattern="[0-9]*" maxlength={GO_DIGITS}
     autocomplete="off" spellcheck="false" aria-describedby="vb-go-said-{uid} vb-go-hint-{uid}"
     value={box.text} bind:this={input} {oninput} />
-  <p class="vb-go-hint" id="vb-go-hint-{uid}"><kbd>Enter</kbd> go · <kbd>Esc</kbd> close</p>
+  <p class="vb-go-hint" id="vb-go-hint-{uid}"><kbd>{shellGoToCardWords.enter}</kbd> {shellGoToCardWords.go} <kbd>{commonWords.esc}</kbd> {shellGoToCardWords.close}</p>
   <p class="vb-go-said" id="vb-go-said-{uid}" role="status">{box.said ?? ''}</p>
   {#if box.past}
-    <button type="button" class="vb-btn vb-go-past" aria-label={box.past.label} onclick={() => onpast?.()}>Show v{box.past.version}</button>
+    <button type="button" class="vb-btn vb-go-past" aria-label={box.past.label} onclick={() => onpast?.()}>{shellGoToCardWords.showV(box.past.version)}</button>
   {/if}
 </div>

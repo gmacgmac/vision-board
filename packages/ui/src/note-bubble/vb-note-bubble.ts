@@ -8,6 +8,7 @@ import type { Kind } from '#format';
 import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
 import { cancelIntent, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';
+import * as noteBubbleWords from '../words/note-bubble.ts';
 
 export const VB_NOTE_BUBBLE_TAG = 'vb-note-bubble';
 
@@ -95,7 +96,7 @@ export function defineVbNoteBubble(): void {
       const save = this.querySelector<HTMLButtonElement>('button[data-note-do="save"]');
       if (save) {
         save.dataset.label ??= save.textContent ?? '';
-        save.textContent = phase === 'saving' ? 'Saving…' : save.dataset.label;
+        save.textContent = phase === 'saving' ? noteBubbleWords.saving : save.dataset.label;
       }
       const error = this.querySelector<HTMLElement>('.vb-nb-error');
       if (error) {

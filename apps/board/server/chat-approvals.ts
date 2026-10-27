@@ -7,6 +7,7 @@
 import { randomBytes } from 'node:crypto';
 import type { ApprovalAnswer, ApprovalOutcome, ApprovalStatus, Facts } from '#agent';
 import { problem } from './problem.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 /** How long the person has to answer (BE_03 ruling 4). */
 export const APPROVAL_TTL_MS = 120_000;
@@ -61,8 +62,8 @@ export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, ttlMs = AP
     answer(approvalId, answer) {
       if (pending.has(approvalId)) return settle(approvalId, answer.approved ? 'approved' : 'denied', answer.scope);
       const status = settled.get(approvalId);
-      if (status) throw problem('conflict', `This approval is already settled (${status}); the first answer stands.`);
-      throw problem('not-found', `There is no approval "${approvalId}" in this session.`);
+      if (status) throw problem('conflict', serverChatWords.thisApprovalIsAlreadySettled(status));
+      throw problem('not-found', serverChatWords.thereIsNoApprovalIn(approvalId));
     },
     release() {
       for (const id of [...pending.keys()]) settle(id, 'released');

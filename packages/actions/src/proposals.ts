@@ -5,6 +5,7 @@ import type { ActEvent } from '#format';
 import { latest, NODE_TYPES } from '#format';
 import type { LedgerState, Proposal } from './fold.ts';
 import { numberOf } from './numbers.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** A proposal still open ends at `seq`; one already ended keeps how it ended. */
 export function endProposal(p: Proposal | undefined, seq: number, outcome: NonNullable<Proposal['outcome']>): void {
@@ -32,5 +33,5 @@ export function standing(s: LedgerState, p: Proposal): 'open' | 'stale' | undefi
 export function proposeProblem(s: LedgerState, id: number): string | undefined {
   const node = s.nodes.get(id);
   const kind = node && latest(node).kind;
-  return kind === undefined || NODE_TYPES[kind].answer ? undefined : `node ${numberOf(s, id)} is a ${kind}, which asks for no answer`;
+  return kind === undefined || NODE_TYPES[kind].answer ? undefined : actionsRefusalsWords.nodeIsAWhichAsks(numberOf(s, id), kind);
 }

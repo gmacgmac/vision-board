@@ -54,6 +54,7 @@ import { createGoTo, GO_PAUSE, type GoTo } from './go-to-card.ts';
 import { showCounts } from './toolbar-counts.ts';
 import { createAppCards } from './app-cards.ts';
 import type { CommandId } from './commands.ts';
+import * as boardWords from './words/board.ts';
 
 export type { BoardElements } from './draw.ts';
 
@@ -207,7 +208,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     notes.place();
     flow.place();
     status.set({ drawn: status.now.drawn + 1 }); // a host's chat refreshes what it attaches
-    if (drew) toast(`The agent drew v${status.now.version}`);
+    if (drew) toast(boardWords.theAgentDrewV(status.now.version));
   }
 
   const renderCounts = () => showCounts(status, S.data!, view(), drawing.layout, { finder, access }, flags.ids().length);

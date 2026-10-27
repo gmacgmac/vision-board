@@ -7,6 +7,8 @@
      move it). A second ask can come before that close event: it is never the one answered. Opened by
      the shared modal dialog (`#ui` `syncModal`, base/dialog.css). -->
 <script lang="ts">
+  import * as shellCommonWords from './words/shell-common.ts';
+  import * as shellConfirmWords from './words/shell-confirm.ts';
   import { shell } from './shell.svelte.ts';
   import ConfirmList from './ConfirmList.svelte';
   import { syncModal } from '#ui';
@@ -37,12 +39,12 @@
 <dialog id="confirm-dialog" class="vb-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-body"
   bind:this={dlg} {onclose} oncancel={() => answer(false)}>
   <form method="dialog" onsubmit={(e) => answer((e.submitter as HTMLButtonElement | null)?.value === 'ok')}>
-    <h2 id="confirm-title">{shell.confirm?.heading ?? 'Are you sure?'}</h2>
+    <h2 id="confirm-title">{shell.confirm?.heading ?? shellConfirmWords.areYouSure}</h2>
     <p id="confirm-body" class="vb-dialog-item">{shell.confirm?.body ?? ''}</p>
     {#if shell.confirm?.list}<ConfirmList list={shell.confirm.list} />{/if}
     <div class="vb-dialog-actions">
-      <button type="submit" value="cancel" class="vb-btn" id="confirm-cancel" bind:this={cancel}>Cancel</button>
-      <button type="submit" value="ok" class="vb-btn vb-btn-primary" id="confirm-ok">{shell.confirm?.confirm ?? 'Confirm'}</button>
+      <button type="submit" value="cancel" class="vb-btn" id="confirm-cancel" bind:this={cancel}>{shellCommonWords.cancel}</button>
+      <button type="submit" value="ok" class="vb-btn vb-btn-primary" id="confirm-ok">{shell.confirm?.confirm ?? shellConfirmWords.confirm}</button>
     </div>
   </form>
 </dialog>

@@ -786,3 +786,19 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: one `packages/testing` package (a package cannot reach an app); a wildcard
   `#format/fixtures/*` (every file a door).
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/TEST_01_test-support-and-parallel.md
+
+## D-063 Words homes: one per part, keyed for the plugin's words file
+- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_05's draft
+- **Decision**: Every sentence a person or an agent reads lives in a words file, one per area, in a
+  `words/` folder of the part that sends it: the board (`apps/board/src/board/words/`, inside `board/`
+  so it stays hostable), the standalone page (`shell/words/`, which may import the board's, never the
+  reverse), the patterns, the server, MCP, the CLI, `#format` (its words import nothing) and `#actions`. A sentence's key is `board.<area>.<name>`; areas
+  are unique across homes. A fixed sentence lives once per part, in that part's `common` file. A words
+  file imports only words files and types. `scripts/words-homes.mjs` is the list of homes, and
+  `scripts/words.test.mjs` holds it and `docs/specification/words.md` equal; a sentence left in code
+  fails the test unless it is named under Exemptions with its reason.
+- **Why**: one home per sentence (principles § Architecture we adopt), and nclite's plugin contract
+  wants one keyed words file per plugin, which these homes can build.
+- **Rejected**: one words folder for the whole app (the board would import outside itself and stop
+  being hostable); unkeyed constants (no way to build the plugin's file).
+- **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_05_words-files.md

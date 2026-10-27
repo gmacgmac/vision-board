@@ -9,6 +9,7 @@
 // packages/actions' `goTarget`; `createGoTo` keeps the box's state and its timer. The toolbar's open
 // list goes to a card through the same path (`to`, open-list FE_01).
 import type { GoTarget } from '#actions';
+import * as goToCardWords from './words/go-to-card.ts';
 
 /** The most digits the box holds. */
 export const GO_DIGITS = 6;
@@ -28,9 +29,9 @@ export const goDigits = (text: string): string => text.replace(/\D/g, '').slice(
 
 /** What the box says for a go that did not arrive. */
 const SAYS: Record<Exclude<GoTarget['to'], 'card'>, (n: number) => string> = {
-  none: (n) => `No card ${n}`,
-  hidden: (n) => `Card ${n} is hidden with the answered cards (H shows them)`,
-  retired: (n) => `Card ${n} was removed`,
+  none: (n) => goToCardWords.noCard(n),
+  hidden: (n) => goToCardWords.cardIsHiddenWithThe(n),
+  retired: (n) => goToCardWords.cardWasRemoved(n),
 };
 
 export interface GoDeps {
@@ -90,7 +91,7 @@ export function createGoTo(d: GoDeps): GoTo {
       return d.arrive(t.id);
     }
     const past = t.to === 'retired' && t.version !== undefined
-      ? { version: t.version, ...(t.until !== undefined && { until: t.until }), label: `Show v${t.version}, where it last appeared` } : undefined;
+      ? { version: t.version, ...(t.until !== undefined && { until: t.until }), label: goToCardWords.showVWhereItLast(t.version) } : undefined;
     show({ text: box.text, said: SAYS[t.to](n), ...(past && { past }) });
   }
 

@@ -4,6 +4,7 @@
      On the board it pushes the stage down by its height (--vb-banner-h, board.css), as the requests
      strip does with its own; the strip is not shown meanwhile. The gallery mounts it in the page flow. -->
 <script lang="ts">
+  import * as toolbarWords from './words/toolbar.ts';
   import type { BoardRun } from '#actions';
   import { versionTime } from '../board/versions.ts';
 
@@ -23,7 +24,7 @@
   });
 </script>
 
-<section class="vb-banner" data-placement={placement} aria-label="Past version" bind:offsetHeight={height}>
-  <p class="vb-banner-text" role="status">Viewing <b>v{run.seq}</b> from {versionTime(run.at)} · read-only</p>
-  <button type="button" class="vb-btn vb-btn-small" aria-keyshortcuts="Escape" onclick={onback}>Back to now</button>
+<section class="vb-banner" data-placement={placement} aria-label={toolbarWords.pastVersion} bind:offsetHeight={height}>
+  <p class="vb-banner-text" role="status">{toolbarWords.viewing} <b>v{run.seq}</b> {toolbarWords.fromReadOnly(versionTime(run.at))}</p>
+  <button type="button" class="vb-btn vb-btn-small" aria-keyshortcuts="Escape" onclick={onback}>{toolbarWords.backToNow}</button>
 </section>

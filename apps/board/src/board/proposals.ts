@@ -5,6 +5,7 @@
 import type { acceptAllPlan, ProposalRow } from '#actions';
 import { ACTIONS } from '#actions';
 import type { ActFields } from './io.ts';
+import * as proposalsWords from './words/proposals.ts';
 
 /** One line of Accept all's list (the confirm dialog's `ConfirmItem`): a card's number and what is done to it. */
 export interface ApplyLine { ref: string; text: string }
@@ -21,7 +22,7 @@ const verb = (row: ProposalRow) => ACTIONS[row.action].label.toLowerCase();
 
 /** The toast once an answer is recorded. */
 export const answerDone = (row: ProposalRow, answer: ProposalAnswer): string =>
-  `${answer === 'accept' ? 'Accepted' : 'Rejected'}: ${verb(row)} ${row.n}`;
+  `${answer === 'accept' ? proposalsWords.accepted : proposalsWords.rejected}: ${verb(row)} ${row.n}`;
 
 /** The notice's words (ruling 4; proposals-notice ruling 3 and revision 2): "3 proposals", "1 out
  *  of date" when any is, and `n`, the pill's bare number while the notice is hidden. The count is
@@ -30,8 +31,7 @@ export const answerDone = (row: ProposalRow, answer: ProposalAnswer): string =>
 export function barWords(rows: readonly ProposalRow[]): { count: string; stale: string; n: string; noun: string } {
   const k = rows.length;
   const stale = rows.filter((r) => r.stale).length;
-  const noun = k === 1 ? 'proposal' : 'proposals';
-  return { count: `${k} ${noun}`, stale: stale ? `${stale} out of date` : '', n: String(k), noun };
+  return { count: proposalsWords.count(k), stale: stale ? proposalsWords.outOfDate(stale) : '', n: String(k), noun: proposalsWords.noun(k) };
 }
 
 const item = (r: ProposalRow, why?: string): ApplyLine =>
@@ -40,13 +40,12 @@ const item = (r: ProposalRow, why?: string): ApplyLine =>
 /** Accept all's confirm step (ruling 4): exactly what it applies, then what it leaves out and why. */
 export function acceptAllWords(plan: ReturnType<typeof acceptAllPlan>) {
   const k = plan.apply.length;
-  const what = `${k} proposal${k === 1 ? '' : 's'}`;
   return {
-    heading: `Accept ${k === 1 ? 'this proposal' : `these ${what}`}?`,
-    body: k === 1 ? 'This decision is applied to its card:' : 'These decisions are applied in this order, each to its card:',
-    confirm: `Apply ${what}`,
+    heading: proposalsWords.acceptHeading(k),
+    body: proposalsWords.acceptBody(k),
+    confirm: proposalsWords.apply(k),
     items: plan.apply.map((r) => item(r)),
     skipped: plan.skip.map((x) => item(x.row, x.why)),
-    done: `Accepted ${what}`,
+    done: proposalsWords.accepted2(k),
   };
 }

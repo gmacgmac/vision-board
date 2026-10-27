@@ -13,6 +13,7 @@ import type { ApprovalDraft, Approvals } from './chat-approvals.ts';
 import { createApprovals } from './chat-approvals.ts';
 import type { StoredSession } from './chat-index.ts';
 import type { Chip } from './chat-prompt.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 export type MessageIn = { kind: 'message_in'; text: string; chips?: Chip[] };
 /** A message as it goes: the agent's prompt and the person's `message_in`. */
@@ -49,11 +50,11 @@ export interface LiveSession {
 }
 
 /** The first line of a session loaded again after a restart: its earlier events were in memory only. */
-export const RESTARTED = 'Earlier messages aren\'t shown after a restart; the agent still remembers them.';
+export const RESTARTED = serverChatWords.earlierMessagesArenTShown;
 /** The line when the board's Send waits for the turn to end. */
-export const QUEUED = 'Your answers go to the agent when it finishes this turn.';
+export const QUEUED = serverChatWords.yourAnswersGoToThe;
 /** The line when the person's message with the board's answers waits for the turn to end. */
-export const QUEUED_WORDS = 'Your message goes to the agent when it finishes this turn.';
+export const QUEUED_WORDS = serverChatWords.yourMessageGoesToThe;
 
 /** A fresh run token: 32 random bytes, base64url. */
 export const newRunToken = (): string => randomBytes(32).toString('base64url');
@@ -94,7 +95,7 @@ export function createLiveSession(
     try {
       for await (const update of agent.prompt(prompt)) emit(toChatEvent(update));
     } catch (err) {
-      emit({ kind: 'system', text: `The agent could not run: ${reason(err)}`, turn: 'error' });
+      emit({ kind: 'system', text: serverChatWords.theAgentCouldNotRun(reason(err)), turn: 'error' });
     } finally {
       approvals.release();
       busy = false;
@@ -121,7 +122,7 @@ export function createLiveSession(
     try {
       postNow(build);
     } catch (err) {
-      emit({ kind: 'system', text: `The board's answers could not be sent: ${reason(err)}` });
+      emit({ kind: 'system', text: serverChatWords.theBoardSAnswersCould(reason(err)) });
     }
   }
 

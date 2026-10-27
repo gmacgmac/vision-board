@@ -5,6 +5,7 @@ import type { IncomingMessage } from 'node:http';
 import type { OperationId } from '#format';
 import { checkBody } from './engine/index.ts';
 import { problem, sizeWords } from './problem.ts';
+import * as httpWords from './words/http.ts';
 
 export const KIB = 1024;
 /** The default body limit; `join` and `write_board` set their own (api.md 28). */
@@ -20,13 +21,13 @@ export function isJsonMediaType(header: string | undefined): boolean {
 }
 
 const tooLarge = (limit: number) =>
-  problem('too-large', `The body is over the ${sizeWords(limit)} limit. Split the items across several calls.`);
+  problem('too-large', httpWords.theBodyIsOverThe(sizeWords(limit)));
 
 /** The body as parsed JSON. Refuses a wrong media type (415), a body over `limit` (413) and text
  * that is not JSON (400). */
 export async function readJson(req: IncomingMessage, limit = BODY_LIMIT): Promise<unknown> {
   if (!isJsonMediaType(req.headers['content-type'])) {
-    throw problem('unsupported-media-type', 'Send the body as application/json (charset utf-8 if you name one).');
+    throw problem('unsupported-media-type', httpWords.sendTheBodyAsApplication);
   }
   // An over-limit body is read to its end (up to 16 times the limit) and dropped, so the caller
   // gets the 413 instead of a reset connection.
@@ -41,7 +42,7 @@ export async function readJson(req: IncomingMessage, limit = BODY_LIMIT): Promis
   try {
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));
   } catch {
-    throw problem('bad-request', 'The body is not valid JSON. Send one JSON object.');
+    throw problem('bad-request', httpWords.theBodyIsNotValid);
   }
 }
 

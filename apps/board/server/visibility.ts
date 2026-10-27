@@ -15,9 +15,10 @@ import type { LedgerState } from '#actions';
 import { boardLocked, boardVisibility, eventBoard, LOCKED, UNAVAILABLE } from '#actions';
 import type { ProblemCode } from './problem.ts';
 import { problem } from './problem.ts';
+import * as writesWords from './words/writes.ts';
 
 /** What an agent is told about a board it may not name: the words of a board that never was. */
-const noBoard = (id: string) => `There is no board "${id}". Call list_boards to see the boards.`;
+const noBoard = (id: string) => writesWords.thereIsNoBoardCall(id);
 
 /** The board an agent operation (or a read with no credentials) names, refused with `not-found`
  * when there is none or agents don't see it, in the same words. */
@@ -42,7 +43,7 @@ export function writeTarget(s: LedgerState, board: string, made: number): void {
   const v = boardVisibility(s, board);
   if (v === 'visible') return requireUnlocked(s, board);
   if (made < 0) {
-    throw problem('not-found', `There is no board "${board}". Call list_boards to see the boards, or start the batch with a board item to make it.`);
+    throw problem('not-found', writesWords.thereIsNoBoardCallList(board));
   }
   if (v === 'archived') throw problem('invalid', UNAVAILABLE, { errors: [{ pointer: `/items/${made}`, detail: UNAVAILABLE }] });
 }
@@ -58,7 +59,7 @@ export function agentSees(s: LedgerState, e: LedgerEvent): boolean {
  * with `code` while the board is archived, saying how to bring it back. */
 export function refuseArchived(s: LedgerState, board: string, code: ProblemCode, what: string): void {
   if (boardVisibility(s, board) === 'archived') {
-    throw problem(code, `Board "${board}" is archived, so ${what}. Restore it from the board picker first.`);
+    throw problem(code, writesWords.boardIsArchivedSoRestore(board, what));
   }
 }
 
@@ -75,5 +76,5 @@ export function requireUnlocked(s: LedgerState, board: string): void {
 /** A chat's start on `board` (it would write the new agent's grant there): refused with `locked`
  * while the board is locked, saying how to go on. A running session's messages still go. */
 export function refuseLocked(s: LedgerState, board: string): void {
-  if (isLocked(s, board)) throw problem('locked', `Board "${board}" is locked, so no chat can start on it. Unlock it from the "⋯" menu first.`);
+  if (isLocked(s, board)) throw problem('locked', writesWords.boardIsLockedSoNo(board));
 }

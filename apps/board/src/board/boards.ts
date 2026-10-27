@@ -24,6 +24,7 @@ import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
 import type { Status } from './status.ts';
 import { work } from './work.ts';
+import * as boardsWords from './words/boards.ts';
 
 export interface BoardsDeps {
   live: Live;
@@ -61,8 +62,8 @@ export interface Boards {
   stop(): void;
 }
 
-const WAITING = 'No boards yet. Waiting for an agent to draw.\n'
-  + '(npm run board serves your project; npm run dev the example boards.)';
+const WAITING = boardsWords.noBoardsYetWaitingFor
+  + boardsWords.npmRunBoardServesYour;
 
 export function createBoards(d: BoardsDeps): Boards {
   let unwatch: (() => void) | null = null;
@@ -80,7 +81,7 @@ export function createBoards(d: BoardsDeps): Boards {
   /** Draw board `id` from the held state; no fetch, the state holds every board. */
   function open(id: string) {
     if (!shown(d.live.state, id)) {
-      d.say(`There is no board "${id}".`);
+      d.say(boardsWords.thereIsNoBoard(id));
       return;
     }
     kept.flush(); // the board being left keeps its place
@@ -140,7 +141,7 @@ export function createBoards(d: BoardsDeps): Boards {
         if (!list.length) {
           status.set({ noBoards: true });
           const archived = archivedBoards(s).length;
-          d.say(archived ? `${WAITING}\n${archived} archived: restore one from the board picker.` : WAITING);
+          d.say(archived ? boardsWords.archivedRestoreOneFromThe(WAITING, archived) : WAITING);
           return;
         }
         const [named = '', ...lasts] = wanted;
@@ -150,7 +151,7 @@ export function createBoards(d: BoardsDeps): Boards {
         switchTo(startBoard(ids, named, last, order));
       } catch (err) {
         d.fail(err);
-        d.say('Could not reach the board server. Start it with: npm run board');
+        d.say(boardsWords.couldNotReachTheBoard);
       }
     },
     switchTo,

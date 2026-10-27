@@ -17,9 +17,10 @@ import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
 import { schemaProblems } from './schema.ts';
+import * as httpWords from './words/http.ts';
 
 const HEADER_SCHEMA = 'https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderHeader';
-const BAD_HEADER = 'The VB-Project header must be the absolute path of the folder you work in, percent-encoded the way encodeURI does it (`/Users/example/my%20project`).';
+const BAD_HEADER = httpWords.projectHeaderMustBeAbsolute;
 
 /** What the check needs: the person's home folder and the open folder (both real paths). */
 export interface FolderEnv { home: string; dir: string }
@@ -28,12 +29,12 @@ const real = (dir: string): string => { try { return fs.realpathSync(dir); } cat
 
 /** The refusal (ruling 1): names the open folder and the caller's, says not to join here. */
 export const wrongFolder = ({ home, dir }: FolderEnv, theirs: string): ProblemError => problem('wrong-folder',
-  `The board has switched to ${displayName(home, dir)}. Your work is in ${displayName(home, theirs)}. Ask the person to open it again; don't join here.`);
+  httpWords.theBoardHasSwitchedTo(displayName(home, dir), displayName(home, theirs)));
 
 /** The refusal for an agent working in the open folder whose secret is from `theirs`, a folder it
  * joined earlier (ruling 2): its folder is open now, so it joins again here. */
 export const joinAgain = ({ home, dir }: FolderEnv, theirs: string): ProblemError => problem('not-authenticated',
-  `This board now has your folder open (${displayName(home, dir)}). Your secret is from ${displayName(home, theirs)} — call join again.`, { headers: REALM });
+  httpWords.thisBoardNowHasYour(displayName(home, dir), displayName(home, theirs)), { headers: REALM });
 
 /** The folder the `VB-Project` header names, decoded; undefined when there is none. */
 export function headerFolder(req: IncomingMessage): string | undefined {

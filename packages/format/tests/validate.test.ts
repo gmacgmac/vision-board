@@ -14,14 +14,9 @@ const load = (name: string): any => boardView(foldDrawn(readLedger(lines(name)).
 
 test('every fixture ledger is found', () => assert.ok(FIXTURES.includes('roadmap') && FIXTURES.length >= 3));
 
-/** Known: the gallery's "Lanes mode" sample draws two cards with no lane (TEST_01, when the gallery's
- * ledger joined these fixtures); the view check names them until the sample or the rule changes. */
-const KNOWN_VIEW = new Set(['gallery']);
-
 for (const name of FIXTURES) {
   test(`fixture ${name} is a valid ledger`, () => assert.deepEqual(validateLedger(lines(name)), []));
-  test(`fixture ${name} projects to a valid view`, { todo: KNOWN_VIEW.has(name) && 'two lanes-mode cards with no lane' },
-    () => assert.deepEqual(validateView(load(name)), []));
+  test(`fixture ${name} projects to a valid view`, () => assert.deepEqual(validateView(load(name)), []));
 }
 
 test('rejects non-objects', () => assert.deepEqual(validateView(null), ['view: must be an object']));

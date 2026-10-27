@@ -4,6 +4,7 @@
      the board's controls are paused. Beside it, out of the toolbar's flow, a polite live region that is
      always there, so a lock from another tab is announced. The toolbar and the gallery both draw this. -->
 <script lang="ts">
+  import * as toolbarWords from './words/toolbar.ts';
   import ButtonIcon from './ButtonIcon.svelte';
   import { LOCKED_PERSON } from '#actions';
 
@@ -11,6 +12,6 @@
 </script>
 
 {#if locked}
-  <span {id} class="vb-chip vb-chip-locked" title="{LOCKED_PERSON} (the &quot;⋯&quot; menu)"><ButtonIcon name="lock" />Locked</span>
+  <span {id} class="vb-chip vb-chip-locked" title={toolbarWords.theMenu(LOCKED_PERSON)}><ButtonIcon name="lock" />{toolbarWords.locked}</span>
 {/if}
-<span class="vb-visually-hidden" role="status">{locked ? `This board is locked. ${LOCKED_PERSON}.` : ''}</span>
+<span class="vb-visually-hidden" role="status">{locked ? toolbarWords.thisBoardIsLocked(LOCKED_PERSON) : ''}</span>

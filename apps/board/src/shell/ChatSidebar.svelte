@@ -9,6 +9,7 @@
      failed until the page is reloaded; the panel, kept open, then loads at start). The gallery mounts it in
      the page flow. -->
 <script lang="ts">
+  import * as chatWords from './words/chat.ts';
   import { onMount, untrack } from 'svelte';
   import { shell } from './shell.svelte.ts';
   import { keep, kept } from './kept.ts';
@@ -122,21 +123,21 @@
   }
 </script>
 
-<aside id={onBoard() ? 'chat' : undefined} class="vb-chat" data-placement={placement} aria-label="Chat with the agent"
+<aside id={onBoard() ? 'chat' : undefined} class="vb-chat" data-placement={placement} aria-label={chatWords.chatWithTheAgent}
   hidden={onBoard() && !shell.chatOpen}>
   {#if onBoard()}
     <!-- A focusable separator is a widget (WAI-ARIA window splitter): its value is the width. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-    <div class="vb-chat-grip" role="separator" tabindex="0" aria-orientation="vertical" aria-label="Chat width"
-      aria-controls="chat" aria-valuenow={width} aria-valuemin={MIN} aria-valuemax={widest()} title="Drag to resize · ← →"
+    <div class="vb-chat-grip" role="separator" tabindex="0" aria-orientation="vertical" aria-label={chatWords.chatWidth}
+      aria-controls="chat" aria-valuenow={width} aria-valuemin={MIN} aria-valuemax={widest()} title={chatWords.dragToResize}
       data-dragging={dragging || undefined} onpointerdown={grab} onkeydown={nudge}></div>
   {/if}
   {#if loadState === 'loading'}
-    <p class="vb-chat-state" role="status">Loading the chat…</p>
+    <p class="vb-chat-state" role="status">{chatWords.loadingTheChat}</p>
   {:else if loadState === 'error'}
     <div class="vb-chat-state" role="alert" data-state="error">
-      <p>The chat did not load.</p>
-      <button type="button" class="vb-btn" onclick={() => onretry()}>Try again</button>
+      <p>{chatWords.theChatDidNotLoad}</p>
+      <button type="button" class="vb-btn" onclick={() => onretry()}>{chatWords.tryAgain}</button>
     </div>
   {/if}
   <div class="chat-panel" bind:this={panel} hidden={loadState === 'loading' || loadState === 'error'}></div>

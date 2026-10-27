@@ -22,6 +22,7 @@ import type { Lock } from './lock.ts';
 import { BEAT_MS, holderMessage, takeLock } from './lock.ts';
 import { problem } from './problem.ts';
 import { addRecent } from './recent.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
 
 /** One open folder. */
 export interface OpenFolder {
@@ -117,7 +118,7 @@ export function openProject(o: ProjectOptions): Project {
       return openLedger(file);
     } catch {
       lock.release();
-      throw problem('conflict', `The board server could not ${create ? 'make or ' : ''}read the ledger in ${displayName(home, dir)}. Check the folder's permissions, then try again.`);
+      throw problem('conflict', serverFoldersWords.theBoardServerCouldNot(create ? serverFoldersWords.makeOr : '', displayName(home, dir)));
     }
   }
 

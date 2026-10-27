@@ -6,6 +6,7 @@
 // It is drawn on the stage, above the cards, and touches none of them.
 import type { OpenMenu, StageBox } from '#ui';
 import { openMenu } from '#ui';
+import * as cardsWords from './words/cards.ts';
 
 export interface MoveTarget { id: string; title: string; disabled?: boolean }
 
@@ -40,7 +41,7 @@ export function createMoveMenu(d: MoveMenuDeps): MoveMenu {
 
   function show(count: number, targets: readonly MoveTarget[], anchor: StageBox) {
     close(false);
-    el.setAttribute('aria-label', `Move ${count} card${count === 1 ? '' : 's'} to`);
+    el.setAttribute('aria-label', cardsWords.moveCardTo(count));
     for (const t of targets) {
       const b = document.createElement('button');
       b.type = 'button';

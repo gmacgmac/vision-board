@@ -4,6 +4,7 @@
 // schema/app/manifest.schema.json), a panel and, if it has tools, a tools module. Pure data: the
 // host (apps/board/server/apps/) and the frame (packages/ui/src/app-frame/) both import it.
 import { ID_PATTERN } from './view.ts';
+import * as formatLedgerWords from './words/format-ledger.ts';
 
 /** An app's id is the name of its folder, with the same pattern as every other id (ruling 2). */
 export const APP_ID = ID_PATTERN;
@@ -217,9 +218,9 @@ export function appStateBytes(state: unknown): number | undefined {
  * `APP_LIMITS.stateBytes`. The server's route and the panel's frame both ask this. */
 export function appStateProblem(state: unknown): string | undefined {
   const bytes = appStateBytes(state);
-  if (bytes === undefined) return 'The state must be a JSON value: no functions, loops or undefined.';
+  if (bytes === undefined) return formatLedgerWords.theStateMustBeA;
   const most = APP_LIMITS.stateBytes;
-  if (bytes > most) return `The state is ${bytes} bytes of JSON and the most a panel may save is ${most} (${most / 1024} KB). Save less: what the panel needs to start where it was.`;
+  if (bytes > most) return formatLedgerWords.theStateIsBytesOf(bytes, most, most / 1024);
   return undefined;
 }
 

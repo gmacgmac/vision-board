@@ -14,6 +14,7 @@ import { DATA_DIR } from '../ledger.ts';
 import { sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';
 import { SCHEMA_BASE, schemaProblems } from '../schema.ts';
+import * as appsManifestWords from '../words/apps-manifest.ts';
 
 export const MANIFEST_ID = `${SCHEMA_BASE}schema/app/manifest.schema.json`;
 
@@ -65,10 +66,10 @@ function locate(dir: string, name: string, problems: AppProblem[]): string | nul
   const file = real(path.join(dir, name));
   if (file === undefined) return null;
   const refuse = (detail: string) => void problems.push({ file: name, detail });
-  if (!inside(dir, file)) return refuse('links outside the app\'s folder. Make it a real file.');
+  if (!inside(dir, file)) return refuse(appsManifestWords.linksOutsideTheAppS);
   const stat = fs.statSync(file);
   if (!stat.isFile()) return refuse('not a file.');
-  if (stat.size > APP_LIMITS.fileBytes) return refuse(`over the ${sizeWords(APP_LIMITS.fileBytes)} limit. Make it smaller.`);
+  if (stat.size > APP_LIMITS.fileBytes) return refuse(appsManifestWords.overTheLimitMakeIt(sizeWords(APP_LIMITS.fileBytes)));
   return file;
 }
 
@@ -80,7 +81,7 @@ const PARSED_AT = / \(line (\d+) column \d+\)$/;
 /** A byte-order mark some editors put first: not part of the JSON, but the hash keeps it (ruling 7). */
 const MARK = /^\uFEFF/;
 /** A file the folder should hold but doesn't. */
-const NOT_THERE = 'not in the app\'s folder. Write it there';
+const NOT_THERE = appsManifestWords.notInTheAppS;
 
 /** The manifest, when it is JSON, fits its schema and names this folder; `folder.size` once its
  * `size` field is good, whatever else is wrong. */
@@ -90,7 +91,7 @@ function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
   let value: unknown;
   try { value = JSON.parse(bytes.toString('utf8').replace(MARK, '')); } catch (err) {
     const line = PARSED_AT.exec((err as SyntaxError).message)?.[1];
-    problems.push({ file, detail: `not valid JSON${line ? ` near line ${line}` : ''}` });
+    problems.push({ file, detail: appsManifestWords.notValidJSON(line ? appsManifestWords.nearLine(line) : '') });
     return undefined;
   }
   const found = schemaProblems(MANIFEST_ID, value);
@@ -99,7 +100,7 @@ function manifestOf(folder: AppFolder, bytes: Buffer): AppManifest | undefined {
   if (problems.length) return undefined;
   const manifest = value as AppManifest;
   if (manifest.id === id) return manifest;
-  problems.push({ file, detail: `id is "${manifest.id}", but the folder is "${id}": make them the same.` });
+  problems.push({ file, detail: appsManifestWords.idIsButTheFolder(manifest.id, id) });
   return undefined;
 }
 
@@ -124,10 +125,10 @@ export function readApp(project: string, id: string): AppFolder | undefined {
   if (!manifest) return folder;
   const panelName = manifest.panel ?? APP_FILES.panel;
   const panel = locate(dir, panelName, problems);
-  if (panel === null) problems.push({ file: panelName, detail: `${NOT_THERE}${manifest.panel ? ', or fix the panel field in app.json' : ''}.` });
+  if (panel === null) problems.push({ file: panelName, detail: `${NOT_THERE}${manifest.panel ? appsManifestWords.orFixThePanelField : ''}.` });
   const toolsName = manifest.tools ?? APP_FILES.tools;
   const tools = locate(dir, toolsName, problems);
-  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: `${NOT_THERE}, or fix the tools field in app.json.` });
+  if (tools === null && manifest.tools) problems.push({ file: toolsName, detail: appsManifestWords.orFixTheToolsField(NOT_THERE) });
   if (problems.length || !panel) return folder;
   folder.manifest = manifest;
   folder.panel = panel;

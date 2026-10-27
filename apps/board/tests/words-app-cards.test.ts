@@ -1,8 +1,8 @@
-// What the page says around an app card's buttons (app-cards FE_02, app-words.ts): the confirms
+// What the page says around an app card's buttons (app-cards FE_02, board/words/app-cards.ts): the confirms
 // before Allow and Stop app, the toasts after, and what Check again and Restart found.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { appAsk, appDone, retryDone } from '../src/board/app-words.ts';
+import { appAsk, appDone, retryDone } from '../src/board/words/app-cards.ts';
 
 test('Allow asks first, saying who wrote the app and what it may do; again after a change; Stop app says what stops', () => {
   assert.deepEqual(appAsk('app-allow', 'Calculator', false), ['Allow Calculator to run?',

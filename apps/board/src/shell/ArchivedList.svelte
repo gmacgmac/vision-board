@@ -5,6 +5,7 @@
      holds it in the modal dialog and does the restoring; the gallery draws it in each state. `uid`
      keeps its ids apart. Every control is a native button: Tab reaches each, Enter or Space chooses. -->
 <script lang="ts">
+  import * as shellBoardsWords from './words/shell-boards.ts';
   import type { ArchivedBoard } from '#actions';
   import { dayOf } from '../board/board-edit.ts';
 
@@ -21,24 +22,24 @@
   } = $props();
 </script>
 
-<h2 id="{uid}-title">Archived boards</h2>
-<p id="{uid}-body" class="vb-dialog-item">Agents don't see these boards. Restore one to bring it back and open it.</p>
+<h2 id="{uid}-title">{shellBoardsWords.archivedBoards}</h2>
+<p id="{uid}-body" class="vb-dialog-item">{shellBoardsWords.agentsDonTSeeThese}</p>
 {#if boards.length}
   <ul class="vb-archived-list" aria-labelledby="{uid}-title" aria-busy={busy !== null}>
     {#each boards as b (b.board)}
       <li class="vb-archived-row">
         <span class="vb-archived-name">{b.title}</span>
-        <span class="vb-archived-when">Last updated {dayOf(b.updated, now)}</span>
+        <span class="vb-archived-when">{shellBoardsWords.lastUpdated(dayOf(b.updated, now))}</span>
         <button type="button" class="vb-btn vb-archived-restore" data-board={b.board} aria-disabled={busy !== null}
-          aria-busy={busy === b.board} aria-label={busy === b.board ? `Restoring ${b.title}` : `Restore ${b.title}`}
-          onclick={() => { if (busy === null) onrestore(b.board); }}>{busy === b.board ? 'Restoring…' : 'Restore'}</button>
+          aria-busy={busy === b.board} aria-label={busy === b.board ? shellBoardsWords.restoring(b.title) : shellBoardsWords.restore(b.title)}
+          onclick={() => { if (busy === null) onrestore(b.board); }}>{busy === b.board ? shellBoardsWords.restoring2 : shellBoardsWords.restore2}</button>
       </li>
     {/each}
   </ul>
 {:else}
-  <p class="vb-archived-empty">No archived boards.</p>
+  <p class="vb-archived-empty">{shellBoardsWords.noArchivedBoards}</p>
 {/if}
 {#if problem}<p id="{uid}-problem" class="vb-dialog-problem" role="alert">{problem}</p>{/if}
 <div class="vb-dialog-actions">
-  <button type="button" class="vb-btn" id="{uid}-close" onclick={onclose}>Close</button>
+  <button type="button" class="vb-btn" id="{uid}-close" onclick={onclose}>{shellBoardsWords.close}</button>
 </div>

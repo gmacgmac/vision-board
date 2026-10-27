@@ -16,6 +16,7 @@ import type { LedgerState } from '../fold.ts';
 import { numberOf } from '../numbers.ts';
 import { boardVisibility } from '../archive.ts';
 import { boardData, boardJson } from './board-data.ts';
+import * as actionsChipsWords from '../words/actions-chips.ts';
 
 /** This plugin's id in a chip. */
 export const CHIP_PLUGIN = 'board';
@@ -52,9 +53,9 @@ export const CARD_LABEL = 200;
 export const NOTE_LABEL = 80;
 
 const refusal = (refused: RefusalCode, reason: string): ChipRefusal => ({ refused, reason });
-const noBoard = (board: string) => refusal('gone', `There is no board "${board}".`);
-const noCard = (board: string, n: number) => refusal('gone', `There is no card ${n} on board "${board}".`);
-const noNote = (board: string, seq: number) => refusal('gone', `There is no note ${seq} on board "${board}".`);
+const noBoard = (board: string) => refusal('gone', actionsChipsWords.thereIsNoBoard(board));
+const noCard = (board: string, n: number) => refusal('gone', actionsChipsWords.thereIsNoCardOn(n, board));
+const noNote = (board: string, seq: number) => refusal('gone', actionsChipsWords.thereIsNoNoteOn(seq, board));
 
 /** Card `n` on `board`: its identity, and its title now; a refusal when it is not there or was removed. */
 function cardNow(s: LedgerState, board: string, n: number) {
@@ -62,12 +63,12 @@ function cardNow(s: LedgerState, board: string, n: number) {
   const id = cardId(s.index, board, n);
   const node = id === undefined ? undefined : s.nodes.get(id);
   if (!node) return noCard(board, n);
-  if (node.retired !== undefined) return refusal('retired', `Card ${n} on board "${board}" was removed.`);
+  if (node.retired !== undefined) return refusal('retired', actionsChipsWords.cardOnBoardWasRemoved(n, board));
   return { title: latest(node).title, ver: latest(node).ver };
 }
 
 /** A note's card (its identity) as the prompt names it: board number and title. */
-const cardLine = (s: LedgerState, id: number) => `card ${numberOf(s, id)} "${s.nodes.get(id) ? latest(s.nodes.get(id)!).title : '?'}"`;
+const cardLine = (s: LedgerState, id: number) => actionsChipsWords.card(numberOf(s, id), s.nodes.get(id) ? latest(s.nodes.get(id)!).title : '?');
 
 /** Note `seq` on `board`: the ask, and where it is; a refusal when it is not there, its card or
  * container was removed, or its card's notes are hidden. */
@@ -78,12 +79,12 @@ function noteNow(s: LedgerState, board: string, seq: number): ChipRefusal | { as
   if (!ask?.text || ask.removed !== undefined || !act || eventBoard(s, act) !== board) return noNote(board, seq);
   const cards = ask.nodes ?? [ask.id];
   if (ask.region !== undefined) {
-    if (s.retiredRegions.has(containerKey(board, ask.region))) return refusal('retired', `Container "${ask.region}" on board "${board}" was removed.`);
+    if (s.retiredRegions.has(containerKey(board, ask.region))) return refusal('retired', actionsChipsWords.containerOnBoardWasRemoved(ask.region, board));
   } else {
-    if (cards.some((id) => s.nodes.get(id)?.retired !== undefined)) return refusal('retired', `The card note ${seq} is on was removed.`);
-    if (cards.every((id) => s.notesHidden.has(id))) return refusal('hidden', `Note ${seq} is hidden.`);
+    if (cards.some((id) => s.nodes.get(id)?.retired !== undefined)) return refusal('retired', actionsChipsWords.theCardNoteIsOn(seq));
+    if (cards.every((id) => s.notesHidden.has(id))) return refusal('hidden', actionsChipsWords.noteIsHidden(seq));
   }
-  const on = ask.region !== undefined ? `container "${ask.region}"` : cards.map((id) => cardLine(s, id)).join(', ');
+  const on = ask.region !== undefined ? actionsChipsWords.container(ask.region) : cards.map((id) => cardLine(s, id)).join(', ');
   return { ask: ask as Ask & { text: string }, on, rev: ask.changed ?? ask.seq };
 }
 
@@ -93,7 +94,7 @@ export function cardChip(s: LedgerState, board: string, n: number): Chip | ChipR
   if ('refused' in card) return card;
   return {
     plugin: CHIP_PLUGIN, kind: 'card', ref: { board, n, ver: card.ver },
-    label: clip(card.title, CARD_LABEL) || `Card ${n}`, detail: `Card ${n} on board "${board}"`,
+    label: clip(card.title, CARD_LABEL) || actionsChipsWords.card2(n), detail: actionsChipsWords.cardOnBoard(n, board),
   };
 }
 
@@ -103,14 +104,14 @@ export function noteChip(s: LedgerState, board: string, seq: number): Chip | Chi
   if ('refused' in note) return note;
   return {
     plugin: CHIP_PLUGIN, kind: 'note', ref: { board, seq, rev: note.rev },
-    label: clip(note.ask.text, NOTE_LABEL), detail: `Note ${seq} on ${note.on}`,
+    label: clip(note.ask.text, NOTE_LABEL), detail: actionsChipsWords.noteOn(seq, note.on),
   };
 }
 
 /** Board `board` as a chip refers to it: its title, or a refusal when it is not there or is archived. */
 function boardNow(s: LedgerState, board: string): ChipRefusal | { title: string } {
   if (!s.index.boards.has(board)) return noBoard(board);
-  if (boardVisibility(s, board) === 'archived') return refusal('retired', `Board "${board}" is archived.`);
+  if (boardVisibility(s, board) === 'archived') return refusal('retired', actionsChipsWords.boardIsArchived(board));
   return { title: s.boards.get(board)?.title ?? board };
 }
 
@@ -121,7 +122,7 @@ export function boardChip(s: LedgerState, board: string): Chip | ChipRefusal {
   if ('refused' in now) return now;
   return {
     plugin: CHIP_PLUGIN, kind: 'board', ref: { board, head: s.seq },
-    label: clip(now.title, CARD_LABEL) || board, detail: `Board "${board}"`,
+    label: clip(now.title, CARD_LABEL) || board, detail: actionsChipsWords.board(board),
   };
 }
 
@@ -136,20 +137,20 @@ export function resolveChip(s: LedgerState, kind: ChipKind, ref: ChipRef): ChipT
     const { board } = ref as BoardRef;
     const now = boardNow(s, board);
     if ('refused' in now) return now;
-    return { where: `Board "${board}"`, text: JSON.stringify(boardJson(boardData(s, board))) };
+    return { where: actionsChipsWords.board(board), text: JSON.stringify(boardJson(boardData(s, board))) };
   }
   if (kind === 'card') {
     const { board, n, ver } = ref as CardRef;
     const card = cardNow(s, board, n);
     if ('refused' in card) return card;
-    if (card.ver !== ver) return refusal('changed', `Card ${n} on board "${board}" changed since you added it.`);
-    return { where: `Board "${board}", card ${n}`, text: card.title };
+    if (card.ver !== ver) return refusal('changed', actionsChipsWords.cardOnBoardChangedSince(n, board));
+    return { where: actionsChipsWords.boardCard(board, n), text: card.title };
   }
   const { board, seq, rev } = ref as NoteRef;
   const note = noteNow(s, board, seq);
   if ('refused' in note) return note;
-  if (note.rev !== rev) return refusal('changed', `Note ${seq} on board "${board}" changed since you added it.`);
-  return { where: `Board "${board}", note ${seq} on ${note.on}`, text: note.ask.text };
+  if (note.rev !== rev) return refusal('changed', actionsChipsWords.noteOnBoardChangedSince(seq, board));
+  return { where: actionsChipsWords.boardNoteOn(board, seq, note.on), text: note.ask.text };
 }
 
 /** The person's answers on `board` since line `since`, as `agent` reads them (the contract's per-turn

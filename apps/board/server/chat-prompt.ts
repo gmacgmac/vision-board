@@ -16,6 +16,7 @@ import type { Chip as BoardChip, ChipRefusal, LedgerState, Round, SelectedCard }
 import { boardBlocks, cardChip, noteChip, resolveChip } from '#actions';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 /** A chip as the `message_in` carries it for the panel: the card's number or the note's `seq`. */
 export interface Chip { kind: 'note' | 'card'; ref: number; label: string }
@@ -34,16 +35,16 @@ function textOf(s: LedgerState, chip: BoardChip): string {
 }
 
 /** The heading of the notes a message names (an older client's note chips; the page sends none). */
-export const NOTES_HEAD = 'Attached from the board:';
+export const NOTES_HEAD = serverChatWords.attachedFromTheBoard;
 
 /** The `message_in`'s words when the person sent cards or notes alone, with no words or answers. */
-export const ONLY_ATTACHED = 'Attached from the board.';
+export const ONLY_ATTACHED = serverChatWords.attachedFromTheBoard2;
 
 /** The person's words, when there are any. */
 export const wordsOf = (msg: ChatMessage): string => (msg.text?.trim() ? msg.text : '');
 
 /** What a session on no board is told after the person's words. */
-export const NO_BOARD = 'No board is open in this folder yet. When there is something to draw, suggest its structure first; once the person agrees, create a board with write_board and the person\'s page opens it.';
+export const NO_BOARD = serverChatWords.noBoardIsOpenIn;
 
 /** One message: the words, the selected cards, the notes, the board's answers (`round`) and the board; `invalid` for a
  * note or card a chip refuses (not on `board`, removed, or a hidden note), with its reason. A note among the `round`'s
@@ -67,19 +68,19 @@ export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMe
     cards.push({ n, title: textOf(s, chip) });
     chips.push({ kind: 'card', ref: n, label: chip.label });
   });
-  if (errors.length) throw problem('invalid', 'The message names notes or cards that are not on this board.', { errors });
+  if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOr, { errors });
   const words = wordsOf(msg);
   const attached = lines.length ? `${NOTES_HEAD}\n${lines.join('\n')}` : '';
-  const prompt = [words, boardBlocks(cards, round, attached), `Board: ${board}`].filter(Boolean).join('\n\n');
+  const prompt = [words, boardBlocks(cards, round, attached), serverChatWords.board(board)].filter(Boolean).join('\n\n');
   return { prompt, text: [words, round?.text].filter(Boolean).join('\n\n') || ONLY_ATTACHED, chips };
 }
 
 /** A message to a session on no board: the words, then that no board is open. */
 function folderPrompt(msg: ChatMessage): BuiltMessage {
   const errors: PointerError[] = [
-    ...(msg.notes ?? []).map((seq, i) => ({ pointer: `/notes/${i}`, detail: `no board is open, so there is no note ${seq}` })),
-    ...(msg.cards ?? []).map((n, i) => ({ pointer: `/cards/${i}`, detail: `no board is open, so there is no card ${n}` })),
+    ...(msg.notes ?? []).map((seq, i) => ({ pointer: `/notes/${i}`, detail: serverChatWords.noBoardIsOpenSo(seq) })),
+    ...(msg.cards ?? []).map((n, i) => ({ pointer: `/cards/${i}`, detail: serverChatWords.noBoardIsOpenSoThere(n) })),
   ];
-  if (errors.length) throw problem('invalid', 'The message names notes or cards, but no board is open.', { errors });
+  if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOrCards, { errors });
   return { prompt: `${wordsOf(msg)}\n\n${NO_BOARD}`, text: wordsOf(msg), chips: [] };
 }

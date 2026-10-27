@@ -6,6 +6,7 @@
 // card, and More context is gone: a note can ask (D-045).
 import type { ActionId } from './ledger.ts';
 import type { Kind } from './view.ts';
+import * as formatKindsWords from './words/format-kinds.ts';
 
 export interface NodeType {
   /** How the type reads in the UI and in labels. */
@@ -28,13 +29,13 @@ const asks = (label: string): NodeType => ({ label, answer: true, actions: ANSWE
 const tells = (label: string): NodeType => ({ label, answer: false, actions: NOTE_ACTIONS });
 
 export const NODE_TYPES: Readonly<Record<Kind, NodeType>> = {
-  question: asks('Question'),
-  finding: tells('Finding'),
-  decision: asks('Decision'),
-  risk: tells('Risk'),
-  action: asks('Action'),
-  topic: tells('Topic'),
-  note: tells('Note'),
+  question: asks(formatKindsWords.question),
+  finding: tells(formatKindsWords.finding),
+  decision: asks(formatKindsWords.decision),
+  risk: tells(formatKindsWords.risk),
+  action: asks(formatKindsWords.action),
+  topic: tells(formatKindsWords.topic),
+  note: tells(formatKindsWords.note),
   // An app the agent built, shown in a panel inside the card (D-047 ruling 3): a note and Later.
-  app: tells('App'),
+  app: tells(formatKindsWords.app),
 };

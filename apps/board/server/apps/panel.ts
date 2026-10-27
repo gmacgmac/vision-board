@@ -13,6 +13,7 @@ import { APP_ID, APP_PANEL_PATH } from '#format';
 import { problem } from '../problem.ts';
 import type { AppHost } from './host.ts';
 import { APPS_OFF } from './host.ts';
+import * as appsHostWords from '../words/apps-host.ts';
 
 /** The panel's path, outside /api: `APP_PANEL_PATH` (the one route string, which the page's frame
  * reads too) and the id, not decoded. */
@@ -43,7 +44,7 @@ export function servePanel(res: ServerResponse, raw: string, host: AppHost): voi
   const status = APP_ID.test(raw) ? host.status(raw) : undefined;
   const folder = status?.folder;
   if (!status || status.info.state === 'missing' || status.info.state === 'invalid' || !folder?.panel || !folder.manifest) {
-    throw problem('not-found', 'There is no app panel here to show. list_apps lists the apps, and what to fix in each.', FRAMED);
+    throw problem('not-found', appsHostWords.thereIsNoAppPanel, FRAMED);
   }
   res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Security-Policy': panelCsp(folder.manifest.csp), 'Cache-Control': 'no-store' });
   res.end(fs.readFileSync(folder.panel));

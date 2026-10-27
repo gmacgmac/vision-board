@@ -4,6 +4,7 @@ import type { CommandInfo, CommandInput } from './commands.generated.ts';
 import { COMMANDS } from './commands.generated.ts';
 import { flagOf } from './args.ts';
 import { GLOBAL_FLAGS } from './globals.ts';
+import * as helpWords from './words/help.ts';
 
 const WIDTH = 92;
 
@@ -30,14 +31,14 @@ const globalRows = () => GLOBAL_FLAGS.map((f) => [`--${f.name}${f.value ? ` <${f
 /** The command list. */
 export function overview(commands: readonly CommandInfo[] = COMMANDS): string {
   return [
-    'vb: talk to the Vision Board from a terminal.',
+    helpWords.vbTalkToTheVision,
     '',
     'Usage: vb <command> [--flag value ...]',
     '',
     'Commands:',
     ...pad(commands.map((c) => [c.name, c.summary])),
     '',
-    'Flags for every command:',
+    helpWords.flagsForEveryCommand,
     ...pad(globalRows()),
     '',
     'Run `vb <command> --help` for a command\'s inputs.',
@@ -56,7 +57,7 @@ export function commandHelp(c: CommandInfo): string {
     `Usage: vb ${c.name}${c.inputs.map((i) => ` ${usageOf(i)}`).join('')}${body} [--text]`,
     ...(inputRows.length ? ['', 'Inputs:', ...pad(inputRows)] : []),
     '',
-    'Flags for every command:',
+    helpWords.flagsForEveryCommand,
     ...pad(globalRows()),
   ].join('\n');
 }

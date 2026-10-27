@@ -13,24 +13,25 @@ import { esc } from '../markdown/inline.ts';
 import { INFO_ICON, svgIcon } from './node-icons.ts';
 import { isItem } from './node-core.ts';
 import { fullTime, noteTime } from './node-time.ts';
+import * as nodeWords from '../words/node.ts';
 
 /** The box's name in the card popover (`data-pop`), and the ⓘ that opens it. */
 export const HISTORY = 'history';
 export const HISTORY_TAB = 'button.vb-history';
 
 /** What the box says while a card has no row (in practice a card always has its first drawing). */
-export const HISTORY_EMPTY = 'Nothing has happened to this card yet';
+export const HISTORY_EMPTY = nodeWords.nothingHasHappenedToThis;
 
-const cardName = (n: ViewNode): string => (isItem(n) ? `card ${n.n}` : `card: ${n.title}`);
+const cardName = (n: ViewNode): string => (isItem(n) ? nodeWords.card(n.n) : nodeWords.card2(n.title));
 
 /** The ⓘ's name, "History of card 4", and the box's heading, "Card 4 history". */
-export const historyLabel = (n: ViewNode): string => `History of ${cardName(n)}`;
-export const historyHead = (n: ViewNode): string => (isItem(n) ? `Card ${n.n} history` : `${n.title}: history`);
+export const historyLabel = (n: ViewNode): string => nodeWords.historyOf(cardName(n));
+export const historyHead = (n: ViewNode): string => (isItem(n) ? nodeWords.cardHistory(n.n) : nodeWords.history(n.title));
 
 /** The ⓘ: 24px like the flag, a button that opens the box (a dialog) beside the card. */
 export const historyButton = (n: ViewNode, box: string): string =>
   `<button type="button" class="vb-act vb-history" aria-haspopup="dialog" aria-expanded="false" aria-controls="${esc(box)}"`
-  + ` aria-label="${esc(historyLabel(n))}" title="History">${svgIcon(INFO_ICON, 20, 'vb-act-icon')}</button>`;
+  + ` aria-label="${esc(historyLabel(n))}" title="${nodeWords.history2}">${svgIcon(INFO_ICON, 20, 'vb-act-icon')}</button>`;
 
 /** The box, empty but for its heading; `historyMarkup` fills `.vb-history-body` when it shows. It
  * scrolls when long, so it is a tab stop (WCAG 2.1.1), as the handover box is. */

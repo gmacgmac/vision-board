@@ -6,6 +6,8 @@
      board's root: the framework-free board (D-005) is mounted in it with this page as its host (board/mount.ts,
      page-host.ts), and the page draws from the board's status. -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as shellBoardWords from './words/shell-board.ts';
   import { onMount, tick, untrack } from 'svelte';
   import { mount, type MountedBoard } from '../board/mount.ts';
   import { exposeWork } from '../board/work.ts';
@@ -84,7 +86,7 @@
   });
 </script>
 
-<a class="vb-skip" href="#stage">Skip to the board</a>
+<a class="vb-skip" href="#stage">{shellBoardWords.skipToTheBoard}</a>
 <Toolbar
   onboard={(id) => board?.switchTo(id)}
   onversion={(seq) => board?.showVersion(seq) ?? Promise.resolve()}
@@ -92,7 +94,7 @@
   onopen={(n) => board?.go.to(n)}
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
-  onsend={() => (view ? send(view) : Promise.resolve('The board is not ready yet.'))}
+  onsend={() => (view ? send(view) : Promise.resolve(shellBoardWords.theBoardIsNotReady))}
   onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
   onflagged={() => board?.nextFlagged()}
   onarchive={() => void board?.boardEdit.archive()}
@@ -109,7 +111,7 @@
     onreview={() => board?.proposals.review()} onacceptall={() => void board?.proposals.acceptAll()} />
 {/if}
 
-<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}></main>
+<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label={commonWords.board} bind:this={stage}></main>
 <!-- The selection, perceivable without colour (3_FE_01 ruling 9): a polite live region. -->
 <p id="selection-status" class="vb-visually-hidden" role="status">{shell.selection}</p>
 
@@ -127,6 +129,6 @@
 </div>
 
 <ConfirmDialog />
-<BoardDialog onsave={(action, fields) => board?.boardEdit.save(action, fields) ?? Promise.resolve('The board is not ready yet.')} />
-{#if archiving}<ArchivedDialog onrestore={(id) => board?.boardEdit.restore(id) ?? Promise.resolve('The board is not ready yet.')} />{/if}
+<BoardDialog onsave={(action, fields) => board?.boardEdit.save(action, fields) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />
+{#if archiving}<ArchivedDialog onrestore={(id) => board?.boardEdit.restore(id) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />{/if}
 {#if openFolder}<FolderDialog />{/if}

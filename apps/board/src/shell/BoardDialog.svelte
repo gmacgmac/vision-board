@@ -7,6 +7,8 @@
      and goes back to the picker on close. Opened, closed and closed by its backdrop by the shared
      modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). -->
 <script lang="ts">
+  import * as shellBoardsWords from './words/shell-boards.ts';
+  import * as shellCommonWords from './words/shell-common.ts';
   import { BOARD_ACTIONS, type BoardActionId } from '#actions';
   import { LIMITS } from '#format';
   import type { BoardFields } from '../board/io.ts';
@@ -57,19 +59,19 @@
   <form onsubmit={save}>
     <h2 id="board-dialog-title">{BOARD_ACTIONS[action].label}</h2>
     <p id="board-dialog-body" class="vb-dialog-item">
-      {rename ? 'The new title shows in the picker and to every agent that reads this board.'
-        : 'One board per topic. An agent asks you before it draws on a board you made.'}
+      {rename ? shellBoardsWords.theNewTitleShowsIn
+        : shellBoardsWords.oneBoardPerTopicAn}
     </p>
-    <label class="vb-field" for="board-title">Title</label>
+    <label class="vb-field" for="board-title">{shellBoardsWords.title}</label>
     <input id="board-title" class="vb-input" required maxlength={LIMITS.title} autocomplete="off" spellcheck="true"
-      pattern={'.*\\S.*'} title="Type a title" bind:value={title} bind:this={titleInput} />
-    <label class="vb-field" for="board-summary">Summary <span class="vb-field-note">optional</span></label>
+      pattern={'.*\\S.*'} title={shellBoardsWords.typeATitle} bind:value={title} bind:this={titleInput} />
+    <label class="vb-field" for="board-summary">{shellBoardsWords.summary} <span class="vb-field-note">{shellBoardsWords.optional}</span></label>
     <textarea id="board-summary" rows="3" maxlength={LIMITS.summary} bind:value={summary} bind:this={summaryInput}></textarea>
     {#if problem}<p id="board-dialog-problem" class="vb-dialog-problem" role="alert">{problem}</p>{/if}
     <div class="vb-dialog-actions">
-      <button type="button" class="vb-btn" id="board-cancel" onclick={() => { shell.boardDialog = null; }}>Cancel</button>
+      <button type="button" class="vb-btn" id="board-cancel" onclick={() => { shell.boardDialog = null; }}>{shellCommonWords.cancel}</button>
       <button type="submit" class="vb-btn vb-btn-primary" id="board-save" disabled={saving} aria-busy={saving}>
-        {saving ? (rename ? 'Renaming…' : 'Creating…') : rename ? 'Rename' : 'Create'}
+        {saving ? (rename ? shellBoardsWords.renaming : shellCommonWords.creating) : rename ? shellBoardsWords.rename : shellCommonWords.create}
       </button>
     </div>
   </form>

@@ -8,6 +8,7 @@ import { eventProblems } from './ledger-shape.ts';
 import { fromLine } from './ledger-line.ts';
 import { retireContext } from './retire-rules.ts';
 import { accessKey, accessName, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
+import * as formatLedgerWords from './words/format-ledger.ts';
 
 export { accessKey, containerKey, openRequestOf, revokeProblem } from './access-rules.ts';
 
@@ -67,42 +68,42 @@ export type CardName = (id: number) => string;
  * name the file gives it (`n`). */
 export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName = String): string[] {
   const p: string[] = [];
-  if (e.seq !== ix.seq + 1) p.push(`seq: expected ${ix.seq + 1}`);
+  if (e.seq !== ix.seq + 1) p.push(formatLedgerWords.seqExpected(ix.seq + 1));
   // A card named by an event must exist and, but for an unlink, still be on its board.
   const node = (id: number | undefined, f = 'n') => {
     const x = id === undefined ? undefined : ix.nodes.get(id);
-    if (id !== undefined && !x) p.push(`${f}: unknown node ${id}`);
-    else if (id !== undefined && ix.retired.has(id) && e.type !== 'unlink') p.push(`${f}: card ${name(id)} is retired`);
+    if (id !== undefined && !x) p.push(formatLedgerWords.unknownNode(f, id));
+    else if (id !== undefined && ix.retired.has(id) && e.type !== 'unlink') p.push(formatLedgerWords.cardIsRetired(f, name(id)));
     return x;
   };
   const verAtMost = (id: number, ver: number | undefined) => {
     const x = node(id);
-    if (x && ver !== undefined && ver > x.ver) p.push(`ver: node ${name(id)} is at version ${x.ver}`);
+    if (x && ver !== undefined && ver > x.ver) p.push(formatLedgerWords.verNodeIsAtVersion(name(id), x.ver));
     return x;
   };
   switch (e.type) {
     // The person may rename any board (D-034, api.md 90); an agent's second line is refused.
     case 'board':
-      if (ix.boards.has(e.board) && e.by !== 'person') p.push(`board: "${e.board}" already exists`);
+      if (ix.boards.has(e.board) && e.by !== 'person') p.push(formatLedgerWords.boardAlreadyExists(e.board));
       break;
     case 'region':
-      if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
-      else if (ix.retiredRegions.has(containerKey(e.board, e.region.id))) p.push(`region.id: container "${e.region.id}" was retired; pick another id`);
+      if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (ix.retiredRegions.has(containerKey(e.board, e.region.id))) p.push(formatLedgerWords.regionIdContainerWasRetired(e.region.id));
       // The built-in Later is every board's own (api.md 67); older lines keep their meaning.
       if (e.v >= 6 && e.region.id === LATER_REGION && !ix.boards.get(e.board)?.has(LATER_REGION))
-        p.push(`region.id: "${LATER_REGION}" is the board's built-in Later container; pick another id`);
+        p.push(formatLedgerWords.regionIdIsTheBoard(LATER_REGION));
       break;
     case 'node': {
       const regions = ix.boards.get(e.board);
-      if (!regions) p.push(`board: unknown "${e.board}"`);
-      else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(`node.region: container "${e.node.region}" was retired`);
-      else if (!regions.has(e.node.region)) p.push(`node.region: unknown "${e.node.region}"`);
+      if (!regions) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (ix.retiredRegions.has(containerKey(e.board, e.node.region))) p.push(formatLedgerWords.nodeRegionContainerWasRetired(e.node.region));
+      else if (!regions.has(e.node.region)) p.push(formatLedgerWords.nodeRegionUnknown(e.node.region));
       const prev = ix.nodes.get(e.id);
-      if (!prev && e.id <= ix.maxId) p.push(`n: ${e.id} was already used; new nodes get ${ix.maxId + 1} or above`);
-      if (prev && prev.board !== e.board) p.push(`n: node ${name(e.id)} belongs to board "${prev.board}"`);
-      if (prev && ix.retired.has(e.id)) p.push(`n: card ${name(e.id)} is retired; draw a new card instead`);
+      if (!prev && e.id <= ix.maxId) p.push(formatLedgerWords.nWasAlreadyUsedNew(e.id, ix.maxId + 1));
+      if (prev && prev.board !== e.board) p.push(formatLedgerWords.nNodeBelongsToBoard(name(e.id), prev.board));
+      if (prev && ix.retired.has(e.id)) p.push(formatLedgerWords.nCardIsRetiredDraw(name(e.id)));
       const want = (prev?.ver ?? 0) + 1;
-      if (e.ver !== want) p.push(`ver: expected ${want}`);
+      if (e.ver !== want) p.push(formatLedgerWords.verExpected(want));
       break;
     }
     case 'link': case 'unlink': node(e.from, 'from'); node(e.to, 'to'); break;
@@ -114,27 +115,27 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
       if (e.proposal !== undefined) {
         const prop = ix.proposals.get(e.proposal);
         const cur = ix.nodes.get(e.id)?.ver;
-        if (!prop || prop.id !== e.id) p.push(`proposal: no proposal ${e.proposal} for node ${name(e.id)}`);
+        if (!prop || prop.id !== e.id) p.push(formatLedgerWords.proposalNoProposalForNode(e.proposal, name(e.id)));
         // An out-of-date proposal can't be accepted, but it can be turned down (api.md 93).
-        else if (prop.ver !== cur && e.action !== 'reject') p.push(`proposal: out of date, node ${name(e.id)} changed since it was made`);
+        else if (prop.ver !== cur && e.action !== 'reject') p.push(formatLedgerWords.proposalOutOfDateNode(name(e.id)));
       }
       break;
     case 'retire': retireContext(ix, e, p, name); break;
     case 'seen':
       if ('id' in e) verAtMost(e.id, e.ver);
-      else if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
-      else if (e.head > ix.seq) p.push(`head: the ledger is at line ${ix.seq}`);
+      else if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (e.head > ix.seq) p.push(formatLedgerWords.headTheLedgerIsAt(ix.seq));
       break;
     case 'propose': verAtMost(e.id, e.ver); break;
     case 'reply': case 'park': node(e.id); break;
     case 'join':
-      if (e.agent !== undefined && ix.agents.has(e.agent)) p.push(`agent: "${e.agent}" has already joined`);
+      if (e.agent !== undefined && ix.agents.has(e.agent)) p.push(formatLedgerWords.agentHasAlreadyJoined(e.agent));
       break;
     case 'grant-request': {
-      if (!ix.boards.has(e.board)) p.push(`board: unknown "${e.board}"`);
-      else if (e.region !== undefined && !ix.boards.get(e.board)!.has(e.region)) p.push(`region: unknown "${e.region}"`);
+      if (!ix.boards.has(e.board)) p.push(formatLedgerWords.boardUnknown(e.board));
+      else if (e.region !== undefined && !ix.boards.get(e.board)!.has(e.region)) p.push(formatLedgerWords.regionUnknown(e.region));
       const open = openRequestOf(ix, e.agent, e.board, e.region);
-      if (open !== undefined) p.push(`board: this agent already has open grant request ${open} for ${accessName(e.board, e.region)}`);
+      if (open !== undefined) p.push(formatLedgerWords.boardThisAgentAlreadyHas(open, accessName(e.board, e.region)));
       break;
     }
   }
@@ -144,15 +145,15 @@ export function contextProblems(ix: LedgerIndex, e: LedgerEvent, name: CardName 
 /** The container rules of an `act`: mode, widths, move, grant, deny, revoke, send and the board marks (api.md 16, 23, 66, 132, 135, 138),
  * and a note on or a place for a whole container (api.md 72). */
 function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
-  const region = () => { if (!ix.boards.get(e.board!)?.has(e.region!)) p.push(`region: unknown "${e.region}"`); };
+  const region = () => { if (!ix.boards.get(e.board!)?.has(e.region!)) p.push(formatLedgerWords.regionUnknown(e.region)); };
   if (isContainerAct(e)) {
     const regions = ix.boards.get(e.board!);
-    if (!regions) p.push(`board: unknown "${e.board}"`);
+    if (!regions) p.push(formatLedgerWords.boardUnknown(e.board));
     // Later can be placed but takes no note: it is not a thread an agent drew (3_FE_04 ruling 2).
     else if (!regions.has(e.region!) && !(e.region === LATER_REGION && CONTAINER_PLACES.has(e.action)))
       p.push(e.region === LATER_REGION
-        ? `region: unknown "${LATER_REGION}" as a container to write on: Later takes no note, since no agent drew it; write the note on one of the board's containers`
-        : `region: unknown "${e.region}" on board "${e.board}"`);
+        ? formatLedgerWords.regionUnknownAsAContainer(LATER_REGION)
+        : formatLedgerWords.regionUnknownOnBoard(e.region, e.board));
     return;
   }
   switch (e.action) {
@@ -161,15 +162,15 @@ function actContext(ix: LedgerIndex, e: ActEvent, p: string[]): void {
       const board = ix.nodes.get(actCard(e)!)?.board;
       if (board === undefined || e.region === LATER_REGION || ix.boards.get(board)?.has(e.region!)) break;
       p.push(ix.retiredRegions.has(containerKey(board, e.region!))
-        ? `region: container "${e.region}" was retired` : `region: unknown "${e.region}" on board "${board}"`);
+        ? formatLedgerWords.regionContainerWasRetired(e.region) : formatLedgerWords.regionUnknownOnBoard(e.region, board));
       break;
     }
     // Send, and the person's marks on a whole board (api.md 135, 138), name a board that exists.
-    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock': if (!ix.boards.has(e.board!)) p.push(`board: unknown "${e.board}"`); break;
+    case 'send': case 'archive': case 'restore': case 'lock': case 'unlock': if (!ix.boards.has(e.board!)) p.push(formatLedgerWords.boardUnknown(e.board)); break;
     case 'grant': case 'deny': {
       const r = ix.requests.get(e.request!);
-      if (!r) p.push(`request: no grant request ${e.request}`);
-      else if (r.answer) p.push(`request: grant request ${e.request} was already answered`);
+      if (!r) p.push(formatLedgerWords.requestNoGrantRequest(e.request));
+      else if (r.answer) p.push(formatLedgerWords.requestGrantRequestWasAlready(e.request));
       break;
     }
     case 'revoke': {
@@ -263,12 +264,12 @@ export function readLedger(lines: string[]): ReadLedger {
   lines.forEach((line, i) => {
     if (!line.trim()) return;
     let e: unknown;
-    try { e = JSON.parse(line); } catch { index.seq += 1; return void problems.push(`line ${i + 1}: not JSON`); }
+    try { e = JSON.parse(line); } catch { index.seq += 1; return void problems.push(formatLedgerWords.lineNotJSON(i + 1)); }
     let p = eventProblems(e);
     const event = p.length ? undefined : fromLine(e as Record<string, unknown>);
     if (event) p = contextProblems(index, event);
     if (p.length || !event) {
-      problems.push(...p.map((x) => `line ${i + 1}: ${x}`));
+      problems.push(...p.map((x) => formatLedgerWords.line(i + 1, x)));
       const seq = (e as { seq?: unknown }).seq;
       if (Number.isInteger(seq)) index.seq = Math.max(index.seq, seq as number); // one bad line, not a cascade
     } else {

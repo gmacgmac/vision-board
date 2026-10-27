@@ -184,6 +184,6 @@ export function chatSection(fx: Fixture): HTMLElement {
     meta,
     group('Every state', 'Fed by the recorded Claude turns as chat events. The header\'s status and the composer follow the chat conditions table.', row),
     group('On the board', 'The sidebar on the right, the board shrinking beside it. The toolbar\'s Chat button and T open and close it; its left edge drags (or takes the arrow keys) to set its width. What goes from the board (the selected cards, the answers since the last Send) is one chip that previews it; a change chip zooms to its cards.', onBoard(fx)),
-    group('Before the chat is drawn', 'The chat\'s elements load the first time the panel opens (board/chat-view.ts): the sidebar shows its loading state until they are there, and its error state with Try again when they did not come.', beforeDrawn()));
+    group('Before the chat is drawn', 'The chat\'s elements load the first time the panel opens (shell/chat-view.ts): the sidebar shows its loading state until they are there, and its error state with Try again when they did not come.', beforeDrawn()));
   return box;
 }

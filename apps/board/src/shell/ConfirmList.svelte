@@ -2,6 +2,7 @@
      number and what is done to it, in the order it is done, then under "Not included" what is left
      out and why. The confirm dialog shows it under its words; the gallery draws it on its own. -->
 <script lang="ts">
+  import * as shellConfirmWords from './words/shell-confirm.ts';
   import type { ConfirmList } from './shell.svelte.ts';
 
   let { list }: { list: ConfirmList } = $props();
@@ -9,14 +10,14 @@
 
 <ol class="vb-confirm-list">
   {#each list.items as it, i (i)}
-    <li><span class="vb-nref" aria-hidden="true">{it.ref}</span><span class="vb-visually-hidden">Item {it.ref}:</span> {it.text}</li>
+    <li><span class="vb-nref" aria-hidden="true">{it.ref}</span><span class="vb-visually-hidden">{shellConfirmWords.item(it.ref)}</span> {it.text}</li>
   {/each}
 </ol>
 {#if list.skipped?.length}
-  <p class="vb-confirm-skip-title">Not included</p>
+  <p class="vb-confirm-skip-title">{shellConfirmWords.notIncluded}</p>
   <ul class="vb-confirm-list vb-confirm-skip">
     {#each list.skipped as it, i (i)}
-      <li><span class="vb-nref" aria-hidden="true">{it.ref}</span><span class="vb-visually-hidden">Item {it.ref}:</span> {it.text}</li>
+      <li><span class="vb-nref" aria-hidden="true">{it.ref}</span><span class="vb-visually-hidden">{shellConfirmWords.item(it.ref)}</span> {it.text}</li>
     {/each}
   </ul>
 {/if}

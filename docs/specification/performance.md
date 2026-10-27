@@ -91,7 +91,7 @@ state and everything drawn and draws again from a fresh read.
   `big`, 1,000 cards in 20 containers (the roadmap's grid, flow, radial and lanes containers, five
   times each, 50 cards each, with their kinds of links), and `mixed`, a copy of the roadmap board for
   the same-picture test. `perf.spec.ts` runs last and alone, one worker, in the `budgets` project that
-  waits for the `chromium` project (the other page specs run on 3 workers, `VB_TEST_WORKERS`). To run it by
+  waits for the `chromium` project (the other page specs run on 5 workers, `VB_TEST_WORKERS`). To run it by
   itself: `npm run test:pages -- --no-deps perf.spec.ts`; `--shard` needs `--project=chromium`.
 
 ## Where this lands

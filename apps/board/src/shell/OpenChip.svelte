@@ -7,13 +7,14 @@
      The count stays on a narrow toolbar, the word for screen readers (board.css). The toolbar and
      the gallery both draw this. -->
 <script lang="ts">
+  import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import MenuSelect from './MenuSelect.svelte';
   import type { RowCard } from '../board/finder.ts';
   import { openRow } from '../board/finder.ts';
 
   let {
-    count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = 'Go to an open card',
-    title = 'Open items: choose one to go to it', plainTitle = 'Open items',
+    count, cards, onpick, id = 'open-cards', look, word = 'open', tone = 'open', label = shellGoToCardWords.goToAnOpenCard,
+    title = shellGoToCardWords.openItemsChooseOneTo, plainTitle = shellGoToCardWords.openItems,
   }: {
     count: number;
     /** The cards to list, by board number; none draws the plain chip. */

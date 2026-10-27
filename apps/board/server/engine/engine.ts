@@ -20,6 +20,7 @@ import { READS } from './reads.ts';
 import type { EngineTool } from './tools.ts';
 import { makeTools } from './tools.ts';
 import { WRITES } from './writes.ts';
+import * as httpWords from '../words/http.ts';
 
 /** One request, as the host has it: the path relative to the board's prefix (`boards/plans`), the
  * query, the body (its value, or a reader the engine calls with the operation's byte limit), the
@@ -111,7 +112,7 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
       if (match === null) return null;
       if ('allow' in match) {
         const allow = match.allow.filter((m) => (Object.keys(OPS) as OperationId[]).some((id) => OPERATIONS[id].method === m));
-        return allow.length ? toReply(problem('method-not-allowed', `This path answers ${allow.join(', ')} only.`, { headers: { Allow: allow.join(', ') } })) : null;
+        return allow.length ? toReply(problem('method-not-allowed', httpWords.thisPathAnswersOnly(allow.join(', ')), { headers: { Allow: allow.join(', ') } })) : null;
       }
       if (!servesOperation(match.id)) return null;
       let params: Record<string, unknown>;
@@ -121,11 +122,11 @@ export function createEngine({ dir, ledger: given, name = () => dir, onSend = ()
     resolve(kind, ref) {
       ledger.refresh();
       const s = ledger.state();
-      if (typeof ref !== 'object' || ref === null) return { refused: 'gone', reason: 'The chip names nothing on the board.' };
+      if (typeof ref !== 'object' || ref === null) return { refused: 'gone', reason: httpWords.theChipNamesNothingOn };
       if (kind === 'card') return resolveChip(s, 'card', ref as CardRef);
       if (kind === 'note') return resolveChip(s, 'note', ref as NoteRef);
       if (kind === 'board') return resolveChip(s, 'board', ref as BoardRef);
-      return { refused: 'gone', reason: `The board has no ${kind}.` };
+      return { refused: 'gone', reason: httpWords.theBoardHasNo(kind) };
     },
     turn({ board, since, agent }) {
       ledger.refresh();

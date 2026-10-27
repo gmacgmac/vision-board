@@ -9,6 +9,7 @@
 import type { ActEvent, LedgerEvent } from '#format';
 import type { LedgerState } from './fold.ts';
 import { eventBoard } from './references.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** How a board stands for agents: `visible`, `archived` (it exists, and no agent may know it), or
  * `unknown` (no such board; an agent may make one with that id). */
@@ -25,7 +26,7 @@ export const visibleToAgents = (s: LedgerState, board: string): boolean => board
 
 /** What an agent is told when it would make or write on an archived board (ruling 9): it says
  * nothing about the board, only that the id is taken. */
-export const UNAVAILABLE = 'That board id isn\'t available; choose another id.';
+export const UNAVAILABLE = actionsRefusalsWords.thatBoardIdIsnT;
 
 /** Fold one `archive` or `restore` (the person's board marks). */
 export function foldArchive(s: LedgerState, e: ActEvent): void {
@@ -44,16 +45,16 @@ export function archivedProblem(s: LedgerState, e: LedgerEvent): string | undefi
   if (board === undefined || boardVisibility(s, board) !== 'archived') return undefined;
   if (e.by === 'agent') return UNAVAILABLE;
   if (e.type === 'seen') return undefined;
-  return `board: "${board}" is archived; restore it from the board picker first`;
+  return actionsRefusalsWords.boardIsArchivedRestoreIt(board);
 }
 
 /** An `archive` names a board that is not archived; a `restore`, one that is. */
 export function archiveRules(e: ActEvent, s: LedgerState, p: string[]): void {
   const id = String(e.board);
   const v = boardVisibility(s, id);
-  if (v === 'unknown') p.push(`board: unknown "${id}"`);
-  else if (e.action === 'archive' && v === 'archived') p.push(`board: "${id}" is already archived`);
-  else if (e.action === 'restore' && v === 'visible') p.push(`board: "${id}" isn't archived`);
+  if (v === 'unknown') p.push(actionsRefusalsWords.boardUnknown(id));
+  else if (e.action === 'archive' && v === 'archived') p.push(actionsRefusalsWords.boardIsAlreadyArchived(id));
+  else if (e.action === 'restore' && v === 'visible') p.push(actionsRefusalsWords.boardIsnTArchived(id));
 }
 
 /** When a board's first line was written, and its own last line (fold.ts `heads`). */

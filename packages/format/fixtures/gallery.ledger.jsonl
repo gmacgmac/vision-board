@@ -85,9 +85,9 @@
 {"v":2,"seq":85,"at":"2026-10-04T09:01:25Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":42,"ver":1,"node":{"region":"frame-flow","kind":"question","title":"flow item 1","item":true}}
 {"v":2,"seq":86,"at":"2026-10-04T09:01:26Z","by":"person","type":"act","action":"ack","n":42,"ver":1}
 {"v":2,"seq":87,"at":"2026-10-04T09:01:27Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":43,"ver":1,"node":{"region":"frame-flow","kind":"action","title":"flow item 2","item":true}}
-{"v":2,"seq":88,"at":"2026-10-04T09:01:28Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":44,"ver":1,"node":{"region":"frame-lanes","kind":"question","title":"lanes item 1","item":true}}
+{"v":2,"seq":88,"at":"2026-10-04T09:01:28Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":44,"ver":1,"node":{"region":"frame-lanes","lane":"Now","kind":"question","title":"lanes item 1","item":true}}
 {"v":2,"seq":89,"at":"2026-10-04T09:01:29Z","by":"person","type":"act","action":"ack","n":44,"ver":1}
-{"v":2,"seq":90,"at":"2026-10-04T09:01:30Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":45,"ver":1,"node":{"region":"frame-lanes","kind":"action","title":"lanes item 2","item":true}}
+{"v":2,"seq":90,"at":"2026-10-04T09:01:30Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":45,"ver":1,"node":{"region":"frame-lanes","lane":"Next","kind":"action","title":"lanes item 2","item":true}}
 {"v":2,"seq":91,"at":"2026-10-04T09:01:31Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":46,"ver":1,"node":{"region":"frame-radial","kind":"question","title":"radial item 1","item":true}}
 {"v":2,"seq":92,"at":"2026-10-04T09:01:32Z","by":"person","type":"act","action":"ack","n":46,"ver":1}
 {"v":2,"seq":93,"at":"2026-10-04T09:01:33Z","by":"agent","agent":"kiro","type":"node","board":"gallery","n":47,"ver":1,"node":{"region":"frame-radial","kind":"action","title":"radial item 2","item":true}}

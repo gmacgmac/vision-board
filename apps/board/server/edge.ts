@@ -6,11 +6,12 @@ import type { LedgerState } from '#actions';
 import { cardFields, cardId } from '#format';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
+import * as writesWords from './words/writes.ts';
 
 type Rec = Record<string, unknown>;
 
 /** Why card `n` names nothing on `board`. */
-export const noCard = (board: string, n: unknown): string => `board ${board} has no card ${String(n)}`;
+export const noCard = (board: string, n: unknown): string => writesWords.boardHasNoCard(board, String(n));
 
 /** The identity of card `n` on `board`, retired or not; undefined for a number the board has not
  * given (or anything not a number). */
@@ -34,6 +35,6 @@ export function cardsIn(s: LedgerState, board: string, body: Rec, type: string):
     if (!f.list) out[f.field] = id(value, `/${f.field}`);
     else if (Array.isArray(value)) out[f.field] = value.map((n, i) => id(n, `/${f.field}/${i}`));
   }
-  if (errors.length) throw problem('invalid', `The request names a card board "${board}" does not have. Name each card by its number on this board (get_board lists them).`, { errors });
+  if (errors.length) throw problem('invalid', writesWords.theRequestNamesACard(board), { errors });
   return out;
 }

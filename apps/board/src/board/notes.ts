@@ -27,6 +27,7 @@ import { cardView, containerView } from './note-views.ts';
 import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
 import type { Selection } from './selection.ts';
 import { createGroupPins, groupPinOf } from './group-pins.ts';
+import * as notesWords from './words/notes.ts';
 
 /** `frame`: a container on the board (3_FE_04): the bubble sits beside its title line (note-anchor.ts). */
 export interface NoteDeps extends ViewDeps, AnchorDeps {
@@ -247,7 +248,6 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     return { action: 'note-edit', ...on, note: o.note!.seq, text: words, ...(o.kind !== o.note!.kind && { kind: o.kind }) };
   }
 
-  const DONE: Record<string, string> = { comment: 'added', 'note-edit': 'saved', 'note-remove': 'removed' };
 
   /** Edit on a note in the conversation (decision 8): the window turns into today's edit mode for
    *  it, beside it; focus still goes back where the conversation opened from. */
@@ -270,11 +270,11 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     bubble.setPhase('saving');
     const problem = await d.attempt(fields);
     if (open !== o) return; // closed or replaced while it was on its way
-    if (problem !== null) return bubble.setPhase('error', `Not saved: ${problem}`);
+    if (problem !== null) return bubble.setPhase('error', notesWords.notSaved(problem));
     close();
     d.relayout();
-    const on = o.region ? `container ${d.region(o.region)?.title ?? o.region}` : o.group ? `${o.group.length} cards` : d.node(o.id)?.n ?? o.id;
-    d.toast(`Note on ${on} ${DONE[fields.action] ?? 'saved'}`);
+    const on = o.region ? notesWords.container(d.region(o.region)?.title ?? o.region) : o.group ? notesWords.cards(o.group.length) : d.node(o.id)?.n ?? o.id;
+    d.toast(notesWords.noteOn(on, fields.action));
   }
 
   bubble.addEventListener('vb-note', (e) => void onChoice(e));

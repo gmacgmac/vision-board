@@ -17,10 +17,11 @@ import { endWhenClosed } from './streams.ts';
 import { sendJson } from './respond.ts';
 import { personBoard, refuseArchived, refuseLocked } from './visibility.ts';
 import { body } from './body.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
-const NO_RUN = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
-const BUSY = 'The agent is still answering the last message. Wait for it, or press Stop.';
-const NOTHING = 'There is nothing to send: write a message, attach cards or notes, or answer on the board first.';
+const NO_RUN = serverChatWords.theServerKnowsNoRunning;
+const BUSY = serverChatWords.theAgentIsStillAnswering;
+const NOTHING = serverChatWords.thereIsNothingToSend;
 
 /** The session in the path, loaded; it must be the one in use on its board, with no new one
  * starting there, to take a message. */
@@ -28,9 +29,9 @@ async function inUse({ params, chats }: Ctx) {
   const live = await chats().live(String(params.session));
   const { board, session } = live.record;
   if (chats().current(board)?.session !== session) {
-    throw problem('conflict', 'A newer session replaced this one on the board; send your message there.');
+    throw problem('conflict', serverChatWords.aNewerSessionReplacedThis);
   }
-  if (chats().starting(board)) throw problem('conflict', 'A new session is starting on this board; send your message there once it has.');
+  if (chats().starting(board)) throw problem('conflict', serverChatWords.aNewSessionIsStarting);
   return live;
 }
 
@@ -38,7 +39,7 @@ async function inUse({ params, chats }: Ctx) {
  * on a locked one, where its grant can't be written (api.md 139). */
 const startChat: Handler = async ({ req, res, params, ledger, chats }) => {
   const board = personBoard(ledger.state(), params.board);
-  refuseArchived(ledger.state(), board, 'invalid', 'no chat can start on it');
+  refuseArchived(ledger.state(), board, 'invalid', serverChatWords.noChatCanStartOn);
   refuseLocked(ledger.state(), board);
   const b = await body('start_chat', req);
   const session = await chats().start(board, b.agent as ChatSession['agent'], b.model as string | undefined);
@@ -66,7 +67,7 @@ function busy(live: { approvals: { release(): void } }): never {
   throw problem('conflict', BUSY);
 }
 
-const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: 'no words, nothing attached and no new answers on the board' }] });
+const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: serverChatWords.noWordsNothingAttachedAnd }] });
 
 /** The person's message; never to a session on an archived board (api.md 136). On a board, one
  * message with the chips and the board's answers since its
@@ -78,7 +79,7 @@ const sendChat: Handler = async (ctx) => {
   const live = await inUse(ctx);
   const msg = await body('send_chat', req) as ChatMessage;
   const { board } = live.record;
-  if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', 'its chat can\'t take messages');
+  if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', serverChatWords.itsChatCanTTake);
   const built = promptFor(ledger.state(), board, msg);
   if (board === undefined) {
     if (live.busy) busy(live);

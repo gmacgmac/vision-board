@@ -12,6 +12,7 @@ import type { BoardActionId, LedgerState } from '#actions';
 import { boardLocked } from '#actions';
 import type { BoardFields } from './io.ts';
 import type { Sender } from './sender.ts';
+import * as boardsWords from './words/boards.ts';
 
 /** Room left under the id limit (64, api.md 10) for a "-N" that makes it unique. */
 const BASE_MAX = 56;
@@ -36,9 +37,9 @@ export function dayOf(at: string, now = new Date()): string {
 /** The archive confirm's words (ruling 5): heading, body, and the confirming button. */
 export function archiveAsk(title: string, dates: { created: string; updated: string }, now = new Date()): [string, string, string] {
   return [
-    `Archive '${title}'?`,
-    `Created ${dayOf(dates.created, now)}, last updated ${dayOf(dates.updated, now)}. Agents won't see it; you can restore it from the board picker.`,
-    'Archive',
+    boardsWords.archive(title),
+    boardsWords.createdLastUpdatedAgentsWon(dayOf(dates.created, now), dayOf(dates.updated, now)),
+    boardsWords.archive2,
   ];
 }
 
@@ -66,13 +67,13 @@ export interface BoardEdit {
 }
 
 /** What the toast says once the board is locked or unlocked. */
-export const LOCK_DONE = { lock: 'Board locked: nobody can change it until you unlock it', unlock: 'Board unlocked' } as const;
+export const LOCK_DONE = { lock: boardsWords.boardLockedNobodyCanChange, unlock: boardsWords.boardUnlocked } as const;
 
 export function createBoardEdit(d: BoardEditDeps): BoardEdit {
   return {
     async save(action, fields) {
       const id = action === 'new-board' ? boardIdFor(fields.title, d.state()?.boards ?? new Set()) : d.id();
-      if (!id) return 'No board is open to rename.';
+      if (!id) return boardsWords.noBoardIsOpenTo;
       const problem = await d.sender.board(id, fields);
       if (problem === null && action === 'new-board') d.switchTo(id);
       return problem;
@@ -82,7 +83,7 @@ export function createBoardEdit(d: BoardEditDeps): BoardEdit {
       const s = d.state();
       const board = s?.boards.get(id);
       const dates = s?.dates.get(id);
-      if (!board || !dates) return 'No board is open to archive.';
+      if (!board || !dates) return boardsWords.noBoardIsOpenToArchive;
       if (!(await d.confirm(...archiveAsk(board.title, dates)))) return null;
       return d.sender.actOn(id, { action: 'archive' });
     },
@@ -94,7 +95,7 @@ export function createBoardEdit(d: BoardEditDeps): BoardEdit {
     async lock() {
       const id = d.id();
       const s = d.state();
-      if (!s?.boards.has(id)) return 'No board is open to lock.';
+      if (!s?.boards.has(id)) return boardsWords.noBoardIsOpenToLock;
       const action = boardLocked(s, id) ? 'unlock' : 'lock';
       const problem = await d.sender.actOn(id, { action });
       if (problem === null) d.toast?.(LOCK_DONE[action]);

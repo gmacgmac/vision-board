@@ -11,6 +11,8 @@
      home) and a Copy button that copies the absolute path and says "Copied" for a moment (current-folder
      task). Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
 <script lang="ts">
+  import * as foldersWords from './words/folders.ts';
+  import * as shellCommonWords from './words/shell-common.ts';
   import type { FolderEntry, FolderInfo, FolderList } from './page-io.ts';
   import ButtonIcon from './ButtonIcon.svelte';
   import { folderPath } from './folder-path.ts';
@@ -42,13 +44,13 @@
   });
   const recent = $derived(listing?.recent.filter((f) => f.path !== current) ?? []);
   const isOpen = $derived(listing !== null && listing.path === current);
-  const boards = (n: number | undefined) => (n === undefined ? '' : ` (${n} board${n === 1 ? '' : 's'})`);
+  const boards = (n: number | undefined) => (n === undefined ? '' : foldersWords.board(n));
   // Never a board in home itself (the server refuses it too): it would be every folder's nearest board.
   const isHome = $derived(listing?.name === '~');
-  const status = $derived(!listing ? (loading ? 'Reading folders…' : '')
-    : isHome ? 'Choose a project folder under ~'
-    : isOpen ? `This folder is open now${boards(listing.boards)}.`
-    : listing.found ? `Vision Board found${boards(listing.boards)}` : 'No Vision Board here');
+  const status = $derived(!listing ? (loading ? foldersWords.readingFolders : '')
+    : isHome ? foldersWords.chooseAProjectFolderUnder
+    : isOpen ? foldersWords.thisFolderIsOpenNow(boards(listing.boards))
+    : listing.found ? foldersWords.visionBoardFound(boards(listing.boards)) : foldersWords.noVisionBoardHere);
   /** Copy the open folder's absolute path: "Copied" for a moment, or why it could not. */
   let copied: 'done' | 'failed' | null = $state(null);
   let copiedTimer = 0;
@@ -60,30 +62,30 @@
     } catch { copied = 'failed'; }
     copiedTimer = window.setTimeout(() => { copied = null; }, 2000);
   }
-  const action = $derived(listing?.found || isHome ? (busy ? 'Opening…' : 'Open') : busy ? 'Creating…' : 'Create');
+  const action = $derived(listing?.found || isHome ? (busy ? foldersWords.opening : foldersWords.open) : busy ? shellCommonWords.creating : shellCommonWords.create);
 </script>
 
 {#snippet row(f: FolderEntry, icon: 'folder' | 'cloud' = 'folder')}
   <li>
     <button type="button" class="vb-folder-row" onclick={() => onchoose(f.path)} disabled={busy}>
       <ButtonIcon name={icon} /><span class="vb-folder-name">{f.name}</span>
-      {#if f.hasBoard}<span class="vb-chip vb-folder-mark" data-tone="new" aria-hidden="true">board</span><span class="vb-visually-hidden">, has a Vision Board</span>{/if}
+      {#if f.hasBoard}<span class="vb-chip vb-folder-mark" data-tone="new" aria-hidden="true">{foldersWords.board2}</span><span class="vb-visually-hidden">{foldersWords.hasAVisionBoard}</span>{/if}
     </button>
   </li>
 {/snippet}
 
-<h2 id="{uid}-title">{here ? 'Open folder — choose a project folder' : 'Open folder'}</h2>
-<p id="{uid}-body" class="vb-dialog-item">{here ? 'Under your home folder.' : 'Choose a project folder under your home folder.'} The board then shows that folder's boards, and the chat works there.</p>
+<h2 id="{uid}-title">{here ? foldersWords.openFolderChooseAProject : foldersWords.openFolder}</h2>
+<p id="{uid}-body" class="vb-dialog-item">{foldersWords.theBoardThenShowsThat(here ? foldersWords.underYourHomeFolder : foldersWords.chooseAProjectFolderUnderYour)}</p>
 {#if here}
   <div class="vb-folder-current" role="group" aria-labelledby="{uid}-current">
-    <span class="vb-folder-current-label" id="{uid}-current">Current folder</span>
+    <span class="vb-folder-current-label" id="{uid}-current">{foldersWords.currentFolder}</span>
     <code class="vb-folder-current-path">{folderPath(here)}</code>
     <button type="button" class="vb-btn vb-btn-small" id="{uid}-copy" data-done={copied === 'done' || undefined}
-      title="Copy the full path" onclick={() => void copyPath()}>{copied === 'done' ? 'Copied' : 'Copy'}</button>
-    <span class="vb-visually-hidden" role="status">{copied === 'done' ? 'Path copied' : copied === 'failed' ? 'Could not copy: select the path and copy it by hand' : ''}</span>
+      title={foldersWords.copyTheFullPath} onclick={() => void copyPath()}>{copied === 'done' ? foldersWords.copied : shellCommonWords.copy}</button>
+    <span class="vb-visually-hidden" role="status">{copied === 'done' ? foldersWords.pathCopied : copied === 'failed' ? foldersWords.couldNotCopySelectThe : ''}</span>
   </div>
 {/if}
-<nav class="vb-folder-crumbs" aria-label="Folder path">
+<nav class="vb-folder-crumbs" aria-label={foldersWords.folderPath}>
   <ol>
     {#each crumbs as c, i (c.path)}
       <li><button type="button" class="vb-folder-crumb" aria-current={i === crumbs.length - 1 ? 'location' : undefined}
@@ -94,26 +96,26 @@
 {#if listing}
 <div class="vb-folder-lists" aria-busy={loading}>
   {#if listing.places?.length}
-    <h3 class="vb-folder-head" id="{uid}-cloud">Cloud storage</h3>
+    <h3 class="vb-folder-head" id="{uid}-cloud">{foldersWords.cloudStorage}</h3>
     <ul class="vb-folder-list vb-folder-places" aria-labelledby="{uid}-cloud">{#each listing.places as f (f.path)}{@render row(f, 'cloud')}{/each}</ul>
   {/if}
   {#if recent.length}
-    <h3 class="vb-folder-head" id="{uid}-recent">Recent</h3>
+    <h3 class="vb-folder-head" id="{uid}-recent">{foldersWords.recent}</h3>
     <ul class="vb-folder-list" aria-labelledby="{uid}-recent">{#each recent as f (f.path)}{@render row(f)}{/each}</ul>
   {/if}
-  <h3 class="vb-folder-head" id="{uid}-in">In {listing.name}</h3>
+  <h3 class="vb-folder-head" id="{uid}-in">{foldersWords.inText(listing.name)}</h3>
   {#if listing.folders.length}
     <ul class="vb-folder-list vb-folder-in" aria-labelledby="{uid}-in">{#each listing.folders as f (f.path)}{@render row(f)}{/each}</ul>
   {:else}
-    <p class="vb-folder-empty">No folders in here.</p>
+    <p class="vb-folder-empty">{foldersWords.noFoldersInHere}</p>
   {/if}
-  {#if listing.more}<p class="vb-dialog-hint">Only the first {listing.folders.length} folders are listed.</p>{/if}
+  {#if listing.more}<p class="vb-dialog-hint">{foldersWords.onlyTheFirstFoldersAre(listing.folders.length)}</p>{/if}
 </div>
 {/if}
 <p class="vb-folder-status" role="status" data-found={listing?.found || undefined}>{status}</p>
 {#if problem}<p class="vb-dialog-problem" role="alert">{problem}</p>{/if}
 <div class="vb-dialog-actions">
-  <button type="button" class="vb-btn" id="{uid}-cancel" onclick={oncancel}>Cancel</button>
+  <button type="button" class="vb-btn" id="{uid}-cancel" onclick={oncancel}>{shellCommonWords.cancel}</button>
   <button type="button" class="vb-btn vb-btn-primary" id="{uid}-accept" disabled={!listing || isHome || isOpen || loading || busy}
     aria-busy={busy} onclick={onaccept}>{action}</button>
 </div>

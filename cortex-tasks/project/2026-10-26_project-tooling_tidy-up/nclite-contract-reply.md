@@ -89,7 +89,11 @@
 - **Tokens:** later, the board reads nclite's tokens through a map with fallbacks, as the Journal
   does. It is not in our tidy-up.
 - **Spelling:** our screen text is British in places, and nclite writes US English. That's the
-  maintainer's call, and our tidy-up changes no wording.
+  maintainer's call, and our tidy-up changes no wording. Found so far: "Centre cards" in the toolbar
+  menu (and its tooltip), and "colour"/"coloured" in the agent's skill.
+- **Words:** every sentence the board says lives in six words homes (the board, the standalone page,
+  the patterns, the server, MCP, the CLI), each keyed `board.<area>.<name>` (D-063,
+  `docs/specification/words.md`). The plugin's one words file can be built from them.
 - **Importing in place:** the board's modules are reached by `#` names from its own `package.json`
   `imports` (D-059, D-060). They resolve while nclite imports the board's files where they sit; copied
   into nclite's tree, they would resolve against nclite's `package.json` instead.

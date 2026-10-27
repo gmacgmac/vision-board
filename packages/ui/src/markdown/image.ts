@@ -6,9 +6,10 @@
 // (apps/board/src/board/card-images.ts); the zoomed view is the image-view pattern's.
 import { IMAGE_ROUTE, IMAGE_WORDS, imagePathProblem } from '#format';
 import { esc } from './inline.ts';
+import * as markdownWords from '../words/markdown.ts';
 
 /** What the box in an image's place begins with (ruling 23): a missing file, or anything else refused. */
-export const IMAGE_NOTE = { notFound: 'Image not found', notShown: 'Image not shown' } as const;
+export const IMAGE_NOTE = { notFound: markdownWords.imageNotFound, notShown: markdownWords.imageNotShown } as const;
 
 /** The box in an image's place: "Image not found: <path>" for a missing file, else "Image not shown:
  * <path> (<reason>)", the reason in `IMAGE_WORDS`' words (the route's problem detail, or the path

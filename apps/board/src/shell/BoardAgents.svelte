@@ -5,6 +5,8 @@
      flag) it carries a bot icon, which a narrow window shows in place of the word, the count
      beside it (board.css). The gallery passes `open`. -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as shellBoardsWords from './words/shell-boards.ts';
   import type { AccessHolder } from '#actions';
   import ButtonIcon from './ButtonIcon.svelte';
 
@@ -20,21 +22,21 @@
 {#if holders.length}
   <details class="vb-agents" {open}>
     {#if icon}
-      <summary class="vb-btn" title="Agents who can draw on this board"><ButtonIcon name="agents" /><span class="vb-btn-text">Agents</span> <b>{holders.length}</b></summary>
+      <summary class="vb-btn" title={shellBoardsWords.agentsWhoCanDrawOn}><ButtonIcon name="agents" /><span class="vb-btn-text">{shellBoardsWords.agents}</span> <b>{holders.length}</b></summary>
     {:else}
-      <summary class="vb-btn">Agents <b>{holders.length}</b></summary>
+      <summary class="vb-btn">{shellBoardsWords.agents} <b>{holders.length}</b></summary>
     {/if}
     <div class="vb-agents-panel">
-      <h2 class="vb-agents-title">Can draw on this board</h2>
+      <h2 class="vb-agents-title">{shellBoardsWords.canDrawOnThisBoard}</h2>
       <ul class="vb-agents-list">
         {#each holders as h (h.agent)}
           <li class="vb-agents-row">
             <span class="vb-agents-label">{h.label}</span>
             {#if h.creator}
-              <span class="vb-agents-note">made this board</span>
+              <span class="vb-agents-note">{shellBoardsWords.madeThisBoard}</span>
             {:else}
-              <button type="button" class="vb-btn vb-btn-small" aria-label="Remove {h.label}'s access to this board"
-                onclick={() => onrevoke(h.agent)}>Remove access</button>
+              <button type="button" class="vb-btn vb-btn-small" aria-label={shellBoardsWords.removeSAccessToThis(h.label)}
+                onclick={() => onrevoke(h.agent)}>{commonWords.removeAccess}</button>
             {/if}
           </li>
         {/each}

@@ -1080,7 +1080,7 @@ section is how the board draws one. Two patterns share the work.
    | `broken` | "This app stopped" and Restart |
    | `past` | the app's title and "Apps don't run in past versions." |
 
-   The words are `node-app.ts` `COPY`; `appView`'s `control` (`allow`, `allowed` or `none`) says
+   The words are in `packages/ui/src/words/node-app.ts`, laid out by `node-app.ts` `COPY`; `appView`'s `control` (`allow`, `allowed` or `none`) says
    which footer control shows, and `reason` is Allow's tip. `node-template.ts` `appStateMarkup` draws
    the view. `node-app-apply.ts` `applyApp`, from `vb-node.ts` `update`, applies it in place (the view
    rebuilt only when it changed, the footer's control shown and named, its menu closed when
@@ -1193,7 +1193,7 @@ section is how the board draws one. Two patterns share the work.
    - **Theme**: `watchTheme` (the root's `data-theme` from the toolbar, and the system's scheme)
      calls `lookChanged()` on every frame, so a ready panel gets `host-context-changed`.
    - **Buttons** (`data-app-act`, one delegated click on the stage): Allow and Stop app ask first,
-     as `ACTIONS[...].needsConfirmation` says (`app-words.ts` `appAsk`), go through the one sender
+     as `ACTIONS[...].needsConfirmation` says (`src/board/words/app-cards.ts` `appAsk`), go through the one sender
      (`app-allow { app, hash }` with list_apps' hash; `app-revoke { app }`), read list_apps again,
      put focus on the card and say what was done in the toast (`appDone`). Check again and Restart
      read list_apps again and say what they found (`retryDone`); focus moves to the card when the
@@ -1210,7 +1210,7 @@ section is how the board draws one. Two patterns share the work.
    and the page's part in a browser: `tests/pages/app-cards.spec.ts` (end to end, the keyboard, a
    code change, Stop app, the flag off), `app-states.spec.ts` (every state, on and off screen, far
    zoom, a past version), `app-safety.spec.ts` (opaque origin, CSP, other windows' messages) and
-   `app-gallery.spec.ts`; the words: `apps/board/tests/app-words.test.ts`, `key-help.test.ts`.
+   `app-gallery.spec.ts`; the words: `apps/board/tests/words-app-cards.test.ts`, `key-help.test.ts`.
 
 ## Images in cards (D-048, app-cards FE_03)
 

@@ -12,6 +12,7 @@ import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
 import { sendJson } from './respond.ts';
 import { body } from './body.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
 
 /** A folder as get_project and open_project show it, and as list_folders heads its listing. */
 function shown(project: Project, dir: string): { path: string; name: string; found: boolean; boards?: number } {
@@ -46,7 +47,7 @@ const listFolders: Handler = ({ res, params, project }) => {
   });
 };
 
-const HOME_ITSELF = 'Choose a project folder under ~, not the home folder itself.';
+const HOME_ITSELF = serverFoldersWords.chooseAProjectFolderUnder;
 
 const openProject: Handler = async ({ req, res, project }) => {
   const b = await body('open_project', req) as { path: string; create?: boolean };

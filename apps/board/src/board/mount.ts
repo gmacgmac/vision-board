@@ -15,6 +15,8 @@ import { createBoard } from './controller.ts';
 import { takeIdPrefix } from './mount-ids.ts';
 import type { Status } from './status.ts';
 import { createStatus, initialStatus } from './status.ts';
+import * as boardWords from './words/board.ts';
+import * as commonWords from './words/common.ts';
 
 /** The class a host's root takes: the board's scope and its `@container vb-board` (D-061). */
 export const BOARD_ROOT = 'vb-board';
@@ -50,10 +52,10 @@ function build(root: HTMLElement): BoardElements & { message: HTMLElement } {
   const world = el('div', 'vb-world no-anim');
   const regions = el('div', 'vb-regions');
   const wires = svg('vb-wires');
-  const cards = el('div', 'vb-cards', { role: 'list', 'aria-label': 'Items, in number order' });
+  const cards = el('div', 'vb-cards', { role: 'list', 'aria-label': boardWords.itemsInNumberOrder });
   const wiresTop = svg('vb-wires vb-wires-top');
   // Markers for link labels with no room on their line (linkLabels flag, link-marks.ts).
-  const marks = el('div', 'vb-link-marks', { role: 'group', 'aria-label': 'Link labels' });
+  const marks = el('div', 'vb-link-marks', { role: 'group', 'aria-label': boardWords.linkLabels });
   marks.hidden = true;
   world.append(regions, wires, cards, wiresTop, marks);
   const message = el('div', 'vb-message', { role: 'status' });
@@ -68,7 +70,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   root.classList.add(...added);
   const own = (['tabindex', 'aria-label'] as const).filter((a) => !root.hasAttribute(a));
   if (own.includes('tabindex')) root.tabIndex = -1;
-  if (own.includes('aria-label')) root.setAttribute('aria-label', 'Board');
+  if (own.includes('aria-label')) root.setAttribute('aria-label', commonWords.board);
   const status = createStatus();
   const ids = takeIdPrefix();
   const io = createIo(host.api, host.page?.person);

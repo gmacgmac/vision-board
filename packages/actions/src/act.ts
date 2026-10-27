@@ -19,6 +19,7 @@ import { cardsOf, isNote, liveNotes } from './notes.ts';
 import { cardName } from './numbers.ts';
 import { standing } from './proposals.ts';
 import { ACTIONS, ITEM_ACTIONS } from './registry.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 type Rule = (e: ActEvent, s: LedgerState, board: string | undefined, p: string[]) => void;
 
@@ -28,7 +29,7 @@ const RULES: Partial<Record<ActEvent['action'], Rule>> = {
   widths: (e, s, board, p) => onContainer(e, s, board, p),
   send: (e, s, board, p) => {
     onBoard(e.board, board, p);
-    if (!s.boards.has(e.board!)) p.push(`board: unknown "${String(e.board)}"`);
+    if (!s.boards.has(e.board!)) p.push(actionsRefusalsWords.boardUnknown(String(e.board)));
   },
   grant: (e, s, board, p) => answers(e, s, board, p),
   deny: (e, s, board, p) => answers(e, s, board, p),
@@ -58,21 +59,21 @@ function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p:
   for (const id of cards) {
     const node = s.nodes.get(id);
     if (node) boards.add(node.board);
-    else p.push(`${field}: unknown node ${id}`);
+    else p.push(actionsRefusalsWords.unknownNode(field, id));
   }
   const [on] = boards;
-  if (boards.size > 1) return void p.push(`nodes: a move names cards on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
+  if (boards.size > 1) return void p.push(actionsRefusalsWords.nodesAMoveNamesCards([...boards].map((b) => `"${b}"`).join(actionsRefusalsWords.and)));
   if (on === undefined) return;
-  if (board !== undefined && on !== board) return void p.push(`${field}: the cards are on board "${on}", not "${board}"`);
+  if (board !== undefined && on !== board) return void p.push(actionsRefusalsWords.theCardsAreOnBoard(field, on, board));
   if (e.region !== LATER_REGION) {
     if (!s.boards.get(on)?.regions.some((r) => r.id === e.region))
-      p.push(`region: unknown "${String(e.region)}"; pick a container on board "${on}", or ${LATER_REGION}`);
+      p.push(actionsRefusalsWords.regionUnknownPickAContainer(String(e.region), on, LATER_REGION));
     return;
   }
   for (const id of cards) {
     const v = latest(s.nodes.get(id)!);
     if (!NODE_TYPES[v.kind].actions.includes('later'))
-      p.push(`region: Later takes only cards that can be saved for later; node ${cardName(s)(id)} is a ${v.kind}, which can't`);
+      p.push(actionsRefusalsWords.regionLaterTakesOnlyCards(cardName(s)(id), v.kind));
   }
 }
 
@@ -80,30 +81,30 @@ function moveProblems(e: ActEvent, s: LedgerState, board: string | undefined, p:
 function onContainer(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
   onBoard(e.board, board, p);
   if (!s.boards.get(e.board!)?.regions.some((r) => r.id === e.region))
-    p.push(`region: unknown "${String(e.region)}"; pick a region on board "${String(e.board)}"`);
+    p.push(actionsRefusalsWords.regionUnknownPickARegion(String(e.region), String(e.board)));
 }
 
 /** The act was sent to `board` but names `named`. */
 function onBoard(named: string | undefined, board: string | undefined, p: string[]): void {
   if (board !== undefined && named !== undefined && named !== board)
-    p.push(`board: this act names board "${named}" but was sent to board "${board}"`);
+    p.push(actionsRefusalsWords.boardThisActNamesBoard(named, board));
 }
 
 /** `grant` and `deny` answer an open grant request on this board. */
 function answers(e: ActEvent, s: LedgerState, board: string | undefined, p: string[]): void {
   const r = grantRequests(s).find((x) => x.seq === e.request);
   const here = board ?? e.board;
-  if (!r) p.push(`request: ${e.request} is not a grant request; answer one from the board's open requests`);
-  else if (r.answer) p.push(`request: grant request ${e.request} was already answered (${r.answer.action})`);
+  if (!r) p.push(actionsRefusalsWords.requestIsNotAGrant(e.request));
+  else if (r.answer) p.push(actionsRefusalsWords.requestGrantRequestWasAlready(e.request, r.answer.action));
   else if (here !== undefined && r.board !== here)
-    p.push(`request: grant request ${e.request} is for board "${r.board}", not "${here}"`);
+    p.push(actionsRefusalsWords.requestGrantRequestIsFor(e.request, r.board, here));
 }
 
 export function validateAct(e: ActEvent, s: LedgerState, board?: string): string[] {
   const def = ACTIONS[e.action];
-  if (!def) return [`action: unknown "${String(e.action)}"`];
+  if (!def) return [actionsRefusalsWords.actionUnknown(String(e.action))];
   if (e.by !== 'person' || def.by !== 'person')
-    return [`${e.action}: only the person can do this, on the board; send a propose or reply item instead`];
+    return [actionsRefusalsWords.onlyThePersonCanDo(e.action)];
   const refused = writeProblem(s, e);
   if (refused) return [refused.detail];
   if (isContainerAct(e)) return containerProblems(e, s, board);
@@ -115,12 +116,12 @@ export function validateAct(e: ActEvent, s: LedgerState, board?: string): string
   }
   if (e.nodes) return groupProblems(e, s, board);
   const node = e.id === undefined ? undefined : s.nodes.get(e.id);
-  if (!node) p.push(`n: unknown node ${String(e.id)}`);
-  else if (board !== undefined && node.board !== board) p.push(`n: node ${cardName(s)(e.id!)} is on board "${node.board}", not "${board}"`);
+  if (!node) p.push(actionsRefusalsWords.nUnknownNode(String(e.id)));
+  else if (board !== undefined && node.board !== board) p.push(actionsRefusalsWords.nNodeIsOnBoard(cardName(s)(e.id!), node.board, board));
   else if (ITEM_ACTIONS.includes(e.action)) {
     const kind = latest(node).kind;
-    if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(`${e.action}: ${/^[aeiou]/.test(kind) ? 'an' : 'a'} ${kind} doesn't offer this`);
-  } else if (e.action === 'size' && latest(node).kind === 'app') p.push('size: an app card is as big as its panel, which the agent sets');
+    if (!NODE_TYPES[kind].actions.includes(e.action)) p.push(actionsRefusalsWords.doesnTOfferThis(e.action, /^[aeiou]/.test(kind) ? 'an' : 'a', kind));
+  } else if (e.action === 'size' && latest(node).kind === 'app') p.push(actionsRefusalsWords.sizeAnAppCardIs);
   if (def.text === 'required' && !e.text?.trim()) p.push('text: required');
   if (node && !p.length) noteRules(e, s, node.board, p);
   if (node && !p.length) proposalProblems(e, s, p);
@@ -134,12 +135,12 @@ function proposalProblems(e: ActEvent, s: LedgerState, p: string[]): void {
   if (e.proposal === undefined) return;
   const prop = s.proposals.get(e.proposal);
   const n = cardName(s)(e.id!);
-  if (!prop || prop.id !== e.id) return void p.push(`proposal: ${e.proposal} is not a proposal on item ${n}`);
+  if (!prop || prop.id !== e.id) return void p.push(actionsRefusalsWords.proposalIsNotAProposal(e.proposal, n));
   const at = standing(s, prop);
-  if (!at) p.push(`proposal: proposal ${e.proposal} was already decided`);
+  if (!at) p.push(actionsRefusalsWords.proposalProposalWasAlreadyDecided(e.proposal));
   else if (e.action === 'reject') return;
-  else if (e.action !== prop.action) p.push(`proposal: proposal ${e.proposal} is to ${ACTIONS[prop.action].label.toLowerCase()}; accept it with ${prop.action}, or reject it`);
-  else if (at === 'stale') p.push(`proposal: ${n} changed after this was proposed; ask the agent to look again`);
+  else if (e.action !== prop.action) p.push(actionsRefusalsWords.proposalProposalIsToAccept(e.proposal, ACTIONS[prop.action].label.toLowerCase(), prop.action));
+  else if (at === 'stale') p.push(actionsRefusalsWords.proposalChangedAfterThisWas(n));
 }
 
 /** A note on a group of cards (3_FE_02 ruling 4, api.md 62): every named card's kind offers the
@@ -150,14 +151,14 @@ function groupProblems(e: ActEvent, s: LedgerState, board: string | undefined): 
   const boards = new Set<string>();
   for (const id of e.nodes!) {
     const node = s.nodes.get(id);
-    if (!node) { p.push(`nodes: unknown node ${id}`); continue; }
+    if (!node) { p.push(actionsRefusalsWords.nodesUnknownNode(id)); continue; }
     boards.add(node.board);
     const v = latest(node);
-    if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(`nodes: node ${cardName(s)(id)} is a ${v.kind}, which doesn't offer ${e.action}`);
+    if (!NODE_TYPES[v.kind].actions.includes(e.action)) p.push(actionsRefusalsWords.nodesNodeIsAWhich(cardName(s)(id), v.kind, e.action));
   }
   const [only] = boards;
-  if (boards.size > 1) p.push(`nodes: a note on a group names items on one board; these are on ${[...boards].map((b) => `"${b}"`).join(' and ')}`);
-  else if (only !== undefined && board !== undefined && only !== board) p.push(`nodes: the items are on board "${only}", not "${board}"`);
+  if (boards.size > 1) p.push(actionsRefusalsWords.nodesANoteOnA([...boards].map((b) => `"${b}"`).join(actionsRefusalsWords.and)));
+  else if (only !== undefined && board !== undefined && only !== board) p.push(actionsRefusalsWords.nodesTheItemsAreOn(only, board));
   if (!e.text?.trim()) p.push('text: required');
   return p;
 }
@@ -170,16 +171,16 @@ function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): voi
   if ((e.action === 'comment' || e.action === 'context') && e.text?.trim()) {
     const open = liveNotes(s.logs.get(e.id!) ?? { asks: [], decisions: [] })
       .find((x) => x.nodes === undefined && x.person === e.person && !lockOf(s, board, x));
-    if (open) p.push(`n: item ${name(e.id!)} already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
+    if (open) p.push(actionsRefusalsWords.nItemAlreadyHasA(name(e.id!), open.seq));
     return;
   }
   if (e.action !== 'note-edit' && e.action !== 'note-remove') return;
   const a = s.asks.get(e.note!);
-  if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
-  else if (a.region !== undefined) p.push(`note: note ${e.note} is on container "${a.region}", not node ${name(e.id!)}`);
+  if (!isNote(a)) p.push(actionsRefusalsWords.noteIsNotANote(e.note));
+  else if (a.region !== undefined) p.push(actionsRefusalsWords.noteNoteIsOnContainer(e.note, a.region, name(e.id!)));
   else if (!cardsOf(a).includes(e.id!)) p.push(a.nodes
-    ? `note: note ${e.note} is on items ${a.nodes.map(name).join(', ')}, not node ${name(e.id!)}`
-    : `note: note ${e.note} is on node ${name(a.id)}, not node ${name(e.id!)}`);
+    ? actionsRefusalsWords.noteNoteIsOnItems(e.note, a.nodes.map(name).join(', '), name(e.id!))
+    : actionsRefusalsWords.noteNoteIsOnNode(e.note, name(a.id), name(e.id!)));
   else changeProblems(a, e, s, board, p);
 }
 
@@ -187,10 +188,10 @@ function noteRules(e: ActEvent, s: LedgerState, board: string, p: string[]): voi
  * popovers-larger-thread ruling 5), and only by the person who wrote it. */
 function changeProblems(a: Ask, e: ActEvent, s: LedgerState, board: string, p: string[]): void {
   const lock = lockOf(s, board, a);
-  if (a.removed !== undefined) p.push(`note: note ${e.note} was removed`);
-  else if (lock === 'sent') p.push(`note: note ${e.note} was sent to the agent, and a sent note is history; write a new note instead`);
-  else if (lock === 'answered') p.push(`note: note ${e.note} was answered by the agent, and an answered note is history; write a new note instead`);
-  else if (a.person !== e.person) p.push(`note: note ${e.note} is not yours`);
+  if (a.removed !== undefined) p.push(actionsRefusalsWords.noteNoteWasRemoved(e.note));
+  else if (lock === 'sent') p.push(actionsRefusalsWords.noteNoteWasSentTo(e.note));
+  else if (lock === 'answered') p.push(actionsRefusalsWords.noteNoteWasAnsweredBy(e.note));
+  else if (a.person !== e.person) p.push(actionsRefusalsWords.noteNoteIsNotYours(e.note));
 }
 
 /** A note on, or a place for, a whole container (3_FE_04 rulings 1-2, api.md 72-73): a container
@@ -200,13 +201,13 @@ function containerProblems(e: ActEvent, s: LedgerState, board: string | undefine
   onBoard(e.board, board, p);
   if (p.length) return p;
   const b = s.boards.get(e.board!);
-  if (!b) return [`board: unknown "${String(e.board)}"`];
+  if (!b) return [actionsRefusalsWords.boardUnknown(String(e.board))];
   const note = !CONTAINER_PLACES.has(e.action);
   if (!b.regions.some((r) => r.id === e.region)) {
     if (e.region === LATER_REGION && note)
-      return [`region: Later takes no note: it holds the cards saved for later and is not a thread an agent drew; write the note on one of the board's containers`];
+      return [actionsRefusalsWords.regionLaterTakesNoNote];
     if (e.region !== LATER_REGION)
-      return [`region: unknown "${String(e.region)}"; pick a container on board "${e.board}"${note ? '' : `, or ${LATER_REGION}`}`];
+      return [actionsRefusalsWords.regionUnknownPickAContainerOn(String(e.region), e.board, note ? '' : `, or ${LATER_REGION}`)];
   }
   if (note) containerNoteRules(e, s, p);
   return p;
@@ -221,12 +222,12 @@ function containerNoteRules(e: ActEvent, s: LedgerState, p: string[]): void {
   if (e.action === 'comment' || e.action === 'context') {
     if (!e.text?.trim()) return void p.push('text: required');
     const open = liveNotes(log ?? { asks: [], decisions: [] }).find((x) => x.person === e.person && !lockOf(s, board, x));
-    if (open) p.push(`region: container "${region}" already has a note not yet sent (note ${open.seq}); change it with note-edit or take it back with note-remove`);
+    if (open) p.push(actionsRefusalsWords.regionContainerAlreadyHasA(region, open.seq));
     return;
   }
   const a = s.asks.get(e.note!);
-  if (!isNote(a)) p.push(`note: ${e.note} is not a note; name the seq of the comment or context act that made it`);
-  else if (a.region === undefined) p.push(`note: note ${e.note} is on ${a.nodes ? `items ${a.nodes.map(cardName(s)).join(', ')}` : `node ${cardName(s)(a.id)}`}, not container "${region}"`);
-  else if (!log?.asks.includes(a)) p.push(`note: note ${e.note} is on container "${a.region}"${a.region === region ? ' of another board' : ''}, not "${region}"`);
+  if (!isNote(a)) p.push(actionsRefusalsWords.noteIsNotANote(e.note));
+  else if (a.region === undefined) p.push(actionsRefusalsWords.noteNoteIsOnNot(e.note, a.nodes ? actionsRefusalsWords.items(a.nodes.map(cardName(s)).join(', ')) : actionsRefusalsWords.node(cardName(s)(a.id)), region));
+  else if (!log?.asks.includes(a)) p.push(actionsRefusalsWords.noteNoteIsOnContainerNot(e.note, a.region, a.region === region ? actionsRefusalsWords.ofAnotherBoard : '', region));
   else changeProblems(a, e, s, board, p);
 }

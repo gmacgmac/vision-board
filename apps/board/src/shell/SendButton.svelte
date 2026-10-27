@@ -10,6 +10,7 @@
      place of the words (board.css); the spinner and the tick stand in for it while sending and sent. The
      gallery passes `state` and `look` to draw a state without acting. -->
 <script lang="ts">
+  import * as shellSendWords from './words/shell-send.ts';
   import type { SendState } from './shell.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
 
@@ -28,11 +29,11 @@
   } = $props();
 
   const TEXT: Record<SendState, string> = {
-    idle: 'Send to agent', sending: 'Sending…', sent: 'Sent', error: 'Not sent · try again', waiting: 'Waiting for agent',
-    disabled: 'Send to agent',
+    idle: shellSendWords.sendToAgent, sending: shellSendWords.sending, sent: shellSendWords.sent, error: shellSendWords.notSentTryAgain, waiting: shellSendWords.waitingForAgent,
+    disabled: shellSendWords.sendToAgent,
   };
-  const WAIT_TIP = 'Your answers go to the agent when it finishes this turn';
-  const NOTHING_TIP = 'Nothing new to send';
+  const WAIT_TIP = shellSendWords.yourAnswersGoToThe;
+  const NOTHING_TIP = shellSendWords.nothingNewToSend;
   /** How long "Sent" and the error state show before the button is idle again. */
   const HOLD = { sent: 2200, error: 6000 };
 
@@ -65,7 +66,7 @@
 
 <button type="button" class="vb-btn vb-btn-primary vb-send" class:vb-btn-iconic={icon} id={forced ? undefined : 'send'} data-state={st} data-look={look}
   aria-disabled={st === 'sending' || st === 'disabled' ? 'true' : undefined}
-  title={st === 'error' && detail ? detail : st === 'waiting' ? WAIT_TIP : st === 'disabled' ? (paused ?? NOTHING_TIP) : 'Tell the agents you are done: they read your answers next'}
+  title={st === 'error' && detail ? detail : st === 'waiting' ? WAIT_TIP : st === 'disabled' ? (paused ?? NOTHING_TIP) : shellSendWords.tellTheAgentsYouAre}
   onclick={click}>
   {#if st === 'sending'}<span class="vb-spinner" aria-hidden="true"></span>{/if}
   {#if st === 'waiting'}<span class="vb-send-wait" aria-hidden="true"></span>{/if}
@@ -74,5 +75,5 @@
   <span class:vb-btn-text={icon}>{TEXT[st]}</span>
 </button>
 {#if !forced}
-  <span class="vb-visually-hidden" role="status">{st === 'sent' ? 'Sent to the agent' : st === 'waiting' ? WAIT_TIP : ''}</span>
+  <span class="vb-visually-hidden" role="status">{st === 'sent' ? shellSendWords.sentToTheAgent : st === 'waiting' ? WAIT_TIP : ''}</span>
 {/if}

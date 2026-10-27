@@ -11,6 +11,8 @@ import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
 import { nblockRepliesMarkup, regionIdsOf } from './region-template.ts';
 import { closeGrace } from '../tip/close-grace.ts';
 import { dismissable } from '../base/layer.ts';
+import * as regionNoteWords from '../words/region-note.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 const COMMENT = 'button.vb-region-comment';
 const POP = '.vb-note-pop';
@@ -157,7 +159,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     if (!block || !more) return;
     block.toggleAttribute('data-expanded', expanded);
     more.setAttribute('aria-expanded', String(expanded));
-    more.textContent = expanded ? 'Show less' : 'Show all';
+    more.textContent = expanded ? regionNoteWords.showLess : uiCommonWords.showAll;
   }
 
   /** "Show all" only when the 3 lines cut the text (checked while collapsed), then the height. */
@@ -207,7 +209,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     for (const b of host.querySelectorAll<HTMLButtonElement>('.vb-region-note-block [data-note-act]')) b.hidden = !next?.editable;
     const edit = q('.vb-note-pop [data-note-act="edit"]');
     // A sent note opens read-only in the bubble: the preview's button says so.
-    if (edit) edit.textContent = next && !next.editable ? 'Open' : 'Edit';
+    if (edit) edit.textContent = next && !next.editable ? uiCommonWords.open : uiCommonWords.edit;
     applyMore();
     shown(host.hasAttribute('data-note-shown'));
     grace.cancel();
@@ -220,7 +222,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
     const show = q<HTMLButtonElement>('.vb-note-pop [data-note-act]:not([data-note-act="edit"])');
     if (show) {
       show.dataset.noteAct = on ? 'hide' : 'show';
-      show.querySelector('.vb-note-show-label')!.textContent = on ? 'Hide' : 'Show in container';
+      show.querySelector('.vb-note-show-label')!.textContent = on ? uiCommonWords.hide : uiCommonWords.showInContainer;
     }
     measure();
   }

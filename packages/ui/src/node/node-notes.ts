@@ -4,6 +4,8 @@
 // sits (groupNoteOnce flag, group-note-once task). No DOM; unit-tested under plain Node.
 import type { ViewNode } from '#format';
 import type { ItemNote } from '#actions';
+import * as uiCommonWords from '../words/ui-common.ts';
+import * as nodeNotesWords from '../words/node-notes.ts';
 
 /** One of the agent's replies under a note, read-only (FE_03 ruling 3). `who` is "Agent reply · label";
  *  `at` its line's time (ISO), which the card shows on hover (card-polish FE_02). */
@@ -46,9 +48,9 @@ export interface NotesView {
 export interface CardReply { seq: number; to?: number; agent?: string; text: string; at: string }
 
 /** An old More context reads as a note everywhere (D-045). */
-const KIND_WORD: Record<ItemNote['kind'], string> = { comment: 'Your note', context: 'Your note' };
+const KIND_WORD: Record<ItemNote['kind'], string> = { comment: uiCommonWords.yourNote, context: uiCommonWords.yourNote };
 
-export const replyEntry = (r: CardReply): ReplyEntry => ({ seq: r.seq, who: `Agent reply${r.agent ? ` · ${r.agent}` : ''}`, text: r.text, at: r.at });
+export const replyEntry = (r: CardReply): ReplyEntry => ({ seq: r.seq, who: nodeNotesWords.agentReply(r.agent ? ` · ${r.agent}` : ''), text: r.text, at: r.at });
 
 /** A list of notes and the agent's replies as one conversation, oldest first, top to bottom
  * (review-polish ruling 8 and decision 8): each note then its replies by `seq`, a reply naming none
@@ -67,7 +69,7 @@ export function conversation(notes: readonly ItemNote[], replies: readonly CardR
     const past = x.sent ? ' · Sent' : x.locked ? ' · Answered' : '';
     entries.push({
       seq: x.seq, index: i + 1, sent: x.locked === true || x.sent === true, text: x.text, at: x.at,
-      who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? ` · ${x.nodes.length} cards` : ''}${past}`,
+      who: `${KIND_WORD[x.kind]} ${i + 1}${x.nodes ? nodeNotesWords.cards(x.nodes.length) : ''}${past}`,
       ...(answers.length && { replies: answers }),
     });
   });
@@ -80,7 +82,7 @@ const count = (k: number, one: string, many: string): string => `${k} ${k === 1 
 /** What a pin says: open a note not yet history to edit it, else show it. `on` names the cards. */
 function pinLabel(index: number, on: string, made: ItemNote): string {
   const sent = made.locked === true || made.sent === true;
-  return sent ? `Note ${index} on ${on}, ${made.sent ? 'sent' : 'answered'}. Show it` : `Note ${index} on ${on}. Edit it`;
+  return sent ? nodeNotesWords.noteOnShowIt(index, on, made.sent === true) : nodeNotesWords.noteOnEditIt(index, on);
 }
 
 /** The pin and thread for an item's notes and the replies to them; undefined with neither. `hiddenAt`
@@ -98,16 +100,16 @@ export function notesView(
   if (!entries.length) return undefined;
   const words = notes.length ? count(notes.length, 'note', 'notes') : count(replies.length, 'reply', 'replies');
   const fresh = hiddenAt === undefined ? 0 : replies.filter((r) => r.seq > hiddenAt).length;
-  const hidden = hiddenAt === undefined ? undefined : `${words}${fresh ? ` · ${count(fresh, 'new reply', 'new replies')}` : ''}`;
+  const hidden = hiddenAt === undefined ? undefined : `${words}${fresh ? ` · ${count(fresh, nodeNotesWords.newReply, nodeNotesWords.newReplies)}` : ''}`;
   const out: NotesView = {
-    count: words, toggle: hidden === undefined ? `Hide notes on item ${n.n}` : `Show ${hidden} on item ${n.n}`,
+    count: words, toggle: hidden === undefined ? nodeNotesWords.hideNotesOnItem(n.n) : nodeNotesWords.showOnItem(hidden, n.n),
     ...(hidden !== undefined && { hidden }), entries,
   };
   const made = notes.at(-1);
   if (!made) return out;
   // The pin is the latest note (ruling 8); a note on a group of cards (3_FE_02) names every item it is on.
   const sent = made.locked === true || made.sent === true;
-  const on = made.nodes ? `items ${made.nodes.join(', ')}` : `item ${n.n}`;
+  const on = made.nodes ? nodeNotesWords.items(made.nodes.join(', ')) : nodeNotesWords.item(n.n);
   return { ...out, pin: { seq: made.seq, index: notes.length, sent, label: pinLabel(notes.length, on, made) } };
 }
 
@@ -135,7 +137,7 @@ export function groupMarkers(items: Iterable<{ notes: readonly ItemNote[] }>): G
     const cards = key.split(',').map(Number);
     return {
       key, cards, seq: made.seq, index: notes.length, sent: made.locked === true || made.sent === true,
-      label: pinLabel(notes.length, `items ${cards.join(', ')}`, made),
+      label: pinLabel(notes.length, nodeNotesWords.items(cards.join(', ')), made),
     };
   }).sort((a, b) => a.cards[0]! - b.cards[0]! || a.seq - b.seq);
 }

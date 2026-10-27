@@ -10,6 +10,8 @@ import {
   HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_SAVE_STATE,
 } from '#format';
 import { checkSave, SAVE_WORDS } from './app-frame-state.ts';
+import * as appFrameWords from '../words/app-frame.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 /** The panel's size in px: the agent's, else the manifest's, else the default (`appSize`), held to
  * `APP_SIZE` (ruling 3). The card and the frame both read it, so they never disagree. */
@@ -70,15 +72,13 @@ export interface AppCallError { problem: string; detail?: string }
 /** What a refused `tools/call` says in its error `message`, in plain words, for each problem code a
  * panel can get (apps.md § Errors); `data.problem` carries the code itself. */
 export const PROBLEM_WORDS: Readonly<Record<string, string>> = {
-  'needs-approval': 'Allow this app on its card first.',
-  invalid: "The tool can't take that input.",
-  'app-invalid': 'This app has problems to fix.',
-  'app-failed': 'The tool failed.',
-  'app-busy': 'The app is busy. Try again.',
-  'app-timeout': 'The tool took too long.',
-  'too-large': "The tool's answer is too big.",
-  'app-not-found': "This app wasn't found.",
-  'not-found': 'App cards are off.',
+  'needs-approval': appFrameWords.allowThisAppOnIts,
+  invalid: appFrameWords.theToolCanTTake,
+  'app-invalid': appFrameWords.thisAppHasProblemsTo,
+  'app-failed': appFrameWords.theToolFailed, 'app-busy': appFrameWords.theAppIsBusyTry,
+  'app-timeout': appFrameWords.theToolTookTooLong, 'too-large': appFrameWords.theToolSAnswerIs,
+  'app-not-found': appFrameWords.thisAppWasnTFound,
+  'not-found': uiCommonWords.appCardsAreOff,
 };
 
 /** Tool calls a panel may have waiting for answers at once: as many as the app host takes (running
@@ -214,7 +214,7 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
   };
 
   function initialize(id: JsonRpcId, params: Record<string, unknown>): void {
-    if (typeof params.protocolVersion !== 'string') return fail(id, PANEL_ERRORS.invalidParams, 'ui/initialize needs a protocolVersion.');
+    if (typeof params.protocolVersion !== 'string') return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.uiInitializeNeedsAProtocolVersion);
     epoch += 1;
     const live = liveFrom(epoch);
     const answer = (saved?: AppStateValue): void => {
@@ -242,8 +242,8 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
 
   function callTool(id: JsonRpcId, params: Record<string, unknown>): void {
     const { name, arguments: args = {} } = params;
-    if (typeof name !== 'string' || !APP_TOOL_NAME.test(name)) return fail(id, PANEL_ERRORS.invalidParams, 'tools/call needs the name of a tool.');
-    if (!isObject(args)) return fail(id, PANEL_ERRORS.invalidParams, 'tools/call arguments must be an object.');
+    if (typeof name !== 'string' || !APP_TOOL_NAME.test(name)) return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.toolsCallNeedsTheName);
+    if (!isObject(args)) return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.toolsCallArgumentsMustBe);
     if (calls >= FRAME_CALLS) return refuse(id, 'app-busy');
     calls += 1;
     const live = liveFrom(epoch);
@@ -258,10 +258,10 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
   }
 
   function request(id: JsonRpcId, method: string, raw: unknown): void {
-    if (!Object.hasOwn(PANEL_METHODS, method)) return fail(id, PANEL_ERRORS.methodNotFound, `No such method: ${method.slice(0, 64)}.`);
-    if (PANEL_METHODS[method as PanelMethod] === 'notification') return fail(id, PANEL_ERRORS.invalidRequest, `${method} is a notification: send it without an id.`);
+    if (!Object.hasOwn(PANEL_METHODS, method)) return fail(id, PANEL_ERRORS.methodNotFound, appFrameWords.noSuchMethod(method.slice(0, 64)));
+    if (PANEL_METHODS[method as PanelMethod] === 'notification') return fail(id, PANEL_ERRORS.invalidRequest, appFrameWords.isANotificationSendIt(method));
     const params = raw === undefined ? {} : raw;
-    if (!isObject(params)) return fail(id, PANEL_ERRORS.invalidParams, 'params must be an object.');
+    if (!isObject(params)) return fail(id, PANEL_ERRORS.invalidParams, appFrameWords.paramsMustBeAnObject);
     if (method === 'ui/initialize') initialize(id, params);
     else if (method === 'ping') reply(id, {});
     else if (method === PANEL_SAVE_STATE) saveState(id, params);

@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
 
 export const LOCK_FILE = 'lock';
 /** How often the holder rewrites `beat`. */
@@ -61,8 +62,8 @@ const live = (x: LockInfo, env: LockEnv): boolean =>
 
 /** Who holds the ledger, for the refusal. */
 export const holderMessage = (x: LockInfo): string =>
-  `Another board server holds this ledger: computer "${x.host}", process ${x.pid}, port ${x.port}, ` +
-  `running since ${x.started}. Stop that server first.`;
+  serverFoldersWords.anotherBoardServerHoldsThis(x.host, x.pid, x.port) +
+  serverFoldersWords.runningSinceStopThatServer(x.started);
 
 /** Take the lock in `dir` (the project's `.visionboard` folder), or say who holds it. */
 export function takeLock(dir: string, port: number, env: LockEnv = realEnv()): Taken {

@@ -1,6 +1,7 @@
 // Local-first safety (project rule 18, api.md 28): only this machine, only this page, only JSON.
 import type { IncomingMessage } from 'node:http';
 import { problem } from './problem.ts';
+import * as httpWords from './words/http.ts';
 
 export function allowedHosts(port: number): Set<string> {
   return new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
@@ -11,8 +12,8 @@ export function allowedHosts(port: number): Set<string> {
 export function guard(req: IncomingMessage, port: number): void {
   const hosts = allowedHosts(port);
   if (!hosts.has(req.headers.host ?? ''))
-    throw problem('forbidden', 'This server answers only on 127.0.0.1 or localhost, at its own port.');
+    throw problem('forbidden', httpWords.thisServerAnswersOnlyOn);
   if (req.method === 'GET' || req.method === 'HEAD' || req.headers.origin === undefined) return;
   const origin = req.headers.origin.replace(/^http:\/\//, '');
-  if (!hosts.has(origin)) throw problem('forbidden', 'Writes are accepted only from the board page on this server.');
+  if (!hosts.has(origin)) throw problem('forbidden', httpWords.writesAreAcceptedOnlyFrom);
 }

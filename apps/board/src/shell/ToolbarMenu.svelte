@@ -13,6 +13,8 @@
      answered, as H does on the board (keys.ts). Its look is the shared menu's (#ui base/menu.css). The
      gallery passes `open`, `placement` 'gallery', which drops the board's ids, and `locked` to draw either row. -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as toolbarWords from './words/toolbar.ts';
   import { tick } from 'svelte';
   import { shell } from './shell.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
@@ -56,10 +58,10 @@
   /** Archive board… waits for a board to be open, and for now to show (the gallery's is on). */
   const archiveOff = $derived(board && (shell.version === null || !!shell.past));
   const isLocked = $derived(locked ?? shell.locked);
-  const lockTip = $derived(archiveOff ? (shell.past ? `Go back to now to ${isLocked ? 'unlock' : 'lock'} this board` : 'No board is open')
-    : isLocked ? 'Let you and the agents change this board again' : 'Make this board read-only for everyone, agents included, until you unlock it');
+  const lockTip = $derived(archiveOff ? (shell.past ? toolbarWords.goBackToNowTo(isLocked) : toolbarWords.noBoardIsOpen)
+    : isLocked ? toolbarWords.letYouAndTheAgents : toolbarWords.makeThisBoardReadOnly);
   const here = $derived(folder === undefined ? shell.folder : folder);
-  const folderTip = $derived(here ? `Open another folder (open now: ${here.name})` : 'Open a project folder');
+  const folderTip = $derived(here ? toolbarWords.openAnotherFolderOpenNow(here.name) : toolbarWords.openAProjectFolder);
   const showCurrent = $derived((current ?? currentFolderOn()) && openFolder);
   /** The Current line's longest path before its middle is elided (the menu is 220 to 360px wide). */
   const CURRENT_MAX = 32;
@@ -97,53 +99,53 @@
 
 <div class="vb-menu" bind:this={root}>
   <button type="button" class="vb-btn vb-menu-btn" id={board ? 'toolbar-menu' : undefined} bind:this={button}
-    title="More: Theme, Hide answered{aligning ? ', Centre cards' : ''}, Reply{onlock ? `, ${isLocked ? 'Unlock' : 'Lock'} board` : ''}{onarchive ? ', Archive board' : ''}{openFolder ? ', Open folder' : ''}" aria-label="More" aria-haspopup="menu" aria-expanded={shown}
+    title={toolbarWords.moreTitle({ centre: aligning, lock: !!onlock, locked: isLocked, archive: !!onarchive, folder: !!openFolder })} aria-label={toolbarWords.more} aria-haspopup="menu" aria-expanded={shown}
     aria-controls="vb-menu-{uid}" onclick={() => (open ? close() : void show())}><ButtonIcon name="more" /></button>
-  <div class="vb-menu-list" id="vb-menu-{uid}" role="menu" aria-label="More" tabindex="-1" hidden={!shown}
+  <div class="vb-menu-list" id="vb-menu-{uid}" role="menu" aria-label={toolbarWords.more} tabindex="-1" hidden={!shown}
     bind:this={list}>
     <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={board ? 'theme' : undefined}
       onclick={() => choose(ontheme)}>
-      <ButtonIcon name="theme" /><span class="vb-menu-label">Theme: {theme}</span>
+      <ButtonIcon name="theme" /><span class="vb-menu-label">{toolbarWords.theme(theme)}</span>
     </button>
     <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={board ? 'hide' : undefined}
       aria-checked={shell.hide} aria-keyshortcuts="h" onclick={() => choose(onhide)}>
-      <ButtonIcon name="hide" /><span class="vb-menu-label">Hide answered</span>
+      <ButtonIcon name="hide" /><span class="vb-menu-label">{commonWords.hideAnswered}</span>
       <span class="vb-menu-check" aria-hidden="true">✓</span><kbd aria-hidden="true">H</kbd>
     </button>
     {#if aligning}
       <button type="button" class="vb-menu-item" role="menuitemcheckbox" tabindex="-1" id={board ? 'align' : undefined}
-        aria-checked={shell.align === 'center'} title="Off: a row of cards lines up by its tops, a column by its left edges"
+        aria-checked={shell.align === 'center'} title={toolbarWords.offARowOfCards}
         onclick={() => choose(toggleAlign)}>
-        <ButtonIcon name="align" /><span class="vb-menu-label">Centre cards</span>
+        <ButtonIcon name="align" /><span class="vb-menu-label">{toolbarWords.centreCards2}</span>
         <span class="vb-menu-check" aria-hidden="true">✓</span>
       </button>
     {/if}
     <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={board ? 'reply-toggle' : undefined}
       aria-expanded={shell.replyOpen} aria-controls={board ? 'reply' : undefined}
       onclick={() => choose(() => { shell.replyOpen = !shell.replyOpen; })}>
-      <ButtonIcon name="quote" /><span class="vb-menu-label">Reply{shell.answered ? ` (${shell.answered})` : ''}</span>
+      <ButtonIcon name="quote" /><span class="vb-menu-label">{toolbarWords.reply2(shell.answered)}</span>
     </button>
     {#if onlock}
       <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={board ? 'lock-board' : undefined}
         aria-disabled={archiveOff} title={lockTip} onclick={() => { if (!archiveOff) choose(onlock); }}>
-        <ButtonIcon name={isLocked ? 'unlock' : 'lock'} /><span class="vb-menu-label">{isLocked ? 'Unlock board' : 'Lock board'}</span>
+        <ButtonIcon name={isLocked ? 'unlock' : 'lock'} /><span class="vb-menu-label">{isLocked ? toolbarWords.unlockBoard : toolbarWords.lockBoard}</span>
       </button>
     {/if}
     {#if onarchive}
       <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={board ? 'archive-board' : undefined}
         aria-haspopup="dialog" aria-disabled={archiveOff}
-        title={archiveOff ? (shell.past ? 'Go back to now to archive this board' : 'No board is open') : 'Hide this board from every agent and from the picker; restore it from the picker'}
+        title={archiveOff ? (shell.past ? toolbarWords.goBackToNowToArchive : toolbarWords.noBoardIsOpen) : toolbarWords.hideThisBoardFromEvery}
         onclick={() => { if (!archiveOff) choose(onarchive); }}>
-        <ButtonIcon name="archive" /><span class="vb-menu-label">Archive board…</span>
+        <ButtonIcon name="archive" /><span class="vb-menu-label">{toolbarWords.archiveBoard2}</span>
       </button>
     {/if}
     {#if openFolder}
       <button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" id={board ? 'open-folder' : undefined}
         aria-haspopup="dialog" title={folderTip} onclick={() => choose(() => { shell.folderDialog = true; })}>
-        <ButtonIcon name="folder" /><span class="vb-menu-label">Open folder…</span>
+        <ButtonIcon name="folder" /><span class="vb-menu-label">{toolbarWords.openFolder2}</span>
       </button>
       {#if showCurrent && here}
-        <p class="vb-menu-current" role="none" title={folderPath(here)}>Current: <b>{elidePath(folderPath(here), CURRENT_MAX)}</b></p>
+        <p class="vb-menu-current" role="none" title={folderPath(here)}>{toolbarWords.current} <b>{elidePath(folderPath(here), CURRENT_MAX)}</b></p>
       {/if}
     {/if}
   </div>

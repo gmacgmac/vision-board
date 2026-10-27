@@ -18,6 +18,7 @@ import { problem } from '../problem.ts';
 import { isLocked, personBoard, requireBoard } from '../visibility.ts';
 import type { OpCtx, Op } from './operations.ts';
 import { reply } from './operations.ts';
+import * as writesWords from '../words/writes.ts';
 
 /** At most `limit` of `list`, and `more: true` when it was cut (api.md 31). */
 function page<T>(list: readonly T[], limit: unknown): { list: T[]; more?: true } {
@@ -44,7 +45,7 @@ const showNode: Op = ({ params, ledger }) => {
   const id = cardOn(s, board, n);
   const detail = id === undefined ? undefined : nodeDetail(s, id);
   if (id === undefined || !detail) {
-    throw problem('not-found', `There is no node ${n} on board "${board}". Call get_board to see its nodes.`);
+    throw problem('not-found', writesWords.thereIsNoNodeOn(n, board));
   }
   return reply(200, { head: s.seq, ...detail, ...(params.linked === true && { linked: linkedDetails(s, id) }) });
 };
@@ -54,7 +55,7 @@ const showContainer: Op = ({ params, ledger }) => {
   const board = requireBoard(s, params.board);
   const region = String(params.region);
   const detail = containerDetail(s, board, region);
-  if (!detail) throw problem('not-found', `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
+  if (!detail) throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   return reply(200, { head: s.seq, ...detail });
 };
 
@@ -71,8 +72,8 @@ const showLayout: Op = ({ params, ledger }) => {
   const r = drawn.regions.find((x) => x.id === region);
   if (!r) {
     throw problem('not-found', s.retiredRegions.has(containerKey(board, region))
-      ? `Container "${region}" on board "${board}" was retired, so nothing is arranged in it. Call get_board to see its regions.`
-      : `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
+      ? writesWords.containerOnBoardWasRetired(region, board)
+      : writesWords.thereIsNoRegionOn(region, board));
   }
   const st = boardState(s, board);
   const view = placedView(drawn, st);

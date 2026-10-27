@@ -17,6 +17,7 @@ import { agentSees, personBoard, requireBoard, requireUnlocked, writeTarget } fr
 import type { Op, OpCtx } from './operations.ts';
 import { reply } from './operations.ts';
 import { compileSchema } from '../schema.ts';
+import * as writesWords from '../words/writes.ts';
 
 const KIB = 1024;
 /** `join` takes 4 KiB; `write_board` 512 KiB and as many items as its schema allows (api.md 28);
@@ -29,7 +30,7 @@ const maxItems = (): number =>
   (compileSchema(SPECS.write_board.body!).schema as { properties: { items: { maxItems: number } } }).properties.items.maxItems;
 
 export const invalid = (errors: { pointer: string; detail: string }[], id?: OperationId) =>
-  problem('invalid', 'The request does not fit the schema. Fix the fields listed in errors and send it again.', { errors, ...(id && bodyExample(id)) });
+  problem('invalid', writesWords.theRequestDoesNotFit, { errors, ...(id && bodyExample(id)) });
 
 /** `value`, checked against the operation's request schema. */
 export function checkBody(id: OperationId, value: unknown): Record<string, unknown> {
@@ -65,7 +66,7 @@ const markSeen: Op = async (ctx) => {
   const board = personBoard(ledger.state(), params.board);
   const e = await body('mark_seen', ctx);
   if (e.board !== undefined && e.board !== board)
-    throw invalid([{ pointer: '/board', detail: `this names board "${String(e.board)}" but was sent to board "${board}"` }]);
+    throw invalid([{ pointer: '/board', detail: writesWords.thisNamesBoardButWas(String(e.board), board) }]);
   const stored = ledger.append({ ...cardsIn(ledger.state(), board, e, 'seen'), type: 'seen' }, { by: 'person' });
   return reply(201, eventOut(ledger.state(), stored));
 };
@@ -119,7 +120,7 @@ const requestGrant: Op = async (ctx) => {
   requireUnlocked(s, board); // a locked board takes no request, nor answers one (N40 ruling 3)
   const region = b.region === undefined ? undefined : String(b.region);
   if (region !== undefined && !s.index.boards.get(board)?.has(region)) {
-    throw problem('not-found', `There is no region "${region}" on board "${board}". Call get_board to see its regions.`);
+    throw problem('not-found', writesWords.thereIsNoRegionOn(region, board));
   }
   const what = { board, ...(region !== undefined && { region }) };
   if (holders(s, board, region).includes(agent)) return reply(200, { ...what, held: true });
@@ -132,7 +133,7 @@ const requestGrant: Op = async (ctx) => {
   if (keyed !== undefined) {
     const r = s.index.requests.get(keyed);
     if (r?.board !== board || r.region !== region || s.grantNotes.get(keyed)?.reason !== b.reason) {
-      throw invalid([{ pointer: '/key', detail: `key reused for different content; use a new key for a new request` }]);
+      throw invalid([{ pointer: '/key', detail: writesWords.keyReusedForDifferentContent }]);
     }
     return reply(200, { request: keyed, ...what, replayed: true });
   }
@@ -150,7 +151,7 @@ const writeBoard: Op = async (ctx) => {
   const items = (value as { items?: unknown } | null)?.items;
   const most = maxItems();
   if (Array.isArray(items) && items.length > most) {
-    throw problem('too-large', `The batch has ${items.length} items and the limit is ${most}. Split the items across several calls.`);
+    throw problem('too-large', writesWords.theBatchHasItemsAnd(items.length, most));
   }
   // Each item is checked on its own as it runs, so one bad item never fails the batch.
   const top = bodyProblems('write_board', value).filter((p) => !/^\/items\/\d+(\/|$)/.test(p.pointer));

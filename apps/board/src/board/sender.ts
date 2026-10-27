@@ -14,6 +14,7 @@
 import type { ActionId, LedgerLine } from '#format';
 import type { ActFields, BoardFields, Io, RetireFields } from './io.ts';
 import { ApiError } from './io.ts';
+import * as sendWords from './words/send.ts';
 
 /** A line the page would send: an act, a seen, the person's `board` line (`put_board`) or their
  * `retire` line (`retire_cards`). */
@@ -35,7 +36,7 @@ export interface SenderDeps {
 }
 
 /** Why an act is refused while a past version shows. */
-export const READ_ONLY = 'This is a past version, read-only. Go back to now to respond.';
+export const READ_ONLY = sendWords.thisIsAPastVersion;
 
 export interface Sender {
   /** Send one act and draw it; null when it was recorded, else the problem's detail. */

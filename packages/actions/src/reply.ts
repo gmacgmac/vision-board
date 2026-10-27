@@ -13,6 +13,7 @@ import type { BoardState } from './board-state.ts';
 import type { ItemNote } from './fold.ts';
 import { ACTIONS } from './registry.ts';
 import type { ItemStatus } from './registry.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** The cards (by board number) and containers a round covers, and the cursor its notes come after. */
 export interface ReplyScope { since: number; cards: ReadonlySet<number>; regions: ReadonlySet<string> }
@@ -82,9 +83,9 @@ export function replyLines(view: View, s: BoardState, scope?: ReplyScope): Reply
     const notes = (s.regionNotes.get(r.id) ?? []).filter(fresh(scope));
     if (!notes.length) continue;
     notesRead.push(...notes.map((x) => x.seq));
-    lines.push({ at: Infinity, text: `On container "${r.title}" ${ACTIONS[notes.at(-1)!.kind].reply}: ${notes.map((x) => x.text).join(' / ')}` });
+    lines.push({ at: Infinity, text: actionsRefusalsWords.onContainer(r.title, ACTIONS[notes.at(-1)!.kind].reply, notes.map((x) => x.text).join(' / ')) });
   }
-  const tail = [...(open.length ? [`Still open: ${open.join(', ')}`] : []), ...(waiting.length ? [`Waiting for your reply: ${waiting.join(', ')}`] : [])]
-    .join('\n') || 'Nothing left open.';
-  return { head: `Board "${view.title}" (v${view.version})`, lines: lines.map((l) => l.text), tail, notes: notesRead };
+  const tail = [...(open.length ? [actionsRefusalsWords.stillOpen(open.join(', '))] : []), ...(waiting.length ? [actionsRefusalsWords.waitingForYourReply(waiting.join(', '))] : [])]
+    .join('\n') || actionsRefusalsWords.nothingLeftOpen;
+  return { head: actionsRefusalsWords.boardV(view.title, view.version), lines: lines.map((l) => l.text), tail, notes: notesRead };
 }

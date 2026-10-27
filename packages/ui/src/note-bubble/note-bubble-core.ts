@@ -5,6 +5,8 @@
 import type { Box, NoteKind, Size } from '#format';
 import { clamp, overlaps } from '#format';
 import type { NotesEntry, ReplyEntry } from '../node/node-core.ts';
+import * as noteBubbleWords from '../words/note-bubble.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 /** A box and a size in stage pixels: format's `Box` and `Size` (geometry.ts), named for where they are used. */
 export type StageBox = Box;
@@ -150,30 +152,30 @@ export interface BubbleView {
 }
 
 /** An old More context is a note like any other (D-045), so it reads the same. */
-export const PLACEHOLDER: Record<NoteKind, string> = { comment: 'Your note for the agent', context: 'Your note for the agent' };
+export const PLACEHOLDER: Record<NoteKind, string> = { comment: noteBubbleWords.yourNoteForTheAgent, context: noteBubbleWords.yourNoteForTheAgent };
 
 /** "Note on 42", "Note on 3 cards: 12, 14, 15" for a group, or "Note on container Review" for a
  * whole container; each mode words it its own way. The conversation is the card's or container's. */
 function headingOf(b: BubbleInput): string {
-  if (b.mode === 'thread') return `Conversation on ${b.container === undefined ? b.number : `container ${b.container}`}`;
+  if (b.mode === 'thread') return noteBubbleWords.conversationOn(b.container === undefined ? b.number : noteBubbleWords.container(b.container));
   const past = b.answered ? 'answered' : 'sent';
   if (b.container !== undefined) {
-    const on = `on container ${b.container}`;
-    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${b.index ?? 1} ${on}, ${past}`;
+    const on = noteBubbleWords.onContainer(b.container);
+    return b.mode === 'new' ? noteBubbleWords.note(on) : b.mode === 'edit' ? noteBubbleWords.editNote(on) : noteBubbleWords.note2(b.index ?? 1, on, past);
   }
   if (b.numbers) {
-    const on = `on ${b.numbers.length} cards: ${b.numbers.join(', ')}`;
-    return b.mode === 'new' ? `Note ${on}` : b.mode === 'edit' ? `Edit note ${on}` : `Note ${on}, ${past}`;
+    const on = noteBubbleWords.onCards(b.numbers.length, b.numbers.join(', '));
+    return b.mode === 'new' ? noteBubbleWords.note(on) : b.mode === 'edit' ? noteBubbleWords.editNote(on) : noteBubbleWords.note3(on, past);
   }
-  return b.mode === 'new' ? `Note on ${b.number}`
-    : b.mode === 'edit' ? `Edit note on ${b.number}` : `Note ${b.index ?? 1} on ${b.number}, ${past}`;
+  return b.mode === 'new' ? noteBubbleWords.noteOn(b.number)
+    : b.mode === 'edit' ? noteBubbleWords.editNoteOn(b.number) : noteBubbleWords.noteOn2(b.index ?? 1, b.number, past);
 }
 
 /** What the read-only part is called: the conversation, the sent note, its replies, or both. */
 function threadOf(mode: BubbleMode, replies: number): string {
-  if (mode === 'thread') return 'Notes and replies';
-  if (mode !== 'sent') return 'Replies';
-  return replies ? 'Note and replies' : 'Note';
+  if (mode === 'thread') return noteBubbleWords.notesAndReplies;
+  if (mode !== 'sent') return noteBubbleWords.replies;
+  return replies ? noteBubbleWords.noteAndReplies : noteBubbleWords.note4;
 }
 
 export function bubbleView(b: BubbleInput): BubbleView {
@@ -182,9 +184,9 @@ export function bubbleView(b: BubbleInput): BubbleView {
   const replies = b.replies ?? [];
   return {
     mode: b.mode, heading, placeholder: PLACEHOLDER[b.kind],
-    hint: shown ? '' : `Enter ${b.mode === 'new' ? 'add' : 'save'} · Esc cancel`,
-    ...(!shown && { primary: b.mode === 'new' ? 'Add note' : 'Save' }),
-    cancel: shown ? 'Close' : 'Cancel',
+    hint: shown ? '' : noteBubbleWords.enterEscCancel(b.mode === 'new'),
+    ...(!shown && { primary: b.mode === 'new' ? noteBubbleWords.addNote : noteBubbleWords.save }),
+    cancel: shown ? uiCommonWords.close : noteBubbleWords.cancel,
     remove: b.mode === 'edit',
     text: b.mode === 'thread' ? '' : b.text ?? '',
     replies, thread: threadOf(b.mode, replies.length),

@@ -2,7 +2,7 @@
 inclusion: always
 ---
 
-> **Version**: 0.3 | **Updated**: 2026-10-26 (maintainer approved)
+> **Version**: 0.4 | **Updated**: 2026-10-27 (maintainer approved)
 
 # Vision Board — project rules
 
@@ -28,6 +28,7 @@ follow them where our documents are silent. If two of our documents disagree, ra
 | Module map and allowed layers | `docs/specification/modules.md`; `npm run verify` |
 | How each part is built | `docs/specification/` |
 | Svelte | `.kiro/steering/svelte-conventions.md` |
+| Where a sentence lives (screen text, refusals, what an agent is told) | `docs/specification/words.md` |
 | Work categories, doc surface | `cortex/PROFILE.md`, `cortex/REGISTRY.md` |
 
 ## How to work
@@ -43,9 +44,11 @@ follow them where our documents are silent. If two of our documents disagree, ra
 - **Done** means every state, accessibility and contrast pass, tests, a gallery entry, and a look in a
   browser in light and dark, as the person sees it.
 - **Tests while working**: unit tests plus the page specs for what changed; the full page suite once,
-  at the end (`npm run test:pages`: 3 workers, `VB_TEST_WORKERS` for more; each worker's servers on
+  at the end (`npm run test:pages`: 5 workers, `VB_TEST_WORKERS` to change; each worker's servers on
   `VB_TEST_PORT` + 10 per worker, fresh for every spec file). Never use port 4466: it is the
   maintainer's board. Tasks running at once take `VB_TEST_PORT`s 100 apart.
+- **Sentences**: a new sentence a person or an agent reads goes in its area's words file
+  (`docs/specification/words.md`), never in the code that shows or sends it.
 - **Worktrees**: work in one; the maintainer's board runs from the main checkout.
 - **Sub-agents** always name their model: Sonnet 5.5 for well-specified work, configuration and cited
   research; Opus 5.5 for new patterns and judgement-heavy design.

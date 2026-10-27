@@ -5,6 +5,8 @@
 // wired twice. They change only what the person sees (or open the note bubble or the move list),
 // so none is a ledger event (rule 8 covers the note, the move and the removal themselves, which are
 // written through the action layer).
+import * as commandsWords from './words/commands.ts';
+import * as commonWords from './words/common.ts';
 
 export const COMMAND_IDS = ['zoom-out', 'fit', 'zoom-in', 'comment', 'move', 'reset-places', 'remove', 'zoom-selection', 'zoom-area', 'container-note', 'go-to-card'] as const;
 export type CommandId = (typeof COMMAND_IDS)[number];
@@ -31,27 +33,27 @@ export interface CommandDef {
 }
 
 export const COMMANDS: Record<CommandId, CommandDef> = {
-  'zoom-out': { label: 'Zoom out', keys: ['-'], glyph: '−' },
-  fit: { label: 'Fit', keys: ['f'] },
-  'zoom-in': { label: 'Zoom in', keys: ['+', '='], glyph: '+' },
+  'zoom-out': { label: commandsWords.zoomOut, keys: ['-'], glyph: '−' },
+  fit: { label: commonWords.fit, keys: ['f'] },
+  'zoom-in': { label: commandsWords.zoomIn, keys: ['+', '='], glyph: '+' },
   // N, and C when two or more are selected (C alone is a card's own comment, keys.ts).
-  comment: { label: 'Comment', keys: ['n', 'c'], primary: true, acts: true },
+  comment: { label: commandsWords.comment, keys: ['n', 'c'], primary: true, acts: true },
   // The list of the board's containers, Later last (3_FE_03 ruling 8, move-menu.ts).
-  move: { label: 'Move to', keys: ['shift+m'], acts: true },
+  move: { label: commandsWords.moveTo, keys: ['shift+m'], acts: true },
   // R with a selection; with none, R is the focused card's own reset (keys.ts).
-  'reset-places': { label: 'Reset places', keys: ['r'], acts: true },
+  'reset-places': { label: commandsWords.resetPlaces, keys: ['r'], acts: true },
   // The selected cards leave the board, after a confirm (N24, remove-flow.ts): the bar says "Remove";
   // its tooltip says the card or the cards (selectionButtons). Without the personRemove flag the bar
   // has no such button and the keys do nothing.
-  remove: { label: 'Remove', means: 'Remove the selected cards', listed: 'Remove cards', keys: ['delete', 'backspace'], acts: true },
-  'zoom-selection': { label: 'Zoom', means: 'Zoom to the selection', keys: ['z'] },
-  'zoom-area': { label: 'Zoom to this area', keys: [] },
+  remove: { label: commandsWords.remove, means: commandsWords.removeTheSelectedCards, listed: commandsWords.removeCards, keys: ['delete', 'backspace'], acts: true },
+  'zoom-selection': { label: commonWords.zoom, means: commandsWords.zoomToTheSelection, keys: ['z'] },
+  'zoom-area': { label: commandsWords.zoomToThisArea, keys: [] },
   // C or N with focus on a container's title line or its controls (3_FE_04 ruling 8): the
   // container's note, a comment as N is for the selection. Those keys mean this only there.
-  'container-note': { label: 'Comment on container', keys: ['c', 'n'], acts: true },
+  'container-note': { label: commandsWords.commentOnContainer, keys: ['c', 'n'], acts: true },
   // Any digit, with focus anywhere on the board but a text field (go-to-card.ts): the box opens
   // holding it. Without the goToCard flag the keys do nothing.
-  'go-to-card': { label: 'Go to card', means: 'Go to a card by its number', keys: [...'0123456789'], shown: ['0–9'] },
+  'go-to-card': { label: commonWords.goToCard, means: commandsWords.goToACardBy, keys: [...'0123456789'], shown: ['0–9'] },
 };
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */
@@ -75,7 +77,7 @@ export const isCommand = (s: string | undefined): s is CommandId => COMMAND_IDS.
 
 /** A key as a hint shows it: "Shift+M", "Z". */
 export const keyText = (key: string) => key.split('+').filter(Boolean)
-  .map((k) => (k === 'shift' ? 'Shift' : k.length > 1 ? k[0]!.toUpperCase() + k.slice(1) : k.toUpperCase())).join('+') || key;
+  .map((k) => (k === 'shift' ? commandsWords.shift : k.length > 1 ? k[0]!.toUpperCase() + k.slice(1) : k.toUpperCase())).join('+') || key;
 
 /** A button's tooltip: what it does and its key ("Zoom in · +", "Zoom to the selection · Z"). */
 export function commandTitle(id: CommandId): string {
@@ -84,7 +86,7 @@ export function commandTitle(id: CommandId): string {
 }
 
 /** A zoom button's tooltip: its label, its key and the level the board is at ("Zoom in · + · 75% now"). */
-export const zoomTitle = (id: CommandId, percent: number): string => `${commandTitle(id)} · ${percent}% now`;
+export const zoomTitle = (id: CommandId, percent: number): string => commandsWords.now(commandTitle(id), percent);
 
 /** The bar's buttons for a list of commands; with `readOnly`, none that acts; `off` are disabled. */
 export const barButtons = (ids: readonly CommandId[], readOnly = false, off: readonly CommandId[] = []) =>

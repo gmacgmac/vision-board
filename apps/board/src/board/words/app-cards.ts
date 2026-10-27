@@ -1,6 +1,7 @@
-// What the page says around an app card's buttons (app-cards FE_02): the confirm before Allow and
-// Stop app (the action registry marks both `needsConfirmation`), the toast once each is done, and
-// what Check again and Restart found. Plain and short: the person reads them, not the agent.
+// Words: app-cards. The confirms before Allow and Stop app, the toasts after, and what Check again and Restart found.
+// Where: an app card's buttons (app-cards FE_02). The action registry marks Allow and Stop app
+// `needsConfirmation`. Plain and short: the person reads them, not the agent.
+// Keys: board.app-cards.<name>. Plain code: no imports but other words files and types.
 import type { ActionId, AppState } from '#format';
 
 /** What an app's code may do once allowed (apps.md § Where it runs), in the person's words. */

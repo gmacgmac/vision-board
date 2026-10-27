@@ -9,13 +9,15 @@ import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
 import { ACTIONS, statusOf } from '#actions';
+import * as uiCommonWords from '../words/ui-common.ts';
+import * as nodeWords from '../words/node.ts';
 
 /** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
  *  is the state and the board gives it no meaning. A card whose note waits for the agent's answer is
  *  "Replied" (D-046; the person's word, replied-word ruling 1: agents read `with-agent`); an old More
  *  context reads as a note. */
 export const STATUS_LABEL: Record<ItemStatus, string> = {
-  open: 'Open', acknowledged: '', dropped: '', commented: 'Replied', context: 'Replied', later: 'Saved for later',
+  open: uiCommonWords.open, acknowledged: '', dropped: '', commented: nodeWords.replied, context: nodeWords.replied, later: nodeWords.savedForLater,
 };
 
 /** What a card's accessible name says for its status: the footer's word, or the lit mark by name. */
@@ -38,9 +40,9 @@ export const isPressed = (action: ActionId, status: ItemStatus): boolean =>
  *  list item can carry no aria-selected and the selection must be perceivable without colour.
  *  `extra` comes before it: what the card's tabs say, such as ", 1 proposal" (FE_01). */
 export function nodeLabel(n: ViewNode, status: ItemStatus, selected = false, extra = ''): string {
-  const num = isItem(n) ? `Item ${n.n}, ` : '';
+  const num = isItem(n) ? nodeWords.item(n.n) : '';
   const st = asksAnswer(n) ? `, ${STATUS_NAME[status]}` : '';
-  return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? ', selected' : ''}`;
+  return `${num}${NODE_TYPES[n.kind].label}: ${n.title}${st}${extra}${selected ? nodeWords.selected : ''}`;
 }
 
 /** The flag's key (cardFlag flag, field report batch 2 ruling 3): F alone is Fit (commands.ts). */
@@ -48,11 +50,11 @@ export const FLAG_KEY = 'Shift+F';
 
 /** The flag button's name: it stays put, and aria-pressed says whether the card is flagged. The
  * flag is the person's private mark, never sent to an agent (api.md 128). */
-export const flagLabel = (n: ViewNode): string => `Flag item ${n.n} (${FLAG_KEY})`;
+export const flagLabel = (n: ViewNode): string => nodeWords.flagItem(n.n, FLAG_KEY);
 
 export function buttonLabel(action: ActionId, n: ViewNode): string {
   const def = ACTIONS[action];
-  return `${def.label} item ${n.n}${def.key ? ` (${def.key.toUpperCase()})` : ''}`;
+  return nodeWords.item2(def.label, n.n, def.key ? ` (${def.key.toUpperCase()})` : '');
 }
 
 // A card's notes and the agent's replies (split out, card-polish FE_02): re-exported, so this stays the import.
@@ -70,7 +72,7 @@ export interface SizeState {
 export const SIZE_LETTER: Record<NodeSize, string> = { s: 'S', m: 'M', l: 'L' };
 
 export const sizeLabel = (v: { tier: NodeSize; picked: boolean }): string =>
-  `Card size: ${SIZE_LETTER[v.tier]}, ${v.picked ? 'your pick' : 'automatic'}. Change size`;
+  nodeWords.cardSizeChangeSize(SIZE_LETTER[v.tier], v.picked);
 
 /** One open proposal on a card (D-018, api.md 93), as the page passes it in: found by the conditions
  *  table (`proposal.open`, or `proposal.stale` when the card changed since), worded from the ledger.
@@ -115,20 +117,20 @@ export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): 
   const stale = list.every((p) => p.stale);
   const entries = [...list].sort((a, b) => b.seq - a.seq).map((p): ProposalEntry => {
     const verb = `${ACTIONS[p.action].label.toLowerCase()} ${n.n}`;
-    const who = p.agent ?? 'The agent';
+    const who = p.agent ?? nodeWords.theAgent;
     return {
       seq: p.seq, stale: p.stale, what: `${ACTIONS[p.action].label} ${n.n}: ${p.reason}`,
-      head: p.stale ? `${who} proposed · out of date` : `${who} proposes`,
+      head: p.stale ? nodeWords.proposedOutOfDate(who) : nodeWords.proposes(who),
       from: [p.source, p.when].filter(Boolean).join(' · '),
-      ...(p.stale && { why: `${n.n} changed after this was proposed. Ask the agent to look again.` }),
-      accept: `Accept: ${verb}${p.stale ? ' (out of date)' : ''}`, reject: `Reject: ${verb}`,
+      ...(p.stale && { why: nodeWords.changedAfterThisWasProposed(n.n) }),
+      accept: nodeWords.acceptVerb(verb, p.stale), reject: nodeWords.reject(verb),
     };
   });
   const k = list.length;
   return {
-    tab: stale ? 'Out of date' : 'Proposal', stale, entries,
-    label: `${k === 1 ? 'Proposal' : `${k} proposals`} on item ${n.n}${stale ? ', out of date' : ''}`,
-    box: `${k === 1 ? 'Proposal' : 'Proposals'} on item ${n.n}`,
+    tab: stale ? nodeWords.outOfDate2 : nodeWords.proposal, stale, entries,
+    label: nodeWords.proposalsOnItem(k, n.n, stale),
+    box: nodeWords.proposalsBox(k, n.n),
   };
 }
 
@@ -136,7 +138,7 @@ export function proposalsView(n: ViewNode, list: readonly CardProposal[] = []): 
 function proposalWords(list: readonly CardProposal[]): string {
   const k = list.length;
   const st = list.filter((p) => p.stale).length;
-  return k ? `, ${k} proposal${k > 1 ? 's' : ''}${st ? `, ${st === k ? '' : `${st} `}out of date` : ''}` : '';
+  return k ? nodeWords.proposalsInName(k, st) : '';
 }
 
 /** The HANDOVER tab and its box (FE_03 ruling 2): the park bundle's headed sections, then the sources. */
@@ -147,7 +149,7 @@ export interface HandoverView {
 }
 
 const HANDOVER_HEADS = [
-  ['situation', 'Situation'], ['background', 'Background'], ['assessment', 'Assessment'], ['recommendation', 'Recommendation'],
+  ['situation', nodeWords.situation], ['background', nodeWords.background], ['assessment', nodeWords.assessment], ['recommendation', nodeWords.recommendation],
 ] as const;
 
 /** The tab and box for an item's written handover; undefined with none, or while it is still owed
@@ -155,14 +157,14 @@ const HANDOVER_HEADS = [
 export function handoverView(n: ViewNode, bundle?: ParkBundle, awaiting = false): HandoverView | undefined {
   if (!isItem(n) || !bundle || awaiting) return undefined;
   return {
-    tab: 'Handover', label: `Handover on item ${n.n}`, box: `Handover on item ${n.n}`,
+    tab: nodeWords.handover, label: nodeWords.handoverOnItem(n.n), box: nodeWords.handoverOnItem(n.n),
     sections: HANDOVER_HEADS.map(([key, head]) => ({ head, text: bundle[key] })),
     sources: bundle.sources ?? [],
   };
 }
 
 /** The footer state word of a card whose handover is owed, and the tip over it (FE_03 ruling 1). */
-export const AWAITING = { word: 'Awaiting', tip: 'Awaiting context' } as const;
+export const AWAITING = { word: nodeWords.awaiting, tip: nodeWords.awaitingContext } as const;
 
 /** Everything a drawn node shows for the person's current state; `update()` applies it. */
 export interface NodeState {
@@ -220,7 +222,7 @@ export function nodeState(n: ViewNode, s: BoardState, tier?: NodeSize, selected 
     pinned: s.pins.has(n.id),
     selected,
     label: nodeLabel(n, status, selected,
-      `${awaiting ? ', awaiting context' : ''}${handover ? ', handover ready' : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? ', new' : ''}${flagged ? ', flagged' : ''}`),
+      `${awaiting ? nodeWords.awaitingContext2 : ''}${handover ? nodeWords.handoverReady : ''}${proposal ? proposalWords(c.proposals!) : ''}${updateWords(updates)}${app?.words ?? ''}${fresh ? nodeWords.freshInName : ''}${flagged ? nodeWords.flaggedInName : ''}`),
     statusWord: awaiting ? AWAITING.word : asksAnswer(n) ? STATUS_LABEL[status] : '',
     ...(awaiting && { awaiting: true as const }),
     ...(notes && { notes }), ...(proposal && { proposal }), ...(updates && { updates }), ...(fresh && { fresh: true as const }), ...(handover && { handover }),

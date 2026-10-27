@@ -1,6 +1,7 @@
 // Who holds what (api.md 81-86, D-034): the keys the index keeps holders under, and the rules
 // for a revoke and an open grant request, which the ledger and the action layer both ask.
 import type { LedgerIndex } from './ledger-index.ts';
+import * as formatLedgerWords from './words/format-ledger.ts';
 
 /** One key per container (a region, D-011). Ids cannot contain `/`, so the key is unambiguous. */
 export const containerKey = (board: string, region: string): string => `${board}/${region}`;
@@ -11,7 +12,7 @@ export const accessKey = (board: string, region?: string): string =>
   region === undefined ? board : containerKey(board, region);
 
 /** How a problem names a board or a container. */
-export const accessName = (board: string, region?: string): string => region === undefined ? `board ${board}` : `${board}/${region}`;
+export const accessName = (board: string, region?: string): string => region === undefined ? formatLedgerWords.board(board) : `${board}/${region}`;
 
 /** Why `holder` cannot be revoked from the board, or the container in `region`, or undefined when
  * it can: a creator stays, and only a holder can be removed (api.md 16, 82). The ledger and the
@@ -20,8 +21,8 @@ export function revokeProblem(ix: LedgerIndex, board: string, region: string | u
   const k = accessKey(board, region);
   const what = accessName(board, region);
   if (ix.creators.get(k) === holder)
-    return `holder: "${holder}" created ${what}, and a ${region === undefined ? 'board' : 'container'}'s creator cannot be removed`;
-  if (!ix.holders.get(k)?.has(holder)) return `holder: "${holder}" does not hold ${what}`;
+    return formatLedgerWords.holderCreatedAndAS(holder, what, region === undefined ? 'board' : 'container');
+  if (!ix.holders.get(k)?.has(holder)) return formatLedgerWords.holderDoesNotHold(holder, what);
   return undefined;
 }
 

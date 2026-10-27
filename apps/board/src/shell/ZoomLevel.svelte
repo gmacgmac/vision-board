@@ -3,6 +3,7 @@
      says it once the zoom has settled (a burst of key presses or a pinch is one announcement). Its
      width is fixed so the group does not shift as the digits change. -->
 <script lang="ts">
+  import * as toolbarWords from './words/toolbar.ts';
   /** Quiet time after the last change before the level is announced. */
   const SETTLE_MS = 600;
 
@@ -12,7 +13,7 @@
   let first = true;
 
   $effect(() => {
-    const text = `Zoom ${percent}%`;
+    const text = toolbarWords.zoom(percent);
     heard = ''; // so the same level, reached again, is announced again
     // The level the page opens at is not news; only a change is.
     if (first) { first = false; return; }

@@ -14,6 +14,7 @@ import type { Agents } from './agents.ts';
 import { newSecret } from './agents.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { Ledger } from './ledger.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 /** The name the agent knows the board's MCP server by: its tools are `mcp__vision-board__*` in
  * Claude Code and `@vision-board` in Kiro (`packages/agent/kiro/vision-board.agent.json`). */
@@ -24,12 +25,12 @@ export const INSTRUCTIONS_FILE = fileURLToPath(new URL('../../../skills/vision-b
  * the gate asks the person about first (PLAN ruling 5). */
 export const CHAT_TOOLS = [`mcp__${MCP_NAME}__*`, 'ToolSearch', 'Read', 'Glob', 'Grep', ...GATED_TOOLS];
 
-const NAMES: Record<ChatSession['agent'], string> = { claude: 'Claude Code', kiro: 'Kiro' };
+const NAMES: Record<ChatSession['agent'], string> = { claude: serverChatWords.claudeCode, kiro: serverChatWords.kiro };
 
 export const agentName = (agent: ChatSession['agent']): string => NAMES[agent];
 
 /** The board label of a session's agent, such as "Claude Code chat 3f1c2a9e". */
-export const chatLabel = (agent: ChatSession['agent'], session: string): string => `${NAMES[agent]} chat ${session.slice(0, 8)}`;
+export const chatLabel = (agent: ChatSession['agent'], session: string): string => serverChatWords.chat(NAMES[agent], session.slice(0, 8));
 
 export interface Identity { agentId: string; secret: string }
 
@@ -47,7 +48,7 @@ export function joinAndGrant(ledger: Ledger, agents: Agents, identity: Identity,
   const agent = { by: 'agent', agent: agentId } as const;
   ledger.append({ type: 'join', label }, agent);
   if (board === undefined) return;
-  const request = ledger.append({ type: 'grant-request', board, reason: 'The person started a chat on this board.' }, agent).seq;
+  const request = ledger.append({ type: 'grant-request', board, reason: serverChatWords.thePersonStartedAChat }, agent).seq;
   ledger.append({ type: 'act', action: 'grant', request }, { by: 'person' }, { board });
 }
 
@@ -71,6 +72,6 @@ export function keepKiroAgent(home: string): string | undefined {
     writeKiroAgent(home, INSTRUCTIONS_FILE);
     return undefined;
   } catch (err) {
-    return `The Kiro agent file ${kiroAgentFile(home)} could not be written: ${err instanceof Error ? err.message : String(err)}. Check that folder's permissions, then restart the board.`;
+    return serverChatWords.theKiroAgentFileCould(kiroAgentFile(home), err instanceof Error ? err.message : String(err));
   }
 }

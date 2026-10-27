@@ -15,6 +15,7 @@ import { OPEN_FOLDER } from './open-folder.ts';
 import { problem } from './problem.ts';
 import { sendJsonLines, sendReply, wantsJsonLines } from './respond.ts';
 import { STREAMS } from './streams.ts';
+import * as httpWords from './words/http.ts';
 
 /** One of the engine's operations, answered by the open folder's engine. `read_ledger` goes out as
  * JSON Lines when the caller asks for them (api.md 44). */
@@ -33,7 +34,7 @@ const viaEngine = (id: OperationId): Handler => async ({ req, res, url, engine, 
     res.off('close', end);
     closed.removeEventListener('abort', end);
   }
-  if (!reply) throw problem('not-found', 'No operation has this path.');
+  if (!reply) throw problem('not-found', httpWords.noOperationHasThisPath2);
   if (res.destroyed || res.writableEnded) return;
   if (id === 'read_ledger' && reply.status === 200 && wantsJsonLines(req)) return sendJsonLines(res, (reply.body as { events: unknown[] }).events);
   sendReply(res, reply);

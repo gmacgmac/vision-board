@@ -5,6 +5,7 @@
 import type { ActEvent } from '#format';
 import { latest } from '#format';
 import type { LedgerState } from './fold.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** What the fold keeps for apps: app id -> the hash the person allowed, while it stands. */
 export interface AppAllows { appAllowed: Map<string, string> }
@@ -18,8 +19,8 @@ export function foldAppAct(s: AppAllows, e: ActEvent): void {
 /** An allow names a version not allowed now; a stop, an app that is allowed. */
 export function appRules(e: ActEvent, s: LedgerState, p: string[]): void {
   const allowed = s.appAllowed.get(e.app!);
-  if (e.action === 'app-allow' && allowed === e.hash) p.push(`hash: this version of "${e.app}" is already allowed`);
-  if (e.action === 'app-revoke' && allowed === undefined) p.push(`app: "${e.app}" isn't allowed, so there is nothing to stop`);
+  if (e.action === 'app-allow' && allowed === e.hash) p.push(actionsRefusalsWords.hashThisVersionOfIs(e.app));
+  if (e.action === 'app-revoke' && allowed === undefined) p.push(actionsRefusalsWords.appIsnTAllowedSo(e.app));
 }
 
 /** The app card `id` names, if it is one (card -> app). */

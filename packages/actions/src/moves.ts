@@ -7,9 +7,10 @@
 import type { Region, View } from '#format';
 import { LATER_REGION } from '#format';
 import type { BoardState } from './board-state.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** Every board's Later container: always last, laid out as a grid (ruling 5). */
-export const LATER: Readonly<Region> = Object.freeze({ id: LATER_REGION, title: 'Later', mode: 'grid' as const });
+export const LATER: Readonly<Region> = Object.freeze({ id: LATER_REGION, title: actionsRefusalsWords.later, mode: 'grid' as const });
 
 /** The agent's view of one board with every card in the container the person put it in, and the
  * Later container last while it holds a card, or while `later` asks for it (a card is being

@@ -17,6 +17,7 @@ import {
 import { isUnder } from './folders.ts';
 import { DATA_DIR } from './ledger.ts';
 import { problem } from './problem.ts';
+import * as httpWords from './words/http.ts';
 
 const missing = () => problem('not-found', IMAGE_WORDS.missing);
 
@@ -47,7 +48,7 @@ const matches = (header: string | undefined, etag: string): boolean =>
 
 /** Answer a request for image `raw` (the route's text after the prefix) in folder `project` (its real path). */
 export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string): void {
-  if (req.method !== 'GET' && req.method !== 'HEAD') throw problem('method-not-allowed', 'GET and HEAD only.', { headers: { Allow: 'GET, HEAD' } });
+  if (req.method !== 'GET' && req.method !== 'HEAD') throw problem('method-not-allowed', httpWords.getAndHeadOnly, { headers: { Allow: 'GET, HEAD' } });
   const rel = decoded(raw);
   const why = imagePathProblem(rel);
   if (why) throw problem(why === IMAGE_WORDS.type ? 'unsupported-media-type' : 'not-found', why);

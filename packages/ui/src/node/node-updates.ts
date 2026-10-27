@@ -3,6 +3,7 @@
 // node-core.ts along this seam (the flag, field report batch 2, grew it past 300 lines). No DOM.
 import type { ViewNode } from '#format';
 import type { Change, FieldChange } from '#actions';
+import * as nodeUpdatesWords from '../words/node-updates.ts';
 
 /** One version a changed card steps through (FE_02): when and by whom, and what changed from the
  *  version before (`versionChanges`). `when` is in the person's clock; `agent` the writer's label.
@@ -37,11 +38,11 @@ const short = (text: string, max: number): string => {
  *  for the agent's answer, its words. */
 function stepLines(changes: readonly FieldChange[], reply?: string): string[] {
   if (reply !== undefined) return [short(reply, 160)];
-  if (!changes.length) return ['Drawn again with no change'];
+  if (!changes.length) return [nodeUpdatesWords.drawnAgainWithNoChange];
   return changes.flatMap((c) => {
-    if (c.field === 'title' && c.text !== undefined) return [`Title: ${short(c.text, 100)}`];
+    if (c.field === 'title' && c.text !== undefined) return [nodeUpdatesWords.title(short(c.text, 100))];
     if (c.field === 'body' && c.change === 'added' && c.text) return [short(c.text, 160)];
-    return c.field === 'body' && c.change === 'changed' ? ['Body rewritten'] : [];
+    return c.field === 'body' && c.change === 'changed' ? [nodeUpdatesWords.bodyRewritten] : [];
   });
 }
 
@@ -49,17 +50,17 @@ function stepLines(changes: readonly FieldChange[], reply?: string): string[] {
 export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefined {
   if (n.n === undefined || !u || (!u.steps && u.count < 1)) return undefined;
   const { steps } = u, k = steps?.length ?? u.count;
-  const tab = `${k} update${k === 1 ? '' : 's'}`;
+  const tab = nodeUpdatesWords.update(k);
   const at = u.at ?? 0;
-  if (!steps) return { tab, label: `${tab} since you last looked. Show them`, open: false, done: false };
+  if (!steps) return { tab, label: nodeUpdatesWords.sinceYouLastLookedShow(tab), open: false, done: false };
   const s = steps[at];
-  if (!s) return { tab: '', label: 'Up to date', open: true, done: true };
-  const count = `Update ${at + 1} of ${k}`;
+  if (!s) return { tab: '', label: nodeUpdatesWords.upToDate, open: true, done: true };
+  const count = nodeUpdatesWords.updateOf(at + 1, k);
   return {
-    tab, label: `${tab} since you last looked. Hide them`, open: true, done: false,
+    tab, label: nodeUpdatesWords.sinceYouLastLookedHide(tab), open: true, done: false,
     step: {
-      label: `${count}, ${s.reply === undefined ? `v${s.ver}` : 'the agent\'s reply'}`, count, first: at === 0, ...(u.source && { source: u.source }),
-      head: `${s.reply === undefined ? `v${s.ver}` : 'Reply'} · ${s.when} · ${s.agent ?? 'the agent'}`,
+      label: `${count}, ${s.reply === undefined ? `v${s.ver}` : nodeUpdatesWords.theAgentSReply}`, count, first: at === 0, ...(u.source && { source: u.source }),
+      head: `${s.reply === undefined ? `v${s.ver}` : nodeUpdatesWords.reply} · ${s.when} · ${s.agent ?? nodeUpdatesWords.theAgent}`,
       chips: s.changes.map((c) => ({ change: c.change, text: `${SIGN[c.change]} ${c.field}` })), lines: stepLines(s.changes, s.reply),
     },
   };
@@ -67,4 +68,4 @@ export function updatesView(n: ViewNode, u?: CardUpdates): UpdatesView | undefin
 
 /** What the updates add to the card's name: ", 3 unseen updates", or ", showing update 2 of 3". */
 export const updateWords = (v?: UpdatesView): string =>
-  !v || v.done ? '' : v.step ? `, showing ${v.step.count.toLowerCase()}` : `, ${v.tab.replace(' ', ' unseen ')}`;
+  !v || v.done ? '' : v.step ? nodeUpdatesWords.showing(v.step.count.toLowerCase()) : `, ${v.tab.replace(' ', nodeUpdatesWords.unseen)}`;

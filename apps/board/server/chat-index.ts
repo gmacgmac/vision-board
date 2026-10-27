@@ -10,6 +10,7 @@ import path from 'node:path';
 import { writeFileAtomic } from './atomic-file.ts';
 import { ignoreInGit } from './agents.ts';
 import { SCHEMA_BASE, schemaProblems } from './schema.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 export const CHAT_SESSIONS_FILE = 'chat-sessions.json';
 const SESSION_ID = `${SCHEMA_BASE}schema/api/chat-session.schema.json`;
@@ -44,7 +45,7 @@ export const publicSession = (session: StoredSession): ChatSession => ({ ...sess
 
 /** Problems with one entry, as text; empty means valid. */
 export function entryProblems(entry: unknown): string[] {
-  if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) return ['an entry is not an object'];
+  if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) return [serverChatWords.anEntryIsNotAn];
   return schemaProblems(SESSION_ID, entry).map((p) => `${p.pointer || '/'} ${p.detail}`);
 }
 

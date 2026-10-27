@@ -14,6 +14,7 @@ import type { ActEvent, LedgerEvent, NodeSize } from '#format';
 import { isPrivateAct, LATER_REGION } from '#format';
 import type { Ask } from './notes.ts';
 import { askOf, cardsOf, foldNoteAct, liveNotes } from './notes.ts';
+import * as actionsHistoryWords from './words/actions-history.ts';
 
 /** What a history row says happened. `context` is More context with no words: an ask, not a note. */
 export const HISTORY_KINDS = [
@@ -49,26 +50,26 @@ const SIZE_WORD = { s: 'S', m: 'M', l: 'L' } as const;
 
 /** Each kind's words after "You" or "Agent", given the named note's number while it is on the card. */
 const SAY: Record<HistoryKind, (d: Said, n?: number) => string> = {
-  drawn: (d) => `drew v${d.ver}`,
-  'note-sent': (d, n) => (n === undefined ? 'sent a note' : `sent note ${n}${d.cards ? ` on ${d.cards} cards` : ''}`),
-  'note-edited': (_, n) => (n === undefined ? 'edited a note' : `edited note ${n}`),
+  drawn: (d) => actionsHistoryWords.drewV(d.ver),
+  'note-sent': (d, n) => (n === undefined ? 'sent a note' : actionsHistoryWords.sentNote(n, d.cards ? actionsHistoryWords.onCards(d.cards) : '')),
+  'note-edited': (_, n) => (n === undefined ? 'edited a note' : actionsHistoryWords.editedNote(n)),
   'note-removed': () => 'removed a note',
-  context: () => 'asked for more context',
-  replied: (d, n) => (d.note === undefined ? 'replied' : n === undefined ? 'replied to a note' : `replied to note ${n}`),
-  check: () => 'marked it ✓',
-  cross: () => 'marked it ✗',
-  reopened: () => 'reopened it',
-  later: () => 'saved it for later',
-  parked: () => 'parked it',
-  size: (d) => (d.size === undefined || d.size === 'auto' ? 'set its size back to automatic' : `set its size to ${SIZE_WORD[d.size]}`),
-  moved: (d) => (d.later ? 'moved it to Later' : 'moved it to another container'),
-  pinned: () => 'placed it',
-  reset: () => 'reset its place',
-  proposed: (d) => `proposed ${d.mark}`,
-  'proposal-answered': (d) => (d.mark ? `accepted the proposal (${d.mark})` : 'turned down the proposal'),
-  'app-allowed': () => 'allowed the app',
-  'app-stopped': () => 'stopped the app',
-  removed: () => 'removed it',
+  context: () => actionsHistoryWords.askedForMoreContext,
+  replied: (d, n) => (d.note === undefined ? 'replied' : n === undefined ? actionsHistoryWords.repliedToANote : actionsHistoryWords.repliedToNote(n)),
+  check: () => actionsHistoryWords.markedIt,
+  cross: () => actionsHistoryWords.markedIt2,
+  reopened: () => actionsHistoryWords.reopenedIt,
+  later: () => actionsHistoryWords.savedItForLater,
+  parked: () => actionsHistoryWords.parkedIt,
+  size: (d) => (d.size === undefined || d.size === 'auto' ? actionsHistoryWords.setItsSizeBackTo : actionsHistoryWords.setItsSizeTo(SIZE_WORD[d.size])),
+  moved: (d) => (d.later ? actionsHistoryWords.movedItToLater : actionsHistoryWords.movedItToAnotherContainer),
+  pinned: () => actionsHistoryWords.placedIt,
+  reset: () => actionsHistoryWords.resetItsPlace,
+  proposed: (d) => actionsHistoryWords.proposed(d.mark),
+  'proposal-answered': (d) => (d.mark ? actionsHistoryWords.acceptedTheProposal(d.mark) : actionsHistoryWords.turnedDownTheProposal),
+  'app-allowed': () => actionsHistoryWords.allowedTheApp,
+  'app-stopped': () => actionsHistoryWords.stoppedTheApp,
+  removed: () => actionsHistoryWords.removedIt,
 };
 
 /** The cards a line is about, by identity: its own card, every card of a group note, the cards of the
@@ -141,7 +142,7 @@ export function historyRow(line: RowLine, d: Said, numbers: ReadonlyMap<number, 
   const agent = line.by === 'agent' && line.agent !== undefined ? labels?.get(line.agent) ?? line.agent : undefined;
   return {
     seq: line.seq, at: line.at, who: line.by, ...(agent !== undefined && { agent }), kind: d.kind,
-    words: `${line.by === 'person' ? 'You' : 'Agent'} ${SAY[d.kind](d, n)}`,
+    words: `${line.by === 'person' ? actionsHistoryWords.you : actionsHistoryWords.agent} ${SAY[d.kind](d, n)}`,
     ...(n !== undefined && { note: d.note }), ...(d.kind === 'replied' && { reply: line.seq }),
   };
 }

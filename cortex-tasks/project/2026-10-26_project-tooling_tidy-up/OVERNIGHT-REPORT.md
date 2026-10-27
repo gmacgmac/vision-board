@@ -13,7 +13,8 @@
 | 2 | ARCH_01 | Done (Run 2, after D-059) | 818c502 · `tidy/wave-2` | 1620 + 10 unit, check 0 errors, gen current, verify ok (18 warnings), 658 page specs passed |
 | 3 | ARCH_02, UI_01, ARCH_04 | Done, with the gate fixes (tokens applied, Base gallery entry, docs) | fe64b9c · `tidy/wave-3` | 1690 + 10 unit, check 0 errors, gen current, verify ok (19 warnings), 664 page specs passed; only gallery-{light,dark} changed (new Base section, appended last, every old row identical) |
 | 4 | ARCH_03, ENGINE_01 | Done, with the gate fixes (board chip, aria ids per mount, docs) | 80a3a2c · `tidy/wave-4` | Combined tree: 1698 + 10 unit, check 0 errors, gen current, verify ok (19 warnings); after the gate fixes 1707 + 10 unit, 667 page specs passed, no baseline changed |
-| 5 | TEST_01 | Done, with the gate's docs pass and D-062 | see git log · `tidy/wave-5` | 1710 + 10 unit (1 todo: the lanes sample), check 0 errors, gen current, verify ok (13 warnings, was 19); 667 page specs passed on 3 workers in 6.4 min (was 16.1 on 1), no screenshot changed. Two timing tests ran slow while the page suite ran beside them; all 10 pass alone |
+| 5 | TEST_01 | Done, with the gate's docs pass and D-062 | a9bb4b3 · `tidy/wave-5` | 1710 + 10 unit (1 todo: the lanes sample), check 0 errors, gen current, verify ok (13 warnings, was 19); 667 page specs passed on 3 workers in 6.4 min (was 16.1 on 1), no screenshot changed. Two timing tests ran slow while the page suite ran beside them; all 10 pass alone |
+| 6 | ARCH_05 (Runs 1 and 2) | Done, with D-063 and point 290 | see git log · `tidy/wave-6` | 1723 + 10 unit (timing 10/10 once nclite's suite finished), check 0 errors, gen current, verify ok (13 warnings); 667 page specs passed on 5 workers in 6.2 min under load 35; only app-cards and chat {light,dark} changed, by one gallery text line |
 
 ## Decisions taken (for the maintainer's review)
 
@@ -58,6 +59,19 @@
   `VB_TEST_WORKERS`, per-worker ports, tasks running at once 100 ports apart.
 - **The gallery's "Lanes mode" sample is wrong, not the rule**: two of its cards name no lane. A
   lanes-mode card names its lane; ARCH_05 gives them "Now" and "Next" (that gallery section may move).
+
+- **Test time, from the maintainer (points 287–289, "proceed")**: the page suite defaults to 5 workers
+  (4.9 min measured, against 6.4 on 3); a task runs only the page specs for what it changed, and the
+  full suite runs once per wave, at the gate (TASK-STATUS rule 12; ARCH_05 told mid-run); tracker M9,
+  a quick check that picks the specs for what changed. The project instructions' Tests line says 5. Both edits to that line (TEST_01's ports and fresh boards, and the 5 workers) **approved by the maintainer** (2026-10-27); the file is now v0.4.
+
+- **D-063, words homes** (ARCH_05): every sentence in a `words/` folder of the part that sends it,
+  keyed `board.<area>.<name>`; the board's inside `board/`. 756 + 293 sentences moved, no wording changed.
+- **Project instructions, point 290 approved by the maintainer**: `words.md` in Sources of truth and a
+  Sentences rule under How to work.
+- **A sentence both the page and `#actions` say** ("Allow", "Send to agent") stays in both for now:
+  sharing it means `#actions` exporting words the page imports; worth doing when the plugin's one words
+  file is built from the homes (nclite).
 
 ## Requests routed
 
@@ -104,6 +118,15 @@
 - TEST_01: `--shard` puts every test in shard 1 unless run with `--project=chromium`.
 - The orchestrator's slip: one gate command of mine briefly made an empty `temp-rows.txt` in the main
   checkout (a stray `cat`); removed within minutes, nothing else touched there.
+
+## Caught beyond the brief (Wave 6)
+
+- ARCH_05: the board's words had to live inside `board/` (in `src/words/` verify failed 28 host rules).
+- ARCH_05: three imports had landed between a JSDoc comment and its declaration; fixed in Run 2.
+- ARCH_05 ran the full suite twice, the second after the new rule reached it.
+- Timing and budget tests are sensitive to load: with nclite's test suite running beside them (load
+  average 22), server start took 1.8–2.7 s (budget 1 s) and the 1,200-link layout 1.0–1.8 s (budget
+  100 ms); alone they pass. The gate reruns them on a quiet machine.
 
 ## To look at by eye (light and dark)
 

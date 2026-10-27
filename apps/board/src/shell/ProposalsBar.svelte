@@ -10,6 +10,7 @@
      the proposals in `news`: those that arrived in the page's latest batch (board/attention.ts).
      Off while a past version shows: the page passes no rows. -->
 <script lang="ts">
+  import * as shellProposalsWords from './words/shell-proposals.ts';
   import { tick } from 'svelte';
   import type { ProposalRow } from '#actions';
   import { acceptAllPlan } from '#actions';
@@ -32,7 +33,7 @@
   const onBoard = () => placement === 'board';
   const words = $derived(barWords(rows));
   const ready = $derived(acceptAllPlan(rows).apply.length);
-  const announce = $derived(rows.filter((r) => news.includes(r.seq)).map((r) => `${r.agent ?? 'The agent'} proposes: ${r.reason}, on item ${r.n}`).join('. '));
+  const announce = $derived(rows.filter((r) => news.includes(r.seq)).map((r) => shellProposalsWords.proposesOnItem(r.agent ?? shellProposalsWords.theAgent, r.reason, r.n)).join('. '));
   const title = $derived(`${placement}-proposals-title`);
 
   const start = () => (onBoard() ? kept(HIDDEN_KEY) === '1' : collapsed);
@@ -60,7 +61,7 @@
 <section class="vb-proposals" data-placement={placement} data-hidden={hidden || undefined}
   aria-labelledby={hidden ? undefined : title} aria-label={hidden ? words.count : undefined} onkeydown={onkey}>
   {#if hidden}
-    <button type="button" class="vb-proposals-pill" aria-label="{words.count}, show the notice" title="Show the proposals notice"
+    <button type="button" class="vb-proposals-pill" aria-label={shellProposalsWords.showTheNotice(words.count)} title={shellProposalsWords.showTheProposalsNotice}
       bind:this={pill} onclick={() => show(true)}><span class="vb-proposals-n">{words.n}</span></button>
   {:else}
     <div class="vb-proposals-head">
@@ -68,12 +69,12 @@
         <h2 class="vb-proposals-title" id={title}><span class="vb-proposals-n">{words.n}</span> {words.noun}</h2>
         {#if words.stale}<p class="vb-proposals-stale">· {words.stale}</p>{/if}
       </div>
-      <button type="button" class="vb-proposals-hide" aria-label="Hide the proposals notice" title="Hide · Esc"
+      <button type="button" class="vb-proposals-hide" aria-label={shellProposalsWords.hideTheProposalsNotice} title={shellProposalsWords.hideEsc}
         onclick={() => show(false)}><span class="vb-proposals-chevron" aria-hidden="true"></span></button>
     </div>
-    <button type="button" class="vb-btn vb-btn-small" bind:this={review} onclick={onreview}>Review</button>
+    <button type="button" class="vb-btn vb-btn-small" bind:this={review} onclick={onreview}>{shellProposalsWords.review}</button>
     {#if ready}
-      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" onclick={onacceptall}>Accept all ({ready})</button>
+      <button type="button" class="vb-btn vb-btn-small vb-btn-primary" onclick={onacceptall}>{shellProposalsWords.acceptAll(ready)}</button>
     {/if}
   {/if}
 </section>

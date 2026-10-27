@@ -21,6 +21,7 @@ import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '#ac
 import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';
+import * as serverFoldersWords from './words/server-folders.ts';
 
 export const DATA_DIR = '.visionboard';
 export const LEDGER_FILE = 'ledger.jsonl';
@@ -95,8 +96,8 @@ function stamp(input: unknown, caller: Caller, seq: number, ix: LedgerIndex): Re
 const wrongCaller = (e: Rec): PointerError => ({
   pointer: '',
   detail: e.by === 'agent'
-    ? 'only the person can do this, on the board; send a propose or reply item instead'
-    : `only an agent writes a ${String(e.type)} event`,
+    ? serverFoldersWords.onlyThePersonCanDo
+    : serverFoldersWords.onlyAnAgentWritesA(String(e.type)),
 });
 
 /** Every problem with appending `e` now: the stored-line schema, then the hand shape rules, then the
@@ -104,10 +105,10 @@ const wrongCaller = (e: Rec): PointerError => ({
  * never written there, api.md 136), or on a locked one, which throws `locked` (423, api.md 139), then
  * an act's action rules, so the person reads their plain words first (api.md 93), then the context. */
 function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: string): PointerError[] {
-  if (!isRec(input)) return [{ pointer: '', detail: 'the event must be an object' }];
+  if (!isRec(input)) return [{ pointer: '', detail: serverFoldersWords.theEventMustBeAn }];
   const hand = (list: string[]) => list.map((t) => pointerError(t, e));
   if (input.type === 'node' && Number.isInteger(input.n) && !ix.nodes.has(input.n as number))
-    return hand([`n: unknown node ${String(input.n)}; leave n out to create a node`]);
+    return hand([serverFoldersWords.nUnknownNodeLeaveN(String(input.n))]);
   const schema = ledgerLineProblems(JSON.stringify(e));
   if (schema.length) return schema.some((p) => p.pointer === '/by') ? [wrongCaller(e)] : schema;
   const shape = eventProblems(e);
@@ -198,7 +199,7 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       const e = stamp(input, caller, ix.seq + 1, ix);
       const errors = check(input, e, ix, s, opts.board);
       if (errors.length) {
-        throw problem('invalid', 'The event does not fit the ledger. Fix the fields listed in errors and send it again.', { errors });
+        throw problem('invalid', serverFoldersWords.theEventDoesNotFit, { errors });
       }
       const event = fromLine(e);
       const line = `${torn ? '\n' : ''}${JSON.stringify(e)}\n`;

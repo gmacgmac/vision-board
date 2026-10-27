@@ -5,6 +5,8 @@
 // cards) and the words the live region announces (ruling 9). `keep` drops ids that left the board,
 // so the selection survives a redraw. No DOM: it is unit-tested under plain Node.
 
+import * as cardsWords from './words/cards.ts';
+
 /** `only`: these alone. `add`, `remove`: one way. `toggle`: each id flips. */
 export type SelectMode = 'only' | 'add' | 'remove' | 'toggle';
 
@@ -30,7 +32,7 @@ export interface Selection {
 }
 
 export const selectionText = (count: number): string =>
-  count === 0 ? 'Selection cleared' : `${count} card${count === 1 ? '' : 's'} selected`;
+  count === 0 ? cardsWords.selectionCleared : cardsWords.cardSelected(count);
 
 export function createSelection(): Selection {
   const ids = new Set<string>();

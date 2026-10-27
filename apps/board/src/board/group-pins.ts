@@ -12,6 +12,7 @@ import type { BoardState } from '#actions';
 import type { BoardLayout } from '#layout';
 import type { GroupMarker } from '#ui';
 import { groupAnchors, groupMarkers, groupPinAt, pauseControls } from '#ui';
+import * as notesWords from './words/notes.ts';
 
 /** The pin of the group whose latest note is `seq`: what a note bubble opened from it points back at. */
 export const groupPinOf = (seq: number): string => `.vb-group-pin[data-group-note="${seq}"]`;
@@ -39,7 +40,7 @@ export function createGroupPins(d: GroupPinDeps): GroupPins {
   const layer = document.createElement('div');
   layer.className = 'vb-group-notes';
   layer.setAttribute('role', 'group');
-  layer.setAttribute('aria-label', 'Notes on groups of cards');
+  layer.setAttribute('aria-label', notesWords.notesOnGroupsOfCards);
   d.world.append(layer);
   const pins = new Map<string, Pin>();
   /** What the last draw was drawn from. */

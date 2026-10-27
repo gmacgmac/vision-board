@@ -99,7 +99,7 @@ off on the server; `createBoardServer({ appLimits })` lets a test shorten `APP_L
 wires each app card's frame (loaded once on screen, then kept and frozen when off screen or zoomed out, at most 8 live, D-050; its state saved per card; tool calls
 through `io.ts` `callAppTool`; Esc back to the card; theme changes), and Allow and Stop app through
 the one sender; `src/board/app-state.ts` holds the one copy of `list_apps`' answer;
-`src/board/app-words.ts` says what the person reads around them (components.md § App card). This
+`src/board/words/app-cards.ts` says what the person reads around them (components.md § App card; `tests/words-app-cards.test.ts`). This
 repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
 (`tests/repo-example-app.test.ts` keeps it equal to the skill's).
 
@@ -118,8 +118,8 @@ drawn from `#format/gallery.ledger.jsonl` (`packages/format/fixtures/gallery.led
 patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from `#ui` `PATTERNS`
 (`packages/ui/src/patterns.ts`, the patterns' `pattern.json` files); a pattern needs a sample function in `src/gallery/main.ts` or the page shows
 a gap and the page test fails. Open it at `/gallery.html`. Page tests (`npm run test:pages`, D-025,
-in `tests/pages/`) run the board and the gallery in Chromium on 3 workers (`VB_TEST_WORKERS` for
-more). Each worker starts its own boards (the roadmap fixture, a generated 1,000-card ledger, an empty
+in `tests/pages/`) run the board and the gallery in Chromium on 5 workers (`VB_TEST_WORKERS` to
+change). Each worker starts its own boards (the roadmap fixture, a generated 1,000-card ledger, an empty
 project) on its own block of ports, `VB_TEST_PORT` (4468) + 10 × (slot + 1), fresh for every spec
 file (`tests/pages/ports.ts`, `servers.ts`). The 1,000-card ledger is `perfLedger` from
 `#format/testing`. The performance budgets (`perf.spec.ts`) run last and alone, in the `budgets`

@@ -4,10 +4,11 @@
 // (a JSON value within `APP_LIMITS.stateBytes`) say. No DOM; app-frame-core.ts answers with it.
 import type { AppStateValue } from '#format';
 import { appStateBytes, appStateProblem, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
+import * as appFrameWords from '../words/app-frame.ts';
 
 /** What a refused save says when the page could not keep the value; over the limit it says
  * `appStateProblem`'s words. `data.problem` carries the code. */
-export const SAVE_WORDS = "The board didn't save the panel's state.";
+export const SAVE_WORDS = appFrameWords.theBoardDidnTSave;
 
 /** A save's params checked: the value as JSON keeps it, or the error to answer with. */
 export type SaveCheck =
@@ -17,7 +18,7 @@ export type SaveCheck =
 export function checkSave(params: Record<string, unknown>): SaveCheck {
   const keys = Object.keys(params);
   if (keys.length !== 1 || keys[0] !== 'state') {
-    return { error: { code: PANEL_ERRORS.invalidParams, message: `${PANEL_SAVE_STATE} takes params { state } and nothing else.` } };
+    return { error: { code: PANEL_ERRORS.invalidParams, message: appFrameWords.takesParamsStateAndNothing(PANEL_SAVE_STATE) } };
   }
   const problem = appStateProblem(params.state);
   if (problem && appStateBytes(params.state) === undefined) return { error: { code: PANEL_ERRORS.invalidParams, message: problem } };

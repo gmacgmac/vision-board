@@ -14,9 +14,11 @@ import type { AppStatus } from './state.ts';
 import { appState } from './state.ts';
 import type { AppLimits } from './supervisor.ts';
 import { appInvalid, createSupervisor } from './supervisor.ts';
+import * as appsHostWords from '../words/apps-host.ts';
+import * as serverCommonWords from '../words/server-common.ts';
 
 /** What the routes say when app cards are off. */
-export const APPS_OFF = 'App cards are off on this board server (the appCards flag).';
+export const APPS_OFF = appsHostWords.appCardsAreOffOn;
 
 export interface AppHostOptions {
   /** The open folder (its real path) and its ledger, for what the person allowed. */
@@ -65,12 +67,12 @@ export function createAppHost({ dir, ledger, flags, limits }: AppHostOptions): A
       if (info.state === 'invalid') throw appInvalid(id, info.problems);
       if (info.state === 'needs-approval') {
         throw problem('needs-approval', info.changed
-          ? `The code of the app "${id}" changed since the person allowed it. Press Allow on its card again.`
-          : `The person has not allowed the app "${id}" yet. Press Allow on its card first.`);
+          ? appsHostWords.theCodeOfTheApp(id)
+          : appsHostWords.thePersonHasNotAllowed(id));
       }
-      if (info.state === 'broken') throw problem('app-failed', `The app "${id}" crashed too often, so the board stopped running its tools. It runs again once its code changes.`);
+      if (info.state === 'broken') throw problem('app-failed', serverCommonWords.theAppCrashedTooOften(id));
       const tools = folder?.tools;
-      if (!tools || !info.hash) throw problem('invalid', `The app "${id}" has a panel only: it has no tools to call.`, { errors: [{ pointer: '/tool', detail: 'this app has no tools' }] });
+      if (!tools || !info.hash) throw problem('invalid', appsHostWords.theAppHasAPanel(id), { errors: [{ pointer: '/tool', detail: appsHostWords.thisAppHasNoTools }] });
       const spec = { id, hash: info.hash, dir: folder.dir, file: tools.file, fileName: tools.name, env: () => readEnv(dir(), folder.manifest?.env ?? []) };
       return runs.call(spec, tool, args, signal);
     },

@@ -11,9 +11,10 @@ import { boardState } from './board-state.ts';
 import type { LedgerState } from './fold.ts';
 import { replyScope } from './pending.ts';
 import { joinReply, replyLines } from './reply.ts';
+import * as actionsMessageWords from './words/actions-message.ts';
 
-export const ROUND_HEAD = 'The person updated the board:';
-export const SELECTED_HEAD = 'The person selected these cards:';
+export const ROUND_HEAD = actionsMessageWords.thePersonUpdatedTheBoard;
+export const SELECTED_HEAD = actionsMessageWords.thePersonSelectedTheseCards;
 
 /** A round: its text, how many answer lines it has, and the `seq` of the notes those lines carry. */
 export interface Round { text: string; count: number; notes: ReadonlySet<number> }
@@ -24,7 +25,7 @@ export function roundOf(s: LedgerState, board: string, since: number, agent?: st
   const scope = replyScope(s, board, since, agent);
   if (scope.cards.size === 0 && scope.regions.size === 0) return undefined;
   const r = replyLines(boardView(s, board), boardState(s, board), scope);
-  const head = `These are the person's answers up to head ${s.seq}. To read anything newer, call check_responses on board "${board}" with after ${s.seq}.`;
+  const head = actionsMessageWords.theseAreThePersonS(s.seq, board, s.seq);
   return { text: [ROUND_HEAD, joinReply(r), head].join('\n'), count: r.lines.length, notes: new Set(r.notes) };
 }
 
@@ -33,7 +34,7 @@ export interface SelectedCard { n: number; title: string }
 
 /** The selection block: the heading, then one line per card in the order selected; '' with none. */
 export const selectionText = (cards: readonly SelectedCard[]): string =>
-  (cards.length ? [SELECTED_HEAD, ...cards.map((c) => `- Card ${c.n}: ${c.title}`)].join('\n') : '');
+  (cards.length ? [SELECTED_HEAD, ...cards.map((c) => actionsMessageWords.card(c.n, c.title))].join('\n') : '');
 
 /** Everything the message carries from the board, its blocks apart by a blank line: the selection,
  * then `attached` (notes an older client still names, chat-prompt.ts), then the round. */

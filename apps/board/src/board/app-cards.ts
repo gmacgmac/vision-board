@@ -28,7 +28,7 @@ import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } f
 import type { OpenMenu } from '#ui';
 import { appView, openMenu } from '#ui';
 import { createAppStates } from './app-state.ts';
-import { appAsk, appDone, retryDone } from './app-words.ts';
+import { appAsk, appDone, retryDone } from './words/app-cards.ts';
 import type { ActFields, AppCallRefusal, Io } from './io.ts';
 import type { PanelKey } from './panel-states.ts';
 import { createPanelStates } from './panel-states.ts';

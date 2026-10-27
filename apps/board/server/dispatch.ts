@@ -18,6 +18,7 @@ import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import type { Project } from './project.ts';
 import { SPECS } from './spec.ts';
+import * as httpWords from './words/http.ts';
 
 /** What the server holds for every request: the person's token, the open folder (project.ts),
  * and the build in watch mode. */
@@ -58,10 +59,10 @@ export async function dispatch(
 ): Promise<void> {
   const method = req.method ?? 'GET';
   const match = matchRoute(method, url.pathname);
-  if (!match) throw problem('not-found', 'No operation has this path. The operations are in openapi.json; start with list_boards (GET /api/boards).');
+  if (!match) throw problem('not-found', httpWords.noOperationHasThisPath);
   if ('allow' in match) {
     const allow = match.allow.join(', ');
-    throw problem('method-not-allowed', `This path answers ${allow} only.`, { headers: { Allow: allow } });
+    throw problem('method-not-allowed', httpWords.thisPathAnswersOnly(allow), { headers: { Allow: allow } });
   }
   const params = readParams(match.id, match.raw, url.searchParams);
   const open = env.project.current();

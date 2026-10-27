@@ -6,6 +6,7 @@
      is cut with "…" (styles/current-folder.css). `look` draws a state without the pointer: the
      gallery's samples only. The toolbar and the gallery both draw this. -->
 <script lang="ts">
+  import * as foldersWords from './words/folders.ts';
   import ButtonIcon from './ButtonIcon.svelte';
   import { folderName, folderPath } from './folder-path.ts';
   import type { FolderInfo } from './page-io.ts';
@@ -20,6 +21,6 @@
 </script>
 
 <button type="button" {id} class="vb-chip vb-chip-btn vb-folder-chip" data-look={look} title={path}
-  aria-label="Folder {folderName(folder)}: {path}. Open another folder" aria-haspopup="dialog" {onclick}>
+  aria-label={foldersWords.folderOpenAnotherFolder(folderName(folder), path)} aria-haspopup="dialog" {onclick}>
   <ButtonIcon name="folder" /><span class="vb-folder-chip-name">{folderName(folder)}</span>
 </button>

@@ -18,8 +18,8 @@ import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
-/** Workers: VB_TEST_WORKERS, else 3 (each runs a browser and three boards; the machine's cores decide). */
-const WORKERS = Number(process.env.VB_TEST_WORKERS ?? 3);
+/** Workers: VB_TEST_WORKERS, else 5 (each runs a browser and three boards; 5 measured 4.9 min, 3 took 6.4). */
+const WORKERS = Number(process.env.VB_TEST_WORKERS ?? 5);
 const CHROME = { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } };
 const BUDGETS = 'perf.spec.ts';
 

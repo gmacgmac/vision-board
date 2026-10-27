@@ -17,6 +17,8 @@ import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { fullTime, noteTime } from './node-time.ts';
 import { HISTORY, historyBox, historyButton } from './node-history.ts';
+import * as nodeWords from '../words/node.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 // One escaper for every text run in packages/ui: the Markdown renderer's, re-exported here.
 export { esc } from '../markdown/inline.ts';
@@ -33,7 +35,7 @@ function tabs(n: ViewNode): string {
   const num = isItem(n) ? `<span class="vb-node-num" aria-hidden="true">${n.n}</span>` : '';
   const notePin = isItem(n) ? '<button type="button" class="vb-note-pin" aria-haspopup="dialog" aria-expanded="false" hidden></button>' : '';
   return `${num}<span class="vb-node-kind">${NODE_TYPES[n.kind].label}</span>`
-    + `<span class="vb-node-pin" aria-hidden="true" title="Moved by you">◆</span>${notePin}`;
+    + `<span class="vb-node-pin" aria-hidden="true" title="${nodeWords.movedByYou}">◆</span>${notePin}`;
 }
 
 /** The note thread's head (card-polish FE_02): the count on the left, as plain text, and one toggle
@@ -44,7 +46,7 @@ function tabs(n: ViewNode): string {
 function notesHead(v: NotesView): string {
   const shown = v.hidden === undefined;
   return `<div class="vb-node-notes-head"><span class="vb-node-notes-count">${esc(v.hidden ?? v.count)}</span>`
-    + `<button type="button" class="vb-node-notes-toggle" data-notes="${shown ? 'hide' : 'show'}" aria-label="${esc(v.toggle)}">${shown ? 'Hide' : 'Show'}</button></div>`;
+    + `<button type="button" class="vb-node-notes-toggle" data-notes="${shown ? 'hide' : 'show'}" aria-label="${esc(v.toggle)}">${shown ? uiCommonWords.hide : nodeWords.show}</button></div>`;
 }
 
 /** A note's or reply's time (card-polish FE_02): said once to screen readers after who wrote it, and
@@ -85,7 +87,7 @@ function replyMarkup(r: ReplyEntry, now: Date): string {
  * private mark, no review action, so `data-flag`, not `data-act`; `update()` sets aria-pressed. */
 const flagButton = (n: ViewNode): string =>
   `<button type="button" class="vb-act vb-flag" data-flag aria-pressed="false" aria-label="${esc(flagLabel(n))}"`
-  + ` title="Flag · ${FLAG_KEY}">${svgIcon(FLAG_ICON, 20, 'vb-act-icon')}</button>`;
+  + ` title="${nodeWords.flag(FLAG_KEY)}">${svgIcon(FLAG_ICON, 20, 'vb-act-icon')}</button>`;
 
 /** Kind icon, divider, state word (with the tip "Awaiting context" over it while the handover is
  * owed, FE_03), then an app card's status (`appStatus`) and its name (`appName`), then the quick actions and the flag, and at
@@ -95,7 +97,7 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   const app = isAppSlot(n, opts);
   if (!isItem(n) && !app) return '';
   const buttons = offers(n).map((a) => button(a, n)).join('') + (opts.flag && isItem(n) ? flagButton(n) : '');
-  const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="Respond">${buttons}</div>` : '';
+  const actions = buttons ? `<div class="vb-node-actions" role="toolbar" aria-label="${nodeWords.respond}">${buttons}</div>` : '';
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
     + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>`
@@ -118,11 +120,11 @@ export const appMenuId = (n: ViewNode, prefix = ''): string => `${prefix}vb-app-
 function appStatus(n: ViewNode, prefix?: string): string {
   const menu = esc(appMenuId(n, prefix));
   return '<div class="vb-app-status">'
-    + '<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" hidden>Allow</button>'
+    + '<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" hidden>' + nodeWords.allow + '</button>'
     + `<button type="button" class="vb-pop-btn vb-app-allowed" data-app-menu aria-haspopup="menu" aria-expanded="false" aria-controls="${menu}" hidden>`
-    + 'Allowed<span class="vb-app-caret" aria-hidden="true">▾</span></button>'
+    + '' + nodeWords.allowed + '<span class="vb-app-caret" aria-hidden="true">▾</span></button>'
     + `<div class="vb-menu-list vb-app-menu" id="${menu}" role="menu" hidden>`
-    + '<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-app-act="app-revoke">Stop app</button></div></div>';
+    + '<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" data-app-act="app-revoke">' + nodeWords.stopApp + '</button></div></div>';
 }
 
 /** An app card's name in its footer, the window's bar (card-polish FE_04, the appTitle flag; CSS
@@ -136,8 +138,8 @@ const appName = (n: ViewNode): string =>
 /** The stepper (FE_02 ruling 3), which takes the footer's place while a changed card is open:
  * "Update 2 of 3", Back and Next. Shown and counted by `update()`. */
 const STEP_NAV = '<div class="vb-node-stepnav" hidden><span class="vb-node-stepcount"></span>'
-  + '<button type="button" class="vb-pop-btn" data-step="back">Back</button>'
-  + '<button type="button" class="vb-pop-btn vb-pop-primary" data-step="next">Next</button></div>';
+  + '<button type="button" class="vb-pop-btn" data-step="back">' + nodeWords.back + '</button>'
+  + '<button type="button" class="vb-pop-btn vb-pop-primary" data-step="next">' + nodeWords.next + '</button></div>';
 
 /** The id of card `n`'s step section, which its "N updates" tab controls. */
 export const stepsId = (n: ViewNode, prefix = ''): string => `${prefix}vb-steps-${n.id}`;
@@ -146,11 +148,11 @@ export const stepsId = (n: ViewNode, prefix = ''): string => `${prefix}vb-steps-
  * who; the change chips; what the text gained; a link to where the change came from (`data-source`,
  * the page's chat). Past the last step, "You're up to date". */
 export function stepMarkup(v: UpdatesView): string {
-  if (!v.step) return v.done ? '<p class="vb-step-done">You\'re up to date</p>' : '';
+  if (!v.step) return v.done ? '<p class="vb-step-done">' + nodeWords.youReUpToDate + '</p>' : '';
   const { head, chips, lines, source } = v.step;
   const link = source ? `<button type="button" class="vb-step-src" data-source>${esc(source)}</button>` : '';
   const list = chips.length
-    ? `<ul class="vb-step-chips" aria-label="Changes">${chips.map((c) => `<li data-change="${c.change}">${esc(c.text)}</li>`).join('')}</ul>` : '';
+    ? `<ul class="vb-step-chips" aria-label="${nodeWords.changes}">${chips.map((c) => `<li data-change="${c.change}">${esc(c.text)}</li>`).join('')}</ul>` : '';
   // What the text gained is Markdown like the body it joins (D-023); the renderer escapes it.
   return `<p class="vb-step-head">${esc(head)}</p>${list}${lines.map((l) => `<div class="vb-step-line">${renderMarkdown(l)}</div>`).join('')}${link}`;
 }
@@ -172,7 +174,7 @@ function bottomTabs(n: ViewNode, prefix?: string): string {
     + ` aria-expanded="false" aria-controls="${esc(popoverId(p, n, prefix))}" hidden></button>`).join('')
     + `<button type="button" class="vb-node-btab" data-tab="updates" aria-expanded="false" aria-controls="${esc(stepsId(n, prefix))}" hidden></button>`
     // NEW is a label, not a button (nothing to open); the card's name says "new", so it is hidden from the tree.
-    + '<span class="vb-node-btab" data-tab="new" aria-hidden="true" hidden>NEW</span>';
+    + '<span class="vb-node-btab" data-tab="new" aria-hidden="true" hidden>' + nodeWords.newBadge + '</span>';
   const boxes = POPOVERS.map((p) =>
     `<div class="vb-tip vb-card-pop" data-pop="${p}" id="${esc(popoverId(p, n, prefix))}" role="dialog" tabindex="${p === 'handover' ? 0 : -1}"></div>`).join('');
   return `<div class="vb-node-btabs">${tabs}</div>${boxes}`;
@@ -192,7 +194,7 @@ export function proposalsMarkup(v: ProposalsView, prefix = ''): string {
       + `<p class="vb-prop-head">${esc(p.head)}</p><p class="vb-prop-what">${esc(p.what)}</p>`
       + (p.from ? `<p class="vb-prop-from">${esc(p.from)}</p>` : '')
       + (p.why ? `<p class="vb-prop-why" id="${why}">${esc(p.why)}</p>` : '')
-      + `<div class="vb-prop-acts">${btn('reject', p.reject, 'Reject')}${btn('accept', p.accept, 'Accept', off)}</div></div>`;
+      + `<div class="vb-prop-acts">${btn('reject', p.reject, nodeWords.reject2)}${btn('accept', p.accept, nodeWords.accept, off)}</div></div>`;
   }).join('');
 }
 
@@ -200,7 +202,7 @@ export function proposalsMarkup(v: ProposalsView, prefix = ''): string {
  * as headed Markdown sections, then the sources as a list. */
 export function handoverMarkup(v: HandoverView): string {
   const sources = v.sources.length
-    ? `<section class="vb-hand"><h4 class="vb-hand-head">Sources</h4><ul class="vb-hand-sources">${v.sources.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
+    ? `<section class="vb-hand"><h4 class="vb-hand-head">${nodeWords.sources}</h4><ul class="vb-hand-sources">${v.sources.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
   return v.sections.map((x) => `<section class="vb-hand"><h4 class="vb-hand-head">${esc(x.head)}</h4>`
     + `<div class="vb-hand-text">${renderMarkdown(x.text)}</div></section>`).join('') + sources;
 }
@@ -225,14 +227,14 @@ const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
  *  above the top edge on hover or keyboard focus. Labels, pressed state and the picked letter are
  *  set by `update()`. The pill is hidden at rest, so only the glyph is in the tab order. */
 function sizeControl(n: ViewNode): string {
-  const name = isItem(n) ? `card ${n.n}` : `card: ${n.title}`;
+  const name = isItem(n) ? nodeWords.card(n.n) : nodeWords.card2(n.title);
   const opts = SIZE_PICKS.map((t) =>
     `<button type="button" class="vb-size-opt" data-size-pick="${t}" aria-pressed="false">${SIZE_LETTER[t]}</button>`).join('');
-  return `<div class="vb-size" role="group" aria-label="Size of ${esc(name)}">`
+  return `<div class="vb-size" role="group" aria-label="${nodeWords.sizeOf(esc(name))}">`
     + `<button type="button" class="vb-size-trig" aria-expanded="false">${svgIcon(SIZE_ICON, 24, 'vb-size-glyph')}`
     + '<span class="vb-size-shown"></span></button>'
     + `<div class="vb-size-menu">${opts}<span class="vb-size-sep" aria-hidden="true"></span>`
-    + '<button type="button" class="vb-size-opt" data-size-pick="auto" aria-pressed="false" aria-label="Automatic size">Auto</button>'
+    + '<button type="button" class="vb-size-opt" data-size-pick="auto" aria-pressed="false" aria-label="' + nodeWords.automaticSize + '">' + nodeWords.auto + '</button>'
     + '</div></div>';
 }
 
@@ -243,7 +245,7 @@ export function appStateMarkup(v: AppCardView): string {
   if (v.frame) return '';
   const warn = v.state === 'invalid' || v.state === 'broken';
   const problems = v.problems
-    ? `<ul class="vb-app-problems" tabindex="0" aria-label="Problems">${v.problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
+    ? `<ul class="vb-app-problems" tabindex="0" aria-label="${nodeWords.problems}">${v.problems.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
   const retry = v.retry
     ? `<button type="button" class="vb-pop-btn" data-app-act="retry" aria-label="${esc(v.names.retry ?? v.retry)}">${esc(v.retry)}</button>` : '';
   return svgIcon(warn ? KIND_ICON.risk : KIND_ICON.app, 24, 'vb-app-icon')

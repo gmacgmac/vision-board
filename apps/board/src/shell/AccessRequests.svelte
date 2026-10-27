@@ -7,6 +7,9 @@
      `grant.requested` condition). The strip itself shows only while a request is open. The gallery
      passes `refusing` to draw a row with its note open. -->
 <script lang="ts">
+  import * as accessWords from '../board/words/access.ts';
+  import * as shellAccessWords from './words/shell-access.ts';
+  import * as shellCommonWords from './words/shell-common.ts';
   import { tick } from 'svelte';
   import type { AccessRequestRow } from './shell.svelte.ts';
   import { askWords } from '../board/access.ts';
@@ -39,7 +42,7 @@
     return () => root.removeProperty('--vb-strip-h');
   });
 
-  const heading = $derived(requests.length === 1 ? 'An agent asks for access' : `${requests.length} agents ask for access`);
+  const heading = $derived(shellAccessWords.askForAccess(requests.length));
   const idOf = (seq: number, part: string) => `${placement}-request-${seq}-${part}`;
 
   /** After an answer the row is gone: focus the next row's Allow, else the board. */
@@ -88,23 +91,23 @@
       <li class="vb-access-row" data-request={r.seq} aria-busy={busy === r.seq ? 'true' : undefined}>
         <p class="vb-access-text">
           <span class="vb-access-ask"><b>{r.label}</b>
-            {#if r.container === undefined}wants to draw on <b>this board</b>{:else}asks to write in <b>{r.container}</b>{/if}</span>
+            {#if r.container === undefined}{shellAccessWords.wantsToDrawOn} <b>{shellAccessWords.thisBoard}</b>{:else}{shellAccessWords.asksToWriteIn2} <b>{r.container}</b>{/if}</span>
           <span class="vb-access-reason">{r.reason}</span>
         </p>
         {#if open === r.seq}
           <form class="vb-access-actions" onsubmit={(e) => { e.preventDefault(); void answer(r, 'deny', note.trim() || undefined); }}>
-            <label class="vb-visually-hidden" for={idOf(r.seq, 'note')}>Note for {r.label} (optional)</label>
+            <label class="vb-visually-hidden" for={idOf(r.seq, 'note')}>{shellAccessWords.noteForOptional(r.label)}</label>
             <input class="vb-access-note" id={idOf(r.seq, 'note')} type="text" maxlength="4000" autocomplete="off"
-              placeholder="Optional: why not?" bind:value={note} onkeydown={(e) => noteKey(e, r)} />
-            <button type="submit" class="vb-btn vb-btn-small" aria-label="Refuse {r.label}">Refuse</button>
-            <button type="button" class="vb-btn vb-btn-small" onclick={() => cancelRefuse(r)}>Cancel</button>
+              placeholder={shellAccessWords.optionalWhyNot} bind:value={note} onkeydown={(e) => noteKey(e, r)} />
+            <button type="submit" class="vb-btn vb-btn-small" aria-label={shellAccessWords.refuse(r.label)}>{shellAccessWords.refuse2}</button>
+            <button type="button" class="vb-btn vb-btn-small" onclick={() => cancelRefuse(r)}>{shellCommonWords.cancel}</button>
           </form>
         {:else}
           <div class="vb-access-actions">
             <button type="button" class="vb-btn vb-btn-small vb-btn-primary vb-access-allow"
-              aria-label="Allow {r.label} to {r.container === undefined ? 'draw on this board' : `write in ${r.container}`}" onclick={() => answer(r, 'grant')}>Allow</button>
+              aria-label={shellAccessWords.allowTo(r.label, r.container === undefined ? accessWords.drawOnThisBoard : accessWords.writeIn(r.container))} onclick={() => answer(r, 'grant')}>{shellAccessWords.allow}</button>
             <button type="button" class="vb-btn vb-btn-small" id={idOf(r.seq, 'refuse')}
-              aria-label="Refuse {r.label}" onclick={() => startRefuse(r)}>Refuse</button>
+              aria-label={shellAccessWords.refuse(r.label)} onclick={() => startRefuse(r)}>{shellAccessWords.refuse2}</button>
           </div>
         {/if}
       </li>

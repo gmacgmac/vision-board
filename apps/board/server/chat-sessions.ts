@@ -24,6 +24,7 @@ import { createLiveSession, hasToken, newRunToken, QUEUED, QUEUED_WORDS } from '
 import type { Ledger } from './ledger.ts';
 import { problem } from './problem.ts';
 import { isLocked } from './visibility.ts';
+import * as serverChatWords from './words/server-chat.ts';
 
 /** One adapter maker per CLI the server can run. */
 export type ChatAdapters = Partial<Record<ChatSession['agent'], () => AgentAdapter>>;
@@ -75,7 +76,7 @@ export interface Chats {
 }
 
 const notFound = (id: string) =>
-  problem('not-found', `There is no chat session "${id}" on this server. Call list_chats to see the board's sessions.`);
+  problem('not-found', serverChatWords.thereIsNoChatSession(id));
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
@@ -125,16 +126,16 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
 
   async function load(record: StoredSession): Promise<LiveSession> {
     const make = adapters[record.agent];
-    if (!make) throw problem('conflict', `${agentName(record.agent)} is not available on this server, so this session cannot run.`);
+    if (!make) throw problem('conflict', serverChatWords.isNotAvailableOnThis(agentName(record.agent)));
     const why = blocked[record.agent];
-    if (why) throw problem('conflict', `${agentName(record.agent)} could not be started: ${why}`);
+    if (why) throw problem('conflict', serverChatWords.couldNotBeStarted(agentName(record.agent), why));
     const token = newRunToken();
     try {
       const extra = { sessionId: record.session, ...(record.model && { model: record.model }) };
       const started = await make().start(options(rekey(agents(), record.agentId), token, extra));
       return keep(record, started, token, true);
     } catch (err) {
-      throw problem('conflict', `${agentName(record.agent)} could not be started: ${reason(err)}`);
+      throw problem('conflict', serverChatWords.couldNotBeStarted(agentName(record.agent), reason(err)));
     }
   }
 
@@ -192,12 +193,12 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
     async start(board, agent, model) {
       const make = adapters[agent];
       if (!make) {
-        throw problem('invalid', `${agentName(agent)} is not available on this server.`, {
-          errors: [{ pointer: '/agent', detail: `${agent} cannot be started here; use one of: ${Object.keys(adapters).join(', ')}` }],
+        throw problem('invalid', serverChatWords.isNotAvailableOnThisServer(agentName(agent)), {
+          errors: [{ pointer: '/agent', detail: serverChatWords.cannotBeStartedHereUse(agent, Object.keys(adapters).join(', ')) }],
         });
       }
       const why = blocked[agent];
-      if (why) throw problem('invalid', `${agentName(agent)} could not be started.`, { errors: [{ pointer: '/agent', detail: why }] });
+      if (why) throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: why }] });
       const identity = newIdentity(ledger, agents());
       const token = newRunToken();
       let started;
@@ -206,7 +207,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       try {
         started = await make().start(options(identity.secret, token, model ? { model } : {}));
       } catch (err) {
-        throw problem('invalid', `${agentName(agent)} could not be started.`, { errors: [{ pointer: '/agent', detail: reason(err) }] });
+        throw problem('invalid', serverChatWords.couldNotBeStarted2(agentName(agent)), { errors: [{ pointer: '/agent', detail: reason(err) }] });
       } finally {
         const left = starts.get(at)! - 1;
         if (left > 0) starts.set(at, left); else starts.delete(at);

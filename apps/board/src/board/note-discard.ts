@@ -4,9 +4,10 @@
 // confirm dialog; OK discards, Cancel puts focus back in the text. Unchanged text never asks.
 import type { VbNoteBubbleElement } from '#ui';
 import { NOTE_DISCARD_EVENT } from '#ui';
+import * as confirmWords from './words/confirm.ts';
 
 /** The confirm dialog's words, as `askConfirm(heading, body, confirm)` takes them. */
-export const DISCARD_ASK = ['Discard your changes?', 'Changes will be lost.', 'Discard'] as const;
+export const DISCARD_ASK = [confirmWords.discardYourChanges, confirmWords.changesWillBeLost, confirmWords.discard] as const;
 
 /** Asks the person; true to discard. */
 export type AskDiscard = () => Promise<boolean>;

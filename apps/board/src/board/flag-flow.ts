@@ -10,6 +10,7 @@
 import type { View } from '#format';
 import type { BoardState } from '#actions';
 import type { ActFields } from './io.ts';
+import * as cardsWords from './words/cards.ts';
 
 /** The act that turns card `id`'s flag over: `flag` when it has none, `unflag` when it has one. */
 export const flagAct = (id: string, flagged: boolean): ActFields => ({ action: flagged ? 'unflag' : 'flag', n: Number(id) });
@@ -28,7 +29,7 @@ export function nextFlagged(ids: readonly string[], from: string | null): string
 }
 
 /** The chip's words: "3 flagged", and what a press does. */
-export const flaggedWords = (k: number) => ({ count: String(k), word: 'flagged', title: `${k} flagged · go to the next one` });
+export const flaggedWords = (k: number) => ({ count: String(k), word: 'flagged', title: cardsWords.flaggedGoToTheNext(k) });
 
 export interface FlagDeps {
   /** The cardFlag flag: off, no button, no key, no chip. */
@@ -66,7 +67,7 @@ export function createFlagFlow(d: FlagDeps): FlagFlow {
       const state = d.state();
       if (!d.on || !state || !d.view()?.nodes.some((n) => n.id === id && n.n !== undefined)) return;
       const flagged = state.flags.has(id);
-      if (await d.record(flagAct(id, flagged))) d.toast(`${id} ${flagged ? 'flag removed' : 'flagged'}`);
+      if (await d.record(flagAct(id, flagged))) d.toast(`${id} ${flagged ? cardsWords.flagRemoved : 'flagged'}`);
     },
     ids,
     next() {
@@ -74,7 +75,7 @@ export function createFlagFlow(d: FlagDeps): FlagFlow {
       const to = nextFlagged(shown, d.focused() ?? last);
       last = to ?? null;
       if (to) d.focusCard(to);
-      else if (ids().length) d.toast('The flagged cards are hidden: turn off Hide answered to see them.');
+      else if (ids().length) d.toast(cardsWords.theFlaggedCardsAreHidden);
     },
   };
 }

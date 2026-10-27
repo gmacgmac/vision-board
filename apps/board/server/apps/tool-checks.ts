@@ -9,6 +9,7 @@ import type { SchemaProblem } from '../schema.ts';
 import { foreignSchemas, schemaProblems } from '../schema.ts';
 import type { Answer } from './child.ts';
 import { fieldWords, MANIFEST_ID } from './manifest.ts';
+import * as appsSupervisorWords from '../words/apps-supervisor.ts';
 
 const TOOL_ID = `${MANIFEST_ID}#/$defs/tool`;
 
@@ -24,14 +25,14 @@ export function checkTools(infos: unknown[], file: string): Map<string, CheckedT
   const tools = new Map<string, CheckedTool>();
   const compile = foreignSchemas();
   infos.forEach((info, i) => {
-    const label = isRec(info) && typeof info.name === 'string' ? `"${info.name}"` : `number ${i + 1}`;
+    const label = isRec(info) && typeof info.name === 'string' ? `"${info.name}"` : appsSupervisorWords.number(i + 1);
     const shape = schemaProblems(TOOL_ID, info);
-    if (shape.length) return void problems.push({ file, detail: `Tool ${label}: ${shape.map(fieldWords).join('; ')}.` });
+    if (shape.length) return void problems.push({ file, detail: appsSupervisorWords.tool(label, shape.map(fieldWords).join('; ')) });
     const tool = info as AppToolInfo;
     try {
       tools.set(tool.name, { info: tool, input: compile(tool.inputSchema), ...(tool.outputSchema && { output: compile(tool.outputSchema) }) });
     } catch (err) {
-      problems.push({ file, detail: `Tool ${label}: a schema of it can't be used: ${err instanceof Error ? err.message : String(err)}.` });
+      problems.push({ file, detail: appsSupervisorWords.toolASchemaOfIt(label, err instanceof Error ? err.message : String(err)) });
     }
   });
   return problems.length ? problems : tools;
@@ -42,26 +43,26 @@ export function checkTools(infos: unknown[], file: string): Map<string, CheckedT
 export function checkInput(app: string, tool: CheckedTool, input: unknown): void {
   const faults = tool.input(input);
   if (!faults.length) return;
-  throw problem('invalid', `The arguments don't fit the tool "${tool.info.name}" of the app "${app}": ${said(faults)}.`, {
+  throw problem('invalid', appsSupervisorWords.theArgumentsDonTFit(tool.info.name, app, said(faults)), {
     errors: faults.map((p) => ({ pointer: `/arguments${p.pointer}`, detail: p.detail })),
   });
 }
 
 /** A tool's answer as MCP's tool result; a problem when the answer is refused. */
 export function resultOf(app: string, tool: CheckedTool, answer: Exclude<Answer, { ended: unknown }>, outputBytes: number): AppToolResult {
-  const name = `The tool "${tool.info.name}" of the app "${app}"`;
-  const tooLarge = () => problem('too-large', `${name} answered more than ${sizeWords(outputBytes)}. Answer less.`);
+  const name = appsSupervisorWords.theToolOfTheApp2(tool.info.name, app);
+  const tooLarge = () => problem('too-large', appsSupervisorWords.answeredMoreThanAnswerLess(name, sizeWords(outputBytes)));
   if ('error' in answer) return { content: [{ type: 'text', text: answer.error }], isError: true };
   if ('refused' in answer) {
     if (answer.refused === 'too-large') throw tooLarge();
-    throw problem('app-failed', `${name} answered something that is not JSON. Answer an object or text.`);
+    throw problem('app-failed', appsSupervisorWords.answeredSomethingThatIsNot(name));
   }
   const { result } = answer;
   const text = typeof result === 'string' ? result : JSON.stringify(result);
   if (text !== undefined && Buffer.byteLength(text) > outputBytes) throw tooLarge();
   const off = tool.output?.(result) ?? [];
-  if (off.length) throw problem('app-failed', `${name} answered something its outputSchema refuses: ${said(off)}. Fix the tool.`);
+  if (off.length) throw problem('app-failed', appsSupervisorWords.answeredSomethingItsOutputSchemaRefuses(name, said(off)));
   if (typeof result === 'string') return { content: [{ type: 'text', text: result }], isError: false };
   if (isRec(result)) return { content: [{ type: 'text', text: text! }], structuredContent: result, isError: false };
-  throw problem('app-failed', `${name} answered ${result === undefined ? 'nothing' : 'something that is neither an object nor text'}. Answer an object or text.`);
+  throw problem('app-failed', appsSupervisorWords.answeredAnswerAnObjectOr(name, result === undefined));
 }

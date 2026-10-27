@@ -6,6 +6,7 @@ import type { AccessHolder, ArchivedBoard, BoardListItem, BoardMark, BoardRun, F
 import type { AccessRequestRow } from './access.ts';
 import type { ContainerRow } from './finder.ts';
 import type { GoBox } from './go-to-card.ts';
+import * as boardWords from './words/board.ts';
 
 export interface BoardStatus {
   /** The picker's list, from the held state after every batch (boards.ts `listed`). */
@@ -75,7 +76,7 @@ export interface BoardStatus {
 
 /** The status before anything is read: what a host draws while the board boots. */
 export const initialStatus = (): BoardStatus => ({
-  boards: [], archived: [], boardId: '', noBoards: false, boardMarks: {}, title: 'Vision Board', version: null,
+  boards: [], archived: [], boardId: '', noBoards: false, boardMarks: {}, title: boardWords.visionBoard, version: null,
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, flagged: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],

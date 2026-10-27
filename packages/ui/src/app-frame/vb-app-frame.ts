@@ -13,6 +13,7 @@ import { APP_ID, APP_PANEL_PATH } from '#format';
 import type { AppBridge, AppLook } from './app-frame-core.ts';
 import { createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
+import * as uiCommonWords from '../words/ui-common.ts';
 
 export const VB_APP_FRAME_TAG = 'vb-app-frame';
 
@@ -248,7 +249,7 @@ export function defineVbAppFrame(): void {
       ph.className = 'vb-af-ph';
       ph.setAttribute('aria-hidden', 'true');
       // The icon is a fixed drawing; the title goes in as text.
-      ph.innerHTML = `${svgIcon(KIND_ICON.app, 24, 'vb-af-icon')}<span class="vb-af-title"></span><span class="vb-af-wait">Loading…</span>`;
+      ph.innerHTML = `${svgIcon(KIND_ICON.app, 24, 'vb-af-icon')}<span class="vb-af-title"></span><span class="vb-af-wait">${uiCommonWords.loading}</span>`;
       ph.querySelector('.vb-af-title')!.textContent = this.label;
       this.prepend(ph);
     }

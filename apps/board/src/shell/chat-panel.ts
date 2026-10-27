@@ -37,10 +37,10 @@ import { ApiError } from '../board/io.ts';
 import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, sendsInChat, shownPick } from './chat-rules.ts';
+import * as chatWords from './words/chat.ts';
 
-/** What the empty feed says on a board, and in a folder with no board. */
-const EMPTY = { board: 'No messages yet. Ask the agent about this board.', folder: 'No boards here yet. Ask the agent to draw one.' };
-const NEW_ASK = ['Start a new session?', 'The agent starts again with no memory of this conversation, and a turn still running stops.', 'New session'] as const;
+const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
+const NEW_ASK = [chatWords.startANewSession, chatWords.theAgentStartsAgainWith, chatWords.newSession] as const;
 const listFor = (board?: string) => (board ? listChats(board) : listFolderChats());
 
 export interface ChatPanelDeps {
@@ -221,14 +221,14 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   /** The message: null once it went or waits for the turn to end (Send then shows it waiting),
    *  else the problem, which a toast also says. */
   async function send({ text, chips: own }: ChatSendDetail): Promise<string | null> {
-    if (st.sending || st.board === null) return 'A message is already on its way.';
+    if (st.sending || st.board === null) return chatWords.aMessageIsAlreadyOn;
     st.sending = true;
     view?.feed.follow();
     const [ask, chips] = [lastAsk(st.chat), [...own, ...d.bridge.chips()]];
     try {
       // A start already under way says itself why it failed; the composer keeps the text.
       const s = st.starting ? await st.starting.catch(() => null) : st.session ?? (await start(st.pick));
-      if (!s) return 'The agent did not start.';
+      if (!s) return chatWords.theAgentDidNotStart;
       const answer = await sendChat(s.session, messageBody(text, chips));
       view?.composer.clear();
       d.bridge.sent(chips);

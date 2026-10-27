@@ -15,6 +15,8 @@ import { startChild } from './child.ts';
 import type { RunFacts } from './state.ts';
 import type { CheckedTool } from './tool-checks.ts';
 import { checkInput, checkTools, resultOf } from './tool-checks.ts';
+import * as appsSupervisorWords from '../words/apps-supervisor.ts';
+import * as serverCommonWords from '../words/server-common.ts';
 
 export type AppLimits = { [K in keyof typeof APP_LIMITS]: number };
 
@@ -37,7 +39,7 @@ const sentence = ({ file, detail }: AppProblem): string => `${file}: ${detail}${
 
 /** The problem for an app whose files need fixing. */
 export const appInvalid = (id: string, problems: readonly AppProblem[] = []): ProblemError =>
-  problem('app-invalid', `The app "${id}" has problems in its files: ${problems.slice(0, 3).map(sentence).join(' ')} Fix them and try again.`);
+  problem('app-invalid', appsSupervisorWords.theAppHasProblemsIn(id, problems.slice(0, 3).map(sentence).join(' ')));
 
 /** A process and its tools, once loaded (rejects with the problem when they don't). */
 interface Proc { child?: Child; tools: Promise<Map<string, CheckedTool>> }
@@ -57,14 +59,14 @@ interface Entry {
 
 /** What a call answers when its process ended first, by why it ended. */
 function endedProblem(why: StopReason | 'crashed', id: string, tool: string | undefined): ProblemError {
-  const doing = tool ? `it ran "${tool}"` : 'its tools loaded';
+  const doing = tool ? appsSupervisorWords.itRan(tool) : appsSupervisorWords.itsToolsLoaded;
   const words: Record<StopReason | 'crashed', string> = {
-    crashed: `The app "${id}" stopped while ${doing}. It starts again on the next call.`,
-    timeout: `The app "${id}" was stopped because another call ran too long. Try again.`,
-    changed: `The app "${id}" was stopped while ${doing}, because its code changed or was taken back. Try again once it is allowed.`,
-    invalid: `The app "${id}" was stopped because its tools don't fit their shape (list_apps says why).`,
-    idle: `The app "${id}" was stopped while ${doing}. Try again.`,
-    closed: `The board closed the app "${id}" while ${doing}. Try again.`,
+    crashed: appsSupervisorWords.theAppStoppedWhileItStarts(id, doing),
+    timeout: appsSupervisorWords.theAppWasStoppedBecause(id),
+    changed: appsSupervisorWords.theAppWasStoppedWhile(id, doing),
+    invalid: appsSupervisorWords.theAppWasStoppedBecauseIts(id),
+    idle: appsSupervisorWords.theAppWasStoppedWhileTry(id, doing),
+    closed: appsSupervisorWords.theBoardClosedTheApp(id, doing),
   };
   return problem('app-failed', words[why]);
 }
@@ -88,7 +90,7 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
   function entry(id: string, hash: string): Entry {
     const old = apps.get(id);
     if (old?.hash === hash) return old;
-    if (old) stopAll(old, 'changed', problem('app-failed', `The code of the app "${id}" changed while this call waited. Try again once it is allowed.`));
+    if (old) stopAll(old, 'changed', problem('app-failed', appsSupervisorWords.theCodeOfTheApp(id)));
     const e: Entry = { hash, running: 0, line: [], crashes: [], restartAt: 0, facts: {} };
     apps.set(id, e);
     return e;
@@ -97,7 +99,7 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
   /** A slot to run in: at once, or after the calls ahead in line; busy when the line is full. */
   async function slot(e: Entry, id: string): Promise<void> {
     if (e.running < limits.inFlight) return void e.running++;
-    if (e.line.length >= limits.queue) throw problem('app-busy', `The app "${id}" is busy with other calls. Try again in a moment.`);
+    if (e.line.length >= limits.queue) throw problem('app-busy', appsSupervisorWords.theAppIsBusyWith(id));
     await new Promise<void>((go, fail) => e.line.push({ go, fail }));
   }
 
@@ -119,8 +121,8 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
     e.crashes = [...e.crashes.filter((t) => now - t < limits.crashWindowMs), now];
     e.restartAt = now + limits.restartMs * 2 ** (e.crashes.length - 1);
     if (e.crashes.length < limits.crashes) return;
-    const last = said ? ` The last time, it said: ${said.slice(-500)}` : '';
-    e.facts.broken = { file: spec.fileName, detail: `Its tools stopped ${e.crashes.length} times within ${limits.crashWindowMs / 1000} s, so the board stopped running them.${last} Change the code to try again.` };
+    const last = said ? appsSupervisorWords.theLastTimeItSaid(said.slice(-500)) : '';
+    e.facts.broken = { file: spec.fileName, detail: appsSupervisorWords.itsToolsStoppedTimesWithin(e.crashes.length, limits.crashWindowMs / 1000, last) };
   }
 
   /** The app's process, started now (after any back-off) when it has none, and its checked tools. */
@@ -166,7 +168,7 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
       child.cancel(id);
       if (e.proc?.child === child) e.proc = undefined;
       child.stop('timeout');
-      throw problem('app-timeout', `The tool "${tool}" of the app "${spec.id}" took too long and was stopped. The next call starts the app again.`);
+      throw problem('app-timeout', appsSupervisorWords.theToolOfTheApp(tool, spec.id));
     } finally {
       clearTimeout(timer);
       signal?.removeEventListener('abort', cancel);
@@ -177,22 +179,22 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
     async call(spec, tool, input, signal) {
       if (closed) throw endedProblem('closed', spec.id, tool);
       const e = entry(spec.id, spec.hash);
-      if (e.facts.broken) throw problem('app-failed', `The app "${spec.id}" crashed too often, so the board stopped running its tools. It runs again once its code changes.`);
+      if (e.facts.broken) throw problem('app-failed', serverCommonWords.theAppCrashedTooOften(spec.id));
       if (e.facts.problems) throw appInvalid(spec.id, e.facts.problems);
       await slot(e, spec.id);
       clearTimeout(e.idle);
       try {
-        if (signal?.aborted) throw problem('app-failed', 'The call was given up before it ran.');
+        if (signal?.aborted) throw problem('app-failed', appsSupervisorWords.theCallWasGivenUp);
         const proc = procOf(e, spec);
         const tools = await proc.tools;
         const checked = tools.get(tool);
         if (!checked) {
-          const has = tools.size ? `Its tools: ${[...tools.keys()].join(', ')}.` : 'It has none.';
-          throw problem('invalid', `The app "${spec.id}" has no tool "${tool}". ${has}`, { errors: [{ pointer: '/tool', detail: `no tool "${tool}". ${has}` }] });
+          const has = tools.size ? appsSupervisorWords.itsTools([...tools.keys()].join(', ')) : appsSupervisorWords.itHasNone;
+          throw problem('invalid', appsSupervisorWords.theAppHasNoTool(spec.id, tool, has), { errors: [{ pointer: '/tool', detail: appsSupervisorWords.noTool(tool, has) }] });
         }
         checkInput(spec.id, checked, input);
         const answer = await timed(e, proc.child!, spec, tool, input, signal);
-        if ('ended' in answer) throw e.facts.broken ? problem('app-failed', `The app "${spec.id}" stopped while it ran "${tool}", and has now crashed too often: the board stopped running its tools. It runs again once its code changes.`) : endedProblem(answer.ended, spec.id, tool);
+        if ('ended' in answer) throw e.facts.broken ? problem('app-failed', appsSupervisorWords.theAppStoppedWhileIt(spec.id, tool)) : endedProblem(answer.ended, spec.id, tool);
         return resultOf(spec.id, checked, answer, limits.outputBytes);
       } finally {
         release(e);
@@ -205,7 +207,7 @@ export function createSupervisor(overrides: Partial<AppLimits> = {}): Supervisor
     seen(id, hash) {
       const e = apps.get(id);
       if (!e || e.hash === hash) return;
-      stopAll(e, 'changed', problem('app-failed', `The code of the app "${id}" changed, or was taken back, while this call waited. Try again once it is allowed.`));
+      stopAll(e, 'changed', problem('app-failed', appsSupervisorWords.theCodeOfTheAppChanged(id)));
       apps.delete(id);
     },
     close() {

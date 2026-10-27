@@ -10,6 +10,7 @@ import { cardOn, noCard } from './edge.ts';
 import type { Ledger } from './ledger.ts';
 import { fail } from './write-problem.ts';
 import { agentSees } from './visibility.ts';
+import * as writesWords from './words/writes.ts';
 
 type Rec = Record<string, unknown>;
 const isRec = (v: unknown): v is Rec => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -37,13 +38,13 @@ export function storedFor(b: Batch, key: string): LedgerEvent | undefined {
 function keyed(b: Batch, ref: Rec, pointer: string): number {
   const key = String(ref.key);
   if (b.failed.has(key)) {
-    fail('depends-on-failed', `This item names the key "${key}", and the item with that key failed. Fix that item, then send both again with the same keys.`,
-      { errors: [{ pointer, detail: `the item with key "${key}" failed` }] });
+    fail('depends-on-failed', writesWords.thisItemNamesTheKey(key),
+      { errors: [{ pointer, detail: writesWords.theItemWithKeyFailed(key) }] });
   }
   const e = storedFor(b, key);
   if (e?.type !== 'node') {
-    fail('invalid', `No node you made has the key "${key}". Name the node by its number, or by the key of the node item that made it.`,
-      { errors: [{ pointer, detail: `no node you made has the key "${key}"` }] });
+    fail('invalid', writesWords.noNodeYouMadeHas(key),
+      { errors: [{ pointer, detail: writesWords.noNodeYouMadeHasThe(key) }] });
   }
   return e.id;
 }
@@ -52,7 +53,7 @@ function keyed(b: Batch, ref: Rec, pointer: string): number {
 function numbered(b: Batch, s: LedgerState, n: unknown, pointer: string): number {
   const id = cardOn(s, b.board, n);
   if (id === undefined) {
-    fail('invalid', `Board "${b.board}" has no card ${String(n)}. Name a card by its number on this board (get_board lists them), or by the key of the node item that made it.`,
+    fail('invalid', writesWords.boardHasNoCardName(b.board, String(n)),
       { errors: [{ pointer, detail: noCard(b.board, n) }] });
   }
   return id;

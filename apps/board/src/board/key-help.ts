@@ -8,8 +8,10 @@
 import { ACTIONS } from '#actions';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
+import * as commonWords from './words/common.ts';
+import * as keyHelpWords from './words/key-help.ts';
 
-export const KEY_GROUPS = ['Items', 'Selection', 'Board', 'View'] as const;
+export const KEY_GROUPS = [keyHelpWords.items, keyHelpWords.selection, commonWords.board, keyHelpWords.view] as const;
 export type KeyGroup = (typeof KEY_GROUPS)[number];
 
 export interface KeyRow {
@@ -21,26 +23,26 @@ export interface KeyRow {
 }
 
 const GROUP_OF: Record<CommandId, Exclude<KeyGroup, 'Items'>> = {
-  comment: 'Selection', move: 'Selection', 'reset-places': 'Selection', remove: 'Selection',
-  'container-note': 'Board', 'go-to-card': 'Board',
-  'zoom-out': 'View', fit: 'View', 'zoom-in': 'View', 'zoom-selection': 'View', 'zoom-area': 'View',
+  comment: keyHelpWords.selection, move: keyHelpWords.selection, 'reset-places': keyHelpWords.selection, remove: keyHelpWords.selection,
+  'container-note': commonWords.board, 'go-to-card': commonWords.board,
+  'zoom-out': keyHelpWords.view, fit: keyHelpWords.view, 'zoom-in': keyHelpWords.view, 'zoom-selection': keyHelpWords.view, 'zoom-area': keyHelpWords.view,
 };
 
 /** Inputs that are neither a command nor a registry action (keys.ts, pointer.ts). */
 const OTHER: Record<KeyGroup, readonly [label: string, keys: string[]][]> = {
-  Items: [['Next / previous card', ['J', 'K']], ['Move the card', ['Alt+arrows']], ['Reset the card\'s place', ['R']]],
-  Selection: [['Select the card', ['Space']], ['Select more', ['Shift+click']], ['Lasso', ['Shift+drag']]],
-  Board: [['Hide answered', ['H']], ['Move a container', ['Alt+arrows']], ['Pan', ['Drag the background']], ['Pan from anywhere', ['Cmd+drag', 'Ctrl+drag']]],
-  View: [['Zoom', ['Ctrl+scroll']], ['This list', ['?']]],
+  Items: [[keyHelpWords.nextPreviousCard, ['J', 'K']], [keyHelpWords.moveTheCard, ['Alt+arrows']], [keyHelpWords.resetTheCardSPlace, ['R']]],
+  Selection: [[keyHelpWords.selectTheCard, [keyHelpWords.space]], [keyHelpWords.selectMore, ['Shift+click']], [keyHelpWords.lasso, ['Shift+drag']]],
+  Board: [[commonWords.hideAnswered, ['H']], ['Move a container', ['Alt+arrows']], [keyHelpWords.pan, [keyHelpWords.dragTheBackground]], [keyHelpWords.panFromAnywhere, ['Cmd+drag', 'Ctrl+drag']]],
+  View: [[commonWords.zoom, ['Ctrl+scroll']], [keyHelpWords.thisList, ['?']]],
 };
 
 /** The chat sidebar's key (chatPanel flag, ChatSidebar.svelte): in Board, with the flag on. */
-const CHAT_ROW: readonly [label: string, keys: string[]] = ['Open or close the chat', ['T']];
+const CHAT_ROW: readonly [label: string, keys: string[]] = [keyHelpWords.openOrCloseTheChat, ['T']];
 /** The flag's key (cardFlag flag, flag-flow.ts): in Items, with the flag on. */
-const FLAG_ROW: readonly [label: string, keys: string[]] = ['Flag or unflag the card', ['Shift+F']];
+const FLAG_ROW: readonly [label: string, keys: string[]] = [keyHelpWords.flagOrUnflagTheCard, ['Shift+F']];
 /** Esc inside an app's panel (appCards flag, app-cards.ts): the panel sends it, the board puts focus
  * back on its card (D-047 ruling 15). In Items, with the flag on. */
-const APP_ROW: readonly [label: string, keys: string[]] = ['Leave an app', ['Esc']];
+const APP_ROW: readonly [label: string, keys: string[]] = [keyHelpWords.leaveAnApp, [commonWords.esc]];
 
 /** The groups with their rows, in order; a group with no row is left out. `chat`: the chatPanel
  * flag; `flag`: the cardFlag flag; `remove`: the personRemove flag (off, Remove is not listed);

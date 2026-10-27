@@ -2,7 +2,7 @@
 // its panel running. The panel is the example calculator, served by this board's own panel route
 // from the served project's `.visionboard/apps/calculator/` (the page tests copy it there from the
 // skill folder, its one source). As on the board, the card's state is list_apps' answer and the
-// panel's tool calls go to call_app_tool, both through the page's I/O layer (io.ts), and a theme
+// panel's tool calls go to call_app_tool, both through the page's I/O layer (shell/page-io.ts), and a theme
 // change reaches the panel. Allow is the board's to do: here the card asks for it, and the panel
 // says it needs it when = is pressed. Every other state, from list_apps answers in their exact
 // shape, is in the app-frame pattern's section. Shown only with the flag on, so ?flags=-appCards
@@ -49,7 +49,7 @@ export function appSection(fx: Fixture): HTMLElement {
   const heading = el('h2', 'g-title', 'App cards on the board');
   heading.id = 'feature-appCards';
   const meta = el('p', 'g-meta');
-  meta.append(el('code', undefined, 'app-cards.ts · app-state.ts · io.ts listApps, callAppTool'), ' · feature flag appCards, on by default · off with ?flags=-appCards');
+  meta.append(el('code', undefined, 'app-cards.ts · app-state.ts · page-io.ts listApps, callAppTool'), ' · feature flag appCards, on by default · off with ?flags=-appCards');
   const n = liveCard(fx);
   // "Loading…" until list_apps answers.
   const node = card(n, fx, fx.state, { app: {} });

@@ -1,5 +1,6 @@
 // JSON-RPC 2.0 as MCP uses it over stdio: one message per line, the standard error codes plus
 // MCP's UnsupportedProtocolVersion (-32022), and the response shapes.
+import * as protocolWords from './words/protocol.ts';
 
 export type Id = string | number;
 
@@ -48,12 +49,12 @@ export function errorResponse(err: RpcError, id?: Id): RpcResponse {
 export function parseLine(line: string): { ok: true; message: RpcMessage } | { ok: false; response: RpcResponse } {
   let raw: unknown;
   try { raw = JSON.parse(line); } catch {
-    return { ok: false, response: errorResponse(new RpcError(CODES.parseError, 'Parse error: each line must be one JSON-RPC message.')) };
+    return { ok: false, response: errorResponse(new RpcError(CODES.parseError, protocolWords.parseErrorEachLineMust)) };
   }
   const id = isRecord(raw) && validId(raw.id) ? raw.id : undefined;
   if (!isRecord(raw) || raw.jsonrpc !== '2.0' || typeof raw.method !== 'string' || ('id' in raw && !validId(raw.id)) ||
       (raw.params !== undefined && !isRecord(raw.params))) {
-    return { ok: false, response: errorResponse(new RpcError(CODES.invalidRequest, 'Invalid request: expected a JSON-RPC 2.0 request or notification.'), id) };
+    return { ok: false, response: errorResponse(new RpcError(CODES.invalidRequest, protocolWords.invalidRequestExpectedAJSON), id) };
   }
   return { ok: true, message: raw as unknown as RpcMessage };
 }

@@ -8,6 +8,7 @@ import type { ChildProcess } from 'node:child_process';
 import { fork } from 'node:child_process';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import * as appsSupervisorWords from '../words/apps-supervisor.ts';
 
 export const RUNNER = fs.realpathSync(fileURLToPath(new URL('./runner.mjs', import.meta.url)));
 
@@ -75,7 +76,7 @@ export function startChild(o: ChildOptions): Child {
   const loaded = new Promise<Loaded>((resolve) => { settle = resolve; });
   // The problem names the tools file, so these words don't.
   const loadTimer = setTimeout(() => {
-    settle({ invalid: `did not finish loading within ${o.callMs / 1000} s. Make its top-level code quicker.` });
+    settle({ invalid: appsSupervisorWords.didNotFinishLoadingWithin(o.callMs / 1000) });
     stop('timeout');
   }, o.callMs);
 

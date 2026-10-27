@@ -4,6 +4,7 @@
 // `detail` is plain English for an agent to act on and never shows internals (api.md 40).
 import type { PointerError, ProblemCode, ProblemDocument } from '#format';
 import { PROBLEM_BASE, PROBLEMS } from '#format';
+import * as httpWords from './words/http.ts';
 
 // The codes, their status and title, `PROBLEM_BASE` and the document's shape are generated from
 // problem.schema.json (`#format`): this file adds only what the server does with them. Its importers
@@ -51,7 +52,7 @@ export const problem = (code: ProblemCode, detail: string, extras?: ProblemExtra
 /** The answer for anything unexpected: the stack goes to stderr, the caller gets a fixed text. */
 export function serverError(err: unknown): ProblemError {
   console.error(err);
-  return problem('server-error', 'Something went wrong on the server. Try again; if it keeps failing, tell the person.');
+  return problem('server-error', httpWords.somethingWentWrongOnThe);
 }
 
 /** A hand-written problem string (`"node.title: required"`, from packages/format and

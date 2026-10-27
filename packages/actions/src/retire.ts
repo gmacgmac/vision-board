@@ -14,6 +14,7 @@ import { numberOf } from './numbers.ts';
 import { endProposal } from './proposals.ts';
 import { placeOf } from './references.ts';
 import { dropRetired } from './unsent.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** What a retire item names: one card (its identity), or a whole container on `board`. */
 export type RetireTarget = { board: string; id: number } | { board: string; region: string };
@@ -36,9 +37,9 @@ function owedKind(s: LedgerState, id: number): 'comment' | 'later' | undefined {
 /** What card `id` still owes the person, as words to the agent with what to do, or undefined. */
 function owedWords(s: LedgerState, id: number): string | undefined {
   const kind = owedKind(s, id);
-  const card = `card ${numberOf(s, id)}`;
-  if (kind === 'comment') return `${card} has a comment you haven't answered: answer it with a reply or an append first`;
-  return kind && `${card} is saved for later and its handover isn't written: write it with a park first`;
+  const card = actionsRefusalsWords.card(numberOf(s, id));
+  if (kind === 'comment') return actionsRefusalsWords.hasACommentYouHaven(card);
+  return kind && actionsRefusalsWords.isSavedForLaterAnd(card);
 }
 
 /** The latest note on container `t.region` with no reply naming it, if there is one. */
@@ -55,12 +56,12 @@ export function retireProblem(s: LedgerState, t: RetireTarget, cards: readonly n
     if (why) return why;
   }
   if (!('region' in t)) return undefined;
-  return owedRegionNote(s, t) ? `container "${t.region}" has a note you haven't answered: answer it with a reply naming it first` : undefined;
+  return owedRegionNote(s, t) ? actionsRefusalsWords.containerHasANoteYou(t.region) : undefined;
 }
 
 const NOTICE = {
-  comment: 'still has an unanswered comment',
-  later: 'is saved for later and its handover isn\'t written yet',
+  comment: actionsRefusalsWords.stillHasAnUnansweredComment,
+  later: actionsRefusalsWords.isSavedForLaterAndIts,
 } as const;
 
 /** Up to this many cards still owed an answer are named one sentence each; more read as one. */
@@ -77,11 +78,11 @@ export function owedNotice(s: LedgerState, t: RetireTarget, cards: readonly numb
     return kind ? [{ n: numberOf(s, id), kind }] : [];
   });
   const out = owed.length > NAMED
-    ? [`Cards ${owed.slice(0, NAMED).map((x) => x.n).join(', ')} and ${owed.length - NAMED} more are still owed an answer.`]
-    : owed.map((x) => `Card ${x.n} ${NOTICE[x.kind]}.`);
+    ? [actionsRefusalsWords.cardsAndMoreAreStill(owed.slice(0, NAMED).map((x) => x.n).join(', '), owed.length - NAMED)]
+    : owed.map((x) => actionsRefusalsWords.card2(x.n, NOTICE[x.kind]));
   const note = 'region' in t ? owedRegionNote(s, t) : undefined;
   // Any note reads as a note, an old More context too (D-045).
-  if (note) out.push(`Container '${title ?? (t as { region: string }).region}' ${NOTICE.comment}.`);
+  if (note) out.push(actionsRefusalsWords.container(title ?? (t as { region: string }).region, NOTICE.comment));
   return out;
 }
 

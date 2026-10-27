@@ -8,6 +8,7 @@
 import type { RegionNoteEventDetail, RegionNoteResizeDetail, VbRegionElement } from '#ui';
 import { REGION_NOTE_EVENT, REGION_NOTE_RESIZE_EVENT } from '#ui';
 import type { ActFields } from './io.ts';
+import * as notesWords from './words/notes.ts';
 
 export interface RegionNoteDeps {
   stage: HTMLElement;
@@ -46,9 +47,9 @@ export function createRegionNotes(d: RegionNoteDeps): RegionNotes {
 
   async function remove(region: string, seq: number) {
     const problem = await d.attempt({ action: 'note-remove', region, note: seq });
-    if (problem !== null) return d.toast(`Not removed: ${problem}`, 'error');
+    if (problem !== null) return d.toast(notesWords.notRemoved(problem), 'error');
     d.relayout();
-    d.toast(`Note on container ${d.title(region)} removed`);
+    d.toast(notesWords.noteOnContainerRemoved(d.title(region)));
   }
 
   function onNote(e: Event) {

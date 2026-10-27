@@ -20,9 +20,10 @@ import { CHAT_CHANGE_EVENT } from '#chat';
 import type { BoardData } from '#actions';
 import { clip } from '#format';
 import type { BoardSide } from '../board/chat-side.ts';
+import * as chatWords from './words/chat.ts';
 
 /** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
-export const SOURCE_LABEL = 'Show in the chat';
+export const SOURCE_LABEL = chatWords.showInTheChat;
 
 const LABEL_MAX = 80;
 
@@ -39,7 +40,7 @@ export const boardCards = (d: BoardData, selected: readonly string[], spent: Rea
   selectedCards(d, selected).filter((c) => !spent.has(c.n));
 
 /** A card as the message's chip: its body's `cards`, the label the feed shows. */
-export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title, LABEL_MAX) || `Card ${c.n}` });
+export const cardChip = (c: SelectedCard): Chip => ({ kind: 'card', ref: c.n, label: clip(c.title, LABEL_MAX) || chatWords.card(c.n) });
 
 const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -50,7 +51,7 @@ const count = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? on
  *  do (api.md 140). None when there is nothing. */
 export function boardContext(s: LedgerState, board: string, cards: readonly SelectedCard[], agent?: string): ComposerContext | null {
   const round = boardLocked(s, board) ? undefined : roundOf(s, board, s.lastSend.get(board) ?? 0, agent);
-  const parts = [round && count(round.count, 'answer'), cards.length > 0 && `${cards.length} selected`].filter(Boolean);
+  const parts = [round && count(round.count, 'answer'), cards.length > 0 && chatWords.selected(cards.length)].filter(Boolean);
   return parts.length ? { label: parts.join(' · '), text: boardBlocks(cards, round) } : null;
 }
 
@@ -123,7 +124,7 @@ export function createChatBridge(): ChatBridge {
     const d = b?.data();
     if (!b || !d) return;
     const ids = cardIds(d, cards);
-    if (!ids.length) return b.toast('Those cards are no longer on the board.');
+    if (!ids.length) return b.toast(chatWords.thoseCardsAreNoLonger);
     b.selection.select(ids, 'only');
     b.zoom();
   }

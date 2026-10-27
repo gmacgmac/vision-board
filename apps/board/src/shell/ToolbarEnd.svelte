@@ -8,6 +8,8 @@
      archiveBoard flag) the menu has Archive board…, and with `onlock` (lockBoard flag) Lock board or Unlock board. The gallery
      passes `placement` 'gallery' (no board ids) and `menuOpen`. -->
 <script lang="ts">
+  import * as commonWords from '../board/words/common.ts';
+  import * as toolbarWords from './words/toolbar.ts';
   import { shell } from './shell.svelte.ts';
   import SendButton from './SendButton.svelte';
   import BoardAgents from './BoardAgents.svelte';
@@ -46,22 +48,22 @@
 </script>
 
 <div class="vb-toolbar-end">
-  <div class="vb-zoom" role="group" aria-label="Zoom">
+  <div class="vb-zoom" role="group" aria-label={commonWords.zoom}>
     {#each HEADER_COMMANDS as id (id)}
       <button type="button" class="vb-btn" title={zoomTitle(id, percent)} aria-label={commandTitle(id).split(' · ')[0]}
-        onclick={() => oncommand(id)}>{id === 'fit' ? 'Fit' : id === 'zoom-out' ? '−' : '+'}</button>
+        onclick={() => oncommand(id)}>{id === 'fit' ? commonWords.fit : id === 'zoom-out' ? '−' : '+'}</button>
       {#if id === 'fit'}<ZoomLevel {percent} />{/if}
     {/each}
   </div>
   {#if !menu}
-    <button type="button" class="vb-btn vb-btn-iconic" id="hide" aria-pressed={shell.hide} title="Hide answered items · H"
-      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">Hide answered</span></button>
-    <button type="button" class="vb-btn vb-btn-iconic" id="theme" title="Theme: {theme}" onclick={ontheme}>
-      <ButtonIcon name="theme" /><span class="vb-btn-text">Theme: {theme}</span>
+    <button type="button" class="vb-btn vb-btn-iconic" id="hide" aria-pressed={shell.hide} title={toolbarWords.hideAnsweredItemsH}
+      onclick={onhide}><ButtonIcon name="hide" /><span class="vb-btn-text">{commonWords.hideAnswered}</span></button>
+    <button type="button" class="vb-btn vb-btn-iconic" id="theme" title={toolbarWords.theme(theme)} onclick={ontheme}>
+      <ButtonIcon name="theme" /><span class="vb-btn-text">{toolbarWords.theme(theme)}</span>
     </button>
-    <button type="button" class="vb-btn vb-btn-primary vb-btn-iconic" id="reply-toggle" title="Reply" aria-expanded={shell.replyOpen}
+    <button type="button" class="vb-btn vb-btn-primary vb-btn-iconic" id="reply-toggle" title={toolbarWords.reply} aria-expanded={shell.replyOpen}
       aria-controls="reply" onclick={() => { shell.replyOpen = !shell.replyOpen; }}>
-      <ButtonIcon name="reply" /><span class="vb-btn-text">Reply{shell.answered ? ` (${shell.answered})` : ''}</span>
+      <ButtonIcon name="reply" /><span class="vb-btn-text">{toolbarWords.reply2(shell.answered)}</span>
     </button>
   {/if}
   {#if holders}
@@ -71,8 +73,8 @@
   {/if}
   {#if chat}
     <button type="button" class="vb-btn vb-btn-iconic" id={board ? 'chat-toggle' : undefined}
-      title={menu ? 'Open or close the chat · T' : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
-      aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">Chat</span></button>
+      title={menu ? toolbarWords.openOrCloseTheChat : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
+      aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">{toolbarWords.chat}</span></button>
   {/if}
   {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {onarchive} {onlock} {placement} open={menuOpen} />{/if}
 </div>

@@ -4,6 +4,8 @@
 // "Today 09:42" or "Yesterday 18:10" when it can, else `versionTime`; `fullTime` is the whole date
 // and time, for a `title`. Pure: the caller passes `now`, so a test fixes it.
 
+import * as nodeWords from '../words/node.ts';
+
 /** A time as the version dropdown and the banner show it, in the person's own clock. */
 export const versionTime = (at: string): string =>
   new Date(at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -16,10 +18,10 @@ const sameDay = (a: Date, b: Date): boolean => a.toDateString() === b.toDateStri
 /** "Today 09:42", "Yesterday 18:10", else `versionTime` ("Oct 18, 09:10"). */
 export function noteTime(at: string, now: Date): string {
   const d = new Date(at);
-  if (sameDay(d, now)) return `Today ${clock(d)}`;
+  if (sameDay(d, now)) return nodeWords.today(clock(d));
   const before = new Date(now);
   before.setDate(before.getDate() - 1);
-  return sameDay(d, before) ? `Yesterday ${clock(d)}` : versionTime(at);
+  return sameDay(d, before) ? nodeWords.yesterday(clock(d)) : versionTime(at);
 }
 
 /** The whole date and time ("Sunday, 19 October 2026 at 09:42" in the person's words), for a `title`. */

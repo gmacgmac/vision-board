@@ -13,11 +13,12 @@ import { APP_ACTIONS, PRIVATE_ACTIONS } from '#format';
 import type { LedgerState } from './fold.ts';
 import { archivedProblem, boardVisibility } from './archive.ts';
 import { eventBoard } from './references.ts';
+import * as actionsRefusalsWords from './words/actions-refusals.ts';
 
 /** What an agent is told when it writes on a locked board (ruling 3). */
-export const LOCKED = 'This board is locked; ask the person to unlock it.';
+export const LOCKED = actionsRefusalsWords.thisBoardIsLockedAsk;
 /** What the person is told when a change to a locked board is paused (ruling 4). */
-export const LOCKED_PERSON = 'Locked: unlock to change it';
+export const LOCKED_PERSON = actionsRefusalsWords.lockedUnlockToChangeIt;
 
 /** Fold one `lock` or `unlock` (the person's board marks). */
 export function foldLock(s: LedgerState, e: ActEvent): void {
@@ -61,7 +62,7 @@ export function writeProblem(s: LedgerState, e: LedgerEvent): WriteRefusal | und
  * by `archivedProblem` first: only `restore` goes there). */
 export function lockRules(e: ActEvent, s: LedgerState, p: string[]): void {
   const id = String(e.board);
-  if (!s.boards.has(id)) p.push(`board: unknown "${id}"`);
-  else if (e.action === 'lock' && s.locked.has(id)) p.push(`board: "${id}" is already locked`);
-  else if (e.action === 'unlock' && !s.locked.has(id)) p.push(`board: "${id}" isn't locked`);
+  if (!s.boards.has(id)) p.push(actionsRefusalsWords.boardUnknown(id));
+  else if (e.action === 'lock' && s.locked.has(id)) p.push(actionsRefusalsWords.boardIsAlreadyLocked(id));
+  else if (e.action === 'unlock' && !s.locked.has(id)) p.push(actionsRefusalsWords.boardIsnTLocked(id));
 }

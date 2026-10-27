@@ -4,6 +4,7 @@
 // (`pageConditions`), never worked out here. Plain data in, plain data out; the page's
 // proposal-flow.ts sends the acts through the one sender, so the server's checks judge every one.
 import type { LedgerState, Proposal } from '../fold.ts';
+import * as actionsRefusalsWords from '../words/actions-refusals.ts';
 
 /** An open proposal on the open board: its card, its line, and whether the card changed since
  * (`proposal.open`, `proposal.stale`). */
@@ -38,7 +39,7 @@ export function acceptAllPlan(rows: readonly ProposalRow[]): { apply: ProposalRo
   const apply = new Map<number, ProposalRow>();
   for (const r of rows) if (!r.stale && !apply.has(r.n)) apply.set(r.n, r);
   const skip = rows.filter((r) => apply.get(r.n) !== r).map((row) => ({
-    row, why: row.stale ? `${row.n} changed after this was proposed` : `a newer proposal on ${row.n} is applied`,
+    row, why: row.stale ? actionsRefusalsWords.changedAfterThisWasProposed(row.n) : actionsRefusalsWords.aNewerProposalOnIs(row.n),
   }));
   const byN = (a: { n: number }, b: { n: number }) => a.n - b.n;
   return { apply: [...apply.values()].sort(byN), skip: skip.sort((a, b) => byN(a.row, b.row)) };

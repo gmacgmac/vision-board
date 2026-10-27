@@ -8,6 +8,7 @@
 // these types are hand-written and a test checks they agree with it (api.md 2).
 import type { AppRef } from './apps.ts';
 import type { Kind, Region, Widths } from './view.ts';
+import * as formatLedgerWords from './words/format-ledger.ts';
 
 /** The format new lines are written in. */
 export const LEDGER_FORMAT = 18;
@@ -121,13 +122,13 @@ interface Keyed { key?: string }
 
 /** Why a v11 node line may not name `item` (api.md 118); the node schema's `noItem` says the same
  * and a test checks they agree. */
-export const ITEM_REMOVED = '`item` is gone: the kind decides. '
-  + 'A `question`, `decision` or `action` card asks the person; any other kind takes a note or Later.';
+export const ITEM_REMOVED = formatLedgerWords.itemIsGoneTheKind
+  + formatLedgerWords.aQuestionDecisionOrAction;
 
 /** Why a v12 line (or a sent item) may not name mode `list` (api.md 129); the common schema's
  * `noList` says the same and a test checks they agree. */
-export const LIST_RENAMED = '`list` is now `column` (top to bottom in card order); '
-  + '`row` runs left to right, `flow` follows the links.';
+export const LIST_RENAMED = formatLedgerWords.listIsNowColumnTop
+  + formatLedgerWords.rowRunsLeftToRight;
 
 /** What the agent says about a node. Its `kind` decides whether it asks for an answer
  * (`NODE_TYPES`, api.md 118). */

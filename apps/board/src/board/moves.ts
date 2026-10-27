@@ -19,6 +19,7 @@ import type { MoveMenu, MoveTarget } from './move-menu.ts';
 import { createMoveMenu } from './move-menu.ts';
 import type { Selection } from './selection.ts';
 import type { Viewport } from './viewport.ts';
+import * as cardsWords from './words/cards.ts';
 
 export interface MoveDeps {
   stage: HTMLElement;
@@ -111,7 +112,7 @@ export function createMoves(d: MoveDeps): Moves {
     pick(region) {
       const ids = d.selection.selected();
       const title = targets(ids).find((t) => t.id === region)?.title ?? region;
-      void d.run(plan(ids, region)).then((ok) => { if (ok) d.toast(`${ids.length === 1 ? '1 card' : `${ids.length} cards`} moved to ${title}`); });
+      void d.run(plan(ids, region)).then((ok) => { if (ok) d.toast(cardsWords.movedTo(ids.length, title)); });
     },
   });
 

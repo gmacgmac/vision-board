@@ -10,6 +10,7 @@ import { checkArgs } from './check-args.ts';
 import { CODES, RpcError, isRecord } from './rpc.ts';
 import type { Route } from './tools.ts';
 import { TOOLS, routeOf } from './tools.ts';
+import * as protocolWords from './words/protocol.ts';
 
 export interface CallContext {
   /** The board server, such as `http://127.0.0.1:4466`. */
@@ -46,10 +47,10 @@ export function split(route: Route, args: Readonly<Record<string, unknown>>, env
 /** What a failed call says: a problem's detail and pointer errors, or how to start the server. */
 export function failureText(err: unknown, base: string): string {
   if (err instanceof ApiProblem) {
-    return [err.detail, ...err.errors.map((e) => `${e.pointer || '/'}: ${e.detail}`), ...(err.example === undefined ? [] : [`Example: ${JSON.stringify(err.example)}`])].join('\n');
+    return [err.detail, ...err.errors.map((e) => `${e.pointer || '/'}: ${e.detail}`), ...(err.example === undefined ? [] : [protocolWords.example(JSON.stringify(err.example))])].join('\n');
   }
   const why = err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err);
-  return `The board server at ${base} is not answering (${why}). Start it with \`npm run board\`, then call again.`;
+  return protocolWords.theBoardServerAtIs(base, why);
 }
 
 /** Every item of a write failed: nothing was written, so the call as a whole is an error. */
@@ -60,14 +61,14 @@ const allFailed = (answer: unknown): boolean =>
 /** Run one `tools/call`. An unknown tool or malformed params is a protocol error (thrown). */
 export async function callTool(params: Readonly<Record<string, unknown>>, ctx: CallContext): Promise<ToolResult> {
   const name = params.name;
-  if (typeof name !== 'string') throw new RpcError(CODES.invalidParams, 'tools/call needs `name`, the tool to call.');
+  if (typeof name !== 'string') throw new RpcError(CODES.invalidParams, protocolWords.toolsCallNeedsNameThe);
   const tool = TOOLS.get(name);
-  if (!tool) throw new RpcError(CODES.invalidParams, `Unknown tool: ${name}`);
+  if (!tool) throw new RpcError(CODES.invalidParams, protocolWords.unknownTool(name));
   const args = params.arguments ?? {};
-  if (!isRecord(args)) throw new RpcError(CODES.invalidParams, 'tools/call `arguments` must be an object.');
+  if (!isRecord(args)) throw new RpcError(CODES.invalidParams, protocolWords.toolsCallArgumentsMustBe);
   const checked = checkArgs(tool.inputSchema, args);
   if (checked.problems.length) {
-    return text(`The arguments do not fit ${name}:\n${checked.problems.join('\n')}`, true);
+    return text(protocolWords.theArgumentsDoNotFit(name, checked.problems.join('\n')), true);
   }
   const { input, secret } = split(routeOf(name), checked.value as Record<string, unknown>, ctx.secret);
   const client = createClient({ base: ctx.base, ...(secret && { secret }), ...(ctx.project && { project: ctx.project }), ...(ctx.fetch && { fetch: ctx.fetch }) });

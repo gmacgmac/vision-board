@@ -5,6 +5,7 @@
 // draws above the cards and moves nothing.
 import { boxAround, boxBetween, clamp, overlaps, touches } from '#format';
 import type { StageBox, StageSize } from '../note-bubble/note-bubble-core.ts';
+import * as selectionBarWords from '../words/selection-bar.ts';
 
 // The lasso's box and the touch test are format's (geometry.ts); the bar's callers reach them here.
 export { boxAround, boxBetween, touches };
@@ -57,11 +58,11 @@ export interface BarButton { id: string; label: string; title?: string; primary?
  *  FE_02): the compact bar, whose count is a pill that shows the buttons only while `open`. */
 export interface BarView { name: string; count: string; buttons: BarButton[]; pill?: true; open?: boolean }
 
-export const selectedCount = (n: number): string => `${n} selected`;
+export const selectedCount = (n: number): string => selectionBarWords.selected(n);
 
 /** The bar over a selection of `n` cards, or over an area a lasso drew round no card; with `pill`,
  *  the compact bar, its pill open or closed (the area bar has no pill: it is always open). */
 export function barView(n: number, buttons: BarButton[], pill?: { open: boolean }): BarView {
-  if (n === 0) return { name: 'Area', count: '', buttons, ...(pill && { pill: true }) };
-  return { name: `Selection: ${selectedCount(n)}`, count: selectedCount(n), buttons, ...(pill && { pill: true, open: pill.open }) };
+  if (n === 0) return { name: selectionBarWords.area, count: '', buttons, ...(pill && { pill: true }) };
+  return { name: selectionBarWords.selection(selectedCount(n)), count: selectedCount(n), buttons, ...(pill && { pill: true, open: pill.open }) };
 }

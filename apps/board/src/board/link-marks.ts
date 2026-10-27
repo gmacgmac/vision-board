@@ -8,6 +8,7 @@
 // place or words changed is written, as the connectors are (wires.ts).
 import type { Route } from '#layout';
 import { bindHoverTip } from '#ui';
+import * as cardsWords from './words/cards.ts';
 
 export interface LinkMarks {
   /** One marker per route whose label did not fit, in route order. */
@@ -18,7 +19,7 @@ export interface LinkMarks {
 interface Mark { host: HTMLElement; look: string }
 
 /** The marker's name: the link and its words. */
-export const markName = (r: Route): string => `Link from ${r.from} to ${r.to}: ${r.label ?? ''}`;
+export const markName = (r: Route): string => cardsWords.linkFromTo(r.from, r.to, r.label ?? '');
 
 /** The routes that take a marker. */
 export const marked = (routes: readonly Route[]): Route[] => routes.filter((r) => r.label && r.labelAt && !r.labelAt.fits);
