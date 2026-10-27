@@ -28,7 +28,7 @@ tracker:
 9. **Add implementation notes** to your task file and brief notes here. Re-run? Add a `Run N:`
    line here and a `### Run N` block in your task file; never overwrite an earlier run
 10. **No git commits** — the orchestrator commits and tags once per wave (PLAN House Rules)
-11. **Your page-test port** is in the Task List's Notes column; never 4466
+11. **Your page-test port** is in the Task List's Notes column; never 4466. The page suite runs 3 workers on `VB_TEST_PORT` + 10 per worker, so tasks running page suites at once take ports 100 apart (TEST_01)
 
 ---
 
@@ -44,10 +44,10 @@ tracker:
 | 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Completed | port 4740 |
 | 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Completed | port 4750 |
 | 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Completed | port 4755 |
-| 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Pending | port 4760 (+ worker ports) |
-| 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Pending | port 4770 |
-| 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4780 |
-| 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Pending | port 4790 |
+| 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Completed | port 4760 (+ 10 per worker from 4770) |
+| 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Pending | port 4800 |
+| 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4900 |
+| 10 | VERIFY_01 | 8 | strong | Staff engineer joining the nclite team, reviewing this code to host it as a plugin, with no history of how it got here — wants every rule in `docs/principles.md` true of the code, not of the docs. | [Verification](./VERIFY_01_tidy-verification.md) | Pending | port 5000 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -102,7 +102,7 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_01-R4 | ARCH_01 Run 2 | `docs/specification/modules.md`: `npm run map` | orchestrator | Done |
 | ARCH_01-R5 | ARCH_01 Run 2 | Decision entry: a module's names (`#m`, `/styles.css`, `/files`, `/testing`) | orchestrator, under delegation: D-060 | Done |
 | ARCH_01-R3 | ARCH_01 Run 2 | READMEs and `components.md`: claims to the names (cortex-docs) | orchestrator, a Sonnet docs sub-agent during the wave gate: six READMEs and components.md updated | Done |
-| ARCH_01-R6 | ARCH_01 Run 2 (note) | `perf-ledger` imported by the actions/layout timing tests: move into a module's `/testing` so verify's warnings clear | TEST_01 | Open |
+| ARCH_01-R6 | ARCH_01 Run 2 (note) | `perf-ledger` imported by the actions/layout timing tests: move into a module's `/testing` so verify's warnings clear | TEST_01: `#format/testing` `perfLedger` (`packages/format/tests/perf-ledger.ts`); the warnings are gone | Done |
 | ARCH_01-R7 | ARCH_01 Run 2 (note) | cli/mcp tests and the calculator skill test reach into the board server: the engine is their front door | ENGINE_01: calculator test imports `compileSchema` from `server/engine/index.ts`; cli/mcp tests must spawn an HTTP board (packages may not import an app, D-016), so their door is a fixture name, ENGINE_01-R1 | Done |
 | UI_01-R1 | UI_01 | Gallery entry for the base (PATTERNS, SAMPLES, pattern.json), gallery baselines | orchestrator: Wave 3 gate sub-agent | Done |
 | UI_01-R2 | UI_01 | New tokens `--vb-z-*`, `--vb-control-*`, `--vb-focus-offset*` (today's values), then apply | orchestrator approved under delegation; Wave 3 gate sub-agent | Done |
@@ -125,7 +125,7 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_04-R5 | ARCH_04 | `chat-prompt.ts` built from `cardChip` / `noteChip` / `resolveChip` / `turnOf`; the `hidden` refusal applies at once | ENGINE_01 | Done |
 | ARCH_04-R6 | ARCH_04 | nclite: `ref` is opaque JSON; refusal `{ code, reason }`; `detail` is the composer's second line | orchestrator: nclite-contract-reply.md | Done |
 | ARCH_04-R7 | ARCH_04 | Actions split: not now (drafted case in ARCH_04 notes) | orchestrator: accepted, no entry; split when a consumer needs reads without actions | Closed |
-| ENGINE_01-R1 | ENGINE_01 | Name for the board's test server, e.g. `#board/testing` → `apps/board/tests/serve-fixture.ts`, resolved by the cli/mcp tests with `import.meta.resolve` (and verify taught to read it) | TEST_01 | Open |
+| ENGINE_01-R1 | ENGINE_01 | Name for the board's test server, e.g. `#board/testing` → `apps/board/tests/serve-fixture.ts`, resolved by the cli/mcp tests with `import.meta.resolve` (and verify taught to read it) | TEST_01: `#board/testing` → `apps/board/tests/support.ts`, which serves the harness when run (serve-fixture.ts deleted); verify reads `import.meta.resolve` and fails a path into an app from outside its tests | Done |
 | ENGINE_01-R2 | ENGINE_01 | `apps/board/README.md` § server: `reads.ts`/`writes.ts` are now `server/engine/`, dispatch calls the engine (cortex-docs) | orchestrator (Wave 4 gate docs) | Done |
 | ENGINE_01-R3 | ENGINE_01 | `#format` `readLedger`'s per-line check as an export (`readLine(index, line)`), so `ledger.ts` `refresh` stops repeating its body | ARCH_06 | Open |
 | ENGINE_01-R4 | ENGINE_01 | nclite reply: the engine's differences (api.md 163), and the grants note below | orchestrator (reply) | Done |
@@ -137,6 +137,11 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_03-R6 | ARCH_03 (deviation) | Raster tolerance 2 in host-styles `sameUnderHost` | orchestrator: accepted (a 1-step edge flicker on the toolbar select; a leak moves pixels far more) | Closed |
 | ARCH_03-R7 | ARCH_03 | `engine.test.ts` hangs inside `npm test` | orchestrator: not reproduced on the finished tree (alone 7/7 in 0.5 s; full suite 1698 + 10 exits 0); the hang was a run caught mid-change | Closed |
 | ARCH_03-R8 | ARCH_03 (note) | A host gets the canvas, status and controls; the toolbar, strips and dialogs are the standalone page's Svelte, so a host draws its own | orchestrator: tracker row for the plugin stage (point for the maintainer) | Done |
+| TEST_01-R1 | TEST_01 | D-060 addendum: test support per module, `import.meta.resolve` for an app's, `?raw` fixtures named by file | orchestrator: D-062 appended (Accepted, for review) | Done |
+| TEST_01-R2 | TEST_01 | Steering § How to work, the Tests line: 3 workers, per-worker ports, ports 100 apart | orchestrator: applied under the delegation, flagged for review | Done |
+| TEST_01-R3 | TEST_01 | Tasks running page suites at once take `VB_TEST_PORT`s 100 apart | orchestrator: rule 11 and the Notes ports (4800, 4900, 5000) | Done |
+| TEST_01-R4 | TEST_01 | Docs pass: performance.md, components.md and four READMEs (perf-ledger in `#format/testing`, budgets project, gallery ledger home, `#board/testing`, page-suite ports) | orchestrator: a Sonnet docs sub-agent in the Wave 5 gate (apps/board, cli, format, mcp READMEs; performance.md; components.md) | Done |
+| TEST_01-R5 | TEST_01 | The gallery's "Lanes mode" sample has two cards with no lane (n 44, 45), so it fails `validateView` (todo in validate.test.ts) | orchestrator: the sample is wrong, the rule stays (a lanes-mode card names its lane) → ARCH_05: give n 44 lane "Now" and n 45 lane "Next", drop the todo; the gallery baselines may change in that section | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -194,8 +199,8 @@ _Notes:_ `apps/board/server/engine/` (`index.ts` the door): `createEngine({ dir,
 ---
 
 ### TEST_01: Test support and parallel page tests
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Test support per module (D-060), not a `packages/testing` (it could not reach the board's server, D-016): `#format/testing` (`FIXTURE_LEDGERS`, `lineMaker`, `checkedEvents`, `makeTempDir`, `perfLedger`/`BIG`) and `#board/testing` (`apps/board/tests/support.ts`: `startTestBoard`, `personCookie`, `joinAgent`, `personAct`, the harness, fake CLIs, apps, images; serves the harness when run: ENGINE_01-R1, serve-fixture.ts deleted; ARCH_01-R6 done). Gallery ledger in `packages/format/fixtures/`, named `#format/gallery.ledger.jsonl` (`?raw`; built page byte-identical). Page suite: build once (global-setup), each worker's main/perf/empty boards in a child process on its own ports (`ports.ts`: `VB_TEST_PORT` + 10 × (slot + 1)), fresh for every spec file; budgets run last, alone (`budgets` project). Helpers in `board-page.ts`, `chat-page.ts`, `agent-board.ts`. 667/667 green: 3 workers 6.4 and 6.5 min, 5 workers 4.9 min, 1 worker 15.2 min, reverse order 15.8 min, shards 4.1 + 2.4 min (baseline 16.1 min, 1 worker); no screenshot changed; first draw 465-486 ms (baseline 471). verify 19 → 13 warnings. For later: gallery "Lanes mode" sample fails the view check (todo); parallel tasks need `VB_TEST_PORT`s 100 apart; `--shard` needs `--project=chromium`; seven file-bound helper texts remain.
 
 ---
 

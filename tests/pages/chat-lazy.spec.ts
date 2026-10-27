@@ -9,6 +9,7 @@ import type { Page } from '@playwright/test';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, test } from './helpers.ts';
+import { side, text, toggle } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -35,9 +36,6 @@ async function open(page: Page): Promise<string[]> {
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
   return seen;
 }
-const side = (page: Page) => page.locator('#chat');
-const toggle = (page: Page) => page.locator('#chat-toggle');
-const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
 const defined = (page: Page) => page.evaluate(() => !!customElements.get('chat-feed') && !!customElements.get('chat-composer'));
 
 test('closed, the chat\'s code is not requested and its elements are not defined; the toolbar still works', async ({ page }) => {

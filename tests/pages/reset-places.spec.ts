@@ -5,18 +5,15 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { bar, idle } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const TITLES = ['First idea', 'Second idea', 'Third idea'];
 
-async function join(request: APIRequestContext): Promise<string> {
-  const r = await request.post('/api/agents', { data: { label: 'Reset chat' } });
-  return (await r.json() as { secret: string }).secret;
-}
-
 /** Draw a board of three cards in one container on `board`. */
 async function draw(request: APIRequestContext, board: string): Promise<void> {
-  const secret = await join(request);
+  const secret = (await joinAgent(request, 'Reset chat')).secret;
   const items = [
     { type: 'board', title: 'Reset board' },
     { type: 'region', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },
@@ -33,11 +30,9 @@ async function open(page: Page, board: string): Promise<void> {
   await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 const card = (page: Page, n: string) => page.locator(`vb-node[data-id="${n}"]`);
 /** The cards' ids (item numbers are the project's, not the board's), in drawing order. */
 const idsOf = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.id!));
-const bar = (page: Page) => page.locator('vb-selection-bar');
 const reset = (page: Page) => bar(page).getByRole('button', { name: 'Reset places' });
 
 /** Nudge card `n` with the keyboard so it is pinned. */
@@ -101,7 +96,7 @@ test('Reset places puts the selected pinned cards back and leaves the others; R 
 });
 
 test('a past version has no Reset places, and R sends nothing there', async ({ page, request }) => {
-  const secret = await join(request);
+  const secret = (await joinAgent(request, 'Reset chat')).secret;
   const write = async (items: unknown[]): Promise<number> => {
     const r = await request.post('/api/boards/reset-past/write', { headers: { Authorization: `Bearer ${secret}` }, data: { items } });
     expect(r.status(), await r.text()).toBe(200);

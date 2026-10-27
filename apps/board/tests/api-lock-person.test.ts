@@ -8,7 +8,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { ActionId } from '#format';
 import { ACTION_IDS, APP_ACTIONS, LATER_REGION } from '#format';
@@ -18,9 +17,10 @@ import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { ROOT } from './openapi-ajv.ts';
 import { fakeChat } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
 const VAULT = 'vault';
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-lock-'));
+const config = makeTempDir('vb-lock-');
 const fake = fakeChat(config);
 let h: Harness;
 let A: Joined;

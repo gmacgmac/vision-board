@@ -1,7 +1,7 @@
 // The person's side of agent access (D-027, api.md 16, 20, 23-26), behind the agentAccess flag
 // (rule 12, on by default): the requests strip with Allow and Refuse, the holders on each frame
 // with Remove access and its confirm step, and Send to agent; then the gallery's Agent access
-// section. Runs after board.spec.ts and gallery.spec.ts on the same server.
+// section. On the worker's roadmap board, fresh for this file (servers.ts).
 //
 // The fixture ledger is built through the API itself, as agents would build it: a creator agent
 // joins and writes board "access" with one container, then each test joins its own agents and
@@ -11,6 +11,8 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { head } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
 
 const BOARD = 'access';
 const REGION = 'pricing';
@@ -20,19 +22,13 @@ const THEMES: Theme[] = ['dark', 'light'];
 
 interface Agent { agent: string; secret: string; label: string }
 
-async function join(request: APIRequestContext, label: string): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label } });
-  expect(r.status(), await r.text()).toBe(201);
-  return { ...(await r.json() as { agent: string; secret: string }), label };
-}
-
 const bearer = (a: Agent) => ({ Authorization: `Bearer ${a.secret}` });
 
 /** Board "access" with one container, written once by its creator agent. */
 async function ensureBoard(request: APIRequestContext): Promise<void> {
   const boards = await (await request.get('/api/boards')).json() as { boards: { board: string }[] };
   if (boards.boards.some((b) => b.board === BOARD)) return;
-  const creator = await join(request, CREATOR);
+  const creator = { ...await joinAgent(request, CREATOR), label: CREATOR };
   const r = await request.post(`/api/boards/${BOARD}/write`, {
     headers: bearer(creator),
     data: { items: [
@@ -47,7 +43,7 @@ async function ensureBoard(request: APIRequestContext): Promise<void> {
 
 /** A new agent asks for the container; returns it with the request's `seq`. */
 async function ask(request: APIRequestContext, label: string, reason = `${label} needs to add items.`): Promise<Agent & { seq: number }> {
-  const a = await join(request, label);
+  const a = { ...await joinAgent(request, label), label };
   const r = await request.post('/api/grants', { headers: bearer(a), data: { board: BOARD, region: REGION, reason } });
   expect(r.status(), await r.text()).toBe(201);
   return { ...a, seq: (await r.json() as { request: number }).request };
@@ -79,7 +75,6 @@ async function ledgerAfter(page: Page, after: number) {
   const r = await page.request.get(`/api/ledger?board=${BOARD}&after=${after}`);
   return (await r.json() as { events: Record<string, unknown>[]; head: number }).events;
 }
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
 
 const strip = (page: Page) => page.getByRole('region', { name: /asks? for access/ });
 const row = (page: Page, label: string) => page.locator('.vb-access-row').filter({ hasText: `${label} asks to write in` });
@@ -160,7 +155,7 @@ test('Refuse with a note sends deny with the note; the request goes and no holde
 });
 
 test('a request for the whole board: Allow lists the agent under Agents, and Remove access takes the board back (D-034)', async ({ page, request }) => {
-  const a = await join(request, 'Roadmap chat');
+  const a = { ...await joinAgent(request, 'Roadmap chat'), label: 'Roadmap chat' };
   const asked = await request.post('/api/grants', { headers: bearer(a), data: { board: BOARD, reason: 'I add the roadmap items.' } });
   expect(asked.status(), await asked.text()).toBe(201);
   const before = await head(page);

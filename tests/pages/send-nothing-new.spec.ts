@@ -10,6 +10,8 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { head } from './board-page.ts';
+import { act, tabTo } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const NOTHING = 'Nothing new to send';
@@ -37,33 +39,17 @@ async function draw(request: APIRequestContext): Promise<Drawn> {
   return { board, n: results[2]!.n! };
 }
 
-/** The person acts on the board (setup), through the page's cookie. */
-async function act(page: Page, d: Drawn, fields: object): Promise<void> {
-  const r = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', ...fields } });
-  expect(r.status(), await r.text()).toBe(201);
-}
-
 /** The board's ledger lines after `after`, as the page's reads give them. */
 async function linesAfter(page: Page, d: Drawn, after: number): Promise<{ type: string; action?: string }[]> {
   const r = await page.request.get(`/api/ledger?board=${d.board}&after=${after}`);
   return (await r.json() as { events: { type: string; action?: string }[] }).events;
 }
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
 
 /** Open the board and wait until it has drawn. */
 async function open(page: Page, d: Drawn): Promise<void> {
   await page.goto(`/#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(1);
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-}
-
-/** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */
-async function tabTo(page: Page, target: Locator, max = 60): Promise<void> {
-  for (let i = 0; i < max; i += 1) {
-    if (await target.evaluate((e) => e === document.activeElement)) return;
-    await page.keyboard.press('Tab');
-  }
-  throw new Error(`Tab never reached ${String(target)}`);
 }
 
 const send = (page: Page) => page.locator('#send');

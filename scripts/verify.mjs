@@ -37,9 +37,11 @@ const SOURCE = /\.(?:ts|mjs|js|svelte|css|html)$/;
 const CODE = /\.(?:ts|mjs|js|svelte)$/;
 // Every way one file reaches another. Imports: `from` (import, export, import type), a bare
 // side-effect import, a dynamic import. Paths: `new URL(…, import.meta.url)` (a template's static
-// start), Vite's import.meta.glob, an HTML href or src, a CSS @import.
+// start), `import.meta.resolve(…)` (a file found by name, never loaded: a module's fixture server
+// spawned as a child), Vite's import.meta.glob, an HTML href or src, a CSS @import.
 const IMPORT = /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s*['"]([^'"]+)['"]/gm;
 const URL_PATH = /new URL\(\s*['"`]([^'"`$]+)/g;
+const RESOLVE = /import\.meta\.resolve\(\s*['"`]([^'"`]+)/g;
 const GLOB = /import\.meta\.glob(?:<[^>]*>)?\(\s*['"`]([^'"`]+)/g;
 const LINK = /\s(?:href|src)="([^"]+)"/g;
 const CSS_IMPORT = /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g;
@@ -82,13 +84,14 @@ export function referencesOf(rel, text) {
   const all = (re, how) => [...text.matchAll(re)].map((m) => ({ how, spec: m[1] ?? m[2] ?? m[3] }));
   if (rel.endsWith('.html')) return all(LINK, 'path');
   if (rel.endsWith('.css')) return all(CSS_IMPORT, 'import');
-  return [...all(IMPORT, 'import'), ...all(URL_PATH, 'path'), ...all(GLOB, 'path')];
+  return [...all(IMPORT, 'import'), ...all(URL_PATH, 'path'), ...all(RESOLVE, 'path'), ...all(GLOB, 'path')];
 }
 
 /** The repo path a reference reaches: a module name through `names`, a relative path from the
- * file. undefined for a name not in the map; null for node:, bare and absolute specifiers. */
+ * file. undefined for a name not in the map; null for node:, bare and absolute specifiers. A Vite
+ * query (`?raw`: the file's text) names the same file. */
 export function targetOf(fromRel, spec, names) {
-  if (spec.startsWith('#')) return names.get(spec);
+  if (spec.startsWith('#')) return names.get(spec.split('?')[0]);
   if (!spec.startsWith('.')) return null;
   return path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec));
 }
@@ -96,7 +99,8 @@ export function targetOf(fromRel, spec, names) {
 const same = (a, b) => a.kind === b.kind && a.name === b.name;
 
 /** Rule 1 / D-016, D-059: a module is reached only by its name (code, CSS, HTML, file paths);
- * names follow the layers; nothing but test code imports an app; nothing imports scripts/. */
+ * names follow the layers; nothing but test code imports an app, or names its files but by name
+ * (D-060); nothing imports scripts/. */
 export function checkReferences(fromRel, text, names, layers = LAYERS) {
   const from = ownerOf(fromRel);
   if (!from) return [];
@@ -116,6 +120,8 @@ export function checkReferences(fromRel, text, names, layers = LAYERS) {
       }
     } else if (how === 'import' && to.kind === 'app' && !APP_TESTS.test(fromRel)) {
       out.push(fail(fromRel, `imports an app (${spec}); apps are never imported`));
+    } else if (to.kind === 'app' && !named && !APP_TESTS.test(fromRel)) {
+      out.push(fail(fromRel, `reaches into apps/${to.name} by path (${spec}): find its test support by its name, #${to.name}/testing, with import.meta.resolve (D-060)`));
     } else if (how === 'import' && to.kind === 'scripts') {
       out.push(fail(fromRel, `imports scripts/ (${spec})`));
     } else if (how === 'import' && from.kind === 'package' && !named) {

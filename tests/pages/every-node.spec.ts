@@ -10,6 +10,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { bar, bubble, card } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 
@@ -55,9 +56,6 @@ async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-const bubble = (page: Page) => page.locator('vb-note-bubble');
-const bar = (page: Page) => page.locator('vb-selection-bar');
 const head = async (page: Page, d: Drawn) => (await (await page.request.get(`/api/boards/${d.board}`)).json() as { head: number }).head;
 const responsesAfter = async (page: Page, d: Drawn, after: number) =>
   (await (await page.request.get(`/api/boards/${d.board}/responses?after=${after}`)).json() as { responses: Record<string, unknown>[] }).responses;

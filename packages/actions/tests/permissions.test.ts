@@ -11,6 +11,7 @@ import { containerKey, latest, readLedger, toLine } from '#format';
 import type { Container, LedgerState, Verdict, WriteItem, WriteKind } from '../src/index.ts';
 import { applyEvent, canWrite, emptyState, holders, PERMISSIONS, placeOf, REFERENCES, scopeOf } from '../src/index.ts';
 import { A, B, C, Ledger, scene } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
 const need = (board: string, region?: string) => ({ board, ...(region !== undefined && { region }) });
 const node = (board: string, n: number, region: string): WriteItem => ({ type: 'node', board, n, node: { region } });
@@ -184,13 +185,9 @@ function oldCanWrite(s: LedgerState, agent: string, item: WriteItem): 'ok' | Con
   }
 }
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
-const lines = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8').split('\n');
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
+const lines = (rel: string) => fs.readFileSync(rel, 'utf8').split('\n');
 
 /** Every agent write in `events`, judged before it is folded: the writes the old rule allowed
  * from an agent that already held a container on that board, and those of them refused now. */

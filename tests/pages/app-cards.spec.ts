@@ -17,6 +17,7 @@ import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card as cardOf, control, panelOf } from './board-page.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 /** The one refusal the end-to-end run makes on purpose: `=` before Allow (needs-approval, 403). */
@@ -35,13 +36,6 @@ async function open(page: Page, board: string, count: number, query = ''): Promi
 /** The calculator not allowed, whatever an earlier test did (an allow is on the app, not a board). */
 async function notAllowed(board: string): Promise<void> {
   if ((await s.apps()).get('calculator')?.allowed) await s.act(board, { action: 'app-revoke', app: 'calculator' });
-}
-
-const cardOf = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-/** A card's panel, once its frame is ready. */
-async function panelOf(card: Locator): Promise<Frame> {
-  await expect(card.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
-  return (await (await card.locator('vb-app-frame iframe').elementHandle())!.contentFrame())!;
 }
 
 /** Allow in the card, then the confirm, as the person does. */
@@ -66,8 +60,6 @@ async function stopApp(page: Page, card: Locator): Promise<void> {
   await expect(card.getByRole('button', { name: 'App allowed: Calculator' })).toBeHidden();
 }
 
-/** The footer's one app control showing: its name, its tip and its words. */
-const control = (card: Locator) => card.locator('.vb-app-status > button:visible');
 
 for (const theme of THEMES) {
   test.describe(`end to end (${theme})`, () => {

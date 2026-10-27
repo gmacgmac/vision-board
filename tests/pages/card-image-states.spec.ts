@@ -7,11 +7,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Page } from '@playwright/test';
-import { IMAGES, imagesDir, pngOf, put } from '../../apps/board/tests/images-support.ts';
+import { IMAGES, imagesDir, pngOf, put } from '#board/testing';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card } from './board-page.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 
@@ -40,7 +41,6 @@ async function open(page: Page, cards: object[], query = ''): Promise<number[]> 
   await expect(page.locator('vb-node')).toHaveCount(cards.length);
   return n;
 }
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 
 const REFUSED = { kind: 'risk', title: 'Pictures that can\'t be shown', body: [
   '![Old diagram](gone.png)', '![Chart](fake.png)', '![Scan](big.png)',

@@ -5,9 +5,9 @@
 // and an agent drawing: new cards, new versions, links and a container change (its mode or card widths).
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
-import { PERF_BASE } from './perf-server.ts';
-import { seeded } from '../../apps/board/tests/random.ts';
-import type { Random } from '../../apps/board/tests/random.ts';
+import { PERF_BASE } from './ports.ts';
+import { seeded } from '#board/testing';
+import type { Random } from '#board/testing';
 
 const BOARD = 'mixed';
 /** The mixed board copies the roadmap: 17 nodes, the ledger's 1001 to 1017 after the big board's

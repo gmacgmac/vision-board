@@ -12,13 +12,10 @@ import { LATER_REGION, readLedger } from '#format';
 import type { ConditionContext, LedgerState } from '../src/index.ts';
 import { conditionsOf, foldLedger, replyScope } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 const unsent = (s: LedgerState, ctx: ConditionContext = { board: 'b' }) => conditionsOf(s, ctx).filter((c) => c.kind === 'board.unsent');
 
@@ -110,7 +107,7 @@ test('the agent\'s own lines never make something new to send', () => {
 for (const file of FIXTURES) {
   const name = file.split('/').at(-1)!;
   test(`on ${name}, every board: unsent exactly when the Send message would carry something`, () => {
-    const read = readLedger(fs.readFileSync(new URL(file, import.meta.url), 'utf8').trim().split('\n'));
+    const read = readLedger(fs.readFileSync(file, 'utf8').trim().split('\n'));
     assert.deepEqual(read.problems, []);
     const s = foldLedger(read.events);
     for (const board of s.boards.keys()) assert.equal(unsent(s, { board }).length > 0, carried(s, board) > 0, board);

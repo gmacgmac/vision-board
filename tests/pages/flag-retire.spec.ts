@@ -7,19 +7,15 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card, frame, head, idle, linesAfter } from './board-page.ts';
+import { act, joinAgent, open } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
 
-interface Agent { secret: string }
 interface Drawn { board: string; agent: Agent }
 let boards = 0;
-
-async function join(request: APIRequestContext): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label: 'Batch 2 chat' } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
 
 /** Write `items`; each result's card number (`n`) or undefined. */
 async function write(request: APIRequestContext, d: Drawn, items: unknown[]): Promise<(number | undefined)[]> {
@@ -32,7 +28,7 @@ async function write(request: APIRequestContext, d: Drawn, items: unknown[]): Pr
 
 /** A board of its own: container `p` with `cards` questions, and container `q` with one finding. */
 async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
-  const d = { board: `batch2-${Date.now()}-${(boards += 1)}`, agent: await join(request) };
+  const d = { board: `batch2-${Date.now()}-${(boards += 1)}`, agent: await joinAgent(request, 'Batch 2 chat') };
   const items = [
     { type: 'board', title: 'Batch two' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
@@ -44,27 +40,6 @@ async function draw(request: APIRequestContext, cards = 3): Promise<Drawn> {
   return d;
 }
 
-/** The person acts on the board (setup), through the page's cookie. */
-async function act(page: Page, d: Drawn, fields: object): Promise<number> {
-  const r = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', ...fields } });
-  expect(r.status(), await r.text()).toBe(201);
-  return (await r.json() as { seq: number }).seq;
-}
-
-/** The ledger lines after `after` as the page reads them: the file's, cards by identity. */
-async function linesAfter(page: Page, after: number): Promise<Record<string, unknown>[]> {
-  return (await (await page.request.get(`/api/ledger?after=${after}`)).json() as { events: Record<string, unknown>[] }).events;
-}
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
-
-/** Open the board and wait until it has drawn `cards` cards and settled. */
-async function open(page: Page, d: Drawn, cards: number, flags = ''): Promise<void> {
-  await page.goto(`/?vbwork${flags}#${d.board}`);
-  await expect(page.locator('vb-node')).toHaveCount(cards);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-}
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const flagOf = (page: Page, n: number) => card(page, n).locator('button[data-flag]');
 const chip = (page: Page) => page.locator('#flagged');
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
@@ -76,7 +51,7 @@ const focusedId = (page: Page) => page.evaluate(() => document.activeElement?.cl
 
 test('the flag: a button beside Later on every card, Shift+F, stored by identity, kept through a redraw and a reload', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   for (const n of [1, 2, 3, 4]) {
     const buttons = card(page, n).locator('.vb-node-actions button');
     await expect(buttons.last()).toHaveAttribute('data-flag', '');
@@ -119,7 +94,7 @@ test('the flag: a button beside Later on every card, Shift+F, stored by identity
 test('the chip steps through the flagged cards in number order from the focused one, wrapping', async ({ page, request }) => {
   const d = await draw(request);
   for (const n of [3, 1]) await act(page, d, { action: 'flag', n });
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await chip(page).click();
   expect(await focusedId(page)).toBe('1');
   await chip(page).click();
@@ -136,7 +111,7 @@ test('a flag is nothing new to send, and an agent never reads it', async ({ page
   const d = await draw(request);
   await act(page, d, { action: 'send', board: d.board });
   const after = await head(page);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await flagOf(page, 1).click();
   await expect(flagOf(page, 1)).toHaveAttribute('aria-pressed', 'true');
   await idle(page);
@@ -151,7 +126,7 @@ test('a flag is nothing new to send, and an agent never reads it', async ({ page
 test('with the cardFlag flag off: no button, Shift+F is Fit, no chip', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'flag', n: 1 });
-  await open(page, d, 4, '&flags=-cardFlag');
+  await open(page, d, '?vbwork&flags=-cardFlag', 4);
   await expect(page.locator('button[data-flag]')).toHaveCount(0);
   await expect(chip(page)).toHaveCount(0);
   await expect(card(page, 1)).not.toHaveAttribute('aria-label', /flagged/);
@@ -167,7 +142,7 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     const d = await draw(request);
     await act(page, d, { action: 'flag', n: 2 });
-    await open(page, d, 4);
+    await open(page, d, '?vbwork', 4);
     await expect(chip(page)).toBeVisible();
     await expectNoAxeViolations(page);
   });
@@ -175,13 +150,12 @@ for (const theme of THEMES) {
 
 // ---- retired cards ----------------------------------------------------------------------------
 
-const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const marker = (page: Page, region: string) => frame(page, region).locator('.vb-region-retired');
 
 test('a card retired: gone from the board, "1 retired" on its container, opening the version where it last appeared', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'ack', n: 1, ver: 1 }); // the agent's next write is a new version of the board
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await expect(marker(page, 'p')).toBeHidden();
   await write(request, d, [{ type: 'retire', n: 2 }]);
   await expect(page.locator('vb-node')).toHaveCount(3);
@@ -210,7 +184,7 @@ test('a card retired: gone from the board, "1 retired" on its container, opening
 
 test('a whole container retired: its frame and its cards leave, with no marker', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await write(request, d, [{ type: 'retire', region: 'q' }]);
   await expect(frame(page, 'q')).toHaveCount(0);
   await expect(page.locator('vb-node')).toHaveCount(3);
@@ -221,7 +195,7 @@ test('with the retiredMarker flag off, a retired card still leaves, with no mark
   const d = await draw(request);
   await act(page, d, { action: 'ack', n: 1, ver: 1 });
   await write(request, d, [{ type: 'retire', n: 3 }]);
-  await open(page, d, 3, '&flags=-retiredMarker');
+  await open(page, d, '?vbwork&flags=-retiredMarker', 3);
   await expect(marker(page, 'p')).toBeHidden();
 });
 
@@ -229,7 +203,7 @@ test('with the retiredMarker flag off, a retired card still leaves, with no mark
 
 test('the container offers Column and Row, and no List; a sent list is refused', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   const names = await frame(page, 'p').getByRole('radio').evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
   expect(names).toEqual(['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row']);
   for (const mode of ['Row', 'Column']) {
@@ -249,7 +223,7 @@ test('the container offers Column and Row, and no List; a sent list is refused',
 
 test('on a second board the page names every card by its own number: buttons, seen, updates', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   const before = await head(page);
   await card(page, 2).locator('button[data-act="ack"]').click();
   await expect(card(page, 2)).toHaveAttribute('data-status', 'acknowledged');

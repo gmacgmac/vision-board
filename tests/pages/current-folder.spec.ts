@@ -12,6 +12,7 @@ import { startFolderServer } from './folder-server.ts';
 import { lc, pixel, resolved } from './apca.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { folderDialog as dialog, menu, menuButton } from './board-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -40,10 +41,7 @@ async function openLong(page: Page) {
   await open(page);
 }
 const chip = (page: Page) => page.locator('#folder-chip');
-const menuButton = (page: Page) => page.locator('#toolbar-menu');
-const menu = (page: Page) => page.getByRole('menu', { name: 'More' });
 const current = (page: Page) => page.locator('.vb-menu-current');
-const dialog = (page: Page) => page.getByRole('dialog', { name: 'Open folder' });
 const line = (page: Page) => dialog(page).getByRole('group', { name: 'Current folder' });
 const THEMES: Theme[] = ['light', 'dark'];
 

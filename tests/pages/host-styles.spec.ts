@@ -11,6 +11,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
+import { openBoard } from './board-page.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 /** A pane's width, and the page it sits in. */
@@ -36,14 +37,6 @@ dialog { padding: 40px; border: 5px solid rgb(0 0 255); background: rgb(255 255 
 
 // The host's sheet goes in as a <style>; the board's own page refuses inline styles (its CSP).
 test.use({ bypassCSP: true });
-
-/** Open the board and wait until it has drawn and stopped moving. */
-async function openBoard(page: Page, base: string): Promise<void> {
-  await page.goto(`${base}/?flags=-chatPanel`);
-  await expect(page.locator('vb-node').first()).toBeVisible();
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 /** The most any colour channel of any pixel differs between two pictures (0: the same bytes), or
  * Infinity when their sizes differ. Decoded in the page, only when the bytes differ. */
@@ -107,7 +100,7 @@ for (const theme of THEMES) {
       try {
         await page.setViewportSize({ width, height: 1000 });
         await setTheme(page, theme);
-        await openBoard(page, roadmap.base);
+        await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
         await sameUnderHost(page, [page.locator('body')]);
       } finally {
         await roadmap.close();
@@ -121,14 +114,14 @@ for (const theme of THEMES) {
       const board = page.locator('main.vb-board');
       await setTheme(page, theme);
       await page.setViewportSize({ width: PANE, height: 1000 });
-      await openBoard(page, roadmap.base);
+      await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
       const own = await layoutOf(page);
       // The same board as a pane at the left of a wide page: the page puts it there before it draws.
       await page.addInitScript((css) => {
         addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: css })));
       }, `body > .vb-stage { right: ${WIDE - PANE}px; }`);
       await page.setViewportSize({ width: WIDE, height: 1000 });
-      await openBoard(page, roadmap.base);
+      await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
       expect((await board.boundingBox())?.width).toBe(PANE);
       expect(await layoutOf(page), 'the pane lays out as the window did').toEqual(own);
       await sameUnderHost(page, [board]);

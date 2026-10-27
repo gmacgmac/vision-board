@@ -9,7 +9,8 @@ import type { ChildProcess } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { run } from '../src/index.ts';
 
-const SERVER = fileURLToPath(new URL('../../../apps/board/tests/serve-fixture.ts', import.meta.url));
+// The board's fixture server, run as a child: its test door (`#board/testing`) serves when run.
+const SERVER = fileURLToPath(import.meta.resolve('#board/testing'));
 let child: ChildProcess;
 let base = '';
 

@@ -2,20 +2,15 @@
 // bottom left; hover or focus lists every command, grouped Items, Selection, Board, View; it stays
 // while the pointer is on it, Esc closes it, "?" opens it; the old hard-coded key bar is gone.
 // The list's content is tested against the command table and the registry in
-// apps/board/tests/key-help.test.ts; here the page shows it. Read-only, on the shared board.
+// apps/board/tests/key-help.test.ts; here the page shows it. Read-only, on the worker's roadmap board.
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { openBoard } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const button = (page: Page) => page.getByRole('button', { name: 'Key commands' });
 const list = (page: Page) => page.locator('.vb-keys-tip');
-
-async function openBoard(page: Page, query = ''): Promise<void> {
-  await page.goto(`/${query}`);
-  await expect(page.locator('vb-node').first()).toBeVisible();
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-}
 
 test('a round "?" sits at the bottom left and the old key bar is gone', async ({ page }) => {
   await openBoard(page);
@@ -77,7 +72,7 @@ test('"?" typed in a text field is just a character', async ({ page }) => {
 });
 
 test('flag off (?flags=-keyBubble): no bubble and no key bar', async ({ page }) => {
-  await openBoard(page, '?flags=-keyBubble');
+  await openBoard(page, { query: '?flags=-keyBubble' });
   await expect(button(page)).toHaveCount(0);
   await expect(page.locator('.vb-help')).toHaveCount(0);
 });
@@ -85,7 +80,7 @@ test('flag off (?flags=-keyBubble): no bubble and no key bar', async ({ page }) 
 for (const theme of THEMES) {
   test(`axe passes with the bubble shut and open (${theme}), and the open list matches its screenshot`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page, '?flags=-chatPanel');
+    await openBoard(page, { query: '?flags=-chatPanel' });
     await expectNoAxeViolations(page);
     await button(page).focus();
     await expect(list(page)).toBeVisible();

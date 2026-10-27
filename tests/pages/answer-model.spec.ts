@@ -13,6 +13,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, open, reply, write } from './agent-board.ts';
+import { toast } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 
@@ -35,7 +36,6 @@ async function draw(request: APIRequestContext): Promise<Drawn & { decision: num
 }
 
 const button = (page: Page, n: number, name: string) => card(page, n).getByRole('button', { name: new RegExp(`^${name} item ${n} `) });
-const toast = (page: Page) => page.locator('#toast');
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.

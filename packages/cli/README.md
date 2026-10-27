@@ -36,4 +36,4 @@ npm run vb -- write-board --board pricing --json-body items.json      # items.js
 - **Public API** (`src/index.ts`): `run(argv, io)`, `nodeIo`, the generated `COMMANDS`, `parseArgs`,
   `assemble`, `formatText`, `overview`, `commandHelp`.
 - **Tests**: `tests/` (parsing, help, formatter, exit codes against a stub server, and a real round
-  trip of the reads against `apps/board/tests/serve-fixture.ts` started as a child process).
+  trip of the reads against the board's test support, `#board/testing`, started as a child process).

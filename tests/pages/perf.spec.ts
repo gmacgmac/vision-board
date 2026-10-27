@@ -1,12 +1,12 @@
 // The board's performance budgets (N12_FE_01, docs/specification/performance.md): a 1,000-card
-// board on its own server (playwright.config.ts, `perf-ledger.ts`), opened with `?vbwork` so the
+// board on its own server (servers.ts, `#format/testing` perfLedger), opened with `?vbwork` so the
 // page exposes its work counters (`window.__vbWork`, apps/board/src/board/work.ts). The counting
 // tests count the work a change costs, not only its time: put back a whole-board rebuild and
 // they fail.
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
-import { BIG } from './perf-ledger.ts';
-import { PERF_BASE } from './perf-server.ts';
+import { BIG } from '#format/testing';
+import { PERF_BASE } from './ports.ts';
 
 const CARDS = BIG.regions * BIG.perRegion;
 

@@ -6,10 +6,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { cardsWords, containerWords, foldLedger } from '../src/index.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 16, seq: ++seq, at: `2026-10-12T11:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 16, at: '2026-10-12T11' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const region = (board: string, id: string, title: string) => agent({ type: 'region', board, region: { id, title, mode: 'grid' } });
@@ -17,7 +18,7 @@ const card = (board: string, n: number, r: string, title: string) => agent({ typ
 
 /** Board a holds identity 1; board b holds 2-5 as its cards 1-4: 1-3 in Notes, 4 in Plan. */
 function state(extra: string[] = []) {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }),
     agent({ type: 'board', board: 'a', title: 'A' }), region('a', 'p', 'P'), card('a', 1, 'p', 'Elsewhere'),

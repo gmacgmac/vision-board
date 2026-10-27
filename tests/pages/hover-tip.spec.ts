@@ -8,6 +8,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
 import { act, card, draw, open, reply, write } from './agent-board.ts';
+import { box } from './board-page.ts';
 
 const LONG = Array.from({ length: 30 }, (_, i) => `Line ${i + 1} of a long answer.`).join('\n\n');
 const STEPS = 30;
@@ -31,7 +32,6 @@ async function drawn(page: Page, request: Parameters<typeof draw>[0]) {
 }
 
 const isOpen = (a: Locator) => a.evaluate((e) => e.hasAttribute('data-tip-open'));
-const box = async (l: Locator) => (await l.boundingBox())!;
 
 /** The pointer walks from `from` to `to` in small steps; the tip must stay open at every one. */
 async function walk(page: Page, a: Locator, from: { x: number; y: number }, to: { x: number; y: number }) {

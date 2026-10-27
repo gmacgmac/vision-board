@@ -8,6 +8,8 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { bar, card, frame, head, idle, linesAfter, toast } from './board-page.ts';
+import { act, open } from './agent-board.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 
@@ -37,30 +39,8 @@ async function draw(request: APIRequestContext): Promise<Drawn> {
   return d;
 }
 
-/** The person acts on the board (setup), through the page's cookie. */
-async function act(page: Page, d: Drawn, fields: object): Promise<void> {
-  const r = await page.request.post(`/api/boards/${d.board}/act`, { data: { type: 'act', ...fields } });
-  expect(r.status(), await r.text()).toBe(201);
-}
-
-async function open(page: Page, d: Drawn, cards: number, flags = ''): Promise<void> {
-  await page.goto(`/?vbwork${flags}#${d.board}`);
-  await expect(page.locator('vb-node')).toHaveCount(cards);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-}
-
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
-/** The ledger lines after `after`, as the file holds them. */
-async function linesAfter(page: Page, after: number): Promise<Record<string, unknown>[]> {
-  return (await (await page.request.get(`/api/ledger?after=${after}`)).json() as { events: Record<string, unknown>[] }).events;
-}
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const dialog = (page: Page) => page.locator('#confirm-dialog');
-const bar = (page: Page) => page.locator('vb-selection-bar');
 const removeButton = (page: Page) => bar(page).locator('button[data-command="remove"]');
-const toast = (page: Page) => page.locator('#toast');
 const removeRow = (f: Locator) => f.getByRole('menuitem', { name: 'Remove container' });
 
 // The page sets the person cookie: setup acts through `page.request` need it before the board opens.
@@ -69,7 +49,7 @@ test.beforeEach(async ({ page }) => { await page.goto('/gallery.html'); });
 test('Remove card on the selection bar: the confirm names the card; it leaves, the container says "1 retired"', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'ack', n: 3, ver: 1 }); // a past version shows card 1 after it goes
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   const before = await head(page);
   await card(page, 1).locator('.vb-node-title').click();
   await openSelectionBar(page);
@@ -113,7 +93,7 @@ test('Remove card on the selection bar: the confirm names the card; it leaves, t
 test('a selection: Delete asks "Remove 2 cards?", warns of the owed one, Cancel keeps both, then both go in one line', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'comment', n: 2, ver: 1, text: 'Which caterer?' });
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   const before = await head(page);
   await card(page, 2).locator('.vb-node-title').click();
   await card(page, 3).locator('.vb-node-title').click({ modifiers: ['Shift'] });
@@ -145,7 +125,7 @@ test('a selection: Delete asks "Remove 2 cards?", warns of the owed one, Cancel 
 
 test('Remove container in the settings: "Remove container \'Findings\' and its card?"; the frame and its card leave', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await zoomToControls(page);
   const f = frame(page, 'q');
   await f.locator('button.vb-cog').click();
@@ -171,7 +151,7 @@ test('Remove container in the settings: "Remove container \'Findings\' and its c
 
 test('by keyboard: Space selects a focused card, Delete asks, Tab and Enter confirm; the cog\'s menu reaches Remove container', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await zoomToControls(page);
   await card(page, 3).focus();
   await page.keyboard.press(' ');
@@ -203,7 +183,7 @@ test('by keyboard: Space selects a focused card, Delete asks, Tab and Enter conf
 test('a locked board pauses both and says why; nothing is written (D-043)', async ({ page, request }) => {
   const d = await draw(request);
   await act(page, d, { action: 'lock', board: d.board });
-  await open(page, d, 4);
+  await open(page, d, '?vbwork', 4);
   await zoomToControls(page);
   const before = await head(page);
   await card(page, 1).locator('.vb-node-title').click();
@@ -224,7 +204,7 @@ test('a locked board pauses both and says why; nothing is written (D-043)', asyn
 
 test('with the personRemove flag off: no Remove on the bar or in the settings, and Delete does nothing', async ({ page, request }) => {
   const d = await draw(request);
-  await open(page, d, 4, '&flags=-personRemove');
+  await open(page, d, '?vbwork&flags=-personRemove', 4);
   await zoomToControls(page);
   await card(page, 1).locator('.vb-node-title').click();
   await openSelectionBar(page);

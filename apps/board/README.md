@@ -114,14 +114,20 @@ opens the zoomed view (`<vb-image-view>`, components.md § Images in cards and �
 `cardImages` flag reaches the renderer once, through `setMarkdownImages` in `src/main.ts`.
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
-drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the
+drawn from `#format/gallery.ledger.jsonl` (`packages/format/fixtures/gallery.ledger.jsonl`, imported `?raw`: a real ledger in the real schema) through the
 patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from `#ui` `PATTERNS`
 (`packages/ui/src/patterns.ts`, the patterns' `pattern.json` files); a pattern needs a sample function in `src/gallery/main.ts` or the page shows
 a gap and the page test fails. Open it at `/gallery.html`. Page tests (`npm run test:pages`, D-025,
-in `tests/pages/`) run the board and the gallery in Chromium on port 4468 from a fresh copy of the
-roadmap fixture ledger, and the performance budgets on port 4469 from a generated 1,000-card ledger
-(`tests/pages/perf-ledger.ts`); screenshots are stored in `tests/pages/__screenshots__/`, and
-`npm run test:pages -- --update-snapshots` replaces them on purpose.
+in `tests/pages/`) run the board and the gallery in Chromium on 3 workers (`VB_TEST_WORKERS` for
+more). Each worker starts its own boards (the roadmap fixture, a generated 1,000-card ledger, an empty
+project) on its own block of ports, `VB_TEST_PORT` (4468) + 10 × (slot + 1), fresh for every spec
+file (`tests/pages/ports.ts`, `servers.ts`). The 1,000-card ledger is `perfLedger` from
+`#format/testing`. The performance budgets (`perf.spec.ts`) run last and alone, in the `budgets`
+project. `--shard` needs `--project=chromium`; `perf.spec.ts` alone needs `--no-deps`. Screenshots
+are stored in `tests/pages/__screenshots__/`, and `npm run test:pages -- --update-snapshots`
+replaces them on purpose. The board's test support (`startTestBoard`, the API harness, fakes) is
+`#board/testing` (`apps/board/tests/support.ts`, `test-board.ts`); other modules' tests find it with
+`import.meta.resolve('#board/testing')` and run it as a child process, never import it (D-062).
 
 - **Depends on**: `packages/format`, `packages/actions`, `packages/client`, `packages/layout`,
   `packages/ui`, `packages/tokens`.

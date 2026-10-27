@@ -12,7 +12,8 @@
 | — | Principles 286, set refined | Done | e9218f8 | verify ok |
 | 2 | ARCH_01 | Done (Run 2, after D-059) | 818c502 · `tidy/wave-2` | 1620 + 10 unit, check 0 errors, gen current, verify ok (18 warnings), 658 page specs passed |
 | 3 | ARCH_02, UI_01, ARCH_04 | Done, with the gate fixes (tokens applied, Base gallery entry, docs) | fe64b9c · `tidy/wave-3` | 1690 + 10 unit, check 0 errors, gen current, verify ok (19 warnings), 664 page specs passed; only gallery-{light,dark} changed (new Base section, appended last, every old row identical) |
-| 4 | ARCH_03, ENGINE_01 | Done, with the gate fixes (board chip, aria ids per mount, docs) | see git log · `tidy/wave-4` | Combined tree: 1698 + 10 unit, check 0 errors, gen current, verify ok (19 warnings); after the gate fixes 1707 + 10 unit, 667 page specs passed, no baseline changed |
+| 4 | ARCH_03, ENGINE_01 | Done, with the gate fixes (board chip, aria ids per mount, docs) | 80a3a2c · `tidy/wave-4` | Combined tree: 1698 + 10 unit, check 0 errors, gen current, verify ok (19 warnings); after the gate fixes 1707 + 10 unit, 667 page specs passed, no baseline changed |
+| 5 | TEST_01 | Done, with the gate's docs pass and D-062 | see git log · `tidy/wave-5` | 1710 + 10 unit (1 todo: the lanes sample), check 0 errors, gen current, verify ok (13 warnings, was 19); 667 page specs passed on 3 workers in 6.4 min (was 16.1 on 1), no screenshot changed. Two timing tests ran slow while the page suite ran beside them; all 10 pass alone |
 
 ## Decisions taken (for the maintainer's review)
 
@@ -50,6 +51,13 @@
   process would be a second writer on a folder the server holds the lock for (ENGINE_01, api.md 162).
 - **Tracker M8 added:** the board's toolbar, strips and dialogs become part of the board, so nclite
   doesn't draw them again. Planned with the plugin, after search (M7).
+- **D-062, test support per module** (TEST_01, an addendum to D-060): `#format/testing`, `#board/testing`
+  (another module finds an app's only with `import.meta.resolve`, to run it as a child), and the gallery
+  ledger named by its file (`#format/gallery.ledger.jsonl`). No `packages/testing`: it couldn't reach an app.
+- **Project instructions, the Tests line** (protected, applied under the delegation): 3 workers,
+  `VB_TEST_WORKERS`, per-worker ports, tasks running at once 100 ports apart.
+- **The gallery's "Lanes mode" sample is wrong, not the rule**: two of its cards name no lane. A
+  lanes-mode card names its lane; ARCH_05 gives them "Now" and "Next" (that gallery section may move).
 
 ## Requests routed
 
@@ -86,6 +94,16 @@
   root is now ignored; the app-card menu is found within its card, not by document id.
 - A unit run left hung in the worktree from mid-wave (pids 7323, 7324, 7448, `node --test`). Stopping
   it was refused by the permission check, so it may still be running: safe to stop.
+
+## Caught beyond the brief (Wave 5)
+
+- TEST_01: the 1,000-card first draw slipped to 910–1,012 ms (budget 1,000) while the test boards shared a
+  process with Playwright's driver; moving them into a child process restored 465–486 ms. No budget,
+  wait or assertion was loosened.
+- TEST_01: `frames-board.ts` kept its board across spec files, so `note-discard` depended on order.
+- TEST_01: `--shard` puts every test in shard 1 unless run with `--project=chromium`.
+- The orchestrator's slip: one gate command of mine briefly made an empty `temp-rows.txt` in the main
+  checkout (a stray `cat`); removed within minutes, nothing else touched there.
 
 ## To look at by eye (light and dark)
 

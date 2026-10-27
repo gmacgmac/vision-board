@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { boardView, readLedger } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import { answeredIds, boardAccess, boardData, boardJson, boardState, foldLedger, itemsOut } from '../src/index.ts';
+import { lineMaker } from '#format/testing';
 
 const lines = fs.readFileSync(`${FIXTURES_DIR}roadmap.ledger.jsonl`, 'utf8').trim().split('\n');
 const read = readLedger(lines);
@@ -35,8 +36,8 @@ test('boardJson: the stored statuses named at the edge, each map an object, the 
 });
 
 test('answeredIds: the decided cards, but not one the agent still owes an answer', () => {
-  let seq = 0;
-  const line = (e: object) => JSON.stringify({ v: 12, seq: ++seq, at: `2026-10-11T11:${String(seq).padStart(2, '0')}:00Z`, ...e });
+  const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+  const { line } = maker;
   const agent = (e: object) => line({ by: 'agent', agent: 'a-aaaa1111', ...e });
   const ask = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'p', kind: 'question', title: `Question ${n}?` } });
   const { events, problems } = readLedger([

@@ -5,14 +5,13 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import type { AgentAdapter } from '#agent';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { fakeChat, readChat, turnEnded } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-starting-'));
+const config = makeTempDir('vb-chat-starting-');
 const fake = fakeChat(config);
 let held: Promise<void> | null = null;
 /** The fake Claude, whose start waits while `held` is set. */

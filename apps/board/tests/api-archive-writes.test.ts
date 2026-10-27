@@ -9,7 +9,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { UNAVAILABLE } from '#actions';
 import { LEDGER_FORMAT } from '#format';
@@ -18,8 +17,9 @@ import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { ROOT } from './openapi-ajv.ts';
 import { fakeChat } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-archive-'));
+const config = makeTempDir('vb-archive-');
 const fake = fakeChat(config);
 let h: Harness;
 let A: Joined;

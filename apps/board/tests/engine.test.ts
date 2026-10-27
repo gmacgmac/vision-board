@@ -6,11 +6,11 @@
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { FIXTURES_DIR, TOOLS_FILE } from '#format/files';
 import type { Caller, Engine, EngineChange } from '../server/engine/index.ts';
 import { createEngine } from '../server/engine/index.ts';
+import { makeTempDir } from '#format/testing';
 
 const PERSON: Caller = { by: 'person' };
 const dirs: string[] = [];
@@ -18,7 +18,7 @@ after(() => { for (const d of dirs) fs.rmSync(d, { recursive: true, force: true 
 
 /** A data folder holding the roadmap fixture as its ledger. */
 function dataDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-engine-'));
+  const dir = makeTempDir('vb-engine-');
   dirs.push(dir);
   fs.copyFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), path.join(dir, 'ledger.jsonl'));
   return dir;

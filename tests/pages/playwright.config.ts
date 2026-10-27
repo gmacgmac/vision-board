@@ -4,51 +4,30 @@
 // Chromium only. The tokens use light-dark(), which has been checked in Chromium alone; other
 // engines are not verified here.
 //
-// `webServer` builds the page, then serves it on its own port (4468, so a board you are running
-// yourself on 4466 is never touched; VB_TEST_PORT picks another, so a second checkout can run its
-// own copy) from a fresh copy of the roadmap fixture ledger in a temp folder. The server seeds the
-// project from VB_SEED only when the folder has no ledger yet, so removing the folder first is what
-// makes every run start from the same board. The folder is removed again when the server stops.
-// The example calculator app is copied into it, for the gallery's live app panel, and the gallery's
-// pictures are saved into its images folder (gallery-images.ts), for the gallery's images in cards.
-// A second server (PERF_PORT, one above) serves the performance fixture (perf-ledger.ts: a
-// 1,000-card board and a mixed one) the same way, for perf.spec.ts, so the budgets never share a
-// ledger with the other tests. It serves the page the first server built: Playwright starts the
-// servers one after the other, in this order. A third (EMPTY_PORT, two above) serves an empty
-// project, no seed, for live-boards.spec.ts: the page waits there for the first board drawn.
-// Specs start their own servers above those (chat-server.ts, folder-server.ts, app-server.ts).
+// The page is built once (global-setup.ts); then each worker starts its own servers in a child
+// process of its own (helpers.ts `test`, servers.ts, serve-boards.ts) on its own block of ports (ports.ts: VB_TEST_PORT, 4468 by
+// default, plus ten per worker, so a board you are running yourself on 4466 is never touched and a
+// second checkout can run its own copy): the roadmap fixture's board, the performance fixture's and
+// an empty project's, fresh for every spec file. No spec sees another's writes, so files run in any
+// order, on any number of workers. Specs start their own servers on the same block (chat-server.ts,
+// folder-server.ts, app-server.ts, roadmap-server.ts).
 // Screenshots are kept in tests/pages/__screenshots__/; update them on purpose with:
 // npm run test:pages -- --update-snapshots
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
-import { FIXTURES_DIR } from '#format/files';
-import { EMPTY_PORT, PERF_PORT } from './perf-server.ts';
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
-const ROOT = fileURLToPath(new URL('../..', import.meta.url));
-const PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${PORT}`);
-const PERF_PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${PERF_PORT}`);
-const EMPTY_PROJECT = path.join(os.tmpdir(), `vision-board-page-tests-${EMPTY_PORT}`);
-const serve = (start: string) => [
-  'rm -rf "$VB_PROJECT"',
-  'trap "rm -rf $VB_PROJECT; exit 0" TERM INT EXIT',
-  start,
-].join('; ');
-// The gallery's live app panel (app-cards FE_02, gallery/app-section.ts) needs the example app in the
-// served project: copied in from the skill folder, its one source.
-const APPS = '"$VB_PROJECT/.visionboard/apps"';
-const SERVE = serve(`npm run build && mkdir -p ${APPS} && cp -R skills/vision-board/examples/apps/calculator ${APPS}/ && node tests/pages/gallery-images.ts "$VB_PROJECT" && node apps/board/server.ts`);
-const SERVE_PERF = serve('node tests/pages/perf-ledger.ts "$VB_SEED" && node apps/board/server.ts');
-const SERVE_EMPTY = serve('node apps/board/server.ts');
-// The servers never write Kiro's agent file into the real home (server.ts, VB_KIRO_AGENT).
-const env = { ...(process.env as Record<string, string>), VB_KIRO_AGENT: '0' };
+/** Workers: VB_TEST_WORKERS, else 3 (each runs a browser and three boards; the machine's cores decide). */
+const WORKERS = Number(process.env.VB_TEST_WORKERS ?? 3);
+const CHROME = { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } };
+const BUDGETS = 'perf.spec.ts';
 
 export default defineConfig({
   testDir: '.',
-  // One server, one ledger: the board tests change it, so the files run one after another.
-  workers: 1,
+  globalSetup: './global-setup.ts',
+  // A file's tests run in order on one worker (they build on each other's writes); files spread.
+  workers: WORKERS,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
@@ -58,7 +37,7 @@ export default defineConfig({
   outputDir: path.join(os.tmpdir(), `vision-board-test-results-${PORT}`),
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFileName}/{arg}-{platform}{ext}',
   use: {
-    baseURL: `http://127.0.0.1:${PORT}`,
+    // baseURL: the worker's main board (helpers.ts `test`).
     // Durations drop to 0ms under reduced motion (tokens.css), so neither axe nor a screenshot
     // ever catches a colour or a card halfway through a transition.
     reducedMotion: 'reduce',
@@ -68,35 +47,12 @@ export default defineConfig({
     // test browser can't reach Google's services or anything a page might call by mistake.
     launchOptions: { args: ['--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } } }],
-  webServer: [{
-    command: `sh -c '${SERVE}'`,
-    url: `http://127.0.0.1:${PORT}/api/boards`,
-    reuseExistingServer: false,
-    cwd: ROOT,
-    env: {
-      ...env,
-      VB_PORT: String(PORT),
-      VB_PROJECT: PROJECT,
-      VB_SEED: `${FIXTURES_DIR}roadmap.ledger.jsonl`,
-    },
-    gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
-    timeout: 120_000,
-  }, {
-    command: `sh -c '${SERVE_PERF}'`,
-    url: `http://127.0.0.1:${PERF_PORT}/api/boards`,
-    reuseExistingServer: false,
-    cwd: ROOT,
-    env: { ...env, VB_PORT: String(PERF_PORT), VB_PROJECT: PERF_PROJECT, VB_SEED: path.join(PERF_PROJECT, 'seed.ledger.jsonl') },
-    gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
-    timeout: 60_000,
-  }, {
-    command: `sh -c '${SERVE_EMPTY}'`,
-    url: `http://127.0.0.1:${EMPTY_PORT}/api/boards`,
-    reuseExistingServer: false,
-    cwd: ROOT,
-    env: { ...env, VB_PORT: String(EMPTY_PORT), VB_PROJECT: EMPTY_PROJECT },
-    gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
-    timeout: 60_000,
-  }],
+  // The performance budgets (perf.spec.ts) run last and alone, on a quiet machine, as they were
+  // measured: `budgets` waits for `chromium`, one worker. Both projects are the same browser. A
+  // dependency always runs whole, so to run the budgets by themselves: `-- --no-deps perf.spec.ts`;
+  // and `--shard` splits only one project at a time: `-- --project=chromium --shard=1/2`.
+  projects: [
+    { name: 'chromium', use: CHROME, testIgnore: BUDGETS },
+    { name: 'budgets', use: CHROME, testMatch: BUDGETS, dependencies: ['chromium'], workers: 1 },
+  ],
 });

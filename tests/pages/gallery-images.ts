@@ -1,11 +1,10 @@
 // The gallery's pictures (app-cards FE_03, D-048): a wide flow diagram and a tall phone screen, saved
-// into a project's `.visionboard/images/gallery/` as an agent would save them. playwright.config.ts
-// runs this on the served project before its server starts (`node tests/pages/gallery-images.ts
-// <project>`), so the gallery's image section shows real files through the real route; its paths are
-// those apps/board/src/gallery/image-view-section.ts names. Drawn here from plain shapes (`pngOf`).
-import { fileURLToPath } from 'node:url';
-import type { Rgb } from '../../apps/board/tests/images-support.ts';
-import { pngOf, put } from '../../apps/board/tests/images-support.ts';
+// into a project's `.visionboard/images/gallery/` as an agent would save them. servers.ts writes them
+// into each worker's main project before its server starts, so the gallery's image section shows real
+// files through the real route; its paths are those apps/board/src/gallery/image-view-section.ts
+// names. Drawn here from plain shapes (`pngOf`).
+import type { Rgb } from '#board/testing';
+import { pngOf, put } from '#board/testing';
 
 /** A rounded box of colour `c` (`r` its corner radius), or a right-pointing arrow head when `tip`. */
 interface Shape { x: number; y: number; w: number; h: number; c: Rgb; r?: number; tip?: true }
@@ -63,5 +62,3 @@ export function writeGalleryImages(project: string): void {
   put(project, GALLERY_IMAGES.flow, flow());
   put(project, GALLERY_IMAGES.phone, phone());
 }
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) writeGalleryImages(process.argv[2]!);

@@ -4,7 +4,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { OPERATIONS } from '#format';
-import { createBoardServer } from '../server/app.ts';
+import { startTestBoard } from './test-board.ts';
 import { HANDLERS } from '../server/handlers.ts';
 import type { Ledger } from '../server/ledger.ts';
 import type { Harness } from './api-harness.ts';
@@ -173,9 +173,8 @@ test('a wrong Host, or a write from another Origin, is forbidden (403); no Origi
 
 test('anything unexpected is server-error (500) with a fixed detail; the stack goes to stderr only', async () => {
   const broken = { state() { throw new Error('secret internals at /home/x'); } } as unknown as Ledger;
-  const server = createBoardServer({ ledger: broken, dist: '/nonexistent' });
-  await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-  const port = (server.address() as { port: number }).port;
+  const board = await startTestBoard({ ledger: broken, dist: '/nonexistent' });
+  const { port } = board;
   const logged: unknown[] = [];
   const original = console.error;
   console.error = (...args: unknown[]) => { logged.push(args); };
@@ -188,6 +187,6 @@ test('anything unexpected is server-error (500) with a fixed detail; the stack g
     assert.equal(logged.length, 1);
   } finally {
     console.error = original;
-    server.close();
+    await board.close();
   }
 });

@@ -6,16 +6,16 @@ import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { APP_LIMITS } from '#format';
 import { SCHEMA_DIR } from '#format/files';
 import { appHash, appState, parseEnv, readApp, readEnv } from '../server/apps.ts';
 import { foreignSchemas } from '../server/schema.ts';
 import { FILE_NAME_WORDS } from './app-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const project = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-apps-')));
-const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-outside-')));
+const project = fs.realpathSync(makeTempDir('vb-apps-'));
+const outside = fs.realpathSync(makeTempDir('vb-outside-'));
 after(() => { for (const d of [project, outside]) fs.rmSync(d, { recursive: true, force: true }); });
 
 const APPS = path.join(project, '.visionboard', 'apps');

@@ -12,6 +12,8 @@ import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card } from './board-page.ts';
+import { sendButton, side, status, text } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -25,8 +27,6 @@ let runs = 0;
 test.beforeAll(async () => { srv = await startChatServer(); });
 test.afterAll(async () => { await srv.close(); });
 
-const side = (page: Page) => page.locator('#chat');
-const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
 const submit = (page: Page) => side(page).getByRole('button', { name: 'Send', exact: true });
 const answers = (page: Page) => side(page).locator('button.chat-cmp-ctx');
 const preview = (page: Page) => side(page).getByRole('region', { name: 'What the agent receives' });
@@ -39,9 +39,6 @@ async function previewText(page: Page): Promise<string> {
   return shown;
 }
 const mine = (page: Page) => side(page).locator('chat-message[data-from="person"]');
-const status = (page: Page) => side(page).locator('.chat-hd-status');
-const sendButton = (page: Page) => page.locator('#send');
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const node = (key: string, title: string, kind = 'question') => ({ type: 'node', key, node: { region: 'plan', kind, title } });
 
 /** Open the page (on `board`, or the folder) with the chat panel open. */

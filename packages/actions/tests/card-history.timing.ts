@@ -1,12 +1,12 @@
 // The card history budget (card-polish BE_02): a card with 1,000 lines of its own builds its
 // history under 50 ms (performance.md "One change shown", the nearest budget: the box opens on one
-// press), from its own lines and from the whole performance ledger (tests/pages/perf-ledger.ts,
+// press), from its own lines and from the whole performance ledger (`#format/testing` perfLedger,
 // 1,000 cards) with them in it. A timing test: it runs alone (`npm run test:timing`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { cardHistory } from '../src/index.ts';
-import { perfLedger } from '../../../tests/pages/perf-ledger.ts';
+import { perfLedger } from '#format/testing';
 
 const BUDGET_MS = 50;
 const CARD = 500;

@@ -10,19 +10,14 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { joinAgent } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 
-interface Agent { secret: string }
 interface Drawn { agent: Agent; board: string; n: number[] }
 
 let boards = 0;
-
-async function join(request: APIRequestContext, label = 'Pricing chat'): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
 
 async function write(request: APIRequestContext, d: { agent: Agent; board: string }, items: object[]) {
   const r = await request.post(`/api/boards/${d.board}/write`, { headers: { Authorization: `Bearer ${d.agent.secret}` }, data: { items } });
@@ -34,7 +29,7 @@ async function write(request: APIRequestContext, d: { agent: Agent; board: strin
 
 /** A board of its own with two cards, drawn by a new agent. */
 async function draw(request: APIRequestContext): Promise<Drawn> {
-  const d = { agent: await join(request), board: `notice-${Date.now()}-${(boards += 1)}` };
+  const d = { agent: await joinAgent(request), board: `notice-${Date.now()}-${(boards += 1)}` };
   const results = await write(request, d, [
     { type: 'board', title: 'Notice' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
@@ -183,7 +178,7 @@ test('keyboard: Esc on the notice hides it with focus on the pill; Enter on the 
 test('with the requests strip showing, the notice sits below it', async ({ page, request }) => {
   const d = await draw(request);
   await propose(request, d, d.n[0]!, 'the client declined');
-  const other = await join(request, 'Support chat');
+  const other = await joinAgent(request, 'Support chat');
   const asked = await request.post('/api/grants', { headers: { Authorization: `Bearer ${other.secret}` }, data: { board: d.board, reason: 'I add the support items.' } });
   expect(asked.status(), await asked.text()).toBe(201);
   await open(page, d);

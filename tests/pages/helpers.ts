@@ -1,10 +1,15 @@
 // Shared page-test helpers (rule 13): one `test` whose page fails the test on any console
 // error or warning, page error or failed request, and an `axe` check that fails on any
 // accessibility violation. Specs import `test` and `expect` from here, never from Playwright.
+// The same `test` gives each worker its own servers (servers.ts, on its ports, ports.ts), fresh for
+// every spec file, and points `baseURL` at the worker's main board.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test as base } from '@playwright/test';
 import type { Frame, Page } from '@playwright/test';
+import { MAIN_BASE } from './ports.ts';
+import type { WorkerBoards } from './servers.ts';
+import { workerBoards } from './servers.ts';
 
 export { expect };
 
@@ -35,9 +40,20 @@ const SKIPPED_RULES = ['color-contrast'];
  * (an object: Playwright reads an array there as a fixture's value and options); every other
  * problem still fails it.
  */
-export const test = base.extend<{ expected: { problems: RegExp[] } }>({
+export const test = base.extend<{ expected: { problems: RegExp[] }; fresh: void }, { boards: WorkerBoards }>({
   expected: [{ problems: [] }, { option: true }],
-  page: async ({ page, expected }, use) => {
+  boards: [async ({}, use) => {
+    const boards = workerBoards();
+    await use(boards);
+    await boards.close();
+  }, { scope: 'worker' }],
+  /** Fresh boards for each spec file, before anything in the file's first test runs. */
+  fresh: [async ({ boards }, use, info) => {
+    await boards.forFile(info.file);
+    await use();
+  }, { auto: true }],
+  baseURL: MAIN_BASE,
+  page: async ({ page, expected, fresh: _ }, use) => {
     const problems: string[] = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error' || msg.type() === 'warning') problems.push(`console ${msg.type()}: ${msg.text()}`);

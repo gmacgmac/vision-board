@@ -12,6 +12,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
+import { card, head } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
@@ -49,7 +50,6 @@ const add = async (request: APIRequestContext, d: Drawn, title: string) => (awai
 /** The ledger lines after `after`, of one board when named (the whole ledger is paged, so a long one is cut). */
 const events = async (page: Page, after = 0, board?: string) =>
   (await (await page.request.get(`/api/ledger?after=${after}${board ? `&board=${board}` : ''}`)).json() as { events: { type: string; board?: string; n?: number; ver?: number }[] }).events;
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
 /** The card seen lines on `board` after line `after`, as [n, ver], by board number (board-lines.ts). */
 const seenAfter = async (page: Page, after: number, board: string) =>
   (await boardLines(page, board, after)).filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver as number]);
@@ -62,7 +62,6 @@ async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await expect.poll(async () => (await events(page, 0, d.board)).some((e) => e.type === 'seen' && e.board === d.board)).toBe(true);
 }
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const tag = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
 
 test.beforeEach(async ({ page }) => {

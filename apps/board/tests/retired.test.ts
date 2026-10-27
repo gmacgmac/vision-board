@@ -7,10 +7,11 @@ import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { boardData, foldLedger, pastLines, retiredCounts } from '#actions';
 import { regionState } from '#ui';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 12, seq: ++seq, at: `2026-10-11T11:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const region = (board: string, id: string) => agent({ type: 'region', board, region: { id, title: id.toUpperCase(), mode: 'grid' } });
@@ -26,7 +27,7 @@ const cross = (n: number, ver = 1) => person({ type: 'act', action: 'drop', n, v
 
 /** Board c: container p drawn at v1 (seq 7) with four cards that ask; then `after` lines. */
 function asked(after: () => string[]) {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'c', title: 'C' }), region('c', 'p'),
     ask('c', 1), ask('c', 2), ask('c', 3), ask('c', 4), // 7: v1

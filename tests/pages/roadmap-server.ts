@@ -1,36 +1,16 @@
-// A board server of its own on a fresh copy of the roadmap fixture ledger (the one the main test
-// server starts from), for a test whose picture must not depend on what earlier specs wrote to the
-// shared board: its version, its card marks and the "N boards updated" chip the other specs' boards
-// raise. Started in the test process on a free port (listen(0)), so it never meets another port; it
-// serves the page the main test server built. Its folder is named like the main server's, so the
-// folder chip draws alike. Everything is removed on close.
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import type { AddressInfo } from 'node:net';
-import { fileURLToPath } from 'node:url';
-import { FIXTURES_DIR } from '#format/files';
-import { createBoardServer } from '../../apps/board/server/app.ts';
-import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
-
-const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
-const ROADMAP = `${FIXTURES_DIR}roadmap.ledger.jsonl`;
+// A board server of its own on a fresh copy of the roadmap fixture ledger (the one the worker's main
+// board starts from), for a test whose picture must not depend on what the file's earlier tests wrote
+// to the main board: its version, its card marks and the "N boards updated" chip the other boards
+// raise. Started in the test process on the worker's roadmap port (ports.ts); it serves the page the
+// global setup built. Its folder is named like the main board's, so the folder chip draws alike.
+// Everything is removed on close.
+import { FIXTURE_LEDGERS } from '#format/testing';
+import { startTestBoard } from '#board/testing';
+import { PORTS } from './ports.ts';
 
 export interface RoadmapServer { base: string; close(): Promise<void> }
 
 export async function startRoadmapServer(): Promise<RoadmapServer> {
-  const project = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vision-board-page-tests-roadmap-')));
-  const file = ledgerPath(project);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.copyFileSync(ROADMAP, file);
-  const server = createBoardServer({ ledger: openLedger(file, () => {}), dist: DIST });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  return {
-    base: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
-    async close() {
-      server.closeAllConnections();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-      fs.rmSync(project, { recursive: true, force: true });
-    },
-  };
+  const board = await startTestBoard({ prefix: 'vision-board-page-tests-roadmap-', seed: FIXTURE_LEDGERS.roadmap, port: PORTS.roadmap });
+  return { base: board.base, close: board.close };
 }

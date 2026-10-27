@@ -5,21 +5,20 @@
 // (api.md 54).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
 import type { NodeEvent, OperationId } from '#format';
 import { boardNumber } from '#format';
 import { FIXTURES_DIR } from '#format/files';
 import type { CallInput, CallOptions, Client } from '#client';
 import { ApiProblem, createClient } from '#client';
 import type { BoardServerOptions } from '../server/app.ts';
-import { createBoardServer } from '../server/app.ts';
 import { watchBuild } from '../server/build-watch.ts';
 import type { Caller, Ledger } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Answer } from './openapi-ajv.ts';
 import { checkAnswer } from './openapi-ajv.ts';
+import { personCookie, startTestBoard } from './test-board.ts';
+import { makeTempDir } from '#format/testing';
 
 export const AGENT: Caller = { by: 'agent', agent: 'a-k3m9x2pq' };
 export const PERSON: Caller = { by: 'person' };
@@ -111,7 +110,7 @@ async function parsed(res: Response, media: string): Promise<unknown> {
 export async function startBoard({ watch = false, chat, home, flags, appLimits }: {
   watch?: boolean; chat?: BoardServerOptions['chat']; home?: string; flags?: BoardServerOptions['flags']; appLimits?: BoardServerOptions['appLimits'];
 } = {}): Promise<Harness> {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-api-'));
+  const dir = makeTempDir('vb-api-');
   const file = ledgerPath(dir);
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.copyFileSync(FIXTURE, file);
@@ -122,13 +121,11 @@ export async function startBoard({ watch = false, chat, home, flags, appLimits }
   const seeded = seedMore(ledger);
   const build = watch ? watchBuild(dist) : undefined;
   // A temp home folder unless the test brings its own: no test reads the real one (api.md 112).
-  const ownHome = home ? undefined : fs.mkdtempSync(path.join(os.tmpdir(), 'vb-home-'));
-  const server = createBoardServer({ ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!) });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  const ownHome = home ? undefined : makeTempDir('vb-home-');
+  const board = await startTestBoard({ project: dir, ledger, dist, build, chat, flags, appLimits, home: home ?? fs.realpathSync(ownHome!) });
+  const { base } = board;
   // The page is served with the person cookie (api.md 20); the test page keeps it like a browser.
-  const page = await fetch(`${base}/`);
-  const cookie = /^(vb_person=[^;]+)/.exec(page.headers.get('set-cookie') ?? '')?.[1] ?? assert.fail('the page set no person cookie');
+  const cookie = await personCookie(base);
   let last: Answer | undefined;
   const recording = (extra: Record<string, string> = {}): typeof fetch => async (url, init) => {
     const res = await fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), ...extra } });
@@ -162,14 +159,11 @@ export async function startBoard({ watch = false, chat, home, flags, appLimits }
       }
       return assert.fail(`${id} answered ${h.last().status}, not ${status} ${code}`);
     },
-    close: () => new Promise<void>((resolve) => {
+    async close() {
       build?.close();
-      server.closeAllConnections();
-      server.close(() => {
-        for (const d of [dir, ownHome]) if (d) fs.rmSync(d, { recursive: true, force: true });
-        resolve();
-      });
-    }),
+      await board.close();
+      for (const d of [dir, ownHome]) if (d) fs.rmSync(d, { recursive: true, force: true });
+    },
   };
   return h;
 }

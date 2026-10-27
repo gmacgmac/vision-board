@@ -4,21 +4,16 @@
 // storage place, `Library/CloudStorage/Cloud-Example/repo` (one board) with home's link to the place
 // as macOS makes one (folder-links-cloud task), so the picker never lists, reads or writes the real
 // home. The agent package's fake `claude` stands in for the CLI, so a test can read the folder a
-// chat ran in. It serves the page the main test server built, on its own port (four above it);
+// chat ran in. It serves the page the global setup built, on the worker's folder port (ports.ts);
 // everything is removed on close.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
-import { fileURLToPath } from 'node:url';
-import { createBoardServer } from '../../apps/board/server/app.ts';
+import { makeTempDir } from '#format/testing';
+import { fakeChat, personCookie, startTestBoard } from '#board/testing';
 import type { Caller } from '../../apps/board/server/ledger.ts';
 import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
-import { fakeChat } from '../../apps/board/tests/chat-support.ts';
-import { CHAT_PORT } from './chat-server.ts';
+import { PORTS } from './ports.ts';
 
-export const FOLDER_PORT = CHAT_PORT + 1;
-const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
 const AGENT: Caller = { by: 'agent', agent: 'a-f01der00' };
 
 export interface FolderServer {
@@ -48,17 +43,16 @@ function seed(dir: string, board: string, title: string): void {
 }
 
 export async function startFolderServer(): Promise<FolderServer> {
-  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-folder-pages-')));
+  const home = fs.realpathSync(makeTempDir('vb-folder-pages-'));
   const [start, other, empty] = ['start', 'other', 'empty-app'].map((n) => path.join(home, 'projects', n)) as [string, string, string];
   seed(start, 'start-board', 'Start card');
   seed(other, 'other-board', 'Other card');
   fs.mkdirSync(empty, { recursive: true });
-  const cli = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-folder-cli-'));
+  const cli = makeTempDir('vb-folder-cli-');
   const fake = fakeChat(cli);
-  const server = createBoardServer({ ledger: openLedger(ledgerPath(start), () => {}), home, dist: DIST, chat: { adapters: fake.adapters } });
-  await new Promise<void>((resolve) => server.listen(FOLDER_PORT, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')?.[1] ?? '';
+  const board = await startTestBoard({ project: start, home, port: PORTS.folder, chat: { adapters: fake.adapters } });
+  const { base } = board;
+  const cookie = await personCookie(base);
   return {
     base, home, start, other, empty, fake,
     addCloud() {
@@ -77,8 +71,7 @@ export async function startFolderServer(): Promise<FolderServer> {
       if (!r.ok) throw new Error(`open_project answered ${r.status}: ${await r.text()}`);
     },
     async close() {
-      server.closeAllConnections();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await board.close();
       for (const dir of [home, cli]) fs.rmSync(dir, { recursive: true, force: true });
     },
   };

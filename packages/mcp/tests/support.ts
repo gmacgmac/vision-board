@@ -8,7 +8,8 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 const BIN = fileURLToPath(new URL('../bin/vb-mcp.ts', import.meta.url));
-const BOARD = fileURLToPath(new URL('../../../apps/board/tests/serve-fixture.ts', import.meta.url));
+// The board's fixture server, run as a child: its test door (`#board/testing`) serves when run.
+const BOARD = fileURLToPath(import.meta.resolve('#board/testing'));
 
 /** The `_meta` a 2026-07-28 client sends on every request. */
 export const MODERN_META = {

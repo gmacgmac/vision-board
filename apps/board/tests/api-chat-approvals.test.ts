@@ -7,15 +7,14 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event, Given } from './chat-support.ts';
 import { ask, fakeChat, gone, readChat } from './chat-support.ts';
 import { checkAnswer } from './openapi-ajv.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-gate-'));
+const config = makeTempDir('vb-chat-gate-');
 const fake = fakeChat(config);
 let h: Harness;
 let session: string;

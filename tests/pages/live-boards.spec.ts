@@ -11,18 +11,14 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { EMPTY_BASE } from './perf-server.ts';
+import { EMPTY_BASE } from './ports.ts';
+import { idle, openDrawn as open } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const REGION = 'ideas';
 
-interface Agent { secret: string }
-
-async function join(request: APIRequestContext, base: string, label: string): Promise<Agent> {
-  const r = await request.post(`${base}/api/agents`, { data: { label } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
 
 async function write(request: APIRequestContext, base: string, a: Agent, board: string, items: unknown[]): Promise<void> {
   const r = await request.post(`${base}/api/boards/${board}/write`, { headers: { Authorization: `Bearer ${a.secret}` }, data: { items } });
@@ -60,19 +56,10 @@ async function viewOf(page: Page): Promise<{ x: number; y: number; k: number }> 
   return { x: Number(m![1]), y: Number(m![2]), k: Number(m![3]) };
 }
 
-/** The page has read every line written so far and drawn it. */
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-
 /** The number of the first item on `board`, for a person act the test sends itself. */
 async function firstItem(page: Page, board: string): Promise<number> {
   const b = await (await page.request.get(`/api/boards/${board}`)).json() as { view: { nodes: { n?: number }[] } };
   return b.view.nodes.find((x) => x.n !== undefined)!.n!;
-}
-
-/** Open the page and wait for its first draw. */
-async function open(page: Page, url: string): Promise<void> {
-  await page.goto(url);
-  await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
 
 test('an empty project waits, then opens the first board drawn, with no reload', async ({ page, request }) => {
@@ -81,7 +68,7 @@ test('an empty project waits, then opens the first board drawn, with no reload',
   await expect(page.locator('.vb-message')).toContainText('npm run board');
   // A mark on the window: it survives only if the page never reloads.
   await page.evaluate(() => { (window as unknown as { vbMark: number }).vbMark = 1; });
-  await write(request, EMPTY_BASE, await join(request, EMPTY_BASE, 'First chat'), 'first', drawn('The first board'));
+  await write(request, EMPTY_BASE, await joinAgent(request, 'First chat', EMPTY_BASE), 'first', drawn('The first board'));
   await expect(page.locator('#title')).toHaveText('The first board');
   await expect(page.locator('.vb-message')).toBeHidden();
   await expect(page.locator('.vb-cards vb-node')).toHaveCount(1);
@@ -94,7 +81,7 @@ test('a board drawn later joins the picker as new, with a chip, and the open boa
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
   const title = await page.locator('#title').textContent();
-  await write(request, '', await join(request, '', 'Later chat'), 'live-new', drawn('Drawn later'));
+  await write(request, '', await joinAgent(request, 'Later chat'), 'live-new', drawn('Drawn later'));
   await expect(option(page, 'live-new')).toHaveText('Drawn later · new');
   await expect(chip(page)).toHaveText('1 board updated');
   await expect(page.locator('#board')).toHaveValue('roadmap');
@@ -112,7 +99,7 @@ test('a board drawn later joins the picker as new, with a chip, and the open boa
 });
 
 test('a picker label is its board\'s title, and an append marks it changed', async ({ page, request }) => {
-  const a = await join(request, '', 'Label chat');
+  const a = await joinAgent(request, 'Label chat');
   await write(request, '', a, 'live-label', drawn('Label board'));
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
@@ -139,7 +126,7 @@ test('zoom and pan survive a reload; with keepView off the board fits again', as
 });
 
 test('a board an agent changed is marked "changed", after a reload and in another browser; opening it clears the mark', async ({ page, request, browser }) => {
-  const a = await join(request, '', 'Other chat');
+  const a = await joinAgent(request, 'Other chat');
   await write(request, '', a, 'live-changed', drawn('Changed elsewhere'));
   await open(page, '/?vbwork#roadmap');
   await seeAll(page);
@@ -174,7 +161,7 @@ test('a board an agent changed is marked "changed", after a reload and in anothe
 });
 
 test('the agent drawing on the open board shows the toast; the person acting does not', async ({ page, request }) => {
-  const a = await join(request, '', 'Toast chat');
+  const a = await joinAgent(request, 'Toast chat');
   await write(request, '', a, 'live-toast', drawn('Toast board'));
   await open(page, '/?vbwork#live-toast');
   await expect(page.locator('#toast')).toBeHidden();

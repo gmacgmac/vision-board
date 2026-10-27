@@ -5,6 +5,7 @@
 // (0.3), 1 and zoomed in (2.5, the board's most). A board of its own, written by an agent.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
+import { scale as view } from './board-page.ts';
 
 let boards = 0;
 /** Three rows: the card measured is in the last, so no container title line is under its pill even
@@ -27,7 +28,6 @@ async function draw(request: APIRequestContext): Promise<string> {
 }
 
 const card = (page: Page) => page.locator('vb-node').last();
-const view = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 
 /** Zoom with Ctrl+wheel at the card's centre (pointer.ts: factor exp(-deltaY * 0.0015)) to `k`. */
 async function zoomTo(page: Page, k: number): Promise<void> {

@@ -10,6 +10,7 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply, tabTo, write } from './agent-board.ts';
+import { replies } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
@@ -23,7 +24,6 @@ const status = (page: Page, n: number) => card(page, n).locator('.vb-node-status
 const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="handover"]');
 const box = (page: Page, n: number) => card(page, n).locator('.vb-card-pop[data-pop="handover"]');
 const notes = (page: Page, n: number) => card(page, n).locator('.vb-node-notes');
-const replies = (page: Page, n: number) => card(page, n).locator('.vb-node-reply');
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.

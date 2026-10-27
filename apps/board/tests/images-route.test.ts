@@ -7,7 +7,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, OPERATIONS, imageNotReal } from '#format';
 import { OPENAPI_FILE } from '#format/files';
@@ -16,6 +15,7 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Got } from './images-support.ts';
 import { IMAGES, SVG, get, imagesDir, problemOf, put } from './images-support.ts';
+import { makeTempDir } from '#format/testing';
 
 const W = IMAGE_WORDS;
 const DECOY = 'DECOY-OUTSIDE-THE-IMAGES-FOLDER';
@@ -205,7 +205,7 @@ test('a link out of the images folder is refused, a link that stays inside works
 });
 
 test('the images folder may itself be a link, but nothing in it may link out of it', async () => {
-  const real = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-images-')));
+  const real = fs.realpathSync(makeTempDir('vb-images-'));
   const linked = await startBoard();
   try {
     fs.mkdirSync(path.join(linked.project, '.visionboard'), { recursive: true });
@@ -242,7 +242,7 @@ test('only GET and HEAD: any other method is 405 and says so', async () => {
 });
 
 test('the route serves the folder that is open now, not the one the server started on', async () => {
-  const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-home-')));
+  const home = fs.realpathSync(makeTempDir('vb-home-'));
   const other = path.join(home, 'projects', 'other');
   const b = await startBoard({ home });
   try {

@@ -4,19 +4,17 @@
 // a list of archived boards each with Restore, which brings the board back and opens it. A board
 // archived elsewhere leaves the page too; a reload, the hash or the remembered board never opens it;
 // with no board left the page shows its empty state. All by keyboard as well, axe in both themes.
-// It runs on the empty project's server (EMPTY_BASE) after new-board.spec.ts, adds two boards of its
-// own, and restores every board it archived, so toolbar.spec.ts after it finds the boards as they were.
+// It runs on the worker's empty project (EMPTY_BASE), fresh for this file (servers.ts), adds two
+// boards of its own, and restores every board it archived, for the tests after it in this file.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { EMPTY_BASE } from './perf-server.ts';
+import { EMPTY_BASE } from './ports.ts';
+import { idle, menuButton, picker } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const ONE = 'multi-bot';
 const TWO = 'multi-bot-plan';
-
-/** The page has read every line written so far and drawn it. */
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 
 /** Open the page (on `board` when given) and wait until it has read the ledger and drawn. */
 async function open(page: Page, hash = '', flags = ''): Promise<void> {
@@ -52,8 +50,6 @@ async function mark(page: Page, board: string, action: 'archive' | 'restore'): P
 const agentBoards = async (request: APIRequestContext) =>
   ((await (await request.get(`${EMPTY_BASE}/api/boards`)).json()) as { boards: { board: string }[] }).boards.map((b) => b.board);
 
-const picker = (page: Page) => page.locator('#board');
-const menuButton = (page: Page) => page.locator('#toolbar-menu');
 const archiveRow = (page: Page) => page.locator('#archive-board');
 const confirmDialog = (page: Page) => page.locator('#confirm-dialog');
 const archived = (page: Page) => page.locator('#archived-dialog');

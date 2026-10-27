@@ -4,12 +4,13 @@
 // least 220px from 1024px up (its title truncates inside). With the toolbarMenu flag (on by default)
 // Theme, Hide answered and Reply sit in a "⋯" menu, and Agents, Send to agent and Chat shrink to
 // icons on a narrow window; every control is named, has a tooltip and passes axe. Off, the toolbar
-// is as it was. It runs on the empty project's server (EMPTY_BASE) after new-board.spec.ts, which it
-// does not disturb: it adds one board, opened by its id. Then the gallery's toolbar section.
+// is as it was. It runs on the worker's empty project (EMPTY_BASE), fresh for this file
+// (servers.ts): it adds one board, opened by its id. Then the gallery's toolbar section.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { EMPTY_BASE } from './perf-server.ts';
+import { EMPTY_BASE } from './ports.ts';
+import { menu, menuButton } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const WIDTHS = [1500, 1440, 1280, 1200, 1100, 1024, 900, 768];
@@ -60,8 +61,6 @@ async function controls(page: Page) {
   });
 }
 
-const menuButton = (page: Page) => page.locator('#toolbar-menu');
-const menu = (page: Page) => page.getByRole('menu', { name: 'More' });
 
 for (const width of WIDTHS) {
   test(`at ${width}px a long title leaves every toolbar control whole and inside the window`, async ({ page, request }) => {

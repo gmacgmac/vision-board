@@ -15,13 +15,10 @@ import {
 import { cardsOf, latestAsk } from '../src/notes.ts';
 import { CLOSED } from '../src/registry.ts';
 import { A, B, C, Ledger, scene } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 // ---- The oracle: the checks this table replaced (pending.ts, reads.ts), moved to every card and
 // to ✓ or ✗ closing a card (every-node BE_02, api.md 120), then to a note never answering a card
@@ -78,7 +75,7 @@ const kinds = (s: LedgerState, ctx: ConditionContext, ...ks: ConditionKind[]) =>
 for (const file of FIXTURES) {
   const name = file.split('/').at(-1)!;
   test(`oracle: on ${name}, every board and every agent, the rows equal the checks they replaced`, () => {
-    const read = readLedger(fs.readFileSync(new URL(file, import.meta.url), 'utf8').trim().split('\n'));
+    const read = readLedger(fs.readFileSync(file, 'utf8').trim().split('\n'));
     assert.deepEqual(read.problems, []);
     const s = foldLedger(read.events);
     for (const board of s.boards.keys()) {

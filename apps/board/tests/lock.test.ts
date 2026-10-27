@@ -1,17 +1,17 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { LockEnv, LockInfo } from '../server/lock.ts';
 import { BEAT_MS, LOCK_FILE, STALE_MS, holderMessage, takeLock } from '../server/lock.ts';
+import { makeTempDir } from '#format/testing';
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true }); });
 
 const T0 = Date.parse('2026-10-07T10:00:00.000Z');
 const dir = (): string => {
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-lock-'));
+  const d = makeTempDir('vb-lock-');
   dirs.push(d);
   return d;
 };

@@ -12,13 +12,10 @@ import { readLedger } from '#format';
 import type { BoardRun, LedgerState } from '../src/index.ts';
 import { applyEvent, boardVersions, DRAWING_EVENTS, emptyState, eventBoard, foldLedger } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 /** The definition as a full scan: per board, its own lines in order (a board seen is none); an
  * agent's drawing line right after a drawing line by the same agent replaces that run's end. */
@@ -82,7 +79,7 @@ test('versions: runs of one agent\'s drawing lines, newest first; now is the boa
 for (const file of FIXTURES) {
   const name = file.split('/').at(-1)!;
   test(`versions: the fold equals the full walk on ${name}, at once and line by line`, () => {
-    const read = readLedger(fs.readFileSync(new URL(file, import.meta.url), 'utf8').trim().split('\n'));
+    const read = readLedger(fs.readFileSync(file, 'utf8').trim().split('\n'));
     assert.deepEqual(read.problems, [], file);
     const whole = foldLedger(read.events);
     assert.deepEqual(seqs(whole), walkedRuns(whole, read.events));

@@ -6,15 +6,15 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { projectOf as projectIn } from '#client';
 import { INSTRUCTIONS, INSTRUCTIONS_JOINED, createMcpServer } from '../src/index.ts';
 
 const projectOf = (env: { VB_PROJECT?: string }, cwd: string) => projectIn(env, cwd, { fs, path });
 import { MODERN_META } from './support.ts';
+import { makeTempDir } from '#format/testing';
 
-const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-mcp-project-')));
+const root = fs.realpathSync(makeTempDir('vb-mcp-project-'));
 const project = path.join(root, 'projects', 'a');
 const deep = path.join(project, 'src', 'deep');
 const homeLike = path.join(root, 'home');

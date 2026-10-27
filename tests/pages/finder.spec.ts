@@ -6,15 +6,12 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { frame, idle, openDrawn as open } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const region = (id: string, title: string) => ({ type: 'region', region: { id, title, mode: 'grid' } });
 const card = (r: string, title: string) => ({ type: 'node', node: { region: r, kind: 'question', title } });
-
-async function join(request: APIRequestContext): Promise<string> {
-  const r = await request.post('/api/agents', { data: { label: 'Finder chat' } });
-  return (await r.json() as { secret: string }).secret;
-}
 
 /** Write `items` on `board`; the seq of the last line written. */
 async function write(request: APIRequestContext, secret: string, board: string, items: unknown[]): Promise<number> {
@@ -25,14 +22,7 @@ async function write(request: APIRequestContext, secret: string, board: string, 
   return Math.max(...out.results.map((x) => x.seq ?? 0));
 }
 
-async function open(page: Page, url: string): Promise<void> {
-  await page.goto(url);
-  await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
-}
-
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 const finder = (page: Page) => page.getByLabel('Containers', { exact: true });
-const frame = (page: Page, id: string) => page.locator(`vb-region[data-region="${id}"]`);
 /** The rows' words: each option's `label` (MenuSelect puts its words there, not in its text). */
 const texts = (page: Page) => finder(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
 
@@ -45,7 +35,7 @@ async function centred(page: Page, id: string): Promise<boolean> {
 }
 
 test('the dropdown lists the containers in board order with counts, Later last and greyed while empty', async ({ page, request }) => {
-  const secret = await join(request);
+  const secret = (await joinAgent(request, 'Finder chat')).secret;
   await write(request, secret, 'fin-list', [
     { type: 'board', title: 'Finder board' }, region('ideas', 'Ideas'), region('plan', 'Plan'),
     card('ideas', 'First idea'), card('ideas', 'Second idea'), card('plan', 'One step'),
@@ -66,7 +56,7 @@ test('the dropdown lists the containers in board order with counts, Later last a
 });
 
 test('choosing a container puts its frame in view, centred, and focuses its title; Later is chosen once it holds a card', async ({ page, request }) => {
-  const secret = await join(request);
+  const secret = (await joinAgent(request, 'Finder chat')).secret;
   await write(request, secret, 'fin-go', [
     { type: 'board', title: 'Finder board' }, region('ideas', 'Ideas'), region('plan', 'Plan'),
     card('ideas', 'First idea'), card('plan', 'One step'),
@@ -99,7 +89,7 @@ test('choosing a container puts its frame in view, centred, and focuses its titl
 });
 
 test('it works in a past version, which lists that version\'s containers, and sends nothing', async ({ page, request }) => {
-  const secret = await join(request);
+  const secret = (await joinAgent(request, 'Finder chat')).secret;
   const first = await write(request, secret, 'fin-past', [{ type: 'board', title: 'Finder board' }, region('ideas', 'Ideas'), card('ideas', 'First idea')]);
   await open(page, '/?vbwork#fin-past');
   // A person's act ends the agent's run, so the next drawing is a version of its own.

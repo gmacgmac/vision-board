@@ -85,11 +85,14 @@ state and everything drawn and draws again from a fresh read.
 - Unit timing tests are `*.timing.ts` files, not `*.test.ts`: `npm test` runs every unit test in
   parallel first, then `npm run test:timing` runs the timing tests alone, one file at a time
   (`--test-concurrency=1`), so a busy machine cannot fail them by running other tests beside them.
-- The page budgets run on their own server (`tests/pages/playwright.config.ts`, the page-test port
-  plus one) over a ledger `tests/pages/perf-ledger.ts` generates from the roadmap fixture's shapes:
+- The page budgets run on the worker's own performance board (`tests/pages/playwright.config.ts`,
+  `ports.ts`; D-062) over a ledger `perfLedger` (`#format/testing`, `packages/format/tests/perf-ledger.ts`)
+  generates from the roadmap fixture's shapes:
   `big`, 1,000 cards in 20 containers (the roadmap's grid, flow, radial and lanes containers, five
   times each, 50 cards each, with their kinds of links), and `mixed`, a copy of the roadmap board for
-  the same-picture test. Page tests already run one at a time (one worker).
+  the same-picture test. `perf.spec.ts` runs last and alone, one worker, in the `budgets` project that
+  waits for the `chromium` project (the other page specs run on 3 workers, `VB_TEST_WORKERS`). To run it by
+  itself: `npm run test:pages -- --no-deps perf.spec.ts`; `--shard` needs `--project=chromium`.
 
 ## Where this lands
 

@@ -1,23 +1,15 @@
 // The chat panel's page tests' own board server (chat-panel FE_02): started in the test process, so
 // a test can switch the agent package's fake `claude` (packages/agent/tests/fake-claude.ts, which
 // replays a recorded real turn, or hangs) and read what each run was given, the gate's run token
-// among it. Never the real CLI. It serves the page the main test server built, on its own port
-// (three above it) and its own empty project in the system temp folder, removed on close. Agents
+// among it. Never the real CLI. It serves the page the global setup built, on the worker's chat port
+// (ports.ts) and its own empty project in the system temp folder, removed on close. Agents
 // write through the API and the person acts with the page's cookie, as the board's other tests do.
 // A test can hold a session's start (`holdStarts`), to send while a new session is starting.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
-import { fileURLToPath } from 'node:url';
 import type { AgentAdapter } from '#agent';
-import { createBoardServer } from '../../apps/board/server/app.ts';
-import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
-import { fakeChat } from '../../apps/board/tests/chat-support.ts';
-import { EMPTY_PORT } from './perf-server.ts';
-
-export const CHAT_PORT = EMPTY_PORT + 1;
-const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
+import { fakeChat, joinAgent, personAct, personCookie, startTestBoard } from '#board/testing';
+import { PORTS } from './ports.ts';
 
 export interface ChatServer {
   base: string;
@@ -32,44 +24,36 @@ export interface ChatServer {
 }
 
 export async function startChatServer(): Promise<ChatServer> {
-  const project = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-pages-'));
-  const fake = fakeChat(fs.mkdtempSync(path.join(project, 'cli-')));
-  const file = ledgerPath(project);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
   let held: Promise<void> | null = null;
+  let fake: ReturnType<typeof fakeChat> | undefined;
   const claude = (): AgentAdapter => {
-    const inner = fake.adapters.claude!();
+    const inner = fake!.adapters.claude!();
     return { agent: inner.agent, async start(o) { await held; return inner.start(o); } };
   };
   // A Kiro that is the same fake process (only the picker and the session record are under test).
   const kiro = (): AgentAdapter => ({ ...claude(), agent: 'kiro' });
-  const server = createBoardServer({ ledger: openLedger(file, () => {}), dist: DIST, chat: { adapters: { claude, kiro } } });
-  await new Promise<void>((resolve) => server.listen(CHAT_PORT, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')?.[1] ?? '';
-  const post = async (url: string, body: unknown, headers: Record<string, string>) => {
-    const r = await fetch(`${base}${url}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
-    if (!r.ok) throw new Error(`${url} answered ${r.status}: ${await r.text()}`);
-    return r.json() as Promise<unknown>;
-  };
-  const { secret } = await post('/api/agents', { label: 'Page test agent' }, {}) as { secret: string };
+  const board = await startTestBoard({ prefix: 'vb-chat-pages-', port: PORTS.chat, chat: { adapters: { claude, kiro } } });
+  fake = fakeChat(fs.mkdtempSync(path.join(board.project, 'cli-')));
+  const { base } = board;
+  const cookie = await personCookie(base);
+  const agent = await joinAgent(base, 'Page test agent');
   return {
     base, fake,
-    async write(board, items, as = secret) {
-      const out = await post(`/api/boards/${board}/write`, { items }, { Authorization: `Bearer ${as}` }) as { results: { ok: boolean; n?: number }[] };
+    async write(board, items, as = agent.secret) {
+      const r = await fetch(`${base}/api/boards/${board}/write`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${as}` }, body: JSON.stringify({ items }),
+      });
+      if (!r.ok) throw new Error(`the write answered ${r.status}: ${await r.text()}`);
+      const out = await r.json() as { results: { ok: boolean; n?: number }[] };
       if (!out.results.every((x) => x.ok)) throw new Error(`the write failed: ${JSON.stringify(out.results)}`);
       return out.results;
     },
-    async act(board, body) { await post(`/api/boards/${board}/act`, { type: 'act', ...body }, { Cookie: cookie }); },
+    act: (board, body) => personAct(base, cookie, board, body),
     holdStarts() {
       let release = () => {};
       held = new Promise<void>((resolve) => { release = resolve; });
       return () => { held = null; release(); };
     },
-    async close() {
-      server.closeAllConnections();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
-      fs.rmSync(project, { recursive: true, force: true });
-    },
+    close: board.close,
   };
 }

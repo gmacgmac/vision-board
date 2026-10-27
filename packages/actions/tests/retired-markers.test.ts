@@ -8,10 +8,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { boardData, foldLedger, pastLines, retiredCounts } from '../src/index.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 12, seq: ++seq, at: `2026-10-11T11:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 12, at: '2026-10-11T11' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const region = (board: string, id: string) => agent({ type: 'region', board, region: { id, title: id.toUpperCase(), mode: 'grid' } });
@@ -22,7 +23,7 @@ const retire = (board: string, cards: number[], r?: string) => agent({ type: 're
  *  it to p), 6-7 in z. Run 1 ends at seq 12; the person's ack (13) starts run 2: 3 retired (14), then
  *  the moved 5 (15). Then the person acks again (16) and z goes whole (17). */
 function ledger(extra: () => string[] = () => []) {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }),
     agent({ type: 'board', board: 'a', title: 'A' }), region('a', 'p'), card('a', 1, 'p'), // 4
@@ -53,7 +54,7 @@ test('retired cards and a retired container are gone from the board the page dra
 });
 
 test('no version before the retire: the marker only counts; a container retired later takes its marker', () => {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }), region('b', 'p'), region('b', 'q'),
     card('b', 1, 'p'), card('b', 2, 'p'), card('b', 3, 'q'), retire('b', [1]), retire('b', [3]),
@@ -79,7 +80,7 @@ test('the person\'s removal of several cards in one line (N24, a v16 line) count
 });
 
 test('pastLines: the drawing after the version and every line from the cut are left out; the answers stay, and another board keeps its drawing', () => {
-  seq = 0;
+  maker.reset();
   const ask = (board: string, n: number, ver = 1) =>
     agent({ type: 'node', board, n, ver, node: { region: 'p', kind: 'question', title: `Question ${n}?` } });
   const { events } = readLedger([

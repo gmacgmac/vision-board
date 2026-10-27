@@ -8,7 +8,7 @@ import { boardAccess, boardState, boardVersions, foldLedger, pageConditions, pro
 import { versionTime } from '../board/versions.ts';
 import type { CardConditions, CardReply, CardUpdates } from '#ui';
 import { createParking } from '../board/parking.ts';
-import ledgerText from './gallery.ledger.jsonl?raw';
+import ledgerText from '#format/gallery.ledger.jsonl?raw';
 
 /** The main board in the fixture ledger. */
 export const BOARD = 'gallery';

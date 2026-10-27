@@ -63,6 +63,24 @@ test('apps and scripts: only test code imports an app; nothing imports scripts/'
   assert.deepEqual(check('skills/vision-board/examples/a.test.mjs', "import { c } from '../../../apps/board/server/schema.ts';"), []);
 });
 
+test('an app\'s test support: found by its name from a package (import.meta.resolve), never by path or import (D-060)', () => {
+  const names = namesOf({ imports: { '#board/testing': './apps/board/tests/support.ts', '#format/testing': './packages/format/tests/support.ts' } });
+  const at = (rel, text) => checkReferences(rel, text, names);
+  assert.deepEqual(at('packages/cli/tests/a.test.ts', "const S = fileURLToPath(import.meta.resolve('#board/testing'));"), []);
+  assert.deepEqual(at('packages/actions/tests/a.timing.ts', "import { perfLedger } from '#format/testing';"), []);
+  assert.match(at('packages/mcp/tests/s.ts', "const B = fileURLToPath(new URL('../../../apps/board/tests/serve.ts', import.meta.url));")[0].message, /by path.*#board\/testing/);
+  assert.match(at('packages/mcp/tests/s.ts', "const B = import.meta.resolve('../../../apps/board/tests/support.ts');")[0].message, /by path/);
+  assert.match(at('packages/cli/tests/a.test.ts', "import { startBoard } from '#board/testing';")[0].message, /imports an app/);
+  assert.match(at('packages/cli/tests/a.test.ts', "const S = import.meta.resolve('#board/nope');")[0].message, /not a module name/);
+  assert.deepEqual(at('tests/pages/a.ts', "import { startTestBoard } from '#board/testing';"), []);
+});
+
+test('a fixture the page loads as text: by its name, with Vite\'s ?raw', () => {
+  const names = namesOf({ imports: { '#format/gallery.ledger.jsonl': './packages/format/fixtures/gallery.ledger.jsonl' } });
+  assert.deepEqual(checkReferences('apps/board/src/gallery/fixture.ts', "import text from '#format/gallery.ledger.jsonl?raw';", names), []);
+  assert.match(checkReferences('apps/board/src/gallery/fixture.ts', "import text from '../../../../packages/format/fixtures/gallery.ledger.jsonl?raw';", names)[0].message, /back door/);
+});
+
 test('a package that imports a file outside every module by path is warned', () => {
   assert.deepEqual(levels(check('packages/actions/tests/a.timing.ts', "import { roadmap } from '../../../tests/pages/perf-ledger.ts';")), ['warn']);
 });

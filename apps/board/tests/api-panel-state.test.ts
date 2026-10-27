@@ -9,7 +9,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { NodeEvent } from '#format';
 import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, boardNumber } from '#format';
@@ -18,6 +17,7 @@ import { AGENT, startBoard } from './api-harness.ts';
 import { raw } from './app-support.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { deref, ops } from './openapi-ajv.ts';
+import { makeTempDir } from '#format/testing';
 
 let h: Harness;
 /** The app cards drawn for these tests: their number on `pricing` and their identity. */
@@ -140,7 +140,7 @@ test('a kept file that is not JSON, does not fit, is too big or is a link reads 
       fs.writeFileSync(fileOf(id), text);
       assert.deepEqual(await read(n), {}, text.slice(0, 40));
     }
-    const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-outside-'));
+    const outside = makeTempDir('vb-outside-');
     try {
       fs.writeFileSync(path.join(outside, 'x.json'), JSON.stringify({ v: 1, app: 'calculator', state: 'outside' }));
       fs.rmSync(fileOf(id));

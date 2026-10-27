@@ -4,12 +4,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { writeFileAtomic } from '../server/atomic-file.ts';
+import { makeTempDir } from '#format/testing';
 
 test('writeFileAtomic: replaces the file by a rename, leaves no temp file, and sets the mode', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-atomic-'));
+  const dir = makeTempDir('vb-atomic-');
   try {
     const file = path.join(dir, 'state.json');
     writeFileAtomic(file, '{"a":1}\n', 0o600);

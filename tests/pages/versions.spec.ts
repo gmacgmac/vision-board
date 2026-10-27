@@ -10,19 +10,15 @@
 import type { APIRequestContext, Page, Request } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { idle, openDrawn as open } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const REGION = 'ideas';
 // The banner's time is the person's own clock: one zone and locale, so the gallery's screenshot holds.
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
 
-interface Agent { secret: string }
-
-async function join(request: APIRequestContext, label: string): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
 
 /** Write `items` on `board`; the seq of the last line written. */
 async function write(request: APIRequestContext, a: Agent, board: string, items: unknown[]): Promise<number> {
@@ -40,15 +36,6 @@ async function headOf(request: APIRequestContext, board: string): Promise<number
   const { boards } = await (await request.get('/api/boards')).json() as { boards: { board: string; seq: number }[] };
   return boards.find((b) => b.board === board)!.seq;
 }
-
-/** Open the page and wait for its first draw. */
-async function open(page: Page, url: string): Promise<void> {
-  await page.goto(url);
-  await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
-}
-
-/** The page has read every line written so far and drawn it. */
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 
 /** Every act or board seen the page sends from now on. */
 function personWrites(page: Page): Request[] {
@@ -71,7 +58,7 @@ test('the picker holds titles only, the title heading is for screen readers, the
   await expect(page.getByLabel('Version', { exact: true })).toBeVisible();
   // A board seen is not a change to the board, and another board's lines are not its own.
   await idle(page);
-  await write(request, await join(request, 'Elsewhere chat'), 'ver-elsewhere', [{ type: 'board', title: 'Elsewhere' }]);
+  await write(request, await joinAgent(request, 'Elsewhere chat'), 'ver-elsewhere', [{ type: 'board', title: 'Elsewhere' }]);
   await idle(page);
   await expect(version(page).locator('option').first()).toHaveText(`v${head} · now`);
 });
@@ -84,7 +71,7 @@ test('with versionView off the toolbar is as it was: the title, the ledger\'s la
 });
 
 test('a past version shows the board as it was, read-only, and Back to now and Esc end it', async ({ page, request }) => {
-  const a = await join(request, 'Versions chat');
+  const a = await joinAgent(request, 'Versions chat');
   const first = await write(request, a, 'ver-past', [
     { type: 'board', title: 'Versions board' },
     { type: 'region', region: { id: REGION, title: 'Ideas', mode: 'grid' } },
@@ -160,7 +147,7 @@ const markIsInert = (page: Page) => page.locator('.vb-world').evaluate((w) => {
 });
 
 test('the retired marker opens its version with the answers as they stood just before the retire, read-only; the dropdown\'s is as at it', async ({ page, request }) => {
-  const a = await join(request, 'Retire chat');
+  const a = await joinAgent(request, 'Retire chat');
   const first = await write(request, a, 'ver-retired', [
     { type: 'board', title: 'Retired answers' },
     { type: 'region', region: { id: REGION, title: 'Ideas', mode: 'grid' } },
@@ -214,7 +201,7 @@ test('the retired marker opens its version with the answers as they stood just b
 });
 
 test('a past version from the dropdown shows each answered card\'s ✓ or ✗ lit, a mark that takes no press', async ({ page, request }) => {
-  const a = await join(request, 'Marks chat');
+  const a = await joinAgent(request, 'Marks chat');
   await write(request, a, 'ver-marks', [
     { type: 'board', title: 'Past marks' },
     { type: 'region', region: { id: REGION, title: 'Ideas', mode: 'grid' } },

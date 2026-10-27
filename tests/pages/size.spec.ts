@@ -1,39 +1,24 @@
 // Card size tiers (D-030, U7), behind the nodeSize feature flag (rule 12), on by default since
 // 2026-10-05 (maintainer): on the board, off with ?flags=-nodeSize, and the gallery's Node size
-// section. Runs after board.spec.ts and gallery.spec.ts on the same server; it leaves every size
-// pick it makes back on Auto.
+// section. On the worker's roadmap board, fresh for this file (servers.ts); it leaves every size
+// pick it makes back on Auto, for the tests after it in this file.
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card, openBoard, ROADMAP_CARDS, zoomToFull } from './board-page.ts';
 
-const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
 /** The tier widths (tokens.css). */
 const WIDTH = { s: 280, m: 360, l: 464 };
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const width = async (page: Page, n: number) => (await card(page, n).boundingBox())!.width;
 /** Width in CSS pixels, whatever the board's zoom. */
 const cssWidth = (page: Page, n: number) => card(page, n).evaluate((e) => (e as HTMLElement).offsetWidth);
-
-async function openBoard(page: Page, query = '?flags=nodeSize'): Promise<void> {
-  await page.goto(`/${query}`);
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 /** Zoom in with + until the stage is no longer "far", so the size control shows (N8). */
 async function zoomIn(page: Page): Promise<void> {
   for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
   await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
-}
-
-/** Zoom in until the world draws at 1:1 or larger, where every control is its full CSS size. */
-async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
-  expect(await scale()).toBeGreaterThanOrEqual(1);
 }
 
 const active = (page: Page) => page.evaluate(() => {
@@ -42,15 +27,15 @@ const active = (page: Page) => page.evaluate(() => {
 });
 
 test('flag off: no tiers and no size control on the board', async ({ page }) => {
-  await openBoard(page, '?flags=-nodeSize');
+  await openBoard(page, { query: '?flags=-nodeSize' });
   await expect(page.locator('vb-node[data-size]')).toHaveCount(0);
   await expect(page.locator('vb-node .vb-size')).toHaveCount(0);
 });
 
 test('flag on by default: every card has a tier, and a long card is wider than a short one', async ({ page }) => {
-  await openBoard(page, '');
-  await expect(page.locator('vb-node[data-size]')).toHaveCount(NODES);
-  await expect(page.locator('vb-node .vb-size')).toHaveCount(NODES);
+  await openBoard(page);
+  await expect(page.locator('vb-node[data-size]')).toHaveCount(ROADMAP_CARDS);
+  await expect(page.locator('vb-node .vb-size')).toHaveCount(ROADMAP_CARDS);
   // Card 1 has a short body (S); card 13 is emphasised, one tier up (M).
   await expect(card(page, 1)).toHaveAttribute('data-size', 's');
   await expect(card(page, 13)).toHaveAttribute('data-size', 'm');
@@ -62,15 +47,15 @@ test('flag on by default: every card has a tier, and a long card is wider than a
 test('flag off via localStorage too, and ?flags=nodeSize turns it on again', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.setItem('vb.flags', '-nodeSize'));
-  await openBoard(page, '');
+  await openBoard(page);
   await expect(page.locator('vb-node[data-size]')).toHaveCount(0);
-  await openBoard(page, '?flags=nodeSize');
-  await expect(page.locator('vb-node[data-size]')).toHaveCount(NODES);
+  await openBoard(page, { query: '?flags=nodeSize' });
+  await expect(page.locator('vb-node[data-size]')).toHaveCount(ROADMAP_CARDS);
   await page.evaluate(() => localStorage.removeItem('vb.flags'));
 });
 
 test('by keyboard: Tab reaches the glyph, which opens the pill; L is picked and survives a reload', async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, { query: '?flags=nodeSize' });
   await zoomIn(page);
   const c = card(page, 1);
   const trig = c.locator('.vb-size-trig');
@@ -102,14 +87,14 @@ test('by keyboard: Tab reaches the glyph, which opens the pill; L is picked and 
   await expect(trig).toHaveAttribute('aria-expanded', 'false');
 
   await page.reload();
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
+  await expect(page.locator('vb-node')).toHaveCount(ROADMAP_CARDS);
   await expect(card(page, 1)).toHaveAttribute('data-size', 'l');
   await expect(card(page, 1).locator('.vb-size-trig')).toHaveText('◆ L');
   expect(await cssWidth(page, 1)).toBe(WIDTH.l);
 });
 
 test('Auto hands the size back to the rule', async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, { query: '?flags=nodeSize' });
   await zoomIn(page);
   const c = card(page, 1);
   await expect(c).toHaveAttribute('data-size', 'l');
@@ -130,11 +115,11 @@ test('Auto hands the size back to the rule', async ({ page }) => {
 for (const theme of THEMES) {
   test(`flag on: axe passes on the board, the size control open included (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page);
+    await openBoard(page, { query: '?flags=nodeSize' });
     // N13: zoomed out at the opening fit-to-view zoom the controls are not drawn, so nothing is excused
     // there, nor at full size below.
     await expectNoAxeViolations(page);
-    await zoomToFull(page);
+    await zoomToFull(page, { check: true });
     await card(page, 1).focus();
     await card(page, 1).locator('.vb-size-trig').focus();
     await expect(card(page, 1).locator('.vb-size-menu')).toBeVisible();

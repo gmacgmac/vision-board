@@ -1,27 +1,14 @@
 // Notes beside cards on the board (2e_FE_01, rulings 1-7): C, M and the footer buttons open the
 // note bubble beside the card; a second press edits the one note not yet sent; Remove takes it
 // back; Esc cancels; the bubble flips left at the board's right edge; after Send the note is
-// read-only. Runs after board.spec.ts on the same server, on cards that file leaves alone.
+// read-only. On the worker's roadmap board, fresh for this file (servers.ts).
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { act, draw, open, reply, write } from './agent-board.ts';
+import { bubble, card, openBoard, zoomToFull } from './board-page.ts';
+import { text } from './frames-board.ts';
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-const bubble = (page: Page) => page.locator('vb-note-bubble');
-const text = (page: Page) => bubble(page).getByLabel('Note text');
-
-async function openBoard(page: Page): Promise<void> {
-  await page.goto('/');
-  await expect(page.locator('vb-node')).toHaveCount(17);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
-
-/** Zoom in until the world draws at 1:1, so every control is its full size. */
-async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
-}
 
 /** Focus a card (which pans it into view) and press a key on it. */
 async function press(page: Page, n: number, key: string): Promise<void> {

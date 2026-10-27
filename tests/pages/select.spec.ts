@@ -1,38 +1,22 @@
 // Selecting cards, moving them by the kind tab and panning on backgrounds (3_FE_01, rulings 1-9).
-// Runs after notes.spec.ts and same-picture.spec.ts on the same server, on the roadmap board. It
-// leaves the ledger as it found it: the one card it moves it puts back (R). Cmd or Ctrl + drag
+// On the worker's roadmap board, fresh for this file (servers.ts); the one card it moves it puts
+// back (R), for the tests after it in this file. Cmd or Ctrl + drag
 // (review-polish ruling 13) draws a board of its own (agent-board.ts).
 import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, open, reply, write } from './agent-board.ts';
+import { card, openBoard, ROADMAP_CARDS, selectedIds, zoomToFull } from './board-page.ts';
 
-const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const live = (page: Page) => page.locator('#selection-status');
-const selectedIds = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) =>
-  els.map((e) => (e as HTMLElement).dataset.id!).sort((a, b) => Number(a) - Number(b)));
 const docSelection = (page: Page) => page.evaluate(() => document.getSelection()?.toString() ?? '');
 const worldAt = (page: Page) => page.locator('.vb-world').evaluate((e) => {
   const m = new DOMMatrix(getComputedStyle(e).transform);
   return { x: Math.round(m.e), y: Math.round(m.f) };
 });
-
-async function openBoard(page: Page): Promise<void> {
-  await page.goto('/');
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
-
-/** Zoom in until the world draws at 1:1, so every control is its full size. */
-async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
-}
 
 /** A point inside `el`, as fractions of its box. */
 async function at(el: Locator, fx = 0.5, fy = 0.5): Promise<{ x: number; y: number }> {
@@ -209,7 +193,7 @@ test('U5: a drag across a container\'s title moves the container and leaves no t
   const before = await worldAt(page);
   const start = await at(h2, 0.1, 0.5);
   // The title moves its container (open list and container title FE_02), not the board. Brought back
-  // to where it started, so nothing is written and the shared board keeps its layout.
+  // to where it started, so nothing is written and the board keeps its layout.
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
   await page.mouse.move(start.x + 260, start.y + 30, { steps: 8 });
@@ -416,7 +400,7 @@ test('the selection survives a redraw', async ({ page }) => {
   // H hides decided cards and draws again; again shows them.
   await page.keyboard.press('h');
   await page.keyboard.press('h');
-  await expect(page.locator('vb-node:visible')).toHaveCount(NODES);
+  await expect(page.locator('vb-node:visible')).toHaveCount(ROADMAP_CARDS);
   expect(await selectedIds(page)).toEqual(['1', '4']);
 });
 

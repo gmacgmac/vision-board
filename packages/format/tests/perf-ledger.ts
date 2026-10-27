@@ -5,11 +5,10 @@
 //   times, 50 cards each, the cards taking the roadmap's kinds, titles, bodies and lanes in turn,
 //   with the roadmap's kinds of links (a chain in flow and lanes, spokes from the centre in radial).
 // - `mixed`: a copy of the roadmap board, for the same-picture test, which changes it at random.
-// Deterministic: same file every run. Run: node tests/pages/perf-ledger.ts <out-file>
+// Deterministic: same file every run. Reached through `#format/testing` (support.ts); the page
+// suite writes it for each worker's performance board (tests/pages/servers.ts).
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { FIXTURES_DIR } from '#format/files';
+import { FIXTURES_DIR } from '../src/files.ts';
 
 type Line = Record<string, unknown> & { type: string };
 
@@ -55,11 +54,4 @@ export function perfLedger(): string[] {
     else if (e.type === 'link') add({ ...rest, type: 'link', from: (e.from as number) + offset, to: (e.to as number) + offset });
   }
   return out.map((e) => JSON.stringify(e));
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const file = process.argv[2];
-  if (!file) throw new Error('usage: node tests/pages/perf-ledger.ts <out-file>');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${perfLedger().join('\n')}\n`);
 }

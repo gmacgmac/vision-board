@@ -1,29 +1,20 @@
 // The focus ring on a card a pointer focused (cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md):
 // a key that moves no focus (Z, Esc, Space) draws no ring on it; focus moved by the keyboard (Tab,
 // Shift+Tab, J) shows it again, and a card the keyboard focused keeps it through Z (WCAG 2.4.7).
-// Runs on the shared server's roadmap board and writes nothing to it. Focus never moves the board
+// Runs on the worker's roadmap board (servers.ts) and writes nothing to it. Focus never moves the board
 // (review-polish ruling 11): those tests draw a board of their own (agent-board.ts).
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, open, reply, write } from './agent-board.ts';
+import { card, openBoard, panBy, scale, stageBox, world } from './board-page.ts';
 
-const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 /** The focus ring as drawn: the outline style of `el` ('none' when there is no ring). */
 const ringOf = (page: Page, n: number) => card(page, n).evaluate((e) => getComputedStyle(e).outlineStyle);
 const ringOnFocused = (page: Page) => page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
-const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-
-async function openBoard(page: Page): Promise<void> {
-  await page.goto('/');
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 async function clickCard(page: Page, n: number): Promise<void> {
   await card(page, n).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
@@ -135,18 +126,7 @@ async function drawStill(page: Page, request: APIRequestContext): Promise<Drawn>
   return drawn;
 }
 
-const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
-const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
 const boxOf = async (page: Page, n: number) => (await card(page, n).boundingBox())!;
-
-/** Pan the board by (dx, dy) screen pixels with the wheel, as a person scrolls. */
-async function panBy(page: Page, dx: number, dy: number): Promise<void> {
-  const s = await stageBox(page);
-  await page.mouse.move(s.x + s.width / 2, s.y + s.height / 2);
-  const before = await world(page);
-  await page.mouse.wheel(-dx, -dy);
-  await expect.poll(() => world(page)).not.toBe(before);
-}
 
 /** A 1000 by 320 window at the top zoom: card 1 is taller than the stage. */
 async function openTall(page: Page, d: Drawn): Promise<void> {

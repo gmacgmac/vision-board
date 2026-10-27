@@ -8,7 +8,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { boardList } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
@@ -17,10 +16,11 @@ import { RECENT_FILE } from '../server/recent.ts';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { alive, fakeChat, gone } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-home-')));
-const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-outside-')));
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-project-cli-'));
+const home = fs.realpathSync(makeTempDir('vb-home-'));
+const outside = fs.realpathSync(makeTempDir('vb-outside-'));
+const config = makeTempDir('vb-project-cli-');
 const fake = fakeChat(config);
 const projects = path.join(home, 'projects');
 const example = path.join(projects, 'example');

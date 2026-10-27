@@ -11,33 +11,21 @@ import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { boardLines } from './board-lines.ts';
+import { card, head, tab } from './board-page.ts';
+import { joinAgent, open, tabTo, write } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 // The step's time and the gallery's screenshot read the same in every test machine's clock.
 test.use({ timezoneId: 'UTC', locale: 'en-GB' });
 
-interface Agent { secret: string }
 interface Drawn { agent: Agent; board: string; n: number[] }
 
 let boards = 0;
 
-async function join(request: APIRequestContext): Promise<Agent> {
-  const r = await request.post('/api/agents', { data: { label: 'Pricing chat' } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
-
-async function write(request: APIRequestContext, d: { agent: Agent; board: string }, items: object[]) {
-  const r = await request.post(`/api/boards/${d.board}/write`, { headers: { Authorization: `Bearer ${d.agent.secret}` }, data: { items } });
-  expect(r.status(), await r.text()).toBe(200);
-  const body = await r.json() as { results: { ok: boolean; n?: number; problem?: unknown }[] };
-  expect(body.results.every((x) => x.ok), JSON.stringify(body.results)).toBe(true);
-  return body.results;
-}
-
 /** A board of its own with `count` cards, drawn by a new agent. */
 async function draw(request: APIRequestContext, count = 1): Promise<Drawn> {
-  const d = { agent: await join(request), board: `updates-${Date.now()}-${(boards += 1)}` };
+  const d = { agent: await joinAgent(request), board: `updates-${Date.now()}-${(boards += 1)}` };
   const results = await write(request, d, [
     { type: 'board', title: 'Updates' },
     { type: 'region', region: { id: 'p', title: 'Pricing thread', mode: 'grid' } },
@@ -52,15 +40,6 @@ const APPENDED = 'The credit amount is in.';
 const retitle = (request: APIRequestContext, d: Drawn, n: number, title: string) =>
   write(request, d, [{ type: 'node', n, node: { region: 'p', kind: 'risk', title, body: `Offered on the last call.\n\n${APPENDED}` } }]);
 
-/** Open the board and wait until it has drawn. */
-async function open(page: Page, d: Drawn, query = ''): Promise<void> {
-  await page.goto(`/${query}#${d.board}`);
-  await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-}
-
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
 const steps = (page: Page, n: number) => card(page, n).locator('.vb-node-steps');
 const nav = (page: Page, n: number) => card(page, n).locator('.vb-node-stepnav');
 const next = (page: Page, n: number) => nav(page, n).getByRole('button', { name: 'Next' });
@@ -68,16 +47,6 @@ const next = (page: Page, n: number) => nav(page, n).getByRole('button', { name:
 /** The card seen lines on the board after line `after`, as [n, ver], by board number (board-lines.ts). */
 const seenAfter = async (page: Page, board: string, after: number): Promise<number[][]> =>
   (await boardLines(page, board, after)).filter((e) => e.type === 'seen' && e.n !== undefined).map((e) => [e.n!, e.ver as number]);
-const head = async (page: Page) => ((await (await page.request.get('/api/boards')).json()) as { head: number }).head;
-
-/** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */
-async function tabTo(page: Page, target: Locator, max = 60): Promise<void> {
-  for (let i = 0; i < max; i += 1) {
-    if (await target.evaluate((e) => e === document.activeElement)) return;
-    await page.keyboard.press('Tab');
-  }
-  throw new Error(`Tab never reached ${String(target)}`);
-}
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.

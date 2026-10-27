@@ -6,28 +6,19 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
 import { REGION_HEAD } from '#layout';
+import { card, openBoard, ROADMAP_CARDS, zoomToFull } from './board-page.ts';
 
-const NODES = 17;
 const REGIONS = ['review', 'prove', 'decide', 'build'];
 const MODES = ['Grid', 'Flow', 'Lanes', 'Radial', 'Column', 'Row'];
 const THEMES: Theme[] = ['dark', 'light'];
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-
-/** Open the board (of the test server, or of the server at `base`) and wait until it has drawn and stopped moving. */
-async function openBoard(page: Page, query = '', base = ''): Promise<void> {
-  await page.goto(`${base}/${query}`);
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 test('the board loads with every region and card', async ({ page }) => {
   await openBoard(page);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Where Vision Board goes from here');
   await expect(page.locator('vb-region')).toHaveCount(REGIONS.length);
   for (const id of REGIONS) await expect(page.locator(`vb-region[data-region="${id}"]`)).toBeVisible();
-  await expect(page.locator('vb-node:visible')).toHaveCount(NODES);
+  await expect(page.locator('vb-node:visible')).toHaveCount(ROADMAP_CARDS);
   // Only cards that need an answer count (every-node ruling 6): the finding, topic and risk don't.
   await expect(page.locator('#counts')).toContainText('14 open');
   await expect(page.locator('#counts')).toContainText('0 answered');
@@ -63,7 +54,7 @@ for (const theme of THEMES) {
     await expect(page.locator('vb-node .vb-size-trig:visible')).toHaveCount(0);
     await expect(page.locator('vb-region .vb-mode-row:visible')).toHaveCount(0);
     await expectNoAxeViolations(page);
-    await zoomToFull(page);
+    await zoomToFull(page, { check: true });
     await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
     await expectNoAxeViolations(page);
   });
@@ -72,7 +63,7 @@ for (const theme of THEMES) {
   // the opening zoom they draw under the 24px target size, the one rule excused there.
   test(`with -hideControlsZoomedOut the controls stay visible zoomed out; only target-size is excused (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await openBoard(page, '?flags=-hideControlsZoomedOut');
+    await openBoard(page, { query: '?flags=-hideControlsZoomedOut' });
     await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
     await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
     await expect(page.locator('vb-region .vb-mode-row:visible').first()).toBeVisible();
@@ -83,14 +74,14 @@ for (const theme of THEMES) {
   // screenshot taken before a flag must be (components.md § Feature flags); send-access.spec.ts,
   // versions.spec.ts and finder.spec.ts cover the board with them on. The key bubble (keyBubble flag,
   // key-bubble.spec.ts) stays on: it replaces the key bar this screenshot used to show.
-  // It draws the roadmap board on a server of its own (roadmap-server.ts), not the shared one: the
-  // earlier specs write to the shared board and raise "N boards updated", and a picture of it would
-  // show whatever they left (FIX_01).
+  // It draws the roadmap board on a server of its own (roadmap-server.ts), not the worker's main one:
+  // this file's earlier tests write to that board and raise "N boards updated", and a picture of it
+  // would show whatever they left (FIX_01).
   test(`screenshot (${theme})`, async ({ page }) => {
     const roadmap = await startRoadmapServer();
     try {
       await setTheme(page, theme);
-      await openBoard(page, '?flags=-agentAccess,-versionView,-containerFinder,-chatPanel', roadmap.base);
+      await openBoard(page, { query: '?flags=-agentAccess,-versionView,-containerFinder,-chatPanel', base: roadmap.base });
       await expect(page).toHaveScreenshot(`board-${theme}.png`);
     } finally {
       await roadmap.close();
@@ -104,13 +95,6 @@ for (const theme of THEMES) {
 async function zoomToButtons(page: Page): Promise<void> {
   for (let i = 0; i < 8 && (await page.locator('#stage[data-zoom="far"]').count()); i += 1) await page.keyboard.press('+');
   await expect(page.locator('#stage')).not.toHaveAttribute('data-zoom', 'far');
-}
-
-/** Zoom in until the world draws at 1:1 or larger, where every control is its full CSS size. */
-async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
-  expect(await scale()).toBeGreaterThanOrEqual(1);
 }
 
 /** Pan with the wheel (scroll pans the board) until `target` sits in the middle of the stage. A pick
@@ -170,7 +154,7 @@ test('✓, ✗ and a comment work and survive a reload', async ({ page }) => {
   };
   await expectAnswers();
   await page.reload();
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
+  await expect(page.locator('vb-node')).toHaveCount(ROADMAP_CARDS);
   await zoomToButtons(page);
   await expectAnswers();
 });
@@ -358,7 +342,7 @@ for (const theme of THEMES) {
   test(`axe passes with the popover and the settings menu open, at full size (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await openBoard(page);
-    await zoomToFull(page);
+    await zoomToFull(page, { check: true });
     await panTo(page, row(page, 'review'));
     const review = page.locator('vb-region[data-region="review"]');
     await review.getByRole('radio', { name: 'Radial', exact: true }).hover();

@@ -9,7 +9,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { projectOf } from '#client';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
@@ -17,9 +16,10 @@ import { LOCK_FILE } from '../server/lock.ts';
 import { RECENT_FILE } from '../server/recent.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
+import { makeTempDir } from '#format/testing';
 
-const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-cloud-home-')));
-const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-cloud-outside-')));
+const home = fs.realpathSync(makeTempDir('vb-cloud-home-'));
+const outside = fs.realpathSync(makeTempDir('vb-cloud-outside-'));
 const library = path.join(home, 'Library');
 const cloud = path.join(library, 'CloudStorage');
 const place = path.join(cloud, 'Cloud-Example');

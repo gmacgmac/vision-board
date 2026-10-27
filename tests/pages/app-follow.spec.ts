@@ -14,6 +14,7 @@ import type { Locator, Page } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
+import { card as cardOf, control } from './board-page.ts';
 
 /** The panel route's 404 for the folder that went: the frame asks once more before the card knows. */
 const GONE = [/^response 404: GET http:\/\/127\.0\.0\.1:\d+\/app-panels\/panel-only$/, /status of 404 \(Not Found\)/];
@@ -28,7 +29,6 @@ async function open(page: Page, board: string, count: number): Promise<void> {
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
-const cardOf = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 /** The card's height as laid out (unscaled by the board's zoom). */
 const heightOf = (card: Locator) => card.evaluate((c: HTMLElement) => c.offsetHeight);
 /** The card's width and height as laid out. */
@@ -44,8 +44,6 @@ async function panBy(page: Page, dx: number, dy: number): Promise<void> {
   await page.mouse.wheel(-dx, -dy);
 }
 
-/** The footer's one app control showing, if any. */
-const control = (card: Locator) => card.locator('.vb-app-status > button:visible');
 
 /** "Allowed ▾", its menu's Stop app, then the confirm, as the person does. */
 async function stopApp(page: Page, card: Locator): Promise<void> {

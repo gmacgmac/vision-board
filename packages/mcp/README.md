@@ -73,4 +73,5 @@ single-chat setup (or for the `vb` CLI); for several chats, leave it out and let
   (the path of `bin/vb-mcp.ts`, which a Node-only module exports from its front door, D-060) and `RpcError`.
 - **Tests**: `tests/` (the generated list against the spec and every client's limits, the argument
   check and stdio framing in process, and modern and legacy sessions over a spawned server against
-  a real board server).
+  a real board server: the board's test support, `#board/testing`, found with `import.meta.resolve`
+  and run as a child process, D-062).

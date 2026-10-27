@@ -6,15 +6,16 @@ import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { applyEvent, boardData, foldLedger } from '#actions';
 import { answerEvent, idOf, numOf } from '../src/board/card-numbers.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 12, seq: ++seq, at: `2026-10-11T12:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 12, at: '2026-10-11T12' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const card = (board: string, n: number) => agent({ type: 'node', board, n, ver: 1, node: { region: 'r', kind: 'question', title: `Card ${n}` } });
 
 function state() {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }),
     agent({ type: 'board', board: 'a', title: 'A' }), agent({ type: 'region', board: 'a', region: { id: 'r', title: 'R', mode: 'grid' } }),

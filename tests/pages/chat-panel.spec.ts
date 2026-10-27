@@ -9,17 +9,17 @@
 // package's fake `claude`, never the real one: replaying the recorded turn that drew cards 1 and 2
 // on "scratch", or hanging so the gate can be asked by hand.
 import type { Page } from '@playwright/test';
-import { ask, gone } from '../../apps/board/tests/chat-support.ts';
+import { ask, gone } from '#board/testing';
 import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card, log, side, status, text, toggle } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
 let srv: ChatServer;
 let runs = 0;
-const card = (key: string, title: string) => ({ type: 'node', key, node: { region: 'ideas', kind: 'question', title } });
 
 test.beforeAll(async () => {
   srv = await startChatServer();
@@ -37,15 +37,10 @@ async function open(page: Page, flags = 'chatPanel') {
   await page.goto(`${srv.base}/?vbwork&flags=${flags}#scratch`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
-const side = (page: Page) => page.locator('#chat');
-const toggle = (page: Page) => page.locator('#chat-toggle');
-const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
 /** Chips but the composer's one (composer-one-chip ruling 1): the board attaches no other. */
 const chips = (page: Page) => side(page).locator('chat-composer .chat-chip:not(.chat-cmp-ctx)');
 /** The composer's one chip: what goes from the board. */
 const attached = (page: Page) => side(page).locator('chat-composer .chat-cmp-ctx');
-const log = (page: Page) => side(page).getByRole('log', { name: 'Conversation' });
-const status = (page: Page) => side(page).locator('.chat-hd-status');
 const width = (page: Page) => side(page).evaluate((el) => Math.round(el.getBoundingClientRect().width));
 
 /** Send `words` from the composer; the fake's run for it, once it started. */

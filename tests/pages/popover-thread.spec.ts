@@ -9,10 +9,9 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply, tabTo } from './agent-board.ts';
+import { bubble, replies } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const bubble = (page: Page) => page.locator('vb-note-bubble');
-const replies = (page: Page, n: number) => card(page, n).locator('.vb-node-reply');
 const shown = (page: Page) => bubble(page).locator('.vb-nb-reply');
 const css = (l: Locator, prop: string) => l.evaluate((e, p) => getComputedStyle(e).getPropertyValue(p), prop);
 

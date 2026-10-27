@@ -1,5 +1,5 @@
 // The layout budget (docs/specification/performance.md: the whole board under 100 ms, 1,000 cards,
-// 3 pins per container), on the performance fixture the page tests use (tests/pages/perf-ledger.ts).
+// 3 pins per container), on the performance fixture the page tests use (`#format/testing` perfLedger).
 // A timing test: it runs alone, in its own serial step (`npm run test:timing`, N12_FE_01 ruling 7).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,7 +7,7 @@ import type { View } from '#format';
 import { boardView, foldDrawn, readLedger } from '#format';
 import { layoutBoard } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
-import { BIG, perfLedger } from '../../../tests/pages/perf-ledger.ts';
+import { BIG, perfLedger } from '#format/testing';
 
 const BUDGET_MS = 100;
 const view = boardView(foldDrawn(readLedger(perfLedger()).events), BIG.board);

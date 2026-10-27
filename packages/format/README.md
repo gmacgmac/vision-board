@@ -57,3 +57,8 @@ never a file. The format-1 view files and transcript are archived in
 - **Files Node reads** (`#format/files`, `src/files.ts`, D-060): `SCHEMA_DIR`, `OPENAPI_FILE`, `TOOLS_FILE`
   (the tool table `npm run gen` writes), `FIXTURES_DIR`.
   Not on `#format`, which the page loads, so `node:url` stays out of the page bundle.
+- **Fixtures** (`fixtures/`): the roadmap, login-review and login-layout ledgers, and
+  `gallery.ledger.jsonl`, which the gallery page imports `?raw` as `#format/gallery.ledger.jsonl` (D-062).
+- **Test support** (`#format/testing`, `tests/support.ts`, D-060): `FIXTURE_LEDGERS`, `fixtureLines`,
+  `lineMaker`, `checkedEvents`, `makeTempDir`, and the performance fixture `perfLedger` and `BIG`
+  (`tests/perf-ledger.ts`). Every module's tests use these instead of keeping their own copies.

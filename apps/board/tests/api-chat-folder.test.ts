@@ -6,7 +6,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { StoredSession } from '../server/chat-index.ts';
 import { NO_BOARD } from '../server/chat-prompt.ts';
@@ -14,8 +13,9 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, readChat } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-folder-'));
+const config = makeTempDir('vb-chat-folder-');
 const fake = fakeChat(config);
 let h: Harness;
 before(async () => { h = await startBoard({ chat: { adapters: fake.adapters } }); });

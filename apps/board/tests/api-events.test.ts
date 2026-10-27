@@ -5,11 +5,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
-import { createBoardServer } from '../server/app.ts';
-import { ledgerPath, openLedger } from '../server/ledger.ts';
+import { makeTempDir } from '#format/testing';
+import { startTestBoard } from './test-board.ts';
 import { AGENT, startBoard } from './api-harness.ts';
 import { checkAnswer, compileInline, doc } from './openapi-ajv.ts';
 
@@ -57,13 +55,12 @@ async function open(base: string, stop: AbortController) {
 }
 
 test('watch_project: 200 on an empty project, retry first, a change on each append, never a build', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-events-'));
-  const ledger = openLedger(ledgerPath(dir), () => {});
-  const server = createBoardServer({ ledger, dist: dir });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const dir = makeTempDir('vb-events-');
+  const board = await startTestBoard({ project: dir, dist: dir });
+  const { ledger } = board;
   const stop = new AbortController();
   try {
-    const s = await open(`http://127.0.0.1:${(server.address() as AddressInfo).port}`, stop);
+    const s = await open(board.base, stop);
     await s.until(/retry: 2000\n\n/);
     assert.match(s.text, /^retry: 2000\n\n/);
     fs.mkdirSync(path.dirname(ledger.file), { recursive: true });
@@ -73,8 +70,7 @@ test('watch_project: 200 on an empty project, retry first, a change on each appe
     assert.doesNotMatch(s.text, /event: build/);
   } finally {
     stop.abort();
-    server.closeAllConnections();
-    server.close();
+    await board.close();
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });

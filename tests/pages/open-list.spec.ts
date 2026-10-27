@@ -9,15 +9,13 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, tabTo, write } from './agent-board.ts';
+import { idle, selected, stageBox } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const list = (page: Page) => page.getByLabel('Go to an open card', { exact: true });
 const chip = (page: Page) => page.locator('#counts .vb-chip[data-tone="open"]');
 /** The rows' words: each option's `label` (MenuSelect puts its words there, so the counts' live region keeps its text). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
-const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
-const selected = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.id));
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 
 /** A board of its own with `count` cards, open in a 1000 by 600 window unless `wide` (the 1600 by 1000 default). */
 async function drawOpen(page: Page, request: APIRequestContext, count: number, query = '?vbwork', wide = false): Promise<Drawn> {

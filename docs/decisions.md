@@ -775,3 +775,14 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   root class only (nclite's draft; the gallery shows patterns with no board root, and our names are
   already namespaced).
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/UI_01_shared-ui-base.md
+
+## D-062 Test support per module, and fixtures a page loads as text
+- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from TEST_01's draft (an addendum to D-060)
+- **Decision**: A module's test support is `#<module>/testing`; an app's is named too (`#board/testing`),
+  and another module finds it only with `import.meta.resolve`, to run it as a child process (its
+  fixture server), never imports it (D-016). A fixture a page loads as text is named by its file
+  (`#format/gallery.ledger.jsonl`, imported `?raw`). `verify` reads `import.meta.resolve` as a path.
+- **Why**: shared fixtures have one home each, reached by name, so `verify` sees every way in.
+- **Rejected**: one `packages/testing` package (a package cannot reach an app); a wildcard
+  `#format/fixtures/*` (every file a door).
+- **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/TEST_01_test-support-and-parallel.md

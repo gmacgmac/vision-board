@@ -12,6 +12,7 @@ import type { Drawn } from './agent-board.ts';
 import { expect, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { lc, pixel, resolved } from './apca.ts';
+import { api, scale as zoom } from './board-page.ts';
 
 type Point = { x: number; y: number };
 const TITLE = 'Pricing questions for the plans';
@@ -32,10 +33,8 @@ async function board(page: Page, request: APIRequestContext, query = ''): Promis
 
 const frame = (page: Page) => page.locator('vb-region[data-region="p"]');
 const title = (page: Page) => frame(page).locator('.vb-region-head h2');
-const zoom = (page: Page) => page.locator('.vb-world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
 const centre = (b: { x: number; y: number; width: number; height: number }): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
 const boxOf = async (l: Locator) => (await l.boundingBox())!;
-const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
 const head = async (page: Page, d: Drawn) => (await api(page, `/boards/${d.board}`)).head as number;
 const pins = async (page: Page, d: Drawn) => ((await api(page, `/boards/${d.board}`)).state.containerPins ?? {}) as Record<string, Point>;
 const acts = async (page: Page, d: Drawn, after: number) => ((await api(page, `/ledger?after=${after}&board=${d.board}`)).events as Record<string, unknown>[])

@@ -1,12 +1,12 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { ProblemError } from '../server/problem.ts';
 import { LEDGER_FORMAT } from '#format';
+import { makeTempDir } from '#format/testing';
 
 // New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
 const AGENT: Caller = { by: 'agent', agent: 'a-kiro0001' };
@@ -17,7 +17,7 @@ const quiet = () => {};
 afterEach(() => { for (const d of dirs.splice(0)) fs.rmSync(d, { recursive: true, force: true }); });
 
 function tempFile(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-ledger-'));
+  const dir = makeTempDir('vb-ledger-');
   dirs.push(dir);
   return ledgerPath(dir);
 }

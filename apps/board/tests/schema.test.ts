@@ -3,7 +3,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +15,7 @@ import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
 } from '../server/schema.ts';
 import { ACTS, BROKEN, CONTAINER, DROP, GROUP, GROUP_MOVE, PERSON, V, VALID, act, long, patch } from './schema-cases.ts';
+import { makeTempDir } from '#format/testing';
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -23,11 +23,9 @@ const LEDGER = `${SCHEMA_BASE}schema/ledger/18/`;
 const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
-const FIXTURES = [
-  ...fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith('.ledger.jsonl'))
-    .map((f) => path.relative(ROOT, path.join(FIXTURES_DIR, f))),
-  'apps/board/src/gallery/gallery.ledger.jsonl',
-];
+// Every fixture ledger, the gallery's among them (packages/format/fixtures/).
+const FIXTURES = fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith('.ledger.jsonl'))
+  .map((f) => path.relative(ROOT, path.join(FIXTURES_DIR, f)));
 const linesOf = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8').trim().split('\n');
 const docs = new Map(schemaFiles().map(({ schema }) => [schema.$id, schema as Rec]));
 const doc = (id: string): Rec => docs.get(id) ?? assert.fail(`no schema ${id}`);
@@ -188,7 +186,7 @@ test('validate CLI: exits 0 on each fixture', () => {
 });
 
 test('validate CLI: exits non-zero on a ledger with one bad line, naming the line', () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-validate-'));
+  const dir = makeTempDir('vb-validate-');
   try {
     const lines = linesOf(path.relative(ROOT, path.join(FIXTURES_DIR, 'login-review.ledger.jsonl')));
     lines[2] = JSON.stringify({ ...JSON.parse(lines[2]!), bogus: true });

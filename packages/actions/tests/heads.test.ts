@@ -11,16 +11,13 @@ import { isPrivateAct, readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { applyEvent, boardList, emptyState, eventBoard, foldLedger } from '../src/index.ts';
 import { scene } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 const eventsOf = (file: string): LedgerEvent[] => {
-  const read = readLedger(fs.readFileSync(new URL(file, import.meta.url), 'utf8').trim().split('\n'));
+  const read = readLedger(fs.readFileSync(file, 'utf8').trim().split('\n'));
   assert.deepEqual(read.problems, [], file);
   return read.events;
 };

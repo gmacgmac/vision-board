@@ -3,23 +3,19 @@
 // the new board opens, its id made from the title. An agent's write on it then needs the board
 // granted. "Rename board…" opens the same dialog with the open board's words, and the picker and
 // title follow the rename live. In a past version both entries are off. The dialog passes axe in
-// both themes. It runs on the empty project's server (EMPTY_BASE), which live-boards.spec.ts has
-// already drawn on, so the boards it makes never reach the shared server's screenshots.
+// both themes. It runs on the worker's empty project (EMPTY_BASE), fresh for this file (servers.ts),
+// so the boards it makes never reach the roadmap board's screenshots.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { EMPTY_BASE } from './perf-server.ts';
+import { EMPTY_BASE } from './ports.ts';
+import { idle, picker } from './board-page.ts';
+import { joinAgent } from './agent-board.ts';
+import type { Agent } from './agent-board.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 
-interface Agent { secret: string }
 interface Result { ok: boolean; problem?: { type: string; board?: string } }
-
-async function join(request: APIRequestContext, label: string): Promise<Agent> {
-  const r = await request.post(`${EMPTY_BASE}/api/agents`, { data: { label } });
-  expect(r.status(), await r.text()).toBe(201);
-  return await r.json() as Agent;
-}
 
 /** Write `items` on `board` as `a`; each item's result. */
 async function write(request: APIRequestContext, a: Agent, board: string, items: unknown[]): Promise<Result[]> {
@@ -28,9 +24,6 @@ async function write(request: APIRequestContext, a: Agent, board: string, items:
   return (await r.json() as { results: Result[] }).results;
 }
 
-/** The page has read every line written so far and drawn it. */
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
-
 /** Open the page and wait until it has read the ledger (the project may have no board yet). */
 async function open(page: Page): Promise<void> {
   await page.goto(`${EMPTY_BASE}/?vbwork`);
@@ -38,7 +31,6 @@ async function open(page: Page): Promise<void> {
   await idle(page);
 }
 
-const picker = (page: Page) => page.locator('#board');
 const dialog = (page: Page) => page.locator('#board-dialog');
 const region = { type: 'region', region: { id: 'roles', title: 'Roles', mode: 'grid' } };
 
@@ -64,7 +56,7 @@ test('New board makes a board the person owns and opens it; an agent then needs 
   await expect(picker(page)).toBeFocused(); // the dialog gives focus back to the picker
 
   // D-034: a board the person made has no agent creator, so an agent asks for it first.
-  const agent = await join(request, 'Hiring chat');
+  const agent = await joinAgent(request, 'Hiring chat', EMPTY_BASE);
   const refused = await write(request, agent, 'hiring-plan', [region]);
   expect([refused[0]!.problem?.type.split('/').pop(), refused[0]!.problem?.board]).toEqual(['needs-grant', 'hiring-plan']);
   const own = await write(request, agent, 'hiring-plan', [{ type: 'board', title: 'Mine' }]);
@@ -166,7 +158,7 @@ test('in a past version New board and Rename board are off', async ({ page, requ
   await idle(page);
   // Two runs of the agent's drawing, so the board has a past version: grant the board, draw, then
   // a person's rename ends the run before the next one.
-  const agent = await join(request, 'Planning chat');
+  const agent = await joinAgent(request, 'Planning chat', EMPTY_BASE);
   const asked = await request.post(`${EMPTY_BASE}/api/grants`, { headers: { Authorization: `Bearer ${agent.secret}` }, data: { board: 'hiring-plan', reason: 'Drawing the roles.' } });
   expect(asked.status(), await asked.text()).toBe(201);
   const grant = await page.request.post(`${EMPTY_BASE}/api/boards/hiring-plan/act`, { data: { type: 'act', action: 'grant', request: (await asked.json() as { request: number }).request } });

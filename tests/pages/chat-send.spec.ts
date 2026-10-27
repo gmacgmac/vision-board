@@ -10,6 +10,7 @@ import type { ChatServer } from './chat-server.ts';
 import { startChatServer } from './chat-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card, log, sendButton, side, status, text } from './chat-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -21,13 +22,8 @@ let runs = 0;
 test.beforeAll(async () => { srv = await startChatServer(); });
 test.afterAll(async () => { await srv.close(); });
 
-const side = (page: Page) => page.locator('#chat');
-const text = (page: Page) => side(page).getByRole('textbox', { name: 'Message to the agent' });
-const log = (page: Page) => side(page).getByRole('log', { name: 'Conversation' });
-const status = (page: Page) => side(page).locator('.chat-hd-status');
 const mine = (page: Page) => log(page).locator('chat-message[data-from="person"]');
 const replies = (page: Page) => log(page).locator('chat-message[data-from="agent"]');
-const sendButton = (page: Page) => page.locator('#send');
 
 /** Open the page (on `board`, or the folder) with the chat panel open. */
 async function open(page: Page, board = '') {
@@ -57,7 +53,6 @@ async function sessionsOn(page: Page, board: string) {
   return (await (await page.request.get(`${srv.base}/api/boards/${board}/chats`)).json() as { sessions: { session: string; model?: string }[] }).sessions;
 }
 
-const card = (key: string, title: string) => ({ type: 'node', key, node: { region: 'ideas', kind: 'question', title } });
 
 test('picking Kiro offers Opus 5.5, picked with it, and Sonnet 5.5 by Kiro\'s ids, never auto (N34)', async ({ page }) => {
   // First, before any session: the pick is the next session's, so nothing starts.

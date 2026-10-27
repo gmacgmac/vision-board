@@ -9,14 +9,12 @@ import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, write } from './agent-board.ts';
+import { panBy, scale, selected, stageBox, world } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const field = (page: Page) => page.getByRole('textbox', { name: 'Go to card' });
 const goBox = (page: Page) => page.locator('.vb-go');
 const said = (page: Page) => goBox(page).getByRole('status');
-const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
-const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
 
 /** A board of its own with `count` cards, open in a 1000 by 600 window. */
 async function drawOpen(page: Page, request: APIRequestContext, count: number, query = ''): Promise<Drawn> {
@@ -26,15 +24,6 @@ async function drawOpen(page: Page, request: APIRequestContext, count: number, q
   return d;
 }
 
-/** Pan the board by (dx, dy) screen pixels with the wheel, as a person scrolls. */
-async function panBy(page: Page, dx: number, dy: number): Promise<void> {
-  const s = await stageBox(page);
-  await page.mouse.move(s.x + s.width / 2, s.y + s.height / 2);
-  const before = await world(page);
-  await page.mouse.wheel(-dx, -dy);
-  await expect.poll(() => world(page)).not.toBe(before);
-}
-
 /** Whether card `n` shows whole on the stage, or any of it. */
 async function shows(page: Page, n: number, whole = true): Promise<boolean> {
   const [s, b] = [await stageBox(page), (await card(page, n).boundingBox())!];
@@ -42,7 +31,6 @@ async function shows(page: Page, n: number, whole = true): Promise<boolean> {
     : b.y < s.y + s.height && b.y + b.height > s.y && b.x < s.x + s.width && b.x + b.width > s.x;
 }
 
-const selected = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.id));
 
 test('type 1 2 Enter: card 12, off screen, is selected and focused, panned in, the zoom unchanged', async ({ page, request }) => {
   await drawOpen(page, request, 14);

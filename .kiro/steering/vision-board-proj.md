@@ -43,7 +43,9 @@ follow them where our documents are silent. If two of our documents disagree, ra
 - **Done** means every state, accessibility and contrast pass, tests, a gallery entry, and a look in a
   browser in light and dark, as the person sees it.
 - **Tests while working**: unit tests plus the page specs for what changed; the full page suite once,
-  at the end. Never use port 4466: it is the maintainer's board.
+  at the end (`npm run test:pages`: 3 workers, `VB_TEST_WORKERS` for more; each worker's servers on
+  `VB_TEST_PORT` + 10 per worker, fresh for every spec file). Never use port 4466: it is the
+  maintainer's board. Tasks running at once take `VB_TEST_PORT`s 100 apart.
 - **Worktrees**: work in one; the maintainer's board runs from the main checkout.
 - **Sub-agents** always name their model: Sonnet 5.5 for well-specified work, configuration and cited
   research; Opus 5.5 for new patterns and judgement-heavy design.

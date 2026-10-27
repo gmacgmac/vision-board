@@ -5,10 +5,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '#format';
 import type { ActEvent } from '#format';
+import { FIXTURE_LEDGERS } from '#format/testing';
 import { boardAccess, boardState, conditionsOf, foldLedger, pageConditions, statusOf, unseenCount, unseenSteps, validateAct } from '#actions';
 
-const FILE = new URL('../src/gallery/gallery.ledger.jsonl', import.meta.url);
-const lines = fs.readFileSync(FILE, 'utf8').trim().split('\n');
+const lines = fs.readFileSync(FIXTURE_LEDGERS.gallery, 'utf8').trim().split('\n');
 const { events, problems } = readLedger(lines);
 
 test('gallery ledger: every line passes the ledger checks', () => {

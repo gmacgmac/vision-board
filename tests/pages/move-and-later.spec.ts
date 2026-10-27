@@ -1,28 +1,16 @@
 // Moving cards between containers, group move and the built-in Later container (3_FE_03, rulings
-// 2-8). Runs on the shared server, on the roadmap board, after board.spec.ts and gallery.spec.ts;
-// every card it moves it puts back in its own container, unpinned and open, so the files after it
-// find the board as it was.
+// 2-8). On the worker's roadmap board, fresh for this file (servers.ts); every card it moves it
+// puts back in its own container, unpinned and open, for the tests after it in this file.
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { api, card, drag, frame, openBoard, ROADMAP_CARDS, selectedIds } from './board-page.ts';
 
-const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
 type Point = { x: number; y: number };
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const later = (page: Page) => frame(page, 'later');
 const menu = (page: Page) => page.getByRole('menu', { name: /^Move \d+ cards? to$/ });
-const selectedIds = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) =>
-  els.map((e) => (e as HTMLElement).dataset.id!).sort((a, b) => Number(a) - Number(b)));
-
-async function openBoard(page: Page): Promise<void> {
-  await page.goto('/');
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 async function clickCard(page: Page, n: number, modifiers: ('Shift' | 'Meta')[] = []): Promise<void> {
   await card(page, n).locator('.vb-node-title').click({ modifiers, position: { x: 4, y: 4 } });
@@ -67,16 +55,6 @@ async function background(page: Page): Promise<Point> {
   });
 }
 
-/** Press on `from`, move to `to` in steps, then run `during` before letting go. */
-async function drag(page: Page, from: Point, to: Point, during?: () => Promise<void>): Promise<void> {
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  await page.mouse.move(to.x, to.y, { steps: 10 });
-  await during?.();
-  await page.mouse.up();
-}
-
-const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
 const head = async (page: Page) => (await api(page, '/boards/roadmap')).head as number;
 const linesAfter = async (page: Page, after: number) =>
   ((await api(page, `/ledger?after=${after}&board=roadmap`)).events as Record<string, unknown>[]);
@@ -89,7 +67,7 @@ async function putBack(page: Page, home: Record<number, string>): Promise<void> 
     expect(r.status(), await r.text()).toBe(201);
   }
   await page.reload();
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
+  await expect(page.locator('vb-node')).toHaveCount(ROADMAP_CARDS);
   for (const n of Object.keys(home)) await expect(card(page, Number(n))).not.toHaveAttribute('data-pinned', '');
 }
 

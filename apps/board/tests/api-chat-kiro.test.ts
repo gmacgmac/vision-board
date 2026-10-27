@@ -9,7 +9,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { KIRO_AGENT_DRAFT, createKiroAdapter } from '#agent';
 import { FAKE_KIRO, KIRO_DENIED } from '#agent/testing';
@@ -19,10 +18,11 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { gone, readChat, turnEnded } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const work = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-'));
+const work = makeTempDir('vb-chat-kiro-');
 const note = path.join(work, 'notes.jsonl');
-const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-home-')));
+const home = fs.realpathSync(makeTempDir('vb-chat-kiro-home-'));
 const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, FAKE_KIRO_FIXTURE: KIRO_DENIED, FAKE_KIRO_MODE: 'replay', FAKE_KIRO_NOTE: note };
 const adapter = () => createKiroAdapter({ command: { file: process.execPath, args: [FAKE_KIRO] }, env, log: () => {} });
 const notes = (): any[] => (fs.existsSync(note) ? fs.readFileSync(note, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
@@ -109,7 +109,7 @@ test('Stop ends the turn, and closing the server ends the Kiro process', async (
 });
 
 test('an agent file that cannot be written: the server runs, and a Kiro start is refused saying why', async () => {
-  const blocked = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-kiro-blocked-')));
+  const blocked = fs.realpathSync(makeTempDir('vb-chat-kiro-blocked-'));
   fs.writeFileSync(path.join(blocked, '.kiro'), 'a file where the folder should be');
   const b = await startBoard({ home: blocked, chat: { adapters: { kiro: adapter }, kiroAgent: true } });
   try {

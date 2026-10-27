@@ -7,6 +7,7 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { bar, scale as view } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const TITLES = ['First idea', 'Second idea', 'Third idea'];
@@ -36,10 +37,8 @@ async function open(page: Page, request: APIRequestContext, query = ''): Promise
   await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
-const bar = (page: Page) => page.locator('vb-selection-bar');
 const pill = (page: Page) => bar(page).locator('.vb-sb-pill');
 const cards = (page: Page) => page.locator('vb-node');
-const view = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 /** The bar's buttons a person can see and reach, by their words. */
 const shown = (page: Page) => bar(page).getByRole('button').allInnerTexts();
 

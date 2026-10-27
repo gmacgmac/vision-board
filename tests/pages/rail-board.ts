@@ -5,6 +5,7 @@ import type { APIRequestContext, Locator, Page } from '@playwright/test';
 import { draw, write } from './agent-board.ts';
 import type { Drawn } from './agent-board.ts';
 import { expect } from './helpers.ts';
+import { scale as zoom } from './board-page.ts';
 import type { Theme } from './helpers.ts';
 import { REGION_GAP, REGION_PAD } from '#layout';
 import { FAR_K } from '../../apps/board/src/board/viewport.ts';
@@ -38,7 +39,7 @@ export async function board(page: Page, request: APIRequestContext, query = ''):
 
 export const frame = (page: Page, id = 'p') => page.locator(`vb-region[data-region="${id}"]`);
 export const rail = (page: Page, id = 'p') => frame(page, id).locator('.vb-region-tools');
-export const zoom = (page: Page) => page.locator('.vb-world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
+export { scale as zoom } from './board-page.ts';
 export const boxOf = async (l: Locator): Promise<Box> => (await l.boundingBox())!;
 
 /** Zoom to `k` by Ctrl + wheel over frame `id`'s title (one turn lands on k), then move the pointer away. */

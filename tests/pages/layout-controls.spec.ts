@@ -7,18 +7,10 @@
 import type { Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { PERF_BASE } from './perf-server.ts';
+import { PERF_BASE } from './ports.ts';
+import { card, frame, openBoard, zoomToFull } from './board-page.ts';
 
-const NODES = 17;
 const THEMES: Theme[] = ['dark', 'light'];
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-
-async function openBoard(page: Page, base = '', query = '', hash = ''): Promise<void> {
-  await page.goto(`${base}/${query}${hash}`);
-  await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
-}
 
 /** A card's box in world pixels (the layout's), read from its transform and size. */
 const boxOf = (page: Page, n: number) => card(page, n).evaluate((e) => {
@@ -50,7 +42,7 @@ test('labels: a label with room sits on its line, centred on a tag no wider than
 });
 
 test('labels off (?flags=-linkLabels): every label as text at the middle of its line, no tag, no marker', async ({ page }) => {
-  await openBoard(page, '', '?flags=-linkLabels');
+  await openBoard(page, { query: '?flags=-linkLabels' });
   await expect(page.locator('.vb-wires:not(.vb-wires-top) .vb-wire-tag')).toHaveCount(0);
   await expect(page.locator('.vb-wires:not(.vb-wires-top) text.vb-wire-label')).toHaveText(['informs']);
   await expect(page.locator('.vb-link-marks .vb-link-mark')).toHaveCount(0);
@@ -117,7 +109,7 @@ test('alignment: Centre cards centres a row, is kept per viewer across a reload,
 test('alignment off (?flags=-alignSetting): no Centre cards, and a kept centre is not applied', async ({ page }) => {
   await openBoard(page);
   await page.evaluate(() => localStorage.setItem('vb.align', 'center'));
-  await openBoard(page, '', '?flags=-alignSetting');
+  await openBoard(page, { query: '?flags=-alignSetting' });
   expect((await boxOf(page, 6)).y).toBe((await boxOf(page, 5)).y);
   await page.locator('#toolbar-menu').click();
   await expect(page.getByRole('menuitem', { name: /Theme/ })).toBeVisible();
@@ -129,7 +121,6 @@ test('alignment off (?flags=-alignSetting): no Centre cards, and a kept centre i
 // ---- Card widths (ruling 5): the switch in each container's mode row ----
 
 const MIXED = '#mixed';
-const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const widthsSwitch = (page: Page, region: string) => frame(page, region).getByRole('switch', { name: 'Match card widths' });
 const act = (page: Page, body: Record<string, unknown>) => page.request.post(`${PERF_BASE}/api/boards/mixed/act`, { data: { type: 'act', ...body } });
 /** A short frame's rail (toolRail flag) shows its other layouts and the switch while hovered. */
@@ -142,7 +133,7 @@ const widthsOn = async (page: Page) =>
 test('widths: each frame\'s switch shows the widths in force; a press or the keyboard sends the act, and the column follows', async ({ page }) => {
   // Controls kept at every zoom (N13): the whole board fits the window, and the frames' mode rows are
   // not drawn zoomed out otherwise; this test is about the switch, not about hiding.
-  await openBoard(page, PERF_BASE, '?vbwork&flags=-hideControlsZoomedOut', MIXED);
+  await openBoard(page, { base: PERF_BASE, query: '?vbwork&flags=-hideControlsZoomedOut', hash: MIXED });
   // Grid and column match by default; flow keeps its own.
   await expect(widthsSwitch(page, 'review')).toHaveAttribute('aria-checked', 'true');
   await expect(widthsSwitch(page, 'review')).toHaveAttribute('title', 'Card widths: Match');
@@ -180,18 +171,13 @@ test('widths: each frame\'s switch shows the widths in force; a press or the key
 });
 
 test('widths off (?flags=-widthsControl): no switch in any frame; the widths in force still apply', async ({ page }) => {
-  await openBoard(page, PERF_BASE, '?flags=-widthsControl', MIXED);
+  await openBoard(page, { base: PERF_BASE, query: '?flags=-widthsControl', hash: MIXED });
   await expect(page.locator('vb-region .vb-widths')).toHaveCount(0);
   // The person's match from the test above still lays "Prove the idea" out at one width.
   await expect.poll(async () => [(await boxOf(page, 5)).w, (await boxOf(page, 6)).w]).toEqual([464, 464]);
 });
 
 // ---- The note bubble clear of a neighbour's footer buttons (BE_02's hand-off) ----
-
-async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-  for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
-}
 
 test('the note bubble beside card 4 leaves card 5\'s footer buttons clear', async ({ page }) => {
   await openBoard(page);

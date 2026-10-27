@@ -7,12 +7,13 @@ import { readLedger } from '#format';
 import type { ViewNode } from '#format';
 import { foldLedger, pageConditions } from '#actions';
 import { createParking } from '../src/board/parking.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
 /** The time `line` gives the line with this `seq`. */
 const AT = (n: number) => `2026-10-08T13:${String(n).padStart(2, '0')}:00Z`;
-const line = (e: object) => JSON.stringify({ v: 10, seq: ++seq, at: AT(seq), ...e });
+const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const item = (n: number) => agent({ type: 'node', board: 'b', n, ver: 1, node: { region: 'r', kind: 'question', title: `Card ${n}`, item: true } });
@@ -23,7 +24,7 @@ const bundle = { situation: 'S', background: 'B', assessment: 'A', recommendatio
  *  naming nothing. 3 and 4 share a group note (seq 12), answered on card 4. A note on the container
  *  (seq 13), answered on card 1. */
 function ledger() {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),

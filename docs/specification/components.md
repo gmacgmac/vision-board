@@ -130,7 +130,7 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
 - **Element in a page:** page tests (D-025, `npm run test:pages`) open the board and the pattern
   gallery in Chromium and fail on console errors, failed requests, accessibility violations or
   screenshot changes. A new pattern needs a gallery entry: a section in
-  `apps/board/src/gallery/` drawn from `gallery.ledger.jsonl` through the pattern's own core
+  `apps/board/src/gallery/` drawn from `#format/gallery.ledger.jsonl` through the pattern's own core
   (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from `#ui` `PATTERNS`
   (their `pattern.json` files, `packages/ui/src/patterns.ts`), and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
 

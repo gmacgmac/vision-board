@@ -14,6 +14,7 @@ import { CALCULATOR, startAppServer } from './app-server.ts';
 import { LIVE_PANELS } from '../../apps/board/src/board/app-cards.ts';
 import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
+import { card as cardOf, panelOf } from './board-page.ts';
 
 let s: AppServer;
 test.beforeAll(async () => { s = await startAppServer({ fixtures: ['panel-only'] }); });
@@ -25,13 +26,6 @@ async function open(page: Page, board: string, count: number): Promise<void> {
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
-const cardOf = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
-
-/** A card's panel, once its frame is ready. */
-async function panelOf(card: Locator): Promise<Frame> {
-  await expect(card.locator('vb-app-frame')).toHaveAttribute('data-state', 'ready');
-  return (await (await card.locator('vb-app-frame iframe').elementHandle())!.contentFrame())!;
-}
 
 /** Every time a panel's document loads (its first load included), by the frame's URL. */
 function countLoads(page: Page): string[] {

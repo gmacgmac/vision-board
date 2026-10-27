@@ -8,15 +8,14 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { act, card, draw, open, reply } from './agent-board.ts';
+import { box, bubble } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const pins = (page: Page) => page.locator('.vb-group-pin');
-const bubble = (page: Page) => page.locator('vb-note-bubble');
 const ringed = (page: Page) => page.locator('vb-node[data-group-ring]').evaluateAll((els) =>
   els.map((e) => Number((e as HTMLElement).dataset.id)).sort((a, b) => a - b));
 const selected = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) =>
   els.map((e) => Number((e as HTMLElement).dataset.id)).sort((a, b) => a - b));
-const box = async (l: Locator) => (await l.boundingBox())!;
 
 test.beforeEach(async ({ page }) => {
   // The page first, so page.request carries the person cookie.

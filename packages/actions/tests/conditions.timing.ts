@@ -1,12 +1,12 @@
 // The conditions budget (BE_04 ruling 4): `conditionsOf` reads folded indexes per board, never the
-// events, so on the performance fixture the page tests use (tests/pages/perf-ledger.ts, 1,000
+// events, so on the performance fixture the page tests use (`#format/testing` perfLedger, 1,000
 // cards) it stays under 5 ms, for the open board and for the whole project. A timing test: it runs
 // alone, in its own serial step (`npm run test:timing`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { conditionsOf, foldLedger } from '../src/index.ts';
-import { BIG, perfLedger } from '../../../tests/pages/perf-ledger.ts';
+import { BIG, perfLedger } from '#format/testing';
 
 const BUDGET_MS = 5;
 const s = foldLedger(readLedger(perfLedger()).events);

@@ -3,19 +3,17 @@
 // board, and every control that would change the board is paused in place (aria-disabled, the quiet
 // look), saying "Locked: unlock to change it" when pressed, while nothing is written; the flag, the
 // person's private mark, still works, by click and by Shift+F. A lock from another tab shows at once.
-// All by keyboard as well, axe in both themes. It runs on the empty project's server (EMPTY_BASE) on a
-// board of its own, and leaves it unlocked, so the specs after it find the boards as they were.
+// All by keyboard as well, axe in both themes. It runs on the worker's empty project (EMPTY_BASE),
+// fresh for this file (servers.ts), on a board of its own, and leaves it unlocked between tests.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, openSelectionBar, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { EMPTY_BASE } from './perf-server.ts';
+import { EMPTY_BASE } from './ports.ts';
+import { card, idle, menuButton, toast } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 const VAULT = 'vault';
 const REASON = 'Locked: unlock to change it';
-
-/** The page has read every line written so far and drawn it. */
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 
 /** Open the page on the vault board and wait until it has read the ledger and drawn. */
 async function open(page: Page, flags = ''): Promise<void> {
@@ -56,11 +54,8 @@ const linesAfter = async (page: Page, after: number) =>
 /** The ledger's latest line. */
 const head = async (page: Page) => ((await (await page.request.get(`${EMPTY_BASE}/api/boards`)).json()) as { head: number }).head;
 
-const menuButton = (page: Page) => page.locator('#toolbar-menu');
 const lockRow = (page: Page) => page.locator('#lock-board');
 const chip = (page: Page) => page.locator('#locked');
-const toast = (page: Page) => page.locator('#toast');
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 const frame = (page: Page) => page.locator('vb-region[data-region="ideas"]');
 
 /** Every control a lock pauses on the board, and the flag, which it never does. */

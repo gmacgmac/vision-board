@@ -13,21 +13,19 @@ import type { Theme } from './helpers.ts';
 import type { Drawn } from './agent-board.ts';
 import { card, write } from './agent-board.ts';
 import { lc, pixel, resolved } from './apca.ts';
+import { frame, idle, tab } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
 let boards = 0;
 
-const frame = (page: Page, id: string) => page.locator(`vb-region[data-region="${id}"]`);
 const pill = (page: Page, id: string) => frame(page, id).locator('.vb-region-fresh');
 /** The pill's words to the eye (its full words are for screen readers only). */
 const said = (page: Page, id: string) => pill(page, id).locator('.vb-region-fresh-n');
-const tab = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="updates"]');
 const isNew = (page: Page, n: number) => card(page, n).locator('.vb-node-btab[data-tab="new"]');
 const list = (page: Page) => page.getByLabel('Go to a new or updated card', { exact: true });
 const chip = (page: Page) => page.locator('#counts .vb-chip[data-tone="new"]:has(#fresh-cards)');
 /** The rows' words: each option's `label` (MenuSelect). */
 const texts = (page: Page) => list(page).locator('option').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).label));
-const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork?: { idle(): Promise<void> } }).__vbWork?.idle());
 
 const node = (region: string, title: string, body?: string) => ({ type: 'node', node: { region, kind: 'question', title, ...(body && { body }) } });
 

@@ -17,10 +17,11 @@ import {
 } from '../src/shell/chat-bridge.ts';
 import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/shell/chat-rules.ts';
 import { createSelection } from '../src/board/selection.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 10, seq: ++seq, at: `2026-10-09T09:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 10, at: '2026-10-09T09' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const item = (board: string, n: number, title = `Card ${n}`) =>
@@ -30,7 +31,7 @@ const item = (board: string, n: number, title = `Card ${n}`) =>
  *  12 More context with no words on 3, 13 on the container. Board c: its card 1 (the ledger's 4: a
  *  change chip names it by its board number, D-041). */
 function state() {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),

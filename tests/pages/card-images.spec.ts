@@ -6,12 +6,13 @@
 // asserted, and none repeats on a timer), and opening it asks too; reduced motion; axe light and dark.
 // The images are real PNGs made here (`pngOf`). Missing and refused images: card-image-states.spec.ts.
 import type { Locator, Page, Request } from '@playwright/test';
-import { pngOf, put } from '../../apps/board/tests/images-support.ts';
+import { pngOf, put } from '#board/testing';
 import { tabTo } from './agent-board.ts';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { card } from './board-page.ts';
 
 const THEMES: Theme[] = ['light', 'dark'];
 const SCREENS = [{ width: 1600, height: 1000 }, { width: 1470, height: 956 }];
@@ -39,7 +40,6 @@ async function open(page: Page, cards: object[]): Promise<number[]> {
   return n;
 }
 
-const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 /** A card's image: its button, once its picture has loaded at the version the route named. */
 async function imageOf(page: Page, n: number): Promise<Locator> {
   const button = card(page, n).locator('.vb-img');

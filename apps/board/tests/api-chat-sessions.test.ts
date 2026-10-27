@@ -7,13 +7,11 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
 import { projectSlug } from '#agent';
 import { createClient } from '#client';
 import { openAgents } from '../server/agents.ts';
-import { createBoardServer } from '../server/app.ts';
+import { personCookie, startTestBoard } from './test-board.ts';
 import { INSTRUCTIONS_FILE } from '../server/chat-access.ts';
 import type { StoredSession } from '../server/chat-index.ts';
 import { openLedger } from '../server/ledger.ts';
@@ -22,8 +20,9 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat, turnEnded } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-cli-'));
+const config = makeTempDir('vb-chat-cli-');
 const fake = fakeChat(config);
 let h: Harness;
 before(async () => { h = await startBoard({ chat: { adapters: fake.adapters } }); });
@@ -135,11 +134,10 @@ test('after a restart the session is listed and resumed, as the same agent with 
   const transcript = path.join(config, 'projects', projectSlug(h.project), `${current.session}.jsonl`);
   fs.mkdirSync(path.dirname(transcript), { recursive: true });
   fs.writeFileSync(transcript, '{}\n');
-  const server = createBoardServer({ ledger: openLedger(h.ledger.file, () => {}), dist: h.dist, chat: { adapters: fake.adapters } });
-  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const board = await startTestBoard({ ledger: openLedger(h.ledger.file, () => {}), dist: h.dist, chat: { adapters: fake.adapters } });
   try {
-    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-    const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')![1]!;
+    const { base } = board;
+    const cookie = await personCookie(base);
     const person = createClient({ base, fetch: (url, init) => fetch(url, { ...init, headers: { ...(init?.headers as Record<string, string>), Cookie: cookie } }) });
     const { sessions } = await person.call('list_chats', { board: 'pricing' }) as { sessions: { session: string }[] };
     assert.equal(sessions[0]!.session, current.session);
@@ -158,7 +156,6 @@ test('after a restart the session is listed and resumed, as the same agent with 
     const secret = run.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
     assert.equal(openAgents(dataDir()).find(secret, () => true), current.agentId);
   } finally {
-    server.closeAllConnections();
-    await new Promise<void>((resolve) => server.close(() => resolve()));
+    await board.close();
   }
 });

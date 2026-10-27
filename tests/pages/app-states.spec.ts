@@ -11,7 +11,7 @@ import path from 'node:path';
 import type { Page, Route } from '@playwright/test';
 import type { AppServer } from './app-server.ts';
 import { startAppServer } from './app-server.ts';
-import { addApp } from '../../apps/board/tests/app-support.ts';
+import { addApp } from '#board/testing';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 

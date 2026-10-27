@@ -3,20 +3,22 @@
 // the number their write returned (step 4G ruling 6), never by title.
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from './helpers.ts';
+import { api, bubble, frame, scale } from './board-page.ts';
+import type { Point } from './board-page.ts';
 
-export type Point = { x: number; y: number };
+export { api, bubble, drag, frame, scale } from './board-page.ts';
+export type { Point } from './board-page.ts';
+
 export type Box = Point & { width: number; height: number };
 
-/** The board, written once per worker (a worker restarted after a failure writes its own), and
- *  its agent's secret. `n`: card number by write key, the write result's `n` (959). */
+/** The board, written once per spec file (each file starts on fresh boards, servers.ts), and its
+ *  agent's secret. `n`: card number by write key, the write result's `n` (959). */
 export const fx = { board: '', secret: '', n: {} as Record<string, number> };
 
-export const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 export const grip = (page: Page, region: string) => frame(page, region).locator('.vb-region-grip');
 // Item numbers run across every board of the project: a card is found by the number its write
 // returned, never by its title.
 export const card = (page: Page, key: string) => page.locator(`vb-node[data-id="${fx.n[key]}"]`);
-export const bubble = (page: Page) => page.locator('vb-note-bubble');
 export const text = (page: Page) => bubble(page).getByLabel('Note text');
 export const comment = (page: Page, title: string) => page.getByRole('button', { name: `Comment on container ${title}` });
 export const preview = (page: Page, region: string) => frame(page, region).locator('.vb-note-pop');
@@ -32,8 +34,9 @@ export async function agentWrite(request: APIRequestContext, items: unknown[]) {
 /** Four containers, items in each, a link across two; the fourth is wide, so it wraps to a second
  *  row under Plan (packing's row width), where a note shown in Plan pushes it down. */
 export async function ensureBoard(request: APIRequestContext, worker: number): Promise<void> {
-  if (fx.board) return;
-  fx.board = `frames-w${worker}`;
+  // Written already for this file: the board is on the server (another file's left with its server).
+  if (fx.board && (await request.get(`/api/boards/${fx.board}`)).ok()) return;
+  Object.assign(fx, { board: `frames-w${worker}`, n: {} });
   const j = await request.post('/api/agents', { data: { label: 'Frames chat' } });
   expect(j.status(), await j.text()).toBe(201);
   fx.secret = ((await j.json()) as { secret: string }).secret;
@@ -60,25 +63,14 @@ export async function openFrames(page: Page): Promise<void> {
   await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
-export const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
 export const head = async (page: Page) => (await api(page, `/boards/${fx.board}`)).head as number;
 export const linesAfter = async (page: Page, after: number) => (await api(page, `/ledger?after=${after}&board=${fx.board}`)).events as Record<string, unknown>[];
 export const regionPins = async (page: Page) => ((await api(page, `/boards/${fx.board}`)).state.containerPins ?? {}) as Record<string, Point>;
 export const boxOf = async (page: Page, sel: ReturnType<Page['locator']>): Promise<Box> => (await sel.boundingBox())!;
 export const centre = (b: Box): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
-export const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 export const settled = async (page: Page) => expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 export const REGIONS = ['plan', 'risks', 'parked', 'backlog'];
 export const frames = (page: Page) => Promise.all(REGIONS.map((r) => boxOf(page, frame(page, r))));
-
-/** Press on `from`, move to `to` in steps, run `during`, let go. */
-export async function drag(page: Page, from: Point, to: Point, during?: () => Promise<void>): Promise<void> {
-  await page.mouse.move(from.x, from.y);
-  await page.mouse.down();
-  await page.mouse.move(to.x, to.y, { steps: 10 });
-  await during?.();
-  await page.mouse.up();
-}
 
 export function apart(boxes: Box[]): boolean {
   return boxes.every((a, i) => boxes.every((b, j) => j <= i

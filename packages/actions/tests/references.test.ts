@@ -11,13 +11,10 @@ import type { LedgerState, ReferenceKind, Scope } from '../src/index.ts';
 import { applyEvent, emptyState, placeOf, REFERENCE_KINDS, REFERENCES, scopeOf } from '../src/index.ts';
 import { cardsOf } from '../src/notes.ts';
 import { A, B, C, Ledger } from './ledger-v3.ts';
+import { FIXTURE_LEDGERS } from '#format/testing';
 
-const FIXTURES = [
-  '../../format/fixtures/roadmap.ledger.jsonl',
-  '../../format/fixtures/login-review.ledger.jsonl',
-  '../../format/fixtures/login-layout.ledger.jsonl',
-  '../../../apps/board/src/gallery/gallery.ledger.jsonl',
-];
+/** Every fixture ledger, the gallery's too: real ledgers in the real schema. */
+const FIXTURES = Object.values(FIXTURE_LEDGERS);
 
 // ---- The oracle: the definitions this table replaced, as they were. ----
 
@@ -231,7 +228,7 @@ test('REFERENCES: each row says what its kind belongs to, and its lookup answers
 // ---- The same answers as the functions replaced, on every line of every fixture ledger. ----
 
 const LEDGERS: [string, string[]][] = [
-  ...FIXTURES.map((f): [string, string[]] => [f.split('/').at(-1)!, fs.readFileSync(new URL(f, import.meta.url), 'utf8').trim().split('\n')]),
+  ...FIXTURES.map((f): [string, string[]] => [f.split('/').at(-1)!, fs.readFileSync(f, 'utf8').trim().split('\n')]),
   ['every()', EVERY.lines],
 ];
 

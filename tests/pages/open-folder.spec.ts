@@ -14,6 +14,7 @@ import type { FolderServer } from './folder-server.ts';
 import { startFolderServer } from './folder-server.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
+import { folderDialog as dialog, menuButton } from './board-page.ts';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -27,9 +28,7 @@ async function open(page: Page, flags = '') {
   await page.goto(`${srv.base}/?vbwork${flags && `&flags=${flags}`}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
 }
-const menuButton = (page: Page) => page.locator('#toolbar-menu');
 const row = (page: Page) => page.locator('#open-folder');
-const dialog = (page: Page) => page.getByRole('dialog', { name: 'Open folder' });
 /** The folders in the chosen folder (the recent list is its own). */
 const rows = (page: Page) => dialog(page).getByRole('list', { name: /^In / }).getByRole('button');
 const status = (page: Page) => dialog(page).locator('.vb-folder-status');

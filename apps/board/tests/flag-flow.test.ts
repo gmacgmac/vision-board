@@ -9,10 +9,11 @@ import { boardData, foldLedger, replyText } from '#actions';
 import { boardCards } from '../src/shell/chat-bridge.ts';
 import type { ActFields } from '../src/board/io.ts';
 import { createFlagFlow, flagAct, flaggedIds, flaggedWords, nextFlagged } from '../src/board/flag-flow.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 12, seq: ++seq, at: `2026-10-11T10:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 12, at: '2026-10-11T10' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const person = (e: object) => line({ by: 'person', ...e });
 const card = (board: string, n: number, kind = 'question') => agent({ type: 'node', board, n, ver: 1, node: { region: 'r', kind, title: `Card ${n}` } });
@@ -20,7 +21,7 @@ const card = (board: string, n: number, kind = 'question') => agent({ type: 'nod
 /** Board a: the ledger's 1 and 2. Board b: the ledger's 3 to 6, its 1 to 4. The person flags b's 2
  *  and 4 (the ledger's 4 and 6), comments on b's 1 and flags a's 1. */
 function state(flags = true) {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }),
     agent({ type: 'board', board: 'a', title: 'A' }), agent({ type: 'region', board: 'a', region: { id: 'r', title: 'R', mode: 'grid' } }),

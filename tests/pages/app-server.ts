@@ -1,26 +1,19 @@
 // The app cards' page tests' own board server (app-cards FE_02): started in the test process on a
 // temp project of its own, with the example calculator copied in from the skill folder (its one
 // source) and the test apps from apps/board/tests/fixtures/apps/ (`addApp`). It serves the page the
-// main test server built, on its own port (five above it); `flags` are the server's own, as
-// VB_FLAGS gives them (`-appCards` turns app cards off), on the port above. Agents write through
+// global setup built, on the worker's app port (ports.ts); `flags` are the server's own, as
+// VB_FLAGS gives them (`-appCards` turns app cards off), on the worker's apps-off port. Agents write through
 // the API and the person acts with the page's cookie (one per server, so the page's too).
 // Everything is removed on close; the app processes stop with the server.
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import type { AppInfo } from '#format';
 import { parseFlags } from '#format';
-import { createBoardServer } from '../../apps/board/server/app.ts';
-import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
-import { addApp } from '../../apps/board/tests/app-support.ts';
-import { FOLDER_PORT } from './folder-server.ts';
+import { makeTempDir } from '#format/testing';
+import { addApp, joinAgent, personAct, personCookie, startTestBoard } from '#board/testing';
+import { PORTS } from './ports.ts';
 
-export const APP_PORT = FOLDER_PORT + 1;
-/** The server with app cards off (`VB_FLAGS=-appCards`). */
-export const APPS_OFF_PORT = APP_PORT + 1;
-const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
 /** The example app, as the skill ships it. */
 export const EXAMPLE = fileURLToPath(new URL('../../skills/vision-board/examples/apps/calculator', import.meta.url));
 
@@ -53,27 +46,19 @@ export interface AppServerOptions {
 }
 
 export async function startAppServer({ flags, fixtures = [] }: AppServerOptions = {}): Promise<AppServer> {
-  const project = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-app-pages-')));
+  const project = fs.realpathSync(makeTempDir('vb-app-pages-'));
   const apps = path.join(project, '.visionboard', 'apps');
   fs.cpSync(EXAMPLE, path.join(apps, 'calculator'), { recursive: true });
   for (const id of fixtures) addApp(project, id);
-  const file = ledgerPath(project);
-  const server = createBoardServer({ ledger: openLedger(file, () => {}), dist: DIST, flags: parseFlags(flags).overrides });
-  await new Promise<void>((resolve) => server.listen(flags ? APPS_OFF_PORT : APP_PORT, '127.0.0.1', resolve));
-  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const cookie = /^(vb_person=[^;]+)/.exec((await fetch(`${base}/`)).headers.get('set-cookie') ?? '')?.[1] ?? '';
-  const post = (url: string, body: unknown, headers: Record<string, string>) =>
-    fetch(`${base}${url}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
-  const ok = async (r: Response) => {
-    if (!r.ok) throw new Error(`${r.url} answered ${r.status}: ${await r.text()}`);
+  const board = await startTestBoard({ project, flags: parseFlags(flags).overrides, port: flags ? PORTS.appsOff : PORTS.app });
+  const { base } = board;
+  const cookie = await personCookie(base);
+  const { write } = await joinAgent(base, 'App cards build');
+  const get = async (url: string) => {
+    const r = await fetch(`${base}${url}`, { headers: { Cookie: cookie } });
+    if (!r.ok) throw new Error(`${url} answered ${r.status}: ${await r.text()}`);
     return r.json() as Promise<unknown>;
   };
-  const { secret } = await ok(await post('/api/agents', { label: 'App cards build' }, {})) as { secret: string };
-  async function write(board: string, items: unknown[]) {
-    const out = await ok(await post(`/api/boards/${board}/write`, { items }, { Authorization: `Bearer ${secret}` })) as { results: { ok: boolean; n?: number }[] };
-    if (!out.results.every((x) => x.ok)) throw new Error(`the write failed: ${JSON.stringify(out.results)}`);
-    return out.results;
-  }
   let boards = 0;
   return {
     base, project, write,
@@ -86,19 +71,20 @@ export async function startAppServer({ flags, fixtures = [] }: AppServerOptions 
       ]);
       return { board, n: results.slice(2).map((r) => r.n!) };
     },
-    async act(board, body) { await ok(await post(`/api/boards/${board}/act`, { type: 'act', ...body }, { Cookie: cookie })); },
+    act: (board, body) => personAct(base, cookie, board, body),
     async apps() {
-      const { apps: list } = await ok(await fetch(`${base}/api/apps`, { headers: { Cookie: cookie } })) as { apps: AppInfo[] };
+      const { apps: list } = await get('/api/apps') as { apps: AppInfo[] };
       return new Map(list.map((a) => [a.id, a]));
     },
     async call(app, tool, args = {}) {
-      const r = await post(`/api/apps/${app}/calls`, { tool, arguments: args }, { Cookie: cookie });
+      const r = await fetch(`${base}/api/apps/${app}/calls`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie }, body: JSON.stringify({ tool, arguments: args }),
+      });
       await r.text();
       return r.status;
     },
     async close() {
-      server.closeAllConnections();
-      await new Promise<void>((resolve) => server.close(() => resolve()));
+      await board.close();
       fs.rmSync(project, { recursive: true, force: true });
     },
   };

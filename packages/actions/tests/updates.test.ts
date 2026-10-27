@@ -5,17 +5,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
 import { foldLedger, pageConditions, seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/index.ts';
+import { lineMaker } from '#format/testing';
 
 const A = 'a-aaaa1111';
-let seq = 0;
-const line = (e: object) => JSON.stringify({ v: 10, seq: ++seq, at: `2026-10-08T13:${String(seq).padStart(2, '0')}:00Z`, ...e });
+const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
+const { line } = maker;
 const agent = (e: object) => line({ by: 'agent', agent: A, ...e });
 const node = (n: number, ver: number, body: string, title = `Card ${n}`) =>
   agent({ type: 'node', board: 'b', n, ver, node: { region: 'r', kind: 'question', title, body, item: true } });
 
 /** Card 1 at version 1. Card 2: seen at 2, then appended and retitled. Card 3: rewritten, never seen. */
 function ledger() {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
@@ -53,7 +54,7 @@ test('a selection marks each unseen item at its latest version, in order; a seen
 });
 
 test('a NEW card shows NEW only: the page leaves it out of the updates (`item.new` before `item.unseen`)', () => {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
@@ -67,7 +68,7 @@ test('a NEW card shows NEW only: the page leaves it out of the updates (`item.ne
 });
 
 test('a selection sends seen for the cards whose conditions end on select (`clearedBy`): NEW and updates both', () => {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
@@ -86,7 +87,7 @@ test('a selection sends seen for the cards whose conditions end on select (`clea
 // D-041 proposed (api.md 125): the page folds by identity and draws by board number. On a second
 // board every card's identity differs from its number, so a slip between the two shows here.
 test('two boards: counts, steps and seen marks name a card by its number on the open board', () => {
-  seq = 0;
+  maker.reset();
   const on = (board: string, n: number, ver: number, body: string) =>
     agent({ type: 'node', board, n, ver, node: { region: 'r', kind: 'question', title: `Card ${n}`, body, item: true } });
   const lines = [
@@ -111,7 +112,7 @@ test('two boards: counts, steps and seen marks name a card by its number on the 
 // the ✓ and is one update of its own, though the card is still at version 1; the card seen line it
 // needs is due although that version was seen, and once sent the update is gone.
 test('the agent\'s reply that cleared a card: one update, its step, a seen line due at a seen version', () => {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
@@ -119,7 +120,7 @@ test('the agent\'s reply that cleared a card: one update, its step, a seen line 
     line({ by: 'person', type: 'act', action: 'ack', n: 1, ver: 1 }),
     line({ by: 'person', type: 'act', action: 'comment', n: 1, ver: 1, text: 'Does it cover renewals?' }),
   ];
-  const note = seq;
+  const note = maker.seq;
   lines.push(agent({ type: 'reply', n: 1, text: 'Yes, renewals too.', to: note }));
   const { events, problems } = readLedger(lines);
   assert.deepEqual(problems, []);
@@ -138,7 +139,7 @@ test('the agent\'s reply that cleared a card: one update, its step, a seen line 
 // Review polish round 2 ruling 4: any reply of the agent's on a card shows "1 update" until the person
 // has seen it, whether or not it answers a note or clears anything; looking at the card ends it.
 test('any reply of the agent\'s is one update until seen: with no note, or to an older note that clears nothing', () => {
-  seq = 0;
+  maker.reset();
   const lines = [
     agent({ type: 'join', label: 'Pricing chat' }), agent({ type: 'board', board: 'b', title: 'B' }),
     agent({ type: 'region', board: 'b', region: { id: 'r', title: 'R', mode: 'grid' } }),
@@ -146,7 +147,7 @@ test('any reply of the agent\'s is one update until seen: with no note, or to an
     line({ by: 'person', type: 'seen', n: 1, ver: 1 }), line({ by: 'person', type: 'seen', n: 2, ver: 1 }),
     line({ by: 'person', type: 'act', action: 'comment', n: 2, ver: 1, text: 'Which plans?' }),
   ];
-  const first = seq;
+  const first = maker.seq;
   lines.push(
     line({ by: 'person', type: 'act', action: 'ack', n: 2, ver: 1 }),
     line({ by: 'person', type: 'act', action: 'comment', n: 2, ver: 1, text: 'And renewals?' }),

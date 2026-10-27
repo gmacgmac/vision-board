@@ -7,7 +7,6 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { ROUND_HEAD, SELECTED_HEAD } from '#actions';
 import { NOTES_HEAD, ONLY_ATTACHED } from '../server/chat-prompt.ts';
@@ -17,8 +16,9 @@ import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
 import { fakeChat, gone, readChat } from './chat-support.ts';
+import { makeTempDir } from '#format/testing';
 
-const config = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-chat-context-'));
+const config = makeTempDir('vb-chat-context-');
 const fake = fakeChat(config);
 let h: Harness;
 let session = '';

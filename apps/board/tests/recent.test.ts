@@ -5,12 +5,12 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { RECENT_MAX, addRecent, readRecent, recentPath, startFolder } from '../server/recent.ts';
+import { makeTempDir } from '#format/testing';
 
-const home = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-recent-')));
-const outside = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'vb-recent-out-')));
+const home = fs.realpathSync(makeTempDir('vb-recent-'));
+const outside = fs.realpathSync(makeTempDir('vb-recent-out-'));
 after(() => { for (const d of [home, outside]) fs.rmSync(d, { recursive: true, force: true }); });
 const folder = (name: string) => {
   const dir = path.join(home, 'projects', name);

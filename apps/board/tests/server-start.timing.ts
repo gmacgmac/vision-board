@@ -1,17 +1,16 @@
 // The server-start budget (docs/specification/performance.md: under 1 s on a 100,000-event ledger,
-// approach 7). The ledger is the performance fixture (tests/pages/perf-ledger.ts) followed by the
+// approach 7). The ledger is the performance fixture (`#format/testing` perfLedger) followed by the
 // person's acts and seen marks up to 100,000 lines. Start = open the ledger (read, check and fold
 // every line), listen, and answer the first read. A timing test: it runs alone, in its own serial
 // step (`npm run test:timing`, N12_FE_01 ruling 7). Under budget there is no checkpoint (step 5).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { createBoardServer } from '../server/app.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
-import { perfLedger } from '../../../tests/pages/perf-ledger.ts';
+import { makeTempDir, perfLedger } from '#format/testing';
 
 const BUDGET_MS = 1000;
 const LINES = 100_000;
@@ -34,7 +33,7 @@ function bigLedger(): string[] {
 }
 
 test(`the server starts on a ${LINES.toLocaleString('en')}-event ledger in under ${BUDGET_MS} ms`, async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-start-'));
+  const dir = makeTempDir('vb-start-');
   try {
     const file = ledgerPath(dir);
     fs.mkdirSync(path.dirname(file), { recursive: true });
