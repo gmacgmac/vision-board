@@ -1,6 +1,6 @@
 // The image route, `GET /board-images/<path>` (app-cards BE_03; D-048 rulings 19-21, docs/specification/
 // images.md): the project's images, and only those, served as what they are (png, jpeg, webp, gif,
-// checked by name and by bytes) with an ETag, a 304 for a matching If-None-Match, and the
+// checked by name and by bytes; svg, by its opening, in images-svg-route.test.ts) with an ETag, a 304 for a matching If-None-Match, and the
 // headers that stop a browser guessing. Every refusal is a problem; nothing outside
 // `.visionboard/images/` is ever read, so each trick below is also tried against valid pictures
 // that sit just outside it (the decoys), whose bytes must never come back.
@@ -46,7 +46,7 @@ async function refused(raw: string, status: number, code: string, detail?: strin
 }
 
 test('each type is served by its extension and its bytes, with its type, size, ETag and the no-sniff, no-cache headers', async () => {
-  const cases: [string, ImageName][] = [['shots/one.png', 'png'], ['shots/two.jpg', 'jpeg'], ['shots/three.jpeg', 'jpeg'], ['shots/four.webp', 'webp'], ['Four.GIF', 'gif']];
+  const cases: [string, keyof typeof IMAGES][] = [['shots/one.png', 'png'], ['shots/two.jpg', 'jpeg'], ['shots/three.jpeg', 'jpeg'], ['shots/four.webp', 'webp'], ['Four.GIF', 'gif']];
   for (const [rel, type] of cases) {
     put(h.project, rel, IMAGES[type]);
     const got = await get(h.base, url(rel));
@@ -113,9 +113,7 @@ test('an overwritten image has a new ETag, so the old one gets the new picture (
   assert.equal((await get(h.base, url('swap.png'), { headers: { 'If-None-Match': touched.headers.etag as string } })).status, 304);
 });
 
-test('svg is refused (415), by name and by content, and a file is the type its name says or it is refused (415)', async () => {
-  put(h.project, 'logo.svg', SVG);
-  await refused(url('logo.svg'), 415, 'unsupported-media-type', W.type);
+test('a file is the type its name says or it is refused (415); an svg under another name too (svg itself: images-svg-route.test.ts)', async () => {
   const fakes: [string, Buffer | string, ImageName][] = [
     ['svg-as.png', SVG, 'png'], ['text.png', 'just some text\n', 'png'], ['html.gif', '<!doctype html><script>alert(1)</script>', 'gif'],
     ['empty.png', '', 'png'], ['png-as.jpg', IMAGES.png, 'jpeg'], ['gif-as.webp', IMAGES.gif, 'webp'], ['cut.png', IMAGES.png.subarray(0, 7), 'png'],

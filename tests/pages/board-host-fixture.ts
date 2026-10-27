@@ -95,6 +95,14 @@ const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof 
     const fake = fakeHost(lines, shown);
     mounted.set(rootId, { view: mount(root, fake.host), record: fake.record, appendRest: fake.appendRest, root });
   },
+  /** The host's own controls, outside both boards: a button and a text input (M10, keys stay inside the board). */
+  addHostControls(parentId: string) {
+    const parent = document.getElementById(parentId)!;
+    const button = Object.assign(document.createElement('button'), { id: 'host-button', textContent: 'Host button' });
+    const input = Object.assign(document.createElement('input'), { id: 'host-input', type: 'text' });
+    input.setAttribute('aria-label', 'Host input');
+    parent.append(button, input);
+  },
   idle: (rootId: string) => mounted.get(rootId)!.view.board.idle(),
   send: (rootId: string) => mounted.get(rootId)!.view.send(),
   status: (rootId: string) => ({ ...mounted.get(rootId)!.view.status.now }),

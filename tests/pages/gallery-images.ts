@@ -1,4 +1,5 @@
-// The gallery's pictures (app-cards FE_03, D-048): a wide flow diagram and a tall phone screen, saved
+// The gallery's pictures (app-cards FE_03, D-048): a wide flow diagram and a tall phone screen, and two
+// svg pictures (D-064, SVG_01: a plan sized by width and height, three pulsing dots sized by viewBox), saved
 // into a project's `.visionboard/images/gallery/` as an agent would save them. servers.ts writes them
 // into each worker's main project before its server starts, so the gallery's image section shows real
 // files through the real route; its paths are those apps/board/src/gallery/image-view-section.ts
@@ -55,10 +56,31 @@ export const phone = (): Buffer => picture(540, 1080, [248, 248, 250], [
   { x: 32, y: 940, w: 476, h: 88, c: [212, 19, 138], r: 44 },
 ]);
 
+const SVG_NS = 'xmlns="http://www.w3.org/2000/svg"';
+/** One step of a plan as svg: a white box with a coloured head and two bars of "text". */
+const svgStep = (x: number, c: string) =>
+  `<rect x="${x}" y="70" width="112" height="100" rx="10" fill="#fff" stroke="#d6d8de" stroke-width="2"/>` +
+  `<path d="M${x} 80a10 10 0 0 1 10-10h92a10 10 0 0 1 10 10v16h-112z" fill="${c}"/>` +
+  `<rect x="${x + 14}" y="116" width="76" height="10" rx="5" fill="#b0b4be"/><rect x="${x + 14}" y="138" width="54" height="10" rx="5" fill="#b0b4be"/>`;
+const svgArrow = (x: number) => `<path d="M${x} 120h26" stroke="#787c8a" stroke-width="4"/><path d="M${x + 24} 110l14 10-14 10z" fill="#787c8a"/>`;
+
+/** A plan in three steps, as an agent would draw it in svg: sized by its width and height, 480 by 240, no text (fonts differ by machine). */
+export const planSvg = (): string => `<svg ${SVG_NS} width="480" height="240" viewBox="0 0 480 240">` +
+  `<rect width="480" height="240" rx="16" fill="#f4f5f7"/>${svgStep(32, '#3471d0')}${svgArrow(150)}${svgStep(184, '#1f8f7e')}${svgArrow(302)}${svgStep(336, '#d4138a')}</svg>`;
+
+/** Three dots that pulse in turn, sized by its viewBox alone: a short animation (three runs of 0.6 s,
+ * back to its first frame) written inside `prefers-reduced-motion: no-preference`, as the skill asks. */
+export const pulseSvg = (): string => `<svg ${SVG_NS} viewBox="0 0 300 100">` +
+  '<style>circle{fill:#3471d0;opacity:.35}@media (prefers-reduced-motion:no-preference){circle{animation:p .6s ease-in-out 3 both}' +
+  'circle:nth-of-type(2){animation-delay:.2s}circle:nth-of-type(3){animation-delay:.4s}}@keyframes p{50%{opacity:1}}</style>' +
+  '<rect width="300" height="100" rx="12" fill="#f4f5f7"/><circle cx="110" cy="50" r="14"/><circle cx="150" cy="50" r="14"/><circle cx="190" cy="50" r="14"/></svg>';
+
 /** The gallery's paths in the images folder (a subfolder, as an agent may use one). */
-export const GALLERY_IMAGES = { flow: 'gallery/flow.png', phone: 'gallery/phone.png' } as const;
+export const GALLERY_IMAGES = { flow: 'gallery/flow.png', phone: 'gallery/phone.png', plan: 'gallery/plan.svg', pulse: 'gallery/pulse.svg' } as const;
 
 export function writeGalleryImages(project: string): void {
   put(project, GALLERY_IMAGES.flow, flow());
   put(project, GALLERY_IMAGES.phone, phone());
+  put(project, GALLERY_IMAGES.plan, planSvg());
+  put(project, GALLERY_IMAGES.pulse, pulseSvg());
 }

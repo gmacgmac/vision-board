@@ -75,10 +75,12 @@ function onCommand(h: KeyHandlers, e: KeyboardEvent, key: string, id: string | n
 }
 
 /** One key press: what it does on the board, if anything. */
-function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement): void {
+function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = false): void {
   const target = e.target as HTMLElement;
-  const board = target.closest?.('.vb-board');
-  if (root && board && board !== root) return;
+  // Whose key it is: a key in another board's root is never this one's; under a host a key outside
+  // every board (a host's button, its text field) is the host's. Only the board's own page hears them.
+  const board = target.closest?.('.vb-board') ?? null;
+  if (root && board !== root && (board || !pageWide)) return;
   // A card's popover box (its Accept, its Reject) takes no card shortcuts: A there is not Acknowledge.
   if (e.defaultPrevented || target.closest('input, textarea, select, dialog, .vb-card-pop')) return;
   if (e.key === 'Escape') return h.escape();
@@ -96,10 +98,13 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement): void {
   if (!onCard(h, e, key, id, target)) onCommand(h, e, key, id);
 }
 
-/** Listens on the document; returns the function that stops listening. A key in another board's
- * root (`.vb-board`, two boards on one page) is that board's, never this one's (`root`). */
-export function bindKeys(h: KeyHandlers, root?: HTMLElement): () => void {
-  const onKey = (e: KeyboardEvent) => route(h, e, root);
+/** Listens on the document; returns the function that stops listening. A key acts only when its
+ * target is inside this board's `root` (a `.vb-board`); a key in another board's root (two boards
+ * on one page) is that board's. With `pageWide`, the board has its own page (the standalone app),
+ * and a key outside every board still reaches it; under a host (nclite: "a view stays inside its
+ * root") it never does, Esc included. */
+export function bindKeys(h: KeyHandlers, root?: HTMLElement, pageWide = false): () => void {
+  const onKey = (e: KeyboardEvent) => route(h, e, root, pageWide);
   document.addEventListener('keydown', onKey);
   return () => document.removeEventListener('keydown', onKey);
 }

@@ -1371,8 +1371,8 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `![alt](path)`. The Host check applies; no cookie is needed or set.
 155. **Its refusals are problems** with the codes of the Errors table (40): `not-found` (a refused
     path, a missing file, a link out of the folder), `unsupported-media-type` (an extension that is not
-    png, jpeg, webp or gif, or bytes that are not the type the extension says), `too-large` (over the
-    size limit), `method-not-allowed` (`Allow: GET, HEAD`) and `forbidden` (the Host). Their `detail` is
+    png, jpeg, webp, gif or svg (svg with the svgImages flag, D-064), bytes that are not the type the
+    extension says, or an svg's opening refused: images.md § SVG), `too-large` (over its type's cap), `method-not-allowed` (`Allow: GET, HEAD`) and `forbidden` (the Host). Their `detail` is
     one of the short plain phrases in images.md § Reasons, which the page shows as they are, not the
     sentence that point 40 asks of an agent's problems. The route answers `ETag` and `Cache-Control:
     no-cache`, and 304 to a matching `If-None-Match`, so the page can ask again cheaply when a card

@@ -617,3 +617,25 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   how to pick a new board's id (again; `write_board`'s description now says to choose it and start
   with a `board` item, added after this run), what link direction means, and which mode suits a
   small checklist.
+
+## Skill v3.14 (svg pictures in cards)
+
+- 2026-10-27, agent (host-fixes-and-svg SVG_01, D-064 drafted, awaiting the maintainer's yes):
+  v3.14 adds svg to § Writing cards › Images in cards: at most 1 MB; the root says its size (a
+  `width` and `height`, or a `viewBox` alone, which draws at most 300 px wide; neither is not shown);
+  CSS and SMIL animation play, script never runs and nothing outside the file loads; an svg that
+  needs script or a pause button is an app card; CSS animation inside
+  `prefers-reduced-motion: no-preference`, short (about 5 seconds in all), never flashing more than
+  three times a second. Why: agents could not show a diagram that stays sharp or a small animation,
+  and an agent that writes script into an svg needs to know it won't run before it tries.
+- 2026-10-27, agent: claims checked against the code and a browser (Chromium, the page suite's):
+  `packages/format/src/images.ts` (`IMAGE_LIMITS.svgMaxBytes`, `svgProblem`: a viewBox or width and
+  height, refused with neither), `apps/board/server/images.ts` `SVG_CSP`; an `<img>` of an svg ran
+  none of its script (a script element, `onload`) and made no request for what it named (an image,
+  `@import`, a font, a `use`); a viewBox-only svg's natural size was 300 by 150 fitted to its shape
+  (150 by 150 square, 300 by 150 at 2 to 1); CSS animation inside `no-preference` held still with
+  the browser's own reduced-motion setting (`--force-prefers-reduced-motion`) and SMIL did not.
+  `tests/pages/card-image-svg.spec.ts` and `card-image-svg-motion.spec.ts` hold these.
+- 2026-10-27, agent: **not run with live agents.** Run an svg scenario with Claude Code and Kiro
+  (draw a diagram as svg; draw a small animation; try an svg with a script and read the card)
+  before relying on the text. Kiro reads the new text when the board next starts.

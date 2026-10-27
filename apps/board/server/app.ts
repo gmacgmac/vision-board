@@ -80,7 +80,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       guard(req, port());
       const url = new URL(req.url ?? '/', `http://127.0.0.1:${port()}`);
       if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return await dispatch(req, res, url, env, HANDLERS);
-      if (url.pathname.startsWith(IMAGE_ROUTE)) return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), project.current().dir);
+      if (url.pathname.startsWith(IMAGE_ROUTE)) return serveImage(req, res, url.pathname.slice(IMAGE_ROUTE.length), project.current().dir, flags);
       if (req.method !== 'GET') throw problem('method-not-allowed', httpWords.thePageAnswersGETOnly, { headers: { Allow: 'GET' } });
       const panel = PANEL_PATH.exec(url.pathname);
       if (panel) return servePanel(res, panel[1]!, project.current().apps());

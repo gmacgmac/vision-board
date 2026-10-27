@@ -802,3 +802,46 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: one words folder for the whole app (the board would import outside itself and stop
   being hostable); unkeyed constants (no way to build the plugin's file).
 - **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_05_words-files.md
+
+## D-064 SVG images in cards, as pictures only (amends D-048)
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-27, point 306: svg as pictures only; an svg that needs script is an app card) · **From**: SVG_01 (host-fixes-and-svg)
+- **Decision**: svg joins png, jpeg, webp and gif as an image a card shows from the project's
+  `.visionboard/images/`, behind the `svgImages` flag (on by default with this yes;
+  `?flags=-svgImages` on the page and `VB_FLAGS=-svgImages` on the server each refuse it as before,
+  "only png, jpeg, webp or gif").
+  1. Shown only through `<img>` (the card's one image shape and the zoomed view), never inline,
+     `<object>` or `<iframe>`. In an `<img>` the browser runs none of an svg's script and loads nothing
+     it names; its CSS and SMIL animation play. An svg that needs script is an app card (D-047).
+  2. Served as `image/svg+xml` with `nosniff` (already global) and its own policy in place of the
+     board's, on 200 and 304: `default-src 'none'; style-src 'unsafe-inline'; img-src data:;
+     font-src data:; frame-ancestors 'none'; base-uri 'none'; sandbox`. Opened at its own address it
+     is a sandboxed document with an opaque origin that runs no script and loads nothing. Every
+     directive is the board's or stricter except inline style, which is the file's own and reaches
+     nothing; the 304 carries it so a revalidated cached copy never takes the board's.
+  3. Known by its opening, as it has no first bytes: within its first 4,096 bytes, after an optional
+     BOM, white space, processing instructions, comments and a doctype, an `<svg` root whose `xmlns`
+     is the SVG namespace. A doctype declaring entities (`<!ENTITY`) is refused: a picture never needs
+     one, and their expansion costs the browser.
+  4. At most 1 MB (other types 8 MB): it is text the browser parses whole.
+  5. It says its size: a `viewBox` (width and height above 0), or a `width` and a `height` that are
+     positive lengths, not percentages. One with neither is refused ("needs a viewBox, or a width and
+     height"), so the browser's 300 by 150 box never jolts the layout.
+  6. The route does not look for script, `on…=` handlers, `<foreignObject>` or outside references.
+     The `<img>` and the policy are the boundary; a text search is not one (a namespace prefix or a
+     handler gets past it), and an outside-reference search would refuse nearly every exported svg
+     (namespace and metadata URLs). An svg holding script is drawn without it; the skill tells
+     agents first.
+  7. Motion: the skill tells agents to write CSS animation inside
+     `@media (prefers-reduced-motion: no-preference)` (the browser's own setting reaches into an svg
+     image: checked in Chromium), to keep it short (a few runs, about 5 seconds in all, then rest:
+     WCAG 2.2.2), to keep SMIL to the same short moves (it ignores the setting), and never to flash
+     more than three times a second (WCAG 2.3.1). Longer or endless motion goes in an app card with a
+     pause control.
+- **Why**: agents could show screenshots but not a diagram that stays sharp at any zoom or a small
+  animation. D-048's reason (svg can carry script) holds for an svg opened as a page, which the
+  policy now covers, not for one drawn as an image.
+- **Rejected**: svg inline in the card's markup (its script would run in the board; D-023 stays);
+  refusing script by a text search (not a boundary, see 6); a separate origin or port for images
+  (the sandbox gives an opaque origin on one server, as D-047's panels do); no size check (the 300 by
+  150 jolt).
+- **Task**: cortex-tasks/board/2026-10-27_board-app_host-fixes-and-svg/SVG_01_svg-images.md

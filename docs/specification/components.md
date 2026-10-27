@@ -181,7 +181,8 @@ ships behind one. The pattern was defined by the first such task (U7, node size)
   gallery's entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
   packages never read the address or storage. Pure packages (`layout`) take the result as input.
   `cardImages` is set once at each entry point with `setMarkdownImages` (`apps/board/src/main.ts`,
-  the gallery's `main.ts`), because every surface that renders Markdown draws images (§ Images in cards).
+  the gallery's `main.ts`), because every surface that renders Markdown draws images (§ Images in cards);
+  `svgImages` the same way, with `setMarkdownSvg` (`packages/ui/src/markdown/image.ts`).
 - **Flag off means unchanged**: every existing page-test screenshot must still match with the
   flag off. A gallery section for flagged behaviour shows only with the flag on, with its own
   screenshots.
@@ -202,8 +203,7 @@ host; nclite's pane will be another.
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
   `destroy`; the one element outside `root`, a modal dialog's top layer) and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
-  status and controller, and a key pressed in one board's root never reaches another (`keys.ts`
-  `bindKeys`), so two boards on one page work apart. The ids inside cards and frames (popovers, step
+  status and controller, so two boards on one page work apart. The ids inside cards and frames (popovers, step
   section, app menu, a frame's menus, the connectors' arrowheads) carry the mount's prefix
   (`board/mount-ids.ts` `takeIdPrefix`: none for the first live mount, `vb2-`, `vb3-` after it;
   `NodeTemplateOptions.idPrefix`, `RegionFrameOptions.idPrefix`), so no id repeats on a page and an
@@ -211,6 +211,21 @@ host; nclite's pane will be another.
   show (null with none shown, or an archived one). Proven by `tests/pages/board-host.spec.ts` (a fake
   host, no Svelte, no server: draw, Send, the page chip, confirm, a change event, two boards with no id
   twice, unmount), `apps/board/tests/mount-ids.test.ts` and `packages/ui/tests/id-prefix.test.ts`.
+- **Keys stay inside the board** (nclite: "a view stays inside its root"; `input/keys.ts` `bindKeys`).
+  Under a host a key acts only when its target is inside this board's root: a key on a host's own
+  button or text field reaches no board, and a key in another board's root is that board's, never this
+  one's. Esc follows the same rule. A board that has its own page (`host.page`, given only by the
+  standalone page) is `pageWide`: a key outside every board still reaches it, as on any page of its own,
+  but a key inside another board's root never does (`controller.ts` `createBoard` passes `!!host.page`
+  through `input/wiring.ts` `bindStage`). A press the board handles itself (a lasso, a Cmd or Ctrl
+  pan) stops the browser moving focus, so `mount` gives the root focus on pointer release when focus
+  is outside it (`preventScroll`): after any click on the board its keys work. Left page-wide on
+  purpose: the pan key's hand cursor (`input/pointer.ts` `bindPanKey`, an attribute on its own stage)
+  and the keyboard-or-pointer reading (`canvas/pointer-focus.ts`, no action). The zoomed image view is
+  a modal dialog outside the root, which `route` ignores (its Esc and Tab are the browser's). Proven by
+  `apps/board/tests/keys.test.ts` (inside, outside, another board, Esc, `pageWide`) and
+  `tests/pages/board-host.spec.ts` "keys stay inside the board" (focus on a host button and field, then
+  a click, a Shift drag, a Cmd or Ctrl drag, a card and a container's title line).
 - **What a host supplies** (`board/host.ts` `BoardHost`): `api` (the typed client's `Transport`, paths
   relative to the route prefix), `events` (`BoardEvent`, `{ plugin, ref: { board, head } }`; a ref with
   no head means "catch up"), `addToChat`, `settings` (`get`, `on`: each flag by name, and `align`),
@@ -240,8 +255,7 @@ host; nclite's pane will be another.
 - **Not covered**: the toolbar, strips,
   dialogs and reply panel are the standalone page's Svelte, so a host draws its own from the status;
   the work counters (`work.ts`) and the input-modality reading (`pointer-focus.ts`) are the page's, shared
-  by every board on it. Open (VERIFY_01, tracker M10–M13): a key pressed outside every board (a host
-  button) still reaches each one; `unmount` drops a note's unsaved words without asking; card images
+  by every board on it. Open (VERIFY_01, tracker M11–M13): `unmount` drops a note's unsaved words without asking; card images
   follow the page's `setMarkdownImages`, not `host.settings`; the saved view
   (`boards/kept-view.ts`) writes `sessionStorage` itself, keyed by board id only.
 
@@ -1233,11 +1247,14 @@ draws an image. Three patterns share the work, behind the `cardImages` flag.
    decoding="async">`; a path it refuses is the box saying why (`imageNote`: "Image not shown: <path>
    (<reason>)", the reason in `IMAGE_WORDS`' words), so nothing outside the images folder, and nothing
    from the internet, is ever asked for; no alt text is the path as plain text. The alt text is the
-   description's words, marks dropped. With images off it is its source text, as before.
+   description's words, marks dropped. With images off it is its source text, as before. An svg is
+   this same `<img>`, never inline markup, so its script never runs (D-064, images.md § SVG); with
+   the `svgImages` flag off its path is refused ("only png, jpeg, webp or gif").
 2. **Images on or off.** `renderMarkdown`'s `images` option, else the page's choice: `setMarkdownImages`
    (render.ts), called once by `apps/board/src/main.ts` and the gallery's `main.ts` with the `cardImages`
    flag, so every surface that renders Markdown agrees (card bodies, notes and replies, the note bubble,
-   parking text, the chat).
+   parking text, the chat). `setMarkdownSvg` (image.ts) is set beside it with the `svgImages` flag;
+   until then it reads the flag's default.
 3. **Its look** (`markdown.css`): never wider than what holds it, its own aspect ratio, at most 1.5 card
    widths tall (`--vb-card-w-s`; the zoomed view shows it whole), centred. Until its size is known it is
    a sunken box at the full width, 16 by 10, with nothing drawn in it (a transparent picture stands in

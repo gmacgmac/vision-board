@@ -75,6 +75,11 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   const ids = takeIdPrefix();
   const io = createIo(host.api, host.page?.person);
 
+  // A press the board handles itself (a lasso, a Cmd or Ctrl pan) stops the browser moving focus, so
+  // a key would still go to whatever had it before, a host's button (keys.ts: keys stay inside the root).
+  const takeFocus = () => { if (!root.contains(document.activeElement)) root.focus({ preventScroll: true }); };
+  root.addEventListener('pointerup', takeFocus);
+
   let els = build(root);
   let board!: Board;
   /** With no page of its own, the board starts again in place. */
@@ -139,6 +144,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     unmount() {
       stop();
       ids.release();
+      root.removeEventListener('pointerup', takeFocus);
       root.replaceChildren();
       root.classList.remove(...added);
       for (const a of own) root.removeAttribute(a);

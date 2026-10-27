@@ -211,7 +211,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
   const handlers = stageHandlers({ act, flags: flagging ? flags : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
     versions, selection, drawing, focus, view, showVersion, toggleHide, status });
-  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); });
+  const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); }, !!host.page);
 
   // ---- boards --------------------------------------------------------------------------------
   /** Boot, and switching boards (boards.ts). */

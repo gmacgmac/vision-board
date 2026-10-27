@@ -56,7 +56,7 @@ share no files.
 
 ## Steps
 
-1. [ ] **Failing tests first** (rule 13):
+1. [x] **Failing tests first** (rule 13):
    - a unit test of `route` (export what the test needs, or test through `bindKeys` with a fake
      document target): with a root and no page-wide keys, a key whose target is outside the root does
      nothing; inside the root it acts; inside another `.vb-board` it does nothing;
@@ -64,28 +64,28 @@ share no files.
      outside both boards. Focus the host button and press H: neither board hides its answered cards.
      Type into the host input: no board shortcut fires.
    Run both and see them fail.
-2. [ ] **The rule in `route`**: under a host, a key acts only when its target is inside `root`. With
+2. [x] **The rule in `route`**: under a host, a key acts only when its target is inside `root`. With
    page-wide keys (the board has its own page) a target outside every board still reaches it, as
    today; a target inside another board never does. Esc follows the same rule.
-3. [ ] **Who decides page-wide**: `wiring.ts` passes `bindKeys` whether the board has its own page,
+3. [x] **Who decides page-wide**: `wiring.ts` passes `bindKeys` whether the board has its own page,
    from `host.page` (reach it the way `createBoard` already gets the host, without a new host field).
    The standalone page passes page-wide; the fake host doesn't.
-4. [ ] **Focus after a click**: under a host, a click on the board's empty canvas, on a card, and on
+4. [x] **Focus after a click**: under a host, a click on the board's empty canvas, on a card, and on
    a container's title line must leave focus inside the root, so the next key works. Prove it in the
    page spec: click the canvas, press H, the answered cards hide; click a card, press J, focus steps.
    If a pointer handler blocks the focus (`bindPointer` prevents `mousedown` on a Cmd/Ctrl pan),
    make the root take focus without scrolling (`focus({ preventScroll: true })`), only when focus is
    outside the root.
-5. [ ] **The other key listeners** (read, decide, record in your notes; change only if one leaks an
+5. [x] **The other key listeners** (read, decide, record in your notes; change only if one leaks an
    action): `pointer-focus.ts` (keyboard-or-pointer reading, page-wide on purpose), `pointer.ts`
    `bindPanKey` (the Cmd/Ctrl held cursor), `#ui` `bindDismiss` Esc while a board menu is open (it
    stops the event page-wide; say whether a host's own Esc should still reach the host when the menu
    isn't focused), the zoomed image view (a modal `<dialog>` outside the root: its Esc and Tab still
    work).
-6. [ ] **Docs** (`cortex-docs`): components.md § The board's host interface. Replace "a key pressed in
+6. [x] **Docs** (`cortex-docs`): components.md § The board's host interface. Replace "a key pressed in
    one board's root never reaches another" with the rule as built, and remove the M10 gap from the
    "Open (VERIFY_01 …)" sentence under Not covered. Name the symbol and the test that hold the claim.
-7. [ ] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`;
+7. [x] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`;
    the page specs `board-host.spec.ts`, `keys*.spec.ts`, `key-help*.spec.ts`, `go-to-card*.spec.ts`
    and any spec that presses a key with focus on `body` (grep `keyboard.press` in specs that never
    click first), on `VB_TEST_PORT=5100`. No full page suite (rule 12).
@@ -94,11 +94,11 @@ share no files.
 
 ## Validation
 
-- [ ] A key with focus on a host control reaches no board; a key inside a board reaches that board
+- [x] A key with focus on a host control reaches no board; a key inside a board reaches that board
       only (page spec and unit test)
-- [ ] After a click on a board's canvas or card, its shortcuts work (page spec)
-- [ ] The standalone page's key specs pass unchanged; no expectation in an existing spec is edited
-- [ ] components.md holds the rule as built, with its symbol and test
+- [x] After a click on a board's canvas or card, its shortcuts work (page spec)
+- [x] The standalone page's key specs pass unchanged; no expectation in an existing spec is edited
+- [x] components.md holds the rule as built, with its symbol and test
 
 ---
 
@@ -107,20 +107,44 @@ share no files.
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-10-27 19:48  
 
 ### Changes Made
-- 
+- `keys.ts`: `route` takes `pageWide`; `bindKeys(h, root, pageWide = false)`. A key acts only when its
+  target is inside `root`; with `pageWide` a target outside every board still reaches it; a target in
+  another board never does. Esc follows the same line (it comes after the check).
+- `wiring.ts`: `bindStage(..., pageWide = false)` hands it on. `controller.ts` `createBoard` passes `!!host.page`
+  (the one-line edit outside the ownership table, see Deviations).
+- `mount.ts`: the root takes focus (`preventScroll`) on `pointerup` when focus is outside it, removed on `unmount`.
+- Tests: new `apps/board/tests/keys.test.ts` (3 tests); `board-host.spec.ts` gains "keys stay inside the board";
+  `board-host-fixture.ts` gains `addHostControls` (a host button and text input). No existing expectation edited.
+- `components.md` § The board's host interface: the rule as built, its symbols and tests; the M10 gap removed.
 
 ### Issues & Resolutions
-- 
+- The failing page test showed one real gap: a Shift drag (lasso) or Cmd/Ctrl drag prevents `mousedown`, so focus
+  stayed on the host button and the board went deaf. Fixed by the `pointerup` focus in `mount.ts`. A plain click
+  on the canvas, a card or a container's title line already left focus in the root (tabindex -1 on the root).
+
+### Step 5, the other key listeners (read, decided)
+- `pointer-focus.ts`: reads input modality only, no action; page-wide on purpose. Unchanged.
+- `pointer.ts` `bindPanKey`: toggles an attribute on its own stage; no action. Unchanged.
+- `size.ts`, `update-flow.ts`, `history-flow.ts`: listen on the stage, so they only hear keys inside the root. Fine.
+- `ChatSidebar.svelte` (T) and `KeyHelp.svelte` (?): document listeners, standalone shell only (`onBoard()` / not the gallery). Not a host concern.
+- `#ui` `dismissable` (`packages/ui/src/base/layer.ts`): with a board layer open, Esc is caught on the document in
+  capture and `stopPropagation`'d, so a host's own Esc is eaten while a board menu/popover is open and focus is
+  elsewhere. Not changed (not mine; and Esc closing the topmost open layer is the usual layer behaviour). Reported
+  as a REQUEST for the maintainer's call.
+- The zoomed image view (modal `<dialog>` outside the root): `route` ignores a dialog's keys, so its Esc and Tab
+  are the browser's; under a host the new rule returns even earlier for the same result.
 
 ### Caught Beyond the Brief
-- None
+- The `dismissable` Esc above.
 
 ### Deviations from Plan
-- None
+- One-line edit in `apps/board/src/board/controller.ts` (`createBoard`'s `bindStage` call passes `!!host.page`), a file
+  the ownership table does not list. `bindStage` is called only there, the host is only in reach there, and no sibling
+  task owns the file; the task's own step 3 ("reach it the way `createBoard` already gets the host") needs it.
 
 ---
 

@@ -2,7 +2,7 @@
 task_name: Host Fixes and SVG Images
 created: 2026-10-27
 completed:
-status: planned
+status: in-progress
 categories: [board-app, board-security]
 tracker: cortex-tasks/tracker.md#M10,M11
 ---
@@ -41,8 +41,8 @@ tracker: cortex-tasks/tracker.md#M10,M11
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | M10_01 | 1 | standard | Accessibility engineer for keyboard and focus — a key belongs to whatever has focus: a plugin that hears keys meant for its host has failed, and so has one that goes deaf after a click on its own canvas. | [Keys stay inside the board](./M10_01_keys-inside-board.md) | Pending | port 5100 |
-| 2 | SVG_01 | 1 | strong | Senior designer-developer who ships animated SVG — the animation that plays, and stops for someone who asked for less motion, is the point; a file that runs code, loads from outside, or can be opened as a page on the board's origin is a hole. | [SVG images in cards](./SVG_01_svg-images.md) | Pending | port 5200 |
+| 1 | M10_01 | 1 | standard | Accessibility engineer for keyboard and focus — a key belongs to whatever has focus: a plugin that hears keys meant for its host has failed, and so has one that goes deaf after a click on its own canvas. | [Keys stay inside the board](./M10_01_keys-inside-board.md) | Completed | port 5100 |
+| 2 | SVG_01 | 1 | strong | Senior designer-developer who ships animated SVG — the animation that plays, and stops for someone who asked for less motion, is the point; a file that runs code, loads from outside, or can be opened as a page on the board's origin is a hole. | [SVG images in cards](./SVG_01_svg-images.md) | Completed | port 5200; D-064 drafted (maintainer's yes needed); 5 wiring requests |
 | 3 | M11_01 | 2 | strong | Product engineer for editors and drafts — words a person typed are never lost unless they chose to lose them, whether the pane closes, the tab closes or the host moves on; and the host, not the plugin, owns the question. | [The host asks before words are lost](./M11_01_ask-before-leaving.md) | Pending | port 5300 |
 | 4 | VERIFY_01 | 3 | strong | nclite developer hosting the board in a pane for the first time, with no history of these changes — expects their own shortcuts and buttons to keep working, their Close to ask before a note is lost, and an animated picture to just play and never run code. | [Verification](./VERIFY_01_host-svg-verification.md) | Pending | port 5400 |
 
@@ -79,6 +79,17 @@ tracker: cortex-tasks/tracker.md#M10,M11
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| M10_01-R1 | M10_01 | `packages/ui/src/base/layer.ts` `dismissable`: Esc captured page-wide while a board layer is open eats a host's own Esc | Tracker row, if the maintainer agrees (point 305) | Open |
+| M10_01-R2 | M10_01 | `apps/board/src/board/controller.ts`: one line, `createBoard` passes `!!host.page` to `bindStage`; record it in M10_01's ownership | Orchestrator: accepted, the only place the host is in reach | Done |
+| SVG_01-R1 | SVG_01 | `docs/decisions.md`: append D-064 from SVG_01's § Proposed decision | Orchestrator, with the maintainer's yes | Done |
+| SVG_01-R2 | SVG_01 | `apps/board/server/app.ts`: pass the server's flags to `serveImage` | SVG_01 Run 2 (ownership widened) | Done |
+| SVG_01-R3 | SVG_01 | `packages/ui/src/index.ts`: export `setMarkdownSvg` | SVG_01 Run 2 | Done |
+| SVG_01-R4 | SVG_01 | `apps/board/src/main.ts`, `apps/board/src/gallery/main.ts`: `setMarkdownSvg(flagOn('svgImages', …))` | SVG_01 Run 2 | Done |
+| SVG_01-R5 | SVG_01 | `packages/ui/tests/markdown-images.test.ts`: the refused-type row `a.svg` → `a.svgz` | SVG_01 Run 2 | Done |
+| SVG_01-R6 | SVG_01 | `docs/specification/api.md`: `unsupported-media-type` and `too-large` wording | SVG_01 Run 2 | Done |
+| SVG_01-R7 | SVG_01 | `docs/specification/components.md` § Feature flags, § Images in cards: `svgImages` | SVG_01 Run 2 | Done |
+| SVG_01-R8 | SVG_01 | Step 1 in WebKit and Firefox: needs Playwright's browsers downloaded | The maintainer (a download) | Open |
+| SVG_01-R9 | SVG_01 (caught beyond) | Animated GIFs (allowed since D-048) have the same no-pause and reduced-motion gap (WCAG 2.2.2) | Tracker row, if the maintainer agrees | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -87,14 +98,15 @@ tracker: cortex-tasks/tracker.md#M10,M11
 ## Implementation Notes
 
 ### M10_01: Keys stay inside the board
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `bindKeys(h, root, pageWide)`: under a host a key acts only inside the root (Esc too); `pageWide` = `!!host.page`, passed by `createBoard` through `bindStage`. `mount` gives the root focus on `pointerup` when focus is outside it (a Shift or Cmd/Ctrl drag prevents `mousedown`, so focus stayed on the host button). Fixture: `addHostControls`. One-line edit in `controller.ts` (not in the ownership table). Open for the maintainer: `dismissable` (packages/ui layer.ts) eats a host's Esc while a board layer is open. Unit + `check` + `verify` + `gen-api --check` pass; key page specs pass on 5100.
 
 ---
 
 ### SVG_01: SVG images in cards
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ svg is in `IMAGE_LIMITS.types` (1 MB cap, 4096-byte head) behind flag `svgImages` (on); `svgProblem` knows it by its opening (SVG namespace, a viewBox or width and height, no `<!ENTITY`), `imageHeadProblem` and `imageCap` are what the route calls; the route sends `SVG_CSP` (no script, nothing loads, sandbox) on 200 and 304. Drawn only as `<img>`: in Chromium no script ran and nothing outside loaded, in the card, the zoomed view or at its own address; CSS and SMIL play; CSS inside `no-preference` holds still under the browser's own reduced-motion setting (Playwright's emulation does not reach svg images). Decision text: task notes § Proposed decision. Open: wiring of the flag in app.ts, `#ui` index and both `main.ts` (3 tests red until then), one row in `markdown-images.test.ts`. WebKit and Firefox not checked (not installed). Perf: 198 animated svg cards within every budget.  
+Run 2: requests R2-R7 done (app.ts passes flags to `serveImage`; `#ui` exports `setMarkdownSvg`; both `main.ts` call it; `markdown-images.test.ts` row `a.svgz`; api.md 155 and components.md § Feature flags, § Images in cards). npm test 0 failures, check, gen-api current, card-image* + gallery specs 54 passed. `verify` wants `npm run map` (modules.md: the new `setMarkdownSvg` export; orchestrator's).
 
 ---
 
@@ -114,7 +126,7 @@ _Notes:_
 
 | Wave | Tasks | Commit · tag | Gate |
 |------|-------|--------------|------|
-| 1 | M10_01, SVG_01 | — | — |
+| 1 | M10_01, SVG_01 | waiting on D-064 (point 306) | Green 2026-10-27: unit 1754 + timing 10, check 0 errors, verify ok, gen-api current, full page suite 680 passed (port 4710) |
 | 2 | M11_01 | — | — |
 | 3 | VERIFY_01 | — | — |
 

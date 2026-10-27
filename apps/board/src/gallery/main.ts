@@ -5,7 +5,7 @@ import '../styles/page.ts';
 import '../styles/chat.ts';
 import './gallery.css';
 import { flagOn } from '#format';
-import { defineBoardElements, PATTERNS, setMarkdownImages } from '#ui';
+import { defineBoardElements, PATTERNS, setMarkdownImages, setMarkdownSvg } from '#ui';
 import type { PatternInfo } from '#ui';
 import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
@@ -154,6 +154,7 @@ function build(): void {
 }
 
 setMarkdownImages(flagOn('cardImages', pageFlags())); // images in Markdown (D-048), as the board's main.ts
+setMarkdownSvg(flagOn('svgImages', pageFlags())); // svg among them (D-064)
 defineBoardElements();
 defineChatElements();
 build();

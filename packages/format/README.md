@@ -41,12 +41,14 @@ never a file. The format-1 view files and transcript are archived in
   `AppToolResult`, `AppInfo`, and `appSize`; `APP_ACTIONS` (ledger.ts); the manifest's one source is
   `schema/app/manifest.schema.json`. The hand twin of the app card's schema pieces is
   `src/app-shape.ts`.
-- **Images in cards** (`src/images.ts`, D-048, [images.md](../../docs/specification/images.md)):
-  `IMAGES_DIR`, `IMAGE_ROUTE`, `IMAGE_LIMITS` (types with their extensions, content types and first
-  bytes; the size, depth and name limits), `IMAGE_HEAD_BYTES`, `IMAGE_WORDS` and `imageNotReal` (the
-  plain words for why an image is not shown), `imagePathProblem` (the one path check, used by the
-  board's route and the Markdown renderer), `imageTypeByName`, `imageTypeOf` and the type
-  `ImageName`. Pure string logic: no Node and no DOM.
+- **Images in cards** (`src/images.ts`, D-048, svg D-064, [images.md](../../docs/specification/images.md)):
+  `IMAGES_DIR`, `IMAGE_ROUTE`, `IMAGE_LIMITS` (png, jpeg, webp, gif and svg with their extensions,
+  content types and first bytes; the size, svg size and svg head, depth and name limits),
+  `IMAGE_HEAD_BYTES`, `IMAGE_WORDS` and `imageNotReal` (the plain words for why an image is not
+  shown), `imagePathProblem` (the one path check, used by the board's route and the Markdown
+  renderer; `ImageAllow` `svg` is the svgImages flag), `imageTypeByName`, `imageTypeOf`, `svgProblem`
+  (an svg known by its opening), `imageHeadProblem`, `imageCap` and the type `ImageName`. Pure string
+  logic: no Node and no DOM.
 - **Geometry and text** (ARCH_04): `src/geometry.ts`, the one home of a box on the board (`Box`,
   `Point`, `Size`, `clamp`, `overlaps`, `touches`, `boundsOf`, `boxAround`, `boxBetween`; layout and
   `packages/ui` re-export what they name; `tests/geometry.test.ts`), and `src/clip.ts` (`clip`, a line cut to

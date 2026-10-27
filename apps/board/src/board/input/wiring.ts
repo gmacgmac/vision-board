@@ -74,8 +74,9 @@ const selectingIn = (el: Element) => {
   return !!s && !s.isCollapsed && !!s.anchorNode && el.contains(s.anchorNode);
 };
 
-/** Bind everything; returns the function that unbinds what outlives the stage (document, window). */
-export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, onResize: () => void): () => void {
+/** Bind everything; returns the function that unbinds what outlives the stage (document, window).
+ * `pageWide`: the board has its own page (`host.page`), so its keys work anywhere on it (keys.ts). */
+export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, onResize: () => void, pageWide = false): () => void {
   stage.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const actBtn = t.closest<HTMLButtonElement>('button[data-act]');
@@ -149,7 +150,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       const b = h.layout()?.regions.find((r) => r.id === region)?.box;
       if (b) h.pinRegion(region, { x: b.x + dx, y: b.y + dy });
     },
-  }, stage.closest<HTMLElement>('.vb-board') ?? undefined);
+  }, stage.closest<HTMLElement>('.vb-board') ?? undefined, pageWide);
   const unbindSize = bindSizeControl(stage);
   // A card a pointer focused draws no focus ring until the keyboard moves focus (pointer-focus.ts).
   const unbindFocus = bindPointerFocus(stage);

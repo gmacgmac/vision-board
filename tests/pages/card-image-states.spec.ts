@@ -129,7 +129,7 @@ const galleryLoaded = (page: Page, id: string) =>
 for (const theme of THEMES) {
   test(`gallery: images in cards in every state, from the gallery's own pictures (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
-    await page.goto('/gallery.html');
+    await page.goto('/gallery.html?flags=-svgImages'); // the svg group has its own test and screenshot: card-image-svg.spec.ts
     await expect(gallery(page).locator('vb-node')).toHaveCount(8);
     for (const id of ['img-wide', 'img-tall']) await expect.poll(() => galleryLoaded(page, id)).toBe(true);
     await expect(gallery(page).locator('vb-node[data-id="img-loading"] img')).not.toHaveAttribute('src');

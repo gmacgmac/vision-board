@@ -113,13 +113,16 @@ repo's own board holds a copy of the example in `.visionboard/apps/calculator/`
 
 Images in cards (D-048, `docs/specification/images.md`): `server/images.ts` `serveImage` answers
 `GET /board-images/<path>` (and `HEAD`) from `.visionboard/images/` only, after `imagePathProblem`
-(packages/format, the one path check the Markdown renderer makes too), with an ETag and 304. On the
+(packages/format, the one path check the Markdown renderer makes too), with an ETag and 304. An svg
+(the svgImages flag, D-064) is checked by its opening (`svgProblem`) and served with its own policy,
+`SVG_CSP`: no script, nothing loaded, sandboxed, so opened at its own address it runs nothing. On the
 page, `src/board/cards/card-images.ts` (made by `canvas/draw.ts`) loads a card's images once it is near and the
 zoom is not far (ruling 23), asks the route which version each is through `io.ts` `imageVersion`,
 asks again when a card is selected or an image is opened (no timer), swaps a newer one in, shows the
 box saying why for a refused file, has a card measured again when its image changed its height, and
 opens the zoomed view (`<vb-image-view>`, components.md § Images in cards and § Image view). The
-`cardImages` flag reaches the renderer once, through `setMarkdownImages` in `src/main.ts`.
+`cardImages` flag reaches the renderer once, through `setMarkdownImages` in `src/main.ts`, and the
+`svgImages` flag through `setMarkdownSvg` (`packages/ui/src/markdown/image.ts`).
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `#format/gallery.ledger.jsonl` (`packages/format/fixtures/gallery.ledger.jsonl`, imported `?raw`: a real ledger in the real schema) through the

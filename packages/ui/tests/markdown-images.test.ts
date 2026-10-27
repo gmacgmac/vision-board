@@ -58,7 +58,7 @@ const REFUSED: [string, string][] = [
   ['javascript:alert(1)', IMAGE_WORDS.outside],
   ['JaVaScRiPt:alert(1)//a.png', IMAGE_WORDS.outside],
   ['data:image/png;base64,iVBORw0KGgo=', IMAGE_WORDS.outside],
-  ['a.svg', IMAGE_WORDS.type],
+  ['a.svgz', IMAGE_WORDS.type],
   ['a.png.html', IMAGE_WORDS.type],
   ['noextension', IMAGE_WORDS.type],
   ['a b.png', IMAGE_WORDS.chars],

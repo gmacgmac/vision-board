@@ -62,7 +62,7 @@ Wave 1, in parallel with M10_01; you share no files.
 
 ## Steps
 
-1. [ ] **Draft the decision** (your notes, § Proposed decision; the orchestrator gets the maintainer's
+1. [x] **Draft the decision** (your notes, § Proposed decision; the orchestrator gets the maintainer's
    yes and appends it as the next D-number). Say, each with its reason:
    - SVG is shown only through `<img>`: no script runs, nothing from outside loads, CSS and SMIL
      animation play. Script stays in app cards (D-047).
@@ -92,45 +92,45 @@ Wave 1, in parallel with M10_01; you share no files.
    - The flag's name and default.
    Stop and return `DEVIATION` if a browser runs script or loads an outside resource from an SVG
    `<img>`: the premise is wrong.
-2. [ ] **Failing tests first** (`packages/format/tests/`, `apps/board/tests/`): `imagePathProblem`
+2. [x] **Failing tests first** (`packages/format/tests/`, `apps/board/tests/`): `imagePathProblem`
    accepts `x.svg` with the flag on; the SVG content check accepts a plain SVG, one with an XML
    declaration and comments, and refuses HTML named `.svg`, an empty file, and one with no size; the
    route serves an SVG with its own policy header and `image/svg+xml`, answers 304 on a matching ETag,
    and refuses each case your decision refuses, with `IMAGE_WORDS` reasons.
-3. [ ] **The one table**: `IMAGE_LIMITS.types.svg` (extensions `svg`, content type `image/svg+xml`),
+3. [x] **The one table**: `IMAGE_LIMITS.types.svg` (extensions `svg`, content type `image/svg+xml`),
    the SVG check beside `imageTypeOf`, its cap, the words. Remove the "svg is not here on purpose"
    comment and say why it is here now. `IMAGE_WORDS.type` lists svg because it reads the table: check
    the sentence still reads well ("only png, jpeg, webp, gif or svg").
-4. [ ] **The route** (`apps/board/server/images.ts`): the SVG's own response headers, the content check
+4. [x] **The route** (`apps/board/server/images.ts`): the SVG's own response headers, the content check
    on the head it already reads, the cap. Nothing else changes for the other types.
-5. [ ] **Drawing and size**: the card's `<img>` and the zoomed view take an SVG like any image. Check
+5. [x] **Drawing and size**: the card's `<img>` and the zoomed view take an SVG like any image. Check
    `card-images.ts` sizes: an SVG's natural size comes from its `viewBox` or `width`/`height`, and the
    card's measured height doesn't jump when it loads. The zoomed view's 70% sizing works for an SVG
    with only a `viewBox`. If it needs explicit sizes, set them where the pattern draws them, not per
    card.
-6. [ ] **The flag** (`packages/format/src/flags.ts`): with it off, `.svg` is refused as today ("only
+6. [x] **The flag** (`packages/format/src/flags.ts`): with it off, `.svg` is refused as today ("only
    png, jpeg, webp or gif"), in the renderer and the route alike.
-7. [ ] **Every state, in the gallery** (`image-view-section.ts`): an SVG card (static), an animated SVG
+7. [x] **Every state, in the gallery** (`image-view-section.ts`): an SVG card (static), an animated SVG
    card, the zoomed view of each, an SVG refused (not shown, with its reason), light and dark. The
    fixture SVGs are small, made for the gallery, and hold no outside reference. Take baselines for
    the new entries only.
-8. [ ] **The page specs** (`tests/pages/card-image*.spec.ts`, `VB_TEST_PORT=5200`):
+8. [x] **The page specs** (`tests/pages/card-image*.spec.ts`, `VB_TEST_PORT=5200`):
    - an SVG holding a `<script>` that would change the page (set a global, post a message) is drawn,
      and the script never ran: in the card, in the zoomed view, and opened at its own address in a
      new page (that page's `<script>` is blocked by the response policy);
    - an SVG referencing an outside image makes no network request (Playwright request log);
    - an animated SVG animates (two screenshots differ, or the computed animation is running) and,
      where step 1 found browsers honour it, holds still under `reducedMotion: 'reduce'`.
-9. [ ] **Performance**: one board with many animated SVG cards (say 200) stays inside
+9. [x] **Performance**: one board with many animated SVG cards (say 200) stays inside
    `docs/specification/performance.md`'s budgets. Run `perf.spec.ts` alone with `--no-deps`; check
    `uptime` first and rerun on a quiet machine before reading a failure as yours.
-10. [ ] **The agent's skill** (`skills/vision-board/SKILL.md` § Images in cards): svg in the list;
+10. [x] **The agent's skill** (`skills/vision-board/SKILL.md` § Images in cards): svg in the list;
     what runs (CSS and SMIL animation) and what doesn't (script, outside files); the motion guidance
     from step 1; "an SVG that needs script is an app card". Bump the version line, and add the change
     to `NOTES.md` if that is where the history goes.
-11. [ ] **Docs** (`cortex-docs`): `docs/specification/images.md`, with every claim naming its symbol
+11. [x] **Docs** (`cortex-docs`): `docs/specification/images.md`, with every claim naming its symbol
     and test. Note anything in `apps.md` or `components.md` that now reads wrong as a `REQUEST`.
-12. [ ] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`
+12. [x] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`
     (the route's problem types may be in OpenAPI), the card-image page specs and `perf.spec.ts`. No
     full page suite (rule 12).
 
@@ -138,12 +138,12 @@ Wave 1, in parallel with M10_01; you share no files.
 
 ## Validation
 
-- [ ] An SVG draws in a card and in the zoomed view, sized from its own dimensions, light and dark
-- [ ] Its CSS animation plays; reduced motion is honoured as the decision says
-- [ ] No script runs and nothing outside loads: in the card, the zoomed view, or at its own address
+- [x] An SVG draws in a card and in the zoomed view, sized from its own dimensions, light and dark
+- [x] Its CSS animation plays; reduced motion is honoured as the decision says
+- [x] No script runs and nothing outside loads: in the card, the zoomed view, or at its own address
       (page specs)
-- [ ] Off, the flag gives today's behaviour exactly
-- [ ] The decision text is in your notes; the skill and images.md say what's true
+- [x] Off, the flag gives today's behaviour exactly (Run 2: on a running page and server too)
+- [x] The decision text is in your notes; the skill and images.md say what's true
 
 ---
 
@@ -152,23 +152,170 @@ Wave 1, in parallel with M10_01; you share no files.
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed (the decision awaits the maintainer's yes; five wiring requests open)  
+**Completed**: 2026-10-27 20:05  
 
 ### Proposed decision
-- 
+
+Drafted for the orchestrator to take to the maintainer and append as the next number (written here as
+D-064; if it lands under another number, replace "D-064" where REQUESTS lists it).
+
+```
+## D-064 SVG images in cards, as pictures only (amends D-048)
+- **Date**: 2026-10-27 · **Status**: Proposed · **From**: SVG_01 (host-fixes-and-svg), for the maintainer's yes
+- **Decision**: svg joins png, jpeg, webp and gif as an image a card shows from the project's
+  `.visionboard/images/`, behind the `svgImages` flag (on by default with this yes;
+  `?flags=-svgImages` on the page and `VB_FLAGS=-svgImages` on the server each refuse it as before,
+  "only png, jpeg, webp or gif").
+  1. Shown only through `<img>` (the card's one image shape and the zoomed view), never inline,
+     `<object>` or `<iframe>`. In an `<img>` the browser runs none of an svg's script and loads nothing
+     it names; its CSS and SMIL animation play. An svg that needs script is an app card (D-047).
+  2. Served as `image/svg+xml` with `nosniff` (already global) and its own policy in place of the
+     board's, on 200 and 304: `default-src 'none'; style-src 'unsafe-inline'; img-src data:;
+     font-src data:; frame-ancestors 'none'; base-uri 'none'; sandbox`. Opened at its own address it
+     is a sandboxed document with an opaque origin that runs no script and loads nothing. Every
+     directive is the board's or stricter except inline style, which is the file's own and reaches
+     nothing; the 304 carries it so a revalidated cached copy never takes the board's.
+  3. Known by its opening, as it has no first bytes: within its first 4,096 bytes, after an optional
+     BOM, white space, processing instructions, comments and a doctype, an `<svg` root whose `xmlns`
+     is the SVG namespace. A doctype declaring entities (`<!ENTITY`) is refused: a picture never needs
+     one, and their expansion costs the browser.
+  4. At most 1 MB (other types 8 MB): it is text the browser parses whole.
+  5. It says its size: a `viewBox` (width and height above 0), or a `width` and a `height` that are
+     positive lengths, not percentages. One with neither is refused ("needs a viewBox, or a width and
+     height"), so the browser's 300 by 150 box never jolts the layout.
+  6. The route does not look for script, `on…=` handlers, `<foreignObject>` or outside references.
+     The `<img>` and the policy are the boundary; a text search is not one (a namespace prefix or a
+     handler gets past it), and an outside-reference search would refuse nearly every exported svg
+     (namespace and metadata URLs). An svg holding script is drawn without it; the skill tells
+     agents first.
+  7. Motion: the skill tells agents to write CSS animation inside
+     `@media (prefers-reduced-motion: no-preference)` (the browser's own setting reaches into an svg
+     image: checked in Chromium), to keep it short (a few runs, about 5 seconds in all, then rest:
+     WCAG 2.2.2), to keep SMIL to the same short moves (it ignores the setting), and never to flash
+     more than three times a second (WCAG 2.3.1). Longer or endless motion goes in an app card with a
+     pause control.
+- **Why**: agents could show screenshots but not a diagram that stays sharp at any zoom or a small
+  animation. D-048's reason (svg can carry script) holds for an svg opened as a page, which the
+  policy now covers, not for one drawn as an image.
+- **Rejected**: svg inline in the card's markup (its script would run in the board; D-023 stays);
+  refusing script by a text search (not a boundary, see 6); a separate origin or port for images
+  (the sandbox gives an opaque origin on one server, as D-047's panels do); no size check (the 300 by
+  150 jolt).
+- **Task**: cortex-tasks/board/2026-10-27_board-app_host-fixes-and-svg/SVG_01_svg-images.md
+```
+
+Step 1's checks, in Chromium (the Playwright build the suite uses; WebKit and Firefox are not
+installed here and were not checked): an svg `<img>` with a `<script>`, an `onload` and handlers
+made no request, set nothing on the page and posted no message; one naming an outside image, an
+`@import`, a font, a `use` and a same-origin image made no request for any of them; CSS and SMIL
+animation played; with `SVG_CSP`, the same file opened at its own address ran no script (without it,
+it did: the control). Natural size: width and height as given; a viewBox alone gives 300 by 150
+fitted to its shape (150 by 150 at 1:1, 300 by 150 at 2:1, 38 by 150 at 1:4). Reduced motion:
+Playwright's emulated `reducedMotion: 'reduce'` does **not** reach an svg image's own media query,
+but the browser's own setting (`--force-prefers-reduced-motion`, as the OS setting) does: CSS inside
+`no-preference` held still; SMIL kept moving. No premise failed, so no DEVIATION.
 
 ### Changes Made
-- 
+- `packages/format/src/images.ts`: `IMAGE_LIMITS.types.svg`, `svgMaxBytes` (1 MB), `svgHeadBytes`
+  (4096, so `IMAGE_HEAD_BYTES` is 4096); `svgProblem` (the opening, the namespace, the size, entities),
+  `imageHeadProblem` (the one head check the route calls), `imageCap`; `imagePathProblem(path,
+  { svg })` (`ImageAllow`, default on); `IMAGE_WORDS.type` now "only png, jpeg, webp, gif or svg",
+  new `typeNoSvg`, `svgTooBig`, `svgSize`, `svgEntity`. The "svg is not here on purpose" comment now
+  says why it is here. Still pure (images-pure.test.ts).
+- `packages/format/src/flags.ts`: `svgImages`, default on.
+- `apps/board/server/images.ts`: `SVG_CSP` on an svg's 200 and 304; `imageCap` and
+  `imageHeadProblem`; `serveImage(…, flags)` reads `svgImages` (default: the flag's default until
+  app.ts passes the server's flags: REQUEST).
+- `packages/ui/src/markdown/image.ts`: `setMarkdownSvg` (the page's flag; until set, the flag's
+  default) and the path check with it. No change to `card-images.ts` or the image view: an svg's
+  natural size drives both as any image's (checked in the page specs).
+- Gallery: `image-view-section.ts` gains an SVG group behind the flag (a plan sized by width and
+  height, three dots pulsing three times and sized by viewBox, one refused for no size, openers for
+  the zoomed view); `tests/pages/gallery-images.ts` writes the two fixture svgs (no text, no outside
+  reference).
+- Tests: `packages/format/tests/images-svg.test.ts` (new), `apps/board/tests/images-svg-route.test.ts`
+  (new), `images.test.ts` and `images-route.test.ts` updated (svg now allowed; docs tables),
+  `images-support.ts` (the `SVG` comment only); page specs `tests/pages/card-image-svg.spec.ts` and
+  `card-image-svg-motion.spec.ts` (new); `card-image-states.spec.ts`'s gallery test opens with
+  `?flags=-svgImages`, so its section and baseline stay exactly as before. New baselines:
+  `__screenshots__/card-image-svg.spec.ts/` (card and gallery group, light and dark).
+- Docs: `docs/specification/images.md` (§ SVG as a Property/Where/Proven-by table, Types, Limits,
+  Reasons, Headers, Answers, Kept true by); `packages/format/README.md`, `apps/board/README.md`
+  images paragraphs; `packages/ui/src/markdown/pattern.json`.
+- Skill: `skills/vision-board/SKILL.md` v3.14 (§ Images in cards: svg, size, what runs, motion, app
+  card for script); `NOTES.md` § Skill v3.14 (why, what was checked, not yet run with live agents).
 
 ### Issues & Resolutions
-- 
+- The flag needs wiring in files this task does not own: the server's flags into `serveImage`
+  (app.ts) and the page's flag into the renderer (`setMarkdownSvg` exported from `#ui`, called in
+  `main.ts` and the gallery's `main.ts`). Built so both default to the flag (on) without it; the
+  failing tests that the wiring turns green are written: `images-svg-route.test.ts` "the server passes
+  its own flags to the route…", `card-image-svg-motion.spec.ts` "off on the page…" and "off on the
+  server…". Verified directly meanwhile: `serveImage` with `{ svgImages: false }` (unit test) and
+  `renderMarkdown` after `setMarkdownSvg(false)` (gives the typeNoSvg box; png untouched).
+- `packages/ui/tests/markdown-images.test.ts` (not owned) has a row `['a.svg', IMAGE_WORDS.type]` that
+  now draws an image: one failing test until the row changes (REQUEST).
+- Performance (step 9), 198 cards each with its own infinitely animated svg (the batch limit is 200
+  items with the board and container), view at 60%, all 198 loaded, on this machine under load
+  (uptime load about 4-5): first draw 224 ms (budget 1 s), 121 frames in 2 s with none over 50 ms, a
+  zoom step median 6.9 ms (50 ms), one act shown median 12.1 ms (50 ms); the same board without
+  images: 146 ms, 122 frames, 8.5 ms, 6.6 ms. `perf.spec.ts` alone (`--no-deps`): 10 passed (first
+  draw 499 ms, one act median 23.8 ms, zoom step median 4.4 ms). The measuring script was a temp file,
+  deleted.
+- `npm run verify` failed once on the new format test importing `#format`; it imports `../src/index.ts`
+  now, as its neighbours do.
 
 ### Caught Beyond the Brief
-- None
+- Playwright's `reducedMotion` emulation does not reach an svg image's own media query in Chromium,
+  so the suite (which runs under `reduce`) sees svg animation play. The reduced-motion test launches
+  its own browser with `--force-prefers-reduced-motion`; the gallery's animated svg is finite (about
+  1.6 s, then its first frame) so its screenshot is stable.
+- A 304 must carry the svg's policy: cached headers take the 304's, so a 304 with only the board's
+  policy would leave a revalidated copy opened at its own address under the board's policy (inline
+  script blocked, but the sandbox gone).
+- Animated GIFs (allowed since D-048) have the same gap as SMIL: nothing honours reduced motion or
+  offers a pause (WCAG 2.2.2), and the board can't reach into an `<img>`. Not acted on; for the
+  maintainer.
+- A Markdown link to the board's own `/board-images/x.svg` (an `http://127.0.0.1:…` link is allowed)
+  opens the svg as a document on the board's origin: the case `SVG_CSP` covers, tested by opening the
+  address directly.
+- Not checked: whether an app card's panel can reach `/board-images/` (its policy allows `img-src
+  data:` plus the manifest's https domains, so it should not).
 
 ### Deviations from Plan
-- None
+- WebKit and Firefox were not checked (step 1 asks for all three): their Playwright builds are not
+  installed, and installing them is a download that needs the maintainer's permission. The page
+  suite is Chromium only; images.md says so under Not covered.
+- Two files touched beyond the ownership list's letter, as part of the listed families: `apps/board/
+  tests/images-support.ts` (one comment that became untrue) and `tests/pages/gallery-images.ts` (the
+  gallery section's fixtures, which the list names as "its fixtures").
+- The flag-off behaviour on a running page and server waits on the wiring REQUESTS (above).
+
+### Run 2
+
+**Status**: Completed · **Completed**: 2026-10-27 20:20 · requests SVG_01-R2 to R7 routed back, with
+ownership widened to exactly these edits.
+
+- R2 `apps/board/server/app.ts`: `serveImage(…, project.current().dir, flags)`, so `VB_FLAGS=-svgImages`
+  reaches the route.
+- R3 `packages/ui/src/index.ts`: exports `setMarkdownSvg` beside `imageNote, IMAGE_NOTE`.
+- R4 `apps/board/src/main.ts`, `apps/board/src/gallery/main.ts`: `setMarkdownSvg(flagOn('svgImages',
+  pageFlags()))` after `setMarkdownImages(…)` (main.ts's header comment says so).
+- R5 `packages/ui/tests/markdown-images.test.ts`: the `a.svg` row is `a.svgz`, still a refused type.
+- R6 `docs/specification/api.md` point 155: `unsupported-media-type` names svg (with the flag) and an
+  svg's refused opening; `too-large` is "over its type's cap".
+- R7 `docs/specification/components.md` § Feature flags (`svgImages` with `setMarkdownSvg`) and § Images
+  in cards (items 1 and 2: an svg is the same `<img>`; the flag off refuses it). § The board's host
+  interface untouched.
+- Checks: `npm test` 0 failures (1754 + 10 timing); `npm run check` clean; `gen-api --check` current;
+  card-image* and gallery page specs on 5200: 54 passed (the four that waited on the wiring now pass).
+  `npm run verify` fails on one thing only: `docs/specification/modules.md` is out of date because
+  `#ui` now exports `setMarkdownSvg` (the one-line change `npm run map` makes was checked, then the file
+  restored: generated files are the orchestrator's).
+- Validation "Off, the flag gives today's behaviour exactly" now holds on a running page and server
+  (card-image-svg-motion.spec.ts "the svgImages flag off").
+- Unchanged: D-064 still awaits the maintainer; WebKit and Firefox still unchecked.
 
 ---
 

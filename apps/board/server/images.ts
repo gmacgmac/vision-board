@@ -3,16 +3,20 @@
 // like an app's panel. The path is decoded once and held to `imagePathProblem`, the same check the
 // Markdown renderer makes; then the file's real path must stay inside the real images folder (a
 // link out is refused, as is anything that isn't a file); the file is opened once and everything
-// after is read from that one open file: its size (over the limit: 413), its first bytes (they
-// must be the type its name says: 415) and then the body. Every answer carries an ETag (size and
-// time) and `no-cache`, so the page asks again cheaply and gets 304 until the file changes; the
-// no-sniff header comes from app.ts for every response. Only this folder's images are read.
+// after is read from that one open file: its size (over its type's cap: 413), its first bytes (they
+// must be the type its name says, or for svg an svg that says its size: 415) and then the body.
+// Every answer carries an ETag (size and time) and `no-cache`, so the page asks again cheaply and gets
+// 304 until the file changes; the no-sniff header comes from app.ts for every response. An svg (the
+// svgImages flag, D-064) also carries `SVG_CSP`, on its 304 too, so a cached copy keeps it: opened at
+// its own address it is a sandboxed document that runs no script and loads nothing. Only this
+// folder's images are read.
 import fs from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
 import { pipeline } from 'node:stream';
+import type { FlagOverrides } from '#format';
 import {
-  IMAGES_DIR, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, imageNotReal, imagePathProblem, imageTypeByName, imageTypeOf,
+  IMAGES_DIR, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, flagOn, imageCap, imageHeadProblem, imagePathProblem, imageTypeByName,
 } from '#format';
 import { isUnder } from './folders.ts';
 import { DATA_DIR } from './ledger.ts';
@@ -20,6 +24,16 @@ import { problem } from './problem.ts';
 import * as httpWords from './words/http.ts';
 
 const missing = () => problem('not-found', IMAGE_WORDS.missing);
+
+/** An svg's own policy, in place of the board's (app.ts): nothing loads and no script runs, its own
+ * inline styles and data: pictures and fonts draw, nothing may frame it, and `sandbox` gives it an
+ * opaque origin, so opened on its own it can't reach the board's page, cookies, storage or /api.
+ * Every directive is the board's or stricter, but for inline style, which is the file's own and
+ * reaches nothing (D-064). In an <img> the browser runs no script and loads nothing anyway. */
+export const SVG_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; frame-ancestors 'none'; base-uri 'none'; sandbox";
+
+/** The words for a type that is not allowed, with the svgImages flag on and off. */
+const TYPE_WORDS: ReadonlySet<string> = new Set([IMAGE_WORDS.type, IMAGE_WORDS.typeNoSvg]);
 
 /** The path as the request wrote it, decoded once; a bad `%` code is refused like any odd character. */
 function decoded(raw: string): string {
@@ -46,12 +60,13 @@ const etagOf = (stat: fs.Stats): string => `"${stat.size.toString(16)}-${Math.tr
 const matches = (header: string | undefined, etag: string): boolean =>
   header !== undefined && header.split(',').some((t) => { const v = t.trim().replace(/^W\//, ''); return v === '*' || v === etag; });
 
-/** Answer a request for image `raw` (the route's text after the prefix) in folder `project` (its real path). */
-export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string): void {
+/** Answer a request for image `raw` (the route's text after the prefix) in folder `project` (its real
+ * path), under the server's `flags` (svgImages). */
+export function serveImage(req: IncomingMessage, res: ServerResponse, raw: string, project: string, flags: FlagOverrides = {}): void {
   if (req.method !== 'GET' && req.method !== 'HEAD') throw problem('method-not-allowed', httpWords.getAndHeadOnly, { headers: { Allow: 'GET, HEAD' } });
   const rel = decoded(raw);
-  const why = imagePathProblem(rel);
-  if (why) throw problem(why === IMAGE_WORDS.type ? 'unsupported-media-type' : 'not-found', why);
+  const why = imagePathProblem(rel, { svg: flagOn('svgImages', flags) });
+  if (why) throw problem(TYPE_WORDS.has(why) ? 'unsupported-media-type' : 'not-found', why);
   const type = imageTypeByName(rel)!; // the check above passed, so the extension names a type
   const file = locate(project, rel);
   // Opened without following a link at the last step, so the file read is the file checked.
@@ -61,12 +76,14 @@ export function serveImage(req: IncomingMessage, res: ServerResponse, raw: strin
   try {
     const stat = fs.fstatSync(fd);
     if (!stat.isFile()) throw missing();
-    if (stat.size > IMAGE_LIMITS.maxBytes) throw problem('too-large', IMAGE_WORDS.tooBig);
+    const cap = imageCap(type);
+    if (stat.size > cap.bytes) throw problem('too-large', cap.words);
     const head = Buffer.alloc(IMAGE_HEAD_BYTES);
     const read = fs.readSync(fd, head, 0, head.length, 0);
-    if (imageTypeOf(head.subarray(0, read)) !== type) throw problem('unsupported-media-type', imageNotReal(type));
+    const notShown = imageHeadProblem(type, head.subarray(0, read));
+    if (notShown) throw problem('unsupported-media-type', notShown);
     const etag = etagOf(stat);
-    const headers = { ETag: etag, 'Cache-Control': 'no-cache' };
+    const headers = { ETag: etag, 'Cache-Control': 'no-cache', ...(type === 'svg' && { 'Content-Security-Policy': SVG_CSP }) };
     if (matches(req.headers['if-none-match'], etag)) {
       res.writeHead(304, headers);
       res.end();

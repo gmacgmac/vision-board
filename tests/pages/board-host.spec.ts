@@ -40,7 +40,7 @@ async function fixture(): Promise<{ js: string; css: string }> {
 /** A blank page holding two empty roots, in a host's own layout, with the fixture loaded. */
 async function open(page: Page): Promise<void> {
   const { js, css } = await fixture();
-  await page.setContent('<!doctype html><html lang="en"><head><title>Host</title></head><body><main class="host"><div id="a"></div><div id="b"></div></main></body></html>');
+  await page.setContent('<!doctype html><html lang="en"><head><title>Host</title></head><body><main class="host"><div id="host-bar"></div><div id="a"></div><div id="b"></div></main></body></html>');
   await page.addStyleTag({ content: `${css}\n.host { display: flex; gap: 8px; } #a, #b { width: 620px; height: 560px; }` });
   await page.addScriptTag({ content: js, type: 'module' });
   await page.waitForFunction(() => 'vbHost' in window);
@@ -52,6 +52,7 @@ type Host = {
   record(id: string): { chips: { kind: string; ref: { board: string; n: number } }[]; confirms: { heading: string; list?: unknown }[];
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
   pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
+  addHostControls(parentId: string): void;
   answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
 };
 const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
@@ -124,4 +125,60 @@ test('the board mounts in a fake host: it draws, Send reaches addToChat, a remov
   }
   expect(await call(page, (h) => h.listeners())).toBe(baseline);
   expect(await page.evaluate(() => document.body.querySelectorAll('*').length)).toBe(bodyKids);
+});
+
+test('keys stay inside the board: a host control hears its own keys, and a click inside the board gives the board its keys', async ({ page }) => {
+  await open(page);
+  await call(page, (h, lines: object[]) => { h.addHostControls('host-bar'); h.mount('a', lines, lines.length); h.mount('b', lines, lines.length); }, LINES);
+  await expect(page.locator('#a vb-node')).toHaveCount(nodesUpTo(Infinity));
+  const hidden = (id: string) => call(page, (h, r: string) => h.status(r).hide, id);
+
+  // Focus on a host button: H reaches no board.
+  await page.locator('#host-button').focus();
+  await page.keyboard.press('h');
+  await page.keyboard.press('Escape');
+  expect(await hidden('a')).toBe(false);
+  expect(await hidden('b')).toBe(false);
+  // Typing in a host field: no shortcut fires, and the field gets its letters.
+  await page.locator('#host-input').focus();
+  await page.keyboard.type('hjk');
+  expect(await hidden('a')).toBe(false);
+  expect(await hidden('b')).toBe(false);
+  await expect(page.locator('#host-input')).toHaveValue('hjk');
+  await expect(page.locator('#a vb-node:focus, #b vb-node:focus')).toHaveCount(0);
+
+  // A click on the empty canvas leaves focus in the root: the next key is the board's, and only that board's.
+  for (const gesture of ['click', 'shift-drag', 'cmd-drag'] as const) {
+    await page.locator('#host-button').focus();
+    const box = (await page.locator('#a').boundingBox())!;
+    const at = { x: box.x + box.width - 12, y: box.y + box.height - 12 };
+    const mods = gesture === 'shift-drag' ? 'Shift' : 'Control';
+    if (gesture === 'click') await page.mouse.click(at.x, at.y);
+    else {
+      await page.keyboard.down(mods);
+      await page.mouse.move(at.x, at.y);
+      await page.mouse.down();
+      await page.mouse.move(at.x - 20, at.y - 20, { steps: 4 });
+      await page.mouse.up();
+      await page.keyboard.up(mods);
+    }
+    await page.keyboard.press('h');
+    await expect.poll(() => hidden('a'), { message: gesture }).toBe(true);
+    expect(await hidden('b'), 'the other board is deaf').toBe(false);
+    await page.keyboard.press('h');
+    await expect.poll(() => hidden('a')).toBe(false);
+  }
+
+  // A click on a card: J steps focus to a card; on a container's title line: its keys work too.
+  await page.locator('#host-button').focus();
+  await page.locator('#a vb-node').first().click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press('j');
+  await expect(page.locator('#a vb-node:focus')).toHaveCount(1);
+  expect(await page.evaluate(() => document.activeElement?.closest('.vb-board')?.id)).toBe('a');
+  await page.locator('#host-button').focus();
+  const title = (await page.locator('#a .vb-region-head h2').first().boundingBox())!;
+  await page.mouse.click(title.x + title.width / 2, title.y + title.height / 2);
+  await page.keyboard.press('h');
+  await expect.poll(() => hidden('a')).toBe(true);
+  expect(await hidden('b')).toBe(false);
 });

@@ -8,7 +8,7 @@
     "blocks": "blocks.ts (parseBlocks: lines into paragraphs, lists, # labels, > quotes and fenced code)",
     "inline": "inline.ts (renderInline: bold, italic, strikethrough, inline code, links, autolinks, escapes, hard breaks; esc)",
     "render": "render.ts (renderMarkdown, the front function, whose options are headingLevel and images; MARKDOWN_MAX; setMarkdownImages, the page's cardImages flag, set once where the page starts)",
-    "image": "image.ts (imageMarkup: what ![alt](path) becomes, after imagePathProblem, packages/format; imageNote and IMAGE_NOTE: the box saying why)",
+    "image": "image.ts (imageMarkup: what ![alt](path) becomes, after imagePathProblem, packages/format; imageNote and IMAGE_NOTE: the box saying why; setMarkdownSvg, the page's svgImages flag, set once where the page starts)",
     "styles": "markdown.css (the vb-md-* classes; tokens only; imported by the page beside node.css). Paragraphs, lists and quotes read --vb-md-text, which a popover sets to --vb-pop-text (popovers-larger-thread); else --vb-text-md"
   },
   "states": ["paragraph", "label", "bulleted list", "numbered list", "nested list", "quote", "code block", "inline marks", "link", "refused link", "plain text"],
@@ -19,7 +19,7 @@
     "labels": "# to ###### all draw as one small label, role=heading at headingLevel (default 4: the card title is an h3)",
     "quotes": "> lines, drawn as the callout (01b .reply without its who line)",
     "code": "``` or ~~~ fences; the info string is dropped; capped height, scrolls, focusable",
-    "images": "![alt](path), path relative to the project's .visionboard/images/ (subfolders too): the image when imagePathProblem passes and the alt text is there; a refused path is the box; no alt text is the path as plain text; with images off (the cardImages flag), the source text",
+    "images": "![alt](path), path relative to the project's .visionboard/images/ (subfolders too): the image when imagePathProblem passes and the alt text is there; a refused path is the box; no alt text is the path as plain text; with images off (the cardImages flag), the source text; an svg is an <img> like any other, never inline markup, so its script never runs (D-064; svgImages flag off: refused)",
     "plain text": "tables, HTML blocks, setext headings, thematic breaks, reference links, indented code, entities"
   },
   "classes": {

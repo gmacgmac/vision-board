@@ -1,7 +1,7 @@
 // The image contract (packages/format/src/images.ts, D-048, docs/specification/images.md): the one
 // path check (`imagePathProblem`) that the route and the Markdown renderer both use, the type check
-// by bytes (`imageTypeOf`), and the doc that states the limits. The route itself is in
-// images-route.test.ts.
+// by bytes (`imageTypeOf`), and the doc that states the limits. svg's own check (`svgProblem`, D-064)
+// is in packages/format/tests/images-svg.test.ts; the route itself is in images-route.test.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -15,8 +15,8 @@ import { IMAGES, SVG } from './images-support.ts';
 const W = IMAGE_WORDS;
 const folders = (n: number, file = 'a.png') => [...Array(n).fill('d'), file].join('/');
 
-test('imagePathProblem: plain relative paths to the four types are fine, subfolders too', () => {
-  for (const p of ['a.png', 'a.jpg', 'a.jpeg', 'a.webp', 'a.gif', 'A.PNG', 'Shot.JPG', 'diagrams/flow.png', 'diagrams/flow/v2.png',
+test('imagePathProblem: plain relative paths to the five types are fine, subfolders too', () => {
+  for (const p of ['a.png', 'a.jpg', 'a.jpeg', 'a.webp', 'a.gif', 'a.svg', 'A.PNG', 'd/Logo.SVG', 'Shot.JPG', 'diagrams/flow.png', 'diagrams/flow/v2.png',
     'my-shot_1.v2.png', '-a.png', '_a.png', folders(IMAGE_LIMITS.depth), `${'a'.repeat(IMAGE_LIMITS.nameChars - 4)}.png`]) {
     assert.equal(imagePathProblem(p), undefined, p);
   }
@@ -61,11 +61,13 @@ test('imagePathProblem: nothing, an empty folder name, a name or a depth over th
   assert.equal(imagePathProblem(folders(IMAGE_LIMITS.depth + 20)), W.deep);
 });
 
-test('imagePathProblem: svg and every other type that is not png, jpeg, webp or gif is refused', () => {
-  for (const p of ['a.svg', 'a.SVG', 'a.svgz', 'a.png.svg', 'a.html', 'a.js', 'a.txt', 'a.tiff', 'a.bmp', 'a.ico', 'a.avif', 'a.pn', 'a.jpe',
+test('imagePathProblem: every type that is not png, jpeg, webp, gif or svg is refused; with svg off, svg too', () => {
+  for (const p of ['a.svgz', 'a.html', 'a.js', 'a.txt', 'a.tiff', 'a.bmp', 'a.ico', 'a.avif', 'a.pn', 'a.jpe',
     'a', 'png', 'a.', 'd.png/b', 'a.png.exe']) {
     assert.equal(imagePathProblem(p), W.type, p);
+    assert.equal(imagePathProblem(p, { svg: false }), W.typeNoSvg, p);
   }
+  for (const p of ['a.svg', 'a.SVG', 'a.png.svg']) assert.equal(imagePathProblem(p, { svg: false }), W.typeNoSvg, p);
 });
 
 test('imagePathProblem: the reasons are plain words, short, and say what is allowed', () => {
@@ -74,7 +76,8 @@ test('imagePathProblem: the reasons are plain words, short, and say what is allo
     assert.ok(r.length <= 40, `"${r}" is longer than it needs to be`);
     assert.doesNotMatch(r, /\b(urls?|uris?|regex|patterns?|segments?|traversal|mime|magic|bytes?|http|payload|sanitis|invalid)\b/i, r);
   }
-  assert.equal(W.type, 'only png, jpeg, webp or gif');
+  assert.equal(W.type, 'only png, jpeg, webp, gif or svg');
+  assert.equal(W.typeNoSvg, 'only png, jpeg, webp or gif');
   assert.equal(W.tooBig, 'over 8 MB');
   assert.equal(W.outside, 'must be inside the images folder');
   assert.equal(W.web, 'no images from the internet');
@@ -86,7 +89,8 @@ test('imageTypeByName: the extension names the type, in any case; jpg is jpeg', 
   assert.equal(imageTypeByName('a.jpeg'), 'jpeg');
   assert.equal(imageTypeByName('a.webp'), 'webp');
   assert.equal(imageTypeByName('a.Gif'), 'gif');
-  for (const p of ['a.svg', 'a', 'd.png/b', 'a.png.svg', '']) assert.equal(imageTypeByName(p), undefined, p);
+  assert.equal(imageTypeByName('a.png.svg'), 'svg');
+  for (const p of ['a.svgz', 'a', 'd.png/b', 'a.svg.html', '']) assert.equal(imageTypeByName(p), undefined, p);
 });
 
 test('imageTypeOf: each type is known by the bytes it starts with, and nothing else is', () => {
@@ -117,8 +121,8 @@ function rows(title: string): string[][] {
 }
 
 test('images.md states every limit as IMAGE_LIMITS holds it, and nothing else', () => {
-  const { maxBytes, depth, nameChars } = IMAGE_LIMITS;
-  assert.deepEqual(Object.fromEntries(rows('Limits').map(([name, value]) => [name, Number(value)])), { maxBytes, depth, nameChars });
+  const { maxBytes, svgMaxBytes, svgHeadBytes, depth, nameChars } = IMAGE_LIMITS;
+  assert.deepEqual(Object.fromEntries(rows('Limits').map(([name, value]) => [name, Number(value)])), { maxBytes, svgMaxBytes, svgHeadBytes, depth, nameChars });
 });
 
 test('images.md lists each type with its extensions and content type as IMAGE_LIMITS holds them', () => {
@@ -139,5 +143,5 @@ test('images.md gives each problem the status the server gives it', () => {
 });
 
 test('images.md lists the headers the route sets', () => {
-  assert.deepEqual(rows('Headers').map(([name]) => name), ['Content-Type', 'Content-Length', 'ETag', 'Cache-Control', 'X-Content-Type-Options']);
+  assert.deepEqual(rows('Headers').map(([name]) => name), ['Content-Type', 'Content-Length', 'ETag', 'Cache-Control', 'X-Content-Type-Options', 'Content-Security-Policy']);
 });

@@ -40,7 +40,8 @@ export function pngOf(w: number, h: number, paint: (x: number, y: number) => Rgb
   return Buffer.concat([IMAGES.png.subarray(0, 8), chunk('IHDR', head), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 
-/** An svg picture: the board refuses it, whatever its name. */
+/** An svg that says its size and holds a script: shown as a picture with the svgImages flag on, under
+ * its own policy (D-064), and refused under any other type's name. */
 export const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><script>alert(1)</script></svg>');
 
 /** The project's images folder. */
