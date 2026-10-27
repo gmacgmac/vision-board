@@ -2,8 +2,8 @@
 // the MCP server all go through it. It builds each request from the generated route table
 // (never openapi.json, so the page bundle stays small, rule 15) and turns every problem answer
 // (api.md 38) into an `ApiProblem`. Runs in the browser and in Node 22 with the global `fetch`.
-import type { OperationId } from '../../format/src/index.ts';
-import { OPERATIONS } from '../../format/src/index.ts';
+import type { OperationId } from '#format';
+import { OPERATIONS } from '#format';
 
 export const PROBLEM_BASE = 'https://vision-board.invalid/problems/';
 

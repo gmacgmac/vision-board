@@ -4,14 +4,14 @@
 // that sends a Bearer secret is scoped to that agent (`list_open`, `check_responses`, api.md 41).
 // Every read naming a board an agent may call names it through `requireBoard` (visibility.ts), so an
 // archived board is not found (api.md 136); `read_ledger` is the person's and names any board.
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { boardView, containerKey, latest, nodesOf, toLine, widthsOf } from '#format';
+import type { LedgerState } from '#actions';
 import {
   boardAccess, boardList, boardState, containerDetail, containerJson, eventBoard, itemsOut, linkedDetails, nodeDetail, numberOf, openContainers, openItems,
   placedView, responsesAfter, responsesPage,
-} from '../../../packages/actions/src/index.ts';
-import { structureOf } from '../../../packages/layout/src/index.ts';
+} from '#actions';
+import { structureOf } from '#layout';
 import { cardOn } from './edge.ts';
 import { openName } from './caller-folder.ts';
 import type { Ctx, Handler } from './dispatch.ts';

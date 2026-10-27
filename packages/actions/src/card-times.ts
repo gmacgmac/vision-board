@@ -5,7 +5,7 @@
 // person's private marks never reach it (fold.ts folds them before this). Lines are matched to cards
 // and said by the history model (card-history.ts `cardsAbout`, `saidOf`, `historyRow`), so the box and
 // `cardHistory` never disagree. The page reads it from the state it already holds: no ledger read. Pure.
-import type { LedgerEvent } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
 import { appCards } from './apps.ts';
 import type { HistoryKind, HistoryRow, Lookup } from './card-history.ts';
 import { cardsAbout, historyRow, noteNumbers, saidOf } from './card-history.ts';

@@ -6,10 +6,10 @@
 // to agent paused with the reason as its title. Shown only with the flag on, so ?flags=-lockBoard
 // draws the gallery as it was.
 import { mount } from 'svelte';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { LOCKED_PERSON } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState, regionState } from '../../../../packages/ui/src/index.ts';
+import type { BoardState } from '#actions';
+import { LOCKED_PERSON } from '#actions';
+import type { VbNodeElement, VbRegionElement } from '#ui';
+import { nodeState, regionState } from '#ui';
 import LockedChip from '../shell/LockedChip.svelte';
 import SendButton from '../shell/SendButton.svelte';
 import ToolbarMenu from '../shell/ToolbarMenu.svelte';

@@ -2,7 +2,7 @@
 // The `vb` command table: one command per x-agent operation, with its summary and its inputs
 // (path, query, and the top-level properties of a JSON body). The CLI reads this, never openapi.json.
 
-import type { OperationId } from '../../format/src/index.ts';
+import type { OperationId } from '#format';
 
 export type CommandInputType = 'string' | 'integer' | 'number' | 'boolean' | 'json';
 

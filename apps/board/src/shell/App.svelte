@@ -22,7 +22,7 @@
   import ArchivedDialog from './ArchivedDialog.svelte';
   import { createChatBridge } from '../board/chat-bridge.ts';
   import { createChatPanel, type ChatPanel } from '../board/chat-panel.ts';
-  import { flagOn } from '../../../../packages/format/src/index.ts';
+  import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 
   let stage: HTMLElement;

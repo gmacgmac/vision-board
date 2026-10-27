@@ -5,10 +5,10 @@
 // openList flag): the open cards (`openCards`, the "N open" chip's own count) as "12 · title"; a
 // choice goes to the card (go-to-card.ts `to`). The "N new" list (freshCards flag) is the same row,
 // an updated card's ending "· updated" (`freshCards`). Neither is an act, so both work in a past version (versions.ts).
-import type { View } from '../../../../packages/format/src/index.ts';
-import { LATER_REGION } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { View } from '#format';
+import { LATER_REGION } from '#format';
+import type { BoardLayout } from '#layout';
+import type { VbRegionElement } from '#ui';
 import type { Viewport } from './viewport.ts';
 import { clip } from './clip.ts';
 

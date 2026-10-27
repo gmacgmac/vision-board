@@ -11,6 +11,7 @@ nclite's vision board chat mode, so it stands alone.
   writes the shapes out as types; `apps/board/tests/chat-fixture.test.ts` checks them against it.
 - **Depends on**: nothing in this repo (its D-016 layer is empty).
 - **Used by**: `apps/board`: the sidebar (`src/shell/ChatSidebar.svelte`, `src/board/chat-panel.ts`), its bridge to the board (`src/board/chat-bridge.ts`) and the gallery.
+- **Names** (D-059, D-060): `#chat` (`src/index.ts`), `#chat/styles.css` (`src/chat.css`) and `#chat/files` (`src/files.ts`, `CHAT_SCHEMA_DIR`, the schema folder Node reads; kept off `#chat` so `node:url` stays out of the page bundle).
 
 ## The pieces
 
@@ -33,9 +34,9 @@ or Stop does anything. The header's status, Stop and the composer's Send all rea
 ## How a host uses it
 
 ```ts
-import '<packages/chat>/src/chat.css';           // pulls in each pattern's CSS
+import '#chat/styles.css';                       // pulls in each pattern's CSS
 import './chat-host.css';                         // the host's --chat-* to its tokens
-import { applyEvent, composerView, defineChatElements, EMPTY_CHAT, headerView } from '<packages/chat>/src/index.ts';
+import { applyEvent, composerView, defineChatElements, EMPTY_CHAT, headerView } from '#chat';
 
 defineChatElements();                            // once, before creating any
 // <div class="chat-panel"><chat-header></chat-header><chat-feed></chat-feed><chat-composer></chat-composer></div>
@@ -70,7 +71,7 @@ calls `feed.answerFailed(id, why)` when an answer did not.
   text run. Without one the agent's words show as typed. The person's words are never markup.
 - **Styling**: `src/chat.css` lists every `--chat-*` property with a neutral fallback (readable
   light and dark on its own); a host sets them on `:root` or any ancestor. The board's mapping is
-  `apps/board/src/styles/chat-host.css`. Elements set no inline styles, so a strict CSP holds.
+  `apps/board/src/styles/chat-host.css`, imported with `#chat/styles.css` by `apps/board/src/styles/chat.ts`. Elements set no inline styles, so a strict CSP holds.
 - **nclite**: its Svelte page mounts the same elements unchanged, maps `--chat-*` to its palette
   tokens, and feeds events from its own engine; its approval drawer's answers become `chat-answer`.
 - **Gallery**: `apps/board/src/gallery/chat-section.ts` (flag `chatPanel`), fed by

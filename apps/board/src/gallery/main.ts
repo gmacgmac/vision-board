@@ -1,42 +1,13 @@
 // Entry point of the pattern gallery (gallery.html): every pattern in every state, drawn from a
 // fixture ledger (rule 11). One section per pattern, listed from the patterns' own pattern.json
 // files, so a new pattern without a gallery entry shows up here as a gap and fails the page test.
-import '../styles/board.css';
-import '../styles/access.css';
-import '../styles/key-help.css';
-import '../styles/go-to-card.css';
-import '../styles/proposals.css';
-import '../../../../packages/ui/src/node/node.css';
-import '../../../../packages/ui/src/node/node-popover.css';
-import '../../../../packages/ui/src/node/node-steps.css';
-import '../../../../packages/ui/src/node/node-parking.css';
-import '../../../../packages/ui/src/node/node-notes.css';
-import '../../../../packages/ui/src/node/node-app.css';
-import '../../../../packages/ui/src/app-frame/app-frame.css';
-import '../../../../packages/ui/src/markdown/markdown.css';
-import '../../../../packages/ui/src/image-view/image-view.css';
-import '../../../../packages/ui/src/region/region.css';
-import '../../../../packages/ui/src/region/region-modes.css';
-import '../../../../packages/ui/src/region/region-narrow.css';
-import '../../../../packages/ui/src/region/region-note.css';
-import '../../../../packages/ui/src/region/region-rail.css';
-import '../../../../packages/ui/src/region/region-fresh.css';
-import '../../../../packages/ui/src/tip/tip.css';
-import '../../../../packages/ui/src/paused/paused.css';
-import '../../../../packages/ui/src/note-bubble/note-bubble.css';
-import '../../../../packages/ui/src/selection-bar/selection-bar.css';
-import '../../../../packages/chat/src/chat.css';
-import '../styles/chat-host.css';
-import '../styles/chat-sidebar.css';
-import '../styles/folder-dialog.css';
-import '../styles/archived-dialog.css';
-import '../styles/lock.css';
-import '../styles/current-folder.css';
+import '../styles/page.ts';
+import '../styles/chat.ts';
 import './gallery.css';
-import type { FlagName } from '../../../../packages/format/src/index.ts';
-import { flagOn } from '../../../../packages/format/src/index.ts';
-import { defineBoardElements, setMarkdownImages } from '../../../../packages/ui/src/index.ts';
-import { defineChatElements } from '../../../../packages/chat/src/index.ts';
+import { flagOn } from '#format';
+import { defineBoardElements, PATTERNS, setMarkdownImages } from '#ui';
+import type { PatternInfo } from '#ui';
+import { defineChatElements } from '#chat';
 import { pageFlags } from '../flags.ts';
 import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
@@ -75,20 +46,6 @@ import { retiredSection } from './retired-section.ts';
 import { alignSection, linkLabelSection, widthsSection } from './layout-section.ts';
 import { drawMiniBoards } from './mini-board.ts';
 
-interface PatternInfo {
-  name: string;
-  title: string;
-  /** The element, for a pattern that has one; `entry` names the function of one that draws markup only. */
-  tag?: string;
-  entry?: string;
-  description: string;
-  states: string[];
-  whenToUse: string;
-  whenNotToUse: string;
-  /** The flag a pattern's behaviour ships behind: its section shows only with the flag on. */
-  flag?: FlagName;
-}
-
 /** One entry per pattern: draws its samples. Keyed by `name` in pattern.json. */
 const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'app-frame': appFrameSamples,
@@ -101,8 +58,7 @@ const SAMPLES: Record<string, (body: HTMLElement, fx: Fixture) => void> = {
   'selection-bar': (body, fx) => selectionBarSamples(body, fx, flagOn('selectionPill', pageFlags()), flagOn('personRemove', pageFlags())),
 };
 
-const files = import.meta.glob<PatternInfo>('../../../../packages/ui/src/*/pattern.json', { eager: true, import: 'default' });
-const patterns = Object.values(files).filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
+const patterns = PATTERNS.filter((p) => !p.flag || flagOn(p.flag, pageFlags())).sort((a, b) => a.name.localeCompare(b.name));
 
 function section(p: PatternInfo, fx: Fixture): HTMLElement {
   const box = el('section', 'g-section');

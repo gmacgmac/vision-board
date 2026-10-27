@@ -3,9 +3,9 @@
 // Accept, Reject and Accept all. Which proposals are open, or out of date, is the conditions table's
 // answer (`pageConditions`), never worked out here. Plain data in, plain data out; proposal-flow.ts
 // sends the acts through the one sender, so the server's checks judge every one.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { ACTIONS } from '../../../../packages/actions/src/index.ts';
-import type { CardProposal } from '../../../../packages/ui/src/index.ts';
+import type { LedgerState } from '#actions';
+import { ACTIONS } from '#actions';
+import type { CardProposal } from '#ui';
 import type { ProposalFound } from './board-data.ts';
 import type { ActFields } from './io.ts';
 

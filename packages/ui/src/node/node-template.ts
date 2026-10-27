@@ -3,9 +3,9 @@
 // element (`VbNode.update`: data-status, aria-pressed, the status word, the note), so this runs
 // once per view version. The look is board v3's card (D-024, mockup 01b): content first, number
 // and kind as tabs in gaps cut from the top border, kind icon, state word and buttons in a footer.
-import type { ActionId, NodeSize, ViewNode } from '../../../format/src/index.ts';
-import { NODE_TYPES } from '../../../format/src/index.ts';
-import { ACTIONS } from '../../../actions/src/index.ts';
+import type { ActionId, NodeSize, ViewNode } from '#format';
+import { NODE_TYPES } from '#format';
+import { ACTIONS } from '#actions';
 import type { HandoverView, NotesView, ProposalsView, ReplyEntry } from './node-core.ts';
 import type { UpdatesView } from './node-updates.ts';
 import type { AppCardView } from './node-app.ts';

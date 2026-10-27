@@ -8,8 +8,8 @@
 // placeholder shows. Unloaded, it is a light placeholder with the app's title. Its inputs are
 // attributes: data-app (the app's id), data-label (its name: the frame's title), data-w and data-h
 // (the panel's size, held to APP_SIZE). Browser only: the class is created inside defineVbAppFrame().
-import type { AppSize, AppStateValue, AppToolResult } from '../../../format/src/index.ts';
-import { APP_ID, APP_PANEL_PATH } from '../../../format/src/index.ts';
+import type { AppSize, AppStateValue, AppToolResult } from '#format';
+import { APP_ID, APP_PANEL_PATH } from '#format';
 import type { AppBridge, AppLook } from './app-frame-core.ts';
 import { createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';

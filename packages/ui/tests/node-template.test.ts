@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import { KINDS } from '../../format/src/index.ts';
+import type { ViewNode } from '#format';
+import { KINDS } from '#format';
 import { esc, fullTime, KIND_ICON, nodeTemplate, notesMarkup, noteTime, offers } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>

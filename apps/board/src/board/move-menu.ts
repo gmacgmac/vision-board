@@ -4,7 +4,7 @@
 // back (menu-keys.ts). A container the selection cannot go in (Later, when a card cannot be saved for later) is
 // shown disabled. The menu handles its own keys, so none reaches the board's shortcuts (keys.ts).
 // It is drawn on the stage, above the cards, and touches none of them.
-import type { StageBox } from '../../../../packages/ui/src/index.ts';
+import type { StageBox } from '#ui';
 import { menuKeydown } from './menu-keys.ts';
 
 export interface MoveTarget { id: string; title: string; disabled?: boolean }

@@ -10,8 +10,8 @@
 // person's flag, cardFlag flag), retired.ts (the "N cards retired" markers, retiredMarker flag), remove-flow.ts (the person's Remove
 // card and Remove container, personRemove flag), go-to-card.ts (Go to card, goToCard flag), history-flow.ts (a card's history box), toolbar-counts.ts (the toolbar's numbers)
 // and app-cards.ts (app cards: their state from list_apps, their frames, Allow and Stop app; appCards flag).
-import { flagOn, type LedgerEvent, type View, type ViewNode } from '../../../../packages/format/src/index.ts';
-import { placedView } from '../../../../packages/actions/src/index.ts';
+import { flagOn, type LedgerEvent, type View, type ViewNode } from '#format';
+import { placedView } from '#actions';
 import { ApiError, type BoardData } from './io.ts';
 import { createBoards } from './boards.ts';
 import { answeredIds, boardData, numberedView } from './board-data.ts';

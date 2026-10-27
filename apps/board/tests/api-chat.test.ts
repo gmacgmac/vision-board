@@ -4,7 +4,7 @@
 // request without the cookie, and a gate call carrying the cookie or no token.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import { OPERATIONS } from '#format';
 import { CHAT_EVENT_ID } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';

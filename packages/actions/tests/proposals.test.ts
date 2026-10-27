@@ -2,7 +2,7 @@
 // and rejecting a proposal, how the fold ends proposals, and seeing a card by acting on it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
 import { validateAct } from '../src/index.ts';
 import { A, B, scene } from './ledger-v3.ts';
 

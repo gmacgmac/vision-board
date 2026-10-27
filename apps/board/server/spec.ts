@@ -3,13 +3,11 @@
 // (operations.generated.ts) says where an operation lives; this says what its inputs may hold.
 // Server only: it uses ajv through schema.ts, which never reaches the page (api.md 12).
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import type { OperationId } from '../../../packages/format/src/index.ts';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import type { OperationId } from '#format';
+import { OPERATIONS } from '#format';
+import { OPENAPI_FILE } from '#format/files';
 import type { SchemaProblem } from './schema.ts';
 import { compileSchema, schemaProblems } from './schema.ts';
-
-export const OPENAPI_FILE = fileURLToPath(new URL('../../../packages/format/schema/openapi.json', import.meta.url));
 
 type Rec = Record<string, any>;
 

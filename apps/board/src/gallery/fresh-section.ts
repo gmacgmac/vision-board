@@ -6,9 +6,9 @@
 // toolbar's "N new" chip (shell/OpenChip.svelte) at rest, hovered, focused, pressed and narrow. Every
 // number is worked out from the fixture ledger as the board does (board-data.ts `pageConditions`).
 import { mount } from 'svelte';
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { CardConditions, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionFresh, regionState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { CardConditions, VbRegionElement } from '#ui';
+import { regionFresh, regionState } from '#ui';
 import { pageConditions } from '../board/board-data.ts';
 import OpenChip from '../shell/OpenChip.svelte';
 import { el, group } from './dom.ts';

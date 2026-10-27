@@ -6,8 +6,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { Region, View, ViewNode } from '../../format/src/index.ts';
-import { boardView, foldDrawn, readLedger } from '../../format/src/index.ts';
+import type { Region, View, ViewNode } from '#format';
+import { boardView, foldDrawn, readLedger } from '#format';
+import { FIXTURES_DIR } from '#format/files';
 import { layoutBoard, layoutRegion, overlaps, packRegions, REGION_HEAD } from '../src/index.ts';
 import type { BoardLayout, Size } from '../src/index.ts';
 
@@ -29,7 +30,7 @@ function apart(l: BoardLayout) {
 }
 
 function load(name: string): View {
-  const lines = fs.readFileSync(new URL(`../../format/fixtures/${name}.ledger.jsonl`, import.meta.url), 'utf8');
+  const lines = fs.readFileSync(`${FIXTURES_DIR}${name}.ledger.jsonl`, 'utf8');
   return boardView(foldDrawn(readLedger(lines.trim().split('\n')).events), name);
 }
 

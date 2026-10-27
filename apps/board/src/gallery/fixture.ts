@@ -1,15 +1,15 @@
 // The fixture behind the gallery: a real project ledger in the real schema (rule 11), read
 // through the same checks and folds the live board uses. Nothing here is hand-written markup.
-import type { View } from '../../../../packages/format/src/index.ts';
-import { boardView, readLedger } from '../../../../packages/format/src/index.ts';
-import type { AccessHolder, BoardAccess, BoardRun, BoardState } from '../../../../packages/actions/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardAccess, boardState, boardVersions, foldLedger } from '../../../../packages/actions/src/index.ts';
+import type { View } from '#format';
+import { boardView, readLedger } from '#format';
+import type { AccessHolder, BoardAccess, BoardRun, BoardState } from '#actions';
+import type { LedgerState } from '#actions';
+import { boardAccess, boardState, boardVersions, foldLedger } from '#actions';
 import { pageConditions } from '../board/board-data.ts';
 import type { ProposalRow } from '../board/proposals.ts';
 import { proposalRows } from '../board/proposals.ts';
 import { versionTime } from '../board/versions.ts';
-import type { CardConditions, CardReply, CardUpdates } from '../../../../packages/ui/src/index.ts';
+import type { CardConditions, CardReply, CardUpdates } from '#ui';
 import { createParking } from '../board/parking.ts';
 import { unseenCount, unseenSteps } from '../board/updates.ts';
 import type { RetiredCount } from '../board/retired.ts';

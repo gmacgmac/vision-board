@@ -11,8 +11,8 @@
 // as the page reads it: board-state.ts. Pure: same events, same state; events are assumed valid.
 import type {
   ActEvent, DrawnState, LedgerEvent, LedgerIndex, LedgerRegion, Mode, NodeSize, ParkBundle, ProposeEvent, Widths,
-} from '../../format/src/index.ts';
-import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '../../format/src/index.ts';
+} from '#format';
+import { applyDrawn, BOARD_MARKS, emptyDrawn, emptyIndex, indexEvent, isContainerAct, isPrivateAct } from '#format';
 import { type BoardDates, foldArchive } from './archive.ts';
 import { type AppAllows, foldAppAct } from './apps.ts';
 import { foldLock } from './lock.ts';

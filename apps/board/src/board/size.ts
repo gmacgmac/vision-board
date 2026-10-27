@@ -1,10 +1,10 @@
 // Card size tiers on the page (D-030, the nodeSize flag): the tier each card is drawn at, the act a
 // pick sends, and the control's Esc and aria-expanded behaviour. The pill opens in CSS (node.css),
 // on hover or keyboard focus, so nothing here holds an open state.
-import type { ActSize, NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
-import { ACT_SIZES } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { sizeTier } from '../../../../packages/layout/src/index.ts';
+import type { ActSize, NodeSize, ViewNode } from '#format';
+import { ACT_SIZES } from '#format';
+import type { BoardState } from '#actions';
+import { sizeTier } from '#layout';
 import type { ActFields } from './io.ts';
 
 /** The tier a card is drawn at: the person's pick, else the agent's suggestion or the auto tier. */

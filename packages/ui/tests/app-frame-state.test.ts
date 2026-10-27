@@ -6,12 +6,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { AppStateValue } from '../../format/src/index.ts';
-import { APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_STATE_KEY, appStateProblem, PANEL_ERRORS, PANEL_SAVE_STATE } from '../../format/src/index.ts';
+import type { AppStateValue } from '#format';
+import { APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_STATE_KEY, appStateProblem, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
+import { SCHEMA_DIR } from '#format/files';
 import { SAVE_WORDS } from '../src/index.ts';
 import { DARK, errorOf, harness, LIGHT, note, ready, req, settle } from './app-frame-harness.ts';
 
-const SCHEMA = JSON.parse(fs.readFileSync(new URL('../../format/schema/app/panel-state.schema.json', import.meta.url), 'utf8'));
+const SCHEMA = JSON.parse(fs.readFileSync(`${SCHEMA_DIR}app/panel-state.schema.json`, 'utf8'));
 
 /** A harness whose page keeps every save in `saved`; `fail` makes the page refuse with it. */
 function saving(fail?: unknown) {

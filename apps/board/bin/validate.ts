@@ -4,7 +4,7 @@
 // Usage: node apps/board/bin/validate.ts <ledger.jsonl> [...more]   (npm run validate -- <file>)
 // Exit 0 when every file is valid; 1 with every problem listed otherwise; 2 on bad usage.
 import fs from 'node:fs';
-import { readLedger } from '../../../packages/format/src/index.ts';
+import { readLedger } from '#format';
 import { ledgerLineProblems } from '../server/schema.ts';
 
 /** Every problem in one ledger file, as "line N: ...". */

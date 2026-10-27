@@ -1,8 +1,8 @@
 // `run`: one `vb` invocation, start to exit code (api.md 51). 0 = done, 1 = the call failed (a
 // problem answer or no answer), 2 = the arguments were wrong. Everything the outside world
 // supplies (output, stdin, files, environment, fetch) comes in as `Io`, so tests run it whole.
-import type { OperationId } from '../../format/src/index.ts';
-import { createClient } from '../../client/src/index.ts';
+import type { OperationId } from '#format';
+import { createClient } from '#client';
 import { assemble, parseArgs } from './args.ts';
 import type { Parsed } from './args.ts';
 import { readJsonBody } from './body-source.ts';

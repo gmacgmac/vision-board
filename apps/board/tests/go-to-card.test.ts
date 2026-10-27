@@ -5,8 +5,8 @@
 // Board b's numbers differ from the ledger's identities throughout.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { foldLedger } from '../../../packages/actions/src/index.ts';
+import { readLedger } from '#format';
+import { foldLedger } from '#actions';
 import { boardData } from '../src/board/board-data.ts';
 import type { GoBox, GoDeps, GoTarget } from '../src/board/go-to-card.ts';
 import { createGoTo, goDigits, goTarget } from '../src/board/go-to-card.ts';

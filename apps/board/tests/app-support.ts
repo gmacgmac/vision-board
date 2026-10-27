@@ -6,8 +6,8 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { AppInfo } from '../../../packages/format/src/index.ts';
-import { ApiProblem } from '../../../packages/client/src/index.ts';
+import type { AppInfo } from '#format';
+import { ApiProblem } from '#client';
 import type { Harness } from './api-harness.ts';
 import { PERSON } from './api-harness.ts';
 

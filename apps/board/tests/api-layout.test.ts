@@ -4,11 +4,11 @@
 // answer is held to openapi.json by the harness.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Mode, View } from '../../../packages/format/src/index.ts';
-import { boardView, widthsOf } from '../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../packages/layout/src/index.ts';
-import { layoutBoard } from '../../../packages/layout/src/index.ts';
-import { boardState, placedView } from '../../../packages/actions/src/index.ts';
+import type { Mode, View } from '#format';
+import { boardView, widthsOf } from '#format';
+import type { BoardLayout } from '#layout';
+import { layoutBoard } from '#layout';
+import { boardState, placedView } from '#actions';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

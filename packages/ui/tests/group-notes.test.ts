@@ -3,8 +3,8 @@
 // and the group's one pin comes from `groupMarkers` over the folded notes, placed by `groupPinAt`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { ItemNote } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { ItemNote } from '#actions';
 import type { CardReply } from '../src/index.ts';
 import { GROUP_PIN, groupAnchors, groupMarkers, groupPinAt, notesView } from '../src/index.ts';
 

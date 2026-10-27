@@ -2,8 +2,8 @@
 // a card's `notes-hide` and `notes-show` decides whether its note thread is put away. Kept in the
 // ledger and folded for the page only: no agent read looks at `notesHidden`, and the fold keeps the
 // mark out of everything an agent reads (fold.ts `applyEvent`: no head, no seen, no answer). Pure.
-import type { ActEvent } from '../../format/src/index.ts';
-import { nodesOf } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
 
 /** Fold one `notes-hide` or `notes-show`. It stays through a redraw: it names no version. */

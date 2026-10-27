@@ -4,7 +4,7 @@
 // lists no app; an app id that is not an id is refused before anything is looked up.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { createClient } from '../../../packages/client/src/index.ts';
+import { createClient } from '#client';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

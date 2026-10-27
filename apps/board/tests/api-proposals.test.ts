@@ -4,7 +4,7 @@
 // out-of-date or decided one is refused with plain words. Every answer is checked against the spec.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
+import { LEDGER_FORMAT } from '#format';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

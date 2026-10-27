@@ -1,7 +1,7 @@
 // A small ledger v3 builder for the action tests: agents join, draw, ask for grants, and the
 // person answers. Every line goes through readLedger, so a test never folds an invalid ledger.
 import assert from 'node:assert/strict';
-import { readLedger } from '../../format/src/index.ts';
+import { readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { foldLedger } from '../src/index.ts';
 

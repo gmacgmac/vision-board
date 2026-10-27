@@ -1,6 +1,6 @@
 export { ACTION_OUT, actionIn, actionOut, ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, BOARD_ACTION_IDS, BOARD_ACTIONS, CLOSED, DECIDED, isDecided, ITEM_ACTIONS, MARK_ACTIONS, RETIRE_ACTION_IDS, RETIRE_ACTIONS, STATUS_OUT, statusOut } from './registry.ts';
 export type { ActionDef, AgentActionDef, AgentActionId, BoardActionDef, BoardActionId, ItemStatus, ReportedAction, ReportedStatus, RetireActionDef, RetireActionId } from './registry.ts';
-export { MAX_TEXT } from '../../format/src/index.ts';
+export { MAX_TEXT } from '#format';
 export { applyEvent, DRAWING_EVENTS, emptyState, foldLedger, sentNotes, sentAfter } from './fold.ts';
 export { boardState, counts, openCards, statusOf } from './board-state.ts';
 export type { BoardState, OpenCard } from './board-state.ts';

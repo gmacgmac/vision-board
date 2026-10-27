@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { boardList } from '../../../packages/actions/src/index.ts';
+import { boardList } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { LOCK_FILE } from '../server/lock.ts';
 import { RECENT_FILE } from '../server/recent.ts';

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { BoardState, ItemNote, ItemStatus } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState, ItemNote, ItemStatus } from '#actions';
 import type { CardReply } from '../src/index.ts';
 import { buttonLabel, conversation, isNoteEntry, nodeLabel, nodeState, notesView, offers, STATUS_LABEL, STATUS_NAME } from '../src/index.ts';
 

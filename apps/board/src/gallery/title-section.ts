@@ -8,8 +8,8 @@
 // board's own drawing); slid left beside the tools on a line as short on screen as it is at about 70%
 // (its frame alone, since cards drawn at 70% have buttons under the 24px target); and at the start at
 // 25% (the drawing again), where the tools have left the line.
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { miniBoard } from './mini-board.ts';

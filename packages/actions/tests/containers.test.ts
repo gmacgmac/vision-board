@@ -5,8 +5,8 @@
 // be placed but takes no note.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems, LATER_REGION, readLedger } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, eventProblems, LATER_REGION, readLedger } from '#format';
 import { boardState, containerDetail, replyText, responsesAfter, validateAct } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
 

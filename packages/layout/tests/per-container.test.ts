@@ -5,13 +5,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { View } from '../../format/src/index.ts';
-import { boardView, foldDrawn, readLedger } from '../../format/src/index.ts';
+import type { View } from '#format';
+import { boardView, foldDrawn, readLedger } from '#format';
+import { FIXTURES_DIR } from '#format/files';
 import { layoutBoard, layoutRegion, packRegions } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 
 function load(name: string): View {
-  const lines = fs.readFileSync(new URL(`../../format/fixtures/${name}.ledger.jsonl`, import.meta.url), 'utf8');
+  const lines = fs.readFileSync(`${FIXTURES_DIR}${name}.ledger.jsonl`, 'utf8');
   return boardView(foldDrawn(readLedger(lines.trim().split('\n')).events), name);
 }
 const sizesFor = (v: View) => new Map<string, Size>(v.nodes.map((n, i) => [n.id, { w: 240 + (i % 3) * 40, h: 96 + (i % 4) * 18 }]));

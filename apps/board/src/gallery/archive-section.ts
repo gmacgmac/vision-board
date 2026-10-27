@@ -4,7 +4,7 @@
 // way, a refusal kept, and none left. Names and dates are made up. Shown only with the flag on, so
 // ?flags=-archiveBoard draws the gallery as it was.
 import { mount } from 'svelte';
-import type { ArchivedBoard } from '../../../../packages/actions/src/index.ts';
+import type { ArchivedBoard } from '#actions';
 import ArchivedList from '../shell/ArchivedList.svelte';
 import ToolbarMenu from '../shell/ToolbarMenu.svelte';
 import { archiveAsk } from '../board/board-edit.ts';

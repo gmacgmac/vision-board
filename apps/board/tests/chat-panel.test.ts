@@ -6,8 +6,8 @@
 // gives) and Sonnet 5.5, never `auto` (N34 ruling 3).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ChatEvent } from '../../../packages/chat/src/index.ts';
-import { applyEvents, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
+import type { ChatEvent } from '#chat';
+import { applyEvents, EMPTY_CHAT } from '#chat';
 import { firstBoard, firstModel, lastAsk, MODELS, shownModel, shownPick } from '../src/board/chat-rules.ts';
 import type { ChatSessionInfo } from '../src/board/io.ts';
 

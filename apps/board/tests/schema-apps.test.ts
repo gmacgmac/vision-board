@@ -6,10 +6,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { AppManifest } from '../../../packages/format/src/index.ts';
+import type { AppManifest } from '#format';
+import { SCHEMA_DIR } from '#format/files';
 import {
   APP_FILES, APP_HASH_PATTERN, APP_ID, APP_LIMITS, APP_SIZE, APP_STATE_FORMAT, APP_STATES, APP_TOOL_NAME, ID_PATTERN, eventProblems,
-} from '../../../packages/format/src/index.ts';
+} from '#format';
 import { LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaProblems } from '../server/schema.ts';
 import { AGENT, DROP, PERSON, patch } from './schema-cases.ts';
 
@@ -230,6 +231,6 @@ test('panel state: the kept file, the save (the panel\'s params and the route\'s
   assert.deepEqual(fits('written', { bytes: APP_LIMITS.stateBytes }), []);
   assert.notDeepEqual(fits('written', { bytes: APP_LIMITS.stateBytes + 1 }), []);
   assert.notDeepEqual(fits('written', { bytes: 0 }), []);
-  const schema = JSON.parse(fs.readFileSync(new URL('../../../packages/format/schema/app/panel-state.schema.json', import.meta.url), 'utf8'));
+  const schema = JSON.parse(fs.readFileSync(`${SCHEMA_DIR}app/panel-state.schema.json`, 'utf8'));
   assert.deepEqual([schema.properties.v.const, schema.$defs.written.properties.bytes.maximum], [APP_STATE_FORMAT, APP_LIMITS.stateBytes]);
 });

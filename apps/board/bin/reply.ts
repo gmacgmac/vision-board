@@ -3,8 +3,8 @@
 // Usage: node apps/board/bin/reply.ts <board> [--json]   (VB_PROJECT = project folder, default repo root)
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { boardView } from '../../../packages/format/src/index.ts';
-import { boardState, replyText } from '../../../packages/actions/src/index.ts';
+import { boardView } from '#format';
+import { boardState, replyText } from '#actions';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');

@@ -4,8 +4,8 @@
 // (`commented` while it is with the agent, D-046); a card the agent's answer cleared
 // and the person has not looked at since carries `unseenAnswer` (clears.ts, D-045). Cards retired from the board
 // are left out (api.md 127). `get_board` sends all of it but the flags and hidden notes (api.md 128, 156). Pure.
-import type { Mode, NodeSize, View, Widths } from '../../format/src/index.ts';
-import { containerKey, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
+import type { Mode, NodeSize, View, Widths } from '#format';
+import { containerKey, NODE_TYPES, nodesOf } from '#format';
 import { flagsOn } from './card-flags.ts';
 import { notesHiddenOn } from './card-notes-hidden.ts';
 import { boardLocked } from './lock.ts';

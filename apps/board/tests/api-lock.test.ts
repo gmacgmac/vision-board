@@ -8,7 +8,7 @@
 // as it was. Only the person locks and unlocks; an agent's act is forbidden.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { LOCKED } from '../../../packages/actions/src/index.ts';
+import { LOCKED } from '#actions';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';

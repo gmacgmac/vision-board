@@ -6,7 +6,7 @@
 // (`LedgerState.index`). Only what exists is judged: an unknown board, region or node is left to the
 // context check, so the agent is told what is wrong rather than to ask for a grant it cannot get.
 // Pure.
-import { accessKey, latest } from '../../format/src/index.ts';
+import { accessKey, latest } from '#format';
 import type { LedgerState } from './fold.ts';
 import type { Container } from './references.ts';
 import { placeOf } from './references.ts';

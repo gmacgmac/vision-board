@@ -2,7 +2,7 @@
 // container and what the agents have asked for; whether one agent may write one item is the
 // permissions table (permissions.ts). All of it reads the access index that packages/format folds
 // (`LedgerState.index`); nothing is folded twice. Pure.
-import { accessKey } from '../../format/src/index.ts';
+import { accessKey } from '#format';
 import type { LedgerState } from './fold.ts';
 
 /** The agents that hold a container now, or with no `region` the board (api.md 23, 81). A region

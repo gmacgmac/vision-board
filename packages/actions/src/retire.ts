@@ -5,8 +5,8 @@
 // `show_container` still answers. The person retires too (N24, api.md 141): the same line, by the
 // person, who may remove a card still owed an answer (ruling 3) and is warned first
 // (`owedNotice`); nothing on it is owed after, and an answer on it waits for no Send. Pure.
-import type { RetireEvent } from '../../format/src/index.ts';
-import { containerKey, nodesOf } from '../../format/src/index.ts';
+import type { RetireEvent } from '#format';
+import { containerKey, nodesOf } from '#format';
 import { owedOn, replied } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
 import { latestAsk } from './notes.ts';

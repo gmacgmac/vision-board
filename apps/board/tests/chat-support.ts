@@ -1,16 +1,14 @@
-// Chat test support: the agent package's fake `claude` (packages/agent/tests/fake-claude.ts, which
-// replays a recorded real turn) as the server's Claude adapter, what each fake run was given, and
+// Chat test support: the agent package's fake `claude` (`#agent/testing` FAKE_CLAUDE, which replays
+// a recorded real turn) as the server's Claude adapter, what each fake run was given, and
 // a reader for a session's event stream. Not a test itself (no .test.ts).
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createClaudeAdapter } from '../../../packages/agent/src/index.ts';
+import { createClaudeAdapter } from '#agent';
+import { DRAW, FAKE_CLAUDE } from '#agent/testing';
 import type { ChatAdapters } from '../server/chat-sessions.ts';
 
-const agentTests = (rel: string) => fileURLToPath(new URL(`../../../packages/agent/tests/${rel}`, import.meta.url));
-export const FAKE_CLAUDE = agentTests('fake-claude.ts');
-export const DRAW = agentTests('fixtures/claude-draw.jsonl');
+export { DRAW, FAKE_CLAUDE };
 
 /** What one fake run was given. */
 export interface Given {

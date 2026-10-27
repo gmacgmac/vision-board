@@ -8,8 +8,8 @@
 // names the file, and the card puts it first, so its words never name it again.
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppManifest, AppProblem, AppSize } from '../../../../packages/format/src/index.ts';
-import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR, appSize } from '../../../../packages/format/src/index.ts';
+import type { AppManifest, AppProblem, AppSize } from '#format';
+import { APP_FILES, APP_ID, APP_LIMITS, APPS_DIR, appSize } from '#format';
 import { DATA_DIR } from '../ledger.ts';
 import { sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';

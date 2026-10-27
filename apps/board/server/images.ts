@@ -13,7 +13,7 @@ import path from 'node:path';
 import { pipeline } from 'node:stream';
 import {
   IMAGES_DIR, IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, imageNotReal, imagePathProblem, imageTypeByName, imageTypeOf,
-} from '../../../packages/format/src/index.ts';
+} from '#format';
 import { isUnder } from './folders.ts';
 import { DATA_DIR } from './ledger.ts';
 import { problem } from './problem.ts';

@@ -7,11 +7,11 @@
 // shorter), measured again whenever that width changes (`remeasure`), so no gap opens under it. DOM order stays reading order, which is also tab order. A change of the selection
 // (3_FE_01 ruling 10) goes through `restate`: it updates only the cards named, measures nothing and
 // places nothing, since the selected look changes no card's size.
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { NodeSize, View, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import type { CardConditions, NodeTemplateOptions, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { BoardState } from '#actions';
+import type { NodeSize, View, ViewNode } from '#format';
+import type { BoardLayout, Size } from '#layout';
+import type { CardConditions, NodeTemplateOptions, VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import { readingOrder } from './render.ts';
 import { work } from './work.ts';
 

@@ -5,7 +5,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
-import { LIST_RENAMED } from '../../../packages/format/src/index.ts';
+import { LIST_RENAMED } from '#format';
 
 let h: Harness;
 before(async () => { h = await startBoard(); });

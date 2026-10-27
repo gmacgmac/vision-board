@@ -8,17 +8,17 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { createClient } from '../../client/src/index.ts';
+import { createClient } from '#client';
+import { OPENAPI_FILE, SCHEMA_DIR } from '#format/files';
 import { TOOL_FILE } from '../src/index.ts';
 import type { Board, Session } from './support.ts';
 import { MODERN_META, call, startBoard, startMcp } from './support.ts';
 
-const SCHEMAS = new URL('../../format/schema/', import.meta.url);
 const ajv = new Ajv2020({ strict: true, strictRequired: false, allErrors: true, discriminator: true });
-for (const f of readdirSync(SCHEMAS, { recursive: true, encoding: 'utf8' })) {
-  if (f.endsWith('.schema.json') && !f.startsWith('vendor')) ajv.addSchema(JSON.parse(readFileSync(new URL(f, SCHEMAS), 'utf8')));
+for (const f of readdirSync(SCHEMA_DIR, { recursive: true, encoding: 'utf8' })) {
+  if (f.endsWith('.schema.json') && !f.startsWith('vendor')) ajv.addSchema(JSON.parse(readFileSync(`${SCHEMA_DIR}${f}`, 'utf8')));
 }
-const spec = JSON.parse(readFileSync(new URL('openapi.json', SCHEMAS), 'utf8'));
+const spec = JSON.parse(readFileSync(OPENAPI_FILE, 'utf8'));
 /** Each tool's success response schema: its operation's lowest 2xx, a component that names a schema file. */
 const outputs = new Map(Object.values<any>(spec.paths).flatMap((item) => Object.values<any>(item)).filter((op) => op['x-agent']).map((op) => {
   const status = Object.keys(op.responses).filter((s) => /^2\d\d$/.test(s)).sort()[0]!;

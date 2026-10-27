@@ -7,7 +7,7 @@
 // agent's line; nothing is written for the person. A reply to an older note, not the card's latest,
 // clears nothing. Any reply of the agent's on a card, clearing or not, is still an update the person
 // has not seen until they look (`unseenReply`, review polish round 2 ruling 4). Pure.
-import type { LedgerEvent } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
 import type { LedgerReply, LedgerState } from './fold.ts';
 import type { Ask } from './notes.ts';
 import { askVer, cardsOf, latestAsk } from './notes.ts';

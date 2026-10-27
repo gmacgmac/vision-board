@@ -7,8 +7,8 @@
 // <vb-region> elements, updated with `regionState` from the fixture ledger's holders, exactly as
 // the board does.
 import { mount } from 'svelte';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import AccessRequests from '../shell/AccessRequests.svelte';
 import SendButton from '../shell/SendButton.svelte';
 import BoardAgents from '../shell/BoardAgents.svelte';

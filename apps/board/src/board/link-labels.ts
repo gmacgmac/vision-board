@@ -5,9 +5,9 @@
 // page's font is squeezed to fit (`fitLabel`), never let out over a card or another label. Where
 // the label does not fit, link-marks.ts draws a marker instead. With the flag off, every label is
 // drawn at the middle of its line, as before.
-import type { Point, Route } from '../../../../packages/layout/src/index.ts';
-import { LABEL_H, labelSize } from '../../../../packages/layout/src/index.ts';
-import { esc } from '../../../../packages/ui/src/index.ts';
+import type { Point, Route } from '#layout';
+import { LABEL_H, labelSize } from '#layout';
+import { esc } from '#ui';
 
 const NS = 'http://www.w3.org/2000/svg';
 /** Room either side of the text inside the tag, px (the layout's LABEL_PAD). */

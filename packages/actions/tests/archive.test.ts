@@ -5,8 +5,8 @@
 // (an agent's in words that say nothing of it); restore brings everything back as it was.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { readLedger } from '../../format/src/index.ts';
+import type { ActEvent, LedgerEvent } from '#format';
+import { readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   applyEvent, archivedBoards, archivedProblem, boardList, boardVisibility, conditionsOf, emptyState, foldLedger, linkedDetails,

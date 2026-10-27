@@ -3,7 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { ACTION_IDS, boardView, validateView } from '../../format/src/index.ts';
+import { ACTION_IDS, boardView, validateView } from '#format';
+import { SCHEMA_DIR } from '#format/files';
 import {
   ACTIONS, AGENT_ACTION_IDS, AGENT_ACTIONS, BOARD_ACTION_IDS, BOARD_ACTIONS, boardState, replyText,
 } from '../src/index.ts';
@@ -36,7 +37,7 @@ test('registry: agent actions are records, by the agent, with their inputs named
 
 test('registry: board actions are the person\'s, unconfirmed, with put_board\'s body as their inputs (api.md 90)', () => {
   assert.deepEqual(Object.keys(BOARD_ACTIONS), [...BOARD_ACTION_IDS]);
-  const core = JSON.parse(fs.readFileSync(new URL('../../format/schema/events/board.schema.json', import.meta.url), 'utf8')).$defs.core;
+  const core = JSON.parse(fs.readFileSync(`${SCHEMA_DIR}events/board.schema.json`, 'utf8')).$defs.core;
   const inputs = Object.fromEntries(Object.keys(core.properties).map((k) => [k, core.required.includes(k) ? 'required' : 'optional']));
   for (const id of BOARD_ACTION_IDS) {
     const def = BOARD_ACTIONS[id];

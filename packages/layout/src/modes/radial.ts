@@ -1,4 +1,4 @@
-import type { ViewNode } from '../../../format/src/index.ts';
+import type { ViewNode } from '#format';
 import type { Box, Cell, ModeFn } from '../types.ts';
 import { GAP } from '../types.ts';
 import { normalise } from '../geometry.ts';

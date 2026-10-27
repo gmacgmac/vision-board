@@ -3,9 +3,9 @@
 // must be what `get_board` would have answered, for every board, and stay so as lines arrive.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent, LedgerLine } from '../../../packages/format/src/index.ts';
-import { fromLine } from '../../../packages/format/src/index.ts';
-import { applyEvent, eventBoard, foldLedger, itemsOut } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent, LedgerLine } from '#format';
+import { fromLine } from '#format';
+import { applyEvent, eventBoard, foldLedger, itemsOut } from '#actions';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { boardData, canApply, pageConditions } from '../src/board/board-data.ts';

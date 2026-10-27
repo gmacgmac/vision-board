@@ -4,8 +4,8 @@
 // does not pull it back (as with pins). The agent's view stays what it drew; the page places each
 // card with `placedView`, which also adds the Later container, from the fold: no agent writes it
 // and it is never stored as a region. Pure.
-import type { Region, View } from '../../format/src/index.ts';
-import { LATER_REGION } from '../../format/src/index.ts';
+import type { Region, View } from '#format';
+import { LATER_REGION } from '#format';
 import type { BoardState } from './board-state.ts';
 
 /** Every board's Later container: always last, laid out as a grid (ruling 5). */

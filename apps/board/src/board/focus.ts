@@ -5,9 +5,9 @@
 // decision 2); a click, focus coming back to the card it left, or the window getting focus back
 // pans nothing. Split out of controller.ts
 // (N12_FE_01); keys.ts and the controller call it.
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import { POPOVER_OPEN } from '../../../../packages/ui/src/index.ts';
+import type { View } from '#format';
+import type { BoardLayout } from '#layout';
+import { POPOVER_OPEN } from '#ui';
 import { lastInput } from './pointer-focus.ts';
 import { readingOrder } from './render.ts';
 import type { Viewport } from './viewport.ts';

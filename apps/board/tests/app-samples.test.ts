@@ -10,7 +10,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppInfo } from '../../../packages/format/src/index.ts';
+import type { AppInfo } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { allow, apps, refused } from './app-support.ts';

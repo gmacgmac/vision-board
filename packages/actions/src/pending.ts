@@ -1,8 +1,8 @@
 // What the agent owes (D-020, api.md 36, 41), as the conditions table works it out
 // (conditions.ts), and the person's responses since a cursor (`check_responses`). Pure reads of
 // the folded ledger.
-import type { ActEvent } from '../../format/src/index.ts';
-import { isContainerAct } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { isContainerAct } from '#format';
 import { conditionsOf } from './conditions.ts';
 import type { LedgerState } from './fold.ts';
 import { numberOf } from './numbers.ts';

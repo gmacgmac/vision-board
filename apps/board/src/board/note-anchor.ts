@@ -2,9 +2,9 @@
 // cards it is on, and beside the part it opened from (a note or a reply), its arrow on that part
 // (popovers-larger-thread ruling 2, review polish ruling 6). Read from the layout, so a bubble
 // follows its card through every pan, zoom and relayout.
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { StageBox, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { boxAround, partAnchor, titleAnchor } from '../../../../packages/ui/src/index.ts';
+import type { BoardLayout } from '#layout';
+import type { StageBox, VbRegionElement } from '#ui';
+import { boxAround, partAnchor, titleAnchor } from '#ui';
 import type { Open } from './note-views.ts';
 import type { Viewport } from './viewport.ts';
 

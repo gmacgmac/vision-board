@@ -1,7 +1,8 @@
 // Project rule checks, one command, zero dependencies (D-016). Run: npm run verify.
-// Rules: steering rule 1 (layers + front doors), rule 2 (file length), rule 15 (the board page's
-// weight, from the last `npm run build`), rule 20 and cortex-rules 11 (exact versions, dependency
-// register), and the generated module map (docs/specification/modules.md).
+// Rules: steering rule 1 (layers; front doors: a module is reached only by its name, D-059), rule 2
+// (file length), rule 15 (the board page's weight, from the last `npm run build`), rule 20 and
+// cortex-rules 11 (exact versions, dependency register), and the generated module map
+// (docs/specification/modules.md).
 // Each check is a pure function over strings, so scripts/verify.test.mjs proves every rule fails
 // when broken. `--write-map` regenerates the module map instead of checking it.
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -10,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 export const LIMITS = { warn: 300, fail: 500 };
-export const ROOTS = ['apps', 'packages', 'scripts'];
+export const ROOTS = ['apps', 'packages', 'scripts', 'tests', 'skills'];
 export const MAP_FILE = 'docs/specification/modules.md';
 export const REGISTER = 'docs/specification/dependencies.md';
 /** Rule 15: the board page's JS and CSS, gzipped (docs/specification/performance.md § Budgets). */
@@ -32,7 +33,16 @@ export const LAYERS = {
 
 const SOURCE = /\.(?:ts|mjs|js|svelte|css|html)$/;
 const CODE = /\.(?:ts|mjs|js|svelte)$/;
-const IMPORT = /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+// Every way one file reaches another. Imports: `from` (import, export, import type), a bare
+// side-effect import, a dynamic import. Paths: `new URL(…, import.meta.url)` (a template's static
+// start), Vite's import.meta.glob, an HTML href or src, a CSS @import.
+const IMPORT = /(?:import|export)\s[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s*['"]([^'"]+)['"]/gm;
+const URL_PATH = /new URL\(\s*['"`]([^'"`$]+)/g;
+const GLOB = /import\.meta\.glob(?:<[^>]*>)?\(\s*['"`]([^'"`]+)/g;
+const LINK = /\s(?:href|src)="([^"]+)"/g;
+const CSS_IMPORT = /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g;
+/** Test code that may import the app it tests: the page suite, and a skill's own tests. */
+const APP_TESTS = /^(?:tests\/|skills\/.*\.test\.m?[jt]s$)/;
 const EXACT = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 // verify.test.mjs holds import strings as fixtures, so it is not scanned for imports.
 const FIXTURE_HOST = /^scripts\/.*\.test\.mjs$/;
@@ -49,49 +59,65 @@ export function checkLength(file, text) {
   return [warn(file, `${lines} lines (aim for about ${LIMITS.warn})${reason ? ` (long-file: ${reason})` : ''}`)];
 }
 
-/** The module a repo path belongs to: { kind: 'package'|'app'|'scripts', name }, or null. */
+/** The module a repo path belongs to: { kind: 'package'|'app'|'skill'|'scripts'|'tests', name }, or null. */
 export function ownerOf(rel) {
   const [top, name] = rel.split('/');
   if (top === 'packages' && name) return { kind: 'package', name };
   if (top === 'apps' && name) return { kind: 'app', name };
-  if (top === 'scripts') return { kind: 'scripts', name: 'scripts' };
+  if (top === 'skills' && name) return { kind: 'skill', name };
+  if (top === 'scripts' || top === 'tests') return { kind: top, name: top };
   return null;
 }
 
-/** Repo-relative target of an import, or null for node:/bare specifiers. `/pkg/x/...` is the browser alias for packages/x/. */
-export function resolveImport(fromRel, spec) {
-  if (spec.startsWith('/pkg/')) return path.posix.join('packages', spec.slice(5));
+/** The module names (D-059): the root package.json `imports` map, each name to its repo path. */
+export function namesOf(pkg) {
+  return new Map(Object.entries(pkg.imports ?? {}).map(([name, target]) => [name, path.posix.normalize(target)]));
+}
+
+/** Every reference in a file: { how: 'import'|'path', spec }. An import loads code or CSS; a path
+ * names a file (new URL, glob, href/src). A CSS @import is an import. */
+export function referencesOf(rel, text) {
+  const all = (re, how) => [...text.matchAll(re)].map((m) => ({ how, spec: m[1] ?? m[2] ?? m[3] }));
+  if (rel.endsWith('.html')) return all(LINK, 'path');
+  if (rel.endsWith('.css')) return all(CSS_IMPORT, 'import');
+  return [...all(IMPORT, 'import'), ...all(URL_PATH, 'path'), ...all(GLOB, 'path')];
+}
+
+/** The repo path a reference reaches: a module name through `names`, a relative path from the
+ * file. undefined for a name not in the map; null for node:, bare and absolute specifiers. */
+export function targetOf(fromRel, spec, names) {
+  if (spec.startsWith('#')) return names.get(spec);
   if (!spec.startsWith('.')) return null;
   return path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec));
 }
 
-export function importsOf(text) {
-  return [...text.matchAll(IMPORT)].map((m) => m[1] ?? m[2]);
-}
+const same = (a, b) => a.kind === b.kind && a.name === b.name;
 
-/** Rule 1 / D-016: layer direction, no package imports an app, cross-module imports use the front door. */
-export function checkImports(fromRel, text, layers = LAYERS) {
+/** Rule 1 / D-016, D-059: a module is reached only by its name (code, CSS, HTML, file paths);
+ * names follow the layers; nothing but test code imports an app; nothing imports scripts/. */
+export function checkReferences(fromRel, text, names, layers = LAYERS) {
   const from = ownerOf(fromRel);
   if (!from) return [];
   const out = [];
-  for (const spec of importsOf(text)) {
-    const target = resolveImport(fromRel, spec);
-    if (!target) continue;
-    const to = ownerOf(target);
-    if (!to || (to.kind === from.kind && to.name === from.name)) continue;
-    if (to.kind === 'app') {
+  for (const { how, spec } of referencesOf(fromRel, text)) {
+    const named = spec.startsWith('#');
+    const target = targetOf(fromRel, spec, names);
+    if (target === undefined) out.push(fail(fromRel, `${spec} is not a module name (package.json "imports", D-059)`));
+    const to = target && ownerOf(target);
+    if (!to) continue;
+    if (same(from, to)) {
+      if (named) out.push(fail(fromRel, `imports its own module's name (${spec}); use a relative path inside a module`));
+    } else if (to.kind === 'package') {
+      if (!named) out.push(fail(fromRel, `back door into packages/${to.name} (${spec}): reach it by its name, #${to.name} (package.json "imports", D-059)`));
+      else if (from.kind === 'package' && !(layers[from.name] ?? []).includes(to.name)) {
+        out.push(fail(fromRel, `packages/${from.name} may not depend on packages/${to.name} (${spec}); see LAYERS / D-016`));
+      }
+    } else if (how === 'import' && to.kind === 'app' && !APP_TESTS.test(fromRel)) {
       out.push(fail(fromRel, `imports an app (${spec}); apps are never imported`));
-      continue;
-    }
-    if (to.kind === 'scripts') {
+    } else if (how === 'import' && to.kind === 'scripts') {
       out.push(fail(fromRel, `imports scripts/ (${spec})`));
-      continue;
-    }
-    if (from.kind === 'package' && !(layers[from.name] ?? []).includes(to.name)) {
-      out.push(fail(fromRel, `packages/${from.name} may not depend on packages/${to.name} (${spec}); see LAYERS / D-016`));
-    }
-    if (target !== `packages/${to.name}/src/index.ts`) {
-      out.push(fail(fromRel, `back-door import ${spec}; import packages/${to.name}/src/index.ts instead`));
+    } else if (how === 'import' && from.kind === 'package' && !named) {
+      out.push(warn(fromRel, `imports ${spec} from outside its module by path: give it a home in a module and import it by name`));
     }
   }
   return out;
@@ -151,17 +177,18 @@ export function checkManifest(file, json, registerText) {
   return out;
 }
 
-/** The module map: who depends on whom (from real imports) and each package's public API. */
-export function buildMap(files) {
+/** The module map: who depends on whom (from real imports, by name or path) and each package's
+ * public API. Test-only folders (tests/, skills/) are left out. */
+export function buildMap(files, names = new Map()) {
   const deps = new Map();
   const ensure = (key) => deps.get(key) ?? deps.set(key, new Set()).get(key);
   for (const { rel, text } of files) {
     const from = ownerOf(rel);
-    if (!from || !CODE.test(rel)) continue;
+    if (!from || !['package', 'app', 'scripts'].includes(from.kind) || !CODE.test(rel)) continue;
     const key = `${from.kind === 'package' ? 'packages' : from.kind === 'app' ? 'apps' : ''}/${from.name}`.replace(/^\//, '');
     ensure(key);
-    for (const spec of importsOf(text)) {
-      const target = resolveImport(rel, spec);
+    for (const { how, spec } of referencesOf(rel, text)) {
+      const target = how === 'import' && targetOf(rel, spec, names);
       const to = target && ownerOf(target);
       if (to?.kind === 'package' && !(from.kind === 'package' && to.name === from.name)) ensure(key).add(`packages/${to.name}`);
     }
@@ -201,7 +228,8 @@ function walk(root, dir, out) {
 
 export function verify(root, { writeMap = false } = {}) {
   const files = ROOTS.filter((r) => existsSync(path.join(root, r))).flatMap((r) => walk(root, r, []));
-  const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(CODE.test(rel) && !FIXTURE_HOST.test(rel) ? checkImports(rel, text) : [])]);
+  const names = namesOf(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')));
+  const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names))]);
   const registerPath = path.join(root, REGISTER);
   const register = existsSync(registerPath) ? readFileSync(registerPath, 'utf8') : null;
   const manifests = ['package.json', ...['apps', 'packages'].flatMap((r) =>
@@ -210,7 +238,7 @@ export function verify(root, { writeMap = false } = {}) {
     results.push(...checkManifest(m, JSON.parse(readFileSync(path.join(root, m), 'utf8')), register));
   }
   results.push(...weightOf(root));
-  const map = buildMap(files.filter((f) => !FIXTURE_HOST.test(f.rel)));
+  const map = buildMap(files.filter((f) => !FIXTURE_HOST.test(f.rel)), names);
   const mapPath = path.join(root, MAP_FILE);
   if (writeMap) writeFileSync(mapPath, map);
   else if (!existsSync(mapPath) || readFileSync(mapPath, 'utf8') !== map) results.push(fail(MAP_FILE, 'out of date: run npm run map'));

@@ -10,9 +10,9 @@
 // person's answers as they stood just before the retire (review polish ruling 10, N42): the ledger
 // is read on to that line and folded without the board's later drawing (retired.ts `pastLines`). The live state keeps following the ledger underneath; new lines never
 // redraw the past view, but the dropdown's "now" moves. Esc or "Back to now" ends it.
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
-import type { BoardRun, LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardVersions, foldLedger } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import type { BoardRun, LedgerState } from '#actions';
+import { boardVersions, foldLedger } from '#actions';
 import { readLedger } from './io.ts';
 import { pastLines } from './retired.ts';
 import type { StageHandlers } from './wiring.ts';
@@ -64,7 +64,7 @@ async function linesTo(seq: number): Promise<LedgerEvent[]> {
 }
 
 /** A version's time as the dropdown and the banner show it: the node pattern's (node-time.ts), with the note times. */
-export { versionTime } from '../../../../packages/ui/src/index.ts';
+export { versionTime } from '#ui';
 
 export function createVersions(d: VersionsDeps): Versions {
   let state: LedgerState | null = null;

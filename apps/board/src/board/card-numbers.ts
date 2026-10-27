@@ -3,9 +3,9 @@
 // draws and sends names a card by its number on its board: the View's node ids, the DOM's
 // `data-id`, every act body. These turn one into the other, on the page's side, so a module that
 // indexes the folded state with a number it drew goes through here. Pure.
-import type { LedgerEvent, LedgerLine } from '../../../../packages/format/src/index.ts';
-import { boardNumber, cardId, fromLine } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent, LedgerLine } from '#format';
+import { boardNumber, cardId, fromLine } from '#format';
+import type { LedgerState } from '#actions';
 
 type Held = Pick<LedgerState, 'index'>;
 

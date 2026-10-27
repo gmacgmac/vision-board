@@ -3,7 +3,7 @@
 // "The person updated the board:" message and the notes its lines carry) is packages/actions
 // `roundOf` (board-message.ts), the one writer the page's composer preview reads too
 // (composer-one-chip ruling 2). Pure: from the folded ledger.
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
+import type { LedgerState } from '#actions';
 
 /** The `seq` of the last Send on `board` before `before`, 0 when there is none. */
 export function previousSend(s: LedgerState, board: string, before: number): number {

@@ -6,10 +6,10 @@
 // an agent's reply closes the box and rings that note on the card (note-hide.ts `highlight`). A line
 // for the card that lands while the box is open adds its row at the top, focus left where it was.
 // Up and Down (Home, End) move between the rows that are buttons (menu-keys.ts). Browser only.
-import type { HistoryRow, LedgerState } from '../../../../packages/actions/src/index.ts';
-import { cardTimeRows } from '../../../../packages/actions/src/index.ts';
-import type { PopoverShowDetail } from '../../../../packages/ui/src/index.ts';
-import { HISTORY, historyMarkup, historyRowMarkup, POPOVER_CLOSE, POPOVER_SHOW } from '../../../../packages/ui/src/index.ts';
+import type { HistoryRow, LedgerState } from '#actions';
+import { cardTimeRows } from '#actions';
+import type { PopoverShowDetail } from '#ui';
+import { HISTORY, historyMarkup, historyRowMarkup, POPOVER_CLOSE, POPOVER_SHOW } from '#ui';
 import { idOf } from './card-numbers.ts';
 import { menuKeydown } from './menu-keys.ts';
 import type { NotePart } from './note-hide.ts';

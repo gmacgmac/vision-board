@@ -5,8 +5,8 @@
 // head, is no answer and reaches no agent's check_responses.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { APP_ACTIONS } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { APP_ACTIONS } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { ACTIONS, appCards, appOf, passesLock, REFERENCES, responsesAfter, scopeOf, validateAct } from '../src/index.ts';
 import { isAnswer } from '../src/registry.ts';

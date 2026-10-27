@@ -2,8 +2,8 @@
 // 81-86): the rows the requests strip shows, the holders the toolbar lists for the board and each
 // frame shows for its container, and the acts Allow, Refuse, Remove access and Send send. Plain data in, plain data out; the controller sends the acts
 // through the one act path, so the server's checks (validateAct) judge every one.
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
+import type { View } from '#format';
+import type { AccessHolder } from '#actions';
 import type { AccessRequestRow } from '../shell/shell.svelte.ts';
 import type { ActFields, BoardData } from './io.ts';
 

@@ -9,10 +9,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { FIXTURES_DIR } from '#format/files';
 
 type Line = Record<string, unknown> & { type: string };
 
-const ROADMAP = fileURLToPath(new URL('../../packages/format/fixtures/roadmap.ledger.jsonl', import.meta.url));
+const ROADMAP = `${FIXTURES_DIR}roadmap.ledger.jsonl`;
 export const BIG = { board: 'big', regions: 20, perRegion: 50 } as const;
 
 export function perfLedger(): string[] {

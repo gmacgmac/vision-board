@@ -6,7 +6,7 @@ import path from 'node:path';
 import type { Caller } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import { ProblemError } from '../server/problem.ts';
-import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
+import { LEDGER_FORMAT } from '#format';
 
 // New lines are ledger v3, where `agent` is an agent id from `join` (api.md 11).
 const AGENT: Caller = { by: 'agent', agent: 'a-kiro0001' };

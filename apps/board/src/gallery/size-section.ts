@@ -3,9 +3,9 @@
 // the auto rule picks them, the agent's suggestion and emphasis, then the size control at rest,
 // with your pick, revealed and with keyboard focus. Each card is a real <vb-node>, drawn with the
 // tier the board would use (`tierOf`, through sizeTier) from the fixture ledger's "sizes" region.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import { tierOf } from '../board/size.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

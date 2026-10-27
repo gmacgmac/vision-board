@@ -7,8 +7,8 @@
 // `data-history-reply`): the page closes the box and rings that note on the card. Other rows are text.
 // The template draws the ⓘ and the empty box with its heading; the page fills the list when the box
 // shows (`POPOVER_SHOW`), from the state it holds. Pure.
-import type { ViewNode } from '../../../format/src/index.ts';
-import type { HistoryRow } from '../../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { HistoryRow } from '#actions';
 import { esc } from '../markdown/inline.ts';
 import { INFO_ICON, svgIcon } from './node-icons.ts';
 import { isItem } from './node-core.ts';

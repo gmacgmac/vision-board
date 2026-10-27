@@ -8,7 +8,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { APP_LIMITS } from '../../../packages/format/src/index.ts';
+import { APP_LIMITS } from '#format';
+import { SCHEMA_DIR } from '#format/files';
 import { appHash, appState, parseEnv, readApp, readEnv } from '../server/apps.ts';
 import { foreignSchemas } from '../server/schema.ts';
 import { FILE_NAME_WORDS } from './app-support.ts';
@@ -72,7 +73,7 @@ test('finding 36: the file-name words say the whole rule: a name at each edge pa
 });
 
 test('tracker row 38: the manifest schema says the file-name rule in the words the board sends', () => {
-  const schema = new URL('../../../packages/format/schema/app/manifest.schema.json', import.meta.url);
+  const schema = `${SCHEMA_DIR}app/manifest.schema.json`;
   const defs = JSON.parse(fs.readFileSync(schema, 'utf8')).$defs as Record<string, { description: string }>;
   for (const [field, def] of [['panel', 'panelFile'], ['tools', 'toolsFile']] as const) {
     assert.equal(defs[def]!.description.replaceAll('`', ''), `A ${FILE_NAME_WORDS[field].replace(`${field} must be a `, '')}.`);

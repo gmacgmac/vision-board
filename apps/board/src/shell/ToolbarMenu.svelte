@@ -17,7 +17,7 @@
   import { shell } from './shell.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
   import { menuKeydown } from '../board/menu-keys.ts';
-  import { flagOn } from '../../../../packages/format/src/index.ts';
+  import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
   import { keepAlign } from './align.ts';
   import { currentFolderOn } from '../board/folder.ts';

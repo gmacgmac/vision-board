@@ -5,8 +5,8 @@
 // identities (`id`, `nodes`); words name them by board number (api.md 125). On an archived board
 // only `restore` goes (archive.ts, api.md 135); on a locked one, only the person's own marks
 // (lock.ts `writeProblem`, api.md 139).
-import type { ActEvent } from '../../format/src/index.ts';
-import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { CONTAINER_PLACES, isContainerAct, LATER_REGION, latest, NODE_TYPES, revokeProblem } from '#format';
 import type { LedgerState } from './fold.ts';
 import { appRules } from './apps.ts';
 import { archiveRules } from './archive.ts';

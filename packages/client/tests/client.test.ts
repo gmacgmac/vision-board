@@ -2,7 +2,7 @@
 // are parsed into ApiProblem, and a missing path parameter is refused before any request.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OPERATIONS } from '../../format/src/index.ts';
+import { OPERATIONS } from '#format';
 import { ApiProblem, buildRequest, createClient, urlFor } from '../src/index.ts';
 
 const BASE = 'http://127.0.0.1:4466';

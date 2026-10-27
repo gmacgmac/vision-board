@@ -2,9 +2,9 @@
 // on the path's board, or the `{ key }` of a node item this agent wrote, becomes the card's
 // identity; a `retire` item becomes its stored line, with `cards` filled in. A number the board has
 // not given, or a key no node item carried, fails the item at its pointer.
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { retireCards } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import type { LedgerState } from '#actions';
+import { retireCards } from '#actions';
 import { cardOn, noCard } from './edge.ts';
 import type { Ledger } from './ledger.ts';
 import { fail } from './write-problem.ts';

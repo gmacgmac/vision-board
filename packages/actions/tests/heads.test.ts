@@ -6,8 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { LedgerEvent } from '../../format/src/index.ts';
-import { isPrivateAct, readLedger } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { isPrivateAct, readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { applyEvent, boardList, emptyState, eventBoard, foldLedger } from '../src/index.ts';
 import { scene } from './ledger-v3.ts';

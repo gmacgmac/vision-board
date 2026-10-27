@@ -6,7 +6,7 @@
 // links on shared trunks and none crossing; keeping card 12 in column 1 costs the one crossing.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Link, Region, View, ViewNode } from '../../format/src/index.ts';
+import type { Link, Region, View, ViewNode } from '#format';
 import { crossingPoints, layoutBoard, MODE_FNS, routeLines } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 import { GAP, LANE_PAD } from '../src/types.ts';

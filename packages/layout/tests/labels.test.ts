@@ -2,7 +2,7 @@
 // that says whether the label fits its stretch of line without covering a card or another label.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Link } from '../../format/src/index.ts';
+import type { Link } from '#format';
 import { labelSize, overlaps, routeLines, routeLinks } from '../src/index.ts';
 import type { Box } from '../src/index.ts';
 

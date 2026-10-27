@@ -2,8 +2,8 @@
 // code at one version, folded to one allowed hash per app; the rules for an allow and a stop; and
 // which cards name which app. An app is on no board and no card: the allow stays when its cards are
 // retired, and whether a hash is the app's current code is the app host's to say (list_apps).
-import type { ActEvent } from '../../format/src/index.ts';
-import { latest } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { latest } from '#format';
 import type { LedgerState } from './fold.ts';
 
 /** What the fold keeps for apps: app id -> the hash the person allowed, while it stands. */

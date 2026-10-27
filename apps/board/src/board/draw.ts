@@ -9,10 +9,10 @@
 // and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
 // after again when a card is selected, and a card whose image changed its height is measured and laid
 // out again alone (`resized`).
-import type { NodeSize, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { Align, BoardLayout, Size } from '../../../../packages/layout/src/index.ts';
-import { widthsOf } from '../../../../packages/format/src/index.ts';
-import type { CardConditions, CardReply, VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { NodeSize, ViewNode } from '#format';
+import type { Align, BoardLayout, Size } from '#layout';
+import { widthsOf } from '#format';
+import type { CardConditions, CardReply, VbNodeElement, VbRegionElement } from '#ui';
 import { holdersOf } from './access.ts';
 import { createCardImages } from './card-images.ts';
 import { createCardSet } from './cards.ts';

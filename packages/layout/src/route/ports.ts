@@ -2,7 +2,7 @@
 // the side in the order of the far ends, so fan-outs don't start from one point. A side's only port
 // leans towards the far end, the source's further than the target's, so two links between two
 // pairs of cards side by side cross cleanly instead of running along one line. Pure.
-import type { Link } from '../../../format/src/index.ts';
+import type { Link } from '#format';
 import type { Box, Point } from '../types.ts';
 import { centre } from '../geometry.ts';
 

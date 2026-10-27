@@ -21,7 +21,7 @@ never a file. The format-1 view files and transcript are archived in
 
 - **Depends on**: nothing.
 - **Used by**: `packages/actions`, `packages/layout`, `packages/ui`, `apps/board`.
-- **Public API** (`src/index.ts`): view types and constants (`View`, `ViewNode`, `Region`,
+- **Public API** (`#format`, `src/index.ts`, D-059): view types and constants (`View`, `ViewNode`, `Region`,
   `Link`, `MODES`, `KINDS`, `ID_PATTERN`, `FORBIDDEN_KEYS`; card widths `WIDTHS`, `DEFAULT_WIDTHS`,
   `widthsOf`, api.md 132), `validateView`; ledger types
   (`LedgerEvent` and one type per event, `NodeBody`, `ParkBundle`, `LedgerRegion`, `EVENT_TYPES`,
@@ -47,3 +47,5 @@ never a file. The format-1 view files and transcript are archived in
   plain words for why an image is not shown), `imagePathProblem` (the one path check, used by the
   board's route and the Markdown renderer), `imageTypeByName`, `imageTypeOf` and the type
   `ImageName`. Pure string logic: no Node and no DOM.
+- **Files Node reads** (`#format/files`, `src/files.ts`, D-060): `SCHEMA_DIR`, `OPENAPI_FILE`, `FIXTURES_DIR`.
+  Not on `#format`, which the page loads, so `node:url` stays out of the page bundle.

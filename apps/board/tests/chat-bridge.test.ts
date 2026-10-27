@@ -7,10 +7,10 @@
 // stream starts over when the server did; a message's body.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { boardBlocks, foldLedger, roundOf, ROUND_HEAD, SELECTED_HEAD } from '../../../packages/actions/src/index.ts';
-import type { ChatComposerElement, ChatEvent, ChatState, Chip, ComposerContext } from '../../../packages/chat/src/index.ts';
-import { applyEvents, CHAT_CHANGE_EVENT, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
+import { readLedger } from '#format';
+import { boardBlocks, foldLedger, roundOf, ROUND_HEAD, SELECTED_HEAD } from '#actions';
+import type { ChatComposerElement, ChatEvent, ChatState, Chip, ComposerContext } from '#chat';
+import { applyEvents, CHAT_CHANGE_EVENT, EMPTY_CHAT } from '#chat';
 import { boardData } from '../src/board/board-data.ts';
 import type { BoardData } from '../src/board/io.ts';
 import {

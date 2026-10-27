@@ -7,8 +7,8 @@
 // changes, so it is measured and only its container lays out again (cards.ts, layout-cache.ts).
 // `highlight` brings one note or reply into view on its card, showing the thread first if it is
 // put away, and rings it for a moment: the history box's rows call it (card-polish FE_03).
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
+import type { BoardState } from '#actions';
+import type { BoardLayout } from '#layout';
 import type { ActFields } from './io.ts';
 import type { Viewport } from './viewport.ts';
 

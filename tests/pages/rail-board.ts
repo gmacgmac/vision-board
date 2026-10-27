@@ -6,7 +6,7 @@ import { draw, write } from './agent-board.ts';
 import type { Drawn } from './agent-board.ts';
 import { expect } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-import { REGION_GAP, REGION_PAD } from '../../packages/layout/src/types.ts';
+import { REGION_GAP, REGION_PAD } from '#layout';
 import { FAR_K } from '../../apps/board/src/board/viewport.ts';
 
 export type Box = { x: number; y: number; width: number; height: number };

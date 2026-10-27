@@ -6,8 +6,8 @@
 // is never named to an agent. Walks ACTION_IDS and EVENT_TYPES, so a new action or event is covered.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent, ActionId, EventType, LedgerEvent } from '../../format/src/index.ts';
-import { ACTION_IDS, EVENT_TYPES, LATER_REGION } from '../../format/src/index.ts';
+import type { ActEvent, ActionId, EventType, LedgerEvent } from '#format';
+import { ACTION_IDS, EVENT_TYPES, LATER_REGION } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   boardList, boardLocked, boardState, LOCKED, LOCKED_PERSON, lockedProblem, passesLock, responsesAfter, UNAVAILABLE, validateAct,

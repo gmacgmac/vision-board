@@ -1,8 +1,8 @@
 // An agent's proposals (D-018, api.md 93): a decision the agent proposes on one card, which only
 // the person takes. How one ends, folded by fold.ts, and where an open one stands, read by the act
 // rules (act.ts) and the conditions table (conditions.ts). Pure.
-import type { ActEvent } from '../../format/src/index.ts';
-import { latest, NODE_TYPES } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { latest, NODE_TYPES } from '#format';
 import type { LedgerState, Proposal } from './fold.ts';
 import { numberOf } from './numbers.ts';
 

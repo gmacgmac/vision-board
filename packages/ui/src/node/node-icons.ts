@@ -1,7 +1,7 @@
 // Node pattern icons: presentation keyed by type lives in packages/ui (components.md § The
 // node-type registry). Records keyed by Kind, so the compiler fails when a kind is added without
 // its icon. Paths only; node-template.ts wraps them in <svg>. Stroke icons, drawn by node.css.
-import type { ActionId, Kind } from '../../../format/src/index.ts';
+import type { ActionId, Kind } from '#format';
 
 /** The kind's icon in the card footer, 24 x 24. Redrawn from the board-v3 mockups' i-<kind>. */
 export const KIND_ICON: Record<Kind, string> = {

@@ -9,11 +9,12 @@ import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { FIXTURES_DIR } from '#format/files';
 import { createBoardServer } from '../../apps/board/server/app.ts';
 import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
 
 const DIST = fileURLToPath(new URL('../../apps/board/dist', import.meta.url));
-const ROADMAP = fileURLToPath(new URL('../../packages/format/fixtures/roadmap.ledger.jsonl', import.meta.url));
+const ROADMAP = `${FIXTURES_DIR}roadmap.ledger.jsonl`;
 
 export interface RoadmapServer { base: string; close(): Promise<void> }
 

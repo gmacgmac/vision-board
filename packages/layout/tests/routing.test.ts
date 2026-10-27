@@ -3,8 +3,8 @@
 // own tracks; right angles; deterministic. Links between containers and in radial keep the elbow.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Link, Mode, View } from '../../format/src/index.ts';
-import { KINDS } from '../../format/src/index.ts';
+import type { Link, Mode, View } from '#format';
+import { KINDS } from '#format';
 import { layoutBoard, routeLines, routeLinks } from '../src/index.ts';
 import type { Box, Size } from '../src/index.ts';
 import { rightAngled, shareStretch, under } from './route-checks.ts';

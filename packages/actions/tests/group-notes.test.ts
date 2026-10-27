@@ -4,8 +4,8 @@
 // sees it once with all its numbers.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems, readLedger } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, eventProblems, readLedger } from '#format';
 import {
   boardState, nodeDetail, pendingItems, replyText, responsesAfter, validateAct,
 } from '../src/index.ts';

@@ -13,7 +13,9 @@ Schemas and the hand validator, then in order, and prints every problem with its
 `packages/format/schema/` by `$id` and gives plain-English problems (`ledgerLineProblems`,
 `compileSchema`); the page never imports it. Pages arrange patterns
 from `packages/ui`; they hold no layout maths, file formats or actions themselves. Every card is a
-`<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the pattern CSS, and
+`<vb-node>` element: `src/main.ts` calls `defineBoardElements()` and imports the page's stylesheet list
+(`src/styles/page.ts`: the tokens, the board's sheets, `#ui/styles.css`, the shell's; the gallery imports
+it too; the chat's sheets are `src/styles/chat.ts`, loaded with the panel), and
 `src/board/cards.ts` and `src/board/render.ts` create, measure and place the elements but never
 build their markup. The page works in proportion to what changed (N12,
 `docs/specification/performance.md`): `src/board/live.ts` reads the ledger once and applies each new
@@ -109,8 +111,8 @@ opens the zoomed view (`<vb-image-view>`, components.md ยง Images in cards and ย
 
 The pattern gallery (`gallery.html`, `src/gallery/`) shows every pattern in every state on one page,
 drawn from `src/gallery/gallery.ledger.jsonl` (a real ledger in the real schema) through the
-patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from the patterns'
-`pattern.json` files; a pattern needs a sample function in `src/gallery/main.ts` or the page shows
+patterns' own `boardView`, `nodeState` and `regionState`. Sections are listed from `#ui` `PATTERNS`
+(`packages/ui/src/patterns.ts`, the patterns' `pattern.json` files); a pattern needs a sample function in `src/gallery/main.ts` or the page shows
 a gap and the page test fails. Open it at `/gallery.html`. Page tests (`npm run test:pages`, D-025,
 in `tests/pages/`) run the board and the gallery in Chromium on port 4468 from a fresh copy of the
 roadmap fixture ledger, and the performance budgets on port 4469 from a generated 1,000-card ledger

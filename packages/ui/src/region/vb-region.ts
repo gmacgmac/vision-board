@@ -5,7 +5,7 @@
 // the ui front door). It is only the frame: cards stay in their own layer (D-013), and the page
 // measures and places it (transform, width, height). The mode row's keyboard, popover and
 // settings menu are region-row.ts.
-import type { Mode, Region } from '../../../format/src/index.ts';
+import type { Mode, Region } from '#format';
 import type { RegionState } from './region-core.ts';
 import { regionColour, widthsTip } from './region-core.ts';
 import type { ModeRow, RegionOpen } from './region-row.ts';

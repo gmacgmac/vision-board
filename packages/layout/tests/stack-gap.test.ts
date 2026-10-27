@@ -2,7 +2,7 @@
 // tabs (about 16px with their halo) clear the card above. Grid, flow and radial are unchanged.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Region, ViewNode } from '../../format/src/index.ts';
+import type { Region, ViewNode } from '#format';
 import { MODE_FNS } from '../src/index.ts';
 import { GAP } from '../src/types.ts';
 import type { Size } from '../src/index.ts';

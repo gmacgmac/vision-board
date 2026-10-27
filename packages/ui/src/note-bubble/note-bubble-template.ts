@@ -12,7 +12,7 @@ import type { BubbleView } from './note-bubble-core.ts';
 import { readOnlyMode } from './note-bubble-core.ts';
 import { esc } from '../markdown/inline.ts';
 import { renderMarkdown } from '../markdown/render.ts';
-import { MAX_TEXT } from '../../../format/src/index.ts';
+import { MAX_TEXT } from '#format';
 
 const button = (act: string, label: string, primary = false): string =>
   `<button type="button" class="vb-nb-btn${primary ? ' vb-nb-primary' : ''}" data-note-do="${act}">${esc(label)}</button>`;

@@ -3,8 +3,8 @@
 // board must keep cards apart, inside their frame below its top line, frames apart, pins exact.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Link, Region, View, ViewNode } from '../../format/src/index.ts';
-import { KINDS, MODES } from '../../format/src/index.ts';
+import type { Link, Region, View, ViewNode } from '#format';
+import { KINDS, MODES } from '#format';
 import { layoutBoard, overlaps, REGION_HEAD } from '../src/index.ts';
 import type { BoardLayout, Point, Size } from '../src/index.ts';
 

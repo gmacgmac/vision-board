@@ -7,19 +7,21 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import type { AgentUpdate } from '../../../packages/agent/src/index.ts';
-import { ClaudeStream, factsFor, toChatEvent } from '../../../packages/agent/src/index.ts';
-import type { ChatEvent } from '../../../packages/chat/src/index.ts';
-import { activityLine, applyEvents, CHAT_EVENT_KINDS, chatStatus, EMPTY_CHAT } from '../../../packages/chat/src/index.ts';
-import { ROUND_HEAD } from '../../../packages/actions/src/index.ts';
+import type { AgentUpdate } from '#agent';
+import { ClaudeStream, factsFor, toChatEvent } from '#agent';
+import { DRAW, REFUSED } from '#agent/testing';
+import type { ChatEvent } from '#chat';
+import { activityLine, applyEvents, CHAT_EVENT_KINDS, chatStatus, EMPTY_CHAT } from '#chat';
+import { ROUND_HEAD } from '#actions';
 import { QUEUED } from '../server/chat-session.ts';
-import { CHAT_EVENT_ID, CHAT_SCHEMA_DIR, schemaFiles, schemaProblems } from '../server/schema.ts';
+import { CHAT_SCHEMA_DIR } from '#chat/files';
+import { CHAT_EVENT_ID, schemaFiles, schemaProblems } from '../server/schema.ts';
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8');
 const SCENES = JSON.parse(read('../src/gallery/gallery.chat.json')) as Record<'session' | 'stopped' | 'error' | 'send', ChatEvent[]>;
-const replay = (name: string): AgentUpdate[] => {
+const replay = (file: string): AgentUpdate[] => {
   const stream = new ClaudeStream(['vision-board'], () => {});
-  const lines = read(`../../../packages/agent/tests/fixtures/${name}`).split('\n').filter(Boolean);
+  const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
   return [...lines.flatMap((l) => stream.push(JSON.parse(l))), ...stream.end()];
 };
 const unstamp = ({ at: _, session: __, seq: ___, ...e }: ChatEvent) => e;
@@ -43,7 +45,7 @@ test('every gallery chat event passes the chat schema, numbered from 1 in its se
 });
 
 test('the agent\'s events are the recorded turns through toChatEvent; the facts are the gate\'s', () => {
-  const recorded = [...replay('claude-draw.jsonl'), ...replay('claude-refused.jsonl')].map(toChatEvent);
+  const recorded = [...replay(DRAW), ...replay(REFUSED)].map(toChatEvent);
   assert.deepEqual(SCENES.session.filter((e) => FROM_AGENT.has(e.kind)).map(unstamp), recorded);
   assert.deepEqual(unstamp(SCENES.stopped.at(-1)!), toChatEvent({ type: 'stopped' }));
   assert.deepEqual(unstamp(SCENES.error.at(-1)!), toChatEvent({ type: 'error', message: 'Claude Code ended without a result.' }));

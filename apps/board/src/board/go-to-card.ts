@@ -8,7 +8,7 @@
 // appeared, as the container's retired marker does (`lastShown`, ruling 4). Card numbers go
 // through card-numbers.ts. `goTarget` is pure; `createGoTo` keeps the box's state and its timer. The
 // toolbar's open list goes to a card through the same path (`to`, open-list FE_01).
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState } from '#actions';
 import { idOf } from './card-numbers.ts';
 import { lastShown } from './retired.ts';
 

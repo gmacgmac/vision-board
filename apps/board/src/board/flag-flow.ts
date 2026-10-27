@@ -7,8 +7,8 @@
 // agent (the server keeps it out of every agent read, and the Send message reads no flag). Which
 // cards are flagged is `BoardState.flags`, as the page reads the board. Nothing acts while a past
 // version shows (versions.ts `guard`, sender.ts).
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
+import type { View } from '#format';
+import type { BoardState } from '#actions';
 import type { ActFields } from './io.ts';
 
 /** The act that turns card `id`'s flag over: `flag` when it has none, `unflag` when it has one. */

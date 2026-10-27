@@ -3,8 +3,8 @@
 // off keeps numbers, and so buttons, on cards that need an answer only. Pure: a small folded ledger.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { applyEvent, foldLedger } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { applyEvent, foldLedger } from '#actions';
 import { answeredIds, boardData, numberedView, pageConditions } from '../src/board/board-data.ts';
 
 const at = '2026-10-10T09:00:00Z';

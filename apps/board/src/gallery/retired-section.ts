@@ -4,8 +4,8 @@
 // button that opens the board version where they last appeared, with the person's answers as they
 // stood just before the retire (review polish ruling 10). The frame is a real <vb-region>,
 // with the marker the board works out from the fixture ledger (retired.ts, render.ts).
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState, retiredMarker } from '../../../../packages/ui/src/index.ts';
+import type { VbRegionElement } from '#ui';
+import { regionState, retiredMarker } from '#ui';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

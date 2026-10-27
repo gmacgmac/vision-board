@@ -1,8 +1,8 @@
 // Node pattern, layer 1 (core), the changed card's part (FE_02): the "N updates" tab and the
 // stepper a changed card opens, worded from the versions the page passes in. Split out of
 // node-core.ts along this seam (the flag, field report batch 2, grew it past 300 lines). No DOM.
-import type { ViewNode } from '../../../format/src/index.ts';
-import type { Change, FieldChange } from '../../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { Change, FieldChange } from '#actions';
 
 /** One version a changed card steps through (FE_02): when and by whom, and what changed from the
  *  version before (`versionChanges`). `when` is in the person's clock; `agent` the writer's label.

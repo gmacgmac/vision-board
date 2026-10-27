@@ -2,7 +2,7 @@
 // in each state. No DOM, so it is unit-tested under plain Node. README picks 5 and 11-12, mockup
 // 05 section 1 (`.ovl.note`), Architect `positionPop`: the right of the card, else the left, else
 // below; never over the card, and it moves nothing.
-import type { NoteKind } from '../../../format/src/index.ts';
+import type { NoteKind } from '#format';
 import type { NotesEntry, ReplyEntry } from '../node/node-core.ts';
 
 export interface StageBox { x: number; y: number; w: number; h: number }

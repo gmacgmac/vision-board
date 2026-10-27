@@ -2,8 +2,8 @@
 // draws. Only when the page asks for it (the nodeSize flag); otherwise nothing changes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState } from '#actions';
 import { nodeState, nodeTemplate, sizeLabel } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode =>

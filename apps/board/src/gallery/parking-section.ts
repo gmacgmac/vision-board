@@ -5,9 +5,9 @@
 // was. The cards and the frame are real <vb-node> and <vb-region> elements updated with `nodeState` and
 // `regionState` from the fixture ledger, read as the board reads it (parking.ts); the open box and the tip
 // are forced open with the attributes the behaviours set.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState, regionState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { VbNodeElement, VbRegionElement } from '#ui';
+import { nodeState, regionState } from '#ui';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

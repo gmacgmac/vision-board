@@ -9,7 +9,7 @@
 // toolRail flag the row is a vertical rail (`data-rail` on the frame): Right on the cog opens its
 // menu and Left in the menu closes it, back to the cog.
 // Nothing here touches HTMLElement at import, so the ui front door stays importable from Node.
-import type { Mode } from '../../../format/src/index.ts';
+import type { Mode } from '#format';
 import { MODE_HINT } from './region-core.ts';
 import { regionIds } from './region-template.ts';
 

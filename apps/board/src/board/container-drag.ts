@@ -5,10 +5,10 @@
 // with the frame's top left in board coordinates, through the action layer (`record`), and the
 // normal redraw then lays the board out (`collide.ts` makes room). Alt+arrows on the grip
 // (keys.ts) go through the same `pin`. A lost pointer puts everything back; a click writes nothing.
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout, Box, Point } from '../../../../packages/layout/src/index.ts';
-import { routeLinks } from '../../../../packages/layout/src/index.ts';
-import type { VbNodeElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
+import type { View } from '#format';
+import type { BoardLayout, Box, Point } from '#layout';
+import { routeLinks } from '#layout';
+import type { VbNodeElement, VbRegionElement } from '#ui';
 import type { ActFields } from './io.ts';
 
 export interface ContainerDragDeps {

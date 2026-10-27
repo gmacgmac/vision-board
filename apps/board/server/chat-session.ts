@@ -7,8 +7,8 @@
 // waits, one at most, and goes when the turn ends, its text made then. The CLI's own transcript is
 // the record, so nothing here is written to disk.
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import type { AgentSession, ChatEventDraft } from '../../../packages/agent/src/index.ts';
-import { toChatEvent } from '../../../packages/agent/src/index.ts';
+import type { AgentSession, ChatEventDraft } from '#agent';
+import { toChatEvent } from '#agent';
 import type { ApprovalDraft, Approvals } from './chat-approvals.ts';
 import { createApprovals } from './chat-approvals.ts';
 import type { StoredSession } from './chat-index.ts';

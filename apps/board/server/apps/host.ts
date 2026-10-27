@@ -3,9 +3,9 @@
 // person's panel only when the app is allowed at this version; stops a process whose code changed
 // or whose allow was taken back; and stops every process when the folder closes. With the
 // `appCards` flag off it runs nothing (the routes answer not-found).
-import type { AppInfo, AppToolResult, FlagOverrides } from '../../../../packages/format/src/index.ts';
-import { flagOn } from '../../../../packages/format/src/index.ts';
-import { namedApps } from '../../../../packages/actions/src/index.ts';
+import type { AppInfo, AppToolResult, FlagOverrides } from '#format';
+import { flagOn } from '#format';
+import { namedApps } from '#actions';
 import type { Ledger } from '../ledger.ts';
 import { problem } from '../problem.ts';
 import { readEnv } from './env.ts';

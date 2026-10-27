@@ -7,9 +7,9 @@
 // links (cheap). The layout functions stay pure; only this cache lives in the page.
 // Same input, same picture: a test drives random changes and holds the result equal to
 // `layoutBoard` after each one.
-import type { Link, Mode, View, ViewNode, Widths } from '../../../../packages/format/src/index.ts';
-import type { Align, BoardLayout, Point, RegionPiece, Size } from '../../../../packages/layout/src/index.ts';
-import { layoutRegion, packRegions } from '../../../../packages/layout/src/index.ts';
+import type { Link, Mode, View, ViewNode, Widths } from '#format';
+import type { Align, BoardLayout, Point, RegionPiece, Size } from '#layout';
+import { layoutRegion, packRegions } from '#layout';
 
 export interface LayoutInputs {
   pins: Map<string, Point>;

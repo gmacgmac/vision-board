@@ -8,8 +8,8 @@
 // policy (frame-ancestors 'none') would make, and its load tells the page to read list_apps again.
 import fs from 'node:fs';
 import type { ServerResponse } from 'node:http';
-import type { AppCsp } from '../../../../packages/format/src/index.ts';
-import { APP_ID, APP_PANEL_PATH } from '../../../../packages/format/src/index.ts';
+import type { AppCsp } from '#format';
+import { APP_ID, APP_PANEL_PATH } from '#format';
 import { problem } from '../problem.ts';
 import type { AppHost } from './host.ts';
 import { APPS_OFF } from './host.ts';

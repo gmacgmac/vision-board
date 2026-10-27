@@ -3,10 +3,10 @@
 // fixture board and a live session go through the same code). The stage is sized to the drawn
 // board. Measuring needs the page, so each mini board draws once the gallery is in the document
 // (`drawMiniBoards`, main.ts).
-import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { Align } from '../../../../packages/layout/src/index.ts';
-import type { CardConditions } from '../../../../packages/ui/src/index.ts';
+import type { View, ViewNode } from '#format';
+import type { BoardState } from '#actions';
+import type { Align } from '#layout';
+import type { CardConditions } from '#ui';
 import type { FreshCount } from '../board/board-data.ts';
 import { createDrawing, type Drawing } from '../board/draw.ts';
 import { FAR_K, Viewport } from '../board/viewport.ts';

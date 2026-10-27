@@ -3,7 +3,9 @@
 // problem, every reference resolves, every example fits its schema, and the route table is current.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { SCHEMA_DIR } from '#format/files';
 import { PROBLEMS } from '../server/problem.ts';
 import { SCHEMA_BASE, compileSchema, schemaFiles } from '../server/schema.ts';
 import type { Rec } from './openapi-ajv.ts';
@@ -48,7 +50,7 @@ function patchedOas(): Rec {
     return Object.fromEntries(Object.entries(node).map(([k, v]) =>
       (k === '$dynamicRef' && v === '#meta' ? ['$ref', '#/$defs/schema'] : [k, patch(v)])));
   };
-  return patch(JSON.parse(read('packages/format/schema/vendor/oas-3.2-schema-2026-08-30.json')));
+  return patch(JSON.parse(fs.readFileSync(`${SCHEMA_DIR}vendor/oas-3.2-schema-2026-08-30.json`, 'utf8')));
 }
 const oas = new Ajv2020({ allowMatchingProperties: true, strictTypes: false, strictTuples: false, allErrors: true });
 for (const format of ['uri-reference', 'email', 'media-range']) oas.addFormat(format, true);

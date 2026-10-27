@@ -3,8 +3,8 @@
 // A timing test: it runs alone, in its own serial step (`npm run test:timing`, N12_FE_01 ruling 7).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { View } from '../../format/src/index.ts';
-import { boardView, foldDrawn, readLedger } from '../../format/src/index.ts';
+import type { View } from '#format';
+import { boardView, foldDrawn, readLedger } from '#format';
 import { layoutBoard } from '../src/index.ts';
 import type { Size } from '../src/index.ts';
 import { BIG, perfLedger } from '../../../tests/pages/perf-ledger.ts';

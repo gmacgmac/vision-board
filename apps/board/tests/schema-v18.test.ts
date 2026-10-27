@@ -3,7 +3,7 @@
 // schema and `eventProblems` agree on every line. The pair's broken forms are in schema-cases.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACTION_IDS, LEDGER_FORMAT, eventProblems, readLedger } from '../../../packages/format/src/index.ts';
+import { ACTION_IDS, LEDGER_FORMAT, eventProblems, readLedger } from '#format';
 import { LEDGER_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import { VALID, act } from './schema-cases.ts';
 

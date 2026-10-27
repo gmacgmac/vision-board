@@ -9,8 +9,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, OPERATIONS, imageNotReal } from '../../../packages/format/src/index.ts';
-import type { ImageName } from '../../../packages/format/src/index.ts';
+import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS, OPERATIONS, imageNotReal } from '#format';
+import { OPENAPI_FILE } from '#format/files';
+import type { ImageName } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Got } from './images-support.ts';
@@ -254,7 +255,7 @@ test('the route serves the folder that is open now, not the one the server start
 });
 
 test('the image route is not an API operation: not in openapi.json, and not in the route table (api.md 154)', () => {
-  const spec = JSON.parse(fs.readFileSync(new URL('../../../packages/format/schema/openapi.json', import.meta.url), 'utf8')) as { paths: Record<string, unknown> };
+  const spec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8')) as { paths: Record<string, unknown> };
   const prefix = IMAGE_ROUTE.slice(0, -1);
   assert.deepEqual(Object.keys(spec.paths).filter((p) => p.includes(prefix)), []);
   assert.deepEqual(Object.values(OPERATIONS).filter((o) => o.path.includes(prefix)), []);

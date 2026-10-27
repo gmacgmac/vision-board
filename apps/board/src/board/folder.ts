@@ -2,7 +2,7 @@
 // server has open, read once at boot; the page title names it; the last board is kept per folder
 // (start-board.ts); and when the live stream opens again (the server ends it on a switch), a
 // different folder reloads the page onto it, without its board hash. Off, none of this runs.
-import { flagOn } from '../../../../packages/format/src/index.ts';
+import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
 import { shell } from '../shell/shell.svelte.ts';
 import type { FolderInfo } from './io.ts';

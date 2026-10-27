@@ -2,8 +2,8 @@
 // the header shows, why no message can go (`blockedReason`: loading, a past version, an archived
 // board, a refused start), what Send waits on, the board a folder session first drew, how a streamed
 // event is applied, and a message's body. Pure, so they are unit-tested under plain Node.
-import type { ChatEvent, ChatOption, ChatState, Chip } from '../../../../packages/chat/src/index.ts';
-import { applyEvent, EMPTY_CHAT } from '../../../../packages/chat/src/index.ts';
+import type { ChatEvent, ChatOption, ChatState, Chip } from '#chat';
+import { applyEvent, EMPTY_CHAT } from '#chat';
 import type { ChatMessageBody, ChatSessionInfo } from './io.ts';
 
 export type Agent = ChatSessionInfo['agent'];

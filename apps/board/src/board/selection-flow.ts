@@ -9,10 +9,10 @@
 // With the selectionPill flag (stage5-follow-ups FE_02) the bar over a selection starts as a pill
 // that opens it (selection-pill.ts). With the personRemove flag (N24) it offers Remove, as Delete and Backspace do
 // (remove-flow.ts). The bar has no Clear: a click on empty board and Esc clear the selection.
-import type { BoardLayout, Box } from '../../../../packages/layout/src/index.ts';
-import type { StageBox, VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
-import type { CommandEventDetail, ToggleEventDetail } from '../../../../packages/ui/src/index.ts';
-import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, touches } from '../../../../packages/ui/src/index.ts';
+import type { BoardLayout, Box } from '#layout';
+import type { StageBox, VbSelectionBarElement } from '#ui';
+import type { CommandEventDetail, ToggleEventDetail } from '#ui';
+import { BAR_GAP, barView, boxAround, boxBetween, pillGap, placeBar, touches } from '#ui';
 import type { CommandId } from './commands.ts';
 import { AREA_COMMANDS, barButtons, COMMANDS, isCommand, SELECTION_COMMANDS, selectionButtons } from './commands.ts';
 import type { NoteFlow } from './notes.ts';

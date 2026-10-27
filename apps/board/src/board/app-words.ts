@@ -1,7 +1,7 @@
 // What the page says around an app card's buttons (app-cards FE_02): the confirm before Allow and
 // Stop app (the action registry marks both `needsConfirmation`), the toast once each is done, and
 // what Check again and Restart found. Plain and short: the person reads them, not the agent.
-import type { ActionId, AppState } from '../../../../packages/format/src/index.ts';
+import type { ActionId, AppState } from '#format';
 
 /** What an app's code may do once allowed (apps.md § Where it runs), in the person's words. */
 const REACH = 'It runs on this computer and can use the internet, but it can\'t change your files.';

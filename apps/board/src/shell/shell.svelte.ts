@@ -1,13 +1,13 @@
 // Shared state between the board controller (plain TypeScript) and the Svelte shell around it.
 // The controller writes here; the toolbar, reply panel, confirm dialog and toast read it (D-005: Svelte
 // arranges the page, the canvas stays framework-free).
-import type { AccessHolder, ArchivedBoard, BoardActionId, BoardListItem, BoardRun, FreshCard, OpenCard } from '../../../../packages/actions/src/index.ts';
+import type { AccessHolder, ArchivedBoard, BoardActionId, BoardListItem, BoardRun, FreshCard, OpenCard } from '#actions';
 import type { BoardMark } from '../board/board-data.ts';
 import type { FolderInfo } from '../board/io.ts';
 import type { ContainerRow } from '../board/finder.ts';
 import type { ProposalRow } from '../board/proposals.ts';
 import type { GoBox } from '../board/go-to-card.ts';
-import type { Align } from '../../../../packages/layout/src/index.ts';
+import type { Align } from '#layout';
 import { keptAlign } from './align.ts';
 
 export interface Toast { text: string; tone: 'info' | 'error'; seq: number }

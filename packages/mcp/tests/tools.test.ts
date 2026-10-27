@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { OPERATIONS } from '../../format/src/index.ts';
+import { OPERATIONS } from '#format';
 import { INSTRUCTIONS, INSTRUCTIONS_JOINED, TOOL_FILE, routeOf } from '../src/index.ts';
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));

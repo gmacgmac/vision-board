@@ -6,9 +6,9 @@
 // boxes are forced open (`data-open`, the attribute the popover sets). The notice and the list are the
 // board's own Svelte components; the notice and its pill sit over a card on the board's ground.
 import { mount } from 'svelte';
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import ProposalsBar from '../shell/ProposalsBar.svelte';
 import ConfirmList from '../shell/ConfirmList.svelte';
 import { acceptAllPlan, acceptAllWords } from '../board/proposals.ts';

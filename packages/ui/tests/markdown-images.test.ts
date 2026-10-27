@@ -4,7 +4,7 @@
 // no alt text is the path as plain text; with the cardImages flag off it is its source text, as before.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS } from '../../format/src/index.ts';
+import { IMAGE_LIMITS, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
 import { imageNote, renderMarkdown, setMarkdownImages } from '../src/index.ts';
 import { IMG, IMGS, assertSafe } from './markdown-adversarial.ts';
 

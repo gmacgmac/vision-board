@@ -5,10 +5,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { ImageName } from '../../../packages/format/src/index.ts';
+import type { ImageName } from '#format';
 import {
   IMAGE_HEAD_BYTES, IMAGE_LIMITS, IMAGE_WORDS, imageNotReal, imagePathProblem, imageTypeByName, imageTypeOf,
-} from '../../../packages/format/src/index.ts';
+} from '#format';
 import { PROBLEMS } from '../server/problem.ts';
 import { IMAGES, SVG } from './images-support.ts';
 
@@ -103,13 +103,6 @@ test('imageTypeOf: each type is known by the bytes it starts with, and nothing e
     'riff that is not webp': text('RIFF\0\0\0\0AVI LIST'), 'webp name only': text('....WEBP....'), 'riff cut short': text('RIFF\0\0\0\0WEB'),
   };
   for (const [what, data] of Object.entries(fakes)) assert.equal(imageTypeOf(data), undefined, what);
-});
-
-test('images.ts is pure string logic: no import, no Node, no DOM (the page and the server both run it)', () => {
-  const code = fs.readFileSync(new URL('../../../packages/format/src/images.ts', import.meta.url), 'utf8')
-    .split('\n').filter((l) => !/^\s*(\/\/|\/\*|\*)/.test(l)).join('\n');
-  assert.doesNotMatch(code, /^\s*import\s/m, 'it imports nothing');
-  assert.doesNotMatch(code, /\b(Buffer|process|require|document|window|globalThis|fetch)\b|node:/, 'it uses no Node or browser name');
 });
 
 // ---- the doc ----

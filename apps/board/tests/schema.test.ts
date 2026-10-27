@@ -10,7 +10,8 @@ import { fileURLToPath } from 'node:url';
 import {
   ACTION_IDS, ACT_SIZES, AGENT_ID_PATTERN, EVENT_TYPES, ID_PATTERN, KINDS, LIMITS, MODES, NODE_SIZES,
   ITEM_REMOVED, LIST_RENAMED, TIMESTAMP_PATTERN, WIDTHS, eventProblems, readLedger,
-} from '../../../packages/format/src/index.ts';
+} from '#format';
+import { FIXTURES_DIR, SCHEMA_DIR } from '#format/files';
 import {
   LEDGER_EVENT_ID, SCHEMA_BASE, compileSchema, ledgerLineProblems, schemaFiles, schemaProblems,
 } from '../server/schema.ts';
@@ -23,8 +24,8 @@ const COMMON = `${LEDGER}common.schema.json`;
 const eventId = (type: string) => `${LEDGER}events/${type}.schema.json`;
 
 const FIXTURES = [
-  ...fs.readdirSync(path.join(ROOT, 'packages/format/fixtures')).filter((f) => f.endsWith('.ledger.jsonl'))
-    .map((f) => path.join('packages/format/fixtures', f)),
+  ...fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith('.ledger.jsonl'))
+    .map((f) => path.relative(ROOT, path.join(FIXTURES_DIR, f))),
   'apps/board/src/gallery/gallery.ledger.jsonl',
 ];
 const linesOf = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8').trim().split('\n');
@@ -189,7 +190,7 @@ test('validate CLI: exits 0 on each fixture', () => {
 test('validate CLI: exits non-zero on a ledger with one bad line, naming the line', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vb-validate-'));
   try {
-    const lines = linesOf('packages/format/fixtures/login-review.ledger.jsonl');
+    const lines = linesOf(path.relative(ROOT, path.join(FIXTURES_DIR, 'login-review.ledger.jsonl')));
     lines[2] = JSON.stringify({ ...JSON.parse(lines[2]!), bogus: true });
     const file = path.join(dir, 'ledger.jsonl');
     fs.writeFileSync(file, `${lines.join('\n')}\n`);
@@ -277,7 +278,7 @@ function refsOf(node: unknown, out: string[] = []): string[] {
 
 test('every schema file compiles, with every $defs entry, and no $ref leaves https://vision-board.invalid/', () => {
   const files = schemaFiles();
-  const relOf = (file: string) => path.relative(path.join(ROOT, 'packages/format/schema'), file).split(path.sep).join('/');
+  const relOf = (file: string) => path.relative(SCHEMA_DIR, file).split(path.sep).join('/');
   // The API body schemas (api/) and the app manifest (app/) have their own namespaces (openapi.test.ts, schema-apps.test.ts).
   const own = (rel: string) => /^(api|app)\//.test(rel);
   assert.equal(files.filter(({ file }) => !own(relOf(file))).length, 2 + EVENT_TYPES.length);

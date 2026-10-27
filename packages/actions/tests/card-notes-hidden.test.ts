@@ -5,8 +5,8 @@
 // number 1, so the page's keys are checked in board numbers.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { PRIVATE_ACTIONS, boardView, eventProblems, isPrivateAct, readLedger } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { PRIVATE_ACTIONS, boardView, eventProblems, isPrivateAct, readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   ACTIONS, boardList, boardState, conditionsOf, nodeDetail, notesHiddenOn, openItems, replyScope, replyText, responsesAfter, validateAct,

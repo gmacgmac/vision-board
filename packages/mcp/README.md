@@ -68,8 +68,9 @@ single-chat setup (or for the `vb` CLI); for several chats, leave it out and let
 
 - **Depends on**: `packages/format`, `packages/client`.
 - **Used by**: MCP clients (Kiro, Claude Code, Cursor), through `bin/vb-mcp.ts`.
-- **Public API** (`src/index.ts`): `createMcpServer`, `serveStdio`, `callTool`, `checkArgs`,
-  `split`, `failureText`, `projectOf`, the generated `TOOLS`/`TOOL_FILE`, the version constants and `RpcError`.
+- **Public API** (`#mcp`, `src/index.ts`, D-059): `createMcpServer`, `serveStdio`, `callTool`, `checkArgs`,
+  `split`, `failureText`, `projectOf`, the generated `TOOLS`/`TOOL_FILE`, the version constants, `MCP_BIN`
+  (the path of `bin/vb-mcp.ts`, which a Node-only module exports from its front door, D-060) and `RpcError`.
 - **Tests**: `tests/` (the generated list against the spec and every client's limits, the argument
   check and stdio framing in process, and modern and legacy sessions over a spawned server against
   a real board server).

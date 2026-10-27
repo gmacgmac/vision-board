@@ -5,7 +5,7 @@ import type { Locator, Page } from '@playwright/test';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
-import { REGION_HEAD } from '../../packages/layout/src/index.ts';
+import { REGION_HEAD } from '#layout';
 
 const NODES = 17;
 const REGIONS = ['review', 'prove', 'decide', 'build'];

@@ -5,7 +5,7 @@
 // cookie; refusals never name the cookie. This stops mistakes, not attackers (api.md 27).
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
-import type { OperationId } from '../../../packages/format/src/index.ts';
+import type { OperationId } from '#format';
 import type { Agents } from './agents.ts';
 import type { Caller, Ledger } from './ledger.ts';
 import type { ProblemError } from './problem.ts';

@@ -4,7 +4,7 @@
 // only ✓ or ✗ answers it (D-045). The page reads `commented`, every agent read `with-agent`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView } from '../../format/src/index.ts';
+import { boardView } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { boardState, counts, itemsOut, nodeDetail, openItems, replyLines, replyText, statusOut, STATUS_OUT } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';

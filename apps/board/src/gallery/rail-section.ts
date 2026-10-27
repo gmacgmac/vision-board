@@ -8,12 +8,12 @@
 // drawn with `data-look` on the rail, as the other samples draw theirs. Each frame takes a sample id of
 // its own, so no id is on the page twice. Shown only with the flag on, so ?flags=-toolRail draws the
 // gallery as it was.
-import { LATER_REGION } from '../../../../packages/format/src/index.ts';
-import type { Region, View } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { placedView } from '../../../../packages/actions/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import { LATER_REGION } from '#format';
+import type { Region, View } from '#format';
+import type { BoardState } from '#actions';
+import { placedView } from '#actions';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import { LATER_FRAME } from '../board/render.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

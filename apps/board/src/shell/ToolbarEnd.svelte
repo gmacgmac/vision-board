@@ -16,8 +16,8 @@
   import ToolbarMenu from './ToolbarMenu.svelte';
   import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../board/commands.ts';
   import type { CommandId } from '../board/commands.ts';
-  import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
-  import { LOCKED_PERSON } from '../../../../packages/actions/src/index.ts';
+  import type { AccessHolder } from '#actions';
+  import { LOCKED_PERSON } from '#actions';
 
   let { theme, ontheme, oncommand, onhide, onsend, onrevoke, onarchive, onlock, holders, chat, menu, zoom, placement = 'board', menuOpen = false }: {
     theme: string;

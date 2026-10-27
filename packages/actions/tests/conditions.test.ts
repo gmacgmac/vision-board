@@ -6,8 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { LedgerNode } from '../../format/src/index.ts';
-import { latest, nodesOf, readLedger } from '../../format/src/index.ts';
+import type { LedgerNode } from '#format';
+import { latest, nodesOf, readLedger } from '#format';
 import type { Condition, ConditionContext, ConditionKind, LedgerState } from '../src/index.ts';
 import {
   boardNews, canWrite, CONDITION_KINDS, CONDITIONS, conditionsOf, foldLedger, grantRequests, holders, REFERENCE_KINDS,

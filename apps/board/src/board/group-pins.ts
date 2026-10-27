@@ -8,10 +8,10 @@
 // (`data-group-ring`, node-notes.css); never a box, so no unrelated card is marked. A press selects the
 // group's cards and opens the note as a card's pin does (notes.ts). Only a pin whose words or place
 // changed is written; a draw with the same state and layout does nothing.
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { GroupMarker } from '../../../../packages/ui/src/index.ts';
-import { groupAnchors, groupMarkers, groupPinAt, pauseControls } from '../../../../packages/ui/src/index.ts';
+import type { BoardState } from '#actions';
+import type { BoardLayout } from '#layout';
+import type { GroupMarker } from '#ui';
+import { groupAnchors, groupMarkers, groupPinAt, pauseControls } from '#ui';
 
 /** The pin of the group whose latest note is `seq`: what a note bubble opened from it points back at. */
 export const groupPinOf = (seq: number): string => `.vb-group-pin[data-group-note="${seq}"]`;

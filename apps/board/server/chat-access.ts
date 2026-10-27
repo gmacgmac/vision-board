@@ -7,8 +7,9 @@
 // prompt instead (N34 ruling 1): the server keeps `~/.kiro/agents/vision-board.json` current at start
 // (`keepKiroAgent`), and a failure to write it stops only Kiro, saying why.
 import { fileURLToPath } from 'node:url';
-import type { McpServer } from '../../../packages/agent/src/index.ts';
-import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '../../../packages/agent/src/index.ts';
+import type { McpServer } from '#agent';
+import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '#agent';
+import { MCP_BIN } from '#mcp';
 import type { Agents } from './agents.ts';
 import { newSecret } from './agents.ts';
 import type { ChatSession } from './chat-index.ts';
@@ -17,8 +18,6 @@ import type { Ledger } from './ledger.ts';
 /** The name the agent knows the board's MCP server by: its tools are `mcp__vision-board__*` in
  * Claude Code and `@vision-board` in Kiro (`packages/agent/kiro/vision-board.agent.json`). */
 export const MCP_NAME = 'vision-board';
-/** The board's MCP server the agent gets, run with this Node. */
-export const VB_MCP = fileURLToPath(new URL('../../../packages/mcp/bin/vb-mcp.ts', import.meta.url));
 /** The launched agent's instructions (BE_03 ruling 7; T_01 rewrites the file). */
 export const INSTRUCTIONS_FILE = fileURLToPath(new URL('../../../skills/vision-board/SKILL.md', import.meta.url));
 /** What the agent may call without asking: the board's tools, reading, and the gated tools, which
@@ -62,7 +61,7 @@ export function rekey(agents: Agents, agentId: string): string {
 /** The board's MCP server for one session: the board server, the secret (in its environment only)
  * and the open folder the CLI works in, so its calls match it (folder-mismatch ruling 4). */
 export function boardMcpServer(base: string, secret: string, project: string): McpServer {
-  return { command: process.execPath, args: ['--no-warnings', VB_MCP], env: { VB_SERVER: base, VB_AGENT_SECRET: secret, VB_PROJECT: project } };
+  return { command: process.execPath, args: ['--no-warnings', MCP_BIN], env: { VB_SERVER: base, VB_AGENT_SECRET: secret, VB_PROJECT: project } };
 }
 
 /** Keep Kiro's agent file under `home` current, its prompt this repo's skill (N34 ruling 1); why it

@@ -12,9 +12,9 @@
 // open board is archived, here or anywhere, the next board opens, or with none left the page reloads
 // into its empty state, as it boots in a folder with no board. The Archived list (archiveBoard flag)
 // is worked out with the picker's.
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { archivedBoards, boardList, boardVisibility } from '../../../../packages/actions/src/index.ts';
+import type { BoardLayout } from '#layout';
+import type { LedgerState } from '#actions';
+import { archivedBoards, boardList, boardVisibility } from '#actions';
 import { createKeptView } from './kept-view.ts';
 import { LAST_BOARD_KEY, nextBoard, startBoard } from './start-board.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn } from './folder.ts';

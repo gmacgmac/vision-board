@@ -3,9 +3,9 @@
 // for Accept and Reject, and what Accept all applies and leaves out.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { applyEvent, foldLedger } from '../../../packages/actions/src/index.ts';
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
+import { readLedger } from '#format';
+import { applyEvent, foldLedger } from '#actions';
+import type { LedgerState } from '#actions';
 import { pageConditions } from '../src/board/board-data.ts';
 import { acceptAllPlan, acceptAllWords, answerDone, answerable, barWords, proposalAct, proposalRows } from '../src/board/proposals.ts';
 

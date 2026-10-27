@@ -5,7 +5,7 @@
      holds it in the modal dialog and does the restoring; the gallery draws it in each state. `uid`
      keeps its ids apart. Every control is a native button: Tab reaches each, Enter or Space chooses. -->
 <script lang="ts">
-  import type { ArchivedBoard } from '../../../../packages/actions/src/index.ts';
+  import type { ArchivedBoard } from '#actions';
   import { dayOf } from '../board/board-edit.ts';
 
   let { boards, uid, busy = null, problem = null, now = new Date(), onrestore, onclose }: {

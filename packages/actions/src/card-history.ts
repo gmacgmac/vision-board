@@ -10,8 +10,8 @@
 // retired card is gone for good (api.md 126): there is no restore of a card. One matcher
 // (`cardsAbout`) and one set of words (`saidOf`, `historyRow`), which the page's per-card times
 // (card-times.ts, card-polish FE_03) read too. Pure: lines in, rows out.
-import type { ActEvent, LedgerEvent, NodeSize } from '../../format/src/index.ts';
-import { isPrivateAct, LATER_REGION } from '../../format/src/index.ts';
+import type { ActEvent, LedgerEvent, NodeSize } from '#format';
+import { isPrivateAct, LATER_REGION } from '#format';
 import type { Ask } from './notes.ts';
 import { askOf, cardsOf, foldNoteAct, liveNotes } from './notes.ts';
 

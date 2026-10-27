@@ -2,8 +2,8 @@
 // containers alike): Esc or Cancel with changed text makes the bubble ask (`vb-note-discard`), and
 // so does opening another bubble or closing it from the board. The page asks through the shell's
 // confirm dialog; OK discards, Cancel puts focus back in the text. Unchanged text never asks.
-import type { VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
-import { NOTE_DISCARD_EVENT } from '../../../../packages/ui/src/index.ts';
+import type { VbNoteBubbleElement } from '#ui';
+import { NOTE_DISCARD_EVENT } from '#ui';
 
 /** The confirm dialog's words, as `askConfirm(heading, body, confirm)` takes them. */
 export const DISCARD_ASK = ['Discard your changes?', 'Changes will be lost.', 'Discard'] as const;

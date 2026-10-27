@@ -2,7 +2,7 @@
 // container, as structure only. It runs the same mode and the same router the picture uses, on
 // cards of one size (the server has no measured sizes, and pins are the person's, not the
 // arrangement), so its columns, rows and crossings agree with what is drawn. Pure.
-import type { Link, Mode, Region, ViewNode, Widths } from '../../format/src/index.ts';
+import type { Link, Mode, Region, ViewNode, Widths } from '#format';
 import type { CardCell, LayoutStructure, Size } from './types.ts';
 import { MODE_FNS } from './board.ts';
 import { laneNames } from './modes/lanes/lanes.ts';

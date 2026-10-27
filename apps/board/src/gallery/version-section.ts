@@ -5,10 +5,10 @@
 // its mark, lit and inert (review polish FIX_01). Shown only with the flag on, so ?flags=-versionView
 // draws the gallery as it was.
 import { mount } from 'svelte';
-import type { ItemStatus } from '../../../../packages/actions/src/index.ts';
-import { statusOf } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { ItemStatus } from '#actions';
+import { statusOf } from '#actions';
+import type { VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import VersionBanner from '../shell/VersionBanner.svelte';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

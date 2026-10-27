@@ -4,8 +4,8 @@
 // toolbar's "N flagged" chip. The cards are real <vb-node> elements from the fixture ledger's marks
 // board, rendered with the button as the board renders them; the chip is the toolbar's own component.
 import { mount } from 'svelte';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { FLAG_KEY, nodeState } from '../../../../packages/ui/src/index.ts';
+import type { VbNodeElement } from '#ui';
+import { FLAG_KEY, nodeState } from '#ui';
 import FlaggedChip from '../shell/FlaggedChip.svelte';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

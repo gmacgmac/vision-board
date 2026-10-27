@@ -2,8 +2,8 @@
 // from the `vb.flags` localStorage key, then from `?flags=` in the address, which wins; both use
 // parseFlags' format ("nodeSize", "-nodeSize", comma separated). Unknown names are ignored, so an
 // old bookmark cannot break the page. Tests and the gallery's samples pass overrides directly.
-import type { FlagOverrides } from '../../../packages/format/src/index.ts';
-import { parseFlags } from '../../../packages/format/src/index.ts';
+import type { FlagOverrides } from '#format';
+import { parseFlags } from '#format';
 
 export const FLAGS_KEY = 'vb.flags';
 

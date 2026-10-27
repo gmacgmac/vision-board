@@ -3,7 +3,7 @@
 // batch 2 ruling 4) are a pair drawn in the same style: three cards stacked, three side by side. Paths only;
 // region-template.ts wraps them with the node pattern's `svgIcon`, and region.css draws them.
 // Typed on `Mode`, so a new mode fails to compile here until it has an icon.
-import type { Mode } from '../../../format/src/index.ts';
+import type { Mode } from '#format';
 
 export const MODE_ICON: Record<Mode, string> = {
   grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/>'

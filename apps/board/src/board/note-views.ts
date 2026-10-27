@@ -3,10 +3,10 @@
 // first, as the card shows them. The conversation (`thread` mode, review polish ruling 6) lists every
 // note and reply on the card or the container, in `conversation`'s order (the card's own). Facts
 // only: notes.ts opens, places and closes.
-import type { NoteKind, Region, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardState, ItemNote } from '../../../../packages/actions/src/index.ts';
-import type { BubbleMode, BubbleView, CardReply, VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
-import { bubbleView, conversation, regionColour, replyEntry } from '../../../../packages/ui/src/index.ts';
+import type { NoteKind, Region, ViewNode } from '#format';
+import type { BoardState, ItemNote } from '#actions';
+import type { BubbleMode, BubbleView, CardReply, VbNoteBubbleElement } from '#ui';
+import { bubbleView, conversation, regionColour, replyEntry } from '#ui';
 
 /** `id`: the card a note's acts name (`n`); `anchor`: the cards the bubble sits beside; `group`:
  *  every card of a note on a group. A note on a container (`region`) names the region in place of a

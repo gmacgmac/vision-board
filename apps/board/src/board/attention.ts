@@ -13,9 +13,9 @@
 // when a board opens, when the page leaves it (a switch, or the page going away) and, while it
 // stays open, at most once a minute when an agent's line arrives. Never while a past version of
 // the board shows (versions.ts): the person is not looking at now.
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardNews } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import type { LedgerState } from '#actions';
+import { boardNews } from '#actions';
 import type { FreshCount, ProposalFound } from './board-data.ts';
 import { pageConditions } from './board-data.ts';
 import { markBoardSeen } from './io.ts';

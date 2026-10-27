@@ -4,11 +4,11 @@
 // times as the board reads them (packages/actions `cardTimeRows`); and the box open on a card with no
 // row, the empty state. The cards are real <vb-node> elements from the notes board; the open boxes are
 // forced open (`data-open`, the attribute the popover sets) and filled as the page fills them.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { HistoryRow } from '../../../../packages/actions/src/index.ts';
-import { cardTimeRows } from '../../../../packages/actions/src/index.ts';
-import type { VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { HISTORY, historyMarkup, nodeState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { HistoryRow } from '#actions';
+import { cardTimeRows } from '#actions';
+import type { VbNodeElement } from '#ui';
+import { HISTORY, historyMarkup, nodeState } from '#ui';
 import { idOf } from '../board/card-numbers.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

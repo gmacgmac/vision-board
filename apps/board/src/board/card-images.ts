@@ -9,9 +9,9 @@
 // - selecting its card, or opening it, asks again with that version's ETag (a conditional request, on
 //   no timer); a newer picture is loaded out of sight, then swapped in, on the card and in the view;
 // - a card whose image loaded, changed or gave way to a box is measured again, alone (`grown`).
-import { IMAGE_ROUTE, imageNotReal, imageTypeByName } from '../../../../packages/format/src/index.ts';
-import type { VbImageViewElement } from '../../../../packages/ui/src/index.ts';
-import { IMAGE_BUTTON, imageButton, showProblem } from '../../../../packages/ui/src/index.ts';
+import { IMAGE_ROUTE, imageNotReal, imageTypeByName } from '#format';
+import type { VbImageViewElement } from '#ui';
+import { IMAGE_BUTTON, imageButton, showProblem } from '#ui';
 import { imageVersion } from './io.ts';
 
 export interface CardImagesDeps {

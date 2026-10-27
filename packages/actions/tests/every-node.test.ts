@@ -5,7 +5,7 @@
 // answer plus anything owed; `show_node` gives every card's status.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView } from '../../format/src/index.ts';
+import { boardView } from '#format';
 import type { ConditionKind } from '../src/index.ts';
 import { boardState, conditionsOf, counts, DECIDED, isDecided, nodeDetail, openItems, pendingItems } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';

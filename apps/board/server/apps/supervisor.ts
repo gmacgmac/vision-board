@@ -6,8 +6,8 @@
 // stops after `idleMs`; one whose code changed or was taken back stops at once; all stop when the
 // folder closes. What running a version found (its tools, why it didn't load, why it broke) is kept
 // per version, for the one state function (state.ts). Limits come from APP_LIMITS.
-import type { AppProblem, AppToolResult } from '../../../../packages/format/src/index.ts';
-import { APP_LIMITS } from '../../../../packages/format/src/index.ts';
+import type { AppProblem, AppToolResult } from '#format';
+import { APP_LIMITS } from '#format';
 import type { ProblemError } from '../problem.ts';
 import { problem } from '../problem.ts';
 import type { Answer, Child, StopReason } from './child.ts';

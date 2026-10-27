@@ -5,18 +5,31 @@
   "engines": {
     "node": ">=22.18.0"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "imports": {
+    "#actions": "./packages/actions/src/index.ts",
+    "#agent": "./packages/agent/src/index.ts",
+    "#agent/testing": "./packages/agent/tests/support.ts",
+    "#chat": "./packages/chat/src/index.ts",
+    "#chat/files": "./packages/chat/src/files.ts",
+    "#chat/styles.css": "./packages/chat/src/chat.css",
+    "#cli": "./packages/cli/src/index.ts",
+    "#client": "./packages/client/src/index.ts",
+    "#format": "./packages/format/src/index.ts",
+    "#format/files": "./packages/format/src/files.ts",
+    "#layout": "./packages/layout/src/index.ts",
+    "#mcp": "./packages/mcp/src/index.ts",
+    "#tokens/styles.css": "./packages/tokens/src/tokens.css",
+    "#ui": "./packages/ui/src/index.ts",
+    "#ui/styles.css": "./packages/ui/src/styles.css"
+  },
   "scripts": {
-    "build": "npm run build --workspace apps/board",
+    "build": "vite build --config apps/board/vite.config.ts",
     "board": "npm run build && node apps/board/server.ts",
     "serve": "node apps/board/server.ts",
     "dev": "npm run build && VB_PROJECT=temp/demo VB_SEED=packages/format/fixtures/roadmap.ledger.jsonl node apps/board/server.ts",
     "board:watch": "node scripts/board-watch.mjs",
-    "watch": "npm run build --workspace apps/board -- --watch",
-    "check": "npm run check --workspace apps/board && tsc -p tsconfig.json",
+    "watch": "vite build --config apps/board/vite.config.ts --watch",
+    "check": "svelte-check --tsconfig apps/board/tsconfig.json && tsc -p tsconfig.json",
     "validate": "node apps/board/bin/validate.ts",
     "reply": "node apps/board/bin/reply.ts",
     "vb": "node packages/cli/bin/vb.ts",
@@ -28,10 +41,17 @@
     "gen": "node scripts/gen-api.mjs",
     "test:pages": "playwright test --config tests/pages/playwright.config.ts"
   },
+  "dependencies": {
+    "ajv": "8.20.0"
+  },
   "devDependencies": {
     "@playwright/test": "1.63.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "22.20.5",
     "axe-core": "4.13.0",
-    "typescript": "6.0.3"
+    "svelte": "5.57.1",
+    "svelte-check": "4.7.6",
+    "typescript": "6.0.3",
+    "vite": "8.3.1"
   }
 }

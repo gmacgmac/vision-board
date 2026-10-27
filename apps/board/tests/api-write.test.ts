@@ -3,9 +3,9 @@
 // the grant loop with resent keys, replays and key conflicts, `base`, key references,
 // depends-on-failed, scoped `pending`, a board revoke, and whole-call problems.
 import { test, after, before } from 'node:test';
-import { cardId } from '../../../packages/format/src/index.ts';
+import { cardId } from '#format';
 import assert from 'node:assert/strict';
-import type { Client } from '../../../packages/client/src/index.ts';
+import type { Client } from '#client';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

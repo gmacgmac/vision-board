@@ -4,9 +4,9 @@
 // says which nodes the layout drew by passing `placed`. Four samples are drawn open, through the
 // element's own `showPanel`: the layout popover (wide, and compact on a narrow frame) and the
 // settings menu with Reset places enabled and disabled.
-import type { Mode } from '../../../../packages/format/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import type { Mode } from '#format';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { FRAME_PREFIX } from './fixture.ts';

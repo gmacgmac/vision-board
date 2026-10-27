@@ -7,6 +7,8 @@ import { defineConfig } from 'vite';
 const page = (name: string) => fileURLToPath(new URL(name, import.meta.url));
 
 export default defineConfig({
+  // The repo is one package scope (D-059): the root's scripts run this config, so the root is set here.
+  root: page('.'),
   plugins: [svelte()],
   // Two pages: the board (index.html) and the pattern gallery (gallery.html, page tests).
   build: {

@@ -8,9 +8,9 @@
 // (openapi.json `personCookie`): no agent read opens these files. A removed card keeps its file.
 import fs from 'node:fs';
 import path from 'node:path';
-import { appOf } from '../../../../packages/actions/src/index.ts';
-import type { AppStateFile, AppStateValue } from '../../../../packages/format/src/index.ts';
-import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem } from '../../../../packages/format/src/index.ts';
+import { appOf } from '#actions';
+import type { AppStateFile, AppStateValue } from '#format';
+import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem } from '#format';
 import { writeFileAtomic } from '../atomic-file.ts';
 import type { Ctx, Handler } from '../dispatch.ts';
 import { cardOn } from '../edge.ts';

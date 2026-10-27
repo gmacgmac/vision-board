@@ -20,12 +20,12 @@
 //   Each says what happened (the toast, a live region) and keeps focus on the card;
 // - "Allowed ▾" in the footer (card-polish FE_01): its menu, one item, Stop app, with the board's
 //   menu keys (menu-keys.ts); Esc or a press outside closes it.
-import type { ActionId, LedgerEvent, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { ACTIONS } from '../../../../packages/actions/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { appView } from '../../../../packages/ui/src/index.ts';
+import type { ActionId, LedgerEvent, ViewNode } from '#format';
+import type { LedgerState } from '#actions';
+import { ACTIONS } from '#actions';
+import type { BoardLayout } from '#layout';
+import type { AppCardInput, CardConditions, VbAppFrameElement, VbNodeElement } from '#ui';
+import { appView } from '#ui';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from './app-words.ts';
 import { menuKeydown } from './menu-keys.ts';

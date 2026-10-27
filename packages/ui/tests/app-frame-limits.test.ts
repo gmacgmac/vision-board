@@ -3,8 +3,8 @@
 // message and call caps, and a panel that closes or starts again. Fake windows: app-frame-harness.ts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { AppToolResult } from '../../format/src/index.ts';
-import { APP_LIMITS, APP_PROTOCOL_VERSION, PANEL_ERRORS } from '../../format/src/index.ts';
+import type { AppToolResult } from '#format';
+import { APP_LIMITS, APP_PROTOCOL_VERSION, PANEL_ERRORS } from '#format';
 import { FRAME_CALLS, PROBLEM_WORDS } from '../src/index.ts';
 import { DARK, errorOf, harness, LIGHT, note, ready, req, settle } from './app-frame-harness.ts';
 

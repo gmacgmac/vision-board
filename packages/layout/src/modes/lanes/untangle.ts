@@ -3,7 +3,7 @@
 // real router: two neighbours in a stack trade places whenever the container's connectors then
 // cross at fewer points. Bounded (containers with few links, short stacks, a fixed number of tries)
 // so a large or dense board stays inside the layout budget (rule 15). Deterministic.
-import type { Link } from '../../../../format/src/index.ts';
+import type { Link } from '#format';
 import type { Box } from '../../types.ts';
 import { crossingPoints } from '../../route/crossings.ts';
 import { routeLines } from '../../route/route.ts';

@@ -4,8 +4,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { Region, View, ViewNode } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { Region, View, ViewNode } from '#format';
+import type { BoardState } from '#actions';
 import { nodeState, nodeTemplate, regionState } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '3', region: 'r', kind: 'question', title: 'T', n: 3, ...f });

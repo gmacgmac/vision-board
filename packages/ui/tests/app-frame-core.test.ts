@@ -4,8 +4,8 @@
 // method table; app-frame-limits.test.ts: bad messages, other windows, theme changes, the caps.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { AppToolResult } from '../../format/src/index.ts';
-import { APP_PROTOCOL_VERSION, APP_SIZE, APP_STYLE_VARIABLES, LEDGER_FORMAT, PANEL_ERRORS } from '../../format/src/index.ts';
+import type { AppToolResult } from '#format';
+import { APP_PROTOCOL_VERSION, APP_SIZE, APP_STYLE_VARIABLES, LEDGER_FORMAT, PANEL_ERRORS } from '#format';
 import { hostStyles, panelSize, PROBLEM_WORDS } from '../src/index.ts';
 import { errorOf, harness, LIGHT, note, ready, req, settle } from './app-frame-harness.ts';
 

@@ -5,7 +5,7 @@
 // numbers are far below the identities the ledger holds: a slip from one to the other fails.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardId } from '../../../packages/format/src/index.ts';
+import { cardId } from '#format';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

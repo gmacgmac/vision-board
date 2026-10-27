@@ -2,7 +2,7 @@
 // that fits. Every example is read from the schema it belongs to (a write item form's `examples`,
 // an operation's request `example`), never written here, so the refusal, the tool description and
 // the docs show the same thing.
-import type { OperationId } from '../../../packages/format/src/index.ts';
+import type { OperationId } from '#format';
 import { compileSchema } from './schema.ts';
 import { SPECS } from './spec.ts';
 

@@ -4,7 +4,7 @@
 // of remove-words.ts, then sends the person's `retire` line through the one sender (sender.ts), which
 // refuses it while a past version shows or the board is locked. The cards leave the selection on the
 // redraw (controller.ts `selection.keep`); focus that was on what left goes back to the board.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState } from '#actions';
 import type { ConfirmList } from '../shell/shell.svelte.ts';
 import type { RetireFields } from './io.ts';
 import type { RemoveWords } from './remove-words.ts';

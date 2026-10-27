@@ -4,8 +4,8 @@
 // has shows a note's latest text, and a removed note is gone from all of them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, eventProblems } from '#format';
 import {
   boardState, nodeDetail, openItems, pendingItems, replyText, responsesAfter, validateAct,
 } from '../src/index.ts';

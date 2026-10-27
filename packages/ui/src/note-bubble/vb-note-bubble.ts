@@ -4,7 +4,7 @@
 // never writes anything itself (rule 8). Keys: Enter saves, Shift+Enter is a new line, Esc
 // cancels. The conversation (review polish ruling 6) opens at an entry: `reveal` scrolls to it and
 // `focusText` focuses it. Browser only: the class is created inside defineVbNoteBubble().
-import type { Kind } from '../../../format/src/index.ts';
+import type { Kind } from '#format';
 import type { BubbleMode, BubblePhase, BubbleView, NoteDiscardDetail, Placement } from './note-bubble-core.ts';
 import { cancelIntent, isDirty, NOTE_DISCARD_EVENT, readOnlyMode } from './note-bubble-core.ts';
 import { noteBubbleTemplate } from './note-bubble-template.ts';

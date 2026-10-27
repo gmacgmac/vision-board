@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { projectOf as projectIn } from '../../client/src/index.ts';
+import { projectOf as projectIn } from '#client';
 import { INSTRUCTIONS, INSTRUCTIONS_JOINED, createMcpServer } from '../src/index.ts';
 
 const projectOf = (env: { VB_PROJECT?: string }, cwd: string) => projectIn(env, cwd, { fs, path });

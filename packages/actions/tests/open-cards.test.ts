@@ -3,7 +3,7 @@
 // its cards 1-5 while the ledger's identities differ (the decision is identity 5, board number 4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView } from '../../format/src/index.ts';
+import { boardView } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import { boardState, counts, openCards } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';

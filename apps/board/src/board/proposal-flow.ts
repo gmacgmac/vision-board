@@ -6,9 +6,9 @@
 // as the act error toast, and after a refused answer the rows are worked out again. A proposal on
 // a card the board has no version for (it was removed) is never shown, and an accept with no
 // version is never sent. None while a past version shows. Split out of controller.ts.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import type { CardConditions } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { LedgerState } from '#actions';
+import type { CardConditions } from '#ui';
 import type { ProposalFound } from './board-data.ts';
 import type { ActFields } from './io.ts';
 import type { ProposalAnswer, ProposalRow } from './proposals.ts';

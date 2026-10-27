@@ -8,8 +8,8 @@
 // api.md 147, 148); the page reads `boardState`, which keeps the stored names. Every status is
 // `cardStatus` (conditions.ts, D-046).
 
-import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '../../format/src/index.ts';
-import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
+import type { LedgerNode, LedgerRegion, NodeBody, NodeSize, ParkBundle } from '#format';
+import { containerKey, everyNodeOf, latest, NODE_TYPES, nodesOf } from '#format';
 import type { BoardRun, ItemNote, LedgerReply, LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { Place } from './containers.ts';

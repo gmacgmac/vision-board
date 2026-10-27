@@ -6,7 +6,7 @@
 // ruling 1: "The person updated the board:", the numbered reply of `replyLines`, the head it covers),
 // with the notes its lines carry, so a message attaches none of them again (chat-no-double-note).
 // Pure: from the folded ledger.
-import { boardView } from '../../format/src/index.ts';
+import { boardView } from '#format';
 import { boardState } from './board-state.ts';
 import type { LedgerState } from './fold.ts';
 import { replyScope } from './pending.ts';

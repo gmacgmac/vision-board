@@ -6,8 +6,8 @@
      with the words kept. Native <dialog>: modal, Esc or Cancel closes, focus starts in the title
      and goes back to the picker on close. -->
 <script lang="ts">
-  import { BOARD_ACTIONS, type BoardActionId } from '../../../../packages/actions/src/index.ts';
-  import { LIMITS } from '../../../../packages/format/src/index.ts';
+  import { BOARD_ACTIONS, type BoardActionId } from '#actions';
+  import { LIMITS } from '#format';
   import type { BoardFields } from '../board/io.ts';
   import { shell } from './shell.svelte.ts';
 

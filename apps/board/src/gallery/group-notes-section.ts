@@ -7,12 +7,12 @@
 // by the board's own drawing (mini-board.ts) and the board's own pins (group-pins.ts), from the fixture
 // ledger; the hover is the pin's own pointerenter. Each sample takes a suffix of its own, so no id is on
 // the page twice. Shown only with the flag on, so ?flags=-groupNoteOnce draws the gallery as it was.
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { boardState } from '../../../../packages/actions/src/index.ts';
-import { boardView } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
-import { bubbleView, placeBubble, replyEntry } from '../../../../packages/ui/src/index.ts';
+import type { BoardState } from '#actions';
+import { boardState } from '#actions';
+import { boardView } from '#format';
+import type { BoardLayout } from '#layout';
+import type { VbNoteBubbleElement } from '#ui';
+import { bubbleView, placeBubble, replyEntry } from '#ui';
 import type { Drawing } from '../board/draw.ts';
 import { createGroupPins } from '../board/group-pins.ts';
 import { createParking } from '../board/parking.ts';

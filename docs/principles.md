@@ -240,7 +240,8 @@ test DOM were small enough to own.
 - Install only what a PLAN lists, at an exact version, with install scripts off (`.npmrc`:
   `save-exact`, `ignore-scripts`). Any install script is listed and approved before it runs.
 - Record every dependency in `docs/specification/dependencies.md` in the same change.
-- One package manager: npm workspaces (`apps/*`, `packages/*`).
+- One package manager, npm, and one package scope: the root `package.json` (D-059). Modules are
+  folders named in its `imports` map, never npm packages.
 - No lint framework: repo rules are our own zero-dependency checks (`scripts/verify.mjs`: file
   length, colour literals outside the tokens, I/O outside its layer, exact versions, the register),
   plus Prettier. Unit tests use Node's built-in runner.

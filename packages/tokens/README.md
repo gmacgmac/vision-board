@@ -6,5 +6,5 @@ tiers (D-009); the automated gate is still to come (tracker N1). Protected: chan
 maintainer's yes.
 
 - **Depends on**: nothing.
-- **Used by**: `apps/board` (loads `src/tokens.css`), and `packages/ui` through it.
-- **Public API**: the `--vb-*` custom properties in `src/tokens.css`.
+- **Used by**: `apps/board` (the page's stylesheet list, `src/styles/page.ts`, imports `#tokens/styles.css`), and `packages/ui` through it.
+- **Public API**: the `--vb-*` custom properties in `src/tokens.css`, reached as `#tokens/styles.css` (D-060); no `<link>` in the HTML pages.

@@ -3,9 +3,9 @@
 // notes they answer (on a card, on a group of cards, on a container), come from the held state.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import type { ViewNode } from '../../../packages/format/src/index.ts';
-import { foldLedger } from '../../../packages/actions/src/index.ts';
+import { readLedger } from '#format';
+import type { ViewNode } from '#format';
+import { foldLedger } from '#actions';
 import { pageConditions } from '../src/board/board-data.ts';
 import { createParking } from '../src/board/parking.ts';
 

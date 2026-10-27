@@ -7,8 +7,8 @@
 // above the cards, repeats the focused card's connectors. With the linkLabels flag a label sits on
 // its line where the layout found it room (link-labels.ts), else a marker does (link-marks.ts, in
 // `marks`, a layer outside this SVG); off, every label is drawn at the middle of its line.
-import type { BoardLayout, Route } from '../../../../packages/layout/src/index.ts';
-import { esc } from '../../../../packages/ui/src/index.ts';
+import type { BoardLayout, Route } from '#layout';
+import { esc } from '#ui';
 import { fitLabel, labelElement, labelMarkup, tagAt } from './link-labels.ts';
 import { createLinkMarks } from './link-marks.ts';
 import { work } from './work.ts';

@@ -3,10 +3,10 @@
 // cog), and an empty Later as it shows while a card is dragged over it, lit as the drop target.
 // Both are real <vb-region> frames, built the way the board builds them (`placedView`,
 // `LATER_FRAME`, `regionState`).
-import { LATER_REGION } from '../../../../packages/format/src/index.ts';
-import { LATER, placedView } from '../../../../packages/actions/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import { LATER_REGION } from '#format';
+import { LATER, placedView } from '#actions';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import { LATER_FRAME } from '../board/render.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

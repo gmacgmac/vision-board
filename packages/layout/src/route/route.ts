@@ -6,7 +6,7 @@
 // get their own tracks (tracks.ts). Links between containers, links in radial, and a link with no
 // free route keep the plain elbow (path.ts). Each labelled link gets its label's place
 // (labels.ts). Pure and deterministic.
-import type { Link } from '../../../format/src/index.ts';
+import type { Link } from '#format';
 import type { Box, Point, Route } from '../types.ts';
 import { boundsOf, overlaps, round } from '../geometry.ts';
 import { conflictsBetween } from './crossings.ts';

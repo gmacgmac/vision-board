@@ -7,8 +7,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { LedgerEvent } from '../../format/src/index.ts';
-import { readLedger } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { readLedger } from '#format';
 import type { BoardRun, LedgerState } from '../src/index.ts';
 import { applyEvent, boardVersions, DRAWING_EVENTS, emptyState, eventBoard, foldLedger } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';

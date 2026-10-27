@@ -3,9 +3,9 @@
 // cards?"), lists the cards when there are several, and warns of every card or container note still
 // owed an answer (the action layer's `owedNotice`: "Card 4 still has an unanswered comment."). The
 // toast after says what went. Pure: the held state in, words out.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { owedNotice, retireCards } from '../../../../packages/actions/src/index.ts';
-import { latest } from '../../../../packages/format/src/index.ts';
+import type { LedgerState } from '#actions';
+import { owedNotice, retireCards } from '#actions';
+import { latest } from '#format';
 import { idOf, numOf } from './card-numbers.ts';
 
 /** One card the confirm lists: its number and title (the shell's `ConfirmItem`). */

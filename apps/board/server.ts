@@ -18,7 +18,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseFlags } from '../../packages/format/src/index.ts';
+import { parseFlags } from '#format';
 import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { DATA_DIR, ledgerPath, openLedger } from './server/ledger.ts';

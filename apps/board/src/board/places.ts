@@ -2,9 +2,9 @@
 // lines): a card dropped from its kind tab or nudged by Alt+arrows becomes a pin, R and Reset
 // places take pins away, and the layout mode, the card widths and the size tier are the person's picks. Every write
 // goes through the controller's `record`, so through the action layer and the I/O module (rule 8).
-import type { ActSize, Mode, View, Widths } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { Box, BoardLayout } from '../../../../packages/layout/src/index.ts';
+import type { ActSize, Mode, View, Widths } from '#format';
+import type { BoardState } from '#actions';
+import type { Box, BoardLayout } from '#layout';
 import type { ActFields } from './io.ts';
 import { sizeAct } from './size.ts';
 import type { Viewport } from './viewport.ts';

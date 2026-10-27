@@ -5,8 +5,8 @@
 // (`LedgerState.looked`: their latest card seen or act naming it). Nothing is stored: engaging with
 // one card of a container ends it for the whole container, and a click on the frame changes nothing.
 // conditions.ts gives these their rows (`freshCards`, `container.fresh`). Pure.
-import { latest, nodesOf } from '../../format/src/index.ts';
-import type { LedgerNode } from '../../format/src/index.ts';
+import { latest, nodesOf } from '#format';
+import type { LedgerNode } from '#format';
 import type { LedgerState } from './fold.ts';
 import { unseenReply } from './clears.ts';
 import { numberOf } from './numbers.ts';

@@ -4,7 +4,7 @@
 // 1,000 cards) with them in it. A timing test: it runs alone (`npm run test:timing`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../format/src/index.ts';
+import { readLedger } from '#format';
 import { cardHistory } from '../src/index.ts';
 import { perfLedger } from '../../../tests/pages/perf-ledger.ts';
 

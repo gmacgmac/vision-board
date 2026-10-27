@@ -6,8 +6,8 @@
 // shared hover tip (packages/ui/src/tip/hover-tip.ts, WCAG 1.4.13: hoverable, persistent, Esc
 // dismisses). The tip is decoration for the eye; the name carries the words. Only a marker whose
 // place or words changed is written, as the connectors are (wires.ts).
-import type { Route } from '../../../../packages/layout/src/index.ts';
-import { bindHoverTip } from '../../../../packages/ui/src/index.ts';
+import type { Route } from '#layout';
+import { bindHoverTip } from '#ui';
 
 export interface LinkMarks {
   /** One marker per route whose label did not fit, in route order. */

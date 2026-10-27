@@ -3,11 +3,11 @@
 // (`read_ledger`, live.ts) and works each board out from it (board-data.ts), so it never fetches
 // a whole board to show one change (N12_FE_01). A refused call comes back as an ApiError carrying
 // the problem's pointer errors (api.md 38).
-import type { ActionId, ActSize, AppInfo, AppStateValue, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '../../../../packages/format/src/index.ts';
-import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '../../../../packages/format/src/index.ts';
-import type { BoardAccess, BoardState } from '../../../../packages/actions/src/index.ts';
-import { ApiProblem, createClient } from '../../../../packages/client/src/index.ts';
-import type { ApprovalAnswer, ChatEvent } from '../../../../packages/chat/src/index.ts';
+import type { ActionId, ActSize, AppInfo, AppStateValue, AppToolResult, LedgerEvent, LedgerLine, Mode, NoteKind, View, Widths } from '#format';
+import { BOARD_MARKS, fromLine, IMAGE_ROUTE, IMAGE_WORDS } from '#format';
+import type { BoardAccess, BoardState } from '#actions';
+import { ApiProblem, createClient } from '#client';
+import type { ApprovalAnswer, ChatEvent } from '#chat';
 
 /** One board as the page draws it. `versions`: node id -> latest `ver`, sent back with an act;
  * `head`: the ledger's latest `seq`; `access`: open grant requests and each region's holders. */

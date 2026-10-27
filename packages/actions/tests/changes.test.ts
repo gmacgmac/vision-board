@@ -2,7 +2,7 @@
 // added, changed or removed; a body that starts with the previous body is added, with the added text.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { NodeBody } from '../../format/src/index.ts';
+import type { NodeBody } from '#format';
 import { versionChanges } from '../src/index.ts';
 
 const v1: NodeBody = { region: 'r', kind: 'risk', title: 'The floor undercuts self-serve', body: 'A 35-seat team pays less.', item: true };

@@ -3,7 +3,7 @@
 // attributes, text and the note's Markdown, so focus and transitions survive. Browser only: the
 // class is created inside defineVbNode(), so importing this file never touches HTMLElement (Node
 // tests import the ui front door). It knows nothing about layout; the page measures and places it.
-import type { ActionId, ViewNode } from '../../../format/src/index.ts';
+import type { ActionId, ViewNode } from '#format';
 import type { NodeState } from './node-core.ts';
 import type { HoverTip } from '../tip/hover-tip.ts';
 import type { NodeTemplateOptions } from './node-template.ts';

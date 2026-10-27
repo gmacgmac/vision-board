@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ROUND_HEAD } from '../../../packages/actions/src/index.ts';
+import { ROUND_HEAD } from '#actions';
 import { QUEUED } from '../server/chat-session.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import type { Harness } from './api-harness.ts';

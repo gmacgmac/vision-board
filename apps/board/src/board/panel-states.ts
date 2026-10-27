@@ -7,7 +7,7 @@
 // `LOAD_WAIT_MS` (then it starts without). The reads and writes are io.ts' (`panelState`,
 // `savePanelState`), passed in, so this runs under plain Node in tests. Nothing here tells the
 // person: a refused save goes back to the panel only.
-import type { AppStateValue } from '../../../../packages/format/src/index.ts';
+import type { AppStateValue } from '#format';
 
 /** One app card's panel: its board, its number there, the app it shows. */
 export interface PanelKey { board: string; n: number; app: string }

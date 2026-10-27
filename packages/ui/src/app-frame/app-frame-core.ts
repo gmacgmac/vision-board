@@ -4,11 +4,11 @@
 // card's own frame, and a way to post to that frame; the page hands it `callTool`, the card's saved
 // state (`saveState`, `loadState`) and the board's look. Every number is the shared table's
 // (`APP_LIMITS`, `APP_SIZE` in packages/format).
-import type { AppRef, AppSize, AppStateValue, AppToolResult, PanelMethod } from '../../../format/src/index.ts';
+import type { AppRef, AppSize, AppStateValue, AppToolResult, PanelMethod } from '#format';
 import {
   APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_SIZE, APP_STATE_KEY, APP_STYLE_VARIABLES, APP_TOOL_NAME, appSize,
   HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_SAVE_STATE,
-} from '../../../format/src/index.ts';
+} from '#format';
 import { checkSave, SAVE_WORDS } from './app-frame-state.ts';
 
 /** The panel's size in px: the agent's, else the manifest's, else the default (`appSize`), held to

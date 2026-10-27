@@ -5,9 +5,9 @@
 // footer buttons, which a 300-400px stage would otherwise squeeze under the target-size minimum.
 // With the selectionPill flag (stage5-follow-ups FE_02) the samples are the compact bar's: the
 // pill, the open bar, its hover (drawn with data-look) and the area bar.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { VbSelectionBarElement } from '../../../../packages/ui/src/index.ts';
-import { BAR_GAP, barView, pillGap, placeBar } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { VbSelectionBarElement } from '#ui';
+import { BAR_GAP, barView, pillGap, placeBar } from '#ui';
 import { AREA_COMMANDS, barButtons, selectionButtons } from '../board/commands.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

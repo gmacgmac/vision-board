@@ -7,11 +7,11 @@
 // (chat-panel FE_02): the board's own ChatSidebar, mounted in the page flow.
 import type {
   ChatEvent, ChatFeedElement, ChatHeaderElement, ChatComposerElement, ChatHost, Chip, ComposerContext, HeaderInput,
-} from '../../../../packages/chat/src/index.ts';
-import { applyEvents, composerView, EMPTY_CHAT, headerView } from '../../../../packages/chat/src/index.ts';
-import { ROUND_HEAD, selectionText } from '../../../../packages/actions/src/index.ts';
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import { nodeState, renderMarkdown } from '../../../../packages/ui/src/index.ts';
+} from '#chat';
+import { applyEvents, composerView, EMPTY_CHAT, headerView } from '#chat';
+import { ROUND_HEAD, selectionText } from '#actions';
+import type { ViewNode } from '#format';
+import { nodeState, renderMarkdown } from '#ui';
 import { mount } from 'svelte';
 import { MODELS } from '../board/chat-rules.ts';
 import ChatSidebar from '../shell/ChatSidebar.svelte';

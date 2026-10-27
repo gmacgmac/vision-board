@@ -5,8 +5,8 @@
 // opens them), and the empty message. Tokens only; no inline styles (the page's CSP forbids them).
 // State is applied in place by the element (`VbRegion.update`), so this runs once per view version;
 // the holders slot is filled by `holdersTemplate` whenever the holders change.
-import type { Mode, Region } from '../../../format/src/index.ts';
-import { MODES } from '../../../format/src/index.ts';
+import type { Mode, Region } from '#format';
+import { MODES } from '#format';
 import { esc } from '../node/node-template.ts';
 import { renderMarkdown } from '../markdown/render.ts';
 import { svgIcon, ACTION_ICON } from '../node/node-icons.ts';

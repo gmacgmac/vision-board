@@ -11,12 +11,12 @@
 // chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
 // attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // The pure parts are unit-tested under Node.
-import type { LedgerState, SelectedCard } from '../../../../packages/actions/src/index.ts';
-import { boardBlocks, boardLocked, roundOf } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState, SelectedCard } from '#actions';
+import { boardBlocks, boardLocked, roundOf } from '#actions';
 import type {
   ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
-} from '../../../../packages/chat/src/index.ts';
-import { CHAT_CHANGE_EVENT } from '../../../../packages/chat/src/index.ts';
+} from '#chat';
+import { CHAT_CHANGE_EVENT } from '#chat';
 import type { BoardData } from './io.ts';
 import { clip } from './clip.ts';
 import type { Selection } from './selection.ts';

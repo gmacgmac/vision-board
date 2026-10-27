@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MODES } from '../../format/src/index.ts';
+import { MODES } from '#format';
 import { EYE_ICON, holdersTemplate, MODE_HINT, MODE_LABEL, nblockRepliesMarkup, regionIds, regionTemplate } from '../src/index.ts';
 
 const region = { id: 'review', title: 'Review', mode: 'flow' as const };

@@ -4,8 +4,8 @@
 // and the markup.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ParkBundle, ViewNode } from '../../format/src/index.ts';
-import type { BoardState, ItemNote } from '../../actions/src/index.ts';
+import type { ParkBundle, ViewNode } from '#format';
+import type { BoardState, ItemNote } from '#actions';
 import type { CardReply, RegionState } from '../src/index.ts';
 import { AWAITING, handoverMarkup, nodeState, nodeTemplate, notesMarkup, regionNote, regionState } from '../src/index.ts';
 

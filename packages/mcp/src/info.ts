@@ -1,6 +1,10 @@
 // Who this server says it is and what it speaks (api.md 45): the two protocol versions, the
 // capabilities, `serverInfo`, and the instructions an agent reads before its first call.
+import { fileURLToPath } from 'node:url';
 import { TOOL_FILE } from './tools.ts';
+
+/** The executable a host runs to start this server over stdio (`node MCP_BIN`). */
+export const MCP_BIN = fileURLToPath(new URL('../bin/vb-mcp.ts', import.meta.url));
 
 /** The stateless revision: version and capabilities ride on every request's `_meta`. */
 export const MODERN = '2026-07-28';

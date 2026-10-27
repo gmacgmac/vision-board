@@ -10,7 +10,7 @@ import { expect, expectNoAxeViolations, setTheme, test, zoomToControls } from '.
 import type { Drawn } from './agent-board.ts';
 import { act, card, draw, open, reply } from './agent-board.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
-import { APP_SIZE } from '../../packages/format/src/index.ts';
+import { APP_SIZE } from '#format';
 
 const NOTE = 'Which plan do most teams pick?';
 const REPLY = 'The team plan, by a wide margin.';

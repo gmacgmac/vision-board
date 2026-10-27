@@ -3,8 +3,8 @@
 // `show_container` and `get_board`. A container note is an `Ask` like a card's (notes.ts) with
 // `region` in place of a card, so `note-edit`, `note-remove` and Send work on it the card-note way.
 // A container place is the top-left of its frame in board coordinates; the latest pin wins.
-import type { ActEvent } from '../../format/src/index.ts';
-import { containerKey } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { containerKey } from '#format';
 import type { LedgerState } from './fold.ts';
 import { sentNotes } from './fold.ts';
 import type { ItemLog, ItemNote } from './notes.ts';

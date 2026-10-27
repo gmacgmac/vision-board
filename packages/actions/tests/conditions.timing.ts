@@ -4,7 +4,7 @@
 // alone, in its own serial step (`npm run test:timing`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../format/src/index.ts';
+import { readLedger } from '#format';
 import { conditionsOf, foldLedger } from '../src/index.ts';
 import { BIG, perfLedger } from '../../../tests/pages/perf-ledger.ts';
 

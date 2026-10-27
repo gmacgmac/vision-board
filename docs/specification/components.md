@@ -108,7 +108,7 @@ the one function `renderMarkdown(src, { headingLevel, images })` from the `packa
 pattern without an element: `packages/ui/src/markdown/` holds `blocks.ts` (lines into blocks),
 `inline.ts` (marks, links, escapes), `image.ts` (what `![alt](path)` becomes, § Images in cards),
 `render.ts` (the front function), `markdown.css` (the
-`vb-md-*` classes, imported by the page beside `node.css`) and `pattern.json` (the subset, the
+`vb-md-*` classes, in `#ui/styles.css` beside `node.css`) and `pattern.json` (the subset, the
 classes and the safety rules). A template sets its output with `innerHTML`, which is safe because
 the renderer escapes every text run; one-line fields (titles, tags) stay plain text through `esc`.
 Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.test.ts`), whose
@@ -131,8 +131,8 @@ Its tests run CommonMark's own examples (`packages/ui/tests/markdown-commonmark.
   gallery in Chromium and fail on console errors, failed requests, accessibility violations or
   screenshot changes. A new pattern needs a gallery entry: a section in
   `apps/board/src/gallery/` drawn from `gallery.ledger.jsonl` through the pattern's own core
-  (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from their
-  `pattern.json`, and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
+  (`nodeState`, `regionState`), never hand-written markup. The gallery lists patterns from `#ui` `PATTERNS`
+  (their `pattern.json` files, `packages/ui/src/patterns.ts`), and `tests/pages/gallery.spec.ts` fails for a pattern that has no samples.
 
 ## Awareness tables (D-033)
 
@@ -1094,8 +1094,9 @@ section is how the board draws one. Two patterns share the work.
    placeholder and icons are hidden from assistive tech; `aria-busy` marks a slot or frame still
    loading. A frozen frame is `inert`: no click, no focus, out of the tab order
    (`app-alive.spec.ts` "a frozen panel takes no click and no Tab…").
-8. **The page's part** (app-cards FE_02, `apps/board/src/board/`): `main.ts` imports `node-app.css`
-   and `app-frame.css` with the other pattern styles; the controller makes `app-cards.ts`
+8. **The page's part** (app-cards FE_02, `apps/board/src/board/`): `main.ts` imports the page's
+   stylesheets (`styles/page.ts`), which take `node-app.css` and `app-frame.css` in with the other
+   pattern styles through `#ui/styles.css`; the controller makes `app-cards.ts`
    `createAppCards` behind the appCards flag (off: the card set renders `{ appCards: false }` and
    nothing below runs).
    - **State**: `app-state.ts` `createAppStates` holds the one copy of list_apps' answer (io.ts

@@ -6,7 +6,7 @@
 // (card-polish FE_04) are checked with the states. Beside gallery.spec.ts
 // (the gallery's other checks), which is at its length limit.
 import type { Frame, Page } from '@playwright/test';
-import { APP_CARD_STATES } from '../../packages/ui/src/node/node-app.ts';
+import { APP_CARD_STATES } from '#ui';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 

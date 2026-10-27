@@ -11,9 +11,9 @@
 // chips, and its agent is told no board is open and it may create one. Pure: it reads the folded
 // ledger and refuses a note or card that is not on the board. Cards come and go by their board
 // number (api.md 125).
-import type { LedgerState, Round, SelectedCard } from '../../../packages/actions/src/index.ts';
-import { boardBlocks, eventBoard, numberOf } from '../../../packages/actions/src/index.ts';
-import { latest } from '../../../packages/format/src/index.ts';
+import type { LedgerState, Round, SelectedCard } from '#actions';
+import { boardBlocks, eventBoard, numberOf } from '#actions';
+import { latest } from '#format';
 import { cardOn } from './edge.ts';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';

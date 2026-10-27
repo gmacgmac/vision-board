@@ -3,9 +3,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '../../../packages/format/src/index.ts';
-import type { ActEvent } from '../../../packages/format/src/index.ts';
-import { boardAccess, boardState, conditionsOf, foldLedger, statusOf, validateAct } from '../../../packages/actions/src/index.ts';
+import { boardView, KINDS, MODES, NODE_TYPES, readLedger } from '#format';
+import type { ActEvent } from '#format';
+import { boardAccess, boardState, conditionsOf, foldLedger, statusOf, validateAct } from '#actions';
 import { pageConditions } from '../src/board/board-data.ts';
 import { unseenCount, unseenSteps } from '../src/board/updates.ts';
 

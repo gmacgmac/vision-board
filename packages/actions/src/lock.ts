@@ -8,8 +8,8 @@
 // (archive.ts): the ledger module asks it of every line it appends, whoever writes it, and the page
 // asks `passesLock` before it sends an act; the server's routes refuse a write on a locked board up
 // front through the same `boardLocked`. Pure.
-import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { APP_ACTIONS, PRIVATE_ACTIONS } from '../../format/src/index.ts';
+import type { ActEvent, LedgerEvent } from '#format';
+import { APP_ACTIONS, PRIVATE_ACTIONS } from '#format';
 import type { LedgerState } from './fold.ts';
 import { archivedProblem, boardVisibility } from './archive.ts';
 import { eventBoard } from './references.ts';

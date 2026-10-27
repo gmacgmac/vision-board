@@ -43,8 +43,8 @@
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
   import type { CommandId } from '../board/commands.ts';
-  import { BOARD_ACTION_IDS, BOARD_ACTIONS, type BoardActionId } from '../../../../packages/actions/src/index.ts';
-  import { flagOn } from '../../../../packages/format/src/index.ts';
+  import { BOARD_ACTION_IDS, BOARD_ACTIONS, type BoardActionId } from '#actions';
+  import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 
   let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {

@@ -3,7 +3,7 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import { OPERATIONS } from '#format';
 import { createBoardServer } from '../server/app.ts';
 import { HANDLERS } from '../server/handlers.ts';
 import type { Ledger } from '../server/ledger.ts';

@@ -12,7 +12,7 @@ import { tabTo } from './agent-board.ts';
 import type { AppServer } from './app-server.ts';
 import { CALCULATOR, startAppServer } from './app-server.ts';
 import { LIVE_PANELS } from '../../apps/board/src/board/app-cards.ts';
-import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '../../packages/format/src/index.ts';
+import { APP_LIMITS, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
 import { expect, expectNoAxeViolations, test } from './helpers.ts';
 
 let s: AppServer;

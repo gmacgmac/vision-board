@@ -13,7 +13,7 @@
 // title FE_02, container-drag.ts); held still, a press on the title is the background's click. While a pan, a move or a lasso runs, nothing on
 // the page gets text-selected (U5). Scroll pans, Ctrl/Cmd + scroll zooms. Keyboard equivalents live
 // in keys.ts (project rule 5).
-import type { Box, Point } from '../../../../packages/layout/src/index.ts';
+import type { Box, Point } from '#layout';
 import type { Viewport } from './viewport.ts';
 
 export interface PointerHandlers {

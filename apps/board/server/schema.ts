@@ -1,18 +1,16 @@
 // The ledger's JSON Schemas through ajv (D-026, api.md 12): the only module that imports ajv. It
-// loads every `*.schema.json` under packages/format/schema/ and the chat package's own contract
-// (packages/chat/schema/, api.md 98) by its `$id`, compiles with Ajv2020
+// loads every `*.schema.json` under the format's schemas (`#format/files` SCHEMA_DIR) and the chat
+// package's own contract (`#chat/files` CHAT_SCHEMA_DIR, api.md 98) by its `$id`, compiles with Ajv2020
 // (strict mode, all errors, the discriminator), and turns ajv's errors into plain-English
 // problems with a JSON Pointer each (api.md 38, 40). Server and tests only: the page never
 // imports it, so ajv never reaches the page bundle (rule 15).
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject, ValidateFunction } from 'ajv/dist/2020.js';
+import { CHAT_SCHEMA_DIR } from '#chat/files';
+import { SCHEMA_DIR } from '#format/files';
 
-export const SCHEMA_DIR = fileURLToPath(new URL('../../../packages/format/schema/', import.meta.url));
-/** The chat package's schemas (D-037): its own contract, which openapi.json references by `$id`. */
-export const CHAT_SCHEMA_DIR = fileURLToPath(new URL('../../../packages/chat/schema/', import.meta.url));
 /** Every schema `$id` starts here; `.invalid` is never fetched (api.md 5). */
 export const SCHEMA_BASE = 'https://vision-board.invalid/';
 export const LEDGER_EVENT_ID = `${SCHEMA_BASE}schema/ledger/18/ledger-event.schema.json`;

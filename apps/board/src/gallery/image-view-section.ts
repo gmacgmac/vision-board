@@ -5,10 +5,10 @@
 // folder without them shows the missing state. The states a request would only reach by failing (a
 // missing file, one too big, one that is not a real png) are drawn from the route's own words
 // (IMAGE_WORDS), so the gallery makes no failing request; loading is a card kept from loading.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import { IMAGE_WORDS, imageNotReal } from '../../../../packages/format/src/index.ts';
-import type { VbImageViewElement } from '../../../../packages/ui/src/index.ts';
-import { showProblem } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import { IMAGE_WORDS, imageNotReal } from '#format';
+import type { VbImageViewElement } from '#ui';
+import { showProblem } from '#ui';
 import { createCardImages } from '../board/card-images.ts';
 import { wholePixels } from './app-frame-section.ts';
 import { cardList, el, group } from './dom.ts';

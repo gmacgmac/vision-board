@@ -5,7 +5,7 @@
 // one state the page reads too. Card, group and container notes alike.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
 import { boardState, validateAct } from '../src/index.ts';
 import { A, B, Ledger } from './ledger-v3.ts';
 

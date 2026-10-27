@@ -4,10 +4,10 @@
 // `boardData` is `get_board`'s answer from that state, built from the same reads the server uses
 // (apps/board/server/reads.ts `getBoard`); a test holds the two equal. `pageConditions` is what needs
 // the person's attention, from the conditions table (attention.ts shows it). Pure: no DOM, no network.
-import type { LedgerEvent, View } from '../../../../packages/format/src/index.ts';
-import { boardView, LEDGER_FORMAT, latest, NODE_TYPES, nodesOf } from '../../../../packages/format/src/index.ts';
-import type { FreshCard, LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardAccess, boardState, conditionsOf, freshCards, isDecided, numberOf, statusOf } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent, View } from '#format';
+import { boardView, LEDGER_FORMAT, latest, NODE_TYPES, nodesOf } from '#format';
+import type { FreshCard, LedgerState } from '#actions';
+import { boardAccess, boardState, conditionsOf, freshCards, isDecided, numberOf, statusOf } from '#actions';
 import type { BoardData } from './io.ts';
 
 /** One board as the page draws it, from the held state. */

@@ -6,7 +6,7 @@
 // unlocks it when it is locked, with no confirm, and says so (N40 ruling 4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ID_PATTERN } from '../../../packages/format/src/index.ts';
+import { ID_PATTERN } from '#format';
 import { archiveAsk, boardIdFor, createBoardEdit, dayOf, LOCK_DONE } from '../src/board/board-edit.ts';
 import type { ActFields } from '../src/board/io.ts';
 import type { BoardFields } from '../src/board/io.ts';

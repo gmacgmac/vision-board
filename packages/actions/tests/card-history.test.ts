@@ -5,8 +5,8 @@
 // say the same. Fixture words are invented.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { LedgerEvent } from '../../format/src/index.ts';
-import { readLedger } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { readLedger } from '#format';
 import type { HistoryRow } from '../src/index.ts';
 import { cardHistory, cardTimeRows, foldLedger, HISTORY_KINDS, TIME_KINDS } from '../src/index.ts';
 import type { Ledger } from './ledger-v3.ts';

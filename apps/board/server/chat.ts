@@ -5,7 +5,7 @@
 // an approval, watch a session's events, and the gate's ask. The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
-import type { ApprovalAnswer, Facts } from '../../../packages/agent/src/index.ts';
+import type { ApprovalAnswer, Facts } from '#agent';
 import { REALM, bearerOf } from './callers.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';

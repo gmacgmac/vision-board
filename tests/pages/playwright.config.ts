@@ -23,6 +23,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
+import { FIXTURES_DIR } from '#format/files';
 import { EMPTY_PORT, PERF_PORT } from './perf-server.ts';
 
 const PORT = Number(process.env.VB_TEST_PORT ?? 4468);
@@ -77,7 +78,7 @@ export default defineConfig({
       ...env,
       VB_PORT: String(PORT),
       VB_PROJECT: PROJECT,
-      VB_SEED: path.join(ROOT, 'packages/format/fixtures/roadmap.ledger.jsonl'),
+      VB_SEED: `${FIXTURES_DIR}roadmap.ledger.jsonl`,
     },
     gracefulShutdown: { signal: 'SIGTERM', timeout: 5000 },
     timeout: 120_000,

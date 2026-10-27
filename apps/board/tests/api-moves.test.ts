@@ -4,7 +4,7 @@
 // `state.moves`, as it carries pins. Every response is checked against the spec (api.md 54).
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
+import { LEDGER_FORMAT } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

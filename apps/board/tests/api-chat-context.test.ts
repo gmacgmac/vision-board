@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ROUND_HEAD, SELECTED_HEAD } from '../../../packages/actions/src/index.ts';
+import { ROUND_HEAD, SELECTED_HEAD } from '#actions';
 import { NOTES_HEAD, ONLY_ATTACHED } from '../server/chat-prompt.ts';
 import { QUEUED_WORDS } from '../server/chat-session.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';

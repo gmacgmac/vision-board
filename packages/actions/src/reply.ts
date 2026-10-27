@@ -7,8 +7,8 @@
 // need the person, then, on their own line, the cards waiting for the agent's answer (D-046, review
 // polish round 2 ruling 3). Reads one board as `boardView` (packages/format) + `boardState` (fold.ts)
 // give it.
-import type { ActionId, View } from '../../format/src/index.ts';
-import { NODE_TYPES } from '../../format/src/index.ts';
+import type { ActionId, View } from '#format';
+import { NODE_TYPES } from '#format';
 import type { BoardState } from './board-state.ts';
 import type { ItemNote } from './fold.ts';
 import { ACTIONS } from './registry.ts';

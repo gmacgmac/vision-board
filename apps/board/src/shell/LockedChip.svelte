@@ -5,7 +5,7 @@
      always there, so a lock from another tab is announced. The toolbar and the gallery both draw this. -->
 <script lang="ts">
   import ButtonIcon from './ButtonIcon.svelte';
-  import { LOCKED_PERSON } from '../../../../packages/actions/src/index.ts';
+  import { LOCKED_PERSON } from '#actions';
 
   let { locked, id }: { locked: boolean; id?: string } = $props();
 </script>

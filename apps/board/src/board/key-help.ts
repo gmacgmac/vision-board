@@ -5,7 +5,7 @@
 // registry action that has a key, by its registry label. `OTHER`
 // holds only the inputs neither table owns: moving between cards, Space, Alt+arrows, H, and the
 // pointer gestures; the flag's, the chat's and an app's key join them behind their flags.
-import { ACTIONS } from '../../../../packages/actions/src/index.ts';
+import { ACTIONS } from '#actions';
 import type { CommandId } from './commands.ts';
 import { COMMAND_IDS, COMMANDS, keyText } from './commands.ts';
 

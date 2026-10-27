@@ -3,8 +3,8 @@
 // across regions). Pure and deterministic. `layoutRegion` and `packRegions` are the two halves, so
 // a page can keep a region's result until its inputs change (N12, performance.md approach 2);
 // `layoutBoard` is exactly the two composed.
-import type { Link, Mode, Region, View, ViewNode, Widths } from '../../format/src/index.ts';
-import { widthsOf } from '../../format/src/index.ts';
+import type { Link, Mode, Region, View, ViewNode, Widths } from '#format';
+import { widthsOf } from '#format';
 import type { Align, Box, BoardLayout, ModeFn, ModeOutput, Point, RegionBox, RegionPiece, Size } from './types.ts';
 import { LANE_GUTTER, REGION_GAP, REGION_HEAD, REGION_PAD } from './types.ts';
 import { column, grid, row } from './modes/grid.ts';

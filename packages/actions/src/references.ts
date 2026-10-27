@@ -3,8 +3,8 @@
 // line touches. Every "which board is this line on", "which cards does this act touch" and "which
 // container is this card in now" is asked here, never worked out locally. Derived from the folded
 // ledger; nothing is stored. Pure.
-import type { ActEvent, ActionId, LedgerEvent } from '../../format/src/index.ts';
-import { actCard, containerKey, isContainerAct, LATER_REGION, latest } from '../../format/src/index.ts';
+import type { ActEvent, ActionId, LedgerEvent } from '#format';
+import { actCard, containerKey, isContainerAct, LATER_REGION, latest } from '#format';
 import type { LedgerState } from './fold.ts';
 import { cardsOf } from './notes.ts';
 import { appCards } from './apps.ts';

@@ -7,9 +7,9 @@
 // Board b's numbers differ from the ledger's identities throughout.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { foldLedger } from '../../../packages/actions/src/index.ts';
-import { regionState } from '../../../packages/ui/src/index.ts';
+import { readLedger } from '#format';
+import { foldLedger } from '#actions';
+import { regionState } from '#ui';
 import { boardData } from '../src/board/board-data.ts';
 import { pastLines, retiredCounts } from '../src/board/retired.ts';
 

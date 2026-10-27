@@ -1,7 +1,7 @@
 // Card size tiers (D-030, docs/specification/components.md § Node size). Pure: a node in, a tier
 // word out. The page writes the tier on the card as `data-size` before it measures, so layout keeps
 // reading measured sizes and never sees a width (rule 9).
-import type { ActSize, NodeSize, ViewNode } from '../../format/src/index.ts';
+import type { ActSize, NodeSize, ViewNode } from '#format';
 
 /** The tiers, smallest first; emphasis moves one step along this list. */
 export const TIERS: readonly NodeSize[] = ['s', 'm', 'l'];

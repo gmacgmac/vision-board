@@ -5,10 +5,10 @@
 // page gives it (card-polish FE_01: loading, error, the menu open), and the window look at the least
 // size with a cut name and its tip (card-polish FE_04). No frame loads here: a live panel
 // needs the board's panel route and an app folder, which app-cards FE_02 adds from the gallery's own project.
-import type { AppInfo, ViewNode } from '../../../../packages/format/src/index.ts';
-import { APP_SIZE } from '../../../../packages/format/src/index.ts';
-import type { AppCardInput, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { AppInfo, ViewNode } from '#format';
+import { APP_SIZE } from '#format';
+import type { AppCardInput, VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';

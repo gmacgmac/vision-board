@@ -7,7 +7,7 @@ import fs from 'node:fs';
 const read = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
 
 test('the favicon colours are the --vb-brand-mark token\'s light and dark values', () => {
-  const token = /--vb-brand-mark:\s*light-dark\((#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/i.exec(read('../../../packages/tokens/src/tokens.css'));
+  const token = /--vb-brand-mark:\s*light-dark\((#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/i.exec(fs.readFileSync(new URL(import.meta.resolve('#tokens/styles.css')), 'utf8'));
   assert.ok(token, '--vb-brand-mark is a light-dark() of two hex colours');
   const [, light, dark] = token;
   const svg = read('../public/favicon.svg');

@@ -5,7 +5,7 @@
      flag) it carries a bot icon, which a narrow window shows in place of the word, the count
      beside it (board.css). The gallery passes `open`. -->
 <script lang="ts">
-  import type { AccessHolder } from '../../../../packages/actions/src/index.ts';
+  import type { AccessHolder } from '#actions';
   import ButtonIcon from './ButtonIcon.svelte';
 
   let { holders, onrevoke, open = false, icon = false }: {

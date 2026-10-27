@@ -4,7 +4,7 @@
      On the board it pushes the stage down by its height (--vb-banner-h, board.css), as the requests
      strip does with its own; the strip is not shown meanwhile. The gallery mounts it in the page flow. -->
 <script lang="ts">
-  import type { BoardRun } from '../../../../packages/actions/src/index.ts';
+  import type { BoardRun } from '#actions';
   import { versionTime } from '../board/versions.ts';
 
   let { run, onback, placement = 'board' }: {

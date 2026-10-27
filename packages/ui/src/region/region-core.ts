@@ -1,10 +1,10 @@
 // Region pattern, layer 1 (core): what a region's frame shows for the person's current state.
 // No DOM, so every rule here is unit-tested under plain Node; the element only applies the
 // result. Geometry (position, size) is the page's job and is not here.
-import type { Mode, Region, View, Widths } from '../../../format/src/index.ts';
-import { widthsOf } from '../../../format/src/index.ts';
-import type { BoardState, ItemNote } from '../../../actions/src/index.ts';
-import { isDecided, statusOf } from '../../../actions/src/index.ts';
+import type { Mode, Region, View, Widths } from '#format';
+import { widthsOf } from '#format';
+import type { BoardState, ItemNote } from '#actions';
+import { isDecided, statusOf } from '#actions';
 import type { CardReply, ReplyEntry } from '../node/node-core.ts';
 import { asksAnswer, replyEntry } from '../node/node-core.ts';
 import type { RegionFresh } from './region-fresh.ts';

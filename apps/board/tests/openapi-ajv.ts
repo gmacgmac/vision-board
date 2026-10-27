@@ -7,12 +7,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv/dist/2020.js';
+import { OPENAPI_FILE } from '#format/files';
 import { SCHEMA_BASE, allSchemaFiles } from '../server/schema.ts';
 
 export type Rec = Record<string, any>;
 export const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
-export const doc: Rec = JSON.parse(read('packages/format/schema/openapi.json'));
+export const doc: Rec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8'));
 const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
 
 export interface Op { id: string; method: string; path: string; op: Rec }

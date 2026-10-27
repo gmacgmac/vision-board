@@ -8,9 +8,9 @@
 // nothing asked in between is missed (as live.ts `sync`). An answer that gives an app no size (its
 // folder went, its app.json can't be read) keeps the last size given, so a card with no size of its
 // own keeps its box (app-cards FIX_03). With the appCards flag off nothing is read.
-import type { AppInfo, LedgerEvent } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { namedApps } from '../../../../packages/actions/src/index.ts';
+import type { AppInfo, LedgerEvent } from '#format';
+import type { LedgerState } from '#actions';
+import { namedApps } from '#actions';
 import { listApps } from './io.ts';
 
 export interface AppStates {

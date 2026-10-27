@@ -3,9 +3,9 @@
 // `join`, the one credential-free write. Each body fits the operation's request schema first
 // (pointers into the body, api.md 38), its cards turn from board numbers into identities (edge.ts),
 // then the ledger module's own checks as it appends. Answers name cards by board number.
-import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '../../../packages/actions/src/index.ts';
-import type { OperationId } from '../../../packages/format/src/index.ts';
-import { openRequestOf } from '../../../packages/format/src/index.ts';
+import { eventOut, holders, openContainers, openItems, retireCards as cardsOf } from '#actions';
+import type { OperationId } from '#format';
+import { openRequestOf } from '#format';
 import { newSecret } from './agents.ts';
 import { BODY_LIMIT, KIB, readJson } from './body.ts';
 import { openName } from './caller-folder.ts';

@@ -2,12 +2,12 @@
 // it can reach (every-node FE_01) and once cleared by the agent's answer to a note (D-045), then the
 // other states (pinned, emphasis, tags, notes, topic and note, long text, lifted). Each card is a real
 // <vb-node>: rendered from a ledger node and updated with `nodeState`, exactly as the board does.
-import type { Kind, ViewNode } from '../../../../packages/format/src/index.ts';
-import { KINDS, NODE_TYPES } from '../../../../packages/format/src/index.ts';
-import type { ItemStatus } from '../../../../packages/actions/src/index.ts';
-import { statusOf } from '../../../../packages/actions/src/index.ts';
-import type { CardConditions, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { Kind, ViewNode } from '#format';
+import { KINDS, NODE_TYPES } from '#format';
+import type { ItemStatus } from '#actions';
+import { statusOf } from '#actions';
+import type { CardConditions, VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGION_KINDS, REGION_OTHER } from './fixture.ts';

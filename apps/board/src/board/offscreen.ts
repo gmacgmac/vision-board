@@ -6,7 +6,7 @@
 // which is why only cards well off screen carry it: nothing on screen changes. Measuring a card
 // takes the attribute off first (cards.ts), since a skipped card has no real size. App cards'
 // frames (app-cards.ts) read the same bounds to load only on screen.
-import type { BoardLayout, Box, Size } from '../../../../packages/layout/src/index.ts';
+import type { BoardLayout, Box, Size } from '#layout';
 import type { Viewport } from './viewport.ts';
 
 /** How far past each edge of the stage a card still counts as on screen, in screens. */

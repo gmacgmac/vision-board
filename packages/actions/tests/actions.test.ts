@@ -1,13 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger, toLine } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, eventProblems, KINDS, NODE_TYPES, readLedger, toLine } from '#format';
+import { FIXTURES_DIR } from '#format/files';
 import { boardState, counts, foldLedger, ITEM_ACTIONS, statusOf, validateAct, MAX_TEXT } from '../src/index.ts';
 
 const BOARD = 'roadmap';
 const lines = fs.readFileSync(
-  new URL(`../../format/fixtures/${BOARD}.ledger.jsonl`, import.meta.url), 'utf8').trim().split('\n');
+  `${FIXTURES_DIR}${BOARD}.ledger.jsonl`, 'utf8').trim().split('\n');
 
 /** An act line as the file holds it: the card's identity in `n`. */
 type ActLine = Partial<Omit<ActEvent, 'id'>> & { n?: number };

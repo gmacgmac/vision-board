@@ -4,7 +4,7 @@
 // earlier one is pushed. Same input, same picture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Region, View, ViewNode } from '../../format/src/index.ts';
+import type { Region, View, ViewNode } from '#format';
 import { layoutBoard, layoutRegion, overlaps, packRegions, REGION_HEAD, REGION_PAD } from '../src/index.ts';
 import type { BoardLayout, Point, Size } from '../src/index.ts';
 

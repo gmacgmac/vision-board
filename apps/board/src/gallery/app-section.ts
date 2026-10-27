@@ -7,9 +7,9 @@
 // says it needs it when = is pressed. Every other state, from list_apps answers in their exact
 // shape, is in the app-frame pattern's section. Shown only with the flag on, so ?flags=-appCards
 // draws the gallery as it was.
-import type { AppInfo, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { VbAppFrameElement, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { appView, nodeState } from '../../../../packages/ui/src/index.ts';
+import type { AppInfo, ViewNode } from '#format';
+import type { VbAppFrameElement, VbNodeElement } from '#ui';
+import { appView, nodeState } from '#ui';
 import { watchTheme } from '../board/app-cards.ts';
 import { callAppTool, listApps } from '../board/io.ts';
 import { cardList, el, group } from './dom.ts';

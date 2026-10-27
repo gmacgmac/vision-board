@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { fileURLToPath } from 'node:url';
-import type { AgentAdapter } from '../../packages/agent/src/index.ts';
+import type { AgentAdapter } from '#agent';
 import { createBoardServer } from '../../apps/board/server/app.ts';
 import { ledgerPath, openLedger } from '../../apps/board/server/ledger.ts';
 import { fakeChat } from '../../apps/board/tests/chat-support.ts';

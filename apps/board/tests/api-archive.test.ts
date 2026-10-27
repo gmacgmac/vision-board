@@ -8,9 +8,9 @@
 // not found.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import type { OperationId } from '../../../packages/format/src/index.ts';
-import type { CallInput, Client } from '../../../packages/client/src/index.ts';
-import { ApiProblem } from '../../../packages/client/src/index.ts';
+import type { OperationId } from '#format';
+import type { CallInput, Client } from '#client';
+import { ApiProblem } from '#client';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';

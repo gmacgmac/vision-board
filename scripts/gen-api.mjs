@@ -12,15 +12,17 @@ import { renderTools } from './gen-mcp.mjs';
 import { METHODS, resolveParam } from './openapi-refs.mjs';
 import { inputType, inputsOf, shape } from './schema-shape.mjs';
 import { renderReference } from './gen-reference.mjs';
+import { CHAT_SCHEMA_DIR } from '#chat/files';
+import { OPENAPI_FILE, SCHEMA_DIR as FORMAT_SCHEMA_DIR } from '#format/files';
 
 export { inputType, inputsOf, shape };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const SPEC = path.join(ROOT, 'packages/format/schema/openapi.json');
+export const SPEC = OPENAPI_FILE;
 export const OUT = path.join(ROOT, 'packages/format/src/operations.generated.ts');
-export const SCHEMA_DIR = path.join(ROOT, 'packages/format/schema');
+export const SCHEMA_DIR = path.resolve(FORMAT_SCHEMA_DIR);
 /** The format's schemas and the chat package's own contract (api.md 98), which the spec references by `$id`. */
-export const SCHEMA_DIRS = [SCHEMA_DIR, path.join(ROOT, 'packages/chat/schema')];
+export const SCHEMA_DIRS = [SCHEMA_DIR, path.resolve(CHAT_SCHEMA_DIR)];
 export const COMMANDS_OUT = path.join(ROOT, 'packages/cli/src/commands.generated.ts');
 export const TOOLS_OUT = path.join(ROOT, 'packages/mcp/src/tools.generated.json');
 export const REFERENCE_OUT = path.join(ROOT, 'docs/specification/api-reference.md');
@@ -139,7 +141,7 @@ export function renderCommands(doc, schemas) {
     '// The `vb` command table: one command per x-agent operation, with its summary and its inputs',
     '// (path, query, and the top-level properties of a JSON body). The CLI reads this, never openapi.json.',
     '',
-    "import type { OperationId } from '../../format/src/index.ts';",
+    "import type { OperationId } from '#format';",
     '',
     "export type CommandInputType = 'string' | 'integer' | 'number' | 'boolean' | 'json';",
     '',

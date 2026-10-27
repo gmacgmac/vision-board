@@ -4,9 +4,9 @@
 // replies under the notes they answer (`reply`, its `to` the note's `seq`), on a card and on a whole
 // container. Facts only: the card and the frame draw them (packages/ui); the page sends nothing, since a
 // handover and a reply are the agent's words, read-only here. Split out of controller.ts.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import type { CardConditions, CardReply } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { LedgerState } from '#actions';
+import type { CardConditions, CardReply } from '#ui';
 import { idOf } from './card-numbers.ts';
 
 export interface ParkingDeps {

@@ -2,9 +2,9 @@
 // `appView`), what the card's name adds, and the markup the template draws for each.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { AppInfo, ViewNode } from '../../format/src/index.ts';
-import { APP_SIZE } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { AppInfo, ViewNode } from '#format';
+import { APP_SIZE } from '#format';
+import type { BoardState } from '#actions';
 import type { AppCardState } from '../src/index.ts';
 import { APP_CARD_STATES, appMenuId, appStateMarkup, appView, KIND_ICON, nodeState, nodeTemplate } from '../src/index.ts';
 

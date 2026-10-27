@@ -5,9 +5,9 @@
 // answer, and a whole container. Remove card on the selection bar is drawn in the selection bar's own
 // samples. Shown only with the flag on, so ?flags=-personRemove draws the gallery as it was.
 import { mount } from 'svelte';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import type { BoardState } from '#actions';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import ConfirmList from '../shell/ConfirmList.svelte';
 import type { RemoveWords } from '../board/remove-words.ts';
 import { cardsWords, containerWords } from '../board/remove-words.ts';

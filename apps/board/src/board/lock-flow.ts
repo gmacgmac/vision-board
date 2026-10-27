@@ -8,8 +8,8 @@
 // is not among them and stays usable), the note bubble doesn't open, and sender.ts asks `refuse`
 // before every line it sends, so a path this file doesn't know is refused there too (the one funnel,
 // with the same `passesLock` the server asks). Selection, zoom, pan and the finder stay.
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardLocked, LOCKED_PERSON, passesLock } from '../../../../packages/actions/src/index.ts';
+import type { LedgerState } from '#actions';
+import { boardLocked, LOCKED_PERSON, passesLock } from '#actions';
 import type { Outgoing } from './sender.ts';
 import type { StageHandlers } from './wiring.ts';
 import { ACTING } from './versions.ts';

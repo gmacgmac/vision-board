@@ -5,10 +5,10 @@
 // reply. Each sample is a small stage on the board's canvas; the bubble is placed with `placeBubble`
 // exactly as the board places it, so right, left and below come from the stage's size, never from
 // a hand-set side; the conversation from `partAnchor`, its arrow on the part pressed.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { BubbleInput, BubblePhase, NotesEntry, StageBox, VbNodeElement, VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
-import { bubbleView, conversation, isNoteEntry, nodeState, partAnchor, placeBubble } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState } from '#actions';
+import type { BubbleInput, BubblePhase, NotesEntry, StageBox, VbNodeElement, VbNoteBubbleElement } from '#ui';
+import { bubbleView, conversation, isNoteEntry, nodeState, partAnchor, placeBubble } from '#ui';
 import { el, group } from './dom.ts';
 import { containerBubbleSample } from './container-bubble.ts';
 import type { Fixture } from './fixture.ts';

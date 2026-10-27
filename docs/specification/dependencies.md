@@ -22,8 +22,8 @@ register in the same change.
 
 | Measure | Value |
 |---|---|
-| Direct dependencies | 9: `ajv` in `apps/board/package.json` `dependencies`; 8 `devDependencies`, 4 in `apps/board/package.json` and `typescript`, `@types/node`, `@playwright/test` and `axe-core` at the root |
-| Lockfile third-party entries | 82, every platform included, workspace links excluded |
+| Direct dependencies | 9, all in the root `package.json` (one package scope, D-059): `ajv` in `dependencies`; 8 `devDependencies` |
+| Lockfile third-party entries | 82, every platform included |
 | Installed on this machine | 58 (the earlier 53 plus `ajv` and its 4 dependencies) |
 | Install scripts run | 0. No installed package declares `preinstall`, `install` or `postinstall` |
 | Licences (installed) | MIT 45, Apache-2.0 7, MPL-2.0 3, BSD-3-Clause 2, ISC 1 |
@@ -32,15 +32,15 @@ register in the same change.
 
 | Package | Version | Declared in | Used by | Why |
 |---|---|---|---|---|
-| `svelte` | 5.57.1 | `apps/board/package.json` | `.svelte` files in `apps/board/src/` | The app shell around the board (D-012). A compiler, so pages ship as generated code plus a small runtime |
-| `vite` | 8.3.1 | `apps/board/package.json` | `apps/board/vite.config.ts`; root `build` and `board` scripts | Builds the page into `apps/board/dist/`, which the board server serves |
-| `@sveltejs/vite-plugin-svelte` | 7.3.1 | `apps/board/package.json` | `svelte()` in `apps/board/vite.config.ts`, `vitePreprocess` in `apps/board/svelte.config.js` | Compiles `.svelte` files inside Vite |
-| `svelte-check` | 4.7.6 | `apps/board/package.json` | root `check` script | Strict type and accessibility checks of `.svelte` and `.ts` files (rules 5, 14) |
+| `svelte` | 5.57.1 | root `package.json` | `.svelte` files in `apps/board/src/` | The app shell around the board (D-012). A compiler, so pages ship as generated code plus a small runtime |
+| `vite` | 8.3.1 | root `package.json` | `apps/board/vite.config.ts`; root `build` and `board` scripts | Builds the page into `apps/board/dist/`, which the board server serves |
+| `@sveltejs/vite-plugin-svelte` | 7.3.1 | root `package.json` | `svelte()` in `apps/board/vite.config.ts`, `vitePreprocess` in `apps/board/svelte.config.js` | Compiles `.svelte` files inside Vite |
+| `svelte-check` | 4.7.6 | root `package.json` | root `check` script | Strict type and accessibility checks of `.svelte` and `.ts` files (rules 5, 14) |
 | `typescript` | 6.0.3 | `package.json` | `svelte-check` (peer) | Type checking. 6.x because `svelte-check` accepts only `^5 \|\| ^6`; review when it supports 7 |
 | `@types/node` | 22.20.5 | `package.json` | `"types": ["node"]` in the root `tsconfig.json` (N7) | Type definitions for Node's built-in modules, so package, server and bin code is strictly checked (rule 14). Major 22 matches our Node 22. Writing our own would be a second source of truth for Node's API (rule 6). Already in the tree through `vite`; now declared directly |
 | `@playwright/test` | 1.63.0 | `package.json` | `tests/pages/` and the root `test:pages` script | Page tests (rule 13, D-025): opens the board and the gallery in Chromium and fails on console errors, failed requests, accessibility violations and screenshot changes. Same version as Uplynk Studio. Its browsers are downloaded by a separate `playwright install`, never by `npm install` |
 | `axe-core` | 4.13.0 | `package.json` | `tests/pages/helpers.ts` | The accessibility checker the page tests inject into each page (WCAG 2 A and AA, rule 5). Same version as Uplynk Studio. No Playwright wrapper package is installed |
-| `ajv` | 8.20.0 | `apps/board/package.json` (`dependencies`) | `apps/board/server/schema.ts` only (the server's I/O layer, its tests and `npm run validate`) | Validates ledger lines against the JSON Schemas in `packages/format/schema/` (D-026, rule 6). Draft 2020-12 through `Ajv2020`, strict mode, `discriminator`. Never imported by the page, so it never reaches the page bundle (rule 15). Timestamps use a pattern, so `ajv-formats` is not installed |
+| `ajv` | 8.20.0 | root `package.json` (`dependencies`) | `apps/board/server/schema.ts` only (the server's I/O layer, its tests and `npm run validate`) | Validates ledger lines against the JSON Schemas in `packages/format/schema/` (D-026, rule 6). Draft 2020-12 through `Ajv2020`, strict mode, `discriminator`. Never imported by the page, so it never reaches the page bundle (rule 15). Timestamps use a pattern, so `ajv-formats` is not installed |
 
 ## Weight and risk
 
@@ -80,6 +80,6 @@ under each package that needs them).
 | Unit tests | Node's built-in runner (root `test` script) | Vitest |
 | Lint rules | `scripts/verify.mjs` | ESLint |
 | Local server | `apps/board/server.ts` on `node:http` | Express, Vite's dev server |
-| Workspaces | npm workspaces | pnpm |
+| Modules | Folders named in the root `imports` map (D-059) | npm workspaces, pnpm |
 
 Still to come: Prettier (D-007, tracker N5).

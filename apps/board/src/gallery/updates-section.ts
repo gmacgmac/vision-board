@@ -3,9 +3,9 @@
 // only with the flag on, so ?flags=-cardUpdates draws the gallery as it was. The cards are real
 // <vb-node> elements updated with `nodeState` and the fixture ledger's unseen versions, read through
 // the conditions table as the board reads them; each stepper state is the one the page passes in.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { CardUpdates, VbNodeElement } from '../../../../packages/ui/src/index.ts';
-import { nodeState } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { CardUpdates, VbNodeElement } from '#ui';
+import { nodeState } from '#ui';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

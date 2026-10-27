@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Mode, Region, View, ViewNode } from '../../format/src/index.ts';
-import { MODES } from '../../format/src/index.ts';
-import type { BoardState, ItemStatus } from '../../actions/src/index.ts';
+import type { Mode, Region, View, ViewNode } from '#format';
+import { MODES } from '#format';
+import type { BoardState, ItemStatus } from '#actions';
 import type { RegionNoteStage } from '../src/index.ts';
 import {
   agentChoiceText, commentLabel, MODE_HINT, retiredMarker, MODE_LABEL, NOTE_STAGE_TEXT, noteBadge, noteStage, PUT_BACK_NONE_HINT, REGION_COLOUR_DEFAULT,

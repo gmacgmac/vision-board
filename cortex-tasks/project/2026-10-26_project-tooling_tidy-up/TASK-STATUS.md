@@ -38,7 +38,7 @@ tracker:
 |---|-----|------|-------|---------|------|--------|-------|
 | 1 | FIX_01 | 1 | standard | — | [Green baseline](./FIX_01_green-baseline.md) | Completed | port 4700 |
 | 1b | FIX_02 | 1 | standard | — | [A proposal on a retired card ends](./FIX_02_proposal-on-retired-card.md) | Completed | port 4705 |
-| 2 | ARCH_01 | 2 | strong | Build and tooling engineer — a module has one front door, and a back door that the checks can't see is a back door that will be used. | [One front door per module](./ARCH_01_module-front-doors.md) | Pending | port 4710 |
+| 2 | ARCH_01 | 2 | strong | Build and tooling engineer — a module has one front door, and a back door that the checks can't see is a back door that will be used. | [One front door per module](./ARCH_01_module-front-doors.md) | Completed | port 4710 |
 | 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Pending | port 4720 |
 | 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Pending | port 4730 |
 | 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Pending | port 4740 |
@@ -97,6 +97,13 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
 | FIX_01-R1 | FIX_01 | The selection bar and its pill cover a container's Move grip when the selection is in the first row (a real overlap, not only a test one) | orchestrator, now (maintainer, point 283): `placeBar` takes boxes to avoid; the board passes each container title line | Done |
+| ARCH_01-R1 | ARCH_01 | One package scope: fold `apps/board/package.json` into the root, regenerate the lockfile (blocking) | orchestrator, under the maintainer's delegation: done, D-059; `npm run build`, `check`, `test`, `verify` green | Done |
+| ARCH_01-R2 | ARCH_01 | Decision entry for the scope and the imports map | orchestrator: D-059 appended (covers both) | Done |
+| ARCH_01-R4 | ARCH_01 Run 2 | `docs/specification/modules.md`: `npm run map` | orchestrator | Done |
+| ARCH_01-R5 | ARCH_01 Run 2 | Decision entry: a module's names (`#m`, `/styles.css`, `/files`, `/testing`) | orchestrator, under delegation: D-060 | Done |
+| ARCH_01-R3 | ARCH_01 Run 2 | READMEs and `components.md`: claims to the names (cortex-docs) | orchestrator, a Sonnet docs sub-agent during the wave gate: six READMEs and components.md updated | Done |
+| ARCH_01-R6 | ARCH_01 Run 2 (note) | `perf-ledger` imported by the actions/layout timing tests: move into a module's `/testing` so verify's warnings clear | TEST_01 | Open |
+| ARCH_01-R7 | ARCH_01 Run 2 (note) | cli/mcp tests and the calculator skill test reach into the board server: the engine is their front door | ENGINE_01 | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -117,8 +124,9 @@ _Notes:_ The fold already closed proposals on a retire (retire.ts `foldRetire`, 
 ---
 
 ### ARCH_01: One front door per module
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Run 1: Step 1 STOP. A root `imports` map resolves `#format` for Node, Vite, Playwright and an outside consumer, but not under `apps/board/`: `apps/board/package.json` is its own package scope, so Node (`ERR_PACKAGE_IMPORT_NOT_DEFINED`), Vite and svelte-check fail there (tsc passes only by cache). An `imports` target cannot leave its package, so there is no in-scope fix. Recommended: fold `apps/board/package.json` into the root (one scope; needs `package.json` beyond `imports`, lockfile, install). Nothing kept; probes in `temp/arch01/`. Detail and options in the task file.
+Run 2: Completed (after D-059). Step 1 re-proved in every resolver, from `apps/board/` too. Names: `#<module>` (index.ts) for all nine code modules; `#ui/styles.css` (new `src/styles.css`), `#chat/styles.css`, `#tokens/styles.css`; Node file paths `#format/files` (`SCHEMA_DIR`, `OPENAPI_FILE`, `FIXTURES_DIR`), `#chat/files` (`CHAT_SCHEMA_DIR`); `MCP_BIN` on `#mcp`; test support `#agent/testing`. Codemod: 732 imports; CSS lists `apps/board/src/styles/{page,chat}.ts`; gallery reads `#ui` `PATTERNS`. `verify` `checkReferences` fails on any path into another module (imports, side-effect, `new URL`, glob, HTML, CSS) across apps, packages, scripts, tests, skills. Built CSS byte-identical; unit, check, gen, build green; 138 page specs on 4710 green, no screenshot changed. `verify` needs `npm run map` (orchestrator). Left for later tasks: perf-ledger imports (TEST_01, verify warns), serve-fixture and skill test reaching the board server (ENGINE_01). Decision draft for the sub-names in the task file.
 
 ---
 

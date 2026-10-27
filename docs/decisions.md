@@ -732,3 +732,28 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Why**: a reply's tip closed before the pointer reached it, so long replies could not be scrolled.
 - **Rejected**: a longer delay (tips linger); clicking to read (it opens the whole conversation).
 - **Task**: cortex-tasks/board/2026-10-26_board-ui_hover-tip-reachable.md
+
+## D-059 One package scope: modules are folders named in the root imports map
+- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27); builds on point 224
+- **Decision**: The repo has one `package.json`, at the root, with every dependency and script.
+  `apps/board/package.json` and npm workspaces are gone. Modules are reached by the names in the
+  root `imports` map (`#format`, `#ui`, …), which Node, Vite, TypeScript and Playwright all resolve.
+- **Why**: a `#name` resolves against the importer's nearest `package.json`, so the board's own one
+  hid the root map from every file under `apps/board/` (ARCH_01 step 1), and an `imports` target cannot
+  leave its package. One scope also matches point 224 (modules, not npm packages) and leaves nclite
+  importing the board's files where they sit.
+- **Rejected**: an npm package per module (point 224); tsconfig `paths` plus a Vite alias plus a Node
+  loader (a second naming mechanism); an `imports` map per app (its targets cannot leave the app).
+- **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_01_module-front-doors.md
+
+## D-060 A module's names: one way in per kind of use
+- **Date**: 2026-10-27 · **Status**: Accepted, for review · **From**: orchestrator, under the maintainer's delegation for the overnight tidy-up (2026-10-27), from ARCH_01's draft
+- **Decision**: `#<module>` is a module's front door (`src/index.ts`); `#<module>/styles.css` its one
+  stylesheet; `#<module>/files` the file paths Node reads from it (schemas, fixtures), only for a module
+  the page loads, so `node:` stays out of the page bundle (a Node-only module exports them from its
+  front door: `GATE_BIN`, `MCP_BIN`); `#<module>/testing` its test support. `verify` fails on any
+  other way in, from `tests/` and `skills/` too.
+- **Why**: one way in per kind of use, each visible to `verify` and the module map.
+- **Rejected**: a wildcard `#ui/*` (every file a door); file paths on the front door (`node:url` in the
+  page bundle); a `styles.css` wrapper for a module with one sheet.
+- **Task**: cortex-tasks/project/2026-10-26_project-tooling_tidy-up/ARCH_01_module-front-doors.md

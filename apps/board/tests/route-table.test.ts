@@ -6,11 +6,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import { OPERATIONS } from '#format';
+import { OPENAPI_FILE } from '#format/files';
 
 type Rec = Record<string, any>;
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
-const doc: Rec = JSON.parse(fs.readFileSync(path.join(ROOT, 'packages/format/schema/openapi.json'), 'utf8'));
+const doc: Rec = JSON.parse(fs.readFileSync(OPENAPI_FILE, 'utf8'));
 const METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace', 'query'];
 const ops = Object.entries<Rec>(doc.paths).flatMap(([route, item]) =>
   METHODS.filter((m) => item[m]).map((m) => ({ id: item[m].operationId as string, method: m.toUpperCase(), path: route, op: item[m] as Rec })));

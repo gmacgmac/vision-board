@@ -2,7 +2,7 @@
 // added, changed or removed, in a fixed order. A body that starts with the previous one is `added`,
 // with the added text (an agent's `append`, api.md 95); any other new body is `changed`. The title's
 // change carries what it now reads. The card's change chips read this. Pure.
-import type { NodeBody } from '../../format/src/index.ts';
+import type { NodeBody } from '#format';
 
 export type ChangeField = 'title' | 'body' | 'tags' | 'kind' | 'size' | 'container';
 export type Change = 'added' | 'changed' | 'removed';

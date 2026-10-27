@@ -1,7 +1,7 @@
 // The note a press edits rather than adds (split out of notes.ts): a card, a group of cards and a
 // container each hold at most one note not yet history (sent or answered, popovers-larger-thread
 // ruling 5), and a press on it opens that note. Pure lookups over the board state.
-import type { BoardState, ItemNote } from '../../../../packages/actions/src/index.ts';
+import type { BoardState, ItemNote } from '#actions';
 
 /** The card's own note not yet history (`locked`: sent or answered, ruling 5), if any. A note on a group of
  * cards is not the card's own (3_FE_02 ruling 3), so C on the card starts its own note. */

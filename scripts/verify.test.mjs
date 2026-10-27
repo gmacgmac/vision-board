@@ -1,7 +1,7 @@
 // Proves every rule in verify.mjs fails when broken and passes when kept.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMap, checkImports, checkLength, checkManifest, checkWeight, pageAssets } from './verify.mjs';
+import { buildMap, checkLength, checkManifest, checkReferences, checkWeight, namesOf, pageAssets } from './verify.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -12,21 +12,63 @@ test('length: under 300 is silent, over 300 warns, over 500 fails unless marked'
   assert.deepEqual(levels(checkLength('a.ts', '// verify: long-file generated table\n' + 'x\n'.repeat(600))), ['warn']);
 });
 
-test('imports: allowed layer through the front door passes', () => {
-  assert.deepEqual(checkImports('packages/actions/src/a.ts', "import { X } from '../../format/src/index.ts';"), []);
-  assert.deepEqual(checkImports('packages/layout/src/a.ts', "import { y } from './b.ts';"), []);
-  assert.deepEqual(checkImports('apps/board/src/a.ts', "import type { V } from '/pkg/format/src/index.ts';"), []);
+const NAMES = namesOf({ imports: {
+  '#actions': './packages/actions/src/index.ts', '#format': './packages/format/src/index.ts',
+  '#format/files': './packages/format/src/files.ts', '#ui': './packages/ui/src/index.ts',
+  '#ui/styles.css': './packages/ui/src/styles.css', '#client': './packages/client/src/index.ts', '#mcp': './packages/mcp/src/index.ts',
+} });
+const check = (rel, text) => checkReferences(rel, text, NAMES);
+const fails = (rel, text, pattern) => {
+  const r = check(rel, text);
+  assert.deepEqual(levels(r), ['fail'], `${rel}: ${text}`);
+  assert.match(r[0].message, pattern);
+};
+
+test('names: a module by its name, in a layer it may use, and relative paths inside a module pass', () => {
+  assert.deepEqual(check('packages/actions/src/a.ts', "import { X } from '#format';"), []);
+  assert.deepEqual(check('packages/layout/src/a.ts', "import { y } from './b.ts';"), []);
+  assert.deepEqual(check('apps/board/src/a.ts', "import '#ui/styles.css';\nimport type { V } from '#format';"), []);
+  assert.deepEqual(check('apps/board/server/a.ts', "import { SCHEMA_DIR } from '#format/files';"), []);
+  assert.deepEqual(check('tests/pages/a.spec.ts', "import { APP } from '#ui';"), []);
+  assert.deepEqual(check('packages/ui/tests/a.test.ts', "const f = new URL('../src/', import.meta.url);"), []);
+  assert.deepEqual(check('apps/board/index.html', '<link rel="icon" href="/favicon.svg"><script type="module" src="./src/main.ts"></script>'), []);
 });
 
-test('imports: back door, wrong-way layer, app and scripts imports fail', () => {
-  assert.match(checkImports('packages/actions/src/a.ts', "import { X } from '../../format/src/view.ts';")[0].message, /back-door/);
-  assert.match(checkImports('packages/format/src/a.ts', "import { A } from '../../actions/src/index.ts';")[0].message, /may not depend/);
-  assert.match(checkImports('packages/ui/src/a.ts', "import x from '../../../apps/board/src/x.ts';")[0].message, /imports an app/);
-  assert.match(checkImports('apps/board/src/a.ts', "import x from '../../../scripts/verify.mjs';")[0].message, /scripts/);
-  assert.match(checkImports('apps/board/src/a.ts', "export * from '/pkg/ui/src/item/item-core.ts';")[0].message, /back-door/);
+test('back doors: any path into another module fails, from code, CSS, HTML, tests and skills', () => {
+  const door = /back door into packages\/(format|ui|tokens|agent)/;
+  fails('packages/actions/src/a.ts', "import { X } from '../../format/src/index.ts';", door);
+  fails('packages/actions/src/a.ts', "export * from '../../format/src/view.ts';", door);
+  fails('apps/board/src/a.ts', "const m = await import('../../../packages/format/src/index.ts');", door);
+  fails('apps/board/src/main.ts', "import '../../../packages/ui/src/node/node.css';", door);
+  fails('apps/board/server/a.ts', "const DIR = fileURLToPath(new URL('../../../packages/format/schema/', import.meta.url));", door);
+  fails('apps/board/tests/a.test.ts', 'const f = (rel) => new URL(`../../../packages/agent/tests/${rel}`, import.meta.url);', door);
+  fails('apps/board/src/g.ts', "const files = import.meta.glob<P>('../../../packages/ui/src/*/pattern.json', { eager: true });", door);
+  fails('apps/board/index.html', '<link rel="stylesheet" href="../../packages/tokens/src/tokens.css">', door);
+  fails('packages/chat/src/chat.css', "@import '../../ui/src/node/node.css';", door);
+  fails('tests/pages/a.ts', "import { REGION_GAP } from '../../packages/layout/src/types.ts';", /back door into packages\/layout/);
+  fails('skills/vision-board/a.test.mjs', "import { X } from '../../packages/format/src/index.ts';", door);
+});
 
-test('imports: the client and MCP layers of D-029', () => {
-  const imp = (from, to) => checkImports(`packages/${from}/src/a.ts`, `import { X } from '../../${to}/src/index.ts';`);
+test('names: an unknown name, a module\'s own name and a wrong-way layer fail', () => {
+  fails('apps/board/src/a.ts', "import { X } from '#nope';", /not a module name/);
+  fails('packages/format/src/a.ts', "import { X } from '#format';", /its own module's name/);
+  fails('packages/format/src/a.ts', "import { A } from '#actions';", /may not depend/);
+});
+
+test('apps and scripts: only test code imports an app; nothing imports scripts/', () => {
+  fails('packages/ui/src/a.ts', "import x from '../../../apps/board/src/x.ts';", /imports an app/);
+  fails('skills/vision-board/tools.mjs', "import x from '../../apps/board/server/schema.ts';", /imports an app/);
+  fails('apps/board/src/a.ts', "import x from '../../../scripts/verify.mjs';", /scripts/);
+  assert.deepEqual(check('tests/pages/a.ts', "import { createBoardServer } from '../../apps/board/server/app.ts';"), []);
+  assert.deepEqual(check('skills/vision-board/examples/a.test.mjs', "import { c } from '../../../apps/board/server/schema.ts';"), []);
+});
+
+test('a package that imports a file outside every module by path is warned', () => {
+  assert.deepEqual(levels(check('packages/actions/tests/a.timing.ts', "import { roadmap } from '../../../tests/pages/perf-ledger.ts';")), ['warn']);
+});
+
+test('names: the client and MCP layers of D-029', () => {
+  const imp = (from, to) => checkReferences(`packages/${from}/src/a.ts`, `import { X } from '#${to}';`, namesOf({ imports: { [`#${to}`]: `./packages/${to}/src/index.ts` } }));
   assert.deepEqual(imp('client', 'format'), []);
   assert.deepEqual(imp('mcp', 'client'), []);
   assert.deepEqual(imp('mcp', 'format'), []);
@@ -34,7 +76,7 @@ test('imports: the client and MCP layers of D-029', () => {
   assert.match(imp('client', 'actions')[0].message, /may not depend/);
   assert.match(imp('mcp', 'actions')[0].message, /may not depend/);
   assert.match(imp('format', 'client')[0].message, /may not depend/);
-});
+  assert.match(imp('ui', 'mcp')[0].message, /may not depend/);
 });
 
 test('manifest: ranges fail, unregistered packages fail, registered exact pins pass', () => {
@@ -44,11 +86,12 @@ test('manifest: ranges fail, unregistered packages fail, registered exact pins p
   assert.match(checkManifest('package.json', { dependencies: { vite: '8.3.1' } }, null)[0].message, /no dependency register/);
 });
 
-test('map: lists real dependencies, users and the public API', () => {
+test('map: lists real dependencies (by name), users and the public API; tests/ is left out', () => {
   const map = buildMap([
     { rel: 'packages/format/src/index.ts', text: "export * from './view.ts';" },
-    { rel: 'packages/actions/src/a.ts', text: "import { V } from '../../format/src/index.ts';" },
-  ]);
+    { rel: 'packages/actions/src/a.ts', text: "import { V } from '#format';" },
+    { rel: 'tests/pages/a.spec.ts', text: "import { V } from '#format';" },
+  ], NAMES);
   assert.match(map, /\| `packages\/actions` \| `packages\/format` \| — \|/);
   assert.match(map, /\| `packages\/format` \| — \| `packages\/actions` \| \* from view\.ts \|/);
 });

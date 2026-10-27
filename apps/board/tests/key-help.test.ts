@@ -3,7 +3,7 @@
 // that has none is not.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACTIONS } from '../../../packages/actions/src/index.ts';
+import { ACTIONS } from '#actions';
 import { COMMAND_IDS, COMMANDS } from '../src/board/commands.ts';
 import { KEY_GROUPS, keyGroups } from '../src/board/key-help.ts';
 

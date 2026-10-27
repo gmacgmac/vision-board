@@ -4,7 +4,7 @@
 // problems in the files are `invalid`; tools the person has not allowed at this version are
 // `needs-approval` (`changed` when an earlier one was); then, for this version, a tools module that
 // didn't load is `invalid` and one that crashed too often `broken`; else `ready`.
-import type { AppInfo, AppProblem } from '../../../../packages/format/src/index.ts';
+import type { AppInfo, AppProblem } from '#format';
 import { appHash } from './hash.ts';
 import type { AppFolder } from './manifest.ts';
 import { readApp } from './manifest.ts';

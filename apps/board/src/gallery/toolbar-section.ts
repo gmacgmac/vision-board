@@ -6,7 +6,7 @@
 // gallery as it was.
 import { mount } from 'svelte';
 import ToolbarEnd from '../shell/ToolbarEnd.svelte';
-import { flagOn } from '../../../../packages/format/src/index.ts';
+import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

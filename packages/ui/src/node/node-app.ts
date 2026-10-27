@@ -5,8 +5,8 @@
 // sits in the footer (card-polish FE_01), so neither a state change nor the frame coming and going
 // (ruling 14) moves the card. Only a new size does: a card with no `w`/`h` is the default until
 // list_apps first gives the manifest's size (components.md § App card 2).
-import type { AppInfo, AppProblem, AppSize, ViewNode } from '../../../format/src/index.ts';
-import { ACTIONS } from '../../../actions/src/index.ts';
+import type { AppInfo, AppProblem, AppSize, ViewNode } from '#format';
+import { ACTIONS } from '#actions';
 import { panelSize } from '../app-frame/app-frame-core.ts';
 
 /** Every state an app card draws: `checking` until list_apps has answered, the app host's five

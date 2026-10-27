@@ -11,7 +11,7 @@
 // way out, and so do the person's marks on a whole board (`actOn`: archive, restore, lock, unlock,
 // api.md 135, 138), which may name a board other than the open one, and the person's removal of
 // cards or a container (`retire`, `retire_cards`, N24).
-import type { ActionId, LedgerLine } from '../../../../packages/format/src/index.ts';
+import type { ActionId, LedgerLine } from '#format';
 import type { ActFields, BoardFields, RetireFields } from './io.ts';
 import { ApiError, markCardSeen, putBoard, retireCards, sendAct } from './io.ts';
 

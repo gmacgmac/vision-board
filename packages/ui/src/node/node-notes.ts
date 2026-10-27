@@ -2,8 +2,8 @@
 // the agent's replies to them as one conversation, and what the card's note pin and note thread
 // show, put away or not (card-polish FE_02); and the one pin of a note on a group of cards and where it
 // sits (groupNoteOnce flag, group-note-once task). No DOM; unit-tested under plain Node.
-import type { ViewNode } from '../../../format/src/index.ts';
-import type { ItemNote } from '../../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { ItemNote } from '#actions';
 
 /** One of the agent's replies under a note, read-only (FE_03 ruling 3). `who` is "Agent reply · label";
  *  `at` its line's time (ISO), which the card shows on hover (card-polish FE_02). */

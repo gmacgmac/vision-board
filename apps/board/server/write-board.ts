@@ -5,10 +5,10 @@
 // ledger module's own checks as it appends. One failure never stops the rest, except items naming a
 // failed item's key, directly or through another failed item. Results name cards by board number.
 import { createHash } from 'node:crypto';
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import { LIMITS, codePoints, latest, toLine } from '../../../packages/format/src/index.ts';
-import type { LedgerState, RetireTarget, WriteItem } from '../../../packages/actions/src/index.ts';
-import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { LIMITS, codePoints, latest, toLine } from '#format';
+import type { LedgerState, RetireTarget, WriteItem } from '#actions';
+import { ACTION_OUT, actionIn, canWrite, numberOf, proposeProblem, retireProblem } from '#actions';
 import { WRITE_ITEM_ID, itemExample, itemTypes } from './examples.ts';
 import type { Ledger } from './ledger.ts';
 import type { PointerError } from './problem.ts';

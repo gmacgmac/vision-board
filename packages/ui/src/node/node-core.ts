@@ -1,14 +1,14 @@
 // Node pattern, layer 1 (core): what a node shows and which actions it offers. No DOM, so
 // every rule here is unit-tested under plain Node; the element only applies the result.
-import type { ActionId, NodeSize, ParkBundle, ViewNode } from '../../../format/src/index.ts';
-import { NODE_TYPES } from '../../../format/src/index.ts';
-import type { BoardState, ItemStatus } from '../../../actions/src/index.ts';
+import type { ActionId, NodeSize, ParkBundle, ViewNode } from '#format';
+import { NODE_TYPES } from '#format';
+import type { BoardState, ItemStatus } from '#actions';
 import type { CardReply, NotesView } from './node-notes.ts';
 import { notesView } from './node-notes.ts';
 import type { CardUpdates, UpdatesView } from './node-updates.ts';
 import { type AppCardInput, type AppCardView, appView } from './node-app.ts';
 import { updatesView, updateWords } from './node-updates.ts';
-import { ACTIONS, statusOf } from '../../../actions/src/index.ts';
+import { ACTIONS, statusOf } from '#actions';
 
 /** The footer's word for a status on a card that asks (D-045): ✓ and ✗ have none, since the lit mark
  *  is the state and the board gives it no meaning. A card whose note waits for the agent's answer is

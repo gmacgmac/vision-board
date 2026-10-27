@@ -24,12 +24,12 @@
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
 import type {
   ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
-} from '../../../../packages/chat/src/index.ts';
+} from '#chat';
 import {
   CHAT_ANSWER_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_SEND_EVENT, CHAT_STOP_EVENT, composerView,
   EMPTY_CHAT, headerView,
-} from '../../../../packages/chat/src/index.ts';
-import { renderMarkdown } from '../../../../packages/ui/src/index.ts';
+} from '#chat';
+import { renderMarkdown } from '#ui';
 import type { ChatBridge } from './chat-bridge.ts';
 import type { ChatView } from './chat-view.ts';
 import type { ChatSessionInfo } from './io.ts';

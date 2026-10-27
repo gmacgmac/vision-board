@@ -5,8 +5,8 @@
 // in board numbers.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, readLedger } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, readLedger } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   boardList, boardState, conditionsOf, flagsOn, nodeDetail, openItems, replyScope, replyText, responsesAfter, validateAct,

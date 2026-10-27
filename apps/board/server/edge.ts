@@ -2,8 +2,8 @@
 // board the operation names; the ledger and the fold know it by its identity. This is the one place
 // a number coming in becomes an identity, on the path's board; a number that board has not given is
 // refused `invalid` at its pointer. Out, packages/actions gives board numbers (numbers.ts).
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { cardId } from '../../../packages/format/src/index.ts';
+import type { LedgerState } from '#actions';
+import { cardId } from '#format';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
 

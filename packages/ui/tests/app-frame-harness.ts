@@ -1,7 +1,7 @@
 // Test helper for the app frame's protocol tests (not a test file): a bridge with fake windows. A
 // message counts as the frame's only when its source is the frame's window, as the element checks.
 import type { AppBridgeOptions, AppHostContext, BridgeState, HostMessage } from '../src/index.ts';
-import { APP_PROTOCOL_VERSION } from '../../format/src/index.ts';
+import { APP_PROTOCOL_VERSION } from '#format';
 import { createAppBridge, hostContext } from '../src/index.ts';
 
 export const LIGHT: AppHostContext = hostContext({ theme: 'light', styles: { variables: { '--color-text-primary': 'rgb(24, 24, 27)' } } }, { w: 360, h: 440 });

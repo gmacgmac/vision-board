@@ -5,7 +5,7 @@
 // card's current answer after its cursor, not every click.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView } from '../../format/src/index.ts';
+import { boardView } from '#format';
 import type { LedgerState } from '../src/index.ts';
 import {
   boardState, conditionsOf, counts, DECIDED, CLOSED, isDecided, pendingItems, replyScope, replyText, responsesPage, unseenAnswer,

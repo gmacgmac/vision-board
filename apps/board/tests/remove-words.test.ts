@@ -4,8 +4,8 @@
 // the ledger's identities (board a drew first).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { foldLedger } from '../../../packages/actions/src/index.ts';
+import { readLedger } from '#format';
+import { foldLedger } from '#actions';
 import { cardsWords, containerWords } from '../src/board/remove-words.ts';
 
 const A = 'a-aaaa1111';

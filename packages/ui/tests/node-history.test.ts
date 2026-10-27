@@ -3,8 +3,8 @@
 // text run escaped; the empty line. Fixture words are invented.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { HistoryRow } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { HistoryRow } from '#actions';
 import { HISTORY_EMPTY, historyHead, historyLabel, historyMarkup, nodeTemplate, noteTime } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '4', region: 'r', kind: 'question', title: 'T', ...f });

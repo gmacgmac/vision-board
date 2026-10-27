@@ -1,8 +1,8 @@
 // Every thing a person or agent can do on the board, declared once (project rule 8, api.md 19).
 // Person actions are `act` events (`ActionId`); agent actions are their own records, written
 // through `write_board` or `request_grant`, never as an `act`.
-import type { ActionId, Kind } from '../../format/src/index.ts';
-import { NODE_TYPES } from '../../format/src/index.ts';
+import type { ActionId, Kind } from '#format';
+import { NODE_TYPES } from '#format';
 
 /** Where a card stands with the person. `commented`: with the agent, its latest note owed an answer,
  * neither open nor answered (conditions.ts `cardStatus`, D-046; the page says "Replied", agents

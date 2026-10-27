@@ -6,7 +6,7 @@
 // write asks it (the server's `requireBoard`, `write_board`, its retry keys, the ledger module's
 // check through `archivedProblem`), and so do the board list and the conditions; nothing else looks
 // at the set. Pure.
-import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
+import type { ActEvent, LedgerEvent } from '#format';
 import type { LedgerState } from './fold.ts';
 import { eventBoard } from './references.ts';
 

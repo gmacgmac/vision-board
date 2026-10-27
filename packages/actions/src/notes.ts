@@ -5,8 +5,8 @@
 // append-only (D-017). After a Send, or once the agent answers it, it is history (note-lock.ts). A note on a group of cards (3_FE_02, api.md
 // 62-65) is one ask shared by the log of every card it names. Pure: the fold calls `foldNoteAct`
 // and `itemOf`; the reads call `liveNotes` and `noteView`.
-import type { ActEvent, NoteKind } from '../../format/src/index.ts';
-import { isContainerAct } from '../../format/src/index.ts';
+import type { ActEvent, NoteKind } from '#format';
+import { isContainerAct } from '#format';
 import type { ItemStatus } from './registry.ts';
 import { ACTIONS, CLOSED } from './registry.ts';
 

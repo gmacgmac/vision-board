@@ -10,9 +10,9 @@
 // anything, with `locked` (`requireUnlocked`, through the action layer's `boardLocked`), and a chat
 // can't start on one (`refuseLocked`); the ledger module refuses any line that reaches it there
 // (`writeProblem`). No other server module asks whether a board is locked.
-import type { LedgerEvent } from '../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { boardLocked, boardVisibility, eventBoard, LOCKED, UNAVAILABLE } from '../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import type { LedgerState } from '#actions';
+import { boardLocked, boardVisibility, eventBoard, LOCKED, UNAVAILABLE } from '#actions';
 import type { ProblemCode } from './problem.ts';
 import { problem } from './problem.ts';
 

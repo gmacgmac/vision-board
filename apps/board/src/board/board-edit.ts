@@ -8,8 +8,8 @@
 // person for it before drawing on it. Archive asks first (ruling 5); the page then opens the next
 // board (boards.ts, which does so whoever archived it). Restore opens the board it brings back. Lock
 // board asks nothing (nothing is lost either way) and says what it did.
-import type { BoardActionId, LedgerState } from '../../../../packages/actions/src/index.ts';
-import { boardLocked } from '../../../../packages/actions/src/index.ts';
+import type { BoardActionId, LedgerState } from '#actions';
+import { boardLocked } from '#actions';
 import type { BoardFields } from './io.ts';
 import type { Sender } from './sender.ts';
 

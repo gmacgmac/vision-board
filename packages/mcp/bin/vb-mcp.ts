@@ -6,7 +6,7 @@
 // the board refuses it when another folder is open. Logs go to stderr; stdout is the protocol.
 import fs from 'node:fs';
 import path from 'node:path';
-import { projectOf } from '../../client/src/index.ts';
+import { projectOf } from '#client';
 import { createMcpServer, serveStdio } from '../src/index.ts';
 
 const base = (process.env.VB_SERVER || 'http://127.0.0.1:4466').replace(/\/+$/, '');

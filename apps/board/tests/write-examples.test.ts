@@ -6,7 +6,7 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import { OPERATIONS } from '#format';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import { itemExample, itemTypes } from '../server/examples.ts';

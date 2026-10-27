@@ -8,7 +8,7 @@
 // - a card with no links fills its lane's leftmost free column (or shortest stack) in the columns
 //   used, in card order, so it never widens the container.
 // Cycles are broken first (`acyclic`, deterministic). Pure.
-import type { Link, ViewNode } from '../../../../format/src/index.ts';
+import type { Link, ViewNode } from '#format';
 import type { Graph } from '../../layers.ts';
 import { acyclic, graphOf } from '../../layers.ts';
 

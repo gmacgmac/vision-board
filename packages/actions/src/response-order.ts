@@ -4,8 +4,8 @@
 // widths of a whole container at the lowest card in it now, or first when it holds none; an answer
 // to a grant request or a revoke, which is on no card, after the cards. A Send ends its batch. Acts at one
 // place stay in the order made. The ledger keeps the order of the clicks. Pure.
-import type { ActEvent } from '../../format/src/index.ts';
-import { isContainerAct, nodesOf } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { isContainerAct, nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
 import { eventOut } from './numbers.ts';
 import { responsesAfter } from './pending.ts';

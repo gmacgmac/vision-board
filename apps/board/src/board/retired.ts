@@ -10,10 +10,10 @@
 // whole container retired takes its cards and its frame with it, so it shows no marker; nor does a
 // container retired later. The same version is where going to a retired card by its number offers
 // to open (`lastShown`, go-to-card.ts). Pure: the held state in.
-import type { LedgerEvent } from '../../../../packages/format/src/index.ts';
-import { containerKey, everyNodeOf, LATER_REGION, latest } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { DRAWING_EVENTS } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { containerKey, everyNodeOf, LATER_REGION, latest } from '#format';
+import type { LedgerState } from '#actions';
+import { DRAWING_EVENTS } from '#actions';
 
 /** One container's marker: how many cards were retired from it, the board version (a run's `seq`)
  * that last showed the latest of them, when there is one, and with it `until`, the first `retire`

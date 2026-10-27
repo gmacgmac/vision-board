@@ -7,8 +7,8 @@
 // container names what ends it on any card in it (`container.fresh`). A check needed in more than one place is a row here, never a local check. Every
 // row reads folded indexes (marks, asks, replies, seen, heads, requests, proposals), per board;
 // none walks the events. Pure.
-import type { LedgerNode } from '../../format/src/index.ts';
-import { latest, NODE_TYPES, nodesOf } from '../../format/src/index.ts';
+import type { LedgerNode } from '#format';
+import { latest, NODE_TYPES, nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
 import { cardsOf, closedAfter, latestAsk } from './notes.ts';
 import { unseenAnswer, unseenReply } from './clears.ts';

@@ -9,7 +9,7 @@
 // each passes the same checks, so a place is just another folder under home, by its real path.
 import fs from 'node:fs';
 import path from 'node:path';
-import { boardList } from '../../../packages/actions/src/index.ts';
+import { boardList } from '#actions';
 import { ledgerPath, openLedger } from './ledger.ts';
 import { problem } from './problem.ts';
 

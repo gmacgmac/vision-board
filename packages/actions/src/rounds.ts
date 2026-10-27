@@ -5,7 +5,7 @@
 // their first board seen on it, or, when the board had no card then, after the agent's first drawing
 // with a card (FIX_01 ruling 7). A Send starts nothing: a card stays new until the person engages
 // with it (new-and-updated Design 2). Pure.
-import type { LedgerEvent } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
 import type { LedgerState } from './fold.ts';
 
 /** Fold one agent drawing line on `board`; `before` is the board's last line before it. */

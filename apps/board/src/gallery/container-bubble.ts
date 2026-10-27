@@ -4,10 +4,10 @@
 // and the agent's reply, opened from the note block's note, the arrow on it). The bubble is placed
 // with `placeBubble(titleAnchor(...))`, as the board places it, and wears the frame's line colour
 // (show's `line`) in place of a card's kind and number.
-import type { Region, View } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { BubbleView, CardReply, VbNoteBubbleElement, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { bubbleView, conversation, placeBubble, regionColour, regionState, titleAnchor } from '../../../../packages/ui/src/index.ts';
+import type { Region, View } from '#format';
+import type { BoardState } from '#actions';
+import type { BubbleView, CardReply, VbNoteBubbleElement, VbRegionElement } from '#ui';
+import { bubbleView, conversation, placeBubble, regionColour, regionState, titleAnchor } from '#ui';
 import { el } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 

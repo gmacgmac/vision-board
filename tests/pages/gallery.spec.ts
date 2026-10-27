@@ -1,18 +1,9 @@
 // The gallery page (gallery.html): every pattern in every state, drawn from the fixture ledger.
-// Sections come from the patterns' own pattern.json files, so this file reads the same folder:
-// a pattern added without a gallery entry fails the first test.
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+// Sections come from the patterns' own pattern.json files (`PATTERNS`, the same list the page
+// reads): a pattern added without a gallery entry fails the first test.
+import { PATTERNS } from '#ui';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
-
-/** `tag` for a pattern with an element; `selector` for one that draws markup only (markdown). */
-interface PatternInfo { name: string; title: string; tag?: string; selector?: string }
-
-const UI = fileURLToPath(new URL('../../packages/ui/src/', import.meta.url));
-const PATTERNS: PatternInfo[] = readdirSync(UI, { withFileTypes: true })
-  .filter((d) => d.isDirectory() && existsSync(`${UI}${d.name}/pattern.json`))
-  .map((d) => JSON.parse(readFileSync(`${UI}${d.name}/pattern.json`, 'utf8')) as PatternInfo);
 
 const THEMES: Theme[] = ['dark', 'light'];
 // every-node ruling 2: the kind decides. A card that asks takes ✓ and ✗; one that tells never does.

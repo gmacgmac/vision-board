@@ -4,8 +4,8 @@
 // it is (`region`) and, when moved, where the agent has it (`moved_from`).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { boardView, eventProblems, LATER_REGION, readLedger } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { boardView, eventProblems, LATER_REGION, readLedger } from '#format';
 import {
   boardState, canWrite, nodeDetail, openItems, placedView, responsesAfter, validateAct,
 } from '../src/index.ts';

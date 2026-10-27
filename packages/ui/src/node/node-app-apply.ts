@@ -3,7 +3,7 @@
 // size on the card, the slot's state and its state view, the footer's app status (card-polish
 // FE_01) and the footer's name with its hover tip (card-polish FE_04, the appTitle flag); and from
 // `VbNode.render`, a new version's markup that keeps a loaded panel where it is (app-state-kept FE_01).
-import type { AppSize } from '../../../format/src/index.ts';
+import type { AppSize } from '#format';
 import type { AppCardView } from './node-app.ts';
 import type { HoverTip } from '../tip/hover-tip.ts';
 import type { VbAppFrameElement } from '../app-frame/vb-app-frame.ts';

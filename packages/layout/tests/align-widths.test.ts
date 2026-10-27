@@ -4,7 +4,7 @@
 // width; the defaults come from `widthsOf` (match for grid and column, own for the rest).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Mode, Region, View, ViewNode, Widths } from '../../format/src/index.ts';
+import type { Mode, Region, View, ViewNode, Widths } from '#format';
 import { layoutBoard, layoutRegion, MODE_FNS } from '../src/index.ts';
 import type { Align, Size } from '../src/index.ts';
 

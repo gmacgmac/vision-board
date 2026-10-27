@@ -6,10 +6,10 @@
 // it to edit (2e_FE_01 ruling 1). Later and Reopen also move the card into the Later container and
 // back out (3_FE_03 ruling 6, moves.ts). With "Hide answered" on, focus goes on to the next card
 // when the card it was on is hidden by its answer.
-import type { ActionId, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { ACTIONS, DECIDED, statusOf } from '../../../../packages/actions/src/index.ts';
-import { isPressed, offers } from '../../../../packages/ui/src/index.ts';
+import type { ActionId, ViewNode } from '#format';
+import type { BoardState } from '#actions';
+import { ACTIONS, DECIDED, statusOf } from '#actions';
+import { isPressed, offers } from '#ui';
 import type { ActFields } from './io.ts';
 import type { Moves } from './moves.ts';
 import type { NoteFlow } from './notes.ts';

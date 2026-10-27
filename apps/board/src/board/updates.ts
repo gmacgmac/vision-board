@@ -4,10 +4,10 @@
 // `pageConditions`), never worked out here; the tab shows only past version 1, so a count starts at
 // `max(seen, 1)` (the row's trueWhen). A card is named by its number on `board`, as drawn; the held
 // state is by identity (card-numbers.ts). Plain data in, plain data out; update-flow.ts sends the lines.
-import { latest } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { clearsOnSelect, unseenAnswer, unseenReply, versionChanges } from '../../../../packages/actions/src/index.ts';
-import type { CardStep } from '../../../../packages/ui/src/index.ts';
+import { latest } from '#format';
+import type { LedgerState } from '#actions';
+import { clearsOnSelect, unseenAnswer, unseenReply, versionChanges } from '#actions';
+import type { CardStep } from '#ui';
 import { idOf } from './card-numbers.ts';
 
 /** Card `n` on `board`'s versions past the one the person last saw, and past version 1. */

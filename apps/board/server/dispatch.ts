@@ -3,8 +3,8 @@
 // operation's handler from the handler table answers it. Unknown path: `not-found`; known path,
 // wrong method: `method-not-allowed` with `Allow`.
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { OperationId } from '../../../packages/format/src/index.ts';
-import { OPERATIONS } from '../../../packages/format/src/index.ts';
+import type { OperationId } from '#format';
+import { OPERATIONS } from '#format';
 import type { Agents } from './agents.ts';
 import type { AppHost } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';

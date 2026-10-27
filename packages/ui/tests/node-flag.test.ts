@@ -3,8 +3,8 @@
 // the card's name) say whether the card is flagged. A card with no number has no button and no flag.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState } from '#actions';
 import { FLAG_KEY, flagLabel, nodeState, nodeTemplate } from '../src/index.ts';
 
 const node = (f: Partial<ViewNode>): ViewNode => ({ id: '3', region: 'r', kind: 'question', title: 'T', n: 3, ...f });

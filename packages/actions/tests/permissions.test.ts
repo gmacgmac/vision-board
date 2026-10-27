@@ -6,8 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { LedgerEvent } from '../../format/src/index.ts';
-import { containerKey, latest, readLedger, toLine } from '../../format/src/index.ts';
+import type { LedgerEvent } from '#format';
+import { containerKey, latest, readLedger, toLine } from '#format';
 import type { Container, LedgerState, Verdict, WriteItem, WriteKind } from '../src/index.ts';
 import { applyEvent, canWrite, emptyState, holders, PERMISSIONS, placeOf, REFERENCES, scopeOf } from '../src/index.ts';
 import { A, B, C, Ledger, scene } from './ledger-v3.ts';

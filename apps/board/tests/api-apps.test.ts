@@ -11,7 +11,7 @@ import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { APP_SIZE } from '../../../packages/format/src/index.ts';
+import { APP_SIZE } from '#format';
 import type { Harness, Joined } from './api-harness.ts';
 import { AGENT, startBoard } from './api-harness.ts';
 import { FILE_NAME_WORDS, addApp, allow, apps, gone, raw, refused, run, touch } from './app-support.ts';

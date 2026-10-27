@@ -3,7 +3,7 @@
 // opening another folder. The caller check has already run: all three are the person's (the
 // `vb_person` cookie). Paths are checked in folders.ts; the switch itself is project.ts's.
 import path from 'node:path';
-import { boardList } from '../../../packages/actions/src/index.ts';
+import { boardList } from '#actions';
 import type { Handler, HandlerTable } from './dispatch.ts';
 import type { FolderEntry } from './folders.ts';
 import { childFolders, cloudPlaces, countBoards, displayName, hasBoard, resolveFolder } from './folders.ts';

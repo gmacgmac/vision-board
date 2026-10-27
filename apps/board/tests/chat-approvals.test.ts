@@ -4,7 +4,7 @@
 // Every event fits the chat schema's kinds and the gate's outcome fits `outcome`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Facts } from '../../../packages/agent/src/index.ts';
+import type { Facts } from '#agent';
 import type { ApprovalDraft } from '../server/chat-approvals.ts';
 import { createApprovals } from '../server/chat-approvals.ts';
 import { ProblemError } from '../server/problem.ts';

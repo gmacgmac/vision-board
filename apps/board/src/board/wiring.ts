@@ -2,11 +2,11 @@
 // (select, move by the kind tab, pan, lasso), the keyboard, the size control and how a card got
 // focus (pointer-focus.ts). Each control calls one handler; what the handler does lives in the
 // controller. Split out of controller.ts (N12_FE_01).
-import type { ActionId, ActSize, Mode, Widths } from '../../../../packages/format/src/index.ts';
-import type { Box, Point } from '../../../../packages/layout/src/index.ts';
-import { routeLinks } from '../../../../packages/layout/src/index.ts';
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
+import type { ActionId, ActSize, Mode, Widths } from '#format';
+import type { Box, Point } from '#layout';
+import { routeLinks } from '#layout';
+import type { View } from '#format';
+import type { BoardLayout } from '#layout';
 import type { KeyHandlers } from './keys.ts';
 import { bindKeys } from './keys.ts';
 import type { PointerHandlers } from './pointer.ts';

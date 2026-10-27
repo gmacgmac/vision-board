@@ -6,9 +6,9 @@
      mounts it in the page flow, open. -->
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { bindHoverTip } from '../../../../packages/ui/src/index.ts';
+  import { bindHoverTip } from '#ui';
   import { keyGroups } from '../board/key-help.ts';
-  import { flagOn } from '../../../../packages/format/src/index.ts';
+  import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 
   let { placement = 'board' }: { placement?: 'board' | 'gallery' } = $props();

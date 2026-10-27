@@ -1,12 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { ActEvent, LedgerEvent } from '../../format/src/index.ts';
-import { boardView, readLedger, validateView } from '../../format/src/index.ts';
+import type { ActEvent, LedgerEvent } from '#format';
+import { boardView, readLedger, validateView } from '#format';
+import { FIXTURES_DIR } from '#format/files';
 import { boardState, foldLedger, replyText, validateAct } from '../src/index.ts';
 
 const lines = fs.readFileSync(
-  new URL('../../format/fixtures/login-review.ledger.jsonl', import.meta.url), 'utf8').trim().split('\n');
+  `${FIXTURES_DIR}login-review.ledger.jsonl`, 'utf8').trim().split('\n');
 const read = readLedger(lines);
 const state = foldLedger(read.events);
 const BOARD = 'login-review';

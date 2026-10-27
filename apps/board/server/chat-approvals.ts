@@ -5,7 +5,7 @@
 // outcome. A yes for the `session` is kept for that kind of change (a file write, or a command)
 // for the rest of the session, and answers later asks at once without asking (`asked: false`).
 import { randomBytes } from 'node:crypto';
-import type { ApprovalAnswer, ApprovalOutcome, ApprovalStatus, Facts } from '../../../packages/agent/src/index.ts';
+import type { ApprovalAnswer, ApprovalOutcome, ApprovalStatus, Facts } from '#agent';
 import { problem } from './problem.ts';
 
 /** How long the person has to answer (BE_03 ruling 4). */

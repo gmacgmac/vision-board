@@ -3,8 +3,8 @@
 // which is by identity, so `answerEvent` turns each back. On board b no number equals its identity.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readLedger } from '../../../packages/format/src/index.ts';
-import { applyEvent, foldLedger } from '../../../packages/actions/src/index.ts';
+import { readLedger } from '#format';
+import { applyEvent, foldLedger } from '#actions';
 import { boardData } from '../src/board/board-data.ts';
 import { answerEvent, idOf, numOf } from '../src/board/card-numbers.ts';
 

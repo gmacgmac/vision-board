@@ -5,8 +5,8 @@
 // itself is the browser's native one. Shown only with the flag on, so ?flags=-openList draws the
 // section as it was.
 import { mount } from 'svelte';
-import { openCards } from '../../../../packages/actions/src/index.ts';
-import type { OpenCard } from '../../../../packages/actions/src/index.ts';
+import { openCards } from '#actions';
+import type { OpenCard } from '#actions';
 import OpenChip from '../shell/OpenChip.svelte';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

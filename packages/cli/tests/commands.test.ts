@@ -3,7 +3,7 @@
 // current is checked by `npm run gen -- --check` and scripts/gen-api.test.mjs.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OPERATIONS } from '../../format/src/index.ts';
+import { OPERATIONS } from '#format';
 import { COMMANDS, GLOBAL_NAMES } from '../src/index.ts';
 
 const agentOps = Object.values(OPERATIONS).filter((o) => o.xAgent);

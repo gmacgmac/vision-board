@@ -2,14 +2,14 @@
 // are created once and then updated in place (attributes, transforms), so focus and CSS transitions
 // survive every draw; a frame is rendered again only when its region changed, and updated only when
 // what it shows changed (N12_FE_01). Cards live in cards.ts, connectors in wires.ts.
-import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import type { AccessHolder, BoardState } from '../../../../packages/actions/src/index.ts';
-import type { CardReply, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionFresh, regionState, retiredMarker } from '../../../../packages/ui/src/index.ts';
+import type { View, ViewNode } from '#format';
+import type { BoardLayout } from '#layout';
+import type { AccessHolder, BoardState } from '#actions';
+import type { CardReply, VbRegionElement } from '#ui';
+import { regionFresh, regionState, retiredMarker } from '#ui';
 import type { FreshCount } from './board-data.ts';
 import type { RetiredCount } from './retired.ts';
-import { LATER_REGION } from '../../../../packages/format/src/index.ts';
+import { LATER_REGION } from '#format';
 import { work } from './work.ts';
 
 /** The built-in Later's frame (3_FE_03 ruling 5): its layout is the grid, set by the board, and

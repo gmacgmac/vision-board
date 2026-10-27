@@ -6,8 +6,8 @@
 // seeded boards, so its numbers are far below the identities: a slip from one to the other fails.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardId } from '../../../packages/format/src/index.ts';
-import { conditionsOf, LOCKED_PERSON } from '../../../packages/actions/src/index.ts';
+import { cardId } from '#format';
+import { conditionsOf, LOCKED_PERSON } from '#actions';
 import type { Harness, Joined } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

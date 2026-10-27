@@ -4,9 +4,9 @@
 // flag), how many cards the person answered, the grant requests and the board's holders (agentAccess
 // flag) and how many cards are flagged (cardFlag flag, the "N flagged" chip). Split out of
 // controller.ts (field report batch 2).
-import type { View } from '../../../../packages/format/src/index.ts';
-import type { BoardLayout } from '../../../../packages/layout/src/index.ts';
-import { counts, openCards, replyText } from '../../../../packages/actions/src/index.ts';
+import type { View } from '#format';
+import type { BoardLayout } from '#layout';
+import { counts, openCards, replyText } from '#actions';
 import { boardHoldersOf, requestRows } from './access.ts';
 import { containerRows } from './finder.ts';
 import type { BoardData } from './io.ts';

@@ -2,7 +2,7 @@
 // not yet sent through `act`; the server refuses a second note, and any change after a Send.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { LEDGER_FORMAT } from '../../../packages/format/src/index.ts';
+import { LEDGER_FORMAT } from '#format';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 

@@ -2,8 +2,8 @@
 // (`id`); every answer an agent or the person reads names a card by its number on its board (`n`).
 // The reads here turn one into the other, once each: a card, a note's group, a proposal, a link and
 // a whole ledger event. Numbers coming in are the server's edge (apps/board/server/edge.ts). Pure.
-import type { LedgerEvent, LedgerIndex } from '../../format/src/index.ts';
-import { boardNumber, toLine } from '../../format/src/index.ts';
+import type { LedgerEvent, LedgerIndex } from '#format';
+import { boardNumber, toLine } from '#format';
 import type { LedgerState, Proposal } from './fold.ts';
 import type { ItemNote } from './notes.ts';
 import type { ReportedAction } from './registry.ts';

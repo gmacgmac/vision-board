@@ -2,8 +2,8 @@
 // (not a button), the card's name ending ", new", and the markup.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState } from '#actions';
 import { nodeState, nodeTemplate } from '../src/index.ts';
 
 const r: ViewNode = { id: '44', n: 44, region: 'r', kind: 'risk', title: 'The floor undercuts self-serve' };

@@ -2,8 +2,8 @@
 // revoke, size and send each checked on its own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActEvent } from '../../format/src/index.ts';
-import { ACTION_IDS } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { ACTION_IDS } from '#format';
 import { validateAct } from '../src/index.ts';
 import { A, B, C, scene } from './ledger-v3.ts';
 

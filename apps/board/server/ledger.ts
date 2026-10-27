@@ -10,12 +10,12 @@
 // change 2, api.md 33).
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ActEvent, LedgerEvent, LedgerIndex } from '../../../packages/format/src/index.ts';
+import type { ActEvent, LedgerEvent, LedgerIndex } from '#format';
 import {
   LEDGER_FORMAT, contextProblems, eventProblems, fromLine, indexEvent, readLedger,
-} from '../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../packages/actions/src/index.ts';
-import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '../../../packages/actions/src/index.ts';
+} from '#format';
+import type { LedgerState } from '#actions';
+import { applyEvent, cardName, foldLedger, validateAct, writeProblem } from '#actions';
 import type { PointerError } from './problem.ts';
 import { pointerError, problem } from './problem.ts';
 import { ledgerLineProblems } from './schema.ts';

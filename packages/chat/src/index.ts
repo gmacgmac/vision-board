@@ -2,7 +2,7 @@
 // this repo, so it moves into another host (nclite) unchanged. Element files are safe to export
 // here: nothing in them touches the DOM until defineChatElements() runs. The events' names are in
 // events.ts, so a host can listen without loading the elements (the board loads them on first open).
-// Styles: src/chat.css.
+// Styles: `#chat/styles.css` (src/chat.css); Node-side file paths: `#chat/files` (D-059).
 export * from './events.ts';
 export { esc, plainText } from './esc.ts';
 export type { RenderText } from './esc.ts';

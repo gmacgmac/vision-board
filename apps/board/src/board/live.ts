@@ -9,9 +9,9 @@
 // In watch mode (dev only) the stream also names the built page: the first id is kept, and a
 // different one reloads the page, whose view is already saved (FE_02 ruling 6). With the openFolder
 // flag the stream is ended by a folder switch; reopened, it reloads the page when the folder changed.
-import type { LedgerEvent, LedgerLine } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import { applyEvent, foldLedger } from '../../../../packages/actions/src/index.ts';
+import type { LedgerEvent, LedgerLine } from '#format';
+import type { LedgerState } from '#actions';
+import { applyEvent, foldLedger } from '#actions';
 import { canApply } from './board-data.ts';
 import { answerEvent } from './card-numbers.ts';
 import { readLedger, watchProject } from './io.ts';

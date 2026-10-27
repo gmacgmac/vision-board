@@ -4,7 +4,7 @@
 // (`imageNote`), so nothing outside the images folder, and nothing from the internet, is ever asked
 // for; no alt text is the path as plain text. The page sizes and versions the image once it knows it
 // (apps/board/src/board/card-images.ts); the zoomed view is the image-view pattern's.
-import { IMAGE_ROUTE, IMAGE_WORDS, imagePathProblem } from '../../../format/src/index.ts';
+import { IMAGE_ROUTE, IMAGE_WORDS, imagePathProblem } from '#format';
 import { esc } from './inline.ts';
 
 /** What the box in an image's place begins with (ruling 23): a missing file, or anything else refused. */

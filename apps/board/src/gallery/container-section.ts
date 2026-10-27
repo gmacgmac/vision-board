@@ -9,8 +9,8 @@
 // fixture ledger's container boards, `owed` included, exactly as the board does; a look the
 // pointer or focus would give is drawn with `data-look` (or the row's `data-hover`), since only
 // one element can hold them for real.
-import type { VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { regionState } from '../../../../packages/ui/src/index.ts';
+import type { VbRegionElement } from '#ui';
+import { regionState } from '#ui';
 import { el, group } from './dom.ts';
 import type { Containers, Fixture } from './fixture.ts';
 

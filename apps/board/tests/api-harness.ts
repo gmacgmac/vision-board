@@ -8,21 +8,22 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { AddressInfo } from 'node:net';
-import type { NodeEvent, OperationId } from '../../../packages/format/src/index.ts';
-import { boardNumber } from '../../../packages/format/src/index.ts';
-import type { CallInput, CallOptions, Client } from '../../../packages/client/src/index.ts';
-import { ApiProblem, createClient } from '../../../packages/client/src/index.ts';
+import type { NodeEvent, OperationId } from '#format';
+import { boardNumber } from '#format';
+import { FIXTURES_DIR } from '#format/files';
+import type { CallInput, CallOptions, Client } from '#client';
+import { ApiProblem, createClient } from '#client';
 import type { BoardServerOptions } from '../server/app.ts';
 import { createBoardServer } from '../server/app.ts';
 import { watchBuild } from '../server/build-watch.ts';
 import type { Caller, Ledger } from '../server/ledger.ts';
 import { ledgerPath, openLedger } from '../server/ledger.ts';
 import type { Answer } from './openapi-ajv.ts';
-import { ROOT, checkAnswer } from './openapi-ajv.ts';
+import { checkAnswer } from './openapi-ajv.ts';
 
 export const AGENT: Caller = { by: 'agent', agent: 'a-k3m9x2pq' };
 export const PERSON: Caller = { by: 'person' };
-const FIXTURE = path.join(ROOT, 'packages/format/fixtures/roadmap.ledger.jsonl');
+const FIXTURE = `${FIXTURES_DIR}roadmap.ledger.jsonl`;
 
 /** What the seed wrote, by name, so tests can name `seq`s and cards: `q` and `d` by their number
  * on board `pricing` (1 and 2), as every request names them; `qId` and `dId` by identity, as a

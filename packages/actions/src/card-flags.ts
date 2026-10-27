@@ -1,8 +1,8 @@
 // The person's flag (ruling 3, assumption A, api.md 128): a private mark on any card, kept in the
 // ledger and folded for the page only. No agent read looks at `flags`, and the fold keeps a flag
 // out of everything an agent reads (fold.ts `applyEvent`: no head, no seen, no answer). Pure.
-import type { ActEvent } from '../../format/src/index.ts';
-import { nodesOf } from '../../format/src/index.ts';
+import type { ActEvent } from '#format';
+import { nodesOf } from '#format';
 import type { LedgerState } from './fold.ts';
 
 /** Fold one `flag` or `unflag`. A flag stays through a redraw: it names no version. */

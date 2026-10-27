@@ -4,10 +4,9 @@
 // know these elements by their types only (`import type`) and by the event names in packages/chat
 // events.ts; nothing outside this file and the gallery imports the element code or its CSS, so the
 // build keeps them in a chunk of their own.
-import '../../../../packages/chat/src/chat.css';
-import '../styles/chat-host.css';
-import type { ChatComposerElement, ChatFeedElement, ChatHeaderElement } from '../../../../packages/chat/src/index.ts';
-import { defineChatElements } from '../../../../packages/chat/src/index.ts';
+import '../styles/chat.ts';
+import type { ChatComposerElement, ChatFeedElement, ChatHeaderElement } from '#chat';
+import { defineChatElements } from '#chat';
 
 export interface ChatView {
   header: ChatHeaderElement;

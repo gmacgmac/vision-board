@@ -2,8 +2,8 @@
 // state, D-050): what a panel's `vision-board/save-state` may carry, checked as its schema
 // (panel-state.schema.json `$defs/save`: params `{ state }` and nothing else) and `appStateProblem`
 // (a JSON value within `APP_LIMITS.stateBytes`) say. No DOM; app-frame-core.ts answers with it.
-import type { AppStateValue } from '../../../format/src/index.ts';
-import { appStateBytes, appStateProblem, PANEL_ERRORS, PANEL_SAVE_STATE } from '../../../format/src/index.ts';
+import type { AppStateValue } from '#format';
+import { appStateBytes, appStateProblem, PANEL_ERRORS, PANEL_SAVE_STATE } from '#format';
 
 /** What a refused save says when the page could not keep the value; over the limit it says
  * `appStateProblem`'s words. `data.problem` carries the code. */

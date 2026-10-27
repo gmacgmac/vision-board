@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { imagePathProblem } from '../../format/src/index.ts';
+import { imagePathProblem } from '#format';
 import { imageNote, renderMarkdown } from '../src/index.ts';
 
 interface Example { markdown: string; html: string; example: number; section: string }

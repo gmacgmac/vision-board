@@ -2,8 +2,8 @@
 // change chips and what the text gained, "You're up to date", the card's name, and the markup.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ViewNode } from '../../format/src/index.ts';
-import type { BoardState } from '../../actions/src/index.ts';
+import type { ViewNode } from '#format';
+import type { BoardState } from '#actions';
 import type { CardStep, CardUpdates } from '../src/index.ts';
 import { nodeState, nodeTemplate, stepMarkup } from '../src/index.ts';
 

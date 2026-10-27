@@ -3,7 +3,7 @@
 // schemas must compile; the arguments of a call are checked against `inputSchema` before it runs,
 // and the answer against `outputSchema` after. An answer becomes MCP's tool result: an object is
 // `structuredContent` and its JSON the text; text is the text; a thrown error is `isError`.
-import type { AppProblem, AppToolInfo, AppToolResult } from '../../../../packages/format/src/index.ts';
+import type { AppProblem, AppToolInfo, AppToolResult } from '#format';
 import { problem, sizeWords } from '../problem.ts';
 import type { SchemaProblem } from '../schema.ts';
 import { foreignSchemas, schemaProblems } from '../schema.ts';

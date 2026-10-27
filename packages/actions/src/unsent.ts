@@ -7,7 +7,7 @@
 // than at the last Send (D-045 ruling 9: ✓ then cleared leaves nothing to send); an answer on
 // cards that have all left the board (a retire, the agent's or the person's) is no longer there to
 // send. Pure.
-import type { ActEvent, RetireEvent } from '../../format/src/index.ts';
+import type { ActEvent, RetireEvent } from '#format';
 import type { LedgerState } from './fold.ts';
 import { cutOf } from './clears.ts';
 import { markOf } from './notes.ts';

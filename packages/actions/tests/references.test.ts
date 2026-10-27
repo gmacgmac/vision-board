@@ -5,8 +5,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import type { ActEvent, ActionId, EventType, LedgerEvent } from '../../format/src/index.ts';
-import { ACTION_IDS, EVENT_TYPES, LATER_REGION, latest, readLedger } from '../../format/src/index.ts';
+import type { ActEvent, ActionId, EventType, LedgerEvent } from '#format';
+import { ACTION_IDS, EVENT_TYPES, LATER_REGION, latest, readLedger } from '#format';
 import type { LedgerState, ReferenceKind, Scope } from '../src/index.ts';
 import { applyEvent, emptyState, placeOf, REFERENCE_KINDS, REFERENCES, scopeOf } from '../src/index.ts';
 import { cardsOf } from '../src/notes.ts';

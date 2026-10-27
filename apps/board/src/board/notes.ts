@@ -10,11 +10,11 @@
 // With the groupNoteOnce flag a note on a group is drawn once, as the group's pin (group-pins.ts),
 // which opens it here. Every write goes through the controller's `attempt` (rule 8); this module only
 // opens, places and closes the bubble. Changed words are never lost silently (note-discard.ts).
-import type { NoteKind } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import type { VbNoteBubbleElement } from '../../../../packages/ui/src/index.ts';
-import { placeBubble, readOnlyMode, saveIntent } from '../../../../packages/ui/src/index.ts';
-import type { NoteEventDetail } from '../../../../packages/ui/src/index.ts';
+import type { NoteKind } from '#format';
+import type { BoardState } from '#actions';
+import type { VbNoteBubbleElement } from '#ui';
+import { placeBubble, readOnlyMode, saveIntent } from '#ui';
+import type { NoteEventDetail } from '#ui';
 import type { ActFields } from './io.ts';
 import type { AskDiscard } from './note-discard.ts';
 import { bindDiscard, mayLeave } from './note-discard.ts';

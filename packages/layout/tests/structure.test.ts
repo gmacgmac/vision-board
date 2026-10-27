@@ -3,7 +3,7 @@
 // cross another, how many cells are empty. Same mode, same router, so it agrees with the picture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { Link, Mode, Region, ViewNode } from '../../format/src/index.ts';
+import type { Link, Mode, Region, ViewNode } from '#format';
 import { crossingLines, layoutBoard, routeLines, structureOf } from '../src/index.ts';
 
 const cards = (n: number, lane?: (i: number) => string): ViewNode[] =>

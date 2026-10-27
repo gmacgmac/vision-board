@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { LATER_REGION, readLedger } from '../../format/src/index.ts';
+import { LATER_REGION, readLedger } from '#format';
 import type { ConditionContext, LedgerState } from '../src/index.ts';
 import { conditionsOf, foldLedger, replyScope } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';

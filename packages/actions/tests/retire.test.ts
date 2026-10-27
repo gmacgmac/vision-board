@@ -5,7 +5,7 @@
 // board numbers 4 and 5 are identities 5 and 6: a read that slips from one to the other fails.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { boardView, readLedger } from '../../format/src/index.ts';
+import { boardView, readLedger } from '#format';
 import {
   boardState, conditionsOf, containerDetail, counts, nodeDetail, openItems, owedNotice, pendingItems, retireCards, retireProblem,
 } from '../src/index.ts';

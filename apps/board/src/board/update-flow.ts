@@ -10,9 +10,9 @@
 // NEW (newCards flag, stage5-follow-ups FE_01): the card facts also say which cards the conditions
 // table finds new (`item.new`); a selection marks seen every card a condition holds for whose row's
 // `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected.
-import type { ViewNode } from '../../../../packages/format/src/index.ts';
-import type { LedgerState } from '../../../../packages/actions/src/index.ts';
-import type { CardConditions, CardStep } from '../../../../packages/ui/src/index.ts';
+import type { ViewNode } from '#format';
+import type { LedgerState } from '#actions';
+import type { CardConditions, CardStep } from '#ui';
 import type { Selection } from './selection.ts';
 import type { SeenMark } from './updates.ts';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from './updates.ts';

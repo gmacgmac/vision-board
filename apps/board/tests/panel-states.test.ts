@@ -3,7 +3,7 @@
 // card and the latest winning, a restore from memory first, else one bounded read.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { AppStateValue } from '../../../packages/format/src/index.ts';
+import type { AppStateValue } from '#format';
 import type { PanelKey } from '../src/board/panel-states.ts';
 import { createPanelStates, LOAD_WAIT_MS, SAVE_DELAY_MS } from '../src/board/panel-states.ts';
 

@@ -4,7 +4,7 @@
 // and below so the gutters between lanes carry connectors (ruling 2). Cards in a stack line up at
 // the lane's top (align `start`) or are centred in the lane (`center`); under `match` every card
 // takes its column's widest width.
-import type { Region, ViewNode } from '../../../../format/src/index.ts';
+import type { Region, ViewNode } from '#format';
 import type { Box, Cell, Lane, ModeFn } from '../../types.ts';
 import { GAP, LANE_GUTTER, LANE_PAD } from '../../types.ts';
 import { columnX, matched } from '../../layers.ts';

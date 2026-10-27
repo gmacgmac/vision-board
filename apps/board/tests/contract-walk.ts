@@ -5,9 +5,9 @@
 // operation without a value here fails the walk at once, so it is covered or the test fails. An
 // operation `writes` when its method is anything but GET, as HTTP says.
 import assert from 'node:assert/strict';
-import type { OperationId } from '../../../packages/format/src/index.ts';
-import type { CallInput, Client } from '../../../packages/client/src/index.ts';
-import { ApiProblem } from '../../../packages/client/src/index.ts';
+import type { OperationId } from '#format';
+import type { CallInput, Client } from '#client';
+import { ApiProblem } from '#client';
 import type { Harness } from './api-harness.ts';
 import type { Rec } from './openapi-ajv.ts';
 import { checkAnswer, deref, ops } from './openapi-ajv.ts';

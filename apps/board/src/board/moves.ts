@@ -7,13 +7,13 @@
 // writes `move` and `later`; out of it, `move` and `reopen` (Reopen with no target returns the
 // card to the region its agent drew it in). Every write goes through the action layer and the I/O
 // module as one batch, drawn once (sender.ts).
-import type { View, ViewNode } from '../../../../packages/format/src/index.ts';
-import { LATER_REGION } from '../../../../packages/format/src/index.ts';
-import type { BoardState } from '../../../../packages/actions/src/index.ts';
-import { LATER, statusOf } from '../../../../packages/actions/src/index.ts';
-import type { BoardLayout, Box, Point } from '../../../../packages/layout/src/index.ts';
-import type { StageBox, VbRegionElement } from '../../../../packages/ui/src/index.ts';
-import { offers } from '../../../../packages/ui/src/index.ts';
+import type { View, ViewNode } from '#format';
+import { LATER_REGION } from '#format';
+import type { BoardState } from '#actions';
+import { LATER, statusOf } from '#actions';
+import type { BoardLayout, Box, Point } from '#layout';
+import type { StageBox, VbRegionElement } from '#ui';
+import { offers } from '#ui';
 import type { ActFields } from './io.ts';
 import type { MoveMenu, MoveTarget } from './move-menu.ts';
 import { createMoveMenu } from './move-menu.ts';

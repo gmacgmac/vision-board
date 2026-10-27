@@ -3,8 +3,8 @@
 // of the same button within 400 ms is ignored, so a double click never undoes itself.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { ActionId, ViewNode } from '../../../packages/format/src/index.ts';
-import type { BoardState, ItemStatus } from '../../../packages/actions/src/index.ts';
+import type { ActionId, ViewNode } from '#format';
+import type { BoardState, ItemStatus } from '#actions';
 import { createItemActs, REPEAT_MS } from '../src/board/item-acts.ts';
 
 const card: ViewNode = { id: '12', n: 12, region: 'r', kind: 'decision', title: 'Keep the free tier' };
