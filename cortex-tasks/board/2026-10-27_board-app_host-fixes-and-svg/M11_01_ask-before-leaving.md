@@ -254,6 +254,24 @@ Requests M11_01-R3 and R4, routed back by the orchestrator (ownership widened to
   current-folder, live-boards, picker-archive, new-board, toolbar, chat-panel, chat-send, chat, finder,
   versions: 150 passed.
 
+### Run 3
+**Status**: Completed  
+**Completed**: 2026-10-27 22:05  
+VERIFY_01 findings F3 and F5, routed back by the orchestrator.
+
+- **F3, failing test first** (port 5300): `board-host.spec.ts` "reveal of another board's card with
+  words unsaved waits for the question" failed (the card named was selected on the board still open
+  while the host asked), then passed.
+- **Fix:** `mount.ts` `reveal` awaits `board.switchTo` when it names another board and stops when it
+  resolves false (Cancel); the card or note is shown by a new local `show` once that board has opened.
+  With no board named, or the one open, it shows at once as before. `host.ts` `BoardView.reveal`'s
+  comment says it may ask through `confirm`.
+- **F5:** components.md § The board's host interface: the keys bullet names the Esc exception (tracker
+  M21, `packages/ui/src/base/layer.ts` `dismissable`); the leave bullet says `reveal` may ask and
+  cites the new test.
+- Checks: npm test 1760 + timing 10 pass (load average 5.8); check 0 errors; verify ok (13 warnings,
+  as before); gen-api current; board-host and note* specs 35 passed.
+
 ---
 
 ## On Completion

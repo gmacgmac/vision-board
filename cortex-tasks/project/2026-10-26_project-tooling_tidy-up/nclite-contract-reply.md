@@ -32,8 +32,8 @@
    - A tool table generated from the one source.
    - A new engine task: `createEngine({ dir, … })` with routes, chip resolve, `turn`, tools and a watcher,
      HTTP-free, with our standalone server and MCP as its hosts.
-   - The view as `mount(root, host)` → `{ unmount, pageChip, reveal }`, two on a page, nothing left
-     after `unmount`.
+   - The view as `mount(root, host)` → `{ unmount, unsaved, leave, pageChip, reveal }`, two on a page,
+     nothing left after `unmount`.
    - One `Chip` type and a pure `resolveChip` with refusals.
    - Styles that hold under the app's element rules, sized by the pane's width.
    - Words keyed so the plugin's one words file can be built.
@@ -73,11 +73,13 @@
   board's state), `board` (its controls) and `send()`. The root gets `vb-board`. Two boards run on one
   page; `unmount` leaves no listener behind (held by `tests/pages/board-host.spec.ts`, a fake host).
   Under a host the board acts on a key only when its target is inside its root (`input/keys.ts`
-  `bindKeys`); only the standalone page (`host.page`) keeps its shortcuts page-wide. A host's Close
-  calls `leave()` before `unmount()`: it asks through `confirm` only while a note holds unsaved words.
+  `bindKeys`); only the standalone page (`host.page`) keeps its shortcuts page-wide. One exception
+  until tracker M21 lands: while a board menu or popover is open, its Esc is caught page-wide. A host's
+  Close calls `leave()` before `unmount()`: it asks through `confirm` only while a note holds unsaved
+  words. `reveal` may ask too, when it switches boards with words unsaved; Cancel keeps the board.
 - **`host`** is the draft's `api`, `events`, `addToChat`, `settings` and `notify`, plus `confirm` and an
   optional `page` part (the board in the address bar, the board last looked at, reload, the person's
-  cookie), which only the standalone page gives. `notify` takes a tone (plain or a warning). `api`
+  cookie), which only the standalone page gives. `notify` takes a tone, `info` or `error` (an `error` for a refusal). `api`
   resolves to the `Response`.
 - **`pageChip()`** returns the board on show as a `board` chip, ref `{ board, head }`.
 - **Pictures:** card images load from the board's image route (`IMAGE_ROUTE`), outside `api`, because an

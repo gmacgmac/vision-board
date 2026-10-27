@@ -84,6 +84,17 @@ test('svgProblem: a doctype that declares entities is refused, before the root o
   }
 });
 
+test('svgProblem: an entity is refused wherever it sits in the head, so text holding <svg before it hides nothing (VERIFY_01 F1)', () => {
+  const ent = '<!ENTITY a "aaaa"><!ENTITY b "&a;&a;&a;">';
+  for (const s of [
+    `<!-- <svg --><!DOCTYPE svg [${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`,
+    `<?x <svg ?><!DOCTYPE svg [${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`,
+    `<!DOCTYPE svg [<!-- <svg -->${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`,
+  ]) assert.equal(svg(s), W.svgEntity, s);
+  assert.equal(svg(`<!-- <svg> drawn by hand --><?x <svg ?><!DOCTYPE svg><svg ${NS} viewBox="0 0 1 1"><rect width="1" height="1"/></svg>`), undefined,
+    'text holding <svg before an ordinary svg still passes');
+});
+
 test('svgProblem: a long run of white space or comments, or an endless opening tag, is answered quickly', () => {
   const started = performance.now();
   for (const s of [' '.repeat(IMAGE_HEAD_BYTES), '<!--'.repeat(IMAGE_HEAD_BYTES / 4), `<svg ${NS} ${'a="b" '.repeat(1000)}`, '<?'.repeat(IMAGE_HEAD_BYTES / 2)]) {

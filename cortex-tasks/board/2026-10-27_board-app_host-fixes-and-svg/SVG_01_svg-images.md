@@ -351,6 +351,32 @@ max channel 5 against `RASTER` 2). Ownership widened to `host-styles.spec.ts` an
   `npm run verify` passes. No baseline changed; the temp probes are deleted (the gate logs in `temp/`
   are the orchestrator's, left as they were).
 
+### Run 4
+
+**Status**: Completed · **Completed**: 2026-10-27 22:10 · VERIFY_01 F1: `svgProblem` looked for
+`<!ENTITY` only before the first `<svg` anywhere in the text, so a comment or processing instruction
+holding `<svg` (before the doctype, or inside its internal subset) hid a later entity declaration and
+the route served the file with 200.
+
+- **Failing tests first**, both seen red before the fix: `packages/format/tests/images-svg.test.ts`
+  "svgProblem: an entity is refused wherever it sits in the head…" (F1's three inputs: `<!-- <svg -->`,
+  `<?x <svg ?>`, a comment holding `<svg` in the internal subset; plus an ordinary svg after a comment
+  and a processing instruction holding `<svg`, which must pass), and
+  `apps/board/tests/images-svg-route.test.ts` "an entity declared after text holding <svg is refused
+  (415)…" (the same three refused with `svgEntity`, the ordinary one served 200).
+- **Fix** (`packages/format/src/images.ts` `svgProblem`): `<!ENTITY` anywhere in the head (its first
+  `svgHeadBytes`) is refused. Why this over "up to the real opening that `SVG_OPENING` matched": an
+  entity can only be declared in the doctype, before the root, and the root's opening must end inside
+  the head or the file is refused anyway, so the head holds the whole prologue. Searching it all needs
+  no parsing that could be wrong again, and covers a file whose opening doesn't match at all (it gets
+  the entity reason, not "not a real svg"). The cost: an svg whose comment or text says `<!ENTITY`
+  within its first 4 KB is refused, which a picture has no reason to do.
+- `docs/specification/images.md` § SVG: the entity row says "anywhere in its first `svgHeadBytes`"
+  and names the new tests. D-064 point 3 still reads true; `docs/decisions.md` untouched.
+- Checks: `npm test` 0 failures (1760 + 10 timing); card-image* specs on 5200: 35 passed;
+  `npm run verify` passes. `npm run check` reports 7 errors, all in `apps/board/src/board/mount.ts`
+  and `tests/pages/board-host.spec.ts`, which another task is editing now; none in files of mine.
+
 ---
 
 ## On Completion

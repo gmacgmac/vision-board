@@ -121,14 +121,16 @@ const viewBoxOk = (v: string | undefined): boolean => {
 /** Why the first bytes of a file named `.svg` (`IMAGE_HEAD_BYTES` are enough) are not one the board
  * shows, in `IMAGE_WORDS`' words; nothing when they are. It must open, within `svgHeadBytes`, an
  * `<svg>` root in the SVG namespace that says its size (a `viewBox`, or a `width` and a `height`), so
- * the browser never falls back to its 300 by 150 default; a doctype that declares entities is
- * refused (a picture never needs one, and expanding them costs the browser). Its script is not
+ * the browser never falls back to its 300 by 150 default; `<!ENTITY` anywhere in the head is refused
+ * (a picture never needs one, and expanding them costs the browser). Its script is not
  * looked for: the browser runs none of it in an <img>, and the route's policy stops it elsewhere. */
 export function svgProblem(head: Uint8Array): string | undefined {
   let text = '';
   for (const b of head.subarray(0, IMAGE_LIMITS.svgHeadBytes)) text += String.fromCharCode(b);
-  const root = text.search(/<svg[\s/>]/);
-  if (/<!ENTITY/i.test(root < 0 ? text : text.slice(0, root))) return IMAGE_WORDS.svgEntity;
+  // Anywhere in the head, not only before the first `<svg`: text in a comment or a processing
+  // instruction can hold `<svg` too (VERIFY_01 F1). An entity can only be declared before the root,
+  // which must end inside the head, so this covers the whole prologue with no parsing to get wrong.
+  if (/<!ENTITY/i.test(text)) return IMAGE_WORDS.svgEntity;
   const opening = SVG_OPENING.exec(text);
   if (!opening) return imageNotReal('svg');
   const attrs = new Map([...opening[1]!.matchAll(ATTRIBUTE)].map((m): [string, string] => [m[1]!, m[2] ?? m[3]!]));

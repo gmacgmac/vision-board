@@ -54,6 +54,7 @@ type Host = {
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
   pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
   addHostControls(parentId: string): void; addClose(parentId: string, id: string): void; unsaved(id: string): boolean;
+  reveal(id: string, ref: { board?: string; n?: number; seq?: number }): void;
   answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
 };
 const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
@@ -232,4 +233,24 @@ test('the host asks before words are lost: Close asks only while a note holds ch
   expect((await confirms('a')).length).toBe(2);
   expect(await page.evaluate(() => document.getElementById('a')!.className)).toBe('');
   expect(await call(page, (h) => h.listeners())).toBe(baseline);
+});
+
+test('reveal of another board\'s card with words unsaved waits for the question: Cancel stays on the note, nothing else is shown', async ({ page }) => {
+  await open(page);
+  await call(page, (h, lines: object[]) => h.mount('a', lines, lines.length), LINES);
+  const cards = page.locator('#a vb-node');
+  await expect(cards).toHaveCount(nodesUpTo(Infinity));
+  const other = Number(await cards.nth(1).getAttribute('data-id'));
+  await cards.first().focus();
+  await page.keyboard.press('c');
+  await page.keyboard.type('Half a thought');
+  const selected = await call(page, (h) => h.status('a').selection);
+  await call(page, (h, n: number) => h.reveal('a', { board: 'elsewhere', n }), other);
+  await expect.poll(async () => (await call(page, (h) => h.record('a'))).confirms.length).toBe(1);
+  const text = page.locator('#a vb-note-bubble textarea');
+  await expect(text).toBeFocused();
+  await expect(text).toHaveValue('Half a thought');
+  await expect(cards.nth(1), 'the card named is not gone to on the board still open').not.toBeFocused();
+  expect(await call(page, (h) => h.status('a').selection)).toBe(selected);
+  expect(await call(page, (h) => h.status('a').boardId)).toBe('roadmap');
 });

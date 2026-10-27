@@ -97,6 +97,8 @@ export interface BoardView {
   leave(): Promise<boolean>;
   /** The chip for the board on show (what a pane header's Add to chat sends); null when no board is shown (or the one shown is archived). */
   pageChip(): Chip | null;
-  /** Brings into view what a chip or a change names: a board, a card (`n`) or a note (`seq`). */
+  /** Brings into view what a chip or a change names: a board, a card (`n`) or a note (`seq`). Another
+   *  board may ask first, through `confirm`, while a note holds unsaved words (as `leave()` does): the
+   *  card or note shows once that board has opened, and Cancel leaves everything as it was. */
   reveal(ref: { board?: string; n?: number; seq?: number }): void;
 }

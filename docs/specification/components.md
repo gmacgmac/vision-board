@@ -221,7 +221,9 @@ host; nclite's pane will be another.
   pan) stops the browser moving focus, so `mount` gives the root focus on pointer release when focus
   is outside it (`preventScroll`): after any click on the board its keys work. Left page-wide on
   purpose: the pan key's hand cursor (`input/pointer.ts` `bindPanKey`, an attribute on its own stage)
-  and the keyboard-or-pointer reading (`canvas/pointer-focus.ts`, no action). The zoomed image view is
+  and the keyboard-or-pointer reading (`canvas/pointer-focus.ts`, no action). One known exception, open
+  as tracker M21: while a board menu or popover is open, its Esc is caught page-wide
+  (`packages/ui/src/base/layer.ts` `dismissable`), so a host's own Esc then closes the board's menu, not the host's. The zoomed image view is
   a modal dialog outside the root, which `route` ignores (its Esc and Tab are the browser's). Proven by
   `apps/board/tests/keys.test.ts` (inside, outside, another board, Esc, `pageWide`) and
   `tests/pages/board-host.spec.ts` "keys stay inside the board" (focus on a host button and field, then
@@ -236,14 +238,17 @@ host; nclite's pane will be another.
   true and the host unmounts; Cancel resolves false and puts focus back in the text, whose keys still
   reach it. A `leave()` while one is asking gets the same answer. The board's own switch asks the same
   way: `Board.switchTo` (the picker, a chat's link, a new or restored board; `controller.ts`
-  `switchTo`) resolves false on Cancel and keeps the board open.
+  `switchTo`) resolves false on Cancel and keeps the board open. So `reveal` may ask too, through
+  `host.confirm`, when it names another board: it shows the card or note only once that board has
+  opened (`mount.ts` `reveal`), and Cancel shows nothing.
   The standalone page guards its own tab with the `leavePrompt` flag (`shell/page-host.ts`
   `guardLeave`, from `App.svelte`): a `beforeunload` listener only while the status says `unsaved`, so
   a close or reload, the page's own reloads included, gets the browser's "Leave site?" prompt; the folder
   picker (`FolderDialog.svelte` `accept`) calls `leave()` before the server switches folders. Proven by
   `apps/board/tests/note-leave.test.ts` (nothing unsaved, changed words, Cancel, OK, one question at
   a time, each turn heard), `tests/pages/board-host.spec.ts` "the host asks before words are lost" (a
-  host's Close on two boards), `tests/pages/note-discard.spec.ts` "a tab close asks" (the browser's
+  host's Close on two boards; "reveal of another board's card" waits for the question),
+  `tests/pages/note-discard.spec.ts` "a tab close asks" (the browser's
   prompt; unchanged, discarded and flag off close) and "choosing another board", and
   `tests/pages/note-folder.spec.ts` (Cancel leaves page and server on one folder; flag off as before).
   Not covered: another tab opening another folder (`shell/folder.ts` `folderMoved`) reloads after the

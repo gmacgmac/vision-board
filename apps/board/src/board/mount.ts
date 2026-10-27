@@ -119,6 +119,17 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     });
   }
 
+  /** Bring into view, on the board open now, the card `n` or the note `seq` (`reveal`). */
+  function show({ n, seq }: { n?: number; seq?: number }) {
+    if (n !== undefined) return board.go.to(n);
+    const s = board.side.ledger();
+    const ask = seq === undefined ? undefined : s?.asks.get(seq);
+    if (!s || !ask || seq === undefined || ask.region !== undefined) return; // a container's note: its board is enough
+    const at = numberOf(s, ask.nodes?.[0] ?? ask.id);
+    board.go.to(at);
+    board.showNote(String(at), seq);
+  }
+
   return {
     get board() { return board; },
     status,
@@ -134,15 +145,11 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       const chip = s && id ? boardChip(s, id) : undefined;
       return chip && !('refused' in chip) ? chip : null;
     },
-    reveal({ board: id, n, seq }) {
-      if (id && id !== board.id()) board.switchTo(id);
-      if (n !== undefined) return board.go.to(n);
-      const s = board.side.ledger();
-      const ask = seq === undefined ? undefined : s?.asks.get(seq);
-      if (!s || !ask || seq === undefined || ask.region !== undefined) return; // a container's note: its board is enough
-      const at = numberOf(s, ask.nodes?.[0] ?? ask.id);
-      board.go.to(at);
-      board.showNote(String(at), seq);
+    reveal(ref) {
+      // Another board opens first, and may ask (a note's unsaved words, `Board.switchTo`): the card
+      // or note is shown only once it has opened; Cancel shows nothing.
+      if (ref.board && ref.board !== board.id()) void board.switchTo(ref.board).then((ok) => { if (ok) show(ref); });
+      else show(ref);
     },
     unmount() {
       stop();

@@ -44,7 +44,7 @@ tracker: cortex-tasks/tracker.md#M10,M11
 | 1 | M10_01 | 1 | standard | Accessibility engineer for keyboard and focus — a key belongs to whatever has focus: a plugin that hears keys meant for its host has failed, and so has one that goes deaf after a click on its own canvas. | [Keys stay inside the board](./M10_01_keys-inside-board.md) | Completed | port 5100 |
 | 2 | SVG_01 | 1 | strong | Senior designer-developer who ships animated SVG — the animation that plays, and stops for someone who asked for less motion, is the point; a file that runs code, loads from outside, or can be opened as a page on the board's origin is a hole. | [SVG images in cards](./SVG_01_svg-images.md) | Completed | port 5200; D-064 drafted (maintainer's yes needed); 5 wiring requests |
 | 3 | M11_01 | 2 | strong | Product engineer for editors and drafts — words a person typed are never lost unless they chose to lose them, whether the pane closes, the tab closes or the host moves on; and the host, not the plugin, owns the question. | [The host asks before words are lost](./M11_01_ask-before-leaving.md) | Completed | port 5300; flag `leavePrompt` (on, proposed); 4 requests |
-| 4 | VERIFY_01 | 3 | strong | nclite developer hosting the board in a pane for the first time, with no history of these changes — expects their own shortcuts and buttons to keep working, their Close to ask before a note is lost, and an animated picture to just play and never run code. | [Verification](./VERIFY_01_host-svg-verification.md) | Pending | port 5400 |
+| 4 | VERIFY_01 | 3 | strong | nclite developer hosting the board in a pane for the first time, with no history of these changes — expects their own shortcuts and buttons to keep working, their Close to ask before a note is lost, and an animated picture to just play and never run code. | [Verification](./VERIFY_01_host-svg-verification.md) | Completed | port 5400; every criterion met (full suite: the gate); 6 findings, none blocking (VERIFY_01_findings.md) |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -79,7 +79,7 @@ tracker: cortex-tasks/tracker.md#M10,M11
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
-| M10_01-R1 | M10_01 | `packages/ui/src/base/layer.ts` `dismissable`: Esc captured page-wide while a board layer is open eats a host's own Esc | Tracker row, if the maintainer agrees (point 305) | Open |
+| M10_01-R1 | M10_01 | `packages/ui/src/base/layer.ts` `dismissable`: Esc captured page-wide while a board layer is open eats a host's own Esc | Tracker M21 (maintainer agreed, point 305) | Done |
 | M10_01-R2 | M10_01 | `apps/board/src/board/controller.ts`: one line, `createBoard` passes `!!host.page` to `bindStage`; record it in M10_01's ownership | Orchestrator: accepted, the only place the host is in reach | Done |
 | SVG_01-R1 | SVG_01 | `docs/decisions.md`: append D-064 from SVG_01's § Proposed decision | Orchestrator, with the maintainer's yes | Done |
 | SVG_01-R2 | SVG_01 | `apps/board/server/app.ts`: pass the server's flags to `serveImage` | SVG_01 Run 2 (ownership widened) | Done |
@@ -98,6 +98,12 @@ tracker: cortex-tasks/tracker.md#M10,M11
 | M11_01-R6 | M11_01 | `leavePrompt` flag default on | The maintainer (point 310) | Open |
 | M11_01-R7 | M11_01 (Run 2) | `apps/board/src/shell/Toolbar.svelte` `pickBoard`: one line puts the picker back after a Cancel; record it as M11_01's | Orchestrator: accepted | Done |
 | M11_01-R8 | M11_01 (Run 2) | `folder.ts` `folderMoved` (another tab opened another folder) can't ask first: the server has already switched; only the browser's prompt asks before the reload. A server-side answer needs a design | Tracker M20 | Done |
+| VERIFY_01-R1 | VERIFY_01 F1 | `images.ts` `svgProblem`: a comment or PI holding `<svg ` hides a later `<!ENTITY` (D-064 point 3 untrue) | SVG_01 Run 4 (in this set) | Done |
+| VERIFY_01-R2 | VERIFY_01 F2 | Esc, H, R act without `preventDefault`; the typing test lacks `[contenteditable]` | Tracker M22 (proposed as M23 in the findings) | Done |
+| VERIFY_01-R3 | VERIFY_01 F3 | `mount.ts` `reveal` doesn't wait for `switchTo`; focus moved while the host asked | M11_01 Run 3 (in this set) | Done |
+| VERIFY_01-R4 | VERIFY_01 F4 | nclite reply drift: notify tones, stale member list, the M21 Esc exception, `reveal` may ask | Orchestrator | Done |
+| VERIFY_01-R5 | VERIFY_01 F5 | components.md: name the M21 Esc exception beside the keys rule | M11_01 Run 3 | Done |
+| VERIFY_01-R6 | VERIFY_01 F6 | Tracker M12 names `svgImages` / `setMarkdownSvg` too | Orchestrator | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -115,20 +121,22 @@ _Notes:_ `bindKeys(h, root, pageWide)`: under a host a key acts only inside the 
 _Status:_ Completed  
 _Notes:_ svg is in `IMAGE_LIMITS.types` (1 MB cap, 4096-byte head) behind flag `svgImages` (on); `svgProblem` knows it by its opening (SVG namespace, a viewBox or width and height, no `<!ENTITY`), `imageHeadProblem` and `imageCap` are what the route calls; the route sends `SVG_CSP` (no script, nothing loads, sandbox) on 200 and 304. Drawn only as `<img>`: in Chromium no script ran and nothing outside loaded, in the card, the zoomed view or at its own address; CSS and SMIL play; CSS inside `no-preference` holds still under the browser's own reduced-motion setting (Playwright's emulation does not reach svg images). Decision text: task notes § Proposed decision. Open: wiring of the flag in app.ts, `#ui` index and both `main.ts` (3 tests red until then), one row in `markdown-images.test.ts`. WebKit and Firefox not checked (not installed). Perf: 198 animated svg cards within every budget.  
 Run 2: requests R2-R7 done (app.ts passes flags to `serveImage`; `#ui` exports `setMarkdownSvg`; both `main.ts` call it; `markdown-images.test.ts` row `a.svgz`; api.md 155 and components.md § Feature flags, § Images in cards). npm test 0 failures, check, gen-api current, card-image* + gallery specs 54 passed. `verify` wants `npm run map` (modules.md: the new `setMarkdownSvg` export; orchestrator's).  
-Run 3: host-styles gallery failure (targets 237/238) traced: those are the layout section's mini boards (`div.g-mini`), not the svg samples (31-35); a rare 4-5 raster step between passes ~30 s apart. `sameUnderHost` now re-shoots a mismatched target back to back (sheet off, then on) and judges that pair at the same `RASTER`; an `img` rule still fails it (shown). host-styles ×3: 8/8 each; card-image* + gallery 54 passed; npm test, check, verify clean.
+Run 3: host-styles gallery failure (targets 237/238) traced: those are the layout section's mini boards (`div.g-mini`), not the svg samples (31-35); a rare 4-5 raster step between passes ~30 s apart. `sameUnderHost` now re-shoots a mismatched target back to back (sheet off, then on) and judges that pair at the same `RASTER`; an `img` rule still fails it (shown). host-styles ×3: 8/8 each; card-image* + gallery 54 passed; npm test, check, verify clean.  
+Run 4: VERIFY_01 F1 fixed: `svgProblem` refuses `<!ENTITY` anywhere in the svg's head, so a comment or processing instruction holding `<svg` no longer hides one; failing tests first (format and route: F1's three bypasses refused, an ordinary svg after such text passes); images.md § SVG updated. npm test 0 failures, card-image* 35 passed, verify ok; check's 7 errors are in mount.ts and board-host.spec.ts (another task, mid-edit).
 
 ---
 
 ### M11_01: The host asks before words are lost
 _Status:_ Completed  
 _Notes:_ `BoardView.unsaved()` / `leave()` (host.ts); `notes/note-discard.ts` `createLeave` reuses `mayLeave` (one question at a time) and reports each turn into `BoardStatus.unsaved`; the flow's types split to `notes/note-flow-types.ts`. Pass-through in `controller.ts`, `board-types.ts`, `status.ts` (outside the ownership table: R1). Standalone: `leavePrompt` flag, `page-host.ts` `guardLeave` adds `beforeunload` only while unsaved. Same discard dialog as Esc: no gallery entry. Found: switching boards drops a note's words silently, and a folder switch asks only after the server switched (requests). Unit 1758 pass; check 0 errors; verify ok; gen-api current; 188 page specs pass on 5300 (host, note*, reload and folder specs). Timing budgets red under load average 24, files untouched.  
-Run 2: R3 and R4 done. Another board (`controller.ts` `switchTo`: picker, chat link and jump, New/Restore) and another folder (`FolderDialog.svelte` `accept`, `guard` from App, leavePrompt flag) ask `leave()` first; Cancel keeps board, folder and words. `leave()` OK now closes the note (`createLeave` `discard`). `Toolbar.svelte` one line: the picker goes back to the open board after Cancel (outside the widened list). `folderMoved` can't ask first (the server has already moved): still a request. New spec `note-folder.spec.ts`. Unit 1758 + timing 10, check, verify, gen-api current; 150 page specs pass on 5300.
+Run 2: R3 and R4 done. Another board (`controller.ts` `switchTo`: picker, chat link and jump, New/Restore) and another folder (`FolderDialog.svelte` `accept`, `guard` from App, leavePrompt flag) ask `leave()` first; Cancel keeps board, folder and words. `leave()` OK now closes the note (`createLeave` `discard`). `Toolbar.svelte` one line: the picker goes back to the open board after Cancel (outside the widened list). `folderMoved` can't ask first (the server has already moved): still a request. New spec `note-folder.spec.ts`. Unit 1758 + timing 10, check, verify, gen-api current; 150 page specs pass on 5300.  
+Run 3: F3 and F5. `mount.ts` `reveal` waits for `switchTo` and shows nothing on Cancel (`show`); `host.ts` `reveal` comment says it may ask. components.md: the Esc exception (M21, `dismissable`) beside the keys rule, and `reveal` may ask. Failing test first: board-host.spec.ts "reveal of another board's card…". Unit 1760 + timing 10, check, verify, gen-api current; board-host + note* 35 passed on 5300.
 
 ---
 
 ### VERIFY_01: Verification
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Every PLAN.md criterion met with evidence; the full page suite is the gate's. Host probe (button, input, contenteditable, body, a host modal dialog; 35 keys): no board acted, nothing marked handled; inside A only A. Close: one question, Cancel keeps words and focus, OK leaves nothing; bare `unmount()` loses words, as components.md warns. Eleven planted svgs: no script, no request from card or zoomed view; at its own address every load blocked by `SVG_CSP`. Findings (`VERIFY_01_findings.md`): F1 `svgProblem` entity check stepped round by a comment holding `<svg ` (served 200; Chromium refuses to decode) → M22; F2 Esc, H, R act without `preventDefault` (a host's Esc also fires) → M23; F3 `reveal` doesn't await `switchTo` → M24; F4 nclite reply drift; F5 components.md lacks M21's Esc caveat; F6 M12 should name `svgImages`. Gates: unit 1758 + timing 10, check, verify, gen-api; 78 page specs on 5400.
 
 ---
 
@@ -138,7 +146,7 @@ _Notes:_
 |------|-------|--------------|------|
 | 1 | M10_01, SVG_01 | 7281ebb · `host-svg/wave-1` | Green 2026-10-27: unit 1754 + timing 10, check 0 errors, verify ok, gen-api current, full page suite 680 passed (port 4710) |
 | 2 | M11_01 (Runs 1–2); SVG_01 Run 3 (host-styles check) | `host-svg/wave-2` | Green 2026-10-27: unit 1758 + timing 10, check 0 errors, verify ok, gen-api current, full page suite 685 passed (port 4710; first run failed 2 in host-styles.spec, fixed by SVG_01 Run 3) |
-| 3 | VERIFY_01 | — | — |
+| 3 | VERIFY_01; fixes F1 (SVG_01 Run 4), F3 and F5 (M11_01 Run 3) | `host-svg/wave-3` | Green 2026-10-27: unit 1760 + timing 10, check 0 errors, verify ok, gen-api current, full page suite 686 passed (port 4710) |
 
 ---
 

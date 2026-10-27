@@ -100,6 +100,21 @@ test('HTML named .svg, an empty file, an svg with no size, one declaring entitie
   assertRefused(await get(h.base, url('logo-as.png')), 415, 'unsupported-media-type', imageNotReal('png'));
 });
 
+test('an entity declared after text holding <svg is refused (415), and an ordinary svg after such text is served (VERIFY_01 F1)', async () => {
+  const ent = '<!ENTITY a "aaaa"><!ENTITY b "&a;&a;&a;">';
+  const hidden: [string, string][] = [
+    ['hid-comment.svg', `<!-- <svg --><!DOCTYPE svg [${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`],
+    ['hid-pi.svg', `<?x <svg ?><!DOCTYPE svg [${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`],
+    ['hid-subset.svg', `<!DOCTYPE svg [<!-- <svg -->${ent}]><svg ${NS} viewBox="0 0 1 1">&b;</svg>`],
+  ];
+  for (const [rel, body] of hidden) {
+    put(h.project, rel, body);
+    assertRefused(await get(h.base, url(rel)), 415, 'unsupported-media-type', W.svgEntity);
+  }
+  put(h.project, 'after-text.svg', `<!-- <svg> drawn by hand --><svg ${NS} viewBox="0 0 1 1"><rect width="1" height="1"/></svg>`);
+  assert.equal((await get(h.base, url('after-text.svg'))).status, 200);
+});
+
 test('an svg over its own cap is refused (413) in its own words, and one at the cap is served', async () => {
   const sized = (rel: string, size: number) => {
     const file = put(h.project, rel, `<svg ${NS} viewBox="0 0 1 1">`);
