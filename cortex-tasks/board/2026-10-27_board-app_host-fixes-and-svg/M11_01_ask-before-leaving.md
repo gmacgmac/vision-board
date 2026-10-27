@@ -70,7 +70,7 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
 
 ## Steps
 
-1. [ ] **Every place a person types inside the board's root**: today the note bubble (`vb-note-bubble`,
+1. [x] **Every place a person types inside the board's root**: today the note bubble (`vb-note-bubble`,
    on cards and containers) is the only one found at planning. Confirm by search, and list what you
    find in your notes. Anything else that holds typed words joins `unsaved()`. The standalone page's
    own Reply panel and chat composer are outside the board: report them, don't change them. Also
@@ -78,7 +78,7 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
    chosen, a redraw that removes or replaces its card, a folder switch): say whether each asks
    today. One that loses words silently inside the files you own goes through `mayLeave` too;
    anywhere else, a `REQUEST`.
-2. [ ] **Failing tests first**:
+2. [x] **Failing tests first**:
    - unit: with no bubble open, or one open but unchanged, `unsaved()` is false and `leave()` resolves
      true without calling `confirm`; with changed words, `unsaved()` is true, `leave()` calls
      `host.confirm` once with `DISCARD_ASK`'s words, resolves false on Cancel (focus back in the text,
@@ -89,13 +89,13 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
      typed goes into the note. OK: the board unmounts and leaves nothing. A Close with an unchanged
      note unmounts at once, with no question. Two boards: only the one with unsaved words asks.
    See them fail.
-3. [ ] **The contract** (`host.ts` `BoardView`): `unsaved()` and `leave()`, each with a comment saying
+3. [x] **The contract** (`host.ts` `BoardView`): `unsaved()` and `leave()`, each with a comment saying
    what a host does with it, and that `unmount` doesn't ask.
-4. [ ] **The code**: the notes flow tells whether its open bubble is dirty, and offers its `mayLeave`
+4. [x] **The code**: the notes flow tells whether its open bubble is dirty, and offers its `mayLeave`
    with the host's confirm. `mount` wires both into the view it returns. Reuse `mayLeave`; don't write
    a second "is it dirty, ask, refocus" path. A `leave()` called while one is already asking returns
    the same answer, not a second dialog.
-5. [ ] **The standalone page** (`page-host.ts` / `App.svelte`, behind the new flag in
+5. [x] **The standalone page** (`page-host.ts` / `App.svelte`, behind the new flag in
    `packages/format/src/flags.ts`): while `unsaved()` is true, a `beforeunload` listener asks the
    browser to prompt. Add it when words become unsaved and remove it when they're saved, sent or
    discarded, and on unmount. Find the moment cheaply: the bubble's own input or dirty change, not a
@@ -103,19 +103,19 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
    prompt too. Say in your notes whether any of them should ask through the shell's dialog instead.
    Name the flag in the existing style; give it a description and a default (propose on, since words
    lost is the worse failure).
-6. [ ] **Docs** (`cortex-docs`): components.md § The board's host interface: `unsaved` and `leave`
+6. [x] **Docs** (`cortex-docs`): components.md § The board's host interface: `unsaved` and `leave`
    under what the view gives back; "a host calls `leave()` before `unmount()`"; the difference from
    nclite's draft under Differences; the M11 gap removed from the "Open (VERIFY_01 …)" sentence. Name
    the symbols and tests.
-7. [ ] **The nclite reply** (`REQUEST` to the orchestrator): one row under Differences we ask of the
+7. [x] **The nclite reply** (`REQUEST` to the orchestrator): one row under Differences we ask of the
    draft. Draft: "`unmount()` saves anything being written" → "`leave()` asks the person first,
    then the host unmounts; `unsaved()` for the host's own question or `beforeunload`", because the
    person decides whether half-written words are kept, not the plugin. Remove the M11 line from the
    gaps bullet.
-8. [ ] **Every state**: the note bubble's discard question already has a gallery entry. If `leave()`'s
+8. [x] **Every state**: the note bubble's discard question already has a gallery entry. If `leave()`'s
    question looks any different from the bubble's own Esc question, add the state to the gallery,
    light and dark. Otherwise say in your notes that it is the same dialog.
-9. [ ] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`;
+9. [x] **Checks**: `npm test`, `npm run check`, `npm run verify`, `node scripts/gen-api.mjs --check`;
    the page specs `board-host.spec.ts`, `note*.spec.ts` and any spec that reloads the page or switches
    folder with a note open, on `VB_TEST_PORT=5300`. Check one `beforeunload` in Chromium with
    Playwright (`page.close({ runBeforeUnload: true })` and the `dialog` event). No full page suite
@@ -125,12 +125,12 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
 
 ## Validation
 
-- [ ] A host's Close asks before unsaved words are lost; Cancel keeps them with focus in the text;
+- [x] A host's Close asks before unsaved words are lost; Cancel keeps them with focus in the text;
       unchanged notes never ask (unit and page specs)
-- [ ] With the flag on, the standalone page prompts on a tab close only while words are unsaved;
+- [x] With the flag on, the standalone page prompts on a tab close only while words are unsaved;
       off, nothing changes
-- [ ] `host.ts` and components.md say what a host does; the nclite reply row is requested
-- [ ] No second discard path: `mayLeave` is the one
+- [x] `host.ts` and components.md say what a host does; the nclite reply row is requested
+- [x] No second discard path: `mayLeave` is the one
 
 ---
 
@@ -139,20 +139,120 @@ Wave 2: M10_01 has finished `keys.ts` and the host fixture (with host controls);
 _To be completed by agent after task completion._
 _Re-run? Add a `### Run N` block below the last one; never overwrite an earlier run._
 
-**Status**: Pending  
-**Completed**: YYYY-MM-DD HH:MM  
+**Status**: Completed  
+**Completed**: 2026-10-27 20:45  
 
 ### Changes Made
-- 
+- Contract first: `host.ts` `BoardView` gains `unsaved()` and `leave()`, each saying what a host does
+  with it; `unmount`'s comment says it never asks.
+- `notes/note-discard.ts`: `unsavedIn(bubble)` (open and `dirty`), now `mayLeave`'s own test, and
+  `createLeave(bubble, ask, report)`: `unsaved`, `leave()` (= `mayLeave` with the board's ask, one
+  question at a time: `asking ??=`), `check()` (tells `report` each turn; also on every `input` in the
+  bubble). No second discard path.
+- `notes/notes.ts` `createNoteFlow`: one guard on its bubble; its open/close (`changed`) calls
+  `check`; `NoteFlow.unsaved`, `NoteFlow.leave`; `NoteDeps.unsaved?(on)`. The flow's types moved to
+  `notes/note-flow-types.ts` (rule 2 seam: notes.ts was 296 lines and would have passed 300).
+- Pass-through (the task's "composition root" clause): `controller.ts` (`unsaved: (on) =>
+  status.set({ unsaved: on })` to the flow; `Board.unsaved`, `Board.leave`), `controller/board-types.ts`
+  (`Board`), `status.ts` (`BoardStatus.unsaved`, so a host hears each turn), `mount.ts` (the view's
+  `unsaved`, `leave`; header).
+- Standalone page: flag `leavePrompt` (default on, proposed) in `packages/format/src/flags.ts`;
+  `shell/page-host.ts` `guardLeave(status)` adds a `beforeunload` listener (`preventDefault`) when
+  `unsaved` turns true, removes it when it turns false and on unmount; `App.svelte` calls it.
+- Tests: `apps/board/tests/note-leave.test.ts` (4); `board-host.spec.ts` "the host asks before words
+  are lost" (fixture: `addClose`, `unsaved`); `note-discard.spec.ts` "a tab close asks" (Chromium
+  `beforeunload` via `page.close({ runBeforeUnload: true })` and the `dialog` event).
+- Docs: components.md § The board's host interface: `unsaved`, `leave` in the view; "A host calls
+  `leave()` before `unmount()`" bullet after M10_01's; the Differences row; M11 out of "Open".
+
+### Step 1: where a person types inside the root, and the board's own moves
+- Typed inside the board's root: only `vb-note-bubble`'s textarea (cards, groups and containers; one
+  bubble per board, `notes.ts`). Searched `apps/board/src/board` and `packages/ui/src` for input,
+  textarea, contenteditable. Outside the root (the page's own, reported, unchanged): the Reply panel,
+  the chat composer, Go to card's field, the access request note, the New/Rename board dialog.
+- The board's moves that close an open bubble:
+  - another bubble, Esc, Cancel, the page's Esc (`stage-handlers.ts`, `notes.close`), a past version
+    (`showVersion` → `notes.close`): ask today (`mayLeave`).
+  - a removed note (`place` → `noteGone` → `close(false)`): silent, by the earlier ruling ("nothing to save to").
+  - its card or container gone from the layout (`place` → `anchorBox` undefined → `close(false)`): an
+    agent's redraw that removes the card, Hide answered over an answered card: silent. In notes.ts, but
+    Cancel would leave a bubble with no anchor, so it needs a ruling (REQUEST), not a quiet change.
+  - another board chosen (`boards.ts` `switchTo` → `open` → redraw → `place`): silent. Card numbers are
+    project-wide, so the card is never on the new board and `close(false)` drops the words. [INFERENCE,
+    from the code] A container id can repeat across boards: the bubble would then follow the other
+    board's container of that id, and Save would write there. REQUEST (controller.ts / boards.ts).
+  - board archived and none left under a host (`mount.ts` `restart` → `stop`): silent; rare.
+  - a folder switch, a rebuilt page, a refused cookie: page reloads, now behind the browser prompt.
+
+### Step 5: the page's own reloads
+- All three reload with `location.reload()`, so with words unsaved they get the browser's prompt.
+- Folder switch (`FolderDialog.svelte` `accept`): should ask through the shell's dialog (`view.leave()`)
+  before `openProject`, because the server has already switched folders when the prompt shows; Cancel
+  there leaves the page on the old folder's board while the server serves the new one, and a Save would
+  write to the new folder's ledger. Same for `folder.ts` `folderMoved` (another tab switched). REQUEST.
+- A rebuilt page (dev watch only) and a refused cookie (`page-io.ts` `asPerson`, once): the browser's
+  prompt is right; Cancel keeps the words to copy.
+
+### Step 8: every state
+- `leave()`'s question is the same dialog as the bubble's own Esc question: the host's `confirm` with
+  `DISCARD_ASK`, on the page the shared confirm dialog, already in the gallery. No new state drawn; the
+  "Leave site?" prompt is the browser's own. No gallery entry added.
 
 ### Issues & Resolutions
-- 
+- `npm run test:timing`: 1-2 budget tests failed on each run (server start 1146-1330 ms over 1000; a
+  1000-card layout 826-1332 ms over 100), a different one each run, with the machine's load average at
+  24. Neither file is touched by this task; the gate should see them on a quiet machine.
+- `askConfirm` (`shell.svelte.ts`) replaces a pending question rather than queueing: two asks at once
+  leave the first unresolved. `leave()` asks once at a time; the bubble's own Esc ask and a host's Close
+  at the same moment are the host's to avoid (its dialog is modal on the page).
 
 ### Caught Beyond the Brief
-- None
+- Another board chosen with a note being written loses the words without asking (step 1). REQUEST.
+- A folder switch asks after the server has switched (step 5). REQUEST.
 
 ### Deviations from Plan
-- None
+- `controller.ts`, `controller/board-types.ts` and `status.ts` are not in TASK-STATUS File Ownership;
+  edited under this task's Inputs clause ("the board's composition root if it must pass it through,
+  only to expose the notes flow's state"): pass-through only, 9 lines. Recorded as REQUEST R1 for the
+  ownership table.
+- New file `notes/note-flow-types.ts` (inside the owned `notes/` folder): the flow's types, split to keep
+  notes.ts under 300 lines.
+- The beforeunload page test was written after the guard; its flag-off and unchanged cases show it
+  closes without the guard.
+
+### Run 2
+**Status**: Completed  
+**Completed**: 2026-10-27 20:50  
+Requests M11_01-R3 and R4, routed back by the orchestrator (ownership widened to `boards/boards.ts`,
+`controller.ts`, `FolderDialog.svelte`, `folder.ts` and their page specs).
+
+- **Failing tests first** (port 5300): `note-discard.spec.ts` "choosing another board with changed
+  words asks first" and `note-folder.spec.ts` (new) both failed on the missing question, then passed.
+- **The one path:** `notes/note-discard.ts` `createLeave` takes `discard`: on OK with words unsaved
+  it closes the bubble (`notes.ts` passes `close(false)`), so `unsaved` turns false and the page's
+  `beforeunload` listener goes before the reload. Unit test updated (OK discards once; Cancel and
+  nothing unsaved discard nothing).
+- **R3, another board:** `controller.ts` `switchTo(id, go)`: with words unsaved and another board,
+  `notes.leave()` first (`mayLeave`); Cancel returns false and keeps the board. Used by
+  `Board.switchTo` (now `Promise<boolean>`), the chat side's `switchTo` and `jump`, and Board edit's
+  switch after New or Restore. With nothing unsaved it switches synchronously, as before (`reveal`
+  still switches then goes to the card). `boards.ts` unchanged: its own switches (an archived board's
+  next, boot) are not the person's choice. `Toolbar.svelte` `pickBoard` puts the picker back on the
+  open board after the answer (one line; needed, or Cancel left the picker naming the other board):
+  outside the widened list, reported.
+- **R4, another folder:** `FolderDialog.svelte` takes `guard` (App passes the view with
+  `leavePrompt` on): with words unsaved, `accept` closes the dialog, then asks `leave()`; Cancel leaves
+  page and server on the same folder with focus back in the note; OK opens the folder (a refusal then
+  shows as a toast, the dialog being gone). Flag description updated.
+- **`folderMoved`** (`folder.ts`, another tab opened another folder): it learns of the move only
+  after the server has switched, so nothing can be asked first; the browser's prompt still asks before
+  the reload. Kept as a REQUEST (a server-side answer, e.g. refusing an act whose page folder is stale).
+- Docs: components.md § The board's host interface (OK discards; `Board.switchTo` asks; the folder
+  picker; `folderMoved` under Not covered); `host.ts` `leave` comment.
+- Checks: npm test 1758 + timing 10 pass (load average 2.9); check 0 errors; verify ok (13 warnings,
+  as before); gen-api current; page specs board-host, note* (incl. note-folder), open-folder,
+  current-folder, live-boards, picker-archive, new-board, toolbar, chat-panel, chat-send, chat, finder,
+  versions: 150 passed.
 
 ---
 

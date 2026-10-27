@@ -82,14 +82,25 @@ function layoutOf(page: Page): Promise<string[]> {
  * board moves far more. */
 const RASTER = 2;
 
-/** Each target's pixels on the page as it is, then under the host's sheet: they must not change. */
+/** Each target's pixels on the page as it is, then under the host's sheet: they must not change. A
+ * target that differs is shot again, its own look and the host's back to back (the sheet off, then
+ * on), and judged on that pair: a rule that reaches the board differs both times, while what a first
+ * pass ~30 s earlier can catch and `animations: 'disabled'` can't stop (an svg image's own animation,
+ * a tile the rasteriser drew again) does not (SVG_01 Run 3). */
 async function sameUnderHost(page: Page, targets: Locator[]): Promise<void> {
+  const shot = (t: Locator) => t.screenshot({ animations: 'disabled' });
   const own = [];
-  for (const t of targets) own.push(await t.screenshot({ animations: 'disabled' }));
-  await page.addStyleTag({ content: HOST });
+  for (const t of targets) own.push(await shot(t));
+  const sheet = await page.addStyleTag({ content: HOST });
+  const hostOn = (on: boolean) => sheet.evaluate((e, v) => { (e as HTMLStyleElement).disabled = !v; }, on);
   for (const [i, t] of targets.entries()) {
-    const hosted = await t.screenshot({ animations: 'disabled' });
-    expect(await mostApart(page, own[i]!, hosted), `target ${i} changed under the host's element rules`).toBeLessThanOrEqual(RASTER);
+    const first = await mostApart(page, own[i]!, await shot(t));
+    if (first <= RASTER) continue;
+    await hostOn(false);
+    const again = await shot(t);
+    await hostOn(true);
+    const what = await t.evaluate((e) => [e.localName, e.getAttribute('data-id') ?? e.getAttribute('class') ?? '', e.closest('[data-pattern]')?.getAttribute('data-pattern') ?? ''].join(' '));
+    expect(await mostApart(page, again, await shot(t)), `target ${i} (${what}) changed under the host's element rules (first pass: ${first})`).toBeLessThanOrEqual(RASTER);
   }
 }
 

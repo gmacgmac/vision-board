@@ -196,7 +196,7 @@ host; nclite's pane will be another.
 - **`mount(root, host)`** (`apps/board/src/board/mount.ts` `mount`) builds the board's layers inside
   `root` with no ids of its own, makes `root` its stage (`vb-board vb-stage vb-ground`, `BOARD_ROOT`; the `vb-board`
   class is its `@container`, D-061) and gives back the contract's view (`board/host.ts` `BoardView`:
-  `unmount`, `pageChip`, `reveal`) plus what a host draws around it: `status` (`board/status.ts`
+  `unmount`, `pageChip`, `reveal`, `unsaved`, `leave`) plus what a host draws around it: `status` (`board/status.ts`
   `Status`, a plain observable of `BoardStatus`: the counts, versions, open lists, picker) and `board`
   (`controller.ts` `Board`, the controls). `send()` is Send to agent: the selected cards go to
   `host.addToChat` as `#actions` `cardChip`s, then the `send` act. `unmount` removes every listener the
@@ -226,6 +226,28 @@ host; nclite's pane will be another.
   `apps/board/tests/keys.test.ts` (inside, outside, another board, Esc, `pageWide`) and
   `tests/pages/board-host.spec.ts` "keys stay inside the board" (focus on a host button and field, then
   a click, a Shift drag, a Cmd or Ctrl drag, a card and a container's title line).
+- **A host calls `leave()` before `unmount()`** (M11): `unmount` is a plain teardown that never asks,
+  so a note's words go with it. `unsaved()` is true while a note bubble is open with changed words
+  (`notes/note-discard.ts` `unsavedIn`); it is synchronous, for a host's `beforeunload` or its own
+  question, and the status's `unsaved` says each time it turns (`createLeave` `check`, on the bubble's
+  open, close and input). `leave()` resolves true at once when nothing is unsaved; otherwise it asks
+  through `host.confirm` with the board's own discard words (`DISCARD_ASK`), by the same `mayLeave` as
+  Esc and another bubble: OK discards the words (the note closes, `unsaved()` turns false), resolves
+  true and the host unmounts; Cancel resolves false and puts focus back in the text, whose keys still
+  reach it. A `leave()` while one is asking gets the same answer. The board's own switch asks the same
+  way: `Board.switchTo` (the picker, a chat's link, a new or restored board; `controller.ts`
+  `switchTo`) resolves false on Cancel and keeps the board open.
+  The standalone page guards its own tab with the `leavePrompt` flag (`shell/page-host.ts`
+  `guardLeave`, from `App.svelte`): a `beforeunload` listener only while the status says `unsaved`, so
+  a close or reload, the page's own reloads included, gets the browser's "Leave site?" prompt; the folder
+  picker (`FolderDialog.svelte` `accept`) calls `leave()` before the server switches folders. Proven by
+  `apps/board/tests/note-leave.test.ts` (nothing unsaved, changed words, Cancel, OK, one question at
+  a time, each turn heard), `tests/pages/board-host.spec.ts` "the host asks before words are lost" (a
+  host's Close on two boards), `tests/pages/note-discard.spec.ts` "a tab close asks" (the browser's
+  prompt; unchanged, discarded and flag off close) and "choosing another board", and
+  `tests/pages/note-folder.spec.ts` (Cancel leaves page and server on one folder; flag off as before).
+  Not covered: another tab opening another folder (`shell/folder.ts` `folderMoved`) reloads after the
+  server has moved, so only the browser's prompt asks.
 - **What a host supplies** (`board/host.ts` `BoardHost`): `api` (the typed client's `Transport`, paths
   relative to the route prefix), `events` (`BoardEvent`, `{ plugin, ref: { board, head } }`; a ref with
   no head means "catch up"), `addToChat`, `settings` (`get`, `on`: each flag by name, and `align`),
@@ -250,12 +272,15 @@ host; nclite's pane will be another.
 - **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
   plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
   `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a
-  tone (`error` for a refusal); the optional `page` part; and the image route (`io.ts` `imageVersion`,
-  `IMAGE_ROUTE`) is the page's own, not under `api`.
+  tone (`error` for a refusal); the optional `page` part; the image route (`io.ts` `imageVersion`,
+  `IMAGE_ROUTE`) is the page's own, not under `api`; and where the draft has `unmount()` save anything
+  being written, the board asks instead: `leave()` asks the person first, then the host unmounts, and
+  `unsaved()` serves the host's own question or `beforeunload` (the person decides whether
+  half-written words are kept, not the plugin).
 - **Not covered**: the toolbar, strips,
   dialogs and reply panel are the standalone page's Svelte, so a host draws its own from the status;
   the work counters (`work.ts`) and the input-modality reading (`pointer-focus.ts`) are the page's, shared
-  by every board on it. Open (VERIFY_01, tracker M11–M13): `unmount` drops a note's unsaved words without asking; card images
+  by every board on it. Open (VERIFY_01, tracker M12–M13): card images
   follow the page's `setMarkdownImages`, not `host.settings`; the saved view
   (`boards/kept-view.ts`) writes `sessionStorage` itself, keyed by board id only.
 

@@ -103,6 +103,16 @@ const mounted = new Map<string, { view: MountedBoard; record: ReturnType<typeof 
     input.setAttribute('aria-label', 'Host input');
     parent.append(button, input);
   },
+  /** The host's Close for one board, outside both (M11): it asks the board first, then unmounts. */
+  addClose(parentId: string, rootId: string) {
+    const close = Object.assign(document.createElement('button'), { id: `close-${rootId}`, textContent: `Close ${rootId}` });
+    close.addEventListener('click', async () => {
+      const { view } = mounted.get(rootId)!;
+      if (await view.leave()) view.unmount();
+    });
+    document.getElementById(parentId)!.append(close);
+  },
+  unsaved: (rootId: string) => mounted.get(rootId)!.view.unsaved(),
   idle: (rootId: string) => mounted.get(rootId)!.view.board.idle(),
   send: (rootId: string) => mounted.get(rootId)!.view.send(),
   status: (rootId: string) => ({ ...mounted.get(rootId)!.view.status.now }),

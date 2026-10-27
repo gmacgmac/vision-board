@@ -11,79 +11,28 @@
 // which opens it here. Every write goes through the controller's `attempt` (rule 8); this module only
 // opens, places and closes the bubble. Changed words are never lost silently (note-discard.ts).
 import type { NoteKind } from '#format';
-import type { BoardState } from '#actions';
 import type { VbNoteBubbleElement } from '#ui';
 import { placeBubble, readOnlyMode, saveIntent } from '#ui';
 import type { NoteEventDetail } from '#ui';
 import type { ActFields } from '../io.ts';
-import type { AskDiscard } from './note-discard.ts';
-import { bindDiscard, mayLeave } from './note-discard.ts';
+import { bindDiscard, createLeave, mayLeave } from './note-discard.ts';
 import { footersNear } from './bubble-clear.ts';
 import { bindOutside } from './note-outside.ts';
-import type { AnchorDeps } from './note-anchor.ts';
 import { anchorBox } from './note-anchor.ts';
-import type { Open, ViewDeps } from './note-views.ts';
+import type { Open } from './note-views.ts';
 import { cardView, containerView } from './note-views.ts';
 import { unsentGroupNote, unsentNote, unsentRegionNote } from './note-find.ts';
-import type { Selection } from '../selection/index.ts';
 import { createGroupPins, groupPinOf } from './group-pins.ts';
 import * as notesWords from '../words/notes.ts';
-
-/** `frame`: a container on the board (3_FE_04): the bubble sits beside its title line (note-anchor.ts). */
-export interface NoteDeps extends ViewDeps, AnchorDeps {
-  stage: HTMLElement;
-  state(): BoardState;
-  /** The version the person was looking at, for a new note's act. */
-  ver(id: string): number | undefined;
-  /** Send one act; null when it was recorded, else what went wrong. */
-  attempt(fields: ActFields): Promise<string | null>;
-  /** After a recorded change: lay the board out again. */
-  relayout(): void;
-  toast(text: string): void;
-  /** The bubble opened or closed (the selection bar hides while it is open, 3_FE_02 ruling 2). */
-  changed(): void;
-  /** "Discard your changes?" (step 4G ruling 4); true to discard. */
-  discard: AskDiscard;
-  /** Why the board can't change now (a locked board, lock-flow.ts): no bubble opens, the toast says why. */
-  paused?(): string | null;
-  /** The world, where the group pins draw in their own layer (groupNoteOnce flag, group-pins.ts). */
-  world: HTMLElement;
-  /** A press on a group pin selects the group's cards. */
-  selection: Pick<Selection, 'select'>;
-}
-
-export interface NoteFlow {
-  /** C on a card: edit its note not yet sent, or start a new one. */
-  press(id: string, kind: NoteKind): void;
-  /** Comment on two or more selected cards (3_FE_02 ruling 3): one note on the group, beside the
-   *  selection's box; the group's own note not yet sent, if it has one, opens to edit. */
-  group(ids: readonly string[]): void;
-  /** The pin: open that note (read-only once sent) with the agent's replies to it. A note in the
-   *  "Your note" block (`fromNote`): the card's conversation, beside it and scrolled to it. */
-  show(id: string, seq: number, fromNote?: boolean): void;
-  /** An agent's reply on the card: the card's conversation, beside the reply and scrolled to it. */
-  reply(id: string, seq: number): void;
-  /** Comment on a container's title line (3_FE_04): edit its note not yet sent, or start one
-   *  (`kind` sets what it asks for; default: the note's own, else a comment). */
-  container(region: string, kind?: NoteKind): void;
-  /** Edit (or Open) in the container's note preview or block: its latest note, read-only once sent,
-   *  with its replies; `part` ('note', or a reply's seq): the block's note or a reply, the
-   *  container's conversation beside that and scrolled to it. */
-  showContainer(region: string, part?: 'note' | number): void;
-  /** Follow the card after a pan, a zoom or a relayout (ruling 6: the controller calls it on
-   * every one); close if the card is gone. */
-  place(): void;
-  /** Close without saving (with changed words, after asking); focus goes back to the card. */
-  close(): void;
-  /** Whether the bubble is open (Esc closes it before it clears the selection, 3_FE_01). */
-  readonly open: boolean;
-  destroy(): void;
-}
+import type { NoteDeps, NoteFlow } from './note-flow-types.ts';
 
 export function createNoteFlow(d: NoteDeps): NoteFlow {
   const bubble = document.createElement('vb-note-bubble') as VbNoteBubbleElement;
   bubble.hidden = true;
   d.stage.append(bubble);
+  const guard = createLeave(bubble, d.discard, d.unsaved, () => close(false));
+  /** The bubble opened or closed: the flow's own deps hear it, and the host hears a turn of `unsaved`. */
+  const changed = () => { guard.check(); d.changed(); };
   let open: Open | null = null;
   // The groupNoteOnce flag: a note on a group of cards is drawn once, as the group's pin.
   const pins = d.groups ? createGroupPins({ ...d, open: (cards, anchor, seq) => { d.selection.select(cards, 'only'); show(anchor, seq); } }) : undefined;
@@ -122,7 +71,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     mark(o, true);
     place();
     bubble.focusText();
-    d.changed();
+    changed();
   }
 
   function press(id: string, kind: NoteKind) {
@@ -231,7 +180,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     const back = o.back?.isConnected ? o.back : o.back && o.at ? host?.querySelector<HTMLElement>(o.at) : undefined;
     if (focus && o.region) (back ?? host?.querySelector<HTMLElement>('.vb-region-comment'))?.focus({ preventScroll: true });
     else if (focus) (back ?? host)?.focus({ preventScroll: true });
-    d.changed();
+    changed();
   }
 
   /** The act a choice sends, or null when there is nothing to write (ruling 6: empty text on
@@ -247,7 +196,6 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     // The latest press sets the kind (ruling 1); a click on the pin keeps it.
     return { action: 'note-edit', ...on, note: o.note!.seq, text: words, ...(o.kind !== o.note!.kind && { kind: o.kind }) };
   }
-
 
   /** Edit on a note in the conversation (decision 8): the window turns into today's edit mode for
    *  it, beside it; focus still goes back where the conversation opened from. */
@@ -292,5 +240,7 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
       void mayLeave(bubble, d.discard).then((ok) => { if (ok && open === o) close(); });
     },
     get open() { return open !== null; },
+    get unsaved() { return guard.unsaved; },
+    leave: guard.leave,
   };
 }

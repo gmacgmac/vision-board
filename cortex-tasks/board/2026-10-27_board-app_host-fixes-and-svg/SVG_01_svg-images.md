@@ -317,6 +317,40 @@ ownership widened to exactly these edits.
   (card-image-svg-motion.spec.ts "the svgImages flag off").
 - Unchanged: D-064 still awaits the maintainer; WebKit and Firefox still unchecked.
 
+### Run 3
+
+**Status**: Completed · **Completed**: 2026-10-27 21:45 · wave 2's gate failed `host-styles.spec.ts`
+"the gallery's samples … draw the same under a host's element rules" (light target 237, dark 238,
+max channel 5 against `RASTER` 2). Ownership widened to `host-styles.spec.ts` and my gallery files.
+
+- **The cause, checked first: not the animated svg sample.** In this tree the gallery's samples
+  number 271 (266 with `-svgImages`); the svg samples are 31 (`svg-plan`), 32 (`svg-pulse`), 33
+  (`svg-nosize`) and 34-35 (their openers). Targets 236-238 are `div.g-mini.vb-ground`, the layout
+  section's mini boards, in both themes (listed by the spec's own selection, on the worker's main
+  server, twice). The spec reproduced the failure once in my first five runs (light, target 237,
+  channel 4), then passed 8 of 8 (`--repeat-each=4`). A probe of the same two passes, with and
+  without the host sheet, 16 runs across both themes and up to 5 workers, saw no target over 2 and
+  no sample move between the passes (the image section's loads settle before the first pass, and the
+  sheet moves nothing). A mini board moved by half a pixel differs by 228, so a 4-5 is not a layout
+  shift: it is the rasteriser drawing the mini boards' connectors a step apart between two passes
+  about 30 s apart. My svg group (about 400 px of page above them) changed where they land, which
+  [INFERENCE] made that rare noise reachable; it is not mine to remove in the mini boards.
+- **The fix, in `sameUnderHost`:** a target that differs over `RASTER` is shot again, its own look and
+  the host's back to back (the host's `<style>` disabled, then enabled), and judged on that pair,
+  still at `RASTER`. A rule that reaches the board differs both times; noise between passes 30 s apart,
+  or an svg image's own animation (which `animations: 'disabled'` can't stop), does not. Nothing is
+  skipped: the svg samples are still compared under the host's rules, every target still has to match.
+  It is Playwright's own rule for screenshots (judge a settled pair), costs only on a mismatch, and the
+  failure now names the sample and its first-pass number (`target 237 (div g-mini vb-ground …)`). Why
+  not a still fixture for the animated svg: it was not the failing sample, and the gallery's pulse
+  rests after about 1.6 s, before the first pass reaches it.
+- **Not weakened, shown:** with `img { opacity: .5 }` added to the host sheet for one run, the gallery
+  test failed at target 20 (`vb-node img-wide image-view`, 116); then removed.
+- Checks: `host-styles.spec.ts` (all 8, both themes) three times on 5200: 8, 8, 8 passed; card-image*
+  and gallery specs: 54 passed; `npm test` 0 failures (1758 + 10); `npm run check` and `tsc` clean;
+  `npm run verify` passes. No baseline changed; the temp probes are deleted (the gate logs in `temp/`
+  are the orchestrator's, left as they were).
+
 ---
 
 ## On Completion

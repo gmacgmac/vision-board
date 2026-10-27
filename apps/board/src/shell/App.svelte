@@ -12,7 +12,7 @@
   import { mount, type MountedBoard } from '../board/mount.ts';
   import { exposeWork } from '../board/work.ts';
   import { askConfirm, shell, toast } from './shell.svelte.ts';
-  import { createPageHost } from './page-host.ts';
+  import { createPageHost, guardLeave } from './page-host.ts';
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
@@ -37,6 +37,8 @@
   const host = createPageHost();
   const keyBubble = flagOn('keyBubble', pageFlags());
   const openFolder = flagOn('openFolder', pageFlags());
+  /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
+  const leavePrompt = flagOn('leavePrompt', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
   /** The chat beside the board (chatPanel flag, chat-panel FE_02): the bridge joins its two sides. */
   shell.chatPanel = flagOn('chatPanel', pageFlags());
@@ -80,9 +82,11 @@
     // The chat's side of the board: what it attaches, refreshed on every draw.
     const unbridge = bridge?.board(v.board.side);
     const unrefresh = bridge ? v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); }) : undefined;
+    // A tab close or reload asks while a note holds unsaved words (leavePrompt flag, M11).
+    const unguard = leavePrompt ? guardLeave(v.status) : undefined;
     if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
     view = v;
-    return () => { unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
+    return () => { unguard?.(); unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
   });
 </script>
 
@@ -131,4 +135,4 @@
 <ConfirmDialog />
 <BoardDialog onsave={(action, fields) => board?.boardEdit.save(action, fields) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />
 {#if archiving}<ArchivedDialog onrestore={(id) => board?.boardEdit.restore(id) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />{/if}
-{#if openFolder}<FolderDialog />{/if}
+{#if openFolder}<FolderDialog guard={leavePrompt ? view : null} />{/if}

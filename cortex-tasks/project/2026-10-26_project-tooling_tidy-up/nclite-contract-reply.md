@@ -52,6 +52,7 @@
 | Tool answers a summary and a ref | `{ ok, result }` or `{ ok: false, problem }` | The operation's own JSON or its problem document, so the bot reads the same shapes as the API |
 | `route` gets a request | It also takes the caller and an abort signal, and a reply may carry a problem's headers | The host knows the bot; a waiting `check_responses` must stop when the turn does |
 | `createEngine(dir)` | `createEngine({ dir, ledger?, name?, onSend?, warn? })` | The folder's name as the person reads it; `onSend` tells the host the person pressed Send |
+| `unmount()` saves anything being written | `leave()` asks the person first, then the host unmounts; `unsaved()` for the host's own question or `beforeunload` | The person decides whether half-written words are kept, not the plugin; `unmount()` stays a plain teardown (`apps/board/src/board/host.ts` `BoardView`) |
 
 ## What the engine needs from the host (built, `apps/board/server/engine/`)
 
@@ -68,9 +69,12 @@
 
 ## The view's host, as built (`apps/board/src/board/host.ts`, `mount.ts`)
 
-- **`mount(root, host)`** returns `{ unmount, pageChip, reveal }`, plus `status` (an observable of the
+- **`mount(root, host)`** returns `{ unmount, unsaved, leave, pageChip, reveal }`, plus `status` (an observable of the
   board's state), `board` (its controls) and `send()`. The root gets `vb-board`. Two boards run on one
   page; `unmount` leaves no listener behind (held by `tests/pages/board-host.spec.ts`, a fake host).
+  Under a host the board acts on a key only when its target is inside its root (`input/keys.ts`
+  `bindKeys`); only the standalone page (`host.page`) keeps its shortcuts page-wide. A host's Close
+  calls `leave()` before `unmount()`: it asks through `confirm` only while a note holds unsaved words.
 - **`host`** is the draft's `api`, `events`, `addToChat`, `settings` and `notify`, plus `confirm` and an
   optional `page` part (the board in the address bar, the board last looked at, reload, the person's
   cookie), which only the standalone page gives. `notify` takes a tone (plain or a warning). `api`
@@ -79,11 +83,11 @@
 - **Pictures:** card images load from the board's image route (`IMAGE_ROUTE`), outside `api`, because an
   `<img>` fetches by URL. nclite either serves that path under the plugin's prefix or gives the board an
   image transport. The engine (`createEngine`) has no picture route: the standalone server serves
-  them (`apps/board/server/images.ts`), so under nclite serving them is the host's.
-- **Gaps we close before the plugin stage** (found by the set's review, VERIFY_01; tracker M10–M15):
-  a key pressed outside every board (a host button) still reaches each board (M10); `unmount` drops a
-  note's unsaved words, where the draft says it saves them: we'll either save the draft or tell the host
-  the view holds unsaved words so it asks first (M11); card images follow a page switch, not
+  them (`apps/board/server/images.ts`), so under nclite serving them is the host's. An svg (D-064) is
+  drawn only as an `<img>`, and its response carries its own sandboxed policy (`SVG_CSP`), so opened at
+  its own address it runs no script: a host that serves the pictures must send that header with it.
+- **Gaps we close before the plugin stage** (found by the set's review, VERIFY_01; tracker M12–M15):
+  card images follow a page switch, not
   `settings` (M12); the saved zoom and position go to `sessionStorage` keyed by board id only (M13);
   the view and its styles get one import name, `#board` (M14). **Tools:** today the engine also serves
   `join` and `request_grant` and leaves `list_apps` out, while the tool table lists `list_apps` and

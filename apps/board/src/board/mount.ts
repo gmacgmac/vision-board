@@ -1,5 +1,6 @@
 // The board in any host (principles § The board is a plugin; host.ts): `mount(root, host)` builds
-// the board's elements inside `root` and gives back nclite's view (`unmount`, `pageChip`, `reveal`),
+// the board's elements inside `root` and gives back nclite's view (`unmount`, `pageChip`, `reveal`,
+// and `unsaved` and `leave`, which a host asks before it unmounts: `unmount` itself never asks),
 // plus what a host draws around the board: its status (status.ts) and its controls (controller.ts
 // `Board`). It adds no element outside `root` but the zoomed image view (a modal dialog's top layer),
 // no document id of its own (ids inside cards and frames carry the mount's prefix, mount-ids.ts), and
@@ -125,6 +126,8 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       for (const chip of selectedChips()) host.addToChat(chip);
       return board.send();
     },
+    unsaved: () => board.unsaved(),
+    leave: () => board.leave(),
     pageChip() {
       const s = board.side.ledger();
       const id = board.id();

@@ -160,7 +160,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     stage, world, selection, groups: on('groupNoteOnce'), vp, node: nodeOf, state: () => S.data!.state, layout: () => drawing.layout, card: (id) => drawing.cards.get(id),
     region: (id) => view().regions.find((r) => r.id === id), frame: (id) => drawing.frames.get(id), regionReplies: () => parking.containers(),
     replies: (id) => { const n = nodeOf(id); return (n && parking.card(n).replies) ?? []; }, ver: (id) => S.data?.versions[id], attempt, relayout: () => redraw(), toast: (t) => toast(t), changed: () => flow.place(),
-    discard: () => ask(...DISCARD_ASK), paused: lock.paused,
+    discard: () => ask(...DISCARD_ASK), paused: lock.paused, unsaved: (on) => status.set({ unsaved: on }), // a host's leave guard (M11)
   });
   /** A container's note preview and block: Edit, Remove, Show in container (region-notes.ts). */
   const regionNotes = createRegionNotes({
@@ -192,7 +192,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
   /** What a host's own chat reads of the board (chat-side.ts): the selection, the answers, a change chip's zoom. */
   const side: BoardSide = { stage, data: () => S.data, ledger: () => live.state, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
-    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => boards.switchTo(id), jump: (id) => boards.jump(id), source: (link) => { chatSource = link; } };
+    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => void switchTo(id), jump: (id) => void switchTo(id, () => boards.jump(id)), source: (link) => { chatSource = link; } };
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,
@@ -224,16 +224,25 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   let align = alignOf(host);
   const unsettle = host.settings.on(() => { if (alignOf(host) !== align) { align = alignOf(host); if (S.data) redraw(); } });
 
+  /** Another board (the picker, a chat's link, a new or restored board): a note's unsaved words ask
+   *  first, by the one path (`notes.leave`, `mayLeave`), and Cancel keeps this board (M11_01-R3).
+   *  With nothing unsaved it switches at once. True once switched. */
+  async function switchTo(id: string, go = () => boards.switchTo(id)): Promise<boolean> {
+    if (id !== S.id && notes.unsaved && !(await notes.leave())) return false;
+    go();
+    return true;
+  }
   async function showVersion(seq: number | null, until?: number) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq, until); }
   return {
-    boot: boards.boot, switchTo: boards.switchTo, showVersion, command: (id) => void flow.command(id),
+    boot: boards.boot, switchTo: (id) => switchTo(id), showVersion, command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
     toggleHide, id: () => S.id, side, showNote: (id, seq) => notes.show(id, seq),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
-    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: boards.switchTo, confirm: ask, toast: (t) => toast(t) }),
+    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
+    unsaved: () => notes.unsaved, leave: () => notes.leave(),
     destroy: () => { cancelAnimationFrame(S.frame); [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle].forEach((f) => f()); },
   };
 }

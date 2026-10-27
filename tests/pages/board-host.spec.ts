@@ -3,7 +3,8 @@
 // server. The board draws a fixture board from the host's `api`; Send hands the selected card to
 // `addToChat`; a removal asks the host's `confirm` first; a change event redraws; two boards on one
 // page work apart; and after `unmount` each root is empty and given back as it was, with no listener
-// left on the document or the window and none on the host. The fixture (board-host-fixture.ts) is
+// left on the document or the window and none on the host. A host's Close asks the board first
+// (`leave`, M11): only a note with changed words makes the host's confirm ask. The fixture (board-host-fixture.ts) is
 // bundled here in memory with Vite and run in a blank page.
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -52,7 +53,7 @@ type Host = {
   record(id: string): { chips: { kind: string; ref: { board: string; n: number } }[]; confirms: { heading: string; list?: unknown }[];
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
   pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
-  addHostControls(parentId: string): void;
+  addHostControls(parentId: string): void; addClose(parentId: string, id: string): void; unsaved(id: string): boolean;
   answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
 };
 const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
@@ -181,4 +182,54 @@ test('keys stay inside the board: a host control hears its own keys, and a click
   await page.keyboard.press('h');
   await expect.poll(() => hidden('a')).toBe(true);
   expect(await hidden('b')).toBe(false);
+});
+
+test('the host asks before words are lost: Close asks only while a note holds changed words; Cancel keeps them, OK unmounts', async ({ page }) => {
+  await open(page);
+  const baseline = await call(page, (h) => h.listeners());
+  await call(page, (h, lines: object[]) => {
+    h.mount('a', lines, lines.length); h.mount('b', lines, lines.length); h.addClose('host-bar', 'a'); h.addClose('host-bar', 'b');
+  }, LINES);
+  await expect(page.locator('#a vb-node')).toHaveCount(nodesUpTo(Infinity));
+  const text = (id: string) => page.locator(`#${id} vb-note-bubble textarea`);
+  const confirms = (id: string) => call(page, (h, r: string) => h.record(r).confirms, id);
+  const unsaved = (id: string) => call(page, (h, r: string) => h.unsaved(r), id);
+
+  // A note being written on A, one opened and left unchanged on B.
+  await page.locator('#a vb-node').first().focus();
+  await page.keyboard.press('c');
+  await expect(text('a')).toBeFocused();
+  expect(await unsaved('a'), 'an open note with no words typed is not unsaved').toBe(false);
+  await page.keyboard.type('Half a thought');
+  expect(await unsaved('a')).toBe(true);
+  await page.locator('#b vb-node').first().focus();
+  await page.keyboard.press('c');
+  await expect(text('b')).toBeFocused();
+  expect(await unsaved('b')).toBe(false);
+
+  // Close A, Cancel: the host's confirm asked the discard question once; the board, the words and
+  // focus in the text stay, and the next key goes into the note.
+  await page.locator('#close-a').click();
+  await expect.poll(async () => (await confirms('a')).length).toBe(1);
+  expect((await confirms('a'))[0]).toEqual({ heading: 'Discard your changes?', body: 'Changes will be lost.', confirm: 'Discard' });
+  await expect(text('a')).toBeFocused();
+  await expect(text('a')).toHaveValue('Half a thought');
+  await page.keyboard.type('!');
+  await expect(text('a')).toHaveValue('Half a thought!');
+  await expect(page.locator('#a vb-node')).toHaveCount(nodesUpTo(Infinity));
+
+  // Close B, its note unchanged: it unmounts at once, with no question, and A is untouched.
+  await page.locator('#close-b').click();
+  await expect.poll(() => page.evaluate(() => document.getElementById('b')!.childElementCount)).toBe(0);
+  expect(await confirms('b')).toEqual([]);
+  expect((await confirms('a')).length).toBe(1);
+  await expect(text('a')).toHaveValue('Half a thought!');
+
+  // Close A again, OK: the board unmounts and leaves nothing.
+  await call(page, (h) => h.answer('a', true));
+  await page.locator('#close-a').click();
+  await expect.poll(() => page.evaluate(() => document.getElementById('a')!.childElementCount)).toBe(0);
+  expect((await confirms('a')).length).toBe(2);
+  expect(await page.evaluate(() => document.getElementById('a')!.className)).toBe('');
+  expect(await call(page, (h) => h.listeners())).toBe(baseline);
 });

@@ -51,7 +51,7 @@
   import { keep, kept } from './kept.ts';
 
   let { onboard, onversion, ongo, onopen, oncommand, onhide, onsend, onrevoke, onflagged, onarchive, onlock }: {
-    onboard: (id: string) => void;
+    onboard: (id: string) => unknown;
     /** Show a past version of the open board, or now with null (versionView flag). */
     onversion: (seq: number | null) => Promise<void>;
     /** Zoom to a container (containerFinder flag, board/find/finder.ts). */
@@ -107,7 +107,8 @@
       return;
     }
     const action = BOARD_ACTION_IDS.find((id) => entry(id) === select.value);
-    if (!action) return onboard(select.value);
+    // A note's unsaved words may ask first (M11_01-R3): Cancel leaves the picker on the open board.
+    if (!action) return void Promise.resolve(onboard(select.value)).then(() => { select.value = shell.boardId; });
     select.value = shell.boardId;
     const rename = action === 'rename-board';
     shell.boardDialog = { action, title: rename ? shell.title : '', summary: rename ? shell.summary : '' };

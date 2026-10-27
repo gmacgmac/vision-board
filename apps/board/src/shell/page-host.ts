@@ -5,9 +5,12 @@
 // (shell.svelte.ts). Its page part names the open board in the address, keeps the board last looked
 // at (per folder with the openFolder flag, folder.ts), reloads to start again and holds the person's
 // cookie. Its chat (chat-panel.ts) takes the board's selection and answers through its bridge
-// (chat-bridge.ts, board/chat-side.ts), so `addToChat` has nothing more to stage here.
+// (chat-bridge.ts, board/chat-side.ts), so `addToChat` has nothing more to stage here. With the
+// leavePrompt flag it guards its own tab: a close or reload while a note holds unsaved words gets the
+// browser's "Leave site?" prompt (`guardLeave`).
 import { flagOn, isFlag } from '#format';
 import type { BoardHost, BoardEvent } from '../board/host.ts';
+import type { Status } from '../board/status.ts';
 import { LAST_BOARD_KEY } from '../board/boards/index.ts';
 import { pageFlags } from '../flags.ts';
 import { folderMoved, lastBoardKey, loadFolder, openFolderOn, reloadOnto } from './folder.ts';
@@ -18,6 +21,18 @@ import { askConfirm, shell, toast } from './shell.svelte.ts';
 /** The standalone host, and how its page tells the board a setting changed (the "⋯" menu's Centre cards). */
 export interface PageHost extends BoardHost {
   settingsChanged(): void;
+}
+
+/** The page's own guard (leavePrompt flag, M11): while the board's status says a note holds unsaved
+ *  words, a tab close or reload gets the browser's "Leave site?" prompt. The listener is there only
+ *  while they are unsaved: added when `unsaved` turns true, removed when it turns false (saved, sent
+ *  or discarded) and by the function returned (the board unmounts). */
+export function guardLeave(status: Pick<Status, 'now' | 'on'>): () => void {
+  const prompt = (e: BeforeUnloadEvent) => e.preventDefault();
+  const set = (on: boolean) => (on ? window.addEventListener('beforeunload', prompt) : window.removeEventListener('beforeunload', prompt));
+  set(status.now.unsaved);
+  const unhear = status.on((patch) => { if (patch.unsaved !== undefined) set(patch.unsaved); });
+  return () => { unhear(); set(false); };
 }
 
 /** This board's id in a change event. */

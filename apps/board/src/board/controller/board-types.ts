@@ -12,7 +12,8 @@ import type { Status } from '../status.ts';
 
 export interface Board {
   boot(): Promise<void>;
-  switchTo(id: string): void;
+  /** Open board `id`; a note's unsaved words ask first (`leave`). True once switched, false on Cancel. */
+  switchTo(id: string): Promise<boolean>;
   /** Show a past version of the open board, read-only, or now with null; `until`: a retired marker's (versions.ts). */
   showVersion(seq: number | null, until?: number): Promise<void>;
   /** A view command from the header (zoom out, Fit, zoom in; commands.ts), or the finder's zoom to a container. */
@@ -36,6 +37,9 @@ export interface Board {
   side: BoardSide;
   /** Show note `seq` on card `id` in its bubble. */
   showNote(id: string, seq: number): void;
+  /** A note holds changed words not yet saved; and the question before they are lost (host.ts `BoardView`). */
+  unsaved(): boolean;
+  leave(): Promise<boolean>;
   /** Throw away the held state, read the whole ledger, draw from scratch (a page test's `rebuild`). */
   rebuild(): Promise<void>;
   /** Resolves once no read is in flight and no draw is waiting for a frame (a page test's `idle`). */

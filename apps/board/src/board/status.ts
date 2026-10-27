@@ -72,6 +72,9 @@ export interface BoardStatus {
   go: GoBox | null;
   /** How many times the board was drawn: a host's chat refreshes what it attaches on each. */
   drawn: number;
+  /** A note holds changed words not yet saved (host.ts `BoardView.unsaved`): set each time it turns,
+   *  so a host can guard a close (the standalone page's `beforeunload`, leaveGuard flag). */
+  unsaved: boolean;
 }
 
 /** The status before anything is read: what a host draws while the board boots. */
@@ -80,7 +83,7 @@ export const initialStatus = (): BoardStatus => ({
   versionView: false, versions: [], past: null, loadingVersion: false, containers: [], summary: '',
   counts: { open: 0, withAgent: 0, answered: 0, later: 0 }, openCards: [], freshCards: [], answered: 0, flagged: 0,
   zoom: 100, replyText: '', replyOpen: false, hide: false, agentAccess: false, requests: [], requestNews: [],
-  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, go: null, drawn: 0,
+  boardHolders: [], selection: '', proposals: [], proposalNews: [], unsent: false, locked: false, go: null, drawn: 0, unsaved: false,
 });
 
 export interface Status {

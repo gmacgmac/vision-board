@@ -7,14 +7,20 @@
      (not while Open is on its way), and focus goes back to "⋯"; its close event, queued after it shut,
      is taken only while it is still shut, as in ArchivedDialog.svelte. The view is FolderPicker.svelte; with the currentFolder flag it also shows the open
      folder on a "Current folder" line with Copy. Opened, closed and closed by its backdrop by the shared
-     modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). -->
+     modal dialog (`#ui` `syncModal`, `backdropClick`, `whenShut`). With `guard` (the board, leavePrompt
+     flag; M11_01-R4) a note's unsaved words ask before the server switches: the dialog closes, the
+     board asks, and Cancel leaves page and server on the same folder with focus back in the note. -->
 <script lang="ts">
   import { tick } from 'svelte';
-  import { shell } from './shell.svelte.ts';
+  import { shell, toast } from './shell.svelte.ts';
+  import type { BoardView } from '../board/host.ts';
   import FolderPicker from './FolderPicker.svelte';
   import { backdropClick, syncModal, whenShut } from '#ui';
   import { listFolders, openProject, type FolderList } from './page-io.ts';
   import { currentFolderOn, reloadOnto } from './folder.ts';
+
+  /** The board, asked before the folder changes under it (leavePrompt flag); none: nothing asks. */
+  let { guard = null }: { guard?: Pick<BoardView, 'unsaved' | 'leave'> | null } = $props();
 
   const UID = 'folder-dialog';
   let dlg: HTMLDialogElement;
@@ -60,13 +66,27 @@
     });
   });
 
+  /** Open the folder on the server, then reload onto it. */
+  async function openFolder(path: string, create: boolean) {
+    await openProject(path, create);
+    reloadOnto();
+  }
+
   async function accept() {
     if (!listing || busy) return;
+    const { path, found } = listing;
+    // Unsaved words ask first, before anything switches: this dialog closes so Cancel's focus can go
+    // back in the note; once discarded, a refusal shows as a toast (the dialog is gone).
+    if (guard?.unsaved()) {
+      shell.folderDialog = false;
+      await tick();
+      if (await guard.leave()) await openFolder(path, !found).catch((err: unknown) => toast(words(err), 'error'));
+      return;
+    }
     busy = true;
     problem = null;
     try {
-      await openProject(listing.path, !listing.found);
-      reloadOnto();
+      await openFolder(path, !found);
     } catch (err) {
       problem = words(err);
       busy = false;

@@ -82,8 +82,19 @@ export const alignOf = (host: Pick<BoardHost, 'settings'>): Align => (host.setti
 
 /** What `mount` gives back: nclite's `PluginView`. */
 export interface BoardView {
-  /** Removes every listener the board added and empties `root`. */
+  /** Removes every listener the board added and empties `root`. It never asks: words a note holds
+   *  go with it, so a host calls `leave()` first. */
   unmount(): void;
+  /** Whether a note holds changed words not yet saved. Synchronous, so a host can read it in a
+   *  `beforeunload` handler or to word its own question; the board's status (`unsaved`) says each
+   *  time it turns. */
+  unsaved(): boolean;
+  /** Asks the person before unsaved words are lost: true at once when nothing is unsaved, else the
+   *  answer to the board's discard question, asked through `confirm`. True: the words are discarded
+   *  (the note closes, `unsaved()` is false) and the host unmounts.
+   *  False (Cancel): the board stays, focus back in the words. A call while one is asking gets the
+   *  same answer, not a second question. */
+  leave(): Promise<boolean>;
   /** The chip for the board on show (what a pane header's Add to chat sends); null when no board is shown (or the one shown is archived). */
   pageChip(): Chip | null;
   /** Brings into view what a chip or a change names: a board, a card (`n`) or a note (`seq`). */
