@@ -36,10 +36,13 @@ const BY_KEY = new Map(
   Object.values(ACTIONS).filter((a) => a.key && a.onItem).map((a) => [a.key!, a.id]),
 );
 
-/** Listens on the document; returns the function that stops listening. */
-export function bindKeys(h: KeyHandlers): () => void {
+/** Listens on the document; returns the function that stops listening. A key in another board's
+ * root (`.vb-board`, two boards on one page) is that board's, never this one's (`root`). */
+export function bindKeys(h: KeyHandlers, root?: HTMLElement): () => void {
   const onKey = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
+    const board = target.closest?.('.vb-board');
+    if (root && board && board !== root) return;
     // A card's popover box (its Accept, its Reject) takes no card shortcuts: A there is not Acknowledge.
     if (e.defaultPrevented || target.closest('input, textarea, select, dialog, .vb-card-pop')) return;
     if (e.key === 'Escape') return h.escape();

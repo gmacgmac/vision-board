@@ -7,7 +7,9 @@
 // never stored, api.md 7) and the hand rules; then the event code reads (`fromLine`) by the act
 // rules and the context, whose words name cards by board number (api.md 125). Node is
 // single-threaded and the append is synchronous, so writes are applied one at a time (PLAN key
-// change 2, api.md 33).
+// change 2, api.md 33). Lines another writer appended (another engine or process on the same file)
+// are read in by `refresh`, before every append and while someone `follow`s the file, so the fold
+// and the next `seq` stay current and every listener hears of them too.
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ActEvent, LedgerEvent, LedgerIndex } from '#format';
@@ -38,9 +40,17 @@ export interface Ledger {
   state(): LedgerState;
   /** Every valid line, oldest first, as code reads it; `toLine` gives the line (`read_ledger`). */
   events(): readonly LedgerEvent[];
-  /** Called after each append. Returns an unsubscribe. */
+  /** Called after each append, this ledger's or another writer's (`refresh`). Returns an unsubscribe. */
   onAppend(fn: (e: LedgerEvent) => void): () => void;
+  /** Read in the whole lines another writer appended since this ledger last read the file. */
+  refresh(): void;
+  /** Look at the file for other writers' lines every `FOLLOW_MS` until the returned stop is called
+   * (counted: the file is watched while anyone follows it). */
+  follow(): () => void;
 }
+
+/** How often a followed ledger file is looked at for another writer's lines. */
+export const FOLLOW_MS = 200;
 
 /** Fields only the server writes; dropped from every request body. */
 const STAMPED = ['v', 'seq', 'at', 'by', 'agent', 'person'] as const;
@@ -113,7 +123,8 @@ function check(input: unknown, e: Rec, ix: LedgerIndex, s: LedgerState, board?: 
 /** Open a ledger file (absent = empty). Bad lines are reported through `warn` and skipped, so one
  * bad line never hides the rest. The next `seq` is above every `seq` seen, valid or not. */
 export function openLedger(file: string, warn: (m: string) => void = (m) => console.error(m)): Ledger {
-  const text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const raw = fs.existsSync(file) ? fs.readFileSync(file) : Buffer.alloc(0);
+  const text = raw.toString('utf8');
   const lines = text.split('\n');
   const read = readLedger(lines);
   for (const m of read.problems) warn(`ledger: ${m}`);
@@ -124,6 +135,44 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
   const listeners = new Set<(e: LedgerEvent) => void>();
   // A torn last line (no newline) must not swallow the next event.
   let torn = text.length > 0 && !text.endsWith('\n');
+  /** The bytes of the file read so far (this ledger's appends included). */
+  let size = raw.length;
+  let followers = 0;
+
+  /** Take `event` in: indexed, folded, kept, and told to every listener. */
+  const add = (event: LedgerEvent) => {
+    events.push(event);
+    indexEvent(ix, event);
+    applyEvent(s, event);
+    for (const fn of [...listeners]) {
+      try { fn(event); } catch (err) { warn(`ledger: listener failed: ${String(err)}`); }
+    }
+  };
+  /** One line another writer appended, checked as `readLedger` checks a line on open. */
+  const takeLine = (line: string) => {
+    let e: unknown;
+    try { e = JSON.parse(line); } catch { ix.seq += 1; return warn('ledger: a line another writer appended is not JSON'); }
+    const shape = eventProblems(e);
+    const event = shape.length ? undefined : fromLine(e as Rec);
+    const problems = event ? contextProblems(ix, event) : shape;
+    if (event && !problems.length) return add(event);
+    for (const p of problems) warn(`ledger: a line another writer appended: ${p}`);
+    const seq = (e as { seq?: unknown } | null)?.seq;
+    if (Number.isInteger(seq)) ix.seq = Math.max(ix.seq, seq as number);
+  };
+  const refresh = () => {
+    const now = fs.statSync(file, { throwIfNoEntry: false })?.size ?? 0;
+    if (now <= size) return;
+    const fd = fs.openSync(file, 'r');
+    const chunk = Buffer.alloc(now - size);
+    try { fs.readSync(fd, chunk, 0, chunk.length, size); } finally { fs.closeSync(fd); }
+    const whole = chunk.subarray(0, chunk.lastIndexOf(0x0a) + 1); // a line still being written waits
+    if (!whole.length) return;
+    size += whole.length;
+    torn = false;
+    for (const line of whole.toString('utf8').split('\n')) if (line.trim()) takeLine(line);
+  };
+  const poll = () => refresh();
 
   return {
     file,
@@ -134,22 +183,30 @@ export function openLedger(file: string, warn: (m: string) => void = (m) => cons
       listeners.add(fn);
       return () => { listeners.delete(fn); };
     },
+    refresh,
+    follow() {
+      if (followers++ === 0) fs.watchFile(file, { interval: FOLLOW_MS, persistent: false }, poll);
+      let on = true;
+      return () => {
+        if (!on) return;
+        on = false;
+        if (--followers === 0) fs.unwatchFile(file, poll);
+      };
+    },
     append(input, caller, opts = {}) {
+      refresh();
       const e = stamp(input, caller, ix.seq + 1, ix);
       const errors = check(input, e, ix, s, opts.board);
       if (errors.length) {
         throw problem('invalid', 'The event does not fit the ledger. Fix the fields listed in errors and send it again.', { errors });
       }
       const event = fromLine(e);
+      const line = `${torn ? '\n' : ''}${JSON.stringify(e)}\n`;
       fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.appendFileSync(file, `${torn ? '\n' : ''}${JSON.stringify(e)}\n`);
+      fs.appendFileSync(file, line);
+      size += Buffer.byteLength(line);
       torn = false;
-      events.push(event);
-      indexEvent(ix, event);
-      applyEvent(s, event);
-      for (const fn of [...listeners]) {
-        try { fn(event); } catch (err) { warn(`ledger: listener failed: ${String(err)}`); }
-      }
+      add(event);
       return event;
     },
   };

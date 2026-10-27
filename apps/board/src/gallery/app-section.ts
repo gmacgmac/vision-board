@@ -11,7 +11,7 @@ import type { AppInfo, ViewNode } from '#format';
 import type { VbAppFrameElement, VbNodeElement } from '#ui';
 import { appView, nodeState } from '#ui';
 import { watchTheme } from '../board/app-cards.ts';
-import { callAppTool, listApps } from '../board/io.ts';
+import { pageIo } from '../shell/page-io.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { card } from './node-section.ts';
@@ -27,7 +27,7 @@ function liveCard(fx: Fixture): ViewNode {
 
 /** list_apps' answer for the example; "not found" when the served project has no such folder. */
 async function exampleInfo(): Promise<AppInfo> {
-  const found = (await listApps()).apps.find((a) => a.id === APP.id);
+  const found = (await pageIo.listApps()).apps.find((a) => a.id === APP.id);
   return found ?? { id: APP.id, state: 'missing', tools: [], allowed: false };
 }
 
@@ -37,7 +37,7 @@ async function run(node: VbNodeElement, n: ViewNode, fx: Fixture): Promise<void>
   node.update(nodeState(n, fx.state, undefined, false, { app }));
   const frame = node.querySelector<VbAppFrameElement>('vb-app-frame');
   if (!frame || !appView(n, app).frame) return;
-  frame.wire({ callTool: (name, args) => callAppTool(APP.id, name, args) });
+  frame.wire({ callTool: (name, args) => pageIo.callAppTool(APP.id, name, args) });
   frame.load();
   watchTheme(() => frame.lookChanged());
 }

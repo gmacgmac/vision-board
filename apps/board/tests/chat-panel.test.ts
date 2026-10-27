@@ -8,8 +8,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ChatEvent } from '#chat';
 import { applyEvents, EMPTY_CHAT } from '#chat';
-import { firstBoard, firstModel, lastAsk, MODELS, shownModel, shownPick } from '../src/board/chat-rules.ts';
-import type { ChatSessionInfo } from '../src/board/io.ts';
+import { firstBoard, firstModel, lastAsk, MODELS, shownModel, shownPick } from '../src/shell/chat-rules.ts';
+import type { ChatSessionInfo } from '../src/shell/page-io.ts';
 
 const S = 'session-1';
 let seq = 0;

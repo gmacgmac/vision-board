@@ -46,14 +46,15 @@ export function checkColours(rel, text) {
 
 // ---- I/O layers ----------------------------------------------------------------------------------
 
-/** The page's network calls: only the board's I/O layer and the typed client make them. */
+/** The page's network calls: only the board's I/O layer, the standalone page's own (its change stream,
+ * chat and folder: shell/page-io.ts) and the typed client make them. */
 const NETWORK = /\bfetch\s*\(|\bnew\s+(?:EventSource|WebSocket)\s*\(|\bXMLHttpRequest\b|\bsendBeacon\s*\(/;
 /** File, socket and process access (a type import is not access). */
 const NODE_IO = /(?:^|\n)\s*import\s+(?!type\b)[^'"]*from\s*['"]node:(?:fs|fs\/promises|http|https|http2|net|tls|dgram|child_process|worker_threads)['"]|\bimport\(\s*['"]node:(?:fs|fs\/promises|http|https|http2|net|tls|dgram|child_process|worker_threads)['"]\s*\)/;
 /** The Node-side layers: the board's server and bins, the agent runner, the MCP server, the CLI's I/O file and bins. */
 const NODE_LAYERS = ['apps/board/server/', 'apps/board/server.ts', 'apps/board/bin/', 'packages/agent/', 'packages/mcp/',
   'packages/cli/src/node-io.ts', 'packages/cli/bin/'];
-const NETWORK_LAYERS = ['apps/board/src/board/io.ts', 'packages/client/src/', ...NODE_LAYERS];
+const NETWORK_LAYERS = ['apps/board/src/board/io.ts', 'apps/board/src/shell/page-io.ts', 'packages/client/src/', ...NODE_LAYERS];
 const within = (rel, layers) => layers.some((l) => rel === l || (l.endsWith('/') && rel.startsWith(l)));
 
 /** Network, file, socket or process access outside its layer fails (one I/O layer, docs/principles.md). */
@@ -61,7 +62,7 @@ export function checkIO(rel, text) {
   if (!CODE.test(rel) || !inSource(rel)) return [];
   const src = uncomment(text, false);
   const out = [];
-  if (NETWORK.test(src) && !within(rel, NETWORK_LAYERS)) out.push(fail(rel, 'a network call outside the I/O layer (apps/board/src/board/io.ts, #client)'));
+  if (NETWORK.test(src) && !within(rel, NETWORK_LAYERS)) out.push(fail(rel, 'a network call outside the I/O layer (apps/board/src/board/io.ts, shell/page-io.ts, #client)'));
   if (NODE_IO.test(src) && !within(rel, NODE_LAYERS)) out.push(fail(rel, `file, socket or process access outside the Node-side layers (${NODE_LAYERS.join(', ')})`));
   return out;
 }

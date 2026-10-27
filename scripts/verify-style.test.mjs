@@ -32,6 +32,7 @@ test('colours: the chat palette is out of scope (PLAN), a warning not a failure'
 test('I/O: network calls only in the I/O layer', () => {
   assert.deepEqual(checkIO('apps/board/src/board/io.ts', 'await fetch(url);'), []);
   assert.deepEqual(checkIO('packages/client/src/client.ts', 'return fetch(path, init);'), []);
+  assert.deepEqual(checkIO('apps/board/src/shell/page-io.ts', 'const s = new EventSource(u);'), [], 'the standalone page\'s own calls');
   assert.deepEqual(levels(checkIO('apps/board/src/board/notes.ts', 'await fetch(url);')), ['fail']);
   assert.deepEqual(levels(checkIO('packages/ui/src/node/vb-node.ts', 'const s = new EventSource(u);')), ['fail']);
   assert.deepEqual(levels(checkIO('apps/board/src/shell/A.svelte', 'const x = new XMLHttpRequest();')), ['fail']);

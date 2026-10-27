@@ -56,7 +56,7 @@ const retitle = (request: APIRequestContext, d: Drawn, n: number, title: string)
 async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);

@@ -14,8 +14,8 @@ const THEMES: Theme[] = ['dark', 'light'];
 const field = (page: Page) => page.getByRole('textbox', { name: 'Go to card' });
 const goBox = (page: Page) => page.locator('.vb-go');
 const said = (page: Page) => goBox(page).getByRole('status');
-const scale = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-const world = (page: Page) => page.locator('#world').evaluate((e) => getComputedStyle(e).transform);
+const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
 
 /** A board of its own with `count` cards, open in a 1000 by 600 window. */

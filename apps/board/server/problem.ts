@@ -1,7 +1,7 @@
 // RFC 9457 problems (api.md 38-40): the one shape every error takes. `problem(code, detail,
-// extras?)` builds one; handlers throw it, the dispatcher sends it as application/problem+json.
+// extras?)` builds one; handlers throw it, the host sends it (the standalone one as
+// application/problem+json, respond.ts `sendProblem`).
 // `detail` is plain English for an agent to act on and never shows internals (api.md 40).
-import type { ServerResponse } from 'node:http';
 import type { PointerError, ProblemCode, ProblemDocument } from '#format';
 import { PROBLEM_BASE, PROBLEMS } from '#format';
 
@@ -10,9 +10,6 @@ import { PROBLEM_BASE, PROBLEMS } from '#format';
 // get the shapes here too.
 export type { PointerError, ProblemCode } from '#format';
 export { PROBLEMS } from '#format';
-
-/** The problem document, as sent. Kept for its importers; the name for it is `ProblemDocument`. */
-export type ProblemBody = ProblemDocument;
 
 /** Extension members (api.md 39) and the pointer errors, as the schema has them, and response
  * headers (never in the body). */
@@ -55,13 +52,6 @@ export const problem = (code: ProblemCode, detail: string, extras?: ProblemExtra
 export function serverError(err: unknown): ProblemError {
   console.error(err);
   return problem('server-error', 'Something went wrong on the server. Try again; if it keeps failing, tell the person.');
-}
-
-export function sendProblem(res: ServerResponse, p: ProblemError): void {
-  res.writeHead(p.status, {
-    ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8', 'Cache-Control': 'no-store',
-  });
-  res.end(JSON.stringify(p.body));
 }
 
 /** A hand-written problem string (`"node.title: required"`, from packages/format and

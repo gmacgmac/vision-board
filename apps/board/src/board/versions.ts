@@ -13,9 +13,9 @@
 import type { LedgerEvent } from '#format';
 import type { BoardRun, LedgerState } from '#actions';
 import { boardVersions, foldLedger, pastLines } from '#actions';
-import { readLedger } from './io.ts';
+import type { Io } from './io.ts';
 import type { StageHandlers } from './wiring.ts';
-import { shell } from '../shell/shell.svelte.ts';
+import type { Status } from './status.ts';
 
 export interface VersionsDeps {
   world: HTMLElement;
@@ -26,6 +26,8 @@ export interface VersionsDeps {
   /** Draw the open board from scratch: the past state while one shows, else now. */
   redraw(): void;
   fail(err: unknown): void;
+  status: Status;
+  readLedger: Io['readLedger'];
 }
 
 export interface Versions {
@@ -51,7 +53,7 @@ export const ACTING = [
 ] as const satisfies readonly (keyof StageHandlers)[];
 
 /** The ledger from the start up to line `seq`, a page at a time, stopping once it is reached. */
-async function linesTo(seq: number): Promise<LedgerEvent[]> {
+async function linesTo(readLedger: Io['readLedger'], seq: number): Promise<LedgerEvent[]> {
   const out: LedgerEvent[] = [];
   let after = 0;
   for (;;) {
@@ -74,13 +76,12 @@ export function createVersions(d: VersionsDeps): Versions {
     const s = d.live();
     if (!d.on) return;
     const v = s ? boardVersions(s, d.board()) : undefined;
-    shell.version = v?.now ?? null;
-    shell.versions = v?.past ?? [];
+    d.status.set({ version: v?.now ?? null, versions: v?.past ?? [] });
   }
 
   function set(past: { run: BoardRun; state: LedgerState } | null) {
     state = past?.state ?? null;
-    shell.past = past?.run ?? null;
+    d.status.set({ past: past?.run ?? null });
     d.world.toggleAttribute('data-readonly', past !== null);
   }
 
@@ -89,27 +90,27 @@ export function createVersions(d: VersionsDeps): Versions {
     listed,
     async show(seq, until) {
       const mine = ++asked;
-      const run = shell.versions.find((r) => r.seq === seq);
+      const run = d.status.now.versions.find((r) => r.seq === seq);
       if (!run) {
         set(null);
         return d.redraw();
       }
-      shell.loadingVersion = true;
+      d.status.set({ loadingVersion: true });
       try {
         const cut = until !== undefined && until > run.seq;
-        const lines = await linesTo(cut ? until - 1 : run.seq);
+        const lines = await linesTo(d.readLedger, cut ? until - 1 : run.seq);
         if (mine !== asked) return;
         set({ run, state: foldLedger(cut ? pastLines(lines, d.board(), run.seq, until) : lines) });
         d.redraw();
       } catch (err) {
         d.fail(err);
       } finally {
-        if (mine === asked) shell.loadingVersion = false;
+        if (mine === asked) d.status.set({ loadingVersion: false });
       }
     },
     reset() {
       asked += 1;
-      shell.loadingVersion = false;
+      d.status.set({ loadingVersion: false });
       set(null);
       listed();
     },

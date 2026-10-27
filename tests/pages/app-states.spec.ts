@@ -51,7 +51,7 @@ const control = (page: Page, i: number) => card(page, i).locator('.vb-app-status
 async function open(page: Page, query = ''): Promise<void> {
   await page.goto(`${s.base}/${query}#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 /** Every card in its state, and the frame loaded in each state that shows the panel. */
@@ -241,7 +241,7 @@ for (const theme of THEMES) {
     page.on('request', (r) => { if (r.url().includes('/app-panels/')) panels.push(r.url()); });
     await page.waitForTimeout(400); // the kept view is saved a moment after the board stops moving
     await page.reload();
-    await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+    await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
     await expect(slot(page, 0)).toHaveAttribute('data-app-state', 'needs-approval');
     await page.waitForTimeout(300);
     await expect(page.locator('vb-app-frame iframe')).toHaveCount(0);

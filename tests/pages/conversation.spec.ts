@@ -16,7 +16,7 @@ const THEMES: Theme[] = ['dark', 'light'];
 const bubble = (page: Page) => page.locator('vb-note-bubble');
 const list = (page: Page) => bubble(page).locator('.vb-nb-thread');
 const entry = (page: Page, seq: number | string) => bubble(page).locator(`[data-seq="${seq}"]`);
-const world = (page: Page) => page.locator('#world').evaluate((e) => getComputedStyle(e).transform);
+const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 const LONG = (what: string) => Array.from({ length: 4 }, (_, i) => `${what}, line ${i + 1}.`).join('\n\n');
 
 test.beforeEach(async ({ page }) => {

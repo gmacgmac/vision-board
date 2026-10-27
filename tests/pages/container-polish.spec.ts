@@ -119,7 +119,7 @@ async function headsAt(page: Page, request: APIRequestContext, ks: number[]): Pr
   await expect(page.locator('vb-node')).toHaveCount(2);
   const f = page.locator('vb-region[data-region="n"]');
   await expect(f.locator('.vb-region-retired')).toHaveText('3 retired');
-  const zoom = () => page.locator('#world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
+  const zoom = () => page.locator('.vb-world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
   const seen: HeadsAt = {};
   for (const k of ks) {
     const head = (await f.locator('h2').boundingBox())!;

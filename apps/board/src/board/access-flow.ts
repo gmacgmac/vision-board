@@ -4,13 +4,17 @@
 // of controller.ts (N12_FE_01).
 import type { ActFields, BoardData } from './io.ts';
 import { answerAct, answerWords, revokeAct, revokeWords } from './access.ts';
-import { askConfirm, shell, toast } from '../shell/shell.svelte.ts';
+import type { ConfirmAsk } from './host.ts';
+import type { Status } from './status.ts';
 
 export interface AccessDeps {
   stage: HTMLElement;
   data(): BoardData;
   /** Send one act; true when it was recorded (and drawn). */
   record(fields: ActFields): Promise<boolean>;
+  status: Status;
+  confirm(ask: ConfirmAsk): Promise<boolean>;
+  notify(text: string): void;
 }
 
 export interface AccessFlow {
@@ -22,16 +26,16 @@ export interface AccessFlow {
 export function createAccessFlow(d: AccessDeps): AccessFlow {
   return {
     async answer(request, a, text) {
-      const row = shell.requests.find((r) => r.seq === request);
+      const row = d.status.now.requests.find((r) => r.seq === request);
       if (!(await d.record(answerAct(request, a, text)))) return false;
-      toast(answerWords(row, a));
+      d.notify(answerWords(row, a));
       return true;
     },
     async revoke(region, holder) {
       const words = revokeWords(d.data(), region, holder);
-      if (!(await askConfirm(words.heading, words.body, words.confirm))) return;
+      if (!(await d.confirm({ heading: words.heading, body: words.body, confirm: words.confirm }))) return;
       if (!(await d.record(revokeAct(region, holder)))) return;
-      toast(words.done);
+      d.notify(words.done);
       // The holder's button is gone; keep keyboard focus on the board.
       if (!document.activeElement || document.activeElement === document.body) d.stage.focus({ preventScroll: true });
     },

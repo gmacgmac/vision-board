@@ -42,8 +42,8 @@ tracker:
 | 3 | ARCH_02 | 3 | strong | API contract engineer — one schema, everything else generated or tested against it; a hand-written copy of a type is a future bug. | [One source per contract](./ARCH_02_single-source-contracts.md) | Completed | port 4720 |
 | 4 | UI_01 | 3 | strong | Design-systems engineer — a menu, a dialog or a focus ring is built once, with every state and keyboard path, and every screen gets it by reuse. | [Shared UI base](./UI_01_shared-ui-base.md) | Completed | port 4730 |
 | 5 | ARCH_04 | 3 | standard | — | [Ledger answers and geometry in packages](./ARCH_04_ledger-queries-and-geometry.md) | Completed | port 4740 |
-| 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Pending | port 4750 |
-| 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Pending | port 4755 |
+| 6 | ARCH_03 | 4 | strong | Front-end architect for embeddable components — a component that imports its host's state can't be hosted anywhere else. | [The board is hostable](./ARCH_03_board-host-interface.md) | Completed | port 4750 |
+| 6b | ENGINE_01 | 4 | strong | Back-end engineer who builds engines other programs embed — an engine that opens its own socket or finds its own folder can only ever run alone. | [The board's engine part](./ENGINE_01_board-engine-part.md) | Completed | port 4755 |
 | 7 | TEST_01 | 5 | strong | Test infrastructure engineer — a test that passes only in a certain order is not a test; shared fixtures have one home. | [Test support and parallel page tests](./TEST_01_test-support-and-parallel.md) | Pending | port 4760 (+ worker ports) |
 | 8 | ARCH_05 | 6 | standard | — | [Words files](./ARCH_05_words-files.md) | Pending | port 4770 |
 | 9 | ARCH_06 | 7 | standard | — | [Feature folders and short functions](./ARCH_06_feature-folders-and-functions.md) | Pending | port 4780 |
@@ -84,8 +84,8 @@ tracker:
 | 3 | ARCH_02 | `packages/client/**`, `scripts/gen-api.mjs`, `scripts/gen-mcp.mjs`, `scripts/openapi-refs.mjs`, `packages/format/schema/api/problem.schema.json`, `packages/format/src/constants*` (new), `apps/board/server/{problem,spec,dispatch,edge,write-refs,schema,writes,write-board}.ts`, `packages/actions/src/numbers.ts`, `apps/board/src/board/{io,card-numbers}.ts`, the generated files `npm run gen` writes, their tests |
 | 3 | UI_01 | `packages/ui/src/base/**` (new), `packages/ui/src/tip/hover-tip.ts`, `packages/ui/src/region/{region-row,region-note}.ts`, every `*.css` under `packages/ui/src/` and `apps/board/src/styles/`, `apps/board/src/shell/{ConfirmDialog,BoardDialog,FolderDialog,ArchivedDialog,ToolbarMenu,MenuSelect}.svelte`, `apps/board/src/board/{move-menu,menu-keys,app-cards,selection-pill,note-outside}.ts`, `scripts/verify.mjs`, their tests |
 | 3 | ARCH_04 | `packages/actions/src/**` except `numbers.ts`, `packages/actions/tests/**`, `packages/format/src/geometry.ts` (new), `packages/layout/src/{geometry,types}.ts`, `packages/ui/src/note-bubble/note-bubble-core.ts`, `packages/ui/src/selection-bar/selection-bar-core.ts`, `apps/board/src/board/{updates,retired,proposals,go-to-card,board-data,remove-words}.ts`, `apps/board/server/reads.ts`, their tests in `apps/board/tests/` |
-| 4 | ARCH_03 | `apps/board/src/**`, `scripts/verify.mjs`, `scripts/verify.test.mjs`, `docs/specification/components.md`, their tests |
-| 4 | ENGINE_01 | `apps/board/server/**`, `apps/board/server.ts`, `packages/mcp/src/**` (where it reaches the board), `docs/specification/api.md`, their tests |
+| 4 | ARCH_03 | `apps/board/src/**`, `packages/client/**` (the transport and change stream under a host), `scripts/verify.mjs`, `scripts/verify-style.mjs`, `scripts/verify.test.mjs`, `tests/pages/host-styles.spec.ts`, `docs/specification/components.md`, their tests |
+| 4 | ENGINE_01 | `apps/board/server/**`, `apps/board/server.ts`, `apps/board/bin/**`, `packages/mcp/**`, `packages/cli/tests/**` and `skills/**/*.test.mjs` (only to reach the board through the engine), `docs/specification/api.md`, their tests |
 | — | orchestrator | `package-lock.json`, `docs/decisions.md`, `packages/tokens/src/tokens.css` (new tokens), `.kiro/steering/`, `CLAUDE.md`, `AGENTS.md`, `docs/specification/modules.md` (`npm run map`, after each wave) |
 
 Waves 2 and 5-8 have one task each: it owns what its task file lists.
@@ -103,28 +103,40 @@ Waves 2 and 5-8 have one task each: it owns what its task file lists.
 | ARCH_01-R5 | ARCH_01 Run 2 | Decision entry: a module's names (`#m`, `/styles.css`, `/files`, `/testing`) | orchestrator, under delegation: D-060 | Done |
 | ARCH_01-R3 | ARCH_01 Run 2 | READMEs and `components.md`: claims to the names (cortex-docs) | orchestrator, a Sonnet docs sub-agent during the wave gate: six READMEs and components.md updated | Done |
 | ARCH_01-R6 | ARCH_01 Run 2 (note) | `perf-ledger` imported by the actions/layout timing tests: move into a module's `/testing` so verify's warnings clear | TEST_01 | Open |
-| ARCH_01-R7 | ARCH_01 Run 2 (note) | cli/mcp tests and the calculator skill test reach into the board server: the engine is their front door | ENGINE_01 | Open |
+| ARCH_01-R7 | ARCH_01 Run 2 (note) | cli/mcp tests and the calculator skill test reach into the board server: the engine is their front door | ENGINE_01: calculator test imports `compileSchema` from `server/engine/index.ts`; cli/mcp tests must spawn an HTTP board (packages may not import an app, D-016), so their door is a fixture name, ENGINE_01-R1 | Done |
 | UI_01-R1 | UI_01 | Gallery entry for the base (PATTERNS, SAMPLES, pattern.json), gallery baselines | orchestrator: Wave 3 gate sub-agent | Done |
 | UI_01-R2 | UI_01 | New tokens `--vb-z-*`, `--vb-control-*`, `--vb-focus-offset*` (today's values), then apply | orchestrator approved under delegation; Wave 3 gate sub-agent | Done |
 | UI_01-R3 | UI_01 | Decision: the board's CSS scope | orchestrator: D-061 | Done |
 | UI_01-R4 | UI_01 | nclite: `vb-` selectors count as scoped; root class `vb-board` | orchestrator: nclite-contract-reply.md | Done |
-| UI_01-R5 | UI_01 | `vb-board` on the mount root; 550 px pane inside a wider page in host-styles.spec | ARCH_03 | Open |
+| UI_01-R5 | UI_01 | `vb-board` on the mount root; 550 px pane inside a wider page in host-styles.spec | ARCH_03: `mount.ts` `BOARD_ROOT`; host-styles pane case (layout compare) | Done |
 | UI_01-R6 | UI_01 | `styles/page.ts` lists `shell.css` first, not `@import` | Wave 3 gate sub-agent | Done |
 | UI_01-R7 | UI_01 | `history-flow.ts` imports `menuKeydown` from `#ui`; delete `board/menu-keys.ts` | ARCH_06 | Open |
 | UI_01-R8 | UI_01 | ReplyPanel, BoardAgents, GoToCard take `.vb-surface-panel` / `.vb-surface-pop` | ARCH_06 | Open |
 | UI_01-R9 | UI_01 | `packages/ui/README.md`: the base and its recipes | Wave 3 gate sub-agent | Done |
 | ARCH_02-R1 | ARCH_02 | `gen-reference.mjs` `optional-agent` row, then `npm run gen` | Wave 3 gate sub-agent | Done |
 | ARCH_02-R2 | ARCH_02 | `#format` exports `constants.ts`; `files.ts` exports `TOOLS_FILE` | Wave 3 gate sub-agent | Done |
-| ARCH_02-R3 | ARCH_02 | `folders.ts` `FolderEntry` from `OperationOutput`; `caller-folder.ts` `PROJECT_HEADER` from `#format`; `write-problem.ts` `ProblemDocument`, drop `ProblemBody` | ENGINE_01 | Open |
-| ARCH_02-R4 | ARCH_02 | `DEFAULT_PORT` / `ENV` for 4466 and `VB_*`: cli, client, reply.ts now; `server.ts`, `vb-mcp.ts` | Wave 3 gate sub-agent; ENGINE_01 for server and mcp | Open |
-| ARCH_02-R5 | ARCH_02 | nclite: full JSON Schema tool inputs; `url()` / `watch()` through `host.events` | orchestrator (reply); ARCH_03 (`host.events`) | Open |
+| ARCH_02-R3 | ARCH_02 | `folders.ts` `FolderEntry` from `OperationOutput`; `caller-folder.ts` `PROJECT_HEADER` from `#format`; `write-problem.ts` `ProblemDocument`, drop `ProblemBody` | ENGINE_01 | Done |
+| ARCH_02-R4 | ARCH_02 | `DEFAULT_PORT` / `ENV` for 4466 and `VB_*`: cli, client, reply.ts now; `server.ts`, `vb-mcp.ts` | Wave 3 gate sub-agent; ENGINE_01 for server and mcp (done: `server.ts`, `vb-mcp.ts`) | Done |
+| ARCH_02-R5 | ARCH_02 | nclite: full JSON Schema tool inputs; `url()` / `watch()` through `host.events` | orchestrator (reply); ARCH_03 (`host.events`: done, the board never calls `url`/`watch`; only `shell/page-io.ts` does) | Done |
 | ARCH_04-R1 | ARCH_04 | Docs: components, performance, board README, actions README to `answers/` | Wave 3 gate sub-agent | Done |
 | ARCH_04-R2 | ARCH_04 | `CardStep` alias of `UnseenStep`, `CardProposal` a pick of `ProposalRow` | ARCH_06 | Open |
-| ARCH_04-R3 | ARCH_04 | `io.ts` `BoardData` re-exported from `#actions` | ARCH_03 | Open |
-| ARCH_04-R4 | ARCH_04 | Private `clip` copies → `#format` `clip`: delete `board/clip.ts` (`chat-bridge.ts`, `finder.ts` import it), and `chat-prompt.ts`'s copy | ARCH_03 (page, owns `apps/board/src`), ENGINE_01 (server) | Open |
-| ARCH_04-R5 | ARCH_04 | `chat-prompt.ts` built from `cardChip` / `noteChip` / `resolveChip` / `turnOf`; the `hidden` refusal applies at once | ENGINE_01 | Open |
+| ARCH_04-R3 | ARCH_04 | `io.ts` `BoardData` re-exported from `#actions` | ARCH_03 | Done |
+| ARCH_04-R4 | ARCH_04 | Private `clip` copies → `#format` `clip`: delete `board/clip.ts` (`chat-bridge.ts`, `finder.ts` import it), and `chat-prompt.ts`'s copy | ARCH_03 (page: done, `board/clip.ts` deleted, components.md claim updated), ENGINE_01 (server: done, the prompt's labels come from the chips) | Done |
+| ARCH_04-R5 | ARCH_04 | `chat-prompt.ts` built from `cardChip` / `noteChip` / `resolveChip` / `turnOf`; the `hidden` refusal applies at once | ENGINE_01 | Done |
 | ARCH_04-R6 | ARCH_04 | nclite: `ref` is opaque JSON; refusal `{ code, reason }`; `detail` is the composer's second line | orchestrator: nclite-contract-reply.md | Done |
 | ARCH_04-R7 | ARCH_04 | Actions split: not now (drafted case in ARCH_04 notes) | orchestrator: accepted, no entry; split when a consumer needs reads without actions | Closed |
+| ENGINE_01-R1 | ENGINE_01 | Name for the board's test server, e.g. `#board/testing` → `apps/board/tests/serve-fixture.ts`, resolved by the cli/mcp tests with `import.meta.resolve` (and verify taught to read it) | TEST_01 | Open |
+| ENGINE_01-R2 | ENGINE_01 | `apps/board/README.md` § server: `reads.ts`/`writes.ts` are now `server/engine/`, dispatch calls the engine (cortex-docs) | orchestrator (Wave 4 gate docs) | Done |
+| ENGINE_01-R3 | ENGINE_01 | `#format` `readLedger`'s per-line check as an export (`readLine(index, line)`), so `ledger.ts` `refresh` stops repeating its body | ARCH_06 | Open |
+| ENGINE_01-R4 | ENGINE_01 | nclite reply: the engine's differences (api.md 163), and the grants note below | orchestrator (reply) | Done |
+| ARCH_03-R1 | ARCH_03 (deviation) | A board chip kind `{ board, head }`, `boardChip`, its `resolveChip` case; `pageChip()` returns it | Wave 4 gate sub-agent | Done |
+| ARCH_03-R2 | ARCH_03 | Aria ids inside cards and frames unique per mount | Wave 4 gate sub-agent | Done |
+| ARCH_03-R3 | ARCH_03 | chat.md, performance.md, chat README: `board/chat-*` → `shell/chat-*`, chat calls → `shell/page-io.ts` | Wave 4 gate sub-agent | Done |
+| ARCH_03-R4 | ARCH_03 | nclite: the optional `page` part, `notify`'s tone, `api` resolves to a Response, the image route outside `api` | orchestrator: nclite-contract-reply.md | Done |
+| ARCH_03-R5 | ARCH_03 | Gallery screen text naming `board/chat-view.ts` and `io.ts listApps` | ARCH_05 (words; the gallery baselines may change by that text only) | Open |
+| ARCH_03-R6 | ARCH_03 (deviation) | Raster tolerance 2 in host-styles `sameUnderHost` | orchestrator: accepted (a 1-step edge flicker on the toolbar select; a leak moves pixels far more) | Closed |
+| ARCH_03-R7 | ARCH_03 | `engine.test.ts` hangs inside `npm test` | orchestrator: not reproduced on the finished tree (alone 7/7 in 0.5 s; full suite 1698 + 10 exits 0); the hang was a run caught mid-change | Closed |
+| ARCH_03-R8 | ARCH_03 (note) | A host gets the canvas, status and controls; the toolbar, strips and dialogs are the standalone page's Svelte, so a host draws its own | orchestrator: tracker row for the plugin stage (point for the maintainer) | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -170,14 +182,14 @@ _Notes:_ Queries in `packages/actions/src/answers/` (updates, retired, proposal 
 ---
 
 ### ARCH_03: The board is hostable
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `board/host.ts` `BoardHost` (contract shape + `confirm`, `notify` tone, optional `page`), `board/status.ts` (plain observable the shell mirrors), `board/mount.ts` `mount(root, host)` → view + `status`, `board`, `send` (selected cards → `addToChat`, then the act); `io.ts` `createIo(api)` per board (`BoardData` from `#actions`); no `apps/board/src/board/` file imports the shell, flags.ts, `location`/`history`/storage keys of the page, or Svelte (`verify.mjs` `checkBoardHost` + test). Standalone host `shell/page-host.ts`; chat, folder and page calls moved to `shell/` (`page-io.ts`); `body > .vb-stage` placement in shell.css. Fake-host spec `tests/pages/board-host.spec.ts` (Vite in-memory bundle: draw, Send, confirm, event, two boards, unmount, listener count). host-styles: pane-in-wide-page case (layout compare) and a raster tolerance of 2 (the 1600px host-sheet check went ~1-in-4 flaky on the toolbar select's edge after this change; pre-change tree 0/8). Page specs moved from board ids to classes. Full page suite on 4750: 667 passed, no baseline changed; unit 1691 pass (all but ENGINE_01's `engine.test.ts`, which hangs in `npm test`). `pageChip` null until `#actions` has a board chip (REQUEST). Screens to check by eye: the board at 1600 and 768px light/dark; chat sidebar open (stage shrinks); archive the last board (page reloads empty); open folder switch; a past version banner; Hide answered (H) and Esc closing the Reply panel.
 
 ---
 
 ### ENGINE_01: The board's engine part
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `apps/board/server/engine/` (`index.ts` the door): `createEngine({ dir, ledger?, name?, onSend?, warn? })` → `route` (relative path, body value or reader, caller, signal → `{ status, body, headers? }` or null), `resolve`, `turn({ board, since, agent })`, `tools` (tool table rows it serves; `list_apps` stays in the app host), `watch` (`{ board?, head }`, from anyone: `ledger.ts` `refresh`/`follow` read another writer's lines). reads/writes moved into `engine/` as reply handlers; `dispatch.ts` keeps the edge and calls `route` (`handlers.ts` `viaEngine`); streams in `streams.ts` on `watch`; `project.ts` one lazy engine per folder. MCP stays an HTTP relay (an engine in the agent's process would be a second writer under the lock). Prompt from chips (hidden/removed now refused). `engine.test.ts` 7 tests, no HTTP. `npm test`: all pass but 3 in `chat-bridge.test.ts` (ARCH_03 in flight); verify: 1 fail, `src/shell/page-io.ts` (ARCH_03); `gen --check` current; tsc clean outside ARCH_03's files. Page specs ran on a HEAD copy with only the server changes (the shared page build is broken by ARCH_03's work): see the task file. **Grants with one bot per folder** (for the nclite reply): the host vouches for the bot, so secrets and `join`'s secret protect nothing; grants still keep (1) the person's own boards (made on the board, no agent creator) closed to the bot until the person approves a request, (2) the person's revoke, which takes a board or container back, and (3) several agents on one board, which nclite has only if helpers or a second CLI share the folder. The action layer refuses ✓, ✗ and approving from any agent whatever the grants. The bot's caller must be an agent id as `join` gives it (`a-` + 8): the host joins once per bot folder (label = the bot) and keeps the id; no join line means no label for the bot on the board. 
 
 ---
 

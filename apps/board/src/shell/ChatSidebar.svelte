@@ -3,7 +3,7 @@
      dragging its left edge, or the arrow keys on that edge, sets its width. Both are kept per viewer
      (localStorage, guarded), and the board's stage shrinks beside it (--vb-chat-w, board.css). Its
      contents are the chat package's elements, which the host fills (`onhost`: the board's
-     board/chat-panel.ts, the gallery's recorded turns). On the board they are drawn the first time it
+     chat-panel.ts, the gallery's recorded turns). On the board they are drawn the first time it
      opens, at start when it was kept open (`onload`): until then it says it is loading, and when they
      did not come, so, with Try again, which reloads the page (a browser keeps a module import that failed
      failed until the page is reloaded; the panel, kept open, then loads at start). The gallery mounts it in

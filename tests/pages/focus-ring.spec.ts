@@ -16,13 +16,13 @@ const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 /** The focus ring as drawn: the outline style of `el` ('none' when there is no ring). */
 const ringOf = (page: Page, n: number) => card(page, n).evaluate((e) => getComputedStyle(e).outlineStyle);
 const ringOnFocused = (page: Page) => page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
-const scale = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 
 async function openBoard(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 async function clickCard(page: Page, n: number): Promise<void> {
@@ -135,7 +135,7 @@ async function drawStill(page: Page, request: APIRequestContext): Promise<Drawn>
   return drawn;
 }
 
-const world = (page: Page) => page.locator('#world').evaluate((e) => getComputedStyle(e).transform);
+const world = (page: Page) => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
 const stageBox = async (page: Page) => (await page.locator('#stage').boundingBox())!;
 const boxOf = async (page: Page, n: number) => (await card(page, n).boundingBox())!;
 

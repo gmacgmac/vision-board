@@ -22,7 +22,7 @@ test.afterAll(async () => { await s.close(); });
 async function open(page: Page, board: string, count: number): Promise<void> {
   await page.goto(`${s.base}/#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(count);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 const cardOf = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);

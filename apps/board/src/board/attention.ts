@@ -6,7 +6,7 @@
 // is in the batch), the changed cards (`item.unseen`, update-flow.ts), the cards awaiting a handover
 // (`item.awaiting`, parking.ts), whether Send to agent has anything to send (`board.unsent`) and the
 // "agent drew" toast (`board.drawn`, when its line is in the batch), and with the freshCards flag the
-// new and updated cards (`shell.freshCards`, the toolbar's "N new") and the fresh containers
+// new and updated cards (the status's `freshCards`, the toolbar's "N new") and the fresh containers
 // (`container.fresh`, their border and pill), none while a past version shows. `pageConditions` (packages/actions, also the
 // gallery's) is the one read; this runs it after every batch and switch,
 // and records the board seen (api.md 87) that ends the marks, whenever one is due (`boardNews`):
@@ -17,8 +17,8 @@ import type { LedgerEvent } from '#format';
 import type { LedgerState } from '#actions';
 import type { FreshCount, ProposalFound } from '#actions';
 import { boardNews, pageConditions } from '#actions';
-import { markBoardSeen } from './io.ts';
-import { shell } from '../shell/shell.svelte.ts';
+import type { Io } from './io.ts';
+import type { Status } from './status.ts';
 
 /** The least time between two board seen lines while a board stays open (api.md 87). */
 const SEEN_EVERY_MS = 60_000;
@@ -32,6 +32,9 @@ export interface AttentionDeps {
   readOnly(): boolean;
   /** The freshCards flag: the "N new" list and the fresh containers. */
   fresh?: boolean;
+  status: Status;
+  /** Records a board seen (io.ts). */
+  markBoardSeen: Io['markBoardSeen'];
 }
 
 export interface Attention {
@@ -80,7 +83,7 @@ export function createAttention(d: AttentionDeps): Attention {
     if (!s || d.readOnly() || head === undefined || !boardNews(s, board) || (sent.get(board) ?? 0) >= head) return;
     sent.set(board, head);
     sentAt = Date.now();
-    markBoardSeen(board, head, leaving).catch((err: unknown) => {
+    d.markBoardSeen(board, head, leaving).catch((err: unknown) => {
       sent.delete(board);
       d.fail(err);
     });
@@ -106,13 +109,14 @@ export function createAttention(d: AttentionDeps): Attention {
     owedCards = c.owedCards;
     freshIn = d.fresh ? c.freshIn : none;
     const cards = d.fresh ? c.freshCards : [];
-    if (JSON.stringify(cards) !== JSON.stringify(shell.freshCards)) shell.freshCards = cards;
-    if (JSON.stringify(c.marks) !== JSON.stringify(shell.boardMarks)) shell.boardMarks = c.marks;
-    shell.unsent = c.unsent;
+    const now = d.status.now;
+    if (JSON.stringify(cards) !== JSON.stringify(now.freshCards)) d.status.set({ freshCards: cards });
+    if (JSON.stringify(c.marks) !== JSON.stringify(now.boardMarks)) d.status.set({ boardMarks: c.marks });
+    d.status.set({ unsent: c.unsent });
     const news = c.requests.filter((seq) => seq >= from);
-    if (news.length) shell.requestNews = news;
+    if (news.length) d.status.set({ requestNews: news });
     const proposed = c.proposals.map((p) => p.seq).filter((seq) => seq >= from);
-    if (proposed.length) shell.proposalNews = proposed;
+    if (proposed.length) d.status.set({ proposalNews: proposed });
     return c.drawn !== undefined && c.drawn >= from;
   }
 

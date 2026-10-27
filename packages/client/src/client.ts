@@ -115,7 +115,9 @@ export async function parseResponse(res: Response): Promise<unknown> {
 export interface Client {
   /** Call one operation; resolves to its answer, typed by the operation, or throws an `ApiProblem`. */
   call<Id extends OperationId>(id: Id, ...args: CallArgs<Id>): Promise<OutputOf<Id>>;
-  /** The URL an operation lives at, for what `fetch` cannot hold open (EventSource). */
+  /** The URL an operation lives at, for what `fetch` cannot hold open (EventSource). It needs an
+   * origin (`base`, `''` the page's own), so a board under a host never asks it: its host's `events`
+   * bring the changes (apps/board/src/board/host.ts). */
   url<Id extends OperationId>(id: Id, input?: InputOf<Id>): string;
   /** Listen to a server-sent-events operation (`watch_board`, `watch_project`) in the browser.
    * `on` gets each named event's parsed data and its name. Returns a stop. `onOpen` runs each time

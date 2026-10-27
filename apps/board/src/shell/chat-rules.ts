@@ -4,7 +4,7 @@
 // event is applied, and a message's body. Pure, so they are unit-tested under plain Node.
 import type { ChatEvent, ChatOption, ChatState, Chip } from '#chat';
 import { applyEvent, EMPTY_CHAT } from '#chat';
-import type { ChatMessageBody, ChatSessionInfo } from './io.ts';
+import type { ChatMessageBody, ChatSessionInfo } from './page-io.ts';
 
 export type Agent = ChatSessionInfo['agent'];
 

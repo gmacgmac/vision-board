@@ -113,7 +113,7 @@ for (const screen of SCREENS) {
 test('Esc, a click outside the image and the × each close it with focus back on the image; while open, focus stays on the × and the board neither pans nor zooms', async ({ page }) => {
   const [n] = await open(page, [FLOW]);
   const flow = await imageOf(page, n!);
-  const world = () => page.locator('#world').evaluate((e) => getComputedStyle(e).transform);
+  const world = () => page.locator('.vb-world').evaluate((e) => getComputedStyle(e).transform);
   const close = page.getByRole('button', { name: 'Close' });
   await flow.click();
   await expect(close).toBeFocused();

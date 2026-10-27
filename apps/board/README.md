@@ -52,10 +52,13 @@ Routes come from the route table generated from `packages/format/schema/openapi.
 (`docs/specification/api.md`). `server.ts` only starts the server; `server/app.ts` runs the guard
 and hands `/api` to `server/dispatch.ts`, which matches the route table, reads path and query
 parameters with the spec's schemas (`server/spec.ts`) and calls the operation's handler from
-`server/handlers.ts` (reads in `server/reads.ts`, writes in `server/writes.ts`). Every error is an
+`server/handlers.ts`. The operations the board's engine serves go to `server/engine/` (`createEngine`
+in `engine.ts`: reads in `engine/reads.ts`, writes in `engine/writes.ts`, the agent tools, chip
+`resolve`, `turn` and `watch`), which is HTTP-free and takes its folder and its caller from its host;
+the standalone server is one host of it. Every error is an
 RFC 9457 problem (`server/problem.ts`), and `server/body.ts` parses the media type exactly and caps
-the body. The page calls the server only through `packages/client`, wrapped by
-`src/board/io.ts`. Before a handler runs, `server/callers.ts` works out the caller from the
+the body. The page calls the server only through `packages/client`: the board through its host's
+transport (`src/board/io.ts` `createIo`), the page's own calls through `src/shell/page-io.ts`. Before a handler runs, `server/callers.ts` works out the caller from the
 operation's `security`: the person by the `vb_person` cookie set with the page (fresh at each start),
 an agent by its Bearer secret. `server/agents.ts` is the only module that touches
 `.visionboard/agents.json` (one SHA-256 per agent, git-ignored), and `server/write-board.ts` runs a

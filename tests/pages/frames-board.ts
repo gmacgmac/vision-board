@@ -56,8 +56,8 @@ export async function ensureBoard(request: APIRequestContext, worker: number): P
 export async function openFrames(page: Page): Promise<void> {
   await page.goto(`/?frames#${fx.board}`);
   await expect(page.locator('vb-node')).toHaveCount(7);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 export const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
@@ -66,8 +66,8 @@ export const linesAfter = async (page: Page, after: number) => (await api(page, 
 export const regionPins = async (page: Page) => ((await api(page, `/boards/${fx.board}`)).state.containerPins ?? {}) as Record<string, Point>;
 export const boxOf = async (page: Page, sel: ReturnType<Page['locator']>): Promise<Box> => (await sel.boundingBox())!;
 export const centre = (b: Box): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
-export const scale = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
-export const settled = async (page: Page) => expect(page.locator('#wires')).not.toHaveClass(/settling/);
+export const scale = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+export const settled = async (page: Page) => expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 export const REGIONS = ['plan', 'risks', 'parked', 'backlog'];
 export const frames = (page: Page) => Promise.all(REGIONS.map((r) => boxOf(page, frame(page, r))));
 

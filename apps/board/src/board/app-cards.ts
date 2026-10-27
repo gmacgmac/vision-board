@@ -29,8 +29,7 @@ import type { OpenMenu } from '#ui';
 import { appView, openMenu } from '#ui';
 import { createAppStates } from './app-state.ts';
 import { appAsk, appDone, retryDone } from './app-words.ts';
-import type { ActFields, AppCallRefusal } from './io.ts';
-import { callAppTool, panelState, savePanelState } from './io.ts';
+import type { ActFields, AppCallRefusal, Io } from './io.ts';
 import type { PanelKey } from './panel-states.ts';
 import { createPanelStates } from './panel-states.ts';
 import { outside, viewBounds } from './offscreen.ts';
@@ -60,6 +59,8 @@ export interface AppCardsDeps {
   fail(err: unknown): void;
   /** list_apps said something new: draw the board again (only the app cards change). */
   redraw(): void;
+  /** The board's calls (io.ts). */
+  io: Pick<Io, 'listApps' | 'callAppTool' | 'panelState' | 'savePanelState'>;
 }
 
 export interface AppCards {
@@ -112,7 +113,9 @@ function createAppMenus(): { toggle(opener: HTMLButtonElement): void; close(focu
   let open: { opener: HTMLButtonElement; menu: OpenMenu } | null = null;
   const close = (focusBack: boolean): void => open?.menu.close(focusBack);
   function toggle(opener: HTMLButtonElement): void {
-    const menu = document.getElementById(opener.getAttribute('aria-controls') ?? '');
+    // Within its own card: ids repeat from card to card when two boards share a page.
+    const id = opener.getAttribute('aria-controls');
+    const menu = id ? opener.closest('vb-node')?.querySelector<HTMLElement>(`#${CSS.escape(id)}`) ?? null : null;
     const again = open?.opener === opener;
     close(again);
     if (again || !menu) return;
@@ -123,11 +126,11 @@ function createAppMenus(): { toggle(opener: HTMLButtonElement): void; close(focu
 }
 
 export function createAppCards(d: AppCardsDeps): AppCards {
-  const states = createAppStates({ on: d.on, changed: () => d.redraw(), fail: d.fail });
+  const states = createAppStates({ on: d.on, changed: () => d.redraw(), fail: d.fail, listApps: d.io.listApps });
   /** The app cards drawn, by node id (filled as the cards' conditions are asked for). */
   const shown = new Map<string, ViewNode>();
   const wired = new WeakSet<VbAppFrameElement>();
-  const saved = createPanelStates({ read: (k) => panelState(k.board, k.n), write: (k, state) => savePanelState(k.board, k.n, state) });
+  const saved = createPanelStates({ read: (k) => d.io.panelState(k.board, k.n), write: (k, state) => d.io.savePanelState(k.board, k.n, state) });
   /** The loaded frames, by node id, least recently on screen first (LIVE_PANELS). */
   const used = new Map<string, VbAppFrameElement>();
 
@@ -141,7 +144,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
   /** A tool call from a card's panel; a refusal that says the state moved reads it again. */
   async function call(app: string, name: string, args: Record<string, unknown>) {
     try {
-      return await callAppTool(app, name, args);
+      return await d.io.callAppTool(app, name, args);
     } catch (err) {
       if (STATE_PROBLEMS.has((err as AppCallRefusal).problem)) void states.refresh();
       throw err;

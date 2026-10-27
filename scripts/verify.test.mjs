@@ -1,7 +1,7 @@
 // Proves every rule in verify.mjs fails when broken and passes when kept.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildMap, checkLength, checkManifest, checkReferences, checkWeight, namesOf, pageAssets } from './verify.mjs';
+import { buildMap, checkBoardHost, checkLength, checkManifest, checkReferences, checkWeight, namesOf, pageAssets } from './verify.mjs';
 
 const levels = (r) => r.map((x) => x.level);
 
@@ -110,4 +110,20 @@ test('page weight: over the gzip budget fails and names the size, at or under it
   const over = checkWeight('apps/board/dist/index.html', 150 * 1024 + 1, 150);
   assert.deepEqual(levels(over), ['fail']);
   assert.match(over[0].message, /150\.0 KB gzip.*budget 150 KB/);
+});
+
+test('the board is hostable: a file under apps/board/src/board/ importing the page around it, or Svelte, fails', () => {
+  const b = 'apps/board/src/board/a.ts';
+  assert.deepEqual(checkBoardHost(b, "import { x } from './io.ts';\nimport type { C } from '#actions';\nimport { y } from '#format';"), []);
+  for (const spec of ['../shell/shell.svelte.ts', '../shell/kept.ts', '../flags.ts', '../gallery/fixture.ts']) {
+    const r = checkBoardHost(b, `import { s } from '${spec}';`);
+    assert.deepEqual(levels(r), ['fail'], spec);
+    assert.match(r[0].message, /imports its host/);
+  }
+  for (const spec of ['svelte', 'svelte/store', './Thing.svelte']) {
+    const r = checkBoardHost(b, `import { s } from '${spec}';`);
+    assert.deepEqual(levels(r), ['fail'], spec);
+    assert.match(r[0].message, /imports Svelte/);
+  }
+  assert.deepEqual(checkBoardHost('apps/board/src/shell/a.ts', "import { s } from './shell.svelte.ts';\nimport { b } from '../board/mount.ts';"), [], 'the host may import the board');
 });

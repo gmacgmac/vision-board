@@ -39,9 +39,9 @@ const picture = (page: Page) => page.evaluate(async () => {
     return `<${e.localName} ${attrs.join(' ')}>${kids}</${e.localName}>`;
   };
   return {
-    cards: [...document.querySelectorAll<HTMLElement>('#cards vb-node')].map((e) => ({ html: clean(e), w: e.offsetWidth, h: e.offsetHeight })),
-    regions: [...document.querySelectorAll('#regions vb-region')].map(clean),
-    wires: clean(document.querySelector('#wires')!),
+    cards: [...document.querySelectorAll<HTMLElement>('.vb-cards vb-node')].map((e) => ({ html: clean(e), w: e.offsetWidth, h: e.offsetHeight })),
+    regions: [...document.querySelectorAll('.vb-regions vb-region')].map(clean),
+    wires: clean(document.querySelector('.vb-wires:not(.vb-wires-top)')!),
     counts: document.querySelector('#counts')!.textContent,
   };
 });

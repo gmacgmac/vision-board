@@ -59,8 +59,10 @@ call the same actions, and each one is recorded in the project ledger as an `act
   `pastLines`; `retired-markers.test.ts`), the open proposals' rows (`proposalRows`, `answerable`,
   `acceptAllPlan`; `proposal-rows.test.ts`), where Go to card goes (`goTarget`; `go-target.test.ts`),
   the words of a removal (`cardsWords`, `containerWords`; `remove-words.test.ts`), and the chat's
-  chips (`Chip`, `cardChip`, `noteChip`, `resolveChip`, and `turnOf`, `roundOf` with a refusal for a
-  board the ledger does not hold; `chips.test.ts`). The page keeps what it does with them (the act
+  chips (`Chip`, `cardChip`, `noteChip`, `boardChip`, `resolveChip`, and `turnOf`, `roundOf` with a refusal for a
+  board the ledger does not hold; a board chip's ref is the board and the head it was added at, it resolves to
+  `boardJson` of the board as it is now, and is refused only when the board is gone or archived, never as
+  changed; `chips.test.ts`). The page keeps what it does with them (the act
   and the words of a proposal answer, the Go to card box, `numberedView`, `canApply`).
 - **Awareness tables** (D-033): what belongs to what (`REFERENCES`), who may write what
   (`PERMISSIONS`) and what needs attention (`CONDITIONS`) are each one typed table, derived from

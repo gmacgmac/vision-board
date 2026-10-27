@@ -8,17 +8,16 @@
 import fs from 'node:fs';
 import type { IncomingMessage } from 'node:http';
 import path from 'node:path';
+import { PROJECT_HEADER } from '#format';
 import { openAgents } from './agents.ts';
 import { displayName, isUnder } from './folders.ts';
 import { DATA_DIR } from './ledger.ts';
 import { REALM } from './callers.ts';
 import type { ProblemError } from './problem.ts';
-import type { Project } from './project.ts';
 import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
 import { schemaProblems } from './schema.ts';
 
-export const PROJECT_HEADER = 'vb-project';
 const HEADER_SCHEMA = 'https://vision-board.invalid/schema/api/project.schema.json#/$defs/folderHeader';
 const BAD_HEADER = 'The VB-Project header must be the absolute path of the folder you work in, percent-encoded the way encodeURI does it (`/Users/example/my%20project`).';
 
@@ -26,9 +25,6 @@ const BAD_HEADER = 'The VB-Project header must be the absolute path of the folde
 export interface FolderEnv { home: string; dir: string }
 
 const real = (dir: string): string => { try { return fs.realpathSync(dir); } catch { return path.resolve(dir); } };
-
-/** The open folder as the person reads it (`~/projects/example`), for `join` and `list_boards`. */
-export const openName = (project: Project): string => displayName(project.home, project.current().dir);
 
 /** The refusal (ruling 1): names the open folder and the caller's, says not to join here. */
 export const wrongFolder = ({ home, dir }: FolderEnv, theirs: string): ProblemError => problem('wrong-folder',
@@ -41,7 +37,7 @@ export const joinAgain = ({ home, dir }: FolderEnv, theirs: string): ProblemErro
 
 /** The folder the `VB-Project` header names, decoded; undefined when there is none. */
 export function headerFolder(req: IncomingMessage): string | undefined {
-  const raw = req.headers[PROJECT_HEADER];
+  const raw = req.headers[PROJECT_HEADER.toLowerCase()];
   if (raw === undefined) return undefined;
   if (Array.isArray(raw) || schemaProblems(HEADER_SCHEMA, raw).length) throw problem('bad-request', BAD_HEADER);
   try { return decodeURIComponent(raw); } catch { throw problem('bad-request', BAD_HEADER); }

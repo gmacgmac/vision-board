@@ -14,7 +14,8 @@ import type { ActFields } from './io.ts';
 import type { ProposalAnswer } from './proposals.ts';
 import { acceptAllWords, answerDone, proposalAct } from './proposals.ts';
 import { versionTime } from './versions.ts';
-import { askConfirm, shell } from '../shell/shell.svelte.ts';
+import type { ConfirmAsk } from './host.ts';
+import type { Status } from './status.ts';
 
 export interface ProposalDeps {
   /** The proposals flag. */
@@ -31,6 +32,8 @@ export interface ProposalDeps {
   record(fields: ActFields): Promise<boolean>;
   run(steps: readonly (readonly ActFields[])[]): Promise<boolean>;
   toast(text: string): void;
+  status: Status;
+  confirm(ask: ConfirmAsk): Promise<boolean>;
 }
 
 export interface ProposalFlow {
@@ -64,7 +67,7 @@ export function createProposalFlow(d: ProposalDeps): ProposalFlow {
     rows = d.on && s && !d.readOnly() ? answerable(proposalRows(s, d.found(), versionTime), d.ver) : [];
     byCard = new Map();
     for (const r of rows) byCard.set(r.n, [...(byCard.get(r.n) ?? []), r]);
-    if (JSON.stringify(rows) !== JSON.stringify(shell.proposals)) shell.proposals = rows;
+    if (JSON.stringify(rows) !== JSON.stringify(d.status.now.proposals)) d.status.set({ proposals: rows });
   }
 
   return {
@@ -92,7 +95,7 @@ export function createProposalFlow(d: ProposalDeps): ProposalFlow {
       const plan = acceptAllPlan(rows);
       if (!plan.apply.length) return;
       const w = acceptAllWords(plan);
-      if (!(await askConfirm(w.heading, w.body, w.confirm, { items: w.items, skipped: w.skipped }))) return;
+      if (!(await d.confirm({ heading: w.heading, body: w.body, confirm: w.confirm, list: { items: w.items, skipped: w.skipped } }))) return;
       const ok = await d.run(plan.apply.flatMap((r) => proposalAct(r, 'accept', d.ver(r.n)) ?? []).map((act) => [act]));
       keepFocus();
       if (ok) d.toast(w.done);

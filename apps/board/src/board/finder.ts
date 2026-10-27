@@ -6,11 +6,10 @@
 // choice goes to the card (go-to-card.ts `to`). The "N new" list (freshCards flag) is the same row,
 // an updated card's ending "· updated" (`freshCards`). Neither is an act, so both work in a past version (versions.ts).
 import type { View } from '#format';
-import { LATER_REGION } from '#format';
+import { clip, LATER_REGION } from '#format';
 import type { BoardLayout } from '#layout';
 import type { VbRegionElement } from '#ui';
 import type { Viewport } from './viewport.ts';
-import { clip } from './clip.ts';
 
 /** One row of a menu dropdown: what a choice names, its words, and its tooltip when the words are cut. */
 export interface MenuRow { value: string; text: string; disabled?: boolean; title?: string }

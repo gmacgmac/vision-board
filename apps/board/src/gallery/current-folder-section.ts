@@ -8,7 +8,7 @@ import { mount } from 'svelte';
 import FolderChip from '../shell/FolderChip.svelte';
 import FolderPicker from '../shell/FolderPicker.svelte';
 import ToolbarMenu from '../shell/ToolbarMenu.svelte';
-import type { FolderList } from '../board/io.ts';
+import type { FolderList } from '../shell/page-io.ts';
 import { el, group } from './dom.ts';
 
 const none = () => undefined;

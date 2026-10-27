@@ -3,7 +3,7 @@
 // its middle elided. Example paths use a made-up user.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { elidePath, folderName, folderPath } from '../src/board/folder-path.ts';
+import { elidePath, folderName, folderPath } from '../src/shell/folder-path.ts';
 
 const UNDER_HOME = { path: '/Users/alex/projects/atlas', name: '~/projects/atlas' };
 const OUTSIDE = { path: '/srv/sites/atlas', name: '/srv/sites/atlas' };

@@ -54,7 +54,7 @@ const head = async (page: Page) => ((await (await page.request.get('/api/boards'
 async function open(page: Page, d: Drawn): Promise<void> {
   await page.goto(`/#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(1);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 /** Press Tab until `target` has focus, as a keyboard user would; fails after `max` presses. */

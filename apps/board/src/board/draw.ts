@@ -56,6 +56,8 @@ export interface DrawDeps {
   removing?: boolean;
   /** The toolRail flag: each frame's tools in a rail on its left edge (container tool rail). */
   rail?: boolean;
+  /** The mount's id prefix (mount-ids.ts): before every id the cards, frames and connectors set. */
+  ids?: string;
   /** The viewer's alignment (ruling 4; `start` without the alignSetting flag). */
   align?(): Align;
   data(): BoardData;
@@ -102,6 +104,8 @@ export interface Drawing {
   wiresFor(layout: BoardLayout, focus: string | null): void;
   /** Hide the connectors as for a relayout (a container was dropped; its draw is on its way). */
   settle(): void;
+  /** Take away what the drawing put outside the board (the image view). */
+  destroy(): void;
 }
 
 /** How long connectors stay hidden while cards glide to new places (the cards' transition). */
@@ -109,9 +113,9 @@ const SETTLE_MS = 380;
 
 export function createDrawing(d: DrawDeps): Drawing {
   const { els } = d;
-  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false });
-  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true });
-  const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined);
+  const cards = createCardSet(els.cards, { sizeControl: d.sizing, flag: d.flag === true, history: d.history === true, appCards: d.appCards !== false, idPrefix: d.ids });
+  const regions = createRegionSet(els.regions, { widths: d.widthsControl === true, remove: d.removing === true, rail: d.rail === true, idPrefix: d.ids });
+  const wires = createWires(els.wires, d.layers ? els.wiresTop : undefined, d.labels && els.marks ? { marks: els.marks } : undefined, d.ids);
   const cache = createLayoutCache();
   const sizes = new Map<string, Size>();
   let layout: BoardLayout | null = null;
@@ -202,5 +206,6 @@ export function createDrawing(d: DrawDeps): Drawing {
     viewMoved() { markOffscreen(cards.els, layout, sizes, d.vp, els.stage); images.place(); d.placed?.(); },
     wiresFor: (l, focus) => wires.draw(l, focus),
     settle: settleWires,
+    destroy: () => { clearTimeout(settle); images.destroy(); },
   };
 }

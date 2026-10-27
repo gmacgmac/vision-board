@@ -85,7 +85,7 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   await expect(chip(page)).toHaveText('Locked');
   await expect(chip(page)).toHaveAttribute('title', /^Locked: unlock to change it/);
   expect(await serverLocked(page)).toBe(true);
-  await expect(page.locator('#world')).toHaveAttribute('data-locked', '');
+  await expect(page.locator('.vb-world')).toHaveAttribute('data-locked', '');
   const paused = page.locator(PAUSED);
   expect(await paused.count()).toBeGreaterThan(10);
   for (const el of await paused.all()) await expect(el).toHaveAttribute('aria-disabled', 'true');
@@ -102,7 +102,7 @@ test('"⋯" › Lock board pauses the board in place, says so beside its name, a
   await idle(page);
   await expect(toast(page)).toHaveText('Board unlocked');
   await expect(chip(page)).toHaveCount(0);
-  await expect(page.locator('#world')).not.toHaveAttribute('data-locked', '');
+  await expect(page.locator('.vb-world')).not.toHaveAttribute('data-locked', '');
   for (const el of await paused.all()) await expect(el).not.toHaveAttribute('aria-disabled', 'true');
   expect(await serverLocked(page)).toBe(false);
 });

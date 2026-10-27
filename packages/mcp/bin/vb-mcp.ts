@@ -6,11 +6,12 @@
 // the board refuses it when another folder is open. Logs go to stderr; stdout is the protocol.
 import fs from 'node:fs';
 import path from 'node:path';
+import { DEFAULT_SERVER, ENV } from '#format';
 import { projectOf } from '#client';
 import { createMcpServer, serveStdio } from '../src/index.ts';
 
-const base = (process.env.VB_SERVER || 'http://127.0.0.1:4466').replace(/\/+$/, '');
-const secret = process.env.VB_AGENT_SECRET || undefined;
+const base = (process.env[ENV.server] || DEFAULT_SERVER).replace(/\/+$/, '');
+const secret = process.env[ENV.agentSecret] || undefined;
 const project = projectOf(process.env, process.cwd(), { fs, path });
 const log = (line: string) => { process.stderr.write(`${line}\n`); };
 

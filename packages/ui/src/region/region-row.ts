@@ -12,7 +12,7 @@
 // Nothing here touches HTMLElement at import, so the ui front door stays importable from Node.
 import type { Mode } from '#format';
 import { MODE_HINT } from './region-core.ts';
-import { regionIds } from './region-template.ts';
+import { regionIdsOf } from './region-template.ts';
 import { menuItems, menuKeydown } from '../base/menu.ts';
 import { dismissable } from '../base/layer.ts';
 
@@ -57,7 +57,7 @@ export function bindModeRow(host: HTMLElement): ModeRow {
 
   /** Highlight one layout in the popover and tie the popover to its icon (aria-describedby). */
   function highlight(mode: Mode | null) {
-    const pop = regionIds(host.dataset.region ?? '').modes;
+    const pop = regionIdsOf(host).modes;
     for (const b of radios()) {
       const on = b.dataset.mode === mode;
       b.toggleAttribute('data-hover', on);

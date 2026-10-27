@@ -4,8 +4,8 @@
 // line that last edited it, so a chip survives edits elsewhere and not edits of itself.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import type { CardRef, Chip, ChipRefusal, NoteRef } from '../src/index.ts';
-import { cardChip, noteChip, resolveChip, roundOf, ROUND_HEAD, turnOf } from '../src/index.ts';
+import type { BoardRef, CardRef, Chip, ChipRefusal, NoteRef } from '../src/index.ts';
+import { boardChip, boardData, boardJson, cardChip, noteChip, resolveChip, roundOf, ROUND_HEAD, turnOf } from '../src/index.ts';
 import { A, scene } from './ledger-v3.ts';
 
 /** The scene at v18 (notes can be hidden): board b's cards 1, 2 and 3, and board b2's card 4. */
@@ -129,6 +129,30 @@ test('a note chip is refused while the notes on its card are hidden, and resolve
   refused(resolveChip(l.state(), 'note', noteRef(c)), 'hidden', new RegExp(`Note ${seq} is hidden`));
   l.act({ action: 'notes-show', n: 1 });
   assert.ok('text' in resolveChip(l.state(), 'note', noteRef(c)));
+});
+
+test('a board chip is the board\'s title and its head; it resolves to the board as the bot reads it, and is never "changed"', () => {
+  const l = base();
+  const s = l.state();
+  const c = chip(boardChip(s, 'b'));
+  assert.deepEqual(c, { plugin: 'board', kind: 'board', ref: { board: 'b', head: s.seq }, label: c.label, detail: 'Board "b"' });
+  assert.equal(c.label, s.boards.get('b')!.title);
+  const now = resolveChip(s, 'board', c.ref as BoardRef);
+  assert.deepEqual(now, { where: 'Board "b"', text: JSON.stringify(boardJson(boardData(s, 'b'))) });
+  l.act({ action: 'comment', n: 1, ver: 1, text: 'Moves the head.' });
+  const later = resolveChip(l.state(), 'board', c.ref as BoardRef);
+  assert.ok('text' in later, 'the board moved on, the chip still resolves');
+  assert.notEqual(later.text, (now as { text: string }).text, 'and says the board as it is now');
+});
+
+test('a board chip is refused when the board is not there, and when it is archived', () => {
+  const l = base();
+  const c = chip(boardChip(l.state(), 'b2'));
+  refused(boardChip(l.state(), 'nope'), 'gone', /no board "nope"/);
+  refused(resolveChip(l.state(), 'board', { board: 'nope', head: 1 }), 'gone', /no board "nope"/);
+  l.act({ action: 'archive', board: 'b2' });
+  refused(boardChip(l.state(), 'b2'), 'retired', /Board "b2" is archived/);
+  refused(resolveChip(l.state(), 'board', c.ref as BoardRef), 'retired', /Board "b2" is archived/);
 });
 
 test('turnOf: the answers since the last message are roundOf\'s, none is none, and a board that is not there is refused', () => {

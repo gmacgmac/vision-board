@@ -4,8 +4,11 @@
 // through the one act path, so the server's checks (validateAct) judge every one.
 import type { View } from '#format';
 import type { AccessHolder } from '#actions';
-import type { AccessRequestRow } from '../shell/shell.svelte.ts';
 import type { ActFields, BoardData } from './io.ts';
+
+/** One open grant request as the strip shows it (agentAccess flag): `container` is the region's
+ * title, left out for a request for the whole board (D-034); `label` the asking agent's. */
+export interface AccessRequestRow { seq: number; label: string; container?: string; reason: string }
 
 /** What a request with no label (an agent that never said who it is) is called. */
 const UNNAMED = 'An agent';

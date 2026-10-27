@@ -11,7 +11,7 @@ import type { OpenFolder, Project } from './project.ts';
 import { problem } from './problem.ts';
 import { readRecent } from './recent.ts';
 import { sendJson } from './respond.ts';
-import { body } from './writes.ts';
+import { body } from './body.ts';
 
 /** A folder as get_project and open_project show it, and as list_folders heads its listing. */
 function shown(project: Project, dir: string): { path: string; name: string; found: boolean; boards?: number } {

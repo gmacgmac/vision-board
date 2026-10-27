@@ -90,13 +90,13 @@ const holderButton = (page: Page, label: string) => frame(page).getByRole('butto
 async function openAccess(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}#${BOARD}`);
   await expect(page.locator('vb-node')).toHaveCount(1);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 /** Zoom in to 250% (the + key), where the one-card frame's line has room for two holders: a holder
  * with no room leaves the line whole (FIX_48), so at the opening zoom only the title and count show. */
 async function zoomToHolders(page: Page): Promise<void> {
-  const percent = () => page.locator('#world').evaluate((e) => Math.round(new DOMMatrix(getComputedStyle(e).transform).a * 100));
+  const percent = () => page.locator('.vb-world').evaluate((e) => Math.round(new DOMMatrix(getComputedStyle(e).transform).a * 100));
   for (let i = 0; i < 30 && (await percent()) < 250; i += 1) await page.keyboard.press('+');
   await expect.poll(percent).toBe(250);
 }

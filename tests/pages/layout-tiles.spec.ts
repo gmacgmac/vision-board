@@ -91,7 +91,7 @@ test('a past version keeps the tiles inert: no tool is visible, and a click on o
   const value = await older.getAttribute('value');
   await page.locator('#version').selectOption(value!);
   await expect(page.locator('.vb-banner')).toBeVisible();
-  await expect(page.locator('#world .vb-region-tools:visible')).toHaveCount(0);
+  await expect(page.locator('.vb-world .vb-region-tools:visible')).toHaveCount(0);
   const sent: string[] = [];
   page.on('request', (r) => { if (r.method() === 'POST' && /\/act$/.test(r.url())) sent.push(r.postData() ?? ''); });
   await tile(page, 'row').evaluate((e) => (e as HTMLElement).click());

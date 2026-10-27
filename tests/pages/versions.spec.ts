@@ -102,12 +102,12 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await version(page).selectOption(String(first));
   await expect(banner(page)).toBeVisible();
   await expect(banner(page).getByRole('status')).toHaveText(new RegExp(`^Viewing v${first} from .+ · read-only$`));
-  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  await expect(page.locator('.vb-world')).toHaveAttribute('data-readonly', '');
   await expect(page.locator('vb-node')).toHaveCount(1);
   const old = page.locator('vb-node').first();
   await expect(old).toHaveAttribute('data-status', 'open'); // the ack came after this version
   for (const control of ['.vb-act', '.vb-size', '.vb-region-grip', '.vb-region-tools', '.vb-note-pin']) {
-    await expect(page.locator(`#world ${control}:visible`), control).toHaveCount(0);
+    await expect(page.locator(`.vb-world ${control}:visible`), control).toHaveCount(0);
   }
   await expect(page.locator('#send')).toHaveCount(0);
   // Selection still works; an act key, a note key and a nudge do nothing and send nothing.
@@ -133,7 +133,7 @@ test('a past version shows the board as it was, read-only, and Back to now and E
   await banner(page).getByRole('button', { name: 'Back to now' }).click();
   await expect(banner(page)).toHaveCount(0);
   await expect(version(page)).toHaveValue('now');
-  await expect(page.locator('#world')).not.toHaveAttribute('data-readonly');
+  await expect(page.locator('.vb-world')).not.toHaveAttribute('data-readonly');
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(page.locator('vb-node .vb-act:visible').first()).toBeVisible();
 
@@ -154,7 +154,7 @@ const ALL = [['Question 1?', 'acknowledged'], ['Question 2?', 'dropped'], ['Ques
 const marks = (page: Page) => page.locator('vb-node').evaluateAll((els) => els.map((e) =>
   [...e.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true })).map((b) => b.dataset.act ?? 'flag')));
 /** Every mark that shows takes no pointer and no focus: a mark, not a button to press. */
-const markIsInert = (page: Page) => page.locator('#world').evaluate((w) => {
+const markIsInert = (page: Page) => page.locator('.vb-world').evaluate((w) => {
   const shown = [...w.querySelectorAll<HTMLElement>('.vb-act')].filter((b) => b.checkVisibility({ visibilityProperty: true }));
   return shown.length > 0 && shown.every((b) => { b.focus(); return getComputedStyle(b).pointerEvents === 'none' && document.activeElement !== b; });
 });
@@ -184,7 +184,7 @@ test('the retired marker opens its version with the answers as they stood just b
   const sent = personWrites(page);
   await marker.click();
   await expect(banner(page).getByRole('status')).toHaveText(new RegExp(`^Viewing v${first} from .+ · read-only$`));
-  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  await expect(page.locator('.vb-world')).toHaveAttribute('data-readonly', '');
   for (const theme of THEMES) {
     await setTheme(page, theme);
     await expect.poll(() => answers(page), theme).toEqual(ALL); // v1's cards, not the summary
@@ -194,7 +194,7 @@ test('the retired marker opens its version with the answers as they stood just b
   // Each card shows its mark (FIX_01): the ✓ or ✗ lit, a mark that takes no focus and no press.
   await expect.poll(() => marks(page)).toEqual(ALL.map(([, status]) => [status === 'acknowledged' ? 'ack' : 'drop']));
   await expect.poll(() => markIsInert(page)).toBe(true);
-  const lit = page.locator('#world .vb-act:visible').first();
+  const lit = page.locator('.vb-world .vb-act:visible').first();
   const box = (await lit.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   // Still read-only: a key sends nothing either.
@@ -233,7 +233,7 @@ test('a past version from the dropdown shows each answered card\'s ✓ or ✗ li
   await idle(page);
   const sent = personWrites(page);
   await version(page).selectOption(String(answered));
-  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  await expect(page.locator('.vb-world')).toHaveAttribute('data-readonly', '');
   await expect(page.locator('vb-node')).toHaveCount(3);
   for (const theme of THEMES) {
     await setTheme(page, theme);
@@ -241,7 +241,7 @@ test('a past version from the dropdown shows each answered card\'s ✓ or ✗ li
     await expect.poll(() => markIsInert(page), theme).toBe(true);
     await expectNoAxeViolations(page);
   }
-  await page.locator('#world .vb-act:visible').first().click({ force: true });
+  await page.locator('.vb-world .vb-act:visible').first().click({ force: true });
   await idle(page);
   expect(sent.map((r) => r.url())).toEqual([]);
   await expect(page.locator('vb-node').first()).toHaveAttribute('data-status', 'acknowledged');

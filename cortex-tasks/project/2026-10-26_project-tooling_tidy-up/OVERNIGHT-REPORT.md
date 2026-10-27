@@ -11,7 +11,8 @@
 | 1 | FIX_01, FIX_02 | Done (before tonight) | c2f6110 · `tidy/wave-1` | green |
 | — | Principles 286, set refined | Done | e9218f8 | verify ok |
 | 2 | ARCH_01 | Done (Run 2, after D-059) | 818c502 · `tidy/wave-2` | 1620 + 10 unit, check 0 errors, gen current, verify ok (18 warnings), 658 page specs passed |
-| 3 | ARCH_02, UI_01, ARCH_04 | Done, with the gate fixes (tokens applied, Base gallery entry, docs) | see git log · `tidy/wave-3` | 1690 + 10 unit, check 0 errors, gen current, verify ok (19 warnings), 664 page specs passed; only gallery-{light,dark} changed (new Base section, appended last, every old row identical) |
+| 3 | ARCH_02, UI_01, ARCH_04 | Done, with the gate fixes (tokens applied, Base gallery entry, docs) | fe64b9c · `tidy/wave-3` | 1690 + 10 unit, check 0 errors, gen current, verify ok (19 warnings), 664 page specs passed; only gallery-{light,dark} changed (new Base section, appended last, every old row identical) |
+| 4 | ARCH_03, ENGINE_01 | Done, with the gate fixes (board chip, aria ids per mount, docs) | see git log · `tidy/wave-4` | Combined tree: 1698 + 10 unit, check 0 errors, gen current, verify ok (19 warnings); after the gate fixes 1707 + 10 unit, 667 page specs passed, no baseline changed |
 
 ## Decisions taken (for the maintainer's review)
 
@@ -40,6 +41,15 @@
   bot never gets words the person can't see (nclite § Chips).
 - **Chips:** a card's `ref` is `{ board, n, ver }`, a note's `{ board, seq, rev }`; refusals carry a
   code. Added to `nclite-contract-reply.md` with the `vb-board` root and importing-in-place notes.
+- **ARCH_03's two deviations accepted:** `pageChip()` returns a new `board` chip (`{ board, head }`,
+  added in the gate); the host-styles 1600 px check allows a raster step of 2 (a 1-step flicker on the
+  toolbar select's edge; a style leak moves pixels far more), and the 550 px pane case compares layout.
+- **Two boards on one page get their own aria ids** (gate), so `aria-controls` never points at the
+  other board.
+- **The MCP server stays a relay** to the standalone server, not an engine host: an engine in the agent's
+  process would be a second writer on a folder the server holds the lock for (ENGINE_01, api.md 162).
+- **Tracker M8 added:** the board's toolbar, strips and dialogs become part of the board, so nclite
+  doesn't draw them again. Planned with the plugin, after search (M7).
 
 ## Requests routed
 
@@ -66,12 +76,26 @@
 - UI_01: `localStorage` is used in 5 places `checkIO` does not cover; `vb-image-view` keeps its own dialog.
 - ARCH_04: `clip` existed twice; promoted to `#format`.
 
+## Caught beyond the brief (Wave 4)
+
+- ENGINE_01: the ledger now reads lines another writer appended (`refresh` before every write, a 200 ms
+  `follow` while anyone watches), so two engines on one folder never repeat a `seq`.
+- ENGINE_01: a removed card in a Send now reads "card N on board "b" was removed"; notes that are hidden
+  or on removed cards are refused (the person's words only).
+- ARCH_03: the pointer's window listeners were never removed before; a key pressed in another board's
+  root is now ignored; the app-card menu is found within its card, not by document id.
+- A unit run left hung in the worktree from mid-wave (pids 7323, 7324, 7448, `node --test`). Stopping
+  it was refused by the permission check, so it may still be running: safe to stop.
+
 ## To look at by eye (light and dark)
 
 - The ⋯ menu, the Move to list (Shift+M), a container's settings menu, the app card's "Allowed ▾".
 - New/Rename board, Open folder…, Archived…, and a confirm: Esc, Cancel, backdrop click, focus back.
 - Hover tip and note preview (grace, Esc, tap then press outside); read-only note bubble; the selection pill.
 - The toolbar at 1200, 1000 and 768 px. The gallery's new Base section.
+- Wave 4: the board at 1600 and 768 px; the chat sidebar open (the stage shrinks); archiving the last
+  board (the page reloads empty); switching the open folder; the past-version banner; H (Hide
+  answered); Esc closing the Reply panel.
 
 ## Points for the maintainer
 

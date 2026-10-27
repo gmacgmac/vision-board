@@ -4,11 +4,11 @@
 // different folder reloads the page onto it, without its board hash. Off, none of this runs.
 import { flagOn } from '#format';
 import { pageFlags } from '../flags.ts';
-import { shell } from '../shell/shell.svelte.ts';
-import type { FolderInfo } from './io.ts';
-import { getProject } from './io.ts';
+import { shell } from './shell.svelte.ts';
+import type { FolderInfo } from './page-io.ts';
+import { getProject } from './page-io.ts';
 import { folderName } from './folder-path.ts';
-import { LAST_BOARD_KEY } from './start-board.ts';
+import { LAST_BOARD_KEY } from '../board/start-board.ts';
 
 export const openFolderOn = (): boolean => flagOn('openFolder', pageFlags());
 

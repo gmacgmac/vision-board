@@ -13,7 +13,7 @@ import { bindModeRow } from './region-row.ts';
 import type { NoteParts } from './region-note.ts';
 import { bindNoteParts } from './region-note.ts';
 import { bindTitleTip } from './region-title.ts';
-import { holdersTemplate, regionIds, regionTemplate } from './region-template.ts';
+import { holdersTemplate, regionIds, regionIdsOf, regionTemplate } from './region-template.ts';
 import type { RegionFrameOptions } from './region-template.ts';
 import { pauseControls } from '../paused/paused.ts';
 
@@ -65,10 +65,12 @@ export function defineVbRegion(): void {
       this.row.close();
       this.titleTip.close();
       this.dataset.region = r.id;
+      if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
+      else delete this.dataset.idPrefix;
       this.toggleAttribute('data-fixed', opts.fixed === true);
       this.toggleAttribute('data-rail', opts.rail === true);
       this.setAttribute('role', 'region');
-      this.setAttribute('aria-labelledby', regionIds(r.id).heading);
+      this.setAttribute('aria-labelledby', regionIds(r.id, opts.idPrefix).heading);
       this.style.setProperty('--region', regionColour(r));
       this.innerHTML = regionTemplate(r, opts);
       this.note.bind();
@@ -88,11 +90,11 @@ export function defineVbRegion(): void {
       const reset = this.piece('[data-reset]');
       reset.setAttribute('aria-disabled', String(!st.canReset || paused));
       if (st.canReset) reset.removeAttribute('aria-describedby');
-      else reset.setAttribute('aria-describedby', regionIds(this.dataset.region!).hint);
+      else reset.setAttribute('aria-describedby', regionIdsOf(this).hint);
       const back = this.piece('[data-put-back]');
       back.setAttribute('aria-disabled', String(!st.canPutBack || paused));
       if (st.canPutBack) back.removeAttribute('aria-describedby');
-      else back.setAttribute('aria-describedby', regionIds(this.dataset.region!).back);
+      else back.setAttribute('aria-describedby', regionIdsOf(this).back);
       this.applyNote(st);
       this.applyRetired(st);
       this.applyFresh(st);

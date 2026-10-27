@@ -1,10 +1,11 @@
 // A failed write item (api.md 34, 38): its problem document without `status`, with pointers into
 // the request body. `write_board`'s steps (write-board.ts, write-refs.ts) fail an item through here.
-import type { PointerError, ProblemBody, ProblemCode, ProblemExtras } from './problem.ts';
+import type { ProblemDocument } from '#format';
+import type { PointerError, ProblemCode, ProblemExtras } from './problem.ts';
 import { problem } from './problem.ts';
 
 /** A failed item's problem: the problem document without `status` (api.md 38). */
-export type ItemProblem = Omit<ProblemBody, 'status'>;
+export type ItemProblem = Omit<ProblemDocument, 'status'>;
 
 /** An item that cannot be written, with its problem. */
 export class ItemFailed extends Error {

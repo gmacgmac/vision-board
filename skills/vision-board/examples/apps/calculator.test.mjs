@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
-import { compileSchema } from '../../../../apps/board/server/schema.ts';
+import { compileSchema } from '../../../../apps/board/server/engine/index.ts';
 import tools, { calculate } from './calculator/tools.mjs';
 
 const dir = (name) => fileURLToPath(new URL(`./calculator/${name}`, import.meta.url));

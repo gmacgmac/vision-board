@@ -170,19 +170,70 @@ ships behind one. The pattern was defined by the first such task (U7, node size)
   removing it, when its behaviour becomes the default, is deleting the entry and its checks.
 - **One question**: `flagOn(name, overrides)` returns the override when there is one, else the
   default. An unknown name throws, so a typo never reads as "off".
-- **Overrides**: the page reads them with `pageFlags()` (`apps/board/src/flags.ts`) from the
-  `vb.flags` localStorage key, then `?flags=` in the address, which wins. Both use `parseFlags`'
+- **Overrides**: the standalone page reads them with `pageFlags()` (`apps/board/src/flags.ts`) from the
+  `vb.flags` localStorage key, then `?flags=` in the address, which wins, and gives them to the board
+  as its host's settings (§ The board's host interface). Both use `parseFlags`'
   format: comma-separated names, a leading `-` turning one off (`?flags=nodeSize`,
   `?flags=-nodeSize`). Unknown names are refused and ignored. Tests and the gallery pass overrides
   directly.
-- **Where it is checked**: once, where the behaviour enters (the board controller, the gallery's
-  entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
+- **Where it is checked**: once, where the behaviour enters (the board controller, through its host's
+  `settings` and `board/host.ts` `flagOf`, a value the host does not give reading as the default; the
+  gallery's entry point), and passed down as data (`render(n, { sizeControl })`, a tier for `nodeState`), so
   packages never read the address or storage. Pure packages (`layout`) take the result as input.
   `cardImages` is set once at each entry point with `setMarkdownImages` (`apps/board/src/main.ts`,
   the gallery's `main.ts`), because every surface that renders Markdown draws images (§ Images in cards).
 - **Flag off means unchanged**: every existing page-test screenshot must still match with the
   flag off. A gallery section for flagged behaviour shows only with the flag on, with its own
   screenshots.
+
+## The board's host interface (ARCH_03)
+
+The board mounts in any host (`docs/principles.md` § The board is a plugin), in the shape of nclite's
+plugin contract (draft v0.1, `docs/plugins.md` § The view and its host). The standalone page is one
+host; nclite's pane will be another.
+
+- **`mount(root, host)`** (`apps/board/src/board/mount.ts` `mount`) builds the board's layers inside
+  `root` with no ids of its own, makes `root` its stage (`vb-board vb-stage vb-ground`, `BOARD_ROOT`; the `vb-board`
+  class is its `@container`, D-061) and gives back the contract's view (`board/host.ts` `BoardView`:
+  `unmount`, `pageChip`, `reveal`) plus what a host draws around it: `status` (`board/status.ts`
+  `Status`, a plain observable of `BoardStatus`: the counts, versions, open lists, picker) and `board`
+  (`controller.ts` `Board`, the controls). `send()` is Send to agent: the selected cards go to
+  `host.addToChat` as `#actions` `cardChip`s, then the `send` act. `unmount` removes every listener the
+  board added on the document or the window, takes the zoomed image view away (`card-images.ts`
+  `destroy`; the one element outside `root`, a modal dialog's top layer) and empties `root`, giving it
+  back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
+  status and controller, and a key belongs to the board whose root it is pressed in (`keys.ts`
+  `bindKeys`), so two boards on one page work apart. The ids inside cards and frames (popovers, step
+  section, app menu, a frame's menus, the connectors' arrowheads) carry the mount's prefix
+  (`board/mount-ids.ts` `takeIdPrefix`: none for the first live mount, `vb2-`, `vb3-` after it;
+  `NodeTemplateOptions.idPrefix`, `RegionFrameOptions.idPrefix`), so no id repeats on a page and an
+  `aria-controls` never points into another board. `pageChip` is `#actions` `boardChip` for the board on
+  show (null with none shown, or an archived one). Proven by `tests/pages/board-host.spec.ts` (a fake
+  host, no Svelte, no server: draw, Send, the page chip, confirm, a change event, two boards with no id
+  twice, unmount), `apps/board/tests/mount-ids.test.ts` and `packages/ui/tests/id-prefix.test.ts`.
+- **What a host supplies** (`board/host.ts` `BoardHost`): `api` (the typed client's `Transport`, paths
+  relative to the route prefix), `events` (`BoardEvent`, `{ plugin, ref: { board, head } }`; a ref with
+  no head means "catch up"), `addToChat`, `settings` (`get`, `on`: each flag by name, and `align`),
+  `notify(text, tone)`, `confirm({ heading, body, confirm, list })` and, for a page that is the board's
+  own, `page` (`BoardPage`: which board opens first, the board opened, starting again, the person's
+  cookie). Without `page` the first board opens and, with none left, the board starts again in place.
+- **The standalone host** (`apps/board/src/shell/page-host.ts` `createPageHost`): `api` is `fetch` on
+  the page's origin, `events` its project stream (`shell/page-io.ts` `watchProject`; a rebuilt page or
+  another folder reloads it), `settings` its flags and the viewer's alignment, `notify` the toast,
+  `confirm` the shared dialog, `page` its address and the board last looked at. `App.svelte` mounts the
+  board in its `<main>` and mirrors the status into `shell.svelte.ts`. Its chat is its own
+  (`shell/chat-panel.ts`, `chat-bridge.ts`): it reads the board through `board/chat-side.ts` `BoardSide`,
+  so its `addToChat` stages nothing more. No file under `apps/board/src/board/` imports the page around
+  it or Svelte: `scripts/verify.mjs` `checkBoardHost` fails it (`scripts/verify.test.mjs`).
+- **Differences from nclite's draft** (the contract bends to the board, principles § The board is a
+  plugin): `confirm` on the host (four actions ask first, one with a list); a change event whose `ref` is
+  `{ board, head }`; `api` resolves to the `Response` (the client reads problems itself); `notify` takes a
+  tone (`error` for a refusal); the optional `page` part; and the image route (`io.ts` `imageVersion`,
+  `IMAGE_ROUTE`) is the page's own, not under `api`.
+- **Not covered**: the toolbar, strips,
+  dialogs and reply panel are the standalone page's Svelte, so a host draws its own from the status;
+  the work counters (`work.ts`) and the input-modality reading (`pointer-focus.ts`) are the page's, shared
+  by every board on it.
 
 ## Node size (D-030, tracker U7)
 
@@ -668,7 +719,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    "Vision Board found (N boards)" with Open, or "No Vision Board here" with Create; focus goes to Open
    when found, else to the first folder in it, else to Create. Esc, Cancel or the backdrop closes it.
    Open or Create switches the server's folder and reloads the page without its board hash; another
-   open page reloads when its live stream opens again on a different folder (`board/folder.ts`). The
+   open page reloads when its live stream opens again on a different folder (`shell/folder.ts`, through the page's change events, `shell/page-host.ts`). The
    last board is kept per folder. Styles: `styles/folder-dialog.css`. The gallery draws the picker in
    each state (`gallery/folder-section.ts`); `tests/pages/open-folder.spec.ts` covers it. Off, the menu
    and title are as before and the page never calls the folder routes.
@@ -677,7 +728,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `cortex-tasks/board/2026-10-26_board-app_current-folder.md`). Nothing else on the page names the open
    folder, so three places do, from `shell.folder` (`FolderInfo`), with no server, ledger or schema change.
    (1) `shell/FolderChip.svelte`, the toolbar's first control after the app icon: a folder icon and the
-   folder's own name (`board/folder-path.ts` `folderName`) in the toolbar's chip-button look, its tooltip
+   folder's own name (`shell/folder-path.ts` `folderName`) in the toolbar's chip-button look, its tooltip
    and accessible name the whole path with the home folder as `~` (`folderPath`, the server's `displayName`);
    a press opens the folder dialog. A long name is cut with "…" (`.vb-folder-chip-name`, `max-width: 18ch`),
    down to 36px (its icon and an ellipsis), and at 1000px and below the picker and the two dropdowns give up a
@@ -698,7 +749,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    keeps its look and draws the hover, pressed and focus looks. Its rows are the open cards
    (`packages/actions` `board-state.ts` `openCards`, which `counts.open` counts, so the two cannot
    disagree; `packages/actions/tests/open-cards.test.ts`) as "12 · title" in board number order,
-   a title past `OPEN_ROW_MAX` cut with "…" (`finder.ts` `openRow`, `board/clip.ts` `clip`) and
+   a title past `OPEN_ROW_MAX` cut with "…" (`finder.ts` `openRow`, `#format` `clip`) and
    whole in the option's tooltip (`apps/board/tests/open-list.test.ts`). Choosing one goes to the
    card as Go to card's Enter does (`go-to-card.ts` `to`, § Go to a card by its number); it is no
    act, so it works in a past version, on that version's open cards. With nothing open it is the
@@ -843,7 +894,7 @@ behind the `archiveBoard` flag (on by default; `?flags=-archiveBoard`).
    list; Esc, Close or the backdrop closes it and focus goes back to the picker. Restored, the board
    opens. Styles: `styles/archived-dialog.css`.
 4. **The chat** on an archived board takes no message: the composer says why
-   (`board/chat-rules.ts` `blockedReason`, `ARCHIVED`; the panel's pure rules moved there from
+   (`shell/chat-rules.ts` `blockedReason`, `ARCHIVED`; the panel's pure rules moved there from
    `chat-panel.ts`), and the server refuses one anyway (api.md 137).
 5. A new board's id is never an archived board's (`boardIdFor` takes every board).
 6. Tests: `tests/pages/picker-archive.spec.ts` (the confirm, Cancel and Esc, archive by keyboard and
@@ -872,7 +923,7 @@ ledger's, so a board locked elsewhere shows locked and paused whatever the flag.
    Styles: `styles/lock.css`.
 3. **Paused in place** (`board/lock-flow.ts`). After every batch and switch `apply` reads the lock
    from the folded ledger through the action layer's `boardLocked` and sets `data-locked` on the world
-   and `shell.locked`. The elements pause their own controls from `BoardState.locked`
+   and the status's `locked` (`board/status.ts`). The elements pause their own controls from `BoardState.locked`
    (`NodeState.paused`, `RegionState.paused`; `packages/ui/src/paused/paused.ts` `pauseControls`,
    `paused.css`): the review buttons, the size control, the note pin, a proposal's Accept and Reject,
    the layout icons, the widths switch, the grip, Comment, the note's Edit and Remove, Reset places,

@@ -8,7 +8,7 @@ import type { RegionNoteAction, RegionNoteEventDetail, RegionNoteResizeDetail, R
 import { REGION_NOTE_EVENT, REGION_NOTE_RESIZE_EVENT } from './region-core.ts';
 import type { PreviewEvent } from './region-preview.ts';
 import { PREVIEW_CLOSED, previewShown, previewStep } from './region-preview.ts';
-import { nblockRepliesMarkup, regionIds } from './region-template.ts';
+import { nblockRepliesMarkup, regionIdsOf } from './region-template.ts';
 import { closeGrace } from '../tip/close-grace.ts';
 import { dismissable } from '../base/layer.ts';
 
@@ -65,7 +65,7 @@ export function bindNoteParts(host: HTMLElement): NoteParts {
   function draw(on = wanted()) {
     host.toggleAttribute('data-preview', on);
     const comment = q(COMMENT);
-    if (on) comment?.setAttribute('aria-describedby', regionIds(host.dataset.region ?? '').previewText);
+    if (on) comment?.setAttribute('aria-describedby', regionIdsOf(host).previewText);
     else comment?.removeAttribute('aria-describedby');
     // A tap opened it: a press outside (the shared dismissable layer) closes it.
     if (state.tapped) stopOutside ??= dismissable({ within: inPreview, dismiss: step });

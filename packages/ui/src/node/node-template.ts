@@ -99,15 +99,15 @@ function footer(n: ViewNode, opts: NodeTemplateOptions): string {
   return '<footer class="vb-node-foot"><span class="vb-node-state" aria-hidden="true">'
     + `${svgIcon(KIND_ICON[n.kind], 24, 'vb-node-kico')}<span class="vb-node-sep"></span>`
     + `<span class="vb-node-status"></span><span class="vb-tip vb-status-tip" aria-hidden="true"></span></span>`
-    + `${app ? appStatus(n) + appName(n) : ''}${actions}${opts.history ? historyButton(n, popoverId(HISTORY, n)) : ''}${STEP_NAV}</footer>`
-    + (opts.history ? historyBox(n, popoverId(HISTORY, n)) : '');
+    + `${app ? appStatus(n, opts.idPrefix) + appName(n) : ''}${actions}${opts.history ? historyButton(n, popoverId(HISTORY, n, opts.idPrefix)) : ''}${STEP_NAV}</footer>`
+    + (opts.history ? historyBox(n, popoverId(HISTORY, n, opts.idPrefix)) : '');
 }
 
 /** An app card draws its slot, and so its status in the footer: the appCards flag is not off. */
 const isAppSlot = (n: ViewNode, opts: NodeTemplateOptions): boolean => n.kind === 'app' && opts.appCards !== false;
 
-/** The id of app card `n`'s menu, which "Allowed ▾" controls. */
-export const appMenuId = (n: ViewNode): string => `vb-app-menu-${n.id}`;
+/** The id of app card `n`'s menu, which "Allowed ▾" controls (`prefix`: the mount's, NodeTemplateOptions.idPrefix). */
+export const appMenuId = (n: ViewNode, prefix = ''): string => `${prefix}vb-app-menu-${n.id}`;
 
 /** An app card's status, the footer's left-side slot after the kind icon (card-polish FE_01; the
  * row over the panel is gone): Allow (the accent button, its reason as its tip and in its name)
@@ -115,8 +115,8 @@ export const appMenuId = (n: ViewNode): string => `vb-app-menu-${n.id}`;
  * person allowed this version, or nothing. `update()` shows one, names them and closes the menu; the
  * page acts on `data-app-act` and opens the menu on `data-app-menu` (app-cards.ts). The menu takes
  * the board's menu look (`vb-menu-list`, `vb-menu-item`) and opens upward, over the panel. */
-function appStatus(n: ViewNode): string {
-  const menu = esc(appMenuId(n));
+function appStatus(n: ViewNode, prefix?: string): string {
+  const menu = esc(appMenuId(n, prefix));
   return '<div class="vb-app-status">'
     + '<button type="button" class="vb-pop-btn vb-pop-primary" data-app-act="app-allow" hidden>Allow</button>'
     + `<button type="button" class="vb-pop-btn vb-app-allowed" data-app-menu aria-haspopup="menu" aria-expanded="false" aria-controls="${menu}" hidden>`
@@ -140,7 +140,7 @@ const STEP_NAV = '<div class="vb-node-stepnav" hidden><span class="vb-node-stepc
   + '<button type="button" class="vb-pop-btn vb-pop-primary" data-step="next">Next</button></div>';
 
 /** The id of card `n`'s step section, which its "N updates" tab controls. */
-export const stepsId = (n: ViewNode): string => `vb-steps-${n.id}`;
+export const stepsId = (n: ViewNode, prefix = ''): string => `${prefix}vb-steps-${n.id}`;
 
 /** The step section's contents (FE_02 ruling 3, mockup 03 Part B option B): the version, when and
  * who; the change chips; what the text gained; a link to where the change came from (`data-source`,
@@ -164,26 +164,26 @@ const POPOVERS = ['proposal', 'handover'] as const;
 export type PopoverName = (typeof POPOVERS)[number];
 
 /** The id of card `n`'s box `name`, which its tab controls. */
-export const popoverId = (name: string, n: ViewNode): string => `vb-pop-${name}-${n.id}`;
+export const popoverId = (name: string, n: ViewNode, prefix = ''): string => `${prefix}vb-pop-${name}-${n.id}`;
 
-function bottomTabs(n: ViewNode): string {
+function bottomTabs(n: ViewNode, prefix?: string): string {
   if (!isItem(n)) return '';
   const tabs = POPOVERS.map((p) => `<button type="button" class="vb-node-btab" data-tab="${p}" aria-haspopup="dialog"`
-    + ` aria-expanded="false" aria-controls="${esc(popoverId(p, n))}" hidden></button>`).join('')
-    + `<button type="button" class="vb-node-btab" data-tab="updates" aria-expanded="false" aria-controls="${esc(stepsId(n))}" hidden></button>`
+    + ` aria-expanded="false" aria-controls="${esc(popoverId(p, n, prefix))}" hidden></button>`).join('')
+    + `<button type="button" class="vb-node-btab" data-tab="updates" aria-expanded="false" aria-controls="${esc(stepsId(n, prefix))}" hidden></button>`
     // NEW is a label, not a button (nothing to open); the card's name says "new", so it is hidden from the tree.
     + '<span class="vb-node-btab" data-tab="new" aria-hidden="true" hidden>NEW</span>';
   const boxes = POPOVERS.map((p) =>
-    `<div class="vb-tip vb-card-pop" data-pop="${p}" id="${esc(popoverId(p, n))}" role="dialog" tabindex="${p === 'handover' ? 0 : -1}"></div>`).join('');
+    `<div class="vb-tip vb-card-pop" data-pop="${p}" id="${esc(popoverId(p, n, prefix))}" role="dialog" tabindex="${p === 'handover' ? 0 : -1}"></div>`).join('');
   return `<div class="vb-node-btabs">${tabs}</div>${boxes}`;
 }
 
 /** The proposal box's contents (FE_01 ruling 3, mockup 03 option C): each proposal, newest first,
  * with who, what, from where and when, then Reject and Accept. Out of date, the reason shows and
  * Accept is aria-disabled, described by it. The page acts on `data-proposal` and `data-answer`. */
-export function proposalsMarkup(v: ProposalsView): string {
+export function proposalsMarkup(v: ProposalsView, prefix = ''): string {
   return v.entries.map((p) => {
-    const why = `vb-prop-why-${p.seq}`;
+    const why = `${prefix}vb-prop-why-${p.seq}`;
     const off = p.why ? ` aria-disabled="true" aria-describedby="${why}"` : '';
     const btn = (answer: string, label: string, text: string, extra = '') =>
       `<button type="button" class="vb-pop-btn${answer === 'accept' ? ' vb-pop-primary' : ''}" data-proposal="${p.seq}"`
@@ -214,6 +214,9 @@ export interface NodeTemplateOptions {
   flag?: boolean;
   /** Draw the ⓘ and the history box on every card with a footer; the page passes it when the cardHistory flag is on. */
   history?: boolean;
+  /** Put before every id the card sets (its popovers, step section, app menu), so two boards on one page
+   * repeat none: each mount has its own (the board's `mount`). Empty for the first, and for the gallery. */
+  idPrefix?: string;
 }
 
 const SIZE_PICKS: readonly NodeSize[] = ['s', 'm', 'l'];
@@ -272,7 +275,7 @@ export function nodeTemplate(n: ViewNode, opts: NodeTemplateOptions = {}): strin
     ? `<ul class="vb-node-tags">${n.tags.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : '';
   const note = '<div class="vb-node-notes" hidden></div>';
   // An item's step section (FE_02), right under the text a change touched.
-  const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n))}" role="region" aria-live="polite" hidden></div>` : '';
+  const steps = isItem(n) ? `<div class="vb-node-steps" id="${esc(stepsId(n, opts.idPrefix))}" role="region" aria-live="polite" hidden></div>` : '';
   return `${tabs(n)}${opts.sizeControl && n.kind !== 'app' ? sizeControl(n) : ''}<div class="vb-node-content"><h3 class="vb-node-title">${esc(n.title)}</h3>`
-    + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n)}`;
+    + `${body}${tags}${steps}${note}</div>${footer(n, opts)}${bottomTabs(n, opts.idPrefix)}`;
 }

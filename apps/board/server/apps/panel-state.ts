@@ -19,7 +19,7 @@ import { problem } from '../problem.ts';
 import { sendJson } from '../respond.ts';
 import { SCHEMA_BASE, schemaProblems } from '../schema.ts';
 import { personBoard } from '../visibility.ts';
-import { body } from '../writes.ts';
+import { body } from '../body.ts';
 import { APPS_OFF } from './host.ts';
 
 /** The one source of a kept file's shape, and of the route's bodies (`$defs`). */

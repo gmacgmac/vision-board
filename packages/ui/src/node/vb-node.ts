@@ -65,6 +65,8 @@ export function defineVbNode(): void {
       this.noteSrc = undefined;
       this.dataset.id = n.id;
       this.dataset.kind = n.kind;
+      if (opts.idPrefix) this.dataset.idPrefix = opts.idPrefix;
+      else delete this.dataset.idPrefix;
       this.toggleAttribute('data-emphasis', Boolean(n.emphasis));
       this.setAttribute('role', 'listitem');
       this.tabIndex = 0;
@@ -178,7 +180,7 @@ export function defineVbNode(): void {
       this.proposalSrc = src;
       const box = this.querySelector<HTMLElement>('[data-pop="proposal"]')!;
       // Markup from proposalsMarkup, which escapes every text run.
-      box.innerHTML = v ? proposalsMarkup(v) : '';
+      box.innerHTML = v ? proposalsMarkup(v, this.dataset.idPrefix) : '';
       if (v) box.setAttribute('aria-label', v.box);
       else this.proposalPop?.close();
     }

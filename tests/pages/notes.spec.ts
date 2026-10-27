@@ -14,12 +14,12 @@ const text = (page: Page) => bubble(page).getByLabel('Note text');
 async function openBoard(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('vb-node')).toHaveCount(17);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 /** Zoom in until the world draws at 1:1, so every control is its full size. */
 async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
   for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
 }
 

@@ -1,5 +1,8 @@
-// Successful answers: JSON, and JSON Lines for `read_ledger` (api.md 44). Never cached.
+// The standalone server's answers: JSON, JSON Lines for `read_ledger` (api.md 44), problems as
+// application/problem+json (api.md 38), and the engine's replies. Never cached.
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { EngineReply } from './engine/index.ts';
+import type { ProblemError } from './problem.ts';
 
 export function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -28,4 +31,17 @@ export function wantsJsonLines(req: IncomingMessage): boolean {
   const accept = req.headers.accept ?? '';
   const lines = quality(accept, 'application/jsonl');
   return lines !== undefined && lines > 0 && lines >= (quality(accept, 'application/json') ?? 0);
+}
+
+export function sendProblem(res: ServerResponse, p: ProblemError): void {
+  res.writeHead(p.status, {
+    ...p.headers, 'Content-Type': 'application/problem+json; charset=utf-8', 'Cache-Control': 'no-store',
+  });
+  res.end(JSON.stringify(p.body));
+}
+
+/** An engine reply as the response: JSON, unless it is a problem (its own media type and headers). */
+export function sendReply(res: ServerResponse, reply: EngineReply): void {
+  res.writeHead(reply.status, { 'Content-Type': 'application/json; charset=utf-8', ...reply.headers, 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify(reply.body));
 }

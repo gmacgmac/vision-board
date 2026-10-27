@@ -20,8 +20,8 @@ const selectedIds = (page: Page) => page.locator('vb-node[data-selected]').evalu
 async function openBoard(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 async function clickCard(page: Page, n: number, modifiers: ('Shift' | 'Meta')[] = []): Promise<void> {
@@ -115,7 +115,7 @@ test('a drop outside every container snaps back and writes nothing; a drop in it
   await openBoard(page);
   const before = { box: await card(page, 4).boundingBox(), head: await head(page) };
   await drag(page, await tabOf(page, 4), await background(page));
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
   expect(await card(page, 4).boundingBox()).toEqual(before.box);
   expect(await head(page)).toBe(before.head);
   await drag(page, await tabOf(page, 4), await emptyIn(page, 'prove'));
@@ -192,7 +192,7 @@ test('L saves a card for later in the Later container; Reopen returns it to the 
     await card(page, 6).focus();
     if ((await card(page, 6).getAttribute('data-selected')) === null) await page.keyboard.press('Space');
     await page.keyboard.press('z');
-    await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+    await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   };
   await zoomTo();
   await card(page, 6).getByRole('button', { name: /later/i }).click();
@@ -239,7 +239,7 @@ for (const theme of THEMES) {
     await page.keyboard.press('l');
     await expect(later(page)).toBeVisible();
     // Every control at full size (the fit zoom's excuse, N13, is not needed).
-    const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+    const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
     for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
     await card(page, 1).focus();
     await page.keyboard.press(' ');

@@ -12,14 +12,16 @@
 // api.md 135, 138), which may name a board other than the open one, and the person's removal of
 // cards or a container (`retire`, `retire_cards`, N24).
 import type { ActionId, LedgerLine } from '#format';
-import type { ActFields, BoardFields, RetireFields } from './io.ts';
-import { ApiError, markCardSeen, putBoard, retireCards, sendAct } from './io.ts';
+import type { ActFields, BoardFields, Io, RetireFields } from './io.ts';
+import { ApiError } from './io.ts';
 
 /** A line the page would send: an act, a seen, the person's `board` line (`put_board`) or their
  * `retire` line (`retire_cards`). */
 export interface Outgoing { type: 'act' | 'seen' | 'board' | 'retire'; action?: ActionId }
 
 export interface SenderDeps {
+  /** The board's calls (io.ts). */
+  io: Pick<Io, 'sendAct' | 'putBoard' | 'retireCards' | 'markCardSeen'>;
   board(): string;
   /** Apply the stored line the server answered with: its cards by number on `board`, the board it
    *  was sent to (card-numbers.ts), whichever board is open by the time it lands. */
@@ -86,7 +88,7 @@ export function createSender(d: SenderDeps): Sender {
       return err instanceof ApiError ? err.message : String(err);
     }
   }
-  const act = (fields: ActFields) => send(() => sendAct(d.board(), fields), { type: 'act', action: fields.action });
+  const act = (fields: ActFields) => send(() => d.io.sendAct(d.board(), fields), { type: 'act', action: fields.action });
 
   async function attempt(fields: ActFields): Promise<string | null> {
     const problem = await act(fields);
@@ -116,16 +118,16 @@ export function createSender(d: SenderDeps): Sender {
   return {
     attempt,
     record: async (fields) => (await attempt(fields)) === null,
-    board: (id, fields) => send(() => putBoard(id, fields), { type: 'board' }, id), // a board line names no card
+    board: (id, fields) => send(() => d.io.putBoard(id, fields), { type: 'board' }, id), // a board line names no card
     async retire(fields) {
-      const problem = await send(() => retireCards(d.board(), fields), { type: 'retire' });
+      const problem = await send(() => d.io.retireCards(d.board(), fields), { type: 'retire' });
       if (problem === null) d.redraw();
       return problem;
     },
-    actOn: (id, fields) => send(() => sendAct(id, fields), { type: 'act', action: fields.action }, id),
+    actOn: (id, fields) => send(() => d.io.sendAct(id, fields), { type: 'act', action: fields.action }, id),
     run: (list) => held(() => steps(list)),
     seen: (marks) => held(async () => {
-      for (const m of marks) if ((await send(() => markCardSeen(d.board(), m.n, m.ver), { type: 'seen' })) !== null) return false;
+      for (const m of marks) if ((await send(() => d.io.markCardSeen(d.board(), m.n, m.ver), { type: 'seen' })) !== null) return false;
       return true;
     }),
     get held() { return hold > 0; },

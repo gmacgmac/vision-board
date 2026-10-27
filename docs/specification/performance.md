@@ -15,7 +15,7 @@
 | App panels kept loaded | a zoom step under 50 ms with panels loaded and frozen; no more than `LIVE_PANELS` loaded while no more are on screen (D-050) | 12 app cards, each zoomed to in turn | `tests/pages/app-alive.spec.ts`, `apps/board/tests/app-live-cap.test.ts` |
 | Same picture | the page after each change equals a page opened afresh | seeded random changes (acts, agent drawing) | `tests/pages/same-picture.spec.ts`, `apps/board/tests/layout-cache.test.ts` |
 | Markdown, one card | under 50 ms | a very large hostile input | `packages/ui/tests/markdown.timing.ts` |
-| Board page weight | under 200 KB gzip (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `board/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
+| Board page weight | under 200 KB gzip (JS + CSS) loaded at start, a chunk reached only by `import()` (the chat panel's drawing, `shell/chat-view.ts`) not counted (D-049) | `npm run build` output | `npm run verify` (`scripts/verify.mjs` `PAGE`) |
 | Server start | under 1 s | a 100,000-event ledger | `apps/board/tests/server-start.timing.ts` |
 
 Today (2026-10-05, tracker N12, on the page-test machine: macOS, Chromium): layout of 1,000 cards takes about 3 ms (6 ms with 3 pins on a card in each of the 20

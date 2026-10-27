@@ -6,7 +6,7 @@
 // Shown only with the flag on, so ?flags=-openFolder draws the gallery as it was.
 import { mount } from 'svelte';
 import FolderPicker from '../shell/FolderPicker.svelte';
-import type { FolderList } from '../board/io.ts';
+import type { FolderList } from '../shell/page-io.ts';
 import { el, group } from './dom.ts';
 
 const HOME = '/home/example';

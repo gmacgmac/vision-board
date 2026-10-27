@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { boardList } from '#actions';
+import type { OperationOutput } from '#format';
 import { ledgerPath, openLedger } from './ledger.ts';
 import { problem } from './problem.ts';
 
@@ -22,8 +23,8 @@ export const MAX_PLACES = 20;
 /** Where macOS keeps cloud storage folders, under home. */
 const CLOUD_STORAGE = path.join('Library', 'CloudStorage');
 
-/** One folder in a listing (`project.schema.json` `entry`). */
-export interface FolderEntry { name: string; path: string; hasBoard: boolean }
+/** One folder in a listing (`project.schema.json` `entry`), as `list_folders` answers it. */
+export type FolderEntry = OperationOutput<'list_folders'>['folders'][number];
 
 const OUTSIDE = 'Only folders under your home folder can be opened, and not hidden ones or node_modules. Choose a folder under ~.';
 

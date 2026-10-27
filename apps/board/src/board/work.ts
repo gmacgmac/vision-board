@@ -2,8 +2,9 @@
 // The page counts what each change costs it, so a test can prove an event touched only what it
 // should: cards updated, cards measured, containers laid out, links redrawn, full fetches. The
 // counters are plain numbers the page bumps as it works; they are readable from outside only as
-// `window.__vbWork`, which exists only when the address carries `?vbwork` (the page tests set it),
-// so a person's page exposes nothing.
+// `window.__vbWork`, which the standalone page sets only when its address carries `?vbwork` (the
+// page tests set it; shell/App.svelte), so a person's page exposes nothing. The counters are the
+// page's, not one board's: two boards on one page add to the same ones.
 
 export interface WorkCounts {
   /** Cards whose element was rendered or updated (`render` or `update` on a `<vb-node>`). */
@@ -52,8 +53,7 @@ export interface WorkHook {
   idle(): Promise<void>;
 }
 
-/** Expose the hook, only when the address asks for it with `?vbwork`. */
+/** Expose the hook (the standalone page, when its address asks for it with `?vbwork`). */
 export function exposeWork(hook: Omit<WorkHook, 'work' | 'reset'>): void {
-  if (!new URLSearchParams(location.search).has('vbwork')) return;
   (globalThis as { __vbWork?: WorkHook }).__vbWork = { work, reset: resetWork, ...hook };
 }

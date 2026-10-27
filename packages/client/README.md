@@ -22,10 +22,14 @@ folder as `VB-Project` (`PROJECT_HEADER`). A problem answer is thrown as `ApiPro
 and their titles come from `problem.schema.json` through `#format`. A missing path parameter is
 refused before any request. `read_ledger` with `{ accept: 'application/jsonl' }` returns a list.
 `url()` and `watch()` cover server-sent events in the browser (one stream, one or several named
-events, each handed on with its name). Works in the browser and in Node 22.
+events, each handed on with its name); `EventSource` needs an origin, so only the standalone page
+uses them (`apps/board/src/shell/page-io.ts`): under a host the board takes its changes from the
+host's `events` and calls through the host's transport (`apps/board/src/board/host.ts`). Works in
+the browser and in Node 22.
 
 - **Depends on**: `packages/format`.
-- **Used by**: `apps/board` (`src/board/io.ts`), `packages/cli` and `packages/mcp`.
+- **Used by**: `apps/board` (`src/board/io.ts`, the board's calls through its host's transport;
+  `src/shell/page-io.ts`, the standalone page's own), `packages/cli` and `packages/mcp`.
 - **Public API** (`src/index.ts`): `createClient`, `httpTransport`, `ApiProblem`, `buildRequest`,
   `pathFor`, `urlFor`, `parseResponse`, `problemFrom`, `projectOf`, and their types (`Transport`,
   `CallInput`, `InputOf`, `OutputOf`, `Client`, `ClientOptions`, `CallOptions`, `BuiltRequest`).

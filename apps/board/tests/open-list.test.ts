@@ -1,10 +1,10 @@
 // The open list's rows (open-list FE_01, finder.ts `openRow`): "12 · title", a long one cut with "…"
 // at OPEN_ROW_MAX and whole in the row's tooltip; the "N new" list's updated rows (freshCards flag),
-// ending "· updated"; and the shared cut (clip.ts), which the chat's chip labels use too.
+// ending "· updated"; and the shared cut (`#format` `clip`), which the chat's chip labels use too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { OPEN_ROW_MAX, openRow } from '../src/board/finder.ts';
-import { clip } from '../src/board/clip.ts';
+import { clip } from '#format';
 
 test('a row is the card number and title, chosen by number', () => {
   assert.deepEqual(openRow({ n: 12, title: 'Pick a plan' }), { value: '12', text: '12 · Pick a plan' });

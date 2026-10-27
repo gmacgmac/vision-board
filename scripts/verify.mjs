@@ -125,6 +125,26 @@ export function checkReferences(fromRel, text, names, layers = LAYERS) {
   return out;
 }
 
+/** The board's own folder: what any host mounts (board/mount.ts, ARCH_03). */
+export const BOARD_DIR = 'apps/board/src/board/';
+
+/** Principles § The board is a plugin: nothing under the board's folder imports the page around it
+ * (the standalone shell, its flags, its gallery) or Svelte, so the board mounts in any host. */
+export function checkBoardHost(fromRel, text) {
+  if (!fromRel.startsWith(BOARD_DIR)) return [];
+  const out = [];
+  for (const { how, spec } of referencesOf(fromRel, text)) {
+    if (how !== 'import') continue;
+    const target = spec.startsWith('.') ? path.posix.normalize(path.posix.join(path.posix.dirname(fromRel), spec)) : null;
+    if (target?.startsWith('apps/board/src/') && !target.startsWith(BOARD_DIR)) {
+      out.push(fail(fromRel, `imports its host (${spec}): the board takes what it needs from \`mount(root, host)\` (board/host.ts), never from the page around it`));
+    } else if (spec === 'svelte' || spec.startsWith('svelte/') || spec.endsWith('.svelte') || spec.includes('.svelte.')) {
+      out.push(fail(fromRel, `imports Svelte (${spec}): the board is framework-free and hostable; no Svelte type crosses its host interface`));
+    }
+  }
+  return out;
+}
+
 /** The board page's assets at start: what its HTML loads from /assets/, and every file those import
  * statically. A chunk reached only through `import()` is not loaded at start (the chat panel's drawing,
  * board/chat-view.ts), so it is not counted. `read(name)` gives an asset's text, or null. */
@@ -232,7 +252,7 @@ export function verify(root, { writeMap = false } = {}) {
   const files = ROOTS.filter((r) => existsSync(path.join(root, r))).flatMap((r) => walk(root, r, []));
   const names = namesOf(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')));
   const results = files.flatMap(({ rel, text }) => [...checkLength(rel, text), ...(FIXTURE_HOST.test(rel) ? [] : checkReferences(rel, text, names)),
-    ...checkStyleAndLayers(rel, text)]);
+    ...checkStyleAndLayers(rel, text), ...checkBoardHost(rel, text)]);
   const registerPath = path.join(root, REGISTER);
   const register = existsSync(registerPath) ? readFileSync(registerPath, 'utf8') : null;
   const manifests = ['package.json', ...['apps', 'packages'].flatMap((r) =>

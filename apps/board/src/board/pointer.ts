@@ -79,7 +79,9 @@ type Gesture =
    *  takes focus after a move; `grip`: the press was on the grip itself, so a click focuses it too. */
   | Start & { kind: 'frame'; region: string; el: HTMLElement; grip: boolean };
 
-export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): void {
+/** Listens on the stage and the window; returns the function that stops listening on the window
+ * (the stage's own listeners go with it). */
+export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers): () => void {
   let g: Gesture | null = null;
   /** The mousedown after this pointerdown must not do its default (focus, text selection). */
   let stopMouse = false;
@@ -173,7 +175,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (g && g.kind !== 'press') e.preventDefault();
   });
 
-  bindPanKey(stage);
+  const unbindPanKey = bindPanKey(stage);
   stage.addEventListener('pointermove', (e) => {
     if (!g) return;
     if (!g.moved && Math.hypot(e.clientX - g.sx, e.clientY - g.sy) < DRAG_THRESHOLD) return;
@@ -243,12 +245,13 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   stage.addEventListener('pointerup', end);
   stage.addEventListener('pointercancel', end);
   // Ahead of every other listener (the stage's controls, a link's default): a pan's click is no click.
-  window.addEventListener('click', (e) => {
+  const onClick = (e: MouseEvent) => {
     if (!swallow) return;
     swallow = false;
     e.preventDefault();
     e.stopImmediatePropagation();
-  }, true);
+  };
+  window.addEventListener('click', onClick, true);
 
   stage.addEventListener('wheel', (e) => {
     // Scrolling inside the note bubble or a hover tip scrolls its text, not the board.
@@ -257,6 +260,10 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     if (e.ctrlKey || e.metaKey) vp.zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015));
     else vp.panBy(-e.deltaX, -e.deltaY);
   }, { passive: false });
+  return () => {
+    window.removeEventListener('click', onClick, true);
+    unbindPanKey();
+  };
 }
 
 /** The container a press on `t` moves, with its grip: on the grip, or on the rest of its label but the
@@ -273,9 +280,15 @@ function frameAt(t: HTMLElement): { region: string; el: HTMLElement; grip: boole
 /** The hand that says a drag will pan (round 2 ruling 6): `data-pan-key` on the stage while the pan
  *  key is held, read by board.css; kept true to every key press and release and to the pointer
  *  coming over the board, and dropped when the window loses focus (the key's release goes elsewhere). */
-function bindPanKey(stage: HTMLElement): void {
+function bindPanKey(stage: HTMLElement): () => void {
   const held = (on: boolean) => { if (stage.hasAttribute('data-pan-key') !== on) stage.toggleAttribute('data-pan-key', on); };
-  for (const type of ['keydown', 'keyup'] as const) window.addEventListener(type, (e) => held(panKey(e)), true);
+  const onKey = (e: KeyboardEvent) => held(panKey(e));
+  const onBlur = () => held(false);
+  for (const type of ['keydown', 'keyup'] as const) window.addEventListener(type, onKey, true);
   stage.addEventListener('pointerover', (e) => held(panKey(e)));
-  window.addEventListener('blur', () => held(false));
+  window.addEventListener('blur', onBlur);
+  return () => {
+    for (const type of ['keydown', 'keyup'] as const) window.removeEventListener(type, onKey, true);
+    window.removeEventListener('blur', onBlur);
+  };
 }

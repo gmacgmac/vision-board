@@ -54,7 +54,7 @@ async function seeAll(page: Page): Promise<void> {
 
 /** The view's pan and zoom, read from the world layer's transform. */
 async function viewOf(page: Page): Promise<{ x: number; y: number; k: number }> {
-  const t = await page.locator('#world').evaluate((e) => (e as HTMLElement).style.transform);
+  const t = await page.locator('.vb-world').evaluate((e) => (e as HTMLElement).style.transform);
   const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)/.exec(t);
   expect(m, t).not.toBeNull();
   return { x: Number(m![1]), y: Number(m![2]), k: Number(m![3]) };
@@ -77,14 +77,14 @@ async function open(page: Page, url: string): Promise<void> {
 
 test('an empty project waits, then opens the first board drawn, with no reload', async ({ page, request }) => {
   await page.goto(`${EMPTY_BASE}/`);
-  await expect(page.locator('#message')).toContainText('No boards yet. Waiting for an agent to draw.');
-  await expect(page.locator('#message')).toContainText('npm run board');
+  await expect(page.locator('.vb-message')).toContainText('No boards yet. Waiting for an agent to draw.');
+  await expect(page.locator('.vb-message')).toContainText('npm run board');
   // A mark on the window: it survives only if the page never reloads.
   await page.evaluate(() => { (window as unknown as { vbMark: number }).vbMark = 1; });
   await write(request, EMPTY_BASE, await join(request, EMPTY_BASE, 'First chat'), 'first', drawn('The first board'));
   await expect(page.locator('#title')).toHaveText('The first board');
-  await expect(page.locator('#message')).toBeHidden();
-  await expect(page.locator('#cards vb-node')).toHaveCount(1);
+  await expect(page.locator('.vb-message')).toBeHidden();
+  await expect(page.locator('.vb-cards vb-node')).toHaveCount(1);
   await expect(page.locator('#board')).toHaveValue('first');
   await expect(chip(page)).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { vbMark?: number }).vbMark)).toBe(1);

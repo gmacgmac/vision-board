@@ -1,7 +1,7 @@
 // The open folder as a name and a path (current-folder task): pure, so the toolbar chip, the "⋯"
 // menu line and the folder dialog read it from one place, and a unit test can load it (folder.ts
 // pulls in the page's state).
-import type { FolderInfo } from './io.ts';
+import type { FolderInfo } from './page-io.ts';
 
 /** The folder's own name: the last part of its path. */
 export const folderName = (f: Pick<FolderInfo, 'path' | 'name'>): string => f.path.split('/').filter(Boolean).at(-1) ?? f.name;

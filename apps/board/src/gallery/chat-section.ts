@@ -13,7 +13,7 @@ import { ROUND_HEAD, selectionText } from '#actions';
 import type { ViewNode } from '#format';
 import { nodeState, renderMarkdown } from '#ui';
 import { mount } from 'svelte';
-import { MODELS } from '../board/chat-rules.ts';
+import { MODELS } from '../shell/chat-rules.ts';
 import ChatSidebar from '../shell/ChatSidebar.svelte';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';

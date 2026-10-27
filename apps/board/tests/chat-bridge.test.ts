@@ -11,11 +11,11 @@ import { readLedger } from '#format';
 import { boardBlocks, boardData, foldLedger, roundOf, ROUND_HEAD, SELECTED_HEAD } from '#actions';
 import type { ChatComposerElement, ChatEvent, ChatState, Chip, ComposerContext } from '#chat';
 import { applyEvents, CHAT_CHANGE_EVENT, EMPTY_CHAT } from '#chat';
-import type { BoardData } from '../src/board/io.ts';
+import type { BoardData } from '#actions';
 import {
   boardCards, boardContext, cardChip, cardIds, createChatBridge, lastChange, selectedCards, SOURCE_LABEL,
-} from '../src/board/chat-bridge.ts';
-import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/board/chat-rules.ts';
+} from '../src/shell/chat-bridge.ts';
+import { ARCHIVED, blockedReason, follow, LOADING, messageBody, PAST, sendsInChat } from '../src/shell/chat-rules.ts';
 import { createSelection } from '../src/board/selection.ts';
 
 const A = 'a-aaaa1111';
@@ -122,10 +122,12 @@ function bridged() {
   let agent: string | undefined = A;
   const panel = new EventTarget();
   const bridge = createChatBridge();
+  /** The stepper's link the bridge gave the board (chat-side.ts `source`). */
+  let linked: ((n: number) => string | undefined) | null = null;
   const offBoard = bridge.board({
     stage: new EventTarget() as HTMLElement, data: () => data[open]!, ledger: () => s, id: () => open, selection, readOnly: () => false,
     zoom: () => log.push(`zoom ${selection.selected().join(' ')}`), switchTo: (id) => { open = id; log.push(`open ${id}`); },
-    jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`),
+    jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`), source: (link) => { linked = link; },
   });
   bridge.chat({
     panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, state: () => chat, agent: () => agent,
@@ -134,7 +136,7 @@ function bridged() {
   const raise = (type: string, detail: unknown) => panel.dispatchEvent(new CustomEvent(type, { detail }));
   return {
     bridge, selection, log, raise, offBoard, chips: () => bridge.chips().map((x) => `${x.kind}-${x.ref}`), context: () => context,
-    agentIs: (id: string | undefined) => { agent = id; },
+    agentIs: (id: string | undefined) => { agent = id; }, linked: () => linked,
   };
 }
 
@@ -183,12 +185,14 @@ test('chat to board: a change chip selects its cards and zooms; on another board
     'board c has one card, its 1: the ledger\'s 4 is no number there');
   assert.equal(t.bridge.source(1), SOURCE_LABEL);
   assert.equal(t.bridge.source(2), undefined, 'card 2 changed on board b; board c is open');
+  assert.equal(t.linked()?.(1), SOURCE_LABEL, 'the board asks the same link through its side (chat-side.ts `source`)');
   t.bridge.open('launch');
   assert.equal(t.log.at(-1), 'jump launch', 'a folder chat\'s first board opens once it is held (panel-send ruling 2)');
   t.offBoard();
   t.bridge.open('launch');
   assert.equal(t.log.at(-1), 'jump launch', 'no board side, nothing opens');
   assert.equal(t.bridge.source(1), undefined, 'no board side, no link');
+  assert.equal(t.linked(), null, 'detached, the board holds no link');
 });
 
 test('the stream: an event at or before the last held, first after a reopen, starts the feed over', () => {

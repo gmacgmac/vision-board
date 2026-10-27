@@ -77,7 +77,7 @@ Home, the arrow up or Shift+Space in the log (`leavesLatest`), or dragging the s
 (`followAfterScroll`). Nothing the page does counts: the Working line, chips from a board selection,
 approvals, a growing reply, the composer resizing. While on, a `ResizeObserver` on the log and its rows
 keeps the view at the end, and a panel that opens shows the latest. Moving down to the end by hand,
-sending a message (the host calls `feed.follow()`; `board/chat-panel.ts` `send`) or the "Jump to
+sending a message (the host calls `feed.follow()`; `shell/chat-panel.ts` `send`) or the "Jump to
 latest" button (shown only while off) turns it on again. Held by `packages/chat/tests/feed-core.test.ts`
 (the pure decisions), `tests/pages/chat-follow.spec.ts` (a reply growing with the composer, chips,
 the panel opening, the wheel, the keys, sending, the button, the board's own panel) and the gallery
@@ -87,11 +87,11 @@ state `scrolled-away` (`tests/pages/chat.spec.ts`).
 
 The sidebar is `shell/ChatSidebar.svelte` (flag `chatPanel`): on the right, opened and closed by the
 toolbar's Chat button and T, its width dragged from its left edge or set by the arrow keys there, both
-kept per viewer; the stage shrinks beside it (`--vb-chat-w`). `board/chat-panel.ts` hosts the elements
+kept per viewer; the stage shrinks beside it (`--vb-chat-w`). `shell/chat-panel.ts` hosts the elements
 for the open board: the session in use (the newest, first in `list_chats`), its events (`watch_chat`,
 reopened from the latest event held; a repeat of an earlier one then means the server started over, and
 the server's first line then says the earlier messages aren't shown), and the elements' events answered
-through `board/io.ts`. A message starts a session when the board has none, and one sent while a session
+through `shell/page-io.ts`. A message starts a session when the board has none, and one sent while a session
 starts (from the New session confirm on) waits for it and goes there;
 the composer is shut with the reason for a page still loading, a past version or a refused start. In a
 folder with no board the panel talks in the folder (`start_folder_chat`, `list_folder_chats`); the first
@@ -112,14 +112,14 @@ words (`sendsInChat`), so the two are enabled and disabled together (`shell.chat
 "Waiting for agent" until the next `message_in`.
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
-`board/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
+`shell/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
 as the composer's one chip (the cards a message took are spent until the selection changes); a change chip selects and zooms to its cards
 (opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
 
 **The drawing loads the first time the panel opens.** The session, its events, the waiting and attached
-states and the bridge run from the page's start with the panel closed (`board/chat-panel.ts`
-`createChatPanel`, `board/chat-bridge.ts`); the header, feed and composer, with the chat's element code
-and CSS, are a chunk of their own (`board/chat-view.ts` `mountChatView`, the only import of the
+states and the bridge run from the page's start with the panel closed (`shell/chat-panel.ts`
+`createChatPanel`, `shell/chat-bridge.ts`); the header, feed and composer, with the chat's element code
+and CSS, are a chunk of their own (`shell/chat-view.ts` `mountChatView`, the only import of the
 elements). It loads when the panel opens (the Chat button, T), at start when the panel was kept open,
 and when a card's "Show in the chat" link needs a row (`ChatPanel.load`, `reveal`); a context the bridge
 set before it came is handed to the composer then (`composerSide`). Until it is drawn the sidebar says

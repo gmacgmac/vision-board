@@ -49,7 +49,7 @@ async function draw(request: APIRequestContext): Promise<Drawn> {
 async function openSeen(page: Page, d: Drawn, query = ''): Promise<void> {
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   await expect.poll(async () => {
     const lines = (await (await page.request.get(`/api/ledger?board=${d.board}`)).json() as { events: { type: string; board?: string; n?: number }[] }).events;
     return lines.some((e) => e.type === 'seen' && e.board === d.board && e.n === undefined);

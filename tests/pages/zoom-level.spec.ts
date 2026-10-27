@@ -18,14 +18,14 @@ const level = (page: Page) => page.locator('.vb-zoom .vb-zoom-level');
 const status = (page: Page) => page.locator('.vb-zoom [role="status"]');
 const zoomButton = (page: Page, name: string) => page.locator('.vb-zoom').getByRole('button', { name, exact: true });
 /** The zoom the world is drawn at, as the percentage the toolbar should show (rounded down). */
-const percent = (page: Page) => page.locator('#world').evaluate((e) => Math.floor(new DOMMatrix(getComputedStyle(e).transform).a * 100 + 1e-6));
+const percent = (page: Page) => page.locator('.vb-world').evaluate((e) => Math.floor(new DOMMatrix(getComputedStyle(e).transform).a * 100 + 1e-6));
 const shown = async (page: Page) => Number.parseInt((await level(page).textContent()) ?? '', 10);
 
 async function openBoard(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
   await page.locator('#stage').focus();
 }
 

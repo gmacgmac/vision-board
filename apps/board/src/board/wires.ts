@@ -30,7 +30,8 @@ const keyOf = (r: Route) => `${r.from}>${r.to}`;
 
 /** `top`: the layer above the cards (wireLayers flag); `labels`: the linkLabels flag, with `marks`, the
  *  markers' layer. */
-export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }): Wires {
+export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { marks: HTMLElement }, ids = ''): Wires {
+  const [arrow, arrowHot] = [`${ids}arrow`, `${ids}arrow-hot`];
   const on = !!labels;
   const marks = labels && createLinkMarks(labels.marks);
   let groups: { lanes: SVGGElement; paths: SVGGElement; labels: SVGGElement } | null = null;
@@ -40,7 +41,7 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { 
   const drawn = new Map<string, Drawn>();
 
   function frame() {
-    svg.innerHTML = `<defs>${marker('arrow')}${marker('arrow-hot')}</defs><g class="vb-lanes"></g><g></g><g></g>`;
+    svg.innerHTML = `<defs>${marker(arrow)}${marker(arrowHot)}</defs><g class="vb-lanes"></g><g></g><g></g>`;
     const [lanes, paths, labels] = [...svg.querySelectorAll<SVGGElement>(':scope > g')] as [SVGGElement, SVGGElement, SVGGElement];
     lanesSrc = topSrc = '';
     size = '';
@@ -51,7 +52,7 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { 
   /** The focused card's connectors and labels, drawn again above the cards. */
   const topOf = (routes: Route[]) => routes.map((r) => {
     const at = tagAt(r, on);
-    return `<path class="vb-wire hot" d="${r.d}" marker-end="url(#arrow-hot)"/>` + (at ? labelMarkup(r.label!, at, on) : '');
+    return `<path class="vb-wire hot" d="${r.d}" marker-end="url(#${arrowHot})"/>` + (at ? labelMarkup(r.label!, at, on) : '');
   }).join('');
 
   function lanesOf(layout: BoardLayout): string {
@@ -106,7 +107,7 @@ export function createWires(svg: SVGSVGElement, top?: SVGSVGElement, labels?: { 
         if (d.look !== look) {
           d.path.setAttribute('class', `vb-wire${h ? ' hot' : ''}`);
           d.path.setAttribute('d', r.d);
-          d.path.setAttribute('marker-end', `url(#${h ? 'arrow-hot' : 'arrow'})`);
+          d.path.setAttribute('marker-end', `url(#${h ? arrowHot : arrow})`);
           if (at) {
             d.label = labelElement(r.label!, at, on, d.label ?? undefined);
             fit.push(d.label);

@@ -26,8 +26,9 @@ import { HANDLERS } from './handlers.ts';
 import { serveImage } from './images.ts';
 import type { Ledger } from './ledger.ts';
 import type { Lock } from './lock.ts';
-import { ProblemError, problem, sendProblem, serverError } from './problem.ts';
+import { ProblemError, problem, serverError } from './problem.ts';
 import { openProject } from './project.ts';
+import { sendProblem } from './respond.ts';
 import { resolveStatic, sendStatic } from './static.ts';
 
 const SECURITY_HEADERS = {

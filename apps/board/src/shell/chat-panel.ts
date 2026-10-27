@@ -32,8 +32,9 @@ import {
 import { renderMarkdown } from '#ui';
 import type { ChatBridge } from './chat-bridge.ts';
 import type { ChatView } from './chat-view.ts';
-import type { ChatSessionInfo } from './io.ts';
-import { answerApproval, ApiError, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './io.ts';
+import type { ChatSessionInfo } from './page-io.ts';
+import { ApiError } from '../board/io.ts';
+import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, sendsInChat, shownPick } from './chat-rules.ts';
 

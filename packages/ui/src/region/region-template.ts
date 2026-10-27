@@ -15,12 +15,16 @@ import type { ReplyEntry } from '../node/node-core.ts';
 import { agentChoiceText, MODE_HINT, MODE_LABEL, PUT_BACK_NONE_HINT, RESET_NONE_HINT, WIDTHS_LABEL } from './region-core.ts';
 import { COG_ICON, EYE_ICON, MODE_ICON, RETIRED_ICON, WIDTHS_ICON } from './region-icons.ts';
 
-/** The ids the element ties together with aria-describedby / aria-controls. */
-export const regionIds = (id: string) => ({
-  heading: `region-${id}`, modes: `region-${id}-modes`, menu: `region-${id}-menu`, hint: `region-${id}-reset-hint`,
-  back: `region-${id}-back-hint`, preview: `region-${id}-note-preview`, previewText: `region-${id}-note-preview-text`,
-  noteText: `region-${id}-note-text`,
+/** The ids the element ties together with aria-describedby / aria-controls. `prefix` is the mount's
+ * (RegionFrameOptions.idPrefix), so two boards on one page repeat none. */
+export const regionIds = (id: string, prefix = '') => ({
+  heading: `${prefix}region-${id}`, modes: `${prefix}region-${id}-modes`, menu: `${prefix}region-${id}-menu`, hint: `${prefix}region-${id}-reset-hint`,
+  back: `${prefix}region-${id}-back-hint`, preview: `${prefix}region-${id}-note-preview`, previewText: `${prefix}region-${id}-note-preview-text`,
+  noteText: `${prefix}region-${id}-note-text`,
 });
+
+/** The ids of the frame `host` (a `vb-region`): its container and the prefix it was drawn with. */
+export const regionIdsOf = (host: HTMLElement) => regionIds(host.dataset.region ?? '', host.dataset.idPrefix);
 
 /** The grip at the start of the label (3_FE_04 ruling 5), the container's keyboard handle: Alt+arrows
  * move it. Its dots are drawn by region.css; the page wires drag and Alt+arrows to it. */
@@ -44,8 +48,8 @@ const noteButton = (act: string, inner: string, label?: string): string =>
 /** The preview popover under Comment (step 4G ruling 2): the note's first 3 lines, its state,
  * Edit and Show in container. A non-modal dialog with real buttons (WCAG 1.4.13: hoverable,
  * persistent, Esc dismisses), shown while `data-preview` is on the frame. */
-const notePreview = (id: string, title: string): string => {
-  const ids = regionIds(id);
+const notePreview = (id: string, title: string, prefix?: string): string => {
+  const ids = regionIds(id, prefix);
   return `<div class="vb-note-pop" id="${ids.preview}" role="dialog" aria-label="Note on container ${title}">`
     + `<p class="vb-note-pop-text" id="${ids.previewText}"></p><p class="vb-note-state"></p><div class="vb-note-acts">`
     + noteButton('edit', 'Edit')
@@ -56,8 +60,8 @@ const notePreview = (id: string, title: string): string => {
 /** The note block under the title line, above the cards (step 4G ruling 3, mockup 09 B): shown
  * while the frame's `noteShown` is set. Its state, Edit and Remove (unsent) or why it is
  * read-only (sent), the text in 3 lines, then "Show all" when it is longer. */
-const noteBlock = (id: string, title: string): string => {
-  const ids = regionIds(id);
+const noteBlock = (id: string, title: string, prefix?: string): string => {
+  const ids = regionIds(id, prefix);
   return `<section class="vb-region-note-block" role="group" aria-label="Note on container ${title}" hidden>`
     + '<div class="vb-nblock-top"><span class="vb-nblock-who">Your note</span><span class="vb-note-state"></span>'
     + `<span class="vb-nblock-acts">${noteButton('edit', 'Edit', `Edit note on container ${title}`)}`
@@ -93,10 +97,10 @@ const widthsSwitch = (id: string): string =>
  * is a button out of the tab order (the row's icons carry the keyboard); a click sets the layout
  * through the page's click wiring, as the icon does (`data-tile` is its mode, `data-region` the frame).
  * The line under the tiles shows the highlighted layout's one-liner in the compact layout only. */
-const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
+const modePopover = (r: Pick<Region, 'id' | 'mode'>, prefix?: string): string => {
   const tiles = MODES.map((m) => `<button type="button" class="vb-mtile" tabindex="-1" data-tile="${m}" data-region="${esc(r.id)}">`
     + `${svgIcon(MODE_ICON[m], 24, 'vb-mtile-icon')}<span class="vb-mtile-name">${MODE_LABEL[m]}</span><small>${MODE_HINT[m]}</small></button>`).join('');
-  return `<div class="vb-mode-pop" id="${regionIds(r.id).modes}" role="tooltip"><div class="vb-mode-tiles">${tiles}</div>`
+  return `<div class="vb-mode-pop" id="${regionIds(r.id, prefix).modes}" role="tooltip"><div class="vb-mode-tiles">${tiles}</div>`
     + '<p class="vb-mode-line"></p>'
     + `<div class="vb-mode-foot"><span>${agentChoiceText(r.mode)}</span>`
     + '<span><kbd>←</kbd> <kbd>→</kbd> move · <kbd>Enter</kbd> apply · <kbd>Esc</kbd> close</span></div></div>';
@@ -105,8 +109,8 @@ const modePopover = (r: Pick<Region, 'id' | 'mode'>): string => {
 /** The settings menu: "Reset places" (the cards' pins) and "Put container back" (the container's
  * own place, 3_FE_04 ruling 7), each disabled with its hint until `update` enables it; with `remove`
  * (personRemove flag, N24) then "Remove container", which the page confirms first. */
-const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean): string => {
-  const ids = regionIds(r.id);
+const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean, prefix?: string): string => {
+  const ids = regionIds(r.id, prefix);
   const item = (data: string, label: string, hint: string, hintId: string) =>
     `<button type="button" class="vb-menu-item" role="menuitem" tabindex="-1" ${data}="${esc(r.id)}" aria-label="${label}"`
     + ` aria-disabled="true" aria-describedby="${hintId}">${label}<span class="vb-menu-hint" id="${hintId}">${hint}</span></button>`;
@@ -125,8 +129,9 @@ const settingsMenu = (r: Pick<Region, 'id' | 'title'>, remove: boolean): string 
  * container in the settings menu (personRemove flag, N24); a fixed frame never has it. `rail`: the tools
  * group (row, popover, note preview, menu) sits in a rail on the frame's left edge, after the header,
  * instead of on the top line (toolRail flag, container tool rail Design 1); the top line then holds
- * the label alone. A fixed frame's rail holds only the cog. */
-export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean }
+ * the label alone. A fixed frame's rail holds only the cog. `idPrefix`: put before every id the frame
+ * sets, so two boards on one page repeat none (the board's `mount`); empty for the first and the gallery. */
+export interface RegionFrameOptions { fixed?: boolean; empty?: string; widths?: boolean; remove?: boolean; rail?: boolean; idPrefix?: string }
 
 /** The empty message of an ordinary frame: every card it has is answered and hidden. */
 export const EMPTY_DECIDED = 'Everything here is answered.';
@@ -156,7 +161,7 @@ const FRESH = '<span class="vb-region-fresh-slot"><span class="vb-region-fresh" 
   + '<span class="vb-region-fresh-words"></span></span></span>';
 
 export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: RegionFrameOptions = {}): string {
-  const ids = regionIds(r.id);
+  const ids = regionIds(r.id, opts.idPrefix);
   const title = esc(r.title);
   const notes = !opts.fixed;
   const modes = opts.fixed ? '' : MODES.map((m) => modeButton(m, r.id)).join('') + '<span class="vb-mode-div" aria-hidden="true"></span>';
@@ -164,12 +169,12 @@ export function regionTemplate(r: Pick<Region, 'id' | 'title' | 'mode'>, opts: R
     + modes + (opts.widths && !opts.fixed ? widthsSwitch(r.id) : '') + (notes ? commentButton(r.id, title) : '')
     + `<button type="button" class="vb-mseg vb-cog" tabindex="-1" aria-label="Settings for ${title}" aria-haspopup="menu"`
     + ` aria-expanded="false" aria-controls="${ids.menu}">${svgIcon(COG_ICON, 24, 'vb-mode-icon')}</button></div>`;
-  const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r)}${notes ? notePreview(r.id, title) : ''}`
-    + `${settingsMenu(r, opts.remove === true && !opts.fixed)}</div>`;
+  const tools = `<div class="vb-region-tools">${row}${opts.fixed ? '' : modePopover(r, opts.idPrefix)}${notes ? notePreview(r.id, title, opts.idPrefix) : ''}`
+    + `${settingsMenu(r, opts.remove === true && !opts.fixed, opts.idPrefix)}</div>`;
   return `<header class="vb-region-head"><div class="vb-region-bar"><div class="vb-region-label">${handle(title, ids.heading)}`
     + `${FRESH}${RETIRED_MARKER}<span class="vb-region-holders"></span><span class="vb-tip vb-title-tip" aria-hidden="true">${title}</span></div>`
     + `${opts.rail ? '' : tools}</div></header>${opts.rail ? `<div class="vb-region-rail">${tools}</div>` : ''}`
-    + `${notes ? noteBlock(r.id, title) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
+    + `${notes ? noteBlock(r.id, title, opts.idPrefix) : ''}<p class="vb-region-empty" hidden>${esc(opts.empty ?? EMPTY_DECIDED)}</p>`;
 }
 
 /**

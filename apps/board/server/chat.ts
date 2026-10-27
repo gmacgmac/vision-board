@@ -13,10 +13,10 @@ import { promptFor, wordsOf } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
-import { endWhenClosed } from './reads.ts';
+import { endWhenClosed } from './streams.ts';
 import { sendJson } from './respond.ts';
 import { personBoard, refuseArchived, refuseLocked } from './visibility.ts';
-import { body } from './writes.ts';
+import { body } from './body.ts';
 
 const NO_RUN = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
 const BUSY = 'The agent is still answering the last message. Wait for it, or press Stop.';

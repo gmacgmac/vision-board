@@ -1,0 +1,127 @@
+// The board in any host (ARCH_03; principles § The board is a plugin; nclite's plugin contract,
+// docs/plugins.md § The view and its host): `mount(root, host)` with a fake host, no Svelte and no
+// server. The board draws a fixture board from the host's `api`; Send hands the selected card to
+// `addToChat`; a removal asks the host's `confirm` first; a change event redraws; two boards on one
+// page work apart; and after `unmount` each root is empty and given back as it was, with no listener
+// left on the document or the window and none on the host. The fixture (board-host-fixture.ts) is
+// bundled here in memory with Vite and run in a blank page.
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import type { Page } from '@playwright/test';
+import { build } from 'vite';
+import { FIXTURES_DIR } from '#format/files';
+import { expect, test } from './helpers.ts';
+
+const ROOT = path.resolve(import.meta.dirname, '../..');
+const LINES = readFileSync(path.join(FIXTURES_DIR, 'roadmap.ledger.jsonl'), 'utf8').split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l) as { seq: number; type: string });
+/** Board A starts with the ledger up to the line before the last card; the rest comes as one event. */
+const LAST_NODE = LINES.findLast((l) => l.type === 'node')!.seq;
+const SHOWN = LAST_NODE - 1;
+const nodesUpTo = (seq: number) => LINES.filter((l) => l.type === 'node' && l.seq <= seq).length;
+
+let bundle: { js: string; css: string } | null = null;
+
+/** The fixture as one script and one sheet. */
+async function fixture(): Promise<{ js: string; css: string }> {
+  if (bundle) return bundle;
+  const out = await build({
+    configFile: false, logLevel: 'silent', root: ROOT,
+    build: { write: false, target: 'es2022', cssCodeSplit: false, minify: false,
+      lib: { entry: path.join(ROOT, 'tests/pages/board-host-fixture.ts'), formats: ['es'], fileName: 'fixture' } },
+  });
+  const files = (Array.isArray(out) ? out : [out]).flatMap((o) => ('output' in o ? o.output : []));
+  const js = files.find((f) => f.type === 'chunk');
+  const css = files.find((f) => f.type === 'asset' && f.fileName.endsWith('.css'));
+  if (js?.type !== 'chunk' || css?.type !== 'asset') throw new Error('the fixture did not bundle');
+  bundle = { js: js.code, css: String(css.source) };
+  return bundle;
+}
+
+/** A blank page holding two empty roots, in a host's own layout, with the fixture loaded. */
+async function open(page: Page): Promise<void> {
+  const { js, css } = await fixture();
+  await page.setContent('<!doctype html><html lang="en"><head><title>Host</title></head><body><main class="host"><div id="a"></div><div id="b"></div></main></body></html>');
+  await page.addStyleTag({ content: `${css}\n.host { display: flex; gap: 8px; } #a, #b { width: 620px; height: 560px; }` });
+  await page.addScriptTag({ content: js, type: 'module' });
+  await page.waitForFunction(() => 'vbHost' in window);
+}
+
+type Host = {
+  listeners(): number; mount(id: string, lines: object[], shown: number): void; idle(id: string): Promise<void>;
+  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string };
+  record(id: string): { chips: { kind: string; ref: { board: string; n: number } }[]; confirms: { heading: string; list?: unknown }[];
+    notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
+  pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
+  answer(id: string, ok: boolean): void; appendRest(id: string): void; unmount(id: string): void;
+};
+const call = <T>(page: Page, fn: (h: Host, ...args: never[]) => T, ...args: unknown[]) =>
+  page.evaluate(({ src, args }) => (new Function('h', 'args', `return (${src})(h, ...args)`) as (h: unknown, a: unknown[]) => T)((window as unknown as { vbHost: unknown }).vbHost, args), { src: fn.toString(), args });
+
+test('the board mounts in a fake host: it draws, Send reaches addToChat, a removal asks confirm, an event redraws, two boards work apart, and unmount leaves nothing', async ({ page }) => {
+  await open(page);
+  const baseline = await call(page, (h) => h.listeners());
+  const bodyKids = await page.evaluate(() => document.body.querySelectorAll('*').length);
+  await call(page, (h, lines: object[], shown: number) => { h.mount('a', lines, shown); h.mount('b', lines, lines.length); }, LINES, SHOWN);
+  const a = page.locator('#a vb-node');
+  const b = page.locator('#b vb-node');
+  await expect(a).toHaveCount(nodesUpTo(SHOWN));
+  await expect(b).toHaveCount(nodesUpTo(Infinity));
+
+  // The board's elements are inside its root, with no ids of their own; the root is its stage.
+  await expect(page.locator('#a')).toHaveClass(/\bvb-board\b.*\bvb-stage\b/);
+  expect(await page.evaluate(() => document.querySelectorAll('#a > [id], #a .vb-world > [id]').length)).toBe(0);
+  expect(await page.evaluate(() => document.querySelectorAll('body > :not(main)').length)).toBe(0);
+
+  // Two boards, one document: no id twice, and every aria-controls / aria-describedby points inside its own board.
+  const ids = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('[id]')].map((e) => e.id);
+    const own = (root: string) => [...document.querySelectorAll(`#${root} [aria-controls], #${root} [aria-describedby]`)].flatMap((e) =>
+      [e.getAttribute('aria-controls'), e.getAttribute('aria-describedby')].filter((r): r is string => !!r).map((r) => (document.getElementById(r)?.closest(`#${root}`) ?? null) !== null));
+    return { duplicates: all.filter((id, i) => all.indexOf(id) !== i), a: own('a'), b: own('b'), second: [...document.querySelectorAll('#b [id]')].map((e) => e.id) };
+  });
+  expect(ids.duplicates).toEqual([]);
+  expect(ids.a.length).toBeGreaterThan(0);
+  expect([...ids.a, ...ids.b]).not.toContain(false);
+  expect(ids.second.length).toBeGreaterThan(0);
+  expect(ids.second.every((id) => id.startsWith('vb2-'))).toBe(true);
+
+  // The board on show is the page's chip: the board, and the head it was added at.
+  const pageChip = await call(page, (h) => h.pageChip('a'));
+  expect(pageChip).toEqual({ plugin: 'board', kind: 'board', ref: { board: 'roadmap', head: SHOWN }, label: expect.any(String), detail: 'Board "roadmap"' });
+
+  // Send: the selected card goes to the host's chat as a chip, then the send act goes through `api`.
+  await a.first().click();
+  await expect.poll(() => call(page, (h) => h.status('a').selection)).toMatch(/1 card selected/);
+  expect(await call(page, (h) => h.status('b').selection), 'the other board keeps its own selection').toBe('');
+  const problem = await call(page, (h) => h.send('a'));
+  const rec = await call(page, (h) => h.record('a'));
+  expect(rec.chips).toEqual([expect.objectContaining({ plugin: 'board', kind: 'card', ref: expect.objectContaining({ board: 'roadmap' }) })]);
+  expect(rec.calls).toContain('POST boards/roadmap/act');
+  expect(problem).toBe('The fake host refuses it.');
+  expect(rec.notices).toContainEqual({ text: 'The fake host refuses it.', tone: 'error' });
+  expect((await call(page, (h) => h.record('b'))).chips, 'nothing went from the other board').toEqual([]);
+
+  // A removal asks the host first; cancelled, nothing is sent.
+  await a.first().focus();
+  await page.keyboard.press('Delete');
+  await expect.poll(async () => (await call(page, (h) => h.record('a'))).confirms.length).toBe(1);
+  expect((await call(page, (h) => h.record('a'))).calls.some((c) => c.includes('/retire'))).toBe(false);
+
+  // Keys belong to the board they are pressed in.
+  await page.keyboard.press('h');
+  await expect.poll(() => call(page, (h) => h.status('a').hide)).toBe(true);
+  expect(await call(page, (h) => h.status('b').hide)).toBe(false);
+
+  // A change event redraws: the rest of the ledger, said once.
+  await call(page, (h) => h.appendRest('a'));
+  await expect(a).toHaveCount(nodesUpTo(Infinity));
+
+  // Unmount: each root empty and given back; no listener on the document or window, none on the host.
+  await call(page, (h) => { h.unmount('a'); h.unmount('b'); });
+  for (const id of ['a', 'b']) {
+    expect(await page.evaluate((r) => { const el = document.getElementById(r)!; return [el.childElementCount, el.className, el.getAttribute('tabindex')]; }, id)).toEqual([0, '', null]);
+    expect((await call(page, (h, r: string) => h.record(r), id)).subscribers).toBe(0);
+  }
+  expect(await call(page, (h) => h.listeners())).toBe(baseline);
+  expect(await page.evaluate(() => document.body.querySelectorAll('*').length)).toBe(bodyKids);
+});

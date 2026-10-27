@@ -26,13 +26,13 @@ async function board(page: Page, request: APIRequestContext, query = ''): Promis
   const drawn = { ...d, n: out.slice(1).map((x) => x.n!) };
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(4);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   return drawn;
 }
 
 const frame = (page: Page) => page.locator('vb-region[data-region="p"]');
 const title = (page: Page) => frame(page).locator('.vb-region-head h2');
-const zoom = (page: Page) => page.locator('#world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
+const zoom = (page: Page) => page.locator('.vb-world').evaluate((w) => new DOMMatrix(getComputedStyle(w).transform).a);
 const centre = (b: { x: number; y: number; width: number; height: number }): Point => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
 const boxOf = async (l: Locator) => (await l.boundingBox())!;
 const api = (page: Page, path: string) => page.request.get(`/api${path}`).then((r) => r.json());
@@ -243,7 +243,7 @@ for (const query of ['', '?flags=-toolRail']) test(`a narrow line shows the coun
   expect(granted.status(), await granted.text()).toBe(201);
   const [q, o] = [page.locator('vb-region[data-region="q"]'), page.locator('vb-region[data-region="o"]')];
   await expect(q.locator('.vb-holder')).toHaveCount(2);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   const zoomAt = async (k: number) => {
     const at = centre(await boxOf(q.locator('.vb-region-head h2')));
     await page.mouse.move(at.x, at.y);

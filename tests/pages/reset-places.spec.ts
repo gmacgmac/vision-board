@@ -30,7 +30,7 @@ async function open(page: Page, board: string): Promise<void> {
   await page.goto(`/?vbwork#${board}`);
   await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
   await expect(page.locator('vb-node')).toHaveCount(3);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
@@ -125,7 +125,7 @@ test('a past version has no Reset places, and R sends nothing there', async ({ p
   await expect(card(page, a)).toHaveAttribute('data-pinned', '');
 
   await page.locator('#version').selectOption(String(second));
-  await expect(page.locator('#world')).toHaveAttribute('data-readonly', '');
+  await expect(page.locator('.vb-world')).toHaveAttribute('data-readonly', '');
   await expect(page.locator('vb-node')).toHaveCount(3);
   await expect(card(page, a)).toHaveAttribute('data-pinned', '');
   const sent: string[] = [];

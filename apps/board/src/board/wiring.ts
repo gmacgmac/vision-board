@@ -114,7 +114,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     if (holder && h.revoke) return h.revoke(holder.closest<HTMLElement>('vb-region')!.dataset.region!, holder.dataset.revoke!);
   });
 
-  bindPointer(stage, vp, {
+  const unbindPointer = bindPointer(stage, vp, {
     box: (id) => h.layout()?.nodes.get(id),
     carried: (id) => h.carried(id),
     dragStart: (ids) => h.dragStart(ids),
@@ -149,7 +149,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
       const b = h.layout()?.regions.find((r) => r.id === region)?.box;
       if (b) h.pinRegion(region, { x: b.x + dx, y: b.y + dy });
     },
-  });
+  }, stage.closest<HTMLElement>('.vb-board') ?? undefined);
   const unbindSize = bindSizeControl(stage);
   // A card a pointer focused draws no focus ring until the keyboard moves focus (pointer-focus.ts).
   const unbindFocus = bindPointerFocus(stage);
@@ -157,6 +157,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
   const sized = new ResizeObserver(() => onResize());
   sized.observe(stage);
   return () => {
+    unbindPointer();
     unbindKeys();
     unbindSize();
     unbindFocus();

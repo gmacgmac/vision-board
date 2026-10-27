@@ -21,9 +21,9 @@
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
   import { keepAlign } from './align.ts';
-  import { currentFolderOn } from '../board/folder.ts';
-  import { elidePath, folderPath } from '../board/folder-path.ts';
-  import type { FolderInfo } from '../board/io.ts';
+  import { currentFolderOn } from './folder.ts';
+  import { elidePath, folderPath } from './folder-path.ts';
+  import type { FolderInfo } from './page-io.ts';
 
   let { theme, ontheme, onhide, onarchive, onlock, locked = undefined, folder = undefined, current = undefined, open: forced = false, placement = 'board' }: {
     theme: string;

@@ -71,7 +71,7 @@ test('picking Kiro offers Opus 5.5, picked with it, and Sonnet 5.5 by Kiro\'s id
 
 test('an empty folder: the chat works, and the first board its agent draws opens with the conversation on it', async ({ page }) => {
   await open(page);
-  await expect(page.locator('#message')).toContainText('No boards yet');
+  await expect(page.locator('.vb-message')).toContainText('No boards yet');
   await expect(side(page).locator('.chat-empty')).toHaveText('No boards here yet. Ask the agent to draw one.');
   await expect(status(page)).toHaveText('Status: Ready');
   await expectNoAxeViolations(page);
@@ -79,7 +79,7 @@ test('an empty folder: the chat works, and the first board its agent draws opens
   const given = await send(page, 'Draw a board for the release');
   expect(given.prompt).toContain('No board is open in this folder yet');
   await expect(replies(page)).toContainText('I wrote the "Scratch" board');
-  await expect(page.locator('#message')).toContainText('No boards yet');
+  await expect(page.locator('.vb-message')).toContainText('No boards yet');
   const secret = given.mcpConfig.mcpServers['vision-board']!.env.VB_AGENT_SECRET!;
   await srv.write('scratch', [
     { type: 'board', key: 'board', title: 'Scratch' }, { type: 'region', key: 'ideas', region: { id: 'ideas', title: 'Ideas', mode: 'grid' } },

@@ -49,7 +49,7 @@ export async function act(page: Page, d: Drawn, body: object): Promise<number> {
 export async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 export const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);

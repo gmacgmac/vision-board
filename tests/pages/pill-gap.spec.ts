@@ -27,7 +27,7 @@ async function draw(request: APIRequestContext): Promise<string> {
 }
 
 const card = (page: Page) => page.locator('vb-node').last();
-const view = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+const view = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 
 /** Zoom with Ctrl+wheel at the card's centre (pointer.ts: factor exp(-deltaY * 0.0015)) to `k`. */
 async function zoomTo(page: Page, k: number): Promise<void> {
@@ -49,7 +49,7 @@ const clear = (page: Page) => page.evaluate(() => {
 test('the pill sits clear of the selected card\'s tabs at three zooms, the space growing with zoom', async ({ page, request }) => {
   await page.goto(`/#${await draw(request)}`);
   await expect(page.locator('vb-node')).toHaveCount(TITLES.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   await card(page).locator('.vb-node-title').click({ position: { x: 4, y: 4 } });
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(1);
   await expect(page.locator('vb-selection-bar')).toBeVisible();

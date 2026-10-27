@@ -8,7 +8,7 @@
 
 1. **Answers since the last message: yes, a hook.** The board needs the engine to add one block per
    turn: the person's ✓, ✗, notes and Laters since the bot's last message, sorted by card number.
-   We'll give it as `turn(since)` on the engine part (from `roundOf`, `packages/actions/src/board-message.ts`);
+   We'll give it as `turn(since)` on the engine part (`turnOf`, `#actions` `answers/chips.ts`, over `roundOf`);
    the host puts its block after the chips, before the skills.
 2. **Confirm: four board actions need it.** Removing cards or containers (with the list of what goes),
    Accept all proposals (with the items and those skipped), removing an agent's access, and discarding
@@ -43,12 +43,44 @@
 | Draft | Board needs | Why |
 |---|---|---|
 | Tool input: flat strings and booleans | Full JSON Schema | `write_board` items; one source generates both |
-| `route` and tools return at once | May return a promise | `check_responses` waits up to 60 s for the person (`reads.ts` `checkResponses`); body reads are async |
+| `route` and tools return at once | May return a promise | `check_responses` waits up to 60 s for the person (`apps/board/server/engine/reads.ts` `checkResponses`); body reads are async |
 | No per-turn hook | `turn(since)` on the engine part | The person's answers ride with the next message |
 | No `confirm` | `confirm({ heading, body, confirm, list? })` | Four actions ask first, one with a list |
 | Every CSS rule under the root class | A `vb-`-prefixed selector counts as scoped | Our elements, classes and tokens are already namespaced; the gallery shows patterns with no board root. Our root class is `vb-board`, also our `@container` (D-061) |
 | Chip `ref` a plain string | An opaque JSON `ref` | The board's is `{ board, n, ver }` for a card and `{ board, seq, rev }` for a note: the version is how "changed since you added it" is caught |
-| `resolve` refuses with a reason | A refusal `{ code, reason }` | Codes `gone`, `retired`, `hidden`, `changed`, so the host can word or mark them; `detail` stays the composer's second line |
+| `resolve` refuses with a reason | A refusal `{ refused, reason }` | `refused` is a code, `gone`, `retired`, `hidden`, `changed`, so the host can word or mark them; `detail` stays the composer's second line |
+| Tool answers a summary and a ref | `{ ok, result }` or `{ ok: false, problem }` | The operation's own JSON or its problem document, so the bot reads the same shapes as the API |
+| `route` gets a request | It also takes the caller and an abort signal, and a reply may carry a problem's headers | The host knows the bot; a waiting `check_responses` must stop when the turn does |
+| `createEngine(dir)` | `createEngine({ dir, ledger?, name?, onSend?, warn? })` | The folder's name as the person reads it; `onSend` tells the host the person pressed Send |
+
+## What the engine needs from the host (built, `apps/board/server/engine/`)
+
+- **One `join` per bot folder, kept.** The bot's agent id comes from a `join` line in the ledger;
+  the host joins once per bot and keeps the id. A well-formed id with no join line writes but has no
+  label on the board.
+- **Grants, with one bot per folder:** the host vouches for the bot, so secrets and `join`'s secret
+  protect nothing. Grants still protect the person's own boards (closed to the bot until the person
+  approves a request), the person's revoke (a board or container taken back), and several agents on
+  one board, which happens only if a bot's helpers or a second client share the folder.
+- **`turn({ board, since, agent })`** takes the board, because a bot may have several.
+- **Two engines on one folder are safe:** each reads the other's appends before it writes and while
+  anyone watches, so `seq` never repeats. One writer per folder is still the plan.
+
+## The view's host, as built (`apps/board/src/board/host.ts`, `mount.ts`)
+
+- **`mount(root, host)`** returns `{ unmount, pageChip, reveal }`, plus `status` (an observable of the
+  board's state), `board` (its controls) and `send()`. The root gets `vb-board`. Two boards run on one
+  page; `unmount` leaves no listener behind (held by `tests/pages/board-host.spec.ts`, a fake host).
+- **`host`** is the draft's `api`, `events`, `addToChat`, `settings` and `notify`, plus `confirm` and an
+  optional `page` part (the board in the address bar, the board last looked at, reload, the person's
+  cookie), which only the standalone page gives. `notify` takes a tone (plain or a warning). `api`
+  resolves to the `Response`.
+- **`pageChip()`** returns the board on show as a `board` chip, ref `{ board, head }`.
+- **Pictures:** card images load from the board's image route (`IMAGE_ROUTE`), outside `api`, because an
+  `<img>` fetches by URL. nclite either serves that path under the plugin's prefix or gives the board an
+  image transport.
+- **Not yet in the board:** the toolbar, the strips (proposals, a past version, a lock) and the dialogs
+  are the standalone page's own. Making them part of the board is planned with the plugin (tracker M8).
 
 ## For nclite to weigh
 

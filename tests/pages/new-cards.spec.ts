@@ -58,7 +58,7 @@ const seenAfter = async (page: Page, after: number, board: string) =>
 async function open(page: Page, d: Drawn, query = ''): Promise<void> {
   await page.goto(`/${query}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
   await expect.poll(async () => (await events(page, 0, d.board)).some((e) => e.type === 'seen' && e.board === d.board)).toBe(true);
 }
 

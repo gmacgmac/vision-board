@@ -11,9 +11,9 @@
      home) and a Copy button that copies the absolute path and says "Copied" for a moment (current-folder
      task). Every part is a native button, so Tab reaches each and Enter or Space chooses. -->
 <script lang="ts">
-  import type { FolderEntry, FolderInfo, FolderList } from '../board/io.ts';
+  import type { FolderEntry, FolderInfo, FolderList } from './page-io.ts';
   import ButtonIcon from './ButtonIcon.svelte';
-  import { folderPath } from '../board/folder-path.ts';
+  import { folderPath } from './folder-path.ts';
 
   let { listing, current, here = null, uid, loading = false, problem = null, busy = false, onchoose, onaccept, oncancel }: {
     /** The chosen folder and what is in it; null until the first listing. */

@@ -61,7 +61,7 @@ const head = async (page: Page) => ((await (await page.request.get('/api/boards'
 async function open(page: Page, d: Drawn, cards: number, flags = ''): Promise<void> {
   await page.goto(`/?vbwork${flags}#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(cards);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 const idle = (page: Page) => page.evaluate(() => (window as unknown as { __vbWork: { idle(): Promise<void> } }).__vbWork.idle());
 const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);

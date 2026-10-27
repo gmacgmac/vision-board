@@ -39,7 +39,7 @@
   import MenuSelect from './MenuSelect.svelte';
   import OpenChip from './OpenChip.svelte';
   import ToolbarEnd from './ToolbarEnd.svelte';
-  import { currentFolderOn } from '../board/folder.ts';
+  import { currentFolderOn } from './folder.ts';
   import { versionTime } from '../board/versions.ts';
   import { rowText } from '../board/finder.ts';
   import type { CommandId } from '../board/commands.ts';

@@ -125,11 +125,11 @@ test('a message: the selected card goes with it; the agent\'s words show; its ch
   await page.locator('#stage').focus();
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
-  const before = await page.locator('#world').getAttribute('style');
+  const before = await page.locator('.vb-world').getAttribute('style');
   await log(page).getByRole('button', { name: /Drew 2 cards on Scratch/ }).click();
   await expect(page.locator('#selection-status')).toHaveText('2 cards selected');
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(2);
-  await expect(page.locator('#world')).not.toHaveAttribute('style', before!);
+  await expect(page.locator('.vb-world')).not.toHaveAttribute('style', before!);
 });
 
 test('a changed card links to the chat\'s write that changed it; the conversation is there again after a reload', async ({ page }) => {

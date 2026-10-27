@@ -6,7 +6,7 @@
 // redraw (controller.ts `selection.keep`); focus that was on what left goes back to the board.
 import type { LedgerState, RemoveWords } from '#actions';
 import { cardsWords, containerWords } from '#actions';
-import type { ConfirmList } from '../shell/shell.svelte.ts';
+import type { ConfirmList } from './host.ts';
 import type { RetireFields } from './io.ts';
 
 export interface RemoveDeps {

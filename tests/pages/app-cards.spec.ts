@@ -29,7 +29,7 @@ test.afterAll(async () => { await s.close(); });
 async function open(page: Page, board: string, count: number, query = ''): Promise<void> {
   await page.goto(`${s.base}/${query}#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(count);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 /** The calculator not allowed, whatever an earlier test did (an allow is on the app, not a board). */

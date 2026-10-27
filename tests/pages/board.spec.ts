@@ -18,8 +18,8 @@ const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 async function openBoard(page: Page, query = '', base = ''): Promise<void> {
   await page.goto(`${base}/${query}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 test('the board loads with every region and card', async ({ page }) => {
@@ -108,7 +108,7 @@ async function zoomToButtons(page: Page): Promise<void> {
 
 /** Zoom in until the world draws at 1:1 or larger, where every control is its full CSS size. */
 async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
   for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
   expect(await scale()).toBeGreaterThanOrEqual(1);
 }
@@ -231,7 +231,7 @@ test('each layout mode draws every region', async ({ page }) => {
       await expect(region).toHaveAttribute('data-mode', mode.toLowerCase());
       await expect(icon).toHaveAttribute('aria-checked', 'true');
       await expect(region.locator('[role="radio"][aria-checked="true"]')).toHaveCount(1);
-      await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+      await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
       await expect.poll(async () => problemsOf(await placement(page, id, ids)), { message: `${id} in ${mode}` }).toEqual([]);
     }
   }

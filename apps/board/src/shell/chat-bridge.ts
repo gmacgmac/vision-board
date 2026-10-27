@@ -17,9 +17,9 @@ import type {
   ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
 } from '#chat';
 import { CHAT_CHANGE_EVENT } from '#chat';
-import type { BoardData } from './io.ts';
-import { clip } from './clip.ts';
-import type { Selection } from './selection.ts';
+import type { BoardData } from '#actions';
+import { clip } from '#format';
+import type { BoardSide } from '../board/chat-side.ts';
 
 /** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
 export const SOURCE_LABEL = 'Show in the chat';
@@ -64,25 +64,8 @@ export function cardIds(d: BoardData, cards: readonly number[]): string[] {
   return cards.map(String).filter((id) => on.has(id));
 }
 
-/** What the bridge needs of the board (controller.ts). */
-export interface BoardSide {
-  stage: HTMLElement;
-  /** The open board as drawn; null before one opens. */
-  data(): BoardData | null;
-  /** The ledger as folded now (not a past version's); null before it is read. */
-  ledger(): LedgerState | null;
-  id(): string;
-  selection: Selection;
-  /** A past version shows: nothing attached (no message can go). */
-  readOnly(): boolean;
-  /** Zoom to the selection (the selection bar's Zoom to selection). */
-  zoom(): void;
-  /** Open another board; it is drawn before this returns (boards.ts). */
-  switchTo(board: string): void;
-  /** Open a board now when it is held, else once its line arrives (boards.ts `jump`). */
-  jump(board: string): void;
-  toast(text: string): void;
-}
+/** What the bridge needs of the board: the board's chat side (board/chat-side.ts). */
+export type { BoardSide } from '../board/chat-side.ts';
 
 /** What the bridge needs of the chat (chat-panel.ts). */
 export interface ChatSide {
@@ -151,6 +134,7 @@ export function createChatBridge(): ChatBridge {
     if (board !== b.id()) b.switchTo(board);
     if (board === b.id()) zoomTo(cards);
   };
+  const source = (n: number) => (b && c && lastChange(c.state(), b.id(), n) ? SOURCE_LABEL : undefined);
   /** The stepper's link on a changed card (packages/ui `stepMarkup`). */
   const onStage = (e: MouseEvent) => {
     const link = (e.target as Element).closest<HTMLElement>('vb-node [data-source]');
@@ -162,13 +146,14 @@ export function createChatBridge(): ChatBridge {
   return {
     board(side) {
       b = side;
+      side.source(source);
       side.stage.addEventListener('click', onStage);
       const unlisten = side.selection.onChange(() => {
         spent.clear();
         attach();
       });
       attach();
-      return () => { side.stage.removeEventListener('click', onStage); unlisten(); b = null; };
+      return () => { side.source(null); side.stage.removeEventListener('click', onStage); unlisten(); b = null; };
     },
     chat(side) {
       c = side;
@@ -182,7 +167,7 @@ export function createChatBridge(): ChatBridge {
     },
     refresh: attach,
     chips: () => cards().map(cardChip),
-    source: (n) => (b && c && lastChange(c.state(), b.id(), n) ? SOURCE_LABEL : undefined),
+    source,
     sent(took) {
       for (const chip of took) if (chip.kind === 'card') spent.add(chip.ref);
       attach();

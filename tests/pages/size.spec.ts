@@ -19,8 +19,8 @@ const cssWidth = (page: Page, n: number) => card(page, n).evaluate((e) => (e as 
 async function openBoard(page: Page, query = '?flags=nodeSize'): Promise<void> {
   await page.goto(`/${query}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 /** Zoom in with + until the stage is no longer "far", so the size control shows (N8). */
@@ -31,7 +31,7 @@ async function zoomIn(page: Page): Promise<void> {
 
 /** Zoom in until the world draws at 1:1 or larger, where every control is its full CSS size. */
 async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
   for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
   expect(await scale()).toBeGreaterThanOrEqual(1);
 }

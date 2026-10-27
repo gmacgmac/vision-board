@@ -9,7 +9,7 @@
 // chat-prompt.ts `promptFor`. A message with something attached waits while a turn runs (ruling 5).
 import path from 'node:path';
 import type { Round } from '#actions';
-import { creatorOf, roundOf } from '#actions';
+import { creatorOf, turnOf } from '#actions';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
@@ -158,7 +158,8 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
   function unsaid(live: LiveSession, board: string, before: number): Round | undefined {
     const s = ledger.state();
     if (isLocked(s, board)) return undefined;
-    return roundOf(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
+    const turn = turnOf(s, board, told.get(live.record.session) ?? previousSend(s, board, before), live.record.agentId);
+    return turn && 'refused' in turn ? undefined : turn;
   }
 
   /** Hand `live`'s agent `held` on `board`: built when it goes, the Send recorded then if asked. */

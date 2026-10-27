@@ -16,7 +16,7 @@ const live = (page: Page) => page.locator('#selection-status');
 const selectedIds = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) =>
   els.map((e) => (e as HTMLElement).dataset.id!).sort((a, b) => Number(a) - Number(b)));
 const docSelection = (page: Page) => page.evaluate(() => document.getSelection()?.toString() ?? '');
-const worldAt = (page: Page) => page.locator('#world').evaluate((e) => {
+const worldAt = (page: Page) => page.locator('.vb-world').evaluate((e) => {
   const m = new DOMMatrix(getComputedStyle(e).transform);
   return { x: Math.round(m.e), y: Math.round(m.f) };
 });
@@ -24,13 +24,13 @@ const worldAt = (page: Page) => page.locator('#world').evaluate((e) => {
 async function openBoard(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 /** Zoom in until the world draws at 1:1, so every control is its full size. */
 async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
   for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
 }
 
@@ -156,7 +156,7 @@ test('only the kind tab moves a card: dragging a selected card\'s tab moves and 
   const [b1, b2] = [(await card(page, 1).boundingBox())!, (await card(page, 2).boundingBox())!];
   await drag(page, await at(card(page, 1).locator('.vb-node-kind')), 90, 60);
   await expect(card(page, 1)).toHaveAttribute('data-pinned', '');
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
   const a1 = (await card(page, 1).boundingBox())!;
   expect(Math.hypot(a1.x - b1.x, a1.y - b1.y)).toBeGreaterThan(40);
   // The other selected card moves with it, by the same amount (3_FE_03 ruling 4), and both stay

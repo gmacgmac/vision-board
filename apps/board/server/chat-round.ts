@@ -1,7 +1,7 @@
 // Where the board's answers a chat session's agent is handed start (panel-send ruling 1, api.md 121,
 // 131): after the board's previous Send, when the agent was not told since. The round itself (the
 // "The person updated the board:" message and the notes its lines carry) is packages/actions
-// `roundOf` (board-message.ts), the one writer the page's composer preview reads too
+// `turnOf` (the engine's `turn`, over `roundOf`, board-message.ts), the one writer the page's composer preview reads too
 // (composer-one-chip ruling 2). Pure: from the folded ledger.
 import type { LedgerState } from '#actions';
 

@@ -2,12 +2,15 @@
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
      the Go to card box while a digit typed on the board has it open (goToCard flag),
      the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag),
-     the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes.ts). The stage's contents are drawn by the framework-free
-     board controller (D-005), mounted here. -->
+     the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes.ts). The stage is the
+     board's root: the framework-free board (D-005) is mounted in it with this page as its host (board/mount.ts,
+     page-host.ts), and the page draws from the board's status. -->
 <script lang="ts">
   import { onMount, tick, untrack } from 'svelte';
-  import { createBoard, type Board } from '../board/controller.ts';
+  import { mount, type MountedBoard } from '../board/mount.ts';
+  import { exposeWork } from '../board/work.ts';
   import { askConfirm, shell, toast } from './shell.svelte.ts';
+  import { createPageHost } from './page-host.ts';
   import Toolbar from './Toolbar.svelte';
   import ReplyPanel from './ReplyPanel.svelte';
   import ConfirmDialog from './ConfirmDialog.svelte';
@@ -20,19 +23,16 @@
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
   import ArchivedDialog from './ArchivedDialog.svelte';
-  import { createChatBridge } from '../board/chat-bridge.ts';
-  import { createChatPanel, type ChatPanel } from '../board/chat-panel.ts';
+  import { createChatBridge } from './chat-bridge.ts';
+  import { createChatPanel, type ChatPanel } from './chat-panel.ts';
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 
+  /** The board's root: the page hosts the board in it (board/mount.ts), as nclite hosts it in a pane. */
   let stage: HTMLElement;
-  let world: HTMLElement;
-  let regions: HTMLElement;
-  let cards: HTMLElement;
-  let wires: SVGSVGElement;
-  let wiresTop: SVGSVGElement;
-  let marks: HTMLElement;
-  let board: Board | null = $state(null);
+  let view = $state<MountedBoard | null>(null);
+  const board = $derived(view?.board ?? null);
+  const host = createPageHost();
   const keyBubble = flagOn('keyBubble', pageFlags());
   const openFolder = flagOn('openFolder', pageFlags());
   const archiving = flagOn('archiveBoard', pageFlags());
@@ -47,14 +47,14 @@
     void shell.archived;
     untrack(() => c?.show(id, past));
   });
-  // The viewer's alignment (alignSetting flag, field report batch 3 ruling 4) changed in the "⋯" menu: lay out again.
+  // The viewer's alignment (alignSetting flag, field report batch 3 ruling 4) changed in the "⋯" menu: a setting the board hears.
   $effect(() => {
     void shell.align;
-    untrack(() => board?.relayout());
+    untrack(() => host.settingsChanged());
   });
   /** Send to agent; with the chat, it is the chat's message with no words when the board's session has
    *  something attached, and waits while the agent is mid-turn (chat-panel.ts `boardSend`). */
-  const send = (b: Board) => (chat ? chat.boardSend(b.send) : b.send());
+  const send = (v: MountedBoard) => (chat ? chat.boardSend(v.send) : v.send());
 
   function hostChat(panel: HTMLElement) {
     const c = createChatPanel(panel, {
@@ -71,10 +71,16 @@
   }
 
   onMount(() => {
-    const b = createBoard({ stage, world, regions, cards, wires, wiresTop, marks }, bridge);
-    board = b;
-    void b.boot();
-    return () => b.destroy();
+    const v = mount(stage, host);
+    // What the page shows of the board is its status, mirrored into the page's state.
+    Object.assign(shell, v.status.now);
+    const unmirror = v.status.on((patch) => Object.assign(shell, patch));
+    // The chat's side of the board: what it attaches, refreshed on every draw.
+    const unbridge = bridge?.board(v.board.side);
+    const unrefresh = bridge ? v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); }) : undefined;
+    if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
+    view = v;
+    return () => { unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
   });
 </script>
 
@@ -86,7 +92,7 @@
   onopen={(n) => board?.go.to(n)}
   oncommand={(id) => board?.command(id)}
   onhide={() => board?.toggleHide()}
-  onsend={() => (board ? send(board) : Promise.resolve('The board is not ready yet.'))}
+  onsend={() => (view ? send(view) : Promise.resolve('The board is not ready yet.'))}
   onrevoke={(agent) => board?.access.revoke(undefined, agent) ?? Promise.resolve()}
   onflagged={() => board?.nextFlagged()}
   onarchive={() => void board?.boardEdit.archive()}
@@ -103,17 +109,7 @@
     onreview={() => board?.proposals.review()} onacceptall={() => void board?.proposals.acceptAll()} />
 {/if}
 
-<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}>
-  <div id="world" class="vb-world no-anim" bind:this={world}>
-    <div id="regions" class="vb-regions" bind:this={regions}></div>
-    <svg id="wires" class="vb-wires" aria-hidden="true" bind:this={wires}></svg>
-    <div id="cards" class="vb-cards" role="list" aria-label="Items, in number order" bind:this={cards}></div>
-    <svg id="wires-top" class="vb-wires vb-wires-top" aria-hidden="true" bind:this={wiresTop}></svg>
-    <!-- Markers for link labels with no room on their line (linkLabels flag, board/link-marks.ts). -->
-    <div id="link-marks" class="vb-link-marks" role="group" aria-label="Link labels" hidden bind:this={marks}></div>
-  </div>
-  <div id="message" class="vb-message" role="status" hidden={shell.message === null}>{shell.message ?? ''}</div>
-</main>
+<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label="Board" bind:this={stage}></main>
 <!-- The selection, perceivable without colour (3_FE_01 ruling 9): a polite live region. -->
 <p id="selection-status" class="vb-visually-hidden" role="status">{shell.selection}</p>
 

@@ -1,7 +1,7 @@
 // A locked board on the page (N40 rulings 1, 4, 5, api.md 138-140). The page reads the lock from the
 // ledger it folds, through the action layer's one check (`boardLocked`; an archived board counts):
 // after every batch and switch, `apply` puts `data-locked` on the world (styles/lock.css) and
-// `shell.locked` (the toolbar's "Locked", Send paused, the "⋯" menu's Unlock board); the elements
+// the status's `locked` (the toolbar's "Locked", Send paused, the "⋯" menu's Unlock board); the elements
 // pause their own controls from `BoardState.locked` (packages/ui paused.ts). Nothing that changes
 // the board goes while it is locked, and the person is told why ("Locked: unlock to change it"):
 // the stage's handlers that act do nothing but say so (`guard`; the flag, the person's private mark,
@@ -13,7 +13,7 @@ import { boardLocked, LOCKED_PERSON, passesLock } from '#actions';
 import type { Outgoing } from './sender.ts';
 import type { StageHandlers } from './wiring.ts';
 import { ACTING } from './versions.ts';
-import { shell } from '../shell/shell.svelte.ts';
+import type { Status } from './status.ts';
 
 export interface LockDeps {
   world: HTMLElement;
@@ -23,6 +23,7 @@ export interface LockDeps {
   board(): string;
   /** Say why a press did nothing (the error toast). */
   say(reason: string): void;
+  status: Status;
 }
 
 export interface LockFlow {
@@ -54,7 +55,7 @@ export function createLockFlow(d: LockDeps): LockFlow {
     apply() {
       const on = paused() !== null;
       d.world.toggleAttribute('data-locked', on);
-      shell.locked = on;
+      d.status.set({ locked: on });
     },
     guard(h) {
       const out: StageHandlers = { ...h, carried: (id) => (paused() ? [] : h.carried(id)) };

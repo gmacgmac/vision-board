@@ -1,20 +1,20 @@
 // The ledger state the page holds, and how it stays current (N12_FE_01 ruling 2, performance.md
 // approaches 1 and 5). Opening the page reads the whole ledger once (`read_ledger`, a full fetch,
 // counted) and folds it with the shared action layer. After that every new line is applied to the
-// same state: the project's live stream (`watch_project`, followed from boot whether or not there
-// are boards, FE_02 ruling 1) says a line was appended, the page reads only the lines after the
-// last one it holds, and hands them on in one batch. An act the page sent itself
-// is applied from its answer when it is the next line. A full fetch happens again only when the
-// ledger went back (another project, a reset) or a line has a format the page cannot apply.
-// In watch mode (dev only) the stream also names the built page: the first id is kept, and a
-// different one reloads the page, whose view is already saved (FE_02 ruling 6). With the openFolder
-// flag the stream is ended by a folder switch; reopened, it reloads the page when the folder changed.
+// same state: the host's change events (`host.events`, host.ts; on the standalone page its project
+// stream, `watch_project`, followed from boot whether or not there are boards, FE_02 ruling 1) say a
+// line was appended, the board reads only the lines after the last one it holds, and hands them on
+// in one batch; an event with no head (a stream that opened again) reads whatever is new. An act the
+// page sent itself is applied from its answer when it is the next line. A full fetch happens again
+// only when the ledger went back (another project, a reset) or a line has a format the page cannot
+// apply. Reloading the page (a rebuilt page, another folder) is the standalone host's (page-host.ts).
 import type { LedgerEvent, LedgerLine } from '#format';
 import type { LedgerState } from '#actions';
 import { applyEvent, foldLedger } from '#actions';
 import { canApply } from './board-data.ts';
 import { answerEvent } from './card-numbers.ts';
-import { readLedger, watchProject } from './io.ts';
+import type { BoardEvent } from './host.ts';
+import type { Io } from './io.ts';
 import { work } from './work.ts';
 
 export interface Live {
@@ -28,9 +28,8 @@ export interface Live {
   /** An act the page sent to `board`: its answer (cards by board number, card-numbers.ts) applied
    * in place when it is the next line, else read with the rest. */
   own(line: LedgerLine, board: string): Promise<void>;
-  /** Follow the project's live stream; a stop function. `reopened`, when given, is asked first each
-   * time the stream opens again; true means the page is going away (another folder, folder.ts). */
-  watch(reopened?: () => Promise<boolean>): () => void;
+  /** Follow the host's change events; a stop function. */
+  watch(): () => void;
   /** Resolves when no read is in flight. */
   settled(): Promise<void>;
 }
@@ -38,7 +37,13 @@ export interface Live {
 /** `lines`: the batch applied in place; `full`: the state was read afresh, so draw from scratch. */
 export type OnLines = (lines: LedgerEvent[], full: boolean) => void;
 
-export function createLive(onLines: OnLines): Live {
+export interface LiveDeps {
+  readLedger: Io['readLedger'];
+  /** The host's change events (`host.events`). */
+  events(listener: (e: BoardEvent) => void): () => void;
+}
+
+export function createLive(d: LiveDeps, onLines: OnLines): Live {
   let state: LedgerState | null = null;
   let reading: Promise<void> | null = null;
   let again = false;
@@ -46,7 +51,7 @@ export function createLive(onLines: OnLines): Live {
   async function all(): Promise<LedgerEvent[]> {
     const out: LedgerEvent[] = [];
     for (;;) {
-      const page = await readLedger(out.at(-1)?.seq ?? 0);
+      const page = await d.readLedger(out.at(-1)?.seq ?? 0);
       out.push(...page.events);
       if (!page.more) return out;
     }
@@ -72,7 +77,7 @@ export function createLive(onLines: OnLines): Live {
     if (!state) return load();
     const lines: LedgerEvent[] = [];
     for (;;) {
-      const page = await readLedger(lines.at(-1)?.seq ?? state.seq);
+      const page = await d.readLedger(lines.at(-1)?.seq ?? state.seq);
       // The ledger went back past what the page holds: it is not the ledger the page folded.
       if (page.head < state.seq) return load();
       lines.push(...page.events);
@@ -107,22 +112,9 @@ export function createLive(onLines: OnLines): Live {
       if (state && !reading && line.seq === state.seq + 1 && apply([answerEvent(state, board, line)])) return;
       await sync();
     },
-    watch(reopened) {
-      let build: string | null = null;
-      let opened = false;
-      return watchProject({
-        change: (seq) => { if (!state || seq > state.seq) void sync(); },
-        build: (id) => {
-          if (build === null) build = id;
-          else if (id !== build) location.reload();
-        },
-        // On (re)connecting, catch up on anything appended while the stream was not open; on a
-        // reconnect, first make sure the server still has the page's folder open.
-        open: () => {
-          if (!opened || !reopened) { opened = true; void sync(); return; }
-          void reopened().then((leaving) => { if (!leaving) void sync(); });
-        },
-      });
+    watch() {
+      // A head past the one held, or no head (catch up on anything appended while not following).
+      return d.events(({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) void sync(); });
     },
     settled: async () => { while (reading) await reading; },
   };

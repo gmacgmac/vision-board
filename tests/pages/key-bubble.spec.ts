@@ -14,7 +14,7 @@ const list = (page: Page) => page.locator('.vb-keys-tip');
 async function openBoard(page: Page, query = ''): Promise<void> {
   await page.goto(`/${query}`);
   await expect(page.locator('vb-node').first()).toBeVisible();
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 test('a round "?" sits at the bottom left and the old key bar is gone', async ({ page }) => {

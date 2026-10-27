@@ -7,6 +7,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import type { OperationId } from '#format';
 import type { Agents } from './agents.ts';
+import { ONLY_PERSON } from './engine/index.ts';
 import type { Caller, Ledger } from './ledger.ts';
 import type { ProblemError } from './problem.ts';
 import { problem } from './problem.ts';
@@ -37,7 +38,6 @@ const same = (a: string, b: string): boolean => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
-export const ONLY_PERSON = 'Only the person can do this, on the board; send a propose or reply item instead.';
 const ONLY_AGENT = 'Only an agent can do this, with the secret join gave it. The person acts on the board itself.';
 const NO_SECRET = 'This needs your agent secret, sent as Authorization: Bearer <secret>. If you have none, call join, then request_grant for each container you need.';
 const UNKNOWN_SECRET = 'The server does not know this secret. Call join again, then request_grant for each container you need; the person must approve again.';

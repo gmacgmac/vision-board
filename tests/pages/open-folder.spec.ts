@@ -122,7 +122,7 @@ test('Create makes a Vision Board in a folder with none and lands on its empty b
   await rows(page).filter({ hasText: 'empty-app' }).click();
   await accept(page).click();
   await expect(page).toHaveTitle('empty-app · Vision Board');
-  await expect(page.locator('#message')).toContainText('No boards yet');
+  await expect(page.locator('.vb-message')).toContainText('No boards yet');
   await expect(card(page)).toHaveCount(0);
   expect(fs.readFileSync(`${srv.empty}/.visionboard/ledger.jsonl`, 'utf8')).toBe('');
 });

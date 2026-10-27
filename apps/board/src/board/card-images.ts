@@ -31,6 +31,9 @@ export interface CardImages {
   place(): void;
   /** Cards just selected: ask whether their images have a newer version (ruling 21). */
   selected(cards: Iterable<HTMLElement>): void;
+  /** Take the zoomed view away (the board unmounts): it is the one element outside the board's
+   *  root, the top layer of a modal dialog. */
+  destroy(): void;
 }
 
 /** The version of a file the page shows: its ETag, and the address that loads exactly it. */
@@ -188,6 +191,11 @@ export function createCardImages(d: CardImagesDeps): CardImages {
         const s = shown.get(path);
         if (s) void ask(path, s.etag);
       }
+    },
+    destroy() {
+      cancelAnimationFrame(placing);
+      view?.remove();
+      view = null;
     },
   };
 }

@@ -16,8 +16,8 @@ const card = (page: Page, n: number) => page.locator(`vb-node[data-id="${n}"]`);
 async function openBoard(page: Page, base = '', query = '', hash = ''): Promise<void> {
   await page.goto(`${base}/${query}${hash}`);
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 /** A card's box in world pixels (the layout's), read from its transform and size. */
@@ -30,7 +30,7 @@ const boxOf = (page: Page, n: number) => card(page, n).evaluate((e) => {
 
 test('labels: a label with room sits on its line, centred on a tag no wider than the layout kept for it', async ({ page }) => {
   await openBoard(page);
-  const tag = page.locator('#wires .vb-wire-tag');
+  const tag = page.locator('.vb-wires:not(.vb-wires-top) .vb-wire-tag');
   await expect(tag).toHaveCount(1);
   await expect(tag.locator('text')).toHaveText('informs');
   const fit = await tag.evaluate((g) => {
@@ -45,15 +45,15 @@ test('labels: a label with room sits on its line, centred on a tag no wider than
   // labelSize('informs'): 7 characters at 6.5px, plus 6px each side.
   expect(fit).toEqual({ w: 58, centred: true, inside: true });
   // Nothing on the roadmap lacks room, so no marker and the markers' layer stays out of the way.
-  await expect(page.locator('#link-marks')).toBeHidden();
-  await expect(page.locator('#link-marks .vb-link-mark')).toHaveCount(0);
+  await expect(page.locator('.vb-link-marks')).toBeHidden();
+  await expect(page.locator('.vb-link-marks .vb-link-mark')).toHaveCount(0);
 });
 
 test('labels off (?flags=-linkLabels): every label as text at the middle of its line, no tag, no marker', async ({ page }) => {
   await openBoard(page, '', '?flags=-linkLabels');
-  await expect(page.locator('#wires .vb-wire-tag')).toHaveCount(0);
-  await expect(page.locator('#wires text.vb-wire-label')).toHaveText(['informs']);
-  await expect(page.locator('#link-marks .vb-link-mark')).toHaveCount(0);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top) .vb-wire-tag')).toHaveCount(0);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top) text.vb-wire-label')).toHaveText(['informs']);
+  await expect(page.locator('.vb-link-marks .vb-link-mark')).toHaveCount(0);
 });
 
 const labels = (page: Page) => page.locator('section[data-feature="linkLabels"]');
@@ -88,7 +88,7 @@ const centreCards = (page: Page) => page.getByRole('menuitemcheckbox', { name: '
 async function toggleCentre(page: Page): Promise<void> {
   await page.locator('#toolbar-menu').click();
   await centreCards(page).click();
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 test('alignment: Centre cards centres a row, is kept per viewer across a reload, and off again lines the row up by its tops', async ({ page }) => {
@@ -189,7 +189,7 @@ test('widths off (?flags=-widthsControl): no switch in any frame; the widths in 
 // ---- The note bubble clear of a neighbour's footer buttons (BE_02's hand-off) ----
 
 async function zoomToFull(page: Page): Promise<void> {
-  const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+  const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
   for (let i = 0; i < 12 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
 }
 

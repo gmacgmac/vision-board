@@ -11,7 +11,7 @@
 import type { AppInfo, LedgerEvent } from '#format';
 import type { LedgerState } from '#actions';
 import { namedApps } from '#actions';
-import { listApps } from './io.ts';
+import type { Io } from './io.ts';
 
 export interface AppStates {
   /** What list_apps last said of app `id` (undefined until it named it), with the last size it gave. */
@@ -28,6 +28,7 @@ export interface AppStateDeps {
   /** list_apps answered something new: draw the app cards again. */
   changed(): void;
   fail(err: unknown): void;
+  listApps: Io['listApps'];
 }
 
 /** A line that draws an app card, or allows or stops an app (another tab, or the person's own act). */
@@ -42,7 +43,7 @@ export function createAppStates(d: AppStateDeps): AppStates {
   let last = '';
 
   async function readOnce(): Promise<void> {
-    const { apps: list } = await listApps();
+    const { apps: list } = await d.listApps();
     const text = JSON.stringify(list);
     if (text === last) return;
     last = text;

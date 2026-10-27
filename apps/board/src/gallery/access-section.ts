@@ -14,7 +14,7 @@ import SendButton from '../shell/SendButton.svelte';
 import BoardAgents from '../shell/BoardAgents.svelte';
 import type { SendState } from '../shell/shell.svelte.ts';
 import { requestRows } from '../board/access.ts';
-import type { BoardData } from '../board/io.ts';
+import type { BoardData } from '#actions';
 import { el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 import { REGIONS_HELD } from './fixture.ts';

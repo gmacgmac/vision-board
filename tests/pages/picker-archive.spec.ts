@@ -173,7 +173,7 @@ test('archived in another tab, the open board gives way to the next; the hash an
   await expect(picker(page)).toHaveValue(ONE);
   await open(page, TWO);
   await expect(picker(page)).toHaveValue(ONE);
-  await expect(page.locator('#message')).toBeHidden();
+  await expect(page.locator('.vb-message')).toBeHidden();
   await mark(page, TWO, 'restore');
   await idle(page);
   await expect(picker(page).locator(`option[value="${TWO}"]`)).toHaveCount(1);
@@ -192,8 +192,8 @@ test('with no board left, the page shows its empty state and the Archived list; 
     await archiveRow(page).click();
     await page.locator('#confirm-ok').click();
     // No board is left to open: the page reloads into its empty state, as it boots in such a folder.
-    await page.waitForFunction(() => document.querySelector('#message')?.textContent?.includes('archived'));
-    await expect(page.locator('#message')).toHaveText(new RegExp(`No boards yet\\. Waiting for an agent to draw\\.[\\s\\S]*${all.length} archived: restore one from the board picker\\.`));
+    await page.waitForFunction(() => document.querySelector('.vb-message')?.textContent?.includes('archived'));
+    await expect(page.locator('.vb-message')).toHaveText(new RegExp(`No boards yet\\. Waiting for an agent to draw\\.[\\s\\S]*${all.length} archived: restore one from the board picker\\.`));
     await expect(picker(page).locator('option[value=":archived"]')).toHaveText(`Archived (${all.length})…`);
     await expect(page).not.toHaveURL(/#/);
     for (const theme of THEMES) {
@@ -206,7 +206,7 @@ test('with no board left, the page shows its empty state and the Archived list; 
     await page.waitForFunction(() => (window as unknown as { __vbWork?: unknown }).__vbWork !== undefined);
     await idle(page);
     await expect(picker(page)).toHaveValue(TWO);
-    await expect(page.locator('#message')).toBeHidden();
+    await expect(page.locator('.vb-message')).toBeHidden();
   } finally {
     const shown = await agentBoards(request);
     for (const b of all.filter((x) => !shown.includes(x))) await mark(page, b, 'restore');

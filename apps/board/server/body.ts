@@ -1,6 +1,9 @@
 // Request bodies (api.md 28, 37): the media type is parsed exactly, the size is capped before
 // and while reading, and the text must be JSON. Each failure is one problem; nothing is written.
+// `body` then holds it to the operation's request schema, as the engine does (`checkBody`).
 import type { IncomingMessage } from 'node:http';
+import type { OperationId } from '#format';
+import { checkBody } from './engine/index.ts';
 import { problem, sizeWords } from './problem.ts';
 
 export const KIB = 1024;
@@ -40,4 +43,10 @@ export async function readJson(req: IncomingMessage, limit = BODY_LIMIT): Promis
   } catch {
     throw problem('bad-request', 'The body is not valid JSON. Send one JSON object.');
   }
+}
+
+/** The body, read with `readJson` and checked against the operation's request schema: the
+ * standalone server's own operations (chat, folders, apps). */
+export async function body(id: OperationId, req: IncomingMessage, limit = BODY_LIMIT): Promise<Record<string, unknown>> {
+  return checkBody(id, await readJson(req, limit));
 }

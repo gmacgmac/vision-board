@@ -73,7 +73,7 @@ test.describe('missing and refused', () => {
       expect(requests.filter((r) => /notes|example|logo/.test(r))).toEqual([]);
       expect(requests.some((r) => r.endsWith('/gone.png'))).toBe(true);
       // At 100%, so the card's own buttons are drawn at their size (this tall card fits below it).
-      const scale = () => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+      const scale = () => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
       for (let i = 0; i < 8 && (await scale()) < 1; i += 1) await page.keyboard.press('+');
       await expectNoAxeViolations(page);
       await expect(card(page, n!)).toHaveScreenshot(`card-image-refused-${theme}.png`);

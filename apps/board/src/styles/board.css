@@ -83,11 +83,9 @@
 /* The dot-grid canvas: the stage, and the gallery's frames so they sit on the same ground. */
 .vb-ground { background-color: var(--vb-surface-canvas); background-image: radial-gradient(var(--vb-dot) 1.2px, transparent 1.3px);
   background-size: 22px 22px; }
-/* --vb-strip-h: the requests strip's height while it shows (AccessRequests.svelte), else unset;
-   --vb-banner-h the same for the past-version banner (VersionBanner.svelte); --vb-chat-w the chat
-   sidebar's width while it is open (ChatSidebar.svelte, styles/chat-sidebar.css), so the stage
-   shrinks beside it. The proposals notice floats over the board and moves nothing (proposals.css). */
-.vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) var(--vb-chat-w, 0px) 0 0; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
+/* The stage is the board's root (board/mount.ts): it fills what its host gives it; where it sits on
+   the standalone page is the page's (shell.css). */
+.vb-stage { position: relative; overflow: hidden; cursor: grab; touch-action: none; outline: none; }
 /* Nothing on the board is text to select but what is in a card or the note bubble (3_FE_01 ruling
    5, U5): a drag on a container's title pans instead. node.css gives card content back its text. */
 .vb-stage { user-select: none; }

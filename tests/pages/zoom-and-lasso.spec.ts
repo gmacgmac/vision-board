@@ -16,7 +16,7 @@ const lasso = (page: Page) => page.locator('.vb-lasso');
 const frame = (page: Page, region: string) => page.locator(`vb-region[data-region="${region}"]`);
 const selectedIds = (page: Page) => page.locator('vb-node[data-selected]').evaluateAll((els) =>
   els.map((e) => (e as HTMLElement).dataset.id!).sort((a, b) => Number(a) - Number(b)));
-const view = (page: Page) => page.locator('#world').evaluate((e) => {
+const view = (page: Page) => page.locator('.vb-world').evaluate((e) => {
   const m = new DOMMatrix(getComputedStyle(e).transform);
   return { x: m.e, y: m.f, k: m.a };
 });
@@ -24,8 +24,8 @@ const view = (page: Page) => page.locator('#world').evaluate((e) => {
 async function openBoard(page: Page): Promise<void> {
   await page.goto('/');
   await expect(page.locator('vb-node')).toHaveCount(NODES);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 async function clickCard(page: Page, n: number | string, modifiers: ('Shift' | 'Meta')[] = []): Promise<void> {

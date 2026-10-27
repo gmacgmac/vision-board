@@ -64,5 +64,5 @@ export { pageConditions } from './answers/page-conditions.ts';
 export type { BoardMark, FreshCount, PageConditions } from './answers/page-conditions.ts';
 export { cardsWords, containerWords } from './answers/remove-words.ts';
 export type { RemoveItem, RemoveWords } from './answers/remove-words.ts';
-export { CARD_LABEL, cardChip, CHIP_PLUGIN, noteChip, NOTE_LABEL, resolveChip, turnOf } from './answers/chips.ts';
-export type { CardRef, Chip, ChipKind, ChipRef, ChipRefusal, ChipText, NoteRef, RefusalCode } from './answers/chips.ts';
+export { boardChip, CARD_LABEL, cardChip, CHIP_PLUGIN, noteChip, NOTE_LABEL, resolveChip, turnOf } from './answers/chips.ts';
+export type { BoardRef, CardRef, Chip, ChipKind, ChipRef, ChipRefusal, ChipText, NoteRef, RefusalCode } from './answers/chips.ts';

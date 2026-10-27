@@ -32,14 +32,14 @@ async function open(page: Page, request: APIRequestContext, query = ''): Promise
   const board = await draw(request);
   await page.goto(`/${query}#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(3);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
-  await expect(page.locator('#wires')).not.toHaveClass(/settling/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-wires:not(.vb-wires-top)')).not.toHaveClass(/settling/);
 }
 
 const bar = (page: Page) => page.locator('vb-selection-bar');
 const pill = (page: Page) => bar(page).locator('.vb-sb-pill');
 const cards = (page: Page) => page.locator('vb-node');
-const view = (page: Page) => page.locator('#world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
+const view = (page: Page) => page.locator('.vb-world').evaluate((e) => new DOMMatrix(getComputedStyle(e).transform).a);
 /** The bar's buttons a person can see and reach, by their words. */
 const shown = (page: Page) => bar(page).getByRole('button').allInnerTexts();
 

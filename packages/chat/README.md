@@ -10,7 +10,7 @@ nclite's vision board chat mode, so it stands alone.
   The board server's schema registry and `openapi.json` reference it by `$id`. `src/events.ts`
   writes the shapes out as types; `apps/board/tests/chat-fixture.test.ts` checks them against it.
 - **Depends on**: nothing in this repo (its D-016 layer is empty).
-- **Used by**: `apps/board`: the sidebar (`src/shell/ChatSidebar.svelte`, `src/board/chat-panel.ts`), its bridge to the board (`src/board/chat-bridge.ts`) and the gallery.
+- **Used by**: `apps/board`: the sidebar (`src/shell/ChatSidebar.svelte`, `src/shell/chat-panel.ts`), its bridge to the board (`src/shell/chat-bridge.ts`) and the gallery.
 - **Names** (D-059, D-060): `#chat` (`src/index.ts`), `#chat/styles.css` (`src/chat.css`) and `#chat/files` (`src/files.ts`, `CHAT_SCHEMA_DIR`, the schema folder Node reads; kept off `#chat` so `node:url` stays out of the page bundle).
 
 ## The pieces
@@ -59,7 +59,7 @@ and Esc closes it with focus back on the chip. With `host.holds` the composer's 
 takes a message with no words when anything is attached, and one while the agent works, which the
 host holds and sends when the turn ends; without it, a message needs words, as before.
 
-The elements raise events and never call a server (the names are constants in `src/events.ts`, so a host can listen before it loads the elements, as the board does: it loads them when its panel first opens, `apps/board/src/board/chat-view.ts`): `chat-send` `{ text, chips }`,
+The elements raise events and never call a server (the names are constants in `src/events.ts`, so a host can listen before it loads the elements, as the board does: it loads them when its panel first opens, `apps/board/src/shell/chat-view.ts`): `chat-send` `{ text, chips }`,
 `chat-chip-remove` `{ chip }`, `chat-answer` `{ approvalId, answer }`, `chat-change`
 `{ board, cards, head? }`, `chat-stop`, `chat-new-session`, `chat-pick` `{ field, id }`. The host
 answers them with its own routes (here the board's chat routes, api.md 98-107), clears the composer

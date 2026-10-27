@@ -5,7 +5,7 @@
 import type { Ctx, Handler } from '../dispatch.ts';
 import { problem } from '../problem.ts';
 import { sendJson } from '../respond.ts';
-import { body } from '../writes.ts';
+import { body } from '../body.ts';
 import { APPS_OFF } from './host.ts';
 import { PANEL_STATE_HANDLERS } from './panel-state.ts';
 

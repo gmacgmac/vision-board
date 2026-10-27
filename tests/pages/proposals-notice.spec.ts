@@ -49,7 +49,7 @@ const propose = (request: APIRequestContext, d: Drawn, n: number, reason: string
 async function open(page: Page, d: Drawn): Promise<void> {
   await page.goto(`/#${d.board}`);
   await expect(page.locator('vb-node')).toHaveCount(d.n.length);
-  await expect(page.locator('#world')).not.toHaveClass(/no-anim/);
+  await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
 
 const notice = (page: Page) => page.locator('.vb-proposals');

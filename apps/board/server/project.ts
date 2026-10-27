@@ -1,5 +1,6 @@
 // The open folder (open-folder task, api.md 109, 111; D-038 proposed): which project folder the
-// server has open, with its ledger, lock, agents, chats and app host, and the only thing that switches it.
+// server has open, with its engine (the board's ledger and agents, in `<folder>/.visionboard`), lock,
+// chats and app host, and the only thing that switches it.
 // A switch takes the new folder's lock first and changes nothing when it can't (`conflict`), or when
 // the new ledger can't be made or read (its lock is let go). Then, in order: the old folder's chats
 // and app processes stop (they work there), its live streams and held reads end (`closed`), its lock is let go,
@@ -8,11 +9,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Agents } from './agents.ts';
-import { openAgents } from './agents.ts';
 import type { AppHost, AppHostOptions } from './apps.ts';
 import { createAppHost } from './apps.ts';
 import type { ChatAdapters, ChatOptions, Chats } from './chat-sessions.ts';
 import { openChats } from './chat-sessions.ts';
+import type { Engine } from './engine/index.ts';
+import { createEngine } from './engine/index.ts';
 import { displayName, hasBoard, isUnder } from './folders.ts';
 import type { Ledger } from './ledger.ts';
 import { DATA_DIR, ledgerPath, openLedger } from './ledger.ts';
@@ -25,6 +27,8 @@ import { addRecent } from './recent.ts';
 export interface OpenFolder {
   /** The folder: its real path. */
   readonly dir: string;
+  /** The board's engine on the folder's data folder (`.visionboard`). */
+  readonly engine: Engine;
   readonly ledger: Ledger;
   agents(): Agents;
   chats(): Chats;
@@ -63,23 +67,30 @@ interface Held extends OpenFolder { readonly lock: Lock | undefined; close(): vo
 
 const real = (dir: string): string => { try { return fs.realpathSync(dir); } catch { return path.resolve(dir); } };
 
-/** The folder's parts, each made on first use (the data folder and the real path too). */
+/** The folder's parts, each made on first use (the data folder, the real path and the engine too,
+ * the engine on the ledger already opened under its lock). A Send through the engine hands the folder's chat session
+ * the person's answers (api.md 121); a session that can't be loaded leaves the Send as it was. */
 function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const data = () => path.dirname(ledger.file);
   let dir: string | undefined;
-  let agents: Agents | undefined;
   let chats: Chats | undefined;
   let apps: AppHost | undefined;
+  let engine: Engine | undefined;
   const abort = new AbortController();
-  const getAgents = () => (agents ??= openAgents(data()));
   const getDir = () => (dir ??= real(path.dirname(data())));
+  const getEngine = () => (engine ??= createEngine({ dir: data(), ledger, name: () => displayName(o.home, getDir()), onSend }));
+  const getAgents = () => getEngine().agents();
+  const getChats = () => (chats ??= openChats({
+    ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
+  }));
+  const onSend = (board: string, seq: number) => {
+    getChats().round(board, seq).catch((err) => console.error(`chat: the Send's answers were not handed over: ${err instanceof Error ? err.message : String(err)}`));
+  };
   return {
     get dir() { return getDir(); },
-    ledger, lock, closed: abort.signal, agents: getAgents,
+    get engine() { return getEngine(); },
+    ledger, lock, closed: abort.signal, agents: getAgents, chats: getChats,
     apps: () => (apps ??= createAppHost({ dir: getDir, ledger, flags: o.apps?.flags, limits: o.apps?.limits })),
-    chats: () => (chats ??= openChats({
-      ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
-    })),
     close() {
       chats?.close();
       apps?.close();
