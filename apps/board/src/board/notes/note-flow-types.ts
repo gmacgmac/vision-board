@@ -33,6 +33,9 @@ export interface NoteDeps extends ViewDeps, AnchorDeps {
   selection: Pick<Selection, 'select'>;
 }
 
+/** What an act takes away: a card by id, a container by id. */
+export interface NoteGone { card?(id: string): boolean; region?(id: string): boolean }
+
 export interface NoteFlow {
   /** C on a card: edit its note not yet sent, or start a new one. */
   press(id: string, kind: NoteKind): void;
@@ -62,5 +65,9 @@ export interface NoteFlow {
   readonly unsaved: boolean;
   /** The host's question before the board goes (host.ts `BoardView.leave`; `mayLeave`, once at a time). */
   leave(): Promise<boolean>;
+  /** Before the person's own act that would take cards or a container away (Hide answered, Remove,
+   *  Archive; point 309): when that takes the open bubble's card (every card of a group's) or its
+   *  container, and its words are unsaved, `leave()`; else true at once. True: go ahead. */
+  leaveIf(gone: NoteGone): Promise<boolean>;
   destroy(): void;
 }

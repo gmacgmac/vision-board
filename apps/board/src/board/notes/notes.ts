@@ -242,5 +242,10 @@ export function createNoteFlow(d: NoteDeps): NoteFlow {
     get open() { return open !== null; },
     get unsaved() { return guard.unsaved; },
     leave: guard.leave,
+    leaveIf(gone) {
+      const o = open;
+      const lost = !!o && (o.region ? !!gone.region?.(o.region) : o.anchor.every((id) => !!gone.card?.(id)));
+      return lost && guard.unsaved ? guard.leave() : Promise.resolve(true);
+    },
   };
 }

@@ -377,6 +377,44 @@ the route served the file with 200.
   `npm run verify` passes. `npm run check` reports 7 errors, all in `apps/board/src/board/mount.ts`
   and `tests/pages/board-host.spec.ts`, which another task is editing now; none in files of mine.
 
+### Run 5
+
+**Status**: Completed · **Completed**: 2026-10-27 22:45 · the maintainer approved Playwright's WebKit
+(point 307: nclite is a Tauri app, WebKit on macOS). `npx playwright install webkit` only: WebKit 26.6
+(playwright webkit v2359), no other browser, no package change.
+
+- **Step 1's premises in WebKit** (a scratch server and probe in `temp/`, deleted): an svg `<img>` with
+  a `<script>`, an `onload` and an `onclick` (clicked) made no request, set nothing on the page and
+  posted no message; one naming an outside image, an `@import`, a font, a `url()` fill, a `use` and a
+  same-origin image made no request for any of them; CSS and SMIL animation played; opened at its own
+  address with `SVG_CSP` no script ran and `origin` was `null`, and without the policy (the control)
+  the script and `onload` both ran. Natural size of a viewBox-only svg: 150 by 150 at 1:1, 300 by 150
+  at 2:1, 37 by 150 at 1:4 (Chromium 38), width and height as given. **No premise failed: no DEVIATION.**
+- **Reduced motion in WebKit: not checked.** Playwright's emulated `reducedMotion: 'reduce'` reaches
+  the page (`matchMedia` true) but not an svg image (CSS inside `no-preference` kept moving), as in
+  Chromium. WebKit has no launch switch for the system setting, and changing macOS's own setting is a
+  system change I don't make, so whether the real setting reaches an svg image in WebKit is open.
+- **Found: WebKit logs a console error for an svg image's own `<style>`** under the board's page policy
+  (`default-src 'self'`, no `'unsafe-inline'` for styles): "Refused to apply a stylesheet because its
+  hash, its nonce, or 'unsafe-inline' appears in neither the style-src directive nor the default-src
+  directive…". It still applies the style: a `<style>rect{fill:red}</style>` over `fill="blue"` drew
+  red, with and without the page policy, and the CSS animation moved. One error per svg image with a
+  `<style>` (several per image as it redraws) is noise in a host's console, which nclite in Tauri would
+  see. Not changed: making it quiet means `'unsafe-inline'` in the board's page `style-src`, a
+  weakening that is the maintainer's call (and nclite's page has its own policy anyway). For the
+  maintainer.
+- **The two svg page specs in WebKit**, through `temp/wk/webkit.config.ts` extending
+  `tests/pages/playwright.config.ts` (one `webkit` project, `ignoreSnapshots: true`, no Chromium launch
+  switches, the console error above tolerated so the rest of each test is seen), on 5200: 12 of 12
+  passed. The reduced-motion test in it launches Chromium itself, so it is not a WebKit check. First
+  run: the gallery test failed because its svg images, far down the page, had not loaded: WebKit's lazy
+  margin is smaller than Chromium's. `card-image-svg.spec.ts` now scrolls the svg group into view
+  before waiting for its pictures (no screenshot changes; Chromium card-image* specs: 35 passed). The
+  repo's config is unchanged; no WebKit baseline written.
+- `docs/specification/images.md` § SVG: "Browsers checked" says what WebKit showed, its two
+  differences, and that Firefox (and WebKit in the suite) is not covered.
+- `temp/wk/` deleted; the orchestrator's `temp/gate2-*.log` left as they were.
+
 ---
 
 ## On Completion

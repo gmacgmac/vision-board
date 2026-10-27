@@ -143,6 +143,8 @@ for (const theme of THEMES) {
     await setTheme(page, theme);
     await page.goto('/gallery.html');
     await expect(svgGroup(page).locator('vb-node')).toHaveCount(3);
+    // Lazy images far down the page load once near the screen: WebKit's margin is smaller than Chromium's.
+    await svgGroup(page).scrollIntoViewIfNeeded();
     for (const id of ['svg-plan', 'svg-pulse']) await expect.poll(() => galleryLoaded(page, id)).toBe(true);
     await expect(svgGroup(page).locator('.vb-md-noimg')).toHaveText(['Image not shown: gallery/logo.svg (needs a viewBox, or a width and height)']);
     await expectNoAxeViolations(page);

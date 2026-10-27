@@ -272,6 +272,40 @@ VERIFY_01 findings F3 and F5, routed back by the orchestrator.
 - Checks: npm test 1760 + timing 10 pass (load average 5.8); check 0 errors; verify ok (13 warnings,
   as before); gen-api current; board-host and note* specs 35 passed.
 
+### Run 4
+**Status**: Completed  
+**Completed**: 2026-10-27 23:00  
+The maintainer's ruling on finding 3 (point 309): the person's own act that would close a note with
+unsaved words asks first. The agent's redraw is tracker M24, not here.
+
+- **Failing tests first** (`note-discard.spec.ts`, port 5300): "Hide answered over a note being
+  written…", "Remove card and Archive board…" and "a past version chosen…" each failed on the missing
+  question (or, for the version, on the past version showing behind it), then passed. No unit test:
+  the check needs the flow's open bubble and the layout, which need the DOM; the page specs cover it.
+- **The one path:** `NoteFlow.leaveIf(gone)` (`notes/notes.ts`, type `NoteGone` in
+  `note-flow-types.ts`): when the act takes the open bubble's card (every card of a group's) or its
+  container and its words are unsaved, `leave()` (`mayLeave`); else true at once. OK discards the note
+  (Run 2's `discard`), then the act goes ahead.
+- **Where** (`controller.ts`):
+  - `toggleHide` (H and the toolbar's Hide answered, the only callers): hiding asks when the hide set
+    (`answeredIds`, as `hiddenSet`) takes the note's card; showing never asks.
+  - Remove card and Remove container: the removal flow's `retire` asks after the person confirms the
+    removal; Cancel sends nothing (it returns `''`, so no "removed" toast). A container's removal takes
+    its cards' notes too.
+  - Archive board: Board edit's `actOn` asks for `archive` of the open board; Cancel archives nothing.
+  - `showVersion` (the version dropdown, Go to card's past offer, a retired marker): it already asked
+    through `notes.close()` but went on without waiting, so a Cancel left the past version showing
+    behind the words. It now waits for `notes.leave()` and stops on Cancel.
+- **Looked at, no change:** showing answered cards again (no anchor goes); Move to and Later (the card
+  moves, its anchor stays); there is no container collapse on the board (the selection pill's collapse
+  removes no card); Lock board (nothing goes); Remove in a note's own block (removes the note itself:
+  the person's choice, the earlier ruling).
+- Docs: components.md § The board's host interface, one sentence on the person's acts that ask, M24
+  named for the agent's redraw; the new tests cited.
+- Checks: npm test 1760 + timing 10 pass (load average 8.2); check 0 errors; verify ok (13 warnings,
+  as before); gen-api current; page specs note*, board-host, toolbar, select, every-node, versions,
+  person-remove, picker-archive, go-to-card, flag-retire: 131 passed.
+
 ---
 
 ## On Completion

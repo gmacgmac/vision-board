@@ -7,7 +7,8 @@
 // "Leave site?" prompt; unchanged, discarded, or with the flag off, it closes without asking.
 import type { Page } from '@playwright/test';
 import { expect, test } from './helpers.ts';
-import { bubble, card, comment, discard, ensureBoard, fx, head, openFrames, text } from './frames-board.ts';
+import { agentWrite, bubble, card, comment, discard, ensureBoard, fx, head, linesAfter, openFrames, text } from './frames-board.ts';
+import { menuButton } from './board-page.ts';
 
 test.beforeEach(async ({ page, request }, info) => {
   await page.goto('/?setup');
@@ -132,4 +133,94 @@ test('choosing another board with changed words asks first: Cancel keeps this bo
   await expect(page.locator('vb-node')).toHaveCount(7);
   await expect(discard(page)).toBeHidden();
   expect(await head(page)).toBe(before);
+});
+
+// The person's own act that would take the note's card away asks first (point 309): Hide answered,
+// Remove card and Archive board. A hide that leaves the note's card, or unchanged words, never asks.
+const confirmOk = (page: Page) => page.locator('#confirm-dialog #confirm-ok');
+const hideRow = async (page: Page) => { await menuButton(page).click(); await page.locator('#hide').click(); };
+
+test('Hide answered over a note being written on an answered card asks: Cancel hides nothing, Discard hides it; on an open card it never asks', async ({ page }) => {
+  await openFrames(page);
+  await card(page, 'p1').focus();
+  await page.keyboard.press('a');
+  await expect(card(page, 'p1')).toHaveAttribute('data-status', /acknowledged|answered/);
+  await card(page, 'p1').focus();
+  await page.keyboard.press('c');
+  await page.keyboard.type('Half a thought');
+  await hideRow(page);
+  await expect(discard(page)).toBeVisible();
+  await discard(page).getByRole('button', { name: 'Cancel' }).click();
+  await expect(text(page)).toBeFocused();
+  await expect(text(page)).toHaveValue('Half a thought');
+  await expect(page.locator('vb-node:visible')).toHaveCount(7);
+  await hideRow(page);
+  await discard(page).getByRole('button', { name: 'Discard' }).click();
+  await expect(page.locator('vb-node:visible')).toHaveCount(6);
+  await expect(bubble(page)).toBeHidden();
+  await hideRow(page);
+  await expect(page.locator('vb-node:visible')).toHaveCount(7);
+  // Words on a card the hide leaves: no question, the note stays open.
+  await card(page, 'p2').focus();
+  await page.keyboard.press('c');
+  await page.keyboard.type('Still here');
+  await hideRow(page);
+  await expect(page.locator('vb-node:visible')).toHaveCount(6);
+  await expect(discard(page)).toBeHidden();
+  await expect(text(page)).toHaveValue('Still here');
+});
+
+test('Remove card and Archive board with a note being written on it ask about the words too: Cancel keeps card, board and words', async ({ page }) => {
+  await openFrames(page);
+  const before = await head(page);
+  await card(page, 'p2').focus();
+  await page.keyboard.press('c');
+  await page.keyboard.type('Half a thought');
+  await card(page, 'p2').locator('.vb-node-title').click();
+  await page.keyboard.press('Delete');
+  await confirmOk(page).click();
+  await expect(discard(page)).toBeVisible();
+  await discard(page).getByRole('button', { name: 'Cancel' }).click();
+  await expect(text(page)).toBeFocused();
+  await expect(text(page)).toHaveValue('Half a thought');
+  await expect(page.locator('vb-node:visible')).toHaveCount(7);
+  const wrote = async () => (await linesAfter(page, before)).filter((l) => l.type !== 'seen').map((l) => l.type);
+  expect(await wrote(), 'nothing removed').toEqual([]);
+
+  await menuButton(page).click();
+  await page.locator('#archive-board').click();
+  await confirmOk(page).click();
+  await expect(discard(page)).toBeVisible();
+  await discard(page).getByRole('button', { name: 'Cancel' }).click();
+  await expect(text(page)).toHaveValue('Half a thought');
+  await expect(page.locator('#board')).toHaveValue(fx.board);
+  expect(await wrote(), 'nothing archived').toEqual([]);
+
+  await card(page, 'p2').locator('.vb-node-title').click();
+  await page.keyboard.press('Delete');
+  await confirmOk(page).click();
+  await discard(page).getByRole('button', { name: 'Discard' }).click();
+  await expect(page.locator('vb-node:visible')).toHaveCount(6);
+  await expect(bubble(page)).toBeHidden();
+});
+
+test('a past version chosen with a note being written asks first: Cancel stays on now with the words, Discard shows it', async ({ page, request }) => {
+  await agentWrite(request, [{ type: 'node', key: 'v2', node: { region: 'plan', kind: 'question', title: 'One more?' } }]);
+  await page.goto(`/?frames#${fx.board}`);
+  const version = page.locator('#version');
+  await expect(version.locator('option')).not.toHaveCount(1);
+  await card(page, 'p1').focus();
+  await page.keyboard.press('c');
+  await page.keyboard.type('Half a thought');
+  await version.selectOption({ index: 1 });
+  await expect(discard(page)).toBeVisible();
+  await discard(page).getByRole('button', { name: 'Cancel' }).click();
+  await expect(text(page)).toBeFocused();
+  await expect(text(page)).toHaveValue('Half a thought');
+  await expect(page.locator('.vb-banner')).toBeHidden();
+  await expect(version).toHaveValue('now');
+  await version.selectOption({ index: 1 });
+  await discard(page).getByRole('button', { name: 'Discard' }).click();
+  await expect(page.locator('.vb-banner')).toBeVisible();
+  await expect(bubble(page)).toBeHidden();
 });

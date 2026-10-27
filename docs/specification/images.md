@@ -77,8 +77,18 @@ it out because it can carry script; that is true only of an svg opened as a docu
 | Motion: a person who asks the system for less motion sees CSS animation written inside `@media (prefers-reduced-motion: no-preference)` hold still; the browser's own setting reaches into an svg image (Playwright's emulated media does not). SMIL ignores the setting, so the skill keeps it short. | the browser | `card-image-svg-motion.spec.ts` ("for a person who asked for less motion…") |
 | Off (`svgImages`), the page's Markdown and the route each refuse an svg as before svg, with `typeNoSvg`. The page's flag reaches the renderer through `setMarkdownSvg`; the server's through `serveImage`'s `flags`. | `image.ts` `setMarkdownSvg`; `serveImage` | `images-svg.test.ts`, `images-svg-route.test.ts` ("with the svgImages flag off…"), `card-image-svg-motion.spec.ts` ("the svgImages flag off") |
 
-Not covered: WebKit and Firefox. The page suite runs Chromium only, so the motion and natural-size
-behaviour above is Chromium's.
+Browsers checked: Chromium (the page suite) for everything above. WebKit (Playwright's WebKit 26.6,
+the engine nclite's Tauri shell uses on macOS) checked by hand on 2026-10-27, outside the suite: an svg
+`<img>` ran no script and loaded nothing; CSS and SMIL animation played; opened at its own address
+under `SVG_CSP` it ran no script, in an opaque origin; a viewBox-only svg's natural size was 300 by 150
+fitted to its shape, as in Chromium; `card-image-svg.spec.ts` and `card-image-svg-motion.spec.ts`
+passed in WebKit (screenshots not compared). Two WebKit differences: it writes a console error,
+"Refused to apply a stylesheet…", for each svg image's own `<style>` under the board's page policy,
+and still applies the style; and whether the system's reduced-motion setting reaches an svg image
+was not checked there (Playwright's emulated setting does not, and WebKit has no launch switch for
+the system one).
+
+Not covered: Firefox; WebKit in the page suite, which runs Chromium only.
 
 ## Limits
 

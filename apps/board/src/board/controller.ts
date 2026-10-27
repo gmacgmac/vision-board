@@ -145,7 +145,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const { attempt, record } = sender;
   const apps = createAppCards({ on: apping, stage, vp, board: () => S.id, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: ask, toast, fail, redraw: () => redraw(), io }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
-    retire: (fields) => sender.retire(fields), confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24)
+    retire: async (fields) => (await notes.leaveIf({ card: (id) => !!fields.cards?.includes(Number(id)) || (!!fields.region && nodeOf(id)?.region === fields.region), region: (r) => r === fields.region })) ? sender.retire(fields) : '',
+    confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24); a note being written on what goes asks too (point 309)
   const proposals = createProposalFlow({
     on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast, status, confirm: (a) => host.confirm(a),
@@ -205,7 +206,12 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const frames = createContainerDrag({ layout: () => drawing.layout, view, frame: (r) => drawing.frames.get(r), card: (id) => drawing.cards.get(id),
     drawDrag: (l) => drawing.wiresFor(l, focus.id), settle: () => drawing.settle(), record, redraw: () => redraw() });
 
-  const toggleHide = () => { status.set({ hide: !status.now.hide }); if (S.data) redraw(); };
+  /** Hide answered (H, the toolbar): a note being written on a card it would hide asks first (point 309). */
+  async function toggleHide() {
+    const hiding = !status.now.hide && S.data ? answeredIds(S.data, attention.owedCards()) : null;
+    if (hiding && !(await notes.leaveIf({ card: (id) => hiding.has(id) }))) return;
+    status.set({ hide: !status.now.hide }); if (S.data) redraw();
+  }
 
   // ---- wiring --------------------------------------------------------------------------------
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
@@ -224,6 +230,11 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   let align = alignOf(host);
   const unsettle = host.settings.on(() => { if (alignOf(host) !== align) { align = alignOf(host); if (S.data) redraw(); } });
 
+  /** Archive board takes the open board away: a note being written on it asks first (point 309); Cancel archives nothing. */
+  async function archiving(id: string, fields: Parameters<typeof sender.actOn>[1]) {
+    if (fields.action === 'archive' && id === S.id && !(await notes.leaveIf({ card: () => true, region: () => true }))) return null;
+    return sender.actOn(id, fields);
+  }
   /** Another board (the picker, a chat's link, a new or restored board): a note's unsaved words ask
    *  first, by the one path (`notes.leave`, `mayLeave`), and Cancel keeps this board (M11_01-R3).
    *  With nothing unsaved it switches at once. True once switched. */
@@ -232,7 +243,12 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     go();
     return true;
   }
-  async function showVersion(seq: number | null, until?: number) { if (notes.open) notes.close(); moves.menu.close(); await versions.show(seq, until); }
+  /** A past version, or now: a note being written asks first and Cancel keeps what shows (point 309). */
+  async function showVersion(seq: number | null, until?: number) {
+    if (!(await notes.leave())) return;
+    if (notes.open) notes.close();
+    moves.menu.close(); await versions.show(seq, until);
+  }
   return {
     boot: boards.boot, switchTo: (id) => switchTo(id), showVersion, command: (id) => void flow.command(id),
     goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
@@ -240,7 +256,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,
     send: () => attempt({ action: 'send' }), // it greys the notes it sent at once (2e_FE_01 ruling 7)
-    boardEdit: createBoardEdit({ sender, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
+    boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
     destroy: () => { cancelAnimationFrame(S.frame); [boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle].forEach((f) => f()); },

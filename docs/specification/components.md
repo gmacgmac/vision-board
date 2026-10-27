@@ -240,7 +240,11 @@ host; nclite's pane will be another.
   way: `Board.switchTo` (the picker, a chat's link, a new or restored board; `controller.ts`
   `switchTo`) resolves false on Cancel and keeps the board open. So `reveal` may ask too, through
   `host.confirm`, when it names another board: it shows the card or note only once that board has
-  opened (`mount.ts` `reveal`), and Cancel shows nothing.
+  opened (`mount.ts` `reveal`), and Cancel shows nothing. The person's own acts that would take a
+  note's card or container away ask the same way before they act (point 309; `notes/notes.ts`
+  `leaveIf`, `controller.ts` `toggleHide`, `showVersion`, the Remove and Archive paths): Hide answered,
+  Remove card or container, Archive board, and a past version; Cancel leaves the board as it was.
+  An agent's redraw that removes the card still closes the note (tracker M24).
   The standalone page guards its own tab with the `leavePrompt` flag (`shell/page-host.ts`
   `guardLeave`, from `App.svelte`): a `beforeunload` listener only while the status says `unsaved`, so
   a close or reload, the page's own reloads included, gets the browser's "Leave site?" prompt; the folder
@@ -249,7 +253,8 @@ host; nclite's pane will be another.
   a time, each turn heard), `tests/pages/board-host.spec.ts` "the host asks before words are lost" (a
   host's Close on two boards; "reveal of another board's card" waits for the question),
   `tests/pages/note-discard.spec.ts` "a tab close asks" (the browser's
-  prompt; unchanged, discarded and flag off close) and "choosing another board", and
+  prompt; unchanged, discarded and flag off close), "choosing another board", "Hide answered…",
+  "Remove card and Archive board…" and "a past version…", and
   `tests/pages/note-folder.spec.ts` (Cancel leaves page and server on one folder; flag off as before).
   Not covered: another tab opening another folder (`shell/folder.ts` `folderMoved`) reloads after the
   server has moved, so only the browser's prompt asks.
