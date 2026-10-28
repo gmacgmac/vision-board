@@ -213,6 +213,11 @@ export const FLAGS = {
     default: true,
     description: 'A note on a selection of cards (one note with `nodes`, api.md 62) is drawn once: one pin per group, on the right edge of the group\'s lowest-numbered card just under that card\'s own note pin (or its next card, when an earlier group\'s pin is already there), in its own layer above the cards. Hovering or focusing it, and its bubble being open, ring each card of the group with a dashed line (never a box); pressing it selects the group\'s cards and opens the note, to edit or remove it, with the agent\'s replies to it shown once there. The cards\' own pins, "Your note" blocks and conversations leave the group\'s notes and replies out. Off, the note and its replies show on every card of the group.',
   },
+  appFit: {
+    // On by default (maintainer, 2026-10-27, point 312: app cards fit their content; app-panel-fits-content task); ?flags=-appFit turns it off.
+    default: true,
+    description: 'An app card fits its panel\'s content: a panel that tells its height (MCP Apps\' `ui/notifications/size-changed`, `{ height }`) gets a frame that height, rounded and held to 120 to 1080 px (APP_LIMITS.toldHeight; never stored, so above the agent\'s 800), as wide as the agent drew it; the card is measured again and the cards under it move, with nothing written to the ledger. The agent\'s `h` is the height until the panel tells one, and again once its frame is removed; a frozen panel keeps its last. A panel that tells nothing keeps the agent\'s size. Off, size-changed is ignored and the panel is the size the agent drew (docs/specification/apps.md § Panel size).',
+  },
   goAfterPause: {
     // Off by default (maintainer, 2026-10-15, go-to-card task ruling 2: Enter goes, nothing goes by itself); ?flags=goAfterPause tries it.
     default: false,

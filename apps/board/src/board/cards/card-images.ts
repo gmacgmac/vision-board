@@ -8,10 +8,12 @@
 // - an image in a card's body is the button that opens it over the board;
 // - selecting its card, or opening it, asks again with that version's ETag (a conditional request, on
 //   no timer); a newer picture is loaded out of sight, then swapped in, on the card and in the view;
-// - a card whose image loaded, changed or gave way to a box is measured again, alone (`grown`).
+// - a card whose image loaded, changed or gave way to a box is measured again, alone (`grown`); so is
+//   an app card whose panel told a new height or whose frame went (APP_FRAME_RESIZE_EVENT, the appFit
+//   flag), through the same path: the one re-measure for a card that changed height by itself.
 import { IMAGE_ROUTE, imageNotReal, imageTypeByName } from '#format';
 import type { VbImageViewElement } from '#ui';
-import { IMAGE_BUTTON, imageButton, showProblem } from '#ui';
+import { APP_FRAME_RESIZE_EVENT, IMAGE_BUTTON, imageButton, showProblem } from '#ui';
 import { imageVersion } from '../io.ts';
 
 export interface CardImagesDeps {
@@ -19,7 +21,8 @@ export interface CardImagesDeps {
   host: HTMLElement;
   /** Whether `card`'s images may load now (ruling 23). */
   near(card: HTMLElement): boolean;
-  /** Cards whose height an image changed: measure them again, and nothing else (rule 15). */
+  /** Cards whose height changed by itself (an image, an app panel's height): measure them again, and
+   * nothing else (rule 15). */
   grown(ids: string[]): void;
 }
 
@@ -159,6 +162,8 @@ export function createCardImages(d: CardImagesDeps): CardImages {
     [img.width, img.height] = wh;
     grew(img);
   }, true);
+  // An app card's panel told a new height, or its frame went: its card measured again, as for a picture.
+  d.host.addEventListener(APP_FRAME_RESIZE_EVENT, (e) => grew(e.target as Element));
   // One that would not draw: the route says why, or its bytes were not a picture after all.
   d.host.addEventListener('error', (e) => {
     const img = e.target as HTMLImageElement;

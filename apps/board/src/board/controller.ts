@@ -143,7 +143,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const sender = createSender({ io, board: () => S.id, own: (line, board) => live.own(line, board), redraw: () => redraw(), fail,
     refusal: (board, line) => (versions.state ? READ_ONLY : lock.refuse(board, line)) });
   const { attempt, record } = sender;
-  const apps = createAppCards({ on: apping, stage, vp, board: () => S.id, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: ask, toast, fail, redraw: () => redraw(), io }); // app-cards.ts
+  const apps = createAppCards({ on: apping, fit: on('appFit'), stage, vp, board: () => S.id, selection, cards: () => drawing.cards, layout: () => drawing.layout, past: () => !!versions.state, act: attempt, confirm: ask, toast, fail, redraw: () => redraw(), io }); // app-cards.ts
   const removal = removing ? createRemoveFlow({ stage, state: () => live.state, board: () => S.id, title: (id) => view().regions.find((r) => r.id === id)?.title ?? id,
     retire: async (fields) => (await notes.leaveIf({ card: (id) => !!fields.cards?.includes(Number(id)) || (!!fields.region && nodeOf(id)?.region === fields.region), region: (r) => r === fields.region })) ? sender.retire(fields) : '',
     confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24); a note being written on what goes asks too (point 309)

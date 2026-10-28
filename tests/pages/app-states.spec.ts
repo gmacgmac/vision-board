@@ -48,8 +48,10 @@ const sizes = (page: Page) => page.locator('vb-node').evaluateAll((els) => [...n
 /** The footer's app control showing on card `i`, if any. */
 const control = (page: Page, i: number) => card(page, i).locator('.vb-app-status > button:visible');
 
-async function open(page: Page, query = ''): Promise<void> {
-  await page.goto(`${s.base}/${query}#${board}`);
+/** Open the board with the appFit flag off (`flags` adds others): every card here keeps the size the
+ * agent drew, so each state is compared at one size. A panel's own height is app-fit.spec.ts's. */
+async function open(page: Page, flags: string[] = []): Promise<void> {
+  await page.goto(`${s.base}/?flags=${['-appFit', ...flags].join(',')}#${board}`);
   await expect(page.locator('vb-node')).toHaveCount(n.length);
   await expect(page.locator('.vb-world')).not.toHaveClass(/no-anim/);
 }
@@ -213,7 +215,7 @@ test('the window look (appTitle flag, on): no title above the panel in any state
 });
 
 test('with the appTitle flag off, the title shows above the panel and the footer names nothing', async ({ page }) => {
-  await open(page, '?flags=-appTitle');
+  await open(page, ['-appTitle']);
   await expectStates(page);
   expect(((await card(page, 0).locator('.vb-node-title').boundingBox())?.width ?? 0)).toBeGreaterThan(2);
   await expect(nameOf(page, 0)).toBeHidden();

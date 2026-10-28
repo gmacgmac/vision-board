@@ -845,3 +845,31 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   (the sandbox gives an opaque origin on one server, as D-047's panels do); no size check (the 300 by
   150 jolt).
 - **Task**: cortex-tasks/board/2026-10-27_board-app_host-fixes-and-svg/SVG_01_svg-images.md
+
+## D-065 An app card fits its panel's content (amends D-047 ruling 3)
+- **Date**: 2026-10-27 · **Status**: Accepted (maintainer approved 2026-10-28, point 314: an app card fits its panel's content; a limit stays, just in case; the height limit set to 1080, point 315) · **From**: maintainer
+  point 312; app-panel-fits-content task
+- **Decision**: A panel may tell the board its content's height with MCP Apps' own
+  `ui/notifications/size-changed` (`{ height }` in px). Behind the `appFit` flag, on by default:
+  1. The board sets the frame's height to it, rounded and held to 120 to 1080 (`packages/format/src/apps.ts`). A
+     `width` is ignored: the width stays the agent's `w`, so a panel never widens its card.
+     The agent's own `h` keeps 120 to 800 (`APP_SIZE.h`): it is written to the ledger, so a
+     wider limit there would be a ledger format change; a told height is never stored.
+  2. The agent's `h` is the height until the panel tells one, and again once the frame is removed
+     (the panel starts again at it). A frozen panel keeps its last height. A panel that tells
+     nothing keeps the agent's size.
+  3. The card is measured again through the board's one re-measure path for a card that changed
+     height by itself (the one images use), so the cards under it move; layout stays a pure function
+     of measured sizes. Nothing is written to the ledger or the saved panel state.
+  4. A height equal to the last does nothing; the message counts towards
+     `panelMessagesPerSecond`; content that grows with its frame stops at 1080.
+  5. `containerDimensions` stays the agent's `{ width: w, height: h }`, and the board sends no
+     `host-context-changed` after a told height (MCP Apps: a host "MAY" send it).
+  6. Off (`?flags=-appFit`), size-changed is ignored, as before.
+- **Why**: the agent can't know the height its app's content takes, so cards showed a blank band
+  under the content or cut it off.
+- **Rejected**: the board reading the panel's height itself (the opaque origin forbids it); the
+  panel setting its width too (a panel would widen cards and the container); sending the new height
+  back as `containerDimensions` (the agent's size stays the panel's statement of what was asked).
+- **Kept**: `containerDimensions` as `{ width, height }`, not MCP Apps' flexible `{ width, maxHeight }`: nothing changes for existing apps, and a panel tells its content's height either way.
+- **Task**: cortex-tasks/board/2026-10-27_board-ui_app-panel-fits-content.md

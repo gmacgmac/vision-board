@@ -639,3 +639,27 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
 - 2026-10-27, agent: **not run with live agents.** Run an svg scenario with Claude Code and Kiro
   (draw a diagram as svg; draw a small animation; try an svg with a script and read the card)
   before relying on the text. Kiro reads the new text when the board next starts.
+
+## Skill v3.15 (an app card fits its content)
+
+- 2026-10-27, maintainer (point 312): app cards show a blank band under their content or cut it
+  off, because the agent can't know the height its app's content will take ("Data flow" asked for
+  900 × 640 and ended about 100 px early). App cards should fit their content.
+- 2026-10-27, agent (app-panel-fits-content task; the decision drafted there, awaiting the
+  maintainer's yes): v3.15 adds `ui/notifications/size-changed` to the panel's messages, with the
+  lines that send it, and one clause to Size (set `h` near the content's height). Why these lines:
+  MCP Apps' own SDK measures the same way (the root at `height: max-content`, rounded up, sent only
+  when it changed), so a panel built either way behaves alike, and `max-content` measures the
+  content even when the page fills its frame (`height: 100%`). A `ResizeObserver` on the body sees
+  the page grow; it can't see a list grow inside a box the frame sizes, so the skill says to call
+  `tellHeight()` after such a change. The board holds the told height to 120 to 1080 (the maintainer, point 315: a told height is never stored, so it is not held to the agent's `h` of 800, which is part of the ledger format) and ignores a width.
+- 2026-10-27, agent: the calculator (model app) sends its height: its keypad's own height is 440
+  (`main { min-height: 440px }`, the same as its app.json), so it fits its card exactly as before,
+  and a long history makes it taller (up to 1080, then the list scrolls). It tells after the history
+  opens, closes and loads. `.visionboard/apps/calculator/panel.html` must be the same file
+  (`repo-example-app.test.ts`).
+- 2026-10-27, agent: checked in a browser (Chromium, the page suite's): the calculator asked for
+  600 fits its 440, and a test panel of fixed rows fits each count from 120 to 1080
+  (`tests/pages/app-fit.spec.ts`). **Not run with live agents**: build an app with Claude Code and
+  Kiro and see whether they send the height and pick `h` near it before relying on the text. Kiro
+  reads the new text when the board next starts.

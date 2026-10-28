@@ -7,8 +7,8 @@
 // measured at (Match card widths, field report batch 3) is measured again at that width and its
 // container laid out once more. A fresh draw (opening a board, a rebuild) throws everything away
 // and draws from scratch. Images in cards (card-images.ts) load once their card is near, are asked
-// after again when a card is selected, and a card whose image changed its height is measured and laid
-// out again alone (`resized`).
+// after again when a card is selected, and a card whose image changed its height, or whose app panel
+// told a new one (appFit), is measured and laid out again alone (`resized`).
 import type { NodeSize, ViewNode } from '#format';
 import type { Align, BoardLayout, Size } from '#layout';
 import { widthsOf } from '#format';
@@ -158,8 +158,9 @@ export function createDrawing(d: DrawDeps): Drawing {
     lay(data, fresh);
   }
 
-  /** Cards `ids` changed height by themselves (an image loaded): measure them, and when one did
-   * change, lay out and place again (only their containers lay out again, layout-cache.ts). */
+  /** Cards `ids` changed height by themselves (an image loaded, an app panel told its height or its
+   * frame went): measure them, and when one did change, lay out and place again (only their
+   * containers lay out again, layout-cache.ts). */
   function resized(ids: string[]) {
     const drawn = ids.filter((id) => layout?.nodes.has(id) && cards.els.has(id));
     const before = drawn.map((id) => sizes.get(id)?.h);

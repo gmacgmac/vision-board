@@ -124,7 +124,7 @@ test(`at most ${FRAME_CALLS} tool calls wait at once (the host's running plus qu
   assert.equal(made, FRAME_CALLS + 1, 'one answered, so the next goes through');
 });
 
-test('ui/notifications/escape calls onEscape (focus back to the card); size-changed is ignored', () => {
+test('ui/notifications/escape calls onEscape (focus back to the card); without fitHeight (the appFit flag off) size-changed is ignored', () => {
   let escapes = 0;
   const h = harness({ onEscape: () => { escapes += 1; } });
   ready(h);

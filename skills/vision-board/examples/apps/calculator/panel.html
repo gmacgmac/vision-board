@@ -29,7 +29,9 @@
   [hidden] { display: none !important; }
   html, body { height: 100%; margin: 0; }
   body { background: var(--bg); color: var(--ink); font: var(--text) var(--font-sans, system-ui, sans-serif); }
-  main { height: 100%; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  /* The keypad's own height: app.json asks for the same, so the card is drawn at it from the start.
+     The panel tells the board its content's height (tellHeight, below): taller with a long history. */
+  main { height: 100%; min-height: 440px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .screen { background: var(--key); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px 10px;
     min-height: 84px; display: flex; flex-direction: column; justify-content: space-between; gap: 2px; }
@@ -127,6 +129,19 @@
     clearTimeout(call.timer);
     if (data.error) call.reject(data.error); else call.resolve(data.result);
   });
+
+  // The content's height, so the card fits it (apps.md, "Panel size"): measured at max-content (the
+  // content's own height, not the frame's) and sent when it changes.
+  let told = 0;
+  function tellHeight() {
+    const html = document.documentElement;
+    const was = html.style.height;
+    html.style.height = 'max-content';
+    const height = Math.ceil(html.getBoundingClientRect().height);
+    html.style.height = was;
+    if (height !== told) send({ method: 'ui/notifications/size-changed', params: { height: (told = height) } });
+  }
+  new ResizeObserver(tellHeight).observe(document.body);
 
   const ready = request('ui/initialize', { protocolVersion: '2026-01-26', appCapabilities: {} }).then((answer) => {
     applyContext(answer.hostContext);
@@ -265,6 +280,8 @@
     toggle.setAttribute('aria-expanded', String(open));
     keys.hidden = open;
     historyBox.hidden = !open;
+    // The list scrolls inside a box the frame sizes, so no observer sees it change: tell after each.
+    tellHeight();
     if (!open) return;
     historyBox.replaceChildren(el('li', 'note', 'Loading…'));
     try {
@@ -273,6 +290,7 @@
     } catch (error) {
       historyBox.replaceChildren(el('li', 'note', error.message));
     }
+    tellHeight();
   }
 
   toggle.addEventListener('click', () => showHistory(historyBox.hidden));

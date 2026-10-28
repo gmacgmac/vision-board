@@ -109,7 +109,8 @@ test('a loaded panel keeps what it holds through a far zoom, a pan two screens a
   await expect(cardOf(page, q!)).toHaveAttribute('data-selected', '');
   await live('a selection');
   await s.write(board, [{ type: 'node', n, node: { region: 'tools', ...CALCULATOR, title: 'Calculator, again', app: { id: 'calculator', w: 400, h: 460 } } }]);
-  await expect.poll(() => iframe.evaluate((f: HTMLIFrameElement) => [f.offsetWidth, f.offsetHeight])).toEqual([400, 460]);
+  // The agent's new width; the height stays the 440 the calculator told (appFit, app-fit.spec.ts).
+  await expect.poll(() => iframe.evaluate((f: HTMLIFrameElement) => [f.offsetWidth, f.offsetHeight])).toEqual([400, 440]);
   await live('a new size');
 });
 

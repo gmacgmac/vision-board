@@ -14,7 +14,7 @@ import { el } from './dom.ts';
 import { loadFixture } from './fixture.ts';
 import type { Fixture } from './fixture.ts';
 import { appFrameSamples } from './app-frame-section.ts';
-import { appSection } from './app-section.ts';
+import { appFitSection, appSection } from './app-section.ts';
 import { baseSamples } from './base-section.ts';
 import { historySection } from './history-section.ts';
 import { imageViewSamples } from './image-view-section.ts';
@@ -148,6 +148,7 @@ function build(): void {
   if (flagOn('freshCards', flags)) main.append(freshSection(fx)); // after the rail, so the sections above keep their place
   if (flagOn('groupNoteOnce', flags)) main.append(groupNotesSection(fx)); // last, so the sections above keep their place
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
+  if (flagOn('appCards', flags)) main.append(appFitSection(fx)); // the appFit flag's entry, on or off; last, so the sections above keep their place
   main.append(...patterns.filter((p) => p.name === LAST).map((p) => section(p, fx))); // last of all, so the sections above keep their place
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document

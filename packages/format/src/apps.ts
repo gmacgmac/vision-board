@@ -28,7 +28,8 @@ export const APP_PANEL_PATH = '/app-panels/';
 export const APP_FILES = { manifest: 'app.json', panel: 'panel.html', tools: 'tools.mjs' } as const;
 
 /** The panel's size in px (ruling 3): the agent's `node.app.w` and `h`, else the manifest's
- * `size`, else the default. The schemas read the same numbers (a test checks). */
+ * `size`, else the default. The schemas read the same numbers (a test checks). A height a panel
+ * tells (`ui/notifications/size-changed`, the appFit flag) has its own most, `APP_LIMITS.toldHeight`. */
 export const APP_SIZE = {
   w: { min: 280, max: 960, default: 360 },
   h: { min: 120, max: 800, default: 320 },
@@ -60,6 +61,11 @@ export const APP_LIMITS = {
   panelMessagesPerSecond: 50,
   /** The most a panel's saved state may hold, in bytes of compact UTF-8 JSON (`appStateProblem`). */
   stateBytes: 64 * 1024,
+  /** The tallest a panel may make its frame by telling its height (`size-changed`, the appFit flag),
+   * in px; the least is `APP_SIZE.h.min`. Above the agent's `APP_SIZE.h.max` on purpose: a told height
+   * is never stored (not in the ledger, not in the saved state), so it is no part of the ledger format,
+   * whose schema holds the agent's `h` to `APP_SIZE.h`. */
+  toldHeight: 1080,
 } as const;
 
 /** What list_apps says of each app (ruling 11), worked out fresh by one function in the host:
@@ -88,8 +94,11 @@ export const APP_STATE_KEY = `${APP_HOST_NAME}/state` as const;
 
 /** Every message a panel may send the board (JSON-RPC 2.0 over `postMessage`, ruling 5): a request
  * gets an answer, a notification none. Anything else is answered "method not found" when it is a
- * request, and ignored when it is not. `ui/notifications/escape` is the board's own: Esc in the
- * panel puts focus back on the card (ruling 15); it came before the `APP_HOST_NAME` rule. */
+ * request, and ignored when it is not. `ui/notifications/size-changed` is MCP Apps' own: `{ height }`
+ * is the panel's content height in px, which sets the frame's height, held to `APP_SIZE.h.min` and
+ * `APP_LIMITS.toldHeight` (a `width`
+ * is ignored; with the appFit flag off, all of it is). `ui/notifications/escape` is the board's own:
+ * Esc in the panel puts focus back on the card (ruling 15); it came before the `APP_HOST_NAME` rule. */
 export const PANEL_METHODS = {
   'ui/initialize': 'request',
   'ui/notifications/initialized': 'notification',

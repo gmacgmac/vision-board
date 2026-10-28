@@ -283,9 +283,16 @@ function frameAt(t: HTMLElement): { region: string; el: HTMLElement; grip: boole
 function bindPanKey(stage: HTMLElement): () => void {
   const held = (on: boolean) => { if (stage.hasAttribute('data-pan-key') !== on) stage.toggleAttribute('data-pan-key', on); };
   const onKey = (e: KeyboardEvent) => held(panKey(e));
+  const onPointer = (e: MouseEvent) => held(panKey(e));
   const onBlur = () => held(false);
   for (const type of ['keydown', 'keyup'] as const) window.addEventListener(type, onKey, true);
-  stage.addEventListener('pointerover', (e) => held(panKey(e)));
+  // A press or a wheel carries the keys as they are. A pointerover only turns the mark on (the key
+  // went down while another window had focus): the browser also fires one when the board moves under
+  // a still pointer (after a zoom), with no keys, which would hand an app's panel the pointer back
+  // mid-gesture (app-pan-key.spec.ts).
+  stage.addEventListener('pointerover', (e) => { if (panKey(e)) held(true); });
+  stage.addEventListener('pointerdown', onPointer, true);
+  stage.addEventListener('wheel', onPointer, { capture: true, passive: true });
   window.addEventListener('blur', onBlur);
   return () => {
     for (const type of ['keydown', 'keyup'] as const) window.removeEventListener(type, onKey, true);

@@ -96,6 +96,10 @@
    caret; during any pan, a closed hand. Over every part's own cursor, so marked important. */
 .vb-stage[data-pan-key], .vb-stage[data-pan-key] :where(:not(input, textarea, select, [contenteditable], [contenteditable] *)) { cursor: grab !important; }
 .vb-stage.panning, .vb-stage.panning * { cursor: grabbing !important; }
+/* An app's panel is a frame: a wheel or a drag over it goes to the panel's own page, never the board.
+   While Cmd is held, or a pan runs, it takes no pointer, so Cmd+wheel zooms and Cmd+drag pans over an
+   app card too (maintainer, point 313; app-pan-key.spec.ts). Without the key the panel keeps it. */
+.vb-stage:is([data-pan-key], .panning) vb-app-frame { pointer-events: none; }
 .vb-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .vb-world.gliding { transition: transform var(--vb-motion) var(--vb-ease); }
 .vb-world.no-anim * { transition: none !important; }

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Grow</title>
+<!-- A test panel (app-fit.spec.ts): rows of a fixed height, so its content is 24 + 40 × rows px
+     tall; window.rows(n) sets how many. It tells the board its height with the skill's lines
+     (skills/vision-board/SKILL.md § Apps on the board). -->
+<style>
+  body { margin: 0; padding: 12px; font: 14px system-ui, sans-serif; background: var(--color-background-primary); color: var(--color-text-primary); }
+  p { box-sizing: border-box; height: 32px; margin: 0 0 8px; }
+</style>
+<main id="rows"><p>Row 1</p><p>Row 2</p><p>Row 3</p><p>Row 4</p></main>
+<script>
+  const send = (message) => parent.postMessage({ jsonrpc: '2.0', ...message }, '*');
+  addEventListener('message', ({ data }) => {
+    const ctx = data?.result?.hostContext;
+    if (!ctx) return;
+    for (const [name, value] of Object.entries(ctx.styles?.variables ?? {})) document.body.style.setProperty(name, value);
+    send({ method: 'ui/notifications/initialized' });
+  });
+  send({ id: 1, method: 'ui/initialize', params: { protocolVersion: '2026-01-26', appCapabilities: {} } });
+
+  let told = 0;
+  function tellHeight() {
+    const html = document.documentElement;
+    const was = html.style.height;
+    html.style.height = 'max-content';
+    const height = Math.ceil(html.getBoundingClientRect().height);
+    html.style.height = was;
+    if (height !== told) send({ method: 'ui/notifications/size-changed', params: { height: (told = height) } });
+  }
+  new ResizeObserver(tellHeight).observe(document.body);
+
+  window.rows = (n) => {
+    const list = document.getElementById('rows');
+    list.replaceChildren(...Array.from({ length: n }, (_, i) => Object.assign(document.createElement('p'), { textContent: `Row ${i + 1}` })));
+  };
+</script>
+</html>

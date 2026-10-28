@@ -2,27 +2,19 @@
 // panel protocol), JSON-RPC 2.0 over postMessage in MCP Apps' shape. No DOM: the element
 // (vb-app-frame.ts) hands it every message its window gets, marked with whether it came from the
 // card's own frame, and a way to post to that frame; the page hands it `callTool`, the card's saved
-// state (`saveState`, `loadState`) and the board's look. Every number is the shared table's
-// (`APP_LIMITS`, `APP_SIZE` in packages/format).
-import type { AppRef, AppSize, AppStateValue, AppToolResult, PanelMethod } from '#format';
+// state (`saveState`, `loadState`), the board's look and, with the appFit flag, the frame's height
+// (`fitHeight`). Every number is the shared table's (`APP_LIMITS`, `APP_SIZE` in packages/format).
+import type { AppSize, AppStateValue, AppToolResult, PanelMethod } from '#format';
 import {
-  APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_SIZE, APP_STATE_KEY, APP_STYLE_VARIABLES, APP_TOOL_NAME, appSize,
+  APP_HOST_NAME, APP_LIMITS, APP_PROTOCOL_VERSION, APP_STATE_KEY, APP_STYLE_VARIABLES, APP_TOOL_NAME,
   HOST_NOTIFICATIONS, LEDGER_FORMAT, PANEL_ERRORS, PANEL_METHODS, PANEL_SAVE_STATE,
 } from '#format';
 import { checkSave, SAVE_WORDS } from './app-frame-state.ts';
+import { panelHeight } from './app-frame-size.ts';
 import * as appFrameWords from '../words/app-frame.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 
-/** The panel's size in px: the agent's, else the manifest's, else the default (`appSize`), held to
- * `APP_SIZE` (ruling 3). The card and the frame both read it, so they never disagree. */
-export function panelSize(ref: AppRef, manifest?: AppSize): AppSize {
-  const s = appSize(ref, manifest);
-  const fit = (v: number, side: 'w' | 'h'): number => {
-    const { min, max, default: d } = APP_SIZE[side];
-    return Number.isFinite(v) ? Math.min(max, Math.max(min, Math.round(v))) : d;
-  };
-  return { w: fit(s.w, 'w'), h: fit(s.h, 'h') };
-}
+export { APP_FRAME_RESIZE_EVENT, panelHeight, panelSize } from './app-frame-size.ts';
 
 export type AppTheme = 'light' | 'dark';
 export type AppStyleVariable = keyof typeof APP_STYLE_VARIABLES;
@@ -95,7 +87,7 @@ export type BridgeState = 'connecting' | 'initializing' | 'ready' | 'closed';
 
 type Parsed =
   | { kind: 'request'; id: JsonRpcId; method: string; params: unknown }
-  | { kind: 'notification'; method: string }
+  | { kind: 'notification'; method: string; params: unknown }
   | { kind: 'response' }
   | { kind: 'invalid'; id: JsonRpcId | null };
 
@@ -110,7 +102,7 @@ export function parsePanelMessage(m: unknown): Parsed {
   if (m.jsonrpc !== '2.0') return { kind: 'invalid', id };
   if (!('method' in m)) return 'result' in m || 'error' in m ? { kind: 'response' } : { kind: 'invalid', id };
   if (typeof m.method !== 'string' || !m.method) return { kind: 'invalid', id };
-  if (!('id' in m)) return { kind: 'notification', method: m.method };
+  if (!('id' in m)) return { kind: 'notification', method: m.method, params: m.params };
   return id === null ? { kind: 'invalid', id } : { kind: 'request', id, method: m.method, params: m.params };
 }
 
@@ -148,6 +140,9 @@ export interface AppBridgeOptions {
   loadState?(): Promise<AppStateValue | undefined>;
   /** The person pressed Esc in the panel (`ui/notifications/escape`): focus goes back to the card. */
   onEscape?(): void;
+  /** The panel told its content's height (`size-changed`; `panelHeight`), when it differs from the
+   * last it told: the frame takes it. Left out (the appFit flag off), size-changed is ignored. */
+  fitHeight?(height: number): void;
   /** The handshake moved on (the element shows the panel once it is ready). */
   onState?(state: BridgeState): void;
   /** The clock the message cap counts by; Date.now unless a test gives another. */
@@ -175,6 +170,8 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
   /** Bumped on each ui/initialize: an answer meant for the panel before a restart is dropped. */
   let epoch = 0;
   let calls = 0;
+  /** The last height the panel told, so the same one again does nothing. */
+  let told: number | undefined;
   const times: number[] = [];
 
   const send = (m: HostMessage): void => {
@@ -268,12 +265,18 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     else callTool(id, params);
   }
 
-  function notify(method: string): void {
+  /** A notification from the panel: initialized, escape, and size-changed with `fitHeight`; any other is ignored. */
+  function notify(method: string, params: unknown): void {
     if (method === 'ui/notifications/initialized' && state === 'initializing') {
       setState('ready');
       contextChanged();
     } else if (method === 'ui/notifications/escape') o.onEscape?.();
-    // ui/notifications/size-changed is ignored (the agent sets the size), and so is any other.
+    else if (method === 'ui/notifications/size-changed' && o.fitHeight) {
+      const height = panelHeight(params);
+      if (height === undefined || height === told) return;
+      told = height;
+      o.fitHeight(height);
+    }
   }
 
   function receive(message: unknown, fromFrame: boolean): void {
@@ -288,7 +291,7 @@ export function createAppBridge(o: AppBridgeOptions): AppBridge {
     }
     times.push(t);
     if (m.kind === 'invalid') fail(m.id, PANEL_ERRORS.invalidRequest, 'Not a JSON-RPC 2.0 message.');
-    else if (m.kind === 'notification') notify(m.method);
+    else if (m.kind === 'notification') notify(m.method, m.params);
     else request(m.id, m.method, m.params);
   }
 

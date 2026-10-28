@@ -7,11 +7,13 @@
 // panel keeps running and what it holds, but takes no input (inert) and isn't painted: the
 // placeholder shows. Unloaded, it is a light placeholder with the app's title. Its inputs are
 // attributes: data-app (the app's id), data-label (its name: the frame's title), data-w and data-h
-// (the panel's size, held to APP_SIZE). Browser only: the class is created inside defineVbAppFrame().
+// (the panel's size, held to APP_SIZE). With the appFit flag, the height a loaded panel tells
+// (size-changed) is the frame's until the frame is removed, and the frame fires APP_FRAME_RESIZE_EVENT
+// so the page measures the card again. Browser only: the class is created inside defineVbAppFrame().
 import type { AppSize, AppStateValue, AppToolResult } from '#format';
-import { APP_ID, APP_PANEL_PATH } from '#format';
+import { APP_ID, APP_PANEL_PATH, flagOn } from '#format';
 import type { AppBridge, AppLook } from './app-frame-core.ts';
-import { createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
+import { APP_FRAME_RESIZE_EVENT, createAppBridge, hostContext, hostStyles, panelSize } from './app-frame-core.ts';
 import { KIND_ICON, svgIcon } from '../node/node-icons.ts';
 import * as uiCommonWords from '../words/ui-common.ts';
 
@@ -35,6 +37,9 @@ export interface AppFrameWiring {
   /** How focus came into the panel, asked when it does: 'pointer' draws no ring (a click, as on a
    * card), anything else, or left out, draws it (the page's `focusCame`, pointer-focus.ts). */
   focusCame?(): 'pointer' | 'key';
+  /** The appFit flag: the height the panel tells (size-changed) is the frame's; left out, the flag's
+   * default. Off, the frame is the size the agent drew. */
+  fit?: boolean;
   /** Esc in the panel; left out, focus goes back to the card the frame is in. */
   onEscape?(): void;
   /** The frame loaded: the panel, or the route's refusal once the app went (the page reads the
@@ -105,6 +110,8 @@ export function defineVbAppFrame(): void {
     private frame: HTMLIFrameElement | undefined;
     private bridge: AppBridge | undefined;
     private timer: ReturnType<typeof setTimeout> | undefined;
+    /** The height the loaded panel told (appFit), held to 120 to APP_LIMITS.toldHeight; undefined: the agent's. */
+    private fitted: number | undefined;
     /** Every message the window gets goes to the core, marked as the frame's only when it came from
      * this frame's window, whose sandbox gives it the opaque origin "null" (ruling 5). */
     private readonly onMessage = (e: MessageEvent): void => {
@@ -182,6 +189,7 @@ export function defineVbAppFrame(): void {
         hostContext: () => hostContext(this.wiring?.look?.() ?? readLook(this), this.size),
         onEscape: () => (this.wiring?.onEscape ? this.wiring.onEscape() : this.toCard()),
         onState: (s) => { if (s === 'ready') this.show(); },
+        ...((this.wiring?.fit ?? flagOn('appFit')) && { fitHeight: (h: number) => this.fitTo(h) }),
       });
       // Listen before the frame exists, so its first message is heard.
       window.addEventListener('message', this.onMessage);
@@ -229,6 +237,19 @@ export function defineVbAppFrame(): void {
       }
       this.dataset.state = 'idle';
       this.removeAttribute('aria-busy');
+      // The panel's height went with it: the agent's again.
+      this.fitTo(undefined);
+    }
+
+    /** The frame's height becomes `h` (the panel's) or, undefined, the agent's; when that changed
+     * it, the page hears (APP_FRAME_RESIZE_EVENT) and measures the card again. */
+    private fitTo(h: number | undefined): void {
+      const before = this.fitted ?? this.size.h;
+      this.fitted = h;
+      const after = h ?? this.size.h;
+      if (after === before) return;
+      this.applySize();
+      this.dispatchEvent(new CustomEvent(APP_FRAME_RESIZE_EVENT, { bubbles: true, detail: { height: after } }));
     }
 
     /** The panel said it is ready (or took too long to): it shows, and can take focus. */
@@ -254,11 +275,12 @@ export function defineVbAppFrame(): void {
       this.prepend(ph);
     }
 
-    /** The panel's size as --app-w and --app-h (CSSOM: the page's CSP refuses style attributes). */
+    /** The panel's size as --app-w and --app-h (CSSOM: the page's CSP refuses style attributes):
+     * the agent's, with the height the panel told in place of its `h` (appFit). */
     private applySize(): void {
       const { w, h } = this.size;
       this.style.setProperty('--app-w', `${w}px`);
-      this.style.setProperty('--app-h', `${h}px`);
+      this.style.setProperty('--app-h', `${this.fitted ?? h}px`);
     }
   }
 

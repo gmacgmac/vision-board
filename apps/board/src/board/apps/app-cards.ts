@@ -41,6 +41,9 @@ import { isFar } from '../canvas/index.ts';
 export interface AppCardsDeps {
   /** The appCards flag: off, app cards are plain cards and nothing here runs (ruling 13). */
   on: boolean;
+  /** The appFit flag: a panel's own height is its frame's (apps.md § Panel size); left out, the
+   * flag's default. */
+  fit?: boolean;
   stage: HTMLElement;
   vp: Viewport;
   /** The board shown: its app cards' saved panel states are kept under it. */
@@ -157,6 +160,7 @@ export function createAppCards(d: AppCardsDeps): AppCards {
     /** The card's panel now: the board shown, the card's number, the app its frame shows. */
     const key = (): PanelKey => ({ board: d.board(), n: Number(card.dataset.id), app: frame.dataset.app ?? '' });
     frame.wire({
+      ...(d.fit !== undefined && { fit: d.fit }),
       callTool: (name, args) => call(frame.dataset.app ?? '', name, args),
       saveState: (state) => saved.save(key(), state),
       loadState: () => saved.load(key()),

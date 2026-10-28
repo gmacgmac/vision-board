@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-17
-updated: 2026-10-19
+updated: 2026-10-27
 scope: The app card contract — an app's folder, manifest, panel protocol, saved panel state, tools module, limits, approval and states
 ---
 
@@ -67,6 +67,27 @@ card takes no `size` word. Limits (`APP_SIZE`; the schema holds the same numbers
 |---|---|---|---|
 | `w` | 280 | 960 | 360 |
 | `h` | 120 | 800 | 320 |
+
+A panel can tell the board its content's height, so the card fits it (the `appFit` flag, on by
+default): it sends MCP Apps' `ui/notifications/size-changed` with `{ height }` in px, and the board
+sets the frame to that height, rounded and held to 120 to `toldHeight` (1080, § Limits;
+`packages/ui/src/app-frame/app-frame-size.ts` `panelHeight`). A told height may be taller than the
+`h` the agent may ask for (800, the table above) because it is never stored: the agent's `h` is in the
+ledger, so its limit is part of the ledger format (the schema's `appHeight`), and a told height is
+not, so raising its limit changes no format. The card is measured again and the
+cards under it move with it; nothing is written to the ledger or the panel's saved state. The width
+stays the agent's `w`: a `width` in the message is ignored. The agent's `h` is the height until the
+panel tells one, and again once its frame is removed (the panel starts again at it); a frozen panel
+keeps its last height. A height equal to the frame's does nothing, and the message counts towards
+`panelMessagesPerSecond`, so a panel whose content grows with its frame stops at 1080. A panel that
+tells nothing keeps the agent's size; with the flag off, `size-changed` is ignored. `containerDimensions`
+in the host context stays the agent's `w` and `h`, and the board sends no `host-context-changed` for
+a height the panel told (MCP Apps leaves that to the host: "MAY").
+
+So set `h` near the content's height, so the first draw is close, and send the height whenever it
+changes: measure the document at `height: max-content` (its content's own height, not the frame's)
+and send it when a `ResizeObserver` on the body says the size changed (the skill,
+`skills/vision-board/SKILL.md` § Apps on the board, has the lines; the example calculator does it).
 
 ## The panel
 
@@ -139,7 +160,7 @@ and keeps its name.
 | `ui/notifications/initialized` | notification | The panel is ready for messages. |
 | `tools/call` | request | Params: `{ name, arguments? }`. Answers the tool's result (§ Tool results). |
 | `ping` | request | Answers `{}`. |
-| `ui/notifications/size-changed` | notification | Ignored: the agent sets the panel's size. |
+| `ui/notifications/size-changed` | notification | Params: `{ height }`, the content's height in px; sets the panel's height (§ Panel size). A `width` is ignored. |
 | `ui/notifications/escape` | notification | The board's own: the person pressed Esc in the panel; focus goes back to the card. |
 | `vision-board/save-state` | request | The board's own. Params: `{ state }`. Answers `{}` (§ Saving the panel's state). |
 
@@ -154,7 +175,8 @@ and keeps its name.
 The `hostContext` in the answer to `ui/initialize`:
 
 - `theme`: `light` or `dark`, the board's theme now.
-- `containerDimensions`: `{ width, height }`, the panel's size in px.
+- `containerDimensions`: `{ width, height }`, the panel's size in px as the agent drew it (a height the
+  panel told is not sent back, § Panel size).
 - `styles.variables`: the board's neutral look as MCP Apps style variables, each the resolved value
   of one board token in the board's theme (`APP_STYLE_VARIABLES`): backgrounds, text, borders, the
   fonts, text sizes and corner radii. They are for surfaces, text and lines, and for fallbacks until
@@ -316,6 +338,7 @@ One table, `APP_LIMITS`, which the app host and the panel's frame both read:
 | `fileBytes` | 1048576 | The most one of the app's files (`app.json`, the panel, the tools file) may hold, in bytes. A bigger one is a problem to fix. |
 | `panelMessagesPerSecond` | 50 | Messages a panel may send in one second. The board ignores the rest; a request among them gets error -32000 with `app-busy`. |
 | `stateBytes` | 65536 | The most a panel's saved state may hold, in bytes of compact UTF-8 JSON. More answers error -32000 with `too-large`. |
+| `toldHeight` | 1080 | The tallest a panel may make its frame by telling its height (`size-changed`, § Panel size), in px. Taller is held to it. Never stored, so it is not the agent's `h` limit. |
 
 ## States
 
@@ -423,7 +446,9 @@ Esc back to the card, theme changes and the approval state.
   (`skills/vision-board/examples/apps/calculator.test.mjs`); this repo's own copy in
   `.visionboard/apps/calculator/` equals it byte for byte (`apps/board/tests/repo-example-app.test.ts`).
 - The panel protocol in the frame, with fake windows: `packages/ui/tests/app-frame-core.test.ts`
-  and `app-frame-limits.test.ts`; the save request checked as its schema, answered when the page
+  and `app-frame-limits.test.ts`; the panel's own height (`panelHeight`, `fitHeight`: rounded, held
+  to `APP_SIZE.h.min` and `APP_LIMITS.toldHeight`, the same height once, a width ignored, a loop ending at the clamp, the message cap,
+  and ignored without it) in `app-frame-fit.test.ts`; the save request checked as its schema, answered when the page
   settles or refused, and the saved value in the `ui/initialize` answer only, under
   `APP_STATE_KEY` (`app-frame-state.test.ts`; the key's name and this page naming it,
   `packages/format/tests/apps.test.ts`). The page's debounce, one write in flight, the latest
@@ -446,4 +471,7 @@ Esc back to the card, theme changes and the approval state.
   size, and a card with no size of its own keeping its box when app.json breaks or the folder
   goes (`app-follow.spec.ts`); the panel's opaque origin, its CSP and messages
   from other windows ignored (`app-safety.spec.ts`); the gallery's samples and its live panel
-  (`app-gallery.spec.ts`).
+  (`app-gallery.spec.ts`); a panel that tells its height fitting its card from 120 to 1080 at the
+  agent's width, the card under it moving with it, no ledger write, a width ignored, a frozen panel
+  keeping its height, a panel that tells nothing keeping the agent's size, and the gallery's calculator
+  asked for 600 fitting its 440, light and dark and with the flag off (`app-fit.spec.ts`).
