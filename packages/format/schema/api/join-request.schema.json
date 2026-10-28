@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/join-request.schema.json",
   "title": "Join request",
-  "description": "The agent's label, for example \"Pricing chat\". Grants nothing.",
+  "description": "The agent's label: its working folder's name (not a path). Grants nothing.",
   "$comment": "Was: api.md 21",
   "type": "object",
   "required": [
@@ -11,7 +11,7 @@
   "properties": {
     "label": {
       "$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/agentLabel",
-      "description": "A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."
+      "description": "Your working folder's name (not a path). The person sees it when you ask for access."
     }
   },
   "unevaluatedProperties": false

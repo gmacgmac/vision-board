@@ -83,6 +83,9 @@ The 45 gallery section screenshots (1px off). Cause measured, section by section
 - Fix at the source: the `agentAccess` Requests description is no longer than the old one's wrapped length (same line count); `accessByBotSection` is exported separately and `main.ts` appends it after the last section (`base`), so its fractional height moves nothing.
 - Result: sections below `agentAccess` move by 77.000 px each (whole); `app-fit`, `chat`, `layout-controls` and `access-by-bot` specs on 5300: 43 pass (my own two new screenshots wrote new baselines on that first run, then passed). `send-access` still fails its two `agent-access-*` screenshots (the section changed height again): re-baseline at the gate.
 
+### Run 4
+VERIFY_01 F7: the `join` tool still said a label "such as Pricing chat" (ruling 321). Sources changed, nothing generated: `packages/format/schema/openapi.json` (the `join` operation's description: "Pass your working folder's name (not a path) as `label`."; its example label is now `pricing-site`), `schema/api/join-request.schema.json` (the schema's and the label's descriptions), `schema/events/join.schema.json` (the ledger line's label description). The generated files (`operations.generated.ts`, `tools.generated.json` x2, `commands.generated.ts`, `api-reference.md`) are stale until `npm run gen`: two `gen-api --check` tests fail until then, as intended. Unit (apps + packages) 1728 of 1730 pass, those two the only failures; `check` clean.
+
 ## On Completion
 
 Notes; your row; one LOG line (`[board-security] ACCESS_01: …` → this file); Return Contract.

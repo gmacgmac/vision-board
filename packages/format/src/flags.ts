@@ -236,12 +236,12 @@ export const FLAGS = {
   cardSearch: {
     // On by default (maintainer, 2026-10-28, points 317 and 322; tracker M7; search-and-finding SEARCH_02).
     default: true,
-    description: 'The Go to card box also searches: `/` opens it, letters find cards by their title, text, notes, replies and container (words in any order, part of a word, case and accents ignored, best first); matches ring and the rest dim, ↓ and ↑ step, Enter goes, Esc clears. Digits still go to a card by number. Off, the box takes digits only.',
+    description: 'The Go to card box also searches: `/` opens it, letters find cards by their title, text, notes, replies and container (words in any order, part of a word, case and accents ignored, best first); matches ring and the rest dim, ↓ and ↑ step, Enter goes, Esc clears. Digits still go to a card by number. Only on the board\'s own page, which draws the box; under a host `/` stays the host\'s. Off, the box takes digits only.',
   },
   reviewList: {
     // On by default (maintainer, 2026-10-28, point 319; search-and-finding REVIEW_01).
     default: true,
-    description: 'The proposals notice\'s Review opens a list of the cards with proposals; choosing one brings the card into view at a readable zoom and opens its proposal box, keeping its marks. Off, Review opens the first proposal\'s box where the card is.',
+    description: 'The proposals notice\'s Review opens a list of the cards with proposals (on two or more cards; with one card it goes straight there); choosing one brings the card into view at a readable zoom and opens its proposal box, keeping its marks. Off, Review opens the first proposal\'s box where the card is.',
   },
 } as const satisfies Record<string, FlagDef>;
 

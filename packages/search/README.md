@@ -6,7 +6,8 @@ Journal (`docs/principles.md` § Shared pieces are shared). A caller turns its r
 asks it on every keystroke. Pure functions, no DOM, no dependencies, imports nothing from the repo.
 
 - **Depends on**: nothing.
-- **Used by**: `packages/actions` (the `SearchDoc` type, for `boardSearchDocs`).
+- **Used by**: `packages/actions` (the `SearchDoc` type, for `boardSearchDocs`); `apps/board`
+  (`board/find/go-to-card.ts` `createMatches`: `searchIndex`, `search`).
 - **Public API** (`src/index.ts`): `searchIndex(docs)`, `search(index, query, { limit? })`, and the
   types `SearchDoc`, `SearchField`, `SearchHit`, `FieldHit`, `Range`, `SearchIndex`, `SearchOptions`
   (`IndexedDoc` and `IndexedField` are the index's insides).

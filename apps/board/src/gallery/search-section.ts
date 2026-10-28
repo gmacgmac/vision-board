@@ -65,13 +65,13 @@ export function searchSection(fx: Fixture): HTMLElement {
   const meta = el('p', 'g-meta');
   meta.append(el('code', undefined, 'GoToCard, data-search, data-found'), ' · feature flag cardSearch, on by default · off with ?flags=-cardSearch');
   box.append(heading,
-    el('p', 'g-desc', '/ opens the Go to card box empty; it takes a card number or words. Words ring the matching cards, best first, and dim the rest; '
+    el('p', 'g-desc', '/ opens the box empty, headed Find a card; it takes a card number or words. Words ring the matching cards, best first, and dim the rest; '
       + '↓ and ↑ step through them, Enter goes to the current one, Esc clears.'),
     meta,
     group('Empty', 'Opened by /: the field says what it takes.', sample(state(fx, ''))),
-    group('Matches', 'The count and, for the current match, its card and the part that matched.', sample(state(fx, 'names'))),
+    group('Matches', 'One sentence: the count, then the current match\'s card and the part that matched.', sample(state(fx, 'names'))),
     group('Stepped', 'After ↓: the second match is current.', sample(state(fx, 'plan', 1))),
     group('No matches', 'Nothing is ringed or dimmed.', sample(state(fx, 'zebra'))),
-    group('On the board', 'The matches in an amber ring, the current one wider with a halo; the other cards, the container and its connectors dim.', board(fx)));
+    group('On the board', 'The matches in a thin amber ring; the current one thicker, with a second ring outside it and a halo. The other cards, the container and its connectors dim.', board(fx)));
   return box;
 }

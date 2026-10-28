@@ -1,8 +1,8 @@
 ---
 task_name: Search and Finding
 created: 2026-10-28
-completed:
-status: in-progress
+completed: 2026-10-28
+status: completed
 categories: [board-app, board-ui]
 tracker: cortex-tasks/tracker.md#M7
 ---
@@ -44,7 +44,7 @@ tracker: cortex-tasks/tracker.md#M7
 | 3 | ACCESS_01 | 1 | standard | Trust-and-safety designer for permission prompts — one decision per bot, named so the person knows who is asking; a wall of identical rows teaches people to click Allow without reading. | [Access requests grouped by bot](./ACCESS_01_requests-by-bot.md) | Completed | port 5300 |
 | 4 | SEARCH_02 | 2 | strong | Senior product designer for canvas tools (whiteboards, maps) — search must show where the matches are on the canvas at a glance, step through them without losing your place, and get out of the way with one key. | [The search box on the board](./SEARCH_02_search-box.md) | Completed | port 5400 |
 | 5 | REVIEW_01 | 2 | standard | — | [Review opens a list](./REVIEW_01_review-list.md) | Completed | port 5500 |
-| 6 | VERIFY_01 | 3 | strong | A person using the board for the first time on a 60-card board, with no history of these changes — wants to find "the pricing card" by typing, step through matches, review three proposals and answer two bots asking for access, without losing which cards are still new. | [Verification](./VERIFY_01_search-verification.md) | Pending | port 5600 |
+| 6 | VERIFY_01 | 3 | strong | A person using the board for the first time on a 60-card board, with no history of these changes — wants to find "the pricing card" by typing, step through matches, review three proposals and answer two bots asking for access, without losing which cards are still new. | [Verification](./VERIFY_01_search-verification.md) | Completed | port 5600; 13 findings, [VERIFY_01_findings.md](./VERIFY_01_findings.md) |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -93,7 +93,7 @@ tracker: cortex-tasks/tracker.md#M7
 | SEARCH_02-R1 | SEARCH_02 | `controller.ts`: the search wiring (`boardSearchDocs`, `go.refresh()`, `search` deps) | Orchestrator, applied from its diff | Done |
 | SEARCH_02-R2 | SEARCH_02 | Re-baseline `key-bubble` (4) for the new / row; `npm run map` | Orchestrator, looked at | Done |
 | SEARCH_02-R3 | SEARCH_02 | Files touched with no other owner (`go-to-card.css`, `gallery/search-section.ts`, two unit tests, `search-perf.spec.ts`) | Orchestrator: accepted | Done |
-| SEARCH_02-R4 | SEARCH_02 | `docs/specification/performance.md`: a row for search keystrokes | VERIFY_01 to propose wording; orchestrator | Open |
+| SEARCH_02-R4 | SEARCH_02 | `docs/specification/performance.md`: a row for search keystrokes | SEARCH_02 Run 2, from VERIFY_01 F10 | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -111,12 +111,14 @@ _Notes:_ The finding go path is `go.to(n)` (`board/find/go-to-card.ts`; Go to ca
 
 ### ACCESS_01
 _Status:_ Completed  
+_Run 4:_ F7: the `join` label description now says "your working folder's name (not a path)" in `openapi.json`, `join-request.schema.json`, `join.schema.json`; generated files wait for `npm run gen`.  
 _Run 3:_ the 45 section screenshots were a fractional shift (17.39 px from my longer `agentAccess` description wrapping a line, plus the new section above the rest); description back to its old line count, `accessByBot` section moved to the end of the gallery; all later sections now move exactly 77 px. `agent-access-*` needs re-baselining at the gate.  
 _Run 2:_ Allow all gives one toast (`access-flow.ts` `answerAll`, `allowAllWords`, `App.svelte` wiring); `api.md` 86 updated. Unit, check, gen-api green; access specs pass except the two expected `agent-access-*` screenshots.  
 _Notes:_ Strip grouped by agent id (`board/access/access.ts` `groupByBot`, `groupAskWords`): heading counts bots, one Allow all per bot with 2+ requests (one `grant` each, no confirm: Allow has none), same-label bots numbered "(1)", "(2)". Side panel chat joins as the folder's name (`chat-access.ts` `chatLabel(agent, folder)`), skill v3.16 + NOTES. Gallery: new section `accessByBot`. Beyond the file list: `styles/access.css`, `server/chat-sessions.ts` (call site), `server/words/server-chat.ts` (dead `chat` removed), `tests/pages/send-access.spec.ts` (strip locators), `api-chat-sessions`/`api-chat-kiro` tests (label), `flags.ts` description. Existing `agent-access-*` and gallery full-page baselines now differ (regrouped strip, new section): orchestrator's. Unit/check/gen-api green; `verify` fails only on `modules.md` (npm run map, the other tasks' `packages/search`).
 
 ### SEARCH_02
 _Status:_ Completed  
+_Run 2:_ VERIFY_01 F1 ("Find a card"), F2 (`matchAt`, "2 of 3 · card 4, in the title"), F3 (current: thicker ring, second ring, halo; test), F6 (`/` and search only with `host.page`; `board-host.spec.ts` test seen failing first), F8, F9, F10, F11 (`proposals-review.spec.ts`, shared `proposals-board.ts`, baselines moved), F13 done. Own `search-{light,dark}` re-taken, looked at. Unit, check, verify, gen-api green; the listed page specs 73 passed on 5400.  
 _Notes:_ The box takes words (`go-to-card.ts` `GoSearch`, `createMatches`; `GoBox.found`; `GoTo.step`, `refresh`, `words`); `/` is the `go-to-card` command's other key (`commands.ts`), its own row in `KeyHelp.svelte`. Index once per state change (`key`), marks `data-found` on cards and `data-search` on the world (`board.css`: amber ring `--vb-state-context`, Lc 56.6 / 63.7; the rest 0.35 opacity). Typing never pans; ↓/↑ reveal; Enter is `arrive` (marks kept). Blocking REQUEST: the controller wiring (3 small edits in `controller.ts`, exact diff in the task file): until applied, the box stays digits-only and `/` does nothing. Verified with it applied, then reverted (REVIEW_01 also edits that file). REVIEW_01-R1 handled (`App.svelte` `onreview={(n) => …review(n)}`). Touched outside the list, no other owner: `styles/go-to-card.css` (the box's search look), `gallery/search-section.ts` (new) and its `main.ts` line after `reviewList`, `apps/board/tests/go-to-card-search.test.ts` (new), `keys.test.ts` (`/` under a host), `tests/pages/search-perf.spec.ts` (new), components.md's two "§ Go to card and search" cross-references. Orchestrator: re-baseline `key-bubble.spec.ts` `key-bubble-open-{light,dark}` and `key-bubble-gallery-{light,dark}` (the new "Find a card by its words /" row; looked at); `npm run map` (`verify` fails only on `modules.md`).
 
 ### REVIEW_01
@@ -124,8 +126,8 @@ _Status:_ Completed
 _Notes:_ Review is a `MenuSelect` list ("12 · title · what it proposes", `finder.ts` `proposalRow`, `reviewRows`) when proposals are on 2+ cards, else the button; a row goes through `proposal-flow.ts` `review(n)` -> `go.to(n)` (a find, marks kept), zooms in only when the stage is "far", then opens the box. `ProposalRow.title?` is added by the page with the flag. Blocking REQUEST: `App.svelte` `onreview={(n) => board?.proposals.review(n)}` (SEARCH_02's file); until then a row chosen goes to the first card. Gallery section `reviewList` last of the gallery (`main.ts`), new baselines `review-list-{light,dark}`; the gallery full-page baseline moves with it. `npm run map` needed (`verify` fails only on `modules.md`). Unit, check, gen-api green; proposals, proposals-notice, open-list, find-keeps-marks, fresh-cards page specs pass on 5500 (scratch copy with the App line).
 
 ### VERIFY_01
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Gates green (unit 1,827, check 0, verify ok, gen-api current); the set's page specs on 5600: 120 passed. On a 60-card probe board every criterion holds standalone: search finds by half a word, either order, accents, a note, a reply, a container; marks kept by every finder, cleared by a click (through a reload); Review's three rows; Allow all per bot. Open (`VERIFY_01_findings.md`): **F6 high** under a host `/` opens a box nobody draws and the next letters are board shortcuts (fake host: `/` then `h` hid answered); F1 label "Go to card"; F2 "2 of 3 Card 4" with no separator; F3 the current ring looks like the others; F4 typing never shows an off-screen best match (maintainer's ruling); F5 a container name rings all its cards; F7 the `join` tool still says "such as Pricing chat" (openapi.json, join-request schema); low: F8 search README's users, F9 components.md host story, F10 the performance.md row (SEARCH_02-R4 wording), F11 proposals.spec.ts 408 lines, F12 the strip's fold, F13 reviewList description. The maintainer's look stays open.
 
 ---
 
@@ -135,17 +137,17 @@ _Notes:_
 |------|-------|--------------|------|
 | 1 | SEARCH_01, FIND_01, ACCESS_01 (Runs 1–3) | `search/wave-1` | Green 2026-10-28: unit pass, check 0 errors, verify ok, gen-api current; full page suite 712 passed, 1 timed out (perf.spec selecting 50, at load 8–13); perf.spec alone, twice: 20 passed. A first run failed 45 gallery screenshots by 1 px (ACCESS_01's longer description shifted every section below by a fraction); fixed at the source in Run 3 |
 | 2 | SEARCH_02, REVIEW_01 | `search/wave-2` | Green 2026-10-28: unit pass, check 0 errors, verify ok, gen-api current, full page suite 734 passed (port 4710). Orchestrator applied SEARCH_02's controller wiring, REVIEW_01's App.svelte line went through SEARCH_02, key-bubble's 4 screenshots re-taken for the new / row (looked at) |
-| 3 | VERIFY_01 | — | — |
+| 3 | VERIFY_01; fixes F1–F3, F6, F8–F11, F13 (SEARCH_02 Run 2), F7 (ACCESS_01 Run 4) | `search/done` | Green 2026-10-28: unit 1827 + timing 14, check 0 errors, verify ok, gen-api current, full page suite 735 passed (port 4710). A first run hung when the laptop slept; rerun green |
 
 ---
 
 ## Completion Checklist
 
-- [ ] All implementation tasks complete
-- [ ] Verification task complete
-- [ ] Every request `Done` or `Closed`
+- [x] All implementation tasks complete
+- [x] Verification task complete
+- [x] Every request `Done` or `Closed`
 - [ ] The maintainer looks in a browser, light and dark: search on a big board, the Review list, grouped requests
-- [ ] LOG entry created
+- [x] LOG entry created
 
 ---
 

@@ -13,6 +13,7 @@ export const openItemsChooseOneTo = 'Open items: choose one to go to it';
 export const openItems = 'Open items';
 
 // ---- GoToCard.svelte, with search (cardSearch flag)
+export const findACard = 'Find a card';
 export const cardNumberOrWords = 'Card number or words';
 export const steps = '↑↓';
 export const step = 'step ·';

@@ -11,6 +11,7 @@ export const noMatches = 'No matches';
 export const matchOf = (at: number, count: number): string => `${at} of ${count}`;
 /** Each part of a card a search reads (`#actions` SEARCH_FIELDS), as "in …" names it. */
 export const PART: Record<string, string> = { title: 'the title', body: 'the text', container: 'the container\'s name', note: 'a note', reply: 'a reply' };
-/** The current match and the parts of it that matched: "Card 12, in the title and a note". */
-export const cardMatchedIn = (n: string, parts: readonly string[]): string =>
-  `Card ${n}, in ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0] ?? ''}`;
+/** The count, then the current match and the parts of it that matched, as the status says it:
+ *  "2 of 3 · card 12, in the title and a note". It starts with `matchOf`, which the box draws bold. */
+export const matchAt = (at: number, count: number, n: string, parts: readonly string[]): string =>
+  `${matchOf(at, count)} · card ${n}, in ${parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0] ?? ''}`;

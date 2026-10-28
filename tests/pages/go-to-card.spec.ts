@@ -12,7 +12,8 @@ import { act, card, draw, open, write } from './agent-board.ts';
 import { panBy, scale, selected, stageBox, world } from './board-page.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const field = (page: Page) => page.getByRole('textbox', { name: 'Go to card' });
+// "Find a card" with the cardSearch flag (on by default), "Go to card" with it off (search.spec.ts).
+const field = (page: Page) => page.getByRole('textbox', { name: /^(Go to card|Find a card)$/ });
 const goBox = (page: Page) => page.locator('.vb-go');
 const said = (page: Page) => goBox(page).getByRole('status');
 

@@ -49,7 +49,7 @@ async function open(page: Page): Promise<void> {
 
 type Host = {
   listeners(): number; mount(id: string, lines: object[], shown: number): void; idle(id: string): Promise<void>;
-  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string };
+  send(id: string): Promise<string | null>; status(id: string): { selection: string; hide: boolean; boardId: string; go?: unknown };
   record(id: string): { chips: { kind: string; ref: { board: string; n: number } }[]; confirms: { heading: string; list?: unknown }[];
     notices: { text: string; tone?: string }[]; calls: string[]; subscribers: number };
   pageChip(id: string): { plugin: string; kind: string; ref: { board: string; head: number }; label: string; detail: string } | null;
@@ -183,6 +183,26 @@ test('keys stay inside the board: a host control hears its own keys, and a click
   await page.keyboard.press('h');
   await expect.poll(() => hidden('a')).toBe(true);
   expect(await hidden('b')).toBe(false);
+});
+
+// Search (cardSearch flag, SEARCH_02; VERIFY_01 F6): the search box is the standalone page's
+// (shell/GoToCard.svelte), so the board binds `/` only where the page draws it (`host.page`). Under a
+// host that draws no box, `/` opens nothing and is left to the host (not prevented); no search state
+// waits for the letters typed after it.
+test('under a host that draws no box, / opens no search and stays the host\'s', async ({ page }) => {
+  await open(page);
+  await call(page, (h, lines: object[]) => h.mount('a', lines, lines.length), LINES);
+  await expect(page.locator('#a vb-node')).toHaveCount(nodesUpTo(Infinity));
+  await page.evaluate(() => {
+    (window as unknown as { slash: boolean | null }).slash = null;
+    window.addEventListener('keydown', (e) => { if (e.key === '/') (window as unknown as { slash: boolean }).slash = e.defaultPrevented; });
+  });
+  const box = (await page.locator('#a').boundingBox())!;
+  await page.mouse.click(box.x + box.width - 12, box.y + box.height - 12);
+  await page.keyboard.press('/');
+  expect(await page.evaluate(() => (window as unknown as { slash: boolean | null }).slash), 'the host\'s: not prevented').toBe(false);
+  expect(await call(page, (h, id: string) => h.status(id).go ?? null, 'a'), 'no box state').toBe(null);
+  await expect(page.locator('#a vb-node[data-found], #a .vb-world[data-search]')).toHaveCount(0);
 });
 
 test('the host asks before words are lost: Close asks only while a note holds changed words; Cancel keeps them, OK unmounts', async ({ page }) => {

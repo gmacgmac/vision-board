@@ -5,8 +5,8 @@
      "Card 7 was removed") is announced (role status) and the box stays; a retired card's version is
      offered as a button. Opened, it takes focus; closed without going, focus goes back where it was
      (a go has focused the card already). The gallery mounts it in the page flow, in each state.
-     With `search` (cardSearch flag, SEARCH_02) the field takes words too ("Card number or words"):
-     the status says "1 of 3" and which part of the current match matched, or "No matches"; ↓ and ↑
+     With `search` (cardSearch flag, SEARCH_02) the box is "Find a card" and takes words too ("Card number
+     or words"): the status says "1 of 3 · card 12, in the title", or "No matches"; ↓ and ↑
      step through the matches (go-to-card.ts keeps them and marks the board). -->
 <script lang="ts">
   import * as commonWords from '../board/words/common.ts';
@@ -70,15 +70,15 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="vb-go vb-surface-pop" data-placement={placement} data-state={box.past ? 'retired' : box.said ? 'not-found' : box.found ? 'found' : 'typing'}
   data-search={search ? '' : undefined} bind:this={host} {onkeydown} {onfocusout}>
-  <label class="vb-go-label" for="vb-go-field-{uid}">{commonWords.goToCard}</label>
+  <label class="vb-go-label" for="vb-go-field-{uid}">{search ? shellGoToCardWords.findACard : commonWords.goToCard}</label>
   <!-- Digits only, or with search any text: no numeric keypad, pattern or length then, and a placeholder. -->
   <input class="vb-go-field" id="vb-go-field-{uid}" type="text" inputmode={search ? undefined : 'numeric'} pattern={search ? undefined : '[0-9]*'}
     maxlength={search ? undefined : GO_DIGITS} placeholder={search ? shellGoToCardWords.cardNumberOrWords : undefined}
     autocomplete="off" spellcheck="false" aria-describedby="vb-go-said-{uid} vb-go-hint-{uid}"
     value={box.text} bind:this={input} {oninput} />
   <p class="vb-go-hint" id="vb-go-hint-{uid}">{#if search}<kbd>{shellGoToCardWords.steps}</kbd> {shellGoToCardWords.step}{' '}{/if}<kbd>{shellGoToCardWords.enter}</kbd> {shellGoToCardWords.go} <kbd>{commonWords.esc}</kbd> {shellGoToCardWords.close}</p>
-  <!-- One polite status: what a go found, or the matches ("1 of 3", then the current one's card and part). -->
-  <p class="vb-go-said" id="vb-go-said-{uid}" role="status" data-tone={box.found ? 'found' : undefined}>{#if box.found}<span class="vb-go-count">{box.found.count}</span> <span class="vb-go-part">{box.found.part}</span>{:else}{box.said ?? ''}{/if}</p>
+  <!-- One polite status: what a go found, or the matches' one sentence ("1 of 3 · card 12, in a note"), its count bold. -->
+  <p class="vb-go-said" id="vb-go-said-{uid}" role="status" data-tone={box.found ? 'found' : undefined}>{#if box.found}<span class="vb-go-count">{box.found.count}</span>{box.found.text.slice(box.found.count.length)}{:else}{box.said ?? ''}{/if}</p>
   {#if box.past}
     <button type="button" class="vb-btn vb-go-past" aria-label={box.past.label} onclick={() => onpast?.()}>{shellGoToCardWords.showV(box.past.version)}</button>
   {/if}

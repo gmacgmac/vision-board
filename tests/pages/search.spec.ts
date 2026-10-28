@@ -14,7 +14,7 @@ import { idle, selected, stageBox } from './board-page.ts';
 import { lc, pixel, resolved } from './apca.ts';
 
 const THEMES: Theme[] = ['dark', 'light'];
-const field = (page: Page) => page.getByRole('textbox', { name: 'Go to card' });
+const field = (page: Page) => page.getByRole('textbox', { name: 'Find a card' });
 const goBox = (page: Page) => page.locator('.vb-go');
 const said = (page: Page) => goBox(page).getByRole('status');
 const found = (page: Page) => page.locator('vb-node[data-found]').evaluateAll((els) => els.map((e) => `${(e as HTMLElement).dataset.id} ${(e as HTMLElement).dataset.found}`));
@@ -86,16 +86,16 @@ test('words ring the matches and dim the rest; "1 of 3" and the part; ↓/↑ st
   await page.keyboard.type('pric ann');
   await expect(searching(page)).toHaveCount(1);
   expect((await found(page)).sort()).toEqual(['13 match', '2 current', '9 match']);
-  await expect(said(page)).toHaveText('1 of 3 Card 2, in the title');
+  await expect(said(page)).toHaveText('1 of 3 · card 2, in the title');
   await expect.poll(() => opacity(page, 'vb-node[data-id="1"]')).toBeLessThan(0.5);
   await expect.poll(() => opacity(page, '.vb-regions')).toBeLessThan(0.5);
   expect(await opacity(page, 'vb-node[data-id="2"]')).toBe(1);
   await page.keyboard.press('ArrowDown');
-  await expect(said(page)).toHaveText('2 of 3 Card 9, in the text');
+  await expect(said(page)).toHaveText('2 of 3 · card 9, in the text');
   await expect(card(page, 9)).toHaveAttribute('data-found', 'current');
   await expect.poll(() => shows(page, 9)).toBe(true);
   await page.keyboard.press('ArrowDown');
-  await expect(said(page)).toHaveText('3 of 3 Card 13, in a note');
+  await expect(said(page)).toHaveText('3 of 3 · card 13, in a note');
   await expect.poll(() => shows(page, 13)).toBe(true);
   await page.keyboard.press('ArrowDown');
   await expect(said(page)).toHaveText(/^1 of 3/);
@@ -177,7 +177,7 @@ test('a screen reader hears the count: the box\'s status is polite and described
   await page.keyboard.press('/');
   await page.keyboard.type('annual');
   const status = said(page);
-  await expect(status).toHaveText(/^1 of 3 /);
+  await expect(status).toHaveText(/^1 of 3 · card /);
   expect(await status.getAttribute('aria-live') ?? 'polite').toBe('polite');
   const id = await status.getAttribute('id');
   expect((await field(page).getAttribute('aria-describedby'))?.split(' ')).toContain(id);
@@ -192,7 +192,7 @@ test('the board redrawn while a search shows: the marks follow, the current matc
   const [added] = await write(request, d, [{ type: 'node', node: { region: 'p', kind: 'question', title: 'Annual review' } }]);
   await expect(card(page, added!.n!)).toHaveAttribute('data-found', 'match');
   await expect(card(page, 9)).toHaveAttribute('data-found', 'current');
-  await expect(said(page)).toHaveText(/ of 4 /);
+  await expect(said(page)).toHaveText(/ of 4 · /);
 });
 
 test('with the cardSearch flag off, / does nothing and the box takes digits only', async ({ page, request }) => {
@@ -202,8 +202,9 @@ test('with the cardSearch flag off, / does nothing and the box takes digits only
   await expect(goBox(page)).toHaveCount(0);
   await page.keyboard.press('1');
   await page.keyboard.type('x');
-  await expect(field(page)).toHaveValue('1');
-  await expect(field(page)).not.toHaveAttribute('placeholder');
+  const digits = page.getByRole('textbox', { name: 'Go to card' });
+  await expect(digits).toHaveValue('1');
+  await expect(digits).not.toHaveAttribute('placeholder');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Key commands' }).hover();
   await expect(page.locator('.vb-keys-tip [data-row="other:search"]')).toHaveCount(0);
@@ -249,6 +250,12 @@ for (const theme of THEMES) {
     console.log(`APCA ${theme}: search ring current ${current.toFixed(1)}, match ${match.toFixed(1)}`);
     expect(current).toBeGreaterThanOrEqual(30);
     expect(match).toBeGreaterThanOrEqual(30);
+    // The current match is told apart (VERIFY_01 F3): a thicker ring, and a second ring outside it.
+    const look = (n: number) => card(page, n).evaluate((e) => { const c = getComputedStyle(e); return { width: parseFloat(c.outlineWidth), shadow: c.boxShadow }; });
+    const [cur, other] = [await look(2), await look(9)];
+    expect(cur.width).toBeGreaterThanOrEqual(other.width * 1.5);
+    expect(cur.shadow).not.toBe(other.shadow);
+    expect(lc(await pixel(page, await resolved(page, 'var(--vb-state-context)')), canvas), 'the outer ring').toBeGreaterThanOrEqual(30);
     expect(await undimmedFindings(page)).toEqual([]);
     await field(page).fill('zebra');
     await expect(said(page)).toHaveText('No matches');

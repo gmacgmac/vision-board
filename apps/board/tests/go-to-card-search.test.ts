@@ -54,13 +54,13 @@ test('/ is the go command\'s key; with search it opens the box empty, without it
   assert.equal(off.open('/'), false, 'cardSearch off: / is not the box\'s');
 });
 
-test('words ring the matches, best first, dim the rest; the box says "1 of 3" and which part matched', () => {
+test('words ring the matches, best first, dim the rest; the box says "1 of 3 · card 1, in the title"', () => {
   const b = box();
   b.go.open('/');
   b.go.edit('pric ann');
   assert.equal(b.world(), true);
   assert.deepEqual(b.marks(), { 1: 'current', 2: 'match', 4: 'match' });
-  assert.deepEqual(b.last(), { text: 'pric ann', found: { count: '1 of 3', part: 'Card 1, in the title' } });
+  assert.deepEqual(b.last(), { text: 'pric ann', found: { count: '1 of 3', text: '1 of 3 · card 1, in the title' } });
   assert.deepEqual(b.did, [], 'typing moves nothing');
 });
 
@@ -70,9 +70,9 @@ test('↓ steps to the next match and brings it in, ↑ back, both wrapping; the
   b.go.edit('pric ann');
   b.go.step(1);
   assert.deepEqual(b.marks(), { 1: 'match', 2: 'current', 4: 'match' });
-  assert.deepEqual(b.last()?.found, { count: '2 of 3', part: 'Card 2, in the text' });
+  assert.deepEqual(b.last()?.found, { count: '2 of 3', text: '2 of 3 · card 2, in the text' });
   b.go.step(1);
-  assert.deepEqual(b.last()?.found, { count: '3 of 3', part: 'Card 4, in a note' });
+  assert.deepEqual(b.last()?.found, { count: '3 of 3', text: '3 of 3 · card 4, in a note' });
   b.go.step(1);
   assert.deepEqual(b.last()?.found?.count, '1 of 3', 'wraps to the first');
   b.go.step(-1);

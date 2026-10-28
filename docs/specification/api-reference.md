@@ -870,20 +870,20 @@ Example (Two lines):
 
 `POST /api/agents` · who: anyone (no credentials) · MCP tool `join`, `vb` command `vb join`
 
-Join the project as an agent, once. Pass a short `label`, such as "Pricing chat". Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.
+Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.
 
 ### Inputs
 
 | Name | Where | Type | Required | Description |
 |---|---|---|---|---|
-| `label` | body | string | yes | A short name for this chat or agent, such as "Pricing chat". The person sees it when you ask for access. |
+| `label` | body | string | yes | Your working folder's name (not a path). The person sees it when you ask for access. |
 | `VB-Project` | header | string | no | The folder you work in, as an absolute path percent-encoded the way `encodeURI` does it (the `vision-board` MCP server sends it on every call). When the board server has another folder open, and this folder is not that one or inside it, the call is refused with `wrong-folder` and nothing is read or written. Left out, nothing is checked. |
 
 Example request:
 
 ```json
 {
-  "label": "Pricing chat"
+  "label": "pricing-site"
 }
 ```
 

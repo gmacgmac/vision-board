@@ -151,6 +151,37 @@ box. Behind a new flag `cardSearch` (default on); off: today's digits-only box.
 - "Under a host" is held by the unit test of `route` (`keys.test.ts`); no host page test
   (`board-host.spec.ts` is not mine).
 
+### Run 2 (VERIFY_01 findings F1–F3, F6, F8–F11, F13)
+
+- **F6** (failing test first, seen failing): `tests/pages/board-host.spec.ts` "under a host that draws
+  no box, / opens no search and stays the host's". Fix: `controller.ts` gives `createGoTo` its `search`
+  only with `host.page` (the existing signal: `host.ts` `BoardPage`, the standalone page's own part,
+  which a host leaves out; no new host field). Under a host `/` opens nothing, is not prevented, and no
+  search state waits for the next letters. A letter typed after it is that letter's own shortcut, as
+  without `/` (no search was started); the test asserts the box state stays null and `/` stays the
+  host's. Digits keep today's undrawn go state under a host (no shortcut fires); left as is.
+- **F1**: with search the box is headed and its field named "Find a card" (`shell-go-to-card.ts`
+  `findACard`); digits-only stays "Go to card". `go-to-card.spec.ts` `field` takes either name.
+- **F2**: one sentence, `board/words/go-to-card.ts` `matchAt` → "2 of 3 · card 4, in the title" (no
+  title); `GoBox.found` is `{ count, text }`; the box draws `count` bold and the rest of the same
+  sentence, which is what the status announces. `cardMatchedIn` removed.
+- **F3**: `board.css`: matches a 1.5 px ring; the current one 3 px, plus a second amber ring outside a
+  canvas gap and the halo (tokens only, widths over `--vb-zoom`). `search.spec.ts` checks the current
+  outline is at least 1.5 × a match's, its shadow differs, and the outer ring's colour is Lc ≥ 30.
+  Rings still Lc 56.6 light, 63.7 dark.
+- **F9** components.md § Go to card and search: items 2 and 7 name the label in each mode; item 7 says
+  where `/` is bound (`host.page`) and cites the host test. **F10** performance.md row added as worded.
+  **F8** `packages/search/README.md` Used by `apps/board`. **F13** `flags.ts` descriptions: `reviewList`
+  (one card goes straight there), `cardSearch` (the board's own page only).
+- **F11**: Review list tests (`farBoard`, its three tests, the gallery section's tests) moved unchanged
+  to `tests/pages/proposals-review.spec.ts`; the shared board and helpers to `tests/pages/proposals-board.ts`
+  (imported by both, not copied); `review-list-{light,dark}` baselines moved to its folder unchanged.
+  `proposals.spec.ts` 283 lines.
+- Re-taken (own, looked at light and dark): `search-{light,dark}` (label, sentence, rings, gallery words).
+- Checks: unit 1,827 + 14 timing pass; `check` 0 errors; `verify` ok; `gen-api --check` current. Page
+  specs on 5400: `search`, `search-perf` (median 5.3 ms, first 41.3 ms), `go-to-card`, `board-host`,
+  `key-bubble`, `proposals`, `proposals-review`, `proposals-notice`: 73 passed; `gallery` 19 passed.
+
 ## On Completion
 
 Notes; your row; one LOG line (`[board-app] SEARCH_02: …` → this file); Return Contract.

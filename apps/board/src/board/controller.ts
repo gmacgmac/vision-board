@@ -179,8 +179,9 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
    *  A find marks nothing seen (findKeepsMarks flag, ruling 322): the selection says `find`, update-flow.ts `saw` reads it. */
   const go = createGoTo({ show: (box) => status.set({ go: box }), past: showVersion, ...(on('goAfterPause') && { pause: GO_PAUSE }), find: (n) => goTarget(versions.state ?? live.state, S.id, n, (id) => !!drawing.layout?.nodes.has(id), versionView),
     arrive: (id) => { selection.select([id], 'only', on('findKeepsMarks') ? 'find' : 'select'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
-    // Words too (cardSearch flag, SEARCH_02): the cards drawn, indexed once per draw (`S.data`), marked on the world.
-    ...(on('cardSearch') && { search: { key: () => S.data, world, card: (id: string) => drawing.cards.get(id), reveal: (id: string) => { const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
+    // Words too (cardSearch flag, SEARCH_02): the cards drawn, indexed once per draw (`S.data`), marked on the world. Only
+    // where the page draws the box (`host.page`, the standalone shell's GoToCard.svelte): under a host that draws none, `/` stays the host's.
+    ...(on('cardSearch') && host.page && { search: { key: () => S.data, world, card: (id: string) => drawing.cards.get(id), reveal: (id: string) => { const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
       docs: () => (S.data ? boardSearchDocs((versions.state ?? live.state)!, S.id, view()).filter((doc) => drawing.layout?.nodes.has(doc.id)) : []) } }) });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({

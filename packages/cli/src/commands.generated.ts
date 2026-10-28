@@ -92,9 +92,9 @@ export const COMMANDS: readonly CommandInfo[] = [
   {
     name: "join", operationId: "join", takesBody: true,
     summary: "Join as an agent",
-    description: "Join the project as an agent, once. Pass a short `label`, such as \"Pricing chat\". Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.",
+    description: "Join the project as an agent, once. Pass your working folder's name (not a path) as `label`. Returns your `agent` id, your `secret` and `project`, the folder the board has open: check it is the folder you work in. Save `agent` and `secret` in your durable notes now: a context compaction loses them and the secret cannot be read again. Send the secret as `Authorization: Bearer <secret>` on your writes. Joining grants nothing: draw a new board of your own, or call `request_grant` with just `board` for a board another agent made. A write that answers `not-authenticated`: join again and ask for your grants again. A call that answers `wrong-folder`: the board has another folder open, so stop, tell the person, and do not join. The one write that needs no credentials.",
     inputs: [
-      {"name":"label","in":"body","type":"string","required":true,"description":"A short name for this chat or agent, such as \"Pricing chat\". The person sees it when you ask for access."},
+      {"name":"label","in":"body","type":"string","required":true,"description":"Your working folder's name (not a path). The person sees it when you ask for access."},
     ],
   },
   {

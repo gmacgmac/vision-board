@@ -31,8 +31,9 @@ export interface GoBox {
   text: string;
   said?: string;
   past?: { version: number; until?: number; label: string };
-  /** Words typed that match (cardSearch flag): "1 of 3", and "Card 12, in a note" for the current match. */
-  found?: { count: string; part: string };
+  /** Words typed that match (cardSearch flag): the status's one sentence, "1 of 3 · card 12, in a note",
+   *  and its first words, "1 of 3" (`count`), which the box draws bold. */
+  found?: { count: string; text: string };
 }
 
 /** What a search needs of the board (cardSearch flag); absent, the box takes digits only. */
@@ -154,7 +155,7 @@ function createMatches(s: GoSearch) {
       const hit = hits[at];
       if (!hit) return { text, said: goToCardWords.noMatches };
       const parts = [...new Set(hit.fields.map((f) => goToCardWords.PART[f.name] ?? f.name))];
-      return { text, found: { count: goToCardWords.matchOf(at + 1, hits.length), part: goToCardWords.cardMatchedIn(hit.id, parts) } };
+      return { text, found: { count: goToCardWords.matchOf(at + 1, hits.length), text: goToCardWords.matchAt(at + 1, hits.length, hit.id, parts) } };
     },
   };
 }

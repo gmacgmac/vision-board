@@ -31,14 +31,40 @@ Findings go in `VERIFY_01_findings.md`, each with a proposed tracker row or requ
 
 ## Validation
 
-- [ ] Every PLAN.md criterion ticked with evidence, or open with a proposed row
+- [x] Every PLAN.md criterion ticked with evidence, or open with a proposed row (`VERIFY_01_findings.md` § Success criteria)
 
 ## Implementation Notes
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-28
 
 ### Changes Made
--
+- `VERIFY_01_findings.md` (new): evidence table, findings F1 to F13 each with a fix or a tracker row,
+  the PLAN's success criteria with evidence. No product, test or doc code changed.
+- Scratch in `temp/verify01/` (a 60-card probe board on 5600 with notes, a reply, accents, a
+  container-only word, then a NEW and an updated card, three proposals, two bots; Playwright probes;
+  a fake-host probe): deleted at the end, the probe server stopped.
+
+### Verification
+- Gates: `npm test` 1,827 + 14 timing pass; `check` 0 errors; `verify` ok (15 warnings; F11);
+  `gen-api --check` current.
+- Page specs on 5600: `search`, `search-perf`, `find-keeps-marks`, `proposals`, `access-by-bot`,
+  `go-to-card`, `board-host`, `fresh-cards`, `open-list`, `gallery`: 120 passed.
+- As a person on 60 cards: every search case in step 1 found the right card first with its part;
+  stepping at 21 %, 37 %, 64 %; every finder kept NEW, "1 update", "2 new" and wrote no seen line;
+  a click cleared and stayed cleared through a reload; Review's three rows; Allow all for one of two
+  bots; light and dark looked at, gallery sections too.
+
+### Findings (detail and fixes in VERIFY_01_findings.md)
+- High: F6 under a host `/` opens an undrawn box and letters fire shortcuts.
+- Medium: F1 "Go to card" label, F2 count and part run together, F3 current match indistinct, F4
+  typing never shows the best match (maintainer), F5 container names ring every card, F7 the `join`
+  tool's "Pricing chat" example.
+- Low: F8 search README, F9 components.md host story, F10 performance.md row (SEARCH_02-R4),
+  F11 proposals.spec.ts length, F12 strip fold, F13 reviewList description.
+
+### Deviations from Plan
+- None. Step 6 was run on a temp copy of the host fixture's setup (no `/` test exists in
+  `board-host.spec.ts`).
 
 ## On Completion
 

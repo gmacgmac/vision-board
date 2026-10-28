@@ -1053,7 +1053,7 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    `createGoTo`, which opens the "Go to card" box (`shell/GoToCard.svelte`, `styles/go-to-card.css`)
    at the board's bottom right, holding that digit, with focus in it. It works with or without a
    card selected or focused, and in a past version. In a note's text field a digit is text.
-2. **The box** is a labelled text field ("Go to card", `inputmode="numeric"`, digits only, at most
+2. **The box** is a labelled text field (headed and named "Go to card"; "Find a card" with search, item 7; `inputmode="numeric"`, digits only, at most
    `GO_DIGITS`), a hint (Enter go · Esc close) and a polite status line that says what a go found.
    Enter goes; Backspace edits; Esc closes, as does focus leaving the box (not the window losing
    it), and focus goes back where it was. Nothing goes by itself: with the `goAfterPause` flag (off
@@ -1098,28 +1098,37 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    `cortex-tasks/board/2026-10-28_board-app_search-and-finding/`, the maintainer's ruling 317; off:
    the digits-only box above, and `/` does nothing). The same box takes words: `/` (the `go-to-card`
    command's other key, `commands.ts`; listed under Board as its own row, "Find a card by its words",
-   `KeyHelp.svelte`) opens it empty, the field saying "Card number or words". Digits alone still go by
+   `KeyHelp.svelte`) opens it empty, headed and named "Find a card" (`shell-go-to-card.ts`
+   `findACard`), the field saying "Card number or words". Digits alone still go by
    number. Words are searched by `go-to-card.ts` `createMatches` with `#search` `search` over an index
    built once per state change (`GoSearch.key`, the controller's held data) from `#actions`
    `boardSearchDocs` on the view drawn, cards not drawn left out: words in any order, part of a word,
    case and accents ignored, best first (`packages/search/README.md`). Matches carry `data-found`
    ("match", or "current") and the world `data-search`, written only where a mark changed; the box's
-   polite status says "1 of 3" and the current one's card and the parts that matched ("Card 12, in the
-   title and a note", `board/words/go-to-card.ts` `cardMatchedIn`), or "No matches" (nothing ringed or
-   dimmed). ↓ and ↑ in the field step, wrapping, and bring the match in by `revealPan`'s rule
+   polite status says one sentence, the count then the current one's card and the parts that matched
+   ("2 of 3 · card 12, in the title and a note", `board/words/go-to-card.ts` `matchAt`, its count drawn
+   bold), or "No matches" (nothing ringed or dimmed). ↓ and ↑ in the field step, wrapping, and bring the match in by `revealPan`'s rule
    (`GoSearch.reveal`), selecting nothing; typing never pans. Enter goes to the current match by the
    finding path (`arrive`, item 6: NEW and updated kept), closing the box; Esc, focus leaving, or a
    go chosen elsewhere (`to`) clears every mark; an empty box clears them and stays open. A redraw
    while it shows searches again on the cards drawn now, the current match kept (`GoTo.refresh`). The
    page draws the box for words when the board's `GoTo.words` says so. Look (`styles/board.css`,
-   tokens only): an amber ring (`--vb-state-context`) on matches, wider with a halo on the current
-   one, the same width on screen at any zoom (`--vb-zoom`); every other card, the containers, the
-   connectors and their markers dim to 0.35 opacity, never hidden; dimmed text is decoration. Rings
-   measured on the canvas (`tests/pages/search.spec.ts`): Lc 56.6 light, 63.7 dark (tier 30). Under a
-   host `/` acts only inside the board's root (`keys.ts` `route`, M10). Tests:
+   tokens only): a thin amber ring (`--vb-state-context`) on matches; the current one twice as thick,
+   with a second amber ring outside it across a gap of canvas and a soft halo, so it is told apart at
+   any zoom; every width the same on screen at any zoom (`--vb-zoom`); every other card, the containers,
+   the connectors and their markers dim to 0.35 opacity, never hidden; dimmed text is decoration. Rings
+   measured on the canvas (`tests/pages/search.spec.ts`, which also checks the current one's ring is
+   thicker and its shadow differs): Lc 56.6 light, 63.7 dark (tier 30). **Under a host:** the box is
+   the standalone page's (`shell/GoToCard.svelte`, drawn from `status.go`), so the controller gives
+   `createGoTo` its `search` only where the page draws it, `host.page` (the standalone shell's own part,
+   `host.ts` `BoardPage`; a host leaves it out). Under a host that draws no box, `/` opens nothing, is
+   not prevented and stays the host's, and no search state waits for the letters after it
+   (`tests/pages/board-host.spec.ts`, "under a host that draws no box"); where it is bound, `/` acts
+   only inside the board's root (`keys.ts` `route`, M10). Digits still open the go state under a host
+   (no box drawn; digits fire no shortcut). Tests:
    `apps/board/tests/go-to-card-search.test.ts` (open by `/`, marks, count and part, stepping and
    wrapping, Enter, Esc, an empty box, no matches, digits, the index once per change, refresh, `to`),
-   `apps/board/tests/keys.test.ts` (`/` under a host), `tests/pages/search.spec.ts` (each of these on
+   `apps/board/tests/keys.test.ts` (`/` in its root), `tests/pages/board-host.spec.ts` (no box drawn, `/` the host's), `tests/pages/search.spec.ts` (each of these on
    a board, NEW and updated kept, the polite status, a redraw, the flag off, the key list, reduced
    motion, APCA and axe light and dark, the gallery section's screenshots), `tests/pages/search-perf.spec.ts`
    (each keystroke on the 1,000-card board inside the one-change budget, nothing drawn again). The

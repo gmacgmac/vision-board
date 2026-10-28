@@ -18,7 +18,7 @@ test('typing a search on the 1,000-card board: each keystroke under 50 ms, and n
     hook.reset();
   });
   await page.keyboard.press('/');
-  const field = page.getByRole('textbox', { name: 'Go to card' });
+  const field = page.getByRole('textbox', { name: 'Find a card' });
   await expect(field).toBeFocused();
   const times = await page.evaluate(async (query) => {
     const input = document.querySelector<HTMLInputElement>('.vb-go-field')!;
