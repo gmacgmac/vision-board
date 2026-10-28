@@ -223,6 +223,26 @@ export const FLAGS = {
     default: false,
     description: 'With the goToCard flag, the "Go to card" box also goes about 1 second after the last digit typed, without Enter (`GO_PAUSE`, apps/board/src/board/find/go-to-card.ts). Off, only Enter goes.',
   },
+  findKeepsMarks: {
+    // On by default (maintainer, 2026-10-28, point 322; search-and-finding FIND_01).
+    default: true,
+    description: 'Finding a card never changes it: going to a card from Go to card, search, the open, new and updated lists or the Review list selects and shows it without marking it seen, so its NEW and updated marks stay; the person\'s own click on the card, and every act, still clear them. Off, a found card is marked seen as a selected one is.',
+  },
+  accessByBot: {
+    // On by default (maintainer, 2026-10-28, points 320 and 321; search-and-finding ACCESS_01).
+    default: true,
+    description: 'The access requests strip groups the requests by bot (the agent id the server stamps on each), named by its label, with each container\'s row and one Allow all for that bot; the heading counts bots. Off, one row per request under a count of requests.',
+  },
+  cardSearch: {
+    // On by default (maintainer, 2026-10-28, points 317 and 322; tracker M7; search-and-finding SEARCH_02).
+    default: true,
+    description: 'The Go to card box also searches: `/` opens it, letters find cards by their title, text, notes, replies and container (words in any order, part of a word, case and accents ignored, best first); matches ring and the rest dim, ↓ and ↑ step, Enter goes, Esc clears. Digits still go to a card by number. Off, the box takes digits only.',
+  },
+  reviewList: {
+    // On by default (maintainer, 2026-10-28, point 319; search-and-finding REVIEW_01).
+    default: true,
+    description: 'The proposals notice\'s Review opens a list of the cards with proposals; choosing one brings the card into view at a readable zoom and opens its proposal box, keeping its marks. Off, Review opens the first proposal\'s box where the card is.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
