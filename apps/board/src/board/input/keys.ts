@@ -18,6 +18,8 @@ export interface KeyHandlers {
   /** A key the command table gives a container's title line (C or N: its note), with focus on
    *  that line or its controls. */
   regionCommand(id: CommandId, region: string): void;
+  /** Z with focus on a container's title line (containerZoom flag): zoom to the whole container. */
+  zoomRegion?(region: string): boolean;
   unpin(id: string): void;
   /** Space on a focused card: add it to the selection, or take it out (3_FE_01 ruling 3). */
   toggle(id: string): void;
@@ -96,6 +98,7 @@ function route(h: KeyHandlers, e: KeyboardEvent, root?: HTMLElement, pageWide = 
     e.preventDefault();
     return h.regionCommand(onRegion, region!);
   }
+  if (region !== undefined && !e.shiftKey && commandForKey(key) === 'zoom-selection' && h.zoomRegion?.(region)) return e.preventDefault();
   if (!onCard(h, e, key, id, target)) onCommand(h, e, key, id);
 }
 

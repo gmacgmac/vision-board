@@ -88,10 +88,15 @@ export function zoomToContainer(d: FinderDeps, id: string): boolean {
   const box = d.layout()?.regions.find((r) => r.id === id)?.box;
   if (!box) return false;
   d.vp.fit(box);
-  const h2 = d.frames().get(id)?.titleLine().querySelector('h2');
-  if (h2) {
-    h2.tabIndex = -1;
-    h2.focus({ preventScroll: true });
-  }
+  focusContainer(d, id);
   return true;
+}
+
+/** Focus container `id`'s title line (its heading, which takes focus from code only), so the keys a
+ *  container takes (C or N for its note, Z to zoom to it) are its own. */
+export function focusContainer(d: Pick<FinderDeps, 'frames'>, id: string): void {
+  const h2 = d.frames().get(id)?.titleLine().querySelector('h2');
+  if (!h2) return;
+  h2.tabIndex = -1;
+  h2.focus({ preventScroll: true });
 }

@@ -30,8 +30,8 @@ export interface PointerHandlers {
   dragEnd(boxes: ReadonlyMap<string, Box>, at: Point | null): void;
   /** A click on a card, not on one of its controls: alone, or `add` (Shift, Cmd or Ctrl held). */
   pick(id: string, add: boolean): void;
-  /** A click on the board's or a container's background. */
-  clear(): void;
+  /** A click on the board's or a container's background (`target`: what was clicked). */
+  clear(target?: Element): void;
   /** A Shift+drag on a background (3_FE_02 ruling 1), in client pixels: drawn as it moves, then
    *  ended (`add`: Cmd or Ctrl held too), or dropped when the pointer is lost. */
   lassoMove(from: Point, to: Point): void;
@@ -63,7 +63,8 @@ export const DRAG_THRESHOLD = 4;
  *  Ctrl/Cmd + scroll zooms. The one place it is named (Option may replace it later, round 2 ruling 6). */
 export const panKey = (e: { metaKey: boolean; ctrlKey: boolean }): boolean => e.metaKey || e.ctrlKey;
 
-interface Start { sx: number; sy: number; moved: boolean }
+/** Where a press began, and what it pressed (`on`: the stage captures the pointer, so a release's target is the stage). */
+interface Start { sx: number; sy: number; moved: boolean; on: Element }
 /** One card a move carries: its element and its box when the drag began. */
 interface Carried { id: string; el: HTMLElement; box0: Box }
 type Gesture =
@@ -88,7 +89,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
   /** A Cmd or Ctrl drag panned: the click its release makes reaches nothing. */
   let swallow = false;
 
-  const start = (e: PointerEvent): Start => ({ sx: e.clientX, sy: e.clientY, moved: false });
+  const start = (e: PointerEvent): Start => ({ sx: e.clientX, sy: e.clientY, moved: false, on: e.target as Element });
   /** The cards a drag on `id` carries, each with its element and box; `id` first. */
   function carriedFrom(id: string): Carried[] {
     const out: Carried[] = [];
@@ -232,7 +233,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     } else if (d.kind === 'frame') {
       if (d.moved) h.frameEnd(e.type === 'pointerup' ? { x: (e.clientX - d.sx) / vp.k, y: (e.clientY - d.sy) / vp.k } : null);
       if (d.moved || d.grip) d.el.focus({ preventScroll: true });
-      else if (click) h.clear();
+      else if (click) h.clear(d.el);
     } else if (d.kind === 'press' && click) {
       // A plain click focused the card itself; a modified one was kept from doing so.
       if (d.add) d.el.focus({ preventScroll: true });
@@ -240,7 +241,7 @@ export function bindPointer(stage: HTMLElement, vp: Viewport, h: PointerHandlers
     } else if (d.kind === 'lasso' && d.moved) {
       if (e.type === 'pointerup') h.lassoEnd({ x: d.sx, y: d.sy }, { x: e.clientX, y: e.clientY }, d.add);
       else h.lassoCancel();
-    } else if (click && !(d.kind === 'pan' && d.middle)) h.clear();
+    } else if (click && !(d.kind === 'pan' && d.middle)) h.clear(d.on);
   }
   stage.addEventListener('pointerup', end);
   stage.addEventListener('pointercancel', end);

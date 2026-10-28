@@ -28,7 +28,7 @@ import { createAccessFlow } from './access/index.ts';
 import { createNoteFlow, createNoteHide, createRegionNotes, DISCARD_ASK } from './notes/index.ts';
 import { createContainerDrag, createMoves, createSelection, createSelectionFlow } from './selection/index.ts';
 import { createSender, READ_ONLY } from './sender.ts';
-import { createGoTo, GO_PAUSE, zoomToContainer } from './find/index.ts';
+import { createGoTo, focusContainer, GO_PAUSE, zoomToContainer } from './find/index.ts';
 import { showCounts } from './toolbar-counts.ts';
 import { createAppCards } from './apps/index.ts';
 import type { Board, BoardDeps } from './controller/board-types.ts';
@@ -222,8 +222,11 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
 
   // ---- wiring --------------------------------------------------------------------------------
   // While a past version shows, or the board is locked, the handlers that act do nothing (versions.ts, lock-flow.ts `guard`).
+  /** What the container finder and Z on a container zoom with (find/finder.ts). */
+  const finding = { vp, layout: () => drawing.layout, frames: () => drawing.frames };
   const handlers = stageHandlers({ act, flags: flagging ? flags : null, access: access ? accessFlow : null, removal, proposals, updates, notes, places, frames, moves, flow,
-    versions, selection, drawing, focus, view, showVersion, toggleHide, status });
+    versions, selection, drawing, focus, view, showVersion, toggleHide, status,
+    ...(on('containerZoom') && { container: { zoom: (id: string) => zoomToContainer(finding, id), mark: (id: string) => focusContainer(finding, id) } }) });
   const unbind = bindStage(stage, vp, versions.guard(lock.guard(handlers)), () => { if (drawing.layout) vp.resized(); }, !!host.page);
 
   // ---- boards --------------------------------------------------------------------------------
@@ -258,7 +261,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   }
   return {
     boot: boards.boot, switchTo: (id) => switchTo(id), showVersion, command: (id) => void flow.command(id),
-    goToContainer: (id) => zoomToContainer({ vp, layout: () => drawing.layout, frames: () => drawing.frames }, id),
+    goToContainer: (id) => zoomToContainer(finding, id),
     toggleHide, id: () => S.id, side, showNote: (id, seq) => notes.show(id, seq),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
     access: accessFlow, proposals, go,

@@ -36,6 +36,8 @@ export interface HandlerFlows {
   showVersion: (seq: number | null, until?: number) => Promise<void>;
   toggleHide: () => void;
   status: Status;
+  /** Z on a container (containerZoom flag): a click inside one or on its title line marks it, Z zooms to it. */
+  container?: { zoom(region: string): boolean; mark(region: string): void };
 }
 
 export function stageHandlers(f: HandlerFlows): StageHandlers {
@@ -57,7 +59,13 @@ export function stageHandlers(f: HandlerFlows): StageHandlers {
     step: (from, dir) => { const next = focus.neighbour(from, dir); if (next) drawing.cards.get(next)?.focus({ preventScroll: true }); },
     command: (id, key) => flow.command(id, key), toggleHide: f.toggleHide, lassoMove: flow.lassoMove, lassoEnd: flow.lassoEnd, lassoCancel: flow.lassoCancel,
     pick: (id, add) => { selection.select([id], add ? 'toggle' : 'only'); updates.saw([id]); },
-    toggle: (id) => selection.select([id], 'toggle'), clear: () => { selection.clear(); flow.dismissArea(); },
+    toggle: (id) => selection.select([id], 'toggle'),
+    clear: (target) => {
+      selection.clear(); flow.dismissArea();
+      const region = f.container && !target?.closest('vb-node') ? target?.closest<HTMLElement>('vb-region')?.dataset.region : undefined;
+      if (region !== undefined) f.container!.mark(region);
+    },
+    ...(f.container && { zoomRegion: f.container.zoom }),
     // Esc closes an open bubble first, then the open selection bar (FE_02), then leaves a past version, else clears the selection (ruling 1).
     escape: () => {
       if (notes.open) return notes.close();

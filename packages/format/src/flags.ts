@@ -243,6 +243,11 @@ export const FLAGS = {
     default: true,
     description: 'The proposals notice\'s Review opens a list of the cards with proposals (on two or more cards; with one card it goes straight there); choosing one brings the card into view at a readable zoom and opens its proposal box, keeping its marks. Off, Review opens the first proposal\'s box where the card is.',
   },
+  containerZoom: {
+    // On by default (maintainer, 2026-10-28: "click a container and then press Z to zoom to the entire container").
+    default: true,
+    description: 'A click on a container\'s empty inside or on its title line makes it the container Z zooms to: Z then fits the whole container on the stage, as the container finder does (`zoomToContainer`). A click on a card still makes Z zoom to the selected cards. Off, Z zooms only to a selection.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

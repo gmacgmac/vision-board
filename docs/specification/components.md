@@ -664,6 +664,11 @@ The rulings are the task's (`cortex-tasks/board/2026-10-01_board-v3/3_FE_02_lass
    app card fits with `APP_FIT` instead, 95%, so its app is big enough to use (card-polish FE_01;
    `viewport-zoom.test.ts` "fit with APP_FIT: …", `app-cards.spec.ts` "Z on the one app card …"). Fit,
    Zoom to this area and a container's zoom keep `fit`'s default, 32px a side and at most 110%.
+   **Z on a container** (containerZoom flag): a click on a container's empty inside or on its title
+   line clears the selection and focuses the container's title line (`find/finder.ts` `focusContainer`,
+   the background click's pressed element, `input/pointer.ts` `Start.on`); Z there zooms to the whole
+   container as the container finder does (`zoomToContainer`; `input/keys.ts` `zoomRegion`). A click on
+   a card still makes Z zoom to the selection (`container-zoom.spec.ts`).
    Comment opens the note bubble, whose own write goes through the action layer as usual (rule 8).
 
 6. **The key commands bubble** (navigation FE_04, `keyBubble` flag, on by default): a round "?" at the

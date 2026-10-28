@@ -59,8 +59,8 @@ export interface StageHandlers extends Omit<KeyHandlers, 'nudge' | 'nudgeRegion'
   drop(boxes: ReadonlyMap<string, Box>, at: Point | null): void;
   /** A click on a card (3_FE_01 ruling 1): it alone, or with `add` into or out of the selection. */
   pick(id: string, add: boolean): void;
-  /** A click on a background: the selection clears. */
-  clear(): void;
+  /** A click on a background: the selection clears (`target`: what was clicked). */
+  clear(target?: Element): void;
   /** The lasso (3_FE_02): drawn while it moves, then ended or dropped (pointer.ts). */
   lassoMove: PointerHandlers['lassoMove'];
   lassoEnd: PointerHandlers['lassoEnd'];
@@ -130,7 +130,7 @@ export function bindStage(stage: HTMLElement, vp: Viewport, h: StageHandlers, on
     },
     dragEnd: (boxes, at) => h.drop(boxes, at),
     pick: (id, add) => h.pick(id, add),
-    clear: () => h.clear(),
+    clear: (target) => h.clear(target),
     lassoMove: h.lassoMove,
     lassoEnd: h.lassoEnd,
     lassoCancel: () => h.lassoCancel(),
