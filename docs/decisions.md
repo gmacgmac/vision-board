@@ -873,3 +873,37 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   back as `containerDimensions` (the agent's size stays the panel's statement of what was asked).
 - **Kept**: `containerDimensions` as `{ width, height }`, not MCP Apps' flexible `{ width, maxHeight }`: nothing changes for existing apps, and a panel tells its content's height either way.
 - **Task**: cortex-tasks/board/2026-10-27_board-ui_app-panel-fits-content.md
+
+## D-066 The agent's access is decided by path rules
+- **Date**: 2026-10-28 · **Status**: Accepted (maintainer approved 2026-10-28, point 340; with points 338 and 339: `.env.example` readable, the bots' secrets refused in any board folder) · **From**: points 329, 331, 334, 335; agent-access-and-working RULES_01
+- **Decision**: The side-panel agent's every tool call is decided by one function, `policy`
+  (`packages/agent/src/policy.ts`), over one table, `ACCESS_RULES` (`access-rules.ts`), of paths relative to
+  the board's folder:
+  1. The table: everything in the folder read allow, write ask; `**/.env`, `**/.env.*` refused but
+     `**/.env.example` (read allow, write ask: it helps and holds no secret, point 338);
+     `**/.visionboard/agents.json`, `**/.visionboard/chat-sessions.json` refused in any board folder (point 339); the ledger, `lock`, `app-state/**`,
+     `permissions.json` and the rest of `.visionboard/` read allow, write refuse; `.visionboard/images/**` and
+     `apps/**` allow (an app's changed code asks again before it runs, D-047); `.git/**` read allow, write refuse.
+     The most specific row wins (a file before a folder's contents, then more named parts, then order).
+  2. A refusal holds whatever the person answers, and is applied before anything remembered.
+  3. A path is resolved before the table is asked: absolute, `..` on the real folders, symlinks followed, the
+     disk's spelling, a new file by its nearest existing folder; matched as written and ignoring case, the
+     stricter kept. A hard-linked file is asked once.
+  4. Anything the table doesn't allow outright is asked. Outside the folder: asked "once" or "this session"
+     only, never remembered for the folder.
+  5. A shell command that only reads (the allow-list, joined only by `|`, plain words) is a read of each word;
+     a search is a read of every file under its folders. Any other command is asked; any command naming a
+     refused path is refused.
+  6. A remembered yes is narrowed: a write yes covers its file's folder, a command yes its first words
+     (`commandHead`); the new `folder` scope is kept in `.visionboard/permissions.json`, which only the server
+     writes, listed and forgettable by the person.
+  7. A question waits until the person answers, stops, or sends a new message; the turn's limit counts only
+     the agent's own working time; Claude's hook waits up to 24 hours.
+  8. Behind `agentAccessRules` (on): off, nothing is allowed unasked and there is no `folder` scope; the
+     refusals, the resolution and the narrower remembered yes are a fix and hold either way.
+- **Why**: one yes covered every write or command; reads had no limit (`.env`, the bots' keys, the home
+  folder); the ledger and `.git/` were ordinary files; paths were judged as typed; a question expired after
+  2 minutes.
+- **Rejected**: a deny list on paths as typed (bypassed by `..`, links, case); refusing every command
+  (the agent could not run tests); refusing outside the folder (the person sometimes wants it).
+- **Task**: cortex-tasks/board/2026-10-28_board-agent_agent-access-and-working/TASK-STATUS.md

@@ -70,8 +70,8 @@ categories: [board-security, board-agent, board-app]
 | HOLD_01-R3 | HOLD_01 | `packages/chat` events, feed, approval: `expiresAt` optional; no countdown and no "expired" without it ("Waiting for your answer") | ASK_01 | Open |
 | HOLD_01-R4 | HOLD_01 | api.md: an approval's 120 s becomes no limit with `approvalHold`; agent README: `hold`, `approvalHold`, `turn-clock.ts` | WIRE_01 | Open |
 | RULES_01-R1 | RULES_01 | Words home `packages/agent/src/words` in words-homes.mjs and words.md | Orchestrator | Done |
-| RULES_01-R2 | RULES_01 | D-066 appended with the maintainer's yes | Orchestrator (point 340) | Open |
-| RULES_01-R3 | RULES_01 | `.env.example` refused by `**/.env.*`; a nested board's secrets readable | The maintainer (points 338, 339) | Open |
+| RULES_01-R2 | RULES_01 | D-066 appended with the maintainer's yes | Orchestrator (point 340) | Done |
+| RULES_01-R3 | RULES_01 | `.env.example` refused by `**/.env.*`; a nested board's secrets readable | Maintainer: .env.example readable (338), the bots' secrets refused in any board folder (339); WIRE_01 changes the table | Open |
 | WORK_01-R1 | WORK_01 | Server queues words alone while the agent works (`chat.ts` `sendChat`, `chat-sessions.ts` `tell`), and a refused message stops releasing waiting approvals (`busy()`); then a `ChatHost` flag that the page queues words | WIRE_01 (ownership widened) | Open |
 | ALL-R1 | all | `npm run map` | Orchestrator | Done |
 | Words alone queue while the agent works: `server/chat-sessions.ts` `tell` holds them like attached ones (joined, `QUEUED_WORDS` line, 202), and the folder branch of `server/chat.ts` `sendChat` uses `live.post`; a refused message no longer releases waiting approvals (`busy()`) | WORK_01 | non-blocking (point 328: "the person can send more") | WIRE_01 | Open |
