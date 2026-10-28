@@ -66,3 +66,20 @@ test('flag off: a click inside a container, then Z, does nothing', async ({ page
   await page.waitForTimeout(400);
   expect(await view(page)).toBe(before);
 });
+
+/** The focus ring on the container's title line, as drawn now. */
+const ring = (page: Page) => frame(page, 'review').locator('.vb-region-head h2').evaluate((e) => getComputedStyle(e).outlineStyle);
+
+test('a click, then Z: the title line has focus but draws no ring; focused by the keyboard it does', async ({ page }) => {
+  await openBoard(page);
+  const at = await inside(page, 'review');
+  await page.mouse.click(at.x, at.y);
+  await page.keyboard.press('z');
+  await expect(frame(page, 'review').locator('.vb-region-head h2')).toBeFocused();
+  expect(await ring(page)).toBe('none');
+  // Focus that came by a key (the container finder chosen with the keyboard focuses it the same way).
+  await page.locator('#stage').focus();
+  await page.keyboard.press('Shift');
+  await frame(page, 'review').locator('.vb-region-head h2').evaluate((e: HTMLElement) => e.focus());
+  expect(await ring(page)).not.toBe('none');
+});

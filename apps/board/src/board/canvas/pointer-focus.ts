@@ -2,7 +2,8 @@
 // a pointer press focused carries data-pointer-focus, and node.css draws no focus ring on it, so a
 // key that moves no focus (Z, Esc, Space...) does not light one up when the browser starts matching
 // :focus-visible. Focus moved by the keyboard (Tab, J, a command that focuses another card) never
-// carries it, so a card the keyboard focused always shows its ring (WCAG 2.4.7). One definition for
+// carries it, so a card the keyboard focused always shows its ring (WCAG 2.4.7). A container's title line, which a
+// click inside the container focuses (Z on a container), is marked the same way. One definition for
 // every key and command: the last input before the focus moved decides. The same reading decides
 // whether a focus may pan the board (focus.ts, review-polish ruling 11): only a key's may.
 const ATTR = 'data-pointer-focus';
@@ -29,8 +30,12 @@ export const lastInput = (): Input | null => (away ? null : last);
 
 /** Listens on the document, the window and `stage`; returns the function that stops listening. */
 export function bindPointerFocus(stage: HTMLElement): () => void {
-  /** The card `e` is on itself (not a control inside it); null for anything else. */
-  const cardOf = (e: Event) => ((e.target as HTMLElement).localName === 'vb-node' ? e.target as HTMLElement : null);
+  /** The card `e` is on itself (not a control inside it), or a container's title line (which a click
+   *  inside the container focuses, so Z zooms to it); null for anything else. */
+  const cardOf = (e: Event) => {
+    const t = e.target as HTMLElement;
+    return t.localName === 'vb-node' || t.matches?.('.vb-region-head h2') ? t : null;
+  };
   const onPointer = (e: PointerEvent) => {
     last = 'pointer';
     away = false;
