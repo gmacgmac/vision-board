@@ -175,6 +175,16 @@ export interface OperationTypes {
     };
     output: ChatEventOutcome;
   };
+  list_permissions: {
+    input: Record<never, never>;
+    output: PermissionListResponse;
+  };
+  forget_permission: {
+    input: {
+      body: PermissionForgetRequest;
+    };
+    output: PermissionListResponse;
+  };
   get_project: {
     input: Record<never, never>;
     output: Project;
@@ -880,8 +890,9 @@ type ChatEventApprovalRequest = {
   approvalId: string;
   facts: ChatEventFacts;
   expiresAt?: string;
+  scopes?: ("once" | "session" | "folder")[];
 } & ChatEventStamp;
-type ChatEventFacts = ChatEventWriteFacts | ChatEventCommandFacts;
+type ChatEventFacts = ChatEventWriteFacts | ChatEventCommandFacts | ChatEventReadFacts;
 type ChatEventWriteFacts = {
   kind: "write";
   op: "create" | "replace" | "edit" | "append";
@@ -893,6 +904,11 @@ type ChatEventCommandFacts = {
   command: string;
   risks: string[];
   paths: string[];
+};
+type ChatEventReadFacts = {
+  kind: "read";
+  path: string;
+  recursive?: true;
 };
 type ChatEventApprovalResult = {
   kind: "approval_result";
@@ -920,6 +936,19 @@ type ChatEventOutcome = {
   approvalId?: string;
   scope?: "once" | "session" | "folder";
   asked?: false;
+};
+type PermissionListResponse = {
+  permissions: Permission[];
+};
+type Permission = {
+  id: string;
+  kind: "write" | "read" | "search" | "command";
+  path?: string;
+  command?: string;
+  created: string;
+};
+type PermissionForgetRequest = {
+  id: string;
 };
 type Project = {
   path: string;

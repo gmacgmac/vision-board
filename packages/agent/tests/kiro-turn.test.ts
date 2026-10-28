@@ -1,13 +1,20 @@
 // Kiro's side of the protocol as pure functions: the turn's updates (text held back a block, tool
 // calls by id, a board write's cards and head from its result, an unknown kind noted once, each
-// stopReason) and the permission rules (the board's own tools and reading go ahead; a file change
-// or a command is asked with the facts; anything else is refused; only one-time options are chosen).
+// stopReason) and the permission rules (the board's own tools go ahead; a read, a search, a file change
+// or a command is decided by the access rules, on a real folder, and asked with the facts only when
+// they ask; anything else is refused; only one-time options are chosen).
 // The recorded turns are in kiro.test.ts: one with its writes refused, one with a successful board
 // write (kiro-cli 2.28.0 puts an MCP tool's result in `rawOutput`, not `content`).
-import { test } from 'node:test';
+import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import type { AgentUpdate } from '../src/index.ts';
-import { KiroTurn, outcome, pickOption, readRequest, verdictFor } from '../src/index.ts';
+import { KIRO_AGENT_DRAFT, KiroTurn, outcome, pickOption, readRequest, verdictFor } from '../src/index.ts';
+import * as words from '../src/words/agent-access.ts';
+import { accessFixture } from './access-fixture.ts';
+
+const fx = accessFixture();
+after(() => fx.remove());
 
 const none = () => false;
 const text = (t: string) => ({ sessionUpdate: 'agent_message_chunk', content: { type: 'text', text: t } });
@@ -103,23 +110,42 @@ test('a permission request: read from its parts, answered with a one-time option
   assert.equal(readRequest('x'), null);
 });
 
-test('verdicts: own tools and reading go ahead; changes and commands are asked with facts; the rest is refused', () => {
-  assert.deepEqual(verdictFor({ title: 'x' }, true, '/p', none), { allow: true });
-  assert.deepEqual(verdictFor({ kind: 'read' }, false, '/p', none), { allow: true });
-  assert.deepEqual(verdictFor({ kind: 'search' }, false, '/p', none), { allow: true });
-  assert.deepEqual(verdictFor({ kind: 'execute', rawInput: { command: 'rm -rf build' } }, false, '/p', none),
-    { ask: { kind: 'command', command: 'rm -rf build', risks: [], paths: [] } });
-  assert.ok('refuse' in verdictFor({ kind: 'execute', rawInput: {} }, false, '/p', none), 'no command to show');
-  assert.deepEqual(verdictFor({ kind: 'edit', content: [{ type: 'diff', path: '/p/a.txt', oldText: null, newText: 'hi\n' }] }, false, '/p', none),
-    { ask: { kind: 'write', op: 'create', path: '/p/a.txt', preview: 'hi\n' } });
-  assert.deepEqual(verdictFor({ kind: 'edit', content: [{ type: 'diff', path: '/p/a.txt', oldText: 'old', newText: 'new' }] }, false, '/p', () => true),
-    { ask: { kind: 'write', op: 'edit', path: '/p/a.txt', preview: '- old\n+ new' } });
-  assert.deepEqual(verdictFor({ kind: 'edit', rawInput: { command: 'create', path: 'b.txt', content: 'x' } }, false, '/p', none),
-    { ask: { kind: 'write', op: 'create', path: '/p/b.txt', preview: 'x' } }, 'no diff: from the tool\'s own input');
-  assert.deepEqual(verdictFor({ kind: 'edit', rawInput: { path: '/p/c.txt', oldStr: 'a', newStr: 'b' } }, false, '/p', none),
-    { ask: { kind: 'write', op: 'edit', path: '/p/c.txt', preview: '- a\n+ b' } });
-  assert.ok('refuse' in verdictFor({ kind: 'edit' }, false, '/p', none), 'no file named');
-  assert.ok('refuse' in verdictFor({ kind: 'edit', locations: [{ path: '/p/a\nb' }] }, false, '/p', none), 'a path that cannot be shown');
-  assert.ok('refuse' in verdictFor({ kind: 'fetch' }, false, '/p', none));
-  assert.ok('refuse' in verdictFor({ title: 'someone else\'s MCP tool' }, false, '/p', none));
+test('verdicts: the access rules first (D-066): own tools go ahead; reads, changes and commands are refused, allowed or asked with facts', () => {
+  const p = fx.folder;
+  const v = (call: Record<string, unknown>, exists = none, strict = false) => verdictFor(call, false, p, exists, strict);
+  assert.deepEqual(verdictFor({ title: 'x' }, true, p, none), { allow: true });
+  assert.deepEqual(v({ kind: 'think' }), { allow: true });
+  assert.deepEqual(v({ kind: 'read', locations: [{ path: `${p}/src/x.ts` }] }), { allow: true });
+  assert.deepEqual(v({ kind: 'read', rawInput: { operations: [{ mode: 'Line', path: `${p}/src/x.ts` }] } }), { allow: true });
+  assert.deepEqual(v({ kind: 'read', locations: [{ path: `${p}/.env` }] }), { refuse: words.secretsFiles });
+  assert.deepEqual(v({ kind: 'read', rawInput: { operations: [{ path: `${p}/src/x.ts` }, { path: `${p}/.visionboard/agents.json` }] } }), { refuse: words.boardSecrets }, 'every file a read names');
+  assert.deepEqual(v({ kind: 'read', locations: [{ path: `${fx.outside}/notes.txt` }] }), { ask: { kind: 'read', path: `${fx.outside}/notes.txt` } });
+  assert.deepEqual(v({ kind: 'read', locations: [{ path: `${p}/src/x.ts` }] }, none, true), { ask: { kind: 'read', path: `${p}/src/x.ts` } }, 'strict: asked');
+  assert.ok('refuse' in v({ kind: 'read' }), 'a read of no file');
+  assert.deepEqual(v({ kind: 'search', rawInput: { path: 'src', pattern: 'x' } }), { allow: true });
+  assert.ok('refuse' in v({ kind: 'search', rawInput: { pattern: 'x' } }), 'a search of the whole folder reaches .env');
+  assert.deepEqual(v({ kind: 'execute', rawInput: { command: 'rm -rf build' } }), { ask: { kind: 'command', command: 'rm -rf build', risks: [], paths: [] } });
+  assert.deepEqual(v({ kind: 'execute', rawInput: { command: 'cat .env' } }), { refuse: words.commandNames('.env', words.secretsFiles) });
+  assert.deepEqual(v({ kind: 'execute', rawInput: { command: 'ls src' } }), { allow: true });
+  assert.ok('refuse' in v({ kind: 'execute', rawInput: {} }), 'no command to show');
+  assert.deepEqual(v({ kind: 'edit', content: [{ type: 'diff', path: `${p}/a.txt`, oldText: null, newText: 'hi\n' }] }),
+    { ask: { kind: 'write', op: 'create', path: `${p}/a.txt`, preview: 'hi\n' } });
+  assert.deepEqual(v({ kind: 'edit', content: [{ type: 'diff', path: `${p}/a.txt`, oldText: 'old', newText: 'new' }] }, () => true),
+    { ask: { kind: 'write', op: 'edit', path: `${p}/a.txt`, preview: '- old\n+ new' } });
+  assert.deepEqual(v({ kind: 'edit', rawInput: { command: 'create', path: 'b.txt', content: 'x' } }),
+    { ask: { kind: 'write', op: 'create', path: `${p}/b.txt`, preview: 'x' } }, 'no diff: from the tool\'s own input');
+  assert.deepEqual(v({ kind: 'edit', rawInput: { path: `${p}/c.txt`, oldStr: 'a', newStr: 'b' } }), { ask: { kind: 'write', op: 'edit', path: `${p}/c.txt`, preview: '- a\n+ b' } });
+  assert.deepEqual(v({ kind: 'edit', rawInput: { command: 'create', path: '.visionboard/ledger.jsonl', content: 'x' } }), { refuse: words.theLedger });
+  assert.deepEqual(v({ kind: 'edit', rawInput: { command: 'create', path: '.visionboard/images/a.svg', content: 'x' } }), { allow: true });
+  assert.deepEqual(v({ kind: 'move', locations: [{ path: `${p}/src/x.ts` }, { path: `${p}/.git/hooks/pre-commit` }] }), { refuse: words.gitFolder }, 'a move is judged at both ends');
+  assert.ok('refuse' in v({ kind: 'edit' }), 'no file named');
+  assert.ok('refuse' in v({ kind: 'edit', locations: [{ path: `${p}/a\nb` }] }), 'a path that cannot be shown');
+  assert.ok('refuse' in v({ kind: 'fetch' }));
+  assert.ok('refuse' in v({ title: 'someone else\'s MCP tool' }));
+});
+
+test('Kiro\'s agent file allows no reading tool unasked: every read reaches the access rules', () => {
+  const draft = JSON.parse(readFileSync(KIRO_AGENT_DRAFT, 'utf8'));
+  assert.deepEqual(draft.allowedTools, ['@vision-board']);
+  assert.ok(!JSON.stringify(draft.permissions).includes('fs_read'));
 });

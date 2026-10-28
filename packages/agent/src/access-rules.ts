@@ -1,7 +1,8 @@
 // The agent's access rules (PLAN agent-access § The rules; maintainer points 329, 331, 334): one table
 // of paths relative to the board's folder, each with what a read and a write get. `policy.ts` resolves a
 // path to the file it reaches before it asks this table, so a rule matches the file, never the text typed.
-// Pure: no I/O.
+// Pure: no I/O. The bots' secrets are refused in any board folder, a nested one too (point 339);
+// `.env.example` holds no secret and is read freely (point 338).
 import * as words from './words/agent-access.ts';
 
 export type AccessVerdict = 'allow' | 'ask' | 'refuse';
@@ -25,8 +26,9 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**', read: 'allow', write: 'ask', why: words.filesInTheFolder },
   { path: '**/.env', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.env.*', read: 'refuse', write: 'refuse', why: words.secretsFiles },
-  { path: '.visionboard/agents.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
-  { path: '.visionboard/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
+  { path: '**/.env.example', read: 'allow', write: 'ask', why: words.secretsExample },
+  { path: '**/.visionboard/agents.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
+  { path: '**/.visionboard/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
   { path: '.visionboard/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
   { path: '.visionboard/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '.visionboard/app-state/**', read: 'allow', write: 'refuse', why: words.boardFiles },
@@ -115,3 +117,4 @@ export function refusedTail(word: string, op: AccessOp, glob = false): AccessRul
   }
   return null;
 }
+

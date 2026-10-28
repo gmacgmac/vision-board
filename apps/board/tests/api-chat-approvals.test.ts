@@ -1,9 +1,10 @@
 // The gate's route on the board server (chat-panel BE_03 ruling 4, api.md 100-102): only the run
 // token of a session with a turn running opens it; the facts become an approval_request on the
 // session's stream and the call is held until the person answers (allowed, denied, or for the
-// session, which later asks of that kind skip); the first answer wins; Stop and a new message
-// release a waiting ask; once the turn is over the token opens nothing. The expiry is in
-// chat-approvals.test.ts.
+// session, which later asks it covers skip); the first answer wins; Stop and a new message (which
+// then waits for the turn, point 328) release a waiting ask; once the turn is over the token opens
+// nothing. The expiry is in chat-approvals.test.ts; the access rules end to end in api-chat-access.test.ts.
+// The facts' paths in /tmp are outside the board's folder, so they are asked.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -31,7 +32,7 @@ before(async () => {
 after(async () => { await h.close(); fs.rmSync(config, { recursive: true, force: true }); });
 
 const WRITE = { kind: 'write', op: 'edit', path: '/tmp/notes.md', preview: '- old\n+ new' };
-const COMMAND = { kind: 'command', command: 'ls', risks: [], paths: [] };
+const COMMAND = { kind: 'command', command: 'npm test', risks: [], paths: [] };
 
 /** The next event of `kind` on the session's stream. */
 async function next(kind: string): Promise<Event> {
@@ -88,10 +89,11 @@ test('a wrong token, a bad body, or the person\'s cookie are refused before anyt
   await h.fails('ask_approval', { body: WRITE }, 403, 'forbidden', h.person);
 });
 
-test('a new message releases a waiting ask; Stop releases one too, and then the token opens nothing', async () => {
+test('a new message releases a waiting ask (and waits for the turn); Stop releases one too, and then the token opens nothing', async () => {
   const first = ask(h.base, run.gate.token, COMMAND);
   await next('approval_request');
-  await h.fails('send_chat', { session, body: { text: 'Never mind.' } }, 409, 'conflict');
+  const queued = await h.ok('send_chat', { session, body: { text: 'Never mind.' } });
+  assert.equal(queued.kind, 'system', 'the words wait for the turn');
   assert.deepEqual([(await outcome(first)).approved, (await next('approval_result')).status], [false, 'released']);
   const second = ask(h.base, run.gate.token, COMMAND);
   await next('approval_request');
@@ -99,7 +101,24 @@ test('a new message releases a waiting ask; Stop releases one too, and then the 
   const settled = await outcome(second);
   assert.deepEqual([settled.approved, settled.status], [false, 'released']);
   await gone(run.pid);
+  const waited = await fake.run(2);
+  assert.match(waited.prompt, /^Never mind\./, 'the waiting words went as the next turn');
+  assert.deepEqual(await h.ok('stop_chat', { session }), { stopped: true });
+  await gone(waited.pid);
   await next('system');
-  const after = await ask(h.base, run.gate.token, WRITE);
+  const after = await ask(h.base, waited.gate.token, WRITE);
   assert.equal(after.status, 401, 'the turn is over, so its token opens nothing');
+});
+
+test('an empty message is refused and releases nothing', async () => {
+  fake.mode('hang');
+  await h.ok('send_chat', { session, body: { text: 'Once more.' } });
+  const third = await fake.run(3);
+  const pending = ask(h.base, third.gate.token, COMMAND);
+  const request = await next('approval_request');
+  await h.fails('send_chat', { session, body: { text: '   ' } }, 422, 'invalid');
+  await h.ok('answer_approval', { session, approval: request.approvalId, body: { approved: true } });
+  assert.equal((await outcome(pending)).status, 'approved', 'still waiting for the person after the refused message');
+  await h.ok('stop_chat', { session });
+  await gone(third.pid);
 });

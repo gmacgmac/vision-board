@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/permission.schema.json",
+  "title": "Folder permission",
+  "description": "One yes the person gave the side-panel agent \"for this folder\", kept across sessions in `.visionboard/permissions.json`, which only the server writes. It covers writes in one folder of the board's folder (`path`, relative to it, `''` for the folder itself, not its subfolders), reads of one file (`read`), searches of one folder (`search`), or a `command` by its first words (`command`). It never covers a path the access rules refuse.",
+  "$comment": "Was: api.md 100, 107; D-066 6",
+  "type": "object",
+  "required": ["id", "kind", "created"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^pm-[0-9a-f]{12}$", "description": "The permission's id; forget_permission names it."},
+    "kind": {"enum": ["write", "read", "search", "command"], "description": "What it allows: writes in the folder `path`, reads of the file `path`, searches of the folder `path`, or a `command`."},
+    "path": {"type": "string", "maxLength": 4096, "pattern": "^(?![/])(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000-\\u001f\\u007f\\u0085\\u2028\\u2029\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069]*$", "description": "For a write or a search, the folder it covers; for a read, the file; relative to the board's folder, `/`-joined; `''` is the board's folder itself."},
+    "command": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\u0000-\\u001f\\u007f]+$", "description": "For a command: the first words it covers, such as `npm test`."},
+    "created": {"$ref": "https://vision-board.invalid/schema/ledger/18/common.schema.json#/$defs/timestamp", "description": "When the person gave it."}
+  },
+  "if": {"type": "object", "properties": {"kind": {"const": "command"}}},
+  "then": {"type": "object", "required": ["command"], "not": {"required": ["path"]}},
+  "else": {"type": "object", "required": ["path"], "not": {"required": ["command"]}},
+  "unevaluatedProperties": false
+}

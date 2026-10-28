@@ -264,9 +264,11 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `list_folder_chats` | `GET /api/chats` | person | `{ sessions }` on no board yet, newest first; the first is the one in use (122) |
 | `send_chat` | `POST /api/chats/{session}/messages` | person | `{ text?, notes?, cards? }`: the person's message, chips and the board's new answers as one message; 202 with its `message_in` event, or the wait's `system` line (101, 131) |
 | `stop_chat` | `POST /api/chats/{session}/stop` | person | Stop the agent's turn; `{ stopped }` (101) |
-| `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on; the `approval_result` event (100, 101) |
+| `answer_approval` | `POST /api/chats/{session}/approvals/{approval}` | person | `{ approved, scope? }`: allow or deny what the agent waits on, `once`, for the `session` or the `folder` as the request offers; the `approval_result` event (100, 101) |
 | `watch_chat` | `GET /api/chats/{session}/events` | person | Server-sent `chat` events after `after`, each with its `seq` as the id (101) |
-| `ask_approval` | `POST /api/run/approvals` | gate | Approval facts from a chat session's gate hook, with its run token; waits for the answer (102) |
+| `ask_approval` | `POST /api/run/approvals` | gate | Approval facts from a chat session's gate hook, with its run token; the access rules first, then a kept yes, else waits for the answer (102, 107) |
+| `list_permissions` | `GET /api/permissions` | person | `{ permissions }`: the yeses kept for this folder ("Allow for this folder"), oldest first (100, 107) |
+| `forget_permission` | `POST /api/permissions/forget` | person | `{ id }`: forget one kept yes; the agent asks again; the ones left (100, 107) |
 | `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }` (109) |
 | `list_folders` | `GET /api/folders` | person | One folder under home (`path`, default home): found or not, its folders marked `hasBoard`, and `recent` (109, 110) |
 | `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
@@ -705,19 +707,25 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     from 1; the host stamps `at`, `session` and `seq`.
 100. **Approvals** follow nclite (`container/approval-ask.ts`, `engine/approvals/facts.ts`): facts,
     never a sentence. `write { op, path, preview? }`, `op` one of `create`, `replace`, `edit`,
-    `append`, with a preview of the change of up to 2000 characters; or `command { command, risks,
-    paths }`, where `risks` and `paths` may be empty (no risk patterns are matched yet). A path
-    holds no control, line-break or text-direction character. The person's answer is `{ approved,
-    scope? }`, `scope` `once` (the default) or `session` (that kind of change, for the rest of the
-    session). The gate is told `{ approved, status, approvalId?, scope?, asked? }`: `status` is
-    `approved`, `denied`, `expired` (nobody answered by `expiresAt`) or `released` (a Stop or a new
-    message ended the wait), `approved` is true exactly when `status` is `approved`, only a yes has
-    a `scope`, and `asked: false` means an answer kept for the session decided.
+    `append`, with a preview of the change of up to 2000 characters; `command { command, risks,
+    paths }`, where `risks` and `paths` may be empty (no risk patterns are matched yet); or `read {
+    path, recursive? }` (a file, or with `recursive` every file under a folder: a search; D-066). A path
+    holds no control, line-break or text-direction character. The request carries `scopes`, the scopes
+    its yes may have: `once` always, `session` unless the call can't be remembered (an interpreter, a
+    script by its path, a command that isn't plain; a second name for a file), `folder` only inside
+    the board's folder and with `agentAccessRules` on. The person's answer is `{ approved, scope? }`,
+    `scope` `once` (the default), `session` or `folder`, one the request offered (else `invalid`). The
+    gate is told `{ approved, status, approvalId?, scope?, asked? }`: `status` is `approved`, `denied`,
+    `expired` (nobody answered by `expiresAt`) or `released` (a Stop or a new message ended the wait),
+    `approved` is true exactly when `status` is `approved`, only a yes has a `scope`, and `asked:
+    false` means nobody was asked: the access rules decided (allowed, or denied whatever the answer)
+    or a kept yes did.
 101. **Sessions** (`start_chat`, `list_chats`): a session is `{ session, board, agent, model?,
     created }`, `agent` `claude` or `kiro`. One per board is in use, the newest; starting one is
     the person's click, so it grants the board to the session's agent. **Messages** (`send_chat`):
     `{ text, notes?, cards? }`, notes by `seq` and cards by number, answered 202 with the
-    `message_in` event, or `conflict` while the agent is still answering. `stop_chat` answers `{
+    `message_in` event, or while the agent is still answering with the wait's `system` line: it goes
+    when the turn ends (point 328). `stop_chat` answers `{
     stopped }`. `answer_approval`: the first answer wins, and a settled approval is a `conflict`.
     **The stream** (`watch_chat`) is `text/event-stream` of `chat` events
     (`api/sse-chat.schema.json`), each with its `seq` as the event `id`: every event after `after`
@@ -747,25 +755,44 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     board and the person's `grant` of it. The secret goes only into the board's MCP server's environment
     (`VB_AGENT_SECRET`); with it set, the MCP instructions say not to join and to leave `secret`
     out. Secrets are never stored: after a restart the same agent gets a fresh one (one more hash
-    in `agents.json`). The agent may call the `vision-board` tools (`CHAT_TOOLS`), `ToolSearch`, `Read`, `Glob`, `Grep` and the
-    gated tools, which the gate asks about; its instructions are `skills/vision-board/SKILL.md`.
+    in `agents.json`). The agent may call the `vision-board` tools (`CHAT_TOOLS`), `ToolSearch` and the
+    gated tools (`Read`, `Glob`, `Grep` among them), which the gate decides by the access rules and asks
+    about when they ask (D-066, 107); its instructions are `skills/vision-board/SKILL.md`.
 107. **Turns and approvals** (`chat-session.ts`, `chat-approvals.ts`). `send_chat` records the
     board's Send (`act` `send`) only once the message is accepted and its turn started; a message to
     a session while a new one is starting on its board is a `conflict` (FIX_01 ruling 1), and the
     page holds a message sent then until the new session has started and sends it there. The prompt is the text, then "Attached from
     the board:" with each note's words and the cards it is on and each card's number and title,
-    then `Board: <id>`. A message while the turn runs releases its waiting approvals and is a
-    `conflict`. The run token (32 random bytes, per session and server start) opens `ask_approval`
-    only while a turn runs. An approval waits 120 seconds (`expired`); a yes for the `session` is
-    kept per kind of facts (`write` or `command`) while the session stays loaded. Stop, a new
-    session on the board and the server closing release the approvals and stop the CLI.
+    then `Board: <id>`. A message while the turn runs releases its waiting approvals and waits, joined
+    with any other waiting, until the turn ends (words alone too, point 328); a message refused (nothing
+    to send) releases nothing. The run token (32 random bytes, per session and server start) opens
+    `ask_approval` only while a turn runs. **The agent's access** (D-066): every ask is decided first by
+    the access rules of the board's folder (`policy`, `packages/agent/src/access-rules.ts`), whatever
+    the gate decided and whatever was answered before: a refused path is denied and an allowed one
+    approved, unasked. Then a kept yes answers what it covers (`coverOf`): a write's yes covers writes in
+    that file's folder (not its subfolders), a read's yes covers that file only, a search's yes searches of that folder, a
+    command's yes that command's first words (`rememberedHead`; `git -C x commit` is `git commit`; never
+    a row of `NEVER_REMEMBERED`: an interpreter, a launcher, a script by its path, a command acting on
+    whatever it targets such as `rm`, `mv`, `cp`, `git reset`, `git push` or any forced git command, nor
+    `curl`/`wget`); for the rest of the `session` (in memory), or for the `folder`, kept in
+    `.visionboard/permissions.json` (`chat-permissions.ts`; written by the server only, atomically,
+    readable by this user only, git-ignored; a refused path for the agent; a damaged file keeps nothing),
+    listed by `list_permissions` and forgotten by `forget_permission`. With `agentAccessRules` off nothing
+    goes unasked and nothing kept for the folder is offered or used. **Timing**: with `approvalHold` (on
+    by default, `VB_FLAGS`) a question waits with no limit until the person answers, presses Stop or sends
+    a new message, and carries no `expiresAt`; the agent's turn clock pauses meanwhile; off, it waits 120
+    seconds (`expired`). Stop, a new session on the board and the server closing release the approvals
+    and stop the CLI. `openapi.json` `info.version` becomes 1.31.0 (`list_permissions`, `forget_permission`;
+    the chat schema's `read` facts and the request's `scopes`).
 108. **Kiro** (chat-panel BE_04). `start_chat` with `agent: 'kiro'` runs `kiro-cli acp` (engine v2, the
     CLI's default) through `packages/agent/src/kiro.ts`; its session id is Kiro's own UUID, and the
     CLI process stays up between turns (Stop sends `session/cancel` and kills it after 3 s only if
     it ignores that; a new session on the board and the server closing end it). Kiro's permission requests become the
-    same `approval_request`/`answer_approval` flow: the `vision-board` tools and reading go unasked, a file
-    change or a command is asked, anything else is refused; a "for this session" yes is kept by the
-    server (Kiro is always answered with its one-time option). No model list is offered for Kiro
+    same `approval_request`/`answer_approval` flow: the `vision-board` tools go unasked; a read, a search,
+    a file change or a command is decided by the same access rules (`verdictFor`, every path the call
+    names), asked only when they ask; anything else is refused; a kept yes is the server's (Kiro is always
+    answered with its one-time option). Kiro's agent file allows no reading tool unasked, so every read
+    reaches the rules. No model list is offered for Kiro
     (`--model` is passed when a model is given). Usage is not reported by Kiro's ACP v2. A board
     write's cards and head come from the tool call's `rawOutput` (kiro-cli 2.28.0 sends an MCP tool's
     result there, `{ items: [{ Json: { content } }] }`, and no `content`), so its change chip zooms.

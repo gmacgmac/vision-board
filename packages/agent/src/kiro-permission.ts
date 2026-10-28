@@ -1,12 +1,13 @@
 // Kiro's `session/request_permission` as the board's approval (PLAN ruling 5): what Kiro asks
 // before a tool runs becomes the same facts the Claude gate sends (a file change, or a command),
-// the person's answer comes back as the option Kiro offered. The adapter decides in three ways:
-// the board's own tools and plain reading go ahead without asking (as Claude's allowed tools do);
-// a file change or a command asks the person; anything else is refused, because the panel has no
-// way to show it. Only a one-time option is ever chosen, so Kiro keeps no trust of its own from us:
-// "for this session" is the board server's to remember.
+// the person's answer comes back as the option Kiro offered. The board's own tools go ahead; a read,
+// a search, a file change or a command is decided by the access rules first (`policy`, D-066), as the
+// Claude gate's are: refused (said why), allowed without asking, or asked of the person; anything else
+// is refused, because the panel has no way to show it. Only a one-time option is ever chosen, so Kiro
+// keeps no trust of its own from us: "for this session" is the board server's to remember.
 import type { Facts } from './approvals.ts';
 import { factsFor } from './approvals.ts';
+import { policy } from './policy.ts';
 import { isRecord } from './record.ts';
 
 type Rec = Record<string, unknown>;
@@ -45,18 +46,45 @@ export const outcome = (optionId: string | null) =>
 const diffs = (content: unknown): Rec[] =>
   (Array.isArray(content) ? content.filter((c): c is Rec => isRecord(c) && c.type === 'diff' && typeof c.path === 'string') : []);
 
+/** Every path a tool call names: its locations, then its input's `path`, `file_path`, `destination` and
+ * each of `operations`' (Kiro's read), so a move or a many-file read is judged on all of them. */
+function pathsOf(toolCall: Rec, input: Rec): string[] {
+  const locs = Array.isArray(toolCall.locations) ? toolCall.locations.filter(isRecord).map((l) => str(l.path)) : [];
+  const ops = Array.isArray(input.operations) ? input.operations.filter(isRecord).map((o) => str(o.path)) : [];
+  return [...locs, str(input.path), str(input.file_path), str(input.destination), str(input.target), ...ops].filter((p) => p !== '');
+}
+
+/** The rules' verdict on `facts`, and on every other path the call names (`also`, judged as `facts`' kind). */
+function judged(facts: Facts, also: string[], cwd: string, strict: boolean): Verdict {
+  let asks = false;
+  for (const f of [facts, ...also.map((path): Facts => (facts.kind === 'write' ? { ...facts, path } : { kind: 'read', path }))]) {
+    const d = policy(f, cwd, { strict });
+    if ('refuse' in d) return d;
+    if ('ask' in d) asks = true;
+  }
+  return asks ? { ask: facts } : { allow: true };
+}
+
 /**
  * What to do for `toolCall` (an ACP tool call with its `kind`, `locations`, `content` and
  * `rawInput`). `own` says whether the tool is one of the board's own (the `vision-board` server's).
+ * `cwd` is the board's folder, which the access rules are relative to; `strict`, the `agentAccessRules`
+ * flag off (nothing goes ahead unasked).
  */
-export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (path: string) => boolean): Verdict {
+export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (path: string) => boolean, strict = false): Verdict {
   if (own) return { allow: true };
   const kind = str(toolCall.kind);
-  if (kind === 'read' || kind === 'search' || kind === 'think') return { allow: true };
+  if (kind === 'think') return { allow: true };
   const input = isRecord(toolCall.rawInput) ? toolCall.rawInput : {};
+  if (kind === 'read' || kind === 'search') {
+    const named = pathsOf(toolCall, input);
+    if (named.length === 0 && kind === 'read') return { refuse: 'The read did not say which file, so it was refused.' };
+    const asked = factsFor({ tool_name: kind === 'read' ? 'Read' : 'Grep', tool_input: { file_path: named[0], path: named[0] ?? '' }, cwd }, exists);
+    return 'refuse' in asked ? asked : judged(asked, named.slice(1), cwd, strict);
+  }
   if (kind === 'execute') {
     const asked = factsFor({ tool_name: 'Bash', tool_input: { command: str(input.command) }, cwd }, exists);
-    return 'refuse' in asked ? asked : { ask: asked };
+    return 'refuse' in asked ? asked : judged(asked, [], cwd, strict);
   }
   if (kind === 'edit' || kind === 'delete' || kind === 'move') {
     const [change] = diffs(toolCall.content);
@@ -71,7 +99,8 @@ export function verdictFor(toolCall: Rec, own: boolean, cwd: string, exists: (pa
       ? { tool_name: 'Edit', tool_input: { file_path: file, old_string: before, new_string: after } }
       : { tool_name: 'Write', tool_input: { file_path: file, content: after } };
     const asked = factsFor({ ...hook, cwd }, exists);
-    return 'refuse' in asked ? asked : { ask: asked };
+    const others = pathsOf(toolCall, input).filter((p) => p !== file).map((p) => (p.startsWith('/') ? p : `${cwd}/${p}`));
+    return 'refuse' in asked ? asked : judged(asked, others, cwd, strict);
   }
   return { refuse: `The board cannot show a ${kind || 'tool'} request to the person, so it was refused.` };
 }

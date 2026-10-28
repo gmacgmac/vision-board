@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/permission-list-response.schema.json",
+  "title": "Folder permissions",
+  "description": "Every yes kept for this folder, oldest first.",
+  "$comment": "Was: api.md 100; D-066 6",
+  "type": "object",
+  "required": ["permissions"],
+  "properties": {
+    "permissions": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {"$ref": "https://vision-board.invalid/schema/api/permission.schema.json"},
+      "description": "The kept yeses, oldest first."
+    }
+  },
+  "unevaluatedProperties": false
+}

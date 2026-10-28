@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/permission-forget-request.schema.json",
+  "title": "Forget a folder permission",
+  "description": "Which kept yes to forget, by its id from list_permissions.",
+  "$comment": "Was: api.md 100; D-066 6",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {"$ref": "https://vision-board.invalid/schema/api/permission.schema.json#/properties/id"}
+  },
+  "unevaluatedProperties": false
+}

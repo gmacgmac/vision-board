@@ -681,3 +681,18 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
 - 2026-10-28, agent: **not run with live agents.** Start Claude Code and Kiro in a folder, let each ask
   for a board it did not make, and read the label in the strip before relying on the text. Kiro reads
   the new text when the board next starts.
+
+## Skill v3.17 (what the agent may read and write)
+
+- 2026-10-28, agent (agent-access WIRE_01, D-066): the side panel's agent now meets the access rules on
+  every tool call (`packages/agent/src/access-rules.ts`): the folder is open to read, a change or a
+  command asks, `.env`, the board's own files and `.git/` are refused whatever the person answers, and
+  a search of a folder holding a refused file is refused (every board folder holds
+  `.visionboard/agents.json`, so a search of the whole folder always is). The skill says so in two
+  bullets, so the agent neither retries a refusal another way nor searches the whole folder first.
+- 2026-10-28, agent: **not run with live agents.** Watch a real Claude Code and Kiro turn for a first
+  search of the whole folder (refused) and for the agent working around a refusal.
+- 2026-10-28, orchestrator (WIRE_01 Run 2): a command whose effect depends on what it targets (`rm`, `mv`,
+  `cp`, `chmod`, `ln`, `dd`, `git reset`/`clean`/`restore`/`push`/`rebase`, `git checkout --`, `git branch -D`,
+  forced git, `npm publish`) or reaches the network (`curl`, `wget`) is never remembered; the skill says so
+  in the Allow line, so the agent expects the question each time.

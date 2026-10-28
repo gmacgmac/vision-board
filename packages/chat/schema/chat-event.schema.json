@@ -135,13 +135,20 @@
     },
     "approvalRequest": {
       "type": "object",
-      "description": "The agent is waiting to change a file or run a command until the person allows or denies it; silence past `expiresAt` is a denial, and with no `expiresAt` the question waits for the person with no limit (approvalHold).",
+      "description": "The agent is waiting to read or change a file or run a command until the person allows or denies it; silence past `expiresAt` is a denial, and with no `expiresAt` the question waits for the person with no limit (approvalHold).",
       "required": ["kind", "approvalId", "facts"],
       "properties": {
         "kind": {"const": "approval_request", "description": "Always `approval_request`."},
         "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval's id; the person's answer names it."},
         "facts": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/facts"},
-        "expiresAt": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When the request lapses, denied; absent, it waits until the person answers, presses Stop or sends a new message."}
+        "expiresAt": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When the request lapses, denied; absent, it waits until the person answers, presses Stop or sends a new message."},
+        "scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope"},
+          "description": "The scopes a yes may have, `once` always: `session` unless the call can't be remembered, `folder` only inside the board's folder. Absent: `once` and `session` (an older host)."
+        }
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
       "unevaluatedProperties": false
@@ -209,14 +216,26 @@
       },
       "unevaluatedProperties": false
     },
+    "readFacts": {
+      "type": "object",
+      "description": "A file the agent is about to read, or with `recursive` every file under a folder (a search).",
+      "required": ["kind", "path"],
+      "properties": {
+        "kind": {"const": "read", "description": "Always `read`."},
+        "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "The file or folder."},
+        "recursive": {"const": true, "description": "Present when every file under the folder is read, as a search does."}
+      },
+      "unevaluatedProperties": false
+    },
     "facts": {
       "type": "object",
-      "description": "What the agent is about to do, as facts, never a sentence: a file write or a shell command.",
+      "description": "What the agent is about to do, as facts, never a sentence: a file read or write, or a shell command.",
       "required": ["kind"],
       "discriminator": {"propertyName": "kind"},
       "oneOf": [
         {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/writeFacts"},
-        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/commandFacts"}
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/commandFacts"},
+        {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/readFacts"}
       ]
     },
     "status": {
@@ -253,7 +272,7 @@
         "status": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/status"},
         "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval the person was asked; left out when nobody was asked."},
         "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope"},
-        "asked": {"const": false, "description": "Present, and false, only when nobody was asked: an answer kept for the session decided."}
+        "asked": {"const": false, "description": "Present, and false, only when nobody was asked: the access rules decided (allowed, or denied whatever the answer), or a yes kept for the session or the folder."}
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/settled"}],
       "unevaluatedProperties": false

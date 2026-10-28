@@ -12,7 +12,7 @@ import type { AgentAdapter, AgentSession, AgentUpdate, StartOptions } from './ad
 import type { TurnSession } from './claude-args.ts';
 import { buildClaudeArgs, isWrongSessionFlag, mcpConfigJson, transcriptExists } from './claude-args.ts';
 import { ClaudeStream } from './claude-stream.ts';
-import { GATE_TOKEN_ENV, GATE_URL_ENV, GATE_WAIT_ENV, gateWaitMs } from './gate.ts';
+import { gateEnv } from './gate.ts';
 import { startTurnClock } from './turn-clock.ts';
 
 /** Between SIGTERM and SIGKILL (nclite's KILL_GRACE_MS). */
@@ -51,8 +51,7 @@ async function* runOnce(
     cwd: start.cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: {
-      ...opts.env, [GATE_URL_ENV]: start.gate.url, [GATE_TOKEN_ENV]: start.gate.token,
-      ...(start.approvalHold && { [GATE_WAIT_ENV]: String(gateWaitMs(true)) }),
+      ...opts.env, ...gateEnv(start),
     },
   });
   const closed = new Promise<void>((resolve) => { child.once('close', () => resolve()); child.once('error', () => resolve()); });

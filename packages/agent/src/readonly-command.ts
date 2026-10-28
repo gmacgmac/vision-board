@@ -3,7 +3,9 @@
 // `cat`, `head`, `tail`, `wc`, `pwd`, `tree`, `stat`, `file`, `grep`, `rg`, `find` without what runs,
 // deletes or writes, and `git`'s reading subcommands), joined only by `|`, with plain words: no
 // redirection, `$`, backticks, `;`, `&`, globs, `~` or braces. Anything else is not read-only (asked).
-// Pure: no I/O. `policy.ts` decides each word against the rules.
+// Pure: no I/O. `policy.ts` decides each word against the rules. Also what a remembered yes for a
+// command covers (`commandHead`, `rememberedHead`) and the one table of commands never remembered
+// (`NEVER_REMEMBERED`: they run any code, act on whatever they target, or reach the network).
 
 export interface ShellWord {
   /** The word after quote removal. */
@@ -146,15 +148,86 @@ export function readOnlyCommand(command: string): ReadOnly | null {
   return { reads, searches };
 }
 
-/**
- * The first words a remembered yes for this command may cover (`npm test`, `git commit`, `ls`):
- * the program, and its subcommand when the second word is one. Null when the command is not one
- * plain program (a yes for `npm test` must never cover `npm test && curl …`).
- */
-export function commandHead(command: string): string | null {
+/** A plain command's words, git's `-C <dir>` and `-c k=v` left out (they don't change what it does); null when not plain. */
+function plainWords(command: string): string[] | null {
   const { segments, plain } = shellWords(command);
   const [only, ...more] = segments;
-  const [first, second] = (only ?? []).map((w) => w.text);
-  if (!plain || more.length > 0 || first === undefined) return null;
-  return second !== undefined && /^[a-z][a-z0-9-]*$/.test(second) ? `${first} ${second}` : first;
+  if (!plain || more.length > 0 || !only || only.length === 0) return null;
+  const words = only.map((w) => w.text);
+  if (words[0] !== 'git') return words;
+  let i = 1;
+  while (words[i] === '-C' || words[i] === '-c') i += 2;
+  return ['git', ...words.slice(i)];
+}
+
+/**
+ * The first words a remembered yes for this command may cover (`npm test`, `git commit`, `ls`):
+ * the program, and its subcommand when the second word is one (`git -C x commit` is `git commit`).
+ * Null when the command is not one plain program (a yes for `npm test` must never cover `npm test && curl …`).
+ */
+export function commandHead(command: string): string | null {
+  const words = plainWords(command);
+  if (words === null) return null;
+  const [first, second] = words;
+  return second !== undefined && /^[a-z][a-z0-9-]*$/.test(second) ? `${first} ${second}` : first!;
+}
+
+/** Why a yes for a command is never remembered: it runs whatever code it is given; what it does
+ * depends on the files it targets; it reaches the network. */
+export type NeverKind = 'code' | 'targets' | 'network';
+export interface NeverRow {
+  /** The first word, or the first two (a subcommand). A first word's version suffix is ignored (`python3.12`). */
+  head: string;
+  kind: NeverKind;
+  /** Only when the words after the head say so; always when left out. */
+  when?: (rest: string[]) => boolean;
+}
+
+const rows = (kind: NeverKind, heads: string[]): NeverRow[] => heads.map((head) => ({ head, kind }));
+/** git's force: `--force`, `--force-with-lease`, `-f` alone or among short flags. */
+const forced = (rest: string[]) => rest.some((w) => w === '--force' || w.startsWith('--force-') || /^-[a-zA-Z]*f[a-zA-Z]*$/.test(w));
+
+/**
+ * The commands a yes is never remembered for: asked every time (D-066 6; WIRE_01 Run 2). One table.
+ */
+export const NEVER_REMEMBERED: readonly NeverRow[] = [
+  ...rows('code', [
+    'sh', 'bash', 'zsh', 'dash', 'ksh', 'fish', 'csh', 'tcsh', 'python', 'node', 'nodejs', 'deno', 'bun', 'ruby', 'perl', 'php',
+    'lua', 'osascript', 'pwsh', 'powershell', 'env', 'xargs', 'sudo', 'doas', 'su', 'nohup', 'nice', 'time', 'timeout',
+    'watch', 'exec', 'eval', 'command', 'builtin', 'source', '.', 'npx', 'bunx', 'pnpx', 'uvx', 'pipx',
+    'npm exec', 'npm x', 'pnpm exec', 'pnpm dlx', 'yarn dlx', 'yarn exec', 'bun x', 'uv run', 'poetry run',
+  ]),
+  ...rows('targets', [
+    'rm', 'rmdir', 'mv', 'cp', 'chmod', 'chown', 'ln', 'dd', 'truncate',
+    'git reset', 'git clean', 'git restore', 'git push', 'git rebase', 'npm publish',
+  ]),
+  { head: 'git checkout', kind: 'targets', when: (rest) => rest.includes('--') },
+  { head: 'git branch', kind: 'targets', when: (rest) => rest.some((w) => /^-[a-zA-Z]*D/.test(w)) },
+  { head: 'git', kind: 'targets', when: forced },
+  ...rows('network', ['curl', 'wget']),
+];
+
+/** Heads whose next word is the script they run: the yes covers that script only (`npm run build`). */
+const SCRIPT_HEADS = new Set(['npm run', 'npm run-script', 'pnpm run', 'yarn run', 'bun run']);
+
+/**
+ * What a remembered yes for `command` covers: its first words (`commandHead`), or null when it must
+ * never be remembered: a command that is not plain, a script by its path (its content can change after
+ * the yes), or a row of `NEVER_REMEMBERED`.
+ */
+export function rememberedHead(command: string): string | null {
+  const words = plainWords(command);
+  const head = commandHead(command);
+  if (words === null || head === null) return null;
+  const first = words[0]!;
+  if (first.includes('/')) return null;
+  const firstName = first.replace(/[0-9.]+$/, '') || first;
+  for (const row of NEVER_REMEMBERED) {
+    const n = row.head.split(' ').length;
+    const named = n === 1 ? row.head === firstName || row.head === first : row.head === words.slice(0, 2).join(' ');
+    if (named && (!row.when || row.when(words.slice(n)))) return null;
+  }
+  if (!SCRIPT_HEADS.has(head)) return head;
+  const script = words[2];
+  return script !== undefined && /^[a-z0-9][a-z0-9:._-]*$/i.test(script) ? `${head} ${script}` : null;
 }

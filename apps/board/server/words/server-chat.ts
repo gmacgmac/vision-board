@@ -9,6 +9,14 @@ export const thePersonStartedAChat = 'The person started a chat on this board.';
 // ---- chat-approvals.ts
 export const thisApprovalIsAlreadySettled = (status: string): string => `This approval is already settled (${status}); the first answer stands.`;
 export const thereIsNoApprovalIn = (approvalId: string): string => `There is no approval "${approvalId}" in this session.`;
+export const thisApprovalDoesNotOffer = (scope: string, offered: string): string =>
+  `This approval does not offer "${scope}": its yes may hold ${offered}.`;
+
+// ---- chat-permissions.ts
+export const thePermissionsFileIsDamaged = (file: string): string =>
+  `chat: ${file} is not a valid permissions file, so nothing is allowed for this folder until the person allows something again.`;
+export const noPermissionIsKeptFor = (id: string): string =>
+  `No permission "${id}" is kept for this folder. Call list_permissions to see them.`;
 
 // ---- chat-index.ts
 export const anEntryIsNotAn = 'an entry is not an object';
@@ -40,7 +48,6 @@ export const couldNotBeStarted2 = (agentName: string): string => `${agentName} c
 
 // ---- chat.ts
 export const theServerKnowsNoRunning = 'The server knows no running chat turn with this run token. Only a running session\'s gate asks.';
-export const theAgentIsStillAnswering = 'The agent is still answering the last message. Wait for it, or press Stop.';
 export const thereIsNothingToSend = 'There is nothing to send: write a message, attach cards or notes, or answer on the board first.';
 export const aNewerSessionReplacedThis = 'A newer session replaced this one on the board; send your message there.';
 export const aNewSessionIsStarting = 'A new session is starting on this board; send your message there once it has.';

@@ -9,20 +9,13 @@ import { lstatSync, readdirSync, readlinkSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import type { AccessOp, AccessVerdict } from './access-rules.ts';
 import { OUTSIDE_RULE, accessFor, refusedTail, stricter } from './access-rules.ts';
-import type { Facts } from './approvals.ts';
+import type { AskScope, Facts } from './approvals.ts';
 import { readOnlyCommand, shellWords } from './readonly-command.ts';
 import * as words from './words/agent-access.ts';
 
-/** A read the agent asks for (a file, or with `recursive` every file under a folder, as a search reads). */
-export interface ReadFacts {
-  kind: 'read';
-  path: string;
-  recursive?: boolean;
-}
-
-export type PolicyFacts = Facts | ReadFacts;
-/** `folder`: remembered for the board's folder; never offered for a path outside it. */
-export type AskScope = 'once' | 'session' | 'folder';
+export type { AskScope };
+/** What the policy decides on: a write, a command, or a read (`ReadFacts`, in approvals.ts beside the others). */
+export type PolicyFacts = Facts;
 export type Decision = { allow: true } | { ask: true; scopes: AskScope[] } | { refuse: string };
 
 export interface PathStat {

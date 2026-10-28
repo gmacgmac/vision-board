@@ -13,6 +13,7 @@ import { createClient } from '#client';
 import { openAgents } from '../server/agents.ts';
 import { personCookie, startTestBoard } from './test-board.ts';
 import { INSTRUCTIONS_FILE } from '../server/chat-access.ts';
+import { QUEUED_WORDS } from '../server/chat-session.ts';
 import type { StoredSession } from '../server/chat-index.ts';
 import { openLedger } from '../server/ledger.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
@@ -101,20 +102,24 @@ test('one turn at a time; Stop ends the CLI and the turn; a second Stop has noth
   await h.ok('send_chat', { session: first.session, body: { text: 'Keep going.' } });
   const run = await fake.run(2);
   assert.deepEqual(run.args.slice(4, 6), ['--resume', first.session], 'the second turn resumes the first');
-  await h.fails('send_chat', { session: first.session, body: { text: 'And again.' } }, 409, 'conflict');
+  const queued = await h.ok('send_chat', { session: first.session, body: { text: 'And again.' } });
+  assert.deepEqual([queued.kind, queued.text], ['system', QUEUED_WORDS], 'words alone wait for the turn (point 328)');
+  fake.mode('replay');
   assert.deepEqual(await h.ok('stop_chat', { session: first.session }), { stopped: true });
   await gone(run.pid);
-  const events = await readChat(h.base, h.cookie, first.session, (ev) => ev.some((e) => e.turn === 'stopped'));
+  const next = await fake.run(3);
+  assert.match(next.prompt, /^And again\./, 'the waiting words go as the next turn');
+  const events = await readChat(h.base, h.cookie, first.session, (ev) => ev.filter((e) => e.turn !== undefined).length >= 3);
   valid(events);
-  assert.deepEqual(events.at(-1), { ...events.at(-1), kind: 'system', turn: 'stopped' });
+  assert.ok(events.some((e) => e.kind === 'system' && e.turn === 'stopped'));
+  assert.deepEqual(events.at(-1), { ...events.at(-1), kind: 'system', turn: 'done' });
   assert.deepEqual(await h.ok('stop_chat', { session: first.session }), { stopped: false });
-  fake.mode('replay');
 });
 
 test('a new session replaces the board\'s current one and stops its CLI; the old one takes no message', async () => {
   fake.mode('hang');
   await h.ok('send_chat', { session: first.session, body: { text: 'Think it over.' } });
-  const run = await fake.run(3);
+  const run = await fake.run(4);
   const second = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
   await gone(run.pid);
   fake.mode('replay');

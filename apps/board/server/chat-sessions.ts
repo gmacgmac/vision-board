@@ -6,7 +6,11 @@
 // the first board its agent creates (panel-send ruling 2). A board session's agent is handed the
 // person's answers since it was last told with every message (`tell`, chat-board-context ruling 2),
 // and the board's Send hands them on their own (`round`, panel-send ruling 1): one builder,
-// chat-prompt.ts `promptFor`. A message with something attached waits while a turn runs (ruling 5).
+// chat-prompt.ts `promptFor`. A message waits while a turn runs (ruling 5; words alone too, point
+// 328), joined with any already waiting. Each session's approvals are decided by the access rules of
+// the board's folder (D-066), with the folder's kept yeses (`chat-permissions.ts`); `approvalHold` and
+// `strictAccess` (the `agentAccessRules` flag off) come from the server's flags.
+import fs from 'node:fs';
 import path from 'node:path';
 import type { Round } from '#actions';
 import { creatorOf, turnOf } from '#actions';
@@ -19,6 +23,8 @@ import { openChatIndex, publicSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
 import { promptFor, wordsOf } from './chat-prompt.ts';
 import { previousSend } from './chat-round.ts';
+import type { Permissions } from './chat-permissions.ts';
+import { openPermissions } from './chat-permissions.ts';
 import type { ChatEvent, LiveSession } from './chat-session.ts';
 import { createLiveSession, hasToken, QUEUED, QUEUED_WORDS } from './chat-session.ts';
 import { newToken } from './secrets.ts';
@@ -42,6 +48,10 @@ export interface ChatOptions {
   approvalTtlMs?: number | undefined;
   /** Why an agent cannot start on this server (Kiro's agent file not written, N34 ruling 1). */
   blocked?: Partial<Record<ChatSession['agent'], string>> | undefined;
+  /** The `approvalHold` flag: a question waits for the person, and the turn clock with it. */
+  approvalHold?: boolean | undefined;
+  /** The `agentAccessRules` flag off: nothing goes ahead unasked, nothing is kept for the folder. */
+  strictAccess?: boolean | undefined;
 }
 
 /** Where a session is: a board, or `undefined` for the folder (a session on no board yet). */
@@ -62,10 +72,12 @@ export interface Chats {
   round(board: string, send: number): Promise<'sent' | 'queued' | undefined>;
   /** The person's message `msg` to `live`, on its board: the words, the chips and the answers since
    * its agent was last told, as one message, recording the board's Send when it goes. Sent now, or,
-   * while a turn runs and something is attached, held with any message already waiting and sent
-   * when the turn ends. The `message_in`, the wait's system line, `busy` for words alone while a
-   * turn runs, or undefined when there is nothing to send. */
-  tell(live: LiveSession, msg: ChatMessage): ChatEvent | 'busy' | undefined;
+   * while a turn runs, held with any message already waiting and sent when the turn ends. In the
+   * folder (a session on no board), the words alone, the same way. The `message_in`, the wait's
+   * system line, or undefined when there is nothing to send. */
+  tell(live: LiveSession, msg: ChatMessage): ChatEvent | undefined;
+  /** The yeses kept for this folder ("Allow for this folder"). */
+  readonly permissions: Permissions;
   /** A session, loaded and ready (resumed after a restart); `not-found` when there is none. */
   live(id: string): Promise<LiveSession>;
   /** A session already loaded in this server, if it is. */
@@ -98,9 +110,12 @@ function joined(was: Held | undefined, next: Held): Held {
   };
 }
 
-export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {} }: ChatOptions): Chats {
+export function openChats(o: ChatOptions): Chats {
+  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false } = o;
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
+  let kept: Permissions | undefined;
+  const permissions = () => (kept ??= openPermissions(dir, (() => { try { return fs.realpathSync(cwd); } catch { return cwd; } })()));
   let index: ChatIndex | undefined;
   const store = () => (index ??= openChatIndex(dir));
   const entries = () => store().all();
@@ -115,12 +130,13 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
 
   /** What the adapter needs for one session: the board's MCP server with its secret, and the gate. */
   const options = (secret: string, token: string, extra: Partial<StartOptions>): StartOptions => ({
-    cwd, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS,
+    cwd, ...extra, instructionsFile: INSTRUCTIONS_FILE, allowedTools: CHAT_TOOLS, approvalHold, strictAccess,
     mcpServers: { [MCP_NAME]: boardMcpServer(base(), secret, cwd) }, gate: { url: `${base()}/api/run/approvals`, token },
   });
 
   const keep = (record: StoredSession, adapterSession: Parameters<typeof createLiveSession>[1], token: string, resumed = false) => {
-    const live = createLiveSession(record, adapterSession, token, { ttlMs: approvalTtlMs, resumed });
+    const access = { folder: cwd, strict: strictAccess, ...(!strictAccess && { kept: permissions() }) };
+    const live = createLiveSession(record, adapterSession, token, { access, ttlMs: approvalTtlMs, hold: approvalHold, resumed });
     sessions.set(record.session, live);
     return live;
   };
@@ -183,6 +199,17 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
   }
 
+  /** The words for a session in the folder (no board, so nothing else rides with them): now, or when the turn ends. */
+  function inFolder(live: LiveSession, held: Held): ChatEvent | undefined {
+    const id = live.record.session;
+    if (live.busy) waiting.set(id, held);
+    return live.post(() => {
+      waiting.delete(id);
+      const built = promptFor(ledger.state(), undefined, held.msg);
+      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text } };
+    }, QUEUED_WORDS);
+  }
+
   /** A session on no board moves to the first board its own agent creates (panel-send ruling 2). */
   const offAppend = ledger.onAppend((e) => {
     if (e.type !== 'board' || e.by !== 'agent' || !index) return;
@@ -240,12 +267,14 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
       return e === undefined ? undefined : e.kind === 'message_in' ? 'sent' : 'queued';
     },
     tell(session, msg) {
-      const board = session.record.board!;
+      const { board, session: id } = session.record;
+      const was = session.busy ? waiting.get(id) : undefined;
+      if (board === undefined) return wordsOf(msg) ? inFolder(session, joined(was, { msg, before: Infinity, record: false })) : undefined;
       const attached = Boolean(msg.notes?.length || msg.cards?.length) || unsaid(session, board, Infinity) !== undefined;
-      if (session.busy && !attached) return 'busy';
       if (!attached && !wordsOf(msg)) return undefined;
-      return deliver(session, board, joined(session.busy ? waiting.get(session.record.session) : undefined, { msg, before: Infinity, record: true }));
+      return deliver(session, board, joined(was, { msg, before: Infinity, record: true }));
     },
+    get permissions() { return permissions(); },
     live,
     loaded: (id) => sessions.get(id),
     byToken: (token) => [...sessions.values()].find((s) => hasToken(s, token)),

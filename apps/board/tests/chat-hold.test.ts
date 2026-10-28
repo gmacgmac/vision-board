@@ -11,6 +11,8 @@ import type { StoredSession } from '../server/chat-index.ts';
 
 const RECORD = { session: 's-1', board: 'pricing', agent: 'claude' } as unknown as StoredSession;
 const WRITE: Facts = { kind: 'write', op: 'create', path: '/tmp/notes.md', preview: 'hello' };
+/** The board's folder the access rules are relative to (this repo): WRITE's file, in /tmp, is outside it, so it is asked. */
+const access = { folder: process.cwd() };
 
 /** An agent whose turn runs until `finish()` or `cancel()`; `held` is every `hold` call it got. */
 function fakeAgent() {
@@ -35,7 +37,7 @@ test.afterEach(() => mock.timers.reset());
 test('hold on: the agent holds while a question waits, and goes on when the person answers; nothing lapses', async () => {
   mock.timers.enable({ apis: ['setTimeout', 'Date'] });
   const { agent, held, finish } = fakeAgent();
-  const live = createLiveSession(RECORD, agent, 'tok', { hold: true });
+  const live = createLiveSession(RECORD, agent, 'tok', { access, hold: true });
   live.send('go', { kind: 'message_in', text: 'go' });
   const asked = live.approvals.ask(WRITE);
   assert.deepEqual(held, [true]);
@@ -51,7 +53,7 @@ test('hold on: the agent holds while a question waits, and goes on when the pers
 
 test('hold on: Stop releases the question and the agent goes on (to be stopped); so does the turn ending', async () => {
   const { agent, held } = fakeAgent();
-  const live = createLiveSession(RECORD, agent, 'tok', { hold: true });
+  const live = createLiveSession(RECORD, agent, 'tok', { access, hold: true });
   live.send('go', { kind: 'message_in', text: 'go' });
   const asked = live.approvals.ask(WRITE);
   assert.equal(live.stop(), true);
@@ -61,7 +63,7 @@ test('hold on: Stop releases the question and the agent goes on (to be stopped);
 
 test('hold on: a new message (words alone while it works) releases the question', async () => {
   const { agent, held } = fakeAgent();
-  const live = createLiveSession(RECORD, agent, 'tok', { hold: true });
+  const live = createLiveSession(RECORD, agent, 'tok', { access, hold: true });
   live.send('go', { kind: 'message_in', text: 'go' });
   const asked = live.approvals.ask(WRITE);
   live.approvals.release(); // what chat.ts `busy` does
@@ -72,7 +74,7 @@ test('hold on: a new message (words alone while it works) releases the question'
 
 test('hold off (today): the agent is never told to hold, and an unanswered question lapses', async () => {
   const { agent, held, finish } = fakeAgent();
-  const live = createLiveSession(RECORD, agent, 'tok', { ttlMs: 30 });
+  const live = createLiveSession(RECORD, agent, 'tok', { access, ttlMs: 30 });
   live.send('go', { kind: 'message_in', text: 'go' });
   const outcome = await live.approvals.ask(WRITE);
   assert.equal(outcome.status, 'expired');
@@ -84,7 +86,7 @@ test('hold off (today): the agent is never told to hold, and an unanswered quest
 test('an adapter session with no hold is fine (hold is optional on the interface)', async () => {
   const { agent, finish } = fakeAgent();
   delete agent.hold;
-  const live = createLiveSession(RECORD, agent, 'tok', { hold: true });
+  const live = createLiveSession(RECORD, agent, 'tok', { access, hold: true });
   live.send('go', { kind: 'message_in', text: 'go' });
   const asked = live.approvals.ask(WRITE);
   live.approvals.answer(request(live.after(0)).approvalId, { approved: false });

@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "Vision Board API",
-    "version": "1.30.0",
+    "version": "1.31.0",
     "summary": "The one board API, for the page, agents and the vb CLI",
     "description": "Every operation on the project ledger, defined once. The MCP tools and `vb` commands are generated from the operations marked `x-agent: true`; the route table is generated from this document.",
     "x-comment": "Was: docs/specification/api.md, D-019, D-026"
@@ -2014,7 +2014,7 @@
         "operationId": "answer_approval",
         "x-agent": false,
         "summary": "Answer an approval",
-        "description": "Allow or deny a file change or command the agent is waiting on, `once` (the default) or for the rest of the `session` for that kind of change. The first answer wins: an approval already settled is a `conflict`, and one past its time limit stays denied. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `approval_result` event.",
+        "description": "Allow or deny a read, a file change or a command the agent is waiting on: `once` (the default), for the rest of the `session`, or for this `folder` (kept across sessions, list_permissions), each only when the request offered it (`scopes`), else `invalid`. A kept yes covers a write's folder (not its subfolders), a read's file, a search's folder, or a command's first words, never a path the access rules refuse; a call outside the board's folder is never offered `folder`, and a command that can't be remembered (an interpreter, a script, not plain) is offered `once` only. The first answer wins: an approval already settled is a `conflict`, and one past its time limit stays denied. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`. It returns the `approval_result` event.",
         "security": [
           {
             "personCookie": []
@@ -2166,7 +2166,7 @@
         "operationId": "ask_approval",
         "x-agent": false,
         "summary": "Ask the person before a file change or command",
-        "description": "Tell the server, as facts, what the agent is about to change (a file write) or run (a shell command), and wait until it is settled. Only the gate hook of a running chat session calls this, with that session's run token; the person's cookie is refused with `forbidden`. The person is asked unless an answer kept for the session decides; silence past the time limit, a Stop or a new message is a denial. It returns `approved`, and how it was settled.",
+        "description": "Tell the server, as facts, what the agent is about to read, change (a file write) or run (a shell command), and wait until it is settled. Only the gate hook of a running chat session calls this, with that session's run token; the person's cookie is refused with `forbidden`. The board's access rules decide first, whatever was asked before: a path they refuse is denied and one they allow is approved, both without asking (`asked: false`). Otherwise a yes kept for the session (or for this folder) decides when it covers the call (a write's folder, a read's file, a search's folder, a command's first words), and else the person is asked; with no time limit (the `approvalHold` flag) the question waits until they answer, Stop or send a new message, and without it silence past the time limit is a denial. It returns `approved`, and how it was settled.",
         "security": [
           {
             "runToken": []
@@ -2245,6 +2245,131 @@
           },
           "500": {
             "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/permissions": {
+      "get": {
+        "operationId": "list_permissions",
+        "x-agent": false,
+        "summary": "List what the agent may do in this folder without asking",
+        "description": "List every yes the person gave the side-panel agent \"for this folder\" (an approval answered with `scope: folder`), oldest first: writes in one folder of the board's folder (`path`, relative to it), reads of one file, searches of one folder, or a command by its first words (`command`). They are kept across sessions and restarts in `.visionboard/permissions.json`, which only the server writes and the agent may not. None of them covers a path the access rules refuse, and none is used while the `agentAccessRules` flag is off. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder's kept yeses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/permissionListResponse"
+                },
+                "example": {
+                  "permissions": [
+                    {
+                      "id": "pm-0123456789ab",
+                      "kind": "write",
+                      "path": "src",
+                      "created": "2026-10-28T09:00:00Z"
+                    },
+                    {
+                      "id": "pm-ba9876543210",
+                      "kind": "command",
+                      "command": "npm test",
+                      "created": "2026-10-28T09:05:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        }
+      }
+    },
+    "/api/permissions/forget": {
+      "post": {
+        "operationId": "forget_permission",
+        "x-agent": false,
+        "summary": "Forget a yes kept for this folder",
+        "description": "Forget one yes kept for this folder: the agent asks again the next time. It returns the kept yeses that are left. Only the board page calls this, with the person's cookie; an agent that calls it is refused with `forbidden`.",
+        "security": [
+          {
+            "personCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The kept yeses that are left.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/permissionListResponse"
+                },
+                "example": {
+                  "permissions": [
+                    {
+                      "id": "pm-ba9876543210",
+                      "kind": "command",
+                      "command": "npm test",
+                      "created": "2026-10-28T09:05:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/permissionNotFound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodNotAllowed"
+          },
+          "413": {
+            "$ref": "#/components/responses/tooLarge"
+          },
+          "415": {
+            "$ref": "#/components/responses/unsupportedMediaType"
+          },
+          "422": {
+            "$ref": "#/components/responses/invalid"
+          },
+          "500": {
+            "$ref": "#/components/responses/serverError"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/permissionForgetRequest"
+              },
+              "example": {
+                "id": "pm-0123456789ab"
+              }
+            }
           }
         }
       }
@@ -3041,6 +3166,15 @@
       },
       "panelStateWritten": {
         "$ref": "https://vision-board.invalid/schema/app/panel-state.schema.json#/$defs/written"
+      },
+      "permission": {
+        "$ref": "https://vision-board.invalid/schema/api/permission.schema.json"
+      },
+      "permissionListResponse": {
+        "$ref": "https://vision-board.invalid/schema/api/permission-list-response.schema.json"
+      },
+      "permissionForgetRequest": {
+        "$ref": "https://vision-board.invalid/schema/api/permission-forget-request.schema.json"
       }
     },
     "parameters": {
@@ -3547,6 +3681,22 @@
               "title": "App timed out",
               "status": 504,
               "detail": "The tool \"evaluate\" of the app \"calculator\" took too long and was stopped. The next call starts the app again."
+            }
+          }
+        }
+      },
+      "permissionNotFound": {
+        "description": "No such permission kept for this folder.",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://vision-board.invalid/problems/not-found",
+              "title": "Not found",
+              "status": 404,
+              "detail": "No permission \"pm-0123456789ab\" is kept for this folder. Call list_permissions to see them."
             }
           }
         }

@@ -1,15 +1,14 @@
 // The chat operations (api.md 98-104, 121-122, 131, chat-panel BE_03): start and list a board's
 // sessions, or the folder's on no board, send the person's message (with the board's answers since
 // its agent was last told, as one message, chat-board-context; a session on no board sends none),
-// stop a turn, answer
-// an approval, watch a session's events, and the gate's ask. The caller check has already run: the
+// stop a turn, answer an approval, watch a session's events, the gate's ask, and list or forget the
+// yeses kept for the folder (D-066). The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
 import type { ApprovalAnswer, Facts } from '#agent';
 import { REALM, bearerOf } from './callers.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
-import { promptFor, wordsOf } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
 import { problem } from './problem.ts';
@@ -20,7 +19,6 @@ import { body } from './body.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
 const NO_RUN = serverChatWords.theServerKnowsNoRunning;
-const BUSY = serverChatWords.theAgentIsStillAnswering;
 const NOTHING = serverChatWords.thereIsNothingToSend;
 
 /** The session in the path, loaded; it must be the one in use on its board, with no new one
@@ -61,34 +59,24 @@ const listFolderChats: Handler = ({ res, chats }) => {
   sendJson(res, 200, { sessions: chats().list(undefined) });
 };
 
-/** Words alone while the agent is still answering: its waiting approvals released, and refused. */
-function busy(live: { approvals: { release(): void } }): never {
-  live.approvals.release();
-  throw problem('conflict', BUSY);
-}
-
 const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: serverChatWords.noWordsNothingAttachedAnd }] });
 
 /** The person's message; never to a session on an archived board (api.md 136). On a board, one
- * message with the chips and the board's answers since its
- * agent was last told, recorded as the board's Send when it goes (chat-sessions.ts `tell`); with
- * something attached it waits while the agent works (202 with the wait's system line). In the
- * folder, the words alone. Words alone while the agent is still answering are refused. */
+ * message with the chips and the board's answers since its agent was last told, recorded as the
+ * board's Send when it goes; in the folder, the words alone (chat-sessions.ts `tell`). While the
+ * agent works it waits, joined with any already waiting (202 with the wait's system line, point 328),
+ * and the questions the agent is waiting on are released: a new message settles them (PLAN ruling
+ * 335). A message refused (nothing to send) releases nothing. */
 const sendChat: Handler = async (ctx) => {
   const { req, res, ledger, chats } = ctx;
   const live = await inUse(ctx);
   const msg = await body('send_chat', req) as ChatMessage;
   const { board } = live.record;
   if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', serverChatWords.itsChatCanTTake);
-  const built = promptFor(ledger.state(), board, msg);
-  if (board === undefined) {
-    if (live.busy) busy(live);
-    if (!wordsOf(msg)) throw nothing();
-    return sendJson(res, 202, live.send(built.prompt, { kind: 'message_in', text: built.text }));
-  }
+  const busy = live.busy;
   const told = chats().tell(live, msg);
-  if (told === 'busy') busy(live);
   if (!told) throw nothing();
+  if (busy) live.approvals.release();
   sendJson(res, 202, told);
 };
 
@@ -134,7 +122,18 @@ const askApproval: Handler = async ({ req, res, chats }) => {
   if (!res.destroyed) sendJson(res, 200, outcome);
 };
 
-export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval'> = {
+/** The yeses the person kept for this folder ("Allow for this folder"), oldest first. */
+const listPermissions: Handler = ({ res, chats }) => {
+  sendJson(res, 200, { permissions: chats().permissions.list() });
+};
+
+/** Forget one: the agent asks again next time. The ones left. */
+const forgetPermission: Handler = async ({ req, res, chats }) => {
+  const { id } = await body('forget_permission', req) as { id: string };
+  sendJson(res, 200, { permissions: chats().permissions.forget(id) });
+};
+
+export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval' | 'list_permissions' | 'forget_permission'> = {
   start_chat: startChat,
   list_chats: listChats,
   start_folder_chat: startFolderChat,
@@ -144,4 +143,6 @@ export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folde
   answer_approval: answerApproval,
   watch_chat: watchChat,
   ask_approval: askApproval,
+  list_permissions: listPermissions,
+  forget_permission: forgetPermission,
 };

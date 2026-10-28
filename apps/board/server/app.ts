@@ -12,7 +12,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import type { FlagOverrides } from '#format';
-import { IMAGE_ROUTE } from '#format';
+import { IMAGE_ROUTE, flagOn } from '#format';
 import type { AppLimits } from './apps.ts';
 import { PANEL_PATH, servePanel } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
@@ -55,7 +55,7 @@ export interface BoardServerOptions {
   /** The CLIs a chat can run (default: Claude Code and Kiro) and the approval time limit; tests set
    * both. `kiroAgent`: keep Kiro's agent file under `home` current at start (server.ts does; a test
    * that does passes a temp home), N34 ruling 1. */
-  chat?: { adapters?: ChatAdapters; approvalTtlMs?: number; kiroAgent?: boolean } | undefined;
+  chat?: { adapters?: ChatAdapters; approvalTtlMs?: number; kiroAgent?: boolean; approvalHold?: boolean; strictAccess?: boolean } | undefined;
   /** The server's own flags (`VB_FLAGS`, server.ts): `appCards` off, the panel route and call_app_tool
    * answer not-found. The page's flags are its own. */
   flags?: FlagOverrides | undefined;
@@ -69,8 +69,10 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
   const port = () => (server.address() as AddressInfo).port;
   const realHome = fs.realpathSync(home);
   const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
+  // The server's flags for its chats: questions wait (approvalHold), and the access rules' loosening (agentAccessRules).
+  const access = { approvalHold: flagOn('approvalHold', flags ?? {}), strictAccess: !flagOn('agentAccessRules', flags ?? {}) };
   const project = openProject({
-    ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...chat, ...(kiro && { blocked: { kiro } }) },
+    ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...access, ...chat, ...(kiro && { blocked: { kiro } }) },
     apps: { flags, limits: appLimits },
   });
   const env: ServerEnv = { person: newToken(), project, build };

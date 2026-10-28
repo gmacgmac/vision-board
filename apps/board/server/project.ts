@@ -49,7 +49,7 @@ export interface ProjectOptions {
   /** The port the server listens on (for a new lock) and its own address (for the chats' MCP server). */
   port: () => number;
   base: () => string;
-  chat?: { adapters?: ChatAdapters | undefined; approvalTtlMs?: number | undefined; blocked?: ChatOptions['blocked'] } | undefined;
+  chat?: Pick<ChatOptions, 'approvalTtlMs' | 'blocked' | 'approvalHold' | 'strictAccess'> & { adapters?: ChatAdapters | undefined } | undefined;
   /** The server's flags and, for tests, shorter app limits (every folder's app host gets them). */
   apps?: Pick<AppHostOptions, 'flags' | 'limits'> | undefined;
 }
@@ -81,6 +81,7 @@ function hold(ledger: Ledger, lock: Lock | undefined, o: ProjectOptions): Held {
   const getAgents = () => getEngine().agents();
   const getChats = () => (chats ??= openChats({
     ledger, agents: getAgents, base: o.base, adapters: o.chat?.adapters, approvalTtlMs: o.chat?.approvalTtlMs, blocked: o.chat?.blocked,
+    approvalHold: o.chat?.approvalHold, strictAccess: o.chat?.strictAccess,
   }));
   const onSend = (board: string, seq: number) => {
     getChats().round(board, seq).catch((err) => console.error(`chat: the Send's answers were not handed over: ${err instanceof Error ? err.message : String(err)}`));

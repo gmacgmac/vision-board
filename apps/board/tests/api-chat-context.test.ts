@@ -2,8 +2,8 @@
 // package's fake `claude`: one message holds the person's words, the attached cards and notes and
 // the answers since the agent was last told, in that order, and is recorded as the board's Send when
 // it goes; with no words the context alone goes; with nothing at all, `invalid`. While the agent
-// works, words alone are refused, and a message with something attached waits (one wait line), its
-// words joined to any other waiting, and goes when the turn ends, built then.
+// works, a message waits, words alone too (one wait line, point 328), its words joined to any other
+// waiting, and goes when the turn ends, built then.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -117,27 +117,27 @@ test('a note named alone that is among the answers goes once, as the answer; no 
   await readChat(h.base, h.cookie, session, turns(runs));
 });
 
-test('while the agent works: words alone are refused; with something attached it waits, joined, and goes when the turn ends', async () => {
+test('while the agent works: a message waits, words alone too, joined, and goes when the turn ends', async () => {
   const { q, d } = h.seeded;
   fake.mode('hang');
   try {
     await message({ text: 'Keep going.' });
     const busy = await fake.run(++runs);
-    await h.fails('send_chat', { session, body: { text: 'Only words.' } }, 409, 'conflict');
-    await act({ action: 'comment', n: q, ver: 2, text: 'Per seat, then.' });
     const before = sends();
-    const waiting = await message({ text: 'And this one.' });
+    const waiting = await message({ text: 'Only words.' });
     assert.deepEqual([waiting.kind, waiting.text], ['system', QUEUED_WORDS]);
+    await act({ action: 'comment', n: q, ver: 2, text: 'Per seat, then.' });
+    assert.equal((await message({ text: 'And this one.' })).seq, waiting.seq);
     await act({ action: 'drop', n: d, ver: 1 });
     const again = await message({ cards: [d] });
-    assert.equal(again.seq, waiting.seq, 'one wait line for two messages');
+    assert.equal(again.seq, waiting.seq, 'one wait line for three messages');
     assert.equal(sends(), before, 'no Send until it goes');
     fake.mode('replay');
     await h.ok('stop_chat', { session });
     await gone(busy.pid);
     const given = await fake.run(++runs);
     const parts = given.prompt.split('\n\n');
-    assert.deepEqual(parts.slice(0, 2), ['And this one.', `${SELECTED_HEAD}\n- Card ${d}: Choose the launch price`]);
+    assert.deepEqual(parts.slice(0, 3), ['Only words.', 'And this one.', `${SELECTED_HEAD}\n- Card ${d}: Choose the launch price`]);
     assert.match(given.prompt, new RegExp(`^${q} \\(question\\): .*Per seat, then\\.$`, 'm'));
     assert.match(given.prompt, new RegExp(`^${d} \\(decision\\): ✗`, 'm'), 'built when it went: the ✗ after the first wait is in');
     const events = await readChat(h.base, h.cookie, session, turns(runs));

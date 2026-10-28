@@ -126,6 +126,14 @@ export const OPERATIONS = {
     operationId: 'ask_approval', method: 'POST', path: '/api/run/approvals',
     pathParams: [], xAgent: false, auth: 'run',
   },
+  list_permissions: {
+    operationId: 'list_permissions', method: 'GET', path: '/api/permissions',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
+  forget_permission: {
+    operationId: 'forget_permission', method: 'POST', path: '/api/permissions/forget',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
   get_project: {
     operationId: 'get_project', method: 'GET', path: '/api/project',
     pathParams: [], xAgent: false, auth: 'person',

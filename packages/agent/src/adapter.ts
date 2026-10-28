@@ -37,6 +37,9 @@ export interface StartOptions {
    * allows (24 hours) and Kiro's permission request as long as the board does; left out, today's
    * 10 minutes. The host also tells the session to `hold` its turn clock while a question waits. */
   approvalHold?: boolean;
+  /** The `agentAccessRules` flag off: the access rules (policy.ts) still refuse, but nothing goes ahead
+   * unasked, reads included. Left out, what the rules allow goes ahead (D-066 8). */
+  strictAccess?: boolean;
 }
 
 /** Token counts for one turn, as far as the CLI reports them. */

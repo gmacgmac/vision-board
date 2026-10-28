@@ -148,7 +148,7 @@ class KiroSession implements AgentSession {
     // Kiro's request says less than the tool call it asks about (no kind, no diff): add what the turn saw.
     const call = { ...turn.mapper.known(req.toolCall.toolCallId), ...req.toolCall };
     const own = req.server !== undefined && Object.hasOwn(this.start.mcpServers, req.server);
-    const verdict = verdictFor(call, own, this.start.cwd, existsSync);
+    const verdict = verdictFor(call, own, this.start.cwd, existsSync, this.start.strictAccess);
     if ('allow' in verdict) return outcome(pickOption(req.options, true));
     if ('refuse' in verdict) {
       this.opts.log(`kiro adapter: refused a tool request: ${verdict.refuse}`);

@@ -1,17 +1,26 @@
 // The gate (PLAN ruling 5): the CLI's "before tool use" hook for file edits and shell commands.
 // bin/gate.ts runs this with the hook input on stdin: it posts the facts to the host's approval
 // route with the session's run token, waits for the person, and prints the CLI's decision. Every
-// path that is not a yes is a denial: an unreachable host, a bad answer, a gate that crashed.
+// path that is not a yes is a denial: an unreachable host, a bad answer, a gate that crashed. Before
+// anything is asked the access rules decide (`policy`, D-066): a refusal is final and says why, an
+// allowed call (most reads) goes ahead unasked, and only what they ask about reaches the person.
 import http from 'node:http';
 import https from 'node:https';
+import type { StartOptions } from './adapter.ts';
 import type { ApprovalOutcome, Facts } from './approvals.ts';
 import { factsFor, refusalFor } from './approvals.ts';
+import type { PathReader } from './policy.ts';
+import { policy } from './policy.ts';
 
 /** The environment the gate reads its route and token from (set by the adapter on the CLI). */
 export const GATE_URL_ENV = 'AGENT_GATE_URL';
 export const GATE_TOKEN_ENV = 'AGENT_GATE_TOKEN';
 /** How long the gate may wait, in milliseconds, when it is not the default (set with `approvalHold`). */
 export const GATE_WAIT_ENV = 'AGENT_GATE_WAIT_MS';
+/** The board's folder, which the access rules are relative to (never the hook's own `cwd`, which the agent moves). */
+export const GATE_FOLDER_ENV = 'AGENT_GATE_FOLDER';
+/** `1` when the `agentAccessRules` flag is off: nothing goes ahead unasked. */
+export const GATE_STRICT_ENV = 'AGENT_GATE_STRICT';
 /** The CLI's own limit on the hook, in seconds; past it the CLI would go on without an answer. */
 export const HOOK_TIMEOUT_S = 600;
 /** With `approvalHold`: a question waits for the person, so the hook may wait a day (PLAN ruling 335). */
@@ -25,6 +34,15 @@ export const GATE_WAIT_MS = gateWaitMs();
 export function gateWaitFrom(env: NodeJS.ProcessEnv): number {
   const ms = Number(env[GATE_WAIT_ENV]);
   return Number.isInteger(ms) && ms > 0 && ms < 2 ** 31 ? ms : GATE_WAIT_MS;
+}
+
+/** The gate's environment for a session: where to ask, with which token, for which folder, and how long to wait. */
+export function gateEnv(start: Pick<StartOptions, 'cwd' | 'gate' | 'approvalHold' | 'strictAccess'>): Record<string, string> {
+  return {
+    [GATE_URL_ENV]: start.gate.url, [GATE_TOKEN_ENV]: start.gate.token, [GATE_FOLDER_ENV]: start.cwd,
+    ...(start.approvalHold && { [GATE_WAIT_ENV]: String(gateWaitMs(true)) }),
+    ...(start.strictAccess && { [GATE_STRICT_ENV]: '1' }),
+  };
 }
 
 export const UNREACHABLE =
@@ -82,12 +100,23 @@ export function askOverHttp(url: string, token: string, waitMs = GATE_WAIT_MS): 
   });
 }
 
-/** The decision for one hook input. Never throws: anything that goes wrong is a denial. */
-export async function decide(stdin: string, ask: Ask, exists: (path: string) => boolean): Promise<HookOutput> {
+/** The board's folder the rules are relative to, and whether the `agentAccessRules` flag is off. */
+export interface GateAccess {
+  folder: string;
+  strict?: boolean;
+  reader?: PathReader;
+}
+
+/** The decision for one hook input: the access rules first, then the person. Never throws: anything
+ * that goes wrong is a denial. */
+export async function decide(stdin: string, ask: Ask, exists: (path: string) => boolean, access: GateAccess): Promise<HookOutput> {
   let input: unknown;
   try { input = JSON.parse(stdin); } catch { return decision(false, 'The gate could not read the tool call, so it was refused.'); }
   const facts = factsFor(input, exists);
   if ('refuse' in facts) return decision(false, facts.refuse);
+  const rules = policy(facts, access.folder, { strict: access.strict ?? false, ...(access.reader && { reader: access.reader }) });
+  if ('refuse' in rules) return decision(false, rules.refuse);
+  if ('allow' in rules) return decision(true, 'The board\'s access rules allow it.');
   let outcome: ApprovalOutcome;
   try { outcome = await ask(facts); } catch { return decision(false, UNREACHABLE); }
   const refusal = refusalFor(outcome);
@@ -98,6 +127,7 @@ export async function decide(stdin: string, ask: Ask, exists: (path: string) => 
 export async function runGate(stdin: string, env: NodeJS.ProcessEnv, exists: (path: string) => boolean): Promise<HookOutput> {
   const url = env[GATE_URL_ENV];
   const token = env[GATE_TOKEN_ENV];
-  if (!url || !token) return decision(false, UNREACHABLE);
-  return decide(stdin, askOverHttp(url, token, gateWaitFrom(env)), exists);
+  const folder = env[GATE_FOLDER_ENV];
+  if (!url || !token || !folder) return decision(false, UNREACHABLE);
+  return decide(stdin, askOverHttp(url, token, gateWaitFrom(env)), exists, { folder, strict: env[GATE_STRICT_ENV] === '1' });
 }

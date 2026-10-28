@@ -27,3 +27,7 @@ export async function collect(updates: AsyncIterable<AgentUpdate>): Promise<Agen
   for await (const u of updates) out.push(u);
   return out;
 }
+
+/** A real board folder on disk for the access rules (symlinks, a hard link, a folder outside it). */
+export { accessFixture } from './access-fixture.ts';
+export type { AccessFixture } from './access-fixture.ts';
