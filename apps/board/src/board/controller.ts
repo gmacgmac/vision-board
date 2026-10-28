@@ -13,7 +13,7 @@
 // Everything outside the board comes from its host (host.ts): calls, change events, settings,
 // notices and confirmations; what a host shows of the board goes out through its status (status.ts).
 import type { FlagName, LedgerEvent, View, ViewNode } from '#format';
-import { answeredIds, boardData, goTarget, placedView, retiredCounts } from '#actions';
+import { answeredIds, boardData, boardSearchDocs, goTarget, placedView, retiredCounts } from '#actions';
 import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf } from './host.ts';
@@ -131,6 +131,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     renderCounts();
     notes.place();
     flow.place();
+    go.refresh(); // a search showing marks the cards as drawn now (SEARCH_02)
     status.set({ drawn: status.now.drawn + 1 }); // a host's chat refreshes what it attaches
     if (drew) toast(boardWords.theAgentDrewV(status.now.version));
   }
@@ -148,7 +149,8 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     retire: async (fields) => (await notes.leaveIf({ card: (id) => !!fields.cards?.includes(Number(id)) || (!!fields.region && nodeOf(id)?.region === fields.region), region: (r) => r === fields.region })) ? sender.retire(fields) : '',
     confirm: ask, toast: (t) => toast(t) }) : undefined; // Remove card, Remove container (N24); a note being written on what goes asks too (point 309)
   const proposals = createProposalFlow({
-    on: proposing, stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
+    on: proposing, list: on('reviewList'), stage, state: () => live.state, found: () => attention.proposals(), readOnly: () => !!versions.state,
+    vp, box: (id) => drawing.layout?.nodes.get(id), title: (n) => view().nodes.find((x) => x.n === n)?.title, go: (n) => go.to(n), // Review goes as Go to card does (`go`, below)
     ver: (n) => S.data?.versions[String(n)], card: (id) => drawing.cards.get(id), record, run: (steps) => sender.run(steps), toast, status, confirm: (a) => host.confirm(a),
   });
   const updates = createUpdateFlow({ on: updating, stage, selection, state: () => live.state, board: () => S.id, unseen: () => attention.unseen(), newCards, fresh: () => attention.fresh(),
@@ -176,7 +178,10 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   /** Go to a card by its number (go-to-card.ts), the one path every finder takes: select and focus it, a pan only by `revealPan`'s rule (`vp.reveal`), the zoom kept.
    *  A find marks nothing seen (findKeepsMarks flag, ruling 322): the selection says `find`, update-flow.ts `saw` reads it. */
   const go = createGoTo({ show: (box) => status.set({ go: box }), past: showVersion, ...(on('goAfterPause') && { pause: GO_PAUSE }), find: (n) => goTarget(versions.state ?? live.state, S.id, n, (id) => !!drawing.layout?.nodes.has(id), versionView),
-    arrive: (id) => { selection.select([id], 'only', on('findKeepsMarks') ? 'find' : 'select'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); } });
+    arrive: (id) => { selection.select([id], 'only', on('findKeepsMarks') ? 'find' : 'select'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
+    // Words too (cardSearch flag, SEARCH_02): the cards drawn, indexed once per draw (`S.data`), marked on the world.
+    ...(on('cardSearch') && { search: { key: () => S.data, world, card: (id: string) => drawing.cards.get(id), reveal: (id: string) => { const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); },
+      docs: () => (S.data ? boardSearchDocs((versions.state ?? live.state)!, S.id, view()).filter((doc) => drawing.layout?.nodes.has(doc.id)) : []) } }) });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)

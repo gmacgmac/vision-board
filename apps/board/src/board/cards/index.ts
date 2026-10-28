@@ -8,7 +8,7 @@ export { createItemActs } from './item-acts.ts';
 export { createParking } from './parking.ts';
 export { createProposalFlow } from './proposal-flow.ts';
 export type { ProposalFlow } from './proposal-flow.ts';
-export { acceptAllWords, barWords } from './proposals.ts';
+export { acceptAllWords, barWords, proposes } from './proposals.ts';
 export { createRemoveFlow } from './remove-flow.ts';
 export { bindSizeControl, isSizePick, sizeAct, tierOf } from './size.ts';
 export { createUpdateFlow } from './update-flow.ts';

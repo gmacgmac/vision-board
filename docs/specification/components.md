@@ -810,7 +810,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    disagree; `packages/actions/tests/open-cards.test.ts`) as "12 · title" in board number order,
    a title past `OPEN_ROW_MAX` cut with "…" (`finder.ts` `openRow`, `#format` `clip`) and
    whole in the option's tooltip (`apps/board/tests/open-list.test.ts`). Choosing one goes to the
-   card as Go to card's Enter does (`go-to-card.ts` `to`, § Go to a card by its number); it is no
+   card as Go to card's Enter does (`go-to-card.ts` `to`, § Go to card and search); it is no
    act, so it works in a past version, on that version's open cards. With nothing open it is the
    plain chip. The list's keys are the browser's: Playwright cannot drive a native popup, so
    `tests/pages/open-list.spec.ts` checks Tab reach, the named combobox and its options, a choice
@@ -830,7 +830,7 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    `OpenChip` (generalised: its word, tone and names are props), listing `freshCards` as "46 ·
    title", an updated one ending "· updated" (`finder.ts` `openRow`, the title giving way to a cut,
    never the ending); choosing one goes to it as Go to card does, which selects it but leaves its
-   NEW or "updated" mark (finding keeps marks, § Go to a card by its number item 6). The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
+   NEW or "updated" mark (finding keeps marks, § Go to card and search item 6). The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
    they never disagree. Hidden at zero, and with the flag off or a past version (`attention.ts`
    `freshIn`, `Toolbar.svelte`). APCA, measured by `tests/pages/fresh-cards.spec.ts`: the border on
    the canvas Lc 58.6 light, 67.4 dark; the pill's words 54.8 and 63.5; the tab's words 74.8 and
@@ -1042,7 +1042,7 @@ behind the `personRemove` flag (on by default; `?flags=-personRemove`).
    (`gallery/remove-section.ts`) draws the settings menu open, the same on a locked board, and the
    three confirms from the fixture ledger.
 
-## Go to a card by its number (go-to-card task)
+## Go to card and search (go-to-card task, SEARCH_02)
 
 Task `cortex-tasks/board/2026-10-15_board-app_go-to-card-number.md`, behind the `goToCard` flag (on
 by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out).
@@ -1094,6 +1094,37 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    `apps/board/tests/selection.test.ts` (the change carries `by`), `tests/pages/find-keeps-marks.spec.ts`
    (each finder keeps NEW and "1 update", the count and the ledger; a click and an act clear them;
    the flag off is today), `tests/pages/fresh-cards.spec.ts` (the "N new" list).
+7. **Search** (`cardSearch` flag, on by default; SEARCH_02 in
+   `cortex-tasks/board/2026-10-28_board-app_search-and-finding/`, the maintainer's ruling 317; off:
+   the digits-only box above, and `/` does nothing). The same box takes words: `/` (the `go-to-card`
+   command's other key, `commands.ts`; listed under Board as its own row, "Find a card by its words",
+   `KeyHelp.svelte`) opens it empty, the field saying "Card number or words". Digits alone still go by
+   number. Words are searched by `go-to-card.ts` `createMatches` with `#search` `search` over an index
+   built once per state change (`GoSearch.key`, the controller's held data) from `#actions`
+   `boardSearchDocs` on the view drawn, cards not drawn left out: words in any order, part of a word,
+   case and accents ignored, best first (`packages/search/README.md`). Matches carry `data-found`
+   ("match", or "current") and the world `data-search`, written only where a mark changed; the box's
+   polite status says "1 of 3" and the current one's card and the parts that matched ("Card 12, in the
+   title and a note", `board/words/go-to-card.ts` `cardMatchedIn`), or "No matches" (nothing ringed or
+   dimmed). ↓ and ↑ in the field step, wrapping, and bring the match in by `revealPan`'s rule
+   (`GoSearch.reveal`), selecting nothing; typing never pans. Enter goes to the current match by the
+   finding path (`arrive`, item 6: NEW and updated kept), closing the box; Esc, focus leaving, or a
+   go chosen elsewhere (`to`) clears every mark; an empty box clears them and stays open. A redraw
+   while it shows searches again on the cards drawn now, the current match kept (`GoTo.refresh`). The
+   page draws the box for words when the board's `GoTo.words` says so. Look (`styles/board.css`,
+   tokens only): an amber ring (`--vb-state-context`) on matches, wider with a halo on the current
+   one, the same width on screen at any zoom (`--vb-zoom`); every other card, the containers, the
+   connectors and their markers dim to 0.35 opacity, never hidden; dimmed text is decoration. Rings
+   measured on the canvas (`tests/pages/search.spec.ts`): Lc 56.6 light, 63.7 dark (tier 30). Under a
+   host `/` acts only inside the board's root (`keys.ts` `route`, M10). Tests:
+   `apps/board/tests/go-to-card-search.test.ts` (open by `/`, marks, count and part, stepping and
+   wrapping, Enter, Esc, an empty box, no matches, digits, the index once per change, refresh, `to`),
+   `apps/board/tests/keys.test.ts` (`/` under a host), `tests/pages/search.spec.ts` (each of these on
+   a board, NEW and updated kept, the polite status, a redraw, the flag off, the key list, reduced
+   motion, APCA and axe light and dark, the gallery section's screenshots), `tests/pages/search-perf.spec.ts`
+   (each keystroke on the 1,000-card board inside the one-change budget, nothing drawn again). The
+   gallery's "Search the board" section (`gallery/search-section.ts`) draws the box's states and a
+   container with rings and dim from the same state code.
 
 ## App card (D-047, app-cards FE_01)
 

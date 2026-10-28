@@ -5,7 +5,9 @@
 // openList flag): the open cards (`openCards`, the "N open" chip's own count) as "12 · title"; a
 // choice goes to the card (go-to-card.ts `to`). The "N new" list (freshCards flag) is the same row,
 // an updated card's ending "· updated" (`freshCards`). Neither is an act, so both work in a past version (versions.ts).
+// The proposals notice's Review list (reviewList flag) is the same row with what is proposed (`proposalRow`).
 import type { View } from '#format';
+import type { ProposalRow } from '#actions';
 import { clip, LATER_REGION } from '#format';
 import type { BoardLayout } from '#layout';
 import type { VbRegionElement } from '#ui';
@@ -48,6 +50,30 @@ export function openRow(c: RowCard): MenuRow {
   const whole = `${c.n} · ${c.title}${end}`;
   const text = clip(`${c.n} · ${c.title}`, OPEN_ROW_MAX - end.length) + end;
   return { value: String(c.n), text, ...(text !== whole && { title: whole }) };
+}
+
+/** The most characters each of a Review list row's title and proposal shows; past it each ends in "…". */
+export const PROPOSAL_ROW_MAX = 36;
+
+/** A card with a proposal, for the notice's Review list (reviewList flag, REVIEW_01): its number and
+ * title, and `what` it proposes ("Cross: the client declined"). */
+export interface ProposalCard { n: number; title: string; what: string }
+
+/** A Review list row: "12 · Pick a plan · Cross: the client declined", the title and the proposal each
+ * cut at PROPOSAL_ROW_MAX with the whole text its tooltip. The same row as the open list's, with what is proposed. */
+export function proposalRow(c: ProposalCard): MenuRow {
+  const whole = `${c.n} · ${c.title} · ${c.what}`;
+  const text = `${c.n} · ${clip(c.title, PROPOSAL_ROW_MAX)} · ${clip(c.what, PROPOSAL_ROW_MAX)}`;
+  return { value: String(c.n), text, ...(text !== whole && { title: whole }) };
+}
+
+/** The Review list for the proposals found (newest first): a row per card with a proposal, in card
+ * order, from its newest proposal (`what` words it). Empty when a row lacks its card's title (the
+ * reviewList flag is off, proposal-flow.ts) or there is only one card: Review then goes straight to it. */
+export function reviewRows(rows: readonly ProposalRow[], what: (r: ProposalRow) => string): MenuRow[] {
+  const cards = [...new Map([...rows].reverse().map((r) => [r.n, r])).values()].sort((a, b) => a.n - b.n);
+  return cards.length > 1 && cards.every((r) => r.title !== undefined)
+    ? cards.map((r) => proposalRow({ n: r.n, title: r.title!, what: what(r) })) : [];
 }
 
 export interface FinderDeps {

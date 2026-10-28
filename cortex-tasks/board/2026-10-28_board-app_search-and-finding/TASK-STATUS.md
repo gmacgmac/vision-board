@@ -42,8 +42,8 @@ tracker: cortex-tasks/tracker.md#M7
 | 1 | SEARCH_01 | 1 | strong | Search engineer who has shipped find-as-you-type in editors — a person types half a word in any order and expects the card they mean first; a match they can't see the reason for, or a box that lags a keystroke, is a failure. | [The search engine and the board's documents](./SEARCH_01_search-engine.md) | Completed | port 5100 |
 | 2 | FIND_01 | 1 | standard | Interaction designer for review tools — looking is not reading: a mark the person is still working through must survive every way of finding the card, and go only when they engage with it. | [Finding never clears a card's marks](./FIND_01_finding-keeps-marks.md) | Completed | port 5200 |
 | 3 | ACCESS_01 | 1 | standard | Trust-and-safety designer for permission prompts — one decision per bot, named so the person knows who is asking; a wall of identical rows teaches people to click Allow without reading. | [Access requests grouped by bot](./ACCESS_01_requests-by-bot.md) | Completed | port 5300 |
-| 4 | SEARCH_02 | 2 | strong | Senior product designer for canvas tools (whiteboards, maps) — search must show where the matches are on the canvas at a glance, step through them without losing your place, and get out of the way with one key. | [The search box on the board](./SEARCH_02_search-box.md) | Pending | port 5400 |
-| 5 | REVIEW_01 | 2 | standard | — | [Review opens a list](./REVIEW_01_review-list.md) | Pending | port 5500 |
+| 4 | SEARCH_02 | 2 | strong | Senior product designer for canvas tools (whiteboards, maps) — search must show where the matches are on the canvas at a glance, step through them without losing your place, and get out of the way with one key. | [The search box on the board](./SEARCH_02_search-box.md) | Completed | port 5400 |
+| 5 | REVIEW_01 | 2 | standard | — | [Review opens a list](./REVIEW_01_review-list.md) | Completed | port 5500 |
 | 6 | VERIFY_01 | 3 | strong | A person using the board for the first time on a 60-card board, with no history of these changes — wants to find "the pricing card" by typing, step through matches, review three proposals and answer two bots asking for access, without losing which cards are still new. | [Verification](./VERIFY_01_search-verification.md) | Pending | port 5600 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -88,6 +88,12 @@ tracker: cortex-tasks/tracker.md#M7
 | ACCESS_01-R1 | ACCESS_01 | Allow all gives one toast; `api.md` 86 updated | ACCESS_01 Run 2 | Done |
 | ACCESS_01-R2 | ACCESS_01 | Re-baseline `send-access` `agent-access-{light,dark}` (the strip regrouped); looked at | Orchestrator | Done |
 | ACCESS_01-R3 | ACCESS_01 | Files touched outside its list: `styles/access.css`, `server/chat-sessions.ts`, `server/words/server-chat.ts`, `send-access.spec.ts`, the two chat label tests | Orchestrator: accepted, no other owner | Done |
+| REVIEW_01-R1 | REVIEW_01 | `App.svelte`: `onreview={(n) => board?.proposals.review(n)}` | SEARCH_02 (its file) | Done |
+| REVIEW_01-R2 | REVIEW_01 | Files touched with no wave-2 owner (`controller.ts` deps, `cards/proposals.ts`, `cards/index.ts`, `proposal-rows.ts`, `find/index.ts`, `gallery/main.ts`, `proposals.css`) | Orchestrator: accepted | Done |
+| SEARCH_02-R1 | SEARCH_02 | `controller.ts`: the search wiring (`boardSearchDocs`, `go.refresh()`, `search` deps) | Orchestrator, applied from its diff | Done |
+| SEARCH_02-R2 | SEARCH_02 | Re-baseline `key-bubble` (4) for the new / row; `npm run map` | Orchestrator, looked at | Done |
+| SEARCH_02-R3 | SEARCH_02 | Files touched with no other owner (`go-to-card.css`, `gallery/search-section.ts`, two unit tests, `search-perf.spec.ts`) | Orchestrator: accepted | Done |
+| SEARCH_02-R4 | SEARCH_02 | `docs/specification/performance.md`: a row for search keystrokes | VERIFY_01 to propose wording; orchestrator | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -110,12 +116,12 @@ _Run 2:_ Allow all gives one toast (`access-flow.ts` `answerAll`, `allowAllWords
 _Notes:_ Strip grouped by agent id (`board/access/access.ts` `groupByBot`, `groupAskWords`): heading counts bots, one Allow all per bot with 2+ requests (one `grant` each, no confirm: Allow has none), same-label bots numbered "(1)", "(2)". Side panel chat joins as the folder's name (`chat-access.ts` `chatLabel(agent, folder)`), skill v3.16 + NOTES. Gallery: new section `accessByBot`. Beyond the file list: `styles/access.css`, `server/chat-sessions.ts` (call site), `server/words/server-chat.ts` (dead `chat` removed), `tests/pages/send-access.spec.ts` (strip locators), `api-chat-sessions`/`api-chat-kiro` tests (label), `flags.ts` description. Existing `agent-access-*` and gallery full-page baselines now differ (regrouped strip, new section): orchestrator's. Unit/check/gen-api green; `verify` fails only on `modules.md` (npm run map, the other tasks' `packages/search`).
 
 ### SEARCH_02
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ The box takes words (`go-to-card.ts` `GoSearch`, `createMatches`; `GoBox.found`; `GoTo.step`, `refresh`, `words`); `/` is the `go-to-card` command's other key (`commands.ts`), its own row in `KeyHelp.svelte`. Index once per state change (`key`), marks `data-found` on cards and `data-search` on the world (`board.css`: amber ring `--vb-state-context`, Lc 56.6 / 63.7; the rest 0.35 opacity). Typing never pans; ↓/↑ reveal; Enter is `arrive` (marks kept). Blocking REQUEST: the controller wiring (3 small edits in `controller.ts`, exact diff in the task file): until applied, the box stays digits-only and `/` does nothing. Verified with it applied, then reverted (REVIEW_01 also edits that file). REVIEW_01-R1 handled (`App.svelte` `onreview={(n) => …review(n)}`). Touched outside the list, no other owner: `styles/go-to-card.css` (the box's search look), `gallery/search-section.ts` (new) and its `main.ts` line after `reviewList`, `apps/board/tests/go-to-card-search.test.ts` (new), `keys.test.ts` (`/` under a host), `tests/pages/search-perf.spec.ts` (new), components.md's two "§ Go to card and search" cross-references. Orchestrator: re-baseline `key-bubble.spec.ts` `key-bubble-open-{light,dark}` and `key-bubble-gallery-{light,dark}` (the new "Find a card by its words /" row; looked at); `npm run map` (`verify` fails only on `modules.md`).
 
 ### REVIEW_01
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ Review is a `MenuSelect` list ("12 · title · what it proposes", `finder.ts` `proposalRow`, `reviewRows`) when proposals are on 2+ cards, else the button; a row goes through `proposal-flow.ts` `review(n)` -> `go.to(n)` (a find, marks kept), zooms in only when the stage is "far", then opens the box. `ProposalRow.title?` is added by the page with the flag. Blocking REQUEST: `App.svelte` `onreview={(n) => board?.proposals.review(n)}` (SEARCH_02's file); until then a row chosen goes to the first card. Gallery section `reviewList` last of the gallery (`main.ts`), new baselines `review-list-{light,dark}`; the gallery full-page baseline moves with it. `npm run map` needed (`verify` fails only on `modules.md`). Unit, check, gen-api green; proposals, proposals-notice, open-list, find-keeps-marks, fresh-cards page specs pass on 5500 (scratch copy with the App line).
 
 ### VERIFY_01
 _Status:_ Pending  
@@ -128,7 +134,7 @@ _Notes:_
 | Wave | Tasks | Commit · tag | Gate |
 |------|-------|--------------|------|
 | 1 | SEARCH_01, FIND_01, ACCESS_01 (Runs 1–3) | `search/wave-1` | Green 2026-10-28: unit pass, check 0 errors, verify ok, gen-api current; full page suite 712 passed, 1 timed out (perf.spec selecting 50, at load 8–13); perf.spec alone, twice: 20 passed. A first run failed 45 gallery screenshots by 1 px (ACCESS_01's longer description shifted every section below by a fraction); fixed at the source in Run 3 |
-| 2 | SEARCH_02, REVIEW_01 | — | — |
+| 2 | SEARCH_02, REVIEW_01 | `search/wave-2` | Green 2026-10-28: unit pass, check 0 errors, verify ok, gen-api current, full page suite 734 passed (port 4710). Orchestrator applied SEARCH_02's controller wiring, REVIEW_01's App.svelte line went through SEARCH_02, key-bubble's 4 screenshots re-taken for the new / row (looked at) |
 | 3 | VERIFY_01 | — | — |
 
 ---

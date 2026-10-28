@@ -1,7 +1,9 @@
 /* The Go to card box (shell/GoToCard.svelte, goToCard flag): a small box on the popover surface (`.vb-surface-pop`, #ui base/surface.css), at the board's
    bottom right, clear of the chat sidebar (--vb-chat-w); the gallery puts it in the page flow.
    States: typing, not found (what it found, on the problem's red edge), retired (the same, with
-   the version to open). The field's hover and focus are the shared input look. Tokens only. */
+   the version to open). The field's hover and focus are the shared input look. Tokens only.
+   With search (cardSearch flag, data-search): wider, the field in the reading font for words, and
+   a found state, "1 of 3" and the current match's card and part, on the matches' amber edge. */
 .vb-go {
   display: grid; gap: var(--vb-space-1); width: 15rem; padding: var(--vb-space-3);
   color: var(--vb-ink); font: var(--vb-text-md) var(--vb-font);
@@ -23,3 +25,9 @@
   border-left: 3px solid var(--vb-state-drop); background: var(--vb-state-drop-soft);
 }
 .vb-go-past { justify-self: start; }
+/* Search (cardSearch flag, SEARCH_02). */
+.vb-go[data-search] { width: 19rem; }
+.vb-go[data-search] .vb-go-field { font: var(--vb-weight-medium) var(--vb-text-lg) var(--vb-font); }
+.vb-go-field::placeholder { color: var(--vb-ink-subtle); opacity: 1; }
+.vb-go-said[data-tone='found'] { border-left-color: var(--vb-state-context); background: var(--vb-state-context-soft); }
+.vb-go-count { font-weight: var(--vb-weight-bold); font-variant-numeric: tabular-nums; }

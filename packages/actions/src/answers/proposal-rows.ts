@@ -11,9 +11,10 @@ import * as actionsRefusalsWords from '../words/actions-refusals.ts';
 export interface ProposalFound { n: number; seq: number; stale: boolean }
 
 /** One open proposal: its card's number and what the card's box shows. `when` is its time in the
- * person's clock; `agent` the proposing agent's label. */
+ * person's clock; `agent` the proposing agent's label. `title` is the card's, which the ledger
+ * does not hold: the page adds it for the notice's Review list (reviewList flag, proposal-flow.ts). */
 export interface ProposalRow {
-  n: number; seq: number; action: Proposal['action']; reason: string; source?: string; when: string; agent?: string; stale: boolean;
+  n: number; seq: number; action: Proposal['action']; reason: string; source?: string; when: string; agent?: string; stale: boolean; title?: string;
 }
 
 /** The rows for the proposals found, newest first. `time` writes a line's time in the person's clock. */

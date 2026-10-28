@@ -50,6 +50,8 @@ async function open(page: Page, d: Drawn): Promise<void> {
 const notice = (page: Page) => page.locator('.vb-proposals');
 const hide = (page: Page) => notice(page).getByRole('button', { name: 'Hide the proposals notice' });
 const pill = (page: Page) => notice(page).locator('.vb-proposals-pill');
+/** Review: a button, or with proposals on more than one card (reviewList flag) a list named for what it does. */
+const reviewOf = (page: Page) => notice(page).getByRole('button', { name: 'Review', exact: true }).or(notice(page).getByRole('combobox', { name: /^Review/ }));
 const top = async (page: Page, selector: string) => (await page.locator(selector).boundingBox())!.y;
 
 test.beforeEach(async ({ page }) => {
@@ -91,7 +93,7 @@ test('three stacked rows: the count and Hide, a full-width Review, a full-width 
   const rows = async () => {
     const n = await box(notice(page));
     return { n, title: await box(notice(page).locator('h2')), hide: await box(hide(page)),
-      review: await box(notice(page).getByRole('button', { name: 'Review' })), all: await box(notice(page).getByRole('button', { name: /^Accept all/ })) };
+      review: await box(reviewOf(page)), all: await box(notice(page).getByRole('button', { name: /^Accept all/ })) };
   };
   const r = await rows();
   expect(r.n.width, 'a small fixed width').toBeGreaterThanOrEqual(160);
@@ -143,7 +145,7 @@ test('hide collapses it to a pill in the same place, kept after a reload; new pr
     .toHaveText(`Pricing chat proposes: not needed, on item ${b}`);
   await pill(page).click();
   await expect(notice(page).getByRole('heading', { level: 2 })).toHaveText('2 proposals');
-  await expect(notice(page).getByRole('button', { name: 'Review' })).toBeFocused();
+  await expect(reviewOf(page)).toBeFocused();
   await page.reload();
   await expect(notice(page).getByRole('heading', { level: 2 })).toHaveText('2 proposals');
 });
@@ -153,7 +155,7 @@ test('keyboard: Esc on the notice hides it with focus on the pill; Enter on the 
   const [a] = d.n as [number];
   await propose(request, d, a, 'the client declined');
   await open(page, d);
-  const review = notice(page).getByRole('button', { name: 'Review' });
+  const review = reviewOf(page);
   await review.focus();
   await page.keyboard.press('Escape');
   await expect(pill(page)).toBeFocused();
@@ -231,7 +233,7 @@ test('page polish: Review and Accept all a clear step apart; Review does not tou
   const d = await draw(request);
   await propose(request, d, d.n[0]!, 'the client declined');
   await open(page, d);
-  const review = (await notice(page).getByRole('button', { name: 'Review' }).boundingBox())!;
+  const review = (await reviewOf(page).boundingBox())!;
   const all = (await notice(page).getByRole('button', { name: 'Accept all (1)' }).boundingBox())!;
   const head = (await notice(page).locator('.vb-proposals-head').boundingBox())!;
   const step = all.y - (review.y + review.height);

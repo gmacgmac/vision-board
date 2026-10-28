@@ -33,7 +33,15 @@
 .vb-proposals-stale { display: inline; margin: 0; font-size: var(--vb-text-xs); color: var(--vb-ink); }
 .vb-proposals > .vb-btn { width: 100%; }
 /* Page polish ruling A: Review and Accept all a clear step apart (8px, twice the rows' gap). */
-.vb-proposals > .vb-btn + .vb-btn { margin-top: var(--vb-space-1); }
+.vb-proposals > .vb-btn + .vb-btn, .vb-proposals > .vb-menu-face + .vb-btn { margin-top: var(--vb-space-1); }
+/* Review as a list (reviewList flag; MenuSelect with a face, as the "N open" chip): drawn as the
+   small button beside it, the notice's full width; the select lies unseen over it. */
+.vb-proposals > .vb-menu-face {
+  display: flex; justify-content: center; box-sizing: border-box; width: 100%; height: var(--vb-control-h-small); padding: 0 var(--vb-space-2);
+  border: 1px solid var(--vb-line-strong); border-radius: var(--vb-radius-sm); background: var(--vb-surface-card); color: var(--vb-ink-strong);
+}
+.vb-proposals > .vb-chip.vb-menu-face:is(:hover, [data-look='hover']) { background: var(--vb-surface-sunken); }
+.vb-proposals > .vb-menu-face > .vb-menu-over { inset: -1px; width: calc(100% + 2px); height: calc(100% + 2px); } /* over the border too */
 
 /* Hide and the pill: plain on the glass, the selection bar's hover; the chevron points the way the
    notice goes (left, into the pill). */

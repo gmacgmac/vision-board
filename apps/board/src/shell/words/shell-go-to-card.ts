@@ -11,3 +11,10 @@ export const showV = (version: number): string => `Show v${version}`;
 export const goToAnOpenCard = 'Go to an open card';
 export const openItemsChooseOneTo = 'Open items: choose one to go to it';
 export const openItems = 'Open items';
+
+// ---- GoToCard.svelte, with search (cardSearch flag)
+export const cardNumberOrWords = 'Card number or words';
+export const steps = '↑↓';
+export const step = 'step ·';
+// ---- KeyHelp.svelte, with search
+export const findACardByItsWords = 'Find a card by its words';

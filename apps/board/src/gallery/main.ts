@@ -32,9 +32,10 @@ import { wireSection } from './wire-section.ts';
 import { versionSection } from './version-section.ts';
 import { keyHelpSection } from './key-help-section.ts';
 import { goToCardSection } from './go-to-card-section.ts';
+import { searchSection } from './search-section.ts';
 import { appIconSection } from './app-icon-section.ts';
 import { parkingSection } from './parking-section.ts';
-import { proposalsSection } from './proposals-section.ts';
+import { proposalsSection, reviewListSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { chatSection } from './chat-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
@@ -151,6 +152,8 @@ function build(): void {
   if (flagOn('appCards', flags)) main.append(appFitSection(fx)); // the appFit flag's entry, on or off; last, so the sections above keep their place
   main.append(...patterns.filter((p) => p.name === LAST).map((p) => section(p, fx))); // last of all, so the sections above keep their place
   if (flagOn('agentAccess', flags) && flagOn('accessByBot', flags)) main.append(accessByBotSection()); // after everything: its height is fractional, so it must move no section
+  if (flagOn('proposals', flags) && flagOn('reviewList', flags)) main.append(reviewListSection(fx)); // after everything, so no section moves
+  if (flagOn('goToCard', flags) && flagOn('cardSearch', flags)) main.append(searchSection(fx)); // after everything, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

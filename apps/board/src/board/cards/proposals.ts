@@ -34,8 +34,11 @@ export function barWords(rows: readonly ProposalRow[]): { count: string; stale: 
   return { count: proposalsWords.count(k), stale: stale ? proposalsWords.outOfDate(stale) : '', n: String(k), noun: proposalsWords.noun(k) };
 }
 
+/** What a proposal proposes, in one line: "Cross: the client declined" (Accept all's list, the Review list). */
+export const proposes = (r: ProposalRow): string => `${ACTIONS[r.action].label}: ${r.reason}`;
+
 const item = (r: ProposalRow, why?: string): ApplyLine =>
-  ({ ref: String(r.n), text: `${ACTIONS[r.action].label}: ${r.reason}${why ? ` (${why})` : ''}` });
+  ({ ref: String(r.n), text: `${proposes(r)}${why ? ` (${why})` : ''}` });
 
 /** Accept all's confirm step (ruling 4): exactly what it applies, then what it leaves out and why. */
 export function acceptAllWords(plan: ReturnType<typeof acceptAllPlan>) {

@@ -1,6 +1,6 @@
 <!-- The page shell: toolbar, the requests strip (agentAccess flag) and the proposals notice (proposals
      flag) or, while a past version shows, its banner (versionView flag), stage, reply panel, the key commands bubble (keyBubble flag),
-     the Go to card box while a digit typed on the board has it open (goToCard flag),
+     the Go to card box while a digit typed on the board has it open (goToCard flag), or `/`, for words (cardSearch flag),
      the chat sidebar (chatPanel flag), toast, the confirm dialog, the New board / Rename board dialog (boardEdit flag),
      the Archived list (archiveBoard flag) and the folder picker (openFolder flag). Notes open in a bubble beside their card (board/notes/notes.ts). The stage is the
      board's root: the framework-free board (D-005) is mounted in it with this page as its host (board/mount.ts,
@@ -113,7 +113,7 @@
       onallowall={(seqs) => board?.access.answerAll(seqs) ?? Promise.resolve(false)} />
   {/if}
   <ProposalsBar rows={shell.proposals} news={shell.proposalNews}
-    onreview={() => board?.proposals.review()} onacceptall={() => void board?.proposals.acceptAll()} />
+    onreview={(n) => board?.proposals.review(n)} onacceptall={() => void board?.proposals.acceptAll()} />
 {/if}
 
 <main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label={commonWords.board} bind:this={stage}></main>
@@ -124,8 +124,8 @@
 
 {#if keyBubble}<KeyHelp />{/if}
 {#if shell.go}
-  <GoToCard box={shell.go} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
-    onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} />
+  <GoToCard box={shell.go} search={board?.go.words ?? false} onedit={(text) => board?.go.edit(text)} onenter={() => board?.go.enter()}
+    onclose={() => board?.go.close()} onpast={() => void board?.go.openPast()} onstep={(dir) => board?.go.step(dir)} />
 {/if}
 {#if bridge}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 

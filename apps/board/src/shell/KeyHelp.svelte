@@ -3,9 +3,11 @@
      table and the action registry (board/input/key-help.ts). The open rules are the shared hover tip
      (packages/ui/src/tip/hover-tip.ts, WCAG 1.4.13): it stays while the pointer is on it, Esc
      closes it. "?" (Shift+/) opens it from anywhere on the page but a text field. The gallery
-     mounts it in the page flow, open. -->
+     mounts it in the page flow, open. With the cardSearch flag, Board lists `/` (SEARCH_02): the go
+     command's key, its own row since it finds a card by its words. -->
 <script lang="ts">
   import * as shellKeyHelpWords from './words/shell-key-help.ts';
+  import * as shellGoToCardWords from './words/shell-go-to-card.ts';
   import { onMount } from 'svelte';
   import { bindHoverTip } from '#ui';
   import { keyGroups } from '../board/input/index.ts';
@@ -16,7 +18,11 @@
 
   const uid = $props.id();
   const OPEN = 'data-keys-open';
-  const groups = keyGroups({ chat: flagOn('chatPanel', pageFlags()), flag: flagOn('cardFlag', pageFlags()), remove: flagOn('personRemove', pageFlags()), go: flagOn('goToCard', pageFlags()), app: flagOn('appCards', pageFlags()) });
+  const go = flagOn('goToCard', pageFlags());
+  /** The search row, after Go to a card by its number (cardSearch flag). */
+  const SEARCH_ROW = { id: 'other:search', label: shellGoToCardWords.findACardByItsWords, keys: ['/'] };
+  const groups = keyGroups({ chat: flagOn('chatPanel', pageFlags()), flag: flagOn('cardFlag', pageFlags()), remove: flagOn('personRemove', pageFlags()), go, app: flagOn('appCards', pageFlags()) })
+    .map((g) => (go && flagOn('cardSearch', pageFlags()) ? { ...g, rows: g.rows.flatMap((r) => (r.id === 'command:go-to-card' ? [r, SEARCH_ROW] : [r])) } : g));
   let host: HTMLElement;
   let button: HTMLButtonElement;
 

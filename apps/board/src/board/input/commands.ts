@@ -1,7 +1,7 @@
 // The board page's view commands (3_FE_02 ruling 5): zoom out, Fit and zoom in in the header; the
 // selection bar's Comment, Move to (3_FE_03 ruling 8), Remove (N24) and Zoom (short words; the tooltip and
 // accessible name say the rest); the area bar's
-// Zoom to this area; and a digit, which opens the Go to card box (go-to-card.ts). ONE table drives the header buttons, the bars and the keys, so nothing is
+// Zoom to this area; and a digit or `/`, which opens the Go to card box (go-to-card.ts). ONE table drives the header buttons, the bars and the keys, so nothing is
 // wired twice. They change only what the person sees (or open the note bubble or the move list),
 // so none is a ledger event (rule 8 covers the note, the move and the removal themselves, which are
 // written through the action layer).
@@ -52,8 +52,10 @@ export const COMMANDS: Record<CommandId, CommandDef> = {
   // container's note, a comment as N is for the selection. Those keys mean this only there.
   'container-note': { label: commandsWords.commentOnContainer, keys: ['c', 'n'], acts: true },
   // Any digit, with focus anywhere on the board but a text field (go-to-card.ts): the box opens
-  // holding it. Without the goToCard flag the keys do nothing.
-  'go-to-card': { label: commonWords.goToCard, means: commandsWords.goToACardBy, keys: [...'0123456789'], shown: ['0–9'] },
+  // holding it. Without the goToCard flag the keys do nothing. `/` opens it empty, for words
+  // (cardSearch flag, SEARCH_02; without the flag `/` does nothing); the key list shows it as its
+  // own row (KeyHelp.svelte), so `shown` stays the digits.
+  'go-to-card': { label: commonWords.goToCard, means: commandsWords.goToACardBy, keys: [...'0123456789', '/'], shown: ['0–9'] },
 };
 
 /** Where each command shows: the header's zoom group, the selection bar, the area bar. */

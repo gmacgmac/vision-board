@@ -77,8 +77,9 @@ test('a card already on screen: no pan, with or without a card focused first', a
   expect(await world(page)).toBe(before);
 });
 
+// Letters never show in the digits-only box: with the cardSearch flag (on by default) they are a search (search.spec.ts).
 test('No card 99 keeps the box open; Backspace edits; Esc closes with focus back where it was', async ({ page, request }) => {
-  await drawOpen(page, request, 6);
+  await drawOpen(page, request, 6, '?flags=-cardSearch');
   await card(page, 2).focus();
   await page.keyboard.type('99');
   await page.keyboard.press('Enter');

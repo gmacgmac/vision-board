@@ -216,3 +216,21 @@
 .vb-menu { position: relative; }
 .vb-btn.vb-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--vb-control-h); padding: 0; }
 .vb-menu .vb-btn-icon { display: block; }
+
+/* Search (cardSearch flag, SEARCH_02; board/find/go-to-card.ts marks them): while words typed in the
+   Go to card box match, the world carries data-search and each matching card data-found ("match", or
+   "current" for the one ↓/↑ stepped to). The matches take an amber ring, as browsers' find does (the
+   context state's colour, not the focus pink: focus stays in the box), the current one wider with a
+   soft halo; both keep their width on screen at any zoom (--vb-zoom, viewport.ts). Everything else
+   dims by opacity, never hidden: the other cards, the containers, connectors and their markers.
+   Dimmed text is decoration; the rings are decoration, Lc 30 at least on the canvas
+   (tests/pages/search.spec.ts). Reduced motion: the tokens' 0ms. */
+.vb-world :is(.vb-regions, .vb-wires, .vb-link-marks) { transition: opacity var(--vb-motion) var(--vb-ease); }
+.vb-world[data-search] :is(.vb-regions, .vb-wires, .vb-link-marks), .vb-world[data-search] vb-node:not([data-found]) { opacity: 0.35; }
+.vb-world[data-search] vb-node[data-found] {
+  outline: calc(2px / var(--vb-zoom, 1)) solid var(--vb-state-context); outline-offset: calc(3px / var(--vb-zoom, 1));
+}
+.vb-world[data-search] vb-node[data-found='current'] {
+  outline-width: calc(3px / var(--vb-zoom, 1)); z-index: var(--vb-z-hover);
+  box-shadow: 0 0 0 calc(8px / var(--vb-zoom, 1)) var(--vb-state-context-soft), var(--vb-shadow-card);
+}

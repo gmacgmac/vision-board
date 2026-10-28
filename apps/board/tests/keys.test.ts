@@ -56,3 +56,19 @@ test('on the board\'s own page, a key outside every board still acts; one in ano
   assert.deepEqual(press('Escape', target(null), mine, true), ['escape']);
   assert.deepEqual(press('h', target(root()), mine, true), []);
 });
+
+// Search (cardSearch flag, SEARCH_02): `/` is the go command's key, so it follows the same rule.
+test('under a host, / opens the search only inside the board\'s root', () => {
+  const pressSlash = (at: Fake, own: Fake): string[] => {
+    const acted: string[] = [];
+    const h = { command: (id: string, key: string) => { acted.push(`${id} ${key}`); return true; } } as unknown as KeyHandlers;
+    const unbind = bindKeys(h, own as unknown as HTMLElement);
+    listener!({ target: at, key: '/', defaultPrevented: false, metaKey: false, ctrlKey: false, altKey: false, shiftKey: false, preventDefault() {} } as unknown as KeyboardEvent);
+    unbind();
+    return acted;
+  };
+  const mine = root();
+  assert.deepEqual(pressSlash(target(mine), mine), ['go-to-card /']);
+  assert.deepEqual(pressSlash(target(null), mine), [], 'a host control keeps its /');
+  assert.deepEqual(pressSlash(target(root()), mine), []);
+});

@@ -5,14 +5,18 @@
 // fixture ledger's proposals, read through the conditions table as the board reads them; the open
 // boxes are forced open (`data-open`, the attribute the popover sets). The notice and the list are the
 // board's own Svelte components; the notice and its pill sit over a card on the board's ground.
+// Review's list (reviewList flag, REVIEW_01) is a section of its own, last of all in the gallery
+// (main.ts), so the sections above keep their place.
 import { mount } from 'svelte';
 import type { ViewNode } from '#format';
 import type { VbNodeElement } from '#ui';
 import { nodeState } from '#ui';
 import ProposalsBar from '../shell/ProposalsBar.svelte';
 import ConfirmList from '../shell/ConfirmList.svelte';
+import type { ProposalRow } from '#actions';
 import { acceptAllPlan } from '#actions';
-import { acceptAllWords } from '../board/cards/index.ts';
+import { acceptAllWords, proposes } from '../board/cards/index.ts';
+import { reviewRows } from '../board/find/index.ts';
 import { cardList, el, group } from './dom.ts';
 import type { Fixture } from './fixture.ts';
 
@@ -29,12 +33,12 @@ function card(n: ViewNode, fx: Fixture, open: boolean): VbNodeElement {
 }
 
 /** The notice, or its pill, over a card on the board's ground, so the see-through shows. */
-function notice(fx: Fixture, n: ViewNode, collapsed: boolean): HTMLElement {
+function notice(fx: Fixture, n: ViewNode, collapsed: boolean, rows: readonly ProposalRow[] = fx.proposals.rows, look?: 'focus' | 'hover'): HTMLElement {
   const stage = el('div', 'g-bubble-stage g-notice-stage vb-ground');
   const c = card(n, fx, false);
   c.style.transform = 'translate(48px, 18px)';
   stage.append(cardList(collapsed ? 'A card under the pill' : 'A card under the notice', c));
-  mount(ProposalsBar, { target: stage, props: { rows: fx.proposals.rows, placement: 'gallery', collapsed, onreview: () => {}, onacceptall: () => {} } });
+  mount(ProposalsBar, { target: stage, props: { rows, placement: 'gallery', collapsed, ...(look && { look }), onreview: () => {}, onacceptall: () => {} } });
   return stage;
 }
 
@@ -68,5 +72,40 @@ export function proposalsSection(fx: Fixture): HTMLElement {
     group('The notice', 'Over the board\'s top left while any proposal is open, see-through, and it moves nothing: Review opens the first card\'s box; Accept all lists what it applies first; Hide or Esc collapses it to the pill, kept for this viewer.', notice(fx, atRest, false)),
     group('The pill', 'The notice hidden, in the same place: the count, kept up to date. A press brings the notice back.', notice(fx, atRest, true)),
     group('Accept all', 'The confirm step: the newest proposal on each card that is not out of date, in card order; the rest are not included, with why.', acceptAll(fx)));
+  return box;
+}
+
+/** The fixture's proposals with their cards' titles, as the page gives the notice with the reviewList flag on. */
+const titled = (fx: Fixture): ProposalRow[] =>
+  fx.proposals.rows.map((r) => ({ ...r, title: fx.proposals.view.nodes.find((n) => n.n === r.n)?.title ?? '' }));
+
+/** The list as the browser draws it open (a native list box with the same rows), beside the notice. */
+function openList(rows: readonly ProposalRow[]): HTMLElement {
+  const list = el('select', 'vb-select');
+  list.style.height = 'auto'; // a list box shows its rows; the select's own height is a closed one's
+  list.size = reviewRows(rows, proposes).length;
+  list.setAttribute('aria-label', 'The Review list, drawn open');
+  for (const r of reviewRows(rows, proposes)) list.append(Object.assign(el('option', undefined, r.text), { value: r.value, title: r.title ?? '' }));
+  return list;
+}
+
+/** Review's list (reviewList flag, REVIEW_01, ruling 319), a section of its own; the gallery puts it last of all (main.ts). */
+export function reviewListSection(fx: Fixture): HTMLElement {
+  const box = el('section', 'g-section');
+  box.dataset.feature = 'reviewList';
+  box.setAttribute('aria-labelledby', 'feature-reviewList');
+  const heading = el('h2', 'g-title', 'Review list');
+  heading.id = 'feature-reviewList';
+  const meta = el('p', 'g-meta');
+  meta.append(el('code', undefined, 'propose'), ' · feature flag reviewList (ruling 319), on by default · off with ?flags=-reviewList');
+  const rows = titled(fx);
+  const atRest = fx.proposals.view.nodes.at(-1)!;
+  const open = el('div', 'g-row');
+  open.append(notice(fx, atRest, false, rows, 'focus'), openList(rows));
+  box.append(heading,
+    el('p', 'g-desc', 'With proposals on more than one card, the notice\'s Review is a list of those cards, like the open and new lists: "12 · title · what it proposes", in card order, a long title or proposal cut with "…" and whole in its tooltip. Choosing one goes to the card as Go to card does (selected and focused, its marks kept), zooms in when the board is too far out for its controls, and opens its proposal box with focus in it. With one card, Review goes straight to it.'),
+    meta,
+    group('Review at rest', 'The same size and place as the button it replaces; the list is the browser\'s own.', notice(fx, atRest, false, rows)),
+    group('Review in focus, and the list open', 'The notice with Review focused (the ring), and the list as the browser opens it, drawn here as an open list box.', open));
   return box;
 }
