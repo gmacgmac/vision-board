@@ -248,6 +248,21 @@ export const FLAGS = {
     default: true,
     description: 'A click on a container\'s empty inside or on its title line makes it the container Z zooms to: Z then fits the whole container on the stage, as the container finder does (`zoomToContainer`). A click on a card still makes Z zoom to the selected cards. Off, Z zooms only to a selection.',
   },
+  agentAccessRules: {
+    // On by default (maintainer, 2026-10-28, points 329, 331, 334; agent-access-and-working). The refusals are a fix and hold with it off.
+    default: true,
+    description: 'The side-panel agent may, without asking: read files inside the board\'s folder that the access rules allow (packages/agent/src/access-rules.ts), run shell commands that only read such files, and write in `.visionboard/images/` and `.visionboard/apps/`; a question inside the folder also offers "Allow for this folder", remembered. Off, every read outside the agent\'s own tools asks, as do those writes. Refused paths (`.env`, the bots\' secrets, the ledger, `.git/`) are refused either way.',
+  },
+  approvalHold: {
+    // On by default (maintainer, 2026-10-28, point 335; agent-access-and-working HOLD_01). Read on the server (VB_FLAGS).
+    default: true,
+    description: 'A question the side-panel agent asks waits until the person answers, presses Stop or sends a new message, with no time limit; the turn\'s limit counts only the agent\'s own working time; Claude\'s hook waits up to 24 hours. Off, an unanswered question is a denial after 2 minutes and a turn stops after 10 minutes, waiting included.',
+  },
+  workAlongside: {
+    // On by default (maintainer, 2026-10-28, point 328; agent-access-and-working WORK_01).
+    default: true,
+    description: 'While the board\'s agent works the board says so (and "waiting for your OK" while it asks), the person keeps working and can send more, and a reply that lands while the chat is closed or scrolled away shows a count on the chat button and a toast that opens it. Off, Send holds as "Waiting for agent" and a reply is only in the chat.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;
