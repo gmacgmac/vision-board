@@ -279,15 +279,28 @@ for (const theme of THEMES) {
     await expectNoAxeViolations(page);
   });
 
-  // With the agentAccess, wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies,
-  // selectionPill, chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl, archiveBoard, lockBoard, personRemove, goToCard, appCards and cardImages flags off (on by default), so their
-  // sections are not in the full page (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
+  // One screenshot per section, not one of the whole page: a change re-saves only the section
+  // it touches, so the screenshots' history stays small (maintainer, 2026-10-28). With the agentAccess,
+  // wireLayers, versionView, keyBubble, proposals, cardUpdates, handover, cardReplies, selectionPill,
+  // chatPanel, toolbarMenu, openFolder, cardFlag, retiredMarker, linkLabels, alignSetting, widthsControl,
+  // archiveBoard, lockBoard, personRemove, goToCard, appCards and cardImages flags off (on by default),
+  // so their sections are not here (components.md § Feature flags); send-access.spec.ts, wires.spec.ts,
   // versions.spec.ts, key-bubble.spec.ts, proposals.spec.ts, card-updates.spec.ts, parking-replies.spec.ts,
-  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts, picker-archive.spec.ts, lock-board.spec.ts, person-remove.spec.ts, go-to-card.spec.ts, app-gallery.spec.ts and card-image-states.spec.ts have those sections' own screenshots.
-  test(`screenshot (${theme})`, async ({ page }) => {
+  // selection-pill.spec.ts, toolbar.spec.ts, open-folder.spec.ts, flag-retire.spec.ts, layout-controls.spec.ts,
+  // picker-archive.spec.ts, lock-board.spec.ts, person-remove.spec.ts, go-to-card.spec.ts, app-gallery.spec.ts
+  // and card-image-states.spec.ts have those sections' own screenshots; markdown has its own above.
+  test(`screenshot of each section (${theme})`, async ({ page }) => {
     await setTheme(page, theme);
     await page.goto('/gallery.html?flags=-agentAccess,-wireLayers,-versionView,-keyBubble,-proposals,-cardUpdates,-handover,-cardReplies,-selectionPill,-chatPanel,-toolbarMenu,-openFolder,-cardFlag,-retiredMarker,-linkLabels,-alignSetting,-widthsControl,-archiveBoard,-lockBoard,-personRemove,-goToCard,-appCards,-cardImages');
+    // Every top-level section the page shows (the full page as it was), named by its pattern, its
+    // feature, or its heading's id (App icon has neither); markdown has its own screenshot above.
     await expect(page.locator('section[data-pattern]').first()).toBeVisible();
-    await expect(page).toHaveScreenshot(`gallery-${theme}.png`, { fullPage: true });
+    const names = await page.locator('main > section').evaluateAll((all) => all.flatMap((e, i) => {
+      if (e.getBoundingClientRect().height === 0) return [];
+      const name = e.getAttribute('data-pattern') ?? e.getAttribute('data-feature') ?? e.getAttribute('aria-labelledby')?.replace(/^feature-/, '');
+      return name && name !== 'markdown' ? [{ i, name }] : [];
+    }));
+    expect(new Set(names.map((n) => n.name)).size, 'each section once, so each screenshot has one name').toBe(names.length);
+    for (const { i, name } of names) await expect(page.locator('main > section').nth(i)).toHaveScreenshot(`gallery-${name}-${theme}.png`);
   });
 }
