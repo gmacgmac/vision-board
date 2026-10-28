@@ -25,7 +25,8 @@ export const REGISTER = 'docs/specification/dependencies.md';
 export const LAYERS = {
   format: [],
   tokens: [],
-  actions: ['format'],
+  actions: ['format', 'search'],
+  search: [],
   layout: ['format'],
   ui: ['format', 'actions', 'tokens'],
   agent: [],

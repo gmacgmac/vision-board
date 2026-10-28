@@ -42,18 +42,35 @@ So a card found is a card "read". Behind a new flag `findKeepsMarks` (default on
 
 ## Validation
 
-- [ ] Every finder keeps NEW and updated; a click or an act clears them (page spec)
-- [ ] One go path, carried reason; the conditions table states it; flag off = today
+- [x] Every finder keeps NEW and updated; a click or an act clears them (page spec)
+- [x] One go path, carried reason; the conditions table states it; flag off = today
 
 ## Implementation Notes
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-28
 
 ### Changes Made
--
+- The reason travels with the selection: `selection.ts` `SelectBy` (`'select'` the person's own, `'find'`),
+  `select(ids, mode, by?)`, `SelectionChange.by`. `update-flow.ts` `saw(ids, by)` passes it to `seenOnSelect`.
+- The conditions table says it: `conditions.ts` `SelectedBy` and `clearsOn(kind, by)` (true only for the person's
+  own select; `clearsOnSelect(kind)` stays, one argument, for `.filter(clearsOnSelect)`); `answers/updates.ts`
+  `seenOnSelect(c, by = 'select')` reads it.
+- The finding go path (shared with SEARCH_02, REVIEW_01): `go.to(n)` in `board/find/go-to-card.ts` (the box's
+  Enter, the open list, the "N new" list and a chat chip's reveal all end there) -> the controller's `arrive`
+  -> `selection.select([id], 'only', on('findKeepsMarks') ? 'find' : 'select')`. A new finder calls `go.to(n)`
+  and needs nothing else; there is no second selection path.
+- Tests: `tests/pages/find-keeps-marks.spec.ts` (new; 3 finders x new and updated card; click and act clear; a
+  second find; flag off), `packages/actions/tests/updates.test.ts`, `apps/board/tests/selection.test.ts`;
+  `tests/pages/fresh-cards.spec.ts` "N new" test rewritten (it asserted that choosing a card ended its NEW).
+- Docs: `components.md` § Go to a card item 6 (Finding keeps marks), and the two lines in item 8 of the
+  navigation section that said selecting from the list ends NEW.
+- The flag `findKeepsMarks` description already matched; unchanged.
 
 ### Caught Beyond the Brief
-- None
+- The first draft made `clearsOnSelect(kind, by)` two-argument; `rounds.test.ts` calls `CONDITION_KINDS.filter(clearsOnSelect)`,
+  which passes the index as the second argument. Split into `clearsOn(kind, by)` and the unchanged one-argument `clearsOnSelect`.
+- Card seen lines in the ledger carry `n` after `boardLines` (`tests/pages/board-lines.ts`), not on the raw events: the spec counts them through it.
+- `#actions` does not export the type `SelectedBy` (index.ts is SEARCH_01's file this wave); `selection.ts` repeats the two-word union as `SelectBy`. See REQUESTS.
 
 ### Deviations from Plan
 - None

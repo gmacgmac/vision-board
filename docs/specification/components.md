@@ -825,12 +825,12 @@ before). Their rulings are the task set's (`cortex-tasks/board/2026-10-07_board-
    card in it (`container.fresh`) carries `data-fresh`: its border takes `--vb-state-fresh` (teal)
    and its title line a pill after the count, "3 new · 1 updated" (`region-fresh.ts` `regionFresh`,
    `region-fresh.css`), which leaves a narrow line whole, after the holders and before the title,
-   and stays zoomed out. Selecting one of its new or updated cards, or any act on one of its cards,
-   ends it; a click on the frame does not. The toolbar's "N new" chip beside "N open" is the same
+   and stays zoomed out. The person's own select of one of its new or updated cards (a click, not a
+   find), or any act on one of its cards, ends it; a click on the frame does not. The toolbar's "N new" chip beside "N open" is the same
    `OpenChip` (generalised: its word, tone and names are props), listing `freshCards` as "46 ·
    title", an updated one ending "· updated" (`finder.ts` `openRow`, the title giving way to a cut,
-   never the ending); choosing one goes to it as Go to card does, which selects it and so ends its
-   NEW. The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
+   never the ending); choosing one goes to it as Go to card does, which selects it but leaves its
+   NEW or "updated" mark (finding keeps marks, § Go to a card by its number item 6). The count, the list, the pills and the tabs read one list (`freshCards`, conditions.ts), so
    they never disagree. Hidden at zero, and with the flag off or a past version (`attention.ts`
    `freshIn`, `Toolbar.svelte`). APCA, measured by `tests/pages/fresh-cards.spec.ts`: the border on
    the canvas Lc 58.6 light, 67.4 dark; the pill's words 54.8 and 63.5; the tab's words 74.8 and
@@ -1078,6 +1078,22 @@ by default; `?flags=-goToCard`: digits do nothing and the key list leaves it out
    a retired card's offer by keyboard; the pause flag; the flag off; the key list; axe light and
    dark; the gallery section's screenshots). The gallery's section (`gallery/go-to-card-section.ts`)
    draws the three states from the same state code.
+6. **Finding keeps marks** (`findKeepsMarks` flag, on by default; the maintainer's ruling 322 in
+   `cortex-tasks/board/2026-10-28_board-app_search-and-finding/`). Looking for a card is not reading
+   it: going to a card by Go to card, the "N new" list, the open list or a chat chip's reveal selects,
+   focuses and shows it but never marks it seen, so its NEW or "N updates" tab, the toolbar's count and
+   its container's pill stay. Every one of those goes through `go-to-card.ts` `to`, which ends in the
+   controller's `arrive`: `selection.select(ids, 'only', 'find')` (`selection.ts` `SelectBy`, carried
+   on `SelectionChange.by`), and `update-flow.ts` `saw` reads it. The conditions table states which
+   selection clears what: `conditions.ts` `clearsOn(kind, by)` is true only for the person's own
+   select (`SelectedBy` `select`), never for a `find`, whatever a row's `clearedBy` names;
+   `seenOnSelect(c, by)` reads it, so no list of kinds lives in the page. The person's own click on the
+   card (also on one already selected), a lasso or Space, and every act (✓, ✗, a note, Accept, Reject)
+   still clear them. Off, a found card is marked seen as a selected one is. Tests:
+   `packages/actions/tests/updates.test.ts` (a find marks nothing; the person's select marks both),
+   `apps/board/tests/selection.test.ts` (the change carries `by`), `tests/pages/find-keeps-marks.spec.ts`
+   (each finder keeps NEW and "1 update", the count and the ledger; a click and an act clear them;
+   the flag off is today), `tests/pages/fresh-cards.spec.ts` (the "N new" list).
 
 ## App card (D-047, app-cards FE_01)
 

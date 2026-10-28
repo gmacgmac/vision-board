@@ -10,9 +10,16 @@ import * as cardsWords from '../words/cards.ts';
 /** `only`: these alone. `add`, `remove`: one way. `toggle`: each id flips. */
 export type SelectMode = 'only' | 'add' | 'remove' | 'toggle';
 
+/** How the selection came about: `select`, the person's own (a click, Space, a lasso), or `find`, going
+ *  to a card to look for it (find/go-to-card.ts). Finding is no engagement, so it marks nothing seen
+ *  (ruling 322; `SelectedBy` in packages/actions' conditions.ts says the same). */
+export type SelectBy = 'select' | 'find';
+
 export interface SelectionChange {
   /** The ids whose selected state changed. */
   changed: string[];
+  /** How this change came about. */
+  by: SelectBy;
   /** How many are selected now. */
   count: number;
   /** What the live region says: "3 cards selected", "Selection cleared". */
@@ -23,7 +30,7 @@ export interface Selection {
   /** The selected ids, in the order they were selected. */
   selected(): string[];
   has(id: string): boolean;
-  select(ids: readonly string[], mode: SelectMode): void;
+  select(ids: readonly string[], mode: SelectMode, by?: SelectBy): void;
   clear(): void;
   /** Keep only ids still on the board (`live`), after a redraw. */
   keep(live: Iterable<string>): void;
@@ -39,27 +46,27 @@ export function createSelection(): Selection {
   const listeners = new Set<(c: SelectionChange) => void>();
 
   /** Make `next` the selection and tell the listeners what changed, if anything did. */
-  function become(next: Set<string>) {
+  function become(next: Set<string>, by: SelectBy = 'select') {
     const changed = [...ids].filter((id) => !next.has(id));
     for (const id of next) if (!ids.has(id)) changed.push(id);
     if (!changed.length) return;
     ids.clear();
     for (const id of next) ids.add(id);
-    const c: SelectionChange = { changed, count: ids.size, text: selectionText(ids.size) };
+    const c: SelectionChange = { changed, by, count: ids.size, text: selectionText(ids.size) };
     for (const l of listeners) l(c);
   }
 
   return {
     selected: () => [...ids],
     has: (id) => ids.has(id),
-    select(list, mode) {
-      if (mode === 'only') return become(new Set(list));
+    select(list, mode, by) {
+      if (mode === 'only') return become(new Set(list), by);
       const next = new Set(ids);
       for (const id of list) {
         if (mode === 'add' || (mode === 'toggle' && !next.has(id))) next.add(id);
         else next.delete(id);
       }
-      become(next);
+      become(next, by);
     },
     clear: () => become(new Set()),
     keep(live) {

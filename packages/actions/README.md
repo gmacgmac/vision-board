@@ -4,7 +4,7 @@ Everything a person or agent can do on the board, as a typed action (✓ and ✗
 clear, pin, mode, and more later). Buttons, keyboard shortcuts and agents
 call the same actions, and each one is recorded in the project ledger as an `act` event (rule 8).
 
-- **Depends on**: `packages/format`.
+- **Depends on**: `packages/format`, `packages/search`.
 - **Used by**: `packages/ui`, `apps/board`.
 - **Public API** (`src/index.ts`): the registry (`ACTIONS`, `ITEM_ACTIONS`, `DECIDED` = `CLOSED`: only ✓
   and ✗ answer a card, D-045; `ACTION_OUT`, ✓ as `check` and ✗ as `cross` at the API edge), the
@@ -50,7 +50,7 @@ call the same actions, and each one is recorded in the project ledger as an `act
   since the agent was last told; one writer for the server's prompt and the composer's preview), and
   the agent's answer clearing a card (`clears.ts`: the fold's clears, and `unseenAnswer` until the
   person looks, D-045). Each card's ✓, ✗, Later and clear reach the agent folded to its latest
-  (`pending.ts` `latestMarks`, and `unsent.ts` for Send).
+  (`pending.ts` `latestMarks`, and `unsent.ts` for Send). The board's cards as search documents (`boardSearchDocs`, `SEARCH_FIELDS`, `search-docs.ts`; title, body, container, notes, replies), for `#search`.
 - **Answers** (`src/answers/`, ARCH_04): the pure queries a host asks of the folded ledger, each with
   its test in `tests/`: the board as the page and `get_board` read it (`boardData`, `boardJson`,
   `answeredIds`; `board-data.test.ts`), what needs attention on the page (`pageConditions`), the

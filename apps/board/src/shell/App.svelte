@@ -109,7 +109,8 @@
 {:else}
   {#if shell.agentAccess}
     <AccessRequests requests={shell.requests} news={shell.requestNews}
-      onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)} />
+      onanswer={(seq, a, text) => board?.access.answer(seq, a, text) ?? Promise.resolve(false)}
+      onallowall={(seqs) => board?.access.answerAll(seqs) ?? Promise.resolve(false)} />
   {/if}
   <ProposalsBar rows={shell.proposals} news={shell.proposalNews}
     onreview={() => board?.proposals.review()} onacceptall={() => void board?.proposals.acceptAll()} />

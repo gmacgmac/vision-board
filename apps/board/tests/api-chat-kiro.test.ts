@@ -1,5 +1,5 @@
 // Kiro on the board server (chat-panel BE_04) with the agent package's fake `kiro-cli acp`
-// replaying a recorded real turn: starting a session joins the board as "Kiro chat <id>" and
+// replaying a recorded real turn: starting a session joins the board as its folder's name and
 // records the grant; the secret reaches only the tool server's environment in session/new; a
 // file change in the turn becomes an approval_request on the chat stream, and the person's answer
 // goes back to Kiro as the option; the events are schema-valid; Stop and the server closing end
@@ -60,7 +60,7 @@ test('start: Kiro joins the board as its agent; a message becomes a turn; a file
   assert.deepEqual([session.agent, session.session], ['kiro', '00000000-0000-4000-8000-000000000001']);
   const lines = h.ledger.events().filter((e) => e.seq > before);
   assert.deepEqual(lines.map((e) => [e.type, e.by]), [['join', 'agent'], ['grant-request', 'agent'], ['act', 'person']]);
-  assert.equal((lines[0] as { label?: string }).label, 'Kiro chat 00000000');
+  assert.equal((lines[0] as { label?: string }).label, path.basename(h.project));
 
   await h.ok('send_chat', { session: session.session, body: { text: 'Draw two cards.' } });
   const asked = (await readChat(h.base, h.cookie, session.session, (e) => e.some((x) => x.kind === 'approval_request'))).at(-1)!;

@@ -663,3 +663,21 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   (`tests/pages/app-fit.spec.ts`). **Not run with live agents**: build an app with Claude Code and
   Kiro and see whether they send the height and pick `h` near it before relying on the text. Kiro
   reads the new text when the board next starts.
+
+## Skill v3.16 (a bot joins as its folder's name)
+
+- 2026-10-28, maintainer (rulings 320, 321; search-and-finding ACCESS_01): one bot ("User split build")
+  asked for nine containers of another bot's board in one second and the strip showed nine rows under
+  "9 agents ask for access"; a bot's label ("Claude Code chat 493e31fb") also said little about who
+  was asking. The strip now groups requests by the asking agent's id (the server stamps it on every
+  request, api.md 21), one group and one Allow all per bot, and the heading counts bots.
+- 2026-10-28, agent: why the `join` line changed. A group is headed by the bot's label, so the label
+  is what the person reads to decide. The folder a bot works in (its repository or worktree folder) is
+  the one name the person already knows it by, and the side panel's chat now joins with the board's
+  folder name for the same reason. The line says "name, never a path" so no home folder or user name
+  reaches the board (rule 0). A bot that loses its secret joins again as a new bot, with the same
+  label; the strip numbers two bots that share a label ("pricing-site (1)", "pricing-site (2)"), never
+  by id, and the number goes when one of them is answered.
+- 2026-10-28, agent: **not run with live agents.** Start Claude Code and Kiro in a folder, let each ask
+  for a board it did not make, and read the label in the strip before relying on the text. Kiro reads
+  the new text when the board next starts.

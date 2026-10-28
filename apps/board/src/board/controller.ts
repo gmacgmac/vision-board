@@ -173,9 +173,10 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     frame: (region) => drawing.frames.get(region), target, run: (steps) => sender.run(steps),
     showLater: (on) => { S.later = on; }, redraw: () => redraw(), toast: (t) => toast(t),
   });
-  /** Go to a card by its number (go-to-card.ts): select and focus it, a pan only by `revealPan`'s rule (`vp.reveal`), the zoom kept. */
+  /** Go to a card by its number (go-to-card.ts), the one path every finder takes: select and focus it, a pan only by `revealPan`'s rule (`vp.reveal`), the zoom kept.
+   *  A find marks nothing seen (findKeepsMarks flag, ruling 322): the selection says `find`, update-flow.ts `saw` reads it. */
   const go = createGoTo({ show: (box) => status.set({ go: box }), past: showVersion, ...(on('goAfterPause') && { pause: GO_PAUSE }), find: (n) => goTarget(versions.state ?? live.state, S.id, n, (id) => !!drawing.layout?.nodes.has(id), versionView),
-    arrive: (id) => { selection.select([id], 'only'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); } });
+    arrive: (id) => { selection.select([id], 'only', on('findKeepsMarks') ? 'find' : 'select'); drawing.cards.get(id)?.focus({ preventScroll: true }); const b = drawing.layout?.nodes.get(id); if (b) vp.reveal(b); } });
   /** The lasso, the selection bar and the view commands (3_FE_02, selection-flow.ts). */
   const flow = createSelectionFlow({
     stage, vp, selection, notes, layout: () => drawing.layout, pill: on('selectionPill'), // the pill (stage5-follow-ups FE_02)

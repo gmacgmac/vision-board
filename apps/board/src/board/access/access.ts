@@ -9,8 +9,9 @@ import * as accessWords from '../words/access.ts';
 import * as commonWords from '../words/common.ts';
 
 /** One open grant request as the strip shows it (agentAccess flag): `container` is the region's
- * title, left out for a request for the whole board (D-034); `label` the asking agent's. */
-export interface AccessRequestRow { seq: number; label: string; container?: string; reason: string }
+ * title, left out for a request for the whole board (D-034); `label` the asking agent's and `agent`
+ * its id, which the server stamps on every request (api.md 21), the key the strip groups by. */
+export interface AccessRequestRow { seq: number; agent?: string; label: string; container?: string; reason: string }
 
 /** What a request with no label (an agent that never said who it is) is called. */
 const UNNAMED = accessWords.anAgent;
@@ -21,7 +22,7 @@ const titleOf = (view: View, region: string) => view.regions.find((r) => r.id ==
  * board) and the agent's label. */
 export function requestRows(data: BoardData): AccessRequestRow[] {
   return (data.access.requests ?? []).map((r) => ({
-    seq: r.seq, label: r.label ?? UNNAMED, reason: r.reason,
+    seq: r.seq, ...(r.agent !== undefined && { agent: r.agent }), label: r.label ?? UNNAMED, reason: r.reason,
     ...(r.region !== undefined && { container: titleOf(data.view, r.region) }),
   }));
 }
@@ -29,6 +30,33 @@ export function requestRows(data: BoardData): AccessRequestRow[] {
 /** What a request asks, after the agent's label (the strip's row and its announcement). */
 export const askWords = (row: AccessRequestRow): string =>
   row.container === undefined ? accessWords.wantsToDrawOnThis : accessWords.asksToWriteIn(row.container);
+
+/** One bot's open requests, as the strip groups them (accessByBot flag, rulings 320/321): `name` is
+ * its label, with a number after it when another asking bot has the same label (ids never show). */
+export interface AccessGroup { key: string; name: string; asks: AccessRequestRow[] }
+
+/** The rows grouped by the asking agent's id, in the order each bot first asked, each bot's rows
+ * oldest first. A request with no id stands alone: nothing says it is another's. Bots that share a
+ * label are numbered in that order ("build (1)", "build (2)"). */
+export function groupByBot(rows: readonly AccessRequestRow[]): AccessGroup[] {
+  const by = new Map<string, AccessRequestRow[]>();
+  for (const r of rows) {
+    const key = r.agent ?? `request-${r.seq}`;
+    by.set(key, [...(by.get(key) ?? []), r]);
+  }
+  const groups = [...by].map(([key, asks]) => ({ key, name: asks[0]!.label, asks }));
+  const same = (label: string) => groups.filter((g) => g.name === label);
+  return groups.map((g) => {
+    const twins = same(g.name);
+    return twins.length > 1 ? { ...g, name: accessWords.sameLabel(g.name, twins.indexOf(g) + 1) } : g;
+  });
+}
+
+/** What a bot asks for, after its name (the group's heading and its announcement). */
+export function groupAskWords(group: AccessGroup): string {
+  const containers = group.asks.filter((r) => r.container !== undefined).length;
+  return accessWords.asksForAccessTo(containers, containers < group.asks.length);
+}
 
 /** Region id -> its holders; empty when the board has none. */
 export const holdersOf = (data: BoardData): Readonly<Record<string, AccessHolder[]>> => data.access.holders ?? {};
@@ -55,6 +83,15 @@ export function revokeWords(data: BoardData, region: string | undefined, holder:
     confirm: commonWords.removeAccess,
     done: accessWords.canNoLonger(label, where),
   };
+}
+
+/** The one toast after Allow all: what the bot may now do, in one sentence. */
+export function allowAllWords(rows: readonly AccessRequestRow[]): string {
+  if (rows.length === 1) return answerWords(rows[0], 'grant');
+  const who = rows[0]?.label ?? UNNAMED;
+  const containers = rows.filter((r) => r.container !== undefined).length;
+  return containers === rows.length ? accessWords.canNowWriteInMany(who, containers)
+    : containers === 0 ? accessWords.canNowDrawOnThis(who) : accessWords.canNowDrawAndWrite(who, containers);
 }
 
 /** The toast after Allow or Refuse. */

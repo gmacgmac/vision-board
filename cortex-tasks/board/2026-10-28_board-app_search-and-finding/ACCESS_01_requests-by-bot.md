@@ -47,21 +47,41 @@ its folder's name. Behind a new flag `accessByBot` (default on).
 
 ## Validation
 
-- [ ] Grouped by agent id, one Allow all per bot, heading counts bots, gallery entry
-- [ ] Labels are folder names (side panel and skill); flag off = today
+- [x] Grouped by agent id, one Allow all per bot, heading counts bots, gallery entry
+- [x] Labels are folder names (side panel and skill); flag off = today (the strip; the server's join label has no flag)
 
 ## Implementation Notes
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-28
 
 ### Changes Made
--
+- `board/access/access.ts`: `AccessRequestRow` carries `agent`; `groupByBot` (by agent id, in the order each bot first asked; a request with no id stands alone; same-label bots numbered) and `groupAskWords` (heading words by count: "3 containers", "draw on this board", "this board and 2 containers"); exported from `index.ts`. Words: `board/words/access.ts` (`sameLabel`, `containerCount`, `asksForAccessTo`), `shell/words/shell-access.ts` (`allowAll`, `allowAllOf`, `refuseTo`).
+- `shell/AccessRequests.svelte`: grouped strip behind `accessByBot` (the component reads the page flag itself, so `App.svelte` is unchanged; prop `byBot` for the gallery), heading counts bots, group heading + rows (container or "this board", reason, Allow, Refuse), one Allow all for a bot with more than one request (sequential `onanswer(seq, 'grant')`, one act each, stops at the first not recorded; no confirm: Allow has none), Refuse's accessible name carries the container, announce per bot, `scope` prop keeps ids unique when two strips share a page. Flag off = the old flat strip.
+- `styles/access.css`: group heading, Allow all, indented rows (tokens only).
+- Labels: `server/chat-access.ts` `chatLabel(agent, folder)` = the folder's name (CLI name for a nameless folder); `server/chat-sessions.ts` passes `cwd`; skill `join` line and v3.16; `NOTES.md` says why.
+- Gallery: `gallery/access-section.ts` second section `accessByBot` (three bots, two sharing a label); baselines `access-by-bot-{light,dark}` new.
+- Tests (written first, seen failing): `apps/board/tests/access-groups.test.ts`, `chat-access.test.ts`, `tests/pages/access-by-bot.spec.ts`; `send-access.spec.ts` locators moved to groups.
 
 ### Caught Beyond the Brief
-- None
+- Two strips on the gallery page shared element ids (`gallery-request-0-title`), so the second strip's `aria-labelledby` read the first's heading: fixed with `scope`.
+- A row's Refuse in a group of several would all be named "Refuse <bot>": each now names its container.
+- Allow all not on a one-request bot: it would repeat that row's Allow.
 
 ### Deviations from Plan
-- None
+- Files outside the ownership table were touched because the feature cannot work without them: `styles/access.css`, `server/chat-sessions.ts` (one argument), `server/words/server-chat.ts` (removed the now unused `chat` sentence), `tests/pages/send-access.spec.ts`, `apps/board/tests/api-chat-sessions.test.ts` and `api-chat-kiro.test.ts` (the label assertion), `packages/format/src/flags.ts` (description). None is owned by another wave-1 task.
+- Allow all sends one toast per request (the last one stays); a single toast needs `App.svelte`'s `onanswer` to pass more (REQUEST).
+
+### Run 2
+Ownership widened for this run: `App.svelte` (the `onanswer` wiring), the access flow, `docs/specification/api.md` item 86.
+- Allow all gives one toast. `access-flow.ts` `answerAll(requests)` records each `grant` through the act path, stops at the first not recorded, and notifies once for those that were; words `allowAllWords` (`access.ts`) with `canNowWriteInMany` and `canNowDrawAndWrite` in `board/words/access.ts` ("build can now write in 3 containers"; a one-request bot keeps the single wording). `AccessRequests.svelte` takes `onallowall` (the gallery has none and falls back to `onanswer` per request); `App.svelte` passes `board.access.answerAll`.
+- Tests: `allowAllWords` unit test (seen failing first); `access-by-bot.spec.ts` asserts `#toast` reads the one sentence after Allow all.
+- `api.md` 86: the grouped strip, grouping by agent id, label is the folder's name, the side panel joining as the folder name.
+- Checks: unit (apps) 597 pass, `check` clean, `gen-api --check` current, `access-by-bot` + `send-access` specs on 5300: 27 pass, 2 fail (the `agent-access-*` screenshots, expected). `verify`: only `modules.md`. No baseline touched, `npm run map` not run.
+
+### Run 3
+The 45 gallery section screenshots (1px off). Cause measured, section by section, on `/gallery.html` against HEAD (a throwaway worktree, removed): the sections after `agentAccess` moved by 94.39 px, not a whole number. Of that, 77 px was the regrouped strip (whole) and 17.39 px was my longer description of the strip in the `agentAccess` section, which wrapped to one more line (a line is not a whole pixel); my new `accessByBot` section (533.156 px) sat above the rest and added its own fraction. Proof it was not FIND_01 or SEARCH_01: with my gallery changes switched off the failures stayed (the description was still longer); with the description back to the same line count every section below moves by exactly 77.000 and the failures went.
+- Fix at the source: the `agentAccess` Requests description is no longer than the old one's wrapped length (same line count); `accessByBotSection` is exported separately and `main.ts` appends it after the last section (`base`), so its fractional height moves nothing.
+- Result: sections below `agentAccess` move by 77.000 px each (whole); `app-fit`, `chat`, `layout-controls` and `access-by-bot` specs on 5300: 43 pass (my own two new screenshots wrote new baselines on that first run, then passed). `send-access` still fails its two `agent-access-*` screenshots (the section changed height again): re-baseline at the gate.
 
 ## On Completion
 

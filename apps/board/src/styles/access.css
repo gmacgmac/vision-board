@@ -25,6 +25,13 @@
 .vb-access-ask { flex: none; color: var(--vb-ink); white-space: nowrap; }
 .vb-access-ask b { color: var(--vb-ink-strong); font-weight: var(--vb-weight-bold); }
 .vb-access-reason { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--vb-ink-subtle); }
+/* Grouped by bot (accessByBot): each bot's heading with its one Allow all, its rows indented under it. */
+.vb-access-groups { gap: var(--vb-space-2); }
+.vb-access-group + .vb-access-group { border-top: 1px solid var(--vb-line-strong); padding-top: var(--vb-space-2); }
+.vb-access-bot { display: flex; align-items: center; justify-content: space-between; gap: var(--vb-space-3); min-height: var(--vb-control-h); }
+.vb-access-bot-name { margin: 0; min-width: 0; font-size: var(--vb-text-sm); font-weight: var(--vb-weight-regular); color: var(--vb-ink); }
+.vb-access-bot-name b { color: var(--vb-ink-strong); font-weight: var(--vb-weight-bold); }
+.vb-access-group > .vb-access-list { padding-left: var(--vb-space-4); }
 .vb-access-actions { flex: none; display: flex; align-items: center; gap: var(--vb-space-2); margin: 0; }
 .vb-access-note {
   width: calc(var(--vb-card-w-s) * 0.9); height: var(--vb-control-h-small); padding: 0 var(--vb-space-2);

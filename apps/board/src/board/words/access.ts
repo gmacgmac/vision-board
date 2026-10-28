@@ -14,3 +14,10 @@ export const canNowDrawOnThis = (who: string): string => `${who} can now draw on
 export const theContainer = 'the container';
 export const canNowWriteIn = (who: string | number, container: string | number): string => `${who} can now write in ${container}`;
 export const willNoLongerBeAble = (label: string, where: string): string => `${label} will no longer be able to ${where}. Its items stay on the board, and it can ask again.`;
+export const canNowWriteInMany = (who: string, containers: number): string => `${who} can now write in ${containerCount(containers)}`;
+export const canNowDrawAndWrite = (who: string, containers: number): string => `${who} can now draw on this board and write in ${containerCount(containers)}`;
+export const sameLabel = (label: string, n: number): string => `${label} (${n})`;
+export const containerCount = (n: number): string => (n === 1 ? '1 container' : `${n} containers`);
+/** What a bot asks for: `containers` of them, and whether the whole board is one of the asks. */
+export const asksForAccessTo = (containers: number, board: boolean): string =>
+  `asks for access to ${board ? (containers > 0 ? `this board and ${containerCount(containers)}` : 'draw on this board') : containerCount(containers)}`;

@@ -8,7 +8,8 @@ import { cardId, latest } from '#format';
 import { versionChanges } from '../changes.ts';
 import type { FieldChange } from '../changes.ts';
 import { unseenAnswer, unseenReply } from '../clears.ts';
-import { clearsOnSelect } from '../conditions.ts';
+import type { SelectedBy } from '../conditions.ts';
+import { clearsOn } from '../conditions.ts';
 import type { LedgerState } from '../fold.ts';
 
 /** Card `n` on `board` as the held state names it (0 for a number the board has not given). */
@@ -63,9 +64,10 @@ export const seenDue = (s: LedgerState, board: string, n: number, ver: number): 
   seenVer(s, board, n) < ver || unseenAnswer(s, idOf(s, board, n)) || answerOf(s, board, n) !== undefined;
 
 /** The items a selection marks seen: for each card condition the page shows, those it holds for when
- *  the row's `clearedBy` names select (`clearsOnSelect`, never a list of kinds here). */
-export const seenOnSelect = (c: { fresh: ReadonlySet<number>; unseen: ReadonlySet<number> }): Set<number> =>
-  new Set([...(clearsOnSelect('item.new') ? c.fresh : []), ...(clearsOnSelect('item.unseen') ? c.unseen : [])]);
+ *  the row's `clearedBy` names select (`clearsOn`, never a list of kinds here). A card selected
+ *  by a find (`by: 'find'`) marks none (ruling 322). */
+export const seenOnSelect = (c: { fresh: ReadonlySet<number>; unseen: ReadonlySet<number> }, by: SelectedBy = 'select'): Set<number> =>
+  new Set([...(clearsOn('item.new', by) ? c.fresh : []), ...(clearsOn('item.unseen', by) ? c.unseen : [])]);
 
 /** A card seen line's fields: version `ver` of card `n` (its board number). */
 export interface SeenMark { n: number; ver: number }

@@ -12,3 +12,6 @@ export const refuse = (label: string | number): string => `Refuse ${label}`;
 export const refuse2 = 'Refuse';
 export const allow = 'Allow';
 export const allowTo = (label: string | number, container: string | number): string => `Allow ${label} to ${container}`;
+export const allowAll = 'Allow all';
+export const allowAllOf = (name: string | number, count: number): string => `Allow all ${count} requests from ${name}`;
+export const refuseTo = (name: string | number, where: string | number): string => `Refuse ${name} to ${where}`;

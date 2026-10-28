@@ -84,3 +84,14 @@ test('a listener can stop listening', () => {
   sel.select(['2'], 'only');
   assert.equal(calls, 1);
 });
+
+test('a change says how it came about: the person\'s own select by default, `find` when asked', () => {
+  const { sel, changes } = watched();
+  sel.select(['1'], 'only');
+  sel.select(['2'], 'only', 'find');
+  sel.select(['3'], 'add', 'find');
+  sel.select(['3'], 'toggle');
+  assert.deepEqual(changes.map((c) => c.by), ['select', 'find', 'find', 'select']);
+  sel.clear();
+  assert.equal(changes.at(-1)?.by, 'select');
+});

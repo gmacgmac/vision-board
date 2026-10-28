@@ -139,17 +139,23 @@ test('selecting a new card ends its container\'s border and pill; a click on the
   await expect(said(page, 'p')).toHaveText('1 updated');
 });
 
-test('"N new": choosing a card goes to it, selected and focused; it then leaves the list; hidden with none', async ({ page, request }) => {
+test('"N new": choosing a card goes to it, selected and focused, and keeps its mark (ruling 322); hidden with none', async ({ page, request }) => {
   const { added } = await fresh(page, request, '?vbwork');
   await list(page).selectOption(String(added));
   await expect(card(page, added)).toBeFocused();
   await expect(card(page, added)).toHaveAttribute('data-selected', '');
   await expect(list(page)).toHaveValue('');
+  // Finding is no engagement: the list, the chip and the tab are as they were (find-keeps-marks.spec.ts).
+  await expect(chip(page)).toContainText('2 new');
+  await expect(isNew(page, added)).toHaveText('NEW');
+  await expect.poll(() => texts(page)).toEqual(['2 new', expect.stringMatching(/ · Card 3 · updated$/), `${added} · Card 4`]);
+  // The person's own click on each ends it.
+  await card(page, added).locator('.vb-node-title').click();
   await expect(chip(page)).toContainText('1 new');
-  await expect.poll(() => texts(page)).toEqual(['1 new', expect.stringMatching(/ · Card 3 · updated$/)]);
   const [n] = (await texts(page)).slice(1).map((x) => Number(x.split(' ')[0]));
   await list(page).selectOption(String(n));
   await expect(card(page, n!)).toBeFocused();
+  await card(page, n!).locator('.vb-node-title').click();
   await expect(page.locator('#fresh-cards')).toHaveCount(0);
   await expect(page.locator('vb-region[data-fresh]')).toHaveCount(0);
 });

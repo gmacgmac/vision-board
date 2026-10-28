@@ -9,13 +9,15 @@
 // away. Opening, a step and folding draw again: only that card changes, so only it is measured.
 // NEW (newCards flag, stage5-follow-ups FE_01): the card facts also say which cards the conditions
 // table finds new (`item.new`); a selection marks seen every card a condition holds for whose row's
-// `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected.
+// `clearedBy` names select (`seenOnSelect`), so a NEW card is marked seen when selected. A card
+// found, not clicked (Go to card, the finder lists), is selected by `find`: it marks nothing (ruling
+// 322, findKeepsMarks flag); the person's click on it, or an act, still does.
 import type { ViewNode } from '#format';
 import type { LedgerState, SeenMark } from '#actions';
 import { seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '#actions';
 import type { CardConditions, CardStep } from '#ui';
 import { versionTime } from '#ui';
-import type { Selection } from '../selection/index.ts';
+import type { SelectBy, Selection } from '../selection/index.ts';
 
 /** How long "You're up to date" stays before the section folds away (node-steps.css fades it first). */
 export const UP_TO_DATE_MS = 2200;
@@ -49,8 +51,9 @@ export interface UpdateFlow {
   refresh(): void;
   /** What the conditions table says about card `n`: NEW, or its updates and its stepper. */
   card(n: ViewNode): CardConditions;
-  /** Cards `ids` were selected (a click too, on one already selected): mark those unseen seen. */
-  saw(ids: readonly string[]): void;
+  /** Cards `ids` were selected (a click too, on one already selected): mark those unseen seen, unless
+   *  the person only found them (`by: 'find'`, ruling 322). */
+  saw(ids: readonly string[], by?: SelectBy): void;
   destroy(): void;
 }
 
@@ -143,7 +146,7 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
   };
   d.stage.addEventListener('click', onClick);
   d.stage.addEventListener('keydown', onKey);
-  const unlisten = d.selection.onChange((c) => flow.saw(c.changed));
+  const unlisten = d.selection.onChange((c) => flow.saw(c.changed, c.by));
 
   const flow: UpdateFlow = {
     refresh() {
@@ -164,9 +167,9 @@ export function createUpdateFlow(d: UpdateDeps): UpdateFlow {
       const source = o && d.source?.(n.n);
       return o ? { updates: { count, steps: o.steps, at: o.at, ...(source && { source }) } } : count ? { updates: { count } } : NONE;
     },
-    saw(ids) {
+    saw(ids, by = 'select') {
       const s = current();
-      if (s) send(seenMarks(s, d.board(), seenOnSelect({ fresh: fresh(), unseen: unseen() }), ids.filter((id) => d.selection.has(id))));
+      if (s) send(seenMarks(s, d.board(), seenOnSelect({ fresh: fresh(), unseen: unseen() }, by), ids.filter((id) => d.selection.has(id))));
     },
     destroy() {
       d.stage.removeEventListener('click', onClick);

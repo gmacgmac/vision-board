@@ -3,5 +3,5 @@ export { createContainerDrag } from './container-drag.ts';
 export { createMoves } from './moves.ts';
 export type { Moves } from './moves.ts';
 export { createSelection } from './selection.ts';
-export type { Selection } from './selection.ts';
+export type { SelectBy, Selection } from './selection.ts';
 export { createSelectionFlow } from './selection-flow.ts';

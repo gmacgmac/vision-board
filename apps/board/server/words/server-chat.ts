@@ -4,7 +4,6 @@
 // ---- chat-access.ts
 export const claudeCode = 'Claude Code';
 export const kiro = 'Kiro';
-export const chat = (NAMES: string, slice: string): string => `${NAMES} chat ${slice}`;
 export const thePersonStartedAChat = 'The person started a chat on this board.';
 
 // ---- chat-approvals.ts

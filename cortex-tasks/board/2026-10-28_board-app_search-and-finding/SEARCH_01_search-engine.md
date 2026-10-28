@@ -53,22 +53,56 @@ library fits without a dependency, and dependencies are high-risk here: write it
 
 ## Validation
 
-- [ ] Every behaviour in step 2 tested, seen failing first
-- [ ] `packages/search` has no dependencies and imports nothing from the repo
-- [ ] `boardSearchDocs` covers title, body, container, notes, replies
+- [x] Every behaviour in step 2 tested, seen failing first (21 of 21 against a stub; the one-letter
+      ranking test failed before its fix)
+- [x] `packages/search` has no dependencies and imports nothing from the repo
+- [x] `boardSearchDocs` covers title, body, container, notes, replies
 
 ## Implementation Notes
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-28
 
 ### Changes Made
--
+- `packages/search/src/types.ts`: the contract: `SearchDoc`, `SearchField`, `SearchHit`, `FieldHit`
+  (`name`, `field`: its place in the doc, `ranges`), `Range`, `SearchIndex`, `SearchOptions`, and the
+  index's insides `IndexedDoc`, `IndexedField`.
+- `packages/search/src/normalise.ts` (`normalise`, `queryWords`): per code point NFD, lower case,
+  marks stripped (ASCII fast path); original start and end offsets per normalised unit; a lone
+  decomposed accent extends the letter before it, so a highlight never splits "e\u0301".
+- `packages/search/src/search.ts` (`searchIndex`, `search`): AND over query words; plain `indexOf`
+  (no pattern from the query); fit whole 3, start 2, inside 1, times the field weight; a word's best
+  field in full plus 0.2 of each other field; +0.25 per further match in a field, at most 2; stable
+  sort, so ties keep doc order; ranges sorted, merged, mapped to the original text.
+- `packages/search/tests/search.test.ts` (22 tests), `search.timing.ts` (index of 1,000 docs about
+  15 ms, budget 100; 3-word queries 1.7-1.9 ms, budget 5, including a worst case of one-letter words
+  hitting 898 docs), `README.md`.
+- `packages/actions/src/search-docs.ts` (`boardSearchDocs`, `SEARCH_FIELDS`, `SearchFieldName`) and
+  its export lines in `packages/actions/src/index.ts`; `packages/actions/tests/search-docs.test.ts`
+  (4 tests on the shared `scene` ledger: fields and weights, group note on each card, removed note
+  gone, a past view's words, a moved card's container through `placedView`, an unknown card).
 
 ### Caught Beyond the Brief
-- None
+- A one-letter word (every search's first keystroke) matches word starts only, and never counts as a
+  whole word: without it "a" lit 14 of the roadmap's 17 cards with the article "a" in a body ranked
+  over titles. Word starts are indexed per field (`heads`), so the first keystroke is the cheapest.
+- "More matched words outrank fewer" under AND is read as: more of the card's words matched in a
+  field (capped, so repeating a word never lifts an inside match over a word start) and the query's
+  words in the title rather than spread over title and text. Tests name both.
+- Notes on a whole container are not on any card, so no card document carries them (a container
+  search would be its own document kind, later).
+- The full `npm test` has one failure outside this task: `apps/board/tests/api-chat-kiro.test.ts`
+  "start: Kiro joins..." expects the label "Kiro chat 00000000" and gets the folder name: ACCESS_01's
+  label change in flight (its files), not this task.
 
 ### Deviations from Plan
-- None
+- No `packages/search/package.json`: no package in this repo has one; a module is named by the root
+  `package.json` `imports` map (D-059), so "the new workspace" is one `imports` entry (REQUEST).
+- `packages/actions` imports `#search` for the `SearchDoc` type only, so its tests need no relative
+  path into `packages/search`. Until the orchestrator adds `#search` and the `LAYERS` row,
+  `npm run check` (tsc and svelte-check) and `npm run verify` fail on that one import, and verify's
+  module map is stale. Checked with the change simulated in `temp/` (deleted): tsc clean, verify's
+  per-file rules clean for every file here; without the `LAYERS` row verify fails the import, so it
+  is needed.
 
 ## On Completion
 

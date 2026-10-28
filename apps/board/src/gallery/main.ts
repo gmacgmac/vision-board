@@ -27,7 +27,7 @@ import { freshSection } from './fresh-section.ts';
 import { groupNotesSection } from './group-notes-section.ts';
 import { selectionBarSamples } from './selection-bar-section.ts';
 import { sizeSection } from './size-section.ts';
-import { accessSection } from './access-section.ts';
+import { accessByBotSection, accessSection } from './access-section.ts';
 import { wireSection } from './wire-section.ts';
 import { versionSection } from './version-section.ts';
 import { keyHelpSection } from './key-help-section.ts';
@@ -150,6 +150,7 @@ function build(): void {
   if (flagOn('openFolder', flags) && flagOn('currentFolder', flags)) main.append(currentFolderSection()); // last, so the sections above keep their place
   if (flagOn('appCards', flags)) main.append(appFitSection(fx)); // the appFit flag's entry, on or off; last, so the sections above keep their place
   main.append(...patterns.filter((p) => p.name === LAST).map((p) => section(p, fx))); // last of all, so the sections above keep their place
+  if (flagOn('agentAccess', flags) && flagOn('accessByBot', flags)) main.append(accessByBotSection()); // after everything: its height is fractional, so it must move no section
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

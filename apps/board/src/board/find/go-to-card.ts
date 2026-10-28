@@ -7,7 +7,9 @@
 // gave says "No card 99"; a retired card says it was removed and offers the version where it last
 // appeared, as the container's retired marker does (`lastShown`, ruling 4). What a number names is
 // packages/actions' `goTarget`; `createGoTo` keeps the box's state and its timer. The toolbar's open
-// list goes to a card through the same path (`to`, open-list FE_01).
+// list goes to a card through the same path (`to`, open-list FE_01), and so do the "N new" list and
+// the chat's change chips: `to` is the one finding path, and finding never marks a card seen (the
+// controller's `arrive` selects it by `find`, ruling 322, findKeepsMarks flag).
 import type { GoTarget } from '#actions';
 import * as goToCardWords from '../words/go-to-card.ts';
 
@@ -37,7 +39,8 @@ const SAYS: Record<Exclude<GoTarget['to'], 'card'>, (n: number) => string> = {
 export interface GoDeps {
   /** Card `n` on the board as drawn now (`goTarget`). */
   find(n: number): GoTarget;
-  /** Select and focus card `id`, panning only when it is off screen (ruling 3). */
+  /** Select and focus card `id`, panning only when it is off screen (ruling 3). Every go is a find:
+   *  the selection says so, and a find marks no card seen (findKeepsMarks, ruling 322). */
   arrive(id: string): void;
   /** Open board version `version`, read-only, with the answers as at line `until` (versions.ts). */
   past(version: number, until?: number): Promise<void>;

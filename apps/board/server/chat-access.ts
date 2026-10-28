@@ -1,11 +1,12 @@
 // The chat agent's board access (chat-panel PLAN ruling 8, BE_03 ruling 3): for each new session the
-// server joins the board as an agent labelled with the CLI's name and the session, and records the
+// server joins the board as an agent labelled with the folder's name, and records the
 // person's grant of the board to it (starting the session was the person's click). The secret goes
 // only to the board's MCP server (`vision-board`), in its environment (`VB_AGENT_SECRET`), so it never appears in a tool
 // call, the CLI's command line, the transcript or a chat event. Secrets are never stored: after a
 // restart the server gives the same agent a fresh one (`rekey`). Kiro gets the skill as its agent's
 // prompt instead (N34 ruling 1): the server keeps `~/.kiro/agents/vision-board.json` current at start
 // (`keepKiroAgent`), and a failure to write it stops only Kiro, saying why.
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '#agent';
 import { GATED_TOOLS, kiroAgentFile, writeKiroAgent } from '#agent';
@@ -29,8 +30,10 @@ const NAMES: Record<ChatSession['agent'], string> = { claude: serverChatWords.cl
 
 export const agentName = (agent: ChatSession['agent']): string => NAMES[agent];
 
-/** The board label of a session's agent, such as "Claude Code chat 3f1c2a9e". */
-export const chatLabel = (agent: ChatSession['agent'], session: string): string => serverChatWords.chat(NAMES[agent], session.slice(0, 8));
+/** The board label of a session's agent: the name of the folder it works in (its last part, not a
+ * path; ruling 321), so the requests strip names a bot by where it works. A folder with no name
+ * (the root) falls back to the CLI's name. */
+export const chatLabel = (agent: ChatSession['agent'], folder: string): string => path.basename(folder) || NAMES[agent];
 
 export interface Identity { agentId: string; secret: string }
 

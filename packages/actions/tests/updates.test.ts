@@ -4,8 +4,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readLedger } from '#format';
-import { foldLedger, pageConditions, seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/index.ts';
+import { CONDITION_KINDS, foldLedger, pageConditions, seenDue, seenMarks, seenOnSelect, unseenCount, unseenSteps } from '../src/index.ts';
 import { lineMaker } from '#format/testing';
+import { clearsOn } from '../src/conditions.ts';
 
 const A = 'a-aaaa1111';
 const maker = lineMaker({ v: 10, at: '2026-10-08T13' });
@@ -82,6 +83,17 @@ test('a selection sends seen for the cards whose conditions end on select (`clea
   const held = seenOnSelect(c);
   assert.deepEqual([...held].sort(), [1, 2]);
   assert.deepEqual(seenMarks(s, 'b', held, ['2', '1']), [{ n: 2, ver: 1 }, { n: 1, ver: 2 }]);
+});
+
+// Ruling 322 (findKeepsMarks): a card found, not clicked, is selected by a find; no row's clearedBy
+// names that, so it marks nothing seen. The person's own select (the default) marks both.
+test('a card selected by a find marks nothing seen; the person\'s own select marks NEW and updates', () => {
+  const c = { fresh: new Set([2]), unseen: new Set([1]) };
+  assert.deepEqual([...seenOnSelect(c, 'find')], []);
+  assert.deepEqual([...seenOnSelect(c, 'select')].sort(), [1, 2]);
+  assert.deepEqual([...seenOnSelect(c)].sort(), [1, 2], 'the person\'s select is the default');
+  for (const kind of CONDITION_KINDS) assert.equal(clearsOn(kind, 'find'), false, `${kind}: a find ends nothing`);
+  assert.deepEqual(CONDITION_KINDS.filter((k) => clearsOn(k, 'select')), ['item.new', 'item.unseen', 'container.fresh']);
 });
 
 // D-041 proposed (api.md 125): the page folds by identity and draws by board number. On a second

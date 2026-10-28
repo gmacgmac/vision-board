@@ -77,7 +77,8 @@ async function ledgerAfter(page: Page, after: number) {
 }
 
 const strip = (page: Page) => page.getByRole('region', { name: /asks? for access/ });
-const row = (page: Page, label: string) => page.locator('.vb-access-row').filter({ hasText: `${label} asks to write in` });
+// A bot's group (accessByBot, on by default): its heading names the bot, its rows hold the containers.
+const row = (page: Page, label: string) => page.locator('.vb-access-group').filter({ has: page.getByRole('heading', { level: 3, name: new RegExp(`^${label} asks for access`) }) });
 const frame = (page: Page) => page.locator(`vb-region[data-region="${REGION}"]`);
 const holderButton = (page: Page, label: string) => frame(page).getByRole('button', { name: `${label}: remove access` });
 
@@ -125,7 +126,8 @@ test('Allow removes the request and adds the holder', async ({ page, request }) 
   const a = await ask(request, 'Docs chat', 'I keep the help pages in step with the prices.');
   await openAccess(page);
   await expect(strip(page)).toBeVisible();
-  await expect(row(page, 'Docs chat')).toContainText(`Docs chat asks to write in ${CONTAINER}`);
+  await expect(row(page, 'Docs chat')).toContainText('Docs chat asks for access to 1 container');
+  await expect(row(page, 'Docs chat')).toContainText(CONTAINER);
   await expect(row(page, 'Docs chat')).toContainText('I keep the help pages in step with the prices.');
   // The creator shows as plain text with no remove control.
   await expect(frame(page).locator('.vb-holder', { hasText: CREATOR })).toBeVisible();
@@ -160,7 +162,8 @@ test('a request for the whole board: Allow lists the agent under Agents, and Rem
   expect(asked.status(), await asked.text()).toBe(201);
   const before = await head(page);
   await openAccess(page);
-  const ask = page.locator('.vb-access-row').filter({ hasText: 'Roadmap chat wants to draw on this board' });
+  const ask = row(page, 'Roadmap chat');
+  await expect(ask).toContainText('Roadmap chat asks for access to draw on this board');
   await expect(ask).toContainText('I add the roadmap items.');
   await ask.getByRole('button', { name: 'Allow Roadmap chat to draw on this board' }).click();
   await expect(ask).toHaveCount(0);
@@ -195,10 +198,10 @@ test('gallery: three requests (one for the board) with one refusing note open, t
   await page.goto('/gallery.html');
   const s = section(page);
   await expect(s.locator('.vb-access-row')).toHaveCount(3);
-  await expect(s.getByRole('region', { name: '3 agents ask for access' })).toBeVisible();
+  await expect(s.getByRole('region', { name: '2 agents ask for access' })).toBeVisible();
   await expect(s.locator('.vb-access-note')).toHaveCount(1);
   await expect(s.getByLabel('Note for Launch plan chat (optional)')).toBeVisible();
-  await expect(s.locator('.vb-access-row').nth(2)).toContainText('Support chat wants to draw on this board');
+  await expect(s.locator('.vb-access-group').first()).toContainText('Support chat asks for access to this board and 1 container');
   await expect(s.getByRole('button', { name: 'Allow Support chat to draw on this board' })).toBeVisible();
   const agents = s.locator('.vb-agents');
   await expect(agents.locator('.vb-agents-row')).toHaveText([/Pricing chat\s*made this board/, /Docs chat\s*Remove access/]);
@@ -380,7 +383,7 @@ test('a request that arrives while the page is open shows in the strip and is an
   await expect(page.locator('.vb-access')).toHaveCount(0);
   const a = await ask(request, 'Late chat');
   await expect(row(page, 'Late chat')).toBeVisible();
-  await expect(page.locator('#board-request-0-announce')).toHaveText(`Late chat asks to write in ${CONTAINER}`);
+  await expect(page.locator('#board-request-0-announce')).toHaveText('Late chat asks for access to 1 container');
   await grant(page, a.seq);
   await expect(page.locator('.vb-access')).toHaveCount(0);
 });

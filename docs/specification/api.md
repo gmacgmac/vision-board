@@ -557,7 +557,14 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 86. **What every read shows.** `get_board` adds `boardHolders` (the agents that may write on the
     board, creator first and marked `creator`; left out when none, 32), and a request for the whole
     board in `requests` has no `region`. On the page (agentAccess flag) the requests strip shows a
-    board request as "<agent> wants to draw on this board", with the same Allow and Refuse, and the
+    board request as "<agent> wants to draw on this board", with the same Allow and Refuse. With
+    the accessByBot flag (search-and-finding rulings 320, 321) the strip groups the requests by the
+    asking agent's id (`agent` on each, stamped by the server, 21): one group per bot, headed by its
+    `label` ("<label> asks for access to 3 containers", or "to draw on this board"), its rows under
+    it, and one Allow all for a bot with more than one request (one `grant` act per request, one
+    toast); the strip's heading counts bots, and two bots with one label are numbered, never shown
+    by id. A bot's label is its working folder's name: the skill tells an MCP bot to `join` with it
+    (not a path), and the side panel's chat joins as the board's folder name. The
     header's **Agents** list shows the board's holders, each but the creator with Remove access
     (confirmed, then `revoke` with no `region`). The limit of 27 stands: this runs on one machine,
     so it stops mistakes and wrong-board writes, not attackers.

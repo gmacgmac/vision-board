@@ -42,7 +42,7 @@ test('start: a session for the board; the server joins as its agent and records 
   const lines = h.ledger.events().filter((e) => e.seq > before);
   assert.deepEqual(lines.map((e) => [e.type, e.by]), [['join', 'agent'], ['grant-request', 'agent'], ['act', 'person']]);
   const agentId = lines[0]!.agent!;
-  assert.equal((lines[0] as { label?: string }).label, `Claude Code chat ${first.session.slice(0, 8)}`);
+  assert.equal((lines[0] as { label?: string }).label, path.basename(h.project));
   assert.equal((lines[2] as { action?: string }).action, 'grant');
   const board = await h.ok('get_board', { board: 'pricing' });
   assert.ok(board.boardHolders.some((x: { agent: string }) => x.agent === agentId), 'the session\'s agent holds the board');

@@ -231,7 +231,7 @@ export const FLAGS = {
   accessByBot: {
     // On by default (maintainer, 2026-10-28, points 320 and 321; search-and-finding ACCESS_01).
     default: true,
-    description: 'The access requests strip groups the requests by bot (the agent id the server stamps on each), named by its label, with each container\'s row and one Allow all for that bot; the heading counts bots. Off, one row per request under a count of requests.',
+    description: 'The access requests strip groups the requests by bot (the agent id the server stamps on each), named by its label, with each container\'s row and, for a bot with more than one request, one Allow all; the heading counts bots (two bots with one label are numbered). Off, one row per request under a count of requests.',
   },
   cardSearch: {
     // On by default (maintainer, 2026-10-28, points 317 and 322; tracker M7; search-and-finding SEARCH_02).

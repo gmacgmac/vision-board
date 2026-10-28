@@ -62,6 +62,7 @@ docs:
     - apps/board/README.md
     - packages/format/README.md
     - packages/actions/README.md
+    - packages/search/README.md
     - packages/layout/README.md
     - packages/ui/README.md
     - packages/tokens/README.md

@@ -217,7 +217,7 @@ export function openChats({ ledger, agents, base, adapters = DEFAULT_ADAPTERS, a
         session: started.id, ...(board !== undefined && { board }), agent, ...(model && { model }), created: new Date().toISOString(), agentId: identity.agentId,
       };
       try {
-        joinAndGrant(ledger, agents(), identity, chatLabel(agent, started.id), board);
+        joinAndGrant(ledger, agents(), identity, chatLabel(agent, cwd), board);
       } catch (err) {
         started.close?.(); // the board was locked or archived while the CLI started: none is left running
         throw err;

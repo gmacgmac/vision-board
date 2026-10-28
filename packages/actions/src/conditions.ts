@@ -35,8 +35,13 @@ export type Audience = 'person' | 'agent' | 'both';
 export type Shows = 'picker' | 'card' | 'container' | 'strip' | 'toast' | 'send';
 /** What the person does that ends a card's label: `select` the card (the page sends its `seen`), or
  * `act` on it (any act naming it but a Send, api.md 94). A Send ends no label (new-and-updated
- * Design 2). */
+ * Design 2). `select` is the person's own (a click, Space, a lasso); a card found (Go to card, a
+ * finder list, search) is selected too but is not one (`SelectedBy`, `clearsOn`, ruling 322). */
 export type ClearedBy = 'select' | 'act';
+
+/** How a card came to be selected: `select`, the person's own, or `find`, going to it to look for it
+ * (the page's go path, board/find/go-to-card.ts). Only the first can end a label (`clearsOn`). */
+export type SelectedBy = 'select' | 'find';
 
 /** One thing that needs attention, by ids only, never text. `seq` is the line it is about; `id`
  * the card's identity (a read gives its board number: numbers.ts). */
@@ -249,9 +254,13 @@ export const CONDITIONS: Rows = {
   },
 };
 
-/** Whether selecting a card ends condition `kind` on it (its row's `clearedBy`): the page sends the
- * card's `seen` for each card condition it holds, which also ends a container's (`container.fresh`). */
-export const clearsOnSelect = (kind: ConditionKind): boolean => CONDITIONS[kind].clearedBy.includes('select');
+/** Whether a selection that came about `by` ends condition `kind` on the card (its row's `clearedBy`):
+ * the page sends the card's `seen` for each card condition it holds, which also ends a container's
+ * (`container.fresh`). Only the person's own select does; a find ends nothing, whatever the row names. */
+export const clearsOn = (kind: ConditionKind, by: SelectedBy): boolean => by === 'select' && CONDITIONS[kind].clearedBy.includes('select');
+
+/** Whether the person's own select ends condition `kind` (`clearsOn`). */
+export const clearsOnSelect = (kind: ConditionKind): boolean => clearsOn(kind, 'select');
 
 /** Everything that needs attention for `ctx`, row by row in `CONDITION_KINDS` order. */
 export const conditionsOf = (s: LedgerState, ctx: ConditionContext = {}): Condition[] =>

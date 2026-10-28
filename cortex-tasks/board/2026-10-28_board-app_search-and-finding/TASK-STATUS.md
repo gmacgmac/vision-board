@@ -39,9 +39,9 @@ tracker: cortex-tasks/tracker.md#M7
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | SEARCH_01 | 1 | strong | Search engineer who has shipped find-as-you-type in editors — a person types half a word in any order and expects the card they mean first; a match they can't see the reason for, or a box that lags a keystroke, is a failure. | [The search engine and the board's documents](./SEARCH_01_search-engine.md) | Pending | port 5100 |
-| 2 | FIND_01 | 1 | standard | Interaction designer for review tools — looking is not reading: a mark the person is still working through must survive every way of finding the card, and go only when they engage with it. | [Finding never clears a card's marks](./FIND_01_finding-keeps-marks.md) | Pending | port 5200 |
-| 3 | ACCESS_01 | 1 | standard | Trust-and-safety designer for permission prompts — one decision per bot, named so the person knows who is asking; a wall of identical rows teaches people to click Allow without reading. | [Access requests grouped by bot](./ACCESS_01_requests-by-bot.md) | Pending | port 5300 |
+| 1 | SEARCH_01 | 1 | strong | Search engineer who has shipped find-as-you-type in editors — a person types half a word in any order and expects the card they mean first; a match they can't see the reason for, or a box that lags a keystroke, is a failure. | [The search engine and the board's documents](./SEARCH_01_search-engine.md) | Completed | port 5100 |
+| 2 | FIND_01 | 1 | standard | Interaction designer for review tools — looking is not reading: a mark the person is still working through must survive every way of finding the card, and go only when they engage with it. | [Finding never clears a card's marks](./FIND_01_finding-keeps-marks.md) | Completed | port 5200 |
+| 3 | ACCESS_01 | 1 | standard | Trust-and-safety designer for permission prompts — one decision per bot, named so the person knows who is asking; a wall of identical rows teaches people to click Allow without reading. | [Access requests grouped by bot](./ACCESS_01_requests-by-bot.md) | Completed | port 5300 |
 | 4 | SEARCH_02 | 2 | strong | Senior product designer for canvas tools (whiteboards, maps) — search must show where the matches are on the canvas at a glance, step through them without losing your place, and get out of the way with one key. | [The search box on the board](./SEARCH_02_search-box.md) | Pending | port 5400 |
 | 5 | REVIEW_01 | 2 | standard | — | [Review opens a list](./REVIEW_01_review-list.md) | Pending | port 5500 |
 | 6 | VERIFY_01 | 3 | strong | A person using the board for the first time on a 60-card board, with no history of these changes — wants to find "the pricing card" by typing, step through matches, review three proposals and answer two bots asking for access, without losing which cards are still new. | [Verification](./VERIFY_01_search-verification.md) | Pending | port 5600 |
@@ -58,7 +58,7 @@ tracker: cortex-tasks/tracker.md#M7
 |----------|-----------|-------------|
 | `packages/search` (`searchIndex`, `search`, `SearchDoc`, `SearchHit`): normalise, match, rank, ranges | SEARCH_01 | SEARCH_02, (later) nclite's Journal |
 | `packages/actions` `boardSearchDocs`: the board's cards as `SearchDoc`s (title, text, notes, replies, container) | SEARCH_01 | SEARCH_02 |
-| The finding go path: going to a card with `{ find: true }` selects and shows it without marking it seen (`board/find/go-to-card.ts`, the controller's `arrive`) | FIND_01 | SEARCH_02, REVIEW_01 |
+| The finding go path: `go.to(n)` (`board/find/go-to-card.ts`) ends in the controller's `arrive`, which selects with `selection.select([id], 'only', 'find')`; every go is a find, so a found card keeps its marks (`conditions.ts` `clearsOn`, `SelectedBy`) | FIND_01 | SEARCH_02, REVIEW_01 |
 | Access rows grouped by agent id (`board/access/access.ts`) | ACCESS_01 | VERIFY_01 |
 
 ---
@@ -82,6 +82,12 @@ tracker: cortex-tasks/tracker.md#M7
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| SEARCH_01-R1 | SEARCH_01 | `package.json` `#search` import; `scripts/verify.mjs` LAYERS (`search: []`, actions may import it); `npm run map` | Orchestrator | Done |
+| SEARCH_01-R2 | SEARCH_01 | `packages/actions/README.md` names `boardSearchDocs`; `cortex/REGISTRY.md` flags `packages/search/README.md` | Orchestrator | Done |
+| FIND_01-R1 | FIND_01 | `packages/actions/src/index.ts` exports `SelectedBy` | Orchestrator; `selection.ts` may drop its copy (SEARCH_02 or VERIFY_01 to note) | Done |
+| ACCESS_01-R1 | ACCESS_01 | Allow all gives one toast; `api.md` 86 updated | ACCESS_01 Run 2 | Done |
+| ACCESS_01-R2 | ACCESS_01 | Re-baseline `send-access` `agent-access-{light,dark}` (the strip regrouped); looked at | Orchestrator | Done |
+| ACCESS_01-R3 | ACCESS_01 | Files touched outside its list: `styles/access.css`, `server/chat-sessions.ts`, `server/words/server-chat.ts`, `send-access.spec.ts`, the two chat label tests | Orchestrator: accepted, no other owner | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -90,16 +96,18 @@ tracker: cortex-tasks/tracker.md#M7
 ## Implementation Notes
 
 ### SEARCH_01
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ `packages/search` (`searchIndex`, `search`; types in `src/types.ts`) and `#actions` `boardSearchDocs(state, board, view)` + `SEARCH_FIELDS` (title 3, body 2, container 1, note 1, reply 1; doc id = card number). Pass the view shown with moves applied (`placedView`). A hit's `fields[].field` is the index into the doc's `fields` (two notes stay apart); `ranges` are original-text offsets, merged. One-letter words match word starts only. Blocking until the orchestrator adds `"#search": "./packages/search/src/index.ts"` to package.json `imports` and `search: []`, `actions: ['format', 'search']` to `LAYERS` in `scripts/verify.mjs`, then `npm run map`: until then `check` and `verify` fail on `packages/actions/src/search-docs.ts`'s one type import.
 
 ### FIND_01
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Notes:_ The finding go path is `go.to(n)` (`board/find/go-to-card.ts`; Go to card's Enter, the open and "N new" lists and a chat chip all use it) -> the controller's `arrive` -> `selection.select([id], 'only', 'find')`. SEARCH_02 and REVIEW_01 call `go.to(n)`; no option to pass. `SelectBy` (`selection.ts`) rides on `SelectionChange.by`; `update-flow.ts` `saw` passes it to `seenOnSelect(c, by)`; `conditions.ts` `clearsOn(kind, by)` is the one rule (a find clears nothing). Flag `findKeepsMarks`; off = today. `fresh-cards.spec.ts` "N new" test rewritten (it asserted the old clearing). Open REQUEST: export `SelectedBy` from `packages/actions/src/index.ts` (non-blocking).
 
 ### ACCESS_01
-_Status:_ Pending  
-_Notes:_ 
+_Status:_ Completed  
+_Run 3:_ the 45 section screenshots were a fractional shift (17.39 px from my longer `agentAccess` description wrapping a line, plus the new section above the rest); description back to its old line count, `accessByBot` section moved to the end of the gallery; all later sections now move exactly 77 px. `agent-access-*` needs re-baselining at the gate.  
+_Run 2:_ Allow all gives one toast (`access-flow.ts` `answerAll`, `allowAllWords`, `App.svelte` wiring); `api.md` 86 updated. Unit, check, gen-api green; access specs pass except the two expected `agent-access-*` screenshots.  
+_Notes:_ Strip grouped by agent id (`board/access/access.ts` `groupByBot`, `groupAskWords`): heading counts bots, one Allow all per bot with 2+ requests (one `grant` each, no confirm: Allow has none), same-label bots numbered "(1)", "(2)". Side panel chat joins as the folder's name (`chat-access.ts` `chatLabel(agent, folder)`), skill v3.16 + NOTES. Gallery: new section `accessByBot`. Beyond the file list: `styles/access.css`, `server/chat-sessions.ts` (call site), `server/words/server-chat.ts` (dead `chat` removed), `tests/pages/send-access.spec.ts` (strip locators), `api-chat-sessions`/`api-chat-kiro` tests (label), `flags.ts` description. Existing `agent-access-*` and gallery full-page baselines now differ (regrouped strip, new section): orchestrator's. Unit/check/gen-api green; `verify` fails only on `modules.md` (npm run map, the other tasks' `packages/search`).
 
 ### SEARCH_02
 _Status:_ Pending  
@@ -119,7 +127,7 @@ _Notes:_
 
 | Wave | Tasks | Commit · tag | Gate |
 |------|-------|--------------|------|
-| 1 | SEARCH_01, FIND_01, ACCESS_01 | — | — |
+| 1 | SEARCH_01, FIND_01, ACCESS_01 (Runs 1–3) | `search/wave-1` | Green 2026-10-28: unit pass, check 0 errors, verify ok, gen-api current; full page suite 712 passed, 1 timed out (perf.spec selecting 50, at load 8–13); perf.spec alone, twice: 20 passed. A first run failed 45 gallery screenshots by 1 px (ACCESS_01's longer description shifted every section below by a fraction); fixed at the source in Run 3 |
 | 2 | SEARCH_02, REVIEW_01 | — | — |
 | 3 | VERIFY_01 | — | — |
 
