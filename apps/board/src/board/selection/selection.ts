@@ -5,6 +5,7 @@
 // cards) and the words the live region announces (ruling 9). `keep` drops ids that left the board,
 // so the selection survives a redraw. No DOM: it is unit-tested under plain Node.
 
+import type { SelectedBy } from '#actions';
 import * as cardsWords from '../words/cards.ts';
 
 /** `only`: these alone. `add`, `remove`: one way. `toggle`: each id flips. */
@@ -12,8 +13,8 @@ export type SelectMode = 'only' | 'add' | 'remove' | 'toggle';
 
 /** How the selection came about: `select`, the person's own (a click, Space, a lasso), or `find`, going
  *  to a card to look for it (find/go-to-card.ts). Finding is no engagement, so it marks nothing seen
- *  (ruling 322; `SelectedBy` in packages/actions' conditions.ts says the same). */
-export type SelectBy = 'select' | 'find';
+ *  (ruling 322; its one home is `SelectedBy` in packages/actions' conditions.ts). */
+export type SelectBy = SelectedBy;
 
 export interface SelectionChange {
   /** The ids whose selected state changed. */
