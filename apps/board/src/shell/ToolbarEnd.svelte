@@ -14,6 +14,7 @@
   import SendButton from './SendButton.svelte';
   import BoardAgents from './BoardAgents.svelte';
   import ButtonIcon from './ButtonIcon.svelte';
+  import ChatButton from './ChatButton.svelte';
   import ZoomLevel from './ZoomLevel.svelte';
   import ToolbarMenu from './ToolbarMenu.svelte';
   import { commandTitle, HEADER_COMMANDS, zoomTitle } from '../board/input/index.ts';
@@ -68,13 +69,11 @@
   {/if}
   {#if holders}
     <BoardAgents {holders} {onrevoke} icon={menu} />
-    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} waiting={shell.sendWaiting} unsent={shell.unsent || shell.chatAttached}
+    <SendButton {onsend} icon={menu} state={board ? undefined : 'idle'} waiting={shell.sendWaiting} queue={shell.workAlongside} unsent={shell.unsent || shell.chatAttached}
       paused={board && shell.locked ? LOCKED_PERSON : undefined} />
   {/if}
   {#if chat}
-    <button type="button" class="vb-btn vb-btn-iconic" id={board ? 'chat-toggle' : undefined}
-      title={menu ? toolbarWords.openOrCloseTheChat : 'Chat · T'} aria-keyshortcuts="t" aria-expanded={shell.chatOpen}
-      aria-controls={board ? 'chat' : undefined} onclick={() => { shell.chatOpen = !shell.chatOpen; }}><ButtonIcon name="chat" /><span class="vb-btn-text">{toolbarWords.chat}</span></button>
+    <ChatButton {menu} {placement} />
   {/if}
   {#if menu}<ToolbarMenu {theme} {ontheme} {onhide} {onarchive} {onlock} {placement} open={menuOpen} />{/if}
 </div>

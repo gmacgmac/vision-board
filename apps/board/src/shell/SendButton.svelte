@@ -2,7 +2,8 @@
      accent button with every state of rule 4: idle, hover, focus, pressed (CSS), sending
      (aria-disabled with a spinner, so keyboard focus stays on it), sent (a brief "Sent"), and
      error (the problem's detail is in the error toast and the button's title), waiting (`waiting`:
-     sent while the chat's agent was mid-turn, the answers go when its turn ends; then "Sent"), and
+     sent while the chat's agent was mid-turn, the answers go when its turn ends; then "Sent"; with
+     `queue`, the workAlongside flag, it reads "Queued" and says the person's answers meanwhile go too), and
      disabled (`unsent` false: nothing answered since the last Send, conditions `board.unsent`; quiet,
      aria-disabled and still focusable, its title "Nothing new to send" the reason; `paused`, why it
      can't send at all, such as a locked board's "Locked: unlock to change it", shows the same way).
@@ -14,7 +15,7 @@
   import type { SendState } from './shell.svelte.ts';
   import ButtonIcon from './ButtonIcon.svelte';
 
-  let { onsend, state: forced, look, icon = false, waiting = false, unsent = true, paused }: {
+  let { onsend, state: forced, look, icon = false, waiting = false, queue = false, unsent = true, paused }: {
     /** Sends the act; resolves to null when it was recorded, else the problem's detail. */
     onsend?: () => Promise<string | null>;
     /** The person answered since the board's last Send (shell `unsent`); false, there is nothing to send. */
@@ -23,6 +24,8 @@
     paused?: string | undefined;
     /** The answers wait for the chat's agent to finish its turn (shell `sendWaiting`). */
     waiting?: boolean;
+    /** The workAlongside flag: waiting reads "Queued", the person keeps working and what they answer meanwhile goes with it. */
+    queue?: boolean;
     state?: SendState;
     look?: 'hover' | 'focus' | 'pressed';
     icon?: boolean;
@@ -32,7 +35,8 @@
     idle: shellSendWords.sendToAgent, sending: shellSendWords.sending, sent: shellSendWords.sent, error: shellSendWords.notSentTryAgain, waiting: shellSendWords.waitingForAgent,
     disabled: shellSendWords.sendToAgent,
   };
-  const WAIT_TIP = shellSendWords.yourAnswersGoToThe;
+  const label = (s: SendState) => (s === 'waiting' && queue ? shellSendWords.queued : TEXT[s]);
+  const WAIT_TIP = $derived(queue ? shellSendWords.queuedGoesToThe : shellSendWords.yourAnswersGoToThe);
   const NOTHING_TIP = shellSendWords.nothingNewToSend;
   /** How long "Sent" and the error state show before the button is idle again. */
   const HOLD = { sent: 2200, error: 6000 };
@@ -72,7 +76,7 @@
   {#if st === 'waiting'}<span class="vb-send-wait" aria-hidden="true"></span>{/if}
   {#if st === 'sent'}<span class="vb-send-mark" aria-hidden="true">✓</span>{/if}
   {#if icon && (st === 'idle' || st === 'error' || st === 'disabled')}<ButtonIcon name="send" />{/if}
-  <span class:vb-btn-text={icon}>{TEXT[st]}</span>
+  <span class:vb-btn-text={icon}>{label(st)}</span>
 </button>
 {#if !forced}
   <span class="vb-visually-hidden" role="status">{st === 'sent' ? shellSendWords.sentToTheAgent : st === 'waiting' ? WAIT_TIP : ''}</span>

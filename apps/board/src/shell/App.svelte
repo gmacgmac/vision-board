@@ -25,6 +25,8 @@
   import ChatSidebar from './ChatSidebar.svelte';
   import FolderDialog from './FolderDialog.svelte';
   import ArchivedDialog from './ArchivedDialog.svelte';
+  import Toast from './Toast.svelte';
+  import * as chatWords from './words/chat.ts';
   import { createChatBridge } from './chat-bridge.ts';
   import { createChatPanel, type ChatPanel } from './chat-panel.ts';
   import { flagOn } from '#format';
@@ -43,6 +45,14 @@
   /** The chat beside the board (chatPanel flag, chat-panel FE_02): the bridge joins its two sides. */
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const bridge = shell.chatPanel ? createChatBridge() : undefined;
+  /** Working alongside the agent (workAlongside flag, point 328): the chat button's mark and count, Send queued, a reply announced. */
+  shell.workAlongside = shell.chatPanel && flagOn('workAlongside', pageFlags());
+  const alongside = shell.workAlongside ? {
+    isOpen: () => shell.chatOpen,
+    work: (w: typeof shell.chatWork) => { shell.chatWork = w; },
+    news: (n: number) => { shell.chatNews = n; },
+    announce: (open: () => void) => toast(chatWords.theAgentReplied, 'info', { label: chatWords.openChat, run: open }),
+  } : {};
   let chat: ChatPanel | null = $state(null);
   // The chat talks about the open board, or in the folder ('') once boot found no board in it; an
   // archive or restore draws its composer again (N39 ruling 3).
@@ -50,6 +60,10 @@
     const [c, id, past] = [chat, shell.boardId || (shell.noBoards ? '' : null), !!shell.past];
     void shell.archived;
     untrack(() => c?.show(id, past));
+  });
+  // The sidebar opened: replies not seen show (chat-panel.ts `opened`).
+  $effect(() => {
+    if (shell.chatOpen) untrack(() => chat?.opened());
   });
   // The viewer's alignment (alignSetting flag, field report batch 3 ruling 4) changed in the "⋯" menu: a setting the board hears.
   $effect(() => {
@@ -69,6 +83,7 @@
       waiting: (on) => { shell.sendWaiting = on; },
       attached: (on) => { shell.chatAttached = on; },
       view: (state) => { shell.chatView = state; },
+      ...alongside,
     });
     chat = c;
     return () => { c.destroy(); chat = null; };
@@ -129,9 +144,7 @@
 {/if}
 {#if bridge}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 
-<div id="toast" class="vb-toast" role="alert" hidden={!shell.toast} data-tone={shell.toast?.tone}>
-  {shell.toast?.text ?? ''}
-</div>
+<Toast />
 
 <ConfirmDialog />
 <BoardDialog onsave={(action, fields) => board?.boardEdit.save(action, fields) ?? Promise.resolve(shellBoardWords.theBoardIsNotReady)} />

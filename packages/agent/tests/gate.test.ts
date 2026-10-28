@@ -7,7 +7,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { ApprovalOutcome, Facts } from '../src/index.ts';
-import { GATE_BIN, GATE_TOKEN_ENV, GATE_URL_ENV, PREVIEW_MAX, RELEASED_REFUSAL, UNREACHABLE, askOverHttp, decide, factsFor, gateSettings } from '../src/index.ts';
+import { GATE_BIN, GATE_TOKEN_ENV, GATE_URL_ENV, GATE_WAIT_MS, PREVIEW_MAX, RELEASED_REFUSAL, UNREACHABLE, askOverHttp, decide, factsFor, gateSettings, runGate } from '../src/index.ts';
+import { GATE_WAIT_ENV, gateWaitFrom } from '../src/gate.ts';
 
 const hook = (tool_name: string, tool_input: Record<string, unknown>) => ({ hook_event_name: 'PreToolUse', tool_name, tool_input, cwd: '/home/someone/project' });
 const none = () => false;
@@ -126,4 +127,21 @@ test('the hook command blocks (exit 2) when the gate cannot even start', () => {
   const command = JSON.parse(gateSettings(process.execPath, '/no/such/gate.ts')).hooks.PreToolUse[0].hooks[0].command;
   const r = spawnSync('/bin/sh', ['-c', command], { input: WRITE, encoding: 'utf8' });
   assert.equal(r.status, 2);
+});
+
+test('the gate waits as long as AGENT_GATE_WAIT_MS says, and a bad value keeps its own limit', async () => {
+  const sockets = new Set<import('node:net').Socket>();
+  const silent = http.createServer(() => { /* the person has not answered */ });
+  silent.on('connection', (c) => { sockets.add(c); });
+  await new Promise<void>((resolve) => silent.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(silent.address() as AddressInfo).port}/api/run/approvals`;
+  try {
+    const started = Date.now();
+    const out = await runGate(JSON.stringify(hook('Bash', { command: 'ls' })), { [GATE_URL_ENV]: url, [GATE_TOKEN_ENV]: 'run-token', [GATE_WAIT_ENV]: '200' }, none);
+    assert.deepEqual([out.hookSpecificOutput.permissionDecision, out.hookSpecificOutput.permissionDecisionReason], ['deny', UNREACHABLE]);
+    assert.ok(Date.now() - started < 5_000, 'gave up after its 200 ms');
+  } finally { for (const c of sockets) c.destroy(); silent.close(); }
+  assert.equal(gateWaitFrom({}), GATE_WAIT_MS);
+  for (const bad of ['', 'x', '0', '-5', 'Infinity', '9999999999']) assert.equal(gateWaitFrom({ [GATE_WAIT_ENV]: bad }), GATE_WAIT_MS, bad);
+  assert.equal(gateWaitFrom({ [GATE_WAIT_ENV]: '86385000' }), 86_385_000);
 });

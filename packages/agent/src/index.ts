@@ -21,3 +21,9 @@ export { KIRO_AGENT, KIRO_AGENT_DRAFT, KIRO_DEFAULT_MODEL, KIRO_EFFORT, kiroAgen
 export { KiroTurn } from './kiro-turn.ts';
 export { outcome, pickOption, readRequest, verdictFor } from './kiro-permission.ts';
 export type { PermissionRequest, Verdict } from './kiro-permission.ts';
+export { ACCESS_RULES, OUTSIDE_RULE, accessFor, refusedTail } from './access-rules.ts';
+export type { AccessOp, AccessRule, AccessVerdict } from './access-rules.ts';
+export { NODE_READER, policy, resolveIn } from './policy.ts';
+export type { AskScope, Decision, PathReader, PathStat, PolicyFacts, PolicyOptions, ReadFacts, ResolvedPath } from './policy.ts';
+export { commandHead, readOnlyCommand, shellWords } from './readonly-command.ts';
+export type { ReadOnly, ShellWord, ShellWords } from './readonly-command.ts';

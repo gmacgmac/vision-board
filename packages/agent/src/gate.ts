@@ -10,10 +10,22 @@ import { factsFor, refusalFor } from './approvals.ts';
 /** The environment the gate reads its route and token from (set by the adapter on the CLI). */
 export const GATE_URL_ENV = 'AGENT_GATE_URL';
 export const GATE_TOKEN_ENV = 'AGENT_GATE_TOKEN';
+/** How long the gate may wait, in milliseconds, when it is not the default (set with `approvalHold`). */
+export const GATE_WAIT_ENV = 'AGENT_GATE_WAIT_MS';
 /** The CLI's own limit on the hook, in seconds; past it the CLI would go on without an answer. */
 export const HOOK_TIMEOUT_S = 600;
-/** The gate gives up (denies) before the CLI's limit, so the CLI never decides for it. */
-export const GATE_WAIT_MS = (HOOK_TIMEOUT_S - 15) * 1000;
+/** With `approvalHold`: a question waits for the person, so the hook may wait a day (PLAN ruling 335). */
+export const HELD_HOOK_TIMEOUT_S = 86_400;
+/** How much sooner than the CLI's limit the gate gives up (denies), so the CLI never decides for it. */
+const GATE_MARGIN_S = 15;
+/** The gate's wait, from the hook limit it runs under. */
+export const gateWaitMs = (hold = false): number => ((hold ? HELD_HOOK_TIMEOUT_S : HOOK_TIMEOUT_S) - GATE_MARGIN_S) * 1000;
+export const GATE_WAIT_MS = gateWaitMs();
+/** The gate's wait as its environment sets it: a whole number of milliseconds a timer can hold, else the default. */
+export function gateWaitFrom(env: NodeJS.ProcessEnv): number {
+  const ms = Number(env[GATE_WAIT_ENV]);
+  return Number.isInteger(ms) && ms > 0 && ms < 2 ** 31 ? ms : GATE_WAIT_MS;
+}
 
 export const UNREACHABLE =
   'Not done: the approval could not be asked (the board did not answer), so this was refused. Tell the person; do not work around it.';
@@ -87,5 +99,5 @@ export async function runGate(stdin: string, env: NodeJS.ProcessEnv, exists: (pa
   const url = env[GATE_URL_ENV];
   const token = env[GATE_TOKEN_ENV];
   if (!url || !token) return decision(false, UNREACHABLE);
-  return decide(stdin, askOverHttp(url, token), exists);
+  return decide(stdin, askOverHttp(url, token, gateWaitFrom(env)), exists);
 }

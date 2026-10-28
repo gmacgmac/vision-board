@@ -73,6 +73,26 @@ uses it: `docs/specification/chat.md`.
   denial: an unreachable host, a bad answer, a tool it doesn't know, a gate that can't start (the
   hook command ends `|| exit 2`). Board tools are not gated. Risks and paths for a command are left
   empty for now (nclite's `command-approval.ts` patterns could fill them).
+- **Access rules** (`src/access-rules.ts`, `src/policy.ts`, `src/readonly-command.ts`; agent-access PLAN,
+  maintainer points 329, 331, 334): `policy(facts, folder, { reader?, strict? })` decides one tool call
+  (`WriteFacts`, `CommandFacts`, or `ReadFacts` with `recursive` for a search) as `{ allow: true }`,
+  `{ ask: true, scopes }` or `{ refuse: why }`. The path is resolved first (`resolveIn`): absolute, `..` on
+  the real folders, symlinks followed (a dangling one by where it would create), the name as the disk
+  spells it (`realpath.native`), a file not made yet by its nearest existing folder. Then `ACCESS_RULES`,
+  one table relative to the folder, decides: the most specific row wins (a row naming a file beats one
+  naming a folder's contents, then more named parts, then the order written), matched as written and
+  ignoring case, the stricter kept. Outside the folder is asked `once` or `session` only; inside, `folder`
+  is offered too; a hard-linked file is asked `once`; `strict` (the `agentAccessRules` flag off) allows
+  nothing unasked. A search is allowed only when nothing under the folder is refused. A command is
+  read-only (`readOnlyCommand`) when every `|`-joined part is on the allow-list with plain words
+  (`shellWords`); it is then a read of every word it names, else it is asked; any command whose words
+  name a refused path (by any trailing part, a glob, `$'...'`, a flag's joined value, `rev:path`) is
+  refused. `commandHead` gives the words a remembered yes may cover, none for a compound command. The
+  disk is read only through the injected `PathReader` (`NODE_READER` by default). Refusals are in
+  `src/words/agent-access.ts`. Tests: `tests/policy.test.ts`, `tests/policy-command.test.ts`, on a real
+  temporary folder (`tests/access-fixture.ts`). **Not covered**: a command that reads a refused file
+  without naming it (a script, `python -c`, a name built at run time, `git log -p` of a committed
+  secret) is asked, not refused; the person's yes is the guard there.
 
 ## Hosting it (here, or in nclite)
 
@@ -89,7 +109,8 @@ and its Claude harness (`container/harness-claude.ts`) is where these flags were
 - **Depends on**: nothing in this repo (its D-016 layer is empty).
 - **Used by**: `apps/board` (the chat sessions, chat-panel BE_03).
 - **Public API** (`src/index.ts`): the types above, `createClaudeAdapter`, `createKiroAdapter`, `writeKiroAgent`, `kiroAgentFile`, `KIRO_AGENT`, `KiroTurn`, `AcpConnection`, `ClaudeStream`,
-  `buildClaudeArgs`, `gateSettings`, `toChatEvent`, `factsFor`, `refusalFor`, `decide`, `runGate`.
+  `buildClaudeArgs`, `gateSettings`, `toChatEvent`, `factsFor`, `refusalFor`, `decide`, `runGate`, `policy`,
+  `resolveIn`, `ACCESS_RULES`, `accessFor`, `readOnlyCommand`, `shellWords`, `commandHead`.
 - **Tests**: `tests/` (arguments, the stream against two recorded real turns in
   `tests/fixtures/claude-*.jsonl` scrubbed of ids, paths and secrets, the adapters against fake CLIs
   that replay them (Claude's `fake-claude.ts`; Kiro's `fake-kiro.ts`, ACP), the gate end to end); `apps/board/tests/agent-events.test.ts` holds the mapped

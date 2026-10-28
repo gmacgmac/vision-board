@@ -135,13 +135,13 @@
     },
     "approvalRequest": {
       "type": "object",
-      "description": "The agent is waiting to change a file or run a command until the person allows or denies it; silence past `expiresAt` is a denial.",
-      "required": ["kind", "approvalId", "facts", "expiresAt"],
+      "description": "The agent is waiting to change a file or run a command until the person allows or denies it; silence past `expiresAt` is a denial, and with no `expiresAt` the question waits for the person with no limit (approvalHold).",
+      "required": ["kind", "approvalId", "facts"],
       "properties": {
         "kind": {"const": "approval_request", "description": "Always `approval_request`."},
         "approvalId": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/approvalId", "description": "The approval's id; the person's answer names it."},
         "facts": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/facts"},
-        "expiresAt": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When the request lapses, denied."}
+        "expiresAt": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/timestamp", "description": "When the request lapses, denied; absent, it waits until the person answers, presses Stop or sends a new message."}
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],
       "unevaluatedProperties": false
@@ -224,8 +224,8 @@
       "description": "`approved` or `denied` by the person (or by an answer kept for the session), `expired` (nobody answered in time) or `released` (a Stop or a new message ended the wait)."
     },
     "scope": {
-      "enum": ["once", "session"],
-      "description": "How long a yes holds: `once`, or for the rest of the `session` for that kind of change."
+      "enum": ["once", "session", "folder"],
+      "description": "How long a yes holds: `once`, for the rest of the `session`, or for this `folder` (remembered across sessions; inside the board's folder only). A remembered yes covers writes under that file's folder, or that command's first words, never a refused path."
     },
     "settled": {
       "description": "`approved` is true exactly when `status` is `approved`, and only a yes has a `scope`.",
@@ -240,7 +240,7 @@
       "required": ["approved"],
       "properties": {
         "approved": {"type": "boolean", "description": "True to allow it, false to deny it. Required: there is no default."},
-        "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope", "description": "How long a yes holds: `once` (the default) or for the rest of the `session`."}
+        "scope": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/scope", "description": "How long a yes holds: `once` (the default), the rest of the `session`, or this `folder`."}
       },
       "unevaluatedProperties": false
     },

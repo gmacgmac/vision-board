@@ -1,6 +1,6 @@
 // A stand-in for the `claude` CLI, so the adapter's tests never run the real one. It reads the
 // prompt from stdin, notes what it was given in FAKE_CLAUDE_NOTE (argv, prompt, the gate's
-// environment, the MCP config it was pointed at, the folder it runs in), then acts by FAKE_CLAUDE_MODE:
+// environment (route, token, wait), the MCP config it was pointed at, the folder it runs in), then acts by FAKE_CLAUDE_MODE:
 //   replay (default)  print FAKE_CLAUDE_FIXTURE's lines and exit 0
 //   new-in-use        as the CLI does for `--session-id` on a session that exists: refuse; else replay
 //   hang              print the fixture's first line, then wait (SIGTERM ends it)
@@ -19,6 +19,7 @@ if (process.env.FAKE_CLAUDE_NOTE) {
     args,
     prompt,
     gate: { url: process.env.AGENT_GATE_URL, token: process.env.AGENT_GATE_TOKEN },
+    gateWaitMs: process.env.AGENT_GATE_WAIT_MS,
     mcpConfig: JSON.parse(readFileSync(config, 'utf8')),
     pid: process.pid,
     cwd: process.cwd(),

@@ -879,7 +879,7 @@ type ChatEventApprovalRequest = {
   kind: "approval_request";
   approvalId: string;
   facts: ChatEventFacts;
-  expiresAt: string;
+  expiresAt?: string;
 } & ChatEventStamp;
 type ChatEventFacts = ChatEventWriteFacts | ChatEventCommandFacts;
 type ChatEventWriteFacts = {
@@ -899,7 +899,7 @@ type ChatEventApprovalResult = {
   approvalId: string;
   approved: boolean;
   status: ChatEventStatus;
-  scope?: "once" | "session";
+  scope?: "once" | "session" | "folder";
 } & ChatEventStamp;
 type ChatEventStatus = "approved" | "denied" | "expired" | "released";
 type ChatEventSystem = {
@@ -912,13 +912,13 @@ type ChatStopResponse = {
 };
 type ChatEventAnswer = {
   approved: boolean;
-  scope?: "once" | "session";
+  scope?: "once" | "session" | "folder";
 };
 type ChatEventOutcome = {
   approved: boolean;
   status: ChatEventStatus;
   approvalId?: string;
-  scope?: "once" | "session";
+  scope?: "once" | "session" | "folder";
   asked?: false;
 };
 type Project = {

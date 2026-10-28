@@ -25,9 +25,9 @@ test.afterAll(async () => { await srv.close(); });
 const mine = (page: Page) => log(page).locator('chat-message[data-from="person"]');
 const replies = (page: Page) => log(page).locator('chat-message[data-from="agent"]');
 
-/** Open the page (on `board`, or the folder) with the chat panel open. */
-async function open(page: Page, board = '') {
-  await page.goto(`${srv.base}/?vbwork${board ? `#${board}` : ''}`);
+/** Open the page (on `board`, or the folder; with `flags`) with the chat panel open. */
+async function open(page: Page, board = '', flags = '') {
+  await page.goto(`${srv.base}/?vbwork${flags && `&flags=${flags}`}${board ? `#${board}` : ''}`);
   if (board) await page.waitForFunction(() => (window as unknown as { __vbWork?: { work: { firstDrawMs: number | null } } }).__vbWork?.work.firstDrawMs != null);
   await page.locator('#chat-toggle').click();
   await expect(side(page)).toBeVisible();
@@ -122,8 +122,9 @@ async function stopAndHandOver(page: Page) {
   return srv.fake.run(++runs);
 }
 
+// With the workAlongside flag off, as before it: chat-alongside.spec.ts has Send queued with it on.
 test('Send to agent while it works waits, then the answers go when the turn ends', async ({ page }) => {
-  await open(page, 'scratch');
+  await open(page, 'scratch', '-workAlongside');
   try {
     await sendWhileBusy(page, { action: 'ack', n: 2, ver: 1 });
     await expect(sendButton(page)).toHaveText('Waiting for agent');

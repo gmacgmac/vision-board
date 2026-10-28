@@ -138,6 +138,15 @@ layer: its words import nothing, not even `node:`.
 | `packages/cli/src/words/globals.ts` | `globals` | The flags every command takes. |
 | `packages/cli/src/words/help.ts` | `help` | The help text. |
 
+### The agent's access rules (`packages/agent`)
+
+Only the access rules' files are scanned (`policy.ts`, `access-rules.ts`, `readonly-command.ts`); the
+rest of `packages/agent/src` stays under Not scanned yet.
+
+| File | Area | Holds |
+|---|---|---|
+| `packages/agent/src/words/agent-access.ts` | `agent-access` | What the agent is told when the access rules refuse or ask. |
+
 ## Other homes
 
 Homes that are not a words folder, each with the reason it cannot import one.

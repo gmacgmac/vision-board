@@ -7,7 +7,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { StartOptions } from '../src/index.ts';
-import { GATED_TOOLS, GATE_BIN, HOOK_TIMEOUT_S, buildClaudeArgs, gateSettings, isWrongSessionFlag, mcpConfigJson, projectSlug, transcriptExists } from '../src/index.ts';
+import { gateWaitMs } from '../src/gate.ts';
+import { GATED_TOOLS, GATE_BIN, GATE_WAIT_MS, HOOK_TIMEOUT_S, buildClaudeArgs, gateSettings, isWrongSessionFlag, mcpConfigJson, projectSlug, transcriptExists } from '../src/index.ts';
 
 const ID = '3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37';
 const START: StartOptions = {
@@ -55,6 +56,20 @@ test('the gate hook: every gated tool, anchored, the gate run by node, fail-clos
   assert.deepEqual(entry.hooks, [{ type: 'command', command: `'/usr/bin/node' --no-warnings '/pkg/bin/gate.ts' || exit 2`, timeout: HOOK_TIMEOUT_S }]);
   assert.match(JSON.parse(gateSettings()).hooks.PreToolUse[0].hooks[0].command, new RegExp(path.basename(GATE_BIN)));
   assert.match(JSON.parse(gateSettings("/it's/node", '/g')).hooks.PreToolUse[0].hooks[0].command, /^'\/it'\\''s\/node'/, 'quoted for the shell');
+});
+
+test('approvalHold: the hook waits 24 hours, the gate 15 seconds less; off, 600 s and 585 s', () => {
+  const timeout = (settings: string) => JSON.parse(settings).hooks.PreToolUse[0].hooks[0].timeout;
+  assert.equal(timeout(gateSettings()), 600);
+  assert.equal(timeout(gateSettings(undefined, undefined, false)), 600);
+  assert.equal(timeout(gateSettings(undefined, undefined, true)), 86_400);
+  assert.equal(HOOK_TIMEOUT_S, 600);
+  assert.equal(GATE_WAIT_MS, 585_000);
+  assert.equal(gateWaitMs(true), 86_385_000);
+  assert.ok(gateWaitMs(true) < 2 ** 31, 'a timer can hold it');
+  const args = (hold?: boolean) => buildClaudeArgs({ ...START, ...(hold && { approvalHold: true }) }, { id: ID, resume: false }, 'c');
+  assert.equal(timeout(args(true)[args(true).indexOf('--settings') + 1]!), 86_400, 'buildClaudeArgs follows the start option');
+  assert.equal(timeout(args()[args().indexOf('--settings') + 1]!), 600);
 });
 
 test('the MCP config file carries the servers, with their env', () => {

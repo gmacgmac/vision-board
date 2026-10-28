@@ -63,7 +63,7 @@ test('each kind refuses its own broken forms', () => {
   broken({ ...VALID.tool_activity, state: 'queued' }, 'an unknown tool state');
   broken({ ...VALID.tool_activity, board: undefined }, 'cards and head without a board');
   broken({ ...VALID.tool_activity, cards: [0] }, 'card 0');
-  broken({ ...VALID.approval_request, expiresAt: undefined }, 'a request with no time limit');
+  // A request with no `expiresAt` is valid: it waits for the person (approvalHold, agent-access-and-working HOLD_01).
   broken({ ...VALID.approval_request, facts: { ...WRITE, op: 'delete' } }, 'an unknown write op');
   broken({ ...VALID.approval_request, facts: { kind: 'egress', host: 'example.com' } }, 'egress is not asked here');
   broken({ ...VALID.approval_result, approved: false }, 'approved must agree with status');
@@ -91,10 +91,11 @@ test('approval facts follow nclite: a write (op, path, preview) or a command (co
   broken({ ...WRITE, command: 'ls' }, 'a write with a command', 'facts');
 });
 
-test('the person\'s answer is { approved, scope: once | session }; the gate\'s outcome says how it was settled', () => {
+test('the person\'s answer is { approved, scope: once | session | folder }; the gate\'s outcome says how it was settled', () => {
   valid({ approved: true }, 'answer');
   valid({ approved: false, scope: 'once' }, 'answer');
   valid({ approved: true, scope: 'session' }, 'answer');
+  valid({ approved: true, scope: 'folder' }, 'answer');
   broken({ approved: true, scope: 'always' }, 'no always', 'answer');
   broken({ scope: 'once' }, 'approved is required', 'answer');
   valid({ approved: true, status: 'approved', approvalId: 'ap-1', scope: 'session' }, 'outcome');

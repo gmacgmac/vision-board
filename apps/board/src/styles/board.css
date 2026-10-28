@@ -190,6 +190,16 @@
   background: var(--vb-ink-strong); color: var(--vb-surface-card); box-shadow: var(--vb-shadow-lift);
 }
 .vb-toast[data-tone='error'] { background: var(--vb-state-drop-fill); color: var(--vb-ink-on-fill); }
+/* A toast with an action (Toast.svelte; workAlongside flag's "The agent replied" · Open chat): the words, then
+   one button in the toast's own colours, outlined. In the gallery, in the page flow. */
+.vb-toast:has(.vb-toast-act) { display: flex; align-items: center; gap: var(--vb-space-3); padding-right: var(--vb-space-2); }
+.vb-toast-act {
+  height: var(--vb-control-target); padding: 0 var(--vb-space-3); border: 1px solid currentColor; border-radius: var(--vb-radius-sm);
+  background: transparent; color: inherit; font: var(--vb-weight-medium) var(--vb-text-sm) var(--vb-font); cursor: pointer;
+}
+.vb-toast-act:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
+.vb-toast-act:focus-visible { outline-color: currentColor; }
+.vb-toast[data-placement='gallery'] { position: static; transform: none; width: max-content; }
 
 /* Reply panel (the panel surface, #ui base/surface.css, is its look) */
 .vb-reply {

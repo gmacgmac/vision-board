@@ -242,6 +242,68 @@ test('the time limit stops a turn that runs too long, as an error', async () => 
   session.close?.();
 });
 
+/** A stand-in for the board while a question waits: tells the session to hold, answers after `ms`
+ * (yes), tells it to go on. `answered` says whether the answer was sent. */
+async function slowGate(ms: number, hold: (on: boolean) => void) {
+  const state = { answered: false, asks: 0 };
+  const server = http.createServer((req, res) => {
+    req.resume();
+    req.on('end', () => {
+      state.asks++;
+      hold(true);
+      const timer = setTimeout(() => {
+        state.answered = true;
+        hold(false);
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ approved: true, status: 'approved', scope: 'once' }));
+      }, ms);
+      res.on('close', () => clearTimeout(timer));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/run/approvals`;
+  return { state, url, close: () => { server.closeAllConnections(); server.close(); } };
+}
+
+test('questions wait: a permission request held for 2.5 times the limit does not stop the turn (hold)', async () => {
+  const { adapter } = fake('replay', { turnLimitMs: 300 });
+  let session: Awaited<ReturnType<typeof adapter.start>> | undefined;
+  const gate = await slowGate(750, (on) => session?.hold?.(on));
+  session = await adapter.start({ ...START(gate.url), approvalHold: true });
+  const updates = await collect(session.prompt('go'));
+  assert.equal(gate.state.answered, true);
+  assert.equal(updates.at(-1)?.type, 'done', kinds(updates).join(','));
+  gate.close();
+  session.close?.();
+});
+
+test('questions wait: without hold the same wait is stopped at the limit (today)', async () => {
+  const { adapter } = fake('replay', { turnLimitMs: 300 });
+  const gate = await slowGate(750, () => {});
+  const session = await adapter.start(START(gate.url));
+  const updates = await collect(session.prompt('go'));
+  assert.equal(updates.at(-1)?.type, 'error');
+  assert.match((updates.at(-1) as { message: string }).message, /did not finish within/);
+  gate.close();
+  session.close?.();
+});
+
+test('questions wait: Stop while a question waits cuts the wait; nothing is answered for the person', async () => {
+  const { adapter, sent } = fake('replay', { turnLimitMs: 300 });
+  let session: Awaited<ReturnType<typeof adapter.start>> | undefined;
+  const gate = await slowGate(60_000, (on) => session?.hold?.(on));
+  session = await adapter.start({ ...START(gate.url), approvalHold: true });
+  const turn = collect(session.prompt('go'));
+  await until(() => gate.state.asks > 0);
+  session.cancel();
+  const updates = await turn; // the wait ended at once (the fake ignores session/cancel, as a Kiro that answers late)
+  assert.equal(sent('session/cancel').length, 1);
+  assert.equal(gate.state.answered, false, 'the question was not answered for the person');
+  assert.notEqual(updates.at(-1)?.type, 'error');
+  gate.close();
+  session.close?.();
+});
+
 test('a tool server that never starts ends the turn in an error before anything is sent', async () => {
   const { adapter, sent } = fake('no-servers', { serversWaitMs: 300 });
   const session = await adapter.start(START());

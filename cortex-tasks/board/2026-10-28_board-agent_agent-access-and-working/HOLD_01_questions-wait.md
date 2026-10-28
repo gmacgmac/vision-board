@@ -38,20 +38,36 @@ flags, `VB_FLAGS`); off, today's 2 minutes and 10 minutes.
 
 ## Validation
 
-- [ ] No expiry; Stop and a new message release; only working time counts; 24 h hook; flag off = today
+- [x] No expiry; Stop and a new message release; only working time counts; 24 h hook; flag off = today (unit and adapter tests; the server flag's wiring is a REQUEST, below)
 
 ## Implementation Notes
 
-**Status**: Pending · **Completed**:
+**Status**: Completed (the flag reaches the server's chat through three files HOLD_01 does not own: REQUESTS) · **Completed**: 2026-10-28
 
 ### Changes Made
--
+- `packages/agent/src/turn-clock.ts` (new, nobody's row): `startTurnClock(limitMs, onExpire)` → `{ hold(on), stop() }`. Pauses on `hold(true)`, resumes with the time left on `hold(false)`; idempotent; dead after `stop()`. One clock for both adapters (no copy).
+- `adapter.ts`: `AgentSession.hold?(on)` (the Shared Foundation WIRE_01 uses; optional like `close?`, so other implementors and fakes still compile) and `StartOptions.approvalHold?`.
+- `claude.ts`: the turn deadline is a `TurnClock`; `ClaudeSession.hold` forwards to the running turn; with `approvalHold` the CLI's environment gets `AGENT_GATE_WAIT_MS`.
+- `kiro.ts`: same clock; `KiroSession.hold`; the permission request waits `gateWaitMs(approvalHold)`.
+- `gate.ts`: `HELD_HOOK_TIMEOUT_S` (86 400), `gateWaitMs(hold)`, `GATE_WAIT_ENV`, `gateWaitFrom(env)` (a bad value keeps 585 s); `runGate` uses it. `HOOK_TIMEOUT_S`/`GATE_WAIT_MS` unchanged.
+- `claude-args.ts`: `gateSettings(node, gate, hold)` and `buildClaudeArgs` take the hook timeout from `options.approvalHold`.
+- `chat-approvals.ts`: `createApprovals(emit, ttlMs | null, onWait)`: `null` sets no timer and leaves `expiresAt` out; `onWait(true/false)` on the first question opening and the last settling (answer, release, abort, expiry). `ApprovalDraft.expiresAt` optional.
+- `chat-session.ts`: `createLiveSession(..., { hold })`: on, `createApprovals(emit, null, w => agent.hold?.(w))`; off, as before.
+- Docs: `chat.md` § The approval's timing (new section).
+- Tests: `turn-clock.test.ts` (new), `chat-hold.test.ts` (new), additions to `chat-approvals`, `claude`, `kiro`, `claude-args`, `gate` tests; `fake-claude.ts` notes `AGENT_GATE_WAIT_MS`.
+
+### Findings
+- **Kiro's own limit on a permission request**: not established in sources. kiro.dev's ACP page lists the methods (no `session/request_permission` at all) and says nothing of a timeout; this adapter's ACP client (`acp.ts`) has none on a request the agent makes. The fake cannot show a real Kiro's limit, and no real CLI was run. So: the adapter side waits as long as the board does; a limit inside the real Kiro stays unverified (the maintainer's look will show it: a question held past a few minutes with Kiro).
+- Claude's 86 400 s hook timeout is the CLI's configured value; whether the real CLI honours that long a hook is likewise unverified here (fake only).
+- Page specs `chat.spec.ts`, `chat-panel.spec.ts` on 5200: see Verification in the return.
 
 ### Caught Beyond the Brief
-- None
+- `AbortSignal.timeout` allows up to 2^31 ms; 86 385 000 fits (tested). `gateWaitFrom` rejects bigger values.
+- In Node 24 `IncomingMessage` emits `close` after `end` (a test server cleared its answer timer on it); tests use `res.on('close')`.
+- `packages/agent/tests/kiro.test.ts` is now 318 lines (verify warns over 300; it is not a failure). Splitting would copy its helpers.
 
 ### Deviations from Plan
-- None
+- New file `turn-clock.ts` (not in File Ownership): created, no other task touches it. No export added to `index.ts` (RULES_01's lines); WIRE_01 imports nothing new from the package beyond the `hold` already on `AgentSession`.
 
 ## On Completion
 

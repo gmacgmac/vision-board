@@ -130,3 +130,49 @@ test('a CLI that cannot start, and an MCP server that did not connect, end in er
   const other = await adapter.start({ ...START, mcpServers: { ...START.mcpServers, extra: { command: 'node' } } });
   assert.deepEqual(await collect(other.prompt('hi')), [{ type: 'error', message: 'The extra tool server did not connect (status: not registered), so the turn was stopped.' }]);
 });
+
+test('questions wait: the time limit counts only the agent\'s own working time (hold)', async () => {
+  const { adapter, given } = fake(DRAW, 'hang', { turnLimitMs: 400 });
+  const session = await adapter.start(START);
+  const turn = collect(session.prompt('wait'));
+  while (given().length === 0) await new Promise((r) => setTimeout(r, 20));
+  session.hold?.(true);
+  await new Promise((r) => setTimeout(r, 1_000));
+  assert.ok(alive(given()[0].pid), 'a question waiting for 2.5 times the limit did not stop the turn');
+  session.hold?.(false);
+  const updates = await turn;
+  assert.deepEqual(updates.map((u) => u.type), ['error']);
+  assert.match((updates[0] as { message: string }).message, /did not finish within/, 'the time left after the wait still runs out');
+});
+
+test('questions wait: Stop ends a held turn at once', async () => {
+  const { adapter, given } = fake(DRAW, 'hang', { turnLimitMs: 400 });
+  const session = await adapter.start(START);
+  const turn = collect(session.prompt('wait'));
+  while (given().length === 0) await new Promise((r) => setTimeout(r, 20));
+  session.hold?.(true);
+  session.cancel();
+  assert.deepEqual(kinds(await turn), ['stopped']);
+  assert.equal(alive(given()[0].pid), false);
+});
+
+test('hold with no turn running does nothing; the next turn starts with its clock running', async () => {
+  const { adapter } = fake(DRAW, 'hang', { turnLimitMs: 300 });
+  const session = await adapter.start(START);
+  session.hold?.(true);
+  const updates = await collect(session.prompt('wait'));
+  assert.match((updates[0] as { message: string }).message, /did not finish within/);
+});
+
+test('approvalHold: the gate is told to wait as long as the hook does', async () => {
+  const on = fake(DRAW);
+  await collect((await on.adapter.start({ ...START, approvalHold: true })).prompt('hi'));
+  const hook = JSON.parse(on.given()[0].args[on.given()[0].args.indexOf('--settings') + 1]).hooks.PreToolUse[0].hooks[0];
+  assert.equal(hook.timeout, 86_400);
+  assert.equal(on.given()[0].gateWaitMs, String((86_400 - 15) * 1000));
+  const off = fake(DRAW);
+  await collect((await off.adapter.start(START)).prompt('hi'));
+  const was = JSON.parse(off.given()[0].args[off.given()[0].args.indexOf('--settings') + 1]).hooks.PreToolUse[0].hooks[0];
+  assert.equal(was.timeout, 600);
+  assert.equal(off.given()[0].gateWaitMs, undefined, 'off, the gate keeps its own 585 s');
+});

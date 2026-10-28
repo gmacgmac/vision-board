@@ -1,7 +1,8 @@
 // One running chat session (chat-panel BE_03 ruling 1, api.md 99-101): the adapter's session, the
 // events it has made since this server started (stamped here with `at`, `session` and `seq` from
 // 1; a session loaded again after a restart starts with one line saying so), who is watching, the
-// turn in progress, its approvals and its run token. One turn at a time; the adapter's updates are
+// turn in progress, its approvals (with `hold`, waiting without a limit while the agent's turn clock
+// stops) and its run token. One turn at a time; the adapter's updates are
 // forwarded as chat events (`toChatEvent`). A message posted while a turn runs (the board's Send,
 // panel-send ruling 1; the person's message with the board's answers, chat-board-context ruling 5)
 // waits, one at most, and goes when the turn ends, its text made then. The CLI's own transcript is
@@ -62,7 +63,7 @@ export const hasToken = (live: LiveSession, given: string): boolean => sameText(
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 export function createLiveSession(
-  record: StoredSession, agent: AgentSession, token: string, opts: { ttlMs?: number; resumed?: boolean; warn?: (m: string) => void } = {},
+  record: StoredSession, agent: AgentSession, token: string, opts: { ttlMs?: number; hold?: boolean; resumed?: boolean; warn?: (m: string) => void } = {},
 ): LiveSession {
   const warn = opts.warn ?? ((m: string) => console.error(m));
   const events: ChatEvent[] = [];
@@ -81,7 +82,10 @@ export function createLiveSession(
     return event;
   }
 
-  const approvals = createApprovals<ChatEvent>(emit, opts.ttlMs);
+  // approvalHold: a question waits for the person, with no limit, and the agent's turn clock stops meanwhile.
+  const approvals = opts.hold
+    ? createApprovals<ChatEvent>(emit, null, (waiting) => agent.hold?.(waiting))
+    : createApprovals<ChatEvent>(emit, opts.ttlMs);
   if (opts.resumed) emit({ kind: 'system', text: RESTARTED });
 
   async function run(prompt: string): Promise<void> {

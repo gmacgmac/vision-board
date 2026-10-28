@@ -18,6 +18,7 @@ export const PARTS = [
   { part: 'server', group: 'server', roots: ['apps/board/server', 'apps/board/server.ts', 'apps/board/bin'], words: 'apps/board/server/words' },
   { part: 'mcp', group: 'mcp', roots: ['packages/mcp/src', 'packages/mcp/bin'], words: 'packages/mcp/src/words' },
   { part: 'cli', group: 'cli', roots: ['packages/cli/src', 'packages/cli/bin'], words: 'packages/cli/src/words' },
+  { part: 'agent', group: 'agent', roots: ['packages/agent/src/policy.ts', 'packages/agent/src/access-rules.ts', 'packages/agent/src/readonly-command.ts'], words: 'packages/agent/src/words' },
 ];
 
 /** Homes that are not a words folder, each with the reason it cannot import one. */

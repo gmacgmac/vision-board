@@ -28,3 +28,28 @@
 }
 .vb-chat-state[data-state='error'] { border-left: 3px solid var(--vb-state-drop); color: var(--vb-ink); }
 .vb-chat-state > p { margin: 0; }
+
+/* The Chat button as the board's mark of the chat's agent (workAlongside flag, point 328; ChatButton.svelte):
+   after its word, a dot and "Agent working" (the dot pulses, still under reduced motion) or "Waiting for your
+   OK" (the attention dot and edge, as the chat header's status), then the count of replies not seen, on the
+   accent fill. A narrow toolbar shows the icon with the dot and the number as badges on its corners; the
+   words stay for screen readers. Tokens only. */
+/* Idle, the button is as it always was; the mark or the count lines up after the word. */
+.vb-chat-btn { position: relative; }
+.vb-chat-btn:is([data-work], :has(.vb-chat-news)) { display: inline-flex; align-items: center; gap: var(--vb-space-2); }
+.vb-chat-mark { display: inline-flex; align-items: center; gap: var(--vb-space-1); font-size: var(--vb-text-sm); color: var(--vb-ink-strong); }
+.vb-chat-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--vb-accent); }
+.vb-chat-btn[data-work='working'] .vb-chat-dot { animation: vb-chat-pulse 1.2s ease-in-out infinite; }
+.vb-chat-btn[data-work='asking'] { border-color: var(--vb-state-context); }
+.vb-chat-btn[data-work='asking'] .vb-chat-dot { background: var(--vb-state-context); }
+@keyframes vb-chat-pulse { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .vb-chat-btn .vb-chat-dot { animation: none; } }
+.vb-chat-news {
+  display: inline-block; height: 18px; padding: 0 var(--vb-space-2); border-radius: var(--vb-radius-pill); white-space: nowrap;
+  background: var(--vb-accent-fill); color: var(--vb-ink-on-fill); font: var(--vb-weight-bold) var(--vb-text-xs) / 18px var(--vb-font);
+}
+[data-narrow] :is(.vb-chat-mark-word, .vb-chat-news-word) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+[data-narrow] .vb-chat-mark { position: absolute; left: 3px; top: 3px; }
+[data-narrow] .vb-chat-news { position: absolute; right: -7px; top: -7px; height: 16px; padding: 0 5px; line-height: 16px; }

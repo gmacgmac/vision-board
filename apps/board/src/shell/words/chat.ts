@@ -33,3 +33,13 @@ export const sonnet55 = 'Sonnet 5.5';
 export const loading = 'Loading…';
 export const aPastVersionOfThe = 'A past version of the board is showing. Go back to now to send a message.';
 export const thisBoardIsArchivedSo = 'This board is archived, so its agent can\'t see it. Restore it from the board picker to chat about it.';
+
+// ---- ChatButton.svelte (workAlongside flag)
+export const agentWorking = 'Agent working';
+export const waitingForYourOk = 'Waiting for your OK';
+export const theAgentIsWaitingFor = 'The agent is waiting for your OK in the chat.';
+export const newRepliesWord = 'new';
+
+// ---- App.svelte (workAlongside flag: the toast when a reply lands out of sight)
+export const theAgentReplied = 'The agent replied';
+export const openChat = 'Open chat';

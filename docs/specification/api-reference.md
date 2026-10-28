@@ -1807,10 +1807,10 @@ Media type `application/json`.
 | `head` | integer | no | For a board write that is done: the ledger position after it. |
 | `approvalId` | string | no | The approval's id; the person's answer names it. |
 | `facts` | object | no | What the agent is about to do, as facts, never a sentence: a file write or a shell command. |
-| `expiresAt` | string | no | When the request lapses, denied. |
+| `expiresAt` | string | no | When the request lapses, denied; absent, it waits until the person answers, presses Stop or sends a new message. |
 | `approved` | boolean | no | True only when the person allowed it. |
 | `status` | `"approved"` or `"denied"` or `"expired"` or `"released"` | no | `approved` or `denied` by the person (or by an answer kept for the session), `expired` (nobody answered in time) or `released` (a Stop or a new message ended the wait). |
-| `scope` | `"once"` or `"session"` | no | How long a yes holds: `once`, or for the rest of the `session` for that kind of change. |
+| `scope` | `"once"` or `"session"` or `"folder"` | no | How long a yes holds: `once`, for the rest of the `session`, or for this `folder` (remembered across sessions; inside the board's folder only). A remembered yes covers writes under that file's folder, or that command's first words, never a refused path. |
 | `turn` | `"done"` or `"stopped"` or `"error"` | no | Present when this line ends the agent's turn: `done`, `stopped` (the person pressed Stop) or `error`. |
 
 Example:
@@ -1904,7 +1904,7 @@ Allow or deny a file change or command the agent is waiting on, `once` (the defa
 | `session` | path | string | yes | The chat session id, from start_chat or list_chats. |
 | `approval` | path | string | yes | The approval id, from its approval_request event. |
 | `approved` | body | boolean | yes | True to allow it, false to deny it. Required: there is no default. |
-| `scope` | body | `"once"` or `"session"` | no | How long a yes holds: `once` (the default) or for the rest of the `session`. |
+| `scope` | body | `"once"` or `"session"` or `"folder"` | no | How long a yes holds: `once` (the default), the rest of the `session`, or this `folder`. |
 
 Example request:
 
@@ -1938,10 +1938,10 @@ Media type `application/json`.
 | `head` | integer | no | For a board write that is done: the ledger position after it. |
 | `approvalId` | string | no | The approval's id; the person's answer names it. |
 | `facts` | object | no | What the agent is about to do, as facts, never a sentence: a file write or a shell command. |
-| `expiresAt` | string | no | When the request lapses, denied. |
+| `expiresAt` | string | no | When the request lapses, denied; absent, it waits until the person answers, presses Stop or sends a new message. |
 | `approved` | boolean | no | True only when the person allowed it. |
 | `status` | `"approved"` or `"denied"` or `"expired"` or `"released"` | no | `approved` or `denied` by the person (or by an answer kept for the session), `expired` (nobody answered in time) or `released` (a Stop or a new message ended the wait). |
-| `scope` | `"once"` or `"session"` | no | How long a yes holds: `once`, or for the rest of the `session` for that kind of change. |
+| `scope` | `"once"` or `"session"` or `"folder"` | no | How long a yes holds: `once`, for the rest of the `session`, or for this `folder` (remembered across sessions; inside the board's folder only). A remembered yes covers writes under that file's folder, or that command's first words, never a refused path. |
 | `turn` | `"done"` or `"stopped"` or `"error"` | no | Present when this line ends the agent's turn: `done`, `stopped` (the person pressed Stop) or `error`. |
 
 Example:
@@ -2076,7 +2076,7 @@ Media type `application/json`.
 | `approved` | boolean | yes | True to go on; anything else is a refusal the agent is told. |
 | `status` | `"approved"` or `"denied"` or `"expired"` or `"released"` | yes | `approved` or `denied` by the person (or by an answer kept for the session), `expired` (nobody answered in time) or `released` (a Stop or a new message ended the wait). |
 | `approvalId` | string | no | The approval the person was asked; left out when nobody was asked. |
-| `scope` | `"once"` or `"session"` | no | How long a yes holds: `once`, or for the rest of the `session` for that kind of change. |
+| `scope` | `"once"` or `"session"` or `"folder"` | no | How long a yes holds: `once`, for the rest of the `session`, or for this `folder` (remembered across sessions; inside the board's folder only). A remembered yes covers writes under that file's folder, or that command's first words, never a refused path. |
 | `asked` | `false` | no | Present, and false, only when nobody was asked: an answer kept for the session decided. |
 
 Example:

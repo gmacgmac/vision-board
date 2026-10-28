@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StartOptions } from './adapter.ts';
 import { GATED_TOOLS } from './approvals.ts';
-import { HOOK_TIMEOUT_S } from './gate.ts';
+import { HELD_HOOK_TIMEOUT_S, HOOK_TIMEOUT_S } from './gate.ts';
 
 /** The gate's executable, beside this package's source. */
 export const GATE_BIN = fileURLToPath(new URL('../bin/gate.ts', import.meta.url));
@@ -23,13 +23,13 @@ const sh = (s: string) => `'${s.replace(/'/g, `'\\''`)}'`;
 /**
  * The inline `--settings`: a PreToolUse hook on every gated tool. Inline, never a settings file the
  * agent could edit. `|| exit 2`: a gate that cannot even start blocks the tool rather than letting
- * it through (exit 2 blocks; any other failure would not).
+ * it through (exit 2 blocks; any other failure would not). `hold` (approvalHold): the hook waits 24 hours.
  */
-export function gateSettings(node = process.execPath, gate = GATE_BIN): string {
+export function gateSettings(node = process.execPath, gate = GATE_BIN, hold = false): string {
   const command = `${sh(node)} --no-warnings ${sh(gate)} || exit 2`;
   return JSON.stringify({
     hooks: {
-      PreToolUse: [{ matcher: `^(${GATED_TOOLS.join('|')})$`, hooks: [{ type: 'command', command, timeout: HOOK_TIMEOUT_S }] }],
+      PreToolUse: [{ matcher: `^(${GATED_TOOLS.join('|')})$`, hooks: [{ type: 'command', command, timeout: hold ? HELD_HOOK_TIMEOUT_S : HOOK_TIMEOUT_S }] }],
     },
   });
 }
@@ -44,7 +44,7 @@ export function mcpConfigJson(servers: StartOptions['mcpServers']): string {
  * stream-json in print mode. `--append-system-prompt-file` every turn, since `--resume` drops it.
  * `--allowedTools` is variadic, so it comes last. Never `--bare` (it would skip the person's login).
  */
-export function buildClaudeArgs(options: StartOptions, session: TurnSession, mcpConfigFile: string, settings = gateSettings()): string[] {
+export function buildClaudeArgs(options: StartOptions, session: TurnSession, mcpConfigFile: string, settings = gateSettings(undefined, undefined, options.approvalHold)): string[] {
   const args = ['-p', '--output-format', 'stream-json', '--verbose', session.resume ? '--resume' : '--session-id', session.id];
   if (options.model) args.push('--model', options.model);
   if (options.instructionsFile) args.push('--append-system-prompt-file', options.instructionsFile);

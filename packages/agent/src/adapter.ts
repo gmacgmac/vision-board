@@ -33,6 +33,10 @@ export interface StartOptions {
   /** Tools the agent may call without asking, in the CLI's spelling. Gated tools still pause. */
   allowedTools: string[];
   gate: GateConfig;
+  /** Questions wait for the person (the `approvalHold` flag): the gate waits as long as the CLI's hook
+   * allows (24 hours) and Kiro's permission request as long as the board does; left out, today's
+   * 10 minutes. The host also tells the session to `hold` its turn clock while a question waits. */
+  approvalHold?: boolean;
 }
 
 /** Token counts for one turn, as far as the CLI reports them. */
@@ -71,6 +75,10 @@ export interface AgentSession {
   prompt(text: string): AsyncIterable<AgentUpdate>;
   /** Stop the running turn, if any; its updates end with `stopped`. */
   cancel(): void;
+  /** A question for the person is waiting (`on`) or no longer is: the turn's time limit stops and goes
+   * on with the time left, so it counts only the agent's own working time. Nothing when no turn runs.
+   * The host calls it only with `approvalHold` on; a session that has no limit may leave it out. */
+  hold?(on: boolean): void;
   /** End the session's process for good, when it keeps one between turns. */
   close?(): void;
 }

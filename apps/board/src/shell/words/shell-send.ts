@@ -11,3 +11,6 @@ export const yourAnswersGoToThe = 'Your answers go to the agent when it finishes
 export const nothingNewToSend = 'Nothing new to send';
 export const tellTheAgentsYouAre = 'Tell the agents you are done: they read your answers next';
 export const sentToTheAgent = 'Sent to the agent';
+// With the workAlongside flag: what was sent while the agent works is queued, and the person keeps working.
+export const queued = 'Queued';
+export const queuedGoesToThe = 'Queued: it goes to the agent when it finishes this turn, with every answer you give until then';

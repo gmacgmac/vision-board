@@ -31,9 +31,9 @@ categories: [board-security, board-agent, board-app]
 
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
-| 1 | RULES_01 | 1 | strong | Application security engineer who has written sandbox policies — a rule that matches the path as typed rather than the file it reaches is no rule; every refusal must hold against `..`, symlinks, case and a second route to the same file. | [The access rules and the policy](./RULES_01_access-rules.md) | Pending | port 5100 |
-| 2 | HOLD_01 | 1 | standard | Reliability engineer for long-running processes — a person's slow answer is not a failure; only the agent's own runaway work should be cut, and every wait must still end cleanly on Stop. | [Questions wait for the person](./HOLD_01_questions-wait.md) | Pending | port 5200 |
-| 3 | WORK_01 | 1 | strong | Product designer for collaborative tools — while someone else is working the person must see it at a glance, never be blocked from their own work, and never miss the moment a reply arrives. | [Working alongside the agent](./WORK_01_working-alongside.md) | Pending | port 5300 |
+| 1 | RULES_01 | 1 | strong | Application security engineer who has written sandbox policies — a rule that matches the path as typed rather than the file it reaches is no rule; every refusal must hold against `..`, symlinks, case and a second route to the same file. | [The access rules and the policy](./RULES_01_access-rules.md) | Completed | port 5100 |
+| 2 | HOLD_01 | 1 | standard | Reliability engineer for long-running processes — a person's slow answer is not a failure; only the agent's own runaway work should be cut, and every wait must still end cleanly on Stop. | [Questions wait for the person](./HOLD_01_questions-wait.md) | Completed | port 5200 |
+| 3 | WORK_01 | 1 | strong | Product designer for collaborative tools — while someone else is working the person must see it at a glance, never be blocked from their own work, and never miss the moment a reply arrives. | [Working alongside the agent](./WORK_01_working-alongside.md) | Completed | port 5300 |
 | 4 | WIRE_01 | 2 | strong | Application security engineer who has written sandbox policies — the same as RULES_01's: one policy, applied before anything remembered, on every route a tool call can take. | [Every route uses the policy](./WIRE_01_wire-policy.md) | Pending | port 5400 |
 | 5 | ASK_01 | 3 | standard | — | [Allow for this folder, and forgetting it](./ASK_01_folder-scope-ui.md) | Pending | port 5500 |
 | 6 | VERIFY_01 | 4 | strong | Penetration tester given a running board and a chat with an agent they control, no history of the work — tries every way to read `.env` or the bots' secrets, write the ledger or `.git/`, keep a yes beyond its scope, or get a question to answer itself. | [Verification](./VERIFY_01_access-verification.md) | Pending | port 5600 |
@@ -65,19 +65,40 @@ categories: [board-security, board-agent, board-app]
 
 | Request | From | Need | Routed to | Status |
 |---------|------|------|-----------|--------|
+| HOLD_01-R1 | HOLD_01 | `apps/board/server/chat-sessions.ts`, `project.ts`, `app.ts`: pass `approvalHold` from `VB_FLAGS` to the live session and the adapters | WIRE_01 (ownership widened) | Open |
+| HOLD_01-R2 | HOLD_01 | Chat schema: `expiresAt` optional; regenerate | Orchestrator | Done |
+| HOLD_01-R3 | HOLD_01 | `packages/chat` events, feed, approval: `expiresAt` optional; no countdown and no "expired" without it ("Waiting for your answer") | ASK_01 | Open |
+| HOLD_01-R4 | HOLD_01 | api.md: an approval's 120 s becomes no limit with `approvalHold`; agent README: `hold`, `approvalHold`, `turn-clock.ts` | WIRE_01 | Open |
+| RULES_01-R1 | RULES_01 | Words home `packages/agent/src/words` in words-homes.mjs and words.md | Orchestrator | Done |
+| RULES_01-R2 | RULES_01 | D-066 appended with the maintainer's yes | Orchestrator (point 340) | Open |
+| RULES_01-R3 | RULES_01 | `.env.example` refused by `**/.env.*`; a nested board's secrets readable | The maintainer (points 338, 339) | Open |
+| WORK_01-R1 | WORK_01 | Server queues words alone while the agent works (`chat.ts` `sendChat`, `chat-sessions.ts` `tell`), and a refused message stops releasing waiting approvals (`busy()`); then a `ChatHost` flag that the page queues words | WIRE_01 (ownership widened) | Open |
+| ALL-R1 | all | `npm run map` | Orchestrator | Done |
+| Words alone queue while the agent works: `server/chat-sessions.ts` `tell` holds them like attached ones (joined, `QUEUED_WORDS` line, 202), and the folder branch of `server/chat.ts` `sendChat` uses `live.post`; a refused message no longer releases waiting approvals (`busy()`) | WORK_01 | non-blocking (point 328: "the person can send more") | WIRE_01 | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
 ## Implementation Notes
 
 ### RULES_01
-_Status:_ Pending
+_Status:_ Completed (2026-10-28)
+- `policy(facts, folder, { reader?, strict? })`, `resolveIn`, `ACCESS_RULES`/`accessFor`, `readOnlyCommand`,
+  `shellWords`, `commandHead` exported from `#agent`. `ReadFacts` (with `recursive` for a search) lives in
+  `policy.ts`; WIRE_01 may move it beside `WriteFacts`. `strict` = `agentAccessRules` off.
+- Apply `policy` before any remembered yes; remember a command only by `commandHead` (null: don't).
+- Beyond the brief: physical `..`, dangling links, case via `realpath.native`, hard links asked once,
+  searches (`grep -r`, `rg`, Grep) refused when anything under them is refused. D-066 drafted in the task file.
+- Orchestrator: `npm run map` (new exports); the words home `packages/agent/src/words/` to add to
+  `scripts/words-homes.mjs` `PARTS` and `docs/specification/words.md`.
 
 ### HOLD_01
-_Status:_ Pending
+_Status:_ Completed. `AgentSession.hold?(on)` (adapter.ts) is what WIRE_01 and the server call; `StartOptions.approvalHold` and `createLiveSession(..., { hold })` carry the flag. New file `packages/agent/src/turn-clock.ts` (`startTurnClock`). `createApprovals(emit, ttlMs | null, onWait)`: `null` = no expiry and no `expiresAt` on the request. Gate: `gateWaitMs(hold)`, `AGENT_GATE_WAIT_MS`, `HELD_HOOK_TIMEOUT_S`. Kiro's own limit on a permission request: not established in sources (kiro.dev ACP page silent; fake only). The flag does not yet reach the server's chat: three files outside HOLD_01 need two lines each (see Requests). Details in HOLD_01_questions-wait.md.
 
 ### WORK_01
-_Status:_ Pending
+_Status:_ Completed (2026-10-28)
+- The Chat button is the board's mark (`shell/ChatButton.svelte`: "Agent working", "Waiting for your OK", "1 new"), from `shell/chat-news.ts` (`agentWork` on the chat's conditions; `createReplyNews`, `panelNews`). Send while working reads "Queued"; a reply out of sight brings a polite toast with Open chat (`shell/Toast.svelte`, `toast(…, action)`). Gallery section last (`gallery/alongside-section.ts`); spec `tests/pages/chat-alongside.spec.ts` with two new baselines.
+- Words alone while the agent works still can't go: the server refuses them. Request to WIRE_01 (a server queue); the page follow-up is small (`ChatHost` says it queues words).
+- `npm run verify` fails only on `docs/specification/modules.md` (RULES_01's new exports): orchestrator's `npm run map`.
 
 ### WIRE_01
 _Status:_ Pending
@@ -92,7 +113,7 @@ _Status:_ Pending
 
 | Wave | Tasks | Commit · tag | Gate |
 |------|-------|--------------|------|
-| 1 | RULES_01, HOLD_01, WORK_01 | — | — |
+| 1 | RULES_01, HOLD_01, WORK_01 | `access/wave-1` | Green 2026-10-28: unit 1874, check 0 errors, verify ok, gen-api current, full page suite 746 passed (port 4710). Orchestrator: chat schema (`expiresAt` optional, `folder` scope), the agent's words home, `npm run gen`/`map`, chat-schema.test.ts to the new rule |
 | 2 | WIRE_01 | — | — |
 | 3 | ASK_01 | — | — |
 | 4 | VERIFY_01 | — | — |

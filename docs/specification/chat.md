@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-10-19
+updated: 2026-10-28
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -109,7 +109,22 @@ agent works (held; the line under the box says so). Send to agent goes through t
 (`boardSend`): with the board's session and something attached it is the composer's message with no
 words (`sendsInChat`), so the two are enabled and disabled together (`shell.chatAttached` beside
 `board.unsent`); otherwise it is the `send` act, as with no session. Held either way, the button shows
-"Waiting for agent" until the next `message_in`.
+"Waiting for agent" until the next `message_in` ("Queued" with the `workAlongside` flag, below).
+
+**Working alongside the agent** (flag `workAlongside`, point 328). While the agent works the person keeps
+working on the board, and the board shows it: the toolbar's Chat button (`shell/ChatButton.svelte`) is
+the board's one mark of the chat's agent, "Agent working" while its turn runs and "Waiting for your OK"
+while a question waits for the person (that one also said in a polite live region), read from the chat's
+own conditions table (`shell/chat-news.ts` `agentWork`). Send to agent pressed meanwhile reads "Queued"
+(`SendButton.svelte` `queue`), and the answers given until the turn ends go with it, as the server builds a
+held message when it goes (§ The pieces, 5). A reply (the `message_out` a turn ends on) that lands while
+the chat is closed or scrolled away from the latest is counted on the Chat button ("1 new") and brings a
+toast, "The agent replied" with Open chat, in a polite live region (`shell/Toast.svelte`); Open chat, or
+opening the chat, goes to the latest and clears the count, as does scrolling back to it (`createReplyNews`,
+`panelNews`). Only a reply that lands after the page began following the session counts. Words alone still
+can't go while the agent works: the server refuses them (`apps/board/server/chat-sessions.ts` `tell`), so
+the composer keeps them and says why. Held by `apps/board/tests/chat-news.test.ts` and
+`tests/pages/chat-alongside.spec.ts` (every state in the gallery, light and dark; with the flag off, as before).
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
 `shell/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
@@ -129,6 +144,30 @@ it is loading, and when the chunk does not come it says so, with Try again (`Cha
 `tests/pages/chat-lazy.spec.ts` (no chunk requested and no element defined with the panel closed; opening
 loads it once and a message goes; T; kept open; the card link; the error state and Try again; the loading
 state) and, for the budget counting only what loads at start, `scripts/verify.test.mjs` (`pageAssets`).
+
+## The approval's timing
+
+A question the agent asks (an approval) waits for the person. With the server flag `approvalHold`
+(`VB_FLAGS`, on by default; PLAN ruling 335):
+
+- **No expiry.** The question waits until the person answers, presses Stop or sends a new message
+  (the last two settle it as `released`). `createApprovals` (`apps/board/server/chat-approvals.ts`)
+  sets no timer, and the `approval_request` carries no `expiresAt`: nothing lapses, so nothing is dated.
+- **Only the agent's own working time counts.** A turn is stopped after `TURN_LIMIT_MS` (10 minutes)
+  of work, not of waiting. While a question waits the live session (`chat-session.ts`) calls the
+  adapter session's `hold(true)` and, when the last waiting question settles, `hold(false)`; the adapter's
+  turn clock (`packages/agent/src/turn-clock.ts`, `startTurnClock`) pauses and resumes with the time that was left.
+  Claude (`claude.ts`) and Kiro (`kiro.ts`) both use it. Stop still ends a held turn at once.
+- **The numbers.** Claude's hook timeout in the generated settings is `HELD_HOOK_TIMEOUT_S` (86 400 s, 24 hours,
+  `gateSettings`); the gate waits `gateWaitMs(true)` (15 seconds less), told to it by `AGENT_GATE_WAIT_MS`
+  (`gateWaitFrom`). Kiro's permission request waits as long as the board does (`askOverHttp` with the same
+  `gateWaitMs`). `StartOptions.approvalHold` carries the flag to the adapter.
+- **Off:** an unanswered question is a denial after `APPROVAL_TTL_MS` (2 minutes, `expired`, with its
+  `expiresAt`), the hook gives up at `HOOK_TIMEOUT_S` (600 s), and a turn stops after 10 minutes of wall
+  time, waiting included; `hold` is never called.
+
+Tests: `apps/board/tests/chat-approvals.test.ts`, `chat-hold.test.ts`; `packages/agent/tests/turn-clock.test.ts`,
+`claude.test.ts`, `kiro.test.ts`, `claude-args.test.ts`, `gate.test.ts`.
 
 ## Another host
 

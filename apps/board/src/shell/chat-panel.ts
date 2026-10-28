@@ -22,6 +22,8 @@
 // the panel holds, with the context the bridge gave the composer (`composerSide`).
 // The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
+// With the workAlongside flag (point 328) it tells the page what the agent is doing, for the board's mark,
+// and the replies that land while the person can't see them, with a way to them (chat-news.ts `panelNews`).
 import type {
   ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
 } from '#chat';
@@ -30,49 +32,21 @@ import {
   EMPTY_CHAT, headerView,
 } from '#chat';
 import { renderMarkdown } from '#ui';
-import type { ChatBridge } from './chat-bridge.ts';
 import type { ChatView } from './chat-view.ts';
+import type { ChatPanel, ChatPanelDeps, ChatViewLoader } from './chat-panel-types.ts';
 import type { ChatSessionInfo } from './page-io.ts';
 import { ApiError } from '../board/io.ts';
 import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
 import * as chatWords from './words/chat.ts';
+import { panelNews } from './chat-news.ts';
 
 const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
 const NEW_ASK = [chatWords.startANewSession, chatWords.theAgentStartsAgainWith, chatWords.newSession] as const;
 const listFor = (board?: string) => (board ? listChats(board) : listFolderChats());
 
-export interface ChatPanelDeps {
-  bridge: ChatBridge;
-  /** A board's title, for change chips. */
-  boardName(id: string): string;
-  /** Whether board `id` is archived: its chat takes no message (N39 ruling 3). */
-  archived?(id: string): boolean;
-  confirm(heading: string, body: string, confirm: string): Promise<boolean>;
-  toast(text: string, tone?: 'info' | 'error'): void;
-  /** Open the sidebar; resolves once it shows. */
-  open(): Promise<void>;
-  /** Whether Send is waiting for the agent's turn to end (the Send button's waiting state). */
-  waiting(on: boolean): void;
-  /** Whether Send has something to send in the chat (`sendsInChat`): it is enabled for it. */
-  attached(on: boolean): void;
-  /** The drawing's load (`load`): loading while it comes, ready once drawn, error when it did not come. */
-  view(state: 'loading' | 'ready' | 'error'): void;
-}
-
-export type ChatViewLoader = () => Promise<{ mountChatView(panel: HTMLElement): ChatView }>;
-
-export interface ChatPanel {
-  /** The open board ('' a folder with no board; null before the page knows), and whether a past version of it shows. */
-  show(board: string | null, past: boolean): void;
-  /** The board's Send (`send`, the act), waiting while the agent is mid-turn: null when recorded, else the problem. */
-  boardSend(send: () => Promise<string | null>): Promise<string | null>;
-  /** Load the drawing if it has not come yet (a no-op once it has): true once it is drawn, false when it did not come. */
-  load(): Promise<boolean>;
-  focus(): void;
-  destroy(): void;
-}
+export type { ChatPanel, ChatPanelDeps, ChatViewLoader } from './chat-panel-types.ts';
 
 /** The drawing's module, loaded on demand: the only import of chat-view.ts (and so of the element code). */
 const loadView: ChatViewLoader = () => import('./chat-view.ts');
@@ -97,6 +71,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   const st = panelState();
   let [unfollow, loads] = [() => {}, 0];
   let [waitShown, attachedShown] = [false, false];
+  const news = panelNews(d, { feed: () => view?.feed ?? null, reveal: () => d.open().then(loadDrawing), focus: () => view?.composer.focusText() });
   const inChat = () => sendsInChat(st.session, st.board, attachedNow());
   const current = (): Pick => shownPick(st.session, st.refused, st.pick);
 
@@ -104,6 +79,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     if (st.wait !== null && lastAsk(st.chat) !== st.wait) st.wait = null;
     if (waitShown !== (st.wait !== null)) d.waiting((waitShown = st.wait !== null));
     if (attachedShown !== inChat()) d.attached((attachedShown = inChat()));
+    news.show(st.chat);
     const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
     const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
@@ -126,6 +102,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
         view = made;
         view.feed.configure(feedOptions());
         view.composer.setContext(context);
+        news.drawn(view.feed);
         render();
         d.view('ready');
         return true;
@@ -146,12 +123,14 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   function use(s: ChatSessionInfo) {
     unfollow();
     Object.assign(st, { session: s, chat: EMPTY_CHAT, refused: undefined, wait: null });
+    news.follow();
     d.bridge.refresh();
     render();
     unfollow = watchChat(s.session, () => st.chat.seq, (e, first) => {
       const drew = firstBoard(st.session, e);
       st.chat = follow(st.chat, e, first);
       render();
+      news.event(e);
       if (drew) d.bridge.open(drew);
     }, () => listFor(st.session?.board));
   }
@@ -160,6 +139,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     unfollow();
     unfollow = () => {};
     Object.assign(st, { session: null, chat: EMPTY_CHAT });
+    news.follow();
     d.bridge.refresh();
   }
 
@@ -293,6 +273,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     boardSend,
     load: loadDrawing,
     focus: () => view?.composer.focusText(),
+    opened: news.opened,
     destroy() { gone = true; view = null; unfollow(); detach(); panel.replaceChildren(); },
   };
 }

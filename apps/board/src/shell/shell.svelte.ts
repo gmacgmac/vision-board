@@ -9,11 +9,14 @@ import type { ConfirmList } from '../board/host.ts';
 import { initialStatus } from '../board/status.ts';
 import type { FolderInfo } from './page-io.ts';
 import { keptAlign } from './align.ts';
+import type { AgentWork } from './chat-news.ts';
 
 export type { AccessRequestRow } from '../board/access/index.ts';
 export type { ConfirmItem, ConfirmList } from '../board/host.ts';
 
-export interface Toast { text: string; tone: 'info' | 'error'; seq: number }
+/** A toast's one action (the reply's Open, workAlongside flag): a toast with one is polite news, not an alert. */
+export interface ToastAction { label: string; run(): void }
+export interface Toast { text: string; tone: 'info' | 'error'; seq: number; action?: ToastAction }
 
 /** A confirmation the page asks for before a decision that takes something away (rule 8), or one
  * that makes several at once (Accept all): the board's `confirm` (board/host.ts), as the dialog holds it. */
@@ -55,6 +58,12 @@ export const shell = $state({
   /** The chat has something to send with Send on the open board (cards or notes attached, or the
    * answers; chat-panel.ts `sendsInChat`): Send is enabled for it too (chat-board-context ruling 4). */
   chatAttached: false,
+  /** The workAlongside flag (point 328): the chat button's mark and count, Send queued, a reply announced. */
+  workAlongside: false,
+  /** What the chat's agent is doing, as the chat button's mark shows it (chat-news.ts `agentWork`). */
+  chatWork: 'idle' as AgentWork,
+  /** Replies that landed while the person could not see them (chat-news.ts `createReplyNews`). */
+  chatNews: 0,
   /** The folder the server has open (openFolder flag, folder.ts); null until read, or with the flag off. */
   folder: null as FolderInfo | null,
   /** The folder picker is open (FolderDialog.svelte). */
@@ -64,10 +73,21 @@ export const shell = $state({
 let toastTimer = 0;
 let toastSeq = 0;
 
-export function toast(text: string, tone: Toast['tone'] = 'info'): void {
-  shell.toast = { text, tone, seq: ++toastSeq };
+/** How long a toast shows: an error longer, one with an action longer still, so there is time to take it. */
+const TOAST_MS = { info: 2200, error: 6000, action: 8000 };
+
+export function toast(text: string, tone: Toast['tone'] = 'info', action?: ToastAction): void {
+  shell.toast = { text, tone, seq: ++toastSeq, ...(action && { action }) };
   clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => { shell.toast = null; }, tone === 'error' ? 6000 : 2200);
+  toastTimer = window.setTimeout(() => { shell.toast = null; }, TOAST_MS[action ? 'action' : tone]);
+}
+
+/** Take the toast's action and close it. */
+export function takeToast(): void {
+  const action = shell.toast?.action;
+  clearTimeout(toastTimer);
+  shell.toast = null;
+  action?.run();
 }
 
 /** Opens the confirm dialog, with `list` under its words. Resolves true when confirmed, false when cancelled. */

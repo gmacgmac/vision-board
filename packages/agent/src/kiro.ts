@@ -14,7 +14,9 @@ import type { AgentAdapter, AgentSession, AgentUpdate, StartOptions } from './ad
 import type { AcpHandlers } from './acp.ts';
 import { AcpConnection, NOT_OFFERED, RpcError } from './acp.ts';
 import { refusalFor } from './approvals.ts';
-import { askOverHttp } from './gate.ts';
+import { askOverHttp, gateWaitMs } from './gate.ts';
+import type { TurnClock } from './turn-clock.ts';
+import { startTurnClock } from './turn-clock.ts';
 import { KIRO_AGENT, KIRO_DEFAULT_MODEL, KIRO_EFFORT, sessionProblem } from './kiro-agent.ts';
 import { KiroTurn } from './kiro-turn.ts';
 import { outcome, pickOption, readRequest, verdictFor } from './kiro-permission.ts';
@@ -64,6 +66,7 @@ interface Turn {
   abort: AbortController;
   cancelled: boolean;
   timedOut: boolean;
+  clock?: TurnClock;
 }
 
 const reason = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -152,7 +155,7 @@ class KiroSession implements AgentSession {
       return outcome(pickOption(req.options, false));
     }
     try {
-      const answer = await askOverHttp(this.start.gate.url, this.start.gate.token)(verdict.ask, turn.abort.signal);
+      const answer = await askOverHttp(this.start.gate.url, this.start.gate.token, gateWaitMs(this.start.approvalHold))(verdict.ask, turn.abort.signal);
       return outcome(pickOption(req.options, refusalFor(answer) === null));
     } catch {
       return outcome(pickOption(req.options, false));
@@ -177,12 +180,12 @@ class KiroSession implements AgentSession {
       mapper: new KiroTurn(this.opts.log), push: (u) => queue.push(u), abort: new AbortController(), cancelled: false, timedOut: false,
     };
     this.turn = turn;
-    const deadline = setTimeout(() => { turn.timedOut = true; this.cancel(); }, this.opts.turnLimitMs);
-    void this.run(turn, text).finally(() => { clearTimeout(deadline); queue.end(); });
+    turn.clock = startTurnClock(this.opts.turnLimitMs, () => { turn.timedOut = true; this.cancel(); });
+    void this.run(turn, text).finally(() => { turn.clock?.stop(); queue.end(); });
     try {
       yield* queue;
     } finally {
-      clearTimeout(deadline);
+      turn.clock?.stop();
       this.turn = null;
     }
   }
@@ -207,6 +210,10 @@ class KiroSession implements AgentSession {
       if (turn.cancelled) return say({ type: 'stopped' });
       say({ type: 'error', message: `Kiro could not answer: ${reason(err)}${tail ? ` ${tail.slice(-300)}` : ''}` });
     }
+  }
+
+  hold(on: boolean): void {
+    this.turn?.clock?.hold(on);
   }
 
   cancel(): void {

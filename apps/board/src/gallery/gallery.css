@@ -148,3 +148,9 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
    it under the group's words. */
 .g-keys:has(.vb-keys[data-keys-open]) { padding-top: calc(var(--vb-space-6) * 1.5); }
 .g-go { display: flex; }
+/* Working alongside the agent (alongside-section.ts): one toolbar strip per state of the Chat button, the
+   end group at its start; the toast in the page flow. */
+.g-alongside-rows { --g-label-w: 220px; display: flex; flex-direction: column; gap: var(--vb-space-2); }
+.g-alongside { flex: 1; }
+.g-alongside .vb-toolbar-end { margin-left: 0; }
+.g-alongside-toast { padding: var(--vb-space-2) 0; }

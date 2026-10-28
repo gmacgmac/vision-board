@@ -1,6 +1,7 @@
 // The Claude adapter (D-036; PLAN ruling 3): one `claude -p` process per prompt, the prompt on
 // stdin, `--session-id` the first time and `--resume` after (claude-args.ts), the person's own
-// login. Cancel is SIGTERM, then SIGKILL after KILL_GRACE_MS (nclite's); a turn has a time limit.
+// login. Cancel is SIGTERM, then SIGKILL after KILL_GRACE_MS (nclite's); a turn has a time limit that
+// counts only the agent's own working time (`hold`, turn-clock.ts).
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { rmSync, writeFileSync } from 'node:fs';
@@ -11,11 +12,12 @@ import type { AgentAdapter, AgentSession, AgentUpdate, StartOptions } from './ad
 import type { TurnSession } from './claude-args.ts';
 import { buildClaudeArgs, isWrongSessionFlag, mcpConfigJson, transcriptExists } from './claude-args.ts';
 import { ClaudeStream } from './claude-stream.ts';
-import { GATE_TOKEN_ENV, GATE_URL_ENV } from './gate.ts';
+import { GATE_TOKEN_ENV, GATE_URL_ENV, GATE_WAIT_ENV, gateWaitMs } from './gate.ts';
+import { startTurnClock } from './turn-clock.ts';
 
 /** Between SIGTERM and SIGKILL (nclite's KILL_GRACE_MS). */
 export const KILL_GRACE_MS = 3_000;
-/** How long one turn may take before it is stopped. */
+/** How long one turn may work before it is stopped (time spent waiting for the person's answer is not counted). */
 export const TURN_LIMIT_MS = 10 * 60_000;
 const SESSION_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
@@ -40,7 +42,7 @@ async function* runOnce(
   start: StartOptions,
   session: TurnSession,
   text: string,
-  turn: { kill?: () => void; cancelled: boolean },
+  turn: Turn,
   retry: { wrongFlag: boolean },
 ): AsyncGenerator<AgentUpdate> {
   const config = path.join(tmpdir(), `agent-mcp-${randomUUID()}.json`);
@@ -48,7 +50,10 @@ async function* runOnce(
   const child = spawn(opts.command.file, [...(opts.command.args ?? []), ...buildClaudeArgs(start, session, config)], {
     cwd: start.cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
-    env: { ...opts.env, [GATE_URL_ENV]: start.gate.url, [GATE_TOKEN_ENV]: start.gate.token },
+    env: {
+      ...opts.env, [GATE_URL_ENV]: start.gate.url, [GATE_TOKEN_ENV]: start.gate.token,
+      ...(start.approvalHold && { [GATE_WAIT_ENV]: String(gateWaitMs(true)) }),
+    },
   });
   const closed = new Promise<void>((resolve) => { child.once('close', () => resolve()); child.once('error', () => resolve()); });
   let spawnError = '';
@@ -68,7 +73,8 @@ async function* runOnce(
   };
   turn.kill = kill;
   if (turn.cancelled) kill();
-  const deadline = setTimeout(() => { timedOut = true; kill(); }, opts.turnLimitMs);
+  const clock = startTurnClock(opts.turnLimitMs, () => { timedOut = true; kill(); });
+  turn.hold = clock.hold;
   const stream = new ClaudeStream(Object.keys(start.mcpServers), opts.log);
   let plain = '';
   try {
@@ -82,7 +88,8 @@ async function* runOnce(
     }
     await closed;
   } finally {
-    clearTimeout(deadline);
+    clock.stop();
+    turn.hold = undefined;
     if (!killed && child.exitCode === null && child.signalCode === null) kill();
     rmSync(config, { force: true });
     turn.kill = undefined;
@@ -99,12 +106,15 @@ async function* runOnce(
 
 type Opts = Required<Omit<ClaudeAdapterOptions, 'allowApiKey'>>;
 
+/** The running turn: how to kill it, whether it was cancelled, and how to hold its clock. */
+interface Turn { kill?: () => void; hold?: (on: boolean) => void; cancelled: boolean }
+
 class ClaudeSession implements AgentSession {
   readonly id: string;
   private readonly start: StartOptions;
   private readonly opts: Opts;
   private started: boolean;
-  private turn: { kill?: () => void; cancelled: boolean } | null = null;
+  private turn: Turn | null = null;
 
   constructor(id: string, resuming: boolean, start: StartOptions, opts: Opts) {
     this.id = id;
@@ -115,7 +125,7 @@ class ClaudeSession implements AgentSession {
 
   async *prompt(text: string): AsyncGenerator<AgentUpdate> {
     if (this.turn) throw new Error('A turn is already running in this session.');
-    const turn = { cancelled: false } as { kill?: () => void; cancelled: boolean };
+    const turn: Turn = { cancelled: false };
     this.turn = turn;
     try {
       for (const resume of [this.started, !this.started]) {
@@ -130,6 +140,10 @@ class ClaudeSession implements AgentSession {
     } finally {
       this.turn = null;
     }
+  }
+
+  hold(on: boolean): void {
+    this.turn?.hold?.(on);
   }
 
   cancel(): void {
