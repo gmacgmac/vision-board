@@ -39,6 +39,7 @@ import { proposalsSection, reviewListSection } from './proposals-section.ts';
 import { updatesSection } from './updates-section.ts';
 import { chatSection } from './chat-section.ts';
 import { alongsideSection } from './alongside-section.ts';
+import { folderAccessSection } from './folder-access-section.ts';
 import { toolbarSection } from './toolbar-section.ts';
 import { folderSection } from './folder-section.ts';
 import { currentFolderSection } from './current-folder-section.ts';
@@ -156,6 +157,7 @@ function build(): void {
   if (flagOn('proposals', flags) && flagOn('reviewList', flags)) main.append(reviewListSection(fx)); // after everything, so no section moves
   if (flagOn('goToCard', flags) && flagOn('cardSearch', flags)) main.append(searchSection(fx)); // after everything, so no section moves
   if (flagOn('chatPanel', flags) && flagOn('workAlongside', flags)) main.append(alongsideSection()); // after everything, so no section moves
+  if (flagOn('chatPanel', flags) && flagOn('agentAccessRules', flags)) main.append(folderAccessSection()); // last of all, so no section moves
   document.body.append(head, main);
   drawMiniBoards(); // the layout samples measure their cards, so they draw once in the document
 }

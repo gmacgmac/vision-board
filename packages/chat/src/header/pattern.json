@@ -2,22 +2,39 @@
   "name": "chat-header",
   "title": "Chat header",
   "tag": "chat-header",
-  "description": "The session's agent and model (a picker when there is a choice) on the first line, across the width so a picker always shows its full label; under them its status from the chat conditions table, with Stop and New session on the right.",
+  "description": "The session's agent and model (a picker when there is a choice) on the first line, across the width so a picker always shows its full label; under them its status from the chat conditions table, with Stop and New session on the right. With a list of what was allowed for the folder it also draws a button under the status that opens each kept yes in words with Forget.",
   "files": {
-    "core": "header-core.ts (headerView, DEFAULT_MODEL; no DOM). The status: conditions.ts (chatStatus, canStop)",
-    "template": "header-template.ts (headerTemplate)",
+    "core": "header-core.ts (headerView, allowedLabel, DEFAULT_MODEL; no DOM). The status: conditions.ts (chatStatus, canStop)",
+    "template": "header-template.ts (headerTemplate, allowedTemplate)",
     "element": "chat-header.ts (defineChatHeader, ChatHeaderElement; light DOM)",
     "styles": "header.css (through chat.css)"
   },
-  "states": ["ready", "working", "waiting for you", "can't send", "stopped", "error", "with a picker"],
-  "attributes": { "data-status": "ready | busy | waiting | blocked | stopped | error" },
-  "methods": { "show(view)": "draws it from headerView; focus stays on the button it was on" },
+  "states": [
+    "ready",
+    "working",
+    "waiting for you",
+    "can't send",
+    "stopped",
+    "error",
+    "with a picker",
+    "allowed list closed",
+    "allowed list open",
+    "allowed list empty"
+  ],
+  "attributes": {
+    "data-status": "ready | busy | waiting | blocked | stopped | error"
+  },
+  "methods": {
+    "show(view)": "draws it from headerView; focus stays on the button it was on"
+  },
   "events": [
     "chat-stop (bubbles): Stop pressed while a turn runs",
     "chat-new-session (bubbles): the host confirms, then starts a session with no memory",
-    "chat-pick (bubbles): detail { field: 'agent' | 'model', id }, for the next session"
+    "chat-pick (bubbles): detail { field: 'agent' | 'model', id }, for the next session",
+    "chat-allowed (bubbles): the list of what was allowed opened; the host reads it again",
+    "chat-forget (bubbles): detail { id }, a kept yes chosen to forget; the host confirms, then forgets it"
   ],
   "whenToUse": "Above the feed.",
   "whenNotToUse": "The board's toolbar.",
-  "accessibility": "The status reads 'Status: Working'; its dot is decoration. Stop is disabled when there is nothing to stop. Pickers are labelled 'Agent' and 'Model'."
+  "accessibility": "The status reads 'Status: Working'; its dot is decoration. Stop is disabled when there is nothing to stop. Pickers are labelled 'Agent' and 'Model'. The list button is aria-expanded and controls a region named 'Allowed for this folder'; Esc or a press outside closes it (Esc gives focus back); each Forget is named 'Forget: <what>'."
 }

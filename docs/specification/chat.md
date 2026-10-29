@@ -122,10 +122,13 @@ held message when it goes (§ The pieces, 5). A reply (the `message_out` a turn 
 the chat is closed or scrolled away from the latest is counted on the Chat button ("1 new") and brings a
 toast, "The agent replied" with Open chat, in a polite live region (`shell/Toast.svelte`); Open chat, or
 opening the chat, goes to the latest and clears the count, as does scrolling back to it (`createReplyNews`,
-`panelNews`). Only a reply that lands after the page began following the session counts. Words alone still
-can't go while the agent works: the server refuses them (`apps/board/server/chat-sessions.ts` `tell`), so
-the composer keeps them and says why. Held by `apps/board/tests/chat-news.test.ts` and
-`tests/pages/chat-alongside.spec.ts` (every state in the gallery, light and dark; with the flag off, as before).
+`panelNews`). Only a reply that lands after the page began following the session counts. Words alone go too: the page tells
+the composer it queues them (`ChatHost.queues`, set by `shell/chat-panel.ts` `render` with the flag on), and
+the server holds them in order (`apps/board/server/chat-sessions.ts` `tell`), while the agent works and
+while a question waits (that one is then released, unanswered); the line under the box says so
+(`composerView`). With the flag off the composer keeps them and says to Stop. Held by
+`apps/board/tests/chat-news.test.ts`, `packages/chat/tests/folder-scope.test.ts` and
+`tests/pages/chat-alongside.spec.ts`, `chat-folder.spec.ts` (every state in the gallery, light and dark; with the flag off, as before).
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
 `shell/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
@@ -199,7 +202,17 @@ before anything remembered:
   inside the board's folder; an answer with another is `invalid`.
 - **For this folder**: kept in `.visionboard/permissions.json` (`chat-permissions.ts`), written by the
   server only and refused to the agent; listed by `list_permissions`, forgotten by `forget_permission`
-  (api.md 107). The page's list and the approval's third answer are the chat's (agent-access ASK_01).
+  (api.md 107).
+- **In the chat** (`agentAccessRules` on; `packages/chat`). The approval card offers the answers its request lists
+  (`approval_request.scopes`, `choicesFor`): Allow once, Allow for this session, Allow for this folder, Deny; a
+  request that lists none (an older host) offers the first two. A read shows as "File read", a search as
+  "Folder search", the path exactly. A request with no `expiresAt` (`approvalHold`) shows no countdown and never
+  lapses: it says "Waiting for your answer" (`approvalView` `timed`). The header's "Allowed for this folder"
+  (`allowedTemplate`, `allowedLabel`, under the status) lists each kept yes in words ("Write files in src/", "Run
+  npm test") with Forget (`chat-forget`); `shell/chat-allowed.ts` reads the list when the drawing comes, when the
+  list opens (`chat-allowed`) and when a yes for the folder is given, and Forget asks first (the confirm dialog),
+  then `forget_permission`, and the agent asks again. Held by `packages/chat/tests/folder-scope.test.ts` and
+  `tests/pages/chat-folder.spec.ts` (every state in the gallery, light and dark).
 - **Off** (`agentAccessRules`, `VB_FLAGS`): nothing goes ahead unasked, `folder` is never offered and
   nothing kept for the folder is used; the refusals hold either way (`strictAccess` on the adapter,
   `AGENT_GATE_STRICT` for the gate).

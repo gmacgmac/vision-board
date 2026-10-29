@@ -13,10 +13,12 @@ export type WriteOp = 'create' | 'replace' | 'edit' | 'append';
 export interface WriteFacts { kind: 'write'; op: WriteOp; path: string; preview?: string }
 /** A shell command the agent is about to run; `risks` and `paths` may be empty. */
 export interface CommandFacts { kind: 'command'; command: string; risks: string[]; paths: string[] }
-export type Facts = WriteFacts | CommandFacts;
+/** A file the agent is about to read, or with `recursive` every file under a folder (a search). */
+export interface ReadFacts { kind: 'read'; path: string; recursive?: true }
+export type Facts = WriteFacts | CommandFacts | ReadFacts;
 
 export type ApprovalStatus = 'approved' | 'denied' | 'expired' | 'released';
-export type ApprovalScope = 'once' | 'session';
+export type ApprovalScope = 'once' | 'session' | 'folder';
 /** The person's answer to an approval request (the schema's `answer`). */
 export interface ApprovalAnswer { approved: boolean; scope?: ApprovalScope }
 
@@ -28,7 +30,11 @@ export interface MessageOut extends Stamp { kind: 'message_out'; text: string; i
 export interface ToolActivity extends Stamp {
   kind: 'tool_activity'; call: string; tool: string; state: ToolState; board?: string; cards?: number[]; head?: number;
 }
-export interface ApprovalRequest extends Stamp { kind: 'approval_request'; approvalId: string; facts: Facts; expiresAt: string }
+/** `expiresAt` is left out when the question waits for the person with no limit; `scopes` are the answers a yes may
+ *  have (`once` always), left out by an older host: `once` and `session`. */
+export interface ApprovalRequest extends Stamp {
+  kind: 'approval_request'; approvalId: string; facts: Facts; expiresAt?: string; scopes?: ApprovalScope[];
+}
 export interface ApprovalResult extends Stamp {
   kind: 'approval_result'; approvalId: string; approved: boolean; status: ApprovalStatus; scope?: ApprovalScope;
 }
@@ -52,3 +58,6 @@ export const CHAT_STOP_EVENT = 'chat-stop';
 export const CHAT_NEW_SESSION_EVENT = 'chat-new-session';
 export const CHAT_PICK_EVENT = 'chat-pick';
 export const CHAT_ANSWER_EVENT = 'chat-answer';
+/** The header's list of what was allowed for the folder opened (the host refreshes it), and a yes in it chosen to forget. */
+export const CHAT_ALLOWED_EVENT = 'chat-allowed';
+export const CHAT_FORGET_EVENT = 'chat-forget';

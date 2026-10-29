@@ -4,7 +4,8 @@
 // "3 answers · 2 selected", the selected cards and the answers since the last Send; the board attaches
 // no other chips, composer-one-chip ruling 1). Send with words while the chat conditions let it; with a
 // host that holds what is attached (`ChatHost.holds`), also with something attached and no words,
-// and while the agent works. No DOM.
+// and while the agent works; with a host that queues (`ChatHost.queues`), words alone go while the
+// agent works or waits for an OK, and are queued. No DOM.
 import type { Chip } from '../events.ts';
 import type { ChatHost } from '../conditions.ts';
 import { canSend } from '../conditions.ts';
@@ -33,12 +34,20 @@ export const PREVIEW_LABEL = 'What the agent receives';
 export const COMPOSER_KEYS = 'Enter send · Shift+Enter new line';
 const WORKING = 'The agent is working. Stop it to send now.';
 const HOLDING = 'The agent is working. What is attached goes when it finishes; Stop it to send words alone.';
+const QUEUING = 'The agent is working. A message you send now is queued.';
+const HOLDING_QUEUING = 'The agent is working. What is attached goes when it finishes; words you send now are queued.';
+const ASKING_QUEUING = 'The agent is waiting for your OK. Sending a message now leaves the question unanswered.';
+
+/** The agent is at work or waiting for an OK: what a host that queues says the hint of. */
+const busy = (s: ChatState): boolean => s.busy || s.pending.length > 0;
 
 export function composerView(s: ChatState, host: ChatHost = {}, placeholder = 'Message the agent'): ComposerView {
   const send = canSend(s, host);
   if (host.blocked) return { send, shut: host.blocked, hint: '', placeholder };
   const attach = host.holds === true;
-  return { send, ...(attach && { attach }), hint: send ? COMPOSER_KEYS : attach ? HOLDING : WORKING, placeholder };
+  const hint = !host.queues || !busy(s) ? (send ? COMPOSER_KEYS : attach ? HOLDING : WORKING)
+    : s.pending.length > 0 ? ASKING_QUEUING : attach ? HOLDING_QUEUING : QUEUING;
+  return { send, ...(attach && { attach }), hint, placeholder };
 }
 
 /** What Send does: words go while the chat lets them; with `attached` (chips or the context) and a

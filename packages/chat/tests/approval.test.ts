@@ -3,14 +3,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ApprovalEntry } from '../src/index.ts';
-import { APPROVAL_CHOICES, approvalTemplate, approvalView, outcomeOf, timeLeft } from '../src/index.ts';
+import { approvalTemplate, approvalView, choicesFor, outcomeOf, timeLeft } from '../src/index.ts';
 import { COMMAND, WRITE } from './support.ts';
 
 const NOW = Date.parse('2026-10-08T09:00:08Z');
 const entry = (facts = WRITE): ApprovalEntry => ({ type: 'approval', key: 'a-ap-1', approvalId: 'ap-1', facts, expiresAt: '2026-10-08T09:02:00Z' });
 
-test('the answers: Allow once (the primary), Allow for this session, then Deny', () => {
-  assert.deepEqual(APPROVAL_CHOICES.map((c) => [c.label, c.answer]), [
+test('the answers of a request that lists no scopes: Allow once (the primary), Allow for this session, then Deny', () => {
+  assert.deepEqual(choicesFor().map((c) => [c.label, c.answer]), [
     ['Allow once', { approved: true, scope: 'once' }],
     ['Allow for this session', { approved: true, scope: 'session' }],
     ['Deny', { approved: false }],

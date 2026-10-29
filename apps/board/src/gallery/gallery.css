@@ -132,7 +132,7 @@ body { min-width: calc(var(--vb-card-w) * 5 + var(--vb-space-6) * 6); }
 /* The chat panel's states (chat-panel FE_01): each a small panel, as tall as a short sidebar, so
    the feed scrolls and the composer sits at the bottom. */
 .g-chats { display: grid; grid-template-columns: repeat(auto-fill, 380px); gap: var(--vb-space-5); }
-.g-chat-sample { margin: 0; }
+.g-chat-sample, .g-access-sample { margin: 0; }
 .g-chat { height: 500px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); overflow: hidden; }
 /* The board with the chat sidebar open (chat-panel FE_02): the ground, then the sidebar. */
 .g-chat-board { display: flex; height: 520px; max-width: 980px; border: 1px solid var(--vb-line); border-radius: var(--vb-radius-lg); overflow: hidden; }

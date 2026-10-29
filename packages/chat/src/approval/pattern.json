@@ -2,18 +2,34 @@
   "name": "chat-approval",
   "title": "Approval card",
   "tag": "chat-approval",
-  "description": "The agent waits to change a file or run a command until the person answers: the kind of change and the time left, the question, the path or command exactly, a preview, risks and paths, then Allow once, Allow for this session and Deny (nclite's ApprovalAsk). Settled, one line says how.",
+  "description": "The agent waits to read or change a file or run a command until the person answers: the kind of change and the time left (none when the request has no time limit: it says it waits for the person), the question, the path or command exactly, a preview, risks and paths, then the answers its request lists (Allow once, Allow for this session, Allow for this folder) and Deny (nclite's ApprovalAsk). Settled, one line says how.",
   "files": {
-    "core": "approval-core.ts (APPROVAL_CHOICES, approvalView, outcomeOf, timeLeft, msLeft; no DOM)",
+    "core": "approval-core.ts (APPROVAL_CHOICES, choicesFor, approvalView, outcomeOf, timeLeft, msLeft; no DOM)",
     "template": "approval-template.ts (approvalTemplate)",
     "element": "chat-approval.ts (defineChatApproval, ChatApprovalElement; light DOM)",
     "styles": "approval.css (through chat.css)"
   },
-  "states": ["open file change", "open command", "sending", "error", "allowed once", "allowed for the session", "denied", "expired", "released", "closed"],
+  "states": [
+    "open file change",
+    "open command",
+    "open read",
+    "open search",
+    "allowed for the folder offered",
+    "no time limit",
+    "sending",
+    "error",
+    "allowed once",
+    "allowed for the session",
+    "allowed for the folder",
+    "denied",
+    "expired",
+    "released",
+    "closed"
+  ],
   "attributes": {
     "role": "group, named 'Approval: <question>'",
     "data-phase": "open | settled | closed | expired",
-    "data-kind": "write | command",
+    "data-kind": "write | command | read",
     "data-answer": "idle | sending | error; aria-busy while sending"
   },
   "methods": {
@@ -21,7 +37,9 @@
     "tick(now)": "keeps the time left current; past it the card is drawn lapsed",
     "setPhase(phase, message?)": "sending ignores further clicks (answer-once); error shows why"
   },
-  "events": ["chat-answer (bubbles): detail { approvalId, answer: { approved, scope? } }, raised once"],
+  "events": [
+    "chat-answer (bubbles): detail { approvalId, answer: { approved, scope? } }, raised once"
+  ],
   "whenToUse": "Inside <chat-feed>, for an approval_request.",
   "whenNotToUse": "Board decisions (acknowledge, drop): those are the person's clicks on the cards.",
   "accessibility": "A named group; every answer is a real button with its words; Deny sits apart from the allows. The preview scrolls and takes focus."

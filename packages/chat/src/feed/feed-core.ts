@@ -12,7 +12,10 @@ export interface AgentEntry { type: 'agent'; key: string; text: string; interim:
 export interface ChangeEntry { type: 'change'; key: string; board: string; cards: readonly number[]; head?: number }
 /** How an approval was settled (the approval_result's facts). */
 export interface Settled { approved: boolean; status: ApprovalStatus; scope?: ApprovalScope }
-export interface ApprovalEntry { type: 'approval'; key: string; approvalId: string; facts: Facts; expiresAt: string; result?: Settled }
+/** `expiresAt`: when the request lapses; none, it waits for the person. `scopes`: the answers its yes may have; none, the older host's two. */
+export interface ApprovalEntry {
+  type: 'approval'; key: string; approvalId: string; facts: Facts; expiresAt?: string; scopes?: readonly ApprovalScope[]; result?: Settled;
+}
 export interface SystemEntry { type: 'system'; key: string; text: string; turn?: TurnEnd }
 export type FeedEntry = PersonEntry | AgentEntry | ChangeEntry | ApprovalEntry | SystemEntry;
 
@@ -79,7 +82,10 @@ function reduce(s: ChatState, e: ChatEvent): ChatState {
       return { ...s, last: 'text', entries: add(s, { type: 'agent', key: keyOf(e), text: e.text, interim: e.interim === true }) };
     case 'tool_activity': return tool(s, e);
     case 'approval_request': {
-      const entry: ApprovalEntry = { type: 'approval', key: `a-${e.approvalId}`, approvalId: e.approvalId, facts: e.facts, expiresAt: e.expiresAt };
+      const entry: ApprovalEntry = {
+        type: 'approval', key: `a-${e.approvalId}`, approvalId: e.approvalId, facts: e.facts,
+        ...(e.expiresAt !== undefined && { expiresAt: e.expiresAt }), ...(e.scopes && { scopes: e.scopes }),
+      };
       return { ...s, entries: add(s, entry), pending: [...s.pending, e.approvalId] };
     }
     case 'approval_result': return settle(s, e);

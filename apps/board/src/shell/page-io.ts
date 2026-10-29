@@ -91,6 +91,14 @@ export const stopChat = (session: string) => person(() => client.call('stop_chat
 export const answerApproval = (session: string, approval: string, answer: ApprovalAnswer) =>
   person(() => client.call('answer_approval', { session, approval, body: answer }));
 
+/** The yeses the person gave the agent "for this folder" (`list_permissions`, api.md 107), oldest first. */
+export type FolderPermission = OperationOutput<'list_permissions'>['permissions'][number];
+
+export const listPermissions = () => person(() => client.call('list_permissions'));
+
+/** Forget one kept yes; the ones left. `not-found` when it was already forgotten. */
+export const forgetPermission = (id: string) => person(() => client.call('forget_permission', { body: { id } }));
+
 /** How long the chat stream waits before it opens again after it dropped. */
 const CHAT_RETRY_MS = 2000;
 /** Follow a session's events (`watch_chat`, like `watch_project`): every event after `after()`, then

@@ -25,3 +25,32 @@ chat-header .chat-hd-status[data-tone='active'] .chat-hd-dot { background: var(-
 chat-header .chat-hd-status[data-tone='attention'] .chat-hd-dot { background: var(--_warn); }
 chat-header .chat-hd-status[data-tone='danger'] .chat-hd-dot { background: var(--_danger); }
 chat-header .chat-hd-acts { grid-column: 2; grid-row: 2; display: flex; gap: var(--_space-2); }
+
+/* What was allowed for the folder (only when the host keeps a list): a quiet button under the status
+   with the count, opening a list over the feed, the header's width, each yes in words with Forget. */
+chat-header { position: relative; }
+chat-header .chat-hd-allowed { grid-column: 1 / -1; position: relative; }
+chat-header .chat-hd-allow {
+  display: inline-flex; align-items: center; gap: var(--_space-1); min-height: var(--_target); margin-left: calc(-1 * var(--_space-1)); padding: 0 var(--_space-1);
+  font: var(--_medium) var(--_text-sm) / 1.2 var(--_font); color: var(--_ink); background: none; border: 0; border-radius: var(--_radius-sm); cursor: pointer;
+}
+chat-header .chat-hd-allow:hover, chat-header .chat-hd-allow[aria-expanded='true'] { color: var(--_ink-strong); background: var(--_surface-sunken); }
+chat-header .chat-hd-count {
+  min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center;
+  font: var(--_bold) var(--_text-xs) / 1 var(--_font); color: var(--_ink-on-fill); background: var(--_accent-fill); border-radius: var(--_radius-pill);
+}
+chat-header .chat-hd-mark { flex: none; color: var(--_ink); transition: transform var(--_motion); }
+chat-header .chat-hd-allow[aria-expanded='true'] .chat-hd-mark { transform: rotate(180deg); }
+chat-header .chat-hd-pop {
+  position: absolute; z-index: 2; left: 0; right: 0; top: calc(100% + var(--_space-1)); display: grid; gap: var(--_space-1);
+  max-height: min(320px, 60vh); overflow: auto; padding: var(--_space-2) var(--_space-3);
+  background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius); box-shadow: var(--_shadow);
+}
+chat-header .chat-hd-pop-h {
+  margin: 0; font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
+}
+chat-header .chat-hd-list { display: grid; gap: var(--_space-1); margin: 0; padding: 0; list-style: none; }
+chat-header .chat-hd-list li { display: flex; align-items: center; gap: var(--_space-2); }
+chat-header .chat-hd-what { flex: 1; min-width: 0; color: var(--_ink-strong); overflow-wrap: anywhere; }
+chat-header .chat-hd-list .chat-btn { flex: none; }
+chat-header .chat-hd-none { margin: 0; color: var(--_ink); }

@@ -2,7 +2,7 @@
   "name": "chat-composer",
   "title": "Composer",
   "tag": "chat-composer",
-  "description": "The person's message: the chips a host may attach, each removable; the host's context chip, one summary of what every message carries (on the board, \"3 answers · 2 selected\": the selected cards and the answers since the last Send, and no other chips), which opens a preview of exactly that text; the text and Send; and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer).",
+  "description": "The person's message: the chips a host may attach, each removable; the host's context chip, one summary of what every message carries (on the board, \"3 answers · 2 selected\": the selected cards and the answers since the last Send, and no other chips), which opens a preview of exactly that text; the text and Send; and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer). With a host that queues (ChatHost.queues) words go while the agent works or waits for an OK, and the line says they are queued.",
   "files": {
     "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, ComposerContext, PREVIEW_LABEL, COMPOSER_KEYS; no DOM)",
     "template": "composer-template.ts (composerTemplate, chipsTemplate, contextTemplate, previewTemplate, lineTemplate)",

@@ -23,9 +23,9 @@ template (one pure function to markup), an element (light DOM, defined lazily), 
 |---|---|---|
 | `feed/` | `<chat-feed>`: the log, the status line, change chips, system lines | `applyEvent`, `ChatState`, `activityLine`, `changeLabel` |
 | `message/` | `<chat-message>`: one message, the person's with chips | (template only) |
-| `approval/` | `<chat-approval>`: Allow once, Allow for this session, Deny | `approvalView`, `APPROVAL_CHOICES`, `timeLeft` |
+| `approval/` | `<chat-approval>`: the answers its request lists (Allow once, for this session, for this folder), Deny | `approvalView`, `choicesFor`, `APPROVAL_CHOICES`, `timeLeft` |
 | `composer/` | `<chat-composer>`: text, removable chips, the host's context chip and its preview | `composerView`, `sendIntent` |
-| `header/` | `<chat-header>`: agent, model, status, Stop, New session | `headerView` |
+| `header/` | `<chat-header>`: agent, model, status, Stop, New session, and the list of what was allowed for the folder | `headerView`, `allowedLabel` |
 
 `src/conditions.ts` is the chat's conditions table (PLAN ruling 11): busy, waiting (for an
 approval), blocked, stopped, error, each with what starts and ends it and whether a message can go
@@ -46,7 +46,7 @@ stream.onmessage = (e) => {                      // the host's stream of chat ev
   state = applyEvent(state, JSON.parse(e.data));
   feed.show(state);
   header.show(headerView({ agent: 'claude', model }, state, host));
-  composer.show(composerView(state, host));       // host = { blocked?: 'why no message can go', holds?: true }
+  composer.show(composerView(state, host));       // host = { blocked?: 'why no message can go', holds?: true, queues?: true }
 };
 ```
 
@@ -57,11 +57,18 @@ Enter or Space, opens a preview over the feed, "What the agent receives", of `te
 hover keeps it while the pointer is on the chip or the preview, a click holds it until clicked again,
 and Esc closes it with focus back on the chip. With `host.holds` the composer's Send also
 takes a message with no words when anything is attached, and one while the agent works, which the
-host holds and sends when the turn ends; without it, a message needs words, as before.
+host holds and sends when the turn ends; without it, a message needs words, as before. With
+`host.queues` it also sends words alone while the agent works or waits for an OK, which the host queues.
+
+A host that keeps "Allow for this folder" gives `headerView` the yeses kept (`allowed: [{ id, kind, path?,
+command? }]`): the header then draws a button under the status that opens them in words ("Write files in
+src/", "Run npm test") with Forget, raising `chat-allowed` when it opens (refresh the list) and `chat-forget`
+`{ id }` for a yes to forget (confirm, then forget it and give the list again). Without `allowed` nothing is
+drawn. An `approval_request` offers the answers its `scopes` list, and with no `expiresAt` has no countdown.
 
 The elements raise events and never call a server (the names are constants in `src/events.ts`, so a host can listen before it loads the elements, as the board does: it loads them when its panel first opens, `apps/board/src/shell/chat-view.ts`): `chat-send` `{ text, chips }`,
 `chat-chip-remove` `{ chip }`, `chat-answer` `{ approvalId, answer }`, `chat-change`
-`{ board, cards, head? }`, `chat-stop`, `chat-new-session`, `chat-pick` `{ field, id }`. The host
+`{ board, cards, head? }`, `chat-stop`, `chat-new-session`, `chat-pick` `{ field, id }`, `chat-allowed`, `chat-forget` `{ id }`. The host
 answers them with its own routes (here the board's chat routes, api.md 98-107), clears the composer
 once a message went through, calls `feed.follow()` when the person sends (the feed otherwise follows
 the latest words until the person scrolls away, and shows a "Jump to latest" button meanwhile), and
@@ -75,4 +82,5 @@ calls `feed.answerFailed(id, why)` when an answer did not.
 - **nclite**: its Svelte page mounts the same elements unchanged, maps `--chat-*` to its palette
   tokens, and feeds events from its own engine; its approval drawer's answers become `chat-answer`.
 - **Gallery**: `apps/board/src/gallery/chat-section.ts` (flag `chatPanel`), fed by
-  `gallery.chat.json`, the recorded Claude turns as chat events.
+  `gallery.chat.json`, the recorded Claude turns as chat events; `folder-access-section.ts` (also `agentAccessRules`)
+  for the approval's scopes, reads, no time limit and the header's list.

@@ -12,8 +12,9 @@ export type ChatConditionKind = (typeof CHAT_CONDITION_KINDS)[number];
  *  version of the board showing, the agent refused to start, an older session), in plain words; and
  *  whether it `holds` a message with something attached (chips or the composer's context): it then
  *  takes one with no words, and one sent while the agent works, which it sends when the turn ends
- *  (the board: its cards, notes and answers). */
-export interface ChatHost { blocked?: string; holds?: boolean }
+ *  (the board: its cards, notes and answers); and whether it `queues` words: it takes them while the
+ *  agent works or waits for an OK, and the agent gets them in order (the board, under workAlongside). */
+export interface ChatHost { blocked?: string; holds?: boolean; queues?: boolean }
 
 /** How the header's status reads: `active` (working), `attention` (the person is needed),
  *  `quiet`, or `danger`. */
@@ -26,37 +27,39 @@ export interface ChatConditionRow {
   endsWhen: string;
   /** Whether a message can be sent while it holds, and whether Stop does anything. */
   send: boolean;
+  /** Whether a host that `queues` takes a message while it holds anyway. */
+  queued: boolean;
   stop: boolean;
   holds: (s: ChatState, host: ChatHost) => boolean;
 }
 
 export const CHAT_CONDITIONS: Record<ChatConditionKind, ChatConditionRow> = {
   busy: {
-    label: 'Working', tone: 'active', send: false, stop: true,
+    label: 'Working', tone: 'active', send: false, queued: true, stop: true,
     startsWhen: 'the person\'s message is accepted (message_in)',
     endsWhen: 'a system line ends the turn (turn done, stopped or error)',
     holds: (s) => s.busy,
   },
   waiting: {
-    label: 'Waiting for you', tone: 'attention', send: false, stop: true,
-    startsWhen: 'the agent asks to change a file or run a command (approval_request)',
+    label: 'Waiting for you', tone: 'attention', send: false, queued: true, stop: true,
+    startsWhen: 'the agent asks to read or change a file or run a command (approval_request)',
     endsWhen: 'its approval_result arrives, or the turn ends',
     holds: (s) => s.pending.length > 0,
   },
   blocked: {
-    label: 'Can\'t send', tone: 'quiet', send: false, stop: false,
+    label: 'Can\'t send', tone: 'quiet', send: false, queued: false, stop: false,
     startsWhen: 'the host says why the chat can\'t take a message (ChatHost.blocked)',
     endsWhen: 'the host clears the reason',
     holds: (_, host) => Boolean(host.blocked),
   },
   stopped: {
-    label: 'Stopped', tone: 'quiet', send: true, stop: false,
+    label: 'Stopped', tone: 'quiet', send: true, queued: true, stop: false,
     startsWhen: 'a system line ends the turn as stopped (the person pressed Stop)',
     endsWhen: 'the person\'s next message (message_in)',
     holds: (s) => s.ended === 'stopped',
   },
   error: {
-    label: 'Error', tone: 'danger', send: true, stop: false,
+    label: 'Error', tone: 'danger', send: true, queued: true, stop: false,
     startsWhen: 'a system line ends the turn as an error',
     endsWhen: 'the person\'s next message (message_in)',
     holds: (s) => s.ended === 'error',
@@ -80,7 +83,8 @@ export function chatStatus(s: ChatState, host: ChatHost = {}): ChatStatus {
   return kind ? { kind, label: CHAT_CONDITIONS[kind].label, tone: CHAT_CONDITIONS[kind].tone } : { kind: 'ready', label: 'Ready', tone: 'quiet' };
 }
 
-/** Whether every condition that holds lets the person send. */
-export const canSend = (s: ChatState, host: ChatHost = {}): boolean => chatConditions(s, host).every((k) => CHAT_CONDITIONS[k].send);
+/** Whether every condition that holds lets the person send (a host that queues, those that queue). */
+export const canSend = (s: ChatState, host: ChatHost = {}): boolean =>
+  chatConditions(s, host).every((k) => CHAT_CONDITIONS[k].send || (host.queues === true && CHAT_CONDITIONS[k].queued));
 /** Whether any condition that holds has a turn to stop. */
 export const canStop = (s: ChatState, host: ChatHost = {}): boolean => chatConditions(s, host).some((k) => CHAT_CONDITIONS[k].stop);

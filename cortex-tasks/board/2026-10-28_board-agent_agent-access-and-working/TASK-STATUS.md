@@ -35,7 +35,7 @@ categories: [board-security, board-agent, board-app]
 | 2 | HOLD_01 | 1 | standard | Reliability engineer for long-running processes — a person's slow answer is not a failure; only the agent's own runaway work should be cut, and every wait must still end cleanly on Stop. | [Questions wait for the person](./HOLD_01_questions-wait.md) | Completed | port 5200 |
 | 3 | WORK_01 | 1 | strong | Product designer for collaborative tools — while someone else is working the person must see it at a glance, never be blocked from their own work, and never miss the moment a reply arrives. | [Working alongside the agent](./WORK_01_working-alongside.md) | Completed | port 5300 |
 | 4 | WIRE_01 | 2 | strong | Application security engineer who has written sandbox policies — the same as RULES_01's: one policy, applied before anything remembered, on every route a tool call can take. | [Every route uses the policy](./WIRE_01_wire-policy.md) | Completed | port 5400 |
-| 5 | ASK_01 | 3 | standard | — | [Allow for this folder, and forgetting it](./ASK_01_folder-scope-ui.md) | Pending | port 5500 |
+| 5 | ASK_01 | 3 | standard | — | [Allow for this folder, and forgetting it](./ASK_01_folder-scope-ui.md) | Completed | port 5500 |
 | 6 | VERIFY_01 | 4 | strong | Penetration tester given a running board and a chat with an agent they control, no history of the work — tries every way to read `.env` or the bots' secrets, write the ledger or `.git/`, keep a yes beyond its scope, or get a question to answer itself. | [Verification](./VERIFY_01_access-verification.md) | Pending | port 5600 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -67,7 +67,7 @@ categories: [board-security, board-agent, board-app]
 |---------|------|------|-----------|--------|
 | HOLD_01-R1 | HOLD_01 | `apps/board/server/chat-sessions.ts`, `project.ts`, `app.ts`: pass `approvalHold` from `VB_FLAGS` to the live session and the adapters | WIRE_01 (ownership widened) | Done |
 | HOLD_01-R2 | HOLD_01 | Chat schema: `expiresAt` optional; regenerate | Orchestrator | Done |
-| HOLD_01-R3 | HOLD_01 | `packages/chat` events, feed, approval: `expiresAt` optional; no countdown and no "expired" without it ("Waiting for your answer") | ASK_01 | Open |
+| HOLD_01-R3 | HOLD_01 | `packages/chat` events, feed, approval: `expiresAt` optional; no countdown and no "expired" without it ("Waiting for your answer") | ASK_01 | Done (ASK_01) |
 | HOLD_01-R4 | HOLD_01 | api.md: an approval's 120 s becomes no limit with `approvalHold`; agent README: `hold`, `approvalHold`, `turn-clock.ts` | WIRE_01 | Done |
 | RULES_01-R1 | RULES_01 | Words home `packages/agent/src/words` in words-homes.mjs and words.md | Orchestrator | Done |
 | RULES_01-R2 | RULES_01 | D-066 appended with the maintainer's yes | Orchestrator (point 340) | Done |
@@ -76,8 +76,8 @@ categories: [board-security, board-agent, board-app]
 | ALL-R1 | all | `npm run map` | Orchestrator | Done |
 | Words alone queue while the agent works: `server/chat-sessions.ts` `tell` holds them like attached ones (joined, `QUEUED_WORDS` line, 202), and the folder branch of `server/chat.ts` `sendChat` uses `live.post`; a refused message no longer releases waiting approvals (`busy()`) | WORK_01 | non-blocking (point 328: "the person can send more") | WIRE_01 | Done (same as WORK_01-R1) |
 | WIRE_01-R1 | WIRE_01 | Chat schema (orchestrator's): `$defs/readFacts` in `facts`, `approval_request.scopes`, `outcome.asked` wording, made by WIRE_01 to verify: accept or redo; decide the `$id` move (chat.md 7) | Orchestrator: accepted, `$id` stays chat/1 | Done |
-| WIRE_01-R2 | WIRE_01 | `packages/chat`: `ChatHost.queues` (words alone go while the agent works; the composer's hint), then `apps/board/src/shell/chat-panel.ts` `render` sets it with `holds` (both on a board and in the folder) under `workAlongside` | ASK_01 (packages/chat) | Open |
-| WIRE_01-R3 | WIRE_01 | `packages/chat` events, feed, approval: render `read` facts (`{ path, recursive? }`) and offer only the request's `scopes` (`folder` → "Allow for this folder"); the forget list on `list_permissions`/`forget_permission` | ASK_01 | Open |
+| WIRE_01-R2 | WIRE_01 | `packages/chat`: `ChatHost.queues` (words alone go while the agent works; the composer's hint), then `apps/board/src/shell/chat-panel.ts` `render` sets it with `holds` (both on a board and in the folder) under `workAlongside` | ASK_01 (packages/chat) | Done (ASK_01) |
+| WIRE_01-R3 | WIRE_01 | `packages/chat` events, feed, approval: render `read` facts (`{ path, recursive? }`) and offer only the request's `scopes` (`folder` → "Allow for this folder"); the forget list on `list_permissions`/`forget_permission` | ASK_01 | Done (ASK_01) |
 | WIRE_01-R4 | WIRE_01 | `npm run map` (new exports: `chat-permissions.ts`, `#agent` `coverOf`, `rememberedHead`, `claudeDenyRules`, `gateEnv`, `READ_TOOLS`, `RULES_REFUSAL`, `GATE_*_ENV`); `npm run gen` to confirm | Orchestrator | Open |
 
 **Status Values**: `Open` | `Done` | `Closed`
@@ -124,7 +124,10 @@ _Status:_ Completed (2026-10-28)
   forced git, network) asked every time; `git -C x commit` → `git commit`. Unit 1897, check 0, chat specs 65.
 
 ### ASK_01
-_Status:_ Pending
+_Status:_ Completed (2026-10-29)
+- Approval: `choicesFor(scopes)` (the request's scopes, Deny last; none listed = once and session), read/search facts, "Allowed for this folder", no `expiresAt` = no countdown and never expired ("Waiting for your answer"). Composer: `ChatHost.queues` (busy and waiting rows `queued`), set in `chat-panel.ts` under workAlongside. Header: `allowed` input, `allowedLabel`/`allowedTemplate`, events `chat-allowed`, `chat-forget`; `shell/chat-allowed.ts` holds the list and Forget (confirm, then `forget_permission`), agentAccessRules flag. Gallery section `folderAccess` (last, `g-access-sample`).
+- The brief's "chat header's existing menu" did not exist (and `packages/chat` can't import `#ui`'s menu): a disclosure in the header. `page-io.ts` got `listPermissions`/`forgetPermission`; chat.md, README and three `pattern.json` updated.
+- Checks: unit 1907 + scripts pass, check 0 errors, gen-api current, verify fails only on modules.md (map: new `#chat` exports); chat page specs on 5500 pass (a loaded machine made some gallery tests hang in teardown; alone they pass).
 
 ### VERIFY_01
 _Status:_ Pending
@@ -135,7 +138,7 @@ _Status:_ Pending
 |------|-------|--------------|------|
 | 1 | RULES_01, HOLD_01, WORK_01 | `access/wave-1` | Green 2026-10-28: unit 1874, check 0 errors, verify ok, gen-api current, full page suite 746 passed (port 4710). Orchestrator: chat schema (`expiresAt` optional, `folder` scope), the agent's words home, `npm run gen`/`map`, chat-schema.test.ts to the new rule |
 | 2 | WIRE_01 (Runs 1–2) | `access/wave-2` | Green 2026-10-28: unit 1897 + timing 14, check 0 errors, verify ok, gen-api current, full page suite 746 passed (port 4710). WIRE_01's chat schema additions (read facts, request scopes) accepted; $id stays chat/1 |
-| 3 | ASK_01 | — | — |
+| 3 | ASK_01 | `access/wave-3` | Green 2026-10-29: unit 1907 + timing 14, check 0 errors, verify ok, gen-api current; full page suite 756 passed, 1 timed out (perf.spec selecting 50; alone 30/30; tracker M29). The worktree's git record (HEAD, commondir, gitdir) was found deleted and restored before the gate |
 | 4 | VERIFY_01 | — | — |
 
 ## Completion Checklist

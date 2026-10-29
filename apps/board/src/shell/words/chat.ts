@@ -43,3 +43,8 @@ export const newRepliesWord = 'new';
 // ---- App.svelte (workAlongside flag: the toast when a reply lands out of sight)
 export const theAgentReplied = 'The agent replied';
 export const openChat = 'Open chat';
+
+// ---- chat-panel.ts (agentAccessRules flag: forgetting what was allowed for the folder)
+export const forgetThisYes = 'Forget this?';
+export const theAgentWillAskAgain = (what: string): string => `The agent will ask again before it does this: ${what}.`;
+export const forget = 'Forget';

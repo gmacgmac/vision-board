@@ -23,7 +23,11 @@
 // The board's side (the cards, the answers, change chips, the stepper's link, opening a board) is the
 // bridge's (chat-bridge.ts); this file knows a board only by its id.
 // With the workAlongside flag (point 328) it tells the page what the agent is doing, for the board's mark,
-// and the replies that land while the person can't see them, with a way to them (chat-news.ts `panelNews`).
+// and the replies that land while the person can't see them, with a way to them (chat-news.ts `panelNews`);
+// the composer then sends words alone while the agent works (`ChatHost.queues`: the server queues them).
+// With the agentAccessRules flag the header lists what the person allowed "for this folder"
+// (`list_permissions`, read when the drawing comes, when the list opens and when a yes for the folder is
+// given); Forget asks first (the confirm dialog), then `forget_permission`, and the agent asks again.
 import type {
   ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
 } from '#chat';
@@ -31,15 +35,18 @@ import {
   CHAT_ANSWER_EVENT, CHAT_NEW_SESSION_EVENT, CHAT_PICK_EVENT, CHAT_SEND_EVENT, CHAT_STOP_EVENT, composerView,
   EMPTY_CHAT, headerView,
 } from '#chat';
+import { flagOn } from '#format';
 import { renderMarkdown } from '#ui';
 import type { ChatView } from './chat-view.ts';
 import type { ChatPanel, ChatPanelDeps, ChatViewLoader } from './chat-panel-types.ts';
 import type { ChatSessionInfo } from './page-io.ts';
 import { ApiError } from '../board/io.ts';
 import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
+import { pageFlags } from '../flags.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
 import * as chatWords from './words/chat.ts';
+import { createAllowed } from './chat-allowed.ts';
 import { panelNews } from './chat-news.ts';
 
 const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
@@ -69,6 +76,8 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   configure(EMPTY.board);
 
   const st = panelState();
+  const queues = flagOn('workAlongside', pageFlags()); // words queue while the agent works (App.svelte passes `work`... on the same flag)
+  const allowed = createAllowed({ confirm: d.confirm, fail: (err) => fail(err), changed: () => render() });
   let [unfollow, loads] = [() => {}, 0];
   let [waitShown, attachedShown] = [false, false];
   const news = panelNews(d, { feed: () => view?.feed ?? null, reveal: () => d.open().then(loadDrawing), focus: () => view?.composer.focusText() });
@@ -82,10 +91,10 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     news.show(st.chat);
     const blocked = blockedReason(st.board, st.past, st.refused, !!st.board && d.archived?.(st.board) === true);
     // On a board, what is attached goes with no words, and waits while the agent works (ruling 5).
-    const host: ChatHost = blocked ? { blocked } : st.board ? { holds: true } : {};
+    const host: ChatHost = blocked ? { blocked } : { ...(st.board && { holds: true }), ...(queues && { queues: true }) };
     const { agent, model } = current();
     if (!view) return;
-    view.header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent] }, st.chat, host));
+    view.header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent], ...(allowed.list && { allowed: allowed.list }) }, st.chat, host));
     view.feed.show(st.chat);
     view.composer.show(composerView(st.chat, host));
   }
@@ -104,6 +113,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
         view.composer.setContext(context);
         news.drawn(view.feed);
         render();
+        void allowed.load(true);
         d.view('ready');
         return true;
       } catch {
@@ -131,6 +141,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       st.chat = follow(st.chat, e, first);
       render();
       news.event(e);
+      if (e.kind === 'approval_result' && e.scope === 'folder') void allowed.load(true);
       if (drew) d.bridge.open(drew);
     }, () => listFor(st.session?.board));
   }
@@ -234,6 +245,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     if (st.session) answerApproval(st.session.session, approvalId, answer).catch((err) => view?.feed.answerFailed(approvalId, (err as Error).message));
   });
   on(CHAT_STOP_EVENT, () => st.session && stopChat(st.session.session).catch(fail));
+  allowed.wire(on);
   on(CHAT_NEW_SESSION_EVENT, () => renew(current()));
   on<ChatPickDetail>(CHAT_PICK_EVENT, picked);
 
