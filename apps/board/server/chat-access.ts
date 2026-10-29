@@ -22,9 +22,10 @@ import * as serverChatWords from './words/server-chat.ts';
 export const MCP_NAME = 'vision-board';
 /** The launched agent's instructions (BE_03 ruling 7; T_01 rewrites the file). */
 export const INSTRUCTIONS_FILE = fileURLToPath(new URL('../../../skills/vision-board/SKILL.md', import.meta.url));
-/** What the agent may call without asking: the board's tools, reading, and the gated tools, which
- * the gate asks the person about first (PLAN ruling 5). */
-export const CHAT_TOOLS = [`mcp__${MCP_NAME}__*`, 'ToolSearch', 'Read', 'Glob', 'Grep', ...GATED_TOOLS];
+/** What the agent may call without asking: the board's tools, ToolSearch, and the gated tools (reading
+ * among them), which the gate decides by the access rules first (PLAN ruling 5, D-066). Its built-ins are
+ * also the only ones the session has (`--tools`, buildClaudeArgs). */
+export const CHAT_TOOLS = [`mcp__${MCP_NAME}__*`, 'ToolSearch', ...GATED_TOOLS];
 
 const NAMES: Record<ChatSession['agent'], string> = { claude: serverChatWords.claudeCode, kiro: serverChatWords.kiro };
 

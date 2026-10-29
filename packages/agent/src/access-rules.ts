@@ -19,24 +19,28 @@ export interface AccessRule {
 
 /**
  * The table. The most specific matching row wins: a row that names a file (its last part is not `**`)
- * beats one that names a folder's contents, then more named parts win, then the order written. So
- * `**` + `/.env` holds inside `.visionboard/images/`, and `images/**` beats `.visionboard/**`.
+ * beats one that names a folder's contents; between folders' contents, one that refuses both reading and
+ * writing wins; then more named parts win, then the order written. So `**` + `/.env` holds inside
+ * `.visionboard/images/`, `images/**` beats `.visionboard/**`, and `**` + `/.git/**` holds inside
+ * `.visionboard/apps/` (points 345, 346, D-067 proposed).
  */
 export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '**', read: 'allow', write: 'ask', why: words.filesInTheFolder },
   { path: '**/.env', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.env.*', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.env.example', read: 'allow', write: 'ask', why: words.secretsExample },
+  { path: '**/.envrc', read: 'refuse', write: 'refuse', why: words.secretsFiles },
+  { path: '**/.npmrc', read: 'refuse', write: 'refuse', why: words.secretsFiles },
   { path: '**/.visionboard/agents.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
   { path: '**/.visionboard/chat-sessions.json', read: 'refuse', write: 'refuse', why: words.boardSecrets },
-  { path: '.visionboard/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
+  { path: '**/.visionboard/ledger.jsonl', read: 'allow', write: 'refuse', why: words.theLedger },
   { path: '.visionboard/lock', read: 'allow', write: 'refuse', why: words.boardFiles },
-  { path: '.visionboard/app-state/**', read: 'allow', write: 'refuse', why: words.boardFiles },
+  { path: '**/.visionboard/app-state/**', read: 'refuse', write: 'refuse', why: words.appState },
   { path: '.visionboard/permissions.json', read: 'allow', write: 'refuse', why: words.permissionsFile },
   { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
-  { path: '.git/**', read: 'allow', write: 'refuse', why: words.gitFolder },
+  { path: '**/.git/**', read: 'refuse', write: 'refuse', why: words.gitFolder },
 ];
 
 /** The table's last line: a path that resolves outside the board's folder. */
@@ -56,9 +60,10 @@ export function globRegExp(glob: string, flags = ''): RegExp {
   return new RegExp(`^${re}$`, flags);
 }
 
-const rank = (r: AccessRule): [number, number] => {
+const rank = (r: AccessRule): [number, number, number] => {
   const parts = r.path.split('/');
-  return [parts[parts.length - 1] === '**' ? 0 : 1, parts.filter((p) => !p.includes('*')).length];
+  const file = parts[parts.length - 1] === '**' ? 0 : 1;
+  return [file, file === 0 && r.read === 'refuse' && r.write === 'refuse' ? 1 : 0, parts.filter((p) => !p.includes('*')).length];
 };
 const COMPILED = ACCESS_RULES.map((rule, order) => ({ rule, order, rank: rank(rule), exact: globRegExp(rule.path), folded: globRegExp(rule.path, 'i') }));
 const SEVERITY: Record<AccessVerdict, number> = { allow: 0, ask: 1, refuse: 2 };
@@ -67,7 +72,8 @@ function pick(rel: string, folded: boolean): AccessRule {
   let best: (typeof COMPILED)[number] | undefined;
   for (const c of COMPILED) {
     if (!(folded ? c.folded : c.exact).test(rel)) continue;
-    if (!best || c.rank[0] > best.rank[0] || (c.rank[0] === best.rank[0] && c.rank[1] > best.rank[1])) best = c;
+    const diff = best ? c.rank.findIndex((v, i) => v !== best!.rank[i]) : -1;
+    if (!best || (diff >= 0 && c.rank[diff]! > best.rank[diff]!)) best = c;
   }
   return best!.rule; // `**` matches every path
 }
@@ -82,6 +88,14 @@ export function accessFor(rel: string, op: AccessOp): { verdict: AccessVerdict; 
   const folded = pick(rel, true);
   const rule = SEVERITY[folded[op]] > SEVERITY[exact[op]] ? folded : exact;
   return { verdict: rule[op], rule };
+}
+
+/** The rows that let through part of what `row` refuses for `op`: a row naming a path under it (`**` read as
+ * one name) that does not refuse (`.env.example` under `.env.*`; `images/**` under `.visionboard/**`). A
+ * second line that has no exception (a deny list) leaves such a row out, or lists these as exceptions. */
+export function exceptionsTo(row: AccessRule, op: AccessOp): AccessRule[] {
+  const sample = (glob: string) => glob.replace(/^\*\*\//, '').replace(/\*+/g, 'x');
+  return ACCESS_RULES.filter((other) => other !== row && other[op] !== 'refuse' && globRegExp(row.path).test(sample(other.path)));
 }
 
 /** The more restrictive of two verdicts. */

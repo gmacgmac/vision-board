@@ -35,24 +35,27 @@ const ROWS: [string, Decision, Decision][] = [
   ['.visionboard/chat-sessions.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
   ['sub/.visionboard/agents.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
   ['a/b/.visionboard/chat-sessions.json', refuse(words.boardSecrets), refuse(words.boardSecrets)],
-  ['sub/.visionboard/ledger.jsonl', ALLOW, ASK_IN],
+  ['sub/.visionboard/ledger.jsonl', ALLOW, refuse(words.theLedger)],
+  ['.envrc', refuse(words.secretsFiles), refuse(words.secretsFiles)],
+  ['apps/web/.npmrc', refuse(words.secretsFiles), refuse(words.secretsFiles)],
   ['.visionboard/ledger.jsonl', ALLOW, refuse(words.theLedger)],
   ['.visionboard/lock', ALLOW, refuse(words.boardFiles)],
-  ['.visionboard/app-state/s.json', ALLOW, refuse(words.boardFiles)],
+  ['.visionboard/app-state/s.json', refuse(words.appState), refuse(words.appState)],
   ['.visionboard/permissions.json', ALLOW, refuse(words.permissionsFile)],
   ['.visionboard/other.json', ALLOW, refuse(words.boardFiles)],
   ['.visionboard', ALLOW, refuse(words.boardFiles)],
   ['.visionboard/images/a.png', ALLOW, ALLOW],
   ['.visionboard/apps/calc/app.json', ALLOW, ALLOW],
   ['.visionboard/images/.env', refuse(words.secretsFiles), refuse(words.secretsFiles)],
-  ['.git/HEAD', ALLOW, refuse(words.gitFolder)],
-  ['.git/hooks/x', ALLOW, refuse(words.gitFolder)],
-  ['.git', ALLOW, refuse(words.gitFolder)],
+  ['.git/HEAD', refuse(words.gitFolder), refuse(words.gitFolder)],
+  ['.git/hooks/x', refuse(words.gitFolder), refuse(words.gitFolder)],
+  ['.git', refuse(words.gitFolder), refuse(words.gitFolder)],
+  ['sub/.git/hooks/x', refuse(words.gitFolder), refuse(words.gitFolder)],
   ['../outside/notes.txt', ASK_OUT, ASK_OUT],
 ];
 
 test('every row of the table, for a read and a write', () => {
-  assert.equal(ACCESS_RULES.length, 14, 'a new row needs its line in ROWS');
+  assert.equal(ACCESS_RULES.length, 16, 'a new row needs its line in ROWS');
   for (const [p, r, w] of ROWS) {
     assert.deepEqual(decide(read(p)), r, `read ${p}`);
     assert.deepEqual(decide(write(p)), w, `write ${p}`);
@@ -129,7 +132,8 @@ test('a search reads everything under a folder: allowed only when nothing under 
   assert.deepEqual(decide(read('src', true)), ALLOW);
   assert.deepEqual(decide(read('apps', true)), refuse(words.searchReaches('apps', 'apps/web/.env')));
   assert.equal('refuse' in decide(read('.', true)), true, 'the folder holds .env and the bots\' keys');
-  assert.deepEqual(decide(read('.visionboard/images', true)), refuse(words.searchReaches('.visionboard/images', '.visionboard/images/sneaky')), 'through `sneaky`');
+  const images = decide(read('.visionboard/images', true));
+  assert.ok('refuse' in images && /would read \.visionboard\/images\/(sneaky|hooky),/.test(images.refuse), 'through `sneaky` (to agents.json) or `hooky` (into .git)');
   assert.deepEqual(decide(read('src', false)), ALLOW, 'a folder\'s names are not its files');
 });
 

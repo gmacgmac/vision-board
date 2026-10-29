@@ -33,7 +33,11 @@ test('the agent file is the draft with the prompt as an absolute file:// path, u
   const made = JSON.parse(readFileSync(file, 'utf8'));
   assert.equal(made.prompt, `file://${skill}`);
   assert.ok(path.isAbsolute(made.prompt.slice('file://'.length)));
-  assert.deepEqual({ ...made, prompt: draft.prompt }, draft, 'only the prompt differs from the draft');
+  const { permissions, toolsSettings, ...rest } = made;
+  const { permissions: draftPermissions, ...draftRest } = draft;
+  assert.deepEqual({ ...rest, prompt: draft.prompt }, draftRest, 'the prompt and the access rules differ from the draft');
+  assert.deepEqual(permissions.rules.slice(0, draftPermissions.rules.length), draftPermissions.rules, 'the draft\'s rules first');
+  assert.ok(toolsSettings.read.deniedPaths.length > 0, 'the access rules are added (kiro-turn.test.ts holds them)');
   assert.equal(made.name, 'vision-board');
   assert.deepEqual(tree(h), [path.join('.kiro', 'agents', 'vision-board.json')], 'nothing else is written');
 });

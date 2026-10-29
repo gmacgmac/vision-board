@@ -7,9 +7,8 @@
 // write (kiro-cli 2.28.0 puts an MCP tool's result in `rawOutput`, not `content`).
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import type { AgentUpdate } from '../src/index.ts';
-import { KIRO_AGENT_DRAFT, KiroTurn, outcome, pickOption, readRequest, verdictFor } from '../src/index.ts';
+import { KiroTurn, kiroAgentText, outcome, pickOption, readRequest, verdictFor } from '../src/index.ts';
 import * as words from '../src/words/agent-access.ts';
 import { accessFixture } from './access-fixture.ts';
 
@@ -144,8 +143,27 @@ test('verdicts: the access rules first (D-066): own tools go ahead; reads, chang
   assert.ok('refuse' in v({ title: 'someone else\'s MCP tool' }));
 });
 
-test('Kiro\'s agent file allows no reading tool unasked: every read reaches the access rules', () => {
-  const draft = JSON.parse(readFileSync(KIRO_AGENT_DRAFT, 'utf8'));
-  assert.deepEqual(draft.allowedTools, ['@vision-board']);
-  assert.ok(!JSON.stringify(draft.permissions).includes('fs_read'));
+test('Kiro\'s agent file (F1): reads and commands ask, so they reach verdictFor; the refused rows are denied as a second line', () => {
+  const made = JSON.parse(kiroAgentText('/skills/vision-board/SKILL.md'));
+  assert.deepEqual(made.allowedTools, ['@vision-board'], 'no tool pre-approved but the board\'s');
+  const rules: { capability: string; match?: string[]; exclude?: string[]; effect: string }[] = made.permissions.rules;
+  const has = (r: object) => rules.some((x) => JSON.stringify(x) === JSON.stringify(r));
+  assert.ok(has({ capability: 'mcp', match: ['vision-board/*'], effect: 'allow' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**'], effect: 'ask' }), 'every read asks (V3: ask beats the default allow on ./**)');
+  assert.ok(has({ capability: 'shell', match: ['*'], effect: 'ask' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**/.env'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**/.env.*'], exclude: ['**/.env.example'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/agents.json'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_read', match: ['**/.visionboard/chat-sessions.json'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_write', match: ['**/.git/**'], effect: 'deny' }));
+  assert.ok(has({ capability: 'fs_write', match: ['./.visionboard/**'], exclude: ['./.visionboard/images/**', './.visionboard/apps/**'], effect: 'deny' }));
+  assert.ok(!rules.some((r) => r.effect === 'deny' && r.capability === 'fs_read' && r.match?.includes('**/.visionboard/ledger.jsonl')), 'a read the rules allow is not denied');
+  // CLI 2.x (engine v2): read, grep and glob are trusted in the working folder, so their deniedPaths are the line there.
+  for (const tool of ['read', 'grep', 'glob']) {
+    assert.deepEqual(made.toolsSettings[tool].deniedPaths, ['**/.env', '**/.env.*', '**/.envrc', '**/.npmrc', '**/.visionboard/agents.json',
+      '**/.visionboard/chat-sessions.json', '**/.visionboard/app-state/**', '**/.git/**'], tool);
+  }
+  assert.ok(made.toolsSettings.write.deniedPaths.includes('**/.visionboard/ledger.jsonl'));
+  assert.ok(!made.toolsSettings.write.deniedPaths.includes('./.visionboard/**'), 'no exception in 2.x: left to verdictFor');
+  assert.deepEqual(made.toolsSettings.shell, { autoAllowReadonly: false, deniedCommands: ['git(\\s.*)?'] });
 });

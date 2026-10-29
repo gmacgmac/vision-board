@@ -82,7 +82,10 @@ export function createApprovals<E>(emit: (draft: ApprovalDraft) => E, options: A
 
   return {
     ask(facts, signal) {
-      const rules = policy(facts, folder, { strict, ...(reader && { reader }) });
+      let rules = policy(facts, folder, { strict, ...(reader && { reader }) });
+      // A command's words were judged by the gate from the shell's folder, which its facts don't carry:
+      // what the gate asked about, the server never lets through unasked (VERIFY_01 F4).
+      if (facts.kind === 'command' && 'allow' in rules) rules = policy(facts, folder, { strict: true, ...(reader && { reader }) });
       if ('refuse' in rules) return decided({ approved: false, status: 'denied' });
       if ('allow' in rules) return decided({ approved: true, status: 'approved' });
       const cover = coverOf(facts, folder, reader);

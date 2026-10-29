@@ -98,7 +98,7 @@ export function folderAccessSection(): HTMLElement {
     return r;
   };
   box.append(heading,
-    el('p', 'g-desc', 'The side-panel agent\'s questions offer the answers the board\'s access rules allow: Allow once, Allow for this session, and inside the board\'s folder Allow for this folder, which is kept across sessions. The chat header lists what was kept, in words, and Forget asks first; then the agent asks again. Reads and searches are asked like changes and commands, and a question waits for the person with no time limit unless approvalHold is off.'),
+    el('p', 'g-desc', 'The side-panel agent\'s questions offer the answers the board\'s access rules allow: Allow once, Allow for this session, and inside the board\'s folder Allow for this folder, which is kept across sessions. The chat header lists what was kept, in words, and Forget asks first; then the agent asks again. Reads outside the folder ask like changes and commands, and a question waits for the person with no time limit unless approvalHold is off.'),
     meta,
     group('The question', 'The answers are the scopes the request lists (approval_request.scopes); Deny stays alone at the end.', row(['inside', 'outside', 'once', 'reads', 'kept', 'timed'])),
     group('Allowed for this folder', 'In the chat header, under the status. The button opens the list over the feed; Esc, a press outside or the button closes it.', row(['list', 'closed', 'empty'])));

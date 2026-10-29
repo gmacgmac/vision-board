@@ -907,3 +907,23 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: a deny list on paths as typed (bypassed by `..`, links, case); refusing every command
   (the agent could not run tests); refusing outside the folder (the person sometimes wants it).
 - **Task**: cortex-tasks/board/2026-10-28_board-agent_agent-access-and-working/TASK-STATUS.md
+
+## D-067 Git is the person's; more closed files (amends D-066)
+- **Date**: 2026-10-29 · **Status**: Accepted (maintainer approved 2026-10-29, point 348) · **From**: points 345, 346; agent-access-and-working WIRE_01 Run 4, VERIFY_01
+- **Decision**: D-066's table and policy change as follows.
+  1. `.git` in any folder (`**/.git/**`) is refused to read and to write; among rows naming a folder's
+     contents, one refusing both ways wins, so it holds inside `.visionboard/images/` and `apps/`.
+  2. Every git command is refused, read-only ones too, however it is spelled (`cd … && git`, `env … git`,
+     a path to git, `sh -c "git …"`, `$(git …)`); git is off the read-only allow-list. The agent says what it
+     would run and why; the person runs it. A command that only mentions git is refused too.
+  3. `**/.envrc` and `**/.npmrc` are refused like `.env`.
+  4. `**/.visionboard/app-state/**` is refused to read and write, and `**/.visionboard/ledger.jsonl` to write,
+     in any board folder.
+  5. Claude Code's deny rules and Kiro's agent rules are regenerated from the table (`Bash(git *)`, Kiro's
+     `shell` deny and `deniedCommands`).
+- **Why**: the integrated agent builds boards and apps in `.visionboard/`; it does not see or touch git (346).
+  `.git/config` can hold a token; git's own settings run commands; reading app state reached `.env` values
+  through an app (VERIFY_01 F5, F6, F9, F10).
+- **Rejected**: refusing only git's writing subcommands (git's config and aliases make reads run code);
+  git at the folder's top only (nested repositories).
+- **Task**: cortex-tasks/board/2026-10-28_board-agent_agent-access-and-working/TASK-STATUS.md (WIRE_01 Run 4)

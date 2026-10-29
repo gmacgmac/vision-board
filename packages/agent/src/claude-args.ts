@@ -6,8 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { StartOptions } from './adapter.ts';
 import type { AccessOp } from './access-rules.ts';
-import { ACCESS_RULES, globRegExp } from './access-rules.ts';
+import { ACCESS_RULES, exceptionsTo } from './access-rules.ts';
 import { GATED_TOOLS } from './approvals.ts';
+import { REFUSED_PROGRAMS } from './readonly-command.ts';
 import { HELD_HOOK_TIMEOUT_S, HOOK_TIMEOUT_S } from './gate.ts';
 
 /** The gate's executable, beside this package's source. */
@@ -34,10 +35,7 @@ const ruleRoot = (folder: string) => `/${folder.replace(/[*?[\]\\]/g, '\\$&')}`;
  */
 export function claudeDenyRules(folder: string): string[] {
   const roots = [...new Set([folder, (() => { try { return realpathSync(folder); } catch { return folder; } })()])];
-  // A row is carved when a path another, unrefused row names (`**` read as one name) falls under it.
-  const sample = (glob: string) => glob.replace(/^\*\*\//, '').replace(/\*+/g, 'x');
-  const carved = (row: (typeof ACCESS_RULES)[number], op: AccessOp) => ACCESS_RULES.some((other) =>
-    other !== row && other[op] !== 'refuse' && globRegExp(row.path).test(sample(other.path)));
+  const carved = (row: (typeof ACCESS_RULES)[number], op: AccessOp) => exceptionsTo(row, op).length > 0;
   const rules: string[] = [];
   for (const [op, tool] of [['read', 'Read'], ['write', 'Edit']] as const) {
     for (const row of ACCESS_RULES) {
@@ -45,6 +43,7 @@ export function claudeDenyRules(folder: string): string[] {
       for (const root of roots) rules.push(`${tool}(${ruleRoot(root)}/${row.path})`);
     }
   }
+  for (const program of REFUSED_PROGRAMS) rules.push(`Bash(${program})`, `Bash(${program} *)`);
   return rules;
 }
 
@@ -73,13 +72,17 @@ export function mcpConfigJson(servers: StartOptions['mcpServers']): string {
 /**
  * One turn's arguments. No prompt: it goes in on stdin, out of `ps`. `--verbose` is required with
  * stream-json in print mode. `--append-system-prompt-file` every turn, since `--resume` drops it.
- * `--allowedTools` is variadic, so it comes last. Never `--bare` (it would skip the person's login).
+ * `--tools` names the only built-in tools the session has: the built-ins among `allowedTools` (Claude
+ * Code's "Restrict which built-in tools Claude can use"; it "doesn't affect MCP tools", cli-reference),
+ * so a built-in the gate doesn't match (a subagent, messaging, scheduling) doesn't exist. `--allowedTools`
+ * is variadic, so it comes last. Never `--bare` (it would skip the person's login).
  */
 export function buildClaudeArgs(options: StartOptions, session: TurnSession, mcpConfigFile: string, settings = gateSettings(undefined, undefined, options.approvalHold, options.cwd)): string[] {
   const args = ['-p', '--output-format', 'stream-json', '--verbose', session.resume ? '--resume' : '--session-id', session.id];
   if (options.model) args.push('--model', options.model);
   if (options.instructionsFile) args.push('--append-system-prompt-file', options.instructionsFile);
   args.push('--mcp-config', mcpConfigFile, '--strict-mcp-config', '--permission-mode', 'default', '--settings', settings);
+  args.push('--tools', [...new Set(options.allowedTools.filter((t) => !t.startsWith('mcp__')))].join(','));
   if (options.allowedTools.length) args.push('--allowedTools', ...options.allowedTools);
   return args;
 }

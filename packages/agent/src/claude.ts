@@ -51,7 +51,9 @@ async function* runOnce(
     cwd: start.cwd,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: {
-      ...opts.env, ...gateEnv(start),
+      // Every Bash command starts in the board's folder: no `cd` carries over (tools-reference § What
+      // persists between commands), so the gate and the CLI agree on where a command's words point.
+      ...opts.env, ...gateEnv(start), CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR: '1',
     },
   });
   const closed = new Promise<void>((resolve) => { child.once('close', () => resolve()); child.once('error', () => resolve()); });

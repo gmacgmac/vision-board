@@ -59,21 +59,37 @@ test('the gate hook: every gated tool (the reading ones too), anchored, the gate
   assert.match(JSON.parse(gateSettings("/it's/node", '/g')).hooks.PreToolUse[0].hooks[0].command, /^'\/it'\\''s\/node'/, 'quoted for the shell');
 });
 
+test('--tools: only the built-in tools the chat allows exist in the session (F8); MCP tools are not touched by it', () => {
+  const args = buildClaudeArgs({ ...START, allowedTools: ['mcp__vision-board__*', 'ToolSearch', ...GATED_TOOLS] }, { id: ID, resume: false }, 'c');
+  assert.equal(args[args.indexOf('--tools') + 1], ['ToolSearch', ...GATED_TOOLS].join(','));
+  assert.ok(args.indexOf('--tools') < args.indexOf('--allowedTools'), 'before the variadic --allowedTools');
+  const none = buildClaudeArgs({ ...START, allowedTools: ['mcp__vision-board__*'] }, { id: ID, resume: false }, 'c');
+  assert.equal(none[none.indexOf('--tools') + 1], '', 'no built-in tool at all');
+});
+
 test('Claude Code\'s own deny rules, from the access rules, at the board\'s folder: a second line behind the gate', () => {
   const rules = claudeDenyRules('/home/some one/[p]');
   assert.deepEqual(rules, [
     'Read(//home/some one/\\[p\\]/**/.env)',
+    'Read(//home/some one/\\[p\\]/**/.envrc)',
+    'Read(//home/some one/\\[p\\]/**/.npmrc)',
     'Read(//home/some one/\\[p\\]/**/.visionboard/agents.json)',
     'Read(//home/some one/\\[p\\]/**/.visionboard/chat-sessions.json)',
+    'Read(//home/some one/\\[p\\]/**/.visionboard/app-state/**)',
+    'Read(//home/some one/\\[p\\]/**/.git/**)',
     'Edit(//home/some one/\\[p\\]/**/.env)',
+    'Edit(//home/some one/\\[p\\]/**/.envrc)',
+    'Edit(//home/some one/\\[p\\]/**/.npmrc)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/agents.json)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/chat-sessions.json)',
-    'Edit(//home/some one/\\[p\\]/.visionboard/ledger.jsonl)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/ledger.jsonl)',
     'Edit(//home/some one/\\[p\\]/.visionboard/lock)',
-    'Edit(//home/some one/\\[p\\]/.visionboard/app-state/**)',
+    'Edit(//home/some one/\\[p\\]/**/.visionboard/app-state/**)',
     'Edit(//home/some one/\\[p\\]/.visionboard/permissions.json)',
-    'Edit(//home/some one/\\[p\\]/.git/**)',
-  ], '.env.* (it has .env.example) and .visionboard/** (it has images/ and apps/) are left to the gate');
+    'Edit(//home/some one/\\[p\\]/**/.git/**)',
+    'Bash(git)',
+    'Bash(git *)',
+  ], '.env.* (it has .env.example) and .visionboard/** (it has images/ and apps/) are left to the gate; git is refused (346)');
   const linked = mkdtempSync(path.join(tmpdir(), 'agent-deny-'));
   try {
     const real = realpathSync(linked);

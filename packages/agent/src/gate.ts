@@ -114,7 +114,9 @@ export async function decide(stdin: string, ask: Ask, exists: (path: string) => 
   try { input = JSON.parse(stdin); } catch { return decision(false, 'The gate could not read the tool call, so it was refused.'); }
   const facts = factsFor(input, exists);
   if ('refuse' in facts) return decision(false, facts.refuse);
-  const rules = policy(facts, access.folder, { strict: access.strict ?? false, ...(access.reader && { reader: access.reader }) });
+  // A command's words are where the shell is (the hook's `cwd`), judged against the board's folder.
+  const cwd = facts.kind === 'command' && typeof (input as { cwd?: unknown }).cwd === 'string' ? (input as { cwd: string }).cwd : undefined;
+  const rules = policy(facts, access.folder, { strict: access.strict ?? false, ...(access.reader && { reader: access.reader }), ...(cwd && { cwd }) });
   if ('refuse' in rules) return decision(false, rules.refuse);
   if ('allow' in rules) return decision(true, 'The board\'s access rules allow it.');
   let outcome: ApprovalOutcome;

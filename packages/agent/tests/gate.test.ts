@@ -152,19 +152,19 @@ test('bin/gate.ts: allowed, denied, unreachable and unconfigured, as the CLI rea
   });
   const env = { [GATE_URL_ENV]: server.url, [GATE_TOKEN_ENV]: 'run-token', [GATE_FOLDER_ENV]: fx.folder };
   try {
-    const allowed = await runAsync(hook('Bash', { command: 'npm test' }), env);
+    const allowed = await runAsync({ ...hook('Bash', { command: 'npm test' }), cwd: fx.folder }, env);
     assert.deepEqual([allowed.status, allowed.out.permissionDecision], [0, 'allow']);
-    const denied = await runAsync(hook('Bash', { command: 'rm -rf build' }), env);
+    const denied = await runAsync({ ...hook('Bash', { command: 'rm -rf build' }), cwd: fx.folder }, env);
     assert.deepEqual([denied.status, denied.out.permissionDecision], [0, 'deny']);
     const env2 = await runAsync({ ...hook('Read', { file_path: '.env' }), cwd: fx.folder }, env);
     assert.deepEqual([env2.out.permissionDecision, env2.out.permissionDecisionReason], ['deny', words.secretsFiles]);
     assert.equal(seenFacts.length, 2, 'the refused read asked nobody');
   } finally { await server.close(); }
-  const unreachable = gate(hook('Bash', { command: 'npm test' }), env);
+  const unreachable = gate({ ...hook('Bash', { command: 'npm test' }), cwd: fx.folder }, env);
   assert.deepEqual([unreachable.status, unreachable.out.permissionDecision, unreachable.out.permissionDecisionReason], [0, 'deny', UNREACHABLE]);
-  assert.equal(gate(hook('Bash', { command: 'npm test' }), {}).out.permissionDecision, 'deny', 'no route configured');
+  assert.equal(gate({ ...hook('Bash', { command: 'npm test' }), cwd: fx.folder }, {}).out.permissionDecision, 'deny', 'no route configured');
   const { [GATE_FOLDER_ENV]: _, ...noFolder } = env;
-  assert.equal(gate(hook('Bash', { command: 'npm test' }), noFolder).out.permissionDecision, 'deny', 'no folder: the rules can\'t be applied');
+  assert.equal(gate({ ...hook('Bash', { command: 'npm test' }), cwd: fx.folder }, noFolder).out.permissionDecision, 'deny', 'no folder: the rules can\'t be applied');
 });
 
 /** As `gate`, without blocking the event loop, so the in-process route can answer. */
@@ -191,7 +191,7 @@ test('the gate waits as long as AGENT_GATE_WAIT_MS says, and a bad value keeps i
   const url = `http://127.0.0.1:${(silent.address() as AddressInfo).port}/api/run/approvals`;
   try {
     const started = Date.now();
-    const out = await runGate(JSON.stringify(hook('Bash', { command: 'npm test' })), { [GATE_URL_ENV]: url, [GATE_TOKEN_ENV]: 'run-token', [GATE_FOLDER_ENV]: fx.folder, [GATE_WAIT_ENV]: '200' }, none);
+    const out = await runGate(JSON.stringify({ ...hook('Bash', { command: 'npm test' }), cwd: fx.folder }), { [GATE_URL_ENV]: url, [GATE_TOKEN_ENV]: 'run-token', [GATE_FOLDER_ENV]: fx.folder, [GATE_WAIT_ENV]: '200' }, none);
     assert.deepEqual([out.hookSpecificOutput.permissionDecision, out.hookSpecificOutput.permissionDecisionReason], ['deny', UNREACHABLE]);
     assert.ok(Date.now() - started < 5_000, 'gave up after its 200 ms');
   } finally { for (const c of sockets) c.destroy(); silent.close(); }

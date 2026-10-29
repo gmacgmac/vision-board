@@ -1,8 +1,9 @@
 // Shell commands for the access rules (PLAN agent-access § The rules): the words a command names, as the
 // shell would hand them to the program, and whether it only reads. Read-only is an allow-list (`ls`,
 // `cat`, `head`, `tail`, `wc`, `pwd`, `tree`, `stat`, `file`, `grep`, `rg`, `find` without what runs,
-// deletes or writes, and `git`'s reading subcommands), joined only by `|`, with plain words: no
-// redirection, `$`, backticks, `;`, `&`, globs, `~` or braces. Anything else is not read-only (asked).
+// deletes or writes), joined only by `|`, with plain words: no redirection, `$`, backticks, `;`, `&`,
+// globs, `~` or braces. Anything else is not read-only (asked). git is the person's (point 346): never
+// read-only, and `runsProgram` finds it in any command, however spelled, so the policy refuses it.
 // Pure: no I/O. `policy.ts` decides each word against the rules. Also what a remembered yes for a
 // command covers (`commandHead`, `rememberedHead`) and the one table of commands never remembered
 // (`NEVER_REMEMBERED`: they run any code, act on whatever they target, or reach the network).
@@ -92,10 +93,6 @@ export function shellWords(command: string): ShellWords {
 
 type Check = (args: string[]) => boolean;
 const none = (bad: string[]): Check => (args) => !args.some((a) => bad.some((b) => a === b || a.startsWith(`${b}=`)));
-const GIT_BRANCH_LIST = new Set(['-a', '--all', '-r', '--remotes', '-v', '-vv', '--verbose', '-l', '--list', '--show-current',
-  '--no-color', '--color', '--column', '--no-column', '--merged', '--no-merged', '--contains', '--no-contains', '--points-at',
-  '--sort', '--format', '--abbrev', '--no-abbrev', '-i', '--ignore-case', '--omit-empty']);
-const GIT_READS = new Set(['log', 'status', 'diff', 'show', 'blame', 'ls-files', 'rev-parse', 'branch']);
 
 /** The allow-list: each command and what its arguments may not hold. */
 const READERS: Record<string, Check> = {
@@ -106,8 +103,6 @@ const READERS: Record<string, Check> = {
   grep: () => true,
   rg: none(['--pre', '--pre-glob', '--hostname-bin']),
   find: none(['-exec', '-execdir', '-ok', '-okdir', '-delete', '-fprint', '-fprint0', '-fprintf', '-fls']),
-  git: (args) => GIT_READS.has(args[0] ?? '') && none(['--output'])(args)
-    && (args[0] !== 'branch' || args.slice(1).every((a) => GIT_BRANCH_LIST.has(a.split('=')[0]!))),
 };
 
 /** grep's and rg's flags that take no value, in the simple form whose words we can tell apart. */
@@ -142,27 +137,47 @@ export function readOnlyCommand(command: string): ReadOnly | null {
     const [cmd = '', ...args] = words.map((w) => w.text);
     const check = Object.hasOwn(READERS, cmd) ? READERS[cmd] : undefined;
     if (!check || !check(args)) return null;
-    reads.push(...(cmd === 'git' ? args.slice(1) : args).filter((a) => !isFlag(a)));
+    reads.push(...args.filter((a) => !isFlag(a)));
     if (cmd === 'grep' || cmd === 'rg') searches.push(...searched(cmd, args));
   }
   return { reads, searches };
 }
 
-/** A plain command's words, git's `-C <dir>` and `-c k=v` left out (they don't change what it does); null when not plain. */
+/** A plain command's words; null when not plain. */
 function plainWords(command: string): string[] | null {
   const { segments, plain } = shellWords(command);
   const [only, ...more] = segments;
   if (!plain || more.length > 0 || !only || only.length === 0) return null;
-  const words = only.map((w) => w.text);
-  if (words[0] !== 'git') return words;
-  let i = 1;
-  while (words[i] === '-C' || words[i] === '-c') i += 2;
-  return ['git', ...words.slice(i)];
+  return only.map((w) => w.text);
+}
+
+/** Programs the agent never runs, whatever the person answers (point 346: git is the person's). */
+export const REFUSED_PROGRAMS: readonly string[] = ['git'];
+/** Words that run the command after them: skipped, with their flags and values, to find the program. */
+const WRAPPERS = new Set(['env', 'sudo', 'doas', 'command', 'builtin', 'exec', 'nohup', 'time', 'nice', 'timeout', 'xargs', 'stdbuf', 'eval', 'then', 'do', 'else', '!']);
+
+/**
+ * The refused program `command` runs, if any, however it is spelled: every piece between the shell's
+ * separators and quotes (`;`, `&&`, `|`, `$(…)`, backticks, `sh -c "…"`), its quotes and backslashes
+ * gone, its assignments, wrappers (`env`, `sudo`, `xargs`) and their flags skipped, and the program by its
+ * last path part (`/usr/bin/git`). A piece that only mentions it (`grep "git" README`) is refused too:
+ * a quoted word starts a piece. Null when none.
+ */
+export function runsProgram(command: string, programs: readonly string[] = REFUSED_PROGRAMS): string | null {
+  const pieces = command.replace(/\\(.)/g, '$1').split(/[;&|()`$'"\n{}]+/);
+  for (const piece of pieces) {
+    const tokens = piece.trim().split(/\s+/).filter(Boolean);
+    let i = 0;
+    while (i < tokens.length && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]!) || WRAPPERS.has(tokens[i]!) || tokens[i]!.startsWith('-') || /^\d+[smhd]?$/.test(tokens[i]!))) i++;
+    const program = tokens[i]?.split('/').pop();
+    if (program !== undefined && programs.includes(program)) return program;
+  }
+  return null;
 }
 
 /**
- * The first words a remembered yes for this command may cover (`npm test`, `git commit`, `ls`):
- * the program, and its subcommand when the second word is one (`git -C x commit` is `git commit`).
+ * The first words a remembered yes for this command may cover (`npm test`, `npm run`, `ls`):
+ * the program, and its subcommand when the second word is one.
  * Null when the command is not one plain program (a yes for `npm test` must never cover `npm test && curl …`).
  */
 export function commandHead(command: string): string | null {
@@ -184,8 +199,6 @@ export interface NeverRow {
 }
 
 const rows = (kind: NeverKind, heads: string[]): NeverRow[] => heads.map((head) => ({ head, kind }));
-/** git's force: `--force`, `--force-with-lease`, `-f` alone or among short flags. */
-const forced = (rest: string[]) => rest.some((w) => w === '--force' || w.startsWith('--force-') || /^-[a-zA-Z]*f[a-zA-Z]*$/.test(w));
 
 /**
  * The commands a yes is never remembered for: asked every time (D-066 6; WIRE_01 Run 2). One table.
@@ -199,11 +212,10 @@ export const NEVER_REMEMBERED: readonly NeverRow[] = [
   ]),
   ...rows('targets', [
     'rm', 'rmdir', 'mv', 'cp', 'chmod', 'chown', 'ln', 'dd', 'truncate',
-    'git reset', 'git clean', 'git restore', 'git push', 'git rebase', 'npm publish',
+    'npm publish',
+    // git is the person's (point 346): refused before anything is remembered; never kept either
+    'git',
   ]),
-  { head: 'git checkout', kind: 'targets', when: (rest) => rest.includes('--') },
-  { head: 'git branch', kind: 'targets', when: (rest) => rest.some((w) => /^-[a-zA-Z]*D/.test(w)) },
-  { head: 'git', kind: 'targets', when: forced },
   ...rows('network', ['curl', 'wget']),
 ];
 

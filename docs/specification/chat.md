@@ -183,23 +183,38 @@ before anything remembered:
 - **Claude**: the gate's hook covers `Read`, `Glob` and `Grep` as well as the writing tools and `Bash`
   (`GATED_TOOLS`); the gate calls `policy` with the board's folder from `AGENT_GATE_FOLDER`
   (`packages/agent/src/gate.ts` `decide`). A refusal is denied with the rule's reason, an allowed call
-  goes ahead unasked, the rest is asked. The same `--settings` carry Claude Code's own
-  `permissions.deny` from the table (`claudeDenyRules`), a second line.
+  goes ahead unasked, the rest is asked. A command's words are resolved from the hook's `cwd` and judged
+  against the board's folder, and the CLI runs with `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1`, so no
+  `cd` carries over between commands. The same `--settings` carry Claude Code's own `permissions.deny`
+  from the table (`claudeDenyRules`), a second line; `--tools` leaves the session only the built-in tools
+  the chat allows (`CHAT_TOOLS`: ToolSearch and the gated ones).
 - **Kiro**: `kiro-permission.ts` `verdictFor` calls `policy` on every path a call names (a move at both
-  ends); Kiro's agent file pre-approves only the board's tools, so every read reaches it.
+  ends). Kiro asks only when its own rules say so: its agent file (`kiro-agent.ts` `kiroAccess`) makes
+  `fs_read` and `shell` ask (engine V3), so each reaches `verdictFor`, and denies the refused rows itself.
+  CLI 2.x trusts `read`, `grep` and `glob` in its working folder with no way to make them ask: there a read
+  inside the folder never reaches `verdictFor`, and only the closed files are stopped, by Kiro's own
+  `deniedPaths` from the same table (VERIFY_01 F1; which engine runs is the maintainer's live look).
 - **The server** (`apps/board/server/chat-approvals.ts`) calls `policy` again on every ask, whatever the
   gate decided: a refused path is denied and an allowed one approved, unasked (`asked: false`). Then a
   kept yes answers what it covers (`coverOf`): a write's yes covers writes in that file's folder (not
   its subfolders), a read's yes covers that file only, a search's yes searches of that folder, a command's yes its first
-  words (`rememberedHead`: `npm test` covers `npm test -- foo`, not `npm run build`; `git -C x commit`
-  is `git commit`). Never remembered, asked every time (`NEVER_REMEMBERED`, one table in
+  words (`rememberedHead`: `npm test` covers `npm test -- foo`, not `npm run build`). Never
+  remembered, asked every time (`NEVER_REMEMBERED`, one table in
   `readonly-command.ts`): a script by its path; what runs any code it is given (an interpreter, a shell,
   a launcher: `python3`, `sh`, `npx`, `env`); what acts on whatever it targets (`rm`, `rmdir`, `mv`, `cp`,
-  `chmod`, `chown`, `ln`, `dd`, `truncate`, `git reset`, `git clean`, `git checkout --`, `git restore`,
-  `git push`, `git rebase`, `git branch -D`, `npm publish`, any git command with `--force` or `-f`); and
-  what reaches the network (`curl`, `wget`). The request says which scopes its
+  `chmod`, `chown`, `ln`, `dd`, `truncate`, `npm publish`); and what reaches the network (`curl`,
+  `wget`). The request says which scopes its
   yes may have (`scopes`): `once` always, `session` unless the call can't be remembered, `folder` only
   inside the board's folder; an answer with another is `invalid`.
+- **Git is the person's** (point 346, D-067 proposed): `.git` in any folder is refused to read and to
+  write, and so is every git command, read-only ones too, however it is spelled (`cd src && git log`,
+  `env A=1 git status`, `/usr/bin/git`, `sh -c "git …"`, `$(git …)`: `runsProgram`, `REFUSED_PROGRAMS`),
+  with the words `gitIsThePersons`. A command that only mentions it (`grep "git" README`) is refused too.
+  Claude Code's deny rules carry `Bash(git)` and `Bash(git *)`, Kiro's a `shell` `deny` and 2.x
+  `deniedCommands`. A script that runs git without naming it is asked, not refused (§ Not covered).
+- **Secrets and the board's files** (point 345): `.env`, `.env.*` (but `.env.example`), `.envrc`, `.npmrc`
+  and the bots' secrets in any folder; what apps save (`.visionboard/app-state/**`) is unread and unwritten
+  in any board folder, and the ledger unwritten in any board folder.
 - **For this folder**: kept in `.visionboard/permissions.json` (`chat-permissions.ts`), written by the
   server only and refused to the agent; listed by `list_permissions`, forgotten by `forget_permission`
   (api.md 107).
@@ -216,9 +231,16 @@ before anything remembered:
 - **Off** (`agentAccessRules`, `VB_FLAGS`): nothing goes ahead unasked, `folder` is never offered and
   nothing kept for the folder is used; the refusals hold either way (`strictAccess` on the adapter,
   `AGENT_GATE_STRICT` for the gate).
-- **Not covered**: a command that reads a refused file without naming it (a script, `python -c`) is
-  asked, not refused; a search of a folder that holds a refused file (any board folder holds
-  `.visionboard/agents.json`) is refused, so the agent searches a subfolder.
+- **Searches and paths outside**: a search of a folder that holds a refused file (any board folder holds
+  `.visionboard/agents.json`) is refused, and so is a search of a folder that holds the board's folder (the
+  parent, `/`): the board's folder is walked for it. A command naming a path outside the folder is asked
+  `once`, never kept. A command the gate asked about is never let through unasked by the server, which
+  can't see the shell's folder.
+- **Not covered**: a command that reads a refused file or runs git without naming it (a script,
+  `python -c`, `npm run` of a script that calls git) is asked, not refused. A remembered command runs whatever code it runs: a yes for `npm test` or `npm run
+  build` covers the code the agent writes there later, and that code can read what the person can (`.env`
+  too). Inside the folder a yes for `sed -i` covers every file the rules ask about, where a Write yes
+  covers one folder.
 
 Tests: `packages/agent/tests/gate.test.ts`, `kiro-turn.test.ts`, `claude-args.test.ts`, `remember.test.ts`,
 `policy.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-permissions.test.ts`, and end to end with
@@ -236,8 +258,9 @@ the same shape as `ask_approval`: the gate sends facts and obeys the answer.
 Kiro CLI runs through the same adapter interface over ACP (`packages/agent/src/kiro.ts`, engine v2;
 see its README for the protocol notes). It has no hook to gate, so its `session/request_permission`
 calls are mapped to the same facts and the same `ask_approval` route inside the adapter: the chat
-panel's Allow and Deny work for it unchanged. The board's own tools (`vb`) and reading go ahead
-unasked; a file change or a command is asked; any other request is refused.
+panel's Allow and Deny work for it unchanged. The board's own tools (`vb`) go ahead unasked; reads,
+searches, file changes and commands are decided by the access rules (§ The agent's access); any other
+request is refused.
 
 Kiro runs as the `vision-board` agent (N34): at start the board server keeps
 `~/.kiro/agents/vision-board.json` current (`chat-access.ts` `keepKiroAgent`, from

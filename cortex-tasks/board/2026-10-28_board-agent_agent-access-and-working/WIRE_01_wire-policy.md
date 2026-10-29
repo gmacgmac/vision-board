@@ -143,6 +143,91 @@ across sessions in a file only the server writes.
 - Checks: unit 1897 pass; check 0 errors; gen-api current; verify fails only on modules.md (map); chat page
   specs on 5400 (4 workers): 65 passed. No new LOG line (orchestrator).
 
+### Run 3 (VERIFY_01 findings; failing tests first for each)
+- **F1** `kiro-agent.ts` `kiroAccess` (from `ACCESS_RULES`, with `exceptionsTo`, now shared with
+  `claudeDenyRules`), merged into the agent file by `kiroAgentText`. Engine V3 `permissions.rules`
+  (kiro.dev/docs/permissions: a rule is `capability`, optional `match`, optional `exclude`, `effect`
+  `deny`|`ask`|`allow`; "deny > ask > allow"; the agent scope is "Embedded in agent profile (`permissions`
+  field)"; the default allows "`fs_read` on `./**`"): `fs_read` `**` ask, `shell` `*` ask, a `deny` per
+  refused row (`fs_read`/`fs_write`, exceptions as `exclude`, `**/` rows as they are, the rest `./`-relative).
+  CLI 2.x `toolsSettings` (kiro.dev/docs/reference/built-in-tools: `read`/`write` `allowedPaths`,
+  `deniedPaths`; `grep`/`glob` `allowedPaths`, `deniedPaths`, `allowReadOnly`; `shell` `allowedCommands`,
+  `deniedCommands`, `autoAllowReadonly`, `denyByDefault`; "`read`, `grep`, and `glob` are trusted in the
+  current working directory"): `read`/`grep`/`glob` `deniedPaths` for every row refusing a read (`.env.*`
+  included: 2.x has no exception, so `.env.example` is closed to Kiro 2.x's own reads), `write` `deniedPaths`
+  for refused rows without exceptions, `shell.autoAllowReadonly: false`. **Not established in sources**: a
+  way to make 2.x reads in the working folder ask (none documented), so on 2.x a read inside the folder
+  never reaches `verdictFor` and only the closed files are stopped (by Kiro); the JSON shape of the agent's
+  `permissions` field (the page shows YAML for the file scope; the draft already used `{ rules: [...] }`);
+  whether patterns are workspace-relative (the default's `./**` suggests so); whether an `ask` over ACP
+  becomes `session/request_permission` ("when no interactive client is available, every `ask` is treated as
+  a deny"). Test: `kiro-turn.test.ts` (the generated file); `kiro-agent.test.ts` adjusted.
+- **F2** `policy.ts` `commandPolicy`: a word outside the folder → `once` only.
+- **F3** `policy.ts` `searchOf`: a search (`grep -r`/`rg`, Claude's Grep, Kiro's search) of a folder holding
+  the board's folder (the parent, `/`) walks the board's folder and is refused like one inside. Glob and
+  `find` list names, not contents, so they are not walked (F13's advice relies on `find . -name`).
+- **F4** `claude.ts`: `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` (code.claude.com/docs/en/tools-reference
+  § What persists between commands: "To disable this carry-over so every Bash command starts in the project
+  directory"). `PolicyOptions.cwd`: a command's words resolved from it, judged against the folder; the gate
+  passes the hook's `cwd` (an unresolvable `cwd` is refused). The server, which never sees that `cwd`, never
+  lets an asked command through unasked (`chat-approvals.ts`: a command its policy would allow is asked, as strict).
+- **F6** `git config` in `NEVER_REMEMBERED` (`code`).
+- **F8** `buildClaudeArgs` passes `--tools` with the built-ins among `allowedTools` (Claude Code's flag:
+  "Restrict which built-in tools Claude can use … The flag doesn't affect MCP tools", code.claude.com/docs/en/cli-reference).
+  `CHAT_TOOLS` no longer lists Read/Glob/Grep twice (they are in `GATED_TOOLS`); their words exemptions went
+  with them (`scripts/words-homes.mjs`, `docs/specification/words.md`).
+- **F12** README's Kiro line, api.md 108, chat.md § The agent's access (Claude, Kiro, searches) and § Kiro;
+  the gallery's `folderAccess` description ("Reads outside the folder ask like changes and commands", the same
+  length): it still changes `folder-access-dark-darwin.png` by 2212 px (same size); light did not run after it
+  (serial file). **Baseline not re-taken** (orchestrator's).
+- **F13** the skill's search line (name top-level files; `find . -name` for names), NOTES.md. **F2/F7** chat.md
+  "Not covered": a remembered command runs whatever code it runs; a `sed -i` yes inside covers every asked file.
+- Checks: unit 1914 pass; check 0 errors; gen-api current; verify fails only on modules.md (map); chat specs on
+  5400 (4 workers): 73 passed, 1 failed (the baseline above), 2 not run.
+
+### Run 4 (the maintainer's rulings 345, 346; failing tests first: `policy-rulings.test.ts`)
+- **Table** (`ACCESS_RULES`, 16 rows): `**/.envrc`, `**/.npmrc` refused both ways (`secretsFiles`, now naming
+  them); `**/.visionboard/app-state/**` refused both ways (new words `appState`); `**/.visionboard/ledger.jsonl`
+  write refused in any board folder; `**/.git/**` refused both ways (`gitFolder` reworded: git is the person's).
+- **Ranking**: between rows naming a folder's contents, one refusing both reading and writing now wins
+  before more named parts, so `**/.git/**` holds inside `.visionboard/images/` and `apps/` (which are
+  writable). File rows are unchanged (`.env.example` still beats `.env.*`).
+- **Every git command refused**: git off the read-only allow-list (`READERS`, `GIT_READS`, `GIT_BRANCH_LIST`
+  gone); `REFUSED_PROGRAMS = ['git']` and `runsProgram` (`readonly-command.ts`) find it in any piece between
+  separators and quotes, after assignments and wrappers (`env`, `sudo`, `xargs`…), by its last path part;
+  `policy` refuses first with `gitIsThePersons`. A command that only mentions it (`grep "git" README`) is
+  refused too (accepted false positive). The Run 2 git rows of `NEVER_REMEMBERED` and the `-C`/`-c` head
+  skipping are gone (moot): one `git` row stays so a yes is never kept even off the policy.
+- **Second lines regenerate**: Claude `Read/Edit(//…/**/.git/**)`, the new rows, `Bash(git)`, `Bash(git *)`;
+  Kiro `fs_read`/`fs_write` denies, `shell` deny `git`, `git *`, 2.x `deniedPaths` and `shell.deniedCommands`
+  `git(\s.*)?` (built-in-tools page: anchored regexes).
+- **Docs**: chat.md § The agent's access (git is the person's; secrets and board files; Not covered), api.md
+  107, the agent README, skill v3.18 (the Allow line and the closed files) + NOTES.md. No gallery or page copy
+  became untrue (none mentions git, `.envrc`, `.npmrc` or app state): no baseline touched.
+- Tests updated for the rulings: policy, policy-command, remember, claude-args, kiro-turn, api-chat-access.
+- Checks: unit 1917 pass; check 0 errors; gen-api current; verify fails only on `modules.md` (new exports
+  `REFUSED_PROGRAMS`, `runsProgram`: map is stale); chat specs on 5400 (4 workers): 76 passed.
+
+### Proposed decision Run 4
+**D-067 Git is the person's; more closed files** (maintainer, points 345, 346; amends D-066)
+- **Decision**: D-066's table and policy change as follows.
+  1. `.git` in any folder (`**/.git/**`) is refused to read and to write; among rows naming a folder's
+     contents, one refusing both ways wins, so it holds inside `.visionboard/images/` and `apps/`.
+  2. Every git command is refused, read-only ones too, however it is spelled (`cd … && git`, `env … git`,
+     a path to git, `sh -c "git …"`, `$(git …)`); git is off the read-only allow-list. The agent says what it
+     would run and why; the person runs it. A command that only mentions git is refused too.
+  3. `**/.envrc` and `**/.npmrc` are refused like `.env`.
+  4. `**/.visionboard/app-state/**` is refused to read and write, and `**/.visionboard/ledger.jsonl` to write,
+     in any board folder.
+  5. Claude Code's deny rules and Kiro's agent rules are regenerated from the table (`Bash(git *)`, Kiro's
+     `shell` deny and `deniedCommands`).
+- **Why**: the integrated agent builds boards and apps in `.visionboard/`; it does not see or touch git (346).
+  `.git/config` can hold a token; git's own settings run commands; reading app state reached `.env` values
+  through an app (VERIFY_01 F5, F6, F9, F10).
+- **Rejected**: refusing only git's writing subcommands (git's config and aliases make reads run code);
+  git at the folder's top only (nested repositories).
+- **Task**: cortex-tasks/board/2026-10-28_board-agent_agent-access-and-working/TASK-STATUS.md (WIRE_01 Run 4)
+
 ## On Completion
 
 Notes; your row in TASK-STATUS.md; one LOG line (`[board-security] WIRE_01: …` → this file, one line ending in a newline); the Return Contract with `REQUESTS` for anything outside your files.

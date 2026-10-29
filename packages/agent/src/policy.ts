@@ -10,7 +10,7 @@ import path from 'node:path';
 import type { AccessOp, AccessVerdict } from './access-rules.ts';
 import { OUTSIDE_RULE, accessFor, refusedTail, stricter } from './access-rules.ts';
 import type { AskScope, Facts } from './approvals.ts';
-import { readOnlyCommand, shellWords } from './readonly-command.ts';
+import { readOnlyCommand, runsProgram, shellWords } from './readonly-command.ts';
 import * as words from './words/agent-access.ts';
 
 export type { AskScope };
@@ -46,6 +46,9 @@ export interface PolicyOptions {
   reader?: PathReader;
   /** The `agentAccessRules` flag off: nothing goes ahead unasked and nothing is kept for the folder. */
   strict?: boolean;
+  /** For a command: the shell's working folder (Claude's hook `cwd`), which its relative words are
+   * resolved from; the rules stay relative to the board's folder. Left out, the board's folder. */
+  cwd?: string;
 }
 
 const gone = (e: unknown) => ['ENOENT', 'ENOTDIR'].includes((e as { code?: string }).code ?? '');
@@ -77,8 +80,8 @@ function follow(from: string, parts: string[], reader: PathReader, links: { n: n
   return at;
 }
 
-function place(root: string, input: string, reader: PathReader): ResolvedPath {
-  const abs = follow(path.isAbsolute(input) ? '/' : root, input.split('/'), reader, { n: 0 });
+function place(root: string, input: string, reader: PathReader, base = root): ResolvedPath {
+  const abs = follow(path.isAbsolute(input) ? '/' : base, input.split('/'), reader, { n: 0 });
   const rel = path.relative(root, abs);
   const outside = rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel);
   return { abs, rel: outside ? null : rel.split(path.sep).join('/'), stat: reader.lstat(abs) };
@@ -98,8 +101,8 @@ interface Judged {
   at: ResolvedPath;
 }
 
-function judge(root: string, input: string, op: AccessOp, reader: PathReader): Judged {
-  const at = place(root, input, reader);
+function judge(root: string, input: string, op: AccessOp, reader: PathReader, base = root): Judged {
+  const at = place(root, input, reader, base);
   if (at.rel === null) return { verdict: OUTSIDE_RULE[op], why: OUTSIDE_RULE.why, inside: false, once: false, at };
   const { verdict, rule } = accessFor(at.rel, op);
   const once = verdict !== 'refuse' && !!at.stat?.isFile() && at.stat.nlink > 1;
@@ -155,7 +158,18 @@ function candidates(word: string): string[] {
   return out.filter((c) => c !== '');
 }
 
-function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean): Decision {
+/** What a search of `j` reaches in the board's folder: under it when it is inside; the whole board's
+ * folder when it holds it (a search of the parent or of `/` reads the folder too, F3); else nothing the
+ * rules govern (a folder outside that holds no board folder: the call is asked). */
+function searchOf(root: string, j: Judged, reader: PathReader): ReturnType<typeof search> | undefined {
+  if (!j.at.stat?.isDirectory()) return undefined;
+  if (j.inside) return search(root, j.at, reader);
+  const holds = j.at.abs === path.parse(j.at.abs).root || root.startsWith(`${j.at.abs}${path.sep}`);
+  return holds ? search(root, place(root, root, reader), reader) : undefined;
+}
+
+function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean, base: string): Decision {
+  if (runsProgram(command) !== null) return { refuse: words.gitIsThePersons };
   const readOnly = readOnlyCommand(command);
   const op: AccessOp = readOnly ? 'read' : 'write';
   const { segments } = shellWords(command);
@@ -169,17 +183,16 @@ function commandPolicy(command: string, root: string, reader: PathReader, strict
   let verdict: AccessVerdict = readOnly ? 'allow' : 'ask';
   for (const word of segments.flatMap((s) => s.slice(1))) {
     for (const c of candidates(word.text)) {
-      const j = judge(root, c, op, reader);
+      const j = judge(root, c, op, reader, base);
       if (j.verdict === 'refuse') return { refuse: words.commandNames(c, j.why) };
       verdict = stricter(verdict, j.verdict);
       judged.push(j);
     }
   }
-  let once = false;
+  // A word outside the folder: asked once, never kept, so no yes covers a path outside (F2).
+  let once = judged.some((j) => !j.inside);
   for (const where of readOnly?.searches ?? []) {
-    const j = judge(root, where, 'read', reader);
-    if (!j.inside || !j.at.stat?.isDirectory()) continue;
-    const found = search(root, j.at, reader);
+    const found = searchOf(root, judge(root, where, 'read', reader, base), reader);
     if (found === 'unsure') once = true;
     else if (found) return { refuse: words.searchReaches(where, found.refused) };
   }
@@ -193,12 +206,16 @@ export function policy(facts: PolicyFacts, folder: string, options: PolicyOption
   let root: string;
   try { root = reader.realpath(folder); } catch { return { refuse: words.noFolder }; }
   try {
-    if (facts.kind === 'command') return commandPolicy(facts.command, root, reader, strict);
+    if (facts.kind === 'command') {
+      let base = root;
+      if (options.cwd !== undefined) { try { base = reader.realpath(options.cwd); } catch { return { refuse: words.cannotFollow }; } }
+      return commandPolicy(facts.command, root, reader, strict, base);
+    }
     if (facts.path === '') return { refuse: words.noPath };
     const j = judge(root, facts.path, facts.kind === 'read' ? 'read' : 'write', reader);
     if (j.verdict === 'refuse') return { refuse: j.why };
-    if (facts.kind === 'read' && facts.recursive && j.inside && j.at.stat?.isDirectory()) {
-      const found = search(root, j.at, reader);
+    const found = facts.kind === 'read' && facts.recursive ? searchOf(root, j, reader) : undefined;
+    if (found !== undefined) {
       if (found !== null && found !== 'unsure') return { refuse: words.searchReaches(facts.path, found.refused) };
       return settle(j.verdict, [j], strict, found === 'unsure');
     }

@@ -30,6 +30,9 @@ uses it: `docs/specification/chat.md`.
   unknown event shape once, and treats a turn with no `result` as an error. An error result the
   agent's last text only repeats (a rate limit) is said once, as the error. Cancel is SIGTERM, then
   SIGKILL after 3 s; a turn is stopped after 10 minutes of its own working time (`hold` pauses it).
+  The CLI runs with `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` (no `cd` carries over between Bash
+  commands) and `--tools` naming only the built-ins in `allowedTools` (Claude Code's flag restricts the
+  built-in tools and leaves MCP tools alone: code.claude.com/docs/en/cli-reference).
 - **Kiro** (`src/kiro.ts`, `src/acp.ts`, `src/kiro-turn.ts`, `src/kiro-permission.ts`): `kiro-cli acp`, the
   Agent Client Protocol over stdio (JSON-RPC 2.0, one object per line; `acp.ts` is a small client of
   it that knows nothing of Kiro). Targets **engine v2**, kiro-cli 2.28.0's default: its session ids
@@ -53,8 +56,14 @@ uses it: `docs/specification/chat.md`.
   so `session/new` must report `modes.currentModeId` `vision-board` and list the model in
   `models.availableModels` (`sessionProblem`); anything else ends the session before any prompt, saying
   why (a `session/load` is checked on what it reports). The draft's tools: `read`, `grep`, `glob`, `write`,
-  `shell`, `@vision-board`; only `@vision-board` pre-approved, so every read, search, write and command
-  reaches the permission request and the access rules (D-066). The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
+  `shell`, `@vision-board`; only `@vision-board` pre-approved. `kiroAgentText` adds the access rules
+  (`kiroAccess`, from `ACCESS_RULES`): for engine V3, `fs_read` and `shell` `ask` (overriding Kiro's silent
+  default `fs_read` on `./**`), so each read and command becomes a permission request `verdictFor` answers,
+  and a `deny` per refused row; for CLI 2.x, which trusts `read`, `grep` and `glob` in the working folder and
+  has no way to make them ask, `toolsSettings` `deniedPaths` for every row refusing a read and
+  `shell.autoAllowReadonly: false`. So on 2.x a read inside the folder never reaches `verdictFor` (only the
+  closed files are stopped, by Kiro); a read outside, a write and a command do. A live run settles which
+  engine the board's Kiro runs (VERIFY_01 F1). The adapter waits for Kiro's `_kiro.dev/mcp/server_initialized` for each server
   (20 s) and ends the turn in an error when one never starts. Updates: `agent_message_chunk` text
   (held a block, as Claude's), `tool_call`/`tool_call_update` by `toolCallId` (name from
   `_meta.kiro.toolName`; a board write names its board and, when done, its cards and head from the
@@ -105,18 +114,21 @@ uses it: `docs/specification/chat.md`.
   (`shellWords`); it is then a read of every word it names, else it is asked; any command whose words
   name a refused path (by any trailing part, a glob, `$'...'`, a flag's joined value, `rev:path`) is
   refused. `commandHead` gives a command's first words, none for a compound command; `rememberedHead`
-  is what a remembered yes may cover: those words (git's `-C <dir>`/`-c k=v` skipped; a script runner's
+  is what a remembered yes may cover: those words (a script runner's
   script too, `npm run build`), never a script by its path nor a row of `NEVER_REMEMBERED` (one table
   beside `commandHead`): an interpreter, a shell or a launcher (`python3`, `sh`, `npx`, `env`), a command
-  acting on whatever it targets (`rm`, `mv`, `cp`, `chmod`, `ln`, `dd`, `git reset`/`clean`/`restore`/
-  `push`/`rebase`, `git checkout --`, `git branch -D`, any forced git command, `npm publish`), the network
-  (`curl`, `wget`).
+  acting on whatever it targets (`rm`, `mv`, `cp`, `chmod`, `ln`, `dd`, `npm publish`), the network
+  (`curl`, `wget`). `runsProgram` finds a refused program (`REFUSED_PROGRAMS`: git, point 346) anywhere a
+  command could run it, and `policy` refuses the command; git is off the read-only allow-list. A command naming a path outside the
+  folder is asked `once` only; a search (`grep -r`, `rg`, `ReadFacts.recursive`) of a folder that holds the
+  board's folder walks the board's folder and is refused like one inside it; `cwd` (the hook's) is where a
+  command's relative words are resolved from, the rules staying relative to the folder (VERIFY_01 F2-F4).
   `coverOf(facts, folder)` is what a remembered yes covers: a write's folder (as really reached, not its
   subfolders), a read's file, a search's folder, or a command's `rememberedHead`; null when it is never kept. The
   disk is read only through the injected `PathReader` (`NODE_READER` by default). Refusals are in
   `src/words/agent-access.ts`. Tests: `tests/policy.test.ts`, `tests/policy-command.test.ts`, on a real
   temporary folder (`tests/access-fixture.ts`). **Not covered**: a command that reads a refused file
-  without naming it (a script, `python -c`, a name built at run time, `git log -p` of a committed
+  without naming it (a script, `python -c`, a name built at run time, a script that runs git, a committed
   secret) is asked, not refused; the person's yes is the guard there.
 
 ## Hosting it (here, or in nclite)
@@ -136,7 +148,7 @@ and its Claude harness (`container/harness-claude.ts`) is where these flags were
 - **Public API** (`src/index.ts`): the types above, `createClaudeAdapter`, `createKiroAdapter`, `writeKiroAgent`, `kiroAgentFile`, `KIRO_AGENT`, `KiroTurn`, `AcpConnection`, `ClaudeStream`,
   `buildClaudeArgs`, `gateSettings`, `toChatEvent`, `factsFor`, `refusalFor`, `decide`, `runGate`, `policy`,
   `resolveIn`, `ACCESS_RULES`, `accessFor`, `readOnlyCommand`, `shellWords`, `commandHead`, `rememberedHead`,
-  `NEVER_REMEMBERED`, `coverOf`, `claudeDenyRules`, `gateEnv`, `RULES_REFUSAL`.
+  `NEVER_REMEMBERED`, `coverOf`, `claudeDenyRules`, `gateEnv`, `RULES_REFUSAL`, `exceptionsTo`, `kiroAccess`.
 - **Tests**: `tests/` (arguments, the stream against two recorded real turns in
   `tests/fixtures/claude-*.jsonl` scrubbed of ids, paths and secrets, the adapters against fake CLIs
   that replay them (Claude's `fake-claude.ts`; Kiro's `fake-kiro.ts`, ACP), the gate end to end); `apps/board/tests/agent-events.test.ts` holds the mapped

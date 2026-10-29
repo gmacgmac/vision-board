@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { GATE_BIN, GATE_STRICT_ENV, GATE_WAIT_ENV, accessFor } from '#agent';
+import { GATE_BIN, GATE_STRICT_ENV, GATE_WAIT_ENV, accessFor, policy } from '#agent';
 import { createClient } from '#client';
 import { makeTempDir } from '#format/testing';
 import { openLedger } from '../server/ledger.ts';
@@ -73,6 +73,8 @@ async function asked(tool: string, input: Record<string, unknown>, answer: Recor
 const ALLOWED = 'The board\'s access rules allow it.';
 /** What the agent is told when a row refuses it. */
 const why = (rel: string, op: 'read' | 'write') => accessFor(rel, op).rule.why;
+/** What the agent is told for a git command (346), as the policy says it. */
+const GIT_REFUSAL = (policy({ kind: 'command', command: 'git status', risks: [], paths: [] }, process.cwd()) as { refuse: string }).refuse;
 const at = (rel: string) => path.join(h.project, rel);
 
 test('Claude\'s Read: .env refused, a file in the folder allowed without a question, a file outside asked', async () => {
@@ -84,6 +86,17 @@ test('Claude\'s Read: .env refused, a file in the folder allowed without a quest
   assert.deepEqual(request.scopes, ['once', 'session'], 'outside the folder: never for the folder');
   assert.equal('expiresAt' in request, false, 'approvalHold is on: it waits');
   assert.deepEqual(decision, ['allow', 'The person allowed it.']);
+});
+
+test('VERIFY_01 (Run 3): a command naming a path outside is offered once only; a search of the parent is refused; the CLI\'s tools are only the chat\'s', async () => {
+  const outsideCat = await asked('Bash', { command: `cat ${path.join(outside, 'notes.txt')}` }, { approved: true });
+  assert.deepEqual(outsideCat.request.scopes, ['once'], 'F2');
+  const parent = await gate('Bash', { command: `grep -r SECRET ${path.dirname(h.project)}` });
+  assert.equal(parent[0], 'deny', 'F3');
+  assert.match(parent[1], /^Searching /);
+  assert.equal((await gate('Grep', { pattern: 'x', path: path.dirname(h.project) }))[0], 'deny', 'F3, Claude\'s Grep');
+  assert.equal(run.args[run.args.indexOf('--tools') + 1], 'ToolSearch,Write,Edit,MultiEdit,NotebookEdit,Bash,Read,Glob,Grep', 'F8');
+  assert.equal(run.gateEnv.AGENT_GATE_FOLDER !== undefined, true);
 });
 
 test('a write yes for this session covers its folder only, and never the ledger', async () => {
@@ -106,8 +119,10 @@ test('a command yes for npm test covers npm test -- foo, not npm run build; cat 
   assert.deepEqual(py.request.scopes, ['once'], 'an interpreter is never remembered');
   const rm = await asked('Bash', { command: 'rm -rf build' }, { approved: true });
   assert.deepEqual(rm.request.scopes, ['once'], 'a command acting on its targets is asked every time (Run 2)');
-  assert.equal((await asked('Bash', { command: 'git -C . commit -m x' }, { approved: true, scope: 'session' })).decision[0], 'allow');
-  assert.deepEqual(await gate('Bash', { command: 'git commit -m y' }), ['allow', 'The person allowed it.'], 'git -C x commit was kept as git commit');
+  for (const c of ['git status', 'git -C . commit -m x', 'cd src && git log']) {
+    assert.deepEqual(await gate('Bash', { command: c }), ['deny', GIT_REFUSAL], `${c}: git is the person's (346)`);
+  }
+  assert.deepEqual(await gate('Read', { file_path: '.git/config' }), ['deny', why('.git/config', 'read')]);
 });
 
 test('for this folder: kept across a new session and a restart, listed, and forgotten', async () => {

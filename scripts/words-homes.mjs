@@ -54,9 +54,6 @@ export const EXEMPT = [
   { file: 'apps/board/src/board/cards/history-flow.ts', text: 'Home', why: 'a keyboard key name (KeyboardEvent.key)' },
   { file: 'apps/board/src/board/cards/history-flow.ts', text: 'End', why: 'a keyboard key name (KeyboardEvent.key)' },
   { file: 'packages/ui/src/base/menu-core.ts', text: 'Escape', why: 'a keyboard key name (KeyboardEvent.key)' },
-  { file: 'apps/board/server/chat-access.ts', text: 'Read', why: 'a tool name the agent client knows (an id, not a sentence)' },
-  { file: 'apps/board/server/chat-access.ts', text: 'Glob', why: 'a tool name the agent client knows (an id, not a sentence)' },
-  { file: 'apps/board/server/chat-access.ts', text: 'Grep', why: 'a tool name the agent client knows (an id, not a sentence)' },
   { file: 'apps/board/server/folders.ts', text: 'Library', why: 'the name of a macOS folder (a path part, not a sentence)' },
 ];
 

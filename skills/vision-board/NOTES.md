@@ -696,3 +696,14 @@ T_01) was written from these notes; `scenarios.md` holds the runs it is tested a
   `cp`, `chmod`, `ln`, `dd`, `git reset`/`clean`/`restore`/`push`/`rebase`, `git checkout --`, `git branch -D`,
   forced git, `npm publish`) or reaches the network (`curl`, `wget`) is never remembered; the skill says so
   in the Allow line, so the agent expects the question each time.
+- 2026-10-29, agent (WIRE_01 Run 3, VERIFY_01 F13): "search a subfolder" left the folder's own top files
+  with no search; the line now says to name them, and that `find . -name` lists names across the folder.
+
+## Skill v3.18 (git is the person's)
+
+- 2026-10-29, maintainer (points 345, 346): the integrated agent builds boards and apps in `.visionboard/`; it
+  does not see or touch git. Every git command is refused (read-only ones too) and `.git` in any folder;
+  `.envrc`, `.npmrc` and `.visionboard/app-state/` are closed. The skill says so in the Allow line (git:
+  say what you would run and why) and the closed-files line.
+- 2026-10-29, agent: **not run with live agents.** Watch a real turn for the agent reaching for `git status`
+  or `git diff` first (refused), and whether it then says what it wanted instead of working around it.

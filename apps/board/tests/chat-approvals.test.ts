@@ -248,3 +248,14 @@ test('for this folder: kept in the store, so a new session and a restart answer 
   strict.approvals.release();
   await asked;
 });
+
+test('a command the gate asked about is never let through unasked by the server (its words may point elsewhere, F4)', async () => {
+  const a = setup();
+  const asked = a.approvals.ask(command('cat src/x.ts'));
+  const request = a.events.at(-1) as { kind: string; scopes: string[] };
+  assert.equal(request.kind, 'approval_request', 'the server, which can\'t see the shell\'s folder, asks');
+  assert.deepEqual(request.scopes, ['once', 'session']);
+  a.approvals.release();
+  await asked;
+  assert.deepEqual(await a.approvals.ask(command('cat .env')), { approved: false, status: 'denied', asked: false }, 'a refusal still holds');
+});

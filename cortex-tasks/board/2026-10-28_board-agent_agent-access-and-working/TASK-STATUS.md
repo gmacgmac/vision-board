@@ -36,7 +36,7 @@ categories: [board-security, board-agent, board-app]
 | 3 | WORK_01 | 1 | strong | Product designer for collaborative tools — while someone else is working the person must see it at a glance, never be blocked from their own work, and never miss the moment a reply arrives. | [Working alongside the agent](./WORK_01_working-alongside.md) | Completed | port 5300 |
 | 4 | WIRE_01 | 2 | strong | Application security engineer who has written sandbox policies — the same as RULES_01's: one policy, applied before anything remembered, on every route a tool call can take. | [Every route uses the policy](./WIRE_01_wire-policy.md) | Completed | port 5400 |
 | 5 | ASK_01 | 3 | standard | — | [Allow for this folder, and forgetting it](./ASK_01_folder-scope-ui.md) | Completed | port 5500 |
-| 6 | VERIFY_01 | 4 | strong | Penetration tester given a running board and a chat with an agent they control, no history of the work — tries every way to read `.env` or the bots' secrets, write the ledger or `.git/`, keep a yes beyond its scope, or get a question to answer itself. | [Verification](./VERIFY_01_access-verification.md) | Pending | port 5600 |
+| 6 | VERIFY_01 | 4 | strong | Penetration tester given a running board and a chat with an agent they control, no history of the work — tries every way to read `.env` or the bots' secrets, write the ledger or `.git/`, keep a yes beyond its scope, or get a question to answer itself. | [Verification](./VERIFY_01_access-verification.md) | Completed | port 5600; 13 findings, F1 blocking ([findings](./VERIFY_01_findings.md)) |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -79,6 +79,10 @@ categories: [board-security, board-agent, board-app]
 | WIRE_01-R2 | WIRE_01 | `packages/chat`: `ChatHost.queues` (words alone go while the agent works; the composer's hint), then `apps/board/src/shell/chat-panel.ts` `render` sets it with `holds` (both on a board and in the folder) under `workAlongside` | ASK_01 (packages/chat) | Done (ASK_01) |
 | WIRE_01-R3 | WIRE_01 | `packages/chat` events, feed, approval: render `read` facts (`{ path, recursive? }`) and offer only the request's `scopes` (`folder` → "Allow for this folder"); the forget list on `list_permissions`/`forget_permission` | ASK_01 | Done (ASK_01) |
 | WIRE_01-R4 | WIRE_01 | `npm run map` (new exports: `chat-permissions.ts`, `#agent` `coverOf`, `rememberedHead`, `claudeDenyRules`, `gateEnv`, `READ_TOOLS`, `RULES_REFUSAL`, `GATE_*_ENV`); `npm run gen` to confirm | Orchestrator | Open |
+| VERIFY_01-F1..F4,F6,F8,F12,F13 | VERIFY_01 | Kiro reads unasked (F1); command yes reaching outside (F2); parent-folder search (F3); `cd` judged from the wrong folder (F4); `git config` never remembered (F6); `--tools` (F8); docs (F12); skill search line (F13) | WIRE_01 Run 3 | Open |
+| VERIFY_01-F5,F9,F10 | VERIFY_01 | Refuse: app-state reads; nested `.git/` and ledgers; `.git/config`, `.envrc`, `.npmrc` | Maintainer yes (point 345, 2026-10-29); a new decision D-067; a WIRE_01 run after Run 3 | Open |
+| M-346 | Maintainer | Ruling 346 (2026-10-29): the integrated agent builds boards and apps in `.visionboard/`; it does not see or touch git: refuse reading `**/.git/**` and refuse every `git` command | WIRE_01 run after Run 3; in D-067 | Open |
+| VERIFY_01-F7,F11,F13b | VERIFY_01 | Remembered runners; whole-folder commands; a gentler search walk | Tracker M30, M31, M32 | Done |
 
 **Status Values**: `Open` | `Done` | `Closed`
 
@@ -122,6 +126,13 @@ _Status:_ Completed (2026-10-28)
   always refused (task file).
 - Run 2: `NEVER_REMEMBERED` (one table beside `commandHead`: code runners, commands acting on their targets,
   forced git, network) asked every time; `git -C x commit` → `git commit`. Unit 1897, check 0, chat specs 65.
+- Run 3: VERIFY_01 F1 (Kiro agent file: V3 `fs_read`/`shell` ask + deny rows, 2.x `deniedPaths`; 2.x reads inside
+  the folder still never reach `verdictFor`), F2 (outside → once), F3 (search of a folder holding the board's),
+  F4 (no `cd` carry-over; words from the hook's `cwd`; the server never lets an asked command through), F6, F8
+  (`--tools`), F12, F13, F2/F7 lines. Unit 1914, check 0; `folder-access-dark` baseline changed (2212 px), not re-taken.
+- Run 4: rulings 345, 346 in `ACCESS_RULES` and `policy`: `**/.git/**` both ways and every git command refused
+  (`runsProgram`, `REFUSED_PROGRAMS`), `.envrc`/`.npmrc`, app state, nested ledger; second lines regenerated;
+  skill v3.18; D-067 drafted in the task file. Unit 1917, check 0, chat specs 76; map stale (new exports).
 
 ### ASK_01
 _Status:_ Completed (2026-10-29)
@@ -130,7 +141,18 @@ _Status:_ Completed (2026-10-29)
 - Checks: unit 1907 + scripts pass, check 0 errors, gen-api current, verify fails only on modules.md (map: new `#chat` exports); chat page specs on 5500 pass (a loaded machine made some gallery tests hang in teardown; alone they pass).
 
 ### VERIFY_01
-_Status:_ Pending
+_Status:_ Completed (2026-10-29). Findings in [VERIFY_01_findings.md](./VERIFY_01_findings.md).
+- **Blocking, F1**: Kiro's default policy reads the workspace silently (`fs_read` on `./**`, kiro.dev permissions),
+  so `.env` and the bots' secrets never reach `verdictFor`. Fix: `ask` on `fs_read` and `shell` and `deny` rows in
+  the agent file (from `ACCESS_RULES`), then a live run.
+- **High**: F2 a command's session yes is kept by head and covers outside paths (`cat`, `grep`, `sed -i`): offer
+  `once` when a word is outside (`policy.ts`). F3 a search of the board's parent is only asked: walk the board's
+  folder. F4 command words resolve from the board's folder, not the shell's `cwd`: `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1`
+  and the hook's `cwd` for relative words.
+- **Medium**: F5 `app-state/**` readable (table row), F6 `git config` never remembered, F7 remembered runners
+  (tracker), F8 `--tools`. Low: F9 to F11. Docs: F12 (four Kiro lines, the gallery). F13: skill line for top files.
+- Held: every `.env`, link, `..`, case, glob, pipe, `find -exec`, `git show` attempt; ledger, `.git/hooks`,
+  `permissions.json` writes; hold tests; chat specs 17 passed on 5600; gallery light and dark. Gates green.
 
 ## The Run (orchestrator)
 

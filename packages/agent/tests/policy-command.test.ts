@@ -15,13 +15,14 @@ const run = (command: string, strict = false) => policy({ kind: 'command', comma
 const ALLOW: Decision = { allow: true };
 const ASK_IN: Decision = { ask: true, scopes: ['once', 'session', 'folder'] };
 const ASK_OUT: Decision = { ask: true, scopes: ['once', 'session'] };
+const ONCE: Decision = { ask: true, scopes: ['once'] };
 const refused = (d: Decision) => 'refuse' in d;
 
 test('commands that only read the folder go ahead', () => {
-  for (const c of ['ls', 'pwd', 'cat src/x.ts', 'git log --oneline', 'git diff HEAD~1', 'grep -rn foo src | head',
-    'git status', 'git branch', 'git branch -a -v', 'git show HEAD:src/x.ts', 'find . -name "*.ts"', 'tree src', 'wc -l src/x.ts',
+  for (const c of ['ls', 'pwd', 'cat src/x.ts', 'grep -rn foo src | head',
+    'find . -name "*.ts"', 'tree src', 'wc -l src/x.ts',
     'head -n 5 src/x.ts | tail -n 2', 'rg foo src clean', 'grep foo src/x.ts', 'cat \'src/x.ts\'', 'stat .visionboard/ledger.jsonl',
-    'cat .visionboard/ledger.jsonl', 'git rev-parse HEAD', 'ls -la .git', 'rg --files']) {
+    'cat .visionboard/ledger.jsonl', 'rg --files']) {
     assert.deepEqual(run(c), ALLOW, c);
   }
 });
@@ -43,7 +44,8 @@ test('commands naming a refused path are refused, by any route to it', () => {
     ['cat ${PWD}/.env', words.secretsFiles],
     ['cat ~/proj/.env', words.secretsFiles],
     ['cat $(echo .env)', words.secretsFiles],
-    ['git show HEAD:.env', words.secretsFiles],
+    ['git show HEAD:.env', words.gitIsThePersons],
+    ['ls -la .git', words.gitFolder],
     ['grep -f.env src/x.ts', words.secretsFiles],             // a flag's value joined to it
     ['grep --file=.env src/x.ts', words.secretsFiles],
     ['cd src && cat ../.env', words.secretsFiles],
@@ -68,16 +70,16 @@ test('a search that would read a refused file is refused, even when it names non
   assert.deepEqual(run('grep -rn foo apps'), { refuse: words.searchReaches('apps', 'apps/web/.env') });
 });
 
-test('anything else is asked; outside the folder only once or for the session', () => {
-  for (const c of ['npm test', 'git commit -m x', 'find . -delete', 'sed -i s/a/b/ src/x.ts', 'cat src/x.ts; rm src/x.ts',
-    'cat src/x.ts && echo', 'ls | xargs rm', 'cat `ls`', 'git -c core.pager=sh log', 'git branch -D x', 'find . -exec rm {} \\;',
-    'tree -o out src', 'git diff --output=out', 'cat src/*.ts', 'cat src/x.ts &', 'PAGER=x git log', 'rg --pre sh foo src',
+test('anything else is asked; outside the folder only once (a command naming a path outside is never kept, VERIFY_01 F2)', () => {
+  for (const c of ['npm test', 'find . -delete', 'sed -i s/a/b/ src/x.ts', 'cat src/x.ts; rm src/x.ts',
+    'cat src/x.ts && echo', 'ls | xargs rm', 'cat `ls`', 'find . -exec rm {} \\;',
+    'tree -o out src', 'cat src/*.ts', 'cat src/x.ts &', 'rg --pre sh foo src',
     'cat src/x.ts\nrm src/x.ts', 'cat "unterminated']) {
     assert.deepEqual(run(c), ASK_IN, c);
   }
   assert.deepEqual(run('cat ~/x'), ASK_IN, '~ is the shell\'s: asked, as a command we can\'t read plainly');
   for (const c of ['cat ../outside/notes.txt', `cat ${fx.outside}/notes.txt`, 'cat out-link', 'npm test --prefix /tmp']) {
-    assert.deepEqual(run(c), ASK_OUT, c);
+    assert.deepEqual(run(c), ONCE, c);
   }
 });
 
@@ -104,8 +106,7 @@ test('shellWords: quotes, escapes and what makes a command not plain', () => {
 test('readOnlyCommand: the reads and the searches of an allow-listed command; null otherwise', () => {
   assert.deepEqual(readOnlyCommand('grep -rn foo src | head'), { reads: ['foo', 'src'], searches: ['src'] });
   assert.deepEqual(readOnlyCommand('rg foo'), { reads: ['foo'], searches: ['.'] });
-  assert.deepEqual(readOnlyCommand('git show HEAD:src/x.ts'), { reads: ['HEAD:src/x.ts'], searches: [] });
-  for (const c of ['npm test', 'find . -fprint x', 'file -C x', 'git --git-dir=x log', 'tree -R', 'wc --files0-from=x', 'rg --hostname-bin=x foo']) {
+  for (const c of ['npm test', 'git status', 'git show HEAD:src/x.ts', 'find . -fprint x', 'file -C x', 'git --git-dir=x log', 'tree -R', 'wc --files0-from=x', 'rg --hostname-bin=x foo']) {
     assert.equal(readOnlyCommand(c), null, c);
   }
 });

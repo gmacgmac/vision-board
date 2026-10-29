@@ -771,13 +771,15 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     the gate decided and whatever was answered before: a refused path is denied and an allowed one
     approved, unasked. Then a kept yes answers what it covers (`coverOf`): a write's yes covers writes in
     that file's folder (not its subfolders), a read's yes covers that file only, a search's yes searches of that folder, a
-    command's yes that command's first words (`rememberedHead`; `git -C x commit` is `git commit`; never
-    a row of `NEVER_REMEMBERED`: an interpreter, a launcher, a script by its path, a command acting on
-    whatever it targets such as `rm`, `mv`, `cp`, `git reset`, `git push` or any forced git command, nor
-    `curl`/`wget`); for the rest of the `session` (in memory), or for the `folder`, kept in
+    command's yes that command's first words (`rememberedHead`; never a row of `NEVER_REMEMBERED`: an
+    interpreter, a launcher, a script by its path, a command acting on whatever it targets such as `rm`,
+    `mv`, `cp`, nor `curl`/`wget`; a command naming a path outside the folder is offered `once` only);
+    for the rest of the `session` (in memory), or for the `folder`, kept in
     `.visionboard/permissions.json` (`chat-permissions.ts`; written by the server only, atomically,
     readable by this user only, git-ignored; a refused path for the agent; a damaged file keeps nothing),
-    listed by `list_permissions` and forgotten by `forget_permission`. With `agentAccessRules` off nothing
+    listed by `list_permissions` and forgotten by `forget_permission`. Git is the person's (points 345, 346, D-067
+    proposed): `.git` in any folder and every git command are refused, as are `.envrc`, `.npmrc` and
+    `.visionboard/app-state/**`. With `agentAccessRules` off nothing
     goes unasked and nothing kept for the folder is offered or used. **Timing**: with `approvalHold` (on
     by default, `VB_FLAGS`) a question waits with no limit until the person answers, presses Stop or sends
     a new message, and carries no `expiresAt`; the agent's turn clock pauses meanwhile; off, it waits 120
@@ -791,8 +793,10 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     same `approval_request`/`answer_approval` flow: the `vision-board` tools go unasked; a read, a search,
     a file change or a command is decided by the same access rules (`verdictFor`, every path the call
     names), asked only when they ask; anything else is refused; a kept yes is the server's (Kiro is always
-    answered with its one-time option). Kiro's agent file allows no reading tool unasked, so every read
-    reaches the rules. No model list is offered for Kiro
+    answered with its one-time option). Kiro's agent file makes reads and commands ask (engine V3) and denies
+    the closed files itself (`kiroAccess`); on CLI 2.x, which trusts reads in its working folder, a read inside
+    the folder does not reach `verdictFor`, and only the closed files are stopped, by Kiro's own
+    `deniedPaths` (chat.md § The agent's access). No model list is offered for Kiro
     (`--model` is passed when a model is given). Usage is not reported by Kiro's ACP v2. A board
     write's cards and head come from the tool call's `rawOutput` (kiro-cli 2.28.0 sends an MCP tool's
     result there, `{ items: [{ Json: { content } }] }`, and no `content`), so its change chip zooms.

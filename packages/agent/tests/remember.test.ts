@@ -5,7 +5,7 @@
 import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { commandHead, coverOf, rememberedHead } from '../src/index.ts';
+import { coverOf, rememberedHead } from '../src/index.ts';
 import { accessFixture } from './access-fixture.ts';
 
 const fx = accessFixture();
@@ -16,7 +16,7 @@ test('rememberedHead: a command yes covers its first words; `npm test` covers `n
   assert.equal(rememberedHead('npm test -- foo'), 'npm test');
   assert.equal(rememberedHead('npm run build'), 'npm run build', 'a script runner covers that script only');
   assert.notEqual(rememberedHead('npm run deploy'), rememberedHead('npm run build'));
-  assert.equal(rememberedHead('git commit -m x'), 'git commit');
+  assert.equal(rememberedHead('git commit -m x'), null, 'git is the person\'s (346): refused, and never kept');
   assert.equal(rememberedHead('ls -la'), 'ls');
 });
 
@@ -34,17 +34,11 @@ test('rememberedHead: a command whose effect depends on its targets, or reaches 
     'git reset --hard', 'git clean -fd', 'git checkout -- src/a.ts', 'git restore src/a.ts', 'git push', 'git push origin main', 'git rebase main',
     'git branch -D old', 'npm publish', 'curl https://example.invalid/', 'wget x', 'git commit --force', 'git add -f x', 'git push --force-with-lease',
     'git checkout -f main', 'git -C x push',
+    'git config user.name x', 'git config core.hooksPath src', 'git -c a=b config core.fsmonitor x',
   ]) assert.equal(rememberedHead(c), null, c);
-  assert.equal(rememberedHead('git checkout main'), 'git checkout', 'a checkout without -- or a force is kept');
-  assert.equal(rememberedHead('git branch -d merged'), 'git branch');
+  assert.equal(rememberedHead('git checkout main'), null, 'every git command (346)');
 });
 
-test('rememberedHead: git\'s -C <dir> and -c k=v are skipped when taking the head (Run 2)', () => {
-  assert.equal(rememberedHead('git -C x commit -m y'), 'git commit');
-  assert.equal(rememberedHead('git -c user.name=x commit'), 'git commit');
-  assert.equal(rememberedHead('git -C a -c k=v status'), 'git status');
-  assert.equal(commandHead('git -C x commit'), 'git commit');
-});
 
 test('coverOf: a write\'s folder (as really reached), a read\'s file, a search\'s folder, a command\'s head', () => {
   const at = (rel: string) => path.join(fx.folder, rel);
