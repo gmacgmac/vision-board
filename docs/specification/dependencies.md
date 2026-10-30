@@ -28,12 +28,19 @@ register in the same change.
 | Install scripts run | 0. No installed package declares `preinstall`, `install` or `postinstall` |
 | Licences (installed) | MIT 45, Apache-2.0 7, MPL-2.0 3, BSD-3-Clause 2, ISC 1 |
 
+## Known audit findings we accept (2026-10-30)
+
+`npm audit` reports `deepmerge` 4.3.1 (GHSA-gcqx-w48m-w2h4, low, prototype poisoning of `mergeObject`'s result), through
+`@sveltejs/vite-plugin-svelte` 7.3.1. No fixed release exists and the plugin is at its latest. It merges our own build
+config at build time and never reaches the page or the server, so it is accepted. Review when either package moves.
+`vite` went to 8.3.4 rather than 8.3.5 (which is 9 days old) and `fast-uri` to 3.1.9 for the other findings.
+
 ## Direct dependencies: what and why (D-014)
 
 | Package | Version | Declared in | Used by | Why |
 |---|---|---|---|---|
 | `svelte` | 5.57.1 | root `package.json` | `.svelte` files in `apps/board/src/` | The app shell around the board (D-012). A compiler, so pages ship as generated code plus a small runtime |
-| `vite` | 8.3.1 | root `package.json` | `apps/board/vite.config.ts`; root `build` and `board` scripts | Builds the page into `apps/board/dist/`, which the board server serves |
+| `vite` | 8.3.4 | root `package.json` | `apps/board/vite.config.ts`; root `build` and `board` scripts | Builds the page into `apps/board/dist/`, which the board server serves |
 | `@sveltejs/vite-plugin-svelte` | 7.3.1 | root `package.json` | `svelte()` in `apps/board/vite.config.ts`, `vitePreprocess` in `apps/board/svelte.config.js` | Compiles `.svelte` files inside Vite |
 | `svelte-check` | 4.7.6 | root `package.json` | root `check` script | Strict type and accessibility checks of `.svelte` and `.ts` files (rules 5, 14) |
 | `typescript` | 6.0.3 | `package.json` | `svelte-check` (peer) | Type checking. 6.x because `svelte-check` accepts only `^5 \|\| ^6`; review when it supports 7 |
