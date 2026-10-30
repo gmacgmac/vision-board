@@ -94,6 +94,9 @@ export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFi
   return now.filter((f) => before.get(f.id) !== f.state).map((f) => words.said(f)).join(' ');
 }
 
+/** Whether a drag carries files, which is the only drag the composer takes: never text or a card. */
+export const dragsFiles = (e: { dataTransfer: { types: readonly string[] } | null }): boolean => e.dataTransfer?.types.includes('Files') === true;
+
 /** The file to bring into view in a long row: the last one that came, or that was just refused (its reason must be seen). */
 export function newestFile(was: readonly ComposerFile[], now: readonly ComposerFile[]): ComposerFile | undefined {
   const before = new Map(was.map((f) => [f.id, f.state]));

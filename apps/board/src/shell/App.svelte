@@ -29,6 +29,7 @@
   import * as chatWords from './words/chat.ts';
   import { createChatBridge } from './chat-bridge.ts';
   import { createChatPanel, type ChatPanel } from './chat-panel.ts';
+  import { guardFileDrops } from './file-drops.ts';
   import { flagOn } from '#format';
   import { pageFlags } from '../flags.ts';
 
@@ -99,9 +100,11 @@
     const unrefresh = bridge ? v.status.on((patch) => { if ('drawn' in patch) bridge.refresh(); }) : undefined;
     // A tab close or reload asks while a note holds unsaved words (leavePrompt flag, M11).
     const unguard = leavePrompt ? guardLeave(v.status) : undefined;
+    // A dragged file never replaces the board (chatAttachments flag, point 357).
+    const unguardDrops = bridge && flagOn('chatAttachments', pageFlags()) ? guardFileDrops(document) : undefined;
     if (new URLSearchParams(location.search).has('vbwork')) exposeWork({ rebuild: () => v.board.rebuild(), idle: () => v.board.idle() });
     view = v;
-    return () => { unguard?.(); unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
+    return () => { unguardDrops?.(); unguard?.(); unrefresh?.(); unbridge?.(); unmirror(); v.unmount(); };
   });
 </script>
 

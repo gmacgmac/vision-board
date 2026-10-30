@@ -275,6 +275,13 @@ The person attaches a file to a message and the agent opens it with its own tool
   composer with the message. A paste with other text is that text (a spreadsheet's cells come with a picture of
   them), unless the text is only the files' names (`pastedFiles`). A picture pasted with no name of its own is named
   from the words: "pasted picture", the day, its type's extension.
+- **A file dragged over the page** (point 357; `shell/file-drops.ts` `guardFileDrops`, `chat-attach-drop.spec.ts`,
+  `file-drops.test.ts`): with the flag on, the whole open panel takes a drop as the composer does (`dropArea`, the
+  same drop target on the composer), and anywhere else on the page a file does nothing: the page stops the browser
+  opening it in place of the board. Only files; text and a card's drag go on as ever. App frames let a dragged file
+  through while it is dragged, as the guard can't reach their pages. The guard is the host's, as a host owns its page,
+  and it comes off when the board unmounts. **Not covered**: a drag that first enters the window directly over a frame
+  is not seen until it reaches the page; panels get no drops during a file's drag.
 - **The person's name for a file** (`attachedFile.label`, point 356; api.md 165): the server's saved name is plain ASCII, so a
   wholly non-Latin name saves as `file.png`. The chip and the sent message show the name the person's file has: Send
   carries it beside the path (`fileLabel` makes it one the contract takes). It is display only: shown as text, never in
@@ -284,7 +291,7 @@ The person attaches a file to a message and the agent opens it with its own tool
 - **Not covered**: an attached file's contents are read by the agent like anything else it reads, so
   words inside it can try to steer it; the access rules and the person's approvals still hold.
 
-Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `chat-attach.test.ts`; `packages/chat/tests/composer-files.test.ts`; `tests/pages/chat-attach.spec.ts`, `chat-attach-gallery.spec.ts`.
+Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `chat-attach.test.ts`, `file-drops.test.ts`; `packages/chat/tests/composer-files.test.ts`; `tests/pages/chat-attach.spec.ts`, `chat-attach-drop.spec.ts`, `chat-attach-gallery.spec.ts`.
 
 ## Another host
 

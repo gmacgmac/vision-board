@@ -111,6 +111,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
         const made = (await loader()).mountChatView(panel);
         if (gone) return false;
         view = made;
+        view.composer.dropArea(panel); // the whole panel takes a dropped file (point 357)
         view.feed.configure(feedOptions());
         view.composer.setContext(context);
         news.drawn(view.feed);

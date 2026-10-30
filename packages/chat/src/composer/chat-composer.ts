@@ -10,7 +10,7 @@
 import type { Chip } from '../events.ts';
 import { CHAT_CHIP_REMOVE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_SEND_EVENT, TEXT_MAX } from '../events.ts';
 import type { ChatFileRemoveDetail } from './composer-attach.ts';
-import { announcer, drawAttaching, removeButton, wireAttaching } from './composer-attach.ts';
+import { announcer, drawAttaching, dropArea, removeButton, wireAttaching } from './composer-attach.ts';
 import type { ComposerContext, ComposerFile, ComposerView } from './composer-core.ts';
 import { chipKey, COMPOSER_KEYS, filesReady, filesSaid, filesUploading, newestFile, sendIntent, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
@@ -28,6 +28,8 @@ export interface ChatComposerElement extends HTMLElement {
   /** The host's context beside the chips (null: none): one chip, its summary, opening a preview of
    *  exactly what goes; it goes with every message the host sends. */
   setContext(context: ComposerContext | null): void;
+  /** Take a dropped file anywhere on `area`, a panel the host keeps around the composer; the drop target still shows here. */
+  dropArea(area: HTMLElement): void;
   /** Where each attached file stands: the host's to say. */
   setFiles(files: readonly ComposerFile[]): void;
   /** Whether anything is attached: a chip, the context or a file that is ready. */
@@ -62,6 +64,7 @@ export function defineChatComposer(): void {
     private quiet = false;
     private readonly popId = `chat-cmp-pop-${++made}`;
     private readonly say = announcer(this);
+    private readonly drops = dropArea(this, () => this.view);
 
     constructor() {
       super();
@@ -102,10 +105,12 @@ export function defineChatComposer(): void {
 
     connectedCallback(): void {
       this.box();
+      this.drops.on();
       document.addEventListener('pointerdown', this.away);
     }
 
     disconnectedCallback(): void {
+      this.drops.off();
       document.removeEventListener('pointerdown', this.away);
       window.clearTimeout(this.leaving);
     }
@@ -128,6 +133,8 @@ export function defineChatComposer(): void {
       line.innerHTML = lineTemplate(v.files && !v.shut && filesUploading(this.files) ? { ...v, hint: v.files.waits } : v);
       line.hidden = line.innerHTML === '';
     }
+
+    readonly dropArea = (area: HTMLElement): void => this.drops.move(area);
 
     setChips(chips: readonly Chip[]): void {
       this.current = [...chips];
@@ -281,9 +288,7 @@ export function defineChatComposer(): void {
     private removeFile(id: string): void {
       const file = this.files.find((f) => f.id === id);
       if (!file) return;
-      this.files = this.files.filter((f) => f !== file);
-      this.drawChips();
-      this.drawLine();
+      this.setFiles(this.files.filter((f) => f !== file));
       this.focusText();
       if (this.view.files) this.say(this.view.files.removed(file.name));
       this.dispatchEvent(new CustomEvent<ChatFileRemoveDetail>(CHAT_FILE_REMOVE_EVENT, { bubbles: true, detail: { id } }));

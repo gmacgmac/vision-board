@@ -1,10 +1,10 @@
 // Composer pattern, layer 3 (element), its attaching part (D-068): the paperclip and its file input, a
 // file dragged over the composer (only files: text or a card goes on as ever) and dropped, and a paste.
-// All three raise `chat-files`; the host's words (`ComposerView.files`) turn the part on, and without them
+// All three raise `chat-files`, and a host may widen where a drop lands to its panel (`dropArea`); the host's words (`ComposerView.files`) turn the part on, and without them
 // the composer is as it ever was. It never reads a file and never calls the server. Browser only.
 import { CHAT_FILES_EVENT } from '../events.ts';
 import type { ComposerView } from './composer-core.ts';
-import { pastedFiles } from './composer-core.ts';
+import { dragsFiles, pastedFiles } from './composer-core.ts';
 import { attachTemplate, dropTemplate, saidTemplate } from './composer-template.ts';
 
 const ATTACH = 'button.chat-cmp-attach';
@@ -15,8 +15,6 @@ const SAY_MS = 100;
 export interface ChatFilesDetail { files: File[]; pasted: boolean }
 /** The `chat-file-remove` event's detail (bubbles): the file whose chip the person took off, by the host's id. */
 export interface ChatFileRemoveDetail { id: string }
-
-const dragsFiles = (e: DragEvent): boolean => e.dataTransfer?.types.includes('Files') === true;
 
 /** Tell a screen reader: what comes within a moment goes as one line, as a live region may read only the last of several changes. */
 export function announcer(el: HTMLElement): (words: string) => void {
@@ -38,30 +36,54 @@ export function removeButton(el: HTMLElement): string | undefined {
   return el.dataset.file ? `button[data-file="${CSS.escape(el.dataset.file)}"]` : `button[data-chip="${CSS.escape(el.dataset.chip ?? '')}"]`;
 }
 
-/** Listen on `el` for the three ways a file comes. Shut, it takes none, though a dropped one still doesn't open in the page. */
-export function wireAttaching(el: HTMLElement, view: () => ComposerView): void {
+const raise = (el: HTMLElement, files: File[], pasted: boolean) => {
+  el.dispatchEvent(new CustomEvent<ChatFilesDetail>(CHAT_FILES_EVENT, { bubbles: true, detail: { files, pasted } }));
+};
+
+/** The drop on `area`, the composer `el` by default or a host's panel around it: the drop target shows on `el`, which
+ *  raises the event. Shut, it takes none, though a dropped file still doesn't open in the page. Removed by what it returns. */
+function wireDrop(area: HTMLElement, el: HTMLElement, view: () => ComposerView): () => void {
+  const off = new AbortController();
+  const { signal } = off;
   const mark = (on: boolean) => el.toggleAttribute('data-drop', on);
   const on = () => view().files !== undefined;
   const shut = () => view().shut !== undefined;
-  const take = (files: File[], pasted: boolean) => {
-    el.dispatchEvent(new CustomEvent<ChatFilesDetail>(CHAT_FILES_EVENT, { bubbles: true, detail: { files, pasted } }));
-  };
   const over = (e: DragEvent) => {
     if (!on() || !dragsFiles(e)) return;
     e.preventDefault(); // else the browser opens the file in place of the board
     e.dataTransfer!.dropEffect = shut() ? 'none' : 'copy';
     mark(!shut());
   };
-  el.addEventListener('dragenter', over);
-  el.addEventListener('dragover', over);
-  el.addEventListener('dragleave', (e) => { if (!el.contains(e.relatedTarget as Node | null)) mark(false); });
-  el.addEventListener('drop', (e) => {
+  area.addEventListener('dragenter', over, { signal });
+  area.addEventListener('dragover', over, { signal });
+  area.addEventListener('dragleave', (e) => { if (!area.contains(e.relatedTarget as Node | null)) mark(false); }, { signal });
+  area.addEventListener('drop', (e) => {
     if (!on() || !dragsFiles(e)) return;
     e.preventDefault();
     mark(false);
     const files = [...e.dataTransfer!.files];
-    if (!shut() && files.length) take(files, false);
-  });
+    if (!shut() && files.length) raise(el, files, false);
+  }, { signal });
+  return () => { off.abort(); mark(false); };
+}
+
+/** Where `el` takes a dropped file: on while it is on the page, and `move` hands it a host's panel. */
+export function dropArea(el: HTMLElement, view: () => ComposerView) {
+  let area = el;
+  let undo: (() => void) | null = null;
+  const on = () => { undo?.(); undo = wireDrop(area, el, view); };
+  return {
+    on,
+    off() { undo?.(); undo = null; },
+    move(to: HTMLElement) { area = to; if (undo) on(); },
+  };
+}
+
+/** Listen on `el` for a paste and the paperclip, the other two ways a file comes. */
+export function wireAttaching(el: HTMLElement, view: () => ComposerView): void {
+  const on = () => view().files !== undefined;
+  const shut = () => view().shut !== undefined;
+  const take = (files: File[], pasted: boolean) => raise(el, files, pasted);
   el.addEventListener('paste', (e) => {
     const data = e.clipboardData;
     if (!on() || shut() || !data) return;

@@ -96,6 +96,33 @@ _To be completed by agent after task completion. Re-run? Add a `### Run N` block
 - Folder switch needs no code: the page reloads onto the new folder (`reloadOnto`, `folderMoved`), which clears the chips; a page spec holds it.
 - Attaching lives in `chat-bridge.ts` as the plan says, though it has little to do with the board. Its own file would fit one job per file better; left for the orchestrator's call, as a new shell file is outside this task's list.
 
+### Run 2
+
+Point 357 (the orchestrator's call; the maintainer was told and can still say no): a file dropped just outside the composer must never replace the board.
+
+**Status**: Completed · **Completed**: 2026-10-30
+
+#### Changes Made
+- Nothing else on the page listened for a native drag (only the composer; a card's move is pointer events), so nothing was reused beyond the composer's own handling.
+- `apps/board/src/shell/file-drops.ts` (new) `guardFileDrops`: on the document, a dragged file that nothing took gets `preventDefault` and the no-drop cursor; only files. `App.svelte` starts it with the chat and the flag on, and removes it on unmount.
+- `composer-attach.ts` `dropArea`: the composer's drop handling can sit on a host's panel; `chat-panel.ts` hands it the panel, so the feed, the header and the words all take a file with the same drop target on the composer.
+- A dragged file passes over app frames, whose pages the guard can't reach: frames take `pointer-events: none` while a file is dragged.
+- `tests/pages/chat-attach-drop.spec.ts` (new, real drags through CDP `Input.dispatchDragEvent`), `apps/board/tests/file-drops.test.ts` (new, removal included), chat.md § Attaching, `pattern.json`. No new sentence.
+
+#### Issues & Resolutions
+- The headless browser does not itself open a dropped file, so "the page stays the board" can't fail on its own. The spec fails first on what can: whether the page stopped the drag. It failed before the guard. With the no-drop answer the browser fires no `drop` at all, which is the point.
+- CDP's `dragCancel` fires no `dragleave`, so leaving the window is tested by a leave event with no target and moving on to the board by a real drag.
+
+#### Caught Beyond the Brief
+- From memory of Chromium's drag code, an unhandled drop over a frame navigates the main frame, so the frames needed guarding too. Not established here: the test browser never navigates, so only "the page sees the drag over a frame's place" is proven, not what an unguarded frame would have done.
+- Not covered: a drag that first enters the window directly over a frame isn't seen until it reaches the page. A frame's own page would have to guard that (`packages/ui` `vb-app-frame`, outside this run's files).
+- While a file is dragged, app panels get no drops. No panel in `skills/` or the gallery takes any today; a future panel that wants them would need a decision.
+- The panel's resize grip sits outside the `.chat-panel` element: a file dropped on that thin edge does nothing, safely.
+
+#### Deviations from Plan
+- `apps/board/tests/file-drops.test.ts` is a new test file outside the run's named paths: removal on unmount can't be driven from a page spec.
+- Not looked at in a real browser by a person's own drag: an OS file drag can't be scripted in the browser pane, so the real drags are CDP's. The drop target's look is unchanged and in the gallery.
+
 ## On Completion
 
 Notes; your row in TASK-STATUS.md; one LOG line (`[board-app] COMPOSE_01: …` → this file, one line ending in a newline); the Return Contract with `REQUESTS` for anything outside your files.
