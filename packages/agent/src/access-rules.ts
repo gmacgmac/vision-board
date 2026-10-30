@@ -40,6 +40,7 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
+  { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', why: words.theirAttachments },
   { path: '**/.git/**', read: 'refuse', write: 'refuse', why: words.gitFolder },
 ];
 

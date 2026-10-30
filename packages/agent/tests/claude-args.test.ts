@@ -86,6 +86,7 @@ test('Claude Code\'s own deny rules, from the access rules, at the board\'s fold
     'Edit(//home/some one/\\[p\\]/.visionboard/lock)',
     'Edit(//home/some one/\\[p\\]/**/.visionboard/app-state/**)',
     'Edit(//home/some one/\\[p\\]/.visionboard/permissions.json)',
+    'Edit(//home/some one/\\[p\\]/.visionboard/attachments/**)',
     'Edit(//home/some one/\\[p\\]/**/.git/**)',
     'Bash(git)',
     'Bash(git *)',

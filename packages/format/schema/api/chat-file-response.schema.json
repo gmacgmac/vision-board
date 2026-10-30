@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/chat-file-response.schema.json",
+  "title": "An attached file saved",
+  "description": "`{ file }`: the file as saved. Send its `path` with the message (`send_chat` `files`).",
+  "$comment": "Was: api.md 164; D-068",
+  "type": "object",
+  "required": ["file"],
+  "properties": {
+    "file": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/attachedFile", "description": "The file as saved."}
+  },
+  "unevaluatedProperties": false
+}

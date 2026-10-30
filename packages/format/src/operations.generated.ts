@@ -134,6 +134,10 @@ export const OPERATIONS = {
     operationId: 'forget_permission', method: 'POST', path: '/api/permissions/forget',
     pathParams: [], xAgent: false, auth: 'person',
   },
+  attach_chat_file: {
+    operationId: 'attach_chat_file', method: 'POST', path: '/api/chat/files',
+    pathParams: [], xAgent: false, auth: 'person',
+  },
   get_project: {
     operationId: 'get_project', method: 'GET', path: '/api/project',
     pathParams: [], xAgent: false, auth: 'person',

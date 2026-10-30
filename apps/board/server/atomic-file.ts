@@ -3,8 +3,8 @@
 // agents store, the chat index, the recent list, the lock and the panel states all write through it.
 import fs from 'node:fs';
 
-/** Write `text` to `file` atomically; `mode` (such as 0o600, this user only) applies to a new file. */
-export function writeFileAtomic(file: string, text: string, mode?: number): void {
+/** Write `text` (or bytes) to `file` atomically; `mode` (such as 0o600, this user only) applies to a new file. */
+export function writeFileAtomic(file: string, text: string | Uint8Array, mode?: number): void {
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, text, mode === undefined ? undefined : { mode });
   fs.renameSync(tmp, file);

@@ -2,16 +2,18 @@
 // sessions, or the folder's on no board, send the person's message (with the board's answers since
 // its agent was last told, as one message, chat-board-context; a session on no board sends none),
 // stop a turn, answer an approval, watch a session's events, the gate's ask, and list or forget the
-// yeses kept for the folder (D-066). The caller check has already run: the
+// yeses kept for the folder (D-066), and save a file the person attaches to a message (D-068; `chatAttachments`). The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
 import type { ApprovalAnswer, Facts } from '#agent';
 import { REALM, bearerOf } from './callers.ts';
+import type { AttachedFile } from './chat-files.ts';
+import { ATTACHMENT_BODY_BYTES, attachedFiles, fileTooLarge, saveAttachment } from './chat-files.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
 import type { Ctx, Handler, HandlerTable } from './dispatch.ts';
-import { problem } from './problem.ts';
+import { ProblemError, problem } from './problem.ts';
 import { endWhenClosed } from './streams.ts';
 import { sendJson } from './respond.ts';
 import { personBoard, refuseArchived, refuseLocked } from './visibility.ts';
@@ -61,16 +63,24 @@ const listFolderChats: Handler = ({ res, chats }) => {
 
 const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: serverChatWords.noWordsNothingAttachedAnd }] });
 
+/** The files a message names; with the flag off it may name none. */
+function filesOf(on: boolean, folder: string, paths: string[]): AttachedFile[] {
+  if (!on) throw problem('invalid', serverChatWords.attachingFilesIsOff, { errors: [{ pointer: '/files', detail: serverChatWords.filesCanTBeAttached }] });
+  return attachedFiles(folder, paths);
+}
+
 /** The person's message; never to a session on an archived board (api.md 136). On a board, one
  * message with the chips and the board's answers since its agent was last told, recorded as the
  * board's Send when it goes; in the folder, the words alone (chat-sessions.ts `tell`). While the
  * agent works it waits, joined with any already waiting (202 with the wait's system line, point 328),
  * and the questions the agent is waiting on are released: a new message settles them (PLAN ruling
- * 335). A message refused (nothing to send) releases nothing. */
+ * 335). A message refused (nothing to send, a file it did not save) releases nothing. */
 const sendChat: Handler = async (ctx) => {
   const { req, res, ledger, chats } = ctx;
+  const folder = ctx.project.current().dir;
   const live = await inUse(ctx);
-  const msg = await body('send_chat', req) as ChatMessage;
+  const { files, ...rest } = await body('send_chat', req) as Omit<ChatMessage, 'files'> & { files?: string[] };
+  const msg: ChatMessage = { ...rest, ...(files && { files: filesOf(chats().attachments, folder, files) }) };
   const { board } = live.record;
   if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', serverChatWords.itsChatCanTTake);
   const busy = live.busy;
@@ -133,7 +143,18 @@ const forgetPermission: Handler = async ({ req, res, chats }) => {
   sendJson(res, 200, { permissions: chats().permissions.forget(id) });
 };
 
-export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval' | 'list_permissions' | 'forget_permission'> = {
+/** One file the person attached, saved in the folder open when it came. A body over the limit is
+ * refused in the file's words, not the body's: the person never sees base64. */
+const attachChatFile: Handler = async ({ req, res, project, chats }) => {
+  if (!chats().attachments) throw problem('not-found', serverChatWords.attachingFilesIsOff);
+  const folder = project.current().dir;
+  const input = await body('attach_chat_file', req, ATTACHMENT_BODY_BYTES).catch((err: unknown) => {
+    throw err instanceof ProblemError && err.code === 'too-large' ? fileTooLarge() : err;
+  });
+  sendJson(res, 201, { file: saveAttachment(folder, input as Parameters<typeof saveAttachment>[1]) });
+};
+
+export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval' | 'list_permissions' | 'forget_permission' | 'attach_chat_file'> = {
   start_chat: startChat,
   list_chats: listChats,
   start_folder_chat: startFolderChat,
@@ -145,4 +166,5 @@ export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folde
   ask_approval: askApproval,
   list_permissions: listPermissions,
   forget_permission: forgetPermission,
+  attach_chat_file: attachChatFile,
 };

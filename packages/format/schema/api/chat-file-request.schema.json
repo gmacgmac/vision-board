@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/chat-file-request.schema.json",
+  "title": "Attach a file to a chat message",
+  "description": "One file the person is attaching: its name as their system gives it (sanitised before it is used), its media type (`''` when the browser doesn't know it) and its bytes as base64.",
+  "$comment": "Was: api.md 164; D-068",
+  "type": "object",
+  "required": ["name", "type", "data"],
+  "properties": {
+    "name": {"type": "string", "maxLength": 1024, "description": "The file's name; the server keeps letters, digits, `.`, `-` and `_`, and never trusts the rest."},
+    "type": {"type": "string", "maxLength": 255, "description": "The file's media type, as the browser reports it; `''` when unknown. Any type is taken."},
+    "data": {"type": "string", "description": "The file's bytes as standard base64, padded; at most 10 MB once decoded."}
+  },
+  "unevaluatedProperties": false
+}

@@ -52,6 +52,8 @@ export interface ChatOptions {
   approvalHold?: boolean | undefined;
   /** The `agentAccessRules` flag off: nothing goes ahead unasked, nothing is kept for the folder. */
   strictAccess?: boolean | undefined;
+  /** The `chatAttachments` flag: the person may attach files to a message (D-068). */
+  attachments?: boolean | undefined;
 }
 
 /** Where a session is: a board, or `undefined` for the folder (a session on no board yet). */
@@ -78,6 +80,8 @@ export interface Chats {
   tell(live: LiveSession, msg: ChatMessage): ChatEvent | undefined;
   /** The yeses kept for this folder ("Allow for this folder"). */
   readonly permissions: Permissions;
+  /** Whether the person may attach files to a message (the `chatAttachments` flag). */
+  readonly attachments: boolean;
   /** A session, loaded and ready (resumed after a restart); `not-found` when there is none. */
   live(id: string): Promise<LiveSession>;
   /** A session already loaded in this server, if it is. */
@@ -104,14 +108,15 @@ function joined(was: Held | undefined, next: Held): Held {
   if (!was) return next;
   const text = [wordsOf(was.msg), wordsOf(next.msg)].filter(Boolean).join('\n\n');
   const [notes, cards] = [union(was.msg.notes, next.msg.notes), union(was.msg.cards, next.msg.cards)];
+  const files = [...new Map([...(was.msg.files ?? []), ...(next.msg.files ?? [])].map((f) => [f.path, f])).values()];
   return {
-    msg: { ...(text && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }) },
+    msg: { ...(text && { text }), ...(notes.length > 0 && { notes }), ...(cards.length > 0 && { cards }), ...(files.length > 0 && { files }) },
     before: Math.min(was.before, next.before), record: was.record || next.record,
   };
 }
 
 export function openChats(o: ChatOptions): Chats {
-  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false } = o;
+  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false } = o;
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
   let kept: Permissions | undefined;
@@ -189,13 +194,14 @@ export function openChats(o: ChatOptions): Chats {
       const s = ledger.state();
       const round = unsaid(live, board, held.before);
       const built = promptFor(s, board, held.msg, round);
-      if (!round && !wordsOf(held.msg) && !built.chips.length) return undefined;
+      const files = held.msg.files;
+      if (!round && !wordsOf(held.msg) && !built.chips.length && !files) return undefined;
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record.
       if (!isLocked(s, board)) {
         told.set(id, s.seq);
         if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
       }
-      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(built.chips.length > 0 && { chips: built.chips }) } };
+      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(built.chips.length > 0 && { chips: built.chips }), ...(files && { files }) } };
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
   }
 
@@ -206,7 +212,7 @@ export function openChats(o: ChatOptions): Chats {
     return live.post(() => {
       waiting.delete(id);
       const built = promptFor(ledger.state(), undefined, held.msg);
-      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text } };
+      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(held.msg.files && { files: held.msg.files }) } };
     }, QUEUED_WORDS);
   }
 
@@ -269,12 +275,13 @@ export function openChats(o: ChatOptions): Chats {
     tell(session, msg) {
       const { board, session: id } = session.record;
       const was = session.busy ? waiting.get(id) : undefined;
-      if (board === undefined) return wordsOf(msg) ? inFolder(session, joined(was, { msg, before: Infinity, record: false })) : undefined;
-      const attached = Boolean(msg.notes?.length || msg.cards?.length) || unsaid(session, board, Infinity) !== undefined;
+      if (board === undefined) return wordsOf(msg) || msg.files ? inFolder(session, joined(was, { msg, before: Infinity, record: false })) : undefined;
+      const attached = Boolean(msg.notes?.length || msg.cards?.length || msg.files) || unsaid(session, board, Infinity) !== undefined;
       if (!attached && !wordsOf(msg)) return undefined;
       return deliver(session, board, joined(was, { msg, before: Infinity, record: true }));
     },
     get permissions() { return permissions(); },
+    attachments,
     live,
     loaded: (id) => sessions.get(id),
     byToken: (token) => [...sessions.values()].find((s) => hasToken(s, token)),

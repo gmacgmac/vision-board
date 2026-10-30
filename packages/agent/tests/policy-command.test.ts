@@ -52,6 +52,9 @@ test('commands naming a refused path are refused, by any route to it', () => {
     ['cat .ENV', words.secretsFiles],
     ['sed -i s/a/b/ .visionboard/ledger.jsonl', words.theLedger],
     ['rm -rf .visionboard', words.boardFiles],
+    ['rm .visionboard/attachments/2026-10-30/1-a.pdf', words.theirAttachments],
+    ['sed -i s/a/b/ .visionboard/attachments/2026-10-30/1-a.pdf', words.theirAttachments],
+    ['cp x .visionboard/attachments/2026-10-30/2-b.pdf', words.theirAttachments],
     ['ln -s ../../.git/hooks/pre-commit .visionboard/images/p', words.gitFolder],
     ['cat up/../agents.json', words.boardSecrets],
   ];

@@ -11,12 +11,13 @@ import type { AgentSession, ChatEventDraft } from '#agent';
 import { toChatEvent } from '#agent';
 import type { ApprovalDraft, ApprovalOptions, Approvals } from './chat-approvals.ts';
 import { createApprovals } from './chat-approvals.ts';
+import type { AttachedFile } from './chat-files.ts';
 import type { StoredSession } from './chat-index.ts';
 import type { Chip } from './chat-prompt.ts';
 import { sameText } from './secrets.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
-export type MessageIn = { kind: 'message_in'; text: string; chips?: Chip[] };
+export type MessageIn = { kind: 'message_in'; text: string; chips?: Chip[]; files?: AttachedFile[] };
 /** A message as it goes: the agent's prompt and the person's `message_in`. */
 export interface Built { prompt: string; message: MessageIn }
 export type Draft = ChatEventDraft | ApprovalDraft | MessageIn;

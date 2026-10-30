@@ -25,7 +25,7 @@ export interface ApprovalAnswer { approved: boolean; scope?: ApprovalScope }
 export type ToolState = 'running' | 'done' | 'failed';
 export type TurnEnd = 'done' | 'stopped' | 'error';
 
-export interface MessageIn extends Stamp { kind: 'message_in'; text: string; chips?: Chip[] }
+export interface MessageIn extends Stamp { kind: 'message_in'; text: string; chips?: Chip[]; files?: { name: string; path: string; size: number }[] }
 export interface MessageOut extends Stamp { kind: 'message_out'; text: string; interim?: true }
 export interface ToolActivity extends Stamp {
   kind: 'tool_activity'; call: string; tool: string; state: ToolState; board?: string; cards?: number[]; head?: number;

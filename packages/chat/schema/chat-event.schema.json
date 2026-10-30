@@ -80,6 +80,17 @@
       },
       "unevaluatedProperties": false
     },
+    "attachedFile": {
+      "type": "object",
+      "description": "A file the person attached to a message, saved under the board's folder; the agent opens it by its path.",
+      "required": ["name", "path", "size"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]{0,79}$", "description": "The file's name as saved: letters, digits, `.`, `-` and `_`, up to 80 characters, no leading dot."},
+        "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "Where it is, relative to the board's folder: `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`."},
+        "size": {"type": "integer", "minimum": 0, "maximum": 10485760, "description": "Its size in bytes, at most 10 MB."}
+      },
+      "unevaluatedProperties": false
+    },
     "messageIn": {
       "type": "object",
       "description": "The person's message.",
@@ -93,6 +104,13 @@
           "maxItems": 200,
           "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/chip"},
           "description": "The notes and cards sent with it; left out when none."
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/attachedFile"},
+          "description": "The files attached to it; left out when none. At most 10 a message as sent; messages joined while the agent works carry them all."
         }
       },
       "allOf": [{"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/stamp"}],

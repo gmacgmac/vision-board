@@ -15,6 +15,7 @@ const broken = (value: unknown, why: string, def?: string) => assert.notDeepEqua
 
 const STAMP = { at: '2026-10-08T09:00:00Z', session: '3f1c2a9e-5b7d-4e21-9a0c-6d8e2f4b1a37', seq: 1 };
 const WRITE = { kind: 'write', op: 'edit', path: '/home/someone/project/notes.md', preview: '- old line\n+ new line' };
+const FILE = { name: 'a.pdf', path: '.visionboard/attachments/2026-10-30/1-a.pdf', size: 3 };
 const COMMAND = { kind: 'command', command: 'rm -rf build', risks: ['rm-recursive'], paths: ['build'] };
 
 /** One valid event of every kind. */
@@ -37,6 +38,7 @@ test('every kind has a valid event: nclite\'s five and tool_activity', () => {
   for (const e of Object.values(VALID)) valid(e);
   valid({ ...VALID.message_out, interim: true });
   valid({ ...VALID.message_in, chips: undefined });
+  valid({ ...VALID.message_in, files: [FILE] });
   valid({ ...VALID.tool_activity, state: 'running', cards: undefined, head: undefined });
   valid({ ...VALID.tool_activity, tool: 'Read', board: undefined, cards: undefined, head: undefined });
   valid({ ...VALID.approval_request, facts: COMMAND });
@@ -57,6 +59,11 @@ test('every event needs kind, at, session and seq; an unknown kind or field is r
 
 test('each kind refuses its own broken forms', () => {
   broken({ ...VALID.message_in, text: ' ' }, 'blank text');
+  broken({ ...VALID.message_in, files: [] }, 'no files is left out');
+  broken({ ...VALID.message_in, files: [{ ...FILE, size: 10485761 }] }, 'a file over 10 MB');
+  broken({ ...VALID.message_in, files: [{ ...FILE, name: '.env' }] }, 'a name not sanitised');
+  broken({ ...VALID.message_in, files: [{ ...FILE, path: 'a\nb' }] }, 'a path with a line break');
+  broken({ ...VALID.message_in, files: [{ ...FILE, extra: 1 }] }, 'an unknown field on a file');
   broken({ ...VALID.message_in, chips: [{ kind: 'region', ref: 1, label: 'x' }] }, 'a chip that is not a note or card');
   broken({ ...VALID.message_out, interim: false }, 'interim is present only when true');
   broken({ ...VALID.message_out, text: undefined }, 'message_out without text');

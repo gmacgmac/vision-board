@@ -47,6 +47,10 @@ const ROWS: [string, Decision, Decision][] = [
   ['.visionboard/images/a.png', ALLOW, ALLOW],
   ['.visionboard/apps/calc/app.json', ALLOW, ALLOW],
   ['.visionboard/images/.env', refuse(words.secretsFiles), refuse(words.secretsFiles)],
+  ['.visionboard/attachments/2026-10-30/1-a.pdf', ALLOW, refuse(words.theirAttachments)],
+  ['.visionboard/attachments/2026-10-30/new.txt', ALLOW, refuse(words.theirAttachments)],
+  ['.visionboard/attachments', ALLOW, refuse(words.theirAttachments)],
+  ['.visionboard/attachments/.env', refuse(words.secretsFiles), refuse(words.secretsFiles)],
   ['.git/HEAD', refuse(words.gitFolder), refuse(words.gitFolder)],
   ['.git/hooks/x', refuse(words.gitFolder), refuse(words.gitFolder)],
   ['.git', refuse(words.gitFolder), refuse(words.gitFolder)],
@@ -55,7 +59,7 @@ const ROWS: [string, Decision, Decision][] = [
 ];
 
 test('every row of the table, for a read and a write', () => {
-  assert.equal(ACCESS_RULES.length, 16, 'a new row needs its line in ROWS');
+  assert.equal(ACCESS_RULES.length, 17, 'a new row needs its line in ROWS');
   for (const [p, r, w] of ROWS) {
     assert.deepEqual(decide(read(p)), r, `read ${p}`);
     assert.deepEqual(decide(write(p)), w, `write ${p}`);

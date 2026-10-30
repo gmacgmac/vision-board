@@ -20,7 +20,7 @@ const FILES = [
   'src/x.ts', 'clean/a.ts', 'apps/web/.env', 'apps/web/main.ts', '.env', '.env.local',
   '.visionboard/agents.json', '.visionboard/chat-sessions.json', '.visionboard/ledger.jsonl', '.visionboard/lock',
   '.visionboard/permissions.json', '.visionboard/app-state/s.json', '.visionboard/other.json',
-  '.visionboard/images/a.png', '.visionboard/apps/calc/app.json', '.git/HEAD', '.git/hooks/x',
+  '.visionboard/images/a.png', '.visionboard/apps/calc/app.json', '.visionboard/attachments/2026-10-30/1-a.pdf', '.git/HEAD', '.git/hooks/x',
 ];
 
 export function accessFixture(): AccessFixture {

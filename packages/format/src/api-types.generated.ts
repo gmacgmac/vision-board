@@ -185,6 +185,12 @@ export interface OperationTypes {
     };
     output: PermissionListResponse;
   };
+  attach_chat_file: {
+    input: {
+      body: ChatFileRequest;
+    };
+    output: ChatFileResponse;
+  };
   get_project: {
     input: Record<never, never>;
     output: Project;
@@ -854,17 +860,24 @@ type ChatMessageRequest = {
   text?: string;
   notes?: number[];
   cards?: number[];
+  files?: string[];
 };
 type ChatEvent = ChatEventMessageIn | ChatEventMessageOut | ChatEventToolActivity | ChatEventApprovalRequest | ChatEventApprovalResult | ChatEventSystem;
 type ChatEventMessageIn = {
   kind: "message_in";
   text: string;
   chips?: ChatEventChip[];
+  files?: ChatEventAttachedFile[];
 } & ChatEventStamp;
 type ChatEventChip = {
   kind: "note" | "card";
   ref: number;
   label: string;
+};
+type ChatEventAttachedFile = {
+  name: string;
+  path: string;
+  size: number;
 };
 type ChatEventStamp = {
   at: string;
@@ -949,6 +962,14 @@ type Permission = {
 };
 type PermissionForgetRequest = {
   id: string;
+};
+type ChatFileRequest = {
+  name: string;
+  type: string;
+  data: string;
+};
+type ChatFileResponse = {
+  file: ChatEventAttachedFile;
 };
 type Project = {
   path: string;

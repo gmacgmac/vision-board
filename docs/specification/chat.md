@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-08
-updated: 2026-10-28
+updated: 2026-10-30
 scope: How the chat panel pattern is built — its own event contract, the agent adapters, the gate and the bridge to the board
 ---
 
@@ -215,6 +215,7 @@ before anything remembered:
 - **Secrets and the board's files** (point 345): `.env`, `.env.*` (but `.env.example`), `.envrc`, `.npmrc`
   and the bots' secrets in any folder; what apps save (`.visionboard/app-state/**`) is unread and unwritten
   in any board folder, and the ledger unwritten in any board folder.
+- **What the person attached** (D-068): `.visionboard/attachments/**` is read freely and never changed.
 - **For this folder**: kept in `.visionboard/permissions.json` (`chat-permissions.ts`), written by the
   server only and refused to the agent; listed by `list_permissions`, forgotten by `forget_permission`
   (api.md 107).
@@ -245,6 +246,28 @@ before anything remembered:
 Tests: `packages/agent/tests/gate.test.ts`, `kiro-turn.test.ts`, `claude-args.test.ts`, `remember.test.ts`,
 `policy.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-permissions.test.ts`, and end to end with
 the fake CLI and the real gate, `api-chat-access.test.ts`.
+
+## Attaching
+
+The person attaches a file to a message and the agent opens it with its own tools (D-068; api.md 164-166;
+`chatAttachments`, `VB_FLAGS`).
+
+- **Where files go**: each is saved when it is attached (`attach_chat_file`,
+  `apps/board/server/chat-files.ts` `saveAttachment`) at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, in
+  the person's project. Day folders, because a new chat's first message has no session yet. In this repo
+  `.gitignore` keeps them out of git; another project's git may pick them up. Nothing clears old ones yet.
+- **By path, never by content**: Send carries the paths; the prompt names them, one a line, under "The
+  person attached these files:" (`chat-prompt.ts` `promptFor`). Neither adapter changes, and pictures go the
+  same way. What an agent can open by path is its own: Kiro's reading of a picture is checked live
+  (the set's VERIFY_01).
+- **A path from a page is not believed**: `send_chat` takes only what `attachedFile` accepts: the saved
+  shape, no link at any step, still there.
+- **The board never serves them**: no route reads them, so nothing in a file runs in the board. The agent
+  may read them and never change them (`ACCESS_RULES`, `.visionboard/attachments/**`).
+- **Not covered**: an attached file's contents are read by the agent like anything else it reads, so
+  words inside it can try to steer it; the access rules and the person's approvals still hold.
+
+Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`.
 
 ## Another host
 

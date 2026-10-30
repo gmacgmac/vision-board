@@ -1,5 +1,6 @@
 // The person's chat message as the agent's prompt (chat-panel BE_03 ruling 5, PLAN ruling 9): the
-// words, then what it carries from the board (packages/actions `boardBlocks`, the one writer the
+// words, then the files the person attached (D-068: by path, "The person attached these files:"), then
+// what it carries from the board (packages/actions `boardBlocks`, the one writer the
 // page's composer preview reads too, composer-one-chip ruling 2): the cards the person selected,
 // "The person selected these cards:", right after the words (ruling 3), then any note chip spelled
 // out (its words and the cards it is on), then the board's answers since the agent was last told
@@ -14,14 +15,16 @@
 // is refused with the chip's reason. Cards come and go by their board number (api.md 125).
 import type { Chip as BoardChip, ChipRefusal, LedgerState, Round, SelectedCard } from '#actions';
 import { boardBlocks, cardChip, noteChip, resolveChip } from '#actions';
+import type { AttachedFile } from './chat-files.ts';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
 /** A chip as the `message_in` carries it for the panel: the card's number or the note's `seq`. */
 export interface Chip { kind: 'note' | 'card'; ref: number; label: string }
-/** The person's message: words (none when it is only what is attached, api.md 131), notes, cards. */
-export interface ChatMessage { text?: string; notes?: number[]; cards?: number[] }
+/** The person's message: words (none when it is only what is attached, api.md 131), notes, cards, and
+ * files, each already checked (`attachedFile`), so a path a page made up never gets this far. */
+export interface ChatMessage { text?: string; notes?: number[]; cards?: number[]; files?: AttachedFile[] }
 /** One message as built: the agent's prompt, and the `message_in`'s words and chips. */
 export interface BuiltMessage { prompt: string; text: string; chips: Chip[] }
 
@@ -40,13 +43,20 @@ export const NOTES_HEAD = serverChatWords.attachedFromTheBoard;
 /** The `message_in`'s words when the person sent cards or notes alone, with no words or answers. */
 export const ONLY_ATTACHED = serverChatWords.attachedFromTheBoard2;
 
+/** The `message_in`'s words when the person sent files alone. */
+export const ONLY_FILES = serverChatWords.attachedFiles;
+
+/** The block naming the attached files, one relative path a line; '' with none. */
+const filesBlock = (msg: ChatMessage): string =>
+  (msg.files?.length ? `${serverChatWords.thePersonAttachedTheseFiles}\n${msg.files.map((f) => f.path).join('\n')}` : '');
+
 /** The person's words, when there are any. */
 export const wordsOf = (msg: ChatMessage): string => (msg.text?.trim() ? msg.text : '');
 
 /** What a session on no board is told after the person's words. */
 export const NO_BOARD = serverChatWords.noBoardIsOpenIn;
 
-/** One message: the words, the selected cards, the notes, the board's answers (`round`) and the board; `invalid` for a
+/** One message: the words, the files, the selected cards, the notes, the board's answers (`round`) and the board; `invalid` for a
  * note or card a chip refuses (not on `board`, removed, or a hidden note), with its reason. A note among the `round`'s
  * answers is checked, then left out. */
 export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMessage, round?: Round): BuiltMessage {
@@ -71,16 +81,17 @@ export function promptFor(s: LedgerState, board: string | undefined, msg: ChatMe
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOr, { errors });
   const words = wordsOf(msg);
   const attached = lines.length ? `${NOTES_HEAD}\n${lines.join('\n')}` : '';
-  const prompt = [words, boardBlocks(cards, round, attached), serverChatWords.board(board)].filter(Boolean).join('\n\n');
-  return { prompt, text: [words, round?.text].filter(Boolean).join('\n\n') || ONLY_ATTACHED, chips };
+  const prompt = [words, filesBlock(msg), boardBlocks(cards, round, attached), serverChatWords.board(board)].filter(Boolean).join('\n\n');
+  const only = msg.files?.length && !chips.length ? ONLY_FILES : ONLY_ATTACHED;
+  return { prompt, text: [words, round?.text].filter(Boolean).join('\n\n') || only, chips };
 }
 
-/** A message to a session on no board: the words, then that no board is open. */
+/** A message to a session on no board: the words, the files, then that no board is open. */
 function folderPrompt(msg: ChatMessage): BuiltMessage {
   const errors: PointerError[] = [
     ...(msg.notes ?? []).map((seq, i) => ({ pointer: `/notes/${i}`, detail: serverChatWords.noBoardIsOpenSo(seq) })),
     ...(msg.cards ?? []).map((n, i) => ({ pointer: `/cards/${i}`, detail: serverChatWords.noBoardIsOpenSoThere(n) })),
   ];
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesNotesOrCards, { errors });
-  return { prompt: `${wordsOf(msg)}\n\n${NO_BOARD}`, text: wordsOf(msg), chips: [] };
+  return { prompt: [wordsOf(msg), filesBlock(msg), NO_BOARD].filter(Boolean).join('\n\n'), text: wordsOf(msg) || ONLY_FILES, chips: [] };
 }
