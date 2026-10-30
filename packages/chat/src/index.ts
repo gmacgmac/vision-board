@@ -24,6 +24,7 @@ export { CHAT_MESSAGE_TAG } from './message/chat-message.ts';
 export type { ChatMessageElement } from './message/chat-message.ts';
 export { CHAT_COMPOSER_TAG } from './composer/chat-composer.ts';
 export type { ChatChipRemoveDetail, ChatComposerElement, ChatSendDetail } from './composer/chat-composer.ts';
+export type { ChatFileRemoveDetail, ChatFilesDetail } from './composer/composer-attach.ts';
 export { CHAT_HEADER_TAG } from './header/chat-header.ts';
 export type { ChatForgetDetail, ChatHeaderElement, ChatPickDetail } from './header/chat-header.ts';
 export { defineChatElements } from './elements.ts';

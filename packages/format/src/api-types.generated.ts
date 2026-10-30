@@ -860,7 +860,10 @@ type ChatMessageRequest = {
   text?: string;
   notes?: number[];
   cards?: number[];
-  files?: string[];
+  files?: {
+    path: string;
+    label?: string;
+  }[];
 };
 type ChatEvent = ChatEventMessageIn | ChatEventMessageOut | ChatEventToolActivity | ChatEventApprovalRequest | ChatEventApprovalResult | ChatEventSystem;
 type ChatEventMessageIn = {
@@ -878,6 +881,7 @@ type ChatEventAttachedFile = {
   name: string;
   path: string;
   size: number;
+  label?: string;
 };
 type ChatEventStamp = {
   at: string;

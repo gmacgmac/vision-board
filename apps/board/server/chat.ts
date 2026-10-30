@@ -64,9 +64,9 @@ const listFolderChats: Handler = ({ res, chats }) => {
 const nothing = () => problem('invalid', NOTHING, { errors: [{ pointer: '/text', detail: serverChatWords.noWordsNothingAttachedAnd }] });
 
 /** The files a message names; with the flag off it may name none. */
-function filesOf(on: boolean, folder: string, paths: string[]): AttachedFile[] {
+function filesOf(on: boolean, folder: string, items: { path: string; label?: string }[]): AttachedFile[] {
   if (!on) throw problem('invalid', serverChatWords.attachingFilesIsOff, { errors: [{ pointer: '/files', detail: serverChatWords.filesCanTBeAttached }] });
-  return attachedFiles(folder, paths);
+  return attachedFiles(folder, items);
 }
 
 /** The person's message; never to a session on an archived board (api.md 136). On a board, one
@@ -79,7 +79,7 @@ const sendChat: Handler = async (ctx) => {
   const { req, res, ledger, chats } = ctx;
   const folder = ctx.project.current().dir;
   const live = await inUse(ctx);
-  const { files, ...rest } = await body('send_chat', req) as Omit<ChatMessage, 'files'> & { files?: string[] };
+  const { files, ...rest } = await body('send_chat', req) as Omit<ChatMessage, 'files'> & { files?: { path: string; label?: string }[] };
   const msg: ChatMessage = { ...rest, ...(files && { files: filesOf(chats().attachments, folder, files) }) };
   const { board } = live.record;
   if (board !== undefined) refuseArchived(ledger.state(), board, 'conflict', serverChatWords.itsChatCanTTake);

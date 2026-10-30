@@ -16,3 +16,6 @@ chat-message .chat-bubble > :first-child { margin-top: 0; }
 chat-message .chat-bubble > :last-child { margin-bottom: 0; }
 chat-message :is(.chat-own, .chat-plain) { margin: 0; white-space: pre-wrap; }
 chat-message .chat-chips { justify-content: flex-end; }
+/* A file's mark on its chip, sent or in the composer: a picture and a document differ by it alone. */
+.chat-chip-i { flex: none; margin-left: 2px; color: var(--_ink); }
+.chat-chip[data-kind='file'] { min-width: 0; }

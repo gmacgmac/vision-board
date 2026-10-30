@@ -41,7 +41,15 @@ paperclip, a drop or paste of a file does nothing new.
    different by icon only). Not a link: the board serves no attached file.
 5. **Words**: every new sentence (the paperclip's label and tip, each refusal, the drop hint, the
    pasted-picture name) in `apps/board/src/shell/words/chat.ts`, handed to the composer like `placeholder`.
-6. **Gallery**: a section, **last**, with the composer holding a chip in each state, the drop target
+6. **The person's own name for a file** (point 356; FILES_01's notes: a wholly non-Latin name saves as
+   `file.png`): the chip and the sent message show the name the person's file has. Contract first:
+   `send_chat`'s `files` items become `{ path, label }`, `attachedFile` in the chat schema gains an optional
+   `label` (1-200 characters, no control characters). Display only: it is shown as text, never reaches the
+   agent's prompt (the prompt names paths alone), and the server still believes only `attachedFile`'s check
+   of the path. Tests: a label with a line break is refused; a hostile label never reaches the prompt.
+7. **Folder switch**: ready chips are cleared when the folder changes (their paths would be refused at
+   Send, FILES_01's notes), and the composer's preview does not need to list files.
+8. **Gallery**: a section, **last**, with the composer holding a chip in each state, the drop target
    showing, and a sent message with files; light and dark. **Checks**: unit tests, `check`, `verify`,
    `gen-api --check`, `tests/pages/chat*.spec.ts` on 5800; a look in a browser, light and dark.
 
@@ -55,19 +63,38 @@ paperclip, a drop or paste of a file does nothing new.
 
 _To be completed by agent after task completion. Re-run? Add a `### Run N` block; never overwrite._
 
-**Status**: Pending · **Completed**:
+**Status**: Blocked on two files outside this task's ownership (patch in TASK-STATUS Requests); everything in its own files is done · **Completed**:
 
 ### Changes Made
-- 
+- Contract (point 356, first): `$defs/fileLabel`, `attachedFile.label`, `send_chat` `files` items `{ path, label? }`; `npm run gen`. Server: `attachedFiles` takes the items, keeps the label, refuses a path named twice; the prompt still names paths alone.
+- Composer: `composer-attach.ts` (new: drag, drop, paste, paperclip, status line), `ComposerFile`, `ComposerFileWords`, `filesSaid`, `newestFile`, `pastedFiles`, `sendIntent` with files, `fileTemplate`, `attachTemplate`, `setFiles`, `chat-files`, `chat-file-remove`; states in `pattern.json`.
+- Shell: `chat-bridge.ts` holds the files, checks size and count, uploads, sets each chip (`attachFiles`, `removeFile`, `files`, `uploading`, `fileLabel`, `attachedName`, `fileData`); `chat-panel.ts` puts them on Send and passes the words; words in `words/chat.ts`.
+- Sent message: `fileChipTemplate`, `fileIcon`. Gallery: `attach-section.ts`, last. Docs: chat.md § Attaching, api.md 165.
+- Tests: `tests/pages/chat-attach.spec.ts`, `chat-attach-gallery.spec.ts` (new baselines `chat-attach-{light,dark}-darwin.png`, after a look), `apps/board/tests/chat-attach.test.ts`, `packages/chat/tests/composer-files.test.ts`; `api-chat-files.test.ts`, `chat-schema.test.ts`, `chat-bridge.test.ts` extended.
 
 ### Issues & Resolutions
-- 
+- `page-io.ts` (`attachChatFile`) and `feed-core.ts` (`PersonEntry.files`) are needed and in no one's list for this task. Not touched: requested as one patch, tried in a scratch copy of the worktree, where every check below ran. Until the patch lands the worktree does not type-check.
+- A template's top-level call or interpolated string counts as running on import: the bundler then kept the chat's elements (28 KB) in the page's first chunk and put the gallery's stylesheet before the chat's, which moved three existing screenshots. Fixed with whole strings in `message-template.ts`; `chat-attach.spec.ts` now fails if the first chunks carry the composer. No screenshot was re-baselined.
+- `createChatPanel` runs 51 lines and `chat-attach.spec.ts` 318: `verify` warnings only.
 
 ### Caught Beyond the Brief
-- 
+- A paste from a spreadsheet or word processor carries a picture of what was copied beside its text; attaching it would have swallowed the text. Text wins unless it is only the files' names (`pastedFiles`).
+- A file's name can hold a line break or a text-direction mark, which the contract refuses, and that would refuse the whole message: `fileLabel` cleans it first. A test holds the two equal.
+- A state moving while focus sat on another chip's remove button redrew the row and lost focus (WCAG 2.4.3); focus and the row's scroll now stay. A refusal in a long row scrolls into view.
+- Several files settling at once overwrite a live region: announcements within 100 ms go as one line (`announcer`).
+- `uniqueItems` stopped catching a repeated path once items became objects: `attachedFiles` refuses it at `/files/<i>`.
+- For the maintainer: a file deleted between attach and Send gets a toast, but `ApiError` drops the problem's pointers (`board/io/errors.ts`), so the chip stays ready and the page can't say which one. With the pointers it could refuse that chip.
+- For the maintainer: a file dropped just outside the composer opens in the browser, replacing the board (no page-level guard; the shell's `App.svelte`, not this task's).
+- For the maintainer: the board's Send sends `text: ''` and then `composer.clear()` wipes words typed in the composer (`boardSend`). Already so, and likelier now that a ready file enables it.
+- For the maintainer: a clipped name's whole text is in the chip's tip and its remove button's name, which a sighted keyboard or touch user can't read. A refused chip goes with the message it was for: a judgement call.
+- `.g-chat` and `.chat-panel` have equal specificity, so the gallery's heights depend on the bundler's stylesheet order; `.chat-panel.g-chat` would stop that. `chat-lazy.spec.ts`'s `CHUNK` pattern also misses the shared `chat-*.js` chunk.
+- Live look: real page, light and dark, on a scratch board (drop, ready and refused); nothing was sent, so no CLI started. The sent message and uploading state were looked at in the gallery.
 
 ### Deviations from Plan
-- 
+- D-068's rulings hold as written; none changed.
+- `label` is optional in `send_chat` (the task writes `{ path, label }`): D-068 ruling 6 has nclite hand over paths, and a name with nothing left after cleaning has no label.
+- Folder switch needs no code: the page reloads onto the new folder (`reloadOnto`, `folderMoved`), which clears the chips; a page spec holds it.
+- Attaching lives in `chat-bridge.ts` as the plan says, though it has little to do with the board. Its own file would fit one job per file better; left for the orchestrator's call, as a new shell file is outside this task's list.
 
 ## On Completion
 

@@ -131,7 +131,7 @@ function bridged() {
     jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`), source: (link) => { linked = link; },
   });
   bridge.chat({
-    panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, state: () => chat, agent: () => agent,
+    panel: panel as HTMLElement, composer: composer as unknown as ChatComposerElement, setFiles() {}, upload: () => Promise.reject(new Error('no upload here')), state: () => chat, agent: () => agent,
     changed: () => log.push('changed'), reveal: (key) => { log.push(`reveal ${key}`); },
   });
   const raise = (type: string, detail: unknown) => panel.dispatchEvent(new CustomEvent(type, { detail }));

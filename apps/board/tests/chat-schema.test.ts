@@ -39,6 +39,7 @@ test('every kind has a valid event: nclite\'s five and tool_activity', () => {
   valid({ ...VALID.message_out, interim: true });
   valid({ ...VALID.message_in, chips: undefined });
   valid({ ...VALID.message_in, files: [FILE] });
+  valid({ ...VALID.message_in, files: [{ ...FILE, label: '写真 (2).png' }] });
   valid({ ...VALID.tool_activity, state: 'running', cards: undefined, head: undefined });
   valid({ ...VALID.tool_activity, tool: 'Read', board: undefined, cards: undefined, head: undefined });
   valid({ ...VALID.approval_request, facts: COMMAND });
@@ -64,6 +65,9 @@ test('each kind refuses its own broken forms', () => {
   broken({ ...VALID.message_in, files: [{ ...FILE, name: '.env' }] }, 'a name not sanitised');
   broken({ ...VALID.message_in, files: [{ ...FILE, path: 'a\nb' }] }, 'a path with a line break');
   broken({ ...VALID.message_in, files: [{ ...FILE, extra: 1 }] }, 'an unknown field on a file');
+  broken({ ...VALID.message_in, files: [{ ...FILE, label: 'a\nb' }] }, 'a label with a line break');
+  broken({ ...VALID.message_in, files: [{ ...FILE, label: '' }] }, 'an empty label');
+  broken({ ...VALID.message_in, files: [{ ...FILE, label: 'x'.repeat(201) }] }, 'a label too long');
   broken({ ...VALID.message_in, chips: [{ kind: 'region', ref: 1, label: 'x' }] }, 'a chip that is not a note or card');
   broken({ ...VALID.message_out, interim: false }, 'interim is present only when true');
   broken({ ...VALID.message_out, text: undefined }, 'message_out without text');

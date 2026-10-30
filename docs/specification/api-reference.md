@@ -1772,7 +1772,7 @@ Send the person's message to the session's agent as one message: the words (left
 | `text` | body | string | no | What the person wrote; left out when they wrote nothing. |
 | `notes` | body | list of integer | no | The person's notes sent with the message, by the `seq` that made each; left out when none. |
 | `cards` | body | list of integer | no | The cards sent with the message, by number; left out when none. |
-| `files` | body | list of string | no | The files attached to the message, by the path `attach_chat_file` answered; left out when none. |
+| `files` | body | list of object | no | The files attached to the message, each by the path `attach_chat_file` answered; left out when none. |
 
 Example request:
 

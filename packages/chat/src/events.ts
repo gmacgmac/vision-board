@@ -25,7 +25,11 @@ export interface ApprovalAnswer { approved: boolean; scope?: ApprovalScope }
 export type ToolState = 'running' | 'done' | 'failed';
 export type TurnEnd = 'done' | 'stopped' | 'error';
 
-export interface MessageIn extends Stamp { kind: 'message_in'; text: string; chips?: Chip[]; files?: { name: string; path: string; size: number }[] }
+/** A file attached to a message, saved under the host's folder; the agent opens it by `path`. `name` is the
+ *  name as saved, `label` the one the person's file has, to show them (display only). */
+export interface AttachedFile { name: string; path: string; size: number; label?: string }
+
+export interface MessageIn extends Stamp { kind: 'message_in'; text: string; chips?: Chip[]; files?: AttachedFile[] }
 export interface MessageOut extends Stamp { kind: 'message_out'; text: string; interim?: true }
 export interface ToolActivity extends Stamp {
   kind: 'tool_activity'; call: string; tool: string; state: ToolState; board?: string; cards?: number[]; head?: number;
@@ -53,6 +57,9 @@ export const TEXT_MAX = 100_000;
  *  without loading the elements: the board loads them when the panel first opens. */
 export const CHAT_SEND_EVENT = 'chat-send';
 export const CHAT_CHIP_REMOVE_EVENT = 'chat-chip-remove';
+/** Files the person attached (dropped, pasted or picked), and a file's chip taken off. */
+export const CHAT_FILES_EVENT = 'chat-files';
+export const CHAT_FILE_REMOVE_EVENT = 'chat-file-remove';
 export const CHAT_CHANGE_EVENT = 'chat-change';
 export const CHAT_STOP_EVENT = 'chat-stop';
 export const CHAT_NEW_SESSION_EVENT = 'chat-new-session';

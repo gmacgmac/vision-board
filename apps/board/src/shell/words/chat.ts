@@ -48,3 +48,25 @@ export const openChat = 'Open chat';
 export const forgetThisYes = 'Forget this?';
 export const theAgentWillAskAgain = (what: string): string => `The agent will ask again before it does this: ${what}.`;
 export const forget = 'Forget';
+
+// ---- chat-panel.ts, chat-bridge.ts (chatAttachments flag: attaching files to a message)
+/** Handed to the composer, as its placeholder is (ComposerFileWords). */
+export const attachingFiles = {
+  attach: 'Attach files',
+  tip: 'Attach files: pick them here, or drop or paste them into the message. Up to 10, 10 MB each.',
+  drop: 'Drop files to attach them',
+  uploading: 'Uploading…',
+  ready: 'ready to send',
+  waits: 'Send waits until the files have uploaded.',
+  remove: (name: string): string => `Remove ${name}`,
+  removed: (name: string): string => `${name} removed.`,
+  said: (f: { name: string; state: string; reason?: string }): string => (
+    f.state === 'uploading' ? `${f.name}: uploading.` : f.state === 'ready' ? `${f.name}: ready to send.` : `${f.name}: ${f.reason ?? ''}`),
+};
+export const aFile = 'file';
+export const pastedPicture = (day: string, extension: string): string => `pasted picture ${day}.${extension}`;
+export const fileIsTooBig = (bytes: number): string => `Not attached: it is ${(Math.ceil(bytes / 104857.6) / 10).toFixed(1)} MB, and the limit is 10 MB a file.`;
+export const tooManyFiles = 'Not attached: a message carries at most 10 files. Remove one, then attach this again.';
+export const fileCouldNotBeRead = 'Not attached: it could not be read. A folder can\'t be attached, only the files in it.';
+export const fileRefused = (why: string): string => `Not attached: ${why}`;
+export const filesStillUploading = 'The files are still uploading. Send again once they are ready.';

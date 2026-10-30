@@ -2,27 +2,30 @@
   "name": "chat-composer",
   "title": "Composer",
   "tag": "chat-composer",
-  "description": "The person's message: the chips a host may attach, each removable; the host's context chip, one summary of what every message carries (on the board, \"3 answers · 2 selected\": the selected cards and the answers since the last Send, and no other chips), which opens a preview of exactly that text; the text and Send; and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer). With a host that queues (ChatHost.queues) words go while the agent works or waits for an OK, and the line says they are queued.",
+  "description": "The person's message: the chips a host may attach, each removable; the host's context chip, one summary of what every message carries (on the board, \"3 answers · 2 selected\": the selected cards and the answers since the last Send, and no other chips), which opens a preview of exactly that text; the text and Send; and one line under it with the keys, why Send waits, or why the composer is shut (the Architect composer). With a host that queues (ChatHost.queues) words go while the agent works or waits for an OK, and the line says they are queued. With the host's words for attaching (view.files, D-068) it takes files by drop, paste and the paperclip, and shows a chip per file saying whether it is uploading, ready, or refused and why; the host uploads.",
   "files": {
-    "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, ComposerContext, PREVIEW_LABEL, COMPOSER_KEYS; no DOM)",
-    "template": "composer-template.ts (composerTemplate, chipsTemplate, contextTemplate, previewTemplate, lineTemplate)",
-    "element": "chat-composer.ts (defineChatComposer, ChatComposerElement; light DOM)",
+    "core": "composer-core.ts (composerView, sendIntent, chipKey, withoutChip, ComposerContext, ComposerFile, ComposerFileWords, FileState, filesReady, filesUploading, filesSaid, pastedFiles, PREVIEW_LABEL, COMPOSER_KEYS; no DOM)",
+    "template": "composer-template.ts (composerTemplate, chipsTemplate, contextTemplate, previewTemplate, lineTemplate, attachTemplate, dropTemplate, saidTemplate, fileTemplate)",
+    "element": "chat-composer.ts (defineChatComposer, ChatComposerElement; light DOM); composer-attach.ts (the drop, the paste and the paperclip)",
     "styles": "composer.css (through chat.css)"
   },
-  "states": ["empty", "with chips", "with the context, closed", "the preview open by hover, held open by click, Enter or Space", "typing", "waiting while the agent works", "holding: what is attached waits for the turn to end", "shut"],
-  "attributes": { "data-shut": "the host's blocked reason applies: the text can't be typed in" },
+  "states": ["empty", "with chips", "with the context, closed", "the preview open by hover, held open by click, Enter or Space", "typing", "waiting while the agent works", "holding: what is attached waits for the turn to end", "shut", "with the paperclip: idle, hover, focus, pressed, disabled when shut", "a file dragged over it (data-drop): the box says what a drop does; only files, not text or a card", "a file uploading: its mark turns, it says so on the chip, and the line says Send waits", "a file ready", "a file refused: a row of its own with the reason in full; never sent", "a file's remove button: idle, hover, focus, pressed", "many files: the row scrolls"],
+  "attributes": { "data-shut": "the host's blocked reason applies: the text can't be typed in", "data-drop": "a file is being dragged over the composer" },
   "methods": {
     "show(view)": "Send allowed, the line, the placeholder, shut or not (from composerView)",
     "setChips(chips)": "the chips attached",
     "setContext(context)": "the host's context { label, text } beside the chips, or null: one chip, its summary, opening a preview of text exactly as it goes; not removable, it goes with every message the host sends",
-    "clear()": "empties the words and the chips once the message went through",
-    "text, chips, attached, focusText()": "the words typed, the chips, whether a chip or the context is attached, focus into the text"
+    "setFiles(files)": "where each attached file stands: { id, name, state: uploading | ready | refused, reason }; the host's to say",
+    "clear()": "empties the words, the chips and the files once the message went through",
+    "text, chips, attached, focusText()": "the words typed, the chips, whether a chip, the context or a ready file is attached, focus into the text"
   },
   "events": [
     "chat-send (bubbles): detail { text, chips }; Enter or Send, with words while the conditions allow; with a host that holds what is attached (ChatHost.holds), also with no words and while the agent works when something is attached. The words stay until clear()",
-    "chat-chip-remove (bubbles): detail { chip }; the chip is taken off and focus goes back to the text"
+    "chat-chip-remove (bubbles): detail { chip }; the chip is taken off and focus goes back to the text",
+    "chat-files (bubbles): detail { files, pasted }; files dropped, pasted or picked, as File objects: the host uploads them",
+    "chat-file-remove (bubbles): detail { id }; a file's chip is taken off and focus goes back to the text"
   ],
   "whenToUse": "Writing to the agent.",
   "whenNotToUse": "A note on a card (the note bubble).",
-  "accessibility": "The text is labelled 'Message to the agent'. Enter sends, Shift+Enter breaks the line. Each chip's remove button is named 'Remove Card 12: <title>' or 'Remove Note: <text>', 24px square. The context chip is a button named by its summary, with aria-expanded; open, it controls the preview, a focusable region named 'What the agent receives' (a long one scrolls by keyboard). Hover opens it and keeps it while the pointer is on the chip or the preview; click, Enter or Space hold it open or close it; Esc closes it, focus on the chip, and goes no further (the board's Esc does not run)."
+  "accessibility": "The text is labelled 'Message to the agent'. Enter sends, Shift+Enter breaks the line. Each chip's remove button is named 'Remove Card 12: <title>' or 'Remove Note: <text>', 24px square. The context chip is a button named by its summary, with aria-expanded; open, it controls the preview, a focusable region named 'What the agent receives' (a long one scrolls by keyboard). Hover opens it and keeps it while the pointer is on the chip or the preview; click, Enter or Space hold it open or close it; Esc closes it, focus on the chip, and goes no further (the board's Esc does not run). The paperclip is a button (Enter or Space opens the file picker), so dragging is never the only way (WCAG 2.5.7); named and tipped by the host's words. A status line (role=status) announces each file as it arrives, each change of state with its reason, and each removal; a state is in words as well as its mark, never by colour alone. A file's remove button is named by the file, 24px square, keeps focus when the row is drawn again, and sends focus to the text when pressed. Motion stops under prefers-reduced-motion. A name's direction comes from the name (dir=auto)."
 }

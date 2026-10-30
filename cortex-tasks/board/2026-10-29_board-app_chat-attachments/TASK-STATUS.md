@@ -33,7 +33,7 @@ skills: [cortex-architecture, cortex-docs]
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
 | 1 | FILES_01 | 1 | strong | Application security engineer who reviews file-upload endpoints — a name the person typed is hostile until sanitised and its real path proven inside the folder; a server never trusts a path the page sends back. | [Attached files: contract, storage and prompt](./FILES_01_attached-files-server.md) | Blocked | port 5700; own files done, needs the four-file patch below |
-| 2 | COMPOSE_01 | 2 | strong | Product designer for chat tools who works to WCAG 2.2 — attaching must work by drag, paste, button and keyboard alike, every chip state must say what is happening, and a refused file must say why. | [Attaching in the composer](./COMPOSE_01_attach-in-composer.md) | Pending | port 5800 |
+| 2 | COMPOSE_01 | 2 | strong | Product designer for chat tools who works to WCAG 2.2 — attaching must work by drag, paste, button and keyboard alike, every chip state must say what is happening, and a refused file must say why. | [Attaching in the composer](./COMPOSE_01_attach-in-composer.md) | Blocked | port 5800; own files done, needs the two-file patch below |
 | 3 | VERIFY_01 | 3 | strong | QA engineer new to this project, given the board and a chat with an agent — tries odd, huge, many and hostile files, every way to attach, and checks the agent really opens what was sent. | [Verification](./VERIFY_01_attachments-verification.md) | Pending | port 5900 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -53,7 +53,7 @@ skills: [cortex-architecture, cortex-docs]
 |------|-------|-------|
 | 0 | orchestrator | `packages/format/src/flags.ts`, `.gitignore`, `docs/decisions.md`, `docs/specification/modules.md`, `cortex-tasks/tracker.md`, existing screenshots |
 | 1 | FILES_01 | `packages/format/schema/api/` (new `chat-file-request`/`chat-file-response`, `chat-message-request`), `packages/format/schema/openapi.json` (the new operation), the generated files `npm run gen` writes, `packages/chat/schema/chat-event.schema.json` (`message_in.files`), `apps/board/server/chat-files.ts` (new), `chat.ts`, `chat-prompt.ts`, `chat-session.ts` (passing files through only), `apps/board/server/words/server-chat.ts`, `packages/agent/src/access-rules.ts` (one row), `packages/agent/src/words/agent-access.ts`, their tests, `docs/specification/api.md`, `docs/specification/chat.md` § attaching (the server side), `skills/vision-board/SKILL.md` (one line on attached files; version line) |
-| 2 | COMPOSE_01 | `packages/chat/src/composer/**`, `packages/chat/src/message/**` (the file chips on a sent message), `packages/chat/src/index.ts` (exports), the chat's words, `apps/board/src/shell/chat-bridge.ts`, `chat-panel.ts`, `chat-view.ts` (the upload and Send wiring), `apps/board/src/shell/words/chat.ts`, `apps/board/src/gallery/` (the new section last), `tests/pages/chat-attach*.spec.ts` (new), `docs/specification/chat.md` § attaching (the panel) |
+| 2 | COMPOSE_01 | `packages/chat/src/composer/**`, `packages/chat/src/message/**` (the file chips on a sent message), `packages/chat/src/index.ts` (exports), the chat's words, `apps/board/src/shell/chat-bridge.ts`, `chat-panel.ts`, `chat-view.ts` (the upload and Send wiring), `apps/board/src/shell/words/chat.ts`, `apps/board/src/gallery/` (the new section last), `tests/pages/chat-attach*.spec.ts` (new), `docs/specification/chat.md` § attaching (the panel); for point 356 only (a file's original name, display only): `packages/format/schema/api/chat-message-request.schema.json`, `packages/chat/schema/chat-event.schema.json` (`attachedFile.label`), `packages/chat/src/events.ts`, the generated files, `apps/board/server/chat.ts`, `chat-files.ts`, `chat-sessions.ts` (`files` carries the label), their tests, `docs/specification/api.md` |
 | 3 | VERIFY_01 | `VERIFY_01_findings.md` (new), its task file; no code |
 
 ## Implementation Notes
@@ -67,6 +67,8 @@ skills: [cortex-architecture, cortex-docs]
 ### Requests
 | From | File | What | Status |
 |------|------|------|--------|
-| FILES_01 | `apps/board/server/chat-sessions.ts`, `app.ts`, `project.ts`, `atomic-file.ts` | One patch: files through `joined`, `deliver`, `inFolder`, `tell`; the `chatAttachments` flag to `chats().attachments`; `writeFileAtomic` takes bytes. Blocking | Open |
-| FILES_01 | `docs/specification/modules.md` | `npm run map` for `chat-files.ts`. Non-blocking | Open |
-| FILES_01 | `packages/chat/src/events.ts` | `MessageIn` gains `files`, for COMPOSE_01 (not in anyone's ownership). Non-blocking | Open |
+| FILES_01 | `apps/board/server/chat-sessions.ts`, `app.ts`, `project.ts`, `atomic-file.ts` | One patch: files through `joined`, `deliver`, `inFolder`, `tell`; the `chatAttachments` flag to `chats().attachments`; `writeFileAtomic` takes bytes. Blocking | Done (wave 1) |
+| FILES_01 | `docs/specification/modules.md` | `npm run map` for `chat-files.ts`. Non-blocking | Done (wave 1) |
+| FILES_01 | `packages/chat/src/events.ts` | `MessageIn` gains `files`, for COMPOSE_01 (not in anyone's ownership). Non-blocking | Done (COMPOSE_01, point 356) |
+| COMPOSE_01 | `apps/board/src/shell/page-io.ts`, `packages/chat/src/feed/feed-core.ts` | One patch: `attachChatFile` (the one I/O module); `PersonEntry.files` from `message_in.files`. Blocking: the worktree does not type-check until it lands | Open |
+| COMPOSE_01 | `docs/specification/modules.md` | `npm run map` for `composer-attach.ts`, `attach-section.ts`. Non-blocking | Open |

@@ -2,17 +2,17 @@
   "name": "chat-message",
   "title": "Chat message",
   "tag": "chat-message",
-  "description": "One message: the person's words exactly as typed, on the right, with the chips they sent; the agent's words through the host's renderer, on the left, outlined while said partway through a turn.",
+  "description": "One message: the person's words exactly as typed, on the right, with the chips they sent and a chip per file they attached; the agent's words through the host's renderer, on the left, outlined while said partway through a turn.",
   "files": {
-    "template": "message-template.ts (messageTemplate, chipTemplate, chipParts)",
+    "template": "message-template.ts (messageTemplate, chipTemplate, chipParts, fileChipTemplate, fileIcon, REMOVE_ICON)",
     "element": "chat-message.ts (defineChatMessage, ChatMessageElement; light DOM)",
     "styles": "message.css (through chat.css)"
   },
-  "states": ["person", "person with chips", "agent", "agent interim"],
+  "states": ["person", "person with chips", "person with files", "agent", "agent interim"],
   "attributes": { "data-from": "person | agent", "data-interim": "the agent's words partway through a turn" },
   "methods": { "show(entry, render)": "draws one person or agent entry from the feed's core" },
   "events": [],
   "whenToUse": "Inside <chat-feed>, which creates it.",
   "whenNotToUse": "System lines and change chips (the feed's own rows).",
-  "accessibility": "A hidden 'You:' or 'Agent:' leads the words. Chips are a list named 'Sent with it'."
+  "accessibility": "A hidden 'You:' or 'Agent:' leads the words. Chips and files are a list named 'Sent with it'; a file's chip is its name, never a link (the board serves no attached file), with its direction from the name (dir=auto)."
 }

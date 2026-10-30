@@ -52,3 +52,40 @@ chat-composer kbd {
 /* Shut (a past version, an agent that would not start): the box greys and the reason is read. */
 chat-composer[data-shut] .chat-cmp-box { background: var(--_surface-sunken); border-color: var(--_line); }
 chat-composer[data-shut] .chat-cmp-line { font-size: var(--_text-sm); color: var(--_ink); }
+/* Attaching (D-068). The paperclip sits before Send and has every state of a control. */
+chat-composer .chat-cmp-attach {
+  flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  color: var(--_ink); background: none; border: 0; border-radius: var(--_radius); cursor: pointer;
+}
+chat-composer .chat-cmp-attach:hover:not(:disabled) { color: var(--_ink-strong); background: var(--_surface-sunken); }
+chat-composer .chat-cmp-attach:active:not(:disabled) { background: var(--_line-strong); }
+chat-composer .chat-cmp-attach:disabled { color: var(--_ink-subtle); cursor: not-allowed; }
+/* While a file is dragged over the composer: the box says what a drop does. */
+chat-composer .chat-cmp-drop { display: none; }
+chat-composer[data-drop] .chat-cmp-box { position: relative; border-color: var(--_accent); box-shadow: 0 0 0 1px var(--_accent); }
+chat-composer[data-drop] .chat-cmp-drop {
+  position: absolute; inset: 0; display: grid; place-items: center; margin: 0; pointer-events: none;
+  font: var(--_medium) var(--_text) / 1.2 var(--_font); color: var(--_ink-strong);
+  background: var(--_accent-soft); border-radius: inherit;
+}
+/* Many files scroll in the row, and the room around each keeps its focus ring whole. */
+chat-composer .chat-chips:has([data-kind='file']) { max-height: min(220px, 40vh); margin: -3px; padding: 3px; overflow-y: auto; }
+/* A file's chip: its mark, its name, its state in words, its remove button. */
+chat-composer .chat-chip[data-kind='file'] { padding-left: var(--_space-1); }
+chat-composer .chat-chip-s { flex: none; font: var(--_text-xs) / 1.2 var(--_font); color: var(--_ink); }
+chat-composer .chat-chip-x:active { background: var(--_line-strong); }
+chat-composer .chat-cmp-spin { animation: chat-cmp-spin 900ms linear infinite; }
+@keyframes chat-cmp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { chat-composer .chat-cmp-spin { animation: none; } }
+/* Refused: a row of its own, so the reason is read in full; the words carry no hue, the mark and the edge do. */
+chat-composer li:has(> .chat-chip[data-state='refused']) { flex-basis: 100%; min-width: 0; }
+chat-composer .chat-chip[data-state='refused'] {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--_space-1); max-width: none;
+  padding: 0 var(--_space-2) var(--_space-1) var(--_space-1); background: var(--_surface);
+  border-color: var(--_danger); border-radius: var(--_radius);
+}
+chat-composer .chat-chip[data-state='refused'] .chat-chip-i { color: var(--_danger); }
+chat-composer .chat-chip[data-state='refused'] .chat-chip-x:hover { background: var(--_surface-sunken); }
+chat-composer .chat-chip-why {
+  grid-column: 1 / -1; padding-left: 22px; font: var(--_text-sm) / 1.35 var(--_font); color: var(--_ink); overflow-wrap: anywhere;
+}

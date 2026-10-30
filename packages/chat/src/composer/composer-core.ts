@@ -5,7 +5,9 @@
 // no other chips, composer-one-chip ruling 1). Send with words while the chat conditions let it; with a
 // host that holds what is attached (`ChatHost.holds`), also with something attached and no words,
 // and while the agent works; with a host that queues (`ChatHost.queues`), words alone go while the
-// agent works or waits for an OK, and are queued. No DOM.
+// agent works or waits for an OK, and are queued. With the host's words for it (`ComposerView.files`) it
+// takes files: the host uploads each and says where it stands (`ComposerFile`); a ready file goes with no
+// words, Send waits while one uploads, a refused one never goes (D-068). No DOM.
 import type { Chip } from '../events.ts';
 import type { ChatHost } from '../conditions.ts';
 import { canSend } from '../conditions.ts';
@@ -22,6 +24,31 @@ export interface ComposerView {
   /** The line under the box: why Send waits while the agent works, else the keys. */
   hint: string;
   placeholder: string;
+  /** The host's words for attaching; given, the composer takes files by drop, paste and the paperclip. */
+  files?: ComposerFileWords;
+}
+
+/** Where a file in the composer stands: the host says (D-068 ruling 6). */
+export type FileState = 'uploading' | 'ready' | 'refused';
+/** One file: the host's `id` for it, the name to show, and with `refused` why (shown in full, never clipped). */
+export interface ComposerFile { id: string; name: string; state: FileState; reason?: string }
+
+/** Every sentence of attaching, from the host, as `placeholder` is. */
+export interface ComposerFileWords {
+  /** The paperclip's name and its tip. */
+  attach: string;
+  tip: string;
+  /** On the composer while a file is dragged over it. */
+  drop: string;
+  /** On a chip while its file uploads; read after the name on a ready one. */
+  uploading: string;
+  ready: string;
+  /** The line under the box while a file uploads. */
+  waits: string;
+  remove(name: string): string;
+  removed(name: string): string;
+  /** What a screen reader is told when a file arrives or its state moves. */
+  said(file: ComposerFile): string;
 }
 
 /** What the host sends with every message: one chip, `label` (its summary), that opens a preview of
@@ -52,10 +79,34 @@ export function composerView(s: ChatState, host: ChatHost = {}, placeholder = 'M
 
 /** What Send does: words go while the chat lets them; with `attached` (chips or the context) and a
  *  host that holds them, a message goes with no words, and while the agent works. */
-export function sendIntent(text: string, v: Pick<ComposerView, 'send' | 'attach' | 'shut'>, attached = false): 'send' | 'skip' {
-  if (v.shut !== undefined) return 'skip';
+export function sendIntent(text: string, v: Pick<ComposerView, 'send' | 'attach' | 'shut'>, attached = false, files: readonly ComposerFile[] = []): 'send' | 'skip' {
+  if (v.shut !== undefined || filesUploading(files)) return 'skip';
   if (v.attach && attached) return 'send';
-  return v.send && text.trim() !== '' ? 'send' : 'skip';
+  return v.send && (text.trim() !== '' || filesReady(files)) ? 'send' : 'skip';
+}
+
+export const filesUploading = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'uploading');
+export const filesReady = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'ready');
+
+/** What to announce for the files `now`, after `was`: each new file, and each whose state moved. */
+export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFile[], words: Pick<ComposerFileWords, 'said'>): string {
+  const before = new Map(was.map((f) => [f.id, f.state]));
+  return now.filter((f) => before.get(f.id) !== f.state).map((f) => words.said(f)).join(' ');
+}
+
+/** The file to bring into view in a long row: the last one that came, or that was just refused (its reason must be seen). */
+export function newestFile(was: readonly ComposerFile[], now: readonly ComposerFile[]): ComposerFile | undefined {
+  const before = new Map(was.map((f) => [f.id, f.state]));
+  return now.findLast((f) => !before.has(f.id) || (f.state === 'refused' && before.get(f.id) !== 'refused'));
+}
+
+/** The files a paste attaches. Spreadsheets and word processors put a picture of what was copied beside
+ *  its text, and that paste is the text: files go only when the clipboard has no text, or the text is
+ *  just their names (a file copied from the system's file manager). */
+export function pastedFiles<F extends { name: string }>(files: readonly F[], text: string): F[] {
+  const names = new Set(files.map((f) => f.name));
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  return lines.every((l) => names.has(l)) ? [...files] : [];
 }
 
 /** A chip's stable key, as its remove button names it. */

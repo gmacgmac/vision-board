@@ -50,6 +50,14 @@
       "description": "A file or folder path, up to 4096 characters, with no control, line-break or text-direction character.",
       "$comment": "As nclite's LINE_BREAKING (engine/approvals/facts.ts): the path is the subject of the question the person reads."
     },
+    "fileLabel": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f\\u2028\\u2029\\u061c\\u200e\\u200f\\u202a-\\u202e\\u2066-\\u2069]+$",
+      "description": "The name the person's file has, to show them: display only, never in the agent's prompt, and nothing is believed from it. Up to 200 characters, with no control, line-break or text-direction character.",
+      "$comment": "D-068, point 356: a wholly non-Latin name saves as `file.png`, and the person should still see their own name."
+    },
     "agent": {
       "enum": ["claude", "kiro"],
       "description": "Which command-line agent runs the session: `claude` (Claude Code) or `kiro` (Kiro CLI)."
@@ -87,7 +95,8 @@
       "properties": {
         "name": {"type": "string", "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]{0,79}$", "description": "The file's name as saved: letters, digits, `.`, `-` and `_`, up to 80 characters, no leading dot."},
         "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "Where it is, relative to the board's folder: `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`."},
-        "size": {"type": "integer", "minimum": 0, "maximum": 10485760, "description": "Its size in bytes, at most 10 MB."}
+        "size": {"type": "integer", "minimum": 0, "maximum": 10485760, "description": "Its size in bytes, at most 10 MB."},
+        "label": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/fileLabel", "description": "The name the person's file has, to show them; left out when it was not given. Display only."}
       },
       "unevaluatedProperties": false
     },

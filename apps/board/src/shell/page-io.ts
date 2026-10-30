@@ -86,6 +86,9 @@ export const startFolderChat = (agent: ChatSessionInfo['agent'], model?: string)
 export const sendChat = (session: string, body: ChatMessageBody) =>
   person(() => client.call('send_chat', { session, body }));
 
+/** Save one file the person attaches to a message (`attach_chat_file`, api.md 164); its path goes with Send. */
+export const attachChatFile = (body: OperationInput<'attach_chat_file'>['body']) =>
+  person(() => client.call('attach_chat_file', { body }));
 export const stopChat = (session: string) => person(() => client.call('stop_chat', { session }));
 
 export const answerApproval = (session: string, approval: string, answer: ApprovalAnswer) =>

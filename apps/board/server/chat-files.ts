@@ -26,8 +26,9 @@ export const ATTACHMENT_BYTES = 10 * KIB * KIB;
 /** `attach_chat_file`'s body limit: that file as base64, and room for its name and type. */
 export const ATTACHMENT_BODY_BYTES = Math.ceil(ATTACHMENT_BYTES / 3) * 4 + 4 * KIB;
 
-/** A saved file, as `attach_chat_file` answers it and `message_in.files` carries it (the schema's `attachedFile`). */
-export interface AttachedFile { name: string; path: string; size: number }
+/** A saved file, as `attach_chat_file` answers it and `message_in.files` carries it (the schema's `attachedFile`).
+ *  `label` is the name the person's file has, display only: it is shown as text and never reaches the prompt. */
+export interface AttachedFile { name: string; path: string; size: number; label?: string }
 
 export const fileTooLarge = () => problem('too-large', serverChatWords.thisFileIsOverThe);
 
@@ -98,13 +99,15 @@ export function attachedFile(folder: string, rel: string): AttachedFile | undefi
   return stat && { name, path: rel, size: stat.size };
 }
 
-/** What a message's `files` name, each by `attachedFile`; `invalid` at `/files/<i>` for any other. */
-export function attachedFiles(folder: string, paths: string[]): AttachedFile[] {
+/** What a message's `files` name, each by `attachedFile`, its label kept as it came; `invalid` at `/files/<i>` for any other, and for a path named twice. */
+export function attachedFiles(folder: string, items: { path: string; label?: string }[]): AttachedFile[] {
   const files: AttachedFile[] = [];
   const errors: PointerError[] = [];
-  paths.forEach((rel, i) => {
-    const file = attachedFile(folder, rel);
-    if (file) files.push(file);
+  const named = new Set<string>();
+  items.forEach(({ path: rel, label }, i) => {
+    const file = named.has(rel) ? undefined : attachedFile(folder, rel);
+    named.add(rel);
+    if (file) files.push({ ...file, ...(label !== undefined && { label }) });
     else errors.push({ pointer: `/files/${i}`, detail: serverChatWords.thisIsNotAFile });
   });
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesFilesThat, { errors });

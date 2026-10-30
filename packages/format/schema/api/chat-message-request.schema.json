@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/chat-message-request.schema.json",
   "title": "Chat message request",
-  "description": "`{ text?, notes?, cards?, files? }`: the person's message, with the notes (by `seq`) and cards (by number) attached to it as chips and the files attached to it by path. `text` is left out to send only what is attached and the board's new answers.",
+  "description": "`{ text?, notes?, cards?, files? }`: the person's message, with the notes (by `seq`) and cards (by number) attached to it as chips and the files attached to it, each `{ path, label? }`. `text` is left out to send only what is attached and the board's new answers.",
   "$comment": "Was: api.md 101, 131, 164",
   "type": "object",
   "properties": {
@@ -28,8 +28,17 @@
       "minItems": 1,
       "maxItems": 10,
       "uniqueItems": true,
-      "items": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "A path `attach_chat_file` answered, relative to the folder."},
-      "description": "The files attached to the message, by the path `attach_chat_file` answered; left out when none."
+      "items": {
+        "type": "object",
+        "description": "One attached file.",
+        "required": ["path"],
+        "properties": {
+          "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "A path `attach_chat_file` answered, relative to the folder. The only part the server believes, and it checks it."},
+          "label": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/fileLabel", "description": "The name the person's file has, to show on the sent message; left out to show the saved name. Display only: it never reaches the agent's prompt."}
+        },
+        "unevaluatedProperties": false
+      },
+      "description": "The files attached to the message, each by the path `attach_chat_file` answered; left out when none."
     }
   },
   "unevaluatedProperties": false

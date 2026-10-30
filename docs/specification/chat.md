@@ -264,10 +264,27 @@ The person attaches a file to a message and the agent opens it with its own tool
   shape, no link at any step, still there.
 - **The board never serves them**: no route reads them, so nothing in a file runs in the board. The agent
   may read them and never change them (`ACCESS_RULES`, `.visionboard/attachments/**`).
+- **In the panel** (`apps/board/src/shell/chat-bridge.ts` `createChatBridge`, `packages/chat` `composer-attach.ts`,
+  `composer-core.ts` `ComposerFile`; held by `tests/pages/chat-attach.spec.ts`): the person drops, pastes or picks
+  (the paperclip, a button, so the keys do all of it). `packages/chat` takes no API: the composer raises `chat-files`
+  with each `File` and takes each chip's state from `setFiles`, and its sentences come from the host
+  (`ComposerView.files`, `words/chat.ts` `attachingFiles`). Each file uploads as it comes. Its chip says uploading,
+  ready, or refused with why, in a row of its own; a status line tells a screen reader each change. The page checks
+  10 MB and 10 files first (`FILE_BYTES`, `FILE_COUNT`, held equal to the server's) and the server checks again. Send
+  waits while a file uploads, and says so; a ready file goes with no words; a refused one never goes, and leaves the
+  composer with the message. A paste with other text is that text (a spreadsheet's cells come with a picture of
+  them), unless the text is only the files' names (`pastedFiles`). A picture pasted with no name of its own is named
+  from the words: "pasted picture", the day, its type's extension.
+- **The person's name for a file** (`attachedFile.label`, point 356; api.md 165): the server's saved name is plain ASCII, so a
+  wholly non-Latin name saves as `file.png`. The chip and the sent message show the name the person's file has: Send
+  carries it beside the path (`fileLabel` makes it one the contract takes). It is display only: shown as text, never in
+  the prompt, and nothing is believed from it.
+- **Another folder**: the page reloads onto it (`folder.ts` `reloadOnto`, `folderMoved`), so the chips go with the page
+  and a path saved in the last folder never reaches Send.
 - **Not covered**: an attached file's contents are read by the agent like anything else it reads, so
   words inside it can try to steer it; the access rules and the person's approvals still hold.
 
-Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`.
+Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `chat-attach.test.ts`; `packages/chat/tests/composer-files.test.ts`; `tests/pages/chat-attach.spec.ts`, `chat-attach-gallery.spec.ts`.
 
 ## Another host
 

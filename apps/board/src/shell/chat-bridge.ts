@@ -10,14 +10,17 @@
 // another one; a changed card's stepper links to the board write in the chat that last changed it; a
 // chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
 // attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
-// The pure parts are unit-tested under Node.
+// It also holds the files attached to the next message (D-068 ruling 6: the composer takes them, the host
+// uploads): each goes up as it comes, its chip saying so, then ready with its path or refused with why;
+// the limits are checked here first and by the server again. The pure parts are unit-tested under Node.
 import type { LedgerState, SelectedCard } from '#actions';
 import { boardBlocks, boardLocked, roundOf } from '#actions';
 import type {
-  ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatState, Chip, ComposerContext,
+  ChangeEntry, ChatChangeDetail, ChatComposerElement, ChatFileRemoveDetail, ChatFilesDetail, ChatState, Chip, ComposerContext, ComposerFile,
 } from '#chat';
-import { CHAT_CHANGE_EVENT } from '#chat';
+import { CHAT_CHANGE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_FILES_EVENT } from '#chat';
 import type { BoardData } from '#actions';
+import type { OperationInput, OperationOutput } from '#format';
 import { clip } from '#format';
 import type { BoardSide } from '../board/chat-side.ts';
 import * as chatWords from './words/chat.ts';
@@ -26,6 +29,43 @@ import * as chatWords from './words/chat.ts';
 export const SOURCE_LABEL = chatWords.showInTheChat;
 
 const LABEL_MAX = 80;
+
+/** The server's limits (D-068 ruling 3), held equal to them by apps/board/tests/chat-attach.test.ts. */
+export const FILE_BYTES = 10 * 1024 * 1024;
+export const FILE_COUNT = 10;
+const FILE_LABEL_MAX = 200;
+/** What the contract's `fileLabel` refuses; a test holds the two equal. */
+const NOT_IN_A_LABEL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]+/g;
+const PICTURE_TYPE = /^image\/(?:x-)?([a-z0-9]+)/i;
+/** What a browser names a picture on the clipboard, which is no name of the person's. */
+const CLIPBOARD_NAME = /^image\.[a-z0-9]+$/i;
+
+/** One file the next message may carry: its body's item. */
+export type MessageFile = NonNullable<OperationInput<'send_chat'>['body']['files']>[number];
+export type AttachFileBody = OperationInput<'attach_chat_file'>['body'];
+
+/** A name as the contract's `label` takes it: a file's name can hold a line break or a text-direction
+ *  mark, and those would refuse the whole message; none when nothing is left. */
+export function fileLabel(name: string): string | undefined {
+  const clean = name.replace(NOT_IN_A_LABEL, ' ').replace(/\s+/g, ' ').trim();
+  return clean.slice(0, FILE_LABEL_MAX).replace(/[\ud800-\udbff]$/, '') || undefined;
+}
+
+/** The file's name, or for a picture pasted with none of its own, one from the words: the day, its type's extension. */
+export function attachedName(file: Pick<File, 'name' | 'type'>, pasted: boolean, now: Date): string {
+  const picture = PICTURE_TYPE.exec(file.type)?.[1]?.toLowerCase();
+  if (!picture || (file.name !== '' && !(pasted && CLIPBOARD_NAME.test(file.name)))) return file.name;
+  const day = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+  return chatWords.pastedPicture(day, picture === 'jpeg' ? 'jpg' : picture);
+}
+
+/** A file's bytes as the operation's `data`: standard base64, padded. */
+export async function fileData(file: Pick<Blob, 'arrayBuffer'>): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = '';
+  for (let at = 0; at < bytes.length; at += 0x8000) binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
+  return btoa(binary);
+}
 
 /** The selected cards, in the order they were selected, by number and title; a node with no number is no card. */
 export function selectedCards(d: BoardData, ids: readonly string[]): SelectedCard[] {
@@ -74,6 +114,10 @@ export interface ChatSide {
   panel: HTMLElement;
   /** The composer, which may not be drawn yet: it takes the context whenever it is (chat-panel.ts `composerSide`). */
   composer: Pick<ChatComposerElement, 'setContext'>;
+  /** Where each attached file stands, for the composer (it is drawn, or a file could not have come). */
+  setFiles(files: readonly ComposerFile[]): void;
+  /** Save one attached file (`attach_chat_file`). */
+  upload(body: AttachFileBody): Promise<OperationOutput<'attach_chat_file'>>;
   state(): ChatState;
   /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
   agent(): string | undefined;
@@ -92,8 +136,16 @@ export interface ChatBridge {
   chips(): Chip[];
   /** The stepper link's words for card `n`, when a board write in the chat changed it. */
   source(n: number): string | undefined;
-  /** A message went with `chips`: those cards are spent until the selection changes. */
-  sent(chips: readonly Chip[]): void;
+  /** Files the person attached (`chat-files`, heard on the panel): each is checked, then uploaded, and its chip says where it stands. */
+  attachFiles(files: readonly File[], pasted: boolean): void;
+  /** A file's chip was taken off (`chat-file-remove`): its file stays saved (D-068 ruling 4), an answer still on its way is dropped. */
+  removeFile(id: string): void;
+  /** The ready files, for the next message. */
+  files(): MessageFile[];
+  /** Whether a file is still uploading: no message goes until it is settled. */
+  uploading(): boolean;
+  /** A message went with `chips` and `files`: those cards are spent until the selection changes, those files and any refused one gone from the composer. */
+  sent(chips: readonly Chip[], files?: readonly MessageFile[]): void;
   /** The chat's agent drew `board`, its session's first: open it. */
   open(board: string): void;
 }
@@ -105,6 +157,9 @@ export function createChatBridge(): ChatBridge {
   const spent = new Set<number>();
   /** The context last given to the composer, as text. */
   let shown = 'null';
+  /** The files attached to the next message, with what the server answered for those it saved. */
+  let held: (ComposerFile & { saved?: MessageFile })[] = [];
+  let filesMade = 0;
 
   const cards = (): SelectedCard[] => {
     const d = b?.data();
@@ -127,6 +182,50 @@ export function createChatBridge(): ChatBridge {
     if (!ids.length) return b.toast(chatWords.thoseCardsAreNoLonger);
     b.selection.select(ids, 'only');
     b.zoom();
+  }
+
+  const drawFiles = () => c?.setFiles(held.map(({ saved: _, ...file }) => file));
+  const showFiles = () => {
+    drawFiles();
+    c?.changed();
+  };
+  const settle = (id: string, change: Partial<(typeof held)[number]>) => {
+    held = held.map((f) => (f.id === id ? { ...f, ...change } : f));
+    showFiles();
+  };
+  function attachFiles(files: readonly File[], pasted: boolean) {
+    const now = new Date();
+    const start: (() => void)[] = [];
+    for (const file of files) {
+      const name = attachedName(file, pasted, now);
+      const id = `file-${++filesMade}`;
+      const reason = file.size > FILE_BYTES ? chatWords.fileIsTooBig(file.size)
+        : held.filter((f) => f.state !== 'refused').length >= FILE_COUNT ? chatWords.tooManyFiles : undefined;
+      held.push({ id, name: fileLabel(name) ?? chatWords.aFile, state: reason ? 'refused' : 'uploading', ...(reason && { reason }) });
+      if (!reason) start.push(() => void upload(id, file, name));
+    }
+    showFiles();
+    start.forEach((go) => go());
+  }
+  function removeFile(id: string) {
+    held = held.filter((f) => f.id !== id);
+    showFiles();
+  }
+  const onFiles = (e: Event) => {
+    const { files, pasted } = (e as CustomEvent<ChatFilesDetail>).detail;
+    attachFiles(files, pasted);
+  };
+  const onFileRemove = (e: Event) => removeFile((e as CustomEvent<ChatFileRemoveDetail>).detail.id);
+  /** Read and save one file; what the person's file is called goes with its path, for the sent message's chip. */
+  async function upload(id: string, file: File, name: string) {
+    const refused = (reason: string) => settle(id, { state: 'refused', reason });
+    const data = await fileData(file).catch(() => null); // a folder dropped: its `File` can't be read
+    if (data === null) return refused(chatWords.fileCouldNotBeRead);
+    try {
+      const { file: saved } = await c!.upload({ name, type: file.type, data });
+      const label = fileLabel(name);
+      settle(id, { state: 'ready', saved: { path: saved.path, ...(label && { label }) } });
+    } catch (err) { refused(chatWords.fileRefused((err as Error).message)); }
   }
 
   const onChange = (e: Event) => {
@@ -160,17 +259,29 @@ export function createChatBridge(): ChatBridge {
       c = side;
       shown = 'null';
       side.panel.addEventListener(CHAT_CHANGE_EVENT, onChange);
+      side.panel.addEventListener(CHAT_FILES_EVENT, onFiles);
+      side.panel.addEventListener(CHAT_FILE_REMOVE_EVENT, onFileRemove);
       attach();
       return () => {
         side.panel.removeEventListener(CHAT_CHANGE_EVENT, onChange);
+        side.panel.removeEventListener(CHAT_FILES_EVENT, onFiles);
+        side.panel.removeEventListener(CHAT_FILE_REMOVE_EVENT, onFileRemove);
         c = null;
       };
     },
     refresh: attach,
     chips: () => cards().map(cardChip),
     source,
-    sent(took) {
+    attachFiles,
+    removeFile,
+    files: () => held.flatMap((f) => (f.state === 'ready' && f.saved ? [f.saved] : [])),
+    uploading: () => held.some((f) => f.state === 'uploading'),
+    sent(took, files = []) {
       for (const chip of took) if (chip.kind === 'card') spent.add(chip.ref);
+      // A refused file went with that message's chance: only one still uploading, or ready after it left, stays.
+      const went = new Set(files.map((f) => f.path));
+      held = held.filter((f) => f.state === 'uploading' || (f.saved && !went.has(f.saved.path)));
+      drawFiles();
       attach();
     },
     open: (board) => b?.jump(board),

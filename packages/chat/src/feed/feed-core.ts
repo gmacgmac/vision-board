@@ -4,9 +4,10 @@
 // write, approval cards (settled in place) and system lines. A tool shows only as the one status
 // line while it runs (`activityLine`). Pure and immutable: an entry that did not change is the same
 // object after an event, so an element redraws only what changed (rule 15). No DOM.
-import type { ApprovalScope, ApprovalStatus, ChatEvent, Chip, Facts, TurnEnd } from '../events.ts';
+import type { ApprovalScope, ApprovalStatus, AttachedFile, ChatEvent, Chip, Facts, TurnEnd } from '../events.ts';
 
-export interface PersonEntry { type: 'person'; key: string; text: string; chips: readonly Chip[] }
+/** `files`: what it attached, left out when none. */
+export interface PersonEntry { type: 'person'; key: string; text: string; chips: readonly Chip[]; files?: readonly AttachedFile[] }
 export interface AgentEntry { type: 'agent'; key: string; text: string; interim: boolean }
 /** A board write that finished: the board, the cards it drew or changed, and the ledger position after it. */
 export interface ChangeEntry { type: 'change'; key: string; board: string; cards: readonly number[]; head?: number }
@@ -76,7 +77,7 @@ function reduce(s: ChatState, e: ChatEvent): ChatState {
   switch (e.kind) {
     case 'message_in': {
       const { ended: _, last: __, ...rest } = s;
-      return { ...rest, busy: true, running: [], entries: add(s, { type: 'person', key: keyOf(e), text: e.text, chips: e.chips ?? [] }) };
+      return { ...rest, busy: true, running: [], entries: add(s, { type: 'person', key: keyOf(e), text: e.text, chips: e.chips ?? [], ...(e.files && { files: e.files }) }) };
     }
     case 'message_out':
       return { ...s, last: 'text', entries: add(s, { type: 'agent', key: keyOf(e), text: e.text, interim: e.interim === true }) };

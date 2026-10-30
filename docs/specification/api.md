@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-30 (attached files: 164); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-30 (attached files: 164; a file's label: 165); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -1538,12 +1538,15 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     not a plain folder (a link), `conflict`, with nothing written through it; the `chatAttachments` flag
     off, `not-found`. The path answers no other method: the board never serves these files. Held by
     `apps/board/tests/chat-files.test.ts` and `api-chat-files.test.ts`.
-165. **`send_chat` `files`**: at most 10 paths, each one `attach_chat_file` answered. `attachedFile`
-    (`chat-files.ts`, the one check) takes a path only in the exact saved shape, with a plain folder at each
-    step and a plain file at the end; any other, or one since deleted, is `invalid` at `/files/<i>`, and
-    nothing is sent. With the flag off any `files` is `invalid` at `/files`. The prompt (`chat-prompt.ts`
+165. **`send_chat` `files`**: at most 10 items `{ path, label? }`, each `path` one `attach_chat_file` answered.
+    `attachedFile` (`chat-files.ts`, the one check) takes a path only in the exact saved shape, with a plain
+    folder at each step and a plain file at the end; any other, one since deleted, or one named twice in the
+    message, is `invalid` at `/files/<i>`, and nothing is sent. `label` is the name the person's file has
+    (1-200 characters, no control, line-break or text-direction character; `$defs/fileLabel`, point 356):
+    display only, kept on `message_in.files` to show on the message, never in the prompt, and nothing is
+    believed from it. With the flag off any `files` is `invalid` at `/files`. The prompt (`chat-prompt.ts`
     `promptFor`) gets one block after the words and before the board's: "The person attached these files:"
-    and one path a line. `message_in.files` carries each `{ name, path, size }`; a message of files alone
+    and one path a line. `message_in.files` carries each `{ name, path, size, label? }`; a message of files alone
     reads "Attached files.". A message waiting for a turn to end is joined with the next, each file once
     (so a joined message may carry more than 10).
 166. **The agent** may read an attached file and never change it: `ACCESS_RULES` row

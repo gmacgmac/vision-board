@@ -28,6 +28,7 @@
 // With the agentAccessRules flag the header lists what the person allowed "for this folder"
 // (`list_permissions`, read when the drawing comes, when the list opens and when a yes for the folder is
 // given); Forget asks first (the confirm dialog), then `forget_permission`, and the agent asks again.
+// With the chatAttachments flag the composer takes files; the bridge uploads them and Send carries the ready ones (D-068).
 import type {
   ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
 } from '#chat';
@@ -41,7 +42,7 @@ import type { ChatView } from './chat-view.ts';
 import type { ChatPanel, ChatPanelDeps, ChatViewLoader } from './chat-panel-types.ts';
 import type { ChatSessionInfo } from './page-io.ts';
 import { ApiError } from '../board/io.ts';
-import { answerApproval, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
+import { answerApproval, attachChatFile, listChats, listFolderChats, sendChat, startChat, startFolderChat, stopChat, watchChat } from './page-io.ts';
 import { pageFlags } from '../flags.ts';
 import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
@@ -77,6 +78,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
 
   const st = panelState();
   const queues = flagOn('workAlongside', pageFlags()); // words queue while the agent works (App.svelte passes `work`... on the same flag)
+  const attaching = flagOn('chatAttachments', pageFlags());
   const allowed = createAllowed({ confirm: d.confirm, fail: (err) => fail(err), changed: () => render() });
   let [unfollow, loads] = [() => {}, 0];
   let [waitShown, attachedShown] = [false, false];
@@ -96,7 +98,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
     if (!view) return;
     view.header.show(headerView({ agent, model, agents: AGENTS, models: MODELS[agent], ...(allowed.list && { allowed: allowed.list }) }, st.chat, host));
     view.feed.show(st.chat);
-    view.composer.show(composerView(st.chat, host));
+    view.composer.show({ ...composerView(st.chat, host), ...(attaching && { files: chatWords.attachingFiles }) });
   }
 
   /** Make the header, feed and composer (the first time), then draw them from what the panel holds. */
@@ -206,16 +208,17 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
    *  else the problem, which a toast also says. */
   async function send({ text, chips: own }: ChatSendDetail): Promise<string | null> {
     if (st.sending || st.board === null) return chatWords.aMessageIsAlreadyOn;
+    if (d.bridge.uploading()) { d.toast(chatWords.filesStillUploading, 'info'); return chatWords.filesStillUploading; } // the board's Send: the composer's waits by itself
     st.sending = true;
     view?.feed.follow();
-    const [ask, chips] = [lastAsk(st.chat), [...own, ...d.bridge.chips()]];
+    const [ask, chips, files] = [lastAsk(st.chat), [...own, ...d.bridge.chips()], d.bridge.files()];
     try {
       // A start already under way says itself why it failed; the composer keeps the text.
       const s = st.starting ? await st.starting.catch(() => null) : st.session ?? (await start(st.pick));
       if (!s) return chatWords.theAgentDidNotStart;
-      const answer = await sendChat(s.session, messageBody(text, chips));
+      const answer = await sendChat(s.session, { ...messageBody(text, chips), ...(files.length > 0 && { files }) });
       view?.composer.clear();
-      d.bridge.sent(chips);
+      d.bridge.sent(chips, files);
       // Held while the agent works: Send waits until the next message is the person's.
       if (answer.kind === 'system' && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
       return null;
@@ -270,7 +273,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   }
 
   const detach = d.bridge.chat({
-    panel, composer: composerSide, state: () => st.chat, changed: render,
+    panel, composer: composerSide, setFiles: (files) => view?.composer.setFiles(files), upload: attachChatFile, state: () => st.chat, changed: render,
     agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
     reveal,
   });
