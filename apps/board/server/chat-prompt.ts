@@ -47,8 +47,8 @@ export const ONLY_ATTACHED = serverChatWords.attachedFromTheBoard2;
 export const ONLY_FILES = serverChatWords.attachedFiles;
 
 /** The block naming the attached files, one relative path a line; '' with none. */
-const filesBlock = (msg: ChatMessage): string =>
-  (msg.files?.length ? `${serverChatWords.thePersonAttachedTheseFiles}\n${msg.files.map((f) => f.path).join('\n')}` : '');
+export const filesBlock = (msg: ChatMessage): string =>
+  (msg.files?.length ? `${serverChatWords.thePersonAttachedTheseFiles}\n${msg.files.map((f) => f.path).join('\n')}\n${serverChatWords.attachedFilesAreUntrusted}` : '');
 
 /** The person's words, when there are any. */
 export const wordsOf = (msg: ChatMessage): string => (msg.text?.trim() ? msg.text : '');

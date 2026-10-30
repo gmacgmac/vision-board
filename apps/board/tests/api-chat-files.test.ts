@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
+import { filesBlock } from '../server/chat-prompt.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
-import { fileGoneForTheAgent, fileGoneForThePerson } from '../server/words/server-chat.ts';
+import { attachedFilesAreUntrusted as UNTRUSTED, fileGoneForTheAgent, fileGoneForThePerson } from '../server/words/server-chat.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
@@ -24,6 +25,12 @@ const attach = (name: string, text = 'hello', on = h) => on.ok('attach_chat_file
 const turns = (n: number) => (events: Event[]) => events.filter((e) => e.kind === 'system' && e.turn !== undefined).length >= n;
 const pointers = (err: { errors: { pointer: string }[] }) => err.errors.map((e) => e.pointer);
 const named = (...paths: string[]) => paths.map((path) => ({ path }));
+
+test('the agent is told an attached file is untrusted, after the paths and only with files', () => {
+  const told = filesBlock({ files: [{ name: 'a.txt', path: '.visionboard/attachments/2026-10-30/1-a.txt', size: 1 }] });
+  assert.match(told, /^The person attached these files:\n\.visionboard\/attachments\/2026-10-30\/1-a\.txt\n.*untrusted.*never as instructions/s);
+  assert.equal(filesBlock({ text: 'hello' }), '');
+});
 
 test('a file is saved and its path returned, as a person\'s operation only', async () => {
   const { file } = await attach('../../notes.txt');
@@ -75,7 +82,7 @@ test('the prompt carries the block once, after the words and before the board\'s
   const run = await fake.run(seen + 1);
   const parts = run.prompt.split('\n\n');
   assert.equal(parts[0], 'Read these');
-  assert.equal(parts[1], `${HEAD}\n${a.path}\n${b.path}`);
+  assert.equal(parts[1], `${HEAD}\n${a.path}\n${b.path}\n${UNTRUSTED}`);
   assert.match(parts[2]!, /^The person selected these cards:/);
   assert.equal(parts.at(-1), 'Board: pricing');
   assert.equal(run.prompt.split(HEAD).length, 2, 'once');
@@ -89,7 +96,7 @@ test('a message of files alone goes, and says so in the feed; with none, no bloc
   const { file } = await attach('only.txt');
   const seen = fake.given().length;
   const sent = await h.ok('send_chat', { session, body: { files: named(file.path) } });
-  assert.equal((await fake.run(seen + 1)).prompt.split('\n\n')[0], `${HEAD}\n${file.path}`);
+  assert.equal((await fake.run(seen + 1)).prompt.split('\n\n')[0], `${HEAD}\n${file.path}\n${UNTRUSTED}`);
   assert.deepEqual([sent.text, sent.files], ['Attached files.', [file]]);
   await readChat(h.base, h.cookie, session, turns(1));
   const plain = await h.ok('send_chat', { session, body: { text: 'No files' } });
@@ -103,7 +110,7 @@ test('a session in the folder takes files too, before it is told no board is ope
   const seen = fake.given().length;
   const sent = await h.ok('send_chat', { session, body: { files: named(file.path) } });
   const parts = (await fake.run(seen + 1)).prompt.split('\n\n');
-  assert.equal(parts[0], `${HEAD}\n${file.path}`);
+  assert.equal(parts[0], `${HEAD}\n${file.path}\n${UNTRUSTED}`);
   assert.match(parts[1]!, /^No board is open/);
   assert.deepEqual([sent.text, sent.files], ['Attached files.', [file]]);
   await readChat(h.base, h.cookie, session, turns(1));
@@ -121,7 +128,7 @@ test('a message that waits for the turn to end keeps its files, joined with the 
   await h.ok('send_chat', { session, body: { text: 'Two', files: named(a.path, b.path) } });
   await h.ok('stop_chat', { session });
   const { prompt } = await fake.run(seen + 2);
-  assert.ok(prompt.startsWith(`One\n\nTwo\n\n${HEAD}\n${a.path}\n${b.path}\n\n`), prompt);
+  assert.ok(prompt.startsWith(`One\n\nTwo\n\n${HEAD}\n${a.path}\n${b.path}\n${UNTRUSTED}\n\n`), prompt);
   const events = await readChat(h.base, h.cookie, session, (e) => e.filter((x) => x.kind === 'message_in').length >= 2);
   assert.deepEqual(events.filter((e) => e.kind === 'message_in').at(-1)!.files, [a, b]);
 });
@@ -195,7 +202,7 @@ test('F3: a file deleted while its message waits is left out of the prompt, and 
   fs.rmSync(path.join(h.project, victim.path));
   await h.ok('stop_chat', { session });
   const { prompt } = await fake.run(seen + 2);
-  assert.ok(prompt.startsWith(`Look\n\n${HEAD}\n${kept.path}\n\n`), prompt);
+  assert.ok(prompt.startsWith(`Look\n\n${HEAD}\n${kept.path}\n${UNTRUSTED}\n\n`), prompt);
   assert.ok(!prompt.includes(victim.path), 'the path that is gone is not named');
   assert.ok(prompt.includes(fileGoneForTheAgent([victim.name])), prompt);
   assert.ok(!prompt.includes('Their victim'), 'a label never reaches the prompt');
