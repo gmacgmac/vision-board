@@ -120,7 +120,8 @@ export async function decide(stdin: string, ask: Ask, exists: (path: string) => 
   if ('refuse' in rules) return decision(false, rules.refuse);
   if ('allow' in rules) return decision(true, 'The board\'s access rules allow it.');
   let outcome: ApprovalOutcome;
-  try { outcome = await ask(facts); } catch { return decision(false, UNREACHABLE); }
+  // The server judges again, so it is told where the shell is.
+  try { outcome = await ask(cwd && cwd !== access.folder ? { ...facts, cwd } as Facts : facts); } catch { return decision(false, UNREACHABLE); }
   const refusal = refusalFor(outcome);
   return refusal === null ? decision(true, 'The person allowed it.') : decision(false, refusal);
 }

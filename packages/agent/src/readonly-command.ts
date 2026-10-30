@@ -8,87 +8,14 @@
 // command covers (`commandHead`, `rememberedHead`) and the one table of commands never remembered
 // (`NEVER_REMEMBERED`: they run any code, act on whatever they target, or reach the network).
 
-export interface ShellWord {
-  /** The word after quote removal. */
-  text: string;
-  /** Whether it holds an unquoted `*`, `?` or `[` (the shell would expand it). */
-  glob: boolean;
-}
-
-export interface ShellWords {
-  /** The words of each `|`-joined part, best effort even when the command is not plain. */
-  segments: ShellWord[][];
-  /** No expansion, redirection or operator but `|`, and every quote closed. */
-  plain: boolean;
-}
+import { shellWords } from './shell-words.ts';
+export type { ShellWord, ShellWords } from './shell-words.ts';
+export { shellWords };
 
 /** What a read-only command reads: words that may name a file, and folders whose files it reads. */
 export interface ReadOnly {
   reads: string[];
   searches: string[];
-}
-
-const BREAK = new Set([';', '&', '<', '>', '(', ')', '`', '\n']);
-const GLOB = new Set(['*', '?', '[']);
-const ESCAPES: Record<string, string> = { n: '\n', t: '\t', r: '\r', a: '\x07', b: '\b', e: '\x1b', E: '\x1b', f: '\f', v: '\v', '\\': '\\', '\'': '\'', '"': '"', '?': '?' };
-
-/** Bash's and zsh's `$'...'` from `from` (after the quote): its text and where it closes. */
-function ansiC(s: string, from: number): [string, number] {
-  let out = '';
-  for (let i = from; i < s.length; i++) {
-    if (s[i] === '\'') return [out, i];
-    if (s[i] !== '\\') { out += s[i]; continue; }
-    const e = /^(?:x[0-9a-fA-F]{1,2}|u[0-9a-fA-F]{1,4}|U[0-9a-fA-F]{1,8}|[0-7]{1,3}|c[\s\S]|[\s\S])/.exec(s.slice(i + 1))?.[0] ?? '';
-    i += e.length;
-    const code = /^[xuU]./.test(e) ? parseInt(e.slice(1), 16) : /^[0-7]/.test(e) ? parseInt(e, 8) : e[0] === 'c' ? e.charCodeAt(1) & 31 : -1;
-    out += code >= 0 ? String.fromCodePoint(Math.min(code, 0x10ffff)) : ESCAPES[e] ?? `\\${e}`;
-  }
-  return [out, s.length];
-}
-
-/** A command's words, as a POSIX shell (bash, zsh) splits and unquotes them. */
-export function shellWords(command: string): ShellWords {
-  const segments: ShellWord[][] = [[]];
-  let plain = true;
-  let text = '';
-  let glob = false;
-  let started = false;
-  let quote = '';
-  const end = () => {
-    if (started) segments[segments.length - 1]!.push({ text, glob });
-    text = ''; glob = false; started = false;
-  };
-  for (let i = 0; i < command.length; i++) {
-    const c = command[i]!;
-    const next = command[i + 1] ?? '';
-    if (quote === '\'') { if (c === '\'') quote = ''; else text += c; continue; }
-    if (quote === '"') {
-      if (c === '"') quote = '';
-      else if (c === '\\' && '$`"\\\n'.includes(next) && next !== '') { text += next; i++; }
-      else { if (c === '$' || c === '`') plain = false; text += c; }
-      continue;
-    }
-    if (c === '\\') { if (next !== '\n') { text += next; started = true; } i++; continue; }
-    if (c === '\'' || c === '"') { quote = c; started = true; continue; }
-    if (c === ' ' || c === '\t') { end(); continue; }
-    if (c === '|') {
-      end();
-      if (next === '|' || next === '&') { plain = false; i++; }
-      segments.push([]);
-      continue;
-    }
-    if (BREAK.has(c)) { plain = false; end(); continue; }
-    if (c === '$' && next === '\'') { const [t, at] = ansiC(command, i + 2); text += t; i = at; plain = false; started = true; continue; }
-    if (!started && (c === '#' || c === '=')) plain = false;       // a comment; zsh's `=cmd`
-    if (c === '~' && (!started || text.endsWith('=') || text.endsWith(':'))) plain = false;
-    if (c === '$' || c === '{' || c === '}') plain = false;
-    if (GLOB.has(c)) { plain = false; glob = true; }
-    text += c;
-    started = true;
-  }
-  if (quote !== '') plain = false;
-  end();
-  return { segments, plain };
 }
 
 type Check = (args: string[]) => boolean;
@@ -110,7 +37,7 @@ const SIMPLE = { grep: /^-[rRnilwHhcvsFEoLqxIZ]+$/, rg: /^-[nilwHcvsFoLUxuNqSI.]
 const SIMPLE_LONG = new Set(['--recursive', '--dereference-recursive', '--line-number', '--ignore-case', '--files-with-matches',
   '--count', '--fixed-strings', '--word-regexp', '--invert-match', '--no-messages', '--with-filename', '--no-filename',
   '--only-matching', '--hidden', '--no-ignore', '--follow', '--no-heading', '--smart-case']);
-const isFlag = (w: string) => w.startsWith('-') && w !== '-';
+export const isFlag = (w: string): boolean => w.startsWith('-') && w !== '-';
 
 /**
  * The folders a grep or rg reads every file under. Recursive: rg always; grep with `-r`, `-R` or
@@ -154,23 +81,51 @@ function plainWords(command: string): string[] | null {
 /** Programs the agent never runs, whatever the person answers (point 346: git is the person's). */
 export const REFUSED_PROGRAMS: readonly string[] = ['git'];
 /** Words that run the command after them: skipped, with their flags and values, to find the program. */
-const WRAPPERS = new Set(['env', 'sudo', 'doas', 'command', 'builtin', 'exec', 'nohup', 'time', 'nice', 'timeout', 'xargs', 'stdbuf', 'eval', 'then', 'do', 'else', '!']);
+const WRAPPERS = new Set(['env', 'sudo', 'doas', 'command', 'builtin', 'exec', 'nohup', 'time', 'nice', 'timeout', 'xargs', 'stdbuf', 'eval', 'if', 'elif', 'while', 'until', 'then', 'do', 'else', '!']);
+/** Shells whose `-c` takes a script (`shellScripts`). */
+const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish', 'csh', 'tcsh']);
+/** How deep scripts inside scripts are followed: past it, `policy` refuses, as it can't be told. */
+export const SCRIPT_DEPTH = 8;
+
+/**
+ * The scripts `command` hands a shell, each to be judged as a plain command: what follows `-c` in `sh -c`, `bash -lc`,
+ * `env sh -c`; all of `eval`'s words; each substitution inside double quotes. One per simple command: what comes after it is the script's. A script on stdin, in a
+ * file or in a variable is not here: it can't be read from the words (chat.md § Not covered).
+ */
+export function shellScripts(command: string): string[] {
+  const { commands, substitutions } = shellWords(command);
+  return [...substitutions, ...commands.flatMap((simple) => {
+    const words = simple.map((w) => w.text);
+    const at = words.findIndex((w) => { const name = w.split('/').pop()!; return name === 'eval' || SHELLS.has(name); });
+    if (at < 0) return [];
+    if (words[at]!.split('/').pop() === 'eval') return [words.slice(at + 1).join(' ')].filter(Boolean);
+    const flag = words.findIndex((w, k) => k > at && /^-[a-zA-Z]*c[a-zA-Z]*$/.test(w));
+    const script = flag < 0 ? undefined : words.slice(flag + 1).find((w) => !isFlag(w));
+    return script ? [script] : [];
+  })];
+}
 
 /**
  * The refused program `command` runs, if any, however it is spelled: every piece between the shell's
  * separators and quotes (`;`, `&&`, `|`, `$(…)`, backticks, `sh -c "…"`), its quotes and backslashes
  * gone, its assignments, wrappers (`env`, `sudo`, `xargs`) and their flags skipped, and the program by its
  * last path part (`/usr/bin/git`). A piece that only mentions it (`grep "git" README`) is refused too:
- * a quoted word starts a piece. Null when none.
+ * a quoted word starts a piece. Each simple command is read again as the shell hands it over, so quotes
+ * inside a word are gone too (`g"i"t`, `'g'it`, `$'\x67it'`), and so is each script it hands a shell. Null when none.
  */
-export function runsProgram(command: string, programs: readonly string[] = REFUSED_PROGRAMS): string | null {
-  const pieces = command.replace(/\\(.)/g, '$1').split(/[;&|()`$'"\n{}]+/);
-  for (const piece of pieces) {
-    const tokens = piece.trim().split(/\s+/).filter(Boolean);
+export function runsProgram(command: string, programs: readonly string[] = REFUSED_PROGRAMS, depth = 0): string | null {
+  const pieces = command.replace(/\\(.)/g, '$1').split(/[;&|()`$'"\n{}]+/).map((piece) => piece.trim().split(/\s+/).filter(Boolean));
+  const handed = shellWords(command).commands.map((simple) => simple.map((w) => w.text));
+  for (const tokens of [...pieces, ...handed]) {
     let i = 0;
     while (i < tokens.length && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]!) || WRAPPERS.has(tokens[i]!) || tokens[i]!.startsWith('-') || /^\d+[smhd]?$/.test(tokens[i]!))) i++;
     const program = tokens[i]?.split('/').pop();
     if (program !== undefined && programs.includes(program)) return program;
+  }
+  if (depth >= SCRIPT_DEPTH) return null;
+  for (const script of shellScripts(command)) {
+    const found = runsProgram(script, programs, depth + 1);
+    if (found !== null) return found;
   }
   return null;
 }

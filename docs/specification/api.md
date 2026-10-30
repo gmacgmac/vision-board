@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-30 (attached files: 164; a file's label: 165); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-30 (attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -724,7 +724,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 101. **Sessions** (`start_chat`, `list_chats`): a session is `{ session, board, agent, model?,
     created }`, `agent` `claude` or `kiro`. One per board is in use, the newest; starting one is
     the person's click, so it grants the board to the session's agent. **Messages** (`send_chat`):
-    `{ text, notes?, cards? }`, notes by `seq` and cards by number, answered 202 with the
+    `{ text, notes?, cards?, files? }`, notes by `seq`, cards by number and files by path (165), answered 202 with the
     `message_in` event, or while the agent is still answering with the wait's `system` line: it goes
     when the turn ends (point 328). `stop_chat` answers `{
     stopped }`. `answer_approval`: the first answer wins, and a settled approval is a `conflict`.
@@ -768,7 +768,8 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
     with any other waiting, until the turn ends (words alone too, point 328); a message refused (nothing
     to send) releases nothing. The run token (32 random bytes, per session and server start) opens
     `ask_approval` only while a turn runs. **The agent's access** (D-066): every ask is decided first by
-    the access rules of the board's folder (`policy`, `packages/agent/src/access-rules.ts`), whatever
+    the access rules of the board's folder (`policy`, `packages/agent/src/access-rules.ts`; a command's words from
+    `commandFacts.cwd`, the shell's folder, which the gate sends when it is not the board's), whatever
     the gate decided and whatever was answered before: a refused path is denied and an allowed one
     approved, unasked. Then a kept yes answers what it covers (`coverOf`): a write's yes covers writes in
     that file's folder (not its subfolders), a read's yes covers that file only, a search's yes searches of that folder, a
@@ -1054,12 +1055,12 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 131. **One message carries the board** (rulings 1-5). `info.version` becomes 1.17.0. On a board
     session, `send_chat` builds one message (`chat-prompt.ts` `promptFor`, the one builder; the
     board's Send uses it too): the person's words (`text`, now optional: left out when they wrote
-    nothing), then "Attached from the board:" with each note and card, then the Send message of 121
+    nothing), then the attached files' block (165), then "Attached from the board:" with each note and card, then the Send message of 121
     for what the session's agent was not yet told (packages/actions `turnOf`, from the last Send,
     `chat-round.ts` `previousSend`; left out when there is nothing), then `Board: <id>`. Its `message_in` shows the words and the answers, with the
     chips; with neither, "Attached from the board.". It is recorded as the board's Send when it
     goes, so 121's "send_chat records the Send without this message" no longer holds. Nothing at
-    all to send (no words, no chips, nothing new for this agent) is `invalid` at `/text`; a folder
+    all to send (no words, no chips, no files, nothing new for this agent) is `invalid` at `/text`; a folder
     session still takes words only. While a turn runs, words alone are still a `conflict` (107);
     a message with chips or new answers waits instead (202 with the `system` line "Your message
     goes to the agent when it finishes this turn.", or 121's line with no words), one per session:
@@ -1528,7 +1529,8 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `openapi.json` `info.version` becomes 1.32.0; the chat schema's `message_in` gains `files` (additive,
     `$id` stays chat/1). The body is `{ name, type, data }`, `data` standard base64 (padded). The file is
     saved at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, the day in UTC and `<n>` one more than
-    the day's highest, readable by this user only; the answer is 201 with `{ file: { name, path, size } }`,
+    the day's highest (or the highest this server has taken, so a number stays taken once its file is deleted: `nextNumber`),
+    readable by this user only, and `attachments/` is added to `.visionboard/.gitignore` (`ignoreInGit`, D-069 ruling 3); the answer is 201 with `{ file: { name, path, size } }`,
     `path` relative to the folder. `name` is what the server made of the one given
     (`chat-files.ts` `attachmentName`): the last path part, accents folded, anything but letters, digits,
     `.`, `-` and `_` made `_`, no leading dot, at most 80 characters with the extension kept, `file` when
@@ -1542,14 +1544,19 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     `attachedFile` (`chat-files.ts`, the one check) takes a path only in the exact saved shape, with a plain
     folder at each step and a plain file at the end; any other, one since deleted, or one named twice in the
     message, is `invalid` at `/files/<i>`, and nothing is sent. `label` is the name the person's file has
-    (1-200 characters, no control, line-break or text-direction character; `$defs/fileLabel`, point 356):
+    (1-200 characters, no control, line-break or text-direction character, and at least one that shows; `$defs/fileLabel`, point 356):
     display only, kept on `message_in.files` to show on the message, never in the prompt, and nothing is
     believed from it. With the flag off any `files` is `invalid` at `/files`. The prompt (`chat-prompt.ts`
     `promptFor`) gets one block after the words and before the board's: "The person attached these files:"
     and one path a line. `message_in.files` carries each `{ name, path, size, label? }`; a message of files alone
     reads "Attached files.". A message waiting for a turn to end is joined with the next, each file once
-    (so a joined message may carry more than 10).
-166. **The agent** may read an attached file and never change it: `ACCESS_RULES` row
-    `.visionboard/attachments/**` (`theirAttachments`), so Claude's deny rules and Kiro's agent carry it.
-    Held by `packages/agent/tests/policy.test.ts`, `policy-command.test.ts`, `claude-args.test.ts`,
+    (so a joined message may carry more than 10); its files are checked again when it goes (`chat-files.ts` `checked`), and
+    one deleted meanwhile is left out of the prompt and of `message_in.files`, the text and the prompt saying which
+    (`fileGoneForThePerson`, `fileGoneForTheAgent`). `send_chat` keeps no record of what was saved (D-069 ruling 4). Held by
+    `apps/board/tests/api-chat-files.test.ts` and `chat-files.test.ts`.
+166. **The agent** may read an attached file, and its file tools may not change it: `ACCESS_RULES` row
+    `.visionboard/attachments/**` (`theirAttachments`), so Claude's deny rules and Kiro's agent carry it. A command the
+    rules can't judge asks (`unknownCommand`), once only; one known to change a file is refused (`knownChanges`, D-069
+    rulings 1, 2; chat.md § What the person attached).
+    Held by `packages/agent/tests/policy-attachments.test.ts`, `policy.test.ts`, `policy-command.test.ts`, `claude-args.test.ts`,
     `kiro-turn.test.ts`.

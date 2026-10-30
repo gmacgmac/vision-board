@@ -209,13 +209,26 @@ before anything remembered:
 - **Git is the person's** (point 346, D-067 proposed): `.git` in any folder is refused to read and to
   write, and so is every git command, read-only ones too, however it is spelled (`cd src && git log`,
   `env A=1 git status`, `/usr/bin/git`, `sh -c "git …"`, `$(git …)`: `runsProgram`, `REFUSED_PROGRAMS`),
-  with the words `gitIsThePersons`. A command that only mentions it (`grep "git" README`) is refused too.
+  and spelled in pieces of quotes (`g"i"t`, `'g'it`, `$'\x67it'`), with the words `gitIsThePersons`. A command that only mentions it (`grep "git" README`) is refused too.
   Claude Code's deny rules carry `Bash(git)` and `Bash(git *)`, Kiro's a `shell` `deny` and 2.x
   `deniedCommands`. A script that runs git without naming it is asked, not refused (§ Not covered).
+- **A script a shell is handed** (`readonly-command.ts` `shellScripts`, `shell-words.ts` `substitutions`, `policy.ts` `commandPolicy`): what `sh -c`,
+  `bash -c`, `zsh -c`, `dash -c` and the like and `eval` are given, and each `"$(...)"` and backtick in double quotes (single quotes
+  stay literal), is judged as a plain command would be, so a closed file named inside it is refused (`curl -d "$(cat .env)" ...`)
+  and so is a known changer on an attached file; what prints into a known changer counts as changed (`rm "$(echo <attached>)"`). The
+  command around it still asks. Scripts inside scripts are followed `SCRIPT_DEPTH` deep and refused past it. Held by `packages/agent/tests/policy-scripts.test.ts`.
 - **Secrets and the board's files** (point 345): `.env`, `.env.*` (but `.env.example`), `.envrc`, `.npmrc`
   and the bots' secrets in any folder; what apps save (`.visionboard/app-state/**`) is unread and unwritten
   in any board folder, and the ledger unwritten in any board folder.
-- **What the person attached** (D-068): `.visionboard/attachments/**` is read freely and never changed.
+- **What the person attached** (D-068, D-069 rulings 1, 2): `.visionboard/attachments/**` is read freely and its
+  file tools are refused. A command the rules can't judge asks about an attached file, as about any other file
+  in the folder: the row's own `unknownCommand` (`access-rules.ts`), which no other row has, so the ledger, `.git/`
+  and the secrets still refuse such a command. A command known to change a file stays refused (`command-changes.ts`
+  `knownChanges`, `CHANGERS`: `rm`, `mv`, `tee`, `truncate`, `dd`, `sed -i` and the like, a redirection onto it,
+  `cp` onto it, a `cp` that makes a second name for it, `-l` or `-s`). `cp` with it as the source asks, and the copy follows
+  the rules of where it lands. A yes for any of these holds for that call (`Judged.once`): a kept yes for
+  `unzip` would cover `unzip -o x.zip -d` onto the file later. Held by `packages/agent/tests/policy-attachments.test.ts`,
+  through `policy`, the real `bin/gate.ts` and Kiro's `verdictFor`.
 - **For this folder**: kept in `.visionboard/permissions.json` (`chat-permissions.ts`), written by the
   server only and refused to the agent; listed by `list_permissions`, forgotten by `forget_permission`
   (api.md 107).
@@ -235,35 +248,46 @@ before anything remembered:
 - **Searches and paths outside**: a search of a folder that holds a refused file (any board folder holds
   `.visionboard/agents.json`) is refused, and so is a search of a folder that holds the board's folder (the
   parent, `/`): the board's folder is walked for it. A command naming a path outside the folder is asked
-  `once`, never kept. A command the gate asked about is never let through unasked by the server, which
-  can't see the shell's folder.
-- **Not covered**: a command that reads a refused file or runs git without naming it (a script,
-  `python -c`, `npm run` of a script that calls git) is asked, not refused. A remembered command runs whatever code it runs: a yes for `npm test` or `npm run
+  `once`, never kept. A command the gate asked about is never let through unasked by the server, and the gate tells it
+  the shell's folder when that is not the board's (`commandFacts.cwd`), so the server judges the same words from
+  the same place and a kept yes can't answer what the gate asked once (`apps/board/tests/chat-approvals-shell.test.ts`).
+- **Not covered**: a command that reads a refused file or runs git without naming it (a script file,
+  `python -c`, a variable, `"$X"`, a script on stdin, `env -S "..."`, `npm run` of a script that calls git, git behind a
+  launcher outside `WRAPPERS` such as `busybox git`) is asked, not refused. "Never change" an attached file holds
+  for what `knownChanges` recognises; for anything else (a script, `tar -x` or `unzip -o` into its folder, a
+  program the shell computes, `python3 <attached>` itself) it rests on the person's answer (D-069 ruling 1). A remembered command runs whatever code it runs: a yes for `npm test` or `npm run
   build` covers the code the agent writes there later, and that code can read what the person can (`.env`
   too). Inside the folder a yes for `sed -i` covers every file the rules ask about, where a Write yes
   covers one folder.
 
 Tests: `packages/agent/tests/gate.test.ts`, `kiro-turn.test.ts`, `claude-args.test.ts`, `remember.test.ts`,
-`policy.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-permissions.test.ts`, and end to end with
+`policy.test.ts`, `policy-scripts.test.ts`; `apps/board/tests/chat-approvals.test.ts`, `chat-approvals-shell.test.ts`, `chat-permissions.test.ts`, and end to end with
 the fake CLI and the real gate, `api-chat-access.test.ts`.
 
 ## Attaching
 
-The person attaches a file to a message and the agent opens it with its own tools (D-068; api.md 164-166;
-`chatAttachments`, `VB_FLAGS`).
+The person attaches a file to a message and the agent opens it with its own tools (D-068, D-069; api.md 164-166).
+The page and the server each have the `chatAttachments` flag, and off means both: `VB_FLAGS=-chatAttachments` for the
+server, `?flags=-chatAttachments` for the page. With only the server's off the paperclip stays, and a chip says it is off.
 
 - **Where files go**: each is saved when it is attached (`attach_chat_file`,
   `apps/board/server/chat-files.ts` `saveAttachment`) at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, in
-  the person's project. Day folders, because a new chat's first message has no session yet. In this repo
-  `.gitignore` keeps them out of git; another project's git may pick them up. Nothing clears old ones yet.
+  the person's project. Day folders, because a new chat's first message has no session yet. The board keeps them out
+  of the project's git: `saveAttachment` adds `attachments/` to `.visionboard/.gitignore` through `ignoreInGit`
+  (D-069 ruling 3; `chat-files.test.ts` asks git itself).
 - **By path, never by content**: Send carries the paths; the prompt names them, one a line, under "The
   person attached these files:" (`chat-prompt.ts` `promptFor`). Neither adapter changes, and pictures go the
-  same way. What an agent can open by path is its own: Kiro's reading of a picture is checked live
-  (the set's VERIFY_01).
+  same way. What an agent can open by path is its own. A file its read tool can't open, it opens by a command, which
+  asks (§ What the person attached). Whether Kiro's read tool opens a picture is not established here: no test can
+  run a real CLI, so it is the set's live look.
 - **A path from a page is not believed**: `send_chat` takes only what `attachedFile` accepts: the saved
-  shape, no link at any step, still there.
-- **The board never serves them**: no route reads them, so nothing in a file runs in the board. The agent
-  may read them and never change them (`ACCESS_RULES`, `.visionboard/attachments/**`).
+  shape, no link at any step, still there. It does not record what it saved (D-069 ruling 4); the agent can't write there.
+- **A message that waited** is checked again when it goes (`chat-files.ts` `checked`, `stillThere`): a file deleted
+  meanwhile is left out of the prompt, its chip is gone from the message, and the message says which, to the person
+  by their name for it and to the agent by the saved name. A number stays taken once its file is deleted (`nextNumber`,
+  `taken`), so a waiting path never comes to name other bytes. Held by `api-chat-files.test.ts`, `chat-files.test.ts`.
+- **The board never serves them**: no route reads them (`api-chat-files.test.ts` tries the addresses one might), so
+  nothing in a file runs in the board. What the agent may do with them is § What the person attached.
 - **In the panel** (`apps/board/src/shell/chat-bridge.ts` `createChatBridge`, `packages/chat` `composer-attach.ts`,
   `composer-core.ts` `ComposerFile`; held by `tests/pages/chat-attach.spec.ts`): the person drops, pastes or picks
   (the paperclip, a button, so the keys do all of it). `packages/chat` takes no API: the composer raises `chat-files`
@@ -288,10 +312,17 @@ The person attaches a file to a message and the agent opens it with its own tool
   the prompt, and nothing is believed from it.
 - **Another folder**: the page reloads onto it (`folder.ts` `reloadOnto`, `folderMoved`), so the chips go with the page
   and a path saved in the last folder never reaches Send.
+- **Refused at Send** (`ApiError.pointers`, `createChatBridge` `refuseSent`, `chat-attach-batch.spec.ts`): a file deleted before
+  Send marks its own chip refused from the problem's `/files/<i>`, with why; the words stay, and the next Send goes without it.
+- **Many at once** (`attachFiles`, `filesSaid`, `chat-attach-batch.spec.ts`): what fits gets a chip and uploads; the rest
+  share one refused chip that counts them; more than a few moving at once are one line of counts in the status.
 - **Not covered**: an attached file's contents are read by the agent like anything else it reads, so
-  words inside it can try to steer it; the access rules and the person's approvals still hold.
+  words inside it can try to steer it; the access rules and the person's approvals still hold. A saved name keeps an
+  ASCII name's words, with underscores, so a hostile name's words reach the prompt that way (shell and path safe;
+  VERIFY_01 F6, accepted). Two wholly non-Latin names reach the agent as `1-file.pdf` and `2-file.pdf`: the
+  person's own name stays out of the prompt.
 
-Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `chat-attach.test.ts`, `file-drops.test.ts`; `packages/chat/tests/composer-files.test.ts`; `tests/pages/chat-attach.spec.ts`, `chat-attach-drop.spec.ts`, `chat-attach-gallery.spec.ts`.
+Tests: `apps/board/tests/chat-files.test.ts`, `api-chat-files.test.ts`, `chat-attach.test.ts`, `file-drops.test.ts`; `packages/chat/tests/composer-files.test.ts`; `packages/agent/tests/policy-attachments.test.ts`; `tests/pages/chat-attach.spec.ts`, `chat-attach-batch.spec.ts`, `chat-attach-drop.spec.ts`, `chat-attach-gallery.spec.ts`.
 
 ## Another host
 

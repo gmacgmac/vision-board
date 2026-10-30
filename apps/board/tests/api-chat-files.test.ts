@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
+import { fileGoneForTheAgent, fileGoneForThePerson } from '../server/words/server-chat.ts';
 import type { Harness } from './api-harness.ts';
 import { startBoard } from './api-harness.ts';
 import type { Event } from './chat-support.ts';
@@ -172,4 +173,89 @@ test('flag off: the operation is 404, files are refused, and a message without t
     assert.ok(!('files' in sent));
     await readChat(off.base, off.cookie, session, turns(1));
   } finally { await off.close(); }
+});
+
+/** A session with a turn hanging, so the next message waits. */
+async function waitingSession() {
+  const { session } = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
+  const seen = fake.given().length;
+  fake.mode('hang');
+  await h.ok('send_chat', { session, body: { text: 'First' } });
+  await fake.run(seen + 1);
+  fake.mode('replay');
+  return { session, seen };
+}
+const lastIn = async (session: string, n: number) =>
+  (await readChat(h.base, h.cookie, session, (e) => e.filter((x) => x.kind === 'message_in').length >= n)).filter((e) => e.kind === 'message_in').at(-1)!;
+
+test('F3: a file deleted while its message waits is left out of the prompt, and the person and the agent are told which', async () => {
+  const { session, seen } = await waitingSession();
+  const [victim, kept] = [(await attach('victim.txt')).file, (await attach('kept.txt')).file];
+  await h.ok('send_chat', { session, body: { text: 'Look', files: [{ path: victim.path, label: 'Their victim.txt' }, { path: kept.path }] } });
+  fs.rmSync(path.join(h.project, victim.path));
+  await h.ok('stop_chat', { session });
+  const { prompt } = await fake.run(seen + 2);
+  assert.ok(prompt.startsWith(`Look\n\n${HEAD}\n${kept.path}\n\n`), prompt);
+  assert.ok(!prompt.includes(victim.path), 'the path that is gone is not named');
+  assert.ok(prompt.includes(fileGoneForTheAgent([victim.name])), prompt);
+  assert.ok(!prompt.includes('Their victim'), 'a label never reaches the prompt');
+  const message = await lastIn(session, 2);
+  assert.deepEqual(message.files, [kept], 'its chip is not shown as sent');
+  assert.equal(message.text, `Look\n\n${fileGoneForThePerson(['Their victim.txt'])}`);
+  assert.deepEqual(schemaProblems(CHAT_EVENT_ID, message), []);
+});
+
+test('F3: with every file of a files-alone message deleted, the turn is told so and no path is named; in the folder too', async () => {
+  const { session, seen } = await waitingSession();
+  const { file } = await attach('alone.txt');
+  await h.ok('send_chat', { session, body: { files: named(file.path) } });
+  fs.rmSync(path.join(h.project, file.path));
+  await h.ok('stop_chat', { session });
+  const { prompt } = await fake.run(seen + 2);
+  assert.ok(!prompt.includes(file.path) && !prompt.includes(HEAD), prompt);
+  const message = await lastIn(session, 2);
+  assert.equal(message.files, undefined);
+  assert.equal(message.text, fileGoneForThePerson([file.name]));
+
+  const folder = await h.ok('start_folder_chat', { body: { agent: 'claude' } });
+  const at = fake.given().length;
+  fake.mode('hang');
+  await h.ok('send_chat', { session: folder.session, body: { text: 'First' } });
+  await fake.run(at + 1);
+  fake.mode('replay');
+  const other = (await attach('folder.txt')).file;
+  await h.ok('send_chat', { session: folder.session, body: { text: 'Look', files: named(other.path) } });
+  fs.rmSync(path.join(h.project, other.path));
+  await h.ok('stop_chat', { session: folder.session });
+  const inFolder = await fake.run(at + 2);
+  assert.ok(!inFolder.prompt.includes(other.path), inFolder.prompt);
+  const said = await lastIn(folder.session, 2);
+  assert.equal(said.text, `Look\n\n${fileGoneForThePerson([other.name])}`);
+  assert.equal(said.files, undefined);
+});
+
+test('F11: a label that shows nothing is refused', async () => {
+  const { session } = await h.ok('start_chat', { board: 'pricing', body: { agent: 'claude' } });
+  const { file } = await attach('blank.txt');
+  const ran = fake.given().length;
+  for (const label of [' ', '\u00a0', '\u200b', '\ufeff', '\u00ad', '\u2060', '\u3000', '\u3164', '\ufe0f', ' \u200b\u00a0', '\u{e0020}', '\u2800']) {
+    const err = await h.fails('send_chat', { session, body: { text: 'Look', files: [{ path: file.path, label }] } }, 422, 'invalid');
+    assert.ok(pointers(err).some((at) => at.startsWith('/files/0')), JSON.stringify(label));
+  }
+  await new Promise((r) => setTimeout(r, 100));
+  assert.equal(fake.given().length, ran, 'no turn started');
+  await h.ok('send_chat', { session, body: { text: 'Look', files: [{ path: file.path, label: 'a b.txt' }] } });
+});
+
+test('F12: no address serves an attached file, by its path, encoded or under another route', async () => {
+  const secret = 'bytes that must not be served';
+  const { file } = await attach('never-served.txt', secret);
+  const encoded = file.path.replaceAll('/', '%2f');
+  for (const address of [
+    file.path, `api/chat/files/${file.path}`, `api/chat/files/${encoded}`, `api/chat/files?path=${encoded}`, `api/images/${file.path}`, `api/images/${encoded}`,
+    `images/${file.path}`, `images/../${file.path}`, `images/..%2f${encoded}`, `assets/..%2f..%2f${encoded}`, `.visionboard/attachments/`,
+  ]) {
+    const r = await fetch(`${h.base}/${address}`, { headers: { Cookie: h.cookie } });
+    assert.ok(!(await r.text()).includes(secret), address);
+  }
 });

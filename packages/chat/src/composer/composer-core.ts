@@ -31,7 +31,14 @@ export interface ComposerView {
 /** Where a file in the composer stands: the host says (D-068 ruling 6). */
 export type FileState = 'uploading' | 'ready' | 'refused';
 /** One file: the host's `id` for it, the name to show, and with `refused` why (shown in full, never clipped). */
-export interface ComposerFile { id: string; name: string; state: FileState; reason?: string }
+export interface ComposerFile {
+  id: string;
+  name: string;
+  state: FileState;
+  reason?: string;
+  /** How many files this one chip stands for, when more than one: files over the limit share a chip. */
+  count?: number;
+}
 
 /** Every sentence of attaching, from the host, as `placeholder` is. */
 export interface ComposerFileWords {
@@ -49,6 +56,8 @@ export interface ComposerFileWords {
   removed(name: string): string;
   /** What a screen reader is told when a file arrives or its state moves. */
   said(file: ComposerFile): string;
+  /** The same for many files at once: how many now stand where, so one drop is one short line. */
+  batch(counts: Record<FileState, number>): string;
 }
 
 /** What the host sends with every message: one chip, `label` (its summary), that opens a preview of
@@ -88,10 +97,17 @@ export function sendIntent(text: string, v: Pick<ComposerView, 'send' | 'attach'
 export const filesUploading = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'uploading');
 export const filesReady = (files: readonly ComposerFile[]): boolean => files.some((f) => f.state === 'ready');
 
-/** What to announce for the files `now`, after `was`: each new file, and each whose state moved. */
-export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFile[], words: Pick<ComposerFileWords, 'said'>): string {
+/** More files than this moving at once are said as counts, not one by one. */
+const SAID_ONE_BY_ONE = 3;
+
+/** What to announce for the files `now`, after `was`: each new file and each whose state moved; many, as one line of counts. */
+export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFile[], words: Pick<ComposerFileWords, 'said' | 'batch'>): string {
   const before = new Map(was.map((f) => [f.id, f.state]));
-  return now.filter((f) => before.get(f.id) !== f.state).map((f) => words.said(f)).join(' ');
+  const moved = now.filter((f) => before.get(f.id) !== f.state);
+  if (moved.length <= SAID_ONE_BY_ONE) return moved.map((f) => words.said(f)).join(' ');
+  const counts: Record<FileState, number> = { uploading: 0, ready: 0, refused: 0 };
+  for (const f of moved) counts[f.state] += f.count ?? 1;
+  return words.batch(counts);
 }
 
 /** Whether a drag carries files, which is the only drag the composer takes: never text or a card. */

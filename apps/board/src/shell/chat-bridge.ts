@@ -20,9 +20,10 @@ import type {
 } from '#chat';
 import { CHAT_CHANGE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_FILES_EVENT } from '#chat';
 import type { BoardData } from '#actions';
-import type { OperationInput, OperationOutput } from '#format';
+import type { OperationInput, OperationOutput, PointerError } from '#format';
 import { clip } from '#format';
 import type { BoardSide } from '../board/chat-side.ts';
+import { FILE_BYTES, FILE_COUNT, attachedName, fileData, fileLabel } from './attached-file.ts';
 import * as chatWords from './words/chat.ts';
 
 /** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
@@ -30,42 +31,9 @@ export const SOURCE_LABEL = chatWords.showInTheChat;
 
 const LABEL_MAX = 80;
 
-/** The server's limits (D-068 ruling 3), held equal to them by apps/board/tests/chat-attach.test.ts. */
-export const FILE_BYTES = 10 * 1024 * 1024;
-export const FILE_COUNT = 10;
-const FILE_LABEL_MAX = 200;
-/** What the contract's `fileLabel` refuses; a test holds the two equal. */
-const NOT_IN_A_LABEL = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]+/g;
-const PICTURE_TYPE = /^image\/(?:x-)?([a-z0-9]+)/i;
-/** What a browser names a picture on the clipboard, which is no name of the person's. */
-const CLIPBOARD_NAME = /^image\.[a-z0-9]+$/i;
-
 /** One file the next message may carry: its body's item. */
 export type MessageFile = NonNullable<OperationInput<'send_chat'>['body']['files']>[number];
 export type AttachFileBody = OperationInput<'attach_chat_file'>['body'];
-
-/** A name as the contract's `label` takes it: a file's name can hold a line break or a text-direction
- *  mark, and those would refuse the whole message; none when nothing is left. */
-export function fileLabel(name: string): string | undefined {
-  const clean = name.replace(NOT_IN_A_LABEL, ' ').replace(/\s+/g, ' ').trim();
-  return clean.slice(0, FILE_LABEL_MAX).replace(/[\ud800-\udbff]$/, '') || undefined;
-}
-
-/** The file's name, or for a picture pasted with none of its own, one from the words: the day, its type's extension. */
-export function attachedName(file: Pick<File, 'name' | 'type'>, pasted: boolean, now: Date): string {
-  const picture = PICTURE_TYPE.exec(file.type)?.[1]?.toLowerCase();
-  if (!picture || (file.name !== '' && !(pasted && CLIPBOARD_NAME.test(file.name)))) return file.name;
-  const day = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
-  return chatWords.pastedPicture(day, picture === 'jpeg' ? 'jpg' : picture);
-}
-
-/** A file's bytes as the operation's `data`: standard base64, padded. */
-export async function fileData(file: Pick<Blob, 'arrayBuffer'>): Promise<string> {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  let binary = '';
-  for (let at = 0; at < bytes.length; at += 0x8000) binary += String.fromCharCode(...bytes.subarray(at, at + 0x8000));
-  return btoa(binary);
-}
 
 /** The selected cards, in the order they were selected, by number and title; a node with no number is no card. */
 export function selectedCards(d: BoardData, ids: readonly string[]): SelectedCard[] {
@@ -144,6 +112,8 @@ export interface ChatBridge {
   files(): MessageFile[];
   /** Whether a file is still uploading: no message goes until it is settled. */
   uploading(): boolean;
+  /** The server refused the message that named `files`: mark each file a problem points to (`/files/<i>`) refused, with why. */
+  refuseSent(files: readonly MessageFile[], pointers: readonly PointerError[]): void;
   /** A message went with `chips` and `files`: those cards are spent until the selection changes, those files and any refused one gone from the composer. */
   sent(chips: readonly Chip[], files?: readonly MessageFile[]): void;
   /** The chat's agent drew `board`, its session's first: open it. */
@@ -193,17 +163,25 @@ export function createChatBridge(): ChatBridge {
     held = held.map((f) => (f.id === id ? { ...f, ...change } : f));
     showFiles();
   };
+  /** Each file that fits gets a chip and uploads, one too big a chip saying so; what is left over gets one chip between them (F9). */
   function attachFiles(files: readonly File[], pasted: boolean) {
     const now = new Date();
     const start: (() => void)[] = [];
+    const over: File[] = [];
+    let drawn = 0;
     for (const file of files) {
+      const tooBig = file.size > FILE_BYTES;
+      if (drawn >= FILE_COUNT || (!tooBig && held.filter((f) => f.state !== 'refused').length >= FILE_COUNT)) { over.push(file); continue; }
+      drawn++;
       const name = attachedName(file, pasted, now);
       const id = `file-${++filesMade}`;
-      const reason = file.size > FILE_BYTES ? chatWords.fileIsTooBig(file.size)
-        : held.filter((f) => f.state !== 'refused').length >= FILE_COUNT ? chatWords.tooManyFiles : undefined;
+      const reason = tooBig ? chatWords.fileIsTooBig(file.size) : undefined;
       held.push({ id, name: fileLabel(name) ?? chatWords.aFile, state: reason ? 'refused' : 'uploading', ...(reason && { reason }) });
       if (!reason) start.push(() => void upload(id, file, name));
     }
+    const [only] = over;
+    if (over.length === 1 && only) held.push({ id: `file-${++filesMade}`, name: fileLabel(attachedName(only, pasted, now)) ?? chatWords.aFile, state: 'refused', reason: chatWords.tooManyFiles });
+    if (over.length > 1) held.push({ id: `file-${++filesMade}`, name: chatWords.moreFiles(over.length), count: over.length, state: 'refused', reason: chatWords.tooManyFilesAtOnce });
     showFiles();
     start.forEach((go) => go());
   }
@@ -276,6 +254,17 @@ export function createChatBridge(): ChatBridge {
     removeFile,
     files: () => held.flatMap((f) => (f.state === 'ready' && f.saved ? [f.saved] : [])),
     uploading: () => held.some((f) => f.state === 'uploading'),
+    refuseSent(files, pointers) {
+      const why = new Map(pointers.flatMap(({ pointer, detail }) => {
+        const file = files[Number(/^\/files\/(\d+)$/.exec(pointer)?.[1] ?? -1)];
+        return file ? [[file.path, detail] as const] : [];
+      }));
+      held = held.map(({ saved, ...f }) => {
+        const reason = saved && why.get(saved.path);
+        return reason ? { ...f, state: 'refused' as const, reason: chatWords.fileRefused(reason) } : { ...f, ...(saved && { saved }) };
+      });
+      showFiles();
+    },
     sent(took, files = []) {
       for (const chip of took) if (chip.kind === 'card') spent.add(chip.ref);
       // A refused file went with that message's chance: only one still uploading, or ready after it left, stays.

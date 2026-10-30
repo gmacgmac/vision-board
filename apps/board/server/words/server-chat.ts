@@ -38,7 +38,9 @@ export const thisFileIsOverThe = 'This file is over the 10 MB limit, so it was n
 export const theFileIsNotValid = 'The file\'s data is not valid base64, so it was not saved.';
 export const theFileCouldNotBe = 'The file could not be saved: .visionboard/attachments/ or the day\'s folder inside it is not a plain folder. Check it, then attach the file again.';
 export const thisIsNotAFile = 'this is not a file attached through the board, or it has since been deleted';
-export const theMessageNamesFilesThat = 'The message names files that were not attached through the board.';
+export const theMessageNamesFilesThat = 'The message was not sent: a file on it can\'t be sent.';
+export const fileGoneForThePerson = (names: string[]): string => `Deleted before this message went, so not sent: ${names.join(', ')}.`;
+export const fileGoneForTheAgent = (names: string[]): string => `The person attached more files, but these were deleted before this message went, so they can't be opened: ${names.join(', ')}.`;
 
 // ---- chat-session.ts
 export const earlierMessagesArenTShown = 'Earlier messages aren\'t shown after a restart; the agent still remembers them.';

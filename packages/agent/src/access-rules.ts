@@ -7,12 +7,17 @@ import * as words from './words/agent-access.ts';
 
 export type AccessVerdict = 'allow' | 'ask' | 'refuse';
 export type AccessOp = 'read' | 'write';
+/** What a shell command does to a word it names, as far as the rules can tell: `unknown` when they can't judge it. */
+export type CommandOp = AccessOp | 'unknown';
 
 export interface AccessRule {
   /** A glob relative to the board's folder: `*` within one name, `**` any number of names; `x/**` is `x` too. */
   path: string;
   read: AccessVerdict;
   write: AccessVerdict;
+  /** What a command the rules can't judge gets on this row's files, when it differs from a write. Left out, such a
+   * command counts as a write, so only a row that says so gives way (D-069 ruling 1). A yes for it is never kept. */
+  unknownCommand?: AccessVerdict;
   /** What the agent is told when the rule refuses it (and what the row means). */
   why: string;
 }
@@ -40,12 +45,15 @@ export const ACCESS_RULES: readonly AccessRule[] = [
   { path: '.visionboard/**', read: 'allow', write: 'refuse', why: words.boardFiles },
   { path: '.visionboard/images/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
   { path: '.visionboard/apps/**', read: 'allow', write: 'allow', why: words.boardPicturesAndApps },
-  { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', why: words.theirAttachments },
+  { path: '.visionboard/attachments/**', read: 'allow', write: 'refuse', unknownCommand: 'ask', why: words.theirAttachments },
   { path: '**/.git/**', read: 'refuse', write: 'refuse', why: words.gitFolder },
 ];
 
 /** The table's last line: a path that resolves outside the board's folder. */
 export const OUTSIDE_RULE: AccessRule = { path: '', read: 'ask', write: 'ask', why: words.filesOutsideTheFolder };
+
+/** What `rule` gives `op`. */
+export const verdictOf = (rule: AccessRule, op: CommandOp): AccessVerdict => (op === 'unknown' ? rule.unknownCommand ?? rule.write : rule[op]);
 
 const escape = (s: string) => s.replace(/[.+^${}()|[\]\\?]/g, '\\$&');
 
@@ -84,11 +92,11 @@ function pick(rel: string, folded: boolean): AccessRule {
  * gets. Matched as written and again ignoring case, and the stricter answer kept: on a disk that
  * ignores case `.ENV` is `.env`, and on one that doesn't, refusing it costs nothing.
  */
-export function accessFor(rel: string, op: AccessOp): { verdict: AccessVerdict; rule: AccessRule } {
+export function accessFor(rel: string, op: CommandOp): { verdict: AccessVerdict; rule: AccessRule } {
   const exact = pick(rel, false);
   const folded = pick(rel, true);
-  const rule = SEVERITY[folded[op]] > SEVERITY[exact[op]] ? folded : exact;
-  return { verdict: rule[op], rule };
+  const rule = SEVERITY[verdictOf(folded, op)] > SEVERITY[verdictOf(exact, op)] ? folded : exact;
+  return { verdict: verdictOf(rule, op), rule };
 }
 
 /** The rows that let through part of what `row` refuses for `op`: a row naming a path under it (`**` read as
@@ -117,12 +125,12 @@ const SAMPLES = ACCESS_RULES.map((rule) => ({ rule, sample: rule.path.replace(/^
  * `../.env`, `HEAD:.env` (split by the caller) or `.e*` all end in a refused name. A command's words
  * can't be resolved for sure (a `cd`, a variable), so any trailing part counts, wherever it points.
  */
-export function refusedTail(word: string, op: AccessOp, glob = false): AccessRule | null {
+export function refusedTail(word: string, op: CommandOp, glob = false): AccessRule | null {
   const parts = word.split('/').filter((p) => p !== '' && p !== '.' && p !== '..');
   for (let k = 1; k <= parts.length; k++) {
     const tail = parts.slice(-k);
     if (glob && tail.some((p) => /[*?[]/.test(p))) {
-      const hit = SAMPLES.find(({ rule, sample }) => rule[op] === 'refuse' && sample.split('/').length === k
+      const hit = SAMPLES.find(({ rule, sample }) => verdictOf(rule, op) === 'refuse' && sample.split('/').length === k
         && sample.split('/').every((s, i) => nameGlob(tail[i]!).test(s)));
       if (hit) return hit.rule;
       continue;

@@ -28,6 +28,8 @@ export interface CommandFacts {
   risks: string[];
   /** Files and folders the command names; empty when none was recognised. */
   paths: string[];
+  /** The shell's working folder, when it is not the board's: what the command's relative words are judged from. */
+  cwd?: string;
 }
 
 /** A file the agent is about to read, or with `recursive` every file under a folder (a search). */

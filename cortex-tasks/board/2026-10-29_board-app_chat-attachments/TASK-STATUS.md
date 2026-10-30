@@ -35,7 +35,7 @@ skills: [cortex-architecture, cortex-docs]
 | 1 | FILES_01 | 1 | strong | Application security engineer who reviews file-upload endpoints — a name the person typed is hostile until sanitised and its real path proven inside the folder; a server never trusts a path the page sends back. | [Attached files: contract, storage and prompt](./FILES_01_attached-files-server.md) | Blocked | port 5700; own files done, needs the four-file patch below |
 | 2 | COMPOSE_01 | 2 | strong | Product designer for chat tools who works to WCAG 2.2 — attaching must work by drag, paste, button and keyboard alike, every chip state must say what is happening, and a refused file must say why. | [Attaching in the composer](./COMPOSE_01_attach-in-composer.md) | Completed | port 5800; Run 2 (point 357) done |
 | 3 | VERIFY_01 | 3 | strong | QA engineer new to this project, given the board and a chat with an agent — tries odd, huge, many and hostile files, every way to attach, and checks the agent really opens what was sent. | [Verification](./VERIFY_01_attachments-verification.md) | Completed | port 5900; [findings](./VERIFY_01_findings.md): F1 blocking (needs the maintainer's ruling), F2-F12 not |
-| 4 | FIX_01 | 4 | strong | Application security engineer who has written sandbox policies — a rule must hold on every route a call takes, and loosening one row must not loosen any other. | [The fixes from VERIFY_01](./FIX_01_verification-fixes.md) | Pending | port 5950 |
+| 4 | FIX_01 | 4 | strong | Application security engineer who has written sandbox policies — a rule must hold on every route a call takes, and loosening one row must not loosen any other. | [The fixes from VERIFY_01](./FIX_01_verification-fixes.md) | Completed | port 5950; notes in its file; seven things under Caught Beyond the Brief, two of them closed-file or git gaps for the maintainer |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
 
@@ -64,6 +64,8 @@ skills: [cortex-architecture, cortex-docs]
 - 
 
 ### Runs
+- Run 3: FIX_01: `"$(...)"` and backticks in double quotes are judged as a plain command, nested too; a closed file or a known changer in one is refused. Port 5950. Notes: its `### Run 3`.
+- Run 2: FIX_01: git spelled in quote pieces is refused; the script inside `sh -c` and `eval` is judged as a plain command; a kept yes no longer answers from a shell inside the attachments folder (the gate sends `cwd`). Port 5950. Notes: its `### Run 2`.
 - Run 2: COMPOSE_01, point 357: a dragged file never replaces the board. The whole open panel takes it (`dropArea`), the page's guard stops it elsewhere (`shell/file-drops.ts`, removed on unmount), frames let it through while it is dragged. Port 5800. Notes: its `### Run 2`.
 
 ### Security

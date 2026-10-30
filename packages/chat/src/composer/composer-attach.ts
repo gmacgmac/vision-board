@@ -3,8 +3,8 @@
 // All three raise `chat-files`, and a host may widen where a drop lands to its panel (`dropArea`); the host's words (`ComposerView.files`) turn the part on, and without them
 // the composer is as it ever was. It never reads a file and never calls the server. Browser only.
 import { CHAT_FILES_EVENT } from '../events.ts';
-import type { ComposerView } from './composer-core.ts';
-import { dragsFiles, pastedFiles } from './composer-core.ts';
+import type { ComposerFile, ComposerFileWords, ComposerView } from './composer-core.ts';
+import { dragsFiles, filesSaid, pastedFiles } from './composer-core.ts';
 import { attachTemplate, dropTemplate, saidTemplate } from './composer-template.ts';
 
 const ATTACH = 'button.chat-cmp-attach';
@@ -16,16 +16,21 @@ export interface ChatFilesDetail { files: File[]; pasted: boolean }
 /** The `chat-file-remove` event's detail (bubbles): the file whose chip the person took off, by the host's id. */
 export interface ChatFileRemoveDetail { id: string }
 
-/** Tell a screen reader: what comes within a moment goes as one line, as a live region may read only the last of several changes. */
-export function announcer(el: HTMLElement): (words: string) => void {
+/** Tell a screen reader: what comes within a moment goes as one line, as a live region may read only the last of several changes.
+ *  What the files did since the last line is worked out then, so a batch settling is one short line, not one line a file. */
+export function announcer(el: HTMLElement, fileWords: () => ComposerFileWords | undefined, files: () => readonly ComposerFile[]): (words?: string) => void {
   const waiting: string[] = [];
+  let spoken: readonly ComposerFile[] = [];
   let timer = 0;
   return (words) => {
-    waiting.push(words);
+    if (words) waiting.push(words);
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
       const status = el.querySelector('.chat-cmp-said');
-      if (status) status.textContent = waiting.splice(0).join(' ');
+      const told = fileWords();
+      const said = [...waiting.splice(0), told ? filesSaid(spoken, files(), told) : ''].filter(Boolean).join(' ');
+      spoken = files();
+      if (status && said) status.textContent = said;
     }, SAY_MS);
   };
 }

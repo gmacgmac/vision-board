@@ -4,9 +4,11 @@
 // is special (`.env`, `CON`). Every step from the data folder down must be a plain folder, never a
 // link, so a file's real path is the path written. A path a page sends back is believed only when
 // `attachedFile`, the one check, finds a file of that exact shape there. The board never serves these
-// files: no route reads them; the agent does, with its own tools (`ACCESS_RULES`).
+// files: no route reads them; the agent does, with its own tools (`ACCESS_RULES`). They stay out of the
+// project's git: the board's own `.gitignore` names the folder (D-069 ruling 3).
 import fs from 'node:fs';
 import path from 'node:path';
+import { ignoreInGit } from './agents.ts';
 import { writeFileAtomic } from './atomic-file.ts';
 import { KIB } from './body.ts';
 import { DATA_DIR } from './ledger.ts';
@@ -64,9 +66,15 @@ function dayFolder(folder: string, day: string): string {
   return path.join(root, day);
 }
 
-/** One more than the highest number in the folder. */
+/** Per day's folder, the highest number saved or named by a message while this server runs: a number stays taken once
+ * its file is deleted, so a message still waiting never comes to name other bytes. Waiting messages live in
+ * this server's memory too, so nothing that waits outlives what this knows. */
+const taken = new Map<string, number>();
+const take = (dir: string, n: number) => { taken.set(dir, Math.max(taken.get(dir) ?? 0, n)); };
+
+/** One more than the highest number in the folder, or taken. */
 function nextNumber(dir: string): number {
-  return fs.readdirSync(dir).reduce((most, name) => Math.max(most, Number(/^\d+/.exec(name)?.[0] ?? 0)), 0) + 1;
+  return fs.readdirSync(dir).reduce((most, name) => Math.max(most, Number(/^\d+/.exec(name)?.[0] ?? 0)), taken.get(dir) ?? 0) + 1;
 }
 
 /** The bytes of `data`, which must be standard base64: `Buffer` reads anything, so what it read must write back the same. */
@@ -82,9 +90,12 @@ export function saveAttachment(folder: string, input: { name: string; type: stri
   if (bytes.length > ATTACHMENT_BYTES) throw fileTooLarge();
   const day = now.toISOString().slice(0, 10);
   const dir = dayFolder(folder, day);
+  ignoreInGit(path.join(folder, DATA_DIR), `${ATTACHMENTS_DIR}/`);
   const name = attachmentName(input.name);
-  const saved = `${nextNumber(dir)}-${name}`;
+  const number = nextNumber(dir);
+  const saved = `${number}-${name}`;
   writeFileAtomic(path.join(dir, saved), bytes, 0o600);
+  take(dir, number);
   return { name, path: [DATA_DIR, ATTACHMENTS_DIR, day, saved].join('/'), size: bytes.length };
 }
 
@@ -107,9 +118,32 @@ export function attachedFiles(folder: string, items: { path: string; label?: str
   items.forEach(({ path: rel, label }, i) => {
     const file = named.has(rel) ? undefined : attachedFile(folder, rel);
     named.add(rel);
-    if (file) files.push({ ...file, ...(label !== undefined && { label }) });
-    else errors.push({ pointer: `/files/${i}`, detail: serverChatWords.thisIsNotAFile });
+    if (file) {
+      files.push({ ...file, ...(label !== undefined && { label }) });
+      take(path.dirname(path.join(folder, rel)), Number.parseInt(path.basename(rel), 10));
+    } else errors.push({ pointer: `/files/${i}`, detail: serverChatWords.thisIsNotAFile });
   });
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesFilesThat, { errors });
   return files;
 }
+
+/** A waiting message's `files`, checked again as it goes: each by `attachedFile`, so it is the one check. */
+export function stillThere(folder: string, files: AttachedFile[]): { there: AttachedFile[]; gone: AttachedFile[] } {
+  const isThere = (f: AttachedFile) => attachedFile(folder, f.path) !== undefined;
+  return { there: files.filter(isThere), gone: files.filter((f) => !isThere(f)) };
+}
+
+/** A message as it goes, its files checked again: one deleted while it waited is left out, and `said` tells the person
+ * (by the name they know) and the agent (by the saved name: a label never reaches the prompt) which. */
+export function checked<M extends { files?: AttachedFile[] }>(folder: string, msg: M): { msg: M; said?: { person: string; agent: string } } {
+  if (!msg.files) return { msg };
+  const { files: _, ...rest } = msg;
+  const { there, gone } = stillThere(folder, msg.files);
+  return {
+    msg: { ...rest, ...(there.length > 0 && { files: there }) } as M,
+    ...(gone.length > 0 && { said: { person: serverChatWords.fileGoneForThePerson(gone.map((f) => f.label ?? f.name)), agent: serverChatWords.fileGoneForTheAgent(gone.map((f) => f.name)) } }),
+  };
+}
+
+/** `text`, then the line `checked` gave; the line alone when the message has nothing else to say. */
+export const withSaid = (text: string, line: string | undefined, alone = false): string => (alone && line ? line : [text, line].filter(Boolean).join('\n\n'));

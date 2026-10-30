@@ -12,7 +12,7 @@ import { CHAT_CHIP_REMOVE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_SEND_EVENT, TEXT_M
 import type { ChatFileRemoveDetail } from './composer-attach.ts';
 import { announcer, drawAttaching, dropArea, removeButton, wireAttaching } from './composer-attach.ts';
 import type { ComposerContext, ComposerFile, ComposerView } from './composer-core.ts';
-import { chipKey, COMPOSER_KEYS, filesReady, filesSaid, filesUploading, newestFile, sendIntent, withoutChip } from './composer-core.ts';
+import { chipKey, COMPOSER_KEYS, filesReady, filesUploading, newestFile, sendIntent, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
 
 export const CHAT_COMPOSER_TAG = 'chat-composer';
@@ -63,7 +63,7 @@ export function defineChatComposer(): void {
     /** Closed by the person while the pointer is on them: hover opens it again only after leaving. */
     private quiet = false;
     private readonly popId = `chat-cmp-pop-${++made}`;
-    private readonly say = announcer(this);
+    private readonly say = announcer(this, () => this.view.files, () => this.files);
     private readonly drops = dropArea(this, () => this.view);
 
     constructor() {
@@ -147,11 +147,9 @@ export function defineChatComposer(): void {
 
     setFiles(files: readonly ComposerFile[]): void {
       this.box();
-      const words = this.view.files;
-      const said = words ? filesSaid(this.files, files, words) : '';
-      if (said) this.say(said);
       const newest = newestFile(this.files, files);
       this.files = [...files];
+      this.say();
       this.drawChips();
       this.drawLine();
       if (newest) this.querySelector(`button[data-file="${CSS.escape(newest.id)}"]`)?.closest('li')?.scrollIntoView({ block: 'nearest' });

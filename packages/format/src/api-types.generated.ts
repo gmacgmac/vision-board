@@ -921,6 +921,7 @@ type ChatEventCommandFacts = {
   command: string;
   risks: string[];
   paths: string[];
+  cwd?: string;
 };
 type ChatEventReadFacts = {
   kind: "read";

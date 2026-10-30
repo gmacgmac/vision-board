@@ -10,7 +10,7 @@ import {
 
 const WORDS: ComposerFileWords = {
   attach: 'Attach files', tip: 'The tip', drop: 'Drop here', uploading: 'Uploading…', ready: 'ready', waits: 'Send waits.',
-  remove: (n) => `Remove ${n}`, removed: (n) => `${n} removed.`, said: (f) => `${f.name} is ${f.state}.`,
+  remove: (n) => `Remove ${n}`, removed: (n) => `${n} removed.`, said: (f) => `${f.name} is ${f.state}.`, batch: (c) => `${c.uploading} up, ${c.ready} ready, ${c.refused} no.`,
 };
 const file = (state: ComposerFile['state'], name = 'a.pdf', id = 'f1'): ComposerFile => ({ id, name, state, ...(state === 'refused' && { reason: 'Too big <b>.' }) });
 
@@ -105,4 +105,13 @@ test('a sent message shows a chip per file: the person\'s name when given, the s
   assert.ok(!html.includes('file.png') && !html.includes('<a ') && !html.includes('p/1-file.png'));
   assert.ok(!('files' in applyEvents(EMPTY_CHAT, [{ ...stamp, kind: 'message_in', text: 'Plain' }]).entries[0]!), 'none: left out');
   assert.equal(fileChipTemplate({ name: 'a.txt' }).includes('title="a.txt"'), true);
+});
+
+test('F9: more than three files moving at once are one line of counts, a shared chip counting for all it stands for', () => {
+  const many = Array.from({ length: 10 }, (_, i) => file('uploading', `${i}.txt`, `f${i}`));
+  const shared: ComposerFile = { id: 'over', name: '990 more files', state: 'refused', reason: 'too many', count: 990 };
+  assert.equal(filesSaid([], [...many, shared], WORDS), '10 up, 0 ready, 990 no.');
+  assert.equal(filesSaid(many, many.map((f) => ({ ...f, state: 'ready' as const })), WORDS), '0 up, 10 ready, 0 no.');
+  assert.equal(filesSaid([], many.slice(0, 3), WORDS), '0.txt is uploading. 1.txt is uploading. 2.txt is uploading.', 'three are still said by name');
+  assert.equal(filesSaid([], [shared], WORDS), '990 more files is refused.', 'alone, by its name');
 });

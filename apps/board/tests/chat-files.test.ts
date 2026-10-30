@@ -2,9 +2,10 @@
 // inside `.visionboard/attachments/`, and `attachedFile` is the one check of a path a page sends back.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ATTACHMENT_BODY_BYTES, ATTACHMENT_BYTES, attachedFile, attachmentName, saveAttachment } from '../server/chat-files.ts';
+import { ATTACHMENT_BODY_BYTES, ATTACHMENT_BYTES, attachedFile, attachedFiles, attachmentName, saveAttachment, stillThere } from '../server/chat-files.ts';
 import { ProblemError } from '../server/problem.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import { makeTempDir } from '#format/testing';
@@ -154,4 +155,47 @@ test('attachedFile takes only a file the board saved: the shape, then no link at
   ]) assert.equal(attachedFile(folder, p), undefined, JSON.stringify(p));
   fs.rmSync(path.join(folder, file.path));
   assert.equal(attachedFile(folder, file.path), undefined, 'since deleted');
+});
+
+test('F3: a number stays taken after its file is deleted, so a path a waiting message names never comes to name other bytes', () => {
+  const { folder } = folders();
+  const first = saveAttachment(folder, input('same.txt', 'sent'), NOW);
+  fs.rmSync(path.join(folder, first.path));
+  const second = saveAttachment(folder, input('same.txt', 'other'), NOW);
+  assert.notEqual(second.path, first.path);
+  assert.equal(attachedFile(folder, first.path), undefined, 'the first stays gone');
+});
+
+test('F3: a number a message named stays taken too, when this server did not save it', () => {
+  const { folder, attachments } = folders();
+  fs.mkdirSync(path.join(attachments, DAY), { recursive: true });
+  const rel = `.visionboard/attachments/${DAY}/7-before.txt`;
+  fs.writeFileSync(path.join(folder, rel), 'from before a restart');
+  attachedFiles(folder, [{ path: rel }]);
+  fs.rmSync(path.join(folder, rel));
+  assert.equal(saveAttachment(folder, input('next.txt'), NOW).path, `.visionboard/attachments/${DAY}/8-next.txt`);
+});
+
+test('F3: stillThere splits a waiting message\'s files by whether each is still there, a link counting as gone', () => {
+  const { folder, outside } = folders();
+  const [kept, gone, linked] = [saveAttachment(folder, input('kept.txt'), NOW), saveAttachment(folder, input('gone.txt'), NOW), saveAttachment(folder, input('linked.txt'), NOW)];
+  fs.rmSync(path.join(folder, gone.path));
+  fs.rmSync(path.join(folder, linked.path));
+  fs.writeFileSync(path.join(outside, 'x'), 'x');
+  fs.symlinkSync(path.join(outside, 'x'), path.join(folder, linked.path));
+  const labelled = { ...kept, label: 'My kept.txt' };
+  assert.deepEqual(stillThere(folder, [labelled, gone, linked]), { there: [labelled], gone: [gone, linked] });
+});
+
+test('F5, D-069 ruling 3: the board keeps attachments out of the project\'s git, through its own .gitignore, keeping what is there', () => {
+  const { folder } = folders();
+  const ignore = path.join(folder, '.visionboard', '.gitignore');
+  fs.writeFileSync(ignore, 'agents.json');
+  const file = saveAttachment(folder, input('private notes.txt'), NOW);
+  saveAttachment(folder, input('again.txt'), NOW);
+  assert.deepEqual(fs.readFileSync(ignore, 'utf8').split('\n'), ['agents.json', 'attachments/', ''], 'added once, after what was there');
+  assert.equal(spawnSync('git', ['init', '-q'], { cwd: folder }).status, 0);
+  const asked = spawnSync('git', ['check-ignore', '-q', file.path], { cwd: folder });
+  assert.equal(asked.status, 0, 'git itself says it is ignored');
+  assert.equal(spawnSync('git', ['status', '--porcelain', '-uall'], { cwd: folder, encoding: 'utf8' }).stdout.includes('attachments'), false);
 });

@@ -7,8 +7,9 @@ import type { ComposerFile } from '#chat';
 import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
 import { SCHEMA_BASE, schemaFiles, schemaProblems } from '../server/schema.ts';
 import type { AttachFileBody, ChatSide } from '../src/shell/chat-bridge.ts';
-import { attachedName, createChatBridge, FILE_BYTES, FILE_COUNT, fileData, fileLabel } from '../src/shell/chat-bridge.ts';
-import { attachingFiles, fileIsTooBig, pastedPicture } from '../src/shell/words/chat.ts';
+import { attachedName, FILE_BYTES, FILE_COUNT, fileData, fileLabel } from '../src/shell/attached-file.ts';
+import { createChatBridge } from '../src/shell/chat-bridge.ts';
+import { attachingFiles, fileIsTooBig, fileRefused, moreFiles, pastedPicture, tooManyFiles, tooManyFilesAtOnce } from '../src/shell/words/chat.ts';
 
 const named = (name: string, body = 'hi', type = 'text/plain') => new File([body], name, { type });
 const tick = () => new Promise((r) => setTimeout(r));
@@ -173,4 +174,58 @@ test('what a screen reader is told names the file and its state; refused, the re
   assert.equal(attachingFiles.said({ ...f, state: 'uploading' }), 'a.txt: uploading.');
   assert.equal(attachingFiles.said({ ...f, state: 'ready' }), 'a.txt: ready to send.');
   assert.equal(attachingFiles.said({ ...f, state: 'refused', reason: 'Not attached: too big.' }), 'a.txt: Not attached: too big.');
+});
+
+test('F4: the server\'s `/files/<i>` marks that file\'s chip refused, with why; the others stay ready, and the next message goes without it', async () => {
+  const { bridge, chips, asked } = bridged();
+  bridge.attachFiles([named('will-vanish.txt'), named('stays.txt')], false);
+  await tick();
+  asked[0]!.ok('.visionboard/attachments/2026-10-30/1-will-vanish.txt');
+  asked[1]!.ok('.visionboard/attachments/2026-10-30/2-stays.txt');
+  await tick();
+  const sent = bridge.files();
+  bridge.refuseSent(sent, [{ pointer: '/files/0', detail: 'it has since been deleted' }, { pointer: '/text', detail: 'not about a file' }, { pointer: '/files/9', detail: 'no such file' }]);
+  assert.deepEqual(chips.now.map((f) => [f.name, f.state, f.reason]), [
+    ['will-vanish.txt', 'refused', fileRefused('it has since been deleted')],
+    ['stays.txt', 'ready', undefined],
+  ]);
+  assert.deepEqual(bridge.files().map((f) => f.path), ['.visionboard/attachments/2026-10-30/2-stays.txt']);
+});
+
+test('F9: many files at once: what fits gets its chip and uploads; what is left shares one chip that counts them', async () => {
+  const { bridge, chips, asked } = bridged();
+  bridge.attachFiles(Array.from({ length: 1000 }, (_, i) => named(`${i}.txt`)), false);
+  await tick();
+  assert.equal(asked.length, 10, 'ten go up');
+  assert.equal(chips.now.length, 11, 'and one chip more');
+  const last = chips.now.at(-1)!;
+  assert.deepEqual([last.name, last.state, last.reason, last.count], [moreFiles(990), 'refused', tooManyFilesAtOnce, 990]);
+});
+
+test('F9: one file over the limit keeps its own chip and name; too big keeps its own reason; a second batch adds at most one more', async () => {
+  const { bridge, chips, asked } = bridged();
+  bridge.attachFiles(Array.from({ length: 11 }, (_, i) => named(`${i}.txt`)), false);
+  await tick();
+  assert.deepEqual([chips.now.at(-1)!.name, chips.now.at(-1)!.reason, chips.now.at(-1)!.count], ['10.txt', tooManyFiles, undefined]);
+  bridge.attachFiles([named('a.txt'), named('b.txt')], false);
+  assert.equal(chips.now.length, 12);
+  assert.equal(chips.now.at(-1)!.count, 2);
+  assert.equal(asked.length, 10);
+  const { bridge: other, chips: otherChips } = bridged();
+  other.attachFiles(Array.from({ length: 30 }, (_, i) => new File([new Uint8Array(FILE_BYTES + 1)], `${i}.bin`)), false);
+  assert.equal(otherChips.now.length, 11, 'too many too big: still no more than fits, and one chip');
+  assert.equal(otherChips.now.at(0)!.state, 'refused');
+  assert.equal(otherChips.now.at(-1)!.count, 20);
+});
+
+test('F11: a name that would show nothing gives no label, so the saved name shows; the contract refuses that label and takes the rest', () => {
+  const takes = (label: string) => schemaProblems(REQUEST, { files: [{ path: 'a', label }] }).length === 0;
+  for (const name of ['\u200b', '\ufeff', '\u00a0', '\u00ad', '\u2060', '\u3164', '\ufe0f', ' \u200b ', '\u{e0020}', '\u2800', '\u034f']) {
+    assert.equal(fileLabel(name), undefined, JSON.stringify(name));
+    assert.equal(takes(name), false, JSON.stringify(name));
+  }
+  for (const name of ['a', '\u200ba', 'é', '写真', '😀', 'ا']) {
+    assert.equal(fileLabel(name), name, JSON.stringify(name));
+    assert.equal(takes(name), true, JSON.stringify(name));
+  }
 });

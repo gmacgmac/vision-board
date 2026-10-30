@@ -12,7 +12,7 @@ export type WriteOp = 'create' | 'replace' | 'edit' | 'append';
 /** A file the agent is about to create or change. */
 export interface WriteFacts { kind: 'write'; op: WriteOp; path: string; preview?: string }
 /** A shell command the agent is about to run; `risks` and `paths` may be empty. */
-export interface CommandFacts { kind: 'command'; command: string; risks: string[]; paths: string[] }
+export interface CommandFacts { kind: 'command'; command: string; risks: string[]; paths: string[]; cwd?: string }
 /** A file the agent is about to read, or with `recursive` every file under a folder (a search). */
 export interface ReadFacts { kind: 'read'; path: string; recursive?: true }
 export type Facts = WriteFacts | CommandFacts | ReadFacts;

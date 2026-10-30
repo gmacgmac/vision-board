@@ -7,10 +7,11 @@
 // Pure but for the disk, which it sees only through an injected reader (`NODE_READER` by default).
 import { lstatSync, readdirSync, readlinkSync, realpathSync } from 'node:fs';
 import path from 'node:path';
-import type { AccessOp, AccessVerdict } from './access-rules.ts';
-import { OUTSIDE_RULE, accessFor, refusedTail, stricter } from './access-rules.ts';
+import type { CommandOp, AccessVerdict } from './access-rules.ts';
+import { OUTSIDE_RULE, accessFor, refusedTail, stricter, verdictOf } from './access-rules.ts';
 import type { AskScope, Facts } from './approvals.ts';
-import { readOnlyCommand, runsProgram, shellWords } from './readonly-command.ts';
+import { knownChanges } from './command-changes.ts';
+import { SCRIPT_DEPTH, readOnlyCommand, runsProgram, shellScripts, shellWords } from './readonly-command.ts';
 import * as words from './words/agent-access.ts';
 
 export type { AskScope };
@@ -96,16 +97,17 @@ interface Judged {
   verdict: AccessVerdict;
   why: string;
   inside: boolean;
-  /** A second name for a file (a hard link): what it is can't be told, so a yes is never kept. */
+  /** A second name for a file (a hard link), or a command judged only by the person on a row that gives way
+   * (`unknownCommand`): a kept yes for its first words would cover what they later do to the file. So never kept. */
   once: boolean;
   at: ResolvedPath;
 }
 
-function judge(root: string, input: string, op: AccessOp, reader: PathReader, base = root): Judged {
+function judge(root: string, input: string, op: CommandOp, reader: PathReader, base = root): Judged {
   const at = place(root, input, reader, base);
-  if (at.rel === null) return { verdict: OUTSIDE_RULE[op], why: OUTSIDE_RULE.why, inside: false, once: false, at };
+  if (at.rel === null) return { verdict: verdictOf(OUTSIDE_RULE, op), why: OUTSIDE_RULE.why, inside: false, once: false, at };
   const { verdict, rule } = accessFor(at.rel, op);
-  const once = verdict !== 'refuse' && !!at.stat?.isFile() && at.stat.nlink > 1;
+  const once = verdict !== 'refuse' && ((!!at.stat?.isFile() && at.stat.nlink > 1) || (op === 'unknown' && rule.unknownCommand !== undefined));
   return { verdict: once ? stricter(verdict, 'ask') : verdict, why: rule.why, inside: true, once, at };
 }
 
@@ -147,15 +149,20 @@ function search(root: string, at: ResolvedPath, reader: PathReader): { refused: 
   return unsure ? 'unsure' : null;
 }
 
-/** The words a command's word may name a file by: itself, after `=` or `:`, a flag's joined value. */
-function candidates(word: string): string[] {
+/** The words a word holds beside itself: after `=` or `:`, a flag's joined value. */
+function parts(word: string): string[] {
   if (word.startsWith('--')) return word.includes('=') ? [word.slice(word.indexOf('=') + 1)] : [];
   if (word.startsWith('-') && word.length > 2) return Array.from({ length: Math.min(word.length, 256) - 2 }, (_, k) => word.slice(k + 2));
   if (word.startsWith('-')) return [];
-  const out = [word];
-  if (word.includes('=')) out.push(word.slice(word.indexOf('=') + 1));
-  out.push(...word.split(':').slice(1));
-  return out.filter((c) => c !== '');
+  return [word, ...(word.includes('=') ? [word.slice(word.indexOf('=') + 1)] : []), ...word.split(':').slice(1)];
+}
+
+/** The words a command's word may name a file by: its `parts`, and in each what curl and its likes read a file from:
+ * `@file`, `name@file`, `name=<file`, `name=@a,b;type=x` (F2). */
+function candidates(word: string): string[] {
+  const found = parts(word);
+  const inFile = found.filter((c) => /[@<]/.test(c)).flatMap((c) => c.split(/[@<;,]/).slice(1));
+  return [...found, ...inFile].filter((c) => c !== '');
 }
 
 /** What a search of `j` reaches in the board's folder: under it when it is inside; the whole board's
@@ -168,14 +175,25 @@ function searchOf(root: string, j: Judged, reader: PathReader): ReturnType<typeo
   return holds ? search(root, place(root, root, reader), reader) : undefined;
 }
 
-function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean, base: string): Decision {
+/** `fed`: what this command prints goes to a command known to change what it is given (`rm "$(ls x)"`), so its words count as changed. */
+function commandPolicy(command: string, root: string, reader: PathReader, strict: boolean, base: string, depth = 0, fed = false): Decision {
   if (runsProgram(command) !== null) return { refuse: words.gitIsThePersons };
-  const readOnly = readOnlyCommand(command);
-  const op: AccessOp = readOnly ? 'read' : 'write';
+  const readOnly = fed ? null : readOnlyCommand(command);
+  const changes = readOnly ? null : knownChanges(command);
+  const opOf = (c: string): CommandOp => (readOnly ? 'read' : fed || changes!.every || changes!.targets.includes(c) ? 'write' : 'unknown');
+  const feeds = fed || !!changes?.every || !!changes?.targets.some((t) => /\$\(|`/.test(t));
+  // A script a shell is handed is judged as the plain command it is; the shell around it still asks.
+  let scriptOnce = false;
+  for (const script of shellScripts(command)) {
+    if (depth >= SCRIPT_DEPTH) throw new Unfollowable();
+    const d = commandPolicy(script, root, reader, strict, base, depth + 1, feeds);
+    if ('refuse' in d) return d;
+    if ('ask' in d && !d.scopes.includes('session')) scriptOnce = true;
+  }
   const { segments } = shellWords(command);
   for (const word of segments.flat()) {
     for (const c of candidates(word.text)) {
-      const rule = refusedTail(c, op, word.glob);
+      const rule = refusedTail(c, opOf(c), word.glob);
       if (rule) return { refuse: words.commandNames(c, rule.why) };
     }
   }
@@ -183,14 +201,14 @@ function commandPolicy(command: string, root: string, reader: PathReader, strict
   let verdict: AccessVerdict = readOnly ? 'allow' : 'ask';
   for (const word of segments.flatMap((s) => s.slice(1))) {
     for (const c of candidates(word.text)) {
-      const j = judge(root, c, op, reader, base);
+      const j = judge(root, c, opOf(c), reader, base);
       if (j.verdict === 'refuse') return { refuse: words.commandNames(c, j.why) };
       verdict = stricter(verdict, j.verdict);
       judged.push(j);
     }
   }
   // A word outside the folder: asked once, never kept, so no yes covers a path outside (F2).
-  let once = judged.some((j) => !j.inside);
+  let once = scriptOnce || judged.some((j) => !j.inside);
   for (const where of readOnly?.searches ?? []) {
     const found = searchOf(root, judge(root, where, 'read', reader, base), reader);
     if (found === 'unsure') once = true;

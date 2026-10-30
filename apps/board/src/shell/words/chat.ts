@@ -62,11 +62,15 @@ export const attachingFiles = {
   removed: (name: string): string => `${name} removed.`,
   said: (f: { name: string; state: string; reason?: string }): string => (
     f.state === 'uploading' ? `${f.name}: uploading.` : f.state === 'ready' ? `${f.name}: ready to send.` : `${f.name}: ${f.reason ?? ''}`),
+  batch: ({ uploading, ready, refused }: { uploading: number; ready: number; refused: number }): string =>
+    `${[uploading && `${uploading} uploading`, ready && `${ready} ready to send`, refused && `${refused} not attached`].filter(Boolean).join(', ')}.`,
 };
 export const aFile = 'file';
 export const pastedPicture = (day: string, extension: string): string => `pasted picture ${day}.${extension}`;
 export const fileIsTooBig = (bytes: number): string => `Not attached: it is ${(Math.ceil(bytes / 104857.6) / 10).toFixed(1)} MB, and the limit is 10 MB a file.`;
 export const tooManyFiles = 'Not attached: a message carries at most 10 files. Remove one, then attach this again.';
+export const tooManyFilesAtOnce = 'Not attached: a message carries at most 10 files. Attach these in another message.';
+export const moreFiles = (n: number): string => `${n} more files`;
 export const fileCouldNotBeRead = 'Not attached: it could not be read. A folder can\'t be attached, only the files in it.';
 export const fileRefused = (why: string): string => `Not attached: ${why}`;
 export const filesStillUploading = 'The files are still uploading. Send again once they are ready.';

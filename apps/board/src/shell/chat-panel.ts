@@ -224,6 +224,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
       if (answer.kind === 'system' && st.session === s && lastAsk(st.chat) === ask) { st.wait = ask; render(); }
       return null;
     } catch (err) {
+      if (err instanceof ApiError) d.bridge.refuseSent(files, err.pointers);
       fail(err);
       return err instanceof ApiError ? err.message : String(err);
     } finally { st.sending = false; }

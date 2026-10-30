@@ -17,6 +17,7 @@ import { creatorOf, turnOf } from '#actions';
 import type { AgentAdapter, StartOptions } from '#agent';
 import { createClaudeAdapter, createKiroAdapter } from '#agent';
 import type { Agents } from './agents.ts';
+import { checked, withSaid } from './chat-files.ts';
 import { CHAT_TOOLS, INSTRUCTIONS_FILE, MCP_NAME, agentName, boardMcpServer, chatLabel, joinAndGrant, newIdentity, rekey } from './chat-access.ts';
 import type { ChatIndex, ChatSession, StoredSession } from './chat-index.ts';
 import { openChatIndex, publicSession } from './chat-index.ts';
@@ -193,15 +194,17 @@ export function openChats(o: ChatOptions): Chats {
       waiting.delete(id);
       const s = ledger.state();
       const round = unsaid(live, board, held.before);
-      const built = promptFor(s, board, held.msg, round);
-      const files = held.msg.files;
-      if (!round && !wordsOf(held.msg) && !built.chips.length && !files) return undefined;
+      const { msg, said } = checked(cwd, held.msg);
+      const built = promptFor(s, board, msg, round);
+      const files = msg.files;
+      const empty = !round && !wordsOf(msg) && !built.chips.length && !files;
+      if (empty && !said) return undefined;
       // On a locked board the words and chips go alone: no round (unsaid), and no Send to record.
       if (!isLocked(s, board)) {
         told.set(id, s.seq);
         if (held.record) ledger.append({ type: 'act', action: 'send', board }, { by: 'person' }, { board });
       }
-      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(built.chips.length > 0 && { chips: built.chips }), ...(files && { files }) } };
+      return { prompt: withSaid(built.prompt, said?.agent), message: { kind: 'message_in', text: withSaid(built.text, said?.person, empty), ...(built.chips.length > 0 && { chips: built.chips }), ...(files && { files }) } };
     }, wordsOf(held.msg) ? QUEUED_WORDS : QUEUED);
   }
 
@@ -211,8 +214,9 @@ export function openChats(o: ChatOptions): Chats {
     if (live.busy) waiting.set(id, held);
     return live.post(() => {
       waiting.delete(id);
-      const built = promptFor(ledger.state(), undefined, held.msg);
-      return { prompt: built.prompt, message: { kind: 'message_in', text: built.text, ...(held.msg.files && { files: held.msg.files }) } };
+      const { msg, said } = checked(cwd, held.msg);
+      const built = promptFor(ledger.state(), undefined, msg);
+      return { prompt: withSaid(built.prompt, said?.agent), message: { kind: 'message_in', text: withSaid(built.text, said?.person, !wordsOf(msg) && !msg.files), ...(msg.files && { files: msg.files }) } };
     }, QUEUED_WORDS);
   }
 
