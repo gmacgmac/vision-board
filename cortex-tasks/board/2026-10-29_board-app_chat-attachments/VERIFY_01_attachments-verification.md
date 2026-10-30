@@ -36,13 +36,13 @@ maintainer's yes.
 
 ## Validation
 
-- [ ] Each finding has the steps to reproduce, what happened, what should, and blocking or not
+- [x] Each finding has the steps to reproduce, what happened, what should, and blocking or not
 
 ## Implementation Notes
 
-_To be completed by agent after task completion._
+Findings: [VERIFY_01_findings.md](./VERIFY_01_findings.md): twelve (F1-F12), one blocking (F1: a command that only reads an attached file is refused, so a type the read tool can't open can't be opened). F2 is a gap in the D-066 rules found by the steering test (`curl -d @.env` asks). No code changed. Throwaway scripts in `temp/v1/`. Real CLIs, a headed desktop drag and a real Esc during a drag were not run.
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-30
 
 ## On Completion
 

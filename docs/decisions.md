@@ -947,3 +947,25 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: pictures inside the message (both adapters would change, Claude's to stream-json input);
   upload on Send (a refusal would come too late); session folders (no session yet on a first message).
 - **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md
+
+## D-069 Attached files: what the agent may run on them, and corrections to D-068
+- **Date**: 2026-10-30 · **Status**: Accepted (maintainer approved 2026-10-30, points 358, 359, 360, 361; points 356, 357 told and not objected to) · **From**: chat-attachments VERIFY_01 F1, F5, F7
+- **Decision**: D-068 changes as follows.
+  1. A command the rules do not know asks about an attached file, as it does about any other file in the
+     folder. Commands known to change a file stay refused on an attached file: `rm`, `mv`, `tee`, `truncate`,
+     `dd`, `sed -i`, a redirection onto it, and `cp` or similar with it as the target. "Never change" is enforced for what
+     is recognised; for a command it cannot judge it rests on the person's answer.
+  2. Copying out is allowed: `cp` with an attached file as its source asks, the original stays, and the copy
+     follows the rules of where it lands.
+  3. The board adds attachments to its own `.visionboard/.gitignore`, so attached files stay out of a project's git.
+  4. Correction to D-068's Why: `send_chat` accepts a plain file of the saved shape in the attachments folder,
+     with no link at any step; it does not record what it saved. The agent cannot write there.
+  5. Recorded from the set: a chip and a sent message show the person's own file name, display only, never in
+     the prompt (point 356); a file dropped anywhere on the page never replaces the board, and the open chat panel takes the
+     drop (point 357).
+- **Why**: "any type" meant nothing if the agent could not open `.docx`, `.xlsx` or `.zip`; a refusal is final, an
+  ask leaves the choice with the person.
+- **Rejected**: growing the read-only list command by command (it can't prove a script only reads); installing
+  document tools on the person's machine from the agent (supply chain). A board tool that reads attachments is
+  the next set (point 361).
+- **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md (FIX_01)
