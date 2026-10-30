@@ -6,6 +6,14 @@ A task should justify the cost of a fresh agent context. The orchestrator spawns
 
 **Rule of thumb**: if two adjacent steps touch the same file with the same concern and have no decision point between them, merge them into one task.
 
+**Batch small changes.** Small, low-risk changes in the same area (wording, a placeholder, a
+divider, a tooltip) go in one task, even across several files. Each task pays for a fresh context
+and its own verification.
+
+**Don't let an open question block settled work.** If a design choice is unresolved, make it a
+design-only task in the first wave that offers 2–3 genuinely different options, with the settled
+rules written in so they aren't reopened. Only the task that needs the decision waits for it.
+
 | Split tasks when... | Merge tasks when... |
 |---|---|
 | Different files / surfaces | Same file, same concern |

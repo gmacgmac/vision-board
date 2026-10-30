@@ -9,13 +9,19 @@ How things are organized, not how they look. Strong models write good code local
 don't do by default is keep a whole codebase to **one home per fact**. This skill is that
 discipline.
 
+**Patterns, not mandates.** These come from experience on real projects. **Where project steering
+defines an approach, it wins**: this skill applies only where the project hasn't decided yet, as a
+reference to consider, not a rule to follow. A project adopts the parts that fit: a docs-only repo
+may use only one home per fact; a repo with no UI or agents skips words files; a repo with no API
+skips contracts. Where a choice depends on the project, this skill asks the question and lists
+common answers rather than naming one. Project numbers and choices (file-length limits, layer
+names, token names, where job state lives) belong in project steering. The planner picks for this
+plan, and proposes recording the choice in project steering, so later plans make the same choice.
+
 **Applied at planning.** The planner (`cortex-write-task`) loads this skill for dev work and
 writes its decisions into the plan — which pattern each piece reuses, which contract comes first,
 what goes in Shared Foundations. Executing agents follow the task; they consult this skill only
 where the task names it.
-
-**Project numbers live in project steering** — file-length limits, layer names, token names.
-This skill gives the method and defaults.
 
 ## Before you build — answer in order; settle each point before the next
 
@@ -50,9 +56,10 @@ This skill gives the method and defaults.
    a caller. Defaults: one request / I/O layer (only it calls APIs or touches files; it validates
    what it reads and writes). One action layer shared by people and agents. A button never calls
    an API directly.
-6. **App-wide awareness goes through registries, never a local check.** Dependencies are edges in
-   a references table; facts more than one place must know are rows in a conditions table;
-   long-running work, once there is more than one kind, is tracked in a jobs table. See
+6. **App-wide awareness goes through registries.** Once a second place needs to know, a local
+   check moves to a table. Dependencies are edges in a references table; facts more than one
+   place must know are rows in a conditions table; long-running work, once there is more than one
+   kind, is tracked in a jobs table. Each table is added only when needed. See
    `references/registries.md`.
 7. **Words have one home.** Every sentence a person or an agent reads — screen text,
    notifications, errors, tool descriptions and refusals — lives in a words file for its area,

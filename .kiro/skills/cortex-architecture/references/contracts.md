@@ -4,6 +4,9 @@ Every contract has one source. Types, handlers, docs, clients and agent tools ar
 it or tested against it, and a test fails when code and source disagree. **Change the source
 first.**
 
+**Take the links that fit.** The chain below is the full form. A project uses the links it has:
+no API, skip the routes; no agent tools, skip MCP; no file formats, skip the schemas.
+
 ## The chain
 
 ```
@@ -13,8 +16,9 @@ JSON Schema (data / file formats, versioned)
    → generated client · generated docs · MCP tools
 ```
 
-Each arrow is either generation or a test. No link in the chain is hand-maintained to match
-another.
+Each arrow is either generation or a test. A link may be hand-written on purpose — a client
+another language reimplements, a doc written for people — as long as a test holds it to its
+source. A hand-written link is fine; an unchecked one is not.
 
 ## A route is a declaration
 
@@ -24,7 +28,8 @@ enforced when the module loads, so a malformed route refuses to start, naming it
 
 - Naming is consistent and checked (e.g. `collection.verb` operation ids).
 - Path params declared must match the path's captures.
-- The served spec **is** the API reference — no hand-written route docs.
+- The served spec **is** the API reference. No hand-written route reference; a guide written for
+  people is tested against the spec.
 
 ## One API shape
 

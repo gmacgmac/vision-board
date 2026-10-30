@@ -83,7 +83,7 @@ Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, nev
 
 Update your task file and TASK-STATUS.md when done, then follow your task file's On Completion — including your own single LOG entry. Append exactly one line ending in a newline; other sub-agents are appending to the same file right now. Don't close the set (`status: completed`, the set LOG entry) — the orchestrator does that.
 
-Run your own tests, plus the tests of every shared pattern or file you change (search the test folders for its name). The orchestrator runs the full gates.
+Test by tier (SKILL.md § Testing by Tier), with a time limit on every run, and name the tier in VERIFICATION. The orchestrator runs the full gates.
 
 No git commits.
 
@@ -92,7 +92,7 @@ Return Contract — your final message MUST end with this block, exactly:
 TASK_ID: {TASK_ID}
 STATUS: COMPLETED | BLOCKED | DEVIATION
 FILES: <comma-separated paths created/modified, or "none">
-VERIFICATION: <what was checked and the result>
+VERIFICATION: <tier (small | normal | wide); what was checked and the result>
 REQUESTS: <one per line: `path` — what's needed — blocking | non-blocking; or "none">
 NOTES: <one line for the orchestrator; "none" if nothing>
 ---
@@ -117,8 +117,9 @@ Before the next wave starts, all of these must hold:
    own change) shows it handled.
 2. **Orchestrator-owned files updated** — requests routed to you, and anything else this wave's
    work requires (e.g. regenerate code, bump a version file).
-3. **Gates green** — the project's build, type-check and tests (its fast set, if it defines one).
-   A failure stops the pipeline; report it.
+3. **Tests green** — the project's fast set, if it defines one, or build and type-check. The full
+   gates only if a return block in this wave reported tier `wide`. A failure stops the pipeline;
+   report it.
 4. **Commit** only if PLAN.md's House Rules ask for one per wave — never otherwise.
 
 Then: `[check] Wave [N] complete ([task_ids]). [R] requests routed. [M] waves remaining.`

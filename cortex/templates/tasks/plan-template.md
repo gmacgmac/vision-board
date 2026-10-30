@@ -43,6 +43,16 @@ _Optional — omit if none. Project rules every task and the orchestrator follow
 - **Orchestrator-only files**: [e.g. lockfiles, generated code, version files — mirror TASK-STATUS.md File Ownership]
 - **Commits**: none during the set (default) / [e.g. orchestrator commits once per wave]
 - **Project checks**: [e.g. file-length limits, required type-check]
+- **Test time limit**: [e.g. 150 s per run]
+
+---
+
+## Decisions
+
+_Omit if none. Every ruling the user made in conversation, written so executing agents never
+have to re-derive intent from chat._
+
+- [Decision — and why, if it matters]
 
 ---
 

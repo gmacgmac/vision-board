@@ -16,6 +16,15 @@
 
 ---
 
+## v4.1.2 — 2026-10-21
+**Testing by tier; architecture is a reference that project steering overrides.**
+### Synced
+- `cortex-task-exe`: tests sized by tier (small / normal / wide), named in each return block; full gates only after a wide wave and when the set closes; every test run has a time limit.
+- `cortex-write-task`: `VERIFY_01` only for wide changes; small same-area changes batched into one task; open design questions don't block settled work; PLAN gains Decisions and a test time limit.
+- `cortex-architecture`: project steering wins where it decides; patterns, not mandates. Registries: owners, deletes that name dependants, condition records stored apart, cycles, job state. Contracts: take the links that fit.
+### Migrations
+- None. No change to `PROFILE.md` or `REGISTRY.md`.
+---
 ## v4.1.1 — 2026-10-21
 **Root README with GitLab and GitHub install steps; never shipped to consumers.**
 

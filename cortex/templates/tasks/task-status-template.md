@@ -121,7 +121,7 @@ _Notes:_
 ## Completion Checklist
 
 - [ ] All implementation tasks complete
-- [ ] Verification task complete
+- [ ] Verification task complete (if the set has one)
 - [ ] Every request `Done` or `Closed`
 - [ ] LOG entry created (see below)
 

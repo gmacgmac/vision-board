@@ -29,9 +29,9 @@ Pick the branch, then follow the steps below.
 
 1. **Determine category and concern** — same as Branch A.
 2. **Create folder** — `cortex-tasks/{concern}/{YYYY-MM-DD}_{category}[_{subdomain}]_{title}/`
-3. **Write PLAN.md** — use `cortex/templates/tasks/plan-template.md`. Problem, solution, key changes, dependencies, and House Rules if the project has any (orchestrator-only files, commit policy, project checks).
+3. **Write PLAN.md** — use `cortex/templates/tasks/plan-template.md`. Problem, solution, key changes, dependencies, House Rules if the project has any (orchestrator-only files, commit policy, project checks, test time limit), and Decisions: every ruling the user made in conversation, so executing agents never re-derive intent from chat.
 4. **Write TASK-STATUS.md** — use `cortex/templates/tasks/task-status-template.md`. Frontmatter, task table, implementation notes sections.
-5. **Write individual task files** — use `cortex/templates/tasks/task-template.md`. Name format: `[TYPE]_{##}_{task-title}.md`, where `[TYPE]` marks the work type and drives agent assignment: `BE` (Backend), `FE` (Frontend), `VERIFY` (Verification), `MANUAL` (Human action), a domain tag (e.g. `API`), or a generic `T` when the work is a single stream with no separate-agent split. Split along surface boundaries (e.g. FE/BE) — separate agents may complete those tasks. Include a final `VERIFY_01` task that tests the implementation (targeted, not a generic `npm test`); if the set touches code a doc describes, it also runs the `cortex-docs` doc audit. Each file: objective, inputs, steps, validation, notes section, and its `Skills` (see § Skill Routing).
+5. **Write individual task files** — use `cortex/templates/tasks/task-template.md`. Name format: `[TYPE]_{##}_{task-title}.md`, where `[TYPE]` marks the work type and drives agent assignment: `BE` (Backend), `FE` (Frontend), `VERIFY` (Verification), `MANUAL` (Human action), a domain tag (e.g. `API`), or a generic `T` when the work is a single stream with no separate-agent split. Split along surface boundaries (e.g. FE/BE) — separate agents may complete those tasks. Include a final `VERIFY_01` task when the set has a wide change (`cortex-task-exe` § Testing by Tier); it tests the implementation (targeted, not a generic `npm test`), and if the set touches code a doc describes, it also runs the `cortex-docs` doc audit. A set of small changes needs none — the closing gates verify it. Each file: objective, inputs, steps, validation, notes section, and its `Skills` (see § Skill Routing).
    - **Needs a person live** (a login, a one-time code, hardware, an outside account) → make it a `MANUAL` task, or say so in the task's Objective, with what the person must have ready. The orchestrator then runs it in the foreground, one action or code per exchange.
 6. **Fill the TASK-STATUS columns and tables** — the planner's call, not the executor's: the orchestrator schedules from PLAN.md and TASK-STATUS.md alone, never task files, so anything left blank it must guess.
    - **Wave** and **Model** (`standard` | `strong`, never a model name) columns.
@@ -50,7 +50,7 @@ loads the relevant skill **while planning**, applies it to the plan, and names i
 
 | Task involves | Skill |
 |---|---|
-| Front-end, back-end, API, MCP, schema, data layer, shared components | `cortex-architecture` — load it before writing PLAN.md |
+| Front-end, back-end, API, MCP, schema, data layer, shared components | `cortex-architecture` — load it before writing PLAN.md, and follow project steering where it already decides |
 | Creating, updating or retiring docs; changing code a doc describes | `cortex-docs` — destination comes from the `REGISTRY.md` doc surface, never a hardcoded path |
 | Investigation only, no code changes | `cortex-research` |
 

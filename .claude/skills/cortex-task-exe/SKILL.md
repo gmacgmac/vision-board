@@ -33,6 +33,23 @@ it. No-op if the value is already correct.
 
 ---
 
+## Testing by Tier
+
+Test in proportion to what the change can break. Judge the tier from the change itself:
+
+| Tier | The change | Run |
+|---|---|---|
+| **Small** | Wording, styling, config values; one area, no logic | Tests of the files touched, plus lint / type-check. None exist → say so |
+| **Normal** | Logic inside one area | Its own tests, plus tests of every shared pattern or file it changed |
+| **Wide** | A contract, a Shared Foundations item, or more than one area | The project's full gates |
+
+- Unsure → the higher tier.
+- Every test run has a time limit (PLAN.md House Rules, else a few minutes). A run that hangs is a
+  failure to report, not something to wait out.
+- The full gates always run once, when the set closes.
+
+---
+
 ## Mode: Single Task (Direct Execution)
 
 You are the executor. Read the task file, do the work, report back.
@@ -43,7 +60,7 @@ You are the executor. Read the task file, do the work, report back.
 4. Execute the steps. If issues arise, work through them — collaborate with the user if needed.
 5. Do NOT deviate from the plan silently. If deviation is needed, stop and discuss.
 6. Document findings in the task file's Implementation Notes.
-7. Verify your changes — focus on testing the logic (run tests, diagnostics, or whatever validation the task specifies), plus the tests of every shared pattern or file you change. Not a sub-agent → also run the project's full gates.
+7. Verify your changes by tier (§ Testing by Tier), plus whatever validation the task specifies.
 8. Record any security concerns you surface in the task's Implementation Notes (or TASK-STATUS.md in a set).
 9. Update your row in TASK-STATUS.md's table. Not a sub-agent and this was the last row → close the set per the Lifecycle above (full gates first).
 10. Follow the task file's **On Completion** — append your own LOG entry for this task. One line, terminated with a newline, append-only; never `str_replace`. If you closed the set in step 9, also append the set entry.
@@ -61,7 +78,7 @@ You are the executor. Read the task file, do the work, report back.
 TASK_ID: {TASK_ID}
 STATUS: COMPLETED | BLOCKED | DEVIATION
 FILES: <comma-separated paths created/modified, or "none">
-VERIFICATION: <what was checked and the result>
+VERIFICATION: <tier (small | normal | wide); what was checked and the result>
 REQUESTS: <one per line: `path` — what's needed — blocking | non-blocking; or "none">
 NOTES: <one line for the orchestrator; "none" if nothing>
 ---
@@ -100,7 +117,7 @@ For the full parallel protocol (wave assignment, dispatch, error handling), read
 - Logging is two-level, same as sequential: each sub-agent logs its own task, the orchestrator logs the set. A whole wave appends at once, so one line ending in `\n`, append-only.
 - Waves run in order; tasks within a wave run in parallel.
 - Parallel tasks MUST NOT modify the same files — TASK-STATUS.md's File Ownership says who owns what.
-- A wave gate runs between waves: every request routed, orchestrator-owned files updated, gates green.
+- A wave gate runs between waves: every request routed, orchestrator-owned files updated, tests green (full gates only after a wide wave).
 - Waves come from TASK-STATUS.md's `Wave` column, assigned by the planner. No Wave column → run sequential and say so.
 - When in doubt about independence, run sequentially within that wave.
 

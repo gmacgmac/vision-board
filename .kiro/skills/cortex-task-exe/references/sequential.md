@@ -76,7 +76,7 @@ Rules:
 - Update the task file's Implementation Notes when done
 - Update TASK-STATUS.md when done
 - Follow the task file's On Completion, including your own single LOG entry (one line, ends with a newline)
-- Run your own tests, plus the tests of every shared pattern or file you change (search the test folders for its name). The orchestrator runs the full gates.
+- Test by tier (SKILL.md § Testing by Tier), with a time limit on every run, and name the tier in VERIFICATION. The orchestrator runs the full gates.
 - No new external dependencies unless the task file calls for them
 - Survival-critical (workspace rules, non-negotiable): use `cwd` for commands, never `cd path &&`. Any write >50 lines: CREATE first section, then APPEND in chunks. If you hit repeated connection-reset errors, STOP — do not retry in a loop — report it as a violation and switch to chunked appends.
 
@@ -85,7 +85,7 @@ Return Contract — your final message MUST end with this block, exactly:
 TASK_ID: {TASK_ID}
 STATUS: COMPLETED | BLOCKED | DEVIATION
 FILES: <comma-separated paths created/modified, or "none">
-VERIFICATION: <what was checked and the result>
+VERIFICATION: <tier (small | normal | wide); what was checked and the result>
 REQUESTS: <one per line: `path` — what's needed — blocking | non-blocking; or "none">
 NOTES: <one line for the orchestrator; "none" if nothing>
 ---
