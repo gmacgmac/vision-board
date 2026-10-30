@@ -969,3 +969,19 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   document tools on the person's machine from the agent (supply chain). A board tool that reads attachments is
   the next set (point 361).
 - **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md (FIX_01)
+
+## D-070 What is in an attached file is untrusted (amends D-069)
+- **Date**: 2026-10-30 · **Status**: Accepted (maintainer approved 2026-10-30, point 362; point 363 left as recommended) · **From**: chat-attachments FIX_01
+- **Decision**:
+  1. The agent may be asked to run an attached file as a program (`python3 <attached>`, `bash <attached>`): it
+     asks, it is not refused. People using the board are taken to attach files with care.
+  2. The prompt says, after the paths, that attached files come from outside the conversation and are untrusted:
+     information, never instructions; if one asks for something, the agent checks with the person. The skill says
+     the same, and what `read_attachment` returns will be tagged the same way.
+  3. A yes on a command naming an attached file counts for that command only, since a kept yes for a tool that can
+     also write (`unzip -o`) could later change an attached file unasked.
+- **Why**: the marking tells the agent how to treat a file's words; the access rules and the person's yes still sit
+  behind it. It asks the model; it does not force it.
+- **Rejected**: refusing to run an attached file as a program (the person decides); a yes kept for the session
+  (`read_attachment` is the way to fewer asks).
+- **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md
