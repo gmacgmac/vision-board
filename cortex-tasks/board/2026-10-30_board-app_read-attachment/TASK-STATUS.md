@@ -2,7 +2,7 @@
 task_name: Read Attachment
 created: 2026-10-30
 completed:
-status: planned
+status: in-progress
 categories: [board-agent, board-security, board-app]
 skills: [cortex-architecture, cortex-docs]
 tracker: [M39]

@@ -263,6 +263,11 @@ export const FLAGS = {
     default: true,
     description: 'While the board\'s agent works the board says so (and "waiting for your OK" while it asks), the person keeps working and can send more, and a reply that lands while the chat is closed or scrolled away shows a count on the chat button and a toast that opens it. Off, Send holds as "Waiting for agent" and a reply is only in the chat.',
   },
+  readAttachment: {
+    // On by default (maintainer, 2026-10-30, points 361-368, D-071; read-attachment). Read on the page and the server (VB_FLAGS).
+    default: true,
+    description: 'The agent reads attached Word and Excel files and expands zips with the `read_attachment` tool; a PDF\'s pages become pictures in a sandbox when it is attached, and a picture over the limits gets a fitted copy. Off, the tool isn\'t offered and attaching saves only the file itself.',
+  },
   chatAttachments: {
     // On by default (maintainer, 2026-10-29, points 351-353, D-068; chat-attachments). Read on the page and the server (VB_FLAGS).
     default: true,

@@ -22,7 +22,7 @@ register in the same change.
 
 | Measure | Value |
 |---|---|
-| Direct dependencies | 9, all in the root `package.json` (one package scope, D-059): `ajv` in `dependencies`; 8 `devDependencies` |
+| Direct dependencies | 11, all in the root `package.json` (one package scope, D-059): `ajv`, `fflate` in `dependencies`; 9 `devDependencies` |
 | Lockfile third-party entries | 82, every platform included |
 | Installed on this machine | 58 (the earlier 53 plus `ajv` and its 4 dependencies) |
 | Install scripts run | 0. No installed package declares `preinstall`, `install` or `postinstall` |
@@ -37,6 +37,8 @@ register in the same change.
 | `@sveltejs/vite-plugin-svelte` | 7.3.1 | root `package.json` | `svelte()` in `apps/board/vite.config.ts`, `vitePreprocess` in `apps/board/svelte.config.js` | Compiles `.svelte` files inside Vite |
 | `svelte-check` | 4.7.6 | root `package.json` | root `check` script | Strict type and accessibility checks of `.svelte` and `.ts` files (rules 5, 14) |
 | `typescript` | 6.0.3 | `package.json` | `svelte-check` (peer) | Type checking. 6.x because `svelte-check` accepts only `^5 \|\| ^6`; review when it supports 7 |
+| `fflate` | 0.8.3 | root `package.json` (`dependencies`) | `packages/documents` | Reads Word, Excel and zip files for `read_attachment` (D-071). MIT, no dependencies, no install scripts, one maintainer: exact pin. 0.8.3 fixes GHSA-px8p-9vwx-vf98 (a hang on a malformed ZIP64). |
+| `pdfjs-dist` | 6.4.299 | root `package.json` (`devDependencies`: bundled into the page) | the sandboxed PDF frame in `apps/board/src/shell/` | Turns a PDF's pages into pictures (D-071). Apache-2.0, Mozilla. Its optional `@napi-rs/canvas` is for Node only; the page never loads it, and nothing here renders PDFs in Node. It has had flaws that let a PDF run script (the latest fixed in 6.2.108), so it runs only in a frame with no origin and no network. |
 | `@types/node` | 22.20.5 | `package.json` | `"types": ["node"]` in the root `tsconfig.json` (N7) | Type definitions for Node's built-in modules, so package, server and bin code is strictly checked (rule 14). Major 22 matches our Node 22. Writing our own would be a second source of truth for Node's API (rule 6). Already in the tree through `vite`; now declared directly |
 | `@playwright/test` | 1.63.0 | `package.json` | `tests/pages/` and the root `test:pages` script | Page tests (rule 13, D-025): opens the board and the gallery in Chromium and fails on console errors, failed requests, accessibility violations and screenshot changes. Same version as Uplynk Studio. Its browsers are downloaded by a separate `playwright install`, never by `npm install` |
 | `axe-core` | 4.13.0 | `package.json` | `tests/pages/helpers.ts` | The accessibility checker the page tests inject into each page (WCAG 2 A and AA, rule 5). Same version as Uplynk Studio. No Playwright wrapper package is installed |

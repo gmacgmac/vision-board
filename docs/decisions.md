@@ -985,3 +985,23 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: refusing to run an attached file as a program (the person decides); a yes kept for the session
   (`read_attachment` is the way to fewer asks).
 - **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md
+
+## D-071 Reading attachments: one board tool, and PDFs rendered in a sandbox
+- **Date**: 2026-10-30 · **Status**: Accepted (points 361, 364-367; the rulings the maintainer delegated 2026-10-30, to decide by the principles and report back) · **From**: read-attachment PLAN
+- **Decision**: PLAN rulings 1-8, in short:
+  1. `read_attachment(path, { sheet?, range? })` is an MCP tool for attached files only; everything it returns says it is untrusted (D-070).
+  2. Excel: the sheets, then a range, each cell's address, value and formula. Word: headings, lists and tables as
+     Markdown, pictures saved to a new folder. Zip: a new folder every time, nothing overwritten, with limits, and links
+     and escaping names refused.
+  3. A PDF's pages become pictures when it is attached, at most 30, by `pdfjs-dist` in a frame with no origin and no
+     network; the answer is checked again outside it. A picture over 5 MB or 2000 px gets a fitted copy beside it.
+  4. The reader lives in `packages/documents`, with no board import, so nclite can take it. A tool and its gate ship
+     together or neither ships.
+  5. Dependencies: `fflate` 0.8.3, `pdfjs-dist` 6.4.299 without `@napi-rs/canvas`. XML goes through our own small reader that refuses a DOCTYPE.
+- **Why**: measured 2026-10-30 on Kiro CLI 2.35.2: its read tool can't open a real PDF, and a 9.7 MB picture is rejected by the
+  provider and never seen. People will attach customer architectures, where the diagram is the point. A PDF library
+  has had script-running flaws, so it gets a place where script reaches nothing.
+- **Rejected**: Python tools on the person's machine (nclite ships them in its container; here they would be installed by the
+  agent); a Node renderer in a child process (needs a native canvas, and script there reaches the disk); plain text
+  from Excel (loses formulas and shape); lifting KiroCrew's code whole (Python; the zip guard and the Word logic are ported, Apache 2.0).
+- **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md

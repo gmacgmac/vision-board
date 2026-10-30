@@ -21,6 +21,7 @@
     "#format/testing": "./packages/format/tests/support.ts",
     "#layout": "./packages/layout/src/index.ts",
     "#mcp": "./packages/mcp/src/index.ts",
+    "#documents": "./packages/documents/src/index.ts",
     "#search": "./packages/search/src/index.ts",
     "#tokens/styles.css": "./packages/tokens/src/tokens.css",
     "#ui": "./packages/ui/src/index.ts",
@@ -46,13 +47,15 @@
     "test:pages": "playwright test --config tests/pages/playwright.config.ts"
   },
   "dependencies": {
-    "ajv": "8.20.0"
+    "ajv": "8.20.0",
+    "fflate": "0.8.3"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "22.20.5",
     "axe-core": "4.13.0",
+    "pdfjs-dist": "6.4.299",
     "svelte": "5.57.1",
     "svelte-check": "4.7.6",
     "typescript": "6.0.3",
