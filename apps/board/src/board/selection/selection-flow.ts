@@ -62,6 +62,8 @@ export interface SelectionFlow {
   lassoCancel(): void;
   /** Run a command; false when it does not apply now (so a key can mean something else). */
   command(id: CommandId, key?: string): boolean;
+  /** Zoom to these cards, whatever is selected (Zoom to selection's fit); false when none is drawn. */
+  zoomTo(ids: readonly string[]): boolean;
   /** Show, hide or move the bar for the selection, the area and the view as they are now. */
   place(): void;
   /** Forget the lassoed area (a background click, Esc, a new selection). */
@@ -162,6 +164,14 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
     return true;
   }
 
+  /** The cards fill 75% of the stage, above 110% when small (review-polish ruling 12); one app card
+   *  fills 95% of it, so its app is big enough to use (card-polish FE_01). */
+  function zoomTo(ids: readonly string[]): boolean {
+    const b = worldBoxOf(d.layout(), ids);
+    if (b) d.vp.fit(b, true, ids.length === 1 && isAppCard(d.stage, ids[0]!) ? APP_FIT : SELECTION_FIT);
+    return b !== undefined;
+  }
+
   function command(id: CommandId, key?: string): boolean {
     const layout = d.layout();
     if (COMMANDS[id].acts && (d.readOnly() || d.paused?.())) return false;
@@ -186,14 +196,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
         return sel.length > 0;
       }
       case 'remove': return d.remove?.(d.selection.selected()) ?? false;
-      case 'zoom-selection': {
-        // The selection fills 75% of the stage, above 110% when small (review-polish ruling 12); one
-        // app card fills 95% of it, so its app is big enough to use (card-polish FE_01).
-        const ids = d.selection.selected();
-        const b = worldBoxOf(layout, ids);
-        if (b) d.vp.fit(b, true, ids.length === 1 && isAppCard(d.stage, ids[0]!) ? APP_FIT : SELECTION_FIT);
-        return b !== undefined;
-      }
+      case 'zoom-selection': return zoomTo(d.selection.selected());
       case 'zoom-area': {
         const a = area;
         if (!a) return false;
@@ -215,7 +218,7 @@ export function createSelectionFlow(d: SelectionFlowDeps): SelectionFlow {
   bar.addEventListener('vb-toggle', (e) => pill?.set((e as CustomEvent<ToggleEventDetail>).detail.open));
 
   return {
-    lassoMove, lassoEnd, lassoCancel: () => { lasso.hidden = true; }, command, place, dismissArea,
+    lassoMove, lassoEnd, lassoCancel: () => { lasso.hidden = true; }, command, zoomTo, place, dismissArea,
     collapse: () => pill?.collapse() ?? false,
     destroy() { pill?.destroy(); bar.remove(); lasso.remove(); },
   };

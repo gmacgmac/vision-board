@@ -2,7 +2,7 @@
 // parts: the composer's one chip (composer-one-chip ruling 1), "3 answers · 2 selected", opening to
 // exactly what the next message carries from the board (packages/actions `boardBlocks`, the server's
 // writer; ruling 2), for the session's agent; no unsent note is a chip (the answers carry it); the
-// cards a message took are spent until the selection changes; a change chip selects and zooms to its
+// cards a message took are spent until the selection changes; a change chip zooms to its
 // cards, opening their board first; the stepper's link finds the write that last changed a card; the
 // stream starts over when the server did; a message's body.
 import { test } from 'node:test';
@@ -127,7 +127,7 @@ function bridged() {
   let linked: ((n: number) => string | undefined) | null = null;
   const offBoard = bridge.board({
     stage: new EventTarget() as HTMLElement, data: () => data[open]!, ledger: () => s, id: () => open, selection, readOnly: () => false,
-    zoom: () => log.push(`zoom ${selection.selected().join(' ')}`), switchTo: (id) => { open = id; log.push(`open ${id}`); },
+    zoom: (ids) => log.push(`zoom ${ids.join(' ')}`), switchTo: (id) => { open = id; log.push(`open ${id}`); },
     jump: (id) => log.push(`jump ${id}`), toast: (t) => log.push(`toast ${t}`), source: (link) => { linked = link; },
   });
   bridge.chat({
@@ -172,14 +172,14 @@ test('board to chat: the answers are for the session\'s agent; another board has
   assert.equal(t.context()?.label, '3 answers', 'no session yet: every answer');
   t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [1] });
   t.bridge.refresh();
-  assert.deepEqual(t.context(), { label: '1 selected', text: `${SELECTED_HEAD}\n- Card 1: Card 4` }, 'board c has no answers; the change chip selected its card 1');
+  assert.equal(t.context(), null, 'board c has no answers, and the change chip selected nothing');
   assert.equal(t.log.at(-1), 'changed', 'the panel hears of it');
 });
 
-test('chat to board: a change chip selects its cards and zooms; on another board, that board opens first', () => {
+test('chat to board: a change chip zooms to its cards and selects nothing; on another board, that board opens first', () => {
   const t = bridged();
   t.raise(CHAT_CHANGE_EVENT, { board: 'b', cards: [1, 2], head: 42 });
-  assert.deepEqual(t.selection.selected(), ['1', '2']);
+  assert.deepEqual(t.selection.selected(), [], 'a selection would go with the next message');
   t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [1], head: 43 });
   t.raise(CHAT_CHANGE_EVENT, { board: 'c', cards: [4] });
   assert.deepEqual(t.log.filter((l) => !/^(chips|context|changed)/.test(l)), ['zoom 1 2', 'open c', 'zoom 1', 'toast Those cards are no longer on the board.'],

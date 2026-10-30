@@ -132,7 +132,7 @@ while a question waits (that one is then released, unanswered); the line under t
 The model picker names exact models ("Opus 5.5", "Sonnet 5.5", with the 1M context for Claude; Kiro's own
 ids for Kiro, see § Kiro).
 `shell/chat-bridge.ts` is the only file that knows both sides: the selected cards and the answers
-as the composer's one chip (the cards a message took are spent until the selection changes); a change chip selects and zooms to its cards
+as the composer's one chip (the cards a message took are spent until the selection changes); a change chip zooms to its cards and selects nothing, so nothing goes with the next message
 (opening their board first); a changed card's stepper links back to the write in the chat (`CardUpdates.source` in `packages/ui`).
 
 **The drawing loads the first time the panel opens.** The session, its events, the waiting and attached

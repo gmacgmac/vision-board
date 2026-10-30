@@ -2,7 +2,7 @@
 // closed at first, opened and closed by the toolbar's Chat button and T, the stage shrinking beside
 // it; its width set by dragging its edge or by the arrow keys, kept with whether it is open; the
 // selected cards as chips (the unsent notes are in the answers chip), a message going with them, the agent's words and
-// its change chip, which selects and zooms to the cards; a changed card's link back to the chat;
+// its change chip, which zooms to the cards and selects nothing; a changed card's link back to the chat;
 // the session again after a reload; Allow and Deny on what the gate asks; Stop; a past version;
 // New session, a message sent while it starts, and the newest session after a reload (FIX_01);
 // axe light and dark. The server is this file's own (chat-server.ts) with the agent
@@ -95,7 +95,7 @@ test('resize: dragging the edge and the arrow keys set the width, kept with the 
   expect(await width(page)).toBe(484);
 });
 
-test('a message: the selected card goes with it; the agent\'s words show; its change chip selects and zooms to the cards', async ({ page }) => {
+test('a message: the selected card goes with it; the agent\'s words show; its change chip zooms to the cards and selects nothing', async ({ page }) => {
   await open(page);
   await toggle(page).click();
   await expect(side(page).locator('.chat-empty')).toHaveText('No messages yet. Ask the agent about this board.');
@@ -116,15 +116,15 @@ test('a message: the selected card goes with it; the agent\'s words show; its ch
   // The message took the card: it is spent until the selection changes.
   await expect(attached(page).filter({ hasText: 'selected' })).toHaveCount(0);
   await expect(text(page)).toHaveValue('');
-  // The change chip: both cards selected and zoomed to.
+  // The change chip: zoomed to, and nothing selected, so nothing goes with the next message.
   await page.locator('#stage').focus();
   await page.keyboard.press('Escape');
   await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
   const before = await page.locator('.vb-world').getAttribute('style');
   await log(page).getByRole('button', { name: /Drew 2 cards on Scratch/ }).click();
-  await expect(page.locator('#selection-status')).toHaveText('2 cards selected');
-  await expect(page.locator('vb-node[data-selected]')).toHaveCount(2);
   await expect(page.locator('.vb-world')).not.toHaveAttribute('style', before!);
+  await expect(page.locator('vb-node[data-selected]')).toHaveCount(0);
+  await expect(attached(page).filter({ hasText: 'selected' })).toHaveCount(0);
 });
 
 test('a changed card links to the chat\'s write that changed it; the conversation is there again after a reload', async ({ page }) => {

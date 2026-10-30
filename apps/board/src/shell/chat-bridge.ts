@@ -6,8 +6,8 @@
 // prompt uses (ruling 2). There is no chip per card: to leave one out, deselect it; the cards a
 // message carried are spent until the selection changes. Notes are among the answers, so they are
 // no chips: a note goes once, as its answer (chat-no-double-note ruling 2). Chat to board: a change
-// chip selects its cards and zooms to them (Zoom to selection), opening their board first when it is
-// another one; a changed card's stepper links to the board write in the chat that last changed it; a
+// chip zooms to its cards and selects nothing, so nothing goes with the next message, opening their
+// board first when it is another one; a changed card's stepper links to the board write in the chat that last changed it; a
 // chat in the folder's first board opens when drawn (`open`, panel-send ruling 2). The board side
 // attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // It also holds the files attached to the next message (D-068 ruling 6: the composer takes them, the host
@@ -150,8 +150,7 @@ export function createChatBridge(): ChatBridge {
     if (!b || !d) return;
     const ids = cardIds(d, cards);
     if (!ids.length) return b.toast(chatWords.thoseCardsAreNoLonger);
-    b.selection.select(ids, 'only');
-    b.zoom();
+    b.zoom(ids);
   }
 
   const drawFiles = () => c?.setFiles(held.map(({ saved: _, ...file }) => file));

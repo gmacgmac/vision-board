@@ -200,7 +200,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   const history = createHistoryFlow({ stage, state: () => versions.state ?? live.state, board: () => S.id, highlight: (id, part) => noteHide.highlight(id, part) }); // the ⓘ's box (history-flow.ts, card-polish FE_03)
   /** What a host's own chat reads of the board (chat-side.ts): the selection, the answers, a change chip's zoom. */
   const side: BoardSide = { stage, data: () => S.data, ledger: () => live.state, id: () => S.id, selection, readOnly: () => !!versions.state, toast,
-    zoom: () => void flow.command('zoom-selection'), switchTo: (id) => void switchTo(id), jump: (id) => void switchTo(id, () => boards.jump(id)), source: (link) => { chatSource = link; } };
+    zoom: (ids) => void flow.zoomTo(ids), switchTo: (id) => void switchTo(id), jump: (id) => void switchTo(id, () => boards.jump(id)), source: (link) => { chatSource = link; } };
 
   /** The review buttons and their keys on one card (item-acts.ts). */
   const act = createItemActs({ node: nodeOf, state: () => S.data!.state, notes, moves, record, target, hiding: () => status.now.hide, hidden: hiddenSet,

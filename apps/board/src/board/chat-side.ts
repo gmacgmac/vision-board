@@ -15,8 +15,8 @@ export interface BoardSide {
   selection: Selection;
   /** A past version shows: nothing attached (no message can go). */
   readOnly(): boolean;
-  /** Zoom to the selection (the selection bar's Zoom to selection). */
-  zoom(): void;
+  /** Zoom to these cards, leaving the selection as it is (a selection would go with the next message). */
+  zoom(ids: readonly string[]): void;
   /** Open another board; it is drawn before this returns (boards.ts). */
   switchTo(board: string): void;
   /** Open a board now when it is held, else once its line arrives (boards.ts `jump`). */
