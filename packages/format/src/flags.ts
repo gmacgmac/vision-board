@@ -266,7 +266,7 @@ export const FLAGS = {
   readAttachment: {
     // On by default (maintainer, 2026-10-30, points 361-368, D-071; read-attachment). Read on the page and the server (VB_FLAGS).
     default: true,
-    description: 'The agent reads attached Word and Excel files and expands zips with the `read_attachment` tool; a PDF\'s pages become pictures in a sandbox when it is attached, and a picture over the limits gets a fitted copy. Off, the tool isn\'t offered and attaching saves only the file itself.',
+    description: 'The agent reads attached Word and Excel files and expands zips with the `read_attachment` tool; a PDF\'s pages become pictures in a sandbox when it is attached, and a picture over the limits gets a fitted copy. Off, the tool answers not-found (the tool list is generated, as for `appCards`) and attaching saves only the file itself.',
   },
   chatAttachments: {
     // On by default (maintainer, 2026-10-29, points 351-353, D-068; chat-attachments). Read on the page and the server (VB_FLAGS).

@@ -3,7 +3,7 @@ category: project-docs
 type: specification
 status: active
 created: 2026-10-02
-updated: 2026-10-30 (attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
+updated: 2026-10-30 (read_attachment: 167, attachedFile widened: 165; attached files: 164; a file's label: 165; D-069: 164-166); 2026-10-27 (the board's engine part, HTTP-free, the standalone server one host of it: 159-163; the chat prompt from chips: 131); 2026-10-25 (the tool list trimmed: no output schemas, no examples in descriptions, a size budget, the server named `vision-board`: 45, 47, 48, 106, 108, 116, 117; worked examples: refusals carry the item's: 39); 2026-10-19 (an app card's saved panel state, get_panel_state and put_panel_state: 157; ledger v18: the person's hidden notes on a card: 156); 2026-10-18 (images in cards: the route is not an operation: 154-155); 2026-10-17 (ledger v17: app cards, list_apps and call_app_tool: 150-153); 2026-10-12 (ledger v15: lock a board, read-only for everyone: 138-140; ledger v14: archive a board, gone for agents: 135-137); 2026-10-11 (ledger v13: card widths, show_layout, alignment per viewer: 132-134; the chat carries the board: 131, a note sent once, the selection's heading and one writer; ledger v12: board numbers, retire, the flag, column and row: 125-130); 2026-10-08 (board access, ledger v8: 81-86; board seen and conditions: 87-89; the person's board, ledger v9: 90-92; the chat panel: 98-104)
 scope: How the board API pattern is built — one OpenAPI source, everything else derived and drift-tested
 ---
 
@@ -270,6 +270,7 @@ with hyphens (`show_node` → `vb show-node`). `x-agent: true` marks the operati
 | `list_permissions` | `GET /api/permissions` | person | `{ permissions }`: the yeses kept for this folder ("Allow for this folder"), oldest first (100, 107) |
 | `forget_permission` | `POST /api/permissions/forget` | person | `{ id }`: forget one kept yes; the agent asks again; the ones left (100, 107) |
 | `attach_chat_file` | `POST /api/chat/files` | person | `{ name, type, data }`: save one file the person attaches to a message; 201 with `{ file }` (164) |
+| `read_attachment` | `POST /api/chat/files/read` | agent | `{ path, sheet?, range? }`: read an attached Word or Excel file, or expand a zip; 200 with `{ kind, untrusted, ... }` (167) |
 | `get_project` | `GET /api/project` | person | The open folder: `{ path, name, found, boards? }` (109) |
 | `list_folders` | `GET /api/folders` | person | One folder under home (`path`, default home): found or not, its folders marked `hasBoard`, and `recent` (109, 110) |
 | `open_project` | `POST /api/project` | person | `{ path, create? }`: open another folder under home in place of this one; the folder now open (111) |
@@ -1541,8 +1542,8 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     off, `not-found`. The path answers no other method: the board never serves these files. Held by
     `apps/board/tests/chat-files.test.ts` and `api-chat-files.test.ts`.
 165. **`send_chat` `files`**: at most 10 items `{ path, label? }`, each `path` one `attach_chat_file` answered.
-    `attachedFile` (`chat-files.ts`, the one check) takes a path only in the exact saved shape, with a plain
-    folder at each step and a plain file at the end; any other, one since deleted, or one named twice in the
+    `attachedFile` (`chat-files.ts`, the one check) takes a path only in the exact saved shape, or inside a folder
+    `saveBeside` made (167), with a plain folder at each step and a plain file at the end, within 10 MB for a message; any other, one since deleted, or one named twice in the
     message, is `invalid` at `/files/<i>`, and nothing is sent. `label` is the name the person's file has
     (1-200 characters, no control, line-break or text-direction character, and at least one that shows; `$defs/fileLabel`, point 356):
     display only, kept on `message_in.files` to show on the message, never in the prompt, and nothing is
@@ -1560,3 +1561,16 @@ headers and answers) is [images.md](./images.md); this section is what the API s
     rulings 1, 2; chat.md § What the person attached).
     Held by `packages/agent/tests/policy-attachments.test.ts`, `policy.test.ts`, `policy-command.test.ts`, `claude-args.test.ts`,
     `kiro-turn.test.ts`.
+167. **`read_attachment`**, `POST /api/chat/files/read`, `x-agent: true`, an agent's secret only (D-071). `openapi.json`
+    `info.version` becomes 1.33.0. The standalone
+    server's, beside the chat, not the engine's: attachments are its host's (D-068 ruling 6). `path` must pass
+    `attachedFile` (165), which also takes a file inside a plain folder of the saved shape, each further step a name with no
+    leading dot and no link at any step (`INSIDE`); only `saveBeside` makes such folders, as the agent can't write there. The
+    kind goes by the file's extension (`KINDS`), and then the reader checks what it really is. **Answers**, each with
+    `untrusted` (`attachedFilesAreUntrusted`): `workbook`, `sheet`, `document`, `folder`
+    (`api/read-attachment-response`). Anything saved goes in a new folder beside the file, by `mkdir`, so nothing is
+    written over or through, and every step's name is the board's own (`attachmentName`), a taken one numbered.
+    **Refusals**: `invalid` at `/path`, `/sheet` or `/range`, in `refusedBecause`'s words, with no text from the file, and
+    nothing is left; too many reads at once (`READS_AT_ONCE`), `conflict`; the flag off, `not-found`. The reader runs in a
+    worker (`chat-read.ts` `inWorker`) with no environment, stopped at `READ_DEADLINE_MS` or when the caller goes
+    away. Held by `apps/board/tests/chat-read.test.ts`, `api-read-attachment.test.ts`, `packages/documents/tests/`.

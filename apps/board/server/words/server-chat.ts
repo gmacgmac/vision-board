@@ -43,6 +43,42 @@ export const theMessageNamesFilesThat = 'The message was not sent: a file on it 
 export const fileGoneForThePerson = (names: string[]): string => `Deleted before this message went, so not sent: ${names.join(', ')}.`;
 export const fileGoneForTheAgent = (names: string[]): string => `The person attached more files, but these were deleted before this message went, so they can't be opened: ${names.join(', ')}.`;
 
+export const theNewFolderCouldNot = 'The new folder could not be made: .visionboard/attachments/ or a folder inside it is not a plain folder, or the disk refused. Nothing was saved.';
+
+// ---- chat-read.ts
+export const readingAttachedFilesIsOff = 'Reading attached files is off on this server.';
+export const theFileCanTBeRead = 'The file can\'t be read, and nothing was saved.';
+export const tooManyFilesAreBeing = 'Too many files are being read right now. Try again when one has finished.';
+export const readingTheFileTookToo = 'reading it took too long, so it was stopped';
+export const theReadWasStopped = 'the read was stopped before it finished';
+export const useYourOwnReadTool = 'this tool reads Word and Excel files and expands zips; open any other file with your own read tool';
+export const onlyAnExcelFileHas = 'only an Excel file has sheets and ranges';
+export const aRangeNeedsASheet = 'a range needs a sheet: call this without either for the list of sheets';
+export const refusedBecause = {
+  notZip: 'it is not an archive, whatever its name says',
+  malformed: 'it is damaged or built to mislead: what it says of itself does not add up',
+  zip64: 'it is a ZIP64 archive, which this tool does not open',
+  encrypted: 'it is encrypted, and this tool has no password: ask the person for a copy without one',
+  method: 'it is compressed in a way this tool does not read',
+  tooMany: 'it holds more entries than this tool will open',
+  tooBig: 'it, or what it expands to, is over the size this tool will read',
+  badName: 'an entry\'s name could land outside its folder, or is a device\'s name',
+  link: 'it holds a link or a special file',
+  bomb: 'an entry expands to more than it declared',
+  xmlDoctype: 'its XML has a DOCTYPE, which this tool refuses',
+  xmlMalformed: 'its XML is damaged',
+  xmlLimit: 'its XML is nested too deep or has too many parts',
+  notDocument: 'it has no Word or Excel document inside, whatever its name says',
+  noSheet: 'it has no sheet of that name: call this without a sheet for the list',
+  badRange: 'that is no range: write it as B2:F20 or B2',
+};
+export const theDocumentWasCut = 'The document was too long, so this is its beginning. The rest is not here.';
+export const notReadFromTheDocument = (kinds: string[]): string => `Not read from the document: ${kinds.join(', ')}.`;
+export const moreFilesThanListed = (shown: number, folder: string): string => `Only the first ${shown} files are listed; the rest are in ${folder}.`;
+export const macFilesLeftOut = (n: number): string => `${n} file${n === 1 ? '' : 's'} a Mac adds to an archive ${n === 1 ? 'was' : 'were'} left out.`;
+export const moreSheetsThanListed = (shown: number): string => `Only the first ${shown} sheets are listed.`;
+export const theCellsWereCut = (shown: number, next: string): string => `Only ${shown} cells came back. Ask for the range ${next} next.`;
+
 // ---- chat-session.ts
 export const earlierMessagesArenTShown = 'Earlier messages aren\'t shown after a restart; the agent still remembers them.';
 export const yourAnswersGoToThe = 'Your answers go to the agent when it finishes this turn.';

@@ -13,7 +13,7 @@ import { INSTRUCTIONS, INSTRUCTIONS_JOINED, TOOL_FILE, routeOf } from '../src/in
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const { tools } = TOOL_FILE;
-const WRITES = ['join', 'request_grant', 'write_board'];
+const WRITES = ['join', 'read_attachment', 'request_grant', 'write_board'];
 
 test('tools.generated.json is current with openapi.json (gen-api --check)', () => {
   const out = execFileSync(process.execPath, ['scripts/gen-api.mjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
@@ -138,7 +138,7 @@ test('no tool description carries an example: examples live in the skill, the sc
 const LIST_CAP = 30_400;
 const TOOL_CAPS: Record<string, number> = {
   list_boards: 600, get_board: 1050, show_node: 1100, show_container: 850, show_layout: 1050, list_open: 1150,
-  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350,
+  check_responses: 2600, join: 1600, request_grant: 1900, write_board: 17_350, list_apps: 1350, read_attachment: 2150,
 };
 
 test('the tool list fits its size budget, as a whole and per tool', () => {

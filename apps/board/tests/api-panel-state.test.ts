@@ -9,6 +9,7 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import type { NodeEvent } from '#format';
 import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, boardNumber } from '#format';
@@ -189,4 +190,15 @@ test('the panel state operations (D-050, api.md 157): the person only, never an 
     assert.equal(codes[404], 'not-found', id);
   }
   assert.equal(String(deref(op('put_panel_state').op.responses['413']).content['application/problem+json'].example.type).split('/').pop(), 'too-large');
+});
+
+test('a saved value stays out of the project\'s git: the board\'s own ignore list names the folder before the first is written', async () => {
+  const { n } = cards.calc!;
+  const ignore = path.join(h.project, '.visionboard', '.gitignore');
+  fs.rmSync(ignore, { force: true });
+  await save(n, { secret: 'private value' });
+  await save(n, { secret: 'private value 2' });
+  assert.equal(fs.readFileSync(ignore, 'utf8').split('\n').filter((line) => line === `${APP_STATE_DIR}/`).length, 1, 'named, once');
+  assert.equal(spawnSync('git', ['init', '-q'], { cwd: h.project }).status, 0);
+  assert.equal(spawnSync('git', ['check-ignore', '-q', path.relative(h.project, fileOf(cards.calc!.id))], { cwd: h.project }).status, 0, 'git itself says it is ignored');
 });

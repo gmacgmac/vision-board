@@ -69,8 +69,8 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
   const port = () => (server.address() as AddressInfo).port;
   const realHome = fs.realpathSync(home);
   const kiro = chat?.kiroAgent ? keepKiroAgent(realHome) : undefined;
-  // The server's flags for its chats: questions wait (approvalHold), the access rules' loosening (agentAccessRules), attaching files (chatAttachments).
-  const access = { approvalHold: flagOn('approvalHold', flags ?? {}), strictAccess: !flagOn('agentAccessRules', flags ?? {}), attachments: flagOn('chatAttachments', flags ?? {}) };
+  // The server's flags for its chats: questions wait (approvalHold), the access rules' loosening (agentAccessRules), attaching files (chatAttachments), reading them for the agent (readAttachment).
+  const access = { approvalHold: flagOn('approvalHold', flags ?? {}), strictAccess: !flagOn('agentAccessRules', flags ?? {}), attachments: flagOn('chatAttachments', flags ?? {}), readAttachment: flagOn('readAttachment', flags ?? {}) };
   const project = openProject({
     ledger, lock, home: realHome, port, base: () => `http://127.0.0.1:${port()}`, chat: { ...access, ...chat, ...(kiro && { blocked: { kiro } }) },
     apps: { flags, limits: appLimits },

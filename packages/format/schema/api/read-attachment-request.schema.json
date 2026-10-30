@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vision-board.invalid/schema/api/read-attachment-request.schema.json",
+  "title": "Read an attached file",
+  "description": "`{ path, sheet?, range? }`: the attached file, and for an Excel file which sheet and which cells.",
+  "$comment": "Was: D-071",
+  "type": "object",
+  "required": ["path"],
+  "properties": {
+    "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "The attached file: `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, or a file in a folder this tool made. Any other path is refused."},
+    "sheet": {"type": "string", "minLength": 1, "maxLength": 255, "description": "Excel: the sheet to read; left out, the list of sheets."},
+    "range": {"type": "string", "minLength": 1, "maxLength": 32, "description": "Excel, with `sheet`: the cells, such as `B2:F20` or `B2`; left out, the whole sheet up to the cap."}
+  },
+  "unevaluatedProperties": false
+}

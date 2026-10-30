@@ -4,7 +4,7 @@
 // into the operation's path, query and body by the table's `route`, and runs the operation with the
 // caller its host passes (a host that knows the agent, nclite's run ticket, passes it; no secret,
 // no `join`). It answers the operation's JSON, or its problem. Tools whose operation the engine does
-// not serve (`list_apps`, the standalone app host's) are left out.
+// not serve (`list_apps`, the standalone app host's; `read_attachment`, beside its chat) are left out.
 import fs from 'node:fs';
 import type { OperationId, ProblemDocument } from '#format';
 import { TOOLS_FILE } from '#format/files';

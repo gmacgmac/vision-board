@@ -6,11 +6,13 @@
 // and the size limit, then written whole (atomic-file.ts); a file is checked again when read, and
 // one that doesn't fit, is too big, or was saved for another app reads as nothing saved. Person only
 // (openapi.json `personCookie`): no agent read opens these files. A removed card keeps its file.
+// A value can hold anything private, so the folder is named in the board's own `.gitignore` before the first is written.
 import fs from 'node:fs';
 import path from 'node:path';
 import { appOf } from '#actions';
 import type { AppStateFile, AppStateValue } from '#format';
 import { APP_LIMITS, APP_STATE_DIR, APP_STATE_FORMAT, appStateBytes, appStateProblem } from '#format';
+import { ignoreInGit } from '../agents.ts';
 import { writeFileAtomic } from '../atomic-file.ts';
 import type { Ctx, Handler } from '../dispatch.ts';
 import { cardOn } from '../edge.ts';
@@ -52,7 +54,10 @@ function stateFile(ledgerFile: string, id: number, make: boolean): string | unde
   if (!Number.isSafeInteger(id) || id < 1) throw new Error(`panel state: card identity ${id} is not a positive integer`);
   const data = path.dirname(ledgerFile);
   const dir = path.join(data, APP_STATE_DIR);
-  if (make) fs.mkdirSync(dir, { recursive: true });
+  if (make) {
+    fs.mkdirSync(dir, { recursive: true });
+    ignoreInGit(data, `${APP_STATE_DIR}/`);
+  }
   let inside: boolean;
   try { inside = isUnder(fs.realpathSync(data), fs.realpathSync(dir)) && fs.lstatSync(dir).isDirectory(); } catch { return undefined; }
   if (inside) return path.join(dir, `${id}.json`);

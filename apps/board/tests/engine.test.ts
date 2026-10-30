@@ -115,7 +115,7 @@ test('turn: the person\'s answers since a line, as the agent reads them; none, a
 test('tools: one per agent operation the engine serves, each runs with the caller passed in; a bad input is refused', async () => {
   const { engine, agent } = await withPlans();
   const table = (JSON.parse(fs.readFileSync(TOOLS_FILE, 'utf8')) as { tools: { name: string }[] }).tools.map((t) => t.name);
-  assert.deepEqual(Object.keys(engine.tools).sort(), table.filter((n) => n !== 'list_apps').sort(), 'list_apps is the app host\'s');
+  assert.deepEqual(Object.keys(engine.tools).sort(), table.filter((n) => n !== 'list_apps' && n !== 'read_attachment').sort(), 'list_apps is the app host\'s, read_attachment is beside its chat');
   const inputs: Record<string, Record<string, unknown>> = {
     list_boards: {}, get_board: { board: 'plans' }, show_node: { board: 'plans', n: 1 }, show_container: { board: 'plans', region: 'now' },
     show_layout: { board: 'plans', region: 'now' }, list_open: { board: 'plans' }, check_responses: { board: 'plans', after: 0 },

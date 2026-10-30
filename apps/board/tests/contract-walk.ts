@@ -39,11 +39,14 @@ const bodies = (board: string): Partial<Record<OperationId, unknown>> => ({
   join: { label: 'Walk chat' },
 });
 
+/** Agent operations a board has no say in, with why: each names a file, not a board. `read_attachment` needs a file attached first, and locked or archived boards change nothing for it (api-read-attachment.test.ts). */
+const NOT_ON_A_BOARD: ReadonlySet<string> = new Set(['read_attachment']);
+
 /** Every agent operation, in openapi.json's order, with its input for `board`. */
 export function agentOps(board: string): AgentOp[] {
   const PATH = pathValues(board);
   const BODY = bodies(board);
-  return ops.filter((o) => o.op['x-agent'] === true).map(({ id, method, op }) => {
+  return ops.filter((o) => o.op['x-agent'] === true && !NOT_ON_A_BOARD.has(o.id)).map(({ id, method, op }) => {
     const input: CallInput = {};
     for (const p of (op.parameters ?? []).map(deref)) {
       if (p.in !== 'path') continue;

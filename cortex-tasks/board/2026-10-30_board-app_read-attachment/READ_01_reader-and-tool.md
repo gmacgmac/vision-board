@@ -52,16 +52,41 @@ rulings 1-4, 7, 8. Behind `readAttachment` (server flags, `VB_FLAGS`); off, the 
 
 _To be completed by agent after task completion. Re-run? Add a `### Run N` block; never overwrite._
 
-**Status**: Pending · **Completed**:
+**Status**: Completed · **Completed**: 2026-10-30
 
 ### Changes Made
-- 
+- `packages/documents` (new, no repo import): `xmlEvents`/`xmlTree`/`decodeXml`, `zipGuard`, `readEntry`, `expandZip`, `readDocx`, `readWorkbook`, `readCells`, `LIMITS`, `DocumentRefused`; `NOTICE`, `LICENSE-Apache-2.0`, `README.md`. A refusal is a code; the words are the host's.
+- Contract: `read_attachment` (`POST /api/chat/files/read`, agent secret, `x-agent: true`), two schemas, `info.version` 1.33.0, `npm run gen`.
+- `apps/board/server/chat-read.ts` (`readAttachment`, `inWorker`), `chat-read-worker.ts`; `chat-files.ts` `attachedFile` widened to board-made folders, `saveBeside`, `attachedBytes`; words in `words/server-chat.ts`; flag through `app.ts`, `project.ts`, `chat-sessions.ts` to `chats().readAttachment`.
+- `app-state/` goes in the board's ignore list before the first value is written (`apps/panel-state.ts` `stateFile`), held by `api-panel-state.test.ts`, asking git itself.
+- Docs: api.md 165, 167; chat.md § Attaching; `SKILL.md` v3.22. `scripts/verify.mjs` `LAYERS`: `documents: []`.
+
+### Design choices (decided by the principles)
+- **The handler is the standalone server's, beside the chat, not the engine's** (PLAN Key Change 3 said engine): attachments are the host's (D-068 ruling 6), the engine knows only the data folder, and the gate is the flag on `chats()`. nclite takes `packages/documents`. `list_apps` is the precedent; `engine/tools.ts` only gains a comment.
+- **No use of `unzipSync`**: the guard reads the central directory itself and inflates with fflate's `Inflate` in 16 KB chunks, so the count is checked between pushes and fflate's own inventory (the GHSA code path) can't be reached.
+- **A merged Word cell repeats its text in each place it covers**: Markdown has no merging, and a blank would read as empty.
+- **Excel**: a shared formula is moved to each cell; style-only cells don't count as holding anything; `cut.next` restarts at the row of the first cell not given.
+- **Names**: every step of an expanded path goes through `attachmentName`, so `.env` lands as `env`; a taken name gets `-2`, compared without case. Files 0600, folders 0700, written with `wx`; a new folder by a bare `mkdir`, so a link there is passed over.
+- **Whole archive refused** on one bad name; `__MACOSX/` and `.DS_Store` are left out and counted.
+- **A refusal never quotes the file**, a worker's error text included.
+- **The worker has `env: {}`**, a heap limit, and four may run at once (`conflict` past that). The promise settles only after the worker has gone, so a slot is free by then.
+- Tool budget in `packages/mcp/tests/tools.test.ts`: `read_attachment: 2150`, on purpose; the whole list stays under its cap.
+- The contract walk leaves out `read_attachment` by name (`NOT_ON_A_BOARD`): it names a file, not a board.
 
 ### Caught Beyond the Brief
-- 
+- **Flag off, the tool is still listed.** `tools/list` is a generated table with no flags (`packages/mcp/src/protocol.ts`); the server answers `not-found`, as `appCards` does for its tools. The objective says "isn't offered", and so does the flag's description: see REQUESTS.
+- **Disk**: a 10 MB zip can expand to 200 MB, per call, and each call makes a new folder (up to 999 per file), so an agent in a loop can fill a disk. Nothing limits a day's total. Worth a tracker row.
+- **Re-reading a Word file makes another `-pictures` folder each time.** The ruling says a new folder; a long session may gather many.
+- **An embedded picture or an expanded one can be over the provider's limit** (PLAN ruling 6 fits only pictures attached directly). Kiro's read tool then says "image removed". For PAGES_01 or VERIFY_01 to weigh: `saveBeside` files could get a fitted copy too.
+- **Words the person doesn't see reach the agent**: Word's hidden text (`w:vanish`) and hidden rows and columns read as plain; hidden sheets are marked. The untrusted line covers them, but no marker says which.
+- **A cut Word document has no way on**: `path, sheet, range` has no paging for Word, past 200,000 characters the rest is unreachable. Writing the whole Markdown beside the pictures would give one.
+- `attachedFile`'s widening would have broken `attachedFiles`' number keeping (`parseInt` of a nested name is NaN, and NaN then poisons `nextNumber`); it now takes the number from the top step. `message_in.files` caps `size` at 10 MB, so `attachedFiles` refuses a bigger one found in a folder.
+- `.docx` part names are matched without case, as Office does, so two parts can't shadow each other only if they differ by more; `zipGuard` refuses exact duplicates only. Reading the first of a case-folded pair is safe (nothing is written by part name) but is noted here.
+- CRCs are not checked: a flipped byte reads as itself. Not a safety matter; the README says so.
 
 ### Deviations from Plan
-- 
+- None from D-071. PLAN Key Change 3's "handler in the engine" is above: the server's handler, as the orchestrator's brief pointed to.
+- The branch lacked the set-up commit: I fast-forwarded `feat/read-attachment` to `main` (12ffe2a), no commit made, and copied `fflate` and `pdfjs-dist` from the main checkout's `node_modules` into this worktree's (npm ci would have brought `@napi-rs/canvas`).
 
 ## On Completion
 

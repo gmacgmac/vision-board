@@ -191,6 +191,12 @@ export interface OperationTypes {
     };
     output: ChatFileResponse;
   };
+  read_attachment: {
+    input: {
+      body: ReadAttachmentRequest;
+    };
+    output: ReadAttachmentResponse;
+  };
   get_project: {
     input: Record<never, never>;
     output: Project;
@@ -975,6 +981,68 @@ type ChatFileRequest = {
 };
 type ChatFileResponse = {
   file: ChatEventAttachedFile;
+};
+type ReadAttachmentRequest = {
+  path: string;
+  sheet?: string;
+  range?: string;
+};
+type ReadAttachmentResponse = ReadAttachmentResponseWorkbook | ReadAttachmentResponseSheet | ReadAttachmentResponseDocument | ReadAttachmentResponseFolder;
+type ReadAttachmentResponseWorkbook = {
+  kind: "workbook";
+  untrusted: string;
+  note?: string;
+  sheets: {
+    name: string;
+    hidden: boolean;
+    rows: number;
+    columns: number;
+    cells: number;
+    formulas: number;
+    used?: string;
+  }[];
+};
+type ReadAttachmentResponseSheet = {
+  kind: "sheet";
+  untrusted: string;
+  note?: string;
+  sheet: string;
+  range: string;
+  merged: string[];
+  cut?: {
+    shown: number;
+    next: string;
+  };
+  cells: {
+    address: string;
+    type: "number" | "text" | "boolean" | "date" | "error";
+    value: string | number | boolean | null;
+    formula?: string;
+    serial?: number;
+    truncated?: true;
+    merged?: string;
+  }[];
+};
+type ReadAttachmentResponseDocument = {
+  kind: "document";
+  untrusted: string;
+  note?: string;
+  markdown: string;
+  folder?: string;
+  pictures: ReadAttachmentResponseSavedFile[];
+};
+type ReadAttachmentResponseSavedFile = {
+  path: string;
+  size: number;
+  from?: string;
+};
+type ReadAttachmentResponseFolder = {
+  kind: "folder";
+  untrusted: string;
+  note?: string;
+  folder: string;
+  count: number;
+  files: ReadAttachmentResponseSavedFile[];
 };
 type Project = {
   path: string;

@@ -27,6 +27,7 @@ export const LAYERS = {
   tokens: [],
   actions: ['format', 'search'],
   search: [],
+  documents: [],
   layout: ['format'],
   ui: ['format', 'actions', 'tokens'],
   agent: [],

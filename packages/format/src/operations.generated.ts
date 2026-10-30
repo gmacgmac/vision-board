@@ -138,6 +138,10 @@ export const OPERATIONS = {
     operationId: 'attach_chat_file', method: 'POST', path: '/api/chat/files',
     pathParams: [], xAgent: false, auth: 'person',
   },
+  read_attachment: {
+    operationId: 'read_attachment', method: 'POST', path: '/api/chat/files/read',
+    pathParams: [], xAgent: true, auth: 'agent',
+  },
   get_project: {
     operationId: 'get_project', method: 'GET', path: '/api/project',
     pathParams: [], xAgent: false, auth: 'person',

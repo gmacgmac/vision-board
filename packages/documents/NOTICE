@@ -1,0 +1,23 @@
+packages/documents includes code ported from KiroCrew.
+
+KiroCrew
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+
+This product includes software developed at
+Amazon.com, Inc. (https://www.amazon.com/).
+
+Licensed under the Apache License, Version 2.0: see LICENSE-Apache-2.0 beside this file.
+
+Ported from commit b7b76f09c26139369aa4a035a4fbc6ded69b6493, rewritten in TypeScript. Each file below says
+at its head what it took and what was changed:
+
+| Here | There |
+|---|---|
+| src/zip-guard.ts | src/kiro_crew/zip_vet.py |
+| src/zip-names.ts | src/kiro_crew/portability_archive.py (_unsafe_member_name, _is_link_entry) |
+| src/read-docx.ts | src/kiro_crew/doc_blocks.py |
+| tests/zip.test.ts | test/test_zip_vet.py (its cases) |
+| tests/support.ts | test/ooxml_fixtures.py (the shape of its fixtures) |
+| tests/docx.test.ts | test/test_doc_blocks.py (its cases) |
+
+Comments in src/xlsx-cells.ts cite what src/kiro_crew/dashboard/file_api/sheet.py warns of; no code came from it.

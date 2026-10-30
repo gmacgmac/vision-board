@@ -281,11 +281,18 @@ server, `?flags=-chatAttachments` for the page. With only the server's off the p
   asks (§ What the person attached). Whether Kiro's read tool opens a picture is not established here: no test can
   run a real CLI, so it is the set's live look.
 - **A path from a page is not believed**: `send_chat` takes only what `attachedFile` accepts: the saved
-  shape, no link at any step, still there. It does not record what it saved (D-069 ruling 4); the agent can't write there.
+  shape, or inside a folder the board made for it (`saveBeside`), no link at any step, still there. It does not record what it saved (D-069 ruling 4); the agent can't write there.
 - **A message that waited** is checked again when it goes (`chat-files.ts` `checked`, `stillThere`): a file deleted
   meanwhile is left out of the prompt, its chip is gone from the message, and the message says which, to the person
   by their name for it and to the agent by the saved name. A number stays taken once its file is deleted (`nextNumber`,
   `taken`), so a waiting path never comes to name other bytes. Held by `api-chat-files.test.ts`, `chat-files.test.ts`.
+- **What the agent's own tools can't open**, `read_attachment` reads (D-071; api.md 167; `apps/board/server/chat-read.ts`,
+  `packages/documents`): an Excel file's sheets, then a range's values and formulas; a Word file as Markdown, its pictures
+  saved beside it in a new folder; a zip into a new folder, never over anything. The new folders sit under
+  `.visionboard/attachments/`, so the row for attachments covers them, and `attachments/` is already in the board's own
+  `.gitignore`. Behind the server's `readAttachment` flag (`VB_FLAGS=-readAttachment`); off, the operation is `not-found`, and
+  the tool stays in the MCP server's list, whose table is generated once. A hostile file reaches nothing outside its new
+  folder, and a refused one leaves nothing. Held by `chat-read.test.ts`, `api-read-attachment.test.ts`, `packages/documents/tests/`.
 - **The board never serves them**: no route reads them (`api-chat-files.test.ts` tries the addresses one might), so
   nothing in a file runs in the board. What the agent may do with them is § What the person attached.
 - **In the panel** (`apps/board/src/shell/chat-bridge.ts` `createChatBridge`, `packages/chat` `composer-attach.ts`,

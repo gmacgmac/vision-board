@@ -2,13 +2,14 @@
 // sessions, or the folder's on no board, send the person's message (with the board's answers since
 // its agent was last told, as one message, chat-board-context; a session on no board sends none),
 // stop a turn, answer an approval, watch a session's events, the gate's ask, and list or forget the
-// yeses kept for the folder (D-066), and save a file the person attaches to a message (D-068; `chatAttachments`). The caller check has already run: the
+// yeses kept for the folder (D-066), save a file the person attaches to a message (D-068; `chatAttachments`), and read one for its agent (D-071; `readAttachment`). The caller check has already run: the
 // person's cookie on every route but the gate's, which carries a run token this handler checks
 // names a session with a turn running (api.md 102). Sessions live in chat-sessions.ts.
 import type { ApprovalAnswer, Facts } from '#agent';
 import { REALM, bearerOf } from './callers.ts';
 import type { AttachedFile } from './chat-files.ts';
 import { ATTACHMENT_BODY_BYTES, attachedFiles, fileTooLarge, saveAttachment } from './chat-files.ts';
+import { readAttachment } from './chat-read.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
 import type { ChatEvent } from './chat-session.ts';
@@ -154,7 +155,16 @@ const attachChatFile: Handler = async ({ req, res, project, chats }) => {
   sendJson(res, 201, { file: saveAttachment(folder, input as Parameters<typeof saveAttachment>[1]) });
 };
 
-export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval' | 'list_permissions' | 'forget_permission' | 'attach_chat_file'> = {
+/** An agent reads an attached file (chat-read.ts): stopped when it goes away or the folder closes. */
+const readAttachmentFile: Handler = async ({ req, res, project, chats, closed }) => {
+  if (!chats().readAttachment) throw problem('not-found', serverChatWords.readingAttachedFilesIsOff);
+  const input = await body('read_attachment', req) as Parameters<typeof readAttachment>[1];
+  const gone = new AbortController();
+  res.on('close', () => { if (!res.writableFinished) gone.abort(); });
+  sendJson(res, 200, await readAttachment(project.current().dir, input, { signal: AbortSignal.any([gone.signal, closed]) }));
+};
+
+export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folder_chat' | 'list_folder_chats' | 'send_chat' | 'stop_chat' | 'answer_approval' | 'watch_chat' | 'ask_approval' | 'list_permissions' | 'forget_permission' | 'attach_chat_file' | 'read_attachment'> = {
   start_chat: startChat,
   list_chats: listChats,
   start_folder_chat: startFolderChat,
@@ -167,4 +177,5 @@ export const CHAT: Pick<HandlerTable, 'start_chat' | 'list_chats' | 'start_folde
   list_permissions: listPermissions,
   forget_permission: forgetPermission,
   attach_chat_file: attachChatFile,
+  read_attachment: readAttachmentFile,
 };

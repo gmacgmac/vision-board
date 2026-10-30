@@ -3,7 +3,8 @@
 // hostile until `attachmentName` has made it plain, and `<n>` means no two files clash and no name
 // is special (`.env`, `CON`). Every step from the data folder down must be a plain folder, never a
 // link, so a file's real path is the path written. A path a page sends back is believed only when
-// `attachedFile`, the one check, finds a file of that exact shape there. The board never serves these
+// `attachedFile`, the one check, finds a file of that exact shape there, or inside a plain folder of
+// that shape, which only the board makes (`saveBeside`, D-071). The board never serves these
 // files: no route reads them; the agent does, with its own tools (`ACCESS_RULES`). They stay out of the
 // project's git: the board's own `.gitignore` names the folder (D-069 ruling 3).
 import fs from 'node:fs';
@@ -13,15 +14,21 @@ import { writeFileAtomic } from './atomic-file.ts';
 import { KIB } from './body.ts';
 import { DATA_DIR } from './ledger.ts';
 import type { PointerError } from './problem.ts';
-import { problem } from './problem.ts';
+import { ProblemError, problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
 
 const ATTACHMENTS_DIR = 'attachments';
 const NAME_MAX = 80;
 const EXTENSION = /\.[A-Za-z0-9_-]{1,16}$/;
 const STANDIN = 'file';
+const NEW_FOLDER_TRIES = 999;
+const NEW_FOLDER_TAIL = 4; // room for the `-<n>` of a new folder
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const SAVED = /^(\d+)-([A-Za-z0-9_-][A-Za-z0-9._-]{0,79})$/;
+/** One step inside a folder the board made: no dot first, so no `..`, `.env` or `.git`. */
+const INSIDE = /^[A-Za-z0-9_-][A-Za-z0-9._-]{0,79}$/;
+/** How deep inside such a folder: as deep as an archive may go, and one for a folder expanded inside another. */
+const INSIDE_DEPTH = 32;
 
 /** The largest file: 10 MB (D-068 ruling 3). */
 export const ATTACHMENT_BYTES = 10 * KIB * KIB;
@@ -99,15 +106,21 @@ export function saveAttachment(folder: string, input: { name: string; type: stri
   return { name, path: [DATA_DIR, ATTACHMENTS_DIR, day, saved].join('/'), size: bytes.length };
 }
 
-/** The file at `rel`, a path a page sent, when it is one `saveAttachment` could have written and is still there: the exact shape, and no link at any step. */
+/** The file at `rel`, a path a page or an agent sent, when it is one the board could have written and is still there: the exact shape, and no link at any step. */
 export function attachedFile(folder: string, rel: string): AttachedFile | undefined {
-  const [data, attachments, day, saved, ...rest] = rel.split('/');
+  const [data, attachments, day, saved, ...inside] = rel.split('/');
   const name = SAVED.exec(saved ?? '')?.[2];
-  if (data !== DATA_DIR || attachments !== ATTACHMENTS_DIR || !DAY.test(day ?? '') || !name || rest.length > 0) return undefined;
-  const root = path.join(folder, DATA_DIR, ATTACHMENTS_DIR);
-  if (!plain(root, 'folder') || !plain(path.join(root, day!), 'folder')) return undefined;
-  const stat = plain(path.join(root, day!, saved!), 'file');
-  return stat && { name, path: rel, size: stat.size };
+  if (data !== DATA_DIR || attachments !== ATTACHMENTS_DIR || !DAY.test(day ?? '') || !name) return undefined;
+  if (inside.length > INSIDE_DEPTH || !inside.every((step) => INSIDE.test(step))) return undefined;
+  const steps = [day!, saved!, ...inside];
+  let at = path.join(folder, DATA_DIR, ATTACHMENTS_DIR);
+  if (!plain(at, 'folder')) return undefined;
+  for (const step of steps.slice(0, -1)) {
+    at = path.join(at, step);
+    if (!plain(at, 'folder')) return undefined;
+  }
+  const stat = plain(path.join(at, steps[steps.length - 1]!), 'file');
+  return stat && { name: inside[inside.length - 1] ?? name, path: rel, size: stat.size };
 }
 
 /** What a message's `files` name, each by `attachedFile`, its label kept as it came; `invalid` at `/files/<i>` for any other, and for a path named twice. */
@@ -118,9 +131,10 @@ export function attachedFiles(folder: string, items: { path: string; label?: str
   items.forEach(({ path: rel, label }, i) => {
     const file = named.has(rel) ? undefined : attachedFile(folder, rel);
     named.add(rel);
-    if (file) {
+    if (file && file.size <= ATTACHMENT_BYTES) {
       files.push({ ...file, ...(label !== undefined && { label }) });
-      take(path.dirname(path.join(folder, rel)), Number.parseInt(path.basename(rel), 10));
+      const [dayDir, saved] = [rel.split('/').slice(0, 3).join('/'), rel.split('/')[3]!];
+      take(path.join(folder, dayDir), Number.parseInt(saved, 10));
     } else errors.push({ pointer: `/files/${i}`, detail: serverChatWords.thisIsNotAFile });
   });
   if (errors.length) throw problem('invalid', serverChatWords.theMessageNamesFilesThat, { errors });
@@ -147,3 +161,94 @@ export function checked<M extends { files?: AttachedFile[] }>(folder: string, ms
 
 /** `text`, then the line `checked` gave; the line alone when the message has nothing else to say. */
 export const withSaid = (text: string, line: string | undefined, alone = false): string => (alone && line ? line : [text, line].filter(Boolean).join('\n\n'));
+
+/** One file `saveBeside` saved: `from` is its name in what it came from, untrusted, when the saved name differs. */
+export interface SavedFile { path: string; size: number; from?: string }
+
+/** `name`, or with `-<n>` before its extension for n above 1, within the limit for one step. */
+function numbered(name: string, n: number): string {
+  const extension = EXTENSION.exec(name)?.[0] ?? '';
+  const tail = n > 1 ? `-${n}` : '';
+  return `${name.slice(0, name.length - extension.length).slice(0, NAME_MAX - extension.length - tail.length)}${tail}${extension}`;
+}
+
+/** Each path as the board's own: every step through `attachmentName`, and a taken name gets another. Names are compared without case, as a disk may. */
+function ownPaths(paths: string[]): string[] {
+  const folders = new Map<string, string>();
+  const taken = new Set<string>();
+  const claim = (parent: string, raw: string) => {
+    const name = attachmentName(raw);
+    for (let n = 1; ; n++) {
+      const candidate = `${parent}${numbered(name, n)}`;
+      if (!taken.has(candidate.toLowerCase())) { taken.add(candidate.toLowerCase()); return candidate; }
+    }
+  };
+  return paths.map((p) => {
+    const parts = p.split('/');
+    let own = '';
+    parts.slice(0, -1).forEach((part, i) => {
+      const key = parts.slice(0, i + 1).join('/');
+      if (!folders.has(key)) folders.set(key, `${claim(own, part)}/`);
+      own = folders.get(key)!;
+    });
+    return claim(own, parts[parts.length - 1]!);
+  });
+}
+
+/** A new folder for `name` in `parent`: another name when it is taken, as Finder does. `mkdir` fails on anything there, so this never goes over or through it. */
+function newFolder(parent: string, name: string): string {
+  for (let n = 1; n <= NEW_FOLDER_TRIES; n++) {
+    const candidate = n > 1 ? `${name}-${n}` : name;
+    try {
+      fs.mkdirSync(path.join(parent, candidate), { mode: 0o700 });
+      return candidate;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') break;
+    }
+  }
+  throw problem('conflict', serverChatWords.theNewFolderCouldNot);
+}
+
+/**
+ * `files` saved in a new folder beside the attached file `rel`, named after it and `suffix`: nothing is
+ * ever written over anything, each name is the board's own, whatever is asked, and a failure leaves no folder.
+ */
+export function saveBeside(folder: string, rel: string, suffix: string, files: { path: string; bytes: Uint8Array }[]): { folder: string; files: SavedFile[] } {
+  if (!attachedFile(folder, rel)) throw problem('conflict', serverChatWords.theNewFolderCouldNot);
+  ignoreInGit(path.join(folder, DATA_DIR), `${ATTACHMENTS_DIR}/`);
+  const parentRel = path.posix.dirname(rel);
+  const parent = path.join(folder, parentRel);
+  const stem = path.posix.basename(rel).replace(/\.[^.]*$/, '');
+  const name = newFolder(parent, `${stem.slice(0, NAME_MAX - suffix.length - NEW_FOLDER_TAIL)}${suffix}`);
+  const own = ownPaths(files.map((f) => f.path));
+  try {
+    const saved = files.map((f, i) => {
+      const target = path.join(parent, name, own[i]!);
+      fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+      fs.writeFileSync(target, f.bytes, { flag: 'wx', mode: 0o600 });
+      return { path: `${parentRel}/${name}/${own[i]}`, size: f.bytes.length, ...(own[i] !== f.path && { from: f.path }) };
+    });
+    return { folder: `${parentRel}/${name}`, files: saved };
+  } catch (err) {
+    fs.rmSync(path.join(parent, name), { recursive: true, force: true });
+    throw err instanceof ProblemError ? err : problem('conflict', serverChatWords.theNewFolderCouldNot);
+  }
+}
+
+/** The bytes of the plain file `rel` (`attachedFile` has passed it): no link is followed even now, and the size is the one read. Undefined when it changed under us or is over `limit`. */
+export function attachedBytes(folder: string, rel: string, limit: number): Uint8Array | undefined {
+  let fd: number;
+  try { fd = fs.openSync(path.join(folder, rel), fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); } catch { return undefined; }
+  try {
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile() || stat.size > limit) return undefined;
+    const bytes = new Uint8Array(stat.size);
+    let read = 0;
+    while (read < bytes.length) {
+      const n = fs.readSync(fd, bytes, read, bytes.length - read, read);
+      if (n === 0) return undefined;
+      read += n;
+    }
+    return bytes;
+  } finally { fs.closeSync(fd); }
+}

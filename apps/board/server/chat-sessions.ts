@@ -55,6 +55,8 @@ export interface ChatOptions {
   strictAccess?: boolean | undefined;
   /** The `chatAttachments` flag: the person may attach files to a message (D-068). */
   attachments?: boolean | undefined;
+  /** The `readAttachment` flag: the agent may read attached files with `read_attachment` (D-071). */
+  readAttachment?: boolean | undefined;
 }
 
 /** Where a session is: a board, or `undefined` for the folder (a session on no board yet). */
@@ -83,6 +85,8 @@ export interface Chats {
   readonly permissions: Permissions;
   /** Whether the person may attach files to a message (the `chatAttachments` flag). */
   readonly attachments: boolean;
+  /** Whether `read_attachment` answers (the `readAttachment` flag). */
+  readonly readAttachment: boolean;
   /** A session, loaded and ready (resumed after a restart); `not-found` when there is none. */
   live(id: string): Promise<LiveSession>;
   /** A session already loaded in this server, if it is. */
@@ -117,7 +121,7 @@ function joined(was: Held | undefined, next: Held): Held {
 }
 
 export function openChats(o: ChatOptions): Chats {
-  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false } = o;
+  const { ledger, agents, base, adapters = DEFAULT_ADAPTERS, approvalTtlMs, blocked = {}, approvalHold = false, strictAccess = false, attachments = false, readAttachment = false } = o;
   const dir = path.dirname(ledger.file);
   const cwd = path.dirname(dir);
   let kept: Permissions | undefined;
@@ -286,6 +290,7 @@ export function openChats(o: ChatOptions): Chats {
     },
     get permissions() { return permissions(); },
     attachments,
+    readAttachment,
     live,
     loaded: (id) => sessions.get(id),
     byToken: (token) => [...sessions.values()].find((s) => hasToken(s, token)),
