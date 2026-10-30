@@ -38,7 +38,7 @@ changes). The page uploads each file as it is attached; the server saves it unde
 and answers with its path; Send carries the paths; the prompt names them; the agent opens them with its
 own tools. Behind the flag `chatAttachments`.
 
-### Rulings (planner's defaults; the maintainer confirms them in D-068)
+### Rulings (confirmed by the maintainer, point 353, 2026-10-29; recorded as D-068 when the set runs)
 
 1. **By path only**, pictures included. The prompt gets one more block, after the words and before the
    board's blocks: "The person attached these files:" and one relative path per line (words file).

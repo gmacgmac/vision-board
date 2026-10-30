@@ -263,6 +263,11 @@ export const FLAGS = {
     default: true,
     description: 'While the board\'s agent works the board says so (and "waiting for your OK" while it asks), the person keeps working and can send more, and a reply that lands while the chat is closed or scrolled away shows a count on the chat button and a toast that opens it. Off, Send holds as "Waiting for agent" and a reply is only in the chat.',
   },
+  chatAttachments: {
+    // On by default (maintainer, 2026-10-29, points 351-353, D-068; chat-attachments). Read on the page and the server (VB_FLAGS).
+    default: true,
+    description: 'The person attaches files to a chat message by dropping, pasting or the paperclip; each is saved under `.visionboard/attachments/` and the agent is told its path. Off, no paperclip, a dropped or pasted file does nothing new, the upload operation answers 404 and Send refuses `files`.',
+  },
 } as const satisfies Record<string, FlagDef>;
 
 export type FlagName = keyof typeof FLAGS;

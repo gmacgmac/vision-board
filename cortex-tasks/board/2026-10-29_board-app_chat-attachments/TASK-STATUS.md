@@ -2,7 +2,7 @@
 task_name: Chat Attachments
 created: 2026-10-29
 completed:
-status: planned
+status: in-progress
 categories: [board-app, board-security, board-agent]
 skills: [cortex-architecture, cortex-docs]
 ---

@@ -927,3 +927,23 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
 - **Rejected**: refusing only git's writing subcommands (git's config and aliases make reads run code);
   git at the folder's top only (nested repositories).
 - **Task**: cortex-tasks/board/2026-10-28_board-agent_agent-access-and-working/TASK-STATUS.md (WIRE_01 Run 4)
+
+## D-068 Files attached to a chat message travel by path
+- **Date**: 2026-10-30 · **Status**: Accepted (maintainer approved 2026-10-29, points 351, 352, 353) · **From**: chat-attachments PLAN
+- **Decision**: The person attaches files to a chat message; the agent reads them with its own tools.
+  1. Every file travels by path, pictures included; no picture or file content goes inside the message, so
+     neither adapter changes. The prompt gets one block, "The person attached these files:", one path a line.
+  2. Files are saved at `.visionboard/attachments/<YYYY-MM-DD>/<n>-<name>`, the name sanitised, `<n>` counting
+     up within the day. Day folders, because a new chat's first message has no session yet.
+  3. Limits: 10 MB a file, 10 files a message, any type. The board never serves these files to a page.
+  4. A file uploads when it is attached, so a refusal shows on its chip at once; a chip removed before Send
+     leaves its file (clearing old attachments is later work).
+  5. The agent may read attached files and never change them (`ACCESS_RULES`, `.visionboard/attachments/**`).
+  6. `packages/chat` takes no API: the composer takes files and raises an event; the host uploads. In nclite the
+     host's chat does its own attaching and hands over the paths.
+  7. A sent message shows its files as chips.
+- **Why**: one way that works for Claude Code and Kiro alike (Kiro v2 takes no file contents in a message; both
+  adapters send text only); a page that sends a path is never trusted (the server checks it saved that file).
+- **Rejected**: pictures inside the message (both adapters would change, Claude's to stream-json input);
+  upload on Send (a refusal would come too late); session folders (no session yet on a first message).
+- **Task**: cortex-tasks/board/2026-10-29_board-app_chat-attachments/TASK-STATUS.md

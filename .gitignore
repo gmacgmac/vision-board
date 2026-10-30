@@ -40,3 +40,6 @@ temp/
 
 # --- Personal Kiro settings (machine-local) ---
 .kiro/settings/
+
+# --- Files attached to chat messages (D-068) ---
+.visionboard/attachments/
