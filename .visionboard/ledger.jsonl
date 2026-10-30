@@ -195,3 +195,15 @@
 {"v":17,"seq":195,"at":"2026-10-18T02:36:46.428Z","by":"agent","agent":"a-zkmir1l0","type":"node","key":"calculator-card","node":{"region":"apps","kind":"app","title":"Calculator","app":{"id":"calculator","w":360,"h":440}},"board":"app-cards","n":54,"ver":1}
 {"v":17,"seq":196,"at":"2026-10-18T02:36:46.429Z","by":"agent","agent":"a-zkmir1l0","type":"node","key":"calculator-note","node":{"region":"apps","kind":"note","title":"Try the calculator","body":"An app the agent built, running in its card. Press **Allow**, then type a sum and press **=**. **Stop app** turns it off.\n\nIts code: `.visionboard/apps/calculator/`"},"board":"app-cards","n":55,"ver":1}
 {"v":17,"seq":197,"at":"2026-10-18T02:36:52.417Z","by":"person","board":"app-cards","head":196,"type":"seen"}
+{"v":18,"seq":198,"at":"2026-10-27T17:42:12.821Z","by":"agent","agent":"a-rpko6s5h","type":"join","label":"Claude Code chat 8232c9f9"}
+{"v":18,"seq":199,"at":"2026-10-27T17:42:12.823Z","by":"agent","agent":"a-rpko6s5h","type":"grant-request","board":"test","reason":"The person started a chat on this board."}
+{"v":18,"seq":200,"at":"2026-10-27T17:42:12.824Z","by":"person","type":"act","action":"grant","request":199}
+{"v":18,"seq":201,"at":"2026-10-27T17:42:12.838Z","by":"person","type":"act","action":"send","board":"test"}
+{"v":18,"seq":202,"at":"2026-10-27T17:42:12.854Z","by":"person","board":"test","head":200,"type":"seen"}
+{"v":18,"seq":203,"at":"2026-10-27T17:47:16.968Z","by":"person","type":"act","action":"send","board":"test"}
+{"v":18,"seq":204,"at":"2026-10-27T17:47:39.046Z","by":"agent","agent":"a-rpko6s5h","type":"region","key":"test-img-r1","region":{"id":"images","title":"Image test","mode":"row"},"board":"test"}
+{"v":18,"seq":205,"at":"2026-10-27T17:47:39.047Z","by":"agent","agent":"a-rpko6s5h","type":"node","key":"test-img-svg","node":{"region":"images","kind":"note","title":"SVG in a card","body":"![Coloured circle, square and triangle with the words SVG test](test/shapes.svg)\n\nFile: `.visionboard/images/test/shapes.svg`. SVG isn't on the allowed list (png, jpeg, webp, gif), so this may show \"Image not shown\"."},"board":"test","n":56,"ver":1}
+{"v":18,"seq":206,"at":"2026-10-27T17:47:39.047Z","by":"agent","agent":"a-rpko6s5h","type":"node","key":"test-img-png","node":{"region":"images","kind":"note","title":"PNG in a card","body":"![Blue-to-pink gradient with a cream circle in the middle](test/gradient.png)\n\nFile: `.visionboard/images/test/gradient.png`, 320 × 180."},"board":"test","n":57,"ver":1}
+{"v":18,"seq":207,"at":"2026-10-27T17:47:39.053Z","by":"person","board":"test","head":206,"type":"seen"}
+{"v":18,"seq":208,"at":"2026-10-30T17:11:40.488Z","by":"person","type":"act","action":"app-allow","app":"calculator","hash":"b9d3509b42a3375d6a902f8785e0df66a54569cbffed7779290e81d90e9cce43"}
+{"v":18,"seq":209,"at":"2026-10-30T17:12:02.780Z","by":"person","n":54,"ver":1,"type":"seen"}
