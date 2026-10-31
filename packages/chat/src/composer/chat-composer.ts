@@ -10,9 +10,9 @@
 import type { Chip } from '../events.ts';
 import { CHAT_CHIP_REMOVE_EVENT, CHAT_FILE_REMOVE_EVENT, CHAT_SEND_EVENT, TEXT_MAX } from '../events.ts';
 import type { ChatFileRemoveDetail } from './composer-attach.ts';
-import { announcer, drawAttaching, dropArea, removeButton, wireAttaching } from './composer-attach.ts';
+import { announcer, drawAttaching, drawDoing, dropArea, removeButton, wireAttaching } from './composer-attach.ts';
 import type { ComposerContext, ComposerFile, ComposerView } from './composer-core.ts';
-import { chipKey, COMPOSER_KEYS, filesReady, filesUploading, newestFile, sendIntent, withoutChip } from './composer-core.ts';
+import { chipKey, COMPOSER_KEYS, filesReady, filesUploading, newestFile, onlyDoingMoved, sendIntent, withoutChip } from './composer-core.ts';
 import { chipsTemplate, composerTemplate, lineTemplate, previewTemplate } from './composer-template.ts';
 
 export const CHAT_COMPOSER_TAG = 'chat-composer';
@@ -147,6 +147,10 @@ export function defineChatComposer(): void {
 
     setFiles(files: readonly ComposerFile[]): void {
       this.box();
+      if (onlyDoingMoved(this.files, files)) {
+        this.files = [...files];
+        return drawDoing(this, files);
+      }
       const newest = newestFile(this.files, files);
       this.files = [...files];
       this.say();

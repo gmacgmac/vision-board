@@ -38,15 +38,19 @@ export const saidTemplate = (): string => '<p class="chat-sr chat-cmp-said" role
 
 /** One file's chip: what state it is in, in words as well as by its mark; refused, why, in full. */
 export function fileTemplate(f: ComposerFile, w: ComposerFileWords): string {
-  const icon = f.state === 'uploading' ? SPINNER : f.state === 'refused' ? REFUSED_ICON : fileIcon(f.name);
-  const status = f.state === 'uploading' ? `<span class="chat-chip-s">${esc(w.uploading)}</span>`
+  const doing = f.state === 'ready' ? f.doing : undefined;
+  const note = f.state === 'ready' ? f.note : undefined;
+  const icon = f.state === 'uploading' || doing ? SPINNER : f.state === 'refused' ? REFUSED_ICON : fileIcon(f.name);
+  const status = f.state === 'uploading' || doing ? `<span class="chat-chip-s">${esc(doing ?? w.uploading)}</span>`
     : f.state === 'ready' ? `<span class="chat-sr">${esc(w.ready)}</span>` : '';
-  const why = f.state === 'refused' ? `<span class="chat-chip-why">${esc(f.reason ?? '')}</span>` : '';
-  return `<span class="chat-chip" data-kind="file" data-state="${f.state}" title="${esc(f.name)}">${icon}<span class="chat-chip-t" dir="auto">${esc(f.name)}</span>${status}`
+  const said = f.state === 'refused' ? f.reason ?? '' : note;
+  const why = said !== undefined ? `<span class="chat-chip-why">${esc(said)}</span>` : '';
+  return `<span class="chat-chip" data-kind="file" data-state="${f.state}"${note ? ' data-note' : ''}${doing ? ' data-doing' : ''} title="${esc(f.name)}">${icon}<span class="chat-chip-t" dir="auto">${esc(f.name)}</span>${status}`
     + `<button type="button" class="chat-chip-x" data-file="${esc(f.id)}" aria-label="${esc(w.remove(f.name))}">${REMOVE_ICON}</button>${why}</span>`;
 }
 
-/** The chips, each removable, the files (with the host's words), then the host's context: a chip that
+/** The chips, each removable, the files (with the host's words; a refused one first, so its reason is what shows when
+ *  the row is short and scrolls), then the host's context: a chip that
  *  opens (`open`) a preview of its text, which the region `id` holds. Empty when there is nothing attached. */
 export function chipsTemplate(
   chips: readonly Chip[], context: ComposerContext | null = null, open = false, id = 'chat-cmp-ctx',
@@ -55,7 +59,8 @@ export function chipsTemplate(
   const shown = words ? files : [];
   if (!chips.length && !context && !shown.length) return '';
   const items = chips.map((c) => `<li>${chipTemplate(c, true)}</li>`);
-  items.push(...shown.map((f) => `<li>${fileTemplate(f, words!)}</li>`));
+  const refusedFirst = [...shown.filter((f) => f.state === 'refused'), ...shown.filter((f) => f.state !== 'refused')];
+  items.push(...refusedFirst.map((f) => `<li>${fileTemplate(f, words!)}</li>`));
   if (context) items.push(`<li>${contextTemplate(context, open, id)}</li>`);
   const preview = context && open && context.text ? previewTemplate(context, id) : '';
   return `<span class="chat-cmp-label" aria-hidden="true">Attached</span><ul class="chat-chips" aria-label="Attached to the message">`

@@ -108,6 +108,13 @@ export function wireAttaching(el: HTMLElement, view: () => ComposerView): void {
   });
 }
 
+/** The words of work still going, changed in place, so a press on a chip's remove button is never lost to a redraw. */
+export function drawDoing(el: HTMLElement, files: readonly ComposerFile[]): void {
+  for (const f of files) {
+    if (f.doing) el.querySelector(`button[data-file="${CSS.escape(f.id)}"]`)?.closest('.chat-chip')?.querySelector('.chat-chip-s')?.replaceChildren(f.doing);
+  }
+}
+
 /** The paperclip and what comes with it, in the box with the host's words and gone without them. */
 export function drawAttaching(el: HTMLElement, v: ComposerView): void {
   const clip = el.querySelector<HTMLButtonElement>(ATTACH);

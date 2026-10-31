@@ -28,7 +28,8 @@
 // With the agentAccessRules flag the header lists what the person allowed "for this folder"
 // (`list_permissions`, read when the drawing comes, when the list opens and when a yes for the folder is
 // given); Forget asks first (the confirm dialog), then `forget_permission`, and the agent asks again.
-// With the chatAttachments flag the composer takes files; the bridge uploads them and Send carries the ready ones (D-068).
+// With the chatAttachments flag the composer takes files; the bridge uploads them and Send carries the ready ones (D-068);
+// with the readAttachment flag too, pictures of what is attached are made in a sandboxed frame (pdf-pages.ts, D-071).
 import type {
   ChatAnswerDetail, ChatHost, ChatPickDetail, ChatSendDetail, ComposerContext,
 } from '#chat';
@@ -48,6 +49,7 @@ import type { Agent, Pick } from './chat-rules.ts';
 import { AGENTS, blockedReason, firstBoard, firstModel, follow, lastAsk, messageBody, MODELS, panelState, sendsInChat, shownPick } from './chat-rules.ts';
 import * as chatWords from './words/chat.ts';
 import { createAllowed } from './chat-allowed.ts';
+import { createCopies } from './pdf-pages.ts';
 import { panelNews } from './chat-news.ts';
 
 const EMPTY = { board: chatWords.noMessagesYetAskThe, folder: chatWords.noBoardsHereYetAsk }; // the empty feed: on a board, in a folder with none
@@ -275,7 +277,7 @@ export function createChatPanel(panel: HTMLElement, d: ChatPanelDeps, loader: Ch
   }
 
   const detach = d.bridge.chat({
-    panel, composer: composerSide, setFiles: (files) => view?.composer.setFiles(files), upload: attachChatFile, state: () => st.chat, changed: render,
+    panel, composer: composerSide, setFiles: (files) => view?.composer.setFiles(files), upload: attachChatFile, copies: flagOn('readAttachment', pageFlags()) ? createCopies() : undefined, state: () => st.chat, changed: render,
     agent: () => (st.session && st.session.board === st.board ? st.session.agentId : undefined),
     reveal,
   });

@@ -34,7 +34,7 @@ tracker: [M39]
 | # | ID | Wave | Model | Persona | Task | Status | Notes |
 |---|-----|------|-------|---------|------|--------|-------|
 | 1 | READ_01 | 1 | strong | Security engineer who reviews document parsers — every file is hostile until read, a declared size is a claim until counted, and a parser's hang is as bad as its crash. | [The reader and the tool](./READ_01_reader-and-tool.md) | Completed | port 6100. The handler is the server's beside the chat, not the engine's; off, the tool stays listed and answers `not-found` (request below) |
-| 2 | PAGES_01 | 2 | strong | Browser security engineer who builds sandboxes — code that parses a stranger's file gets no origin, no network and nothing to reach, and whatever it hands back is checked again. | [PDF pages and fitted pictures](./PAGES_01_pdf-pages-and-pictures.md) | Pending | port 6200 |
+| 2 | PAGES_01 | 2 | strong | Browser security engineer who builds sandboxes — code that parses a stranger's file gets no origin, no network and nothing to reach, and whatever it hands back is checked again. | [PDF pages and fitted pictures](./PAGES_01_pdf-pages-and-pictures.md) | Completed | port 6200. The file is read in a worker inside the frame: a frame's `connect-src` does not stop WebRTC (measured: a STUN packet left) |
 | 3 | VERIFY_01 | 3 | strong | Solutions architect new to this project, handed real customer documents and the board — does the agent actually see the diagram, the formula, the table, and does a hostile file reach anything? | [Verification](./VERIFY_01_read-attachment-verification.md) | Pending | port 6300 |
 
 **Status Values**: `Pending` | `In Progress` | `Completed` | `Blocked` | `Deferred`
@@ -63,10 +63,14 @@ tracker: [M39]
 - Wave 1 (READ_01, audit fixes, chat text 125%): 2078 unit, full page suite green; `host-styles` (M28) failed under load and passed alone, and `chat-attach-gallery` timed out once under load.
 
 ### Security
-- 
+- PAGES_01: `connect-src 'none'` is not "no network" in a frame: `RTCPeerConnection` sent a real STUN packet past it, Chromium has no `webrtc` directive, and a frame can navigate itself. So the stranger's file is read in a worker inside the frame, which has neither; the page's `frame-src 'self'` also stops the navigation. Tested in `chat-attach-pages.spec.ts`.
 
 ### Requests
 | From | File | What | Status |
 |------|------|------|--------|
 | READ_01 | `packages/mcp/src/protocol.ts`, `apps/board/server/chat-access.ts` | Hide `read_attachment` from `tools/list` with the flag off | Open |
 | READ_01 | `docs/specification/modules.md` | `npm run map` for `packages/documents` | Open |
+| PAGES_01 | `apps/board/server/app.ts`, `apps/board/vite.config.ts`, `apps/board/src/shell/chat-panel.ts`, `apps/board/server/chat.ts`, `apps/board/tests/openapi.test.ts`, `packages/chat/src/chat.css` | Changed, though not in the ownership row: the frame's route, its build entry, the flag's wiring, the handler, the version, the feed's share. Please review | Done |
+| PAGES_01 | `docs/specification/dependencies.md` | `pdfjs-dist`'s row: its `wasm/openjpeg.wasm` and `jbig2.wasm` are bundled into the frame (their own licences, `wasm/LICENSE_*`) | Open |
+| PAGES_01 | `docs/decisions.md` | D-071 ruling 3 to name the worker, and the frame's `wasm-unsafe-eval`, and that a fitted copy is made in the frame too | Open |
+| PAGES_01 | `skills/vision-board/SKILL.md` | Its line naming `pdftotext` for a PDF could say to open the pictures the message names first | Open |

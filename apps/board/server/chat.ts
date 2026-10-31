@@ -8,7 +8,7 @@
 import type { ApprovalAnswer, Facts } from '#agent';
 import { REALM, bearerOf } from './callers.ts';
 import type { AttachedFile } from './chat-files.ts';
-import { ATTACHMENT_BODY_BYTES, attachedFiles, fileTooLarge, saveAttachment } from './chat-files.ts';
+import { ATTACHMENT_BODY_BYTES, attachedFiles, fileTooLarge, saveAttachment, saveCopy } from './chat-files.ts';
 import { readAttachment } from './chat-read.ts';
 import type { ChatSession } from './chat-index.ts';
 import type { ChatMessage } from './chat-prompt.ts';
@@ -152,7 +152,9 @@ const attachChatFile: Handler = async ({ req, res, project, chats }) => {
   const input = await body('attach_chat_file', req, ATTACHMENT_BODY_BYTES).catch((err: unknown) => {
     throw err instanceof ProblemError && err.code === 'too-large' ? fileTooLarge() : err;
   });
-  sendJson(res, 201, { file: saveAttachment(folder, input as Parameters<typeof saveAttachment>[1]) });
+  const file = input as Parameters<typeof saveAttachment>[1] & { of?: Parameters<typeof saveCopy>[1]['of'] };
+  if (file.of && !chats().readAttachment) throw problem('not-found', serverChatWords.readingPagesIsOff);
+  sendJson(res, 201, { file: file.of ? saveCopy(folder, { data: file.data, of: file.of }) : saveAttachment(folder, file) });
 };
 
 /** An agent reads an attached file (chat-read.ts): stopped when it goes away or the folder closes. */

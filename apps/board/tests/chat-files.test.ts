@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ATTACHMENT_BODY_BYTES, ATTACHMENT_BYTES, attachedFile, attachedFiles, attachmentName, saveAttachment, stillThere } from '../server/chat-files.ts';
+import type { AttachedFile, Beside } from '../server/chat-files.ts';
+import { ATTACHMENT_BODY_BYTES, ATTACHMENT_BYTES, attachedFile, attachedFiles, attachmentName, besideOf, checked, PICTURE_BYTES, saveAttachment, saveCopy, stillThere } from '../server/chat-files.ts';
 import { ProblemError } from '../server/problem.ts';
 import { CHAT_EVENT_ID, schemaProblems } from '../server/schema.ts';
 import { makeTempDir } from '#format/testing';
@@ -198,4 +199,56 @@ test('F5, D-069 ruling 3: the board keeps attachments out of the project\'s git,
   const asked = spawnSync('git', ['check-ignore', '-q', file.path], { cwd: folder });
   assert.equal(asked.status, 0, 'git itself says it is ignored');
   assert.equal(spawnSync('git', ['status', '--porcelain', '-uall'], { cwd: folder, encoding: 'utf8' }).stdout.includes('attachments'), false);
+});
+
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+const copy = (bytes: Buffer, of: { path: string; page?: number; pages?: number }) => ({ data: bytes.toString('base64'), of });
+const code = (run: () => unknown, want: string) => assert.throws(run, (e: { code?: string }) => e.code === want, want);
+
+test('a page goes in a folder beside its PDF, named by the server, read back by `attachedFile`, and counted from the disk', () => {
+  const { folder } = folders();
+  const { path: pdf } = saveAttachment(folder, input('design.pdf'), NOW);
+  assert.equal(besideOf(folder, pdf), undefined);
+  const one = saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 40 }));
+  assert.deepEqual(one, { name: 'page-001-of-040.png', path: `.visionboard/attachments/${DAY}/1-design-pages/page-001-of-040.png`, size: PNG.length });
+  assert.equal(attachedFile(folder, one.path)?.size, PNG.length);
+  saveCopy(folder, copy(PNG, { path: pdf, page: 2, pages: 40 }));
+  assert.deepEqual(besideOf(folder, pdf), { kind: 'pages', folder: `.visionboard/attachments/${DAY}/1-design-pages`, first: 'page-001-of-040.png', last: 'page-002-of-040.png', saved: 2, total: 40 });
+  code(() => saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 40 })), 'conflict');
+  assert.equal(saveAttachment(folder, input('next.txt'), NOW).path, `.visionboard/attachments/${DAY}/2-next.txt`, 'the folder takes no number of its own');
+  const message: { files: AttachedFile[]; beside?: Record<string, Beside> } = { files: [{ name: 'design.pdf', path: pdf, size: 5 }] };
+  const { msg } = checked(folder, message);
+  assert.equal(msg.beside?.[pdf]?.kind, 'pages');
+  assert.deepEqual(Object.keys(msg.files![0]!).sort(), ['name', 'path', 'size'], 'nothing more goes on the message\'s file');
+});
+
+test('a fitted copy: a PNG or a JPEG, one, beside the picture; the longest name still passes', () => {
+  const { folder } = folders();
+  const { path: picture } = saveAttachment(folder, input(`${'p'.repeat(100)}.png`), NOW);
+  const fitted = saveCopy(folder, copy(JPEG, { path: picture }));
+  assert.match(fitted.path, /-fitted\/fitted\.jpg$/);
+  assert.ok(attachedFile(folder, fitted.path), fitted.path);
+  assert.deepEqual(besideOf(folder, picture), { kind: 'fitted', path: fitted.path });
+  const { path: other } = saveAttachment(folder, input('b.png'), NOW);
+  assert.match(saveCopy(folder, copy(PNG, { path: other })).path, /2-b-fitted\/fitted\.png$/);
+});
+
+test('a copy is refused unless what it came from is an attached file itself, and it is the picture it says, within 5 MB', () => {
+  const { folder, outside } = folders();
+  const { path: pdf } = saveAttachment(folder, input('a.pdf'), NOW);
+  const { path: page } = saveCopy(folder, copy(PNG, { path: pdf, page: 1, pages: 1 }));
+  for (const from of ['.env', '../x.pdf', '.visionboard/ledger.jsonl', `.visionboard/attachments/${DAY}/9-none.pdf`, page]) code(() => saveCopy(folder, copy(PNG, { path: from, page: 1, pages: 1 })), 'invalid');
+  code(() => saveCopy(folder, copy(JPEG, { path: pdf, page: 2, pages: 2 })), 'invalid');
+  code(() => saveCopy(folder, copy(Buffer.from('<script>'), { path: pdf })), 'invalid');
+  code(() => saveCopy(folder, copy(PNG, { path: pdf, page: 3, pages: 2 })), 'invalid');
+  code(() => saveCopy(folder, copy(Buffer.concat([PNG, Buffer.alloc(PICTURE_BYTES)]), { path: pdf, page: 2, pages: 2 })), 'too-large');
+  code(() => saveCopy(folder, { data: 'not base64!', of: { path: pdf } }), 'bad-request');
+  // A link where the folder goes is not written through, and what is in it counts for nothing.
+  const { path: b } = saveAttachment(folder, input('b.pdf'), NOW);
+  fs.symlinkSync(outside, path.join(folder, `.visionboard/attachments/${DAY}/2-b-pages`));
+  code(() => saveCopy(folder, copy(PNG, { path: b, page: 1, pages: 1 })), 'conflict');
+  assert.deepEqual(fs.readdirSync(outside), []);
+  fs.writeFileSync(path.join(outside, 'page-001-of-001.png'), PNG);
+  assert.equal(besideOf(folder, b), undefined);
 });

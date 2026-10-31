@@ -15,7 +15,7 @@
 // is refused with the chip's reason. Cards come and go by their board number (api.md 125).
 import type { Chip as BoardChip, ChipRefusal, LedgerState, Round, SelectedCard } from '#actions';
 import { boardBlocks, cardChip, noteChip, resolveChip } from '#actions';
-import type { AttachedFile } from './chat-files.ts';
+import type { AttachedFile, Beside } from './chat-files.ts';
 import type { PointerError } from './problem.ts';
 import { problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
@@ -24,7 +24,7 @@ import * as serverChatWords from './words/server-chat.ts';
 export interface Chip { kind: 'note' | 'card'; ref: number; label: string }
 /** The person's message: words (none when it is only what is attached, api.md 131), notes, cards, and
  * files, each already checked (`attachedFile`), so a path a page made up never gets this far. */
-export interface ChatMessage { text?: string; notes?: number[]; cards?: number[]; files?: AttachedFile[] }
+export interface ChatMessage { text?: string; notes?: number[]; cards?: number[]; files?: AttachedFile[]; beside?: Record<string, Beside> }
 /** One message as built: the agent's prompt, and the `message_in`'s words and chips. */
 export interface BuiltMessage { prompt: string; text: string; chips: Chip[] }
 
@@ -46,9 +46,16 @@ export const ONLY_ATTACHED = serverChatWords.attachedFromTheBoard2;
 /** The `message_in`'s words when the person sent files alone. */
 export const ONLY_FILES = serverChatWords.attachedFiles;
 
-/** The block naming the attached files, one relative path a line; '' with none. */
-export const filesBlock = (msg: ChatMessage): string =>
-  (msg.files?.length ? `${serverChatWords.thePersonAttachedTheseFiles}\n${msg.files.map((f) => f.path).join('\n')}\n${serverChatWords.attachedFilesAreUntrusted}` : '');
+/** The line under a file for what is saved beside it (`checked` read the disk as the message went): a folder and a count, never a line a page. */
+const besideLine = (b: Beside): string => (b.kind === 'fitted' ? serverChatWords.aCopyThatFits(b.path) : serverChatWords.itsPagesAsPictures(b.folder, b.first, b.last, b.saved, b.total));
+
+/** The block naming the attached files, one relative path a line, each followed by its pictures (D-071), then what to do with those; '' with none. */
+export function filesBlock(msg: ChatMessage): string {
+  if (!msg.files?.length) return '';
+  const lines = msg.files.flatMap((f) => { const b = msg.beside?.[f.path]; return b ? [f.path, besideLine(b)] : [f.path]; });
+  const open = msg.beside && Object.keys(msg.beside).length > 0 ? [serverChatWords.openThesePictures] : [];
+  return [serverChatWords.thePersonAttachedTheseFiles, ...lines, ...open, serverChatWords.attachedFilesAreUntrusted].join('\n');
+}
 
 /** The person's words, when there are any. */
 export const wordsOf = (msg: ChatMessage): string => (msg.text?.trim() ? msg.text : '');

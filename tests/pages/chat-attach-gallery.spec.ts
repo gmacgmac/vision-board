@@ -1,12 +1,19 @@
 // The gallery's section on attaching files (chat-attachments COMPOSE_01): every state drawn, the chips,
 // the paperclip and the drop hint at their contrast tiers, focus, axe, light and dark, and its screenshot;
-// there only with chatPanel and chatAttachments on; the other chat samples have no paperclip.
+// there only with chatPanel and chatAttachments on; the other chat samples have no paperclip; every sample is as
+// tall as it needs (chat text at 16, 15, 14 px), so the feed's line and a refusal's words are whole; a PDF's pages' states (D-071).
 import type { Locator, Page } from '@playwright/test';
 import { lc, pixel, resolved } from './apca.ts';
 import { expect, expectNoAxeViolations, setTheme, test } from './helpers.ts';
 import type { Theme } from './helpers.ts';
 
-const SAMPLES = ['idle', 'uploading', 'ready', 'refused', 'eleventh', 'mixed', 'names', 'drop', 'shut', 'sent', 'sent-alone'];
+const SAMPLES = ['idle', 'uploading', 'ready', 'refused', 'eleventh', 'mixed', 'names', 'drop', 'shut', 'sent', 'sent-alone', 'reading', 'fitting', 'pages-short'];
+
+// The section has 14 samples, each with its contrast read pixel by pixel: under a full suite's load that takes its time.
+test.describe.configure({ timeout: 120_000 });
+
+/** How far apart two boxes are, up and down; below 0 they overlap. */
+const gap = (above: { y: number; height: number }, below: { y: number }) => below.y - (above.y + above.height);
 
 /** The nearest opaque background of `at`, as the browser draws it. */
 const backOf = (at: Locator): Promise<string> => at.evaluate((el) => {
@@ -71,6 +78,23 @@ for (const theme of ['dark', 'light'] as Theme[]) {
     await x.focus();
     await expect(x).toHaveCSS('outline-style', 'solid');
     await x.evaluate((el) => el.blur());
+    // Every sample has the height it needs: the feed's line clear of what is attached, and no list that had to scroll.
+    for (const state of SAMPLES) {
+      const empty = sample(state).locator('.chat-empty:visible');
+      const next = sample(state).locator('.chat-cmp-label:visible, .chat-cmp-box').first();
+      if (await empty.count()) expect(gap((await empty.boundingBox())!, (await next.boundingBox())!), state).toBeGreaterThanOrEqual(0);
+      const list = sample(state).locator('chat-composer .chat-chips');
+      if (await list.count()) expect(await list.evaluate((el) => el.scrollHeight - el.clientHeight), state).toBeLessThanOrEqual(0);
+    }
+    // The eleventh's reason comes first and reads whole.
+    await expect(sample('eleventh').locator('chat-composer li').first()).toContainText('a message carries at most 10 files');
+    // The pages' states: reading text 60, with the file still ready; a note is a row of its own and carries no alarm.
+    await expect(sample('reading').locator('.chat-chip-s').first()).toHaveText('Reading pages… 12 of 30');
+    await expect(sample('reading').locator('.chat-chip').first()).toHaveAttribute('data-state', 'ready');
+    await expect(sample('reading').locator('button.chat-cmp-send')).toBeEnabled();
+    expect(await contrast(page, sample('reading').locator('.chat-chip-s').first())).toBeGreaterThanOrEqual(60);
+    expect(await contrast(page, sample('pages-short').locator('.chat-chip-why').first())).toBeGreaterThanOrEqual(60);
+    expect(await contrast(page, sample('reading').locator('.chat-chip-i').first())).toBeGreaterThanOrEqual(30);
     await expectNoAxeViolations(page);
     await expect(section).toHaveScreenshot(`chat-attach-${theme}.png`);
   });
@@ -85,4 +109,7 @@ test('the section is there only with chatPanel and chatAttachments on; the chat 
   await page.goto('/gallery.html');
   await expect(page.locator('section[data-feature="chatPanel"] .chat-cmp-attach')).toHaveCount(0);
   await expect(page.locator('main > section').last()).toHaveAttribute('data-feature', 'chatAttachments');
+  await page.goto('/gallery.html?flags=-readAttachment');
+  await expect(page.locator('.g-attach-sample[data-state="sent"]')).toBeVisible();
+  await expect(page.locator('.g-attach-sample[data-state="reading"]')).toHaveCount(0);
 });

@@ -38,6 +38,10 @@ export interface ComposerFile {
   reason?: string;
   /** How many files this one chip stands for, when more than one: files over the limit share a chip. */
   count?: number;
+  /** Work still going on a file that is ready and can go as it is, in a few words: "Reading pages… 12 of 30". */
+  doing?: string | undefined;
+  /** What to know about a file that is ready and still goes, shown in full: "Its pages can't be read". */
+  note?: string | undefined;
 }
 
 /** Every sentence of attaching, from the host, as `placeholder` is. */
@@ -100,14 +104,25 @@ export const filesReady = (files: readonly ComposerFile[]): boolean => files.som
 /** More files than this moving at once are said as counts, not one by one. */
 const SAID_ONE_BY_ONE = 3;
 
+/** Where a file stands, for announcing: work starting or ending is news, and the count of pages going up is not. */
+const standing = (f: ComposerFile): string => `${f.state}|${f.doing ? 'doing' : ''}|${f.note ?? ''}`;
+
 /** What to announce for the files `now`, after `was`: each new file and each whose state moved; many, as one line of counts. */
 export function filesSaid(was: readonly ComposerFile[], now: readonly ComposerFile[], words: Pick<ComposerFileWords, 'said' | 'batch'>): string {
-  const before = new Map(was.map((f) => [f.id, f.state]));
-  const moved = now.filter((f) => before.get(f.id) !== f.state);
+  const before = new Map(was.map((f) => [f.id, standing(f)]));
+  const moved = now.filter((f) => before.get(f.id) !== standing(f));
   if (moved.length <= SAID_ONE_BY_ONE) return moved.map((f) => words.said(f)).join(' ');
   const counts: Record<FileState, number> = { uploading: 0, ready: 0, refused: 0 };
   for (const f of moved) counts[f.state] += f.count ?? 1;
   return words.batch(counts);
+}
+
+/** Whether all that moved from `was` to `now` is the words of work still going: those change in place, so a press on a chip's remove button is never lost to a redraw. */
+export function onlyDoingMoved(was: readonly ComposerFile[], now: readonly ComposerFile[]): boolean {
+  return was.length === now.length && now.every((f, i) => {
+    const before = was[i]!;
+    return f.id === before.id && f.state === before.state && f.note === before.note && f.name === before.name && !!f.doing === !!before.doing;
+  });
 }
 
 /** Whether a drag carries files, which is the only drag the composer takes: never text or a card. */

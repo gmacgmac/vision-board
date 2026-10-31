@@ -62,7 +62,9 @@
   display: flex; flex-direction: column; min-height: 0; height: 100%;
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink); background: var(--_surface);
 }
-.chat-panel > chat-feed { flex: 1; min-height: 0; }
+/* However much the composer holds, the feed keeps this much of the panel. */
+.chat-panel > chat-feed { flex: 1; min-height: 30%; overflow: hidden; }
+@media (max-height: 520px) { .chat-panel > chat-feed { min-height: 20%; } }
 
 :where(chat-feed, chat-message, chat-approval, chat-composer, chat-header) { box-sizing: border-box; }
 :where(chat-feed, chat-message, chat-approval, chat-composer, chat-header) *,

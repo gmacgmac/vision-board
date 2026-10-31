@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { zipSync } from 'fflate';
-import { ATTACHMENT_BYTES, attachedFile, attachedFiles, attachmentName, saveAttachment, saveBeside } from '../server/chat-files.ts';
+import { ATTACHMENT_BYTES, attachedFile, attachedFiles, attachmentName, PICTURE_BYTES, saveAttachment, saveBeside } from '../server/chat-files.ts';
 import { READS_AT_ONCE, inWorker, readAttachment } from '../server/chat-read.ts';
 import { ProblemError } from '../server/problem.ts';
 import { attachedFilesAreUntrusted as UNTRUSTED } from '../server/words/server-chat.ts';
@@ -213,4 +213,15 @@ test('the caller going away stops the worker; only so many run at once, and a sl
   gone.abort();
   await Promise.all(running.map((r) => refused(r, '/path', /stopped/)));
   await refused(inWorker({ kind: 'zip', bytes: new Uint8Array(1) }, { script, deadlineMs: 50 }), '/path', /too long/);
+});
+
+test('a picture out of a zip that is over the provider\'s limit is named as such, and the agent told it may not see it; a small one, or a big file that is no picture, is not', async () => {
+  const folder = board();
+  const rel = attach(folder, 'pictures.zip', zipSync({ 'big.png': new Uint8Array(PICTURE_BYTES + 1), 'small.png': enc('x'), 'big.bin': new Uint8Array(PICTURE_BYTES + 1) }, { level: 1 }));
+  const read = await readAttachment(folder, { path: rel }) as { note?: string };
+  assert.match(read.note!, /Over 5 MB, so you may not see this picture/);
+  assert.match(read.note!, /big\.png/);
+  assert.doesNotMatch(read.note!, /small\.png|big\.bin/);
+  const fine = await readAttachment(folder, { path: attach(folder, 'fine.zip', zipSync({ 'small.png': enc('x') })) }) as { note?: string };
+  assert.equal(fine.note, undefined);
 });

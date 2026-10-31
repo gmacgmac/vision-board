@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ComposerFile, ComposerFileWords } from '../src/index.ts';
 import {
-  applyEvents, attachTemplate, chipsTemplate, composerView, dropTemplate, EMPTY_CHAT, filesSaid, fileChipTemplate, fileTemplate,
+  applyEvents, attachTemplate, chipsTemplate, composerView, dropTemplate, EMPTY_CHAT, filesSaid, fileChipTemplate, fileTemplate, onlyDoingMoved,
   messageTemplate, newestFile, pastedFiles, sendIntent,
 } from '../src/index.ts';
 
@@ -114,4 +114,37 @@ test('F9: more than three files moving at once are one line of counts, a shared 
   assert.equal(filesSaid(many, many.map((f) => ({ ...f, state: 'ready' as const })), WORDS), '0 up, 10 ready, 0 no.');
   assert.equal(filesSaid([], many.slice(0, 3), WORDS), '0.txt is uploading. 1.txt is uploading. 2.txt is uploading.', 'three are still said by name');
   assert.equal(filesSaid([], [shared], WORDS), '990 more files is refused.', 'alone, by its name');
+});
+
+test('work going on a ready file shows in a few words with the moving mark; a note shows in full and escaped; neither makes it anything but ready', () => {
+  const doing = fileTemplate({ ...file('ready'), doing: 'Reading pages… 12 of 30' }, WORDS);
+  assert.match(doing, /data-state="ready"/);
+  assert.match(doing, /data-doing/);
+  assert.match(doing, /data-glyph="uploading"/);
+  assert.match(doing, /<span class="chat-chip-s">Reading pages… 12 of 30<\/span>/);
+  const noted = fileTemplate({ ...file('ready'), note: 'Can\'t <read>.' }, WORDS);
+  assert.match(noted, /data-note/);
+  assert.match(noted, /<span class="chat-chip-why">Can&#39;t &lt;read&gt;\.<\/span>/);
+  assert.doesNotMatch(noted, /data-glyph="refused"/);
+  assert.match(noted, /data-glyph="document"/);
+  assert.doesNotMatch(fileTemplate(file('refused'), WORDS), /data-note|data-doing/);
+});
+
+test('a refused file comes first, so its reason is what shows when the row is short', () => {
+  const row = chipsTemplate([], null, false, 'x', [{ id: 'a', name: 'a', state: 'ready' }, { id: 'b', name: 'b', state: 'refused', reason: 'why' }], WORDS);
+  assert.ok(row.indexOf('data-file="b"') < row.indexOf('data-file="a"'));
+});
+
+test('work starting and ending is said; only its count going up is neither said nor drawn again', () => {
+  const words = { said: (f: { name: string; doing?: string | undefined }) => `${f.name}:${f.doing ?? 'done'}`, batch: () => 'many' };
+  const a = { id: 'a', name: 'a', state: 'ready' as const };
+  const [one, two] = [{ ...a, doing: '1 of 3' }, { ...a, doing: '2 of 3' }];
+  assert.equal(filesSaid([a], [one], words), 'a:1 of 3');
+  assert.equal(filesSaid([one], [two], words), '');
+  assert.equal(filesSaid([two], [a], words), 'a:done');
+  assert.equal(filesSaid([a], [{ ...a, note: 'Short.' }], words), 'a:done');
+  assert.equal(onlyDoingMoved([one], [two]), true);
+  assert.equal(onlyDoingMoved([one], [a]), false);
+  assert.equal(onlyDoingMoved([a], [{ ...a, note: 'x' }]), false);
+  assert.equal(onlyDoingMoved([one], [two, a]), false);
 });

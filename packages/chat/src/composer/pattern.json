@@ -16,7 +16,7 @@
     "setChips(chips)": "the chips attached",
     "setContext(context)": "the host's context { label, text } beside the chips, or null: one chip, its summary, opening a preview of text exactly as it goes; not removable, it goes with every message the host sends",
     "dropArea(area)": "take a dropped file anywhere on area, a panel the host keeps around the composer; the drop target still shows on the composer; the listeners go when the composer leaves the page",
-    "setFiles(files)": "where each attached file stands: { id, name, state: uploading | ready | refused, reason }; the host's to say",
+    "setFiles(files)": "where each attached file stands: { id, name, state: uploading | ready | refused, reason, doing, note }; the host's to say. doing: work still going on a ready file, in a few words, changed in place; note: what to know of a ready file, shown in full. A refused file comes first",
     "clear()": "empties the words, the chips and the files once the message went through",
     "text, chips, attached, focusText()": "the words typed, the chips, whether a chip, the context or a ready file is attached, focus into the text"
   },

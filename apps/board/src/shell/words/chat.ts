@@ -60,8 +60,9 @@ export const attachingFiles = {
   waits: 'Send waits until the files have uploaded.',
   remove: (name: string): string => `Remove ${name}`,
   removed: (name: string): string => `${name} removed.`,
-  said: (f: { name: string; state: string; reason?: string }): string => (
-    f.state === 'uploading' ? `${f.name}: uploading.` : f.state === 'ready' ? `${f.name}: ready to send.` : `${f.name}: ${f.reason ?? ''}`),
+  said: (f: { name: string; state: string; reason?: string; doing?: string; note?: string }): string => (
+    f.state === 'uploading' ? `${f.name}: uploading.`
+      : f.state === 'ready' ? [`${f.name}: ready to send.`, f.doing, f.note].filter(Boolean).join(' ') : `${f.name}: ${f.reason ?? ''}`),
   batch: ({ uploading, ready, refused }: { uploading: number; ready: number; refused: number }): string =>
     `${[uploading && `${uploading} uploading`, ready && `${ready} ready to send`, refused && `${refused} not attached`].filter(Boolean).join(', ')}.`,
 };
@@ -73,4 +74,16 @@ export const tooManyFilesAtOnce = 'Not attached: a message carries at most 10 fi
 export const moreFiles = (n: number): string => `${n} more files`;
 export const fileCouldNotBeRead = 'Not attached: it could not be read. A folder can\'t be attached, only the files in it.';
 export const fileRefused = (why: string): string => `Not attached: ${why}`;
+
+// ---- pdf-pages.ts (readAttachment flag: a PDF's pages and a picture's fitted copy)
+export const readingAnAttachedFile = 'Reading an attached file';
+export const readingPages = (page?: number, of?: number): string => (page === undefined ? 'Reading pages…' : `Reading pages… ${page} of ${of}`);
+export const fittingPicture = 'Fitting…';
+export const pdfHasAPassword = 'Its pages can\'t be read, as it has a password. The PDF itself still goes.';
+export const pdfIsDamaged = 'Its pages can\'t be read, as it is damaged or is no PDF. The file itself still goes.';
+export const onlySomePages = (saved: number, pages: number): string => `The agent gets ${saved} of its ${pages} pages as pictures.`;
+export const pagesTookTooLong = (saved: number, want: number): string => `Stopped at ${saved} of ${want} pages, as reading it took too long. The agent gets those, and the PDF itself.`;
+export const pagesNotOpened = 'Its pages can\'t be read here. The file itself still goes.';
+export const copiesNotSaved = 'Its pictures could not be saved. The file itself still goes.';
+export const pictureNotFitted = 'No copy that fits could be made, so the agent may not see this picture. It still goes.';
 export const filesStillUploading = 'The files are still uploading. Send again once they are ready.';

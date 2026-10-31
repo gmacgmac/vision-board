@@ -978,6 +978,11 @@ type ChatFileRequest = {
   name: string;
   type: string;
   data: string;
+  of?: {
+    path: string;
+    page?: number;
+    pages?: number;
+  };
 };
 type ChatFileResponse = {
   file: ChatEventAttachedFile;

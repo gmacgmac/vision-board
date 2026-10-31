@@ -1,6 +1,6 @@
 // The board server as a request listener: the guard, then /api through the dispatcher, the project's
 // images at /board-images/<path> (images.ts, D-048), an app's panel at /app-panels/<id> with its own
-// CSP (apps.ts, D-047), and the built page from dist/ for everything else. Every error is a problem
+// CSP (apps.ts, D-047), the frame that reads a stranger's PDF or picture with its own (pdf-frame.ts, D-071), and the built page from dist/ for everything else. Every error is a problem
 // (api.md 38); anything unexpected logs its stack to stderr and answers `server-error`. The person cookie is minted
 // here, once per start, and set with the page (api.md 20); it stays valid when the open folder
 // changes. The open folder, with its ledger, lock, agents and chats, is project.ts's (api.md 111):
@@ -17,6 +17,7 @@ import type { AppLimits } from './apps.ts';
 import { PANEL_PATH, servePanel } from './apps.ts';
 import type { BuildWatch } from './build-watch.ts';
 import { personCookie } from './callers.ts';
+import { PDF_FRAME_PATH, servePdfFrame } from './pdf-frame.ts';
 import { newToken } from './secrets.ts';
 import { keepKiroAgent } from './chat-access.ts';
 import type { ChatAdapters } from './chat-sessions.ts';
@@ -86,6 +87,7 @@ export function createBoardServer({ ledger, lock, home = os.homedir(), dist, bui
       if (req.method !== 'GET') throw problem('method-not-allowed', httpWords.thePageAnswersGETOnly, { headers: { Allow: 'GET' } });
       const panel = PANEL_PATH.exec(url.pathname);
       if (panel) return servePanel(res, panel[1]!, project.current().apps());
+      if (url.pathname === PDF_FRAME_PATH) return servePdfFrame(res, dist, access.readAttachment);
       const file = resolveStatic(url.pathname, dist);
       if (!file) throw problem('not-found', httpWords.thereIsNoSuchPage);
       if (file.endsWith('.html')) res.setHeader('Set-Cookie', personCookie(env.person));

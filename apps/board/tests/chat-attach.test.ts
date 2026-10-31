@@ -4,11 +4,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { ComposerFile } from '#chat';
-import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
+import { ATTACHMENT_BYTES, PICTURE_BYTES as SERVER_PICTURE_BYTES } from '../server/chat-files.ts';
+import { PDF_FRAME_PATH as SERVER_FRAME_PATH } from '../server/pdf-frame.ts';
+import { PAGES_MAX, PDF_FRAME_PATH, PICTURE_BYTES } from '../src/shell/pdf-pages-core.ts';
 import { SCHEMA_BASE, schemaFiles, schemaProblems } from '../server/schema.ts';
 import type { AttachFileBody, ChatSide } from '../src/shell/chat-bridge.ts';
 import { attachedName, FILE_BYTES, FILE_COUNT, fileData, fileLabel } from '../src/shell/attached-file.ts';
 import { createChatBridge } from '../src/shell/chat-bridge.ts';
+import type { MakeCopies } from '../src/shell/pdf-pages.ts';
 import { attachingFiles, fileIsTooBig, fileRefused, moreFiles, pastedPicture, tooManyFiles, tooManyFilesAtOnce } from '../src/shell/words/chat.ts';
 
 const named = (name: string, body = 'hi', type = 'text/plain') => new File([body], name, { type });
@@ -16,7 +19,7 @@ const tick = () => new Promise((r) => setTimeout(r));
 const REQUEST = `${SCHEMA_BASE}schema/api/chat-message-request.schema.json`;
 
 /** A bridge with a chat side: the composer's last files, the uploads asked for, each answered by hand. */
-function bridged() {
+function bridged(copies?: MakeCopies) {
   const bridge = createChatBridge();
   const chips = { now: [] as readonly ComposerFile[] };
   const asked: { body: AttachFileBody; ok(path: string): void; no(why: string): void }[] = [];
@@ -24,6 +27,7 @@ function bridged() {
   const side: ChatSide = {
     panel: panel as HTMLElement,
     composer: { setContext() {} },
+    copies,
     setFiles(f) { chips.now = f; },
     upload: (body) => new Promise((resolve, reject) => {
       asked.push({
@@ -46,6 +50,32 @@ test('the page\'s limits are the server\'s', () => {
   assert.equal(FILE_BYTES, ATTACHMENT_BYTES);
   const { schema } = schemaFiles().find((f) => f.schema.$id === REQUEST)!;
   assert.equal(FILE_COUNT, (schema as unknown as { properties: { files: { maxItems: number } } }).properties.files.maxItems);
+  assert.equal(PICTURE_BYTES, SERVER_PICTURE_BYTES);
+  assert.equal(PDF_FRAME_PATH, SERVER_FRAME_PATH);
+  const attach = schemaFiles().find((f) => f.schema.$id === `${SCHEMA_BASE}schema/api/chat-file-request.schema.json`)!.schema as unknown as { properties: { of: { properties: { page: { maximum: number } } } } };
+  assert.equal(PAGES_MAX, attach.properties.of.properties.page.maximum);
+});
+
+test('once a file is ready its pictures start, what they say reaches its chip, and neither holds Send; removing or sending stops them', async () => {
+  const started: { path: string; stopped: boolean; progress(p: { doing?: string; note?: string }): void }[] = [];
+  const { bridge, chips, asked } = bridged((_, path, { progress }) => { const it = { path, stopped: false, progress }; started.push(it); return () => { it.stopped = true; }; });
+  bridge.attachFiles([named('a.pdf'), named('b.pdf')], false);
+  await tick();
+  asked[0]!.ok('p/1-a.pdf');
+  asked[1]!.ok('p/2-b.pdf');
+  await tick();
+  assert.deepEqual(started.map((s) => s.path), ['p/1-a.pdf', 'p/2-b.pdf']);
+  started[0]!.progress({ doing: 'Reading pages… 1 of 3' });
+  assert.equal(chips.now[0]!.doing, 'Reading pages… 1 of 3');
+  assert.equal(chips.now[0]!.state, 'ready');
+  assert.equal(bridge.uploading(), false);
+  started[0]!.progress({ note: 'Short.' });
+  assert.deepEqual([chips.now[0]!.doing, chips.now[0]!.note], [undefined, 'Short.']);
+  bridge.removeFile(chips.now[1]!.id);
+  assert.equal(started[1]!.stopped, true);
+  assert.equal(started[0]!.stopped, false);
+  bridge.sent([], bridge.files());
+  assert.equal(started[0]!.stopped, true);
 });
 
 test('a file goes uploading, then ready with its path and the person\'s own name; Send carries it, then it is gone', async () => {

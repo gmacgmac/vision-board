@@ -10,7 +10,7 @@ import type { DocxDocument, ExpandedZip, SheetAnswer, WorkbookSummary } from '#d
 import { LIMITS } from '#documents';
 import type { OperationInput, OperationOutput } from '#format';
 import type { SavedFile } from './chat-files.ts';
-import { attachedBytes, attachedFile, saveBeside } from './chat-files.ts';
+import { attachedBytes, attachedFile, PICTURE_BYTES, saveBeside } from './chat-files.ts';
 import type { ReadJob } from './chat-read-worker.ts';
 import { problem } from './problem.ts';
 import * as serverChatWords from './words/server-chat.ts';
@@ -23,6 +23,9 @@ export const READS_AT_ONCE = 4;
 const WORKER_HEAP_MB = 1024;
 /** The files of a folder named in one answer: the agent can list the rest. */
 export const FILES_LISTED = 500;
+/** The pictures over the limit named in one answer. */
+const OVER_NAMED = 10;
+const PICTURE = /\.(?:png|jpe?g|gif|webp|bmp|tiff?|avif|heic)$/i;
 
 type ReadInput = OperationInput<'read_attachment'>['body'];
 type ReadAnswer = OperationOutput<'read_attachment'>;
@@ -89,13 +92,19 @@ const notes = (...lines: (string | false | undefined)[]) => {
   return said ? { note: said } : {};
 };
 
+/** The pictures among `files` that are over the size the agent's provider took when measured (D-071): the page fits only what is attached directly, so these are only named. */
+function overTheLimit(files: readonly SavedFile[]): string | false {
+  const over = files.filter((f) => PICTURE.test(f.path) && f.size > PICTURE_BYTES).map((f) => f.path);
+  return over.length > 0 && serverChatWords.picturesOverTheLimit(over.slice(0, OVER_NAMED), Math.max(0, over.length - OVER_NAMED));
+}
+
 function documentAnswer(folder: string, rel: string, read: DocxDocument): ReadAnswer {
   const pictures = read.pictures.map((p) => ({ path: p.name, bytes: p.bytes }));
   const saved = pictures.length > 0 ? saveBeside(folder, rel, '-pictures', pictures) : undefined;
   return {
     kind: 'document', untrusted: serverChatWords.attachedFilesAreUntrusted, markdown: read.markdown,
     ...(saved && { folder: saved.folder }), pictures: (saved?.files ?? []).map(({ path: p, size }): SavedFile => ({ path: p, size })),
-    ...notes(read.cut && serverChatWords.theDocumentWasCut, read.notRead.length > 0 && serverChatWords.notReadFromTheDocument(read.notRead)),
+    ...notes(read.cut && serverChatWords.theDocumentWasCut, read.notRead.length > 0 && serverChatWords.notReadFromTheDocument(read.notRead), overTheLimit(saved?.files ?? [])),
   };
 }
 
@@ -103,7 +112,7 @@ function folderAnswer(folder: string, rel: string, read: ExpandedZip): ReadAnswe
   const saved = saveBeside(folder, rel, '', read.files);
   return {
     kind: 'folder', untrusted: serverChatWords.attachedFilesAreUntrusted, folder: saved.folder, count: saved.files.length, files: saved.files.slice(0, FILES_LISTED),
-    ...notes(saved.files.length > FILES_LISTED && serverChatWords.moreFilesThanListed(FILES_LISTED, saved.folder), read.skipped > 0 && serverChatWords.macFilesLeftOut(read.skipped)),
+    ...notes(saved.files.length > FILES_LISTED && serverChatWords.moreFilesThanListed(FILES_LISTED, saved.folder), read.skipped > 0 && serverChatWords.macFilesLeftOut(read.skipped), overTheLimit(saved.files)),
   };
 }
 

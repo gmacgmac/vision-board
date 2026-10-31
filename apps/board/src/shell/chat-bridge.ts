@@ -12,7 +12,8 @@
 // attaches from the controller, the chat side from the sidebar (chat-panel.ts); each detaches on its own.
 // It also holds the files attached to the next message (D-068 ruling 6: the composer takes them, the host
 // uploads): each goes up as it comes, its chip saying so, then ready with its path or refused with why;
-// the limits are checked here first and by the server again. The pure parts are unit-tested under Node.
+// the limits are checked here first and by the server again. Once ready, a PDF's pages and a big picture's fitted
+// copy are made (`ChatSide.copies`, pdf-pages.ts, D-071), which never holds Send. The pure parts are unit-tested under Node.
 import type { LedgerState, SelectedCard } from '#actions';
 import { boardBlocks, boardLocked, roundOf } from '#actions';
 import type {
@@ -24,6 +25,7 @@ import type { OperationInput, OperationOutput, PointerError } from '#format';
 import { clip } from '#format';
 import type { BoardSide } from '../board/chat-side.ts';
 import { FILE_BYTES, FILE_COUNT, attachedName, fileData, fileLabel } from './attached-file.ts';
+import type { MakeCopies } from './pdf-pages.ts';
 import * as chatWords from './words/chat.ts';
 
 /** The words of the stepper's link to the chat (packages/ui `CardUpdates.source`). */
@@ -86,6 +88,8 @@ export interface ChatSide {
   setFiles(files: readonly ComposerFile[]): void;
   /** Save one attached file (`attach_chat_file`). */
   upload(body: AttachFileBody): Promise<OperationOutput<'attach_chat_file'>>;
+  /** Pictures of what is attached, with the `readAttachment` flag on (pdf-pages.ts). */
+  copies?: MakeCopies | undefined;
   state(): ChatState;
   /** The agent id of the session on the open board, whose answers the context shows; undefined with none. */
   agent(): string | undefined;
@@ -130,6 +134,11 @@ export function createChatBridge(): ChatBridge {
   /** The files attached to the next message, with what the server answered for those it saved. */
   let held: (ComposerFile & { saved?: MessageFile })[] = [];
   let filesMade = 0;
+  /** Stopping each file's pictures, while they are being made. */
+  const making = new Map<string, () => void>();
+  const stopMaking = (keep: (id: string) => boolean = () => false) => {
+    for (const [id, stop] of making) if (!keep(id)) { stop(); making.delete(id); }
+  };
 
   const cards = (): SelectedCard[] => {
     const d = b?.data();
@@ -185,6 +194,8 @@ export function createChatBridge(): ChatBridge {
     start.forEach((go) => go());
   }
   function removeFile(id: string) {
+    making.get(id)?.();
+    making.delete(id);
     held = held.filter((f) => f.id !== id);
     showFiles();
   }
@@ -202,6 +213,8 @@ export function createChatBridge(): ChatBridge {
       const { file: saved } = await c!.upload({ name, type: file.type, data });
       const label = fileLabel(name);
       settle(id, { state: 'ready', saved: { path: saved.path, ...(label && { label }) } });
+      const stop = c?.copies?.(file, saved.path, { save: (body) => c!.upload(body), progress: ({ doing, note }) => settle(id, { doing, note }) });
+      if (stop) making.set(id, stop);
     } catch (err) { refused(chatWords.fileRefused((err as Error).message)); }
   }
 
@@ -243,6 +256,7 @@ export function createChatBridge(): ChatBridge {
         side.panel.removeEventListener(CHAT_CHANGE_EVENT, onChange);
         side.panel.removeEventListener(CHAT_FILES_EVENT, onFiles);
         side.panel.removeEventListener(CHAT_FILE_REMOVE_EVENT, onFileRemove);
+        stopMaking();
         c = null;
       };
     },
@@ -269,6 +283,7 @@ export function createChatBridge(): ChatBridge {
       // A refused file went with that message's chance: only one still uploading, or ready after it left, stays.
       const went = new Set(files.map((f) => f.path));
       held = held.filter((f) => f.state === 'uploading' || (f.saved && !went.has(f.saved.path)));
+      stopMaking((id) => held.some((f) => f.id === id));
       drawFiles();
       attach();
     },

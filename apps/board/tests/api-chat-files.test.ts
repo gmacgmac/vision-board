@@ -2,6 +2,7 @@
 // refusals `send_chat` gives a path it did not save, the prompt's one block, `message_in.files`, and the flag.
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ATTACHMENT_BYTES } from '../server/chat-files.ts';
@@ -265,4 +266,47 @@ test('F12: no address serves an attached file, by its path, encoded or under ano
     const r = await fetch(`${h.base}/${address}`, { headers: { Cookie: h.cookie } });
     assert.ok(!(await r.text()).includes(secret), address);
   }
+});
+
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1]).toString('base64');
+
+test('a PDF\'s pages go through the operation; the prompt names a folder and a count, then what to do, before the untrusted line', async () => {
+  const { file } = await attach('deck.pdf');
+  const saved = await h.ok('attach_chat_file', { body: { name: 'ignored', type: 'image/png', data: PNG, of: { path: file.path, page: 1, pages: 40 } } });
+  assert.match(saved.file.path, /\d+-deck-pages\/page-001-of-040\.png$/);
+  await h.fails('attach_chat_file', { body: { name: 'x', type: '', data: PNG, of: { path: file.path, page: 31, pages: 40 } } }, 422, 'invalid');
+  await h.fails('attach_chat_file', { body: { name: 'x', type: '', data: PNG, of: { path: file.path, page: 2 } } }, 422, 'invalid');
+  const agent = await h.join('Pages agent');
+  await h.fails('attach_chat_file', { body: { name: 'x', type: '', data: PNG, of: { path: file.path } } }, 403, 'forbidden', agent.client);
+  const dir = saved.file.path.slice(0, saved.file.path.lastIndexOf('/'));
+  const told = filesBlock({ files: [file], beside: { [file.path]: { kind: 'pages', folder: dir, first: 'page-001-of-040.png', last: 'page-001-of-040.png', saved: 1, total: 40 } } }).split('\n');
+  assert.equal(told[1], file.path);
+  assert.equal(told[2], `  Its pages as pictures, 1 of 40: ${dir}/page-001-of-040.png to page-001-of-040.png`);
+  assert.match(told[3]!, /^Open the pictures named under a file/);
+  assert.equal(told[4], UNTRUSTED);
+});
+
+test('the frame\'s page: its script inside, named by its hash, no network; with the flag off or no build, none, and either way framed only by the board', async () => {
+  const none = await fetch(`${h.base}/pdf-frame`);
+  assert.equal(none.status, 404);
+  assert.match(none.headers.get('content-security-policy')!, /^sandbox allow-scripts; default-src 'none'/);
+  fs.mkdirSync(path.join(h.dist, 'assets'), { recursive: true });
+  const js = 'const a = "</script><!-- <script>";';
+  fs.writeFileSync(path.join(h.dist, 'assets', 'pdf-frame-abc123.js'), js);
+  const res = await fetch(`${h.base}/pdf-frame`);
+  const [page, policy] = [await res.text(), res.headers.get('content-security-policy')!];
+  assert.equal(res.status, 200);
+  assert.equal(page.match(/<\/script/gi)!.length, 1, 'only the page\'s own end');
+  const script = /<script type="module">(.*)<\/script>/s.exec(page)![1]!;
+  assert.equal(new Function(`${script}; return a;`)(), '</script><!-- <script>', 'it means the same');
+  assert.ok(policy.includes(`'sha256-${createHash('sha256').update(script).digest('base64')}'`));
+  for (const part of ['sandbox allow-scripts', "default-src 'none'", "connect-src 'none'", "frame-ancestors 'self'", "base-uri 'none'", "form-action 'none'"]) assert.ok(policy.includes(part), part);
+  for (const part of ["'unsafe-eval'", "'unsafe-inline'", 'allow-same-origin', 'http:']) assert.ok(!policy.includes(part), part);
+  assert.equal(res.headers.get('x-dns-prefetch-control'), 'off');
+  const off = await startBoard({ chat: { adapters: fake.adapters }, flags: { readAttachment: false } });
+  try {
+    assert.equal((await fetch(`${off.base}/pdf-frame`)).status, 404);
+    const { file: there } = await attach('off.pdf', 'x', off);
+    await off.fails('attach_chat_file', { body: { name: 'x', type: '', data: PNG, of: { path: there.path, page: 1, pages: 1 } } }, 404, 'not-found');
+  } finally { await off.close(); }
 });

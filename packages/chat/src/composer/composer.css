@@ -2,7 +2,7 @@
    and Send, and one line under it (the keys, why Send waits, or why it is shut).
    --_* properties: chat.css. */
 chat-composer {
-  position: relative; display: grid; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3) var(--_space-3);
+  position: relative; display: flex; flex-direction: column; min-height: 0; gap: var(--_space-2); padding: var(--_space-2) var(--_space-3) var(--_space-3);
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink); border-top: 1px solid var(--_line);
 }
 chat-composer .chat-cmp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--_space-1) var(--_space-2); }
@@ -28,13 +28,13 @@ chat-composer .chat-cmp-label {
   font: var(--_bold) var(--_text-xs) / 1.2 var(--_font); letter-spacing: 0.07em; text-transform: uppercase; color: var(--_ink-subtle);
 }
 chat-composer .chat-cmp-box {
-  display: flex; align-items: flex-end; gap: var(--_space-2); padding: var(--_space-1) var(--_space-1) var(--_space-1) var(--_space-3);
+  flex: none; display: flex; align-items: flex-end; gap: var(--_space-2); padding: var(--_space-1) var(--_space-1) var(--_space-1) var(--_space-3);
   background: var(--_surface); border: 1px solid var(--_line-strong); border-radius: var(--_radius-lg);
   transition: border-color var(--_motion);
 }
 chat-composer .chat-cmp-box:focus-within { border-color: var(--_focus); box-shadow: 0 0 0 1px var(--_focus); }
 chat-composer .chat-cmp-text {
-  flex: 1; min-width: 0; min-height: 3em; max-height: 180px; field-sizing: content; padding: var(--_space-2) 0; resize: none;
+  flex: 1; min-width: 0; min-height: 3em; max-height: min(180px, 25vh); field-sizing: content; padding: var(--_space-2) 0; resize: none;
   font: var(--_text) / 1.45 var(--_font); color: var(--_ink-strong); background: none; border: 0; outline: 0;
 }
 chat-composer .chat-cmp-text::placeholder { color: var(--_ink-subtle); }
@@ -44,7 +44,7 @@ chat-composer .chat-cmp-send {
 }
 chat-composer .chat-cmp-send:hover:not(:disabled) { background: var(--_accent-fill-hover); }
 chat-composer .chat-cmp-send:disabled { color: var(--_ink-subtle); background: var(--_surface-sunken); cursor: default; }
-chat-composer .chat-cmp-line { margin: 0; font-size: var(--_text-xs); color: var(--_ink-subtle); }
+chat-composer .chat-cmp-line { flex: none; margin: 0; font-size: var(--_text-xs); color: var(--_ink-subtle); }
 chat-composer kbd {
   padding: 0 3px; font: var(--_text-xs) / 1.4 var(--_font-mono); color: var(--_ink);
   border: 1px solid var(--_line-strong); border-radius: 4px;
@@ -68,22 +68,33 @@ chat-composer[data-drop] .chat-cmp-drop {
   font: var(--_medium) var(--_text) / 1.2 var(--_font); color: var(--_ink-strong);
   background: var(--_accent-soft); border-radius: inherit;
 }
-/* Many files scroll in the row, and the room around each keeps its focus ring whole. */
-chat-composer .chat-chips:has([data-kind='file']) { max-height: min(220px, 40vh); margin: -3px; padding: 3px; overflow-y: auto; }
+/* The files take the height the box and the line leave, down to what the feed keeps (chat.css): many scroll in
+   the row, a refused one first, and the room around each keeps its focus ring whole. */
+chat-composer .chat-cmp-chips:has([data-kind='file']) { flex: 0 1 auto; flex-flow: column nowrap; align-items: stretch; min-height: 0; }
+chat-composer .chat-chips:has([data-kind='file']) { flex: 0 1 auto; min-height: 0; margin: -3px; padding: 3px; overflow-y: auto; }
+/* A short window: the keys and the label go, and the box is lower, leaving room for a refusal's reason. Why it is shut, or why Send waits, stays. */
+@media (max-height: 520px) {
+  chat-composer:not([data-shut]) .chat-cmp-line:has(kbd), chat-composer .chat-cmp-label { display: none; }
+  chat-composer .chat-cmp-text { min-height: 1.45em; max-height: 10vh; }
+}
 /* A file's chip: its mark, its name, its state in words, its remove button. */
 chat-composer .chat-chip[data-kind='file'] { padding-left: var(--_space-1); }
 chat-composer .chat-chip-s { flex: none; font: var(--_text-xs) / 1.2 var(--_font); color: var(--_ink); }
 chat-composer .chat-chip-x:active { background: var(--_line-strong); }
+/* Work still going on a file ("Reading pages… 12 of 30"): the count is long, so a row of its own keeps the name readable. */
+chat-composer li:has(> .chat-chip[data-doing]) { flex-basis: 100%; min-width: 0; }
+chat-composer .chat-chip[data-doing] { max-width: 100%; }
+chat-composer .chat-chip[data-doing] .chat-chip-t { flex: 0 1 auto; min-width: 0; }
 chat-composer .chat-cmp-spin { animation: chat-cmp-spin 900ms linear infinite; }
 @keyframes chat-cmp-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { chat-composer .chat-cmp-spin { animation: none; } }
-/* Refused: a row of its own, so the reason is read in full; the words carry no hue, the mark and the edge do. */
-chat-composer li:has(> .chat-chip[data-state='refused']) { flex-basis: 100%; min-width: 0; }
-chat-composer .chat-chip[data-state='refused'] {
+/* Refused, or ready with a note: a row of its own, so the words are read in full; they carry no hue. A refusal's mark and edge do. */
+chat-composer li:has(> .chat-chip:is([data-state='refused'], [data-note])) { flex-basis: 100%; min-width: 0; }
+chat-composer .chat-chip:is([data-state='refused'], [data-note]) {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: var(--_space-1); max-width: none;
-  padding: 0 var(--_space-2) var(--_space-1) var(--_space-1); background: var(--_surface);
-  border-color: var(--_danger); border-radius: var(--_radius);
+  padding: 0 var(--_space-2) var(--_space-1) var(--_space-1); background: var(--_surface); border-radius: var(--_radius);
 }
+chat-composer .chat-chip[data-state='refused'] { border-color: var(--_danger); }
 chat-composer .chat-chip[data-state='refused'] .chat-chip-i { color: var(--_danger); }
 chat-composer .chat-chip[data-state='refused'] .chat-chip-x:hover { background: var(--_surface-sunken); }
 chat-composer .chat-chip-why {

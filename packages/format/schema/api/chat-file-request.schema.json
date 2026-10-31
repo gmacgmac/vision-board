@@ -2,14 +2,26 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vision-board.invalid/schema/api/chat-file-request.schema.json",
   "title": "Attach a file to a chat message",
-  "description": "One file the person is attaching: its name as their system gives it (sanitised before it is used), its media type (`''` when the browser doesn't know it) and its bytes as base64.",
-  "$comment": "Was: api.md 164; D-068",
+  "description": "One file the person is attaching: its name as their system gives it (sanitised before it is used), its media type (`''` when the browser doesn't know it) and its bytes as base64. With `of`, a picture the page made from a file already attached: a PDF's page, or a copy of a picture that fits the limits.",
+  "$comment": "Was: api.md 164; D-068; `of`: api.md 168, D-071",
   "type": "object",
   "required": ["name", "type", "data"],
   "properties": {
     "name": {"type": "string", "maxLength": 1024, "description": "The file's name; the server keeps letters, digits, `.`, `-` and `_`, and never trusts the rest."},
     "type": {"type": "string", "maxLength": 255, "description": "The file's media type, as the browser reports it; `''` when unknown. Any type is taken."},
-    "data": {"type": "string", "description": "The file's bytes as standard base64, padded; at most 10 MB once decoded."}
+    "data": {"type": "string", "description": "The file's bytes as standard base64, padded; at most 10 MB once decoded, at most 5 MB with `of`."},
+    "of": {
+      "type": "object",
+      "description": "What this picture was made from. The server names it and saves it in a folder beside that file; `name` and `type` are not used.",
+      "required": ["path"],
+      "properties": {
+        "path": {"$ref": "https://vision-board.invalid/schema/chat/1/chat-event.schema.json#/$defs/path", "description": "The attached file's path, as this operation answered it."},
+        "page": {"type": "integer", "minimum": 1, "maximum": 30, "description": "The PDF's page this is a picture of (a PNG). Left out, this is a fitted copy of a picture (a PNG or a JPEG)."},
+        "pages": {"type": "integer", "minimum": 1, "maximum": 1000000, "description": "How many pages the PDF has, as the sandboxed reader found."}
+      },
+      "dependentRequired": {"page": ["pages"], "pages": ["page"]},
+      "unevaluatedProperties": false
+    }
   },
   "unevaluatedProperties": false
 }
