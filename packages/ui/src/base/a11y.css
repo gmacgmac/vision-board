@@ -2,6 +2,8 @@
    focus, in any host; a pattern states only an offset where 2px does not fit (inset rows -2px, small
    controls 1px, cards 3px). Visually hidden: words for screen readers only. Tokens only. */
 :where([class*='vb-'], [class*='vb-'] *):focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+/* What a pointer press focused draws no ring, whatever key comes next; what the keyboard focused always does (pointer-focus.ts). */
+:where([class*='vb-'], [class*='vb-'] *)[data-pointer-focus]:focus-visible { outline: none; }
 .vb-visually-hidden,
 vb-region .vb-region-count-words,
 vb-region .vb-region-fresh-words,

@@ -76,7 +76,7 @@
    look; the chip draws the hover and pressed looks above and the focus ring the select would. */
 .vb-menu-face { position: relative; cursor: pointer; }
 .vb-menu-over { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font: inherit; cursor: pointer; }
-.vb-menu-face:has(.vb-menu-over:focus-visible), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
+.vb-menu-face:has(.vb-menu-over:focus-visible:not([data-pointer-focus])), .vb-menu-face[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset); }
 .vb-chip[data-tone='flag'] .vb-btn-icon { display: block; width: 14px; height: 14px; color: var(--vb-state-flag); }
 
 /* Stage and world */

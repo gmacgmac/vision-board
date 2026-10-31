@@ -33,7 +33,6 @@ vb-node:focus-visible { outline: var(--vb-focus-w) solid var(--vb-focus); outlin
 /* A card a pointer press focused (data-pointer-focus, set by the page) draws no ring when a key that
    moves no focus makes the browser match :focus-visible (Z, Esc, Space); focus the keyboard moved
    never carries it, so the ring always shows for the keyboard (pointer-focus ring, 2026-10-09). */
-vb-node[data-pointer-focus]:focus-visible { outline: none; }
 /* Selected (3_FE_01 ruling 2, mockup 05 `.card.is-sel`): 1.5px in total in the card's own colour
    lifted toward the strong ink (--vb-select-lift) and a little more saturated (--vb-select-chroma,
    review polish round 2 ruling 5), a half-pixel ring over the 1px border and the top hairline at

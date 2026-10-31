@@ -1,5 +1,5 @@
-// The focus ring on a card a pointer focused (cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md):
-// a key that moves no focus (Z, Esc, Space) draws no ring on it; focus moved by the keyboard (Tab,
+// The focus ring on what a pointer focused, a card or any control (cortex-tasks/board/2026-10-09_board-app_pointer-focus-ring.md):
+// a key that moves no focus (a modifier, Z, Esc, Space) draws no ring on it; focus moved by the keyboard (Tab,
 // Shift+Tab, J) shows it again, and a card the keyboard focused keeps it through Z (WCAG 2.4.7).
 // Runs on the worker's roadmap board (servers.ts) and writes nothing to it. Focus never moves the board
 // (review-polish ruling 11): those tests draw a board of their own (agent-board.ts).
@@ -58,6 +58,36 @@ test('focus moved by the keyboard from a clicked card shows the ring: Tab, Shift
   await page.keyboard.press('j');
   await expect(card(page, 12)).not.toBeFocused();
   expect(await ringOnFocused(page)).toBe('solid');
+});
+
+test('a clicked button shows no ring when a key is pressed; Tab to the next one shows it', async ({ page }) => {
+  await openBoard(page);
+  await page.getByRole('button', { name: 'Zoom out' }).click();
+  await expect(page.getByRole('button', { name: 'Zoom out' })).toBeFocused();
+  expect(await ringOnFocused(page)).toBe('none');
+  for (const key of ['Shift', 'Meta', 'Alt', 'Control']) {
+    await page.keyboard.press(key);
+    expect(await ringOnFocused(page), key).toBe('none');
+  }
+  await page.keyboard.press('Tab');
+  expect(await ringOnFocused(page)).toBe('solid');
+});
+
+test('a clicked dropdown shows no ring when a modifier is pressed', async ({ page }) => {
+  await openBoard(page);
+  await page.locator('#board').click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Shift');
+  expect(await ringOnFocused(page)).toBe('none');
+});
+
+test('a clicked text box keeps its ring', async ({ page }) => {
+  await openBoard(page);
+  await page.keyboard.press('t');
+  const box = page.locator('chat-composer textarea');
+  await box.click();
+  await expect(box).toBeFocused();
+  await expect(box).not.toHaveAttribute('data-pointer-focus');
 });
 
 test('a card the keyboard focused keeps its ring through Z', async ({ page }) => {

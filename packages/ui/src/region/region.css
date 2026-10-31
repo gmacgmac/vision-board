@@ -105,7 +105,6 @@ vb-region .vb-region-head h2 {
 }
 /* Focused by a click inside the container (data-pointer-focus, set by the page, as on a card): no ring
    when a key that moves no focus (Z) lights :focus-visible; focused by the keyboard it keeps one. */
-vb-region .vb-region-head h2[data-pointer-focus]:focus-visible { outline: none; }
 vb-region .vb-region-count { flex: none; white-space: nowrap; font-size: var(--vb-text-sm); color: var(--vb-ink-subtle); }
 /* "1/1" to the eye (round 2 ruling 1); its words, "1 of 1 answered", for screen readers only (base/a11y.css). */
 /* "3 retired" (retiredMarker flag; round 2 ruling 1, "3 cards retired" in its name and tooltip): the

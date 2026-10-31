@@ -15,6 +15,8 @@ export const theEventDoesNotFit = 'The event does not fit the ledger. Fix the fi
 
 // ---- lock.ts
 export const anotherBoardServerHoldsThis = (host: string, pid: number, port: number): string => `Another board server holds this ledger: computer "${host}", process ${pid}, port ${port}, `;
+/** What to do, when the board that holds it is on this computer (the terminal's message at start). */
+export const itIsAlreadyRunning = (port: number, pid: number): string => `It is at http://localhost:${port}, so open that. To start this one instead, stop the run that started it, or: kill ${pid}`;
 export const runningSinceStopThatServer = (started: string): string => `running since ${started}. Stop that server first.`;
 
 // ---- open-folder.ts

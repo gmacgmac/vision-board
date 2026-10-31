@@ -23,6 +23,7 @@ import { createBoardServer } from './server/app.ts';
 import { watchBuild } from './server/build-watch.ts';
 import { DATA_DIR, ledgerPath, openLedger } from './server/ledger.ts';
 import { holderMessage, takeLock } from './server/lock.ts';
+import * as serverFoldersWords from './server/words/server-folders.ts';
 import { startFolder } from './server/recent.ts';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -54,6 +55,7 @@ const FILE = ledgerPath(PROJECT);
 const taken = takeLock(path.join(PROJECT, DATA_DIR), PORT);
 if (!taken.ok) {
   console.error(holderMessage(taken.holder));
+  if (taken.holder.host === os.hostname()) console.error(serverFoldersWords.itIsAlreadyRunning(taken.holder.port, taken.holder.pid));
   process.exit(1);
 }
 const { lock } = taken;

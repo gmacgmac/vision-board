@@ -29,7 +29,7 @@ vb-region .vb-mtile small, vb-region .vb-mode-line {
    and focus with data-look. */
 vb-region .vb-mtile:hover, vb-region .vb-mtile[data-hover] { background: var(--vb-surface-sunken); color: var(--vb-ink-strong); border-color: var(--vb-line-strong); }
 vb-region .vb-mtile:active, vb-region .vb-mtile[data-look='pressed'] { transform: translateY(1px); }
-vb-region .vb-mtile:focus-visible, vb-region .vb-mtile[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
+vb-region .vb-mtile:focus-visible:not([data-pointer-focus]), vb-region .vb-mtile[data-look='focus'] { outline: var(--vb-focus-w) solid var(--vb-focus); outline-offset: var(--vb-focus-offset-tight); }
 vb-region .vb-mtile[data-current] { border-color: var(--vb-accent-line); background: var(--vb-accent-soft); color: var(--vb-accent-text); }
 vb-region .vb-mode-line { display: none; margin: 0; padding: 0 var(--vb-space-1); }
 vb-region .vb-mode-foot {

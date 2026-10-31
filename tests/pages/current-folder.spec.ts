@@ -65,7 +65,16 @@ test('the chip is first in the toolbar, names the folder, gives the path in its 
   await expect(dialog(page)).toBeVisible();
 });
 
-for (const width of [1500, 1100, 1024, 768]) {
+test('at 768px the chip gives way to its icon alone, the whole path still in its tooltip and name', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 800 });
+  await openLong(page);
+  await expect(chip(page)).toHaveAttribute('title', `~/projects/${LONG_NAME}`);
+  await expect(chip(page).locator('.vb-folder-chip-name')).toBeHidden();
+  await expect(chip(page)).toHaveAccessibleName(new RegExp(LONG_NAME));
+  expect((await chip(page).boundingBox())!.width).toBeLessThanOrEqual(40);
+});
+
+for (const width of [1500, 1100, 1024]) {
   test(`at ${width}px a long folder name is cut with an ellipsis and the toolbar stays whole`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await openLong(page);
