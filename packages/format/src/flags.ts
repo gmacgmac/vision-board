@@ -273,11 +273,6 @@ export const FLAGS = {
     default: true,
     description: 'The header takes one of three forms by its own width, not the window\'s (board/chrome/header-tier.ts; needs versionView and toolbarMenu): full, one path "folder / board / version" and everything with its words; half, Version and Containers in "⋯" and the zoom as a small menu; a third, the board\'s name, a compact count, Send, Chat and "⋯", which holds the rest. Off, the toolbar is as it was.',
   },
-  boardChromeInMount: {
-    // On once the move held every page spec; removed at the plugin-mode set's close (maintainer, 2026-10-31, point 373; CHROME_01).
-    default: true,
-    description: 'The board\'s controls (toolbar, strips, dialogs, search, help) draw inside `mount`\'s root, so any host gets the whole board and the standalone page holds only what is truly its own. Off, the page draws them around the board as before.',
-  },
   readAttachment: {
     // On by default (maintainer, 2026-10-30, points 361-368, D-071; read-attachment). Read on the page and the server (VB_FLAGS).
     default: true,

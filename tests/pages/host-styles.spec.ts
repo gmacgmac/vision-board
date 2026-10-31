@@ -130,7 +130,7 @@ for (const theme of THEMES) {
       // The same board as a pane at the left of a wide page: the page puts it there before it draws.
       await page.addInitScript((css) => {
         addEventListener('DOMContentLoaded', () => document.head.append(Object.assign(document.createElement('style'), { textContent: css })));
-      }, `body > .vb-board:not(.vb-stage) { right: ${WIDE - PANE}px; }`);
+      }, `body > .vb-board { right: ${WIDE - PANE}px; }`);
       await page.setViewportSize({ width: WIDE, height: 1000 });
       await openBoard(page, { base: roadmap.base, query: '?flags=-chatPanel' });
       expect((await board.boundingBox())?.width).toBe(PANE);

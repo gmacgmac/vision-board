@@ -5,9 +5,8 @@
      or `/`, for words (cardSearch flag), the New board / Rename board dialog (boardEdit flag) and the Archived
      list (archiveBoard flag). Notes open in a bubble beside their card (board/notes/notes.ts). Notices and
      confirmations are the host's (`notify`, `confirm`). The stage is the board's own element, which the
-     framework-free board draws in; `stage` is the flag-off page's, which draws its own (boardChromeInMount). -->
+     framework-free board draws in. -->
 <script lang="ts">
-  import type { Snippet } from 'svelte';
   import * as commonWords from '../words/common.ts';
   import * as chromeBoardWords from '../words/chrome-board.ts';
   import { provideChrome, type Chrome } from './chrome.svelte.ts';
@@ -22,12 +21,11 @@
   import GoToCard from './GoToCard.svelte';
   import ArchivedDialog from './ArchivedDialog.svelte';
 
-  let { chrome, board, send, stage }: {
+  let { chrome, board, send }: {
     chrome: Chrome;
     /** The board's controls, once it is mounted. */
     board: () => BoardControls | null;
     send: () => Promise<string | null>;
-    stage?: Snippet;
   } = $props();
 
   // svelte-ignore state_referenced_locally
@@ -62,9 +60,7 @@
     onreview={(n) => board()?.proposals.review(n)} onacceptall={() => void board()?.proposals.acceptAll()} />
 {/if}
 
-{#if stage}{@render stage()}{:else}
-  <svelte:element this={pageWide ? 'main' : 'div'} id={id('stage')} class="vb-stage vb-ground" role={pageWide ? undefined : 'group'} tabindex="-1" aria-label={commonWords.board}></svelte:element>
-{/if}
+<svelte:element this={pageWide ? 'main' : 'div'} id={id('stage')} class="vb-stage vb-ground" role={pageWide ? undefined : 'group'} tabindex="-1" aria-label={commonWords.board}></svelte:element>
 <!-- The selection, perceivable without colour (3_FE_01 ruling 9): a polite live region. -->
 <p id={id('selection-status')} class="vb-visually-hidden" role="status">{shown.selection}</p>
 

@@ -24,7 +24,5 @@ kbd {
 }
 code { font-family: var(--vb-font-mono); }
 /* Where the page puts the board: the whole window, the chat over its right edge (the root's stage shrinks by
-   --vb-chat-w, ChatSidebar.svelte, board.css). The root takes no z-index, so the header's menus still open over the chat.
-   With the boardChromeInMount flag off the page's <main> is the stage itself. */
-body > .vb-board:not(.vb-stage) { position: absolute; inset: 0; }
-body > .vb-stage { position: fixed; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) var(--vb-chat-w, 0px) 0 0; }
+   --vb-chat-w, ChatSidebar.svelte, board.css). The root takes no z-index, so the header's menus still open over the chat. */
+body > .vb-board { position: absolute; inset: 0; }

@@ -191,6 +191,9 @@ test('cards off screen are cheap, keep their name and order, and draw again when
 // 3_FE_01 ruling 10: selecting is view state, so it touches only the cards whose state changed:
 // no measuring, no placing, no layout, no fetch.
 test('selecting 50 cards updates exactly those 50 and lays out none; clearing updates the same 50', async ({ page }) => {
+  // Its budget is the counts, not the clock: fifty rounds of key, focus and click take about 26 s
+  // alone at low priority, so the default 30 s failed it under any load (tracker M29).
+  test.setTimeout(90_000);
   await open(page);
   await counts(page);
   await reset(page);

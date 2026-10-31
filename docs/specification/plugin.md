@@ -292,7 +292,7 @@ For the maintainer's review (D-074 rule 7). Each is decided for now, and each is
 5. **`status` and `send` on the view**, beyond PLAN's list. Standalone's chat reads `status`, and a host may want a button of its
    own. Keep; the status is wide, so only what this page names is promised.
 6. **`#board` still gives `board`.** The folder's `mount` leaves it out (`plugin/view.ts`), but the `#board` name, used inside
-   this repo, does not. It goes when `boardChromeInMount`'s off branch does, once `App.svelte` needs only its test door.
+   this repo, does not: `App.svelte` needs its test door.
 7. **The root is a size container** (`apps/board/src/styles/board.css`), so `100cqh` caps a menu by the pane. It asks a host for a definite
    size, which its absolute children needed already.
 8. **The sheet touches `:root`**: the tokens and `color-scheme: light dark`, whose lowered form makes `data-theme` work only there.

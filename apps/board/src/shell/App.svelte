@@ -1,13 +1,10 @@
 <!-- The standalone page, one host of the board (board/mount.ts, host.ts; page-host.ts): the board's root fills it
      and holds the board's controls (board/chrome/), and the page keeps its own: the skip link, the chat sidebar
      (chatPanel flag), toast, the confirm dialog, the folder picker (openFolder flag) and the parts it draws in the
-     board's header (page-parts.ts). With the boardChromeInMount flag off the page draws the same controls round
-     its own <main>, which is then the board's root. -->
+     board's header (page-parts.ts). -->
 <script lang="ts">
-  import * as commonWords from '../board/words/common.ts';
   import * as chromeBoardWords from '../board/words/chrome-board.ts';
   import { onMount, tick, untrack } from 'svelte';
-  import { BoardChrome, createChrome } from '../board/chrome/index.ts';
   import { mount, type MountedBoard } from '../board/mount.ts';
   import { exposeWork } from '../board/work.ts';
   import { askConfirm, shell, toast } from './shell.svelte.ts';
@@ -32,8 +29,6 @@
   const bridge = createChatBridge();
   shell.chatPanel = flagOn('chatPanel', pageFlags());
   const host = createPageHost(bridge.host, pageParts());
-  /** Flag off: the page draws the board's controls round its own stage, with their state from the status. */
-  const pageChrome = flagOn('boardChromeInMount', pageFlags()) ? null : createChrome(host, document.documentElement, '');
   const openFolder = flagOn('openFolder', pageFlags());
   /** A tab close, a reload and another folder ask while a note holds unsaved words (M11). */
   const leavePrompt = flagOn('leavePrompt', pageFlags());
@@ -79,7 +74,7 @@
   onMount(() => {
     const v = mount(root!, host);
     // What the page shows of the board is its status, mirrored into the page's state.
-    const mirror = (patch: Partial<typeof v.status.now>) => { Object.assign(shell, patch); if (pageChrome) Object.assign(pageChrome.state, patch); };
+    const mirror = (patch: Partial<typeof v.status.now>) => { Object.assign(shell, patch); };
     mirror(v.status.now);
     const unmirror = v.status.on(mirror);
     // The chat keeps level with the stage's top, under the header and any strip.
@@ -100,13 +95,7 @@
 </script>
 
 <a class="vb-skip" href="#stage">{chromeBoardWords.skipToTheBoard}</a>
-{#if pageChrome}
-  <BoardChrome chrome={pageChrome} board={() => view?.board ?? null} send={() => view?.send() ?? Promise.resolve(chromeBoardWords.theBoardIsNotReady)}>
-    {#snippet stage()}<main id="stage" class="vb-stage vb-ground" tabindex="-1" aria-label={commonWords.board} bind:this={root}></main>{/snippet}
-  </BoardChrome>
-{:else}
-  <div bind:this={root}></div>
-{/if}
+<div bind:this={root}></div>
 {#if shell.chatPanel}<ChatSidebar onhost={hostChat} onload={() => chat?.load() ?? Promise.resolve(false)} />{/if}
 
 <Toast />

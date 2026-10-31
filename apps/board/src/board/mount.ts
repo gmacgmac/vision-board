@@ -2,8 +2,7 @@
 // the board's elements inside `root` and gives back nclite's view (`unmount`, `pageChip`, `reveal`,
 // and `unsaved` and `leave`, which a host asks before it unmounts: `unmount` itself never asks),
 // plus what a host shows of the board: its status (status.ts). `root` holds the whole board: its header,
-// strips, dialogs and search (chrome/, boardChromeInMount flag) round the stage the cards draw in; off, `root`
-// is the stage and the standalone page draws the controls (`BoardControls`). It adds no element outside
+// strips, dialogs and search (chrome/) round the stage the cards draw in. It adds no element outside
 // `root`, every id it sets carries the mount's prefix (mount-ids.ts), a modal's keys stop at the root, and
 // nothing outlives `unmount`: every listener on the document or the window goes, the image view goes,
 // and `root` is emptied and given back as it was. Each mount has its own calls (io.ts), status and
@@ -11,7 +10,7 @@
 import { boardChip, numberOf } from '#actions';
 import { mountChrome } from './chrome/index.ts';
 import type { BoardHost, BoardPage, BoardView } from './host.ts';
-import { flagOf, memoryStore } from './host.ts';
+import { memoryStore } from './host.ts';
 import { createIo } from './io.ts';
 import type { Board, BoardElements } from './controller.ts';
 import { createBoard } from './controller.ts';
@@ -19,12 +18,9 @@ import { takeIdPrefix } from './mount-ids.ts';
 import type { Status } from './status.ts';
 import { createStatus, initialStatus } from './status.ts';
 import * as boardWords from './words/board.ts';
-import * as commonWords from './words/common.ts';
 
 /** The class a host's root takes: the board's scope and its `@container vb-board` (D-061). */
 export const BOARD_ROOT = 'vb-board';
-/** The classes the root takes when it is the board's stage (boardChromeInMount flag off). */
-const STAGE_CLASSES = [BOARD_ROOT, 'vb-stage', 'vb-ground'];
 const SVG = 'http://www.w3.org/2000/svg';
 
 /** What the board's controls call (chrome/), and the standalone page's test door (`rebuild`, `idle`,
@@ -72,19 +68,15 @@ function build(stage: HTMLElement): BoardElements & { message: HTMLElement } {
 
 /** Mount the board in `root`, an element the host gives (empty, or holding only what it drew). */
 export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
-  const inMount = flagOf(host, 'boardChromeInMount');
-  const added = (inMount ? [BOARD_ROOT] : STAGE_CLASSES).filter((c) => !root.classList.contains(c));
+  const added = root.classList.contains(BOARD_ROOT) ? [] : [BOARD_ROOT];
   root.classList.add(...added);
-  const own = inMount ? [] : (['tabindex', 'aria-label'] as const).filter((a) => !root.hasAttribute(a));
-  if (own.includes('tabindex')) root.tabIndex = -1;
-  if (own.includes('aria-label')) root.setAttribute('aria-label', commonWords.board);
   const status = createStatus();
   const ids = takeIdPrefix();
   const store = host.store ?? memoryStore();
   let board!: Board;
   const send = () => host.chat.send(() => board.send());
-  const chrome = inMount ? mountChrome(root, host, { status, ids: ids.prefix, store, board: () => board, send }) : null;
-  const stage = chrome?.stage ?? root;
+  const chrome = mountChrome(root, host, { status, ids: ids.prefix, store, board: () => board, send });
+  const stage = chrome.stage;
   // A modal of the board's (a dialog, the zoomed image) closes on the browser's own Esc, which a
   // `preventDefault` would stop: so a key pressed in one goes no further than the root, and a host never
   // acts on it as well.
@@ -158,10 +150,9 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       ids.release();
       stage.removeEventListener('pointerup', takeFocus);
       root.removeEventListener('keydown', keepModalKeys);
-      chrome?.unmount();
+      chrome.unmount();
       root.replaceChildren();
       root.classList.remove(...added);
-      for (const a of own) root.removeAttribute(a);
     },
   };
 }

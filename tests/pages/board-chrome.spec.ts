@@ -1,7 +1,7 @@
-// The board's controls inside `mount`'s root (boardChromeInMount flag; plugin-mode CHROME_01, M8, M27). A fake host
+// The board's controls inside `mount`'s root (plugin-mode CHROME_01, M8, M27). A fake host
 // with nothing of `shell/` gets the whole board: the header in its pane, search, help and the dialogs; what is the
 // standalone page's (Theme, its folder, Chat) is absent and the header reflows. The standalone page has the
-// same controls in its root, the chat beside them; with the flag off it draws them round its own stage.
+// same controls in its root, the chat beside them.
 import { expect, test } from './helpers.ts';
 import { call, LINES, open } from './board-host-page.ts';
 import { startRoadmapServer } from './roadmap-server.ts';
@@ -97,19 +97,6 @@ test('the standalone page holds the controls in the board\'s root, and the chat 
     const row = (await hide.boundingBox())!;
     expect(row.x + row.width).toBeGreaterThan(chat!.x);
     expect(await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('button')?.id, [row.x + row.width - 4, row.y + row.height / 2])).toBe('hide');
-  } finally {
-    await roadmap.close();
-  }
-});
-
-test('with the boardChromeInMount flag off the page draws the same controls round its own stage', async ({ page }) => {
-  const roadmap = await startRoadmapServer();
-  try {
-    await openBoard(page, { base: roadmap.base, query: '?flags=-boardChromeInMount' });
-    await expect(page.locator('body > header.vb-toolbar')).toBeVisible();
-    await expect(page.locator('body > main#stage.vb-board.vb-stage')).toBeVisible();
-    await page.locator('#toolbar-menu').click();
-    await expect(page.locator('#theme')).toBeVisible();
   } finally {
     await roadmap.close();
   }

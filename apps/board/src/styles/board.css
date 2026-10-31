@@ -10,8 +10,9 @@
    chat, narrower than the root. A host's own `position` on its root wins (`:where`). */
 :where(.vb-board) { position: relative; }
 /* The root's height is what a control caps by (100cqh: header.css, key-help.css), as the window's was. Everything in
-   it is absolute, so it gives up no height of its own: a host sizes it. (With boardChromeInMount off, the stage is the root.) */
-.vb-board:not(.vb-stage) { container-type: size; }
+   it is absolute, so it gives up no height of its own: a host sizes it. The class is named twice to
+   win over the inline-size container of packages/ui's root.css, which sets the name. */
+.vb-board.vb-board { container-type: size; }
 .vb-board > .vb-stage {
   position: absolute; inset: calc(var(--vb-toolbar-h) + var(--vb-strip-h, 0px) + var(--vb-banner-h, 0px)) var(--vb-chat-w, 0px) 0 0;
   container: vb-board / inline-size;

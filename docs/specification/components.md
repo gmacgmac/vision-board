@@ -198,8 +198,7 @@ host; nclite's pane will be another.
   class is its `@container`, D-061) and gives back the contract's view (`board/host.ts` `BoardView`:
   `unmount`, `pageChip`, `reveal`, `unsaved`, `leave`) plus what a host draws around it: `status` (`board/status.ts`
   `Status`, a plain observable of `BoardStatus`: the counts, versions, open lists, picker) and `board`
-  (`mount.ts` `BoardControls`: the standalone page's own door, what its controls call with `boardChromeInMount` off and its
-  test door; no chat goes through them, and the plugin's folder leaves it out, `plugin/view.ts`, `docs/specification/plugin.md`). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
+  (`mount.ts` `BoardControls`: what the board's controls call, and the standalone page's test door; no chat goes through them, and the plugin's folder leaves it out, `plugin/view.ts`, `docs/specification/plugin.md`). `send()` is Send to agent, through `host.chat.send`. `unmount` removes every listener the
   board added on the document or the window, takes the zoomed image view away (`card-images.ts`
   `destroy`), and empties `root`, giving it
   back without the classes and attributes it added. Each mount has its own calls (`io.ts` `createIo`),
@@ -282,7 +281,7 @@ host; nclite's pane will be another.
   own, `page` (`BoardPage`: which board opens first, the board opened, starting again, the person's
   cookie, and `parts`, the page's own controls in the header). Without `page` the first board opens and, with
   none left, the board starts again in place.
-- **The board's controls** (`board/chrome/`, `boardChromeInMount` flag, tracker M8, M27): `mount` draws the whole board in
+- **The board's controls** (`board/chrome/`, tracker M8, M27): `mount` draws the whole board in
   `root`: the header, the strips, the reply panel, search, help and the New board, Rename and Archived dialogs
   (`chrome/index.ts` `mountChrome`, `BoardChrome.svelte`), round the stage the cards draw in. They are Svelte,
   compiled inside the plugin's bundle; no Svelte type crosses `host.ts`, and only `chrome/` may import it
@@ -291,10 +290,9 @@ host; nclite's pane will be another.
   `host.page.parts` (`BoardPageParts`: Theme, Centre cards, its folder, Chat), each a function that draws into an
   element of the header's taking no room (`.vb-part`); absent, they are absent and the header reflows. The root is
   the containing block (`:where(.vb-board)`, a host's own `position` wins), and the stage keeps its own
-  `@container vb-board`, narrower than the root beside a chat. Off, `root` is the stage and the standalone page
-  draws the same `BoardChrome` round it. Proven by `tests/pages/board-chrome.spec.ts` (a host's whole board,
-  `/` and `?` inside its root and the host's outside it; the page's chat beside them, under the header's menus;
-  the flag off), `tests/pages/board-host.spec.ts` (two boards, no id twice) and `tests/pages/host-styles.spec.ts`.
+  `@container vb-board`, narrower than the root beside a chat. Proven by `tests/pages/board-chrome.spec.ts` (a host's whole board,
+  `/` and `?` inside its root and the host's outside it; the page's chat beside them, under the header's menus),
+  `tests/pages/board-host.spec.ts` (two boards, no id twice) and `tests/pages/host-styles.spec.ts`.
 - **The host's chat** (`board/host.ts` `BoardChat`; the board's side is `board/chat-side.ts` `bindChat`, D-074). The
   board keeps two live chips attached (`chat.attach(key, chip | null)`): `selection` and `answers`
   (`#actions` `selectionChip`, `answersChip`), replaced as they change, none on a past version, taken back at
