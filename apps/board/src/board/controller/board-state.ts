@@ -10,6 +10,8 @@ export function createBoardState() {
     data: null as BoardData | null,
     /** A draw waiting for the next frame, so lines that land together draw once (approach 5). */
     frame: 0,
+    /** The board was destroyed: a read still on its way applies nothing. */
+    stopped: false,
     /** The waiting draw starts from scratch (the state was read afresh). */
     fresh: false,
     /** The waiting draw shows lines in which the agent drew on this board (`board.drawn`). */

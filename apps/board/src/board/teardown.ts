@@ -9,3 +9,14 @@ export function finishAll(steps: readonly unknown[]): void {
     try { step(); } catch (err) { console.error(err); }
   }
 }
+
+/** Hears `listener` through a host's `on`, and gives back the stop that holds whatever the host's unsubscribe does: one
+ *  that does nothing, or returns nothing, still leaves a stopped mount deaf. Every subscription to the host comes through here. */
+export function hearUntilStopped<A extends unknown[]>(on: (heard: (...args: A) => void) => unknown, listener: (...args: A) => void): () => void {
+  let hearing = true;
+  const off = on((...args) => { if (hearing) listener(...args); });
+  return () => {
+    hearing = false;
+    finishAll([off]);
+  };
+}

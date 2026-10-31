@@ -28,12 +28,14 @@ function hostFor(o = {}) {
   const kept = new Map();
   let muted = !!o.muted;
   let badRead = o.firstRead;
+  /** Every read fails this way until it is cleared (`readsDown`, below). */
+  let readsDown = null;
   const made = createChat(o);
   const record = { notices: [], confirms: [], answer: true, calls: [], refused: [] };
   const host = {
     async api(path, init) {
-      if (badRead && path.startsWith('ledger')) {
-        const how = badRead;
+      if ((badRead || readsDown) && path.startsWith('ledger')) {
+        const how = readsDown ?? badRead;
         badRead = undefined;
         record.calls.push(`${init.method ?? 'GET'} ${path}`);
         if (how === 'reject') throw new Error('The engine is starting');
@@ -47,7 +49,7 @@ function hostFor(o = {}) {
     events(listener) {
       const l = (e) => { if (!muted) listener(e); };
       boardListeners.add(l); heardBoard.add(l);
-      return () => { boardListeners.delete(l); heardBoard.delete(l); };
+      return o.plainOn ? undefined : () => { boardListeners.delete(l); heardBoard.delete(l); };
     },
     chat: made.chat,
     settings: {
@@ -68,7 +70,7 @@ function hostFor(o = {}) {
   const catchUp = () => { muted = false; for (const l of heardBoard) l({ plugin: manifest.id, ref: {} }); };
   const changeSetting = (key, value) => { settings[key] = value; for (const l of settingsHeard) l(); };
   const subscribers = () => heardBoard.size + settingsHeard.size + made.statusListeners();
-  return { host, made, record, kept, changeSetting, subscribers, mute, catchUp };
+  return { host, made, record, kept, changeSetting, subscribers, mute, catchUp, setReadsDown: (how) => { readsDown = how; } };
 }
 
 let current = null;
@@ -155,6 +157,7 @@ window.fakeHost = {
   statusHeard: () => statusHeard,
   mute: () => current.mute(),
   catchUp: () => current.catchUp(),
+  readsDown: (how) => current.setReadsDown(how),
   pageChip: () => current.view.pageChip(),
   reveal: (ref) => current.view.reveal(ref),
   send: () => current.view.send(),

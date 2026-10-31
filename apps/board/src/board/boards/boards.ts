@@ -77,6 +77,12 @@ export function createBoards(d: BoardsDeps): Boards {
   let retrying: Promise<readonly string[]> | null = null;
   /** Stopped while the first read was on its way (`unmount`): it opens nothing, and nothing follows. */
   let stopped = false;
+  /** A read failed and none has worked since: one notice for all of it, however many events come meanwhile. */
+  let down = false;
+  function failed(err: unknown) {
+    if (!down && !stopped) d.fail(err instanceof ApiError ? err : new ApiError(boardsWords.couldNotReadTheBoard));
+    down = true;
+  }
   const waiting = [boardsWords.noBoardsYetWaitingFor, ...(d.page.help?.waiting ? [d.page.help.waiting] : [])].join('\n');
   const kept = createKeptView(d.vp, d.id, d.keepView, d.store);
   const { status } = d;
@@ -173,11 +179,11 @@ export function createBoards(d: BoardsDeps): Boards {
         if (stopped) return;
         // An engine still starting is ordinary for a host, and a reload is not its to give: the board says
         // so, and the next change event reads again, with no retry of its own (`listed`).
-        d.fail(err instanceof ApiError ? err : new ApiError(boardsWords.couldNotReadTheBoard));
+        failed(err);
         d.say(d.page.help?.unreachable ?? boardsWords.couldNotReadTheBoard);
         retrying = wanted;
       }
-      unwatch = d.live.watch(d.fail);
+      unwatch = d.live.watch(failed, () => { down = false; });
     },
     switchTo,
     jump,

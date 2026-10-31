@@ -75,8 +75,11 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
   const ids = takeIdPrefix(!!host.page);
   const store = host.store ?? memoryStore();
   let board!: Board;
+  /** `unmount` ran: whatever a host keeps calling on the view does nothing. */
+  let gone = false;
   /** Send to agent. A host's `send` that rejects (a `fetch` that failed) is Send's error state, as words it answers are. */
   const send = async (): Promise<string | null> => {
+    if (gone) return null;
     try { return (await host.chat.send(() => board.send())) ?? null; } catch (err) {
       console.error(err);
       return boardWords.theChatCouldNotSend;
@@ -127,15 +130,17 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
     get board() { return board; },
     status,
     send,
-    unsaved: () => board.unsaved(),
-    leave: () => board.leave(),
+    unsaved: () => !gone && board.unsaved(),
+    leave: () => (gone ? Promise.resolve(true) : board.leave()),
     pageChip() {
+      if (gone) return null;
       const s = board.ledger();
       const id = board.id();
       const chip = s && id ? boardChip(s, id) : undefined;
       return chip && !('refused' in chip) ? chip : null;
     },
     reveal(ref) {
+      if (gone) return;
       // Another board opens first, and may ask (a note's unsaved words, `Board.switchTo`): what `ref`
       // names is shown only once it has opened; Cancel shows nothing. One the ledger does not hold yet
       // opens when its line arrives (`Board.jump`).
@@ -144,6 +149,7 @@ export function mount(root: HTMLElement, host: BoardHost): MountedBoard {
       void (board.ledger()?.boards.has(to) ? board.switchTo(to) : board.jump(to)).then((ok) => { if (ok && board.id() === to) show(ref); });
     },
     unmount() {
+      gone = true;
       finishAll([stop, ids.release, () => stage.removeEventListener('pointerup', takeFocus), () => root.removeEventListener('keydown', keepModalKeys),
         chrome.unmount, () => root.replaceChildren(), () => root.classList.remove(...added)]);
     },

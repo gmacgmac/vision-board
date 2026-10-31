@@ -36,10 +36,16 @@
   box-sizing: border-box;
 }
 /* An svg or a picture carries its size, and an svg its paint, as attributes, which `all: revert` would take away: so
-   the properties a host's rule on them might set, one by one (a Tailwind-like reset's `display`, `max-width`, `height`). */
+   the properties a host's rule on them might set, one by one (a Tailwind-like reset's `display`, `max-width`, `height`,
+   an icon set's `fill: currentColor`). Only two svgs of the board's carry paint as attributes, and only these values
+   (AppIcon, ButtonIcon); `guest.spec.ts` "a host's loud element rules" fails on any other. */
 :is(svg, img):where(.vb-board *):not(html) {
   display: revert; vertical-align: revert; margin: 0; padding: 0; border: 0; max-width: none; max-height: none; min-width: 0; min-height: 0;
   float: none; opacity: revert; filter: none; transform: none; box-shadow: none; background: none; position: revert;
 }
 :is(svg, img):where(.vb-board *):not(html):where(:not([width])) { width: revert; }
 :is(svg, img):where(.vb-board *):not(html):where(:not([height])) { height: revert; }
+svg:where(.vb-board *):not(html):where(:not([fill])) { fill: revert; }
+svg:where(.vb-board *):not(html):where(:not([stroke])) { stroke: revert; }
+svg:where(.vb-board *):not(html):where([fill='none']) { fill: none; }
+svg:where(.vb-board *):not(html):where([stroke='currentColor']) { stroke: currentColor; }

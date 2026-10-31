@@ -18,7 +18,7 @@ import { ApiError } from './io.ts';
 import type { ConfirmList } from './host.ts';
 import { alignOf, flagOf, markdownOf } from './host.ts';
 import { bindChat, cardIds, chatSource } from './chat-side.ts';
-import { finishAll } from './teardown.ts';
+import { finishAll, hearUntilStopped } from './teardown.ts';
 import { createBoardEdit, createBoards, createLockFlow, createVersions } from './boards/index.ts';
 import { numberedView } from './board-data.ts';
 import { createAttention, createFlagFlow, createHistoryFlow, createItemActs, createParking, createProposalFlow, createRemoveFlow, createUpdateFlow } from './cards/index.ts';
@@ -101,6 +101,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
 
   /** Lines were applied to the held state: draw them in the next frame. */
   function onLines(lines: LedgerEvent[], full: boolean) {
+    if (S.stopped) return; // a read that was on its way when the board stopped
     S.fresh ||= full;
     S.drew ||= attention.batch(lines, full);
     // A past version stays as it is; only the dropdown's "now" moves (versions.ts).
@@ -243,7 +244,7 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
   });
   // The viewer's alignment changed (the standalone page's "⋯" menu, alignSetting flag): lay out again.
   let align = alignOf(host);
-  const unsettle = host.settings.on(() => { if (alignOf(host) !== align) { align = alignOf(host); if (S.data) redraw(); } });
+  const unsettle = hearUntilStopped((heard) => host.settings.on(heard), () => { if (alignOf(host) !== align) { align = alignOf(host); if (S.data) redraw(); } });
 
   /** Archive board takes the open board away: a note being written on it asks first (point 309); Cancel archives nothing. */
   async function archiving(id: string, fields: Parameters<typeof sender.actOn>[1]) {
@@ -286,8 +287,9 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     zoomToCards(cards) {
       if (!S.data) return;
       const ids = cardIds(S.data, cards);
-      if (ids.length) flow.zoomTo(ids);
-      else toast(boardWords.thoseCardsAreNoLonger);
+      const drawn = ids.filter((id) => drawing.layout?.nodes.has(id));
+      if (drawn.length) flow.zoomTo(drawn);
+      else toast(ids.length ? boardWords.cardsAreHidden(ids.length) : boardWords.thoseCardsAreNoLonger);
     },
     jump: (id) => switchTo(id, () => boards.jump(id)),
     async rebuild() { await live.load(); redraw(true); }, async idle() { await sender.idle(); await live.sync(); while (S.frame) await nextFrame(); },
@@ -296,6 +298,6 @@ export function createBoard(els: BoardElements, b: BoardDeps): Board {
     boardEdit: createBoardEdit({ sender: { board: sender.board, actOn: archiving }, state: () => live.state, id: () => S.id, switchTo: (id) => void switchTo(id), confirm: ask, toast: (t) => toast(t) }),
     nextFlagged: () => flags.next(),
     unsaved: () => notes.unsaved, leave: () => notes.leave(),
-    destroy: () => { cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
+    destroy: () => { S.stopped = true; cancelAnimationFrame(S.frame); finishAll([unchat, boards.stop, attention.destroy, unbind, notes.destroy, regionNotes.destroy, flow.destroy, moves.menu.destroy, updates.destroy, apps.destroy, drawing.destroy, unsettle]); },
   };
 }

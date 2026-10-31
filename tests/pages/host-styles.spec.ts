@@ -83,10 +83,13 @@ function layoutOf(page: Page): Promise<string[]> {
 const RASTER = 2;
 
 /** Each target's pixels on the page as it is, then under the host's sheet: they must not change. A
- * target that differs is shot again, its own look and the host's back to back (the sheet off, then
- * on), and judged on that pair: a rule that reaches the board differs both times, while what a first
+ * target that differs is shot again, the host's look between its own (the sheet off, on, off), and
+ * judged on the closer pair: a rule that reaches the board differs from both, while what a first
  * pass ~30 s earlier can catch and `animations: 'disabled'` can't stop (an svg image's own animation,
- * a tile the rasteriser drew again) does not (SVG_01 Run 3). */
+ * a tile the rasteriser drew again) does not (SVG_01 Run 3). The tile can settle between any two of the
+ * three, once: a card's size glyph, a few levels on a few pixels, some shots after it scrolled in, with
+ * no sheet at all (FIX_01 Run 2, F19). What this can't catch: a rule whose effect outlives the sheet,
+ * such as a size the board measured under it and kept, since the look after then matches the host's. */
 async function sameUnderHost(page: Page, targets: Locator[]): Promise<void> {
   const shot = (t: Locator) => t.screenshot({ animations: 'disabled' });
   const own = [];
@@ -97,10 +100,14 @@ async function sameUnderHost(page: Page, targets: Locator[]): Promise<void> {
     const first = await mostApart(page, own[i]!, await shot(t));
     if (first <= RASTER) continue;
     await hostOn(false);
-    const again = await shot(t);
+    const before = await shot(t);
+    await hostOn(true);
+    const under = await shot(t);
+    await hostOn(false);
+    const after = await shot(t);
     await hostOn(true);
     const what = await t.evaluate((e) => [e.localName, e.getAttribute('data-id') ?? e.getAttribute('class') ?? '', e.closest('[data-pattern]')?.getAttribute('data-pattern') ?? ''].join(' '));
-    expect(await mostApart(page, again, await shot(t)), `target ${i} (${what}) changed under the host's element rules (first pass: ${first})`).toBeLessThanOrEqual(RASTER);
+    expect(Math.min(await mostApart(page, before, under), await mostApart(page, under, after)), `target ${i} (${what}) changed under the host's element rules (first pass: ${first})`).toBeLessThanOrEqual(RASTER);
   }
 }
 

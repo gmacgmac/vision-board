@@ -141,6 +141,33 @@ test.describe('an unsubscribe that throws', () => {
   });
 });
 
+test('a stopped mount ignores what a host keeps calling, when its unsubscribes hold nothing', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { plainOn: true });
+  await drawn(page);
+  await page.locator('.host-root vb-node').first().locator('button[data-act="ack"]').click();
+  await expect(page.locator('#host-chips li')).toHaveCount(1);
+  await drive(page, 'unmount');
+  await expect(page.locator('#host-chips li')).toHaveCount(0);
+  const before = await drive(page, 'record');
+  await drive(page, 'catchUp');
+  await drive(page, 'status', { now: 'working' });
+  await drive(page, 'setting', 'align', 'center');
+  await page.waitForTimeout(200);
+  await expect(page.locator('#host-chips li'), 'no chip comes back').toHaveCount(0);
+  expect(await drive(page, 'unsaved')).toBe(false);
+  expect(await drive(page, 'leave')).toBe(true);
+  expect(await drive(page, 'pageChip')).toBe(null);
+  await drive(page, 'reveal', { n: 999 });
+  await drive(page, 'reveal', { cards: [999] });
+  expect(await drive(page, 'send'), 'nothing to send').toBe(null);
+  const after = await drive(page, 'record');
+  expect(after.calls, 'no api call').toEqual(before.calls);
+  expect(after.attaches, 'no attach').toEqual(before.attaches);
+  expect(after.sends, 'no send').toBe(before.sends);
+  expect(after.notices, 'no notice').toEqual(before.notices);
+});
+
 test('reveal of what is not on the board says so through notify, and takes no focus', async ({ page, host }) => {
   await drawPlans(host);
   await openHost(page, host);
@@ -165,6 +192,10 @@ test('reveal of what is not on the board says so through notify, and takes no fo
   await page.locator('#host-input').focus();
   await drive(page, 'reveal', { n: 1 });
   await expect.poll(async () => (await said()).at(-1)).toContain('hidden');
+  const before = (await said()).length;
+  await drive(page, 'reveal', { cards: [1] });
+  await expect.poll(said, 'several cards, none drawn, says so too').toHaveLength(before + 1);
+  expect((await said()).at(-1)).toContain('hidden');
   await expect(page.locator('#host-input')).toBeFocused();
 });
 

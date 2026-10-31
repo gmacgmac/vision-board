@@ -44,17 +44,18 @@ test('a host\'s loud element rules do not reach the board\'s controls', async ({
   expect(title.color).not.toBe('rgb(200, 0, 0)');
   // Its span, div, svg and img rules (host.css) too: the icons draw, no text takes the host's size or colour.
   const loud = await page.locator('.host-root').evaluate((root) => {
-    const seen = { blankIcons: [] as string[], loudText: [] as string[], spaced: [] as string[] };
+    const seen = { blankIcons: [] as string[], loudText: [] as string[], spaced: [] as string[], painted: [] as string[] };
     const name = (e: Element) => `${e.tagName} ${e.getAttribute('class')}`;
     for (const e of root.querySelectorAll('*')) {
       const s = getComputedStyle(e);
       if (e.tagName === 'svg' && s.display === 'none' && !e.closest('[hidden]') && !/vb-btn-icon|vb-widths-(own|same)/.test(e.getAttribute('class') ?? '')) seen.blankIcons.push(name(e));
       if (s.fontSize === '30px' || s.fontSize === '26px' || s.color === 'rgb(255, 120, 0)' || s.color === 'rgb(10, 200, 10)' || s.color === 'rgb(255, 0, 255)') seen.loudText.push(name(e));
+      if (e.closest('svg') && (s.fill === 'rgb(255, 0, 0)' || s.stroke === 'rgb(255, 0, 0)')) seen.painted.push(name(e));
       if (!e.closest('svg') && (s.letterSpacing === '2px' || parseFloat(s.letterSpacing) > 3.5)) seen.spaced.push(name(e));
     }
     return seen;
   });
-  expect(loud).toEqual({ blankIcons: [], loudText: [], spaced: [] });
+  expect(loud).toEqual({ blankIcons: [], loudText: [], spaced: [], painted: [] });
   await expect(page.locator('.host-root vb-node').first().locator('button[data-act="ack"] svg')).toBeVisible();
 });
 

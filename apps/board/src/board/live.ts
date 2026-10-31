@@ -15,6 +15,7 @@ import { canApply } from './board-data.ts';
 import { answerEvent } from './card-numbers.ts';
 import type { BoardEvent } from './host.ts';
 import type { Io } from './io.ts';
+import { hearUntilStopped } from './teardown.ts';
 import { work } from './work.ts';
 
 export interface Live {
@@ -28,8 +29,8 @@ export interface Live {
   /** An act the page sent to `board`: its answer (cards by board number, card-numbers.ts) applied
    * in place when it is the next line, else read with the rest. */
   own(line: LedgerLine, board: string): Promise<void>;
-  /** Follow the host's change events; a stop function. A read they start that fails goes to `failed`, and the next one reads again. */
-  watch(failed: (err: unknown) => void): () => void;
+  /** Follow the host's change events; a stop function. A read they start that fails goes to `failed`, one that works to `worked`. */
+  watch(failed: (err: unknown) => void, worked: () => void): () => void;
   /** Resolves when no read is in flight. */
   settled(): Promise<void>;
 }
@@ -112,9 +113,9 @@ export function createLive(d: LiveDeps, onLines: OnLines): Live {
       if (state && !reading && line.seq === state.seq + 1 && apply([answerEvent(state, board, line)])) return;
       await sync();
     },
-    watch(failed) {
+    watch(failed, worked) {
       // A head past the one held, or no head (catch up on anything appended while not following).
-      return d.events(({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) sync().catch(failed); });
+      return hearUntilStopped<[BoardEvent]>((heard) => d.events(heard), ({ ref }) => { if (!state || ref.head === undefined || ref.head > state.seq) sync().then(worked, failed); });
     },
     settled: async () => { while (reading) await reading; },
   };

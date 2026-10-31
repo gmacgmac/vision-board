@@ -45,6 +45,49 @@ for (const firstRead of [500, 404, 'reject', 'html'] as const) {
   });
 }
 
+test('events: while reads keep failing there is one notice until one works, and no raw error, a 200 of HTML included', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host);
+  await drawn(page);
+  const notices = async () => (await drive(page, 'record')).notices as { text: string; tone?: string }[];
+  const reads = async () => (await drive(page, 'record')).calls.filter((c: string) => c.includes('ledger')).length;
+  const event = async () => { const at = await reads(); await drive(page, 'catchUp'); await expect.poll(reads).toBeGreaterThan(at); await page.waitForTimeout(50); };
+  const start = (await notices()).length;
+  await drive(page, 'readsDown', 'html');
+  for (let i = 0; i < 3; i += 1) await event();
+  await expect.poll(async () => (await notices()).length).toBe(start + 1);
+  const said = (await notices()).at(-1)!;
+  expect(said.tone).toBe('error');
+  expect(said.text).not.toMatch(/TypeError|undefined/);
+  await drive(page, 'readsDown', 500);
+  await event();
+  await drive(page, 'readsDown', 'reject');
+  await event();
+  expect((await notices()).length, 'the same outage, however it fails').toBe(start + 1);
+  // It works again, and goes down again: a new outage is a new notice.
+  await drive(page, 'readsDown', null);
+  await host.tool('write_board', { board: 'plans', items: [{ type: 'node', node: { region: 'now', kind: 'question', title: 'While it was down?' } }] });
+  await drive(page, 'catchUp');
+  await expect(page.locator('.host-root vb-node')).toHaveCount(4);
+  await drive(page, 'readsDown', 500);
+  await event();
+  await expect.poll(async () => (await notices()).filter((n) => n.tone === 'error').length).toBe(2);
+});
+
+test('events: a first read that fails, and later ones, are one notice until one works', async ({ page, host }) => {
+  await drawPlans(host);
+  await openHost(page, host, { firstRead: 500, muted: true });
+  await expect(page.locator('.host-root .vb-message')).toBeVisible();
+  await drive(page, 'readsDown', 'html');
+  await drive(page, 'catchUp');
+  await drive(page, 'catchUp');
+  await page.waitForTimeout(200);
+  expect((await drive(page, 'record')).notices).toHaveLength(1);
+  await drive(page, 'readsDown', null);
+  await drive(page, 'catchUp');
+  await drawn(page);
+});
+
 test('settings: a flag comes from settings.get, and settings.on hears a change of align', async ({ page, host }) => {
   // A row of two cards of different heights: the alignment shows in the shorter one's place.
   const long = Array.from({ length: 12 }, (_, i) => `Line ${i} of a long card.`).join('\n\n');

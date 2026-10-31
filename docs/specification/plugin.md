@@ -59,7 +59,7 @@ dialogs, search and help. There is no second element to give and no control a ho
 | Member | Promise | Left out | Proven by |
 |---|---|---|---|
 | `api(path, init)` | Calls the engine's routes: `path` is relative (`ledger?after=0`); resolves the `fetch` `Response`, as the person (§ The engine) | Required | `view-hooks.spec.ts` "api and events" |
-| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens. **A first read that fails** (`api` answers a problem or rejects, an engine still starting) says so through `notify` and over the stage, keeps listening and reads again on the next call of `listener`, with no retry of its own: so say one when your engine is up | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head", "events: a first read that fails" |
+| `events(listener)` | Calls `listener({ plugin, ref: { board?, head? } })` for every change to the data, from anyone; returns the unsubscribe. A `ref` with no `head` says "you may have missed changes": the board catches up. Say one each time your stream opens. **A first read that fails** (`api` answers a problem or rejects, an engine still starting) says so through `notify` and over the stage, keeps listening and reads again on the next call of `listener`, with no retry of its own: so say one when your engine is up. **While reads keep failing**, at any time, there is one notice until one works | Required | `view-hooks.spec.ts` "api and events", "events: a ref with no head", "events: a first read that fails", "events: while reads keep failing" |
 | `chat` | § The chat | Required: give the three lines there if you have no chat | `view-hooks.spec.ts` "a host with no chat at all" |
 | `settings.get(key)`, `settings.on(listener)` | Each flag by name, a boolean, and `align` (`center` or `start`). A value you don't give reads as the flag's default. Flags are read once, at mount; `on` is for `align`, which lays out again, and returns the unsubscribe | Required | `view-hooks.spec.ts` "settings: a flag comes" |
 | `notify(text, tone?)` | A short notice outside the board; `tone` `error` for a refusal | Required | `view-hooks.spec.ts` "notify and confirm" |
@@ -77,7 +77,7 @@ off stop pictures and svg pictures; pass `svgImages` to `createEngine`'s `flags`
 
 | Member | Promise | Proven by |
 |---|---|---|
-| `unmount()` | Removes every listener it added, an open menu's or tip's too, takes back its chips, empties `root` and gives it back as it was. Never asks, so call `leave()` first. Each step runs whatever another does: an unsubscribe of yours that isn't a function is passed over, and one that throws goes to the console (`apps/board/src/board/teardown.ts` `finishAll`) | `view-gives.spec.ts` "unmount: every listener", "unmount with a tip open", "unmount finishes" |
+| `unmount()` | Removes every listener it added, an open menu's or tip's too, takes back its chips, empties `root` and gives it back as it was. Never asks, so call `leave()` first. Each step runs whatever another does: an unsubscribe of yours that isn't a function is passed over, and one that throws goes to the console (`apps/board/src/board/teardown.ts` `finishAll`). After it the mount ignores whatever you keep calling, a listener your unsubscribe left in place or a member of the view (`hearUntilStopped`) | `view-gives.spec.ts` "unmount: every listener", "unmount with a tip open", "unmount finishes", "a stopped mount ignores" |
 | `unsaved()` | Synchronous: a note holds changed words. For your `beforeunload` or your own question | `view-gives.spec.ts` "unsaved and leave" |
 | `leave()` | True at once when nothing is unsaved; else asks through `confirm`. True: the words are discarded and you unmount. False: the board stays, focus in the words | `view-gives.spec.ts` "unsaved and leave" |
 | `pageChip()` | The chip for the board on show, for your own Add to chat; null with none | `view-gives.spec.ts` "pageChip" |
@@ -104,7 +104,8 @@ chat: {
 - **Chips.** A chip is `{ plugin, kind, ref, label, detail, preview? }` (`#actions` `Chip`): draw `label` and `detail`, keep the
   rest unread. `detail` names a board by its id, as `Board "pricing"`, not its title. The board keeps two live, keys `selection`
   and `answers`, replaced as they change and removed at `unmount`. A chip that went with a message is **spent until its key's
-  `ref` changes**: the same `ref` may come again with new words, and stays spent. `attach(key, null)` does not end it, so
+  `ref` changes**, by value: each chip is a new object, so compare their JSON, not the objects. The same `ref` may come again with new
+  words, and stays spent. `attach(key, null)` does not end it, so
   selecting the same card again stays spent; keep what is spent across a null, as `tests/plugin/fake-host/chat.js` does.
   Proven by `view-hooks.spec.ts` "chat.attach".
 - **As a message goes**, call the engine's `resolve(chip.kind, chip.ref)` for every chip. `{ where, text }` is one block of
@@ -139,12 +140,13 @@ With no chat at all, where nothing carries a chip: `chat: { attach() {}, send: (
   it (`.vb-dialog` up to 480 wide, `.vb-archived-list`). Proven by `guest.spec.ts` "the zoomed view is a real modal".
 - **Layers.** The root makes no stacking context of its own, so the board's `z-index`es meet your page's; set `isolation: isolate`
   on `root` if yours would clash.
-- **Styles.** Your rules on a bare element reach in and the board stands: `button`, a field, a heading, `p`, `dialog`, `span`, `div`,
-  `a`, a list, `table`, `code`, `kbd`, the sectioning elements, `img` and `svg` each start again inside the root, under every
-  rule of the board's (`packages/ui/src/base/root.css`). `root` itself is yours, and the text properties it would hand down the board sets. What
-  doesn't hold: a rule of yours with a class or an id that matches inside, one with `!important`, one on an element not named
-  there or on an svg's inner shapes, a less usual property on `span` or `div` (the sheet lists what it takes back; `all` costs a big
-  board too much), or a `width` or `height` on an `svg` or `img` that carries its own. The board's rules stay under its own `vb-` names, but the sheet does
+- **Styles.** Your rules on one bare element reach in and the board stands: `button`, a field, a heading, `p`, `dialog`, `span`, `div`,
+  `a`, a list, `table`, `code`, `kbd`, the sectioning elements, `img` and `svg`, its `fill` and `stroke` too, each start again inside the
+  root, under every rule of the board's (`packages/ui/src/base/root.css`). `root` itself is yours, and the text properties it would hand
+  down the board sets. What doesn't hold: a rule of yours with a class or an id that matches inside, one with `!important`, a rule naming
+  two elements (`body span`, `main div`), which ties the board's guard and wins when your sheet comes later, a rule on `*` (`box-sizing`
+  among them), one on an element not named there or on an svg's inner shapes, a less usual property on `span` or `div` (the sheet lists what it
+  takes back; `all` costs a big board too much), or a `width` or `height` on an `svg` or `img` that carries its own. The board's rules stay under its own `vb-` names, but the sheet does
   set `--vb-*` and `--lightningcss-*` on `:root` and on `[data-theme]`, registers `--vb-root-w`, and selects `vb-node` and `vb-region`. A
   `color-scheme` of yours stays yours: the board's is on its root. Proven by `guest.spec.ts` "a host's loud element rules",
   "a picture stands too", "a host's color-scheme", `tests/pages/host-styles.spec.ts`.

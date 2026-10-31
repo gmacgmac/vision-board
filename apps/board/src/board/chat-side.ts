@@ -9,7 +9,7 @@ import { answersChip, selectionChip } from '#actions';
 import type { BoardChat } from './host.ts';
 import type { Selection } from './selection/index.ts';
 import type { Status } from './status.ts';
-import { finishAll } from './teardown.ts';
+import { finishAll, hearUntilStopped } from './teardown.ts';
 import * as boardWords from './words/board.ts';
 
 /** The keys the board's live chips go under. */
@@ -100,7 +100,7 @@ export function bindChat(d: ChatSideDeps): () => void {
   };
 
   stage.addEventListener('click', onStage);
-  const stops = [selection.onChange(attach), status.on((patch) => { if ('drawn' in patch) attach(); }), chat.status.on(hear)];
+  const stops = [selection.onChange(attach), status.on((patch) => { if ('drawn' in patch) attach(); }), hearUntilStopped((heard) => chat.status.on(heard), hear)];
   hear();
   return () => finishAll([...stops, () => stage.removeEventListener('click', onStage), () => put(SELECTION_KEY, null), () => put(ANSWERS_KEY, null)]);
 }
