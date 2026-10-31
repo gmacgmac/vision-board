@@ -1027,3 +1027,17 @@ rejected, and the task link. Never edit an Accepted entry; append a new one and 
   4. A diagram never vanishes with no word. Where a Word or Excel file holds one, the agent gets a marker, the words in its shapes and SmartArt, what connectors join, a chart's kind, title, series and figures, and a `note`. Its look and layout are not read, and arrow direction is reported as drawn.
 - **Why**: each was found by checking rather than by the first build. The real use is customers' architecture documents, where a silently missing diagram gives a confident wrong answer.
 - **Task**: cortex-tasks/board/2026-10-30_board-app_read-attachment/TASK-STATUS.md (VERIFY_01, FIX_PAGES, FIX_DOCS)
+
+## D-074 The board is built as one plugin, and the standalone app is a host of it
+- **Date**: 2026-10-31 · **Status**: Accepted (maintainer, points 337, 341, 343, 373) · **From**: board-app plugin-mode PLAN
+- **Decision**:
+  1. The standalone app is a host of the plugin, through the same mechanisms any other host uses, so working here means working there. The contract stays general and standard: plain ES modules, JSON Schema, MCP's tool shape. Nothing in it names nclite.
+  2. The board's controls stay Svelte, compiled inside the plugin's bundle. A host only ever calls `mount`. This amends tracker M8's "framework-free"; the host contract's "framework-free view" means framework-free to the host.
+  3. Local is master. A host takes the built folder from here. GitLab gets only the cleaned export.
+  4. Tools reach any bot as MCP tools: the engine gives `tools.list` and `tools.call`, and each host chooses its transport. Standalone's is `vb-mcp`.
+  5. Attachments belong to the host's chat (D-068 ruling 6). The plugin never sees a file. `read_attachment` and the PDF frame stay with the standalone chat; `packages/documents` stays reusable.
+  6. The answers since the last Send are a chip, through `chat.attach` and `resolve`, with no extra prompt hook. This one is the planner's call, under the maintainer's "keep it general", and can be overruled in review.
+  7. The maintainer reviews the final spec, `docs/specification/plugin.md`, and may change any of these there.
+- **Why**: the board's destination is a plugin in nclite, built once and shared. Today a host gets the canvas and none of its controls, and our own chat goes around the contract in seven places, so "works here" doesn't mean "works there".
+- **Rejected**: rewriting the controls framework-free (2,500 lines rewritten for a gain no host sees, since nclite is Svelte too and only calls `mount`); an adapter written to nclite's draft contract (a draft, implemented only in a prototype, and it would tie the board to one host).
+- **Task**: cortex-tasks/board/2026-10-31_board-app_plugin-mode/TASK-STATUS.md

@@ -2,7 +2,7 @@
 task_name: Plugin Mode
 created: 2026-10-31
 completed:
-status: planned
+status: in-progress
 categories: [board-app, board-agent, board-ui]
 skills: [cortex-architecture, cortex-docs]
 tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
@@ -63,7 +63,7 @@ tracker: [M8, M12, M13, M14, M15, M21, M22, M27]
 ## Implementation Notes
 
 ### Wave gates
-- 
+- Set-up: `boardChromeInMount` added (off until proven). PLAN's `pluginSeam` is not added: SEAM_01 changes no behaviour and deletes `BoardSide`, so there is no off branch for a flag to switch.
 
 ### Security
 - 
